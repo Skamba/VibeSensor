@@ -60,7 +60,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     config.logging.metrics_csv_path.parent.mkdir(parents=True, exist_ok=True)
     config.clients_json_path.parent.mkdir(parents=True, exist_ok=True)
 
-    registry = ClientRegistry(config.clients_json_path)
+    registry = ClientRegistry(
+        config.clients_json_path,
+        stale_ttl_seconds=config.processing.client_ttl_seconds,
+    )
     processor = SignalProcessor(
         sample_rate_hz=config.processing.sample_rate_hz,
         waveform_seconds=config.processing.waveform_seconds,
@@ -111,9 +114,17 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         async def processing_loop() -> None:
             interval = 1.0 / max(1, config.processing.fft_update_hz)
             while True:
-                metrics_by_client = runtime.processor.compute_all(runtime.registry.client_ids())
+                runtime.registry.evict_stale()
+                active_ids = runtime.registry.active_client_ids()
+                sample_rates: dict[str, int] = {}
+                for client_id in active_ids:
+                    record = runtime.registry.get(client_id)
+                    if record is not None:
+                        sample_rates[client_id] = record.sample_rate_hz
+                metrics_by_client = runtime.processor.compute_all(active_ids, sample_rates_hz=sample_rates)
                 for client_id, metrics in metrics_by_client.items():
                     runtime.registry.set_latest_metrics(client_id, metrics)
+                runtime.processor.evict_clients(set(active_ids))
                 await asyncio.sleep(interval)
 
         runtime.tasks = [
@@ -161,5 +172,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

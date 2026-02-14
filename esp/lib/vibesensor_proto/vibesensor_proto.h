@@ -26,7 +26,8 @@ size_t pack_hello(uint8_t* out,
                   uint16_t control_port,
                   uint16_t sample_rate_hz,
                   const char* name,
-                  const char* firmware_version);
+                  const char* firmware_version,
+                  uint32_t queue_overflow_drops = 0);
 
 size_t pack_data(uint8_t* out,
                  size_t out_len,
@@ -50,4 +51,3 @@ size_t pack_ack(uint8_t* out,
                 uint8_t status);
 
 }  // namespace vibesensor
-

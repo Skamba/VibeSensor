@@ -28,11 +28,15 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "fft_update_hz": 4,
         "fft_n": 2048,
         "spectrum_max_hz": 200,
+        "client_ttl_seconds": 120,
     },
     "logging": {
         "log_metrics": True,
-        "metrics_csv_path": "pi/data/metrics.csv",
+        "metrics_csv_path": "/var/log/vibesensor/metrics.csv",
         "metrics_log_hz": 4,
+    },
+    "storage": {
+        "clients_json_path": "/var/lib/vibesensor/clients.json",
     },
     "gps": {"gps_enabled": False, "gps_speed_only": True},
 }
@@ -95,6 +99,7 @@ class ProcessingConfig:
     fft_update_hz: int
     fft_n: int
     spectrum_max_hz: int
+    client_ttl_seconds: int
 
 
 @dataclass(slots=True)
@@ -118,12 +123,9 @@ class AppConfig:
     processing: ProcessingConfig
     logging: LoggingConfig
     gps: GPSConfig
+    clients_json_path: Path
     config_path: Path
     repo_dir: Path = REPO_DIR
-
-    @property
-    def clients_json_path(self) -> Path:
-        return self.repo_dir / "pi" / "data" / "clients.json"
 
 
 def _read_config_file(path: Path) -> dict[str, Any]:
@@ -171,6 +173,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             fft_update_hz=int(merged["processing"]["fft_update_hz"]),
             fft_n=int(merged["processing"]["fft_n"]),
             spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
+            client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
         ),
         logging=LoggingConfig(
             log_metrics=bool(merged["logging"]["log_metrics"]),
@@ -181,6 +184,8 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
             gps_speed_only=bool(merged["gps"]["gps_speed_only"]),
         ),
+        clients_json_path=_resolve_repo_path(
+            str(merged.get("storage", {}).get("clients_json_path", "/var/lib/vibesensor/clients.json"))
+        ),
         config_path=path,
     )
-

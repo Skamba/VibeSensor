@@ -10,26 +10,12 @@ class GPSSpeedMonitor:
         self.gps_enabled = gps_enabled
         self.speed_mps: float | None = None
 
-    async def _probe_gpsd(self, host: str, port: int) -> bool:
-        try:
-            reader, writer = await asyncio.wait_for(
-                asyncio.open_connection(host, port),
-                timeout=1.0,
-            )
-            writer.close()
-            await writer.wait_closed()
-            return True
-        except (OSError, TimeoutError):
-            return False
-
     async def run(self, host: str = "127.0.0.1", port: int = 2947) -> None:
         while True:
             if not self.gps_enabled:
-                has_gpsd = await self._probe_gpsd(host, port)
-                if not has_gpsd:
-                    self.speed_mps = None
-                    await asyncio.sleep(5.0)
-                    continue
+                self.speed_mps = None
+                await asyncio.sleep(5.0)
+                continue
 
             try:
                 reader, writer = await asyncio.open_connection(host, port)

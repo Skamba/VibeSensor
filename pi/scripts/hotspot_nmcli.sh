@@ -1,9 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PI_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
-CONFIG_PATH="${PI_DIR}/config.yaml"
+CONFIG_PATH="${VIBESENSOR_CONFIG_PATH:-/etc/vibesensor/config.yaml}"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --config)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing value for --config"
+        exit 1
+      fi
+      CONFIG_PATH="$2"
+      shift 2
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      echo "Usage: $0 [--config /path/to/config.yaml]"
+      exit 1
+      ;;
+  esac
+done
 
 if [ "$(id -u)" -eq 0 ]; then
   AS_ROOT=""

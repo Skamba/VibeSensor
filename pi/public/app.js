@@ -617,7 +617,12 @@
       sendSelection();
     };
     state.ws.onmessage = (event) => {
-      const payload = JSON.parse(event.data);
+      let payload;
+      try {
+        payload = JSON.parse(event.data);
+      } catch (_err) {
+        return;
+      }
       state.clients = payload.clients || [];
       state.spectra = payload.spectra || { freq: [], clients: {} };
       updateClientSelect();
