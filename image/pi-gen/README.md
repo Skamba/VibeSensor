@@ -3,7 +3,7 @@
 Build machine commands:
 
 ```bash
-git clone https://github.com/<MY_GITHUB_USER>/VibeSensor.git
+git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
 ./image/pi-gen/build.sh   # outputs an .img in image/pi-gen/out/
 ```

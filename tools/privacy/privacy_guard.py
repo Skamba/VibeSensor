@@ -30,9 +30,11 @@ def run_git(args: list[str]) -> str:
         cwd=REPO_ROOT,
         check=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
     )
-    return result.stdout
+    return result.stdout or ""
 
 
 def check_local_git_email() -> list[str]:

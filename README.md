@@ -66,7 +66,7 @@ Flash official Raspberry Pi OS Lite to SD card, then run on the Pi:
 ```bash
 sudo apt-get update
 sudo apt-get install -y git
-git clone https://github.com/<MY_GITHUB_USER>/VibeSensor.git
+git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
 sudo ./pi/scripts/install_pi.sh
 sudo ./pi/scripts/hotspot_nmcli.sh
@@ -78,7 +78,7 @@ sudo systemctl status vibesensor
 Run on a Linux build machine:
 
 ```bash
-git clone https://github.com/<MY_GITHUB_USER>/VibeSensor.git
+git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
 ./image/pi-gen/build.sh   # outputs an .img in image/pi-gen/out/
 ```
@@ -89,6 +89,9 @@ After first boot, no manual install steps are required; hotspot + server are alr
 See image build notes: `image/pi-gen/README.md`
 
 ## Verification (Both Modes)
+
+Default AP credentials in this repo are for local prototype use only. Change
+SSID/PSK before any real-world deployment.
 
 - Phone: connect to SSID `VibeSensor` (PSK `vibesensor123`)
 - Open: `http://192.168.4.1:8000`
@@ -133,3 +136,12 @@ Loss detection uses sequence gaps on the Pi (`frames_dropped` per client).
   - check AP channel and frame size
 - Hotspot has no DHCP leases:
   - rerun `pi/scripts/hotspot_nmcli.sh` (it configures NetworkManager dnsmasq mode)
+
+## Developer Safeguards
+
+To enable versioned local hooks (privacy guard + metadata checks):
+
+```bash
+git config core.hooksPath .githooks
+git config user.email "8420201+Skamba@users.noreply.github.com"
+```
