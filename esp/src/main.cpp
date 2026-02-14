@@ -26,6 +26,7 @@ constexpr uint32_t kWifiRetryIntervalMs = 4000;
 constexpr uint8_t kWifiInitialConnectAttempts = 3;
 constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 constexpr size_t kSensorReadBatchSamples = 8;
+constexpr size_t kMaxTxFramesPerLoop = 3;
 
 // Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
 constexpr int kI2cSdaPin = 26;
@@ -237,26 +238,26 @@ void service_hello() {
 }
 
 void service_tx() {
-  DataFrame frame;
-  if (!pop_frame(&frame)) {
-    return;
-  }
-
   uint8_t packet[kMaxDatagramBytes];
-  size_t len = vibesensor::pack_data(packet,
-                                     sizeof(packet),
-                                     g_client_id,
-                                     frame.seq,
-                                     frame.t0_us,
-                                     frame.xyz,
-                                     frame.sample_count);
-  if (len == 0) {
-    return;
+  for (size_t sent = 0; sent < kMaxTxFramesPerLoop; ++sent) {
+    DataFrame frame;
+    if (!pop_frame(&frame)) {
+      return;
+    }
+    size_t len = vibesensor::pack_data(packet,
+                                       sizeof(packet),
+                                       g_client_id,
+                                       frame.seq,
+                                       frame.t0_us,
+                                       frame.xyz,
+                                       frame.sample_count);
+    if (len == 0) {
+      continue;
+    }
+    g_data_udp.beginPacket(kServerIp, kServerDataPort);
+    g_data_udp.write(packet, len);
+    g_data_udp.endPacket();
   }
-
-  g_data_udp.beginPacket(kServerIp, kServerDataPort);
-  g_data_udp.write(packet, len);
-  g_data_udp.endPacket();
 }
 
 void send_ack(uint32_t cmd_seq, uint8_t status) {

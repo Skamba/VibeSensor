@@ -25,6 +25,10 @@ jobs:
         run: |
           ruff check pi/vibesensor pi/tests tools/simulator
 
+      - name: Line endings
+        run: |
+          python tools/config/check_line_endings.py
+
       - name: Privacy guard
         run: |
           python tools/privacy/privacy_guard.py check-tree
@@ -33,6 +37,11 @@ jobs:
       - name: Unit tests
         run: |
           pytest -q pi/tests
+
+      - name: Config preflight
+        run: |
+          python tools/config/config_preflight.py pi/config.example.yaml
+          python tools/config/config_preflight.py pi/config.dev.yaml
 
       - name: Simulator + websocket smoke
         run: |

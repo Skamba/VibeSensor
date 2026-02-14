@@ -38,6 +38,7 @@ class SignalProcessor:
         self.waveform_step = max(1, sample_rate_hz // max(1, waveform_display_hz))
         self._buffers: dict[str, ClientBuffer] = {}
         self._fft_window = np.hanning(self.fft_n).astype(np.float32)
+        self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
 
     def _get_or_create(self, client_id: str) -> ClientBuffer:
@@ -124,7 +125,7 @@ class SignalProcessor:
             buf.sample_rate_hz = int(sample_rate_hz)
         sr = buf.sample_rate_hz or self.sample_rate_hz
 
-        n_time = min(buf.count, self.fft_n)
+        n_time = min(buf.count, self.max_samples)
         time_window = self._latest(buf, n_time)
 
         metrics: dict[str, Any] = {}
@@ -146,7 +147,14 @@ class SignalProcessor:
             spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
 
             for axis_idx, axis in enumerate(AXES):
-                spec = np.abs(np.fft.rfft(fft_block[axis_idx] * self._fft_window))
+                spec = np.abs(
+                    np.fft.rfft(fft_block[axis_idx] * self._fft_window),
+                ).astype(np.float32)
+                spec *= self._fft_scale
+                if spec.size > 0:
+                    spec[0] *= 0.5
+                if (self.fft_n % 2) == 0 and spec.size > 1:
+                    spec[-1] *= 0.5
                 amp_slice = spec[valid_idx]
                 if amp_slice.size > 1:
                     amp_for_peaks = amp_slice.copy()
@@ -194,9 +202,7 @@ class SignalProcessor:
                 continue
             if not freq:
                 freq = buf.latest_spectrum["x"]["freq"].tolist()
-            client_payload = self.spectrum_payload(client_id)
-            client_payload["freq"] = buf.latest_spectrum["x"]["freq"].tolist()
-            clients[client_id] = client_payload
+            clients[client_id] = self.spectrum_payload(client_id)
         return {"freq": freq, "clients": clients}
 
     def selected_payload(self, client_id: str) -> dict[str, Any]:

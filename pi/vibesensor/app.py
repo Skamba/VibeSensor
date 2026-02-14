@@ -37,6 +37,7 @@ class RuntimeState:
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
+    ws_tick: int = 0
 
     def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
         clients = self.registry.snapshot_for_api()
@@ -45,17 +46,28 @@ class RuntimeState:
             active = clients[0]["id"]
         client_ids = [c["id"] for c in clients]
 
+        self.ws_tick += 1
+        heavy_every = max(
+            1,
+            int(
+                self.config.processing.ui_push_hz
+                / max(1, self.config.processing.ui_heavy_push_hz)
+            ),
+        )
+        include_heavy = (self.ws_tick % heavy_every) == 0
+
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
             "speed_mps": self.gps_monitor.speed_mps,
             "clients": clients,
             "selected_client_id": active,
-            "spectra": self.processor.multi_spectrum_payload(client_ids),
         }
-        if active is not None:
-            payload["selected"] = self.processor.selected_payload(active)
-        else:
-            payload["selected"] = {}
+        if include_heavy:
+            payload["spectra"] = self.processor.multi_spectrum_payload(client_ids)
+            if active is not None:
+                payload["selected"] = self.processor.selected_payload(active)
+            else:
+                payload["selected"] = {}
         return payload
 
 
@@ -123,22 +135,23 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 sample_rates: dict[str, int] = {}
                 for client_id in active_ids:
                     record = runtime.registry.get(client_id)
-                    if record is not None:
-                        sample_rates[client_id] = record.sample_rate_hz
-                        client_rate = int(record.sample_rate_hz or 0)
-                        default_rate = runtime.config.processing.sample_rate_hz
-                        if (
-                            client_rate > 0
-                            and client_rate != default_rate
-                            and client_id not in runtime.sample_rate_mismatch_logged
-                        ):
-                            runtime.sample_rate_mismatch_logged.add(client_id)
-                            LOGGER.warning(
-                                "Client %s uses sample_rate_hz=%d; default config is %d.",
-                                client_id,
-                                client_rate,
-                                default_rate,
-                            )
+                    if record is None:
+                        continue
+                    sample_rates[client_id] = record.sample_rate_hz
+                    client_rate = int(record.sample_rate_hz or 0)
+                    default_rate = runtime.config.processing.sample_rate_hz
+                    if (
+                        client_rate > 0
+                        and client_rate != default_rate
+                        and client_id not in runtime.sample_rate_mismatch_logged
+                    ):
+                        runtime.sample_rate_mismatch_logged.add(client_id)
+                        LOGGER.warning(
+                            "Client %s uses sample_rate_hz=%d; default config is %d.",
+                            client_id,
+                            client_rate,
+                            default_rate,
+                        )
                 metrics_by_client = runtime.processor.compute_all(
                     active_ids,
                     sample_rates_hz=sample_rates,

@@ -136,8 +136,6 @@ class ClientRegistry:
                 advertised = _sanitize_name(hello.name)
                 if advertised:
                     record.name = advertised
-            self._persist_names(now_ts=now_ts, force=False)
-            self._flush_pending_persist(now_ts)
 
     def update_from_data(
         self,
