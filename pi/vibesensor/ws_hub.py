@@ -51,7 +51,10 @@ class WebSocketHub:
         async def _send(conn: WSConnection) -> WebSocket | None:
             payload = payload_builder(conn.selected_client_id)
             try:
-                await asyncio.wait_for(conn.websocket.send_json(payload), timeout=self._send_timeout_s)
+                await asyncio.wait_for(
+                    conn.websocket.send_json(payload),
+                    timeout=self._send_timeout_s,
+                )
                 return None
             except Exception:
                 return conn.websocket
