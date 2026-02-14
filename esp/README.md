@@ -1,6 +1,7 @@
-# ESP32 Firmware (LOLIN C3 Mini)
+# ESP32 Firmware (ATOM ESP32-PICO)
 
 This PlatformIO project streams ADXL345 acceleration data to the Pi over UDP.
+Default PlatformIO environment targets `m5stack-atom` (ATOM ESP32-PICO).
 
 ## Features
 
@@ -8,6 +9,7 @@ This PlatformIO project streams ADXL345 acceleration data to the Pi over UDP.
 - HELLO + DATA protocol packets
 - Buffered frame queue to reduce sample loss during short Wi-Fi stalls
 - UDP command listener for identify blink with ACK response
+- Identify command triggers RGB LED wave animation on ATOM LEDs
 - ADXL345 SPI driver at 800 Hz
 - Synthetic waveform fallback when the sensor is absent
 
@@ -28,3 +30,9 @@ Edit constants in `src/main.cpp`:
 - `kClientName`
 - SPI pin constants (`kSpiSckPin`, `kSpiMisoPin`, `kSpiMosiPin`, `kAdxlCsPin`)
 
+Default ATOM pin mapping used in this repo:
+
+- `SCK = GPIO22`
+- `MISO = GPIO19`
+- `MOSI = GPIO23`
+- `CS = GPIO33`
