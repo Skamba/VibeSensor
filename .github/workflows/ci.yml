@@ -37,7 +37,7 @@ jobs:
       - name: Simulator + websocket smoke
         run: |
           set -euo pipefail
-          python -m vibesensor.app --config pi/config.yaml >server.log 2>&1 &
+          python -m vibesensor.app --config pi/config.dev.yaml >server.log 2>&1 &
           SERVER_PID=$!
           cleanup() {
             kill "${SIM_PID:-}" >/dev/null 2>&1 || true

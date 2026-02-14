@@ -68,7 +68,7 @@ size_t pack_hello(uint8_t* out,
                   uint32_t queue_overflow_drops) {
   const size_t name_len = strnlen(name, 32);
   const size_t fw_len = strnlen(firmware_version, 32);
-  const size_t need = 1 + 1 + 6 + 2 + 2 + 1 + name_len + 1 + fw_len + 4;
+  const size_t need = kHelloFixedBytes + name_len + fw_len;
   if (out_len < need) {
     return 0;
   }
@@ -100,7 +100,7 @@ size_t pack_data(uint8_t* out,
                  const int16_t* xyz_interleaved,
                  uint16_t sample_count) {
   const size_t payload_len = static_cast<size_t>(sample_count) * 6;
-  const size_t need = 1 + 1 + 6 + 4 + 8 + 2 + payload_len;
+  const size_t need = kDataHeaderBytes + payload_len;
   if (out_len < need) {
     return 0;
   }
@@ -126,7 +126,7 @@ bool parse_cmd(const uint8_t* data,
                uint8_t* out_cmd_id,
                uint32_t* out_cmd_seq,
                uint16_t* out_identify_duration_ms) {
-  const size_t base = 1 + 1 + 6 + 1 + 4;
+  const size_t base = kCmdHeaderBytes;
   if (len < base) {
     return false;
   }
@@ -163,7 +163,7 @@ size_t pack_ack(uint8_t* out,
                 const uint8_t client_id[6],
                 uint32_t cmd_seq,
                 uint8_t status) {
-  const size_t need = 1 + 1 + 6 + 4 + 1;
+  const size_t need = kAckBytes;
   if (out_len < need) {
     return 0;
   }

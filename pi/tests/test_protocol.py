@@ -3,7 +3,12 @@ from __future__ import annotations
 import numpy as np
 
 from vibesensor.protocol import (
+    ACK_BYTES,
+    CMD_HEADER_BYTES,
     CMD_IDENTIFY,
+    CMD_IDENTIFY_BYTES,
+    DATA_HEADER_BYTES,
+    HELLO_FIXED_BYTES,
     MSG_DATA,
     MSG_HELLO,
     pack_cmd_identify,
@@ -56,3 +61,10 @@ def test_parse_identify_cmd() -> None:
     assert parsed.cmd_seq == 42
     assert int.from_bytes(parsed.params[:2], "little") == 1500
 
+
+def test_protocol_layout_constants_match_esp_side() -> None:
+    assert HELLO_FIXED_BYTES == 18
+    assert DATA_HEADER_BYTES == 22
+    assert ACK_BYTES == 13
+    assert CMD_HEADER_BYTES == 13
+    assert CMD_IDENTIFY_BYTES == 15

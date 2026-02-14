@@ -73,6 +73,10 @@
     lastDetectionGlobal: {},
     recentDetectionEvents: [],
     eventMatrix: createEmptyMatrix(),
+    pendingPayload: null,
+    renderQueued: false,
+    lastRenderTsMs: 0,
+    minRenderIntervalMs: 100,
   };
 
   function createEmptyMatrix() {
@@ -762,28 +766,51 @@
       } catch (_err) {
         return;
       }
-      state.clients = payload.clients || [];
-      state.spectra = payload.spectra || { freq: [], clients: {} };
-      updateClientSelect();
-
-      if (typeof payload.speed_mps === "number") {
-        state.speedMps = payload.speed_mps;
-        els.speed.textContent = `Speed: ${fmt(payload.speed_mps, 2)} m/s (GPS)`;
-      } else {
-        state.speedMps = null;
-        const spd = effectiveSpeedMps();
-        els.speed.textContent = spd ? `Speed: ${fmt(spd, 2)} m/s (Override)` : "Speed: -- m/s";
-      }
-
-      renderSpectrum();
-      const row = state.clients.find((c) => c.id === state.selectedClientId);
-      renderStatus(row);
+      state.pendingPayload = payload;
+      queueRender();
     };
     state.ws.onclose = () => {
       els.linkState.textContent = "WS: reconnecting...";
       els.linkState.className = "panel status-bad";
       window.setTimeout(connectWS, 1200);
     };
+  }
+
+  function queueRender() {
+    if (state.renderQueued) return;
+    state.renderQueued = true;
+    window.requestAnimationFrame(() => {
+      state.renderQueued = false;
+      const now = Date.now();
+      if (now - state.lastRenderTsMs < state.minRenderIntervalMs) {
+        queueRender();
+        return;
+      }
+      const payload = state.pendingPayload;
+      if (!payload) return;
+      state.pendingPayload = null;
+      state.lastRenderTsMs = now;
+      applyPayload(payload);
+    });
+  }
+
+  function applyPayload(payload) {
+    state.clients = payload.clients || [];
+    state.spectra = payload.spectra || { freq: [], clients: {} };
+    updateClientSelect();
+
+    if (typeof payload.speed_mps === "number") {
+      state.speedMps = payload.speed_mps;
+      els.speed.textContent = `Speed: ${fmt(payload.speed_mps, 2)} m/s (GPS)`;
+    } else {
+      state.speedMps = null;
+      const spd = effectiveSpeedMps();
+      els.speed.textContent = spd ? `Speed: ${fmt(spd, 2)} m/s (Override)` : "Speed: -- m/s";
+    }
+
+    renderSpectrum();
+    const row = state.clients.find((c) => c.id === state.selectedClientId);
+    renderStatus(row);
   }
 
   async function renameClient() {
