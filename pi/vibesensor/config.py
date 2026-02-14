@@ -185,7 +185,12 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             gps_speed_only=bool(merged["gps"]["gps_speed_only"]),
         ),
         clients_json_path=_resolve_repo_path(
-            str(merged.get("storage", {}).get("clients_json_path", "/var/lib/vibesensor/clients.json"))
+            str(
+                merged.get(
+                    "storage",
+                    {},
+                ).get("clients_json_path", "/var/lib/vibesensor/clients.json")
+            )
         ),
         config_path=path,
     )

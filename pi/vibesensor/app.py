@@ -121,7 +121,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                     record = runtime.registry.get(client_id)
                     if record is not None:
                         sample_rates[client_id] = record.sample_rate_hz
-                metrics_by_client = runtime.processor.compute_all(active_ids, sample_rates_hz=sample_rates)
+                metrics_by_client = runtime.processor.compute_all(
+                    active_ids,
+                    sample_rates_hz=sample_rates,
+                )
                 for client_id, metrics in metrics_by_client.items():
                     runtime.registry.set_latest_metrics(client_id, metrics)
                 runtime.processor.evict_clients(set(active_ids))

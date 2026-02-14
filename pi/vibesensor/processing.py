@@ -48,13 +48,22 @@ class SignalProcessor:
             self._buffers[client_id] = buf
         return buf
 
-    def ingest(self, client_id: str, samples: np.ndarray, sample_rate_hz: int | None = None) -> None:
+    def ingest(
+        self,
+        client_id: str,
+        samples: np.ndarray,
+        sample_rate_hz: int | None = None,
+    ) -> None:
         if samples.size == 0:
             return
         buf = self._get_or_create(client_id)
         chunk = np.asarray(samples, dtype=np.float32)
         if chunk.ndim != 2 or chunk.shape[1] != 3:
-            LOGGER.warning("Dropping malformed sample chunk for %s with shape %s", client_id, chunk.shape)
+            LOGGER.warning(
+                "Dropping malformed sample chunk for %s with shape %s",
+                client_id,
+                chunk.shape,
+            )
             return
         if sample_rate_hz is not None and sample_rate_hz > 0:
             buf.sample_rate_hz = int(sample_rate_hz)
@@ -224,6 +233,10 @@ class SignalProcessor:
         }
 
     def evict_clients(self, keep_client_ids: set[str]) -> None:
-        stale_ids = [client_id for client_id in self._buffers.keys() if client_id not in keep_client_ids]
+        stale_ids = [
+            client_id
+            for client_id in self._buffers.keys()
+            if client_id not in keep_client_ids
+        ]
         for client_id in stale_ids:
             self._buffers.pop(client_id, None)
