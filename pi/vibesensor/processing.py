@@ -194,7 +194,9 @@ class SignalProcessor:
                 continue
             if not freq:
                 freq = buf.latest_spectrum["x"]["freq"].tolist()
-            clients[client_id] = self.spectrum_payload(client_id)
+            client_payload = self.spectrum_payload(client_id)
+            client_payload["freq"] = buf.latest_spectrum["x"]["freq"].tolist()
+            clients[client_id] = client_payload
         return {"freq": freq, "clients": clients}
 
     def selected_payload(self, client_id: str) -> dict[str, Any]:

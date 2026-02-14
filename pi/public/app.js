@@ -563,18 +563,66 @@
   }
 
   function renderSpectrum() {
-    const freq = Array.isArray(state.spectra.freq) ? state.spectra.freq : [];
+    const fallbackFreq = Array.isArray(state.spectra.freq) ? state.spectra.freq : [];
     const entries = [];
+    let targetFreq = [];
+
+    function interpolateToTarget(sourceFreq, sourceVals, desiredFreq) {
+      if (!Array.isArray(sourceFreq) || !Array.isArray(sourceVals)) return [];
+      if (!Array.isArray(desiredFreq) || !desiredFreq.length) return sourceVals.slice();
+      if (sourceFreq.length !== sourceVals.length || sourceFreq.length < 2) return [];
+
+      const out = new Array(desiredFreq.length);
+      let j = 0;
+      for (let i = 0; i < desiredFreq.length; i++) {
+        const f = desiredFreq[i];
+        while (j + 1 < sourceFreq.length && sourceFreq[j + 1] < f) {
+          j++;
+        }
+        if (j + 1 >= sourceFreq.length) {
+          out[i] = sourceVals[sourceVals.length - 1];
+          continue;
+        }
+        const f0 = sourceFreq[j];
+        const f1 = sourceFreq[j + 1];
+        const v0 = sourceVals[j];
+        const v1 = sourceVals[j + 1];
+        if (f1 <= f0) {
+          out[i] = v0;
+          continue;
+        }
+        const t = (f - f0) / (f1 - f0);
+        out[i] = v0 + ((v1 - v0) * t);
+      }
+      return out;
+    }
+
     for (const [i, client] of state.clients.entries()) {
       const s = state.spectra.clients?.[client.id];
       if (!s || !Array.isArray(s.x) || !Array.isArray(s.y) || !Array.isArray(s.z)) continue;
-      const n = Math.min(s.x.length, s.y.length, s.z.length);
+      const clientFreq = Array.isArray(s.freq) && s.freq.length ? s.freq : fallbackFreq;
+      const n = Math.min(clientFreq.length, s.x.length, s.y.length, s.z.length);
       if (!n) continue;
-      const blended = new Array(n);
+      let blended = new Array(n);
       for (let j = 0; j < n; j++) {
         blended[j] = Math.sqrt((s.x[j] * s.x[j] + s.y[j] * s.y[j] + s.z[j] * s.z[j]) / 3.0);
       }
-      entries.push({ id: client.id, label: client.name || client.id, color: colorForClient(i), values: blended });
+      const freqSlice = clientFreq.slice(0, n);
+      if (!targetFreq.length) {
+        targetFreq = freqSlice;
+      } else if (
+        freqSlice.length !== targetFreq.length ||
+        freqSlice.some((v, idx) => Math.abs(v - targetFreq[idx]) > 1e-6)
+      ) {
+        blended = interpolateToTarget(freqSlice, blended, targetFreq);
+      }
+      if (!blended.length) continue;
+      entries.push({
+        id: client.id,
+        label: client.name || client.id,
+        color: colorForClient(i),
+        values: blended,
+      });
     }
 
     if (!state.spectrumPlot || state.spectrumPlot.series.length !== entries.length + 1) {
@@ -584,12 +632,12 @@
     state.chartBands = calculateBands();
     renderBandLegend();
 
-    if (!freq.length || !entries.length) {
+    if (!targetFreq.length || !entries.length) {
       state.spectrumPlot.setData([[], ...entries.map(() => [])]);
       return;
     }
-    const minLen = Math.min(freq.length, ...entries.map((e) => e.values.length));
-    const data = [freq.slice(0, minLen)];
+    const minLen = Math.min(targetFreq.length, ...entries.map((e) => e.values.length));
+    const data = [targetFreq.slice(0, minLen)];
     for (const e of entries) data.push(e.values.slice(0, minLen));
     state.spectrumPlot.setData(data);
     detectVibrationEvents(data, entries);
