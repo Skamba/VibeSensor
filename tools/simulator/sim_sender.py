@@ -163,8 +163,11 @@ class SimClient:
         return (
             f"{self.name} id={self.client_id.hex()} profile={self.profile_name} "
             f"amp={self.amp_scale:.2f} noise={self.noise_scale:.2f} "
-            f"scene={self.scene_mode}:{self.scene_gain:.2f} common={self.common_event_gain:.2f} paused={self.paused} "
-            f"tx_scale={self.send_period_scale:.5f} tx_jitter={self.send_jitter_s * 1000:.1f}ms offset={self.start_offset_s * 1000:.1f}ms"
+            f"scene={self.scene_mode}:{self.scene_gain:.2f} "
+            f"common={self.common_event_gain:.2f} paused={self.paused} "
+            f"tx_scale={self.send_period_scale:.5f} "
+            f"tx_jitter={self.send_jitter_s * 1000:.1f}ms "
+            f"offset={self.start_offset_s * 1000:.1f}ms"
         )
 
     def make_frame(self) -> np.ndarray:
@@ -658,7 +661,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-auto-server", action="store_true", help="Disable local server auto-start check")
     parser.add_argument("--server-http-port", type=int, default=8000, help="HTTP port for server health check")
     parser.add_argument("--server-config", default="pi/config.yaml", help="Config path used when auto-starting server")
-    parser.add_argument("--server-start-timeout", type=float, default=10.0, help="Seconds to wait for auto-started server readiness")
+    parser.add_argument(
+        "--server-start-timeout",
+        type=float,
+        default=10.0,
+        help="Seconds to wait for auto-started server readiness",
+    )
     parser.add_argument("--server-check-timeout", type=float, default=1.0, help="Per-check HTTP timeout in seconds")
     return parser.parse_args()
 

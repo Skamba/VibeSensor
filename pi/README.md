@@ -1,6 +1,7 @@
 # Pi Server
 
-This package runs the local FastAPI + WebSocket server on Raspberry Pi and ingests UDP telemetry from ESP32 vibration nodes.
+This package runs the local FastAPI + WebSocket server on Raspberry Pi and
+ingests UDP telemetry from ESP32 vibration nodes.
 
 ## Files
 
@@ -26,5 +27,4 @@ python -m vibesensor.app --config config.yaml
 - `POST /api/clients/{client_id}/rename`
 - `POST /api/clients/{client_id}/identify`
 - `WS /ws`
-
 

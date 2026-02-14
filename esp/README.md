@@ -10,7 +10,7 @@ Default PlatformIO environment targets `m5stack-atom` (ATOM ESP32-PICO).
 - Buffered frame queue to reduce sample loss during short Wi-Fi stalls
 - UDP command listener for identify blink with ACK response
 - Identify command triggers RGB LED wave animation on ATOM LEDs
-- ADXL345 SPI driver at 800 Hz
+- ADXL345 I2C driver at 800 Hz
 - Synthetic waveform fallback when the sensor is absent
 
 ## Build and flash
@@ -28,11 +28,10 @@ Edit constants in `src/main.cpp`:
 - `kWifiSsid`, `kWifiPsk`
 - `kServerIp`, ports
 - `kClientName`
-- SPI pin constants (`kSpiSckPin`, `kSpiMisoPin`, `kSpiMosiPin`, `kAdxlCsPin`)
+- I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)
 
-Default ATOM pin mapping used in this repo:
+Default ATOM Lite Unit-port mapping used in this repo (4-pin Unit cable):
 
-- `SCK = GPIO22`
-- `MISO = GPIO19`
-- `MOSI = GPIO23`
-- `CS = GPIO33`
+- `SDA = GPIO26`
+- `SCL = GPIO32`
+- `ADDR = 0x53`

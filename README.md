@@ -3,10 +3,12 @@
 End-to-end prototype for local/offline car vibration sensing:
 
 - Raspberry Pi 3A+ runs as offline Wi-Fi AP and telemetry server
-- Multiple ESP32 (LOLIN C3 Mini) clients stream ADXL345 samples (800 Hz)
+- Multiple ESP32 (M5Stack ATOM Lite) clients stream ADXL345 samples (800 Hz)
 - Pi computes live waveform + FFT spectrum + metrics and serves a mobile-friendly web UI
 - Multi-client registry supports naming and identify blink command
 - Dev simulator provides reproducible CI/local testing without Pi/ESP hardware
+
+Hardware list and wiring notes: `hardware/README.md`
 
 ## Repository Layout
 
@@ -41,8 +43,10 @@ In another terminal:
 python tools/simulator/sim_sender.py --count 3 --server-host 127.0.0.1
 ```
 
-The simulator stays running while you use the UI and supports interactive commands (`help`, `list`, `set`, `pulse`, `pause`, `resume`, `quit`).
-In the dashboard Vehicle Settings panel, tire settings are split into 3 fields (width mm / aspect % / rim inches), with defaults for a 640i setup: `285 / 30 / R21`.
+The simulator stays running while you use the UI and supports interactive commands:
+`help`, `list`, `set`, `pulse`, `pause`, `resume`, `quit`.
+In the dashboard Vehicle Settings panel, tire settings are split into 3 fields
+(width mm / aspect % / rim inches), with defaults for a 640i setup: `285 / 30 / R21`.
 
 Open:
 
@@ -69,7 +73,7 @@ sudo ./pi/scripts/hotspot_nmcli.sh
 sudo systemctl status vibesensor
 ```
 
-### Mode B: Prebuilt custom image (pi-gen + Docker)
+### Mode B: Prebuilt custom image (pi-gen + Docker, Raspberry Pi 3 A+ target)
 
 Run on a Linux build machine:
 
@@ -103,7 +107,7 @@ Edit `esp/src/main.cpp` before flashing:
 - `kWifiSsid`, `kWifiPsk`
 - `kClientName`
 - `kServerIp`
-- ADXL345 SPI pins (`kSpiSckPin`, `kSpiMisoPin`, `kSpiMosiPin`, `kAdxlCsPin`)
+- ADXL345 I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)
 
 ## Protocol Summary
 
@@ -129,4 +133,3 @@ Loss detection uses sequence gaps on the Pi (`frames_dropped` per client).
   - check AP channel and frame size
 - Hotspot has no DHCP leases:
   - rerun `pi/scripts/hotspot_nmcli.sh` (it configures NetworkManager dnsmasq mode)
-

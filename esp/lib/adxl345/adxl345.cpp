@@ -13,24 +13,21 @@ constexpr uint8_t REG_FIFO_STATUS = 0x39;
 constexpr uint8_t VALUE_DEVID = 0xE5;
 }  // namespace
 
-ADXL345::ADXL345(SPIClass& spi,
-                 int cs_pin,
-                 int sck_pin,
-                 int miso_pin,
-                 int mosi_pin,
+ADXL345::ADXL345(TwoWire& wire,
+                 uint8_t i2c_addr,
+                 int sda_pin,
+                 int scl_pin,
                  uint8_t fifo_watermark)
-    : spi_(spi),
-      cs_pin_(cs_pin),
-      sck_pin_(sck_pin),
-      miso_pin_(miso_pin),
-      mosi_pin_(mosi_pin),
+    : wire_(wire),
+      i2c_addr_(i2c_addr),
+      sda_pin_(sda_pin),
+      scl_pin_(scl_pin),
       fifo_watermark_(fifo_watermark),
       available_(false) {}
 
 bool ADXL345::begin() {
-  pinMode(cs_pin_, OUTPUT);
-  digitalWrite(cs_pin_, HIGH);
-  spi_.begin(sck_pin_, miso_pin_, mosi_pin_, cs_pin_);
+  wire_.begin(sda_pin_, scl_pin_);
+  wire_.setClock(400000);
 
   uint8_t devid = read_reg(REG_DEVID);
   if (devid != VALUE_DEVID) {
@@ -82,25 +79,37 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved, size_t max_samples) {
 }
 
 uint8_t ADXL345::read_reg(uint8_t reg) {
-  digitalWrite(cs_pin_, LOW);
-  spi_.transfer(static_cast<uint8_t>(reg | 0x80));
-  uint8_t value = spi_.transfer(0x00);
-  digitalWrite(cs_pin_, HIGH);
-  return value;
+  wire_.beginTransmission(i2c_addr_);
+  wire_.write(reg);
+  if (wire_.endTransmission(false) != 0) {
+    return 0;
+  }
+  if (wire_.requestFrom(static_cast<int>(i2c_addr_), 1, true) != 1) {
+    return 0;
+  }
+  return wire_.read();
 }
 
 void ADXL345::write_reg(uint8_t reg, uint8_t value) {
-  digitalWrite(cs_pin_, LOW);
-  spi_.transfer(static_cast<uint8_t>(reg & 0x3F));
-  spi_.transfer(value);
-  digitalWrite(cs_pin_, HIGH);
+  wire_.beginTransmission(i2c_addr_);
+  wire_.write(reg);
+  wire_.write(value);
+  wire_.endTransmission(true);
 }
 
 void ADXL345::read_multi(uint8_t reg, uint8_t* out, size_t len) {
-  digitalWrite(cs_pin_, LOW);
-  spi_.transfer(static_cast<uint8_t>(reg | 0xC0));
-  for (size_t i = 0; i < len; ++i) {
-    out[i] = spi_.transfer(0x00);
+  wire_.beginTransmission(i2c_addr_);
+  wire_.write(reg);
+  if (wire_.endTransmission(false) != 0) {
+    memset(out, 0, len);
+    return;
   }
-  digitalWrite(cs_pin_, HIGH);
+  size_t got = wire_.requestFrom(static_cast<int>(i2c_addr_), static_cast<int>(len), true);
+  for (size_t i = 0; i < len; ++i) {
+    if (i < got) {
+      out[i] = wire_.read();
+    } else {
+      out[i] = 0;
+    }
+  }
 }
