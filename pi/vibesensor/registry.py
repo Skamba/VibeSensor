@@ -57,7 +57,8 @@ class ClientRegistry:
 
     def _persist_names(self) -> None:
         self._persist_path.parent.mkdir(parents=True, exist_ok=True)
-        # Persist both known user-assigned names and active records so offline clients survive rewrites.
+        # Persist known user-assigned names and active records so offline
+        # clients survive rewrites.
         names_by_id: dict[str, str] = dict(self._user_names)
         for record in self._clients.values():
             if record.name:
