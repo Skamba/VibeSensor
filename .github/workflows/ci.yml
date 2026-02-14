@@ -9,6 +9,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -26,7 +28,7 @@ jobs:
       - name: Privacy guard
         run: |
           python tools/privacy/privacy_guard.py check-tree
-          python tools/privacy/privacy_guard.py check-range HEAD~20..HEAD
+          python tools/privacy/privacy_guard.py check-range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
       - name: Unit tests
         run: |
