@@ -57,10 +57,15 @@ class ClientRegistry:
 
     def _persist_names(self) -> None:
         self._persist_path.parent.mkdir(parents=True, exist_ok=True)
+        # Persist both known user-assigned names and active records so offline clients survive rewrites.
+        names_by_id: dict[str, str] = dict(self._user_names)
+        for record in self._clients.values():
+            if record.name:
+                names_by_id[record.client_id] = record.name
         payload = {
             "clients": [
-                {"id": record.client_id, "name": record.name}
-                for record in sorted(self._clients.values(), key=lambda r: r.client_id)
+                {"id": client_id, "name": name}
+                for client_id, name in sorted(names_by_id.items(), key=lambda item: item[0])
             ]
         }
         tmp_path = self._persist_path.with_suffix(".tmp")
@@ -68,6 +73,7 @@ class ClientRegistry:
         tmp_path.replace(self._persist_path)
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
+        client_id = client_id.lower()
         record = self._clients.get(client_id)
         if record is None:
             default_name = self._user_names.get(client_id, f"client-{client_id[-4:]}")
@@ -134,7 +140,7 @@ class ClientRegistry:
             raise ValueError("Name must be non-empty and <=32 UTF-8 bytes")
         record = self._get_or_create(client_id)
         record.name = clean
-        self._user_names[client_id] = clean
+        self._user_names[record.client_id] = clean
         self._persist_names()
         return record
 

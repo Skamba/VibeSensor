@@ -52,3 +52,48 @@ def test_registry_rename_persist(tmp_path: Path) -> None:
     assert row["name"] == "rear"
 
 
+def test_registry_rename_normalizes_client_id(tmp_path: Path) -> None:
+    persist = tmp_path / "clients.json"
+    registry = ClientRegistry(persist)
+    lower_id = "001122334455"
+    upper_id = lower_id.upper()
+
+    registry.set_name(lower_id, "rear")
+    registry.set_name(upper_id, "rear-updated")
+
+    rows = registry.snapshot_for_api(now=1.0)
+    assert len(rows) == 1
+    assert rows[0]["id"] == lower_id
+    assert rows[0]["name"] == "rear-updated"
+
+
+def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
+    persist = tmp_path / "clients.json"
+    registry = ClientRegistry(persist)
+    offline_id = "001122334455"
+    active_id = "aabbccddeeff"
+
+    registry.set_name(offline_id, "offline-node")
+    hello = HelloMessage(
+        client_id=bytes.fromhex(active_id),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="active-node",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("192.168.4.2", 9010), now=2.0)
+
+    registry2 = ClientRegistry(persist)
+    registry2.update_from_hello(hello, ("192.168.4.2", 9010), now=3.0)
+    registry2.update_from_hello(HelloMessage(
+        client_id=bytes.fromhex(offline_id),
+        control_port=9011,
+        sample_rate_hz=800,
+        name="should-not-overwrite",
+        firmware_version="fw",
+    ), ("192.168.4.3", 9011), now=4.0)
+
+    rows = {row["id"]: row for row in registry2.snapshot_for_api(now=4.0)}
+    assert rows[offline_id]["name"] == "offline-node"
+
+
