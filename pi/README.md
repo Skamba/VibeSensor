@@ -17,7 +17,7 @@ cd pi
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-python -m vibesenser.app --config config.yaml
+python -m vibesensor.app --config config.yaml
 ```
 
 ## API
@@ -26,4 +26,5 @@ python -m vibesenser.app --config config.yaml
 - `POST /api/clients/{client_id}/rename`
 - `POST /api/clients/{client_id}/identify`
 - `WS /ws`
+
 

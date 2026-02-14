@@ -5,6 +5,20 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PI_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 CONFIG_PATH="${PI_DIR}/config.yaml"
 
+if [ "$(id -u)" -eq 0 ]; then
+  AS_ROOT=""
+else
+  AS_ROOT="sudo"
+fi
+
+run_as_root() {
+  if [ -n "${AS_ROOT}" ]; then
+    sudo "$@"
+  else
+    "$@"
+  fi
+}
+
 eval "$(
 python3 - "${CONFIG_PATH}" <<'PY'
 import pathlib
@@ -42,11 +56,11 @@ if ! command -v nmcli >/dev/null 2>&1; then
 fi
 
 if ! dpkg -s dnsmasq >/dev/null 2>&1; then
-  sudo apt-get update
-  sudo apt-get install -y dnsmasq
+  run_as_root apt-get update
+  run_as_root apt-get install -y dnsmasq
 fi
 
-sudo python3 - <<'PY'
+run_as_root python3 - <<'PY'
 from configparser import ConfigParser
 from pathlib import Path
 
@@ -61,14 +75,14 @@ with path.open("w", encoding="utf-8") as fh:
     cfg.write(fh)
 PY
 
-sudo systemctl disable --now dnsmasq.service >/dev/null 2>&1 || true
-sudo systemctl restart NetworkManager
+run_as_root systemctl disable --now dnsmasq.service >/dev/null 2>&1 || true
+run_as_root systemctl restart NetworkManager
 
-if ! nmcli -t -f NAME connection show | grep -Fxq "${CON_NAME}"; then
-  nmcli connection add type wifi ifname "${IFNAME}" con-name "${CON_NAME}" autoconnect yes ssid "${SSID}"
+if ! run_as_root nmcli -t -f NAME connection show | grep -Fxq "${CON_NAME}"; then
+  run_as_root nmcli connection add type wifi ifname "${IFNAME}" con-name "${CON_NAME}" autoconnect yes ssid "${SSID}"
 fi
 
-nmcli connection modify "${CON_NAME}" \
+run_as_root nmcli connection modify "${CON_NAME}" \
   802-11-wireless.mode ap \
   802-11-wireless.band bg \
   802-11-wireless.channel "${CHANNEL}" \
@@ -78,5 +92,5 @@ nmcli connection modify "${CON_NAME}" \
   ipv4.addresses "${IP}" \
   ipv6.method ignore
 
-nmcli connection up "${CON_NAME}"
-nmcli -f GENERAL.STATE,IP4.ADDRESS connection show "${CON_NAME}"
+run_as_root nmcli connection up "${CON_NAME}"
+run_as_root nmcli -f GENERAL.STATE,IP4.ADDRESS connection show "${CON_NAME}"

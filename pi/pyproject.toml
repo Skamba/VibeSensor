@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vibesenser"
+name = "vibesensor"
 version = "0.1.0"
 description = "Offline Raspberry Pi vibration telemetry server"
 readme = "README.md"
@@ -24,10 +24,10 @@ dev = [
 ]
 
 [project.scripts]
-vibesenser-server = "vibesenser.app:main"
+vibesensor-server = "vibesensor.app:main"
 
 [tool.setuptools]
-packages = ["vibesenser"]
+packages = ["vibesensor"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -39,3 +39,4 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+

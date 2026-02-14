@@ -49,3 +49,12 @@ __pycache__/
 # Runtime data
 pi/data/*.csv
 pi/data/clients.json
+
+# Image build artifacts
+image/pi-gen/.cache/
+image/pi-gen/out/*
+!image/pi-gen/out/.gitkeep
+
+# General build artifacts
+build_artifacts/*
+!build_artifacts/.gitkeep

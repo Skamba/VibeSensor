@@ -26,7 +26,7 @@ async def run(uri: str, min_clients: int, timeout_s: float) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="WebSocket smoke test for VibeSenser")
+    parser = argparse.ArgumentParser(description="WebSocket smoke test for VibeSensor")
     parser.add_argument("--uri", default="ws://127.0.0.1:8000/ws")
     parser.add_argument("--min-clients", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=20.0)
@@ -40,4 +40,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
