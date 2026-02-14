@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VibeSenser</title>
+    <link rel="stylesheet" href="/uplot.min.css" />
+    <style>
+      :root {
+        --bg: radial-gradient(circle at top, #f8f0d8 0%, #f4f1e7 45%, #e8ecef 100%);
+        --ink: #14213d;
+        --card: rgba(255, 255, 255, 0.82);
+        --accent: #2d6a4f;
+        --warn: #b23a48;
+        --line: rgba(20, 33, 61, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 1.8rem;
+        letter-spacing: 0.03em;
+      }
+
+      .speed {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        background: var(--card);
+        min-width: 8rem;
+        text-align: right;
+      }
+
+      .controls,
+      .meta,
+      .metrics,
+      .charts {
+        margin-top: 1rem;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 0.8rem;
+        background: var(--card);
+        padding: 0.75rem;
+      }
+
+      .controls {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      select,
+      input,
+      button {
+        height: 2.2rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--line);
+        padding: 0 0.6rem;
+        font-size: 0.95rem;
+      }
+
+      button {
+        background: #fff;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      button.primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      button.warn {
+        background: var(--warn);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.6rem;
+      }
+
+      .meta .panel {
+        min-height: 4.4rem;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.6rem;
+      }
+
+      .metric-title {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .metric-sub {
+        margin: 0.35rem 0 0;
+        font-size: 0.9rem;
+      }
+
+      .charts {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .chart-box {
+        overflow: hidden;
+      }
+
+      .status-ok {
+        color: var(--accent);
+      }
+
+      .status-bad {
+        color: var(--warn);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <h1 class="title">VibeSenser Local Monitor</h1>
+        <div id="speed" class="speed">Speed: -- m/s</div>
+      </div>
+
+      <div class="controls">
+        <div class="field panel">
+          <label for="clientSelect">Client</label>
+          <select id="clientSelect"></select>
+        </div>
+        <div class="field panel">
+          <label for="renameInput">Rename Client</label>
+          <input id="renameInput" type="text" maxlength="32" placeholder="New name" />
+        </div>
+        <div class="field panel">
+          <label>&nbsp;</label>
+          <button id="renameBtn" class="primary">Save Name</button>
+        </div>
+        <div class="field panel">
+          <label>&nbsp;</label>
+          <button id="identifyBtn" class="warn">Identify (Blink)</button>
+        </div>
+        <div class="field panel">
+          <label for="waveAxis">Waveform Axis</label>
+          <select id="waveAxis">
+            <option value="x">X</option>
+            <option value="y">Y</option>
+            <option value="z" selected>Z</option>
+          </select>
+        </div>
+        <div class="field panel">
+          <label for="specAxis">Spectrum Axis</label>
+          <select id="specAxis">
+            <option value="x">X</option>
+            <option value="y">Y</option>
+            <option value="z" selected>Z</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div class="panel" id="lastSeen">Last seen: --</div>
+        <div class="panel" id="dropped">Dropped frames: --</div>
+        <div class="panel" id="framesTotal">Frames total: --</div>
+        <div class="panel" id="linkState">WS: connecting...</div>
+      </div>
+
+      <div class="metrics">
+        <div class="panel" id="metric-x"></div>
+        <div class="panel" id="metric-y"></div>
+        <div class="panel" id="metric-z"></div>
+      </div>
+
+      <div class="charts">
+        <div class="panel chart-box">
+          <div id="waveChart"></div>
+        </div>
+        <div class="panel chart-box">
+          <div id="specChart"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/uplot.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

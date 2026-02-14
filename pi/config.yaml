@@ -1,0 +1,33 @@
+ap:
+  ssid: VibeSensor
+  psk: vibesensor123
+  ip: 192.168.4.1/24
+  channel: 7
+  ifname: wlan0
+  con_name: VibeSensor-AP
+
+server:
+  host: 0.0.0.0
+  port: 8000
+
+udp:
+  data_listen: 0.0.0.0:9000
+  control_listen: 0.0.0.0:9001
+
+processing:
+  sample_rate_hz: 800
+  waveform_seconds: 8
+  waveform_display_hz: 200
+  ui_push_hz: 20
+  fft_update_hz: 4
+  fft_n: 2048
+  spectrum_max_hz: 200
+
+logging:
+  log_metrics: true
+  metrics_csv_path: pi/data/metrics.csv
+  metrics_log_hz: 4
+
+gps:
+  gps_enabled: false
+  gps_speed_only: true
