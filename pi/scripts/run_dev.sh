@@ -15,7 +15,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 
-python -m vibesenser.app --config "${PI_DIR}/config.yaml" &
+python -m vibesensor.app --config "${PI_DIR}/config.yaml" &
 SERVER_PID=$!
 
 python "${REPO_DIR}/tools/simulator/sim_sender.py" --count 3 --server-host 127.0.0.1 &
@@ -28,3 +28,4 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 wait "${SERVER_PID}"
+

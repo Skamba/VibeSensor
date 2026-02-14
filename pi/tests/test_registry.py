@@ -4,8 +4,8 @@ from pathlib import Path
 
 import numpy as np
 
-from vibesenser.protocol import DataMessage, HelloMessage
-from vibesenser.registry import ClientRegistry
+from vibesensor.protocol import DataMessage, HelloMessage
+from vibesensor.registry import ClientRegistry
 
 
 def test_registry_sequence_gap(tmp_path: Path) -> None:
@@ -50,4 +50,5 @@ def test_registry_rename_persist(tmp_path: Path) -> None:
 
     row = registry2.snapshot_for_api(now=5.0)[0]
     assert row["name"] == "rear"
+
 

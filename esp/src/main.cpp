@@ -4,7 +4,7 @@
 #include <esp_timer.h>
 
 #include "adxl345.h"
-#include "vibesenser_proto.h"
+#include "vibesensor_proto.h"
 
 namespace {
 
@@ -154,7 +154,7 @@ void service_sampling() {
 
 void send_hello() {
   uint8_t packet[128];
-  size_t len = vibesenser::pack_hello(packet,
+  size_t len = vibesensor::pack_hello(packet,
                                       sizeof(packet),
                                       g_client_id,
                                       g_control_port,
@@ -185,7 +185,7 @@ void service_tx() {
   }
 
   uint8_t packet[kMaxDatagramBytes];
-  size_t len = vibesenser::pack_data(packet,
+  size_t len = vibesensor::pack_data(packet,
                                      sizeof(packet),
                                      g_client_id,
                                      frame.seq,
@@ -203,7 +203,7 @@ void service_tx() {
 
 void send_ack(uint32_t cmd_seq, uint8_t status) {
   uint8_t packet[16];
-  size_t len = vibesenser::pack_ack(packet, sizeof(packet), g_client_id, cmd_seq, status);
+  size_t len = vibesensor::pack_ack(packet, sizeof(packet), g_client_id, cmd_seq, status);
   if (len == 0) {
     return;
   }
@@ -226,7 +226,7 @@ void service_control_rx() {
   uint8_t cmd_id = 0;
   uint32_t cmd_seq = 0;
   uint16_t identify_ms = 0;
-  bool ok = vibesenser::parse_cmd(packet,
+  bool ok = vibesensor::parse_cmd(packet,
                                   read,
                                   g_client_id,
                                   &cmd_id,
@@ -236,7 +236,7 @@ void service_control_rx() {
     return;
   }
 
-  if (cmd_id == vibesenser::kCmdIdentify) {
+  if (cmd_id == vibesensor::kCmdIdentify) {
     g_blink_until_ms = millis() + identify_ms;
     g_blink_toggle_ms = 0;
     send_ack(cmd_seq, 0);
@@ -284,7 +284,7 @@ void setup() {
   connect_wifi();
 
   String mac = WiFi.macAddress();
-  if (!vibesenser::parse_mac(mac, g_client_id)) {
+  if (!vibesensor::parse_mac(mac, g_client_id)) {
     Serial.println("Failed to parse MAC, using fallback ID.");
     const uint8_t fallback[6] = {0xD0, 0x5A, 0x00, 0x00, 0x00, 0x01};
     memcpy(g_client_id, fallback, sizeof(g_client_id));
@@ -313,3 +313,4 @@ void loop() {
   service_blink();
   delay(1);
 }
+

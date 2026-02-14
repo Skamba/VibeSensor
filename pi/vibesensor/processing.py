@@ -139,6 +139,28 @@ class SignalProcessor:
     def compute_all(self, client_ids: list[str]) -> dict[str, dict[str, Any]]:
         return {client_id: self.compute_metrics(client_id) for client_id in client_ids}
 
+    def spectrum_payload(self, client_id: str) -> dict[str, Any]:
+        buf = self._buffers.get(client_id)
+        if buf is None or not buf.latest_spectrum:
+            return {"x": [], "y": [], "z": []}
+        return {
+            "x": buf.latest_spectrum["x"]["amp"].tolist(),
+            "y": buf.latest_spectrum["y"]["amp"].tolist(),
+            "z": buf.latest_spectrum["z"]["amp"].tolist(),
+        }
+
+    def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
+        freq: list[float] = []
+        clients: dict[str, dict[str, list[float]]] = {}
+        for client_id in client_ids:
+            buf = self._buffers.get(client_id)
+            if buf is None or not buf.latest_spectrum:
+                continue
+            if not freq:
+                freq = buf.latest_spectrum["x"]["freq"].tolist()
+            clients[client_id] = self.spectrum_payload(client_id)
+        return {"freq": freq, "clients": clients}
+
     def selected_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
         if buf is None or buf.count == 0:
@@ -171,4 +193,3 @@ class SignalProcessor:
             "spectrum": spectrum,
             "metrics": buf.latest_metrics,
         }
-

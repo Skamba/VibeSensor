@@ -1,5 +1,5 @@
 [Unit]
-Description=VibeSenser FastAPI Server
+Description=VibeSensor FastAPI Server
 After=network-online.target
 Wants=network-online.target
 
@@ -7,10 +7,11 @@ Wants=network-online.target
 Type=simple
 User=__SERVICE_USER__
 WorkingDirectory=__PI_DIR__
-ExecStart=__VENV_DIR__/bin/python -m vibesenser.app --config /etc/vibesenser/config.yaml
+ExecStart=__VENV_DIR__/bin/python -m vibesensor.app --config /etc/vibesensor/config.yaml
 Restart=on-failure
 RestartSec=2
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
+

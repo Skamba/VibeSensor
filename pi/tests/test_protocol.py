@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from vibesenser.protocol import (
+from vibesensor.protocol import (
     CMD_IDENTIFY,
     MSG_DATA,
     MSG_HELLO,
@@ -53,4 +53,5 @@ def test_parse_identify_cmd() -> None:
     assert parsed.cmd_id == CMD_IDENTIFY
     assert parsed.cmd_seq == 42
     assert int.from_bytes(parsed.params[:2], "little") == 1500
+
 

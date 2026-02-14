@@ -19,7 +19,7 @@ End-to-end prototype for local/offline car vibration sensing:
 │  ├─ public/
 │  ├─ scripts/
 │  ├─ systemd/
-│  └─ vibesenser/
+│  └─ vibesensor/
 ├─ esp/
 ├─ tools/simulator/
 └─ .github/workflows/ci.yml
@@ -32,7 +32,7 @@ cd pi
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-python -m vibesenser.app --config config.yaml
+python -m vibesensor.app --config config.yaml
 ```
 
 In another terminal:
@@ -41,39 +41,54 @@ In another terminal:
 python tools/simulator/sim_sender.py --count 3 --server-host 127.0.0.1
 ```
 
+The simulator stays running while you use the UI and supports interactive commands (`help`, `list`, `set`, `pulse`, `pause`, `resume`, `quit`).
+In the dashboard Vehicle Settings panel, tire settings are split into 3 fields (width mm / aspect % / rim inches), with defaults for a 640i setup: `285 / 30 / R21`.
+
 Open:
 
 - `http://localhost:8000`
 
-## Pi Setup
+## Two Ways To Deploy
 
-### 1) Configure AP hotspot (idempotent)
+Both deployment modes use idempotent scripts:
 
-```bash
-cd pi
-chmod +x scripts/hotspot_nmcli.sh
-./scripts/hotspot_nmcli.sh
-```
+- `pi/scripts/install_pi.sh`
+- `pi/scripts/hotspot_nmcli.sh`
 
-This uses `nmcli` with:
+### Mode A: Manual install on stock Raspberry Pi OS (Bookworm Lite)
 
-- mode `ap`
-- band `bg`
-- WPA2-PSK
-- `ipv4.method shared` for DHCP/NAT
-- static AP IP from config (default `192.168.4.1/24`)
-
-### 2) Install server service
+Flash official Raspberry Pi OS Lite to SD card, then run on the Pi:
 
 ```bash
-cd pi
-chmod +x scripts/install_pi.sh
-./scripts/install_pi.sh
+sudo apt-get update
+sudo apt-get install -y git
+git clone https://github.com/<MY_GITHUB_USER>/VibeSensor.git
+cd VibeSensor
+sudo ./pi/scripts/install_pi.sh
+sudo ./pi/scripts/hotspot_nmcli.sh
+sudo systemctl status vibesensor
 ```
 
-Then from a phone connected to the AP:
+### Mode B: Prebuilt custom image (pi-gen + Docker)
 
-- `http://192.168.4.1:8000`
+Run on a Linux build machine:
+
+```bash
+git clone https://github.com/<MY_GITHUB_USER>/VibeSensor.git
+cd VibeSensor
+./image/pi-gen/build.sh   # outputs an .img in image/pi-gen/out/
+```
+
+Then flash the produced `.img` (or `.img.xz`/`.zip` artifact) using Raspberry Pi Imager.  
+After first boot, no manual install steps are required; hotspot + server are already enabled.
+
+See image build notes: `image/pi-gen/README.md`
+
+## Verification (Both Modes)
+
+- Phone: connect to SSID `VibeSensor` (PSK `vibesensor123`)
+- Open: `http://192.168.4.1:8000`
+- You should see the UI, and clients should appear within a few seconds.
 
 ## ESP Setup (PlatformIO)
 

@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-namespace vibesenser {
+namespace vibesensor {
 
 constexpr uint8_t kProtoVersion = 1;
 
@@ -49,4 +49,5 @@ size_t pack_ack(uint8_t* out,
                 uint32_t cmd_seq,
                 uint8_t status);
 
-}  // namespace vibesenser
+}  // namespace vibesensor
+

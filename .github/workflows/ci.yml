@@ -22,7 +22,7 @@ jobs:
 
       - name: Lint
         run: |
-          ruff check pi/vibesenser pi/tests tools/simulator
+          ruff check pi/vibesensor pi/tests tools/simulator
 
       - name: Unit tests
         run: |
@@ -31,7 +31,7 @@ jobs:
       - name: Simulator + websocket smoke
         run: |
           set -euo pipefail
-          python -m vibesenser.app --config pi/config.yaml >server.log 2>&1 &
+          python -m vibesensor.app --config pi/config.yaml >server.log 2>&1 &
           SERVER_PID=$!
           cleanup() {
             kill "${SIM_PID:-}" >/dev/null 2>&1 || true

@@ -1,8 +1,8 @@
-#include "vibesenser_proto.h"
+#include "vibesensor_proto.h"
 
 #include <cstring>
 
-namespace vibesenser {
+namespace vibesensor {
 namespace {
 
 void write_u16_le(uint8_t* dst, uint16_t v) {
@@ -175,4 +175,5 @@ size_t pack_ack(uint8_t* out,
   return o;
 }
 
-}  // namespace vibesenser
+}  // namespace vibesensor
+

@@ -39,12 +39,14 @@ class RuntimeState:
         active = selected_client
         if active is None and clients:
             active = clients[0]["id"]
+        client_ids = [c["id"] for c in clients]
 
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
             "speed_mps": self.gps_monitor.speed_mps,
             "clients": clients,
             "selected_client_id": active,
+            "spectra": self.processor.multi_spectrum_payload(client_ids),
         }
         if active is not None:
             payload["selected"] = self.processor.selected_payload(active)
@@ -91,7 +93,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         metrics_logger=metrics_logger,
     )
 
-    app = FastAPI(title="VibeSenser")
+    app = FastAPI(title="VibeSensor")
     app.state.runtime = runtime
     app.include_router(create_router(runtime))
     app.mount("/", StaticFiles(directory=PI_DIR / "public", html=True), name="public")
@@ -143,7 +145,7 @@ app = create_app()
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run VibeSenser server")
+    parser = argparse.ArgumentParser(description="Run VibeSensor server")
     parser.add_argument("--config", type=Path, default=None, help="Path to config YAML")
     args = parser.parse_args()
 
@@ -159,4 +161,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
 
