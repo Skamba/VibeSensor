@@ -52,7 +52,11 @@ jobs:
             sleep 1
           done
 
-          python tools/simulator/sim_sender.py --count 3 --duration 20 --server-host 127.0.0.1 >sim.log 2>&1 &
+          python tools/simulator/sim_sender.py \
+            --count 3 \
+            --duration 20 \
+            --server-host 127.0.0.1 \
+            --no-auto-server >sim.log 2>&1 &
           SIM_PID=$!
           if ! python tools/simulator/ws_smoke.py \
             --uri ws://127.0.0.1:8000/ws \
