@@ -50,6 +50,10 @@ run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/log
 if [ ! -f /etc/vibesensor/config.yaml ]; then
   run_as_root cp "${PI_DIR}/config.example.yaml" /etc/vibesensor/config.yaml
 fi
+if [ ! -f /etc/vibesensor/wifi-secrets.env ]; then
+  run_as_root cp "${PI_DIR}/wifi-secrets.example.env" /etc/vibesensor/wifi-secrets.env
+fi
+run_as_root chmod 600 /etc/vibesensor/wifi-secrets.env
 
 sed \
   -e "s#__PI_DIR__#${PI_DIR}#g" \
