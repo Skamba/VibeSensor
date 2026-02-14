@@ -29,7 +29,9 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         now_ts = time.time()
         client_id = msg.client_id.hex()
         self.registry.update_from_data(msg, addr, now_ts)
-        self.processor.ingest(client_id, msg.samples)
+        record = self.registry.get(client_id)
+        sample_rate_hz = record.sample_rate_hz if record is not None else None
+        self.processor.ingest(client_id, msg.samples, sample_rate_hz=sample_rate_hz)
 
 
 async def start_udp_data_receiver(
@@ -44,4 +46,3 @@ async def start_udp_data_receiver(
         local_addr=(host, port),
     )
     return transport
-

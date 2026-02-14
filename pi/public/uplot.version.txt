@@ -1,0 +1,7 @@
+uPlot minified bundle metadata
+- Package: uPlot
+- Version: 1.6.31
+- License: MIT
+- Source: https://github.com/leeoniya/uPlot
+
+If updating `uplot.min.js` or `uplot.min.css`, update this file in the same commit.

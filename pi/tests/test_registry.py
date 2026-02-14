@@ -97,3 +97,43 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
     assert rows[offline_id]["name"] == "offline-node"
 
 
+def test_registry_hello_uses_sender_control_port(tmp_path: Path) -> None:
+    registry = ClientRegistry(tmp_path / "clients.json")
+    hello = HelloMessage(
+        client_id=bytes.fromhex("aabbccddeeff"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("192.168.4.2", 54321), now=1.0)
+
+    row = registry.snapshot_for_api(now=1.0)[0]
+    assert row["control_addr"] == ("192.168.4.2", 54321)
+
+
+def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
+    registry = ClientRegistry(tmp_path / "clients.json", stale_ttl_seconds=2.0)
+
+    fresh = HelloMessage(
+        client_id=bytes.fromhex("001122334455"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="fresh",
+        firmware_version="fw",
+    )
+    stale = HelloMessage(
+        client_id=bytes.fromhex("aabbccddeeff"),
+        control_port=9011,
+        sample_rate_hz=800,
+        name="stale",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(stale, ("192.168.4.2", 9000), now=1.0)
+    registry.update_from_hello(fresh, ("192.168.4.3", 9001), now=3.0)
+
+    assert set(registry.active_client_ids(now=3.1)) == {"001122334455"}
+    evicted = registry.evict_stale(now=3.1)
+    assert evicted == ["aabbccddeeff"]
+    assert registry.get("aabbccddeeff") is None
+
