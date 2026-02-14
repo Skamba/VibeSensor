@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 CACHE_DIR="${SCRIPT_DIR}/.cache"
 PI_GEN_DIR="${CACHE_DIR}/pi-gen"
+PI_GEN_REF="${PI_GEN_REF:-bookworm}"
 STAGE_DIR="${PI_GEN_DIR}/stage-vibesensor"
 STAGE_REPO_DIR="${STAGE_DIR}/files/opt/VibeSensor"
 OUT_DIR="${SCRIPT_DIR}/out"
@@ -29,9 +30,11 @@ fi
 mkdir -p "${CACHE_DIR}" "${OUT_DIR}"
 
 if [ ! -d "${PI_GEN_DIR}/.git" ]; then
-  git clone --depth 1 https://github.com/RPi-Distro/pi-gen.git "${PI_GEN_DIR}"
+  git clone --depth 1 --branch "${PI_GEN_REF}" https://github.com/RPi-Distro/pi-gen.git "${PI_GEN_DIR}"
 else
-  git -C "${PI_GEN_DIR}" pull --ff-only
+  git -C "${PI_GEN_DIR}" fetch --depth 1 origin "${PI_GEN_REF}"
+  git -C "${PI_GEN_DIR}" checkout -B "${PI_GEN_REF}" FETCH_HEAD
+  git -C "${PI_GEN_DIR}" reset --hard FETCH_HEAD
 fi
 
 rm -rf "${STAGE_DIR}"
@@ -95,4 +98,3 @@ if ! find "${OUT_DIR}" -maxdepth 1 -type f \( -name "*.img" -o -name "*.img.xz" 
 fi
 
 echo "Image artifacts available in: ${OUT_DIR}"
-

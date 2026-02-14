@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Adafruit_NeoPixel.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <esp_timer.h>
@@ -11,7 +12,7 @@ namespace {
 constexpr char kWifiSsid[] = "VibeSensor";
 constexpr char kWifiPsk[] = "vibesensor123";
 constexpr char kClientName[] = "vibe-node";
-constexpr char kFirmwareVersion[] = "esp-c3-0.1";
+constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
 
 constexpr uint16_t kSampleRateHz = 800;
 constexpr uint16_t kFrameSamples = 200;
@@ -20,15 +21,24 @@ constexpr uint16_t kServerControlPort = 9001;
 constexpr size_t kFrameQueueLen = 4;
 constexpr size_t kMaxDatagramBytes = 1500;
 
-// Default pins for LOLIN C3 Mini. Edit these for your wiring.
-constexpr int kSpiSckPin = 4;
-constexpr int kSpiMisoPin = 5;
-constexpr int kSpiMosiPin = 6;
-constexpr int kAdxlCsPin = 7;
+// Default pins for M5Stack ATOM ESP32-PICO. Edit these for your wiring.
+// Common external SPI wiring on ATOM headers:
+// SCK=GPIO22, MISO=GPIO19, MOSI=GPIO23, CS=GPIO33.
+constexpr int kSpiSckPin = 22;
+constexpr int kSpiMisoPin = 19;
+constexpr int kSpiMosiPin = 23;
+constexpr int kAdxlCsPin = 33;
 
 #ifndef LED_BUILTIN
-constexpr int LED_BUILTIN = 8;
+constexpr int LED_BUILTIN = 27;
 #endif
+#ifndef VIBESENSOR_LED_PIXELS
+constexpr uint16_t kLedPixels = 25;
+#else
+constexpr uint16_t kLedPixels = static_cast<uint16_t>(VIBESENSOR_LED_PIXELS);
+#endif
+constexpr uint16_t kLedWavePeriodMs = 900;
+constexpr uint16_t kLedWaveStepMs = 30;
 
 const IPAddress kServerIp(192, 168, 4, 1);
 
@@ -39,10 +49,15 @@ struct DataFrame {
   int16_t xyz[kFrameSamples * 3];
 };
 
+#if defined(CONFIG_IDF_TARGET_ESP32C3)
 SPIClass g_spi(FSPI);
+#else
+SPIClass g_spi(VSPI);
+#endif
 ADXL345 g_adxl(g_spi, kAdxlCsPin, kSpiSckPin, kSpiMisoPin, kSpiMosiPin);
 WiFiUDP g_data_udp;
 WiFiUDP g_control_udp;
+Adafruit_NeoPixel g_led_strip(kLedPixels, LED_BUILTIN, NEO_GRB + NEO_KHZ800);
 
 uint8_t g_client_id[6] = {};
 uint16_t g_control_port = 9010;
@@ -62,12 +77,28 @@ uint32_t g_last_hello_ms = 0;
 bool g_sensor_ok = false;
 
 uint32_t g_blink_until_ms = 0;
-uint32_t g_blink_toggle_ms = 0;
-bool g_led_state = false;
+uint32_t g_led_next_update_ms = 0;
+uint8_t g_identify_wave_shift = 0;
 
-inline void set_led(bool on) {
-  digitalWrite(LED_BUILTIN, on ? HIGH : LOW);
-  g_led_state = on;
+void clear_leds() {
+  g_led_strip.clear();
+  g_led_strip.show();
+}
+
+void render_identify_wave(uint32_t now_ms) {
+  const uint16_t phase = static_cast<uint16_t>(now_ms % kLedWavePeriodMs);
+  const uint16_t base = static_cast<uint16_t>((phase * 255U) / kLedWavePeriodMs);
+
+  for (uint16_t i = 0; i < kLedPixels; ++i) {
+    uint8_t wave = static_cast<uint8_t>((base + g_identify_wave_shift + (i * (255U / (kLedPixels == 0 ? 1 : kLedPixels)))) & 0xFF);
+    uint8_t tri = wave < 128 ? static_cast<uint8_t>(wave * 2) : static_cast<uint8_t>((255 - wave) * 2);
+
+    uint8_t r = static_cast<uint8_t>(10 + (tri / 5));
+    uint8_t g = static_cast<uint8_t>(35 + (tri / 2));
+    uint8_t b = static_cast<uint8_t>(45 + tri);
+    g_led_strip.setPixelColor(i, g_led_strip.Color(r, g, b));
+  }
+  g_led_strip.show();
 }
 
 void enqueue_frame() {
@@ -238,7 +269,7 @@ void service_control_rx() {
 
   if (cmd_id == vibesensor::kCmdIdentify) {
     g_blink_until_ms = millis() + identify_ms;
-    g_blink_toggle_ms = 0;
+    g_led_next_update_ms = 0;
     send_ack(cmd_seq, 0);
   } else {
     send_ack(cmd_seq, 2);
@@ -248,16 +279,15 @@ void service_control_rx() {
 void service_blink() {
   uint32_t now = millis();
   if (g_blink_until_ms == 0 || static_cast<int32_t>(g_blink_until_ms - now) <= 0) {
-    if (g_led_state) {
-      set_led(false);
-    }
+    clear_leds();
     g_blink_until_ms = 0;
     return;
   }
 
-  if (now >= g_blink_toggle_ms) {
-    set_led(!g_led_state);
-    g_blink_toggle_ms = now + 120;
+  if (now >= g_led_next_update_ms) {
+    render_identify_wave(now);
+    g_identify_wave_shift = static_cast<uint8_t>(g_identify_wave_shift + 3);
+    g_led_next_update_ms = now + kLedWaveStepMs;
   }
 }
 
@@ -278,8 +308,8 @@ void connect_wifi() {
 
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_BUILTIN, OUTPUT);
-  set_led(false);
+  g_led_strip.begin();
+  clear_leds();
 
   connect_wifi();
 
@@ -313,4 +343,3 @@ void loop() {
   service_blink();
   delay(1);
 }
-
