@@ -173,7 +173,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
+app: FastAPI | None = create_app() if __name__ != "__main__" else None
 
 
 def main() -> None:
