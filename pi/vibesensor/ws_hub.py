@@ -1,0 +1,61 @@
+from __future__ import annotations
+
+import asyncio
+from collections.abc import Callable, Coroutine
+from dataclasses import dataclass
+
+from fastapi import WebSocket
+
+
+@dataclass(slots=True)
+class WSConnection:
+    websocket: WebSocket
+    selected_client_id: str | None = None
+
+
+class WebSocketHub:
+    def __init__(self):
+        self._connections: dict[int, WSConnection] = {}
+        self._lock = asyncio.Lock()
+
+    async def add(self, websocket: WebSocket, selected_client_id: str | None) -> None:
+        async with self._lock:
+            self._connections[id(websocket)] = WSConnection(
+                websocket=websocket,
+                selected_client_id=selected_client_id,
+            )
+
+    async def remove(self, websocket: WebSocket) -> None:
+        async with self._lock:
+            self._connections.pop(id(websocket), None)
+
+    async def update_selected_client(self, websocket: WebSocket, client_id: str | None) -> None:
+        async with self._lock:
+            conn = self._connections.get(id(websocket))
+            if conn is not None:
+                conn.selected_client_id = client_id
+
+    async def _snapshot(self) -> list[WSConnection]:
+        async with self._lock:
+            return list(self._connections.values())
+
+    async def broadcast(
+        self,
+        payload_builder: Callable[[str | None], dict],
+    ) -> None:
+        conns = await self._snapshot()
+        for conn in conns:
+            payload = payload_builder(conn.selected_client_id)
+            try:
+                await conn.websocket.send_json(payload)
+            except RuntimeError:
+                await self.remove(conn.websocket)
+            except Exception:
+                await self.remove(conn.websocket)
+
+    async def run(self, hz: int, payload_builder: Callable[[str | None], dict]) -> Coroutine:
+        interval = 1.0 / max(1, hz)
+        while True:
+            await self.broadcast(payload_builder)
+            await asyncio.sleep(interval)
+
