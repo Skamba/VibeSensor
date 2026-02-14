@@ -38,14 +38,9 @@ class RuntimeState:
     data_transport: asyncio.DatagramTransport | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
     ws_tick: int = 0
+    ws_include_heavy: bool = True
 
-    def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
-        clients = self.registry.snapshot_for_api()
-        active = selected_client
-        if active is None and clients:
-            active = clients[0]["id"]
-        client_ids = [c["id"] for c in clients]
-
+    def on_ws_broadcast_tick(self) -> None:
         self.ws_tick += 1
         heavy_every = max(
             1,
@@ -54,7 +49,14 @@ class RuntimeState:
                 / max(1, self.config.processing.ui_heavy_push_hz)
             ),
         )
-        include_heavy = (self.ws_tick % heavy_every) == 0
+        self.ws_include_heavy = (self.ws_tick % heavy_every) == 0
+
+    def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
+        clients = self.registry.snapshot_for_api()
+        active = selected_client
+        if active is None and clients:
+            active = clients[0]["id"]
+        client_ids = [c["id"] for c in clients]
 
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
@@ -62,7 +64,7 @@ class RuntimeState:
             "clients": clients,
             "selected_client_id": active,
         }
-        if include_heavy:
+        if self.ws_include_heavy:
             payload["spectra"] = self.processor.multi_spectrum_payload(client_ids)
             if active is not None:
                 payload["selected"] = self.processor.selected_payload(active)
@@ -164,7 +166,11 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         runtime.tasks = [
             asyncio.create_task(processing_loop(), name="processing-loop"),
             asyncio.create_task(
-                runtime.ws_hub.run(config.processing.ui_push_hz, runtime.build_ws_payload),
+                runtime.ws_hub.run(
+                    config.processing.ui_push_hz,
+                    runtime.build_ws_payload,
+                    on_tick=runtime.on_ws_broadcast_tick,
+                ),
                 name="ws-broadcast",
             ),
             asyncio.create_task(runtime.metrics_logger.run(), name="metrics-log"),
