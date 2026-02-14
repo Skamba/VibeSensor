@@ -35,7 +35,8 @@ class SimClient:
     server_control_port: int
     seq: int = 0
     phase: float = 0.0
-    transport: asyncio.DatagramTransport | None = None
+    control_transport: asyncio.DatagramTransport | None = None
+    data_transport: asyncio.DatagramTransport | None = None
 
     def make_frame(self) -> np.ndarray:
         dt = 1.0 / self.sample_rate_hz
@@ -55,7 +56,7 @@ class ClientProtocol(asyncio.DatagramProtocol):
         self.sim = sim
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
-        self.sim.transport = transport  # type: ignore[assignment]
+        self.sim.control_transport = transport  # type: ignore[assignment]
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         if not data or data[0] != MSG_CMD:
@@ -70,28 +71,48 @@ class ClientProtocol(asyncio.DatagramProtocol):
             duration_ms = int.from_bytes(cmd.params[:2], "little") if len(cmd.params) >= 2 else 1000
             print(f"{self.sim.name}: identify for {duration_ms}ms from {addr[0]}:{addr[1]}")
             ack = pack_ack(self.sim.client_id, cmd.cmd_seq, status=0)
-            if self.sim.transport is not None:
-                self.sim.transport.sendto(ack, (self.sim.server_host, self.sim.server_control_port))
+            if self.sim.control_transport is not None:
+                self.sim.control_transport.sendto(ack, (self.sim.server_host, self.sim.server_control_port))
+
+    def error_received(self, exc: Exception) -> None:
+        print(f"{self.sim.name}: control socket error: {exc!r}")
+
+
+class DataProtocol(asyncio.DatagramProtocol):
+    def __init__(self, sim: SimClient):
+        self.sim = sim
+
+    def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        self.sim.data_transport = transport  # type: ignore[assignment]
+
+    def error_received(self, exc: Exception) -> None:
+        print(f"{self.sim.name}: data socket error: {exc!r}")
 
 
 async def run_client(sim: SimClient, hello_interval_s: float) -> None:
     loop = asyncio.get_running_loop()
-    transport, _ = await loop.create_datagram_endpoint(
+    control_transport, _ = await loop.create_datagram_endpoint(
         lambda: ClientProtocol(sim),
         local_addr=("0.0.0.0", sim.control_port),
     )
-    sim.transport = transport
+    data_transport, _ = await loop.create_datagram_endpoint(
+        lambda: DataProtocol(sim),
+        local_addr=("0.0.0.0", 0),
+    )
+    sim.control_transport = control_transport
+    sim.data_transport = data_transport
     try:
         async with asyncio.TaskGroup() as tg:
             tg.create_task(hello_loop(sim, hello_interval_s))
             tg.create_task(data_loop(sim))
     finally:
-        transport.close()
+        control_transport.close()
+        data_transport.close()
 
 
 async def hello_loop(sim: SimClient, hello_interval_s: float) -> None:
     while True:
-        if sim.transport is not None:
+        if sim.control_transport is not None:
             packet = pack_hello(
                 client_id=sim.client_id,
                 control_port=sim.control_port,
@@ -99,7 +120,7 @@ async def hello_loop(sim: SimClient, hello_interval_s: float) -> None:
                 name=sim.name,
                 firmware_version="sim-0.1",
             )
-            sim.transport.sendto(packet, (sim.server_host, sim.server_control_port))
+            sim.control_transport.sendto(packet, (sim.server_host, sim.server_control_port))
         await asyncio.sleep(hello_interval_s)
 
 
@@ -107,7 +128,7 @@ async def data_loop(sim: SimClient) -> None:
     frame_period = sim.frame_samples / sim.sample_rate_hz
     next_send = asyncio.get_running_loop().time()
     while True:
-        if sim.transport is not None:
+        if sim.data_transport is not None:
             samples = sim.make_frame()
             packet = pack_data(
                 client_id=sim.client_id,
@@ -115,7 +136,7 @@ async def data_loop(sim: SimClient) -> None:
                 t0_us=time.monotonic_ns() // 1000,
                 samples=samples,
             )
-            sim.transport.sendto(packet, (sim.server_host, sim.server_data_port))
+            sim.data_transport.sendto(packet, (sim.server_host, sim.server_data_port))
             sim.seq = (sim.seq + 1) & 0xFFFFFFFF
         next_send += frame_period
         await asyncio.sleep(max(0.0, next_send - asyncio.get_running_loop().time()))
@@ -181,4 +202,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
