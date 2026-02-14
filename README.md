@@ -17,6 +17,7 @@ Hardware list and wiring notes: `hardware/README.md`
 ├─ pi/
 │  ├─ pyproject.toml
 │  ├─ config.yaml
+│  ├─ config.dev.yaml
 │  ├─ config.example.yaml
 │  ├─ public/
 │  ├─ scripts/
@@ -34,7 +35,7 @@ cd pi
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-python -m vibesensor.app --config config.yaml
+python -m vibesensor.app --config config.dev.yaml
 ```
 
 In another terminal:
@@ -131,6 +132,7 @@ UDP datagrams:
 - ACK (`type=4`) command acknowledgment
 
 Loss detection uses sequence gaps on the Pi (`frames_dropped` per client).
+Canonical field/size reference: `docs/protocol.md`.
 
 ## Troubleshooting
 

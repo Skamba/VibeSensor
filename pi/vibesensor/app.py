@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,6 +22,8 @@ from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
 from .ws_hub import WebSocketHub
 
+LOGGER = logging.getLogger(__name__)
+
 
 @dataclass(slots=True)
 class RuntimeState:
@@ -33,6 +36,7 @@ class RuntimeState:
     metrics_logger: MetricsLogger
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
+    sample_rate_mismatch_logged: set[str] = field(default_factory=set)
 
     def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
         clients = self.registry.snapshot_for_api()
@@ -121,6 +125,20 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                     record = runtime.registry.get(client_id)
                     if record is not None:
                         sample_rates[client_id] = record.sample_rate_hz
+                        client_rate = int(record.sample_rate_hz or 0)
+                        default_rate = runtime.config.processing.sample_rate_hz
+                        if (
+                            client_rate > 0
+                            and client_rate != default_rate
+                            and client_id not in runtime.sample_rate_mismatch_logged
+                        ):
+                            runtime.sample_rate_mismatch_logged.add(client_id)
+                            LOGGER.warning(
+                                "Client %s uses sample_rate_hz=%d; default config is %d.",
+                                client_id,
+                                client_rate,
+                                default_rate,
+                            )
                 metrics_by_client = runtime.processor.compute_all(
                     active_ids,
                     sample_rates_hz=sample_rates,
@@ -155,7 +173,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
+app: FastAPI | None = create_app() if __name__ != "__main__" else None
 
 
 def main() -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,7 @@ import yaml
 
 PI_DIR = Path(__file__).resolve().parents[1]
 REPO_DIR = PI_DIR.parent
+LOGGER = logging.getLogger(__name__)
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "ap": {
@@ -23,8 +25,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "processing": {
         "sample_rate_hz": 800,
         "waveform_seconds": 8,
-        "waveform_display_hz": 200,
-        "ui_push_hz": 20,
+        "waveform_display_hz": 120,
+        "ui_push_hz": 10,
         "fft_update_hz": 4,
         "fft_n": 2048,
         "spectrum_max_hz": 200,
@@ -146,7 +148,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     data_host, data_port = _split_host_port(str(merged["udp"]["data_listen"]))
     control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))
 
-    return AppConfig(
+    app_config = AppConfig(
         ap=APConfig(
             ssid=str(merged["ap"]["ssid"]),
             psk=str(merged["ap"]["psk"]),
@@ -194,3 +196,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         config_path=path,
     )
+    LOGGER.info(
+        "Loaded config=%s metrics_csv_path=%s clients_json_path=%s",
+        app_config.config_path,
+        app_config.logging.metrics_csv_path,
+        app_config.clients_json_path,
+    )
+    return app_config

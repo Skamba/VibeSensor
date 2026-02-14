@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import numpy as np
 
 VERSION = 1
+CLIENT_ID_BYTES = 6
 
 MSG_HELLO = 1
 MSG_DATA = 2
@@ -19,6 +20,12 @@ DATA_HEADER = struct.Struct("<BB6sIQH")
 ACK_STRUCT = struct.Struct("<BB6sIB")
 CMD_HEADER = struct.Struct("<BB6sBI")
 CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
+
+HELLO_FIXED_BYTES = 1 + 1 + CLIENT_ID_BYTES + 2 + 2 + 1 + 1 + 4
+DATA_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 8 + 2
+ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 1
+CMD_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 1 + 4
+CMD_IDENTIFY_BYTES = CMD_HEADER_BYTES + 2
 
 
 class ProtocolError(ValueError):

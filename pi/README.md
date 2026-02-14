@@ -6,6 +6,7 @@ ingests UDP telemetry from ESP32 vibration nodes.
 ## Files
 
 - `config.yaml`: active configuration
+- `config.dev.yaml`: local development config (repo-relative paths)
 - `config.example.yaml`: template for deployments
 - `wifi-secrets.example.env`: template for uplink Wi-Fi + git update settings
 - `scripts/hotspot_nmcli.sh`: idempotent AP setup using NetworkManager shared mode
@@ -35,7 +36,7 @@ cd pi
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-python -m vibesensor.app --config config.yaml
+python -m vibesensor.app --config config.dev.yaml
 ```
 
 ## API

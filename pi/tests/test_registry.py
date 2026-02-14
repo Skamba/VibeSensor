@@ -97,7 +97,7 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
     assert rows[offline_id]["name"] == "offline-node"
 
 
-def test_registry_hello_uses_sender_control_port(tmp_path: Path) -> None:
+def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
     registry = ClientRegistry(tmp_path / "clients.json")
     hello = HelloMessage(
         client_id=bytes.fromhex("aabbccddeeff"),
@@ -109,7 +109,7 @@ def test_registry_hello_uses_sender_control_port(tmp_path: Path) -> None:
     registry.update_from_hello(hello, ("192.168.4.2", 54321), now=1.0)
 
     row = registry.snapshot_for_api(now=1.0)[0]
-    assert row["control_addr"] == ("192.168.4.2", 54321)
+    assert row["control_addr"] == ("192.168.4.2", 9010)
 
 
 def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
@@ -136,4 +136,3 @@ def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
     evicted = registry.evict_stale(now=3.1)
     assert evicted == ["aabbccddeeff"]
     assert registry.get("aabbccddeeff") is None
-

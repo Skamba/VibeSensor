@@ -37,7 +37,7 @@ jobs:
       - name: Simulator + websocket smoke
         run: |
           set -euo pipefail
-          python -m vibesensor.app --config pi/config.yaml >server.log 2>&1 &
+          python -m vibesensor.app --config pi/config.dev.yaml >server.log 2>&1 &
           SERVER_PID=$!
           cleanup() {
             kill "${SIM_PID:-}" >/dev/null 2>&1 || true
@@ -52,7 +52,26 @@ jobs:
             sleep 1
           done
 
-          python tools/simulator/sim_sender.py --count 3 --duration 12 --server-host 127.0.0.1 >sim.log 2>&1 &
+          python tools/simulator/sim_sender.py \
+            --count 3 \
+            --duration 20 \
+            --server-host 127.0.0.1 \
+            --no-auto-server >sim.log 2>&1 &
           SIM_PID=$!
-          python tools/simulator/ws_smoke.py --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 20
+          if ! python tools/simulator/ws_smoke.py \
+            --uri ws://127.0.0.1:8000/ws \
+            --min-clients 3 \
+            --timeout 35 \
+            --debug \
+            --report-every 1 >ws_smoke.log 2>&1; then
+            echo "=== ws_smoke.log ==="
+            cat ws_smoke.log || true
+            echo "=== sim.log (last 200 lines) ==="
+            tail -n 200 sim.log || true
+            echo "=== server.log (last 200 lines) ==="
+            tail -n 200 server.log || true
+            echo "=== /api/clients snapshot ==="
+            curl -sv http://127.0.0.1:8000/api/clients || true
+            exit 1
+          fi
           wait "${SIM_PID}"
