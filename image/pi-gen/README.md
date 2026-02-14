@@ -1,4 +1,4 @@
-# Prebuilt Image (Mode B)
+# Prebuilt Image (Mode B, Raspberry Pi 3 A+)
 
 Build machine commands:
 
@@ -17,5 +17,6 @@ Output image artifacts are written to:
 
 - `image/pi-gen/out/`
 
-After flashing the produced image and first boot, no manual install steps are required.
+The produced image name is `vibesensor-rpi3a-plus-bookworm-lite` and is intended for Raspberry Pi 3 A+.
 
+After flashing the produced image and first boot, no manual install steps are required.

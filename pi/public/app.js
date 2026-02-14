@@ -43,6 +43,14 @@
   ];
   const multiSyncWindowMs = 500;
   const multiFreqBinHz = 1.5;
+  const orderUncertainty = {
+    speed_pct: 0.03,
+    tire_diameter_pct: 0.03,
+    final_drive_pct: 0.015,
+    gear_ratio_pct: 0.015,
+    min_abs_hz: 0.8,
+    max_rel_tol: 0.25,
+  };
 
   const state = {
     ws: null,
@@ -87,9 +95,15 @@
       if (typeof parsed.tire_width_mm === "number") state.vehicleSettings.tire_width_mm = parsed.tire_width_mm;
       if (typeof parsed.tire_aspect_pct === "number") state.vehicleSettings.tire_aspect_pct = parsed.tire_aspect_pct;
       if (typeof parsed.rim_in === "number") state.vehicleSettings.rim_in = parsed.rim_in;
-      if (typeof parsed.final_drive_ratio === "number") state.vehicleSettings.final_drive_ratio = parsed.final_drive_ratio;
-      if (typeof parsed.current_gear_ratio === "number") state.vehicleSettings.current_gear_ratio = parsed.current_gear_ratio;
-      if (typeof parsed.speed_override_kmh === "number") state.vehicleSettings.speed_override_kmh = parsed.speed_override_kmh;
+      if (typeof parsed.final_drive_ratio === "number") {
+        state.vehicleSettings.final_drive_ratio = parsed.final_drive_ratio;
+      }
+      if (typeof parsed.current_gear_ratio === "number") {
+        state.vehicleSettings.current_gear_ratio = parsed.current_gear_ratio;
+      }
+      if (typeof parsed.speed_override_kmh === "number") {
+        state.vehicleSettings.speed_override_kmh = parsed.speed_override_kmh;
+      }
     } catch (_err) {
       // Ignore malformed local storage values.
     }
@@ -143,6 +157,19 @@
     return null;
   }
 
+  function combinedRelativeMargin(...parts) {
+    let total = 0;
+    for (const p of parts) {
+      if (typeof p === "number" && p > 0) total += p;
+    }
+    return total;
+  }
+
+  function toleranceForOrder(baseTol, orderHz, uncertaintyPct) {
+    const absFloor = orderUncertainty.min_abs_hz / Math.max(1, orderHz);
+    return Math.min(orderUncertainty.max_rel_tol, Math.max(baseTol + uncertaintyPct, absFloor));
+  }
+
   function bandPlugin() {
     return {
       hooks: {
@@ -192,7 +219,17 @@
     const wheelHz = speed / (Math.PI * tireDiameterMeters(tire));
     const driveHz = wheelHz * state.vehicleSettings.final_drive_ratio;
     const engineHz = driveHz * state.vehicleSettings.current_gear_ratio;
-    return { wheelHz, driveHz, engineHz };
+    const wheelUncertaintyPct = combinedRelativeMargin(orderUncertainty.speed_pct, orderUncertainty.tire_diameter_pct);
+    const driveUncertaintyPct = combinedRelativeMargin(wheelUncertaintyPct, orderUncertainty.final_drive_pct);
+    const engineUncertaintyPct = combinedRelativeMargin(driveUncertaintyPct, orderUncertainty.gear_ratio_pct);
+    return {
+      wheelHz,
+      driveHz,
+      engineHz,
+      wheelUncertaintyPct,
+      driveUncertaintyPct,
+      engineUncertaintyPct,
+    };
   }
 
   function recreateSpectrumPlot(seriesMeta) {
@@ -265,24 +302,35 @@
   function calculateBands() {
     const orders = vehicleOrdersHz();
     if (!orders) return [];
-    const { wheelHz, driveHz, engineHz } = orders;
+    const {
+      wheelHz,
+      driveHz,
+      engineHz,
+      wheelUncertaintyPct,
+      driveUncertaintyPct,
+      engineUncertaintyPct,
+    } = orders;
     const mk = (label, center, spread, color) => ({
       label,
       min_hz: Math.max(0, center * (1 - spread)),
       max_hz: center * (1 + spread),
       color,
     });
+    const wheelSpread = toleranceForOrder(0.12, wheelHz, wheelUncertaintyPct);
+    const driveSpread = toleranceForOrder(0.1, driveHz, driveUncertaintyPct);
+    const engineSpread = toleranceForOrder(0.1, engineHz, engineUncertaintyPct);
     const out = [
-      mk("Wheel 1x", wheelHz, 0.12, "rgba(42,157,143,0.14)"),
-      mk("Wheel 2x", wheelHz * 2, 0.12, "rgba(42,157,143,0.11)"),
+      mk("Wheel 1x", wheelHz, wheelSpread, "rgba(42,157,143,0.14)"),
+      mk("Wheel 2x", wheelHz * 2, wheelSpread, "rgba(42,157,143,0.11)"),
     ];
-    if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < 0.03) {
-      out.push(mk("Driveshaft+Engine 1x", driveHz, 0.1, "rgba(120,95,180,0.15)"));
+    const overlapTol = Math.max(0.03, driveUncertaintyPct + engineUncertaintyPct);
+    if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < overlapTol) {
+      out.push(mk("Driveshaft+Engine 1x", driveHz, Math.max(driveSpread, engineSpread), "rgba(120,95,180,0.15)"));
     } else {
-      out.push(mk("Driveshaft 1x", driveHz, 0.1, "rgba(58,134,255,0.14)"));
-      out.push(mk("Engine 1x", engineHz, 0.1, "rgba(230,57,70,0.14)"));
+      out.push(mk("Driveshaft 1x", driveHz, driveSpread, "rgba(58,134,255,0.14)"));
+      out.push(mk("Engine 1x", engineHz, engineSpread, "rgba(230,57,70,0.14)"));
     }
-    out.push(mk("Engine 2x", engineHz * 2, 0.1, "rgba(230,57,70,0.11)"));
+    out.push(mk("Engine 2x", engineHz * 2, engineSpread, "rgba(230,57,70,0.11)"));
     return out;
   }
 
@@ -306,21 +354,57 @@
     const orders = vehicleOrdersHz();
     const candidates = [];
     if (orders) {
-      const { wheelHz, driveHz, engineHz } = orders;
-      candidates.push({ cause: "Wheel/Tire imbalance or radial force variation", hz: wheelHz, tol: 0.14, key: "wheel1" });
-      candidates.push({ cause: "Tire non-uniformity or wheel resonance", hz: wheelHz * 2, tol: 0.14, key: "wheel2" });
-      if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < 0.03) {
+      const {
+        wheelHz,
+        driveHz,
+        engineHz,
+        wheelUncertaintyPct,
+        driveUncertaintyPct,
+        engineUncertaintyPct,
+      } = orders;
+      const wheelTol = toleranceForOrder(0.14, wheelHz, wheelUncertaintyPct);
+      const driveTol = toleranceForOrder(0.12, driveHz, driveUncertaintyPct);
+      const engineTol = toleranceForOrder(0.12, engineHz, engineUncertaintyPct);
+      candidates.push({
+        cause: "Wheel/Tire imbalance or radial force variation",
+        hz: wheelHz,
+        tol: wheelTol,
+        key: "wheel1",
+      });
+      candidates.push({
+        cause: "Tire non-uniformity or wheel resonance",
+        hz: wheelHz * 2,
+        tol: wheelTol,
+        key: "wheel2",
+      });
+      const overlapTol = Math.max(0.03, driveUncertaintyPct + engineUncertaintyPct);
+      if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < overlapTol) {
         candidates.push({
           cause: "Driveshaft/Engine 1x overlap (same order in current gear)",
           hz: driveHz,
-          tol: 0.12,
+          tol: Math.max(driveTol, engineTol),
           key: "shaft_eng1",
         });
       } else {
-        candidates.push({ cause: "Drive shaft imbalance or driveline angle issue", hz: driveHz, tol: 0.12, key: "shaft1" });
-        candidates.push({ cause: "Engine order vibration (mount/combustion/accessory related)", hz: engineHz, tol: 0.12, key: "eng1" });
+        candidates.push({
+          cause: "Drive shaft imbalance or driveline angle issue",
+          hz: driveHz,
+          tol: driveTol,
+          key: "shaft1",
+        });
+        candidates.push({
+          cause: "Engine order vibration (mount/combustion/accessory related)",
+          hz: engineHz,
+          tol: engineTol,
+          key: "eng1",
+        });
       }
-      candidates.push({ cause: "Engine second-order vibration (common in 4-cylinder NVH)", hz: engineHz * 2, tol: 0.12, key: "eng2" });
+      candidates.push({
+        cause: "Engine second-order vibration (common in 4-cylinder NVH)",
+        hz: engineHz * 2,
+        tol: engineTol,
+        key: "eng2",
+      });
     }
     let best = null;
     let bestErr = Number.POSITIVE_INFINITY;
@@ -430,7 +514,10 @@
   function renderMatrix() {
     if (!els.vibrationMatrix) return;
     hideMatrixTooltip();
-    const header = `<thead><tr><th>Amplitude Group</th>${sourceColumns.map((s) => `<th>${s.label}</th>`).join("")}</tr></thead>`;
+    const header = (
+      `<thead><tr><th>Amplitude Group</th>` +
+      `${sourceColumns.map((s) => `<th>${s.label}</th>`).join("")}</tr></thead>`
+    );
     const bodyRows = severityBands
       .map((band) => {
         const cells = sourceColumns
@@ -581,7 +668,9 @@
       const srcKeys = sourceKeysFromClassKey(group[0].cls.key);
       updateMatrixCells(srcKeys, sev.key, `combined(${labels.join(", ")})`);
       pushVibrationMessage(
-        `Strong multi-sensor vibration detected on ${group.length} sensors [${labels.join(", ")}]. Frequency and amplitude are ${fmt(avgHz, 2)} Hz and ${fmt(avgAmp, 1)}. Severity: ${sev.label}. Most likely cause: ${group[0].cls.cause}.`,
+        `Strong multi-sensor vibration detected on ${group.length} sensors [${labels.join(", ")}]. ` +
+          `Frequency and amplitude are ${fmt(avgHz, 2)} Hz and ${fmt(avgAmp, 1)}. ` +
+          `Severity: ${sev.label}. Most likely cause: ${group[0].cls.cause}.`,
       );
     }
 
@@ -596,7 +685,9 @@
       const srcKeys = sourceKeysFromClassKey(ev.cls.key);
       updateMatrixCells(srcKeys, sev.key, ev.sensorLabel);
       pushVibrationMessage(
-        `Vibration detected by sensor ${ev.sensorLabel}. Frequency and amplitude are ${fmt(ev.peakHz, 2)} Hz and ${fmt(ev.peakAmp, 1)}. Severity: ${sev.label}. Most likely cause: ${ev.cls.cause}.`,
+        `Vibration detected by sensor ${ev.sensorLabel}. ` +
+          `Frequency and amplitude are ${fmt(ev.peakHz, 2)} Hz and ${fmt(ev.peakAmp, 1)}. ` +
+          `Severity: ${sev.label}. Most likely cause: ${ev.cls.cause}.`,
       );
     }
     renderMatrix();

@@ -77,7 +77,8 @@ EOF
 chmod +x "${STAGE_DIR}/00-run.sh"
 
 cat >"${PI_GEN_DIR}/config" <<'EOF'
-IMG_NAME='vibesensor-bookworm-lite'
+# This image is tuned for Raspberry Pi 3 A+ deployments.
+IMG_NAME='vibesensor-rpi3a-plus-bookworm-lite'
 RELEASE='bookworm'
 ENABLE_SSH=1
 STAGE_LIST="stage0 stage1 stage2 stage-vibesensor"
