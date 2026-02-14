@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
 
 AXES = ("x", "y", "z")
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -13,6 +15,7 @@ class ClientBuffer:
     data: np.ndarray
     write_idx: int = 0
     count: int = 0
+    sample_rate_hz: int = 0
     latest_metrics: dict[str, Any] = field(default_factory=dict)
     latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
 
@@ -34,6 +37,8 @@ class SignalProcessor:
         self.max_samples = sample_rate_hz * waveform_seconds
         self.waveform_step = max(1, sample_rate_hz // max(1, waveform_display_hz))
         self._buffers: dict[str, ClientBuffer] = {}
+        self._fft_window = np.hanning(self.fft_n).astype(np.float32)
+        self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
 
     def _get_or_create(self, client_id: str) -> ClientBuffer:
         buf = self._buffers.get(client_id)
@@ -43,13 +48,25 @@ class SignalProcessor:
             self._buffers[client_id] = buf
         return buf
 
-    def ingest(self, client_id: str, samples: np.ndarray) -> None:
+    def ingest(
+        self,
+        client_id: str,
+        samples: np.ndarray,
+        sample_rate_hz: int | None = None,
+    ) -> None:
         if samples.size == 0:
             return
         buf = self._get_or_create(client_id)
         chunk = np.asarray(samples, dtype=np.float32)
         if chunk.ndim != 2 or chunk.shape[1] != 3:
+            LOGGER.warning(
+                "Dropping malformed sample chunk for %s with shape %s",
+                client_id,
+                chunk.shape,
+            )
             return
+        if sample_rate_hz is not None and sample_rate_hz > 0:
+            buf.sample_rate_hz = int(sample_rate_hz)
 
         n = int(chunk.shape[0])
         if n >= self.max_samples:
@@ -88,10 +105,24 @@ class SignalProcessor:
             order = idx[np.argsort(amps[idx])[::-1]]
         return [{"hz": float(freqs[i]), "amp": float(amps[i])} for i in order]
 
-    def compute_metrics(self, client_id: str) -> dict[str, Any]:
+    def _fft_params(self, sample_rate_hz: int) -> tuple[np.ndarray, np.ndarray]:
+        cached = self._fft_cache.get(sample_rate_hz)
+        if cached is not None:
+            return cached
+        freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
+        valid = freqs <= self.spectrum_max_hz
+        freq_slice = freqs[valid].astype(np.float32)
+        valid_idx = np.flatnonzero(valid)
+        self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
+        return freq_slice, valid_idx
+
+    def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
         if buf is None or buf.count == 0:
             return {}
+        if sample_rate_hz is not None and sample_rate_hz > 0:
+            buf.sample_rate_hz = int(sample_rate_hz)
+        sr = buf.sample_rate_hz or self.sample_rate_hz
 
         n_time = min(buf.count, self.fft_n)
         time_window = self._latest(buf, n_time)
@@ -111,15 +142,12 @@ class SignalProcessor:
 
         if buf.count >= self.fft_n:
             fft_block = self._latest(buf, self.fft_n)
-            freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / self.sample_rate_hz)
-            valid = freqs <= self.spectrum_max_hz
-            freq_slice = freqs[valid]
-            window = np.hanning(self.fft_n)
+            freq_slice, valid_idx = self._fft_params(sr)
             spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
 
             for axis_idx, axis in enumerate(AXES):
-                spec = np.abs(np.fft.rfft(fft_block[axis_idx] * window))
-                amp_slice = spec[valid]
+                spec = np.abs(np.fft.rfft(fft_block[axis_idx] * self._fft_window))
+                amp_slice = spec[valid_idx]
                 if amp_slice.size > 1:
                     amp_for_peaks = amp_slice.copy()
                     amp_for_peaks[0] = 0.0
@@ -136,8 +164,16 @@ class SignalProcessor:
         buf.latest_metrics = metrics
         return metrics
 
-    def compute_all(self, client_ids: list[str]) -> dict[str, dict[str, Any]]:
-        return {client_id: self.compute_metrics(client_id) for client_id in client_ids}
+    def compute_all(
+        self,
+        client_ids: list[str],
+        sample_rates_hz: dict[str, int] | None = None,
+    ) -> dict[str, dict[str, Any]]:
+        rates = sample_rates_hz or {}
+        return {
+            client_id: self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
+            for client_id in client_ids
+        }
 
     def spectrum_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
@@ -158,7 +194,9 @@ class SignalProcessor:
                 continue
             if not freq:
                 freq = buf.latest_spectrum["x"]["freq"].tolist()
-            clients[client_id] = self.spectrum_payload(client_id)
+            client_payload = self.spectrum_payload(client_id)
+            client_payload["freq"] = buf.latest_spectrum["x"]["freq"].tolist()
+            clients[client_id] = client_payload
         return {"freq": freq, "clients": clients}
 
     def selected_payload(self, client_id: str) -> dict[str, Any]:
@@ -167,11 +205,13 @@ class SignalProcessor:
             return {"client_id": client_id, "waveform": {}, "spectrum": {}, "metrics": {}}
 
         waveform_raw = self._latest(buf, buf.count)
-        decimated = waveform_raw[:, :: self.waveform_step]
+        sr = buf.sample_rate_hz or self.sample_rate_hz
+        waveform_step = max(1, sr // max(1, self.waveform_display_hz))
+        decimated = waveform_raw[:, :: waveform_step]
         points = decimated.shape[1]
         x = (
             (np.arange(points, dtype=np.float32) - (points - 1))
-            * (self.waveform_step / self.sample_rate_hz)
+            * (waveform_step / sr)
         )
 
         waveform = {"t": x.tolist()}
@@ -193,3 +233,12 @@ class SignalProcessor:
             "spectrum": spectrum,
             "metrics": buf.latest_metrics,
         }
+
+    def evict_clients(self, keep_client_ids: set[str]) -> None:
+        stale_ids = [
+            client_id
+            for client_id in self._buffers.keys()
+            if client_id not in keep_client_ids
+        ]
+        for client_id in stale_ids:
+            self._buffers.pop(client_id, None)

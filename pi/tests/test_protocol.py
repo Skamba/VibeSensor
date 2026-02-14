@@ -23,6 +23,7 @@ def test_hello_roundtrip() -> None:
         sample_rate_hz=800,
         name="front-left",
         firmware_version="fw-test",
+        queue_overflow_drops=7,
     )
     assert pkt[0] == MSG_HELLO
     decoded = parse_hello(pkt)
@@ -31,6 +32,7 @@ def test_hello_roundtrip() -> None:
     assert decoded.sample_rate_hz == 800
     assert decoded.name == "front-left"
     assert decoded.firmware_version == "fw-test"
+    assert decoded.queue_overflow_drops == 7
 
 
 def test_data_roundtrip() -> None:
@@ -53,5 +55,4 @@ def test_parse_identify_cmd() -> None:
     assert parsed.cmd_id == CMD_IDENTIFY
     assert parsed.cmd_seq == 42
     assert int.from_bytes(parsed.params[:2], "little") == 1500
-
 

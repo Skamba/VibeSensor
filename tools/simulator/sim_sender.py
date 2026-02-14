@@ -163,8 +163,11 @@ class SimClient:
         return (
             f"{self.name} id={self.client_id.hex()} profile={self.profile_name} "
             f"amp={self.amp_scale:.2f} noise={self.noise_scale:.2f} "
-            f"scene={self.scene_mode}:{self.scene_gain:.2f} common={self.common_event_gain:.2f} paused={self.paused} "
-            f"tx_scale={self.send_period_scale:.5f} tx_jitter={self.send_jitter_s * 1000:.1f}ms offset={self.start_offset_s * 1000:.1f}ms"
+            f"scene={self.scene_mode}:{self.scene_gain:.2f} "
+            f"common={self.common_event_gain:.2f} paused={self.paused} "
+            f"tx_scale={self.send_period_scale:.5f} "
+            f"tx_jitter={self.send_jitter_s * 1000:.1f}ms "
+            f"offset={self.start_offset_s * 1000:.1f}ms"
         )
 
     def make_frame(self) -> np.ndarray:
@@ -293,6 +296,19 @@ def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None
         )
         return None
 
+    for _ in range(5):
+        if _check_server_running(
+            args.server_host,
+            args.server_http_port,
+            timeout_s=args.server_check_timeout,
+        ):
+            print(
+                "Server already running at "
+                f"{_server_health_url(args.server_host, args.server_http_port)}"
+            )
+            return None
+        time.sleep(0.2)
+
     if _check_server_running(args.server_host, args.server_http_port, timeout_s=args.server_check_timeout):
         print(f"Server already running at {_server_health_url(args.server_host, args.server_http_port)}")
         return None
@@ -305,6 +321,18 @@ def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None
     deadline = time.monotonic() + args.server_start_timeout
     while time.monotonic() < deadline:
         if proc.poll() is not None:
+            # If another process already owns the port, a second start can fail
+            # quickly even though the original server is healthy.
+            if _check_server_running(
+                args.server_host,
+                args.server_http_port,
+                timeout_s=args.server_check_timeout,
+            ):
+                print(
+                    "Detected existing healthy server after auto-start race at "
+                    f"{_server_health_url(args.server_host, args.server_http_port)}"
+                )
+                return None
             raise RuntimeError(f"Auto-started server exited early with code {proc.returncode}")
         if _check_server_running(args.server_host, args.server_http_port, timeout_s=args.server_check_timeout):
             print(f"Server is now reachable at {_server_health_url(args.server_host, args.server_http_port)}")
@@ -658,7 +686,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-auto-server", action="store_true", help="Disable local server auto-start check")
     parser.add_argument("--server-http-port", type=int, default=8000, help="HTTP port for server health check")
     parser.add_argument("--server-config", default="pi/config.yaml", help="Config path used when auto-starting server")
-    parser.add_argument("--server-start-timeout", type=float, default=10.0, help="Seconds to wait for auto-started server readiness")
+    parser.add_argument(
+        "--server-start-timeout",
+        type=float,
+        default=10.0,
+        help="Seconds to wait for auto-started server readiness",
+    )
     parser.add_argument("--server-check-timeout", type=float, default=1.0, help="Per-check HTTP timeout in seconds")
     return parser.parse_args()
 

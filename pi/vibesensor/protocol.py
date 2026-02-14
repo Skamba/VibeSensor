@@ -32,6 +32,7 @@ class HelloMessage:
     sample_rate_hz: int
     name: str
     firmware_version: str
+    queue_overflow_drops: int = 0
 
 
 @dataclass(slots=True)
@@ -92,12 +93,16 @@ def parse_hello(data: bytes) -> HelloMessage:
     offset += name_len
 
     firmware_version = ""
+    queue_overflow_drops = 0
     if len(data) > offset:
         firmware_len = data[offset]
         offset += 1
         if len(data) < offset + firmware_len:
             raise ProtocolError("HELLO firmware length out of range")
         firmware_version = data[offset : offset + firmware_len].decode("utf-8", errors="replace")
+        offset += firmware_len
+        if len(data) >= offset + 4:
+            queue_overflow_drops = struct.unpack_from("<I", data, offset)[0]
 
     return HelloMessage(
         client_id=client_id,
@@ -105,6 +110,7 @@ def parse_hello(data: bytes) -> HelloMessage:
         sample_rate_hz=sample_rate_hz,
         name=name,
         firmware_version=firmware_version,
+        queue_overflow_drops=queue_overflow_drops,
     )
 
 
@@ -114,6 +120,7 @@ def pack_hello(
     sample_rate_hz: int,
     name: str,
     firmware_version: str = "",
+    queue_overflow_drops: int = 0,
 ) -> bytes:
     name_bytes = name.encode("utf-8")[:32]
     fw_bytes = firmware_version.encode("utf-8")[:32]
@@ -130,6 +137,7 @@ def pack_hello(
         + name_bytes
         + bytes([len(fw_bytes)])
         + fw_bytes
+        + struct.pack("<I", int(max(0, queue_overflow_drops)))
     )
 
 

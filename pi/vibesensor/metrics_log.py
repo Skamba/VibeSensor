@@ -21,6 +21,7 @@ CSV_COLUMNS = [
     "peak3_hz",
     "peak3_amp",
     "frames_dropped_total",
+    "queue_overflow_drops",
     "speed_mps",
 ]
 
@@ -77,6 +78,7 @@ class MetricsLogger:
                         axis_metrics.get("p2p", 0.0),
                         *peak_vals,
                         record.frames_dropped,
+                        record.queue_overflow_drops,
                         speed_mps if speed_mps is not None else "",
                     ]
                 )
@@ -99,4 +101,3 @@ class MetricsLogger:
         while True:
             await asyncio.to_thread(self._append_rows)
             await asyncio.sleep(interval)
-

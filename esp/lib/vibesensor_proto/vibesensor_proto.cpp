@@ -64,10 +64,11 @@ size_t pack_hello(uint8_t* out,
                   uint16_t control_port,
                   uint16_t sample_rate_hz,
                   const char* name,
-                  const char* firmware_version) {
+                  const char* firmware_version,
+                  uint32_t queue_overflow_drops) {
   const size_t name_len = strnlen(name, 32);
   const size_t fw_len = strnlen(firmware_version, 32);
-  const size_t need = 1 + 1 + 6 + 2 + 2 + 1 + name_len + 1 + fw_len;
+  const size_t need = 1 + 1 + 6 + 2 + 2 + 1 + name_len + 1 + fw_len + 4;
   if (out_len < need) {
     return 0;
   }
@@ -86,6 +87,8 @@ size_t pack_hello(uint8_t* out,
   out[o++] = static_cast<uint8_t>(fw_len);
   memcpy(out + o, firmware_version, fw_len);
   o += fw_len;
+  write_u32_le(out + o, queue_overflow_drops);
+  o += 4;
   return o;
 }
 
@@ -176,4 +179,3 @@ size_t pack_ack(uint8_t* out,
 }
 
 }  // namespace vibesensor
-

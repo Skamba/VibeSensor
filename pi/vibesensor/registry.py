@@ -27,6 +27,7 @@ class ClientRecord:
     control_addr: tuple[str, int] | None = None
     frames_total: int = 0
     frames_dropped: int = 0
+    queue_overflow_drops: int = 0
     parse_errors: int = 0
     last_seq: int | None = None
     last_ack_cmd_seq: int | None = None
@@ -35,8 +36,13 @@ class ClientRecord:
 
 
 class ClientRegistry:
-    def __init__(self, persist_path: Path):
+    def __init__(self, persist_path: Path, stale_ttl_seconds: float = 120.0):
         self._persist_path = persist_path
+        self._stale_ttl_seconds = max(1.0, stale_ttl_seconds)
+        self._persist_min_interval_seconds = 60.0
+        self._last_persist_ts = 0.0
+        self._last_persist_payload = ""
+        self._pending_persist = False
         self._clients: dict[str, ClientRecord] = {}
         self._user_names: dict[str, str] = {}
         self._load_persisted_names()
@@ -55,23 +61,48 @@ class ClientRegistry:
                 if name:
                     self._user_names[client_id] = name
 
-    def _persist_names(self) -> None:
-        self._persist_path.parent.mkdir(parents=True, exist_ok=True)
-        # Persist known user-assigned names and active records so offline
-        # clients survive rewrites.
+    def _build_names_payload(self) -> dict[str, Any]:
         names_by_id: dict[str, str] = dict(self._user_names)
         for record in self._clients.values():
             if record.name:
                 names_by_id[record.client_id] = record.name
-        payload = {
+        return {
             "clients": [
                 {"id": client_id, "name": name}
                 for client_id, name in sorted(names_by_id.items(), key=lambda item: item[0])
             ]
         }
+
+    def _persist_names(self, *, now_ts: float | None = None, force: bool = False) -> None:
+        payload = self._build_names_payload()
+        payload_text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        if payload_text == self._last_persist_payload and self._persist_path.exists():
+            self._pending_persist = False
+            return
+
+        now_val = time.time() if now_ts is None else now_ts
+        if (
+            not force
+            and self._last_persist_ts > 0.0
+            and (now_val - self._last_persist_ts) < self._persist_min_interval_seconds
+        ):
+            self._pending_persist = True
+            return
+
+        self._persist_path.parent.mkdir(parents=True, exist_ok=True)
         tmp_path = self._persist_path.with_suffix(".tmp")
         tmp_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
         tmp_path.replace(self._persist_path)
+        self._last_persist_payload = payload_text
+        self._last_persist_ts = now_val
+        self._pending_persist = False
+
+    def _flush_pending_persist(self, now_ts: float) -> None:
+        if not self._pending_persist:
+            return
+        if (now_ts - self._last_persist_ts) < self._persist_min_interval_seconds:
+            return
+        self._persist_names(now_ts=now_ts, force=True)
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
         client_id = client_id.lower()
@@ -92,14 +123,16 @@ class ClientRegistry:
         client_id = client_id_hex(hello.client_id)
         record = self._get_or_create(client_id)
         record.last_seen = now_ts
-        record.control_addr = (addr[0], hello.control_port)
+        record.control_addr = (addr[0], addr[1])
         record.sample_rate_hz = hello.sample_rate_hz
         record.firmware_version = hello.firmware_version
+        record.queue_overflow_drops = hello.queue_overflow_drops
         if client_id not in self._user_names:
             advertised = _sanitize_name(hello.name)
             if advertised:
                 record.name = advertised
-        self._persist_names()
+        self._persist_names(now_ts=now_ts, force=False)
+        self._flush_pending_persist(now_ts)
 
     def update_from_data(
         self,
@@ -142,7 +175,7 @@ class ClientRegistry:
         record = self._get_or_create(client_id)
         record.name = clean
         self._user_names[record.client_id] = clean
-        self._persist_names()
+        self._persist_names(force=True)
         return record
 
     def set_latest_metrics(self, client_id: str, metrics: dict[str, Any]) -> None:
@@ -154,6 +187,25 @@ class ClientRegistry:
 
     def client_ids(self) -> list[str]:
         return list(self._clients.keys())
+
+    def active_client_ids(self, now: float | None = None) -> list[str]:
+        now_ts = time.time() if now is None else now
+        return [
+            record.client_id
+            for record in self._clients.values()
+            if record.last_seen and (now_ts - record.last_seen) <= self._stale_ttl_seconds
+        ]
+
+    def evict_stale(self, now: float | None = None) -> list[str]:
+        now_ts = time.time() if now is None else now
+        stale_ids = [
+            client_id
+            for client_id, record in self._clients.items()
+            if record.last_seen and (now_ts - record.last_seen) > self._stale_ttl_seconds
+        ]
+        for client_id in stale_ids:
+            self._clients.pop(client_id, None)
+        return stale_ids
 
     def mark_cmd_sent(self, client_id: str, cmd_seq: int) -> None:
         record = self._get_or_create(client_id)
@@ -177,6 +229,7 @@ class ClientRegistry:
                     "control_addr": record.control_addr,
                     "frames_total": record.frames_total,
                     "dropped_frames": record.frames_dropped,
+                    "queue_overflow_drops": record.queue_overflow_drops,
                     "parse_errors": record.parse_errors,
                     "latest_metrics": record.latest_metrics,
                     "last_ack_cmd_seq": record.last_ack_cmd_seq,

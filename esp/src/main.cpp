@@ -20,14 +20,16 @@ constexpr uint16_t kServerDataPort = 9000;
 constexpr uint16_t kServerControlPort = 9001;
 constexpr size_t kFrameQueueLen = 4;
 constexpr size_t kMaxDatagramBytes = 1500;
+constexpr uint32_t kWifiConnectTimeoutMs = 15000;
+constexpr uint32_t kWifiRetryBackoffMs = 2000;
+constexpr uint32_t kWifiRetryIntervalMs = 4000;
+constexpr uint8_t kWifiInitialConnectAttempts = 3;
+constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 
-// Default pins for M5Stack ATOM ESP32-PICO. Edit these for your wiring.
-// Common external SPI wiring on ATOM headers:
-// SCK=GPIO22, MISO=GPIO19, MOSI=GPIO23, CS=GPIO33.
-constexpr int kSpiSckPin = 22;
-constexpr int kSpiMisoPin = 19;
-constexpr int kSpiMosiPin = 23;
-constexpr int kAdxlCsPin = 33;
+// Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
+constexpr int kI2cSdaPin = 26;
+constexpr int kI2cSclPin = 32;
+constexpr uint8_t kAdxlI2cAddr = 0x53;
 
 #ifndef LED_BUILTIN
 constexpr int LED_BUILTIN = 27;
@@ -49,12 +51,8 @@ struct DataFrame {
   int16_t xyz[kFrameSamples * 3];
 };
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
-SPIClass g_spi(FSPI);
-#else
-SPIClass g_spi(VSPI);
-#endif
-ADXL345 g_adxl(g_spi, kAdxlCsPin, kSpiSckPin, kSpiMisoPin, kSpiMosiPin);
+TwoWire& g_i2c = Wire;
+ADXL345 g_adxl(g_i2c, kAdxlI2cAddr, kI2cSdaPin, kI2cSclPin);
 WiFiUDP g_data_udp;
 WiFiUDP g_control_udp;
 Adafruit_NeoPixel g_led_strip(kLedPixels, LED_BUILTIN, NEO_GRB + NEO_KHZ800);
@@ -80,6 +78,8 @@ uint32_t g_blink_until_ms = 0;
 uint32_t g_led_next_update_ms = 0;
 uint8_t g_identify_wave_shift = 0;
 bool g_identify_leds_active = false;
+uint32_t g_last_wifi_retry_ms = 0;
+uint32_t g_queue_overflow_drops = 0;
 
 void clear_leds() {
   g_led_strip.clear();
@@ -91,7 +91,9 @@ void render_identify_wave(uint32_t now_ms) {
   const uint16_t base = static_cast<uint16_t>((phase * 255U) / kLedWavePeriodMs);
 
   for (uint16_t i = 0; i < kLedPixels; ++i) {
-    uint8_t wave = static_cast<uint8_t>((base + g_identify_wave_shift + (i * (255U / (kLedPixels == 0 ? 1 : kLedPixels)))) & 0xFF);
+    uint16_t pixel_span = static_cast<uint16_t>(kLedPixels == 0 ? 1 : kLedPixels);
+    uint8_t wave = static_cast<uint8_t>(
+        (base + g_identify_wave_shift + (i * (255U / pixel_span))) & 0xFF);
     uint8_t tri = wave < 128 ? static_cast<uint8_t>(wave * 2) : static_cast<uint8_t>((255 - wave) * 2);
 
     uint8_t r = static_cast<uint8_t>(10 + (tri / 5));
@@ -108,6 +110,7 @@ void enqueue_frame() {
   }
 
   if (g_q_size == kFrameQueueLen) {
+    g_queue_overflow_drops++;
     g_q_tail = (g_q_tail + 1) % kFrameQueueLen;
     g_q_size--;
   }
@@ -177,10 +180,19 @@ void sample_once() {
 void service_sampling() {
   const uint64_t step_us = 1000000ULL / kSampleRateHz;
   uint64_t now = esp_timer_get_time();
-  while (static_cast<int64_t>(now - g_next_sample_due_us) >= 0) {
+  size_t catch_up_count = 0;
+  while (static_cast<int64_t>(now - g_next_sample_due_us) >= 0 &&
+         catch_up_count < kMaxCatchUpSamplesPerLoop) {
     sample_once();
     g_next_sample_due_us += step_us;
+    catch_up_count++;
     now = esp_timer_get_time();
+  }
+
+  if (static_cast<int64_t>(now - g_next_sample_due_us) >= 0) {
+    uint64_t lag_us = now - g_next_sample_due_us;
+    uint64_t skipped = (lag_us / step_us) + 1;
+    g_next_sample_due_us += skipped * step_us;
   }
 }
 
@@ -192,7 +204,8 @@ void send_hello() {
                                       g_control_port,
                                       kSampleRateHz,
                                       kClientName,
-                                      kFirmwareVersion);
+                                      kFirmwareVersion,
+                                      g_queue_overflow_drops);
   if (len == 0) {
     return;
   }
@@ -296,17 +309,45 @@ void service_blink() {
   }
 }
 
-void connect_wifi() {
+bool connect_wifi() {
   WiFi.mode(WIFI_STA);
-  WiFi.begin(kWifiSsid, kWifiPsk);
-  Serial.print("Connecting WiFi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(300);
-    Serial.print(".");
+  for (uint8_t attempt = 1; attempt <= kWifiInitialConnectAttempts; ++attempt) {
+    WiFi.begin(kWifiSsid, kWifiPsk);
+    Serial.printf("Connecting WiFi (attempt %u/%u)", attempt, kWifiInitialConnectAttempts);
+    uint32_t start_ms = millis();
+    while (WiFi.status() != WL_CONNECTED) {
+      if (millis() - start_ms >= kWifiConnectTimeoutMs) {
+        break;
+      }
+      delay(300);
+      Serial.print(".");
+    }
+    if (WiFi.status() == WL_CONNECTED) {
+      Serial.println();
+      Serial.print("Connected IP: ");
+      Serial.println(WiFi.localIP());
+      return true;
+    }
+    Serial.println("\nWiFi connect timeout.");
+    WiFi.disconnect(true, true);
+    delay(kWifiRetryBackoffMs);
   }
-  Serial.println();
-  Serial.print("Connected IP: ");
-  Serial.println(WiFi.localIP());
+  Serial.println("WiFi unavailable after retries; continuing and retrying in loop.");
+  return false;
+}
+
+void service_wifi() {
+  if (WiFi.status() == WL_CONNECTED) {
+    return;
+  }
+  uint32_t now = millis();
+  if (now - g_last_wifi_retry_ms < kWifiRetryIntervalMs) {
+    return;
+  }
+  g_last_wifi_retry_ms = now;
+  Serial.println("WiFi disconnected, retrying...");
+  WiFi.disconnect(true, true);
+  WiFi.begin(kWifiSsid, kWifiPsk);
 }
 
 }  // namespace
@@ -341,6 +382,7 @@ void setup() {
 }
 
 void loop() {
+  service_wifi();
   service_sampling();
   service_tx();
   service_hello();

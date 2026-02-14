@@ -44,6 +44,9 @@ python3 -m venv "${VENV_DIR}"
 "${VENV_DIR}/bin/pip" install -e "${PI_DIR}"
 
 run_as_root install -d /etc/vibesensor
+run_as_root install -d -m 0755 /var/lib/vibesensor
+run_as_root install -d -m 0755 /var/log/vibesensor
+run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/log/vibesensor
 if [ ! -f /etc/vibesensor/config.yaml ]; then
   run_as_root cp "${PI_DIR}/config.example.yaml" /etc/vibesensor/config.yaml
 fi
@@ -67,4 +70,3 @@ else
   run_as_root systemctl enable --now vibesensor.service
   run_as_root systemctl status vibesensor.service --no-pager
 fi
-
