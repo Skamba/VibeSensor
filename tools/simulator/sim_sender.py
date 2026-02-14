@@ -685,7 +685,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-interactive", action="store_true", help="Disable interactive command mode")
     parser.add_argument("--no-auto-server", action="store_true", help="Disable local server auto-start check")
     parser.add_argument("--server-http-port", type=int, default=8000, help="HTTP port for server health check")
-    parser.add_argument("--server-config", default="pi/config.yaml", help="Config path used when auto-starting server")
+    parser.add_argument(
+        "--server-config",
+        default="pi/config.dev.yaml",
+        help="Config path used when auto-starting server",
+    )
     parser.add_argument(
         "--server-start-timeout",
         type=float,

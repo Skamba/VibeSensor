@@ -17,8 +17,8 @@ udp:
 processing:
   sample_rate_hz: 800
   waveform_seconds: 8
-  waveform_display_hz: 200
-  ui_push_hz: 20
+  waveform_display_hz: 120
+  ui_push_hz: 10
   fft_update_hz: 4
   fft_n: 2048
   spectrum_max_hz: 200
@@ -26,11 +26,11 @@ processing:
 
 logging:
   log_metrics: true
-  metrics_csv_path: pi/data/metrics.csv
+  metrics_csv_path: /var/log/vibesensor/metrics.csv
   metrics_log_hz: 4
 
 storage:
-  clients_json_path: pi/data/clients.json
+  clients_json_path: /var/lib/vibesensor/clients.json
 
 gps:
   gps_enabled: false

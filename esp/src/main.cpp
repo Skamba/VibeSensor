@@ -25,6 +25,7 @@ constexpr uint32_t kWifiRetryBackoffMs = 2000;
 constexpr uint32_t kWifiRetryIntervalMs = 4000;
 constexpr uint8_t kWifiInitialConnectAttempts = 3;
 constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
+constexpr size_t kSensorReadBatchSamples = 8;
 
 // Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
 constexpr int kI2cSdaPin = 26;
@@ -73,6 +74,9 @@ uint64_t g_next_sample_due_us = 0;
 
 uint32_t g_last_hello_ms = 0;
 bool g_sensor_ok = false;
+int16_t g_sensor_batch_xyz[kSensorReadBatchSamples * 3] = {};
+size_t g_sensor_batch_count = 0;
+size_t g_sensor_batch_index = 0;
 
 uint32_t g_blink_until_ms = 0;
 uint32_t g_led_next_update_ms = 0;
@@ -143,22 +147,31 @@ void synth_sample(int16_t* x, int16_t* y, int16_t* z) {
   *z = static_cast<int16_t>(900.0f * sinf(2.0f * PI * 41.0f * t + 1.1f));
 }
 
+bool next_sensor_sample(int16_t* x, int16_t* y, int16_t* z) {
+  if (!g_sensor_ok) {
+    return false;
+  }
+  if (g_sensor_batch_index >= g_sensor_batch_count) {
+    g_sensor_batch_count = g_adxl.read_samples(g_sensor_batch_xyz, kSensorReadBatchSamples);
+    g_sensor_batch_index = 0;
+  }
+  if (g_sensor_batch_count == 0) {
+    return false;
+  }
+  const size_t offset = g_sensor_batch_index * 3;
+  *x = g_sensor_batch_xyz[offset + 0];
+  *y = g_sensor_batch_xyz[offset + 1];
+  *z = g_sensor_batch_xyz[offset + 2];
+  g_sensor_batch_index++;
+  return true;
+}
+
 void sample_once() {
   int16_t x = 0;
   int16_t y = 0;
   int16_t z = 0;
 
-  if (g_sensor_ok) {
-    int16_t one_sample[3];
-    size_t got = g_adxl.read_samples(one_sample, 1);
-    if (got == 1) {
-      x = one_sample[0];
-      y = one_sample[1];
-      z = one_sample[2];
-    } else {
-      synth_sample(&x, &y, &z);
-    }
-  } else {
+  if (!next_sensor_sample(&x, &y, &z)) {
     synth_sample(&x, &y, &z);
   }
 

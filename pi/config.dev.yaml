@@ -26,11 +26,11 @@ processing:
 
 logging:
   log_metrics: true
-  metrics_csv_path: /var/log/vibesensor/metrics.csv
+  metrics_csv_path: pi/data/metrics.csv
   metrics_log_hz: 4
 
 storage:
-  clients_json_path: /var/lib/vibesensor/clients.json
+  clients_json_path: pi/data/clients.json
 
 gps:
   gps_enabled: false

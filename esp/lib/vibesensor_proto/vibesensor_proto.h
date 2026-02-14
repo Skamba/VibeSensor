@@ -5,6 +5,12 @@
 namespace vibesensor {
 
 constexpr uint8_t kProtoVersion = 1;
+constexpr size_t kClientIdBytes = 6;
+constexpr size_t kHelloFixedBytes = 1 + 1 + kClientIdBytes + 2 + 2 + 1 + 1 + 4;
+constexpr size_t kDataHeaderBytes = 1 + 1 + kClientIdBytes + 4 + 8 + 2;
+constexpr size_t kAckBytes = 1 + 1 + kClientIdBytes + 4 + 1;
+constexpr size_t kCmdHeaderBytes = 1 + 1 + kClientIdBytes + 1 + 4;
+constexpr size_t kCmdIdentifyBytes = kCmdHeaderBytes + 2;
 
 enum MessageType : uint8_t {
   kMsgHello = 1,

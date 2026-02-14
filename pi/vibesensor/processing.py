@@ -202,7 +202,13 @@ class SignalProcessor:
     def selected_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
         if buf is None or buf.count == 0:
-            return {"client_id": client_id, "waveform": {}, "spectrum": {}, "metrics": {}}
+            return {
+                "client_id": client_id,
+                "sample_rate_hz": self.sample_rate_hz,
+                "waveform": {},
+                "spectrum": {},
+                "metrics": {},
+            }
 
         waveform_raw = self._latest(buf, buf.count)
         sr = buf.sample_rate_hz or self.sample_rate_hz
@@ -229,6 +235,7 @@ class SignalProcessor:
 
         return {
             "client_id": client_id,
+            "sample_rate_hz": sr,
             "waveform": waveform,
             "spectrum": spectrum,
             "metrics": buf.latest_metrics,
