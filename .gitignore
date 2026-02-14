@@ -39,3 +39,13 @@
 
 # debug information files
 *.dwo
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Runtime data
+pi/data/*.csv
+pi/data/clients.json
