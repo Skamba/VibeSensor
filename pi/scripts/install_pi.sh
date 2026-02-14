@@ -39,6 +39,8 @@ run_as_root apt-get install -y \
   gpsd \
   gpsd-clients
 
+python3 "${PI_DIR}/../tools/config/config_preflight.py" "${PI_DIR}/config.example.yaml" >/dev/null
+
 python3 -m venv "${VENV_DIR}"
 "${VENV_DIR}/bin/pip" install --upgrade pip
 "${VENV_DIR}/bin/pip" install -e "${PI_DIR}"

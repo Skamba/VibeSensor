@@ -38,14 +38,20 @@ uint32_t read_u32_le(const uint8_t* src) {
 }  // namespace
 
 bool parse_mac(const String& mac, uint8_t out_client_id[6]) {
-  int values[6];
-  if (sscanf(mac.c_str(), "%x:%x:%x:%x:%x:%x",
+  if (mac.length() != 17) {
+    return false;
+  }
+  unsigned int values[6];
+  if (sscanf(mac.c_str(), "%2x:%2x:%2x:%2x:%2x:%2x",
              &values[0], &values[1], &values[2],
              &values[3], &values[4], &values[5]) != 6) {
     return false;
   }
   for (size_t i = 0; i < 6; ++i) {
-    out_client_id[i] = static_cast<uint8_t>(values[i] & 0xFF);
+    if (values[i] > 0xFF) {
+      return false;
+    }
+    out_client_id[i] = static_cast<uint8_t>(values[i]);
   }
   return true;
 }
@@ -115,6 +121,7 @@ size_t pack_data(uint8_t* out,
   o += 8;
   write_u16_le(out + o, sample_count);
   o += 2;
+  // xyz_interleaved holds little-endian int16 values expected by the Python parser.
   memcpy(out + o, xyz_interleaved, payload_len);
   o += payload_len;
   return o;
