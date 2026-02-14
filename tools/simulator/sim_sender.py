@@ -296,6 +296,19 @@ def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None
         )
         return None
 
+    for _ in range(5):
+        if _check_server_running(
+            args.server_host,
+            args.server_http_port,
+            timeout_s=args.server_check_timeout,
+        ):
+            print(
+                "Server already running at "
+                f"{_server_health_url(args.server_host, args.server_http_port)}"
+            )
+            return None
+        time.sleep(0.2)
+
     if _check_server_running(args.server_host, args.server_http_port, timeout_s=args.server_check_timeout):
         print(f"Server already running at {_server_health_url(args.server_host, args.server_http_port)}")
         return None
@@ -308,6 +321,18 @@ def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None
     deadline = time.monotonic() + args.server_start_timeout
     while time.monotonic() < deadline:
         if proc.poll() is not None:
+            # If another process already owns the port, a second start can fail
+            # quickly even though the original server is healthy.
+            if _check_server_running(
+                args.server_host,
+                args.server_http_port,
+                timeout_s=args.server_check_timeout,
+            ):
+                print(
+                    "Detected existing healthy server after auto-start race at "
+                    f"{_server_health_url(args.server_host, args.server_http_port)}"
+                )
+                return None
             raise RuntimeError(f"Auto-started server exited early with code {proc.returncode}")
         if _check_server_running(args.server_host, args.server_http_port, timeout_s=args.server_check_timeout):
             print(f"Server is now reachable at {_server_health_url(args.server_host, args.server_http_port)}")
