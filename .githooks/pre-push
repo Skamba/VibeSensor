@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [[ -z "${local_sha:-}" || "${local_sha}" == "0000000000000000000000000000000000000000" ]]; then
+    continue
+  fi
+
+  if [[ "${remote_sha}" == "0000000000000000000000000000000000000000" ]]; then
+    commit_range="${local_sha}"
+  else
+    commit_range="${remote_sha}..${local_sha}"
+  fi
+
+  python tools/privacy/privacy_guard.py check-range "${commit_range}"
+done

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+python tools/privacy/privacy_guard.py check-staged

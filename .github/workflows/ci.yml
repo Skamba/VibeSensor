@@ -24,6 +24,11 @@ jobs:
         run: |
           ruff check pi/vibesensor pi/tests tools/simulator
 
+      - name: Privacy guard
+        run: |
+          python tools/privacy/privacy_guard.py check-tree
+          python tools/privacy/privacy_guard.py check-range HEAD~20..HEAD
+
       - name: Unit tests
         run: |
           pytest -q pi/tests
