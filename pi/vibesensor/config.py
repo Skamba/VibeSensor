@@ -27,6 +27,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "waveform_seconds": 8,
         "waveform_display_hz": 120,
         "ui_push_hz": 10,
+        "ui_heavy_push_hz": 4,
         "fft_update_hz": 4,
         "fft_n": 2048,
         "spectrum_max_hz": 200,
@@ -98,6 +99,7 @@ class ProcessingConfig:
     waveform_seconds: int
     waveform_display_hz: int
     ui_push_hz: int
+    ui_heavy_push_hz: int
     fft_update_hz: int
     fft_n: int
     spectrum_max_hz: int
@@ -172,6 +174,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             waveform_seconds=int(merged["processing"]["waveform_seconds"]),
             waveform_display_hz=int(merged["processing"]["waveform_display_hz"]),
             ui_push_hz=int(merged["processing"]["ui_push_hz"]),
+            ui_heavy_push_hz=int(merged["processing"].get("ui_heavy_push_hz", 4)),
             fft_update_hz=int(merged["processing"]["fft_update_hz"]),
             fft_n=int(merged["processing"]["fft_n"]),
             spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),

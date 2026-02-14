@@ -796,7 +796,9 @@
 
   function applyPayload(payload) {
     state.clients = payload.clients || [];
-    state.spectra = payload.spectra || { freq: [], clients: {} };
+    if (payload.spectra) {
+      state.spectra = payload.spectra;
+    }
     updateClientSelect();
 
     if (typeof payload.speed_mps === "number") {
@@ -807,8 +809,9 @@
       const spd = effectiveSpeedMps();
       els.speed.textContent = spd ? `Speed: ${fmt(spd, 2)} m/s (Override)` : "Speed: -- m/s";
     }
-
-    renderSpectrum();
+    if (payload.spectra) {
+      renderSpectrum();
+    }
     const row = state.clients.find((c) => c.id === state.selectedClientId);
     renderStatus(row);
   }
