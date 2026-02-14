@@ -69,9 +69,18 @@ sudo apt-get install -y git
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
 sudo ./pi/scripts/install_pi.sh
+# Optional: configure uplink update credentials (kept out of git)
+sudo cp pi/wifi-secrets.example.env /etc/vibesensor/wifi-secrets.env
+sudo nano /etc/vibesensor/wifi-secrets.env
+sudo chmod 600 /etc/vibesensor/wifi-secrets.env
 sudo ./pi/scripts/hotspot_nmcli.sh
 sudo systemctl status vibesensor
 ```
+
+`pi/scripts/hotspot_nmcli.sh` scans for the configured uplink Wi-Fi for up to
+10 seconds. If found, it waits for git update activity to complete, then
+disconnects and starts the hotspot. If not found, it starts the hotspot
+immediately.
 
 ### Mode B: Prebuilt custom image (pi-gen + Docker, Raspberry Pi 3 A+ target)
 

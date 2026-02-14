@@ -50,6 +50,7 @@ __pycache__/
 # Runtime data
 pi/data/*.csv
 pi/data/clients.json
+pi/wifi-secrets.env
 
 # Image build artifacts
 image/pi-gen/.cache/
