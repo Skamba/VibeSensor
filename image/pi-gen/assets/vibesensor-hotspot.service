@@ -1,0 +1,12 @@
+[Unit]
+Description=Configure VibeSensor hotspot
+After=NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/VibeSensor/pi/scripts/hotspot_nmcli.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

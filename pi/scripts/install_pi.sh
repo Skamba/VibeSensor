@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PI_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor.service"
+VENV_DIR="${PI_DIR}/.venv"
+SKIP_SERVICE_START="${VIBESENSOR_SKIP_SERVICE_START:-0}"
+
+if [ "$(id -u)" -eq 0 ]; then
+  AS_ROOT=""
+else
+  AS_ROOT="sudo"
+fi
+
+run_as_root() {
+  if [ -n "${AS_ROOT}" ]; then
+    sudo "$@"
+  else
+    "$@"
+  fi
+}
+
+if [ -n "${SUDO_USER:-}" ] && [ "${SUDO_USER}" != "root" ]; then
+  SERVICE_USER="${SUDO_USER}"
+elif id -u pi >/dev/null 2>&1; then
+  SERVICE_USER="pi"
+else
+  SERVICE_USER="$(id -un)"
+fi
+
+run_as_root apt-get update
+run_as_root apt-get install -y \
+  python3 \
+  python3-venv \
+  python3-pip \
+  network-manager \
+  dnsmasq \
+  gpsd \
+  gpsd-clients
+
+python3 -m venv "${VENV_DIR}"
+"${VENV_DIR}/bin/pip" install --upgrade pip
+"${VENV_DIR}/bin/pip" install -e "${PI_DIR}"
+
+run_as_root install -d /etc/vibesensor
+if [ ! -f /etc/vibesensor/config.yaml ]; then
+  run_as_root cp "${PI_DIR}/config.example.yaml" /etc/vibesensor/config.yaml
+fi
+
+sed \
+  -e "s#__PI_DIR__#${PI_DIR}#g" \
+  -e "s#__VENV_DIR__#${VENV_DIR}#g" \
+  -e "s#__SERVICE_USER__#${SERVICE_USER}#g" \
+  "${SERVICE_TEMPLATE}" | run_as_root tee /etc/systemd/system/vibesensor.service >/dev/null
+
+if [ "${SKIP_SERVICE_START}" = "1" ]; then
+  run_as_root systemctl daemon-reload >/dev/null 2>&1 || true
+  if ! run_as_root systemctl enable vibesensor.service >/dev/null 2>&1; then
+    run_as_root install -d /etc/systemd/system/multi-user.target.wants
+    run_as_root ln -sf \
+      /etc/systemd/system/vibesensor.service \
+      /etc/systemd/system/multi-user.target.wants/vibesensor.service
+  fi
+else
+  run_as_root systemctl daemon-reload
+  run_as_root systemctl enable --now vibesensor.service
+  run_as_root systemctl status vibesensor.service --no-pager
+fi
+
