@@ -64,8 +64,15 @@ class WebSocketHub:
             if ws is not None:
                 await self.remove(ws)
 
-    async def run(self, hz: int, payload_builder: Callable[[str | None], dict]) -> None:
+    async def run(
+        self,
+        hz: int,
+        payload_builder: Callable[[str | None], dict],
+        on_tick: Callable[[], None] | None = None,
+    ) -> None:
         interval = 1.0 / max(1, hz)
         while True:
+            if on_tick is not None:
+                on_tick()
             await self.broadcast(payload_builder)
             await asyncio.sleep(interval)

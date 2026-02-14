@@ -200,9 +200,12 @@ class SignalProcessor:
             buf = self._buffers.get(client_id)
             if buf is None or not buf.latest_spectrum:
                 continue
+            client_freq = buf.latest_spectrum["x"]["freq"].tolist()
             if not freq:
-                freq = buf.latest_spectrum["x"]["freq"].tolist()
-            clients[client_id] = self.spectrum_payload(client_id)
+                freq = client_freq
+            client_payload = self.spectrum_payload(client_id)
+            client_payload["freq"] = client_freq
+            clients[client_id] = client_payload
         return {"freq": freq, "clients": clients}
 
     def selected_payload(self, client_id: str) -> dict[str, Any]:
