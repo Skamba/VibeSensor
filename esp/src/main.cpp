@@ -79,6 +79,7 @@ bool g_sensor_ok = false;
 uint32_t g_blink_until_ms = 0;
 uint32_t g_led_next_update_ms = 0;
 uint8_t g_identify_wave_shift = 0;
+bool g_identify_leds_active = false;
 
 void clear_leds() {
   g_led_strip.clear();
@@ -279,13 +280,17 @@ void service_control_rx() {
 void service_blink() {
   uint32_t now = millis();
   if (g_blink_until_ms == 0 || static_cast<int32_t>(g_blink_until_ms - now) <= 0) {
-    clear_leds();
+    if (g_identify_leds_active) {
+      clear_leds();
+      g_identify_leds_active = false;
+    }
     g_blink_until_ms = 0;
     return;
   }
 
   if (now >= g_led_next_update_ms) {
     render_identify_wave(now);
+    g_identify_leds_active = true;
     g_identify_wave_shift = static_cast<uint8_t>(g_identify_wave_shift + 3);
     g_led_next_update_ms = now + kLedWaveStepMs;
   }
