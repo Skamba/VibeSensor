@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 
 from fastapi import WebSocket
+
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -18,6 +21,8 @@ class WebSocketHub:
         self._connections: dict[int, WSConnection] = {}
         self._lock = asyncio.Lock()
         self._send_timeout_s = 0.5
+        self._last_send_error_log_ts = 0.0
+        self._send_error_log_interval_s = 10.0
 
     async def add(self, websocket: WebSocket, selected_client_id: str | None) -> None:
         async with self._lock:
@@ -57,6 +62,13 @@ class WebSocketHub:
                 )
                 return None
             except Exception:
+                now = asyncio.get_running_loop().time()
+                if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:
+                    self._last_send_error_log_ts = now
+                    LOGGER.warning(
+                        "WebSocket broadcast send failed; connection will be removed.",
+                        exc_info=True,
+                    )
                 return conn.websocket
 
         dead_ws = await asyncio.gather(*(_send(conn) for conn in conns))

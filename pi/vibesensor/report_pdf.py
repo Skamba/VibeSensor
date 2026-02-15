@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from datetime import UTC, datetime
 from io import BytesIO
@@ -13,6 +14,8 @@ from .report_analysis import (
 )
 from .report_i18n import tr as _tr
 from .report_i18n import variants as _tr_variants
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _pdf_escape(text: str) -> str:
@@ -1060,4 +1063,8 @@ def build_report_pdf(summary: dict[str, object]) -> bytes:
     try:
         return _reportlab_pdf(summary)
     except Exception:
+        LOGGER.warning(
+            "ReportLab PDF generation failed, using fallback PDF renderer.",
+            exc_info=True,
+        )
         return _fallback_pdf(summary)
