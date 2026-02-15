@@ -1,4 +1,6 @@
-export const palette = ["#2563eb", "#0d9488", "#7c3aed", "#ea580c", "#dc2626", "#0891b2", "#ca8a04"];
+import { chartSeriesPalette } from "./theme";
+
+export const palette = chartSeriesPalette;
 
 export const defaultLocationCodes = [
   "front_left_wheel",

@@ -1,4 +1,5 @@
 import "uplot/dist/uPlot.min.css";
+import "./styles/app.css";
 import * as I18N from "./i18n";
 import {
   deleteLog as deleteLogApi,
@@ -17,7 +18,18 @@ import {
   startLoggingRun,
   stopLoggingRun,
 } from "./api";
+import {
+  bandToleranceModelVersion,
+  defaultLocationCodes,
+  multiFreqBinHz,
+  multiSyncWindowMs,
+  palette,
+  severityBands,
+  sourceColumns,
+  treadWearModel,
+} from "./constants";
 import { SpectrumChart } from "./spectrum";
+import { orderBandFills } from "./theme";
 import { WsClient, type WsUiState } from "./ws";
   const els: any = {
     menuButtons: Array.from(document.querySelectorAll(".menu-btn")),
@@ -69,48 +81,8 @@ import { WsClient, type WsUiState } from "./ws";
   };
 
   const uiLanguageStorageKey = "vibesensor_ui_lang_v1";
-  const palette = ["#e63946", "#2a9d8f", "#3a86ff", "#f4a261", "#7b2cbf", "#1d3557", "#ff006e"];
-  const defaultLocationCodes = [
-    "front_left_wheel",
-    "front_right_wheel",
-    "rear_left_wheel",
-    "rear_right_wheel",
-    "transmission",
-    "driveshaft_tunnel",
-    "engine_bay",
-    "front_subframe",
-    "rear_subframe",
-    "driver_seat",
-    "front_passenger_seat",
-    "rear_left_seat",
-    "rear_center_seat",
-    "rear_right_seat",
-    "trunk",
-  ];
   const settingsStorageKey = "vibesensor_vehicle_settings_v3";
   const speedUnitStorageKey = "vibesensor_speed_unit";
-  const bandToleranceModelVersion = 2;
-  const treadWearModel = {
-    // 10/32 in (~7.9 mm) new to 2/32 in (~1.6 mm) legal minimum.
-    new_tread_mm: 7.9,
-    worn_tread_mm: 1.6,
-    safety_margin_pct: 0.3,
-  };
-  const sourceColumns = [
-    { key: "engine", labelKey: "matrix.source.engine" },
-    { key: "driveshaft", labelKey: "matrix.source.driveshaft" },
-    { key: "wheel", labelKey: "matrix.source.wheel" },
-    { key: "other", labelKey: "matrix.source.other" },
-  ];
-  const severityBands = [
-    { key: "l5", labelKey: "matrix.severity.l5", minDb: 40, maxDb: Number.POSITIVE_INFINITY },
-    { key: "l4", labelKey: "matrix.severity.l4", minDb: 34, maxDb: 40 },
-    { key: "l3", labelKey: "matrix.severity.l3", minDb: 28, maxDb: 34 },
-    { key: "l2", labelKey: "matrix.severity.l2", minDb: 22, maxDb: 28 },
-    { key: "l1", labelKey: "matrix.severity.l1", minDb: 16, maxDb: 22 },
-  ];
-  const multiSyncWindowMs = 500;
-  const multiFreqBinHz = 1.5;
 
   const state: any = {
     ws: null,
@@ -590,7 +562,7 @@ import { WsClient, type WsUiState } from "./ws";
     for (const b of state.chartBands) {
       const row = document.createElement("div");
       row.className = "legend-item";
-      row.innerHTML = `<span class="swatch" style="background:${b.color}"></span><span>${b.label}</span>`;
+      row.innerHTML = `<span class="swatch" style="--swatch-color:${b.color}"></span><span>${b.label}</span>`;
       els.bandLegend.appendChild(row);
     }
   }
@@ -847,9 +819,18 @@ import { WsClient, type WsUiState } from "./ws";
     }
   }
 
+  function resetLiveVibrationCounts() {
+    state.eventMatrix = createEmptyMatrix();
+    state.recentDetectionEvents = [];
+    state.lastDetectionByClient = {};
+    state.lastDetectionGlobal = {};
+    renderMatrix();
+  }
+
   async function startLogging() {
     try {
       state.loggingStatus = await startLoggingRun();
+      resetLiveVibrationCounts();
       renderLoggingStatus();
       await refreshLogs();
     } catch (_err) {}
@@ -1072,8 +1053,8 @@ import { WsClient, type WsUiState } from "./ws";
       engineUncertaintyPct,
     );
     const out = [
-      mk(t("bands.wheel_1x"), wheelHz, wheelSpread, "rgba(42,157,143,0.14)"),
-      mk(t("bands.wheel_2x"), wheelHz * 2, wheelSpread, "rgba(42,157,143,0.11)"),
+      mk(t("bands.wheel_1x"), wheelHz, wheelSpread, orderBandFills.wheel1),
+      mk(t("bands.wheel_2x"), wheelHz * 2, wheelSpread, orderBandFills.wheel2),
     ];
     const overlapTol = Math.max(0.03, driveUncertaintyPct + engineUncertaintyPct);
     if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < overlapTol) {
@@ -1082,14 +1063,14 @@ import { WsClient, type WsUiState } from "./ws";
           t("bands.driveshaft_engine_1x"),
           driveHz,
           Math.max(driveSpread, engineSpread),
-          "rgba(120,95,180,0.15)",
+          orderBandFills.driveshaftEngine1,
         ),
       );
     } else {
-      out.push(mk(t("bands.driveshaft_1x"), driveHz, driveSpread, "rgba(58,134,255,0.14)"));
-      out.push(mk(t("bands.engine_1x"), engineHz, engineSpread, "rgba(230,57,70,0.14)"));
+      out.push(mk(t("bands.driveshaft_1x"), driveHz, driveSpread, orderBandFills.driveshaft1));
+      out.push(mk(t("bands.engine_1x"), engineHz, engineSpread, orderBandFills.engine1));
     }
-    out.push(mk(t("bands.engine_2x"), engineHz * 2, engineSpread, "rgba(230,57,70,0.11)"));
+    out.push(mk(t("bands.engine_2x"), engineHz * 2, engineSpread, orderBandFills.engine2));
     return out;
   }
 
@@ -1201,12 +1182,7 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function severityFromPeak(peakAmp, floorAmp, sensorCount) {
-    const peak = Math.max(0, Number(peakAmp) || 0);
-    const floor = Math.max(0, Number(floorAmp) || 0);
-    const epsRatio = Math.max(0.001, Number(state.vehicleSettings.event_db_floor_eps_ratio) || 0.05);
-    const minAbsPeak = Math.max(1e-6, Number(state.vehicleSettings.event_min_abs_peak_g) || 0.01);
-    const eps = Math.max(minAbsPeak * 0.05, floor * epsRatio);
-    const db = 20 * Math.log10((peak + eps) / (floor + eps));
+    const db = amplitudeDbAboveFloor(peakAmp, floorAmp);
     // Multi-sensor synchronous detections are stronger indicators than single-sensor events.
     const adjustedDb = sensorCount >= 2 ? db + 2 : db;
     for (const band of severityBands) {
@@ -1215,6 +1191,15 @@ import { WsClient, type WsUiState } from "./ws";
       }
     }
     return null;
+  }
+
+  function amplitudeDbAboveFloor(peakAmp, floorAmp) {
+    const peak = Math.max(0, Number(peakAmp) || 0);
+    const floor = Math.max(0, Number(floorAmp) || 0);
+    const epsRatio = Math.max(0.001, Number(state.vehicleSettings.event_db_floor_eps_ratio) || 0.05);
+    const minAbsPeak = Math.max(1e-6, Number(state.vehicleSettings.event_min_abs_peak_g) || 0.01);
+    const eps = Math.max(minAbsPeak * 0.05, floor * epsRatio);
+    return Math.max(0, 20 * Math.log10((peak + eps) / (floor + eps)));
   }
 
   function updateMatrixCell(sourceKey, severityKey, contributorLabel) {
@@ -1429,12 +1414,20 @@ import { WsClient, type WsUiState } from "./ws";
       return;
     }
     const minLen = Math.min(targetFreq.length, ...entries.map((e) => e.values.length));
-    const data = [targetFreq.slice(0, minLen)];
-    for (const e of entries) data.push(e.values.slice(0, minLen));
+    const linearData = [targetFreq.slice(0, minLen)];
+    for (const e of entries) linearData.push(e.values.slice(0, minLen));
+
+    // Plot the same peak-over-floor dB scale used by live vibration severity.
+    const dbData = [linearData[0]];
+    for (let seriesIdx = 1; seriesIdx < linearData.length; seriesIdx++) {
+      const vals = linearData[seriesIdx];
+      const floor = vals.slice(5).sort((a, b) => a - b)[Math.floor(Math.max(1, vals.length - 5) / 2)] || 0;
+      dbData.push(vals.map((amp) => amplitudeDbAboveFloor(amp, floor)));
+    }
     state.hasSpectrumData = true;
-    state.spectrumPlot.setData(data);
+    state.spectrumPlot.setData(dbData);
     updateSpectrumOverlay();
-    detectVibrationEvents(data, entries);
+    detectVibrationEvents(linearData, entries);
   }
 
   function detectVibrationEvents(data, entries) {
@@ -1609,8 +1602,17 @@ import { WsClient, type WsUiState } from "./ws";
     } else {
       state.speedMps = null;
     }
-    state.hasSpectrumData =
-      Boolean(payload?.spectra?.clients) && Object.keys(payload.spectra.clients || {}).length > 0;
+    if (payload.spectra) {
+      const clientsObj = payload?.spectra?.clients || {};
+      const entries = Object.values(clientsObj);
+      state.hasSpectrumData = entries.some((clientSpec: any) => {
+        const fx = Array.isArray(clientSpec?.freq) ? clientSpec.freq.length : 0;
+        const x = Array.isArray(clientSpec?.x) ? clientSpec.x.length : 0;
+        const y = Array.isArray(clientSpec?.y) ? clientSpec.y.length : 0;
+        const z = Array.isArray(clientSpec?.z) ? clientSpec.z.length : 0;
+        return fx > 0 && (x > 0 || y > 0 || z > 0);
+      });
+    }
     renderSpeedReadout();
     if (payload.spectra) {
       renderSpectrum();

@@ -341,6 +341,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
     "START_TIME_UTC": {"en": "Start Time (UTC)", "nl": "Starttijd (UTC)"},
     "END_TIME_UTC": {"en": "End Time (UTC)", "nl": "Eindtijd (UTC)"},
     "SENSOR_MODEL": {"en": "Sensor Model", "nl": "Sensormodel"},
+    "SENSOR_PLACEMENT_AND_HOTSPOTS": {
+        "en": "Sensor placement and hotspots",
+        "nl": "Sensorplaatsing en hotspots",
+    },
     "RAW_SAMPLE_RATE_HZ_LABEL": {
         "en": "Raw Sample Rate (Hz)",
         "nl": "Bemonsteringsfrequentie (Hz)",

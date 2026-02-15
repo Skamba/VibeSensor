@@ -178,6 +178,7 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/logging/start")
     async def start_logging() -> dict:
+        state.live_diagnostics.reset()
         return state.metrics_logger.start_logging()
 
     @router.post("/api/logging/stop")
