@@ -261,8 +261,16 @@ def test_offline_client_mac_set_location_and_remove(
     )
 
     driver.execute_script("window.confirm = () => true;")
-    remove_btn = (By.CSS_SELECTOR, f"{row_selector} .row-remove")
-    wait.until(EC.element_to_be_clickable(remove_btn)).click()
+    remove_selector = f"{row_selector} .row-remove"
+    wait.until(
+        lambda d: d.execute_script(
+            "const btn=document.querySelector(arguments[0]);"
+            "if(!btn) return false;"
+            "btn.click();"
+            "return true;",
+            remove_selector,
+        )
+    )
     wait.until(
         lambda d: d.execute_script(
             "return document.querySelector(arguments[0]) === null;",
