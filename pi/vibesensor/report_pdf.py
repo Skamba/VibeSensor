@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import UTC, datetime
 from io import BytesIO
-from typing import Any
+from statistics import mean
 
-from .report_analysis import SPEED_COVERAGE_MIN_PCT, _as_float, _format_duration, _normalize_lang, _required_text
+from .report_analysis import (
+    SPEED_COVERAGE_MIN_PCT,
+    _as_float,
+    _normalize_lang,
+    _required_text,
+)
 from .report_i18n import tr as _tr
 from .report_i18n import variants as _tr_variants
+
 
 def _pdf_escape(text: str) -> str:
     return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
