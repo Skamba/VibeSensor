@@ -4,602 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VibeSensor</title>
-    <style>
-      :root {
-        --bg: linear-gradient(180deg, #f3f7f9 0%, #edf2f5 100%);
-        --surface: #ffffff;
-        --border: #d8e1e8;
-        --text: #1c2738;
-        --muted: #5b6779;
-        --primary: #0b7285;
-        --danger: #c44536;
-        --success: #2b9348;
-        --s1: 4px;
-        --s2: 8px;
-        --s3: 12px;
-        --s4: 16px;
-        --s5: 24px;
-        --s6: 32px;
-        --r1: 10px;
-        --r2: 14px;
-        --sh1: 0 4px 12px rgba(19, 41, 61, 0.08);
-        --sh2: 0 10px 24px rgba(19, 41, 61, 0.12);
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      body {
-        margin: 0;
-        font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-        background: var(--bg);
-        color: var(--text);
-        font-size: 15px;
-      }
-
-      .wrap {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: var(--s4);
-      }
-
-      .site-header {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        padding: var(--s4);
-        border: 1px solid var(--border);
-        border-radius: var(--r2);
-        background: linear-gradient(180deg, #ffffff 0%, #f3f8fb 100%);
-        box-shadow: var(--sh2);
-      }
-
-      .topbar {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: var(--s3);
-      }
-
-      .title {
-        margin: 0;
-        font-size: 1.7rem;
-        letter-spacing: 0.02em;
-      }
-
-      .topbar-actions {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--s2);
-      }
-
-      .lang-picker,
-      .unit-picker,
-      select,
-      input,
-      button,
-      .btn {
-        height: 36px;
-        border-radius: var(--r1);
-        border: 1px solid var(--border);
-        padding: 0 var(--s3);
-        font-size: 0.95rem;
-      }
-
-      .unit-picker {
-        min-width: 86px;
-      }
-
-      .speed {
-        padding: var(--s2) var(--s3);
-        border: 1px solid var(--border);
-        border-radius: var(--r1);
-        background: var(--surface);
-        min-width: 220px;
-        text-align: right;
-        font-weight: 600;
-      }
-
-      .mini-label {
-        font-size: 0.82rem;
-        color: var(--muted);
-      }
-
-      .menu {
-        margin-top: var(--s3);
-        display: flex;
-        flex-wrap: nowrap;
-        gap: var(--s2);
-        overflow-x: auto;
-        padding-bottom: var(--s1);
-      }
-
-      .menu-btn {
-        border: 0;
-        border-radius: 999px;
-        background: #e8eef3;
-        color: #24405a;
-        padding: 0.58rem 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        white-space: nowrap;
-        transition: background-color 120ms ease, color 120ms ease, transform 80ms ease;
-      }
-
-      .menu-btn.active {
-        background: #13293d;
-        color: #fff;
-      }
-
-      .menu-btn:hover {
-        background: #d8e5ef;
-      }
-
-      .menu-btn:active {
-        transform: translateY(1px);
-      }
-
-      .menu-btn:focus-visible,
-      .btn:focus-visible,
-      button:focus-visible,
-      select:focus-visible,
-      input:focus-visible {
-        outline: 2px solid #0f62fe;
-        outline-offset: 2px;
-      }
-
-      .view {
-        display: none;
-        margin-top: var(--s4);
-      }
-
-      .view.active {
-        display: block;
-      }
-
-      .card,
-      .panel {
-        border: 1px solid var(--border);
-        border-radius: var(--r2);
-        background: var(--surface);
-        padding: var(--s4);
-        box-shadow: var(--sh1);
-      }
-
-      .card__title {
-        margin: 0 0 var(--s3);
-        font-size: 1rem;
-        font-weight: 700;
-      }
-
-      .card__subtle,
-      .subtle {
-        color: var(--muted);
-        font-size: 0.88rem;
-      }
-
-      .pill,
-      .badge,
-      .status-pill {
-        display: inline-flex;
-        align-items: center;
-        border-radius: 999px;
-        padding: 0 var(--s3);
-        height: 28px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        border: 1px solid transparent;
-      }
-
-      .pill--ok,
-      .status-pill.online,
-      .badge.on {
-        background: #d8f3dc;
-        color: #1b4332;
-      }
-
-      .pill--warn,
-      .badge.off {
-        background: #ffe8d6;
-        color: #9c2f00;
-      }
-
-      .pill--bad,
-      .status-pill.offline {
-        background: #ffd6d6;
-        color: #8f2d2d;
-      }
-
-      .pill--muted {
-        background: #edf2f7;
-        color: #475569;
-      }
-
-      .btn,
-      button {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #fff;
-        color: var(--text);
-        cursor: pointer;
-        font-weight: 600;
-        text-decoration: none;
-      }
-
-      .btn:disabled,
-      button:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-      }
-
-      .btn--primary,
-      button.primary {
-        background: var(--primary);
-        color: #fff;
-        border-color: transparent;
-      }
-
-      .btn--success,
-      button.success {
-        background: var(--success);
-        color: #fff;
-        border-color: transparent;
-      }
-
-      .btn--danger,
-      button.warn {
-        background: var(--danger);
-        color: #fff;
-        border-color: transparent;
-      }
-
-      .btn--muted {
-        background: #f1f5f9;
-        color: #334155;
-      }
-
-      .stat-grid {
-        display: grid;
-        gap: var(--s3);
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        margin-bottom: var(--s4);
-      }
-
-      .stat {
-        min-height: 86px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-      }
-
-      .stat__label {
-        font-size: 0.78rem;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-
-      .stat__value {
-        margin-top: var(--s1);
-        font-size: 1rem;
-        font-weight: 700;
-      }
-
-      .dashboard-grid {
-        display: grid;
-        gap: var(--s4);
-        grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-        grid-template-areas:
-          "spectrum side"
-          "matrix matrix";
-      }
-
-      .dashboard-grid__main {
-        grid-area: spectrum;
-      }
-
-      .dashboard-grid__side {
-        grid-area: side;
-        display: grid;
-        gap: var(--s4);
-        align-content: start;
-      }
-
-      .dashboard-grid__full {
-        grid-area: matrix;
-      }
-
-      .spectrum-wrap {
-        position: relative;
-        min-height: 360px;
-      }
-
-      .empty-state {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: var(--s4);
-        background: rgba(255, 255, 255, 0.75);
-        border: 1px dashed var(--border);
-        border-radius: var(--r1);
-        color: var(--muted);
-        font-weight: 600;
-      }
-
-      .empty-state[hidden] {
-        display: none !important;
-      }
-
-      .legend {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--s2) var(--s4);
-        margin-top: var(--s3);
-        font-size: 0.86rem;
-      }
-
-      .legend.band-legend {
-        margin-top: var(--s2);
-        padding-top: var(--s2);
-        border-top: 1px dashed var(--border);
-      }
-
-      .legend-item {
-        display: flex;
-        align-items: center;
-        gap: var(--s1);
-      }
-
-      .swatch {
-        width: 12px;
-        height: 12px;
-        border-radius: 2px;
-      }
-
-      .logging-row,
-      .live-speed-row,
-      .live-speed-readout {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: var(--s2);
-      }
-
-      .live-speed-readout {
-        margin-top: var(--s3);
-      }
-
-      .live-speed-row {
-        margin-top: var(--s3);
-      }
-
-      .live-speed-row label {
-        min-width: 11rem;
-      }
-
-      .live-speed-row input {
-        width: 9rem;
-      }
-
-      .log-box {
-        max-height: 220px;
-        overflow: auto;
-        font-size: 0.9rem;
-        line-height: 1.3;
-      }
-
-      .log-row {
-        padding: var(--s2) 0;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .log-row:last-child {
-        border-bottom: 0;
-      }
-
-      .log-time {
-        color: var(--muted);
-        font-size: 0.78rem;
-      }
-
-      .matrix-note {
-        font-size: 0.84rem;
-        margin-top: var(--s2);
-        color: var(--muted);
-      }
-
-      .matrix-wrap {
-        overflow-x: auto;
-        margin-top: var(--s3);
-      }
-
-      .vib-matrix,
-      .logs-table,
-      .clients-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-      }
-
-      .vib-matrix th,
-      .vib-matrix td,
-      .logs-table th,
-      .logs-table td,
-      .clients-table th,
-      .clients-table td {
-        border-bottom: 1px solid var(--border);
-        border-top: 1px solid var(--border);
-        padding: 0.55rem;
-        text-align: left;
-        vertical-align: middle;
-      }
-
-      .vib-matrix td,
-      .vib-matrix th {
-        text-align: center;
-      }
-
-      .vib-matrix th:first-child,
-      .vib-matrix td:first-child {
-        text-align: left;
-      }
-
-      .logs-table th,
-      .clients-table th {
-        position: sticky;
-        top: 0;
-        z-index: 2;
-        background: #f7fafc;
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--muted);
-      }
-
-      .logs-table tr:last-child td,
-      .clients-table tr:last-child td {
-        border-bottom: 0;
-      }
-
-      .logs-table td,
-      .clients-table td {
-        word-break: break-word;
-      }
-
-      .clients-table {
-        margin-top: var(--s3);
-      }
-
-      .numeric {
-        text-align: right !important;
-        font-variant-numeric: tabular-nums;
-      }
-
-      .table-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: var(--s2);
-        align-items: center;
-      }
-
-      .controls,
-      .log-actions,
-      .settings-subgrid,
-      .settings-groups {
-        display: grid;
-        gap: var(--s3);
-      }
-
-      .controls,
-      .log-actions {
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      }
-
-      .settings-layout {
-        display: grid;
-        gap: var(--s4);
-      }
-
-      .settings-groups {
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      }
-
-      .settings-group {
-        border: 1px dashed var(--border);
-        border-radius: var(--r1);
-        background: #f8fbfd;
-        padding: var(--s3);
-      }
-
-      .settings-group h3 {
-        margin: 0 0 var(--s2);
-        font-size: 0.84rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: #2f4f67;
-      }
-
-      .settings-subgrid {
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      }
-
-      .settings-actions {
-        display: flex;
-        justify-content: flex-end;
-      }
-
-      .settings-actions .btn,
-      .settings-actions button {
-        min-width: 12rem;
-      }
-
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: var(--s1);
-      }
-
-      label {
-        font-size: 0.86rem;
-        color: #243547;
-      }
-
-      .matrix-tooltip {
-        position: fixed;
-        z-index: 50;
-        max-width: 320px;
-        display: none;
-        pointer-events: none;
-        background: rgba(20, 33, 61, 0.96);
-        color: #fff;
-        border-radius: var(--r1);
-        padding: var(--s2) var(--s3);
-        font-size: 0.82rem;
-        line-height: 1.3;
-        white-space: pre-line;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
-      }
-
-      .vib-cell {
-        cursor: help;
-        font-weight: 700;
-      }
-
-      .report-insights {
-        margin-top: var(--s3);
-      }
-
-      .report-insights p {
-        margin: var(--s1) 0;
-      }
-
-      @media (max-width: 980px) {
-        .dashboard-grid {
-          grid-template-columns: 1fr;
-          grid-template-areas:
-            "spectrum"
-            "side"
-            "matrix";
-        }
-
-        .speed {
-          min-width: 180px;
-        }
-      }
-    </style>
   </head>
   <body>
     <div class="wrap">
       <header class="site-header">
         <div class="topbar">
-          <h1 class="title" data-i18n="title.main">VibeSensor Frequency Live</h1>
+          <h1 class="title" data-i18n="title.main">VibeSensor</h1>
           <div class="topbar-actions">
             <select id="languageSelect" class="lang-picker" aria-label="Language">
               <option value="en">🇺🇸 English</option>
@@ -610,52 +20,16 @@
         </div>
 
         <nav class="menu" aria-label="Primary" role="tablist">
-          <button
-            type="button"
-            class="menu-btn active"
-            data-view="dashboardView"
-            id="tab-dashboard"
-            role="tab"
-            aria-controls="dashboardView"
-            aria-selected="true"
-            tabindex="0"
-          >
+          <button type="button" class="menu-btn active" data-view="dashboardView" id="tab-dashboard" role="tab" aria-controls="dashboardView" aria-selected="true" tabindex="0">
             <span data-i18n="nav.live">Live</span>
           </button>
-          <button
-            type="button"
-            class="menu-btn"
-            data-view="logsView"
-            id="tab-logs"
-            role="tab"
-            aria-controls="logsView"
-            aria-selected="false"
-            tabindex="-1"
-          >
+          <button type="button" class="menu-btn" data-view="logsView" id="tab-logs" role="tab" aria-controls="logsView" aria-selected="false" tabindex="-1">
             <span data-i18n="nav.logs">Logs</span>
           </button>
-          <button
-            type="button"
-            class="menu-btn"
-            data-view="reportView"
-            id="tab-report"
-            role="tab"
-            aria-controls="reportView"
-            aria-selected="false"
-            tabindex="-1"
-          >
+          <button type="button" class="menu-btn" data-view="reportView" id="tab-report" role="tab" aria-controls="reportView" aria-selected="false" tabindex="-1">
             <span data-i18n="nav.report">Report</span>
           </button>
-          <button
-            type="button"
-            class="menu-btn"
-            data-view="settingsView"
-            id="tab-settings"
-            role="tab"
-            aria-controls="settingsView"
-            aria-selected="false"
-            tabindex="-1"
-          >
+          <button type="button" class="menu-btn" data-view="settingsView" id="tab-settings" role="tab" aria-controls="settingsView" aria-selected="false" tabindex="-1">
             <span data-i18n="nav.settings">Settings</span>
           </button>
         </nav>
@@ -679,6 +53,9 @@
 
         <div class="dashboard-grid">
           <div class="panel card dashboard-grid__main">
+            <div class="card__header">
+              <div class="card__title" data-i18n="chart.spectrum_title">Multi-Sensor Blended Spectrum</div>
+            </div>
             <div id="specChartWrap" class="spectrum-wrap">
               <div id="specChart"></div>
               <div id="spectrumOverlay" class="empty-state" hidden>Waiting for sensor data...</div>
@@ -689,15 +66,13 @@
 
           <div class="dashboard-grid__side">
             <div class="panel card">
-              <div class="card__title" data-i18n="dashboard.run_logging">Run Logging</div>
+              <div class="card__header">
+                <div class="card__title" data-i18n="dashboard.run_logging">Run Logging</div>
+              </div>
               <div class="logging-row">
                 <span id="loggingStatus" class="pill pill--muted">Stopped</span>
-                <button id="startLoggingBtn" class="btn btn--success" data-i18n="dashboard.start_logging">
-                  Start Logging
-                </button>
-                <button id="stopLoggingBtn" class="btn btn--danger" data-i18n="dashboard.stop_logging">
-                  Stop Logging
-                </button>
+                <button id="startLoggingBtn" class="btn btn--success" data-i18n="dashboard.start_logging">Start Logging</button>
+                <button id="stopLoggingBtn" class="btn btn--danger" data-i18n="dashboard.stop_logging">Stop Logging</button>
               </div>
               <div class="live-speed-readout">
                 <div id="speed" class="speed">Speed --</div>
@@ -710,26 +85,24 @@
               <div class="live-speed-row">
                 <label for="speedOverrideInput" data-i18n="dashboard.speed_override">Speed Override (km/h)</label>
                 <input id="speedOverrideInput" type="number" step="0.1" min="0" />
-                <button id="applySpeedOverrideBtn" class="btn btn--primary" data-i18n="dashboard.apply_override">
-                  Apply Override
-                </button>
+                <button id="applySpeedOverrideBtn" class="btn btn--primary" data-i18n="dashboard.apply_override">Apply Override</button>
               </div>
               <div id="currentLogFile" class="card__subtle">Current file: --</div>
             </div>
 
             <div class="panel card">
-              <div class="card__title" data-i18n="dashboard.detected_vibrations">Detected Vibrations</div>
+              <div class="card__header">
+                <div class="card__title" data-i18n="dashboard.detected_vibrations">Detected Vibrations</div>
+              </div>
               <div id="vibrationLog" class="log-box"></div>
             </div>
           </div>
 
           <div class="panel card dashboard-grid__full">
-            <div class="card__title" data-i18n="dashboard.vibration_count_live">Vibration Count Live</div>
-            <div class="matrix-note">
-              <span data-i18n="dashboard.matrix_note"
-                >Levels use peak-over-floor dB bands (L1-L5), grouped by source type.</span
-              >
+            <div class="card__header">
+              <div class="card__title" data-i18n="dashboard.vibration_count_live">Vibration Count Live</div>
             </div>
+            <div class="matrix-note"><span data-i18n="dashboard.matrix_note">Levels use peak-over-floor dB bands (L1-L5), grouped by source type.</span></div>
             <div class="matrix-wrap">
               <table id="vibrationMatrix" class="vib-matrix"></table>
             </div>
@@ -746,9 +119,7 @@
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="deleteAllLogsBtn" class="btn btn--danger" data-i18n="logs.delete_all" disabled>
-                Delete All Logs
-              </button>
+              <button id="deleteAllLogsBtn" class="btn btn--danger" data-i18n="logs.delete_all" disabled>Delete All Logs</button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
@@ -782,15 +153,11 @@
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="loadInsightsBtn" class="btn btn--primary" data-i18n="report.load_insights">
-                Load Insights
-              </button>
+              <button id="loadInsightsBtn" class="btn btn--primary" data-i18n="report.load_insights">Load Insights</button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="downloadReportBtn" class="btn btn--success" data-i18n="report.generate_pdf">
-                Generate PDF Report
-              </button>
+              <button id="downloadReportBtn" class="btn btn--success" data-i18n="report.generate_pdf">Generate PDF Report</button>
             </div>
           </div>
           <div id="reportInsights" class="report-insights subtle">
@@ -802,9 +169,7 @@
       <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>
         <div class="panel card">
           <strong data-i18n="settings.client_locations">Client Locations</strong>
-          <div class="subtle" data-i18n="settings.client_locations_hint">
-            Set location and identify by client. Offline clients can still be assigned.
-          </div>
+          <div class="subtle" data-i18n="settings.client_locations_hint">Set location and identify by client. Offline clients can still be assigned.</div>
           <table class="clients-table">
             <thead>
               <tr>
@@ -828,91 +193,36 @@
             <section class="settings-group">
               <h3 data-i18n="settings.group.vehicle_setup">Vehicle Setup</h3>
               <div class="settings-subgrid">
-                <div class="field">
-                  <label for="tireWidthInput" data-i18n="settings.tire_width">Tire Width (mm)</label>
-                  <input id="tireWidthInput" type="number" min="100" step="1" />
-                </div>
-                <div class="field">
-                  <label for="tireAspectInput" data-i18n="settings.tire_aspect">Tire Aspect (%)</label>
-                  <input id="tireAspectInput" type="number" min="20" step="1" />
-                </div>
-                <div class="field">
-                  <label for="rimInput" data-i18n="settings.rim_size">Rim Size (in)</label>
-                  <input id="rimInput" type="number" min="10" step="0.5" />
-                </div>
-                <div class="field">
-                  <label for="finalDriveInput" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label>
-                  <input id="finalDriveInput" type="number" step="0.01" min="0.1" />
-                </div>
-                <div class="field">
-                  <label for="gearRatioInput" data-i18n="settings.current_gear_ratio">Current Gear Ratio</label>
-                  <input id="gearRatioInput" type="number" step="0.01" min="0.1" />
-                </div>
+                <div class="field"><label for="tireWidthInput" data-i18n="settings.tire_width">Tire Width (mm)</label><input id="tireWidthInput" type="number" min="100" step="1" /></div>
+                <div class="field"><label for="tireAspectInput" data-i18n="settings.tire_aspect">Tire Aspect (%)</label><input id="tireAspectInput" type="number" min="20" step="1" /></div>
+                <div class="field"><label for="rimInput" data-i18n="settings.rim_size">Rim Size (in)</label><input id="rimInput" type="number" min="10" step="0.5" /></div>
+                <div class="field"><label for="finalDriveInput" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label><input id="finalDriveInput" type="number" step="0.01" min="0.1" /></div>
+                <div class="field"><label for="gearRatioInput" data-i18n="settings.current_gear_ratio">Current Gear Ratio</label><input id="gearRatioInput" type="number" step="0.01" min="0.1" /></div>
               </div>
             </section>
 
             <section class="settings-group">
               <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>
               <div class="settings-subgrid">
-                <div class="field">
-                  <label for="wheelBandwidthInput" data-i18n="settings.wheel_bandwidth">Wheel Bandwidth (%)</label>
-                  <input id="wheelBandwidthInput" type="number" step="0.1" min="1" max="40" />
-                </div>
-                <div class="field">
-                  <label for="driveshaftBandwidthInput" data-i18n="settings.driveshaft_bandwidth"
-                    >Driveshaft Bandwidth (%)</label
-                  >
-                  <input id="driveshaftBandwidthInput" type="number" step="0.1" min="1" max="40" />
-                </div>
-                <div class="field">
-                  <label for="engineBandwidthInput" data-i18n="settings.engine_bandwidth">Engine Bandwidth (%)</label>
-                  <input id="engineBandwidthInput" type="number" step="0.1" min="1" max="40" />
-                </div>
-                <div class="field">
-                  <label for="minAbsBandHzInput" data-i18n="settings.min_half_width">Min Half-width (Hz)</label>
-                  <input id="minAbsBandHzInput" type="number" step="0.1" min="0" max="10" />
-                </div>
-                <div class="field">
-                  <label for="maxBandHalfWidthInput" data-i18n="settings.max_half_width">Max Half-width (%)</label>
-                  <input id="maxBandHalfWidthInput" type="number" step="0.1" min="1" max="25" />
-                </div>
+                <div class="field"><label for="wheelBandwidthInput" data-i18n="settings.wheel_bandwidth">Wheel Bandwidth (%)</label><input id="wheelBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
+                <div class="field"><label for="driveshaftBandwidthInput" data-i18n="settings.driveshaft_bandwidth">Driveshaft Bandwidth (%)</label><input id="driveshaftBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
+                <div class="field"><label for="engineBandwidthInput" data-i18n="settings.engine_bandwidth">Engine Bandwidth (%)</label><input id="engineBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
+                <div class="field"><label for="minAbsBandHzInput" data-i18n="settings.min_half_width">Min Half-width (Hz)</label><input id="minAbsBandHzInput" type="number" step="0.1" min="0" max="10" /></div>
+                <div class="field"><label for="maxBandHalfWidthInput" data-i18n="settings.max_half_width">Max Half-width (%)</label><input id="maxBandHalfWidthInput" type="number" step="0.1" min="1" max="25" /></div>
               </div>
             </section>
 
             <section class="settings-group">
               <h3 data-i18n="settings.group.uncertainty_model">Uncertainty Model</h3>
-              <div class="subtle">
-                <span data-i18n="settings.uncertainty_defaults"
-                  >Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.</span
-                >
-              </div>
+              <div class="subtle"><span data-i18n="settings.uncertainty_defaults">Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.</span></div>
               <div class="settings-subgrid">
-                <div class="field">
-                  <label for="speedUncertaintyInput" data-i18n="settings.speed_uncertainty">Speed Uncertainty (%)</label>
-                  <input id="speedUncertaintyInput" type="number" step="0.1" min="0" max="20" />
-                </div>
-                <div class="field">
-                  <label for="tireDiameterUncertaintyInput" data-i18n="settings.tire_diameter_uncertainty"
-                    >Tire Diameter Uncertainty (%)</label
-                  >
-                  <input id="tireDiameterUncertaintyInput" type="number" step="0.1" min="0" max="20" />
-                </div>
-                <div class="field">
-                  <label for="finalDriveUncertaintyInput" data-i18n="settings.final_drive_uncertainty"
-                    >Final Drive Uncertainty (%)</label
-                  >
-                  <input id="finalDriveUncertaintyInput" type="number" step="0.1" min="0" max="10" />
-                </div>
-                <div class="field">
-                  <label for="gearUncertaintyInput" data-i18n="settings.gear_slip_uncertainty"
-                    >Gear/Slip Uncertainty (%)</label
-                  >
-                  <input id="gearUncertaintyInput" type="number" step="0.1" min="0" max="20" />
-                </div>
+                <div class="field"><label for="speedUncertaintyInput" data-i18n="settings.speed_uncertainty">Speed Uncertainty (%)</label><input id="speedUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
+                <div class="field"><label for="tireDiameterUncertaintyInput" data-i18n="settings.tire_diameter_uncertainty">Tire Diameter Uncertainty (%)</label><input id="tireDiameterUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
+                <div class="field"><label for="finalDriveUncertaintyInput" data-i18n="settings.final_drive_uncertainty">Final Drive Uncertainty (%)</label><input id="finalDriveUncertaintyInput" type="number" step="0.1" min="0" max="10" /></div>
+                <div class="field"><label for="gearUncertaintyInput" data-i18n="settings.gear_slip_uncertainty">Gear/Slip Uncertainty (%)</label><input id="gearUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
               </div>
             </section>
           </div>
-
           <div class="settings-actions">
             <button id="saveSettingsBtn" class="btn btn--primary" data-i18n="settings.save">Save Settings</button>
           </div>
