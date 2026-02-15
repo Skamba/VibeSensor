@@ -30,6 +30,9 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
             "metrics_csv_path": str(cfg.logging.metrics_csv_path),
             "clients_json_path": str(cfg.clients_json_path),
         },
+        "logging": {
+            "sensor_model": cfg.logging.sensor_model,
+        },
     }
 
 

@@ -140,12 +140,19 @@ def _activate_tab(driver: webdriver.Remote, tab_id: str, view_id: str) -> None:
         "const v=document.getElementById(arguments[0]); "
         "return v && v.classList.contains('active') && !v.hidden;"
     )
-    wait.until(
-        lambda d: d.execute_script(
-            script,
-            view_id
-        )
+    wait.until(lambda d: d.execute_script(script, view_id))
+
+
+def _set_language(driver: webdriver.Remote, lang: str) -> None:
+    wait = WebDriverWait(driver, 10)
+    select = wait.until(EC.presence_of_element_located((By.ID, "languageSelect")))
+    driver.execute_script(
+        "arguments[0].value = arguments[1];"
+        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));",
+        select,
+        lang,
     )
+    wait.until(lambda d: d.execute_script("return document.documentElement.lang;") == lang)
 
 
 def _seed_client_hello(control_port: int) -> None:
@@ -173,6 +180,82 @@ def test_nav_tabs_switch_views(driver: webdriver.Remote, live_server: dict[str, 
     _activate_tab(driver, "tab-report", "reportView")
     _activate_tab(driver, "tab-settings", "settingsView")
     _activate_tab(driver, "tab-dashboard", "dashboardView")
+
+
+@pytest.mark.parametrize(
+    ("lang", "labels"),
+    [
+        (
+            "en",
+            {
+                "nav": ["Live", "Logs", "Report", "Settings"],
+                "start_logging": "Start Logging",
+                "refresh_logs": "Refresh Logs",
+                "load_insights": "Load Insights",
+                "generate_pdf": "Generate PDF Report",
+                "save_settings": "Save Settings",
+                "settings_location_header": "Location",
+            },
+        ),
+        (
+            "nl",
+            {
+                "nav": ["Live", "Logs", "Rapport", "Instellingen"],
+                "start_logging": "Logging starten",
+                "refresh_logs": "Logs verversen",
+                "load_insights": "Inzichten laden",
+                "generate_pdf": "PDF-rapport genereren",
+                "save_settings": "Instellingen opslaan",
+                "settings_location_header": "Locatie",
+            },
+        ),
+    ],
+)
+def test_all_tabs_render_localized_texts(
+    driver: webdriver.Remote,
+    live_server: dict[str, object],
+    lang: str,
+    labels: dict[str, object],
+) -> None:
+    base_url = str(live_server["base_url"])
+    driver.get(f"{base_url}/")
+    wait = WebDriverWait(driver, 10)
+    _set_language(driver, lang)
+
+    nav_texts = driver.execute_script(
+        "const nodes = Array.from(document.querySelectorAll('.menu-btn span'));"
+        "return nodes.map((el) => el.textContent.trim());"
+    )
+    assert nav_texts == labels["nav"]
+
+    _activate_tab(driver, "tab-dashboard", "dashboardView")
+    wait.until(
+        lambda d: d.find_element(By.ID, "startLoggingBtn").text.strip() == labels["start_logging"]
+    )
+
+    _activate_tab(driver, "tab-logs", "logsView")
+    wait.until(
+        lambda d: d.find_element(By.ID, "refreshLogsBtn").text.strip() == labels["refresh_logs"]
+    )
+
+    _activate_tab(driver, "tab-report", "reportView")
+    wait.until(
+        lambda d: d.find_element(By.ID, "loadInsightsBtn").text.strip() == labels["load_insights"]
+    )
+    wait.until(
+        lambda d: d.find_element(By.ID, "downloadReportBtn").text.strip() == labels["generate_pdf"]
+    )
+
+    _activate_tab(driver, "tab-settings", "settingsView")
+    wait.until(
+        lambda d: d.find_element(By.ID, "saveSettingsBtn").text.strip() == labels["save_settings"]
+    )
+    headers = driver.execute_script(
+        "const headers = Array.from(document.querySelectorAll('.clients-table thead th'));"
+        "return headers.map((el) => el.textContent.trim());"
+    )
+    # The location column label must localize correctly in both languages.
+    assert labels["settings_location_header"] in headers
 
 
 def test_logging_buttons_toggle_status_badge(
@@ -204,13 +287,15 @@ def test_location_selector_has_vehicle_positions(
 
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "row-location-select")))
     wait.until(
-        lambda d: len(
-            d.execute_script(
-                "const s=document.querySelector('.row-location-select');"
-                "return s ? Array.from(s.options).map(o=>o.text.trim()) : [];",
-            ),
-        )
-        > 10,
+        lambda d: (
+            len(
+                d.execute_script(
+                    "const s=document.querySelector('.row-location-select');"
+                    "return s ? Array.from(s.options).map(o=>o.text.trim()) : [];",
+                ),
+            )
+            > 10
+        ),
     )
     labels = driver.execute_script(
         "const s=document.querySelector('.row-location-select');"
@@ -220,6 +305,73 @@ def test_location_selector_has_vehicle_positions(
     assert "Transmission" in labels
     assert "Driver Seat" in labels
     assert "Trunk" in labels
+
+
+def test_logs_can_be_deleted_with_confirmation(
+    driver: webdriver.Remote,
+    live_server: dict[str, object],
+) -> None:
+    base_url = str(live_server["base_url"])
+    driver.get(f"{base_url}/")
+    wait = WebDriverWait(driver, 10)
+    _activate_tab(driver, "tab-dashboard", "dashboardView")
+
+    wait.until(EC.element_to_be_clickable((By.ID, "startLoggingBtn"))).click()
+    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Running")
+    wait.until(EC.element_to_be_clickable((By.ID, "stopLoggingBtn"))).click()
+    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
+
+    _activate_tab(driver, "tab-logs", "logsView")
+    wait.until(
+        lambda d: (
+            d.execute_script("return document.querySelectorAll('.delete-log-btn').length;") >= 1
+        )
+    )
+    before_count = int(
+        driver.execute_script("return document.querySelectorAll('.delete-log-btn').length;")
+    )
+    assert before_count >= 1
+
+    driver.execute_script("window.confirm = () => true;")
+    driver.execute_script(
+        "const btn=document.querySelector('.delete-log-btn'); if (btn) btn.click();"
+    )
+    wait.until(
+        lambda d: (
+            d.execute_script("return document.querySelectorAll('.delete-log-btn').length;")
+            == max(0, before_count - 1)
+        )
+    )
+
+
+def test_dutch_logs_uses_domain_terms_not_literal_calque(
+    driver: webdriver.Remote,
+    live_server: dict[str, object],
+) -> None:
+    base_url = str(live_server["base_url"])
+    wait = WebDriverWait(driver, 10)
+    driver.get(f"{base_url}/")
+    _activate_tab(driver, "tab-dashboard", "dashboardView")
+
+    wait.until(EC.element_to_be_clickable((By.ID, "startLoggingBtn"))).click()
+    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Running")
+    wait.until(EC.element_to_be_clickable((By.ID, "stopLoggingBtn"))).click()
+    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
+
+    _set_language(driver, "nl")
+    _activate_tab(driver, "tab-logs", "logsView")
+    wait.until(
+        lambda d: (
+            d.execute_script("return document.querySelectorAll('.delete-log-btn').length;") >= 1
+        )
+    )
+
+    raw_labels = driver.execute_script(
+        "const links = Array.from(document.querySelectorAll('#logsTableBody a'));"
+        "return links.map((a) => a.textContent.trim());"
+    )
+    assert any(label == "RAW-log" for label in raw_labels)
+    assert all(label != "Ruw" for label in raw_labels)
 
 
 def test_offline_client_mac_set_location_and_remove(
@@ -252,12 +404,14 @@ def test_offline_client_mac_set_location_and_remove(
         row_selector,
     )
     wait.until(
-        lambda d: d.execute_script(
-            "const el=document.querySelector(arguments[0] + ' td strong');"
-            "return el ? el.textContent.trim() : '';",
-            row_selector,
+        lambda d: (
+            d.execute_script(
+                "const el=document.querySelector(arguments[0] + ' td strong');"
+                "return el ? el.textContent.trim() : '';",
+                row_selector,
+            )
+            == "Trunk"
         )
-        == "Trunk"
     )
 
     driver.execute_script("window.confirm = () => true;")
