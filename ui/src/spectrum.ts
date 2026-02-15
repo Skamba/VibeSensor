@@ -88,7 +88,7 @@ export class SpectrumChart {
     for (const item of seriesMeta) {
       const row = document.createElement("div");
       row.className = "legend-item";
-      row.innerHTML = `<span class="swatch" style="background:${item.color}"></span><span>${item.label}</span>`;
+      row.innerHTML = `<span class="swatch" style="--swatch-color:${item.color}"></span><span>${item.label}</span>`;
       legendEl.appendChild(row);
     }
   }

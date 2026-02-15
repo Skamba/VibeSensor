@@ -102,9 +102,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     "wheel_imbalance": Profile(
         name="wheel_imbalance",
         tones=(
-            (11.0, (220.0, 125.0, 170.0)),
-            (22.0, (70.0, 45.0, 60.0)),
-            (3.2, (28.0, 22.0, 35.0)),
+            # Keep wheel signatures aligned to the same order model used by
+            # live/report diagnostics so simulated wheel faults classify reliably.
+            (DEFAULT_ORDER_HZ["wheel_1x"], (220.0, 125.0, 170.0)),
+            (DEFAULT_ORDER_HZ["wheel_2x"], (80.0, 52.0, 72.0)),
+            (DEFAULT_ORDER_HZ["wheel_1x"] * 0.52, (24.0, 18.0, 30.0)),
         ),
         noise_std=24.0,
         bump_probability=0.004,
