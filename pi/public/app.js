@@ -2,6 +2,7 @@
   const els = {
     menuButtons: Array.from(document.querySelectorAll(".menu-btn")),
     views: Array.from(document.querySelectorAll(".view")),
+    languageSelect: document.getElementById("languageSelect"),
     speed: document.getElementById("speed"),
     loggingStatus: document.getElementById("loggingStatus"),
     currentLogFile: document.getElementById("currentLogFile"),
@@ -44,23 +45,29 @@
     matrixTooltip: document.getElementById("matrixTooltip"),
   };
 
+  const I18N = window.VibeI18n || {
+    normalizeLang: () => "en",
+    get: (_lang, key) => key,
+    getForAllLangs: (key) => [key],
+  };
+  const uiLanguageStorageKey = "vibesensor_ui_lang_v1";
   const palette = ["#e63946", "#2a9d8f", "#3a86ff", "#f4a261", "#7b2cbf", "#1d3557", "#ff006e"];
-  const defaultLocationOptions = [
-    { code: "front_left_wheel", label: "Front Left Wheel" },
-    { code: "front_right_wheel", label: "Front Right Wheel" },
-    { code: "rear_left_wheel", label: "Rear Left Wheel" },
-    { code: "rear_right_wheel", label: "Rear Right Wheel" },
-    { code: "transmission", label: "Transmission" },
-    { code: "driveshaft_tunnel", label: "Driveshaft Tunnel" },
-    { code: "engine_bay", label: "Engine Bay" },
-    { code: "front_subframe", label: "Front Subframe" },
-    { code: "rear_subframe", label: "Rear Subframe" },
-    { code: "driver_seat", label: "Driver Seat" },
-    { code: "front_passenger_seat", label: "Front Passenger Seat" },
-    { code: "rear_left_seat", label: "Rear Left Seat" },
-    { code: "rear_center_seat", label: "Rear Center Seat" },
-    { code: "rear_right_seat", label: "Rear Right Seat" },
-    { code: "trunk", label: "Trunk" },
+  const defaultLocationCodes = [
+    "front_left_wheel",
+    "front_right_wheel",
+    "rear_left_wheel",
+    "rear_right_wheel",
+    "transmission",
+    "driveshaft_tunnel",
+    "engine_bay",
+    "front_subframe",
+    "rear_subframe",
+    "driver_seat",
+    "front_passenger_seat",
+    "rear_left_seat",
+    "rear_center_seat",
+    "rear_right_seat",
+    "trunk",
   ];
   const settingsStorageKey = "vibesensor_vehicle_settings_v3";
   const bandToleranceModelVersion = 2;
@@ -71,23 +78,24 @@
     safety_margin_pct: 0.3,
   };
   const sourceColumns = [
-    { key: "engine", label: "Engine" },
-    { key: "driveshaft", label: "Drive Shaft" },
-    { key: "wheel", label: "Wheel/Tire" },
-    { key: "other", label: "Other/Road" },
+    { key: "engine", labelKey: "matrix.source.engine" },
+    { key: "driveshaft", labelKey: "matrix.source.driveshaft" },
+    { key: "wheel", labelKey: "matrix.source.wheel" },
+    { key: "other", labelKey: "matrix.source.other" },
   ];
   const severityBands = [
-    { key: "l5", label: "L5 Critical (>=40 dB)", minDb: 40, maxDb: Number.POSITIVE_INFINITY },
-    { key: "l4", label: "L4 Severe (34-40 dB)", minDb: 34, maxDb: 40 },
-    { key: "l3", label: "L3 Elevated (28-34 dB)", minDb: 28, maxDb: 34 },
-    { key: "l2", label: "L2 Moderate (22-28 dB)", minDb: 22, maxDb: 28 },
-    { key: "l1", label: "L1 Slight (16-22 dB)", minDb: 16, maxDb: 22 },
+    { key: "l5", labelKey: "matrix.severity.l5", minDb: 40, maxDb: Number.POSITIVE_INFINITY },
+    { key: "l4", labelKey: "matrix.severity.l4", minDb: 34, maxDb: 40 },
+    { key: "l3", labelKey: "matrix.severity.l3", minDb: 28, maxDb: 34 },
+    { key: "l2", labelKey: "matrix.severity.l2", minDb: 22, maxDb: 28 },
+    { key: "l1", labelKey: "matrix.severity.l1", minDb: 16, maxDb: 22 },
   ];
   const multiSyncWindowMs = 500;
   const multiFreqBinHz = 1.5;
 
   const state = {
     ws: null,
+    lang: I18N.normalizeLang(window.localStorage.getItem(uiLanguageStorageKey) || "en"),
     clients: [],
     selectedClientId: null,
     spectrumPlot: null,
@@ -127,7 +135,63 @@
     lastRenderTsMs: 0,
     minRenderIntervalMs: 100,
     clientsSettingsSignature: "",
+    locationCodes: defaultLocationCodes.slice(),
   };
+
+  function t(key, vars) {
+    return I18N.get(state.lang, key, vars);
+  }
+
+  function locationLabelForLang(lang, code) {
+    return I18N.get(lang, `location.${code}`, { code });
+  }
+
+  function locationLabel(code) {
+    return locationLabelForLang(state.lang, code);
+  }
+
+  function buildLocationOptions(codes) {
+    return codes.map((code) => ({ code, label: locationLabel(code) }));
+  }
+
+  function translateStaticDom() {
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const key = el.getAttribute("data-i18n");
+      if (!key) return;
+      el.innerHTML = t(key);
+    });
+  }
+
+  function saveLanguage(lang) {
+    state.lang = I18N.normalizeLang(lang);
+    window.localStorage.setItem(uiLanguageStorageKey, state.lang);
+  }
+
+  function applyLanguage(forceReloadInsights = false) {
+    translateStaticDom();
+    if (els.languageSelect) {
+      els.languageSelect.value = state.lang;
+    }
+    state.locationOptions = buildLocationOptions(state.locationCodes);
+    state.clientsSettingsSignature = "";
+    maybeRenderClientsSettingsList(true);
+    renderSpeedReadout();
+    renderLoggingStatus();
+    renderLogsTable();
+    renderReportSelect();
+    renderVibrationLog();
+    renderMatrix();
+    els.linkState.textContent = t("ws.connecting");
+    if (state.spectrumPlot) {
+      state.spectrumPlot.destroy();
+      state.spectrumPlot = null;
+      renderSpectrum();
+    }
+    if (forceReloadInsights && state.selectedLogName) {
+      void loadReportInsights();
+    }
+  }
 
   Object.assign(state.vehicleSettings, buildRecommendedBandDefaults(state.vehicleSettings));
 
@@ -339,11 +403,11 @@
 
   function renderSpeedReadout() {
     if (typeof state.speedMps === "number") {
-      els.speed.textContent = `Speed: ${fmt(state.speedMps, 2)} m/s (GPS)`;
+      els.speed.textContent = t("speed.gps", { value: fmt(state.speedMps, 2) });
       return;
     }
     const spd = effectiveSpeedMps();
-    els.speed.textContent = spd ? `Speed: ${fmt(spd, 2)} m/s (Override)` : "Speed: -- m/s";
+    els.speed.textContent = spd ? t("speed.override", { value: fmt(spd, 2) }) : t("speed.none");
   }
 
   function combinedRelativeUncertainty(...parts) {
@@ -433,17 +497,17 @@
       state.spectrumPlot.destroy();
       state.spectrumPlot = null;
     }
-    const series = [{ label: "Hz" }];
+    const series = [{ label: t("chart.axis.hz") }];
     for (const item of seriesMeta) {
       series.push({ label: item.label, stroke: item.color, width: 2 });
     }
     state.spectrumPlot = new uPlot(
       {
-        title: "Multi-Sensor Blended Spectrum",
+        title: t("chart.spectrum_title"),
         width: chartWidth(els.specChart),
         height: 360,
         scales: { x: { time: false } },
-        axes: [{ label: "Hz" }, { label: "Amplitude" }],
+        axes: [{ label: t("chart.axis.hz") }, { label: t("chart.axis.amplitude") }],
         series,
         plugins: [bandPlugin()],
       },
@@ -472,12 +536,18 @@
   }
 
   function locationCodeForClient(client) {
-    const match = state.locationOptions.find((loc) => loc.label === client.name);
+    const name = String(client?.name || "").trim();
+    if (!name) return "";
+    for (const code of state.locationCodes) {
+      const labels = I18N.getForAllLangs(`location.${code}`);
+      if (labels.some((label) => label === name)) return code;
+    }
+    const match = state.locationOptions.find((loc) => loc.label === name);
     return match ? match.code : "";
   }
 
   function locationOptionsMarkup(selectedCode) {
-    const opts = [`<option value="">Select location</option>`];
+    const opts = [`<option value="">${escapeHtml(t("settings.select_location"))}</option>`];
     for (const loc of state.locationOptions) {
       const selectedAttr = loc.code === selectedCode ? " selected" : "";
       opts.push(
@@ -528,14 +598,14 @@
   function renderClientsSettingsList() {
     if (!els.clientsSettingsBody) return;
     if (!state.clients.length) {
-      els.clientsSettingsBody.innerHTML = `<tr><td colspan="5">No clients detected yet.</td></tr>`;
+      els.clientsSettingsBody.innerHTML = `<tr><td colspan="5">${escapeHtml(t("settings.no_clients"))}</td></tr>`;
       return;
     }
     els.clientsSettingsBody.innerHTML = state.clients
       .map((client) => {
         const selectedCode = locationCodeForClient(client);
         const connected = Boolean(client.connected);
-        const statusText = connected ? "Online" : "Offline";
+        const statusText = connected ? t("status.online") : t("status.offline");
         const statusClass = connected ? "online" : "offline";
         const macAddress = client.mac_address || client.id;
         return `
@@ -551,8 +621,8 @@
             ${locationOptionsMarkup(selectedCode)}
           </select>
         </td>
-        <td><button class="row-action row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>Identify</button></td>
-        <td><button class="row-action warn row-remove" data-client-id="${escapeHtml(client.id)}">Remove</button></td>
+        <td><button class="row-action row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td>
+        <td><button class="row-action warn row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td>
       </tr>`;
       })
       .join("");
@@ -586,15 +656,16 @@
 
   function renderStatus(clientRow) {
     if (!clientRow) {
-      els.lastSeen.textContent = "Last seen: --";
-      els.dropped.textContent = "Dropped frames: --";
-      els.framesTotal.textContent = "Frames total: --";
+      els.lastSeen.textContent = t("status.last_seen_none");
+      els.dropped.textContent = t("status.dropped", { value: "--" });
+      els.framesTotal.textContent = t("status.frames_total", { value: "--" });
       return;
     }
     const age = clientRow.last_seen_age_ms ?? null;
-    els.lastSeen.textContent = age === null ? "Last seen: --" : `Last seen: ${age} ms ago`;
-    els.dropped.textContent = `Dropped frames: ${clientRow.dropped_frames ?? 0}`;
-    els.framesTotal.textContent = `Frames total: ${clientRow.frames_total ?? 0}`;
+    els.lastSeen.textContent =
+      age === null ? t("status.last_seen_none") : t("status.last_seen", { value: `${age} ms ago` });
+    els.dropped.textContent = t("status.dropped", { value: clientRow.dropped_frames ?? 0 });
+    els.framesTotal.textContent = t("status.frames_total", { value: clientRow.frames_total ?? 0 });
   }
 
   async function apiJson(url, options) {
@@ -605,12 +676,47 @@
     return resp.json();
   }
 
+  async function syncSpeedOverrideToServer(speedKmh) {
+    const normalized = typeof speedKmh === "number" && speedKmh > 0 ? speedKmh : null;
+    try {
+      const payload = await apiJson("/api/speed-override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ speed_kmh: normalized }),
+      });
+      if (typeof payload?.speed_kmh === "number") {
+        state.vehicleSettings.speed_override_kmh = payload.speed_kmh;
+      }
+    } catch (_err) {
+      // Ignore transient API errors; UI can still use local override for charting.
+    }
+  }
+
+  async function syncAnalysisSettingsToServer() {
+    const payload = {
+      tire_width_mm: state.vehicleSettings.tire_width_mm,
+      tire_aspect_pct: state.vehicleSettings.tire_aspect_pct,
+      rim_in: state.vehicleSettings.rim_in,
+      final_drive_ratio: state.vehicleSettings.final_drive_ratio,
+      current_gear_ratio: state.vehicleSettings.current_gear_ratio,
+    };
+    try {
+      await apiJson("/api/analysis-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (_err) {
+      // Keep UI local settings even if backend update fails transiently.
+    }
+  }
+
   function renderLoggingStatus() {
     const status = state.loggingStatus || { enabled: false, current_file: null };
     const on = Boolean(status.enabled);
-    els.loggingStatus.textContent = on ? "Running" : "Stopped";
+    els.loggingStatus.textContent = on ? t("status.running") : t("status.stopped");
     els.loggingStatus.className = `badge ${on ? "on" : "off"}`;
-    els.currentLogFile.textContent = `Current file: ${status.current_file || "--"}`;
+    els.currentLogFile.textContent = t("status.current_file", { value: status.current_file || "--" });
   }
 
   async function refreshLoggingStatus() {
@@ -618,7 +724,7 @@
       state.loggingStatus = await apiJson("/api/logging/status");
       renderLoggingStatus();
     } catch (_err) {
-      els.loggingStatus.textContent = "Unavailable";
+      els.loggingStatus.textContent = t("status.unavailable");
       els.loggingStatus.className = "badge off";
     }
   }
@@ -651,7 +757,7 @@
     if (!state.logs.length) {
       const opt = document.createElement("option");
       opt.value = "";
-      opt.textContent = "No logs available";
+      opt.textContent = t("logs.no_available");
       els.reportLogSelect.appendChild(opt);
       state.selectedLogName = null;
       return;
@@ -671,21 +777,26 @@
   async function refreshLocationOptions() {
     try {
       const payload = await apiJson("/api/client-locations");
-      state.locationOptions = Array.isArray(payload.locations) ? payload.locations : [];
+      const codes = Array.isArray(payload.locations)
+        ? payload.locations.map((row) => row?.code).filter((code) => typeof code === "string")
+        : [];
+      state.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
+      state.locationOptions = buildLocationOptions(state.locationCodes);
     } catch (_err) {
-      state.locationOptions = defaultLocationOptions.slice();
+      state.locationCodes = defaultLocationCodes.slice();
+      state.locationOptions = buildLocationOptions(state.locationCodes);
     }
     maybeRenderClientsSettingsList(true);
   }
 
   function renderLogsTable() {
     if (!state.logs.length) {
-      els.logsSummary.textContent = "No log files yet.";
-      els.logsTableBody.innerHTML = `<tr><td colspan="4">No logs found.</td></tr>`;
+      els.logsSummary.textContent = t("logs.none");
+      els.logsTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("logs.none_found"))}</td></tr>`;
       renderReportSelect();
       return;
     }
-    els.logsSummary.textContent = `${state.logs.length} log file(s) available`;
+    els.logsSummary.textContent = t("logs.available_count", { count: state.logs.length });
     els.logsTableBody.innerHTML = state.logs
       .map(
         (row) => `
@@ -694,8 +805,9 @@
         <td>${fmtTs(row.updated_at)}</td>
         <td>${fmtBytes(row.size_bytes)}</td>
         <td>
-          <button class="select-log-btn" data-log="${row.name}">Use In Report</button>
-          <a href="/api/logs/${encodeURIComponent(row.name)}" target="_blank" rel="noopener">CSV</a>
+          <button class="select-log-btn" data-log="${row.name}">${escapeHtml(t("logs.use_in_report"))}</button>
+          <a href="/api/logs/${encodeURIComponent(row.name)}" target="_blank" rel="noopener">${escapeHtml(t("logs.raw"))}</a>
+          <button class="warn delete-log-btn" data-log="${row.name}">${escapeHtml(t("logs.delete"))}</button>
         </td>
       </tr>`,
       )
@@ -705,6 +817,12 @@
         const logName = btn.dataset.log || null;
         selectLog(logName);
         setActiveView("reportView");
+      });
+    });
+    els.logsTableBody.querySelectorAll(".delete-log-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const logName = btn.dataset.log || "";
+        await deleteLog(logName);
       });
     });
     renderReportSelect();
@@ -721,26 +839,70 @@
     }
   }
 
-  function renderInsights(summary) {
-    if (!summary || typeof summary !== "object") {
-      els.reportInsights.textContent = "No report insights available for this run.";
+  async function deleteLog(logName) {
+    if (!logName) return;
+    const ok = window.confirm(t("logs.delete_confirm", { name: logName }));
+    if (!ok) return;
+    const resp = await fetch(`/api/logs/${encodeURIComponent(logName)}`, {
+      method: "DELETE",
+    });
+    if (!resp.ok) {
+      let message = t("logs.delete_failed");
+      try {
+        const payload = await resp.json();
+        if (payload?.detail) message = String(payload.detail);
+      } catch (_err) {}
+      window.alert(message);
       return;
     }
-    const causes = Array.isArray(summary.top_causes) ? summary.top_causes : [];
-    const causeRows = causes.length
-      ? causes
-          .map((c) => `<p><strong>${c.cause}</strong> (${c.count}): ${c.insight}</p>`)
-          .join("")
-      : "<p>No high-confidence vibration signatures found in this run.</p>";
+    if (state.selectedLogName === logName) {
+      state.selectedLogName = null;
+    }
+    await refreshLogs();
+  }
+
+  function renderInsights(summary) {
+    if (!summary || typeof summary !== "object") {
+      els.reportInsights.textContent = t("report.no_insights");
+      return;
+    }
+    const findings = Array.isArray(summary.findings) ? summary.findings : [];
+    const topFindings = findings
+      .slice(0, 4)
+      .map((f) => {
+        const confidence = typeof f.confidence_0_to_1 === "number" ? fmt(f.confidence_0_to_1, 2) : "0.00";
+        const source = f.suspected_source || "unknown";
+        const detail = f.evidence_summary || "";
+        return `<p><strong>${source}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}): ${detail}</p>`;
+      })
+      .join("");
+    const speedCoverage = summary?.data_quality?.speed_coverage || {};
+    const speedPct =
+      typeof speedCoverage.non_null_pct === "number"
+        ? `${fmt(speedCoverage.non_null_pct, 1)}%`
+        : t("report.missing");
+    const speedMin =
+      typeof speedCoverage.min_kmh === "number" ? fmt(speedCoverage.min_kmh, 1) : t("report.missing");
+    const speedMax =
+      typeof speedCoverage.max_kmh === "number" ? fmt(speedCoverage.max_kmh, 1) : t("report.missing");
+    const rawSampleRate =
+      typeof summary.raw_sample_rate_hz === "number"
+        ? `${fmt(summary.raw_sample_rate_hz, 1)} Hz`
+        : t("report.missing");
+    const skippedReason =
+      typeof summary.speed_breakdown_skipped_reason === "string"
+        ? `<p><strong>${escapeHtml(t("report.speed_analysis"))}:</strong> ${summary.speed_breakdown_skipped_reason}</p>`
+        : "";
     els.reportInsights.innerHTML = `
-      <p><strong>File:</strong> ${summary.file_name || "--"}</p>
-      <p><strong>Duration:</strong> ${fmt(summary.duration_s, 1)} s</p>
-      <p><strong>Rows:</strong> ${summary.rows || 0}</p>
-      <p><strong>Mean Peak Frequency:</strong> ${fmt(summary.mean_peak1_hz, 2)} Hz</p>
-      <p><strong>Max P2P:</strong> ${fmt(summary.max_p2p, 2)}</p>
-      <p><strong>Dropped Frames (max):</strong> ${summary.dropped_frames_max || 0}</p>
+      <p><strong>${escapeHtml(t("report.file"))}:</strong> ${summary.file_name || "--"}</p>
+      <p><strong>${escapeHtml(t("report.run_id"))}:</strong> ${summary.run_id || t("report.missing")}</p>
+      <p><strong>${escapeHtml(t("report.duration"))}:</strong> ${fmt(summary.duration_s, 1)} s</p>
+      <p><strong>${escapeHtml(t("report.rows"))}:</strong> ${summary.rows || 0}</p>
+      <p><strong>${escapeHtml(t("report.raw_sample_rate"))}:</strong> ${rawSampleRate}</p>
+      <p><strong>${escapeHtml(t("report.speed_coverage"))}:</strong> ${speedPct} (${speedMin}-${speedMax} km/h)</p>
       <hr />
-      ${causeRows}
+      ${skippedReason}
+      ${topFindings || `<p>${escapeHtml(t("report.no_findings_for_run"))}</p>`}
     `;
   }
 
@@ -749,10 +911,12 @@
     if (!logName) return;
     selectLog(logName);
     try {
-      const summary = await apiJson(`/api/logs/${encodeURIComponent(logName)}/insights`);
+      const summary = await apiJson(
+        `/api/logs/${encodeURIComponent(logName)}/insights?lang=${encodeURIComponent(state.lang)}`,
+      );
       renderInsights(summary);
     } catch (_err) {
-      els.reportInsights.textContent = "Unable to load insights for selected log.";
+      els.reportInsights.textContent = t("report.unable_load_insights");
     }
   }
 
@@ -760,7 +924,11 @@
     const logName = els.reportLogSelect.value;
     if (!logName) return;
     selectLog(logName);
-    window.open(`/api/logs/${encodeURIComponent(logName)}/report.pdf`, "_blank", "noopener");
+    window.open(
+      `/api/logs/${encodeURIComponent(logName)}/report.pdf?lang=${encodeURIComponent(state.lang)}`,
+      "_blank",
+      "noopener",
+    );
   }
 
   function calculateBands() {
@@ -796,17 +964,24 @@
       engineUncertaintyPct,
     );
     const out = [
-      mk("Wheel 1x", wheelHz, wheelSpread, "rgba(42,157,143,0.14)"),
-      mk("Wheel 2x", wheelHz * 2, wheelSpread, "rgba(42,157,143,0.11)"),
+      mk(t("bands.wheel_1x"), wheelHz, wheelSpread, "rgba(42,157,143,0.14)"),
+      mk(t("bands.wheel_2x"), wheelHz * 2, wheelSpread, "rgba(42,157,143,0.11)"),
     ];
     const overlapTol = Math.max(0.03, driveUncertaintyPct + engineUncertaintyPct);
     if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < overlapTol) {
-      out.push(mk("Driveshaft+Engine 1x", driveHz, Math.max(driveSpread, engineSpread), "rgba(120,95,180,0.15)"));
+      out.push(
+        mk(
+          t("bands.driveshaft_engine_1x"),
+          driveHz,
+          Math.max(driveSpread, engineSpread),
+          "rgba(120,95,180,0.15)",
+        ),
+      );
     } else {
-      out.push(mk("Driveshaft 1x", driveHz, driveSpread, "rgba(58,134,255,0.14)"));
-      out.push(mk("Engine 1x", engineHz, engineSpread, "rgba(230,57,70,0.14)"));
+      out.push(mk(t("bands.driveshaft_1x"), driveHz, driveSpread, "rgba(58,134,255,0.14)"));
+      out.push(mk(t("bands.engine_1x"), engineHz, engineSpread, "rgba(230,57,70,0.14)"));
     }
-    out.push(mk("Engine 2x", engineHz * 2, engineSpread, "rgba(230,57,70,0.11)"));
+    out.push(mk(t("bands.engine_2x"), engineHz * 2, engineSpread, "rgba(230,57,70,0.11)"));
     return out;
   }
 
@@ -818,7 +993,7 @@
 
   function renderVibrationLog() {
     if (!state.vibrationMessages.length) {
-      els.vibrationLog.innerHTML = `<div class="log-row">No significant vibration events yet.</div>`;
+      els.vibrationLog.innerHTML = `<div class="log-row">${escapeHtml(t("vibration.none"))}</div>`;
       return;
     }
     els.vibrationLog.innerHTML = state.vibrationMessages
@@ -854,13 +1029,13 @@
         engineUncertaintyPct,
       );
       candidates.push({
-        cause: "Wheel/Tire imbalance or radial force variation",
+        cause: t("cause.wheel1"),
         hz: wheelHz,
         tol: wheelTol,
         key: "wheel1",
       });
       candidates.push({
-        cause: "Tire non-uniformity or wheel resonance",
+        cause: t("cause.wheel2"),
         hz: wheelHz * 2,
         tol: wheelTol,
         key: "wheel2",
@@ -868,27 +1043,27 @@
       const overlapTol = Math.max(0.03, driveUncertaintyPct + engineUncertaintyPct);
       if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < overlapTol) {
         candidates.push({
-          cause: "Driveshaft/Engine 1x overlap (same order in current gear)",
+          cause: t("cause.shaft_eng1"),
           hz: driveHz,
           tol: Math.max(driveTol, engineTol),
           key: "shaft_eng1",
         });
       } else {
         candidates.push({
-          cause: "Drive shaft imbalance or driveline angle issue",
+          cause: t("cause.shaft1"),
           hz: driveHz,
           tol: driveTol,
           key: "shaft1",
         });
         candidates.push({
-          cause: "Engine order vibration (mount/combustion/accessory related)",
+          cause: t("cause.eng1"),
           hz: engineHz,
           tol: engineTol,
           key: "eng1",
         });
       }
       candidates.push({
-        cause: "Engine second-order vibration (common in 4-cylinder NVH)",
+        cause: t("cause.eng2"),
         hz: engineHz * 2,
         tol: engineTol,
         key: "eng2",
@@ -905,8 +1080,8 @@
       }
     }
     if (best) return best;
-    if (peakHz >= 3 && peakHz <= 12) return { cause: "Road input / suspension or body resonance", key: "road" };
-    return { cause: "Further diagnostics needed", key: "other" };
+    if (peakHz >= 3 && peakHz <= 12) return { cause: t("cause.road"), key: "road" };
+    return { cause: t("cause.other"), key: "other" };
   }
 
   function sourceKeysFromClassKey(classKey) {
@@ -923,7 +1098,7 @@
     const adjustedDb = sensorCount >= 2 ? db + 2 : db;
     for (const band of severityBands) {
       if (adjustedDb >= band.minDb && adjustedDb < band.maxDb) {
-        return { key: band.key, label: band.label, db: adjustedDb };
+        return { key: band.key, labelKey: band.labelKey, db: adjustedDb };
       }
     }
     return null;
@@ -947,12 +1122,15 @@
     const band = severityBands.find((b) => b.key === severityKey);
     const cell = state.eventMatrix[sourceKey]?.[severityKey];
     if (!cell || cell.count === 0) {
-      return `${source?.label || sourceKey} / ${band?.label || severityKey}\nNo events yet.`;
+      return `${t(source?.labelKey || sourceKey)} / ${t(band?.labelKey || severityKey)}\n${t("tooltip.no_events")}`;
     }
-    const parts = [`${source?.label || sourceKey} / ${band?.label || severityKey}`, `Total events: ${cell.count}`];
+    const parts = [
+      `${t(source?.labelKey || sourceKey)} / ${t(band?.labelKey || severityKey)}`,
+      t("tooltip.total_events", { count: cell.count }),
+    ];
     const entries = Object.entries(cell.contributors).sort((a, b) => b[1] - a[1]);
     if (entries.length) {
-      parts.push("By sensor scope:");
+      parts.push(t("tooltip.by_sensor_scope"));
       for (const [name, cnt] of entries) parts.push(`- ${name}: ${cnt}`);
     }
     return parts.join("\n");
@@ -1002,10 +1180,9 @@
   function renderMatrix() {
     if (!els.vibrationMatrix) return;
     hideMatrixTooltip();
-    const header = (
-      `<thead><tr><th>Amplitude Group</th>` +
-      `${sourceColumns.map((s) => `<th>${s.label}</th>`).join("")}</tr></thead>`
-    );
+    const header = `<thead><tr><th>${escapeHtml(t("matrix.amplitude_group"))}</th>${sourceColumns
+      .map((s) => `<th>${escapeHtml(t(s.labelKey))}</th>`)
+      .join("")}</tr></thead>`;
     const bodyRows = severityBands
       .map((band) => {
         const cells = sourceColumns
@@ -1014,7 +1191,7 @@
             return `<td class="vib-cell" data-source="${src.key}" data-severity="${band.key}">${val}</td>`;
           })
           .join("");
-        return `<tr><td>${band.label}</td>${cells}</tr>`;
+        return `<tr><td>${escapeHtml(t(band.labelKey))}</td>${cells}</tr>`;
       })
       .join("");
     els.vibrationMatrix.innerHTML = `${header}<tbody>${bodyRows}</tbody>`;
@@ -1204,9 +1381,14 @@
       const srcKeys = sourceKeysFromClassKey(group[0].cls.key);
       updateMatrixCells(srcKeys, sev.key, `combined(${labels.join(", ")})`);
       pushVibrationMessage(
-        `Strong multi-sensor vibration detected on ${group.length} sensors [${labels.join(", ")}]. ` +
-          `Frequency and amplitude are ${fmt(avgHz, 2)} Hz and ${fmt(avgAmp, 1)}. ` +
-          `Severity: ${sev.label}. Most likely cause: ${group[0].cls.cause}.`,
+        t("msg.multi_detected", {
+          count: group.length,
+          labels: labels.join(", "),
+          hz: fmt(avgHz, 2),
+          amp: fmt(avgAmp, 1),
+          severity: t(sev.labelKey),
+          cause: group[0].cls.cause,
+        }),
       );
     }
 
@@ -1221,9 +1403,13 @@
       const srcKeys = sourceKeysFromClassKey(ev.cls.key);
       updateMatrixCells(srcKeys, sev.key, ev.sensorLabel);
       pushVibrationMessage(
-        `Vibration detected by sensor ${ev.sensorLabel}. ` +
-          `Frequency and amplitude are ${fmt(ev.peakHz, 2)} Hz and ${fmt(ev.peakAmp, 1)}. ` +
-          `Severity: ${sev.label}. Most likely cause: ${ev.cls.cause}.`,
+        t("msg.single_detected", {
+          sensor: ev.sensorLabel,
+          hz: fmt(ev.peakHz, 2),
+          amp: fmt(ev.peakAmp, 1),
+          severity: t(sev.labelKey),
+          cause: ev.cls.cause,
+        }),
       );
     }
     renderMatrix();
@@ -1239,7 +1425,7 @@
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
     state.ws = new WebSocket(`${proto}//${window.location.host}/ws`);
     state.ws.onopen = () => {
-      els.linkState.textContent = "WS: connected";
+      els.linkState.textContent = t("ws.connected");
       els.linkState.className = "panel status-ok";
       sendSelection();
     };
@@ -1254,7 +1440,7 @@
       queueRender();
     };
     state.ws.onclose = () => {
-      els.linkState.textContent = "WS: reconnecting...";
+      els.linkState.textContent = t("ws.reconnecting");
       els.linkState.className = "panel status-bad";
       window.setTimeout(connectWS, 1200);
     };
@@ -1314,7 +1500,7 @@
       body: JSON.stringify({ location_code: locationCode }),
     });
     if (!resp.ok) {
-      let message = "Failed to set location.";
+      let message = t("actions.set_location_failed");
       try {
         const payload = await resp.json();
         if (payload?.detail) message = String(payload.detail);
@@ -1341,13 +1527,13 @@
 
   async function removeClient(clientId) {
     if (!clientId) return;
-    const ok = window.confirm(`Remove client ${clientId} from the list?`);
+    const ok = window.confirm(t("actions.remove_client_confirm", { id: clientId }));
     if (!ok) return;
     const resp = await fetch(`/api/clients/${encodeURIComponent(clientId)}`, {
       method: "DELETE",
     });
     if (!resp.ok) {
-      let message = "Failed to remove client.";
+      let message = t("actions.remove_client_failed");
       try {
         const payload = await resp.json();
         if (payload?.detail) message = String(payload.detail);
@@ -1432,6 +1618,8 @@
     state.vehicleSettings.band_tolerance_model_version = bandToleranceModelVersion;
     state.vehicleSettings.speed_override_kmh = speedOverride;
     saveVehicleSettings();
+    void syncAnalysisSettingsToServer();
+    void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
     renderSpectrum();
     renderSpeedReadout();
   }
@@ -1441,6 +1629,7 @@
     if (!(speedOverride >= 0)) return;
     state.vehicleSettings.speed_override_kmh = speedOverride;
     saveVehicleSettings();
+    void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
     renderSpectrum();
     renderSpeedReadout();
   }
@@ -1467,6 +1656,13 @@
   if (els.applySpeedOverrideBtn) {
     els.applySpeedOverrideBtn.addEventListener("click", applySpeedOverrideFromInput);
   }
+  if (els.languageSelect) {
+    els.languageSelect.value = state.lang;
+    els.languageSelect.addEventListener("change", () => {
+      saveLanguage(els.languageSelect.value);
+      applyLanguage(true);
+    });
+  }
   els.speedOverrideInput.addEventListener("keydown", (ev) => {
     if (ev.key === "Enter") {
       ev.preventDefault();
@@ -1480,11 +1676,11 @@
 
   loadVehicleSettings();
   syncSettingsInputs();
-  renderVibrationLog();
-  renderMatrix();
-  renderLoggingStatus();
+  applyLanguage(false);
   setActiveView("dashboardView");
   refreshLocationOptions();
+  void syncAnalysisSettingsToServer();
+  void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
   refreshLoggingStatus();
   refreshLogs();
   connectWS();

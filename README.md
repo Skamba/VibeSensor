@@ -7,6 +7,7 @@ End-to-end prototype for local/offline car vibration sensing:
 - Pi computes live waveform + FFT spectrum + metrics and serves a mobile-friendly web UI
 - Multi-client registry supports naming and identify blink command
 - Dev simulator provides reproducible CI/local testing without Pi/ESP hardware
+- Diagnostics/report pipeline uses reproducible run logs (`.jsonl`) with explicit references
 
 Hardware list and wiring notes: `hardware/README.md`
 
@@ -52,6 +53,26 @@ In the dashboard Vehicle Settings panel, tire settings are split into 3 fields
 Open:
 
 - `http://localhost:8000`
+
+## Diagnostics v2 (Schema + Reporting)
+
+Run logs are written as `metrics_*.jsonl` records with required metadata and
+required per-sample fields (`t_s`, `speed_kmh`, `accel_x_g/y_g/z_g`).
+
+Schema reference:
+
+- `docs/run_schema_v2.md`
+
+Generate a report from a saved run:
+
+```bash
+vibesensor-report pi/data/metrics_20260215_120000.jsonl
+```
+
+If speed or sample-rate references are missing, the report degrades gracefully:
+
+- speed-binned and wheel-order sections are skipped with explicit reason text
+- findings include `reference missing` entries instead of speculative order labels
 
 ## Local Test In Docker (No AP/Hotspot)
 

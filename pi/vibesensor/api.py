@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
@@ -29,6 +29,18 @@ class SetLocationRequest(BaseModel):
     location_code: str = Field(min_length=1, max_length=64)
 
 
+class SpeedOverrideRequest(BaseModel):
+    speed_kmh: float | None = Field(default=None, ge=0)
+
+
+class AnalysisSettingsRequest(BaseModel):
+    tire_width_mm: float = Field(gt=0)
+    tire_aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
+    final_drive_ratio: float = Field(gt=0)
+    current_gear_ratio: float = Field(gt=0)
+
+
 def _log_dir(state: RuntimeState) -> Path:
     return state.config.logging.metrics_csv_path.parent
 
@@ -42,8 +54,8 @@ def _normalize_client_id_or_400(client_id: str) -> str:
 
 def _safe_log_path(state: RuntimeState, log_name: str) -> Path:
     candidate = Path(log_name).name
-    if not candidate.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Log name must be a .csv file")
+    if Path(candidate).suffix.lower() != ".jsonl":
+        raise HTTPException(status_code=400, detail="Log name must be a .jsonl file")
     path = (_log_dir(state) / candidate).resolve()
     try:
         path.relative_to(_log_dir(state).resolve())
@@ -59,7 +71,7 @@ def _list_logs(state: RuntimeState) -> list[dict]:
     log_dir = _log_dir(state)
     if not log_dir.exists():
         return out
-    for path in sorted(log_dir.glob("*.csv"), reverse=True):
+    for path in sorted(log_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
         stat = path.stat()
         out.append(
             {
@@ -81,6 +93,26 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.get("/api/client-locations")
     async def get_client_locations() -> dict:
         return {"locations": all_locations()}
+
+    @router.get("/api/speed-override")
+    async def get_speed_override() -> dict:
+        override_mps = state.gps_monitor.override_speed_mps
+        speed_kmh = (override_mps * 3.6) if isinstance(override_mps, (int, float)) else None
+        return {"speed_kmh": speed_kmh}
+
+    @router.post("/api/speed-override")
+    async def set_speed_override(req: SpeedOverrideRequest) -> dict:
+        speed_kmh = state.gps_monitor.set_speed_override_kmh(req.speed_kmh)
+        return {"speed_kmh": speed_kmh}
+
+    @router.get("/api/analysis-settings")
+    async def get_analysis_settings() -> dict:
+        return state.analysis_settings.snapshot()
+
+    @router.post("/api/analysis-settings")
+    async def set_analysis_settings(req: AnalysisSettingsRequest) -> dict:
+        updated = state.analysis_settings.update(req.model_dump())
+        return updated
 
     @router.post("/api/clients/{client_id}/rename")
     async def rename_client(client_id: str, req: RenameRequest) -> dict:
@@ -150,17 +182,29 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.get("/api/logs/{log_name}")
     async def download_log(log_name: str) -> FileResponse:
         path = _safe_log_path(state, log_name)
-        return FileResponse(path, media_type="text/csv", filename=path.name)
+        return FileResponse(path, media_type="application/x-ndjson", filename=path.name)
+
+    @router.delete("/api/logs/{log_name}")
+    async def delete_log(log_name: str) -> dict:
+        path = _safe_log_path(state, log_name)
+        status = state.metrics_logger.status()
+        active_file = status.get("current_file")
+        if status.get("enabled") and isinstance(active_file, str) and active_file == path.name:
+            raise HTTPException(status_code=409, detail="Cannot delete active log while logging")
+        path.unlink()
+        return {"name": path.name, "status": "deleted"}
 
     @router.get("/api/logs/{log_name}/insights")
-    async def get_log_insights(log_name: str) -> dict:
+    async def get_log_insights(log_name: str, lang: str | None = Query(default=None)) -> dict:
         path = _safe_log_path(state, log_name)
-        return summarize_log(path)
+        return summarize_log(path, lang=lang)
 
     @router.get("/api/logs/{log_name}/report.pdf")
-    async def download_report_pdf(log_name: str) -> Response:
+    async def download_report_pdf(
+        log_name: str, lang: str | None = Query(default=None)
+    ) -> Response:
         path = _safe_log_path(state, log_name)
-        summary = summarize_log(path)
+        summary = summarize_log(path, lang=lang)
         pdf = build_report_pdf(summary)
         return Response(
             content=pdf,
