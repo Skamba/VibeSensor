@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT / "pi"))
 from vibesensor.protocol import (  # noqa: E402
     CMD_IDENTIFY,
     MSG_CMD,
+    client_id_mac,
     pack_ack,
     pack_data,
     pack_hello,
@@ -155,13 +156,17 @@ class SimClient:
     def profile(self) -> Profile:
         return PROFILE_LIBRARY[self.profile_name]
 
+    @property
+    def mac_address(self) -> str:
+        return client_id_mac(self.client_id)
+
     def pulse(self, strength: float) -> None:
         vec = np.asarray(self.profile.bump_strength, dtype=np.float32)
         self.bump_state += vec * np.float32(strength)
 
     def summary(self) -> str:
         return (
-            f"{self.name} id={self.client_id.hex()} profile={self.profile_name} "
+            f"{self.name} id={self.client_id.hex()} mac={self.mac_address} profile={self.profile_name} "
             f"amp={self.amp_scale:.2f} noise={self.noise_scale:.2f} "
             f"scene={self.scene_mode}:{self.scene_gain:.2f} "
             f"common={self.common_event_gain:.2f} paused={self.paused} "
@@ -260,7 +265,16 @@ class DataProtocol(asyncio.DatagramProtocol):
 
 def make_client_id(seed: int) -> bytes:
     rng = random.Random(seed)
-    return bytes([0xD0, 0x5A, rng.randrange(0, 255), rng.randrange(0, 255), rng.randrange(0, 255), seed & 0xFF])
+    return bytes(
+        [
+            0x02,  # locally administered unicast
+            0x5A,
+            rng.randrange(0, 255),
+            rng.randrange(0, 255),
+            rng.randrange(0, 255),
+            seed & 0xFF,
+        ]
+    )
 
 
 def _normalize_http_host(host: str) -> str:
@@ -357,6 +371,9 @@ def find_targets(clients: list[SimClient], token: str) -> list[SimClient]:
     by_id = [c for c in clients if c.client_id.hex() == target]
     if by_id:
         return by_id
+    by_mac = [c for c in clients if c.mac_address == target]
+    if by_mac:
+        return by_mac
     return []
 
 
@@ -674,8 +691,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--server-host", default="127.0.0.1")
     parser.add_argument("--server-data-port", type=int, default=9000)
     parser.add_argument("--server-control-port", type=int, default=9001)
-    parser.add_argument("--count", type=int, default=3)
-    parser.add_argument("--names", default="front-left,front-right,rear")
+    parser.add_argument("--count", type=int, default=5)
+    parser.add_argument("--names", default="front-left,front-right,rear-left,rear-right,trunk")
     parser.add_argument("--sample-rate-hz", type=int, default=800)
     parser.add_argument("--frame-samples", type=int, default=200)
     parser.add_argument("--hello-interval", type=float, default=2.0)

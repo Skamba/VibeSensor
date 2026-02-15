@@ -18,7 +18,7 @@ python -m pip install -e ".[dev]"
 python -m vibesensor.app --config "${PI_DIR}/config.dev.yaml" &
 SERVER_PID=$!
 
-python "${REPO_DIR}/tools/simulator/sim_sender.py" --count 3 --server-host 127.0.0.1 &
+python "${REPO_DIR}/tools/simulator/sim_sender.py" --count 5 --server-host 127.0.0.1 &
 SIM_PID=$!
 
 cleanup() {
