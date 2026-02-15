@@ -49,6 +49,7 @@ __pycache__/
 
 # Runtime data
 pi/data/*.csv
+pi/data/*.jsonl
 pi/data/clients.json
 pi/wifi-secrets.env
 

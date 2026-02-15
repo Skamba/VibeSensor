@@ -27,6 +27,7 @@ dev = [
 
 [project.scripts]
 vibesensor-server = "vibesensor.app:main"
+vibesensor-report = "vibesensor.report_cli:main"
 
 [tool.setuptools]
 packages = ["vibesensor"]

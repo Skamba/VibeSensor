@@ -1,30 +1,220 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from vibesensor.reports import build_report_pdf, summarize_log
 
 
-def test_summarize_log_and_pdf(tmp_path: Path) -> None:
-    csv_path = tmp_path / "metrics_20260215_120000.csv"
-    csv_path.write_text(
-        "\n".join(
-            [
-                "timestamp_iso,client_id,axis,rms,p2p,peak1_hz,peak1_amp,peak2_hz,peak2_amp,peak3_hz,peak3_amp,frames_dropped_total,queue_overflow_drops,speed_mps",
-                "2026-02-15T12:00:00+00:00,c1,x,1,2,12.0,5,20,3,35,2,0,0,22",
-                "2026-02-15T12:00:02+00:00,c2,y,2,3,24.0,6,11,2,36,1,5,0,22",
-            ]
-        ),
+def _write_jsonl(path: Path, records: list[dict]) -> None:
+    path.write_text(
+        "\n".join(json.dumps(record, separators=(",", ":")) for record in records) + "\n",
         encoding="utf-8",
     )
 
-    summary = summarize_log(csv_path)
-    assert summary["rows"] == 2
-    assert summary["duration_s"] == 2.0
-    assert summary["dropped_frames_max"] == 5
-    assert summary["top_causes"]
-    assert "diagnostic_result" in summary
-    assert "totals" in summary
+
+def _run_metadata(
+    *,
+    run_id: str,
+    raw_sample_rate_hz: int | None,
+    tire_circumference_m: float | None = None,
+    tire_width_mm: float | None = None,
+    tire_aspect_pct: float | None = None,
+    rim_in: float | None = None,
+    final_drive_ratio: float | None = None,
+    current_gear_ratio: float | None = None,
+) -> dict:
+    metadata = {
+        "record_type": "run_metadata",
+        "schema_version": "v2-jsonl",
+        "run_id": run_id,
+        "start_time_utc": "2026-02-15T12:00:00+00:00",
+        "end_time_utc": "2026-02-15T12:01:00+00:00",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": raw_sample_rate_hz,
+        "feature_interval_s": 0.5,
+        "fft_window_size_samples": 2048,
+        "fft_window_type": "hann",
+        "peak_picker_method": "max_peak_amp_across_axes",
+        "units": {
+            "t_s": "s",
+            "speed_kmh": "km/h",
+            "accel_x_g": "g",
+            "accel_y_g": "g",
+            "accel_z_g": "g",
+        },
+        "amplitude_definitions": {
+            "dominant_peak_amp_g": {"statistic": "Peak", "units": "g", "definition": "FFT peak"}
+        },
+        "incomplete_for_order_analysis": raw_sample_rate_hz is None,
+    }
+    if tire_circumference_m is not None:
+        metadata["tire_circumference_m"] = tire_circumference_m
+    if tire_width_mm is not None:
+        metadata["tire_width_mm"] = tire_width_mm
+    if tire_aspect_pct is not None:
+        metadata["tire_aspect_pct"] = tire_aspect_pct
+    if rim_in is not None:
+        metadata["rim_in"] = rim_in
+    if final_drive_ratio is not None:
+        metadata["final_drive_ratio"] = final_drive_ratio
+    if current_gear_ratio is not None:
+        metadata["current_gear_ratio"] = current_gear_ratio
+    return metadata
+
+
+def _sample(
+    idx: int,
+    *,
+    speed_kmh: float | None,
+    dominant_freq_hz: float,
+    dominant_peak_amp_g: float,
+) -> dict:
+    t_s = idx * 0.5
+    return {
+        "record_type": "sample",
+        "schema_version": "v2-jsonl",
+        "run_id": "run-01",
+        "timestamp_utc": f"2026-02-15T12:00:{idx:02d}+00:00",
+        "t_s": t_s,
+        "client_id": "c1",
+        "speed_kmh": speed_kmh,
+        "gps_speed_kmh": speed_kmh,
+        "engine_rpm": None,
+        "gear": None,
+        "accel_x_g": 0.03 + (idx * 0.0005),
+        "accel_y_g": 0.02 + (idx * 0.0003),
+        "accel_z_g": 0.01 + (idx * 0.0002),
+        "accel_magnitude_rms_g": 0.05 + (idx * 0.0007),
+        "accel_magnitude_p2p_g": 0.12 + (idx * 0.001),
+        "dominant_freq_hz": dominant_freq_hz,
+        "dominant_peak_amp_g": dominant_peak_amp_g,
+        "dominant_axis": "x",
+    }
+
+
+def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_complete.jsonl"
+    circumference_m = 2.20
+    records: list[dict] = [
+        _run_metadata(
+            run_id="run-01",
+            raw_sample_rate_hz=800,
+            tire_circumference_m=circumference_m,
+        )
+    ]
+    for idx in range(30):
+        speed = 40 + idx
+        wheel_hz = (speed / 3.6) / circumference_m
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=float(speed),
+                dominant_freq_hz=wheel_hz,
+                dominant_peak_amp_g=0.09 + (idx * 0.001),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    assert summary["rows"] == 30
+    assert not summary["speed_breakdown_skipped_reason"]
+    assert summary["speed_breakdown"]
+    assert summary["findings"]
+    assert any("order" in str(f.get("frequency_hz_or_order", "")) for f in summary["findings"])
+    plots = summary["plots"]
+    assert plots["accel_magnitude"]
+    assert plots["accel_axes"]["x"]
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
+
+
+def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_missing_speed.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(20):
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=None,
+                dominant_freq_hz=14.0,
+                dominant_peak_amp_g=0.08,
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    assert (
+        summary["speed_breakdown_skipped_reason"]
+        == "Speed data missing or insufficient; speed-binned and wheel-order analysis skipped."
+    )
+    assert summary["speed_breakdown"] == []
+    assert any(f.get("finding_id") == "REF_SPEED" for f in summary["findings"])
+    assert all(
+        "wheel order" not in str(f.get("frequency_hz_or_order", "")).lower()
+        for f in summary["findings"]
+    )
+
+    pdf = build_report_pdf(summary)
+    assert pdf.startswith(b"%PDF")
+
+
+def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_missing_sample_rate.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=None)]
+    for idx in range(20):
+        speed = 60 + idx
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=float(speed),
+                dominant_freq_hz=20.0,
+                dominant_peak_amp_g=0.06 + (idx * 0.0005),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    assert summary["raw_sample_rate_hz"] is None
+    assert any(f.get("finding_id") == "REF_SAMPLE_RATE" for f in summary["findings"])
+    assert summary["findings"]
+
+    pdf = build_report_pdf(summary)
+    assert pdf.startswith(b"%PDF")
+
+
+def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_derived_references.jsonl"
+    records: list[dict] = [
+        _run_metadata(
+            run_id="run-01",
+            raw_sample_rate_hz=800,
+            tire_width_mm=285,
+            tire_aspect_pct=30,
+            rim_in=21,
+            final_drive_ratio=3.08,
+            current_gear_ratio=0.64,
+        )
+    ]
+    for idx in range(28):
+        speed = 45 + idx
+        # close to 1x wheel order for these parameters
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=float(speed),
+                dominant_freq_hz=6.5 + (idx * 0.05),
+                dominant_peak_amp_g=0.08 + (idx * 0.0008),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    finding_ids = {str(f.get("finding_id")) for f in summary["findings"]}
+    assert "REF_WHEEL" not in finding_ids
+    assert "REF_ENGINE" not in finding_ids

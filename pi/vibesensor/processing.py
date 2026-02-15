@@ -250,6 +250,24 @@ class SignalProcessor:
             "metrics": buf.latest_metrics,
         }
 
+    def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
+        buf = self._buffers.get(client_id)
+        if buf is None or buf.count == 0:
+            return None
+        idx = (buf.write_idx - 1) % self.max_samples
+        return (
+            float(buf.data[0, idx]),
+            float(buf.data[1, idx]),
+            float(buf.data[2, idx]),
+        )
+
+    def latest_sample_rate_hz(self, client_id: str) -> int | None:
+        buf = self._buffers.get(client_id)
+        if buf is None:
+            return None
+        rate = int(buf.sample_rate_hz or 0)
+        return rate if rate > 0 else None
+
     def evict_clients(self, keep_client_ids: set[str]) -> None:
         stale_ids = [
             client_id

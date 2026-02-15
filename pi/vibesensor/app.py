@@ -12,6 +12,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
 from .config import PI_DIR, AppConfig, load_config
 from .gps_speed import GPSSpeedMonitor
@@ -33,6 +34,7 @@ class RuntimeState:
     control_plane: UDPControlPlane
     ws_hub: WebSocketHub
     gps_monitor: GPSSpeedMonitor
+    analysis_settings: AnalysisSettingsStore
     metrics_logger: MetricsLogger
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
@@ -96,12 +98,20 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         bind_port=config.udp.control_port,
     )
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
+    analysis_settings = AnalysisSettingsStore()
     metrics_logger = MetricsLogger(
         enabled=config.logging.log_metrics,
         csv_path=config.logging.metrics_csv_path,
         metrics_log_hz=config.logging.metrics_log_hz,
         registry=registry,
         gps_monitor=gps_monitor,
+        processor=processor,
+        analysis_settings=analysis_settings,
+        sensor_model=config.logging.sensor_model,
+        default_sample_rate_hz=config.processing.sample_rate_hz,
+        fft_window_size_samples=config.processing.fft_n,
+        fft_window_type="hann",
+        peak_picker_method="max_peak_amp_across_axes",
     )
 
     runtime = RuntimeState(
@@ -111,6 +121,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         control_plane=control_plane,
         ws_hub=ws_hub,
         gps_monitor=gps_monitor,
+        analysis_settings=analysis_settings,
         metrics_logger=metrics_logger,
     )
 
@@ -183,6 +194,8 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             task.cancel()
         await asyncio.gather(*runtime.tasks, return_exceptions=True)
         runtime.tasks.clear()
+
+        runtime.metrics_logger.stop_logging()
 
         runtime.control_plane.close()
         if runtime.data_transport is not None:
