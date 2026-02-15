@@ -51,7 +51,7 @@ class AnalysisSettingsRequest(BaseModel):
 
 
 def _log_dir(state: RuntimeState) -> Path:
-    return state.config.logging.metrics_csv_path.parent
+    return state.config.logging.metrics_log_path.parent
 
 
 def _normalize_client_id_or_400(client_id: str) -> str:

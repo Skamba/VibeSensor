@@ -25,7 +25,7 @@ class MetricsLogger:
     def __init__(
         self,
         enabled: bool,
-        csv_path: Path,
+        log_path: Path,
         metrics_log_hz: int,
         registry: ClientRegistry,
         gps_monitor: GPSSpeedMonitor,
@@ -38,7 +38,7 @@ class MetricsLogger:
         peak_picker_method: str = "max_peak_amp_across_axes",
     ):
         self.enabled = bool(enabled)
-        self.csv_path = csv_path
+        self.log_path = log_path
         self.metrics_log_hz = max(1, metrics_log_hz)
         self.registry = registry
         self.gps_monitor = gps_monitor
@@ -64,8 +64,8 @@ class MetricsLogger:
     def _path_for_new_session(self, now: datetime | None = None) -> Path:
         ts = now or datetime.now(UTC)
         date_suffix = ts.strftime("%Y%m%d_%H%M%S")
-        stem = self.csv_path.stem
-        return self.csv_path.with_name(f"{stem}_{date_suffix}.jsonl")
+        stem = self.log_path.stem
+        return self.log_path.with_name(f"{stem}_{date_suffix}.jsonl")
 
     def _start_new_session_locked(self, now: datetime | None = None) -> None:
         self._active_path = self._path_for_new_session(now=now)

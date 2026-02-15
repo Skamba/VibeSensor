@@ -27,6 +27,7 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
             "ui_heavy_push_hz": cfg.processing.ui_heavy_push_hz,
         },
         "paths": {
+            "metrics_log_path": str(cfg.logging.metrics_log_path),
             "metrics_csv_path": str(cfg.logging.metrics_csv_path),
             "clients_json_path": str(cfg.clients_json_path),
         },
