@@ -72,6 +72,13 @@ def client_id_hex(client_id: bytes) -> str:
     return client_id.hex()
 
 
+def client_id_mac(client_id: bytes | str) -> str:
+    raw = parse_client_id(client_id) if isinstance(client_id, str) else client_id
+    if len(raw) != 6:
+        raise ValueError(f"client_id must be 6 bytes, got {len(raw)}")
+    return ":".join(f"{b:02x}" for b in raw)
+
+
 def parse_client_id(client_id_text: str) -> bytes:
     compact = client_id_text.replace(":", "").strip().lower()
     if len(compact) != 12:

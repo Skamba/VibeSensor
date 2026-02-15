@@ -5,6 +5,7 @@
 - HELLO packets every 2 seconds
 - DATA frames at 800 Hz sample rate (200 samples per UDP frame)
 - ACK for identify commands
+- Deterministic MAC-style client IDs (shown in `list` output)
 - Distinct vibration profiles per simulated sensor (`engine_idle`, `wheel_imbalance`, `rear_body`, `rough_road`)
 - Road-scene behavior by default:
   - sometimes quiet (near no vibration)
@@ -15,10 +16,11 @@
 ## Run
 
 ```bash
-python tools/simulator/sim_sender.py --count 3 --server-host 127.0.0.1
+python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
 ```
 
 With default settings and a TTY, interactive mode is enabled. You can keep this running while using the web UI.
+Targets in interactive commands can be client name, hex `id`, or colon-form MAC address.
 
 Common commands:
 
@@ -37,7 +39,7 @@ quit
 
 Useful options:
 
-- `--names front-left,front-right,rear`
+- `--names front-left,front-right,rear-left,rear-right,trunk`
 - `--duration 20` to auto-stop
 - `--server-data-port 9000 --server-control-port 9001`
 - `--interactive` force CLI mode
