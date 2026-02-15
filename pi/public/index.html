@@ -56,6 +56,17 @@
         gap: 0.75rem;
       }
 
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+      }
+
+      .lang-picker {
+        min-width: 8.6rem;
+        height: 2.2rem;
+      }
+
       .title {
         margin: 0;
         font-size: 1.7rem;
@@ -483,8 +494,14 @@
     <div class="wrap">
       <header class="site-header">
         <div class="topbar">
-          <h1 class="title">VibeSensor Frequency Live</h1>
-          <div id="speed" class="speed">Speed: -- m/s</div>
+          <h1 class="title" data-i18n="title.main">VibeSensor Frequency Live</h1>
+          <div class="topbar-actions">
+            <select id="languageSelect" class="lang-picker" aria-label="Language">
+              <option value="en">🇺🇸 English</option>
+              <option value="nl">🇳🇱 Nederlands</option>
+            </select>
+            <div id="speed" class="speed">Speed: -- m/s</div>
+          </div>
         </div>
 
         <nav class="menu" aria-label="Primary">
@@ -497,7 +514,7 @@
             aria-controls="dashboardView"
             aria-selected="true"
           >
-            Live
+            <span data-i18n="nav.live">Live</span>
           </button>
           <button
             type="button"
@@ -508,7 +525,7 @@
             aria-controls="logsView"
             aria-selected="false"
           >
-            Logs
+            <span data-i18n="nav.logs">Logs</span>
           </button>
           <button
             type="button"
@@ -519,7 +536,7 @@
             aria-controls="reportView"
             aria-selected="false"
           >
-            Report
+            <span data-i18n="nav.report">Report</span>
           </button>
           <button
             type="button"
@@ -530,7 +547,7 @@
             aria-controls="settingsView"
             aria-selected="false"
           >
-            Settings
+            <span data-i18n="nav.settings">Settings</span>
           </button>
         </nav>
       </header>
@@ -538,15 +555,15 @@
       <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
         <div class="panel">
           <div class="logging-row">
-            <strong>Run Logging</strong>
+            <strong data-i18n="dashboard.run_logging">Run Logging</strong>
             <span id="loggingStatus" class="badge off">Stopped</span>
-            <button id="startLoggingBtn" class="success">Start Logging</button>
-            <button id="stopLoggingBtn" class="warn">Stop Logging</button>
+            <button id="startLoggingBtn" class="success" data-i18n="dashboard.start_logging">Start Logging</button>
+            <button id="stopLoggingBtn" class="warn" data-i18n="dashboard.stop_logging">Stop Logging</button>
           </div>
           <div class="live-speed-row">
-            <label for="speedOverrideInput">Speed Override (km/h)</label>
+            <label for="speedOverrideInput" data-i18n="dashboard.speed_override">Speed Override (km/h)</label>
             <input id="speedOverrideInput" type="number" step="0.1" min="0" />
-            <button id="applySpeedOverrideBtn" class="primary">Apply Override</button>
+            <button id="applySpeedOverrideBtn" class="primary" data-i18n="dashboard.apply_override">Apply Override</button>
           </div>
           <div id="currentLogFile" class="subtle">Current file: --</div>
         </div>
@@ -565,13 +582,15 @@
             <div id="bandLegend" class="legend band-legend"></div>
           </div>
           <div class="panel">
-            <strong>Detected Vibrations</strong>
+            <strong data-i18n="dashboard.detected_vibrations">Detected Vibrations</strong>
             <div id="vibrationLog" class="log-box"></div>
           </div>
           <div class="panel">
-            <strong>Vibration Count Live</strong>
+            <strong data-i18n="dashboard.vibration_count_live">Vibration Count Live</strong>
             <div class="matrix-note">
-              Levels use peak-over-floor dB bands (L1-L5), grouped by source type.
+              <span data-i18n="dashboard.matrix_note"
+                >Levels use peak-over-floor dB bands (L1-L5), grouped by source type.</span
+              >
             </div>
             <div class="matrix-wrap">
               <table id="vibrationMatrix" class="vib-matrix"></table>
@@ -585,7 +604,7 @@
           <div class="log-actions">
             <div class="field">
               <label>&nbsp;</label>
-              <button id="refreshLogsBtn" class="primary">Refresh Logs</button>
+              <button id="refreshLogsBtn" class="primary" data-i18n="logs.refresh">Refresh Logs</button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
@@ -595,10 +614,10 @@
           <table class="logs-table">
             <thead>
               <tr>
-                <th>File</th>
-                <th>Updated</th>
-                <th>Size</th>
-                <th>Actions</th>
+                <th data-i18n="logs.table.file">File</th>
+                <th data-i18n="logs.table.updated">Updated</th>
+                <th data-i18n="logs.table.size">Size</th>
+                <th data-i18n="logs.table.actions">Actions</th>
               </tr>
             </thead>
             <tbody id="logsTableBody">
@@ -614,36 +633,38 @@
         <div class="panel">
           <div class="controls">
             <div class="field">
-              <label for="reportLogSelect">Saved run</label>
+              <label for="reportLogSelect" data-i18n="report.saved_run">Saved run</label>
               <select id="reportLogSelect"></select>
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="loadInsightsBtn" class="primary">Load Insights</button>
+              <button id="loadInsightsBtn" class="primary" data-i18n="report.load_insights">Load Insights</button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="downloadReportBtn" class="success">Generate PDF Report</button>
+              <button id="downloadReportBtn" class="success" data-i18n="report.generate_pdf">Generate PDF Report</button>
             </div>
           </div>
           <div id="reportInsights" class="report-insights subtle" style="margin-top: 0.8rem">
-            Select a saved run and click <strong>Load Insights</strong>.
+            <span data-i18n="report.select_run_hint">Select a saved run and click <strong>Load Insights</strong>.</span>
           </div>
         </div>
       </section>
 
       <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>
         <div class="panel">
-          <strong>Client Locations</strong>
-          <div class="subtle">Set location and identify by client. Offline clients can still be assigned.</div>
+          <strong data-i18n="settings.client_locations">Client Locations</strong>
+          <div class="subtle" data-i18n="settings.client_locations_hint">
+            Set location and identify by client. Offline clients can still be assigned.
+          </div>
           <table class="clients-table" style="margin-top: 0.7rem">
             <thead>
               <tr>
-                <th>Client</th>
-                <th>MAC Address</th>
-                <th>Location</th>
-                <th>Identify</th>
-                <th>Remove</th>
+                <th data-i18n="settings.clients.client">Client</th>
+                <th data-i18n="settings.clients.mac">MAC Address</th>
+                <th data-i18n="settings.clients.location">Location</th>
+                <th data-i18n="settings.clients.identify">Identify</th>
+                <th data-i18n="settings.clients.remove">Remove</th>
               </tr>
             </thead>
             <tbody id="clientsSettingsBody">
@@ -657,77 +678,87 @@
         <div class="panel settings-layout">
           <div class="settings-groups">
             <section class="settings-group">
-              <h3>Vehicle Setup</h3>
+              <h3 data-i18n="settings.group.vehicle_setup">Vehicle Setup</h3>
               <div class="settings-subgrid">
                 <div class="field">
-                  <label for="tireWidthInput">Tire Width (mm)</label>
+                  <label for="tireWidthInput" data-i18n="settings.tire_width">Tire Width (mm)</label>
                   <input id="tireWidthInput" type="number" min="100" step="1" />
                 </div>
                 <div class="field">
-                  <label for="tireAspectInput">Tire Aspect (%)</label>
+                  <label for="tireAspectInput" data-i18n="settings.tire_aspect">Tire Aspect (%)</label>
                   <input id="tireAspectInput" type="number" min="20" step="1" />
                 </div>
                 <div class="field">
-                  <label for="rimInput">Rim Size (in)</label>
+                  <label for="rimInput" data-i18n="settings.rim_size">Rim Size (in)</label>
                   <input id="rimInput" type="number" min="10" step="0.5" />
                 </div>
                 <div class="field">
-                  <label for="finalDriveInput">Final Drive Ratio</label>
+                  <label for="finalDriveInput" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label>
                   <input id="finalDriveInput" type="number" step="0.01" min="0.1" />
                 </div>
                 <div class="field">
-                  <label for="gearRatioInput">Current Gear Ratio</label>
+                  <label for="gearRatioInput" data-i18n="settings.current_gear_ratio">Current Gear Ratio</label>
                   <input id="gearRatioInput" type="number" step="0.01" min="0.1" />
                 </div>
               </div>
             </section>
 
             <section class="settings-group">
-              <h3>Order Band Widths</h3>
+              <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>
               <div class="settings-subgrid">
                 <div class="field">
-                  <label for="wheelBandwidthInput">Wheel Bandwidth (%)</label>
+                  <label for="wheelBandwidthInput" data-i18n="settings.wheel_bandwidth">Wheel Bandwidth (%)</label>
                   <input id="wheelBandwidthInput" type="number" step="0.1" min="1" max="40" />
                 </div>
                 <div class="field">
-                  <label for="driveshaftBandwidthInput">Driveshaft Bandwidth (%)</label>
+                  <label for="driveshaftBandwidthInput" data-i18n="settings.driveshaft_bandwidth"
+                    >Driveshaft Bandwidth (%)</label
+                  >
                   <input id="driveshaftBandwidthInput" type="number" step="0.1" min="1" max="40" />
                 </div>
                 <div class="field">
-                  <label for="engineBandwidthInput">Engine Bandwidth (%)</label>
+                  <label for="engineBandwidthInput" data-i18n="settings.engine_bandwidth">Engine Bandwidth (%)</label>
                   <input id="engineBandwidthInput" type="number" step="0.1" min="1" max="40" />
                 </div>
                 <div class="field">
-                  <label for="minAbsBandHzInput">Min Half-width (Hz)</label>
+                  <label for="minAbsBandHzInput" data-i18n="settings.min_half_width">Min Half-width (Hz)</label>
                   <input id="minAbsBandHzInput" type="number" step="0.1" min="0" max="10" />
                 </div>
                 <div class="field">
-                  <label for="maxBandHalfWidthInput">Max Half-width (%)</label>
+                  <label for="maxBandHalfWidthInput" data-i18n="settings.max_half_width">Max Half-width (%)</label>
                   <input id="maxBandHalfWidthInput" type="number" step="0.1" min="1" max="25" />
                 </div>
               </div>
             </section>
 
             <section class="settings-group">
-              <h3>Uncertainty Model</h3>
+              <h3 data-i18n="settings.group.uncertainty_model">Uncertainty Model</h3>
               <div class="subtle" style="margin-bottom: 0.55rem">
-                Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.
+                <span data-i18n="settings.uncertainty_defaults"
+                  >Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.</span
+                >
               </div>
               <div class="settings-subgrid">
                 <div class="field">
-                  <label for="speedUncertaintyInput">Speed Uncertainty (%)</label>
+                  <label for="speedUncertaintyInput" data-i18n="settings.speed_uncertainty">Speed Uncertainty (%)</label>
                   <input id="speedUncertaintyInput" type="number" step="0.1" min="0" max="20" />
                 </div>
                 <div class="field">
-                  <label for="tireDiameterUncertaintyInput">Tire Diameter Uncertainty (%)</label>
+                  <label for="tireDiameterUncertaintyInput" data-i18n="settings.tire_diameter_uncertainty"
+                    >Tire Diameter Uncertainty (%)</label
+                  >
                   <input id="tireDiameterUncertaintyInput" type="number" step="0.1" min="0" max="20" />
                 </div>
                 <div class="field">
-                  <label for="finalDriveUncertaintyInput">Final Drive Uncertainty (%)</label>
+                  <label for="finalDriveUncertaintyInput" data-i18n="settings.final_drive_uncertainty"
+                    >Final Drive Uncertainty (%)</label
+                  >
                   <input id="finalDriveUncertaintyInput" type="number" step="0.1" min="0" max="10" />
                 </div>
                 <div class="field">
-                  <label for="gearUncertaintyInput">Gear/Slip Uncertainty (%)</label>
+                  <label for="gearUncertaintyInput" data-i18n="settings.gear_slip_uncertainty"
+                    >Gear/Slip Uncertainty (%)</label
+                  >
                   <input id="gearUncertaintyInput" type="number" step="0.1" min="0" max="20" />
                 </div>
               </div>
@@ -735,7 +766,7 @@
           </div>
 
           <div class="settings-actions">
-            <button id="saveSettingsBtn" class="primary">Save Settings</button>
+            <button id="saveSettingsBtn" class="primary" data-i18n="settings.save">Save Settings</button>
           </div>
         </div>
       </section>
@@ -743,6 +774,7 @@
     <div id="matrixTooltip" class="matrix-tooltip"></div>
 
     <script src="/uplot.min.js"></script>
+    <script src="/i18n.js?v=20260216a"></script>
     <script src="/app.js?v=20260215h"></script>
   </body>
 </html>

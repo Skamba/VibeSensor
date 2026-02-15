@@ -35,8 +35,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "logging": {
         "log_metrics": True,
-        "metrics_csv_path": "/var/log/vibesensor/metrics.csv",
+        "metrics_csv_path": "/var/log/vibesensor/metrics.jsonl",
         "metrics_log_hz": 4,
+        "sensor_model": "ADXL345",
     },
     "storage": {
         "clients_json_path": "/var/lib/vibesensor/clients.json",
@@ -111,6 +112,7 @@ class LoggingConfig:
     log_metrics: bool
     metrics_csv_path: Path
     metrics_log_hz: int
+    sensor_model: str
 
 
 @dataclass(slots=True)
@@ -184,6 +186,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             log_metrics=bool(merged["logging"]["log_metrics"]),
             metrics_csv_path=_resolve_repo_path(str(merged["logging"]["metrics_csv_path"])),
             metrics_log_hz=int(merged["logging"]["metrics_log_hz"]),
+            sensor_model=str(merged["logging"].get("sensor_model", "ADXL345")),
         ),
         gps=GPSConfig(
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
