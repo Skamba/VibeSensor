@@ -4,7 +4,15 @@ import asyncio
 import random
 import time
 
-from .protocol import MSG_ACK, MSG_HELLO, ProtocolError, pack_cmd_identify, parse_ack, parse_hello
+from .protocol import (
+    MSG_ACK,
+    MSG_HELLO,
+    ProtocolError,
+    pack_cmd_identify,
+    parse_ack,
+    parse_client_id,
+    parse_hello,
+)
 from .registry import ClientRegistry
 
 
@@ -59,13 +67,17 @@ class UDPControlPlane:
     def send_identify(self, client_id: str, duration_ms: int) -> tuple[bool, int | None]:
         if self.transport is None:
             return False, None
-        record = self.registry.get(client_id)
+        try:
+            normalized_client_id = parse_client_id(client_id).hex()
+        except ValueError:
+            return False, None
+
+        record = self.registry.get(normalized_client_id)
         if record is None or record.control_addr is None:
             return False, None
 
         self._cmd_seq = (self._cmd_seq + 1) & 0xFFFFFFFF
-        payload = pack_cmd_identify(bytes.fromhex(client_id), self._cmd_seq, duration_ms)
+        payload = pack_cmd_identify(parse_client_id(record.client_id), self._cmd_seq, duration_ms)
         self.transport.sendto(payload, record.control_addr)
-        self.registry.mark_cmd_sent(client_id, self._cmd_seq)
+        self.registry.mark_cmd_sent(normalized_client_id, self._cmd_seq)
         return True, self._cmd_seq
-
