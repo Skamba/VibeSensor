@@ -541,8 +541,12 @@ def _build_order_findings(
 
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
         snr_score = min(1.0, log1p(mean_amp / max(1e-6, mean_floor)) / 2.5)
-        confidence = 0.20 + (0.35 * match_rate) + (0.20 * error_score) + (0.15 * corr_val) + (
-            0.10 * snr_score
+        confidence = (
+            0.20
+            + (0.35 * match_rate)
+            + (0.20 * error_score)
+            + (0.15 * corr_val)
+            + (0.10 * snr_score)
         )
         confidence = max(0.08, min(0.97, confidence))
 

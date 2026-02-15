@@ -18,10 +18,7 @@ SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
 
 def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
     return {
-        source: {
-            severity: {"count": 0, "contributors": {}}
-            for severity in SEVERITY_KEYS
-        }
+        source: {severity: {"count": 0, "contributors": {}} for severity in SEVERITY_KEYS}
         for source in SOURCE_KEYS
     }
 
@@ -305,7 +302,7 @@ class LiveDiagnosticsEngine:
                 y = float(y_raw[idx])
                 z = float(z_raw[idx])
                 blend.append(((x * x) + (y * y) + (z * z)) / 3.0)
-            blend = [value ** 0.5 for value in blend]
+            blend = [value**0.5 for value in blend]
             if not target_freq:
                 target_freq = freq_slice
             elif len(freq_slice) != len(target_freq) or any(

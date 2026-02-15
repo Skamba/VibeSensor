@@ -52,8 +52,7 @@ class RuntimeState:
         heavy_every = max(
             1,
             int(
-                self.config.processing.ui_push_hz
-                / max(1, self.config.processing.ui_heavy_push_hz)
+                self.config.processing.ui_push_hz / max(1, self.config.processing.ui_heavy_push_hz)
             ),
         )
         self.ws_include_heavy = (self.ws_tick % heavy_every) == 0
