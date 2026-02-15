@@ -59,4 +59,3 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
 
     cmd = parse_cmd(payload)
     assert cmd.client_id.hex() == client_hex
-

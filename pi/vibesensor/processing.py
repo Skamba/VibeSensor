@@ -330,12 +330,9 @@ class SignalProcessor:
         waveform_raw = self._latest(buf, buf.count)
         sr = buf.sample_rate_hz or self.sample_rate_hz
         waveform_step = max(1, sr // max(1, self.waveform_display_hz))
-        decimated = waveform_raw[:, :: waveform_step]
+        decimated = waveform_raw[:, ::waveform_step]
         points = decimated.shape[1]
-        x = (
-            (np.arange(points, dtype=np.float32) - (points - 1))
-            * (waveform_step / sr)
-        )
+        x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
 
         waveform = {"t": x.tolist()}
         for axis_idx, axis in enumerate(AXES):
@@ -378,9 +375,7 @@ class SignalProcessor:
 
     def evict_clients(self, keep_client_ids: set[str]) -> None:
         stale_ids = [
-            client_id
-            for client_id in self._buffers.keys()
-            if client_id not in keep_client_ids
+            client_id for client_id in self._buffers.keys() if client_id not in keep_client_ids
         ]
         for client_id in stale_ids:
             self._buffers.pop(client_id, None)

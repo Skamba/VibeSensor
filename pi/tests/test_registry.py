@@ -99,13 +99,17 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
 
     registry2 = ClientRegistry(persist)
     registry2.update_from_hello(hello, ("192.168.4.2", 9010), now=3.0)
-    registry2.update_from_hello(HelloMessage(
-        client_id=bytes.fromhex(offline_id),
-        control_port=9011,
-        sample_rate_hz=800,
-        name="should-not-overwrite",
-        firmware_version="fw",
-    ), ("192.168.4.3", 9011), now=4.0)
+    registry2.update_from_hello(
+        HelloMessage(
+            client_id=bytes.fromhex(offline_id),
+            control_port=9011,
+            sample_rate_hz=800,
+            name="should-not-overwrite",
+            firmware_version="fw",
+        ),
+        ("192.168.4.3", 9011),
+        now=4.0,
+    )
 
     rows = {row["id"]: row for row in registry2.snapshot_for_api(now=4.0)}
     assert rows[offline_id]["name"] == "offline-node"

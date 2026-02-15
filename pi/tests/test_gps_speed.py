@@ -21,4 +21,3 @@ def test_set_speed_override_zero_clears_override() -> None:
     monitor.set_speed_override_kmh(0.0)
     assert monitor.override_speed_mps is None
     assert monitor.effective_speed_mps is None
-

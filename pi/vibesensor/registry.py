@@ -290,9 +290,7 @@ class ClientRegistry:
                     )
                     continue
                 age_ms = (
-                    int(max(0.0, now_ts - record.last_seen) * 1000)
-                    if record.last_seen
-                    else None
+                    int(max(0.0, now_ts - record.last_seen) * 1000) if record.last_seen else None
                 )
                 connected = bool(
                     record.last_seen and (now_ts - record.last_seen) <= self._stale_ttl_seconds
