@@ -7,16 +7,23 @@
     <style>
       :root {
         --bg: linear-gradient(180deg, #f3f7f9 0%, #edf2f5 100%);
-        --ink: #1c2738;
-        --card: #ffffff;
-        --line: #d8e1e8;
-        --primary: #0b7285;
-        --primary-dark: #095c6c;
-        --accent: #2b9348;
-        --warn: #c44536;
+        --surface: #ffffff;
+        --border: #d8e1e8;
+        --text: #1c2738;
         --muted: #5b6779;
-        --nav: #13293d;
-        --nav-active: #1b4965;
+        --primary: #0b7285;
+        --danger: #c44536;
+        --success: #2b9348;
+        --s1: 4px;
+        --s2: 8px;
+        --s3: 12px;
+        --s4: 16px;
+        --s5: 24px;
+        --s6: 32px;
+        --r1: 10px;
+        --r2: 14px;
+        --sh1: 0 4px 12px rgba(19, 41, 61, 0.08);
+        --sh2: 0 10px 24px rgba(19, 41, 61, 0.12);
       }
 
       * {
@@ -27,24 +34,25 @@
         margin: 0;
         font-family: "Segoe UI", "Trebuchet MS", sans-serif;
         background: var(--bg);
-        color: var(--ink);
+        color: var(--text);
+        font-size: 15px;
       }
 
       .wrap {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 1rem;
+        padding: var(--s4);
       }
 
       .site-header {
         position: sticky;
         top: 0;
         z-index: 100;
-        padding: 0.8rem;
-        border: 1px solid var(--line);
-        border-radius: 0.9rem;
+        padding: var(--s4);
+        border: 1px solid var(--border);
+        border-radius: var(--r2);
         background: linear-gradient(180deg, #ffffff 0%, #f3f8fb 100%);
-        box-shadow: 0 10px 24px rgba(19, 41, 61, 0.08);
+        box-shadow: var(--sh2);
       }
 
       .topbar {
@@ -52,36 +60,61 @@
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        gap: 0.75rem;
+        gap: var(--s3);
+      }
+
+      .title {
+        margin: 0;
+        font-size: 1.7rem;
+        letter-spacing: 0.02em;
       }
 
       .topbar-actions {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.55rem;
+        gap: var(--s2);
       }
 
-      .lang-picker {
-        min-width: 8.6rem;
-        height: 2.2rem;
+      .lang-picker,
+      .unit-picker,
+      select,
+      input,
+      button,
+      .btn {
+        height: 36px;
+        border-radius: var(--r1);
+        border: 1px solid var(--border);
+        padding: 0 var(--s3);
+        font-size: 0.95rem;
       }
 
-      .title {
-        margin: 0;
-        font-size: 1.7rem;
-        letter-spacing: 0.03em;
+      .unit-picker {
+        min-width: 86px;
+      }
+
+      .speed {
+        padding: var(--s2) var(--s3);
+        border: 1px solid var(--border);
+        border-radius: var(--r1);
+        background: var(--surface);
+        min-width: 220px;
+        text-align: right;
+        font-weight: 600;
+      }
+
+      .mini-label {
+        font-size: 0.82rem;
+        color: var(--muted);
       }
 
       .menu {
-        margin-top: 0.9rem;
+        margin-top: var(--s3);
         display: flex;
         flex-wrap: nowrap;
-        gap: 0.5rem;
+        gap: var(--s2);
         overflow-x: auto;
-        padding-bottom: 0.2rem;
-        position: relative;
-        z-index: 2;
+        padding-bottom: var(--s1);
       }
 
       .menu-btn {
@@ -97,7 +130,7 @@
       }
 
       .menu-btn.active {
-        background: var(--nav);
+        background: #13293d;
         color: #fff;
       }
 
@@ -109,208 +142,215 @@
         transform: translateY(1px);
       }
 
-      .menu-btn:focus-visible {
+      .menu-btn:focus-visible,
+      .btn:focus-visible,
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible {
         outline: 2px solid #0f62fe;
         outline-offset: 2px;
       }
 
-      .speed {
-        padding: 0.5rem 0.75rem;
-        border: 1px solid var(--line);
-        border-radius: 0.6rem;
-        background: var(--card);
-        min-width: 10rem;
-        text-align: right;
-      }
-
-      .speed-unit {
-        min-width: 7.2rem;
-      }
-
-      .panel {
-        border: 1px solid var(--line);
-        border-radius: 0.8rem;
-        background: var(--card);
-        padding: 0.75rem;
-      }
-
       .view {
         display: none;
-        margin-top: 1rem;
+        margin-top: var(--s4);
       }
 
       .view.active {
         display: block;
       }
 
-      .controls,
-      .meta,
-      .charts,
-      .settings-grid,
-      .log-actions {
-        margin-top: 1rem;
+      .card,
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: var(--r2);
+        background: var(--surface);
+        padding: var(--s4);
+        box-shadow: var(--sh1);
       }
 
-      .controls,
-      .settings-grid,
-      .log-actions {
-        display: grid;
-        gap: 0.75rem;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      .card__title {
+        margin: 0 0 var(--s3);
+        font-size: 1rem;
+        font-weight: 700;
       }
 
-      .settings-layout {
-        display: grid;
-        gap: 0.85rem;
-      }
-
-      .settings-groups {
-        display: grid;
-        gap: 0.75rem;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      }
-
-      .settings-group {
-        border: 1px dashed var(--line);
-        border-radius: 0.7rem;
-        background: #f8fbfd;
-        padding: 0.7rem;
-      }
-
-      .settings-group h3 {
-        margin: 0 0 0.55rem;
+      .card__subtle,
+      .subtle {
+        color: var(--muted);
         font-size: 0.88rem;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: #2f4f67;
       }
 
-      .settings-subgrid {
-        display: grid;
-        gap: 0.65rem;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      .pill,
+      .badge,
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 var(--s3);
+        height: 28px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border: 1px solid transparent;
       }
 
-      .settings-actions {
-        display: flex;
-        justify-content: flex-end;
+      .pill--ok,
+      .status-pill.online,
+      .badge.on {
+        background: #d8f3dc;
+        color: #1b4332;
       }
 
-      .settings-actions button {
-        min-width: 12rem;
+      .pill--warn,
+      .badge.off {
+        background: #ffe8d6;
+        color: #9c2f00;
       }
 
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
+      .pill--bad,
+      .status-pill.offline {
+        background: #ffd6d6;
+        color: #8f2d2d;
       }
 
-      label {
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+      .pill--muted {
+        background: #edf2f7;
+        color: #475569;
       }
 
-      select,
-      input,
+      .btn,
       button {
-        height: 2.2rem;
-        border-radius: 0.5rem;
-        border: 1px solid var(--line);
-        padding: 0 0.6rem;
-        font-size: 0.95rem;
-      }
-
-      button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         background: #fff;
+        color: var(--text);
         cursor: pointer;
         font-weight: 600;
+        text-decoration: none;
       }
 
+      .btn:disabled,
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .btn--primary,
       button.primary {
         background: var(--primary);
         color: #fff;
         border-color: transparent;
       }
 
-      button.warn {
-        background: var(--warn);
-        color: #fff;
-        border-color: transparent;
-      }
-
+      .btn--success,
       button.success {
-        background: var(--accent);
+        background: var(--success);
         color: #fff;
         border-color: transparent;
       }
 
-      .meta {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: stretch;
-        gap: 0.6rem;
+      .btn--danger,
+      button.warn {
+        background: var(--danger);
+        color: #fff;
+        border-color: transparent;
       }
 
-      .meta .panel {
-        min-height: 3.4rem;
-        min-width: 11rem;
-        flex: 1 1 11rem;
+      .btn--muted {
+        background: #f1f5f9;
+        color: #334155;
       }
 
-      .status-strip .panel {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .charts {
+      .stat-grid {
         display: grid;
-        gap: 0.75rem;
+        gap: var(--s3);
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        margin-bottom: var(--s4);
       }
 
-      .chart-box {
-        overflow: hidden;
+      .stat {
+        min-height: 86px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
       }
 
-      .chart-stage {
+      .stat__label {
+        font-size: 0.78rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .stat__value {
+        margin-top: var(--s1);
+        font-size: 1rem;
+        font-weight: 700;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        gap: var(--s4);
+        grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+        grid-template-areas:
+          "spectrum side"
+          "matrix matrix";
+      }
+
+      .dashboard-grid__main {
+        grid-area: spectrum;
+      }
+
+      .dashboard-grid__side {
+        grid-area: side;
+        display: grid;
+        gap: var(--s4);
+        align-content: start;
+      }
+
+      .dashboard-grid__full {
+        grid-area: matrix;
+      }
+
+      .spectrum-wrap {
         position: relative;
-        min-height: 220px;
+        min-height: 360px;
       }
 
-      .spectrum-overlay {
+      .empty-state {
         position: absolute;
         inset: 0;
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 1rem;
-        border-radius: 0.6rem;
+        padding: var(--s4);
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px dashed var(--border);
+        border-radius: var(--r1);
         color: var(--muted);
-        background: rgba(255, 255, 255, 0.76);
-        border: 1px dashed var(--line);
+        font-weight: 600;
       }
 
       .legend {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem 1rem;
-        margin-top: 0.5rem;
+        gap: var(--s2) var(--s4);
+        margin-top: var(--s3);
         font-size: 0.86rem;
       }
 
       .legend.band-legend {
-        margin-top: 0.35rem;
-        padding-top: 0.35rem;
-        border-top: 1px dashed var(--line);
+        margin-top: var(--s2);
+        padding-top: var(--s2);
+        border-top: 1px dashed var(--border);
       }
 
       .legend-item {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: var(--s1);
       }
 
       .swatch {
@@ -319,99 +359,21 @@
         border-radius: 2px;
       }
 
-      .status-ok {
-        color: var(--accent);
-      }
-
-      .status-bad {
-        color: var(--warn);
-      }
-
-      .log-box {
-        max-height: 220px;
-        overflow: auto;
-        font-size: 0.9rem;
-        line-height: 1.3;
-      }
-
-      .log-row {
-        padding: 0.35rem 0;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .log-row:last-child {
-        border-bottom: 0;
-      }
-
-      .log-time {
-        color: #4d5d7a;
-        font-size: 0.78rem;
-      }
-
-      .matrix-note {
-        font-size: 0.84rem;
-        margin-top: 0.3rem;
-        color: var(--muted);
-      }
-
-      .matrix-wrap {
-        overflow-x: auto;
-        margin-top: 0.5rem;
-      }
-
-      .vib-matrix {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-      }
-
-      .vib-matrix th,
-      .vib-matrix td {
-        border: 1px solid var(--line);
-        padding: 0.45rem 0.55rem;
-        text-align: center;
-      }
-
-      .vib-matrix th:first-child,
-      .vib-matrix td:first-child {
-        text-align: left;
-        white-space: nowrap;
-      }
-
-      .vib-cell {
-        cursor: help;
-        font-weight: 700;
-      }
-
-      .matrix-tooltip {
-        position: fixed;
-        z-index: 50;
-        max-width: 320px;
-        display: none;
-        pointer-events: none;
-        background: rgba(20, 33, 61, 0.96);
-        color: #fff;
-        border-radius: 0.5rem;
-        padding: 0.5rem 0.6rem;
-        font-size: 0.82rem;
-        line-height: 1.3;
-        white-space: pre-line;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
-      }
-
-      .logging-row {
+      .logging-row,
+      .live-speed-row,
+      .live-speed-readout {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.6rem;
+        gap: var(--s2);
+      }
+
+      .live-speed-readout {
+        margin-top: var(--s3);
       }
 
       .live-speed-row {
-        margin-top: 0.75rem;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0.6rem;
+        margin-top: var(--s3);
       }
 
       .live-speed-row label {
@@ -422,103 +384,210 @@
         width: 9rem;
       }
 
-      .badge {
-        display: inline-block;
-        border-radius: 999px;
-        padding: 0.3rem 0.6rem;
-        font-size: 0.8rem;
-        font-weight: 700;
-      }
-
-      .badge.on {
-        background: #d8f3dc;
-        color: #1b4332;
-      }
-
-      .badge.off {
-        background: #ffe8d6;
-        color: #9c2f00;
-      }
-
-      .subtle {
-        color: var(--muted);
-        font-size: 0.88rem;
-      }
-
-      .logs-table {
-        width: 100%;
-        border-collapse: collapse;
+      .log-box {
+        max-height: 220px;
+        overflow: auto;
         font-size: 0.9rem;
+        line-height: 1.3;
       }
 
-      .logs-table th,
-      .logs-table td {
-        border-bottom: 1px solid var(--line);
-        text-align: left;
-        padding: 0.55rem;
+      .log-row {
+        padding: var(--s2) 0;
+        border-bottom: 1px solid var(--border);
       }
 
-      .logs-table th {
-        font-size: 0.82rem;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--muted);
-      }
-
-      .logs-table tr:last-child td {
+      .log-row:last-child {
         border-bottom: 0;
       }
 
+      .log-time {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .matrix-note {
+        font-size: 0.84rem;
+        margin-top: var(--s2);
+        color: var(--muted);
+      }
+
+      .matrix-wrap {
+        overflow-x: auto;
+        margin-top: var(--s3);
+      }
+
+      .vib-matrix,
+      .logs-table,
       .clients-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 0.9rem;
       }
 
+      .vib-matrix th,
+      .vib-matrix td,
+      .logs-table th,
+      .logs-table td,
       .clients-table th,
       .clients-table td {
-        border-bottom: 1px solid var(--line);
-        padding: 0.5rem;
+        border-bottom: 1px solid var(--border);
+        border-top: 1px solid var(--border);
+        padding: 0.55rem;
         text-align: left;
         vertical-align: middle;
       }
 
+      .vib-matrix td,
+      .vib-matrix th {
+        text-align: center;
+      }
+
+      .vib-matrix th:first-child,
+      .vib-matrix td:first-child {
+        text-align: left;
+      }
+
+      .logs-table th,
       .clients-table th {
-        font-size: 0.82rem;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f7fafc;
+        font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.04em;
         color: var(--muted);
       }
 
+      .logs-table tr:last-child td,
       .clients-table tr:last-child td {
         border-bottom: 0;
       }
 
-      .row-action {
-        width: 100%;
+      .logs-table td,
+      .clients-table td {
+        word-break: break-word;
       }
 
-      .status-pill {
-        display: inline-block;
-        border-radius: 999px;
-        padding: 0.12rem 0.45rem;
-        font-size: 0.74rem;
+      .clients-table {
+        margin-top: var(--s3);
+      }
+
+      .numeric {
+        text-align: right !important;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .table-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--s2);
+        align-items: center;
+      }
+
+      .controls,
+      .log-actions,
+      .settings-subgrid,
+      .settings-groups {
+        display: grid;
+        gap: var(--s3);
+      }
+
+      .controls,
+      .log-actions {
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      }
+
+      .settings-layout {
+        display: grid;
+        gap: var(--s4);
+      }
+
+      .settings-groups {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .settings-group {
+        border: 1px dashed var(--border);
+        border-radius: var(--r1);
+        background: #f8fbfd;
+        padding: var(--s3);
+      }
+
+      .settings-group h3 {
+        margin: 0 0 var(--s2);
+        font-size: 0.84rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #2f4f67;
+      }
+
+      .settings-subgrid {
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      }
+
+      .settings-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .settings-actions .btn,
+      .settings-actions button {
+        min-width: 12rem;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--s1);
+      }
+
+      label {
+        font-size: 0.86rem;
+        color: #243547;
+      }
+
+      .matrix-tooltip {
+        position: fixed;
+        z-index: 50;
+        max-width: 320px;
+        display: none;
+        pointer-events: none;
+        background: rgba(20, 33, 61, 0.96);
+        color: #fff;
+        border-radius: var(--r1);
+        padding: var(--s2) var(--s3);
+        font-size: 0.82rem;
+        line-height: 1.3;
+        white-space: pre-line;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+      }
+
+      .vib-cell {
+        cursor: help;
         font-weight: 700;
-        margin-top: 0.25rem;
       }
 
-      .status-pill.online {
-        background: #d8f3dc;
-        color: #1b4332;
-      }
-
-      .status-pill.offline {
-        background: #e9ecef;
-        color: #495057;
+      .report-insights {
+        margin-top: var(--s3);
       }
 
       .report-insights p {
-        margin: 0.35rem 0;
+        margin: var(--s1) 0;
+      }
+
+      @media (max-width: 980px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "spectrum"
+            "side"
+            "matrix";
+        }
+
+        .speed {
+          min-width: 180px;
+        }
       }
     </style>
   </head>
@@ -532,12 +601,7 @@
               <option value="en">🇺🇸 English</option>
               <option value="nl">🇳🇱 Nederlands</option>
             </select>
-            <label for="speedUnitSelect" class="subtle" data-i18n="speed.unit">Speed unit</label>
-            <select id="speedUnitSelect" class="speed-unit" aria-label="Speed unit">
-              <option value="kmh" data-i18n="speed.unit.kmh">km/h</option>
-              <option value="mph" data-i18n="speed.unit.mph">mph</option>
-            </select>
-            <div id="speed" class="speed">Speed: -- km/h</div>
+            <div id="linkState" class="pill pill--muted">Connecting...</div>
           </div>
         </div>
 
@@ -594,43 +658,69 @@
       </header>
 
       <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
-        <div class="panel">
-          <div class="logging-row">
-            <strong data-i18n="dashboard.run_logging">Run Logging</strong>
-            <span id="loggingStatus" class="badge off">Stopped</span>
-            <button id="startLoggingBtn" class="success" data-i18n="dashboard.start_logging">Start Logging</button>
-            <button id="stopLoggingBtn" class="warn" data-i18n="dashboard.stop_logging">Stop Logging</button>
+        <div class="stat-grid">
+          <div class="panel card stat" id="lastSeen">
+            <div class="stat__label" data-i18n="status.last_seen_label">Last seen</div>
+            <div class="stat__value" data-value>--</div>
           </div>
-          <div class="live-speed-row">
-            <label for="speedOverrideInput" data-i18n="dashboard.speed_override">Speed Override (km/h)</label>
-            <input id="speedOverrideInput" type="number" step="0.1" min="0" />
-            <button id="applySpeedOverrideBtn" class="primary" data-i18n="dashboard.apply_override">Apply Override</button>
+          <div class="panel card stat" id="dropped">
+            <div class="stat__label" data-i18n="status.dropped_label">Dropped frames</div>
+            <div class="stat__value" data-value>--</div>
           </div>
-          <div id="currentLogFile" class="subtle">Current file: --</div>
+          <div class="panel card stat" id="framesTotal">
+            <div class="stat__label" data-i18n="status.frames_total_label">Frames total</div>
+            <div class="stat__value" data-value>--</div>
+          </div>
         </div>
 
-        <div class="meta status-strip">
-          <div class="panel" id="lastSeen">Last seen: --</div>
-          <div class="panel" id="dropped">Dropped frames: --</div>
-          <div class="panel" id="framesTotal">Frames total: --</div>
-          <div class="panel" id="linkState">WS: connecting...</div>
-        </div>
-
-        <div class="charts">
-          <div class="panel chart-box">
-            <div class="chart-stage">
+        <div class="dashboard-grid">
+          <div class="panel card dashboard-grid__main">
+            <div id="specChartWrap" class="spectrum-wrap">
               <div id="specChart"></div>
-              <div id="spectrumOverlay" class="spectrum-overlay">Loading spectrum...</div>
+              <div id="spectrumOverlay" class="empty-state" hidden>Waiting for sensor data...</div>
             </div>
             <div id="legend" class="legend"></div>
             <div id="bandLegend" class="legend band-legend"></div>
           </div>
-          <div class="panel">
-            <strong data-i18n="dashboard.detected_vibrations">Detected Vibrations</strong>
-            <div id="vibrationLog" class="log-box"></div>
+
+          <div class="dashboard-grid__side">
+            <div class="panel card">
+              <div class="card__title" data-i18n="dashboard.run_logging">Run Logging</div>
+              <div class="logging-row">
+                <span id="loggingStatus" class="pill pill--muted">Stopped</span>
+                <button id="startLoggingBtn" class="btn btn--success" data-i18n="dashboard.start_logging">
+                  Start Logging
+                </button>
+                <button id="stopLoggingBtn" class="btn btn--danger" data-i18n="dashboard.stop_logging">
+                  Stop Logging
+                </button>
+              </div>
+              <div class="live-speed-readout">
+                <div id="speed" class="speed">Speed --</div>
+                <label class="mini-label" for="speedUnitSelect" data-i18n="speed.unit">Unit</label>
+                <select id="speedUnitSelect" class="unit-picker" aria-label="Speed unit">
+                  <option value="kmh" data-i18n="speed.unit.kmh">km/h</option>
+                  <option value="mps" data-i18n="speed.unit.mps">m/s</option>
+                </select>
+              </div>
+              <div class="live-speed-row">
+                <label for="speedOverrideInput" data-i18n="dashboard.speed_override">Speed Override (km/h)</label>
+                <input id="speedOverrideInput" type="number" step="0.1" min="0" />
+                <button id="applySpeedOverrideBtn" class="btn btn--primary" data-i18n="dashboard.apply_override">
+                  Apply Override
+                </button>
+              </div>
+              <div id="currentLogFile" class="card__subtle">Current file: --</div>
+            </div>
+
+            <div class="panel card">
+              <div class="card__title" data-i18n="dashboard.detected_vibrations">Detected Vibrations</div>
+              <div id="vibrationLog" class="log-box"></div>
+            </div>
           </div>
-          <div class="panel">
-            <strong data-i18n="dashboard.vibration_count_live">Vibration Count Live</strong>
+
+          <div class="panel card dashboard-grid__full">
+            <div class="card__title" data-i18n="dashboard.vibration_count_live">Vibration Count Live</div>
             <div class="matrix-note">
               <span data-i18n="dashboard.matrix_note"
                 >Levels use peak-over-floor dB bands (L1-L5), grouped by source type.</span
@@ -644,11 +734,11 @@
       </section>
 
       <section id="logsView" class="view" role="tabpanel" aria-labelledby="tab-logs" hidden>
-        <div class="panel">
+        <div class="panel card">
           <div class="log-actions">
             <div class="field">
               <label>&nbsp;</label>
-              <button id="refreshLogsBtn" class="primary" data-i18n="logs.refresh">Refresh Logs</button>
+              <button id="refreshLogsBtn" class="btn btn--primary" data-i18n="logs.refresh">Refresh Logs</button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
@@ -660,7 +750,7 @@
               <tr>
                 <th data-i18n="logs.table.file">File</th>
                 <th data-i18n="logs.table.updated">Updated</th>
-                <th data-i18n="logs.table.size">Size</th>
+                <th class="numeric" data-i18n="logs.table.size">Size</th>
                 <th data-i18n="logs.table.actions">Actions</th>
               </tr>
             </thead>
@@ -674,7 +764,7 @@
       </section>
 
       <section id="reportView" class="view" role="tabpanel" aria-labelledby="tab-report" hidden>
-        <div class="panel">
+        <div class="panel card">
           <div class="controls">
             <div class="field">
               <label for="reportLogSelect" data-i18n="report.saved_run">Saved run</label>
@@ -682,26 +772,30 @@
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="loadInsightsBtn" class="primary" data-i18n="report.load_insights">Load Insights</button>
+              <button id="loadInsightsBtn" class="btn btn--primary" data-i18n="report.load_insights">
+                Load Insights
+              </button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="downloadReportBtn" class="success" data-i18n="report.generate_pdf">Generate PDF Report</button>
+              <button id="downloadReportBtn" class="btn btn--success" data-i18n="report.generate_pdf">
+                Generate PDF Report
+              </button>
             </div>
           </div>
-          <div id="reportInsights" class="report-insights subtle" style="margin-top: 0.8rem">
+          <div id="reportInsights" class="report-insights subtle">
             <span data-i18n="report.select_run_hint">Select a saved run and click <strong>Load Insights</strong>.</span>
           </div>
         </div>
       </section>
 
       <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>
-        <div class="panel">
+        <div class="panel card">
           <strong data-i18n="settings.client_locations">Client Locations</strong>
           <div class="subtle" data-i18n="settings.client_locations_hint">
             Set location and identify by client. Offline clients can still be assigned.
           </div>
-          <table class="clients-table" style="margin-top: 0.7rem">
+          <table class="clients-table">
             <thead>
               <tr>
                 <th data-i18n="settings.clients.client">Client</th>
@@ -719,7 +813,7 @@
           </table>
         </div>
 
-        <div class="panel settings-layout">
+        <div class="panel card settings-layout">
           <div class="settings-groups">
             <section class="settings-group">
               <h3 data-i18n="settings.group.vehicle_setup">Vehicle Setup</h3>
@@ -777,7 +871,7 @@
 
             <section class="settings-group">
               <h3 data-i18n="settings.group.uncertainty_model">Uncertainty Model</h3>
-              <div class="subtle" style="margin-bottom: 0.55rem">
+              <div class="subtle">
                 <span data-i18n="settings.uncertainty_defaults"
                   >Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.</span
                 >
@@ -810,7 +904,7 @@
           </div>
 
           <div class="settings-actions">
-            <button id="saveSettingsBtn" class="primary" data-i18n="settings.save">Save Settings</button>
+            <button id="saveSettingsBtn" class="btn btn--primary" data-i18n="settings.save">Save Settings</button>
           </div>
         </div>
       </section>

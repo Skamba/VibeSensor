@@ -15,13 +15,15 @@ export interface SpectrumText {
 export class SpectrumChart {
   private plot: uPlot | null = null;
   private readonly hostEl: HTMLElement;
+  private readonly measureEl: HTMLElement;
   private readonly overlayEl: HTMLElement | null;
   private readonly height: number;
   private resizeObserver: ResizeObserver | null = null;
   private resizeRaf: number | null = null;
 
-  constructor(hostEl: HTMLElement, overlayEl?: HTMLElement | null, height = 360) {
+  constructor(hostEl: HTMLElement, overlayEl?: HTMLElement | null, height = 360, measureEl?: HTMLElement | null) {
     this.hostEl = hostEl;
+    this.measureEl = measureEl || hostEl;
     this.overlayEl = overlayEl || null;
     this.height = height;
     this.startResizeObserver();
@@ -56,6 +58,11 @@ export class SpectrumChart {
   setData(data: number[][]): void {
     if (!this.plot) return;
     this.plot.setData(data);
+  }
+
+  resize(): void {
+    if (!this.plot) return;
+    this.plot.setSize({ width: this.computeWidth(), height: this.height });
   }
 
   getSeriesCount(): number {
@@ -109,14 +116,13 @@ export class SpectrumChart {
       }
       this.resizeRaf = window.requestAnimationFrame(() => {
         this.resizeRaf = null;
-        if (!this.plot) return;
-        this.plot.setSize({ width: this.computeWidth(), height: this.height });
+        this.resize();
       });
     });
-    this.resizeObserver.observe(this.hostEl);
+    this.resizeObserver.observe(this.measureEl);
   }
 
   private computeWidth(): number {
-    return Math.max(320, Math.floor(this.hostEl.getBoundingClientRect().width - 20));
+    return Math.max(320, Math.floor(this.measureEl.getBoundingClientRect().width));
   }
 }

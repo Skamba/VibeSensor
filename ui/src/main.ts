@@ -42,6 +42,7 @@ import { WsClient, type WsUiState } from "./ws";
     dropped: document.getElementById("dropped"),
     framesTotal: document.getElementById("framesTotal"),
     linkState: document.getElementById("linkState"),
+    specChartWrap: document.getElementById("specChartWrap"),
     specChart: document.getElementById("specChart"),
     spectrumOverlay: document.getElementById("spectrumOverlay"),
     legend: document.getElementById("legend"),
@@ -166,7 +167,7 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function normalizeSpeedUnit(raw) {
-    return raw === "mph" ? "mph" : "kmh";
+    return raw === "mps" ? "mps" : "kmh";
   }
 
   function saveSpeedUnit(unit) {
@@ -176,12 +177,12 @@ import { WsClient, type WsUiState } from "./ws";
 
   function speedValueInSelectedUnit(speedMps) {
     if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null;
-    if (state.speedUnit === "mph") return speedMps * 2.2369362921;
+    if (state.speedUnit === "mps") return speedMps;
     return speedMps * 3.6;
   }
 
   function selectedSpeedUnitLabel() {
-    return state.speedUnit === "mph" ? t("speed.unit.mph") : t("speed.unit.kmh");
+    return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh");
   }
 
   function locationLabelForLang(lang, code) {
@@ -350,6 +351,28 @@ import { WsClient, type WsUiState } from "./ws";
     return d.toLocaleString();
   }
 
+  function formatInt(value) {
+    if (typeof value !== "number" || !Number.isFinite(value)) return "--";
+    return new Intl.NumberFormat().format(Math.round(value));
+  }
+
+  function setStatValue(container, value) {
+    const valueEl = container?.querySelector?.("[data-value]");
+    if (valueEl) {
+      valueEl.textContent = String(value);
+      return;
+    }
+    if (container) {
+      container.textContent = String(value);
+    }
+  }
+
+  function setPillState(el, variant, text) {
+    if (!el) return;
+    el.className = `pill pill--${variant}`;
+    el.textContent = text;
+  }
+
   function setActiveView(viewId) {
     const valid = els.views.some((v) => v.id === viewId);
     state.activeViewId = valid ? viewId : "dashboardView";
@@ -363,6 +386,9 @@ import { WsClient, type WsUiState } from "./ws";
       btn.classList.toggle("active", isActive);
       btn.setAttribute("aria-selected", isActive ? "true" : "false");
       btn.tabIndex = isActive ? 0 : -1;
+    }
+    if (state.activeViewId === "dashboardView" && state.spectrumPlot) {
+      state.spectrumPlot.resize();
     }
   }
 
@@ -448,13 +474,13 @@ import { WsClient, type WsUiState } from "./ws";
     const unitLabel = selectedSpeedUnitLabel();
     if (typeof state.speedMps === "number") {
       const value = speedValueInSelectedUnit(state.speedMps);
-      els.speed.textContent = t("speed.gps", { value: fmt(value, 2), unit: unitLabel });
+      els.speed.textContent = t("speed.gps", { value: fmt(value, 1), unit: unitLabel });
       return;
     }
     const spd = effectiveSpeedMps();
     if (spd) {
       const value = speedValueInSelectedUnit(spd);
-      els.speed.textContent = t("speed.override", { value: fmt(value, 2), unit: unitLabel });
+      els.speed.textContent = t("speed.override", { value: fmt(value, 1), unit: unitLabel });
       return;
     }
     els.speed.textContent = t("speed.none", { unit: unitLabel });
@@ -469,9 +495,14 @@ import { WsClient, type WsUiState } from "./ws";
       no_data: "ws.no_data",
     };
     const key = keyByState[state.wsState] || "ws.connecting";
-    els.linkState.textContent = t(key);
-    const isGood = state.wsState === "connected" || state.wsState === "no_data";
-    els.linkState.className = `panel ${isGood ? "status-ok" : "status-bad"}`;
+    const variantByState = {
+      connecting: "muted",
+      connected: "ok",
+      reconnecting: "warn",
+      stale: "bad",
+      no_data: "muted",
+    };
+    setPillState(els.linkState, variantByState[state.wsState] || "muted", t(key));
   }
 
   function updateSpectrumOverlay() {
@@ -483,7 +514,7 @@ import { WsClient, type WsUiState } from "./ws";
     }
     if (state.wsState === "connecting" || state.wsState === "reconnecting") {
       els.spectrumOverlay.hidden = false;
-      els.spectrumOverlay.textContent = t("spectrum.disconnected");
+      els.spectrumOverlay.textContent = t("ws.connecting");
       return;
     }
     if (state.wsState === "stale") {
@@ -587,7 +618,7 @@ import { WsClient, type WsUiState } from "./ws";
       state.spectrumPlot.destroy();
       state.spectrumPlot = null;
     }
-    state.spectrumPlot = new SpectrumChart(els.specChart, els.spectrumOverlay, 360);
+    state.spectrumPlot = new SpectrumChart(els.specChart, els.spectrumOverlay, 360, els.specChartWrap);
     state.spectrumPlot.ensurePlot(
       seriesMeta,
       {
@@ -699,8 +730,8 @@ import { WsClient, type WsUiState } from "./ws";
             ${locationOptionsMarkup(selectedCode)}
           </select>
         </td>
-        <td><button class="row-action row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td>
-        <td><button class="row-action warn row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td>
+        <td><button class="btn btn--primary row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td>
+        <td><button class="btn btn--danger row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td>
       </tr>`;
       })
       .join("");
@@ -734,16 +765,17 @@ import { WsClient, type WsUiState } from "./ws";
 
   function renderStatus(clientRow) {
     if (!clientRow) {
-      els.lastSeen.textContent = t("status.last_seen_none");
-      els.dropped.textContent = t("status.dropped", { value: "--" });
-      els.framesTotal.textContent = t("status.frames_total", { value: "--" });
+      setStatValue(els.lastSeen, "--");
+      setStatValue(els.dropped, "--");
+      setStatValue(els.framesTotal, "--");
       return;
     }
     const age = clientRow.last_seen_age_ms ?? null;
-    els.lastSeen.textContent =
-      age === null ? t("status.last_seen_none") : t("status.last_seen", { value: `${age} ms ago` });
-    els.dropped.textContent = t("status.dropped", { value: clientRow.dropped_frames ?? 0 });
-    els.framesTotal.textContent = t("status.frames_total", { value: clientRow.frames_total ?? 0 });
+    const ageSuffix = state.lang === "nl" ? "ms geleden" : "ms ago";
+    const ageValue = age === null ? "--" : `${formatInt(Math.max(0, age))} ${ageSuffix}`;
+    setStatValue(els.lastSeen, ageValue);
+    setStatValue(els.dropped, formatInt(clientRow.dropped_frames ?? 0));
+    setStatValue(els.framesTotal, formatInt(clientRow.frames_total ?? 0));
   }
 
   async function syncSpeedOverrideToServer(speedKmh) {
@@ -791,8 +823,7 @@ import { WsClient, type WsUiState } from "./ws";
   function renderLoggingStatus() {
     const status = state.loggingStatus || { enabled: false, current_file: null };
     const on = Boolean(status.enabled);
-    els.loggingStatus.textContent = on ? t("status.running") : t("status.stopped");
-    els.loggingStatus.className = `badge ${on ? "on" : "off"}`;
+    setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
     els.currentLogFile.textContent = t("status.current_file", { value: status.current_file || "--" });
   }
 
@@ -801,8 +832,7 @@ import { WsClient, type WsUiState } from "./ws";
       state.loggingStatus = await getLoggingStatus();
       renderLoggingStatus();
     } catch (_err) {
-      els.loggingStatus.textContent = t("status.unavailable");
-      els.loggingStatus.className = "badge off";
+      setPillState(els.loggingStatus, "bad", t("status.unavailable"));
     }
   }
 
@@ -880,11 +910,13 @@ import { WsClient, type WsUiState } from "./ws";
       <tr>
         <td>${row.name}</td>
         <td>${fmtTs(row.updated_at)}</td>
-        <td>${fmtBytes(row.size_bytes)}</td>
+        <td class="numeric">${fmtBytes(row.size_bytes)}</td>
         <td>
-          <button class="select-log-btn" data-log="${row.name}">${escapeHtml(t("logs.use_in_report"))}</button>
-          <a href="${logDownloadUrl(row.name)}" target="_blank" rel="noopener">${escapeHtml(t("logs.raw"))}</a>
-          <button class="warn delete-log-btn" data-log="${row.name}">${escapeHtml(t("logs.delete"))}</button>
+          <div class="table-actions">
+            <button class="btn btn--primary select-log-btn" data-log="${row.name}">${escapeHtml(t("logs.use_in_report"))}</button>
+            <a class="btn btn--muted" href="${logDownloadUrl(row.name)}" target="_blank" rel="noopener">${escapeHtml(t("logs.raw"))}</a>
+            <button class="btn btn--danger delete-log-btn" data-log="${row.name}">${escapeHtml(t("logs.delete"))}</button>
+          </div>
         </td>
       </tr>`,
       )
