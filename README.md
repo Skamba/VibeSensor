@@ -10,6 +10,7 @@ End-to-end prototype for local/offline car vibration sensing:
 - Diagnostics/report pipeline uses reproducible run logs (`.jsonl`) with explicit references
 
 Hardware list and wiring notes: `hardware/README.md`
+Design language (Material Design 3): `docs/design_language.md`
 
 ## Repository Layout
 

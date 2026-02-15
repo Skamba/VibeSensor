@@ -20,6 +20,8 @@ ORDER_TOLERANCE_REL = 0.08
 ORDER_TOLERANCE_MIN_HZ = 0.5
 ORDER_MIN_MATCH_POINTS = 4
 ORDER_MIN_COVERAGE_POINTS = 6
+STEADY_SPEED_STDDEV_KMH = 2.0
+STEADY_SPEED_RANGE_KMH = 8.0
 
 
 def _normalize_lang(lang: object) -> str:
@@ -126,6 +128,32 @@ def _speed_bin_sort_key(label: str) -> int:
         return 0
 
 
+def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
+    if not speed_values:
+        return {
+            "min_kmh": None,
+            "max_kmh": None,
+            "mean_kmh": None,
+            "stddev_kmh": None,
+            "range_kmh": None,
+            "steady_speed": True,
+        }
+    vmin = min(speed_values)
+    vmax = max(speed_values)
+    vmean = mean(speed_values)
+    var = sum((value - vmean) ** 2 for value in speed_values) / max(1, len(speed_values))
+    stddev = sqrt(var)
+    vrange = max(0.0, vmax - vmin)
+    return {
+        "min_kmh": vmin,
+        "max_kmh": vmax,
+        "mean_kmh": vmean,
+        "stddev_kmh": stddev,
+        "range_kmh": vrange,
+        "steady_speed": stddev < STEADY_SPEED_STDDEV_KMH or vrange < STEADY_SPEED_RANGE_KMH,
+    }
+
+
 def _sensor_limit_g(sensor_model: object) -> float | None:
     if not isinstance(sensor_model, str):
         return None
@@ -224,6 +252,35 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
                 "max_amplitude_g": max(values) if values else None,
             }
         )
+    return rows
+
+
+def _sensor_intensity_by_location(
+    samples: list[dict[str, Any]],
+) -> list[dict[str, float | str | int]]:
+    grouped: dict[str, list[float]] = defaultdict(list)
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        location = _location_label(sample)
+        if not location:
+            continue
+        amp = _primary_vibration_amp(sample)
+        if amp is None or amp <= 0:
+            continue
+        grouped[location].append(float(amp))
+
+    rows: list[dict[str, float | str | int]] = []
+    for location, values in grouped.items():
+        rows.append(
+            {
+                "location": location,
+                "samples": len(values),
+                "mean_intensity_g": mean(values),
+                "max_intensity_g": max(values),
+            }
+        )
+    rows.sort(key=lambda row: float(row["mean_intensity_g"]), reverse=True)
     return rows
 
 
@@ -372,28 +429,315 @@ def _order_hypotheses() -> list[_OrderHypothesis]:
     ]
 
 
-def _quick_checks_for_source(lang: object, source: str) -> list[str]:
+def _wheel_focus_from_location(lang: object, location: str) -> str:
+    token = location.strip().lower()
+    if "front-left wheel" in token:
+        return _text(lang, "front-left wheel", "linkervoorwiel")
+    if "front-right wheel" in token:
+        return _text(lang, "front-right wheel", "rechtervoorwiel")
+    if "rear-left wheel" in token:
+        return _text(lang, "rear-left wheel", "linkerachterwiel")
+    if "rear-right wheel" in token:
+        return _text(lang, "rear-right wheel", "rechterachterwiel")
+    if "rear" in token or "trunk" in token:
+        return _text(lang, "rear wheels", "achterwielen")
+    if "front" in token or "engine" in token:
+        return _text(lang, "front wheels", "voorwielen")
+    return _text(lang, "all wheels", "alle wielen")
+
+
+def _finding_actions_for_source(
+    lang: object,
+    source: str,
+    *,
+    strongest_location: str = "",
+    strongest_speed_band: str = "",
+    weak_spatial_separation: bool = False,
+) -> list[dict[str, str]]:
+    location = strongest_location.strip()
+    speed_band = strongest_speed_band.strip()
+    speed_hint = (
+        _text(
+            lang,
+            f" with focus around {speed_band}",
+            f" met focus rond {speed_band}",
+        )
+        if speed_band
+        else ""
+    )
     if source == "wheel/tire":
+        wheel_focus = _wheel_focus_from_location(lang, location)
+        location_hint = (
+            _text(
+                lang,
+                f"Near the strongest location ({location}),",
+                f"Nabij de sterkste locatie ({location}),",
+            )
+            if location
+            else _text(lang, "At the wheel/tire corners,", "Bij de wiel/band-hoeken,")
+        )
         return [
-            _tr(lang, "SWAP_FRONT_REAR_WHEEL_POSITIONS_AND_REPEAT_THE"),
-            _tr(lang, "INSPECT_WHEEL_BALANCE_AND_RADIAL_LATERAL_RUNOUT"),
-            _tr(lang, "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER"),
+            {
+                "action_id": "wheel_balance_and_runout",
+                "what": _text(
+                    lang,
+                    f"Inspect and balance {wheel_focus}; measure radial/lateral runout on the wheel and tire{speed_hint}.",
+                    f"Controleer en balanceer {wheel_focus}; meet radiale/laterale slingering op wiel en band{speed_hint}.",
+                ),
+                "why": _text(
+                    lang,
+                    f"{location_hint} wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
+                    f"{location_hint} wielorde-signaturen komen meestal door onbalans, slingering of banddeformatie.",
+                ),
+                "confirm": _text(
+                    lang,
+                    "A clear imbalance or runout is found and corrected, with vibration complaint reduced.",
+                    "Er wordt duidelijke onbalans of slingering gevonden en gecorrigeerd, waarna de trillingsklacht afneemt.",
+                ),
+                "falsify": _text(
+                    lang,
+                    "Balance and runout are within spec on all checked wheels/tires and complaint remains unchanged.",
+                    "Balans en slingering zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft gelijk.",
+                ),
+                "eta": "20-45 min",
+            },
+            {
+                "action_id": "wheel_tire_condition",
+                "what": _text(
+                    lang,
+                    f"Inspect {wheel_focus} for tire defects: flat spots, belt shift, uneven wear, pressure mismatch.",
+                    f"Controleer {wheel_focus} op banddefecten: vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld, drukverschillen.",
+                ),
+                "why": _text(
+                    lang,
+                    "Tire structural issues often create strong 1x/2x wheel-order vibration.",
+                    "Structurele bandproblemen veroorzaken vaak sterke 1x/2x wielorde-trillingen.",
+                ),
+                "confirm": _text(
+                    lang,
+                    "Visible/measureable tire defect aligns with complaint speed band.",
+                    "Zichtbaar/meetbaar banddefect sluit aan op de klachten-snelheidsband.",
+                ),
+                "falsify": _text(
+                    lang,
+                    "No tire condition anomaly is found on inspected wheels.",
+                    "Er wordt geen bandtoestandsafwijking gevonden op de gecontroleerde wielen.",
+                ),
+                "eta": "10-20 min",
+            },
         ]
     if source == "driveline":
+        driveline_focus = (
+            _text(
+                lang,
+                f"near {location}",
+                f"nabij {location}",
+            )
+            if location
+            else _text(
+                lang,
+                "along the tunnel/rear driveline path",
+                "langs de tunnel/achterste aandrijflijn",
+            )
+        )
         return [
-            _tr(lang, "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER"),
-            _tr(lang, "REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK"),
-            _tr(lang, "CROSS_CHECK_WITH_A_SECOND_SENSOR_LOCATION_TO"),
+            {
+                "action_id": "driveline_inspection",
+                "what": _text(
+                    lang,
+                    f"Inspect propshaft runout/balance, center support bearing, CV/guibo joints {driveline_focus}.",
+                    f"Controleer cardanas slingering/balans, middenlager, homokineten/hardy-schijf {driveline_focus}.",
+                ),
+                "why": _text(
+                    lang,
+                    "Driveline-order vibration is commonly caused by shaft imbalance, joint wear, or support bearing issues.",
+                    "Aandrijflijnorde-trillingen komen vaak door onbalans van de as, slijtage van koppelingen of problemen met het middenlager.",
+                ),
+                "confirm": _text(
+                    lang,
+                    "Mechanical defect or out-of-spec runout/play is found in driveline components.",
+                    "Mechanisch defect of buiten-specificatie slingering/speling wordt gevonden in aandrijflijncomponenten.",
+                ),
+                "falsify": _text(
+                    lang,
+                    "No driveline play/runout/balance issue is found.",
+                    "Er wordt geen aandrijflijn-issue in speling/slingering/balans gevonden.",
+                ),
+                "eta": "20-35 min",
+            },
+            {
+                "action_id": "driveline_mounts_and_fasteners",
+                "what": _text(
+                    lang,
+                    "Check driveline mounts and fastening torque (diff mounts, shaft couplings, carrier brackets).",
+                    "Controleer aandrijflijnsteunen en aanhaalmomenten (diff-steunen, askoppelingen, draagbeugels).",
+                ),
+                "why": _text(
+                    lang,
+                    "Loose or degraded mounts can amplify normal order content into cabin vibration.",
+                    "Losse of versleten steunen kunnen normale orde-inhoud versterken tot voelbare trillingen in de auto.",
+                ),
+                "confirm": _text(
+                    lang,
+                    "Loose mount/fastener or cracked rubber support is found.",
+                    "Losse bevestiging of gescheurde rubbersteun wordt gevonden.",
+                ),
+                "falsify": _text(
+                    lang,
+                    "All inspected mounts and fasteners are within condition/torque spec.",
+                    "Alle gecontroleerde steunen en bevestigingen zijn binnen conditie-/koppelspecificatie.",
+                ),
+                "eta": "10-20 min",
+            },
         ]
     if source == "engine":
         return [
-            _tr(lang, "HOLD_ENGINE_AT_THE_SAME_RPM_IN_NEUTRAL"),
-            _tr(lang, "INSPECT_ENGINE_MOUNTS_AND_ACCESSORY_DRIVE"),
-            _tr(lang, "COMPARE_UNDER_LOAD_VS_NO_LOAD_AT_MATCHED"),
+            {
+                "action_id": "engine_mounts_and_accessories",
+                "what": _text(
+                    lang,
+                    "Inspect engine mounts and accessory drive (idler, tensioner, pulleys) for play or resonance.",
+                    "Controleer motorsteunen en hulpaandrijving (spanrol, geleiderol, poelies) op speling of resonantie.",
+                ),
+                "why": _text(
+                    lang,
+                    "Engine-order vibration often transfers through weakened mounts or accessory imbalance.",
+                    "Motororde-trillingen worden vaak doorgegeven via verzwakte steunen of onbalans in hulpaandrijving.",
+                ),
+                "confirm": _text(
+                    lang,
+                    "A worn mount or accessory imbalance is identified.",
+                    "Een versleten steun of onbalans in hulpaandrijving wordt vastgesteld.",
+                ),
+                "falsify": _text(
+                    lang,
+                    "Mounts and accessory drive are within acceptable condition.",
+                    "Steunen en hulpaandrijving zijn binnen acceptabele conditie.",
+                ),
+                "eta": "15-30 min",
+            },
+            {
+                "action_id": "engine_combustion_quality",
+                "what": _text(
+                    lang,
+                    "Check misfire counters and fuel/ignition adaptation for cylinders contributing to roughness.",
+                    "Controleer misfire-tellers en brandstof/ontsteking-adaptaties op cilinders die ruwloop veroorzaken.",
+                ),
+                "why": _text(
+                    lang,
+                    "Combustion imbalance can create engine-order vibration without obvious mechanical noise.",
+                    "Verbrandingsonbalans kan motororde-trillingen geven zonder duidelijk mechanisch geluid.",
+                ),
+                "confirm": _text(
+                    lang,
+                    "Cylinder-specific deviation aligns with the vibration complaint.",
+                    "Cilinderspecifieke afwijking sluit aan op de trillingsklacht.",
+                ),
+                "falsify": _text(
+                    lang,
+                    "Combustion quality indicators are stable and balanced.",
+                    "Verbrandingskwaliteits-indicatoren zijn stabiel en gebalanceerd.",
+                ),
+                "eta": "10-20 min",
+            },
         ]
+    fallback_why = _text(
+        lang,
+        "Use direct mechanical checks first because source classification is not specific enough yet.",
+        "Gebruik eerst directe mechanische controles omdat de bronclassificatie nog niet specifiek genoeg is.",
+    )
+    if weak_spatial_separation:
+        fallback_why = _text(
+            lang,
+            "Spatial separation is weak, so prioritize broad underbody and mount checks before part replacement.",
+            "Ruimtelijke scheiding is zwak, dus prioriteer brede onderstel- en steuncontroles vóór onderdeelvervanging.",
+        )
     return [
-        _tr(lang, "REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK"),
-        _tr(lang, "CROSS_CHECK_WITH_A_SECOND_SENSOR_LOCATION_TO"),
+        {
+            "action_id": "general_mechanical_inspection",
+            "what": _text(
+                lang,
+                "Inspect wheel bearings, suspension bushings, subframe mounts, and loose fasteners in the hotspot area.",
+                "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in de hotspot-zone.",
+            ),
+            "why": fallback_why,
+            "confirm": _text(
+                lang,
+                "A clear mechanical issue is found at or near the hotspot.",
+                "Een duidelijke mechanische afwijking wordt bij of nabij de hotspot gevonden.",
+            ),
+            "falsify": _text(
+                lang,
+                "No abnormal wear, play, or looseness is found.",
+                "Er wordt geen abnormale slijtage, speling of losheid gevonden.",
+            ),
+            "eta": "20-35 min",
+        }
+    ]
+
+
+def _merge_test_plan(
+    findings: list[dict[str, object]],
+    lang: object,
+) -> list[dict[str, str]]:
+    steps: list[dict[str, str]] = []
+    for finding in findings:
+        if not isinstance(finding, dict):
+            continue
+        actions = finding.get("actions")
+        if isinstance(actions, list) and actions:
+            steps.extend([step for step in actions if isinstance(step, dict)])
+            continue
+        source = str(finding.get("suspected_source") or "").strip().lower()
+        steps.extend(
+            _finding_actions_for_source(
+                lang,
+                source,
+                strongest_location=str(finding.get("strongest_location") or ""),
+                strongest_speed_band=str(finding.get("strongest_speed_band") or ""),
+                weak_spatial_separation=bool(finding.get("weak_spatial_separation")),
+            )
+        )
+
+    dedup: dict[str, dict[str, str]] = {}
+    ordered: list[dict[str, str]] = []
+    for step in steps:
+        action_id = str(step.get("action_id") or "").strip().lower()
+        if not action_id:
+            continue
+        if action_id in dedup:
+            continue
+        dedup[action_id] = step
+        ordered.append(step)
+        if len(ordered) >= 5:
+            break
+    if ordered:
+        return ordered
+    return [
+        {
+            "action_id": "general_mechanical_inspection",
+            "what": _text(
+                lang,
+                "Inspect wheel bearings, suspension bushings, subframe mounts, and loose fasteners in the vibration path.",
+                "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in het trillingspad.",
+            ),
+            "why": _text(
+                lang,
+                "No specific source could be ranked with enough confidence.",
+                "Er kon geen specifieke bron met voldoende betrouwbaarheid worden gerangschikt.",
+            ),
+            "confirm": _text(
+                lang,
+                "A concrete mechanical issue is identified.",
+                "Een concrete mechanische afwijking wordt vastgesteld.",
+            ),
+            "falsify": _text(
+                lang,
+                "No abnormal play, wear, or looseness is detected.",
+                "Er wordt geen abnormale speling, slijtage of losheid gedetecteerd.",
+            ),
+            "eta": "20-35 min",
+        }
     ]
 
 
@@ -431,6 +775,7 @@ def _location_speedbin_summary(
             "mean_amp": top_amp,
             "dominance_ratio": dominance,
             "location_count": len(ranked),
+            "weak_spatial_separation": dominance < 1.2,
         }
         if best is None or float(candidate["mean_amp"]) > float(best["mean_amp"]):
             best = candidate
@@ -442,16 +787,21 @@ def _location_speedbin_summary(
         lang,
         (
             "Strongest at {location} in {speed_range} "
-            "(~{dominance:.2f}x vs next location in that speed bin)."
+            "(~{dominance:.2f}x vs next location in that speed bin{weak_note})."
         ),
         (
             "Sterkst bij {location} in {speed_range} "
-            "(~{dominance:.2f}x t.o.v. volgende locatie in die snelheidsband)."
+            "(~{dominance:.2f}x t.o.v. volgende locatie in die snelheidsband{weak_note})."
         ),
     ).format(
         location=best["location"],
         speed_range=best["speed_range"],
         dominance=float(best["dominance_ratio"]),
+        weak_note=(
+            _text(lang, ", weak spatial separation", ", zwakke ruimtelijke scheiding")
+            if bool(best.get("weak_spatial_separation"))
+            else ""
+        ),
     )
     return sentence, best
 
@@ -461,6 +811,7 @@ def _build_order_findings(
     metadata: dict[str, Any],
     samples: list[dict[str, Any]],
     speed_sufficient: bool,
+    steady_speed: bool,
     tire_circumference_m: float | None,
     engine_ref_sufficient: bool,
     raw_sample_rate_hz: float | None,
@@ -548,6 +899,8 @@ def _build_order_findings(
             + (0.15 * corr_val)
             + (0.10 * snr_score)
         )
+        if steady_speed:
+            confidence *= 0.88
         confidence = max(0.08, min(0.97, confidence))
 
         ranking_score = (
@@ -581,8 +934,33 @@ def _build_order_findings(
         if location_line:
             evidence = f"{evidence} {location_line}"
 
+        strongest_location = (
+            str(location_hotspot.get("location")) if isinstance(location_hotspot, dict) else ""
+        )
+        strongest_speed_band = (
+            str(location_hotspot.get("speed_range")) if isinstance(location_hotspot, dict) else ""
+        )
+        weak_spatial_separation = (
+            bool(location_hotspot.get("weak_spatial_separation"))
+            if isinstance(location_hotspot, dict)
+            else True
+        )
+        actions = _finding_actions_for_source(
+            lang,
+            hypothesis.suspected_source,
+            strongest_location=strongest_location,
+            strongest_speed_band=strongest_speed_band,
+            weak_spatial_separation=weak_spatial_separation,
+        )
+        quick_checks = [
+            str(action.get("what") or "")
+            for action in actions
+            if str(action.get("what") or "").strip()
+        ][:3]
+
         finding = {
             "finding_id": "F_ORDER",
+            "finding_key": hypothesis.key,
             "suspected_source": hypothesis.suspected_source,
             "evidence_summary": evidence,
             "frequency_hz_or_order": _order_label(
@@ -599,9 +977,32 @@ def _build_order_findings(
                 ),
             },
             "confidence_0_to_1": confidence,
-            "quick_checks": _quick_checks_for_source(lang, hypothesis.suspected_source),
+            "quick_checks": quick_checks,
             "matched_points": matched_points,
             "location_hotspot": location_hotspot,
+            "strongest_location": strongest_location or None,
+            "strongest_speed_band": strongest_speed_band or None,
+            "dominance_ratio": (
+                float(location_hotspot.get("dominance_ratio"))
+                if isinstance(location_hotspot, dict)
+                else None
+            ),
+            "weak_spatial_separation": weak_spatial_separation,
+            "evidence_metrics": {
+                "match_rate": match_rate,
+                "mean_relative_error": mean_rel_err,
+                "mean_matched_amplitude": mean_amp,
+                "mean_noise_floor": mean_floor,
+                "possible_samples": possible,
+                "matched_samples": matched,
+                "frequency_correlation": corr,
+            },
+            "next_sensor_move": _text(
+                lang,
+                str(actions[0].get("what") or "Inspect the highest-ranked hotspot path first."),
+                str(actions[0].get("what") or "Controleer eerst het hoogste hotspot-pad."),
+            ),
+            "actions": actions,
         }
         findings.append((ranking_score, finding))
 
@@ -614,6 +1015,7 @@ def _build_findings(
     metadata: dict[str, Any],
     samples: list[dict[str, Any]],
     speed_sufficient: bool,
+    steady_speed: bool,
     speed_non_null_pct: float,
     raw_sample_rate_hz: float | None,
     lang: object = "en",
@@ -700,6 +1102,7 @@ def _build_findings(
             metadata=metadata,
             samples=samples,
             speed_sufficient=speed_sufficient,
+            steady_speed=steady_speed,
             tire_circumference_m=tire_circumference_m if speed_sufficient else None,
             engine_ref_sufficient=engine_ref_sufficient,
             raw_sample_rate_hz=raw_sample_rate_hz,
@@ -716,6 +1119,71 @@ def _build_findings(
     return findings
 
 
+def _most_likely_origin_summary(
+    findings: list[dict[str, object]], lang: object
+) -> dict[str, object]:
+    if not findings:
+        return {
+            "location": _tr(lang, "UNKNOWN"),
+            "source": _tr(lang, "UNKNOWN"),
+            "dominance_ratio": None,
+            "weak_spatial_separation": True,
+            "explanation": _text(
+                lang,
+                "No ranked finding is available yet.",
+                "Nog geen gerangschikte bevinding beschikbaar.",
+            ),
+        }
+    top = findings[0]
+    location = str(top.get("strongest_location") or "").strip() or _tr(lang, "UNKNOWN")
+    source = str(top.get("suspected_source") or "unknown")
+    source_human = (
+        "Wheel / Tire"
+        if source == "wheel/tire"
+        else "Driveline"
+        if source == "driveline"
+        else "Engine"
+        if source == "engine"
+        else "Unknown"
+    )
+    dominance = _as_float(top.get("dominance_ratio"))
+    weak = bool(top.get("weak_spatial_separation")) or (dominance is not None and dominance < 1.2)
+    speed_band = str(
+        top.get("strongest_speed_band") or _text(lang, "unknown band", "onbekende band")
+    )
+    explanation = _text(
+        lang,
+        (
+            "Based on Finding 1 ({source}) matched samples in {speed_band}, strongest at {location}, "
+            "dominance {dominance}."
+        ),
+        (
+            "Gebaseerd op Bevinding 1 ({source}) met gematchte samples in {speed_band}, sterkst bij {location}, "
+            "dominantie {dominance}."
+        ),
+    ).format(
+        source=source_human,
+        speed_band=speed_band,
+        location=location,
+        dominance=(f"{dominance:.2f}x" if dominance is not None else _text(lang, "n/a", "n.v.t.")),
+    )
+    if weak:
+        explanation += " " + _text(
+            lang,
+            "Weak spatial separation; inspect both top nearby components before replacing parts.",
+            "Zwakke ruimtelijke scheiding; controleer eerst beide dichtstbijzijnde componenten voordat je onderdelen vervangt.",
+        )
+    return {
+        "location": location,
+        "source": source,
+        "source_human": source_human,
+        "dominance_ratio": dominance,
+        "weak_spatial_separation": weak,
+        "speed_band": speed_band,
+        "explanation": explanation,
+    }
+
+
 def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     samples: list[dict[str, Any]] = summary.get("samples", [])
     raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
@@ -723,6 +1191,8 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     dominant_freq_points: list[tuple[float, float]] = []
     speed_amp_points: list[tuple[float, float]] = []
     matched_by_finding: list[dict[str, object]] = []
+    freq_vs_speed_by_finding: list[dict[str, object]] = []
+    steady_speed_distribution: dict[str, float] | None = None
 
     for sample in samples:
         t_s = _as_float(sample.get("t_s"))
@@ -776,12 +1246,47 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
                     "points": points,
                 }
             )
+        freq_points: list[tuple[float, float]] = []
+        pred_points: list[tuple[float, float]] = []
+        for row in points_raw:
+            if not isinstance(row, dict):
+                continue
+            speed = _as_float(row.get("speed_kmh"))
+            matched_hz = _as_float(row.get("matched_hz"))
+            predicted_hz = _as_float(row.get("predicted_hz"))
+            if speed is None or speed <= 0:
+                continue
+            if matched_hz is not None and matched_hz > 0:
+                freq_points.append((speed, matched_hz))
+            if predicted_hz is not None and predicted_hz > 0:
+                pred_points.append((speed, predicted_hz))
+        if freq_points:
+            freq_vs_speed_by_finding.append(
+                {
+                    "label": str(finding.get("frequency_hz_or_order") or finding.get("finding_id")),
+                    "matched": freq_points,
+                    "predicted": pred_points,
+                }
+            )
+
+    speed_stats = summary.get("speed_stats", {})
+    if isinstance(speed_stats, dict) and bool(speed_stats.get("steady_speed")) and vib_mag_points:
+        vals = sorted(v for _t, v in vib_mag_points if v >= 0)
+        if vals:
+            steady_speed_distribution = {
+                "p10": _percentile(vals, 0.10),
+                "p50": _percentile(vals, 0.50),
+                "p90": _percentile(vals, 0.90),
+                "p95": _percentile(vals, 0.95),
+            }
 
     return {
         "vib_magnitude": vib_mag_points,
         "dominant_freq": dominant_freq_points,
         "amp_vs_speed": speed_amp_points,
         "matched_amp_vs_speed": matched_by_finding,
+        "freq_vs_speed_by_finding": freq_vs_speed_by_finding,
+        "steady_speed_distribution": steady_speed_distribution,
     }
 
 
@@ -798,6 +1303,7 @@ def build_findings_for_samples(
         for speed in (_as_float(sample.get("speed_kmh")) for sample in rows)
         if speed is not None and speed > 0
     ]
+    speed_stats = _speed_stats(speed_values)
     speed_non_null_pct = (len(speed_values) / len(rows) * 100.0) if rows else 0.0
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
@@ -807,6 +1313,7 @@ def build_findings_for_samples(
         metadata=dict(metadata),
         samples=rows,
         speed_sufficient=speed_sufficient,
+        steady_speed=bool(speed_stats.get("steady_speed")),
         speed_non_null_pct=speed_non_null_pct,
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,
@@ -836,6 +1343,7 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
         for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
         if speed is not None and speed > 0
     ]
+    speed_stats = _speed_stats(speed_values)
     speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
@@ -906,10 +1414,133 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
         metadata=metadata,
         samples=samples,
         speed_sufficient=speed_sufficient,
+        steady_speed=bool(speed_stats.get("steady_speed")),
         speed_non_null_pct=speed_non_null_pct,
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,
     )
+    most_likely_origin = _most_likely_origin_summary(findings, language)
+    test_plan = _merge_test_plan(findings, language)
+
+    metadata_dict = metadata if isinstance(metadata, dict) else {}
+    reference_complete = bool(
+        _as_float(metadata_dict.get("raw_sample_rate_hz"))
+        and (
+            _as_float(metadata_dict.get("tire_circumference_m"))
+            or tire_circumference_m_from_spec(
+                _as_float(metadata_dict.get("tire_width_mm")),
+                _as_float(metadata_dict.get("tire_aspect_pct")),
+                _as_float(metadata_dict.get("rim_in")),
+            )
+        )
+        and (
+            _as_float(metadata_dict.get("engine_rpm"))
+            or (
+                _as_float(metadata_dict.get("final_drive_ratio"))
+                and _as_float(metadata_dict.get("current_gear_ratio"))
+            )
+        )
+    )
+    run_suitability = [
+        {
+            "check": _text(language, "Speed variation", "Snelheidsvariatie"),
+            "state": ("pass" if not bool(speed_stats.get("steady_speed")) else "warn"),
+            "explanation": _text(
+                language,
+                "Wide enough speed sweep for order tracking."
+                if not bool(speed_stats.get("steady_speed"))
+                else "Speed sweep is narrow; repeat with +20 to +30 km/h span.",
+                "Snelheidssweep is breed genoeg voor orde-tracking."
+                if not bool(speed_stats.get("steady_speed"))
+                else "Snelheidssweep is smal; herhaal met +20 tot +30 km/u bereik.",
+            ),
+        },
+        {
+            "check": _text(language, "Sensor coverage", "Sensordekking"),
+            "state": "pass"
+            if len(
+                {
+                    str(s.get("client_id") or "")
+                    for s in samples
+                    if isinstance(s, dict) and s.get("client_id")
+                }
+            )
+            >= 3
+            else "warn",
+            "explanation": _text(
+                language,
+                "Multiple sensor locations observed."
+                if len(
+                    {
+                        str(s.get("client_id") or "")
+                        for s in samples
+                        if isinstance(s, dict) and s.get("client_id")
+                    }
+                )
+                >= 3
+                else "Few active sensors; location ranking is weaker.",
+                "Meerdere sensorlocaties waargenomen."
+                if len(
+                    {
+                        str(s.get("client_id") or "")
+                        for s in samples
+                        if isinstance(s, dict) and s.get("client_id")
+                    }
+                )
+                >= 3
+                else "Weinig actieve sensoren; locatierangschikking is zwakker.",
+            ),
+        },
+        {
+            "check": _text(language, "Reference completeness", "Referentiecompleetheid"),
+            "state": "pass" if reference_complete else "warn",
+            "explanation": _text(
+                language,
+                "Required order references are present."
+                if reference_complete
+                else "Some order references are missing or derived with uncertainty.",
+                "Vereiste ordesreferenties zijn aanwezig."
+                if reference_complete
+                else "Sommige ordesreferenties ontbreken of zijn onzeker afgeleid.",
+            ),
+        },
+        {
+            "check": _text(language, "Saturation and outliers", "Saturatie en uitschieters"),
+            "state": "pass" if sat_count == 0 else "warn",
+            "explanation": _text(
+                language,
+                "No obvious saturation detected."
+                if sat_count == 0
+                else f"{sat_count} potential saturation samples detected.",
+                "Geen duidelijke saturatie gedetecteerd."
+                if sat_count == 0
+                else f"{sat_count} mogelijke saturatiesamples gedetecteerd.",
+            ),
+        },
+    ]
+    sensor_locations = sorted(
+        {
+            _location_label(sample)
+            for sample in samples
+            if isinstance(sample, dict) and _location_label(sample)
+        }
+    )
+    top_causes = []
+    for finding in findings[:3]:
+        if not isinstance(finding, dict):
+            continue
+        top_causes.append(
+            {
+                "finding_id": finding.get("finding_id"),
+                "source": finding.get("suspected_source"),
+                "confidence": finding.get("confidence_0_to_1"),
+                "order": finding.get("frequency_hz_or_order"),
+                "strongest_location": finding.get("strongest_location"),
+                "dominance_ratio": finding.get("dominance_ratio"),
+                "strongest_speed_band": finding.get("strongest_speed_band"),
+                "weak_spatial_separation": finding.get("weak_spatial_separation"),
+            }
+        )
 
     summary: dict[str, Any] = {
         "file_name": log_path.name,
@@ -934,6 +1565,14 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
         "speed_breakdown": speed_breakdown,
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
+        "top_causes": top_causes,
+        "most_likely_origin": most_likely_origin,
+        "test_plan": test_plan,
+        "speed_stats": speed_stats,
+        "sensor_locations": sensor_locations,
+        "sensor_count_used": len(sensor_locations),
+        "sensor_intensity_by_location": _sensor_intensity_by_location(samples),
+        "run_suitability": run_suitability,
         "samples": samples,
         "data_quality": {
             "required_missing_pct": {
@@ -947,6 +1586,8 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
                 "non_null_pct": speed_non_null_pct,
                 "min_kmh": min(speed_values) if speed_values else None,
                 "max_kmh": max(speed_values) if speed_values else None,
+                "mean_kmh": speed_stats.get("mean_kmh"),
+                "stddev_kmh": speed_stats.get("stddev_kmh"),
                 "count_non_null": len(speed_values),
             },
             "accel_sanity": {
