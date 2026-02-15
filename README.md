@@ -41,7 +41,7 @@ python -m vibesensor.app --config config.dev.yaml
 In another terminal:
 
 ```bash
-python tools/simulator/sim_sender.py --count 3 --server-host 127.0.0.1
+python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
 ```
 
 The simulator stays running while you use the UI and supports interactive commands:
@@ -52,6 +52,31 @@ In the dashboard Vehicle Settings panel, tire settings are split into 3 fields
 Open:
 
 - `http://localhost:8000`
+
+## Local Test In Docker (No AP/Hotspot)
+
+This path runs only the telemetry server for local testing. It does not run
+Raspberry Pi Access Point/hotspot setup.
+
+```bash
+docker compose up --build
+```
+
+Then open:
+
+- `http://localhost:8000`
+
+To stream test data from host:
+
+```bash
+python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
+```
+
+Stop container:
+
+```bash
+docker compose down
+```
 
 ## Two Ways To Deploy
 

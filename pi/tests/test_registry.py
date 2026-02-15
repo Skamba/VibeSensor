@@ -30,6 +30,7 @@ def test_registry_sequence_gap(tmp_path: Path) -> None:
     row = registry.snapshot_for_api(now=3.0)[0]
     assert row["frames_total"] == 2
     assert row["dropped_frames"] == 1
+    assert row["mac_address"] == "aa:bb:cc:dd:ee:ff"
 
 
 def test_registry_rename_persist(tmp_path: Path) -> None:
@@ -65,6 +66,19 @@ def test_registry_rename_normalizes_client_id(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows[0]["id"] == lower_id
     assert rows[0]["name"] == "rear-updated"
+
+
+def test_registry_snapshot_includes_persisted_offline_clients(tmp_path: Path) -> None:
+    persist = tmp_path / "clients.json"
+    registry = ClientRegistry(persist)
+    offline_id = "001122334455"
+    registry.set_name(offline_id, "rear-right-wheel")
+
+    registry2 = ClientRegistry(persist)
+    rows = {row["id"]: row for row in registry2.snapshot_for_api(now=10.0)}
+    assert rows[offline_id]["name"] == "rear-right-wheel"
+    assert rows[offline_id]["connected"] is False
+    assert rows[offline_id]["mac_address"] == "00:11:22:33:44:55"
 
 
 def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
@@ -136,3 +150,17 @@ def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
     evicted = registry.evict_stale(now=3.1)
     assert evicted == ["aabbccddeeff"]
     assert registry.get("aabbccddeeff") is None
+
+
+def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
+    persist = tmp_path / "clients.json"
+    registry = ClientRegistry(persist)
+    client_id = "001122334455"
+    registry.set_name(client_id, "front-left")
+
+    assert registry.remove_client(client_id) is True
+    assert registry.remove_client(client_id) is False
+
+    registry2 = ClientRegistry(persist)
+    rows = registry2.snapshot_for_api(now=1.0)
+    assert rows == []

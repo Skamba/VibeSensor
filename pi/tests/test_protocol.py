@@ -11,9 +11,11 @@ from vibesensor.protocol import (
     HELLO_FIXED_BYTES,
     MSG_DATA,
     MSG_HELLO,
+    client_id_mac,
     pack_cmd_identify,
     pack_data,
     pack_hello,
+    parse_client_id,
     parse_cmd,
     parse_data,
     parse_hello,
@@ -60,6 +62,13 @@ def test_parse_identify_cmd() -> None:
     assert parsed.cmd_id == CMD_IDENTIFY
     assert parsed.cmd_seq == 42
     assert int.from_bytes(parsed.params[:2], "little") == 1500
+
+
+def test_client_id_mac_roundtrip() -> None:
+    client_id = bytes.fromhex("d05a01020304")
+    mac = client_id_mac(client_id)
+    assert mac == "d0:5a:01:02:03:04"
+    assert parse_client_id(mac) == client_id
 
 
 def test_protocol_layout_constants_match_esp_side() -> None:

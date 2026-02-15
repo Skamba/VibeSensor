@@ -1,0 +1,30 @@
+server:
+  host: 0.0.0.0
+  port: 8000
+
+udp:
+  data_listen: 0.0.0.0:9000
+  control_listen: 0.0.0.0:9001
+
+processing:
+  sample_rate_hz: 800
+  waveform_seconds: 8
+  waveform_display_hz: 120
+  ui_push_hz: 10
+  ui_heavy_push_hz: 4
+  fft_update_hz: 4
+  fft_n: 2048
+  spectrum_max_hz: 200
+  client_ttl_seconds: 120
+
+logging:
+  log_metrics: true
+  metrics_csv_path: pi/data/metrics.csv
+  metrics_log_hz: 4
+
+storage:
+  clients_json_path: pi/data/clients.json
+
+gps:
+  gps_enabled: false
+  gps_speed_only: true

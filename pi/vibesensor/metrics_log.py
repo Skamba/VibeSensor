@@ -4,6 +4,7 @@ import asyncio
 import csv
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import RLock
 
 from .gps_speed import GPSSpeedMonitor
 from .registry import ClientRegistry
@@ -35,19 +36,42 @@ class MetricsLogger:
         registry: ClientRegistry,
         gps_monitor: GPSSpeedMonitor,
     ):
-        self.enabled = enabled
+        self.enabled = bool(enabled)
         self.csv_path = csv_path
         self.metrics_log_hz = max(1, metrics_log_hz)
         self.registry = registry
         self.gps_monitor = gps_monitor
+        self._lock = RLock()
+        self._active_path: Path | None = None
+        if self.enabled:
+            self._active_path = self._path_for_new_session()
 
-    def _path_for_today(self) -> Path:
-        date_suffix = datetime.now(UTC).strftime("%Y%m%d")
+    def _path_for_new_session(self, now: datetime | None = None) -> Path:
+        ts = now or datetime.now(UTC)
+        date_suffix = ts.strftime("%Y%m%d_%H%M%S")
         stem = self.csv_path.stem
         return self.csv_path.with_name(f"{stem}_{date_suffix}{self.csv_path.suffix or '.csv'}")
 
-    def _append_rows(self) -> None:
-        path = self._path_for_today()
+    def status(self) -> dict[str, str | bool | None]:
+        with self._lock:
+            return {
+                "enabled": self.enabled,
+                "current_file": self._active_path.name if self._active_path else None,
+            }
+
+    def start_logging(self) -> dict[str, str | bool | None]:
+        with self._lock:
+            self.enabled = True
+            self._active_path = self._path_for_new_session()
+            return self.status()
+
+    def stop_logging(self) -> dict[str, str | bool | None]:
+        with self._lock:
+            self.enabled = False
+            self._active_path = None
+            return self.status()
+
+    def _append_rows(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         needs_header = not path.exists()
         ts = datetime.now(UTC).isoformat()
@@ -93,11 +117,11 @@ class MetricsLogger:
             writer.writerows(rows)
 
     async def run(self) -> None:
-        if not self.enabled:
-            while True:
-                await asyncio.sleep(30.0)
-
         interval = 1.0 / self.metrics_log_hz
         while True:
-            await asyncio.to_thread(self._append_rows)
+            with self._lock:
+                active = self.enabled
+                path = self._active_path
+            if active and path is not None:
+                await asyncio.to_thread(self._append_rows, path)
             await asyncio.sleep(interval)
