@@ -781,6 +781,34 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def build_findings_for_samples(
+    *,
+    metadata: dict[str, Any],
+    samples: list[dict[str, Any]],
+    lang: str | None = None,
+) -> list[dict[str, object]]:
+    language = _normalize_lang(lang)
+    rows = list(samples) if isinstance(samples, list) else []
+    speed_values = [
+        speed
+        for speed in (_as_float(sample.get("speed_kmh")) for sample in rows)
+        if speed is not None and speed > 0
+    ]
+    speed_non_null_pct = (len(speed_values) / len(rows) * 100.0) if rows else 0.0
+    speed_sufficient = (
+        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
+    )
+    raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
+    return _build_findings(
+        metadata=dict(metadata),
+        samples=rows,
+        speed_sufficient=speed_sufficient,
+        speed_non_null_pct=speed_non_null_pct,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        lang=language,
+    )
+
+
 def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
     language = _normalize_lang(lang)
     metadata, samples, warnings = _load_run(log_path)
