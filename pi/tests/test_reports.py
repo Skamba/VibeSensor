@@ -13,6 +13,10 @@ def _write_jsonl(path: Path, records: list[dict]) -> None:
     )
 
 
+def _assert_pdf_contains(pdf_bytes: bytes, text: str) -> None:
+    assert text.encode("latin-1", errors="ignore") in pdf_bytes
+
+
 def _run_metadata(
     *,
     run_id: str,
@@ -145,6 +149,9 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
+    _assert_pdf_contains(pdf, "Next steps test plan")
+    _assert_pdf_contains(pdf, "Sensor placement and hotspots")
+    _assert_pdf_contains(pdf, "Finding 1")
 
 
 def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
@@ -270,3 +277,34 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
     units = summary["metadata"]["units"]
     assert units["accel_x_g"] == "g"
     assert units["vib_mag_rms_g"] == "g"
+
+
+def test_steady_speed_report_wording(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_steady_speed.jsonl"
+    records: list[dict] = [
+        _run_metadata(
+            run_id="run-01",
+            raw_sample_rate_hz=800,
+            tire_circumference_m=2.2,
+        )
+    ]
+    for idx in range(24):
+        # narrow speed spread to trigger steady-speed branch
+        speed = 100.0 + ((idx % 3) * 0.4)
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=speed,
+                dominant_freq_hz=22.0 + (idx * 0.02),
+                dominant_peak_amp_g=0.08 + (idx * 0.0003),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    assert bool(summary["speed_stats"]["steady_speed"]) is True
+
+    pdf = build_report_pdf(summary)
+    assert pdf.startswith(b"%PDF")
+    _assert_pdf_contains(pdf, "Amplitude at steady speed")

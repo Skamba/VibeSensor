@@ -90,6 +90,14 @@ class LiveDiagnosticsEngine:
         self._latest_events: list[dict[str, Any]] = []
         self._latest_findings: list[dict[str, Any]] = []
 
+    def reset(self) -> None:
+        self._matrix = _new_matrix()
+        self._recent_events = []
+        self._last_detection_by_client = {}
+        self._last_detection_global = {}
+        self._latest_events = []
+        self._latest_findings = []
+
     def _update_matrix(self, source_key: str, severity_key: str, contributor_label: str) -> None:
         if source_key not in self._matrix:
             return
