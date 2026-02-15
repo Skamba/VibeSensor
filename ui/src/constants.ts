@@ -1,4 +1,4 @@
-export const palette = ["#e63946", "#2a9d8f", "#3a86ff", "#f4a261", "#7b2cbf", "#1d3557", "#ff006e"];
+export const palette = ["#2563eb", "#0d9488", "#7c3aed", "#ea580c", "#dc2626", "#0891b2", "#ca8a04"];
 
 export const defaultLocationCodes = [
   "front_left_wheel",

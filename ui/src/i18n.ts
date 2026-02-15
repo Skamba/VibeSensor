@@ -2,7 +2,7 @@ export const supported = ["en", "nl"];
 
 export const dict = {
     en: {
-      "title.main": "VibeSensor Frequency Live",
+      "title.main": "VibeSensor",
       "nav.live": "Live",
       "nav.logs": "Logs",
       "nav.report": "Report",
@@ -166,7 +166,7 @@ export const dict = {
       "location.trunk": "Trunk",
     },
     nl: {
-      "title.main": "VibeSensor Frequentieanalyse Live",
+      "title.main": "VibeSensor",
       "nav.live": "Live",
       "nav.logs": "Logs",
       "nav.report": "Rapport",
