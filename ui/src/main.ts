@@ -2,23 +2,42 @@
 import "uplot/dist/uPlot.min.css";
 import * as I18N from "./i18n";
 import {
-  deleteLog as deleteLogApi,
-  getClientLocations,
-  getLogInsights,
   getLoggingStatus,
-  getLogs,
   getSpeedOverride,
   identifyClient as identifyClientApi,
-  logDownloadUrl,
   removeClient as removeClientApi,
-  reportPdfUrl,
   setAnalysisSettings,
   setClientLocation as setClientLocationApi,
   setSpeedOverride,
   startLoggingRun,
   stopLoggingRun,
 } from "./api";
+import {
+  bandToleranceModelVersion,
+  defaultLocationCodes,
+  multiFreqBinHz,
+  multiSyncWindowMs,
+  palette,
+  severityBands,
+  sourceColumns,
+} from "./constants";
+import {
+  createEmptyMatrix,
+  relativeDbAboveFloor,
+  severityFromPeak,
+  sourceKeysFromClassKey,
+} from "./diagnostics";
+import { escapeHtml, fmt, formatInt } from "./format";
+import { createClientsSettingsController } from "./features/clients_settings";
+import { createLogReportController } from "./features/log_report";
 import { SpectrumChart } from "./spectrum";
+import {
+  buildRecommendedBandDefaults,
+  combinedRelativeUncertainty,
+  parseTireSpec,
+  tireDiameterMeters,
+  toleranceForOrder,
+} from "./vehicle_math";
 import { WsClient, type WsUiState } from "./ws";
   const els = {
     menuButtons: Array.from(document.querySelectorAll(".menu-btn")),
@@ -31,6 +50,7 @@ import { WsClient, type WsUiState } from "./ws";
     startLoggingBtn: document.getElementById("startLoggingBtn"),
     stopLoggingBtn: document.getElementById("stopLoggingBtn"),
     refreshLogsBtn: document.getElementById("refreshLogsBtn"),
+    deleteAllLogsBtn: document.getElementById("deleteAllLogsBtn"),
     logsSummary: document.getElementById("logsSummary"),
     logsTableBody: document.getElementById("logsTableBody"),
     reportLogSelect: document.getElementById("reportLogSelect"),
@@ -70,48 +90,8 @@ import { WsClient, type WsUiState } from "./ws";
   };
 
   const uiLanguageStorageKey = "vibesensor_ui_lang_v1";
-  const palette = ["#e63946", "#2a9d8f", "#3a86ff", "#f4a261", "#7b2cbf", "#1d3557", "#ff006e"];
-  const defaultLocationCodes = [
-    "front_left_wheel",
-    "front_right_wheel",
-    "rear_left_wheel",
-    "rear_right_wheel",
-    "transmission",
-    "driveshaft_tunnel",
-    "engine_bay",
-    "front_subframe",
-    "rear_subframe",
-    "driver_seat",
-    "front_passenger_seat",
-    "rear_left_seat",
-    "rear_center_seat",
-    "rear_right_seat",
-    "trunk",
-  ];
   const settingsStorageKey = "vibesensor_vehicle_settings_v3";
   const speedUnitStorageKey = "vibesensor_speed_unit";
-  const bandToleranceModelVersion = 2;
-  const treadWearModel = {
-    // 10/32 in (~7.9 mm) new to 2/32 in (~1.6 mm) legal minimum.
-    new_tread_mm: 7.9,
-    worn_tread_mm: 1.6,
-    safety_margin_pct: 0.3,
-  };
-  const sourceColumns = [
-    { key: "engine", labelKey: "matrix.source.engine" },
-    { key: "driveshaft", labelKey: "matrix.source.driveshaft" },
-    { key: "wheel", labelKey: "matrix.source.wheel" },
-    { key: "other", labelKey: "matrix.source.other" },
-  ];
-  const severityBands = [
-    { key: "l5", labelKey: "matrix.severity.l5", minDb: 40, maxDb: Number.POSITIVE_INFINITY },
-    { key: "l4", labelKey: "matrix.severity.l4", minDb: 34, maxDb: 40 },
-    { key: "l3", labelKey: "matrix.severity.l3", minDb: 28, maxDb: 34 },
-    { key: "l2", labelKey: "matrix.severity.l2", minDb: 22, maxDb: 28 },
-    { key: "l1", labelKey: "matrix.severity.l1", minDb: 16, maxDb: 22 },
-  ];
-  const multiSyncWindowMs = 500;
-  const multiFreqBinHz = 1.5;
 
   const state = {
     ws: null,
@@ -152,6 +132,8 @@ import { WsClient, type WsUiState } from "./ws";
     lastDetectionGlobal: {},
     recentDetectionEvents: [],
     eventMatrix: createEmptyMatrix(),
+    useServerDiagnostics: false,
+    lastTopFindingSig: "",
     pendingPayload: null,
     renderQueued: false,
     lastRenderTsMs: 0,
@@ -221,11 +203,11 @@ import { WsClient, type WsUiState } from "./ws";
     }
     state.locationOptions = buildLocationOptions(state.locationCodes);
     state.clientsSettingsSignature = "";
-    maybeRenderClientsSettingsList(true);
+    clientsSettings.maybeRenderClientsSettingsList(true);
     renderSpeedReadout();
     renderLoggingStatus();
-    renderLogsTable();
-    renderReportSelect();
+    logReport.renderLogsTable();
+    logReport.renderReportSelect();
     renderVibrationLog();
     renderMatrix();
     renderWsState();
@@ -235,22 +217,108 @@ import { WsClient, type WsUiState } from "./ws";
       renderSpectrum();
     }
     if (forceReloadInsights && state.selectedLogName) {
-      void loadReportInsights();
+      void logReport.loadReportInsights();
     }
     updateSpectrumOverlay();
   }
 
   Object.assign(state.vehicleSettings, buildRecommendedBandDefaults(state.vehicleSettings));
 
-  function createEmptyMatrix() {
-    const matrix = {};
-    for (const src of sourceColumns) {
-      matrix[src.key] = {};
-      for (const band of severityBands) {
-        matrix[src.key][band.key] = { count: 0, contributors: {} };
+  function causeForClassKey(classKey) {
+    if (classKey === "wheel1") return t("cause.wheel1");
+    if (classKey === "wheel2") return t("cause.wheel2");
+    if (classKey === "shaft_eng1") return t("cause.shaft_eng1");
+    if (classKey === "shaft1") return t("cause.shaft1");
+    if (classKey === "eng1") return t("cause.eng1");
+    if (classKey === "eng2") return t("cause.eng2");
+    if (classKey === "road") return t("cause.road");
+    return t("cause.other");
+  }
+
+  function severityLabelForKey(key) {
+    const match = severityBands.find((band) => band.key === key);
+    return match ? t(match.labelKey) : key;
+  }
+
+  function applyServerDiagnostics(diagnostics) {
+    if (!diagnostics || typeof diagnostics !== "object") return;
+    const matrix = diagnostics.matrix;
+    if (matrix && typeof matrix === "object") {
+      const next = createEmptyMatrix();
+      for (const src of sourceColumns) {
+        const srcRow = matrix[src.key];
+        if (!srcRow || typeof srcRow !== "object") continue;
+        for (const band of severityBands) {
+          const cell = srcRow[band.key];
+          if (!cell || typeof cell !== "object") continue;
+          const contributors = {};
+          const rawContrib = cell.contributors;
+          if (rawContrib && typeof rawContrib === "object") {
+            for (const [name, value] of Object.entries(rawContrib)) {
+              contributors[name] = Number(value) || 0;
+            }
+          }
+          next[src.key][band.key] = {
+            count: Number(cell.count) || 0,
+            contributors,
+          };
+        }
+      }
+      state.eventMatrix = next;
+      renderMatrix();
+    }
+
+    const events = Array.isArray(diagnostics.events) ? diagnostics.events : [];
+    for (const ev of events) {
+      const classKey = ev?.class_key || "other";
+      const cause = causeForClassKey(classKey);
+      const severity = severityLabelForKey(ev?.severity_key);
+      const hz = fmt(Number(ev?.peak_hz) || 0, 2);
+      const amp = fmt(Number(ev?.peak_amp) || 0, 1);
+      if (ev?.kind === "multi") {
+        const labels = Array.isArray(ev?.sensor_labels)
+          ? ev.sensor_labels.map((label) => String(label)).filter(Boolean)
+          : [];
+        pushVibrationMessage(
+          t("msg.multi_detected", {
+            count: Number(ev?.sensor_count) || labels.length || 0,
+            labels: labels.join(", "),
+            hz,
+            amp,
+            severity,
+            cause,
+          }),
+        );
+      } else {
+        pushVibrationMessage(
+          t("msg.single_detected", {
+            sensor: String(ev?.sensor_label || ev?.sensor_id || "unknown"),
+            hz,
+            amp,
+            severity,
+            cause,
+          }),
+        );
       }
     }
-    return matrix;
+
+    const topFinding = diagnostics.top_finding;
+    if (topFinding && typeof topFinding === "object") {
+      const sig = [
+        String(topFinding.finding_id || ""),
+        String(topFinding.suspected_source || ""),
+        String(topFinding.frequency_hz_or_order || ""),
+      ].join("|");
+      if (sig && sig !== state.lastTopFindingSig) {
+        state.lastTopFindingSig = sig;
+        const source = String(topFinding.suspected_source || "unknown");
+        const freqOrder = String(topFinding.frequency_hz_or_order || "");
+        const conf = typeof topFinding.confidence_0_to_1 === "number" ? fmt(topFinding.confidence_0_to_1, 2) : "0.00";
+        pushVibrationMessage(
+          `Analysis update: likely ${source}${freqOrder ? ` (${freqOrder})` : ""}, confidence ${conf}.`,
+        );
+      }
+    }
   }
 
   function loadVehicleSettings() {
@@ -332,30 +400,6 @@ import { WsClient, type WsUiState } from "./ws";
     els.speedOverrideInput.value = String(state.vehicleSettings.speed_override_kmh);
   }
 
-  function fmt(n, digits = 2) {
-    if (typeof n !== "number" || !Number.isFinite(n)) return "--";
-    return n.toFixed(digits);
-  }
-
-  function fmtBytes(bytes) {
-    if (!(typeof bytes === "number") || bytes < 0) return "--";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  function fmtTs(iso) {
-    if (!iso) return "--";
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString();
-  }
-
-  function formatInt(value) {
-    if (typeof value !== "number" || !Number.isFinite(value)) return "--";
-    return new Intl.NumberFormat().format(Math.round(value));
-  }
-
   function setStatValue(container, value) {
     const valueEl = container?.querySelector?.("[data-value]");
     if (valueEl) {
@@ -394,73 +438,6 @@ import { WsClient, type WsUiState } from "./ws";
 
   function colorForClient(index) {
     return palette[index % palette.length];
-  }
-
-  function parseTireSpec(raw) {
-    if (!raw || typeof raw !== "object") return null;
-    const widthMm = Number(raw.widthMm);
-    const aspect = Number(raw.aspect);
-    const rimIn = Number(raw.rimIn);
-    if (!(widthMm > 0 && aspect >= 0 && rimIn > 0)) return null;
-    return { widthMm, aspect, rimIn };
-  }
-
-  function tireDiameterMeters(spec) {
-    const sidewallMm = spec.widthMm * (spec.aspect / 100);
-    const diameterMm = spec.rimIn * 25.4 + sidewallMm * 2;
-    return diameterMm / 1000;
-  }
-
-  function clamp(n, lo, hi) {
-    return Math.min(hi, Math.max(lo, n));
-  }
-
-  function round1(n) {
-    return Math.round(n * 10) / 10;
-  }
-
-  function rssPct(...parts) {
-    let sumSq = 0;
-    for (const p of parts) {
-      if (typeof p === "number" && p > 0) sumSq += p * p;
-    }
-    return Math.sqrt(sumSq);
-  }
-
-  function buildRecommendedBandDefaults(vehicleSettings) {
-    const tire = parseTireSpec({
-      widthMm: vehicleSettings.tire_width_mm,
-      aspect: vehicleSettings.tire_aspect_pct,
-      rimIn: vehicleSettings.rim_in,
-    });
-    const diameterMm = tire ? tireDiameterMeters(tire) * 1000 : 700;
-    const treadLossMm = Math.max(0, treadWearModel.new_tread_mm - treadWearModel.worn_tread_mm);
-    const wearSpanPct = (2 * treadLossMm * 100) / Math.max(100, diameterMm);
-    const tireUncertaintyPct = clamp((wearSpanPct / 2) + treadWearModel.safety_margin_pct, 0.6, 2.5);
-    const speedUncertaintyPct = 0.6;
-    const finalDriveUncertaintyPct = 0.2;
-    const gearUncertaintyPct = 0.5;
-
-    const wheelUncPct = rssPct(speedUncertaintyPct, tireUncertaintyPct);
-    const driveshaftUncPct = rssPct(wheelUncPct, finalDriveUncertaintyPct);
-    const engineUncPct = rssPct(driveshaftUncPct, gearUncertaintyPct);
-
-    const wheelBandwidthPct = clamp(2 * ((wheelUncPct * 1.2) + 1.0), 4.0, 12.0);
-    const driveshaftBandwidthPct = clamp(2 * ((driveshaftUncPct * 1.2) + 0.9), 4.0, 11.0);
-    const engineBandwidthPct = clamp(2 * ((engineUncPct * 1.2) + 1.0), 4.5, 12.0);
-
-    return {
-      wheel_bandwidth_pct: round1(wheelBandwidthPct),
-      driveshaft_bandwidth_pct: round1(driveshaftBandwidthPct),
-      engine_bandwidth_pct: round1(engineBandwidthPct),
-      speed_uncertainty_pct: speedUncertaintyPct,
-      tire_diameter_uncertainty_pct: round1(tireUncertaintyPct),
-      final_drive_uncertainty_pct: finalDriveUncertaintyPct,
-      gear_uncertainty_pct: gearUncertaintyPct,
-      min_abs_band_hz: 0.4,
-      max_band_half_width_pct: 8.0,
-      band_tolerance_model_version: bandToleranceModelVersion,
-    };
   }
 
   function effectiveSpeedMps() {
@@ -522,29 +499,13 @@ import { WsClient, type WsUiState } from "./ws";
       els.spectrumOverlay.textContent = t("spectrum.stale");
       return;
     }
-    if (!state.hasSpectrumData || state.wsState === "no_data") {
+    if (!state.hasSpectrumData) {
       els.spectrumOverlay.hidden = false;
       els.spectrumOverlay.textContent = t("spectrum.empty");
       return;
     }
     els.spectrumOverlay.hidden = true;
     els.spectrumOverlay.textContent = "";
-  }
-
-  function combinedRelativeUncertainty(...parts) {
-    let sumSq = 0;
-    for (const p of parts) {
-      if (typeof p === "number" && p > 0) sumSq += p * p;
-    }
-    return Math.sqrt(sumSq);
-  }
-
-  function toleranceForOrder(baseBandwidthPct, orderHz, uncertaintyPct) {
-    const baseHalfRel = Math.max(0, Number(baseBandwidthPct) || 0) / 200.0;
-    const absFloor = Math.max(0, state.vehicleSettings.min_abs_band_hz || 0) / Math.max(1, orderHz);
-    const maxHalfRel = Math.max(0.005, (state.vehicleSettings.max_band_half_width_pct || 0) / 100.0);
-    const combined = Math.sqrt(baseHalfRel * baseHalfRel + uncertaintyPct * uncertaintyPct);
-    return Math.min(maxHalfRel, Math.max(combined, absFloor));
   }
 
   function bandPlugin() {
@@ -635,57 +596,6 @@ import { WsClient, type WsUiState } from "./ws";
     state.spectrumPlot.renderLegend(els.legend, seriesMeta);
   }
 
-  function escapeHtml(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
-  }
-
-  function locationCodeForClient(client) {
-    const name = String(client?.name || "").trim();
-    if (!name) return "";
-    for (const code of state.locationCodes) {
-      const labels = I18N.getForAllLangs(`location.${code}`);
-      if (labels.some((label) => label === name)) return code;
-    }
-    const match = state.locationOptions.find((loc) => loc.label === name);
-    return match ? match.code : "";
-  }
-
-  function locationOptionsMarkup(selectedCode) {
-    const opts = [`<option value="">${escapeHtml(t("settings.select_location"))}</option>`];
-    for (const loc of state.locationOptions) {
-      const selectedAttr = loc.code === selectedCode ? " selected" : "";
-      opts.push(
-        `<option value="${escapeHtml(loc.code)}"${selectedAttr}>${escapeHtml(loc.label)}</option>`,
-      );
-    }
-    return opts.join("");
-  }
-
-  function clientsSettingsSignature() {
-    const clientPart = state.clients
-      .map((client) => {
-        const connected = client.connected ? "1" : "0";
-        return `${client.id}|${client.name || ""}|${client.mac_address || ""}|${connected}`;
-      })
-      .join("||");
-    const locationPart = state.locationOptions
-      .map((loc) => `${loc.code}|${loc.label}`)
-      .join("||");
-    return `${clientPart}##${locationPart}`;
-  }
-
-  function maybeRenderClientsSettingsList(force = false) {
-    const nextSig = clientsSettingsSignature();
-    if (!force && nextSig === state.clientsSettingsSignature) return;
-    state.clientsSettingsSignature = nextSig;
-    renderClientsSettingsList();
-  }
-
   function updateClientSelection() {
     const current = state.selectedClientId;
     const firstConnected = state.clients.find((c) => Boolean(c.connected));
@@ -702,65 +612,6 @@ import { WsClient, type WsUiState } from "./ws";
           ? state.clients[0].id
           : null;
     }
-  }
-
-  function renderClientsSettingsList() {
-    if (!els.clientsSettingsBody) return;
-    if (!state.clients.length) {
-      els.clientsSettingsBody.innerHTML = `<tr><td colspan="5">${escapeHtml(t("settings.no_clients"))}</td></tr>`;
-      return;
-    }
-    els.clientsSettingsBody.innerHTML = state.clients
-      .map((client) => {
-        const selectedCode = locationCodeForClient(client);
-        const connected = Boolean(client.connected);
-        const statusText = connected ? t("status.online") : t("status.offline");
-        const statusClass = connected ? "online" : "offline";
-        const macAddress = client.mac_address || client.id;
-        return `
-      <tr data-client-id="${escapeHtml(client.id)}">
-        <td>
-          <strong>${escapeHtml(client.name || client.id)}</strong>
-          <div class="subtle">${escapeHtml(client.id)}</div>
-          <div class="status-pill ${statusClass}">${statusText}</div>
-        </td>
-        <td><code>${escapeHtml(macAddress)}</code></td>
-        <td>
-          <select class="row-location-select" data-client-id="${escapeHtml(client.id)}">
-            ${locationOptionsMarkup(selectedCode)}
-          </select>
-        </td>
-        <td><button class="btn btn--primary row-identify" data-client-id="${escapeHtml(client.id)}"${connected ? "" : " disabled"}>${escapeHtml(t("actions.identify"))}</button></td>
-        <td><button class="btn btn--danger row-remove" data-client-id="${escapeHtml(client.id)}">${escapeHtml(t("actions.remove"))}</button></td>
-      </tr>`;
-      })
-      .join("");
-
-    els.clientsSettingsBody.querySelectorAll(".row-location-select").forEach((select) => {
-      select.addEventListener("change", async () => {
-        const clientId = select.getAttribute("data-client-id");
-        if (!clientId) return;
-        const locationCode = select.value || "";
-        await setClientLocation(clientId, locationCode);
-      });
-    });
-
-    els.clientsSettingsBody.querySelectorAll(".row-identify").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        if (btn.hasAttribute("disabled")) return;
-        const clientId = btn.getAttribute("data-client-id");
-        if (!clientId) return;
-        await identifyClient(clientId);
-      });
-    });
-
-    els.clientsSettingsBody.querySelectorAll(".row-remove").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const clientId = btn.getAttribute("data-client-id");
-        if (!clientId) return;
-        await removeClient(clientId);
-      });
-    });
   }
 
   function renderStatus(clientRow) {
@@ -812,6 +663,15 @@ import { WsClient, type WsUiState } from "./ws";
       rim_in: state.vehicleSettings.rim_in,
       final_drive_ratio: state.vehicleSettings.final_drive_ratio,
       current_gear_ratio: state.vehicleSettings.current_gear_ratio,
+      wheel_bandwidth_pct: state.vehicleSettings.wheel_bandwidth_pct,
+      driveshaft_bandwidth_pct: state.vehicleSettings.driveshaft_bandwidth_pct,
+      engine_bandwidth_pct: state.vehicleSettings.engine_bandwidth_pct,
+      speed_uncertainty_pct: state.vehicleSettings.speed_uncertainty_pct,
+      tire_diameter_uncertainty_pct: state.vehicleSettings.tire_diameter_uncertainty_pct,
+      final_drive_uncertainty_pct: state.vehicleSettings.final_drive_uncertainty_pct,
+      gear_uncertainty_pct: state.vehicleSettings.gear_uncertainty_pct,
+      min_abs_band_hz: state.vehicleSettings.min_abs_band_hz,
+      max_band_half_width_pct: state.vehicleSettings.max_band_half_width_pct,
     };
     try {
       await setAnalysisSettings(payload);
@@ -840,7 +700,7 @@ import { WsClient, type WsUiState } from "./ws";
     try {
       state.loggingStatus = await startLoggingRun();
       renderLoggingStatus();
-      await refreshLogs();
+      await logReport.refreshLogs();
     } catch (_err) {}
   }
 
@@ -848,184 +708,8 @@ import { WsClient, type WsUiState } from "./ws";
     try {
       state.loggingStatus = await stopLoggingRun();
       renderLoggingStatus();
-      await refreshLogs();
+      await logReport.refreshLogs();
     } catch (_err) {}
-  }
-
-  function selectLog(logName) {
-    state.selectedLogName = logName || null;
-    if (state.selectedLogName) {
-      els.reportLogSelect.value = state.selectedLogName;
-    }
-  }
-
-  function renderReportSelect() {
-    els.reportLogSelect.innerHTML = "";
-    if (!state.logs.length) {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = t("logs.no_available");
-      els.reportLogSelect.appendChild(opt);
-      state.selectedLogName = null;
-      return;
-    }
-    for (const row of state.logs) {
-      const opt = document.createElement("option");
-      opt.value = row.name;
-      opt.textContent = row.name;
-      els.reportLogSelect.appendChild(opt);
-    }
-    if (!state.selectedLogName || !state.logs.some((l) => l.name === state.selectedLogName)) {
-      state.selectedLogName = state.logs[0].name;
-    }
-    els.reportLogSelect.value = state.selectedLogName;
-  }
-
-  async function refreshLocationOptions() {
-    try {
-      const payload = await getClientLocations();
-      const codes = Array.isArray(payload.locations)
-        ? payload.locations.map((row) => row?.code).filter((code) => typeof code === "string")
-        : [];
-      state.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
-      state.locationOptions = buildLocationOptions(state.locationCodes);
-    } catch (_err) {
-      state.locationCodes = defaultLocationCodes.slice();
-      state.locationOptions = buildLocationOptions(state.locationCodes);
-    }
-    maybeRenderClientsSettingsList(true);
-  }
-
-  function renderLogsTable() {
-    if (!state.logs.length) {
-      els.logsSummary.textContent = t("logs.none");
-      els.logsTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("logs.none_found"))}</td></tr>`;
-      renderReportSelect();
-      return;
-    }
-    els.logsSummary.textContent = t("logs.available_count", { count: state.logs.length });
-    els.logsTableBody.innerHTML = state.logs
-      .map(
-        (row) => `
-      <tr>
-        <td>${row.name}</td>
-        <td>${fmtTs(row.updated_at)}</td>
-        <td class="numeric">${fmtBytes(row.size_bytes)}</td>
-        <td>
-          <div class="table-actions">
-            <button class="btn btn--primary select-log-btn" data-log="${row.name}">${escapeHtml(t("logs.use_in_report"))}</button>
-            <a class="btn btn--muted" href="${logDownloadUrl(row.name)}" target="_blank" rel="noopener">${escapeHtml(t("logs.raw"))}</a>
-            <button class="btn btn--danger delete-log-btn" data-log="${row.name}">${escapeHtml(t("logs.delete"))}</button>
-          </div>
-        </td>
-      </tr>`,
-      )
-      .join("");
-    els.logsTableBody.querySelectorAll(".select-log-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const logName = btn.dataset.log || null;
-        selectLog(logName);
-        setActiveView("reportView");
-      });
-    });
-    els.logsTableBody.querySelectorAll(".delete-log-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const logName = btn.dataset.log || "";
-        await deleteLog(logName);
-      });
-    });
-    renderReportSelect();
-  }
-
-  async function refreshLogs() {
-    try {
-      const payload = await getLogs();
-      state.logs = Array.isArray(payload.logs) ? payload.logs : [];
-      renderLogsTable();
-    } catch (_err) {
-      state.logs = [];
-      renderLogsTable();
-    }
-  }
-
-  async function deleteLog(logName) {
-    if (!logName) return;
-    const ok = window.confirm(t("logs.delete_confirm", { name: logName }));
-    if (!ok) return;
-    try {
-      await deleteLogApi(logName);
-    } catch (err) {
-      window.alert(err?.message || t("logs.delete_failed"));
-      return;
-    }
-    if (state.selectedLogName === logName) {
-      state.selectedLogName = null;
-    }
-    await refreshLogs();
-  }
-
-  function renderInsights(summary) {
-    if (!summary || typeof summary !== "object") {
-      els.reportInsights.textContent = t("report.no_insights");
-      return;
-    }
-    const findings = Array.isArray(summary.findings) ? summary.findings : [];
-    const topFindings = findings
-      .slice(0, 4)
-      .map((f) => {
-        const confidence = typeof f.confidence_0_to_1 === "number" ? fmt(f.confidence_0_to_1, 2) : "0.00";
-        const source = f.suspected_source || "unknown";
-        const detail = f.evidence_summary || "";
-        return `<p><strong>${source}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}): ${detail}</p>`;
-      })
-      .join("");
-    const speedCoverage = summary?.data_quality?.speed_coverage || {};
-    const speedPct =
-      typeof speedCoverage.non_null_pct === "number"
-        ? `${fmt(speedCoverage.non_null_pct, 1)}%`
-        : t("report.missing");
-    const speedMin =
-      typeof speedCoverage.min_kmh === "number" ? fmt(speedCoverage.min_kmh, 1) : t("report.missing");
-    const speedMax =
-      typeof speedCoverage.max_kmh === "number" ? fmt(speedCoverage.max_kmh, 1) : t("report.missing");
-    const rawSampleRate =
-      typeof summary.raw_sample_rate_hz === "number"
-        ? `${fmt(summary.raw_sample_rate_hz, 1)} Hz`
-        : t("report.missing");
-    const skippedReason =
-      typeof summary.speed_breakdown_skipped_reason === "string"
-        ? `<p><strong>${escapeHtml(t("report.speed_analysis"))}:</strong> ${summary.speed_breakdown_skipped_reason}</p>`
-        : "";
-    els.reportInsights.innerHTML = `
-      <p><strong>${escapeHtml(t("report.file"))}:</strong> ${summary.file_name || "--"}</p>
-      <p><strong>${escapeHtml(t("report.run_id"))}:</strong> ${summary.run_id || t("report.missing")}</p>
-      <p><strong>${escapeHtml(t("report.duration"))}:</strong> ${fmt(summary.duration_s, 1)} s</p>
-      <p><strong>${escapeHtml(t("report.rows"))}:</strong> ${summary.rows || 0}</p>
-      <p><strong>${escapeHtml(t("report.raw_sample_rate"))}:</strong> ${rawSampleRate}</p>
-      <p><strong>${escapeHtml(t("report.speed_coverage"))}:</strong> ${speedPct} (${speedMin}-${speedMax} km/h)</p>
-      <hr />
-      ${skippedReason}
-      ${topFindings || `<p>${escapeHtml(t("report.no_findings_for_run"))}</p>`}
-    `;
-  }
-
-  async function loadReportInsights() {
-    const logName = els.reportLogSelect.value;
-    if (!logName) return;
-    selectLog(logName);
-    try {
-      const summary = await getLogInsights(logName, state.lang);
-      renderInsights(summary);
-    } catch (_err) {
-      els.reportInsights.textContent = t("report.unable_load_insights");
-    }
-  }
-
-  function downloadReportPdf() {
-    const logName = els.reportLogSelect.value;
-    if (!logName) return;
-    selectLog(logName);
-    window.open(reportPdfUrl(logName, state.lang), "_blank", "noopener");
   }
 
   function calculateBands() {
@@ -1049,16 +733,22 @@ import { WsClient, type WsUiState } from "./ws";
       state.vehicleSettings.wheel_bandwidth_pct,
       wheelHz,
       wheelUncertaintyPct,
+      state.vehicleSettings.min_abs_band_hz,
+      state.vehicleSettings.max_band_half_width_pct,
     );
     const driveSpread = toleranceForOrder(
       state.vehicleSettings.driveshaft_bandwidth_pct,
       driveHz,
       driveUncertaintyPct,
+      state.vehicleSettings.min_abs_band_hz,
+      state.vehicleSettings.max_band_half_width_pct,
     );
     const engineSpread = toleranceForOrder(
       state.vehicleSettings.engine_bandwidth_pct,
       engineHz,
       engineUncertaintyPct,
+      state.vehicleSettings.min_abs_band_hz,
+      state.vehicleSettings.max_band_half_width_pct,
     );
     const out = [
       mk(t("bands.wheel_1x"), wheelHz, wheelSpread, "rgba(42,157,143,0.14)"),
@@ -1114,16 +804,22 @@ import { WsClient, type WsUiState } from "./ws";
         state.vehicleSettings.wheel_bandwidth_pct,
         wheelHz,
         wheelUncertaintyPct,
+        state.vehicleSettings.min_abs_band_hz,
+        state.vehicleSettings.max_band_half_width_pct,
       );
       const driveTol = toleranceForOrder(
         state.vehicleSettings.driveshaft_bandwidth_pct,
         driveHz,
         driveUncertaintyPct,
+        state.vehicleSettings.min_abs_band_hz,
+        state.vehicleSettings.max_band_half_width_pct,
       );
       const engineTol = toleranceForOrder(
         state.vehicleSettings.engine_bandwidth_pct,
         engineHz,
         engineUncertaintyPct,
+        state.vehicleSettings.min_abs_band_hz,
+        state.vehicleSettings.max_band_half_width_pct,
       );
       candidates.push({
         cause: t("cause.wheel1"),
@@ -1179,26 +875,6 @@ import { WsClient, type WsUiState } from "./ws";
     if (best) return best;
     if (peakHz >= 3 && peakHz <= 12) return { cause: t("cause.road"), key: "road" };
     return { cause: t("cause.other"), key: "other" };
-  }
-
-  function sourceKeysFromClassKey(classKey) {
-    if (classKey === "shaft_eng1") return ["driveshaft", "engine"];
-    if (classKey === "eng1" || classKey === "eng2") return ["engine"];
-    if (classKey === "shaft1") return ["driveshaft"];
-    if (classKey === "wheel1" || classKey === "wheel2") return ["wheel"];
-    return ["other"];
-  }
-
-  function severityFromPeak(peakAmp, floorAmp, sensorCount) {
-    const db = 20 * Math.log10((Math.max(0, peakAmp) + 1) / (Math.max(0, floorAmp) + 1));
-    // Multi-sensor synchronous detections are stronger indicators than single-sensor events.
-    const adjustedDb = sensorCount >= 2 ? db + 2 : db;
-    for (const band of severityBands) {
-      if (adjustedDb >= band.minDb && adjustedDb < band.maxDb) {
-        return { key: band.key, labelKey: band.labelKey, db: adjustedDb };
-      }
-    }
-    return null;
   }
 
   function updateMatrixCell(sourceKey, severityKey, contributorLabel) {
@@ -1379,11 +1055,15 @@ import { WsClient, type WsUiState } from "./ws";
         blended = interpolateToTarget(freqSlice, blended, targetFreq);
       }
       if (!blended.length) continue;
+      const floor =
+        blended.slice(5).sort((a, b) => a - b)[Math.floor(Math.max(1, blended.length - 5) / 2)] || 0;
+      const dbValues = blended.map((amp) => Math.max(0, Math.min(50, relativeDbAboveFloor(amp, floor))));
       entries.push({
         id: client.id,
         label: client.name || client.id,
         color: colorForClient(i),
-        values: blended,
+        rawValues: blended,
+        values: dbValues,
       });
     }
 
@@ -1405,8 +1085,10 @@ import { WsClient, type WsUiState } from "./ws";
     renderBandLegend();
 
     if (!targetFreq.length || !entries.length) {
-      state.hasSpectrumData = false;
-      state.spectrumPlot.setData([[], ...entries.map(() => [])]);
+      if (!state.hasSpectrumData) {
+        state.hasSpectrumData = false;
+        state.spectrumPlot.setData([[], ...entries.map(() => [])]);
+      }
       updateSpectrumOverlay();
       return;
     }
@@ -1416,17 +1098,21 @@ import { WsClient, type WsUiState } from "./ws";
     state.hasSpectrumData = true;
     state.spectrumPlot.setData(data);
     updateSpectrumOverlay();
-    detectVibrationEvents(data, entries);
+    if (!state.useServerDiagnostics) {
+      detectVibrationEvents(targetFreq.slice(0, minLen), entries);
+    }
   }
 
-  function detectVibrationEvents(data, entries) {
-    const freq = data[0] || [];
+  function detectVibrationEvents(freq, entries) {
     if (!freq.length) return;
     const sensorEvents = [];
 
     for (let s = 0; s < entries.length; s++) {
-      const vals = data[s + 1];
-      if (!Array.isArray(vals) || vals.length < 10) continue;
+      const rawVals = entries[s]?.rawValues;
+      if (!Array.isArray(rawVals) || rawVals.length < 10) continue;
+      const n = Math.min(rawVals.length, freq.length);
+      if (n < 10) continue;
+      const vals = rawVals.slice(0, n);
       const floor = vals.slice(5).sort((a, b) => a - b)[Math.floor(Math.max(1, vals.length - 5) / 2)] || 0;
       const localMaxima = [];
       for (let i = 2; i < vals.length - 2; i++) {
@@ -1579,7 +1265,7 @@ import { WsClient, type WsUiState } from "./ws";
       state.spectra = payload.spectra;
     }
     updateClientSelection();
-    maybeRenderClientsSettingsList();
+    clientsSettings.maybeRenderClientsSettingsList();
     if (prevSelected !== state.selectedClientId) {
       sendSelection();
     }
@@ -1589,8 +1275,10 @@ import { WsClient, type WsUiState } from "./ws";
     } else {
       state.speedMps = null;
     }
-    state.hasSpectrumData =
-      Boolean(payload?.spectra?.clients) && Object.keys(payload.spectra.clients || {}).length > 0;
+    if (payload.diagnostics && typeof payload.diagnostics === "object") {
+      state.useServerDiagnostics = true;
+      applyServerDiagnostics(payload.diagnostics);
+    }
     renderSpeedReadout();
     if (payload.spectra) {
       renderSpectrum();
@@ -1605,7 +1293,7 @@ import { WsClient, type WsUiState } from "./ws";
     if (!clientId) return;
     if (!locationCode) return;
     const existing = state.clients.find((c) => c.id === clientId);
-    if (existing && locationCodeForClient(existing) === locationCode) return;
+    if (existing && clientsSettings.locationCodeForClient(existing) === locationCode) return;
     try {
       await setClientLocationApi(clientId, locationCode);
     } catch (err) {
@@ -1616,7 +1304,7 @@ import { WsClient, type WsUiState } from "./ws";
     if (selected) {
       const client = state.clients.find((c) => c.id === clientId);
       if (client) client.name = selected.label;
-      maybeRenderClientsSettingsList();
+      clientsSettings.maybeRenderClientsSettingsList();
     }
   }
 
@@ -1642,7 +1330,7 @@ import { WsClient, type WsUiState } from "./ws";
       state.selectedClientId = null;
     }
     updateClientSelection();
-    maybeRenderClientsSettingsList();
+    clientsSettings.maybeRenderClientsSettingsList();
     if (prevSelected !== state.selectedClientId) {
       sendSelection();
     }
@@ -1728,6 +1416,23 @@ import { WsClient, type WsUiState } from "./ws";
     renderSpeedReadout();
   }
 
+  const clientsSettings = createClientsSettingsController({
+    els,
+    state,
+    t,
+    buildLocationOptions,
+    onSetLocation: setClientLocation,
+    onIdentify: identifyClient,
+    onRemove: removeClient,
+  });
+
+  const logReport = createLogReportController({
+    els,
+    state,
+    t,
+    setActiveView,
+  });
+
   function activateTabByIndex(index) {
     if (!els.menuButtons.length) return;
     const safeIndex = ((index % els.menuButtons.length) + els.menuButtons.length) % els.menuButtons.length;
@@ -1773,10 +1478,7 @@ import { WsClient, type WsUiState } from "./ws";
   });
   els.startLoggingBtn.addEventListener("click", startLogging);
   els.stopLoggingBtn.addEventListener("click", stopLogging);
-  els.refreshLogsBtn.addEventListener("click", refreshLogs);
-  els.reportLogSelect.addEventListener("change", () => selectLog(els.reportLogSelect.value || null));
-  els.loadInsightsBtn.addEventListener("click", loadReportInsights);
-  els.downloadReportBtn.addEventListener("click", downloadReportPdf);
+  logReport.bindEvents();
   if (els.applySpeedOverrideBtn) {
     els.applySpeedOverrideBtn.addEventListener("click", applySpeedOverrideFromInput);
   }
@@ -1806,10 +1508,10 @@ import { WsClient, type WsUiState } from "./ws";
   syncSettingsInputs();
   applyLanguage(false);
   setActiveView("dashboardView");
-  refreshLocationOptions();
+  void clientsSettings.refreshLocationOptions();
   void loadSpeedOverrideFromServer();
   void syncAnalysisSettingsToServer();
   void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
   refreshLoggingStatus();
-  refreshLogs();
+  void logReport.refreshLogs();
   connectWS();

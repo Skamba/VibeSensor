@@ -34,11 +34,20 @@ class SpeedOverrideRequest(BaseModel):
 
 
 class AnalysisSettingsRequest(BaseModel):
-    tire_width_mm: float = Field(gt=0)
-    tire_aspect_pct: float = Field(gt=0)
-    rim_in: float = Field(gt=0)
-    final_drive_ratio: float = Field(gt=0)
-    current_gear_ratio: float = Field(gt=0)
+    tire_width_mm: float | None = Field(default=None, gt=0)
+    tire_aspect_pct: float | None = Field(default=None, gt=0)
+    rim_in: float | None = Field(default=None, gt=0)
+    final_drive_ratio: float | None = Field(default=None, gt=0)
+    current_gear_ratio: float | None = Field(default=None, gt=0)
+    wheel_bandwidth_pct: float | None = Field(default=None, gt=0)
+    driveshaft_bandwidth_pct: float | None = Field(default=None, gt=0)
+    engine_bandwidth_pct: float | None = Field(default=None, gt=0)
+    speed_uncertainty_pct: float | None = Field(default=None, ge=0)
+    tire_diameter_uncertainty_pct: float | None = Field(default=None, ge=0)
+    final_drive_uncertainty_pct: float | None = Field(default=None, ge=0)
+    gear_uncertainty_pct: float | None = Field(default=None, ge=0)
+    min_abs_band_hz: float | None = Field(default=None, ge=0)
+    max_band_half_width_pct: float | None = Field(default=None, gt=0)
 
 
 def _log_dir(state: RuntimeState) -> Path:
@@ -111,7 +120,7 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/analysis-settings")
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> dict:
-        updated = state.analysis_settings.update(req.model_dump())
+        updated = state.analysis_settings.update(req.model_dump(exclude_none=True))
         return updated
 
     @router.post("/api/clients/{client_id}/rename")

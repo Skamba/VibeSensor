@@ -39,13 +39,7 @@ export async function setSpeedOverride(speedKmh: number | null): Promise<any> {
   });
 }
 
-export async function setAnalysisSettings(payload: {
-  tire_width_mm: number;
-  tire_aspect_pct: number;
-  rim_in: number;
-  final_drive_ratio: number;
-  current_gear_ratio: number;
-}): Promise<any> {
+export async function setAnalysisSettings(payload: Record<string, number>): Promise<any> {
   return apiJson("/api/analysis-settings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

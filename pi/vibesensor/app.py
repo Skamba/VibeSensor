@@ -17,6 +17,7 @@ from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
 from .config import PI_DIR, AppConfig, load_config
 from .gps_speed import GPSSpeedMonitor
+from .live_diagnostics import LiveDiagnosticsEngine
 from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
 from .registry import ClientRegistry
@@ -37,6 +38,7 @@ class RuntimeState:
     gps_monitor: GPSSpeedMonitor
     analysis_settings: AnalysisSettingsStore
     metrics_logger: MetricsLogger
+    live_diagnostics: LiveDiagnosticsEngine
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
@@ -67,12 +69,31 @@ class RuntimeState:
             "clients": clients,
             "selected_client_id": active,
         }
+        analysis_settings_snapshot = self.analysis_settings.snapshot()
+        analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
         if self.ws_include_heavy:
             payload["spectra"] = self.processor.multi_spectrum_payload(client_ids)
             if active is not None:
                 payload["selected"] = self.processor.selected_payload(active)
             else:
                 payload["selected"] = {}
+            payload["diagnostics"] = self.live_diagnostics.update(
+                speed_mps=self.gps_monitor.effective_speed_mps,
+                clients=clients,
+                spectra=payload.get("spectra"),
+                settings=analysis_settings_snapshot,
+                finding_metadata=analysis_metadata,
+                finding_samples=analysis_samples,
+            )
+        else:
+            payload["diagnostics"] = self.live_diagnostics.update(
+                speed_mps=self.gps_monitor.effective_speed_mps,
+                clients=clients,
+                spectra=None,
+                settings=analysis_settings_snapshot,
+                finding_metadata=analysis_metadata,
+                finding_samples=analysis_samples,
+            )
         return payload
 
 
@@ -114,6 +135,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         fft_window_type="hann",
         peak_picker_method="max_peak_amp_across_axes",
     )
+    live_diagnostics = LiveDiagnosticsEngine()
 
     runtime = RuntimeState(
         config=config,
@@ -124,6 +146,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         gps_monitor=gps_monitor,
         analysis_settings=analysis_settings,
         metrics_logger=metrics_logger,
+        live_diagnostics=live_diagnostics,
     )
 
     app = FastAPI(title="VibeSensor")
