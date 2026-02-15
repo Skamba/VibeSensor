@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import UTC, datetime
-from io import BytesIO
 from math import ceil, floor, sqrt
 from pathlib import Path
 from statistics import mean
@@ -10,7 +9,6 @@ from typing import Any
 
 from .analysis_settings import tire_circumference_m_from_spec
 from .report_i18n import tr as _tr
-from .report_i18n import variants as _tr_variants
 from .runlog import parse_iso8601, read_jsonl_run
 
 SPEED_BIN_WIDTH_KMH = 10
