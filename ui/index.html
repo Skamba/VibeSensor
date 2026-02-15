@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VibeSensor</title>
+    <style>
+      :root {
+        --bg: linear-gradient(180deg, #f3f7f9 0%, #edf2f5 100%);
+        --ink: #1c2738;
+        --card: #ffffff;
+        --line: #d8e1e8;
+        --primary: #0b7285;
+        --primary-dark: #095c6c;
+        --accent: #2b9348;
+        --warn: #c44536;
+        --muted: #5b6779;
+        --nav: #13293d;
+        --nav-active: #1b4965;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: 0.9rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f3f8fb 100%);
+        box-shadow: 0 10px 24px rgba(19, 41, 61, 0.08);
+      }
+
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .topbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.55rem;
+      }
+
+      .lang-picker {
+        min-width: 8.6rem;
+        height: 2.2rem;
+      }
+
+      .title {
+        margin: 0;
+        font-size: 1.7rem;
+        letter-spacing: 0.03em;
+      }
+
+      .menu {
+        margin-top: 0.9rem;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        position: relative;
+        z-index: 2;
+      }
+
+      .menu-btn {
+        border: 0;
+        border-radius: 999px;
+        background: #e8eef3;
+        color: #24405a;
+        padding: 0.58rem 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color 120ms ease, color 120ms ease, transform 80ms ease;
+      }
+
+      .menu-btn.active {
+        background: var(--nav);
+        color: #fff;
+      }
+
+      .menu-btn:hover {
+        background: #d8e5ef;
+      }
+
+      .menu-btn:active {
+        transform: translateY(1px);
+      }
+
+      .menu-btn:focus-visible {
+        outline: 2px solid #0f62fe;
+        outline-offset: 2px;
+      }
+
+      .speed {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 0.6rem;
+        background: var(--card);
+        min-width: 10rem;
+        text-align: right;
+      }
+
+      .speed-unit {
+        min-width: 7.2rem;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 0.8rem;
+        background: var(--card);
+        padding: 0.75rem;
+      }
+
+      .view {
+        display: none;
+        margin-top: 1rem;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .controls,
+      .meta,
+      .charts,
+      .settings-grid,
+      .log-actions {
+        margin-top: 1rem;
+      }
+
+      .controls,
+      .settings-grid,
+      .log-actions {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      }
+
+      .settings-layout {
+        display: grid;
+        gap: 0.85rem;
+      }
+
+      .settings-groups {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .settings-group {
+        border: 1px dashed var(--line);
+        border-radius: 0.7rem;
+        background: #f8fbfd;
+        padding: 0.7rem;
+      }
+
+      .settings-group h3 {
+        margin: 0 0 0.55rem;
+        font-size: 0.88rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #2f4f67;
+      }
+
+      .settings-subgrid {
+        display: grid;
+        gap: 0.65rem;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      }
+
+      .settings-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .settings-actions button {
+        min-width: 12rem;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      select,
+      input,
+      button {
+        height: 2.2rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--line);
+        padding: 0 0.6rem;
+        font-size: 0.95rem;
+      }
+
+      button {
+        background: #fff;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      button.primary {
+        background: var(--primary);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      button.warn {
+        background: var(--warn);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      button.success {
+        background: var(--accent);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0.6rem;
+      }
+
+      .meta .panel {
+        min-height: 3.4rem;
+        min-width: 11rem;
+        flex: 1 1 11rem;
+      }
+
+      .status-strip .panel {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .charts {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .chart-box {
+        overflow: hidden;
+      }
+
+      .chart-stage {
+        position: relative;
+        min-height: 220px;
+      }
+
+      .spectrum-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 1rem;
+        border-radius: 0.6rem;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.76);
+        border: 1px dashed var(--line);
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1rem;
+        margin-top: 0.5rem;
+        font-size: 0.86rem;
+      }
+
+      .legend.band-legend {
+        margin-top: 0.35rem;
+        padding-top: 0.35rem;
+        border-top: 1px dashed var(--line);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+      }
+
+      .status-ok {
+        color: var(--accent);
+      }
+
+      .status-bad {
+        color: var(--warn);
+      }
+
+      .log-box {
+        max-height: 220px;
+        overflow: auto;
+        font-size: 0.9rem;
+        line-height: 1.3;
+      }
+
+      .log-row {
+        padding: 0.35rem 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .log-row:last-child {
+        border-bottom: 0;
+      }
+
+      .log-time {
+        color: #4d5d7a;
+        font-size: 0.78rem;
+      }
+
+      .matrix-note {
+        font-size: 0.84rem;
+        margin-top: 0.3rem;
+        color: var(--muted);
+      }
+
+      .matrix-wrap {
+        overflow-x: auto;
+        margin-top: 0.5rem;
+      }
+
+      .vib-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .vib-matrix th,
+      .vib-matrix td {
+        border: 1px solid var(--line);
+        padding: 0.45rem 0.55rem;
+        text-align: center;
+      }
+
+      .vib-matrix th:first-child,
+      .vib-matrix td:first-child {
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      .vib-cell {
+        cursor: help;
+        font-weight: 700;
+      }
+
+      .matrix-tooltip {
+        position: fixed;
+        z-index: 50;
+        max-width: 320px;
+        display: none;
+        pointer-events: none;
+        background: rgba(20, 33, 61, 0.96);
+        color: #fff;
+        border-radius: 0.5rem;
+        padding: 0.5rem 0.6rem;
+        font-size: 0.82rem;
+        line-height: 1.3;
+        white-space: pre-line;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+      }
+
+      .logging-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .live-speed-row {
+        margin-top: 0.75rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .live-speed-row label {
+        min-width: 11rem;
+      }
+
+      .live-speed-row input {
+        width: 9rem;
+      }
+
+      .badge {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .badge.on {
+        background: #d8f3dc;
+        color: #1b4332;
+      }
+
+      .badge.off {
+        background: #ffe8d6;
+        color: #9c2f00;
+      }
+
+      .subtle {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .logs-table th,
+      .logs-table td {
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        padding: 0.55rem;
+      }
+
+      .logs-table th {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      .logs-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .clients-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .clients-table th,
+      .clients-table td {
+        border-bottom: 1px solid var(--line);
+        padding: 0.5rem;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      .clients-table th {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      .clients-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .row-action {
+        width: 100%;
+      }
+
+      .status-pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.12rem 0.45rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        margin-top: 0.25rem;
+      }
+
+      .status-pill.online {
+        background: #d8f3dc;
+        color: #1b4332;
+      }
+
+      .status-pill.offline {
+        background: #e9ecef;
+        color: #495057;
+      }
+
+      .report-insights p {
+        margin: 0.35rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="site-header">
+        <div class="topbar">
+          <h1 class="title" data-i18n="title.main">VibeSensor Frequency Live</h1>
+          <div class="topbar-actions">
+            <select id="languageSelect" class="lang-picker" aria-label="Language">
+              <option value="en">🇺🇸 English</option>
+              <option value="nl">🇳🇱 Nederlands</option>
+            </select>
+            <label for="speedUnitSelect" class="subtle" data-i18n="speed.unit">Speed unit</label>
+            <select id="speedUnitSelect" class="speed-unit" aria-label="Speed unit">
+              <option value="kmh" data-i18n="speed.unit.kmh">km/h</option>
+              <option value="mph" data-i18n="speed.unit.mph">mph</option>
+            </select>
+            <div id="speed" class="speed">Speed: -- km/h</div>
+          </div>
+        </div>
+
+        <nav class="menu" aria-label="Primary" role="tablist">
+          <button
+            type="button"
+            class="menu-btn active"
+            data-view="dashboardView"
+            id="tab-dashboard"
+            role="tab"
+            aria-controls="dashboardView"
+            aria-selected="true"
+            tabindex="0"
+          >
+            <span data-i18n="nav.live">Live</span>
+          </button>
+          <button
+            type="button"
+            class="menu-btn"
+            data-view="logsView"
+            id="tab-logs"
+            role="tab"
+            aria-controls="logsView"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span data-i18n="nav.logs">Logs</span>
+          </button>
+          <button
+            type="button"
+            class="menu-btn"
+            data-view="reportView"
+            id="tab-report"
+            role="tab"
+            aria-controls="reportView"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span data-i18n="nav.report">Report</span>
+          </button>
+          <button
+            type="button"
+            class="menu-btn"
+            data-view="settingsView"
+            id="tab-settings"
+            role="tab"
+            aria-controls="settingsView"
+            aria-selected="false"
+            tabindex="-1"
+          >
+            <span data-i18n="nav.settings">Settings</span>
+          </button>
+        </nav>
+      </header>
+
+      <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
+        <div class="panel">
+          <div class="logging-row">
+            <strong data-i18n="dashboard.run_logging">Run Logging</strong>
+            <span id="loggingStatus" class="badge off">Stopped</span>
+            <button id="startLoggingBtn" class="success" data-i18n="dashboard.start_logging">Start Logging</button>
+            <button id="stopLoggingBtn" class="warn" data-i18n="dashboard.stop_logging">Stop Logging</button>
+          </div>
+          <div class="live-speed-row">
+            <label for="speedOverrideInput" data-i18n="dashboard.speed_override">Speed Override (km/h)</label>
+            <input id="speedOverrideInput" type="number" step="0.1" min="0" />
+            <button id="applySpeedOverrideBtn" class="primary" data-i18n="dashboard.apply_override">Apply Override</button>
+          </div>
+          <div id="currentLogFile" class="subtle">Current file: --</div>
+        </div>
+
+        <div class="meta status-strip">
+          <div class="panel" id="lastSeen">Last seen: --</div>
+          <div class="panel" id="dropped">Dropped frames: --</div>
+          <div class="panel" id="framesTotal">Frames total: --</div>
+          <div class="panel" id="linkState">WS: connecting...</div>
+        </div>
+
+        <div class="charts">
+          <div class="panel chart-box">
+            <div class="chart-stage">
+              <div id="specChart"></div>
+              <div id="spectrumOverlay" class="spectrum-overlay">Loading spectrum...</div>
+            </div>
+            <div id="legend" class="legend"></div>
+            <div id="bandLegend" class="legend band-legend"></div>
+          </div>
+          <div class="panel">
+            <strong data-i18n="dashboard.detected_vibrations">Detected Vibrations</strong>
+            <div id="vibrationLog" class="log-box"></div>
+          </div>
+          <div class="panel">
+            <strong data-i18n="dashboard.vibration_count_live">Vibration Count Live</strong>
+            <div class="matrix-note">
+              <span data-i18n="dashboard.matrix_note"
+                >Levels use peak-over-floor dB bands (L1-L5), grouped by source type.</span
+              >
+            </div>
+            <div class="matrix-wrap">
+              <table id="vibrationMatrix" class="vib-matrix"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="logsView" class="view" role="tabpanel" aria-labelledby="tab-logs" hidden>
+        <div class="panel">
+          <div class="log-actions">
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="refreshLogsBtn" class="primary" data-i18n="logs.refresh">Refresh Logs</button>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <div id="logsSummary" class="subtle">No log files yet.</div>
+            </div>
+          </div>
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th data-i18n="logs.table.file">File</th>
+                <th data-i18n="logs.table.updated">Updated</th>
+                <th data-i18n="logs.table.size">Size</th>
+                <th data-i18n="logs.table.actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody">
+              <tr>
+                <td colspan="4">No logs found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reportView" class="view" role="tabpanel" aria-labelledby="tab-report" hidden>
+        <div class="panel">
+          <div class="controls">
+            <div class="field">
+              <label for="reportLogSelect" data-i18n="report.saved_run">Saved run</label>
+              <select id="reportLogSelect"></select>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="loadInsightsBtn" class="primary" data-i18n="report.load_insights">Load Insights</button>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="downloadReportBtn" class="success" data-i18n="report.generate_pdf">Generate PDF Report</button>
+            </div>
+          </div>
+          <div id="reportInsights" class="report-insights subtle" style="margin-top: 0.8rem">
+            <span data-i18n="report.select_run_hint">Select a saved run and click <strong>Load Insights</strong>.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>
+        <div class="panel">
+          <strong data-i18n="settings.client_locations">Client Locations</strong>
+          <div class="subtle" data-i18n="settings.client_locations_hint">
+            Set location and identify by client. Offline clients can still be assigned.
+          </div>
+          <table class="clients-table" style="margin-top: 0.7rem">
+            <thead>
+              <tr>
+                <th data-i18n="settings.clients.client">Client</th>
+                <th data-i18n="settings.clients.mac">MAC Address</th>
+                <th data-i18n="settings.clients.location">Location</th>
+                <th data-i18n="settings.clients.identify">Identify</th>
+                <th data-i18n="settings.clients.remove">Remove</th>
+              </tr>
+            </thead>
+            <tbody id="clientsSettingsBody">
+              <tr>
+                <td colspan="5">No clients detected yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel settings-layout">
+          <div class="settings-groups">
+            <section class="settings-group">
+              <h3 data-i18n="settings.group.vehicle_setup">Vehicle Setup</h3>
+              <div class="settings-subgrid">
+                <div class="field">
+                  <label for="tireWidthInput" data-i18n="settings.tire_width">Tire Width (mm)</label>
+                  <input id="tireWidthInput" type="number" min="100" step="1" />
+                </div>
+                <div class="field">
+                  <label for="tireAspectInput" data-i18n="settings.tire_aspect">Tire Aspect (%)</label>
+                  <input id="tireAspectInput" type="number" min="20" step="1" />
+                </div>
+                <div class="field">
+                  <label for="rimInput" data-i18n="settings.rim_size">Rim Size (in)</label>
+                  <input id="rimInput" type="number" min="10" step="0.5" />
+                </div>
+                <div class="field">
+                  <label for="finalDriveInput" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label>
+                  <input id="finalDriveInput" type="number" step="0.01" min="0.1" />
+                </div>
+                <div class="field">
+                  <label for="gearRatioInput" data-i18n="settings.current_gear_ratio">Current Gear Ratio</label>
+                  <input id="gearRatioInput" type="number" step="0.01" min="0.1" />
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-group">
+              <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>
+              <div class="settings-subgrid">
+                <div class="field">
+                  <label for="wheelBandwidthInput" data-i18n="settings.wheel_bandwidth">Wheel Bandwidth (%)</label>
+                  <input id="wheelBandwidthInput" type="number" step="0.1" min="1" max="40" />
+                </div>
+                <div class="field">
+                  <label for="driveshaftBandwidthInput" data-i18n="settings.driveshaft_bandwidth"
+                    >Driveshaft Bandwidth (%)</label
+                  >
+                  <input id="driveshaftBandwidthInput" type="number" step="0.1" min="1" max="40" />
+                </div>
+                <div class="field">
+                  <label for="engineBandwidthInput" data-i18n="settings.engine_bandwidth">Engine Bandwidth (%)</label>
+                  <input id="engineBandwidthInput" type="number" step="0.1" min="1" max="40" />
+                </div>
+                <div class="field">
+                  <label for="minAbsBandHzInput" data-i18n="settings.min_half_width">Min Half-width (Hz)</label>
+                  <input id="minAbsBandHzInput" type="number" step="0.1" min="0" max="10" />
+                </div>
+                <div class="field">
+                  <label for="maxBandHalfWidthInput" data-i18n="settings.max_half_width">Max Half-width (%)</label>
+                  <input id="maxBandHalfWidthInput" type="number" step="0.1" min="1" max="25" />
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-group">
+              <h3 data-i18n="settings.group.uncertainty_model">Uncertainty Model</h3>
+              <div class="subtle" style="margin-bottom: 0.55rem">
+                <span data-i18n="settings.uncertainty_defaults"
+                  >Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.</span
+                >
+              </div>
+              <div class="settings-subgrid">
+                <div class="field">
+                  <label for="speedUncertaintyInput" data-i18n="settings.speed_uncertainty">Speed Uncertainty (%)</label>
+                  <input id="speedUncertaintyInput" type="number" step="0.1" min="0" max="20" />
+                </div>
+                <div class="field">
+                  <label for="tireDiameterUncertaintyInput" data-i18n="settings.tire_diameter_uncertainty"
+                    >Tire Diameter Uncertainty (%)</label
+                  >
+                  <input id="tireDiameterUncertaintyInput" type="number" step="0.1" min="0" max="20" />
+                </div>
+                <div class="field">
+                  <label for="finalDriveUncertaintyInput" data-i18n="settings.final_drive_uncertainty"
+                    >Final Drive Uncertainty (%)</label
+                  >
+                  <input id="finalDriveUncertaintyInput" type="number" step="0.1" min="0" max="10" />
+                </div>
+                <div class="field">
+                  <label for="gearUncertaintyInput" data-i18n="settings.gear_slip_uncertainty"
+                    >Gear/Slip Uncertainty (%)</label
+                  >
+                  <input id="gearUncertaintyInput" type="number" step="0.1" min="0" max="20" />
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="settings-actions">
+            <button id="saveSettingsBtn" class="primary" data-i18n="settings.save">Save Settings</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div id="matrixTooltip" class="matrix-tooltip"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
