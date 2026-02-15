@@ -32,6 +32,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "fft_n": 2048,
         "spectrum_max_hz": 200,
         "client_ttl_seconds": 120,
+        "accel_scale_g_per_lsb": None,
     },
     "logging": {
         "log_metrics": True,
@@ -105,14 +106,20 @@ class ProcessingConfig:
     fft_n: int
     spectrum_max_hz: int
     client_ttl_seconds: int
+    accel_scale_g_per_lsb: float | None
 
 
 @dataclass(slots=True)
 class LoggingConfig:
     log_metrics: bool
-    metrics_csv_path: Path
+    metrics_log_path: Path
     metrics_log_hz: int
     sensor_model: str
+
+    @property
+    def metrics_csv_path(self) -> Path:
+        # Backward-compatible alias for older callsites and tooling.
+        return self.metrics_log_path
 
 
 @dataclass(slots=True)
@@ -148,9 +155,22 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     path = config_path or (PI_DIR / "config.yaml")
     override = _read_config_file(path)
     merged = _deep_merge(DEFAULT_CONFIG, override)
+    logging_cfg = merged.get("logging", {})
+    metrics_log_path_raw = logging_cfg.get("metrics_log_path") or logging_cfg.get(
+        "metrics_csv_path"
+    )
+    if not isinstance(metrics_log_path_raw, str) or not metrics_log_path_raw.strip():
+        raise ValueError(
+            "logging.metrics_log_path (or legacy logging.metrics_csv_path) must be configured."
+        )
 
     data_host, data_port = _split_host_port(str(merged["udp"]["data_listen"]))
     control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))
+
+    accel_scale_raw = merged["processing"].get("accel_scale_g_per_lsb")
+    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, (int, float)) else None
+    if accel_scale is not None and accel_scale <= 0:
+        accel_scale = None
 
     app_config = AppConfig(
         ap=APConfig(
@@ -181,10 +201,11 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             fft_n=int(merged["processing"]["fft_n"]),
             spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
             client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
+            accel_scale_g_per_lsb=accel_scale,
         ),
         logging=LoggingConfig(
             log_metrics=bool(merged["logging"]["log_metrics"]),
-            metrics_csv_path=_resolve_repo_path(str(merged["logging"]["metrics_csv_path"])),
+            metrics_log_path=_resolve_repo_path(metrics_log_path_raw),
             metrics_log_hz=int(merged["logging"]["metrics_log_hz"]),
             sensor_model=str(merged["logging"].get("sensor_model", "ADXL345")),
         ),
@@ -203,9 +224,9 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         config_path=path,
     )
     LOGGER.info(
-        "Loaded config=%s metrics_csv_path=%s clients_json_path=%s",
+        "Loaded config=%s metrics_log_path=%s clients_json_path=%s",
         app_config.config_path,
-        app_config.logging.metrics_csv_path,
+        app_config.logging.metrics_log_path,
         app_config.clients_json_path,
     )
     return app_config

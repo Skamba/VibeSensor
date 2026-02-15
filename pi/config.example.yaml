@@ -27,7 +27,7 @@ processing:
 
 logging:
   log_metrics: true
-  metrics_csv_path: /var/log/vibesensor/metrics.jsonl
+  metrics_log_path: /var/log/vibesensor/metrics.jsonl
   metrics_log_hz: 4
   sensor_model: ADXL345
 

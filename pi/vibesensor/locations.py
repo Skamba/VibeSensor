@@ -27,4 +27,3 @@ def all_locations() -> list[dict[str, str]]:
 
 def label_for_code(code: str) -> str | None:
     return LOCATION_LABEL_BY_CODE.get(code)
-

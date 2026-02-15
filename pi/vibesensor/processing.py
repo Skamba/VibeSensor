@@ -28,12 +28,18 @@ class SignalProcessor:
         waveform_display_hz: int,
         fft_n: int,
         spectrum_max_hz: int,
+        accel_scale_g_per_lsb: float | None = None,
     ):
         self.sample_rate_hz = sample_rate_hz
         self.waveform_seconds = waveform_seconds
         self.waveform_display_hz = waveform_display_hz
         self.fft_n = fft_n
         self.spectrum_max_hz = spectrum_max_hz
+        self.accel_scale_g_per_lsb = (
+            float(accel_scale_g_per_lsb)
+            if isinstance(accel_scale_g_per_lsb, (int, float)) and accel_scale_g_per_lsb > 0
+            else None
+        )
         self.max_samples = sample_rate_hz * waveform_seconds
         self.waveform_step = max(1, sample_rate_hz // max(1, waveform_display_hz))
         self._buffers: dict[str, ClientBuffer] = {}
@@ -59,6 +65,8 @@ class SignalProcessor:
             return
         buf = self._get_or_create(client_id)
         chunk = np.asarray(samples, dtype=np.float32)
+        if self.accel_scale_g_per_lsb is not None:
+            chunk = chunk * np.float32(self.accel_scale_g_per_lsb)
         if chunk.ndim != 2 or chunk.shape[1] != 3:
             LOGGER.warning(
                 "Dropping malformed sample chunk for %s with shape %s",
@@ -96,15 +104,73 @@ class SignalProcessor:
         return np.concatenate((buf.data[:, start:], buf.data[:, : n - first]), axis=1)
 
     @staticmethod
-    def _top_peaks(freqs: np.ndarray, amps: np.ndarray, top_n: int = 3) -> list[dict[str, float]]:
-        if len(freqs) == 0:
+    def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
+        if amps.size == 0:
+            return amps
+        width = max(1, int(bins))
+        if width <= 1:
+            return amps.astype(np.float32, copy=True)
+        if (width % 2) == 0:
+            width += 1
+        if amps.size < width:
+            return amps.astype(np.float32, copy=True)
+        kernel = np.ones(width, dtype=np.float32) / np.float32(width)
+        return np.convolve(amps, kernel, mode="same").astype(np.float32)
+
+    @staticmethod
+    def _noise_floor(amps: np.ndarray) -> float:
+        if amps.size == 0:
+            return 0.0
+        band = amps[1:] if amps.size > 1 else amps
+        finite = band[np.isfinite(band)]
+        if finite.size == 0:
+            return 0.0
+        return float(np.percentile(finite, 20.0))
+
+    @classmethod
+    def _top_peaks(
+        cls,
+        freqs: np.ndarray,
+        amps: np.ndarray,
+        *,
+        top_n: int = 5,
+        floor_ratio: float = 3.0,
+        smoothing_bins: int = 5,
+    ) -> list[dict[str, float]]:
+        if freqs.size == 0 or amps.size == 0:
             return []
-        if len(freqs) <= top_n:
-            order = np.argsort(amps)[::-1]
-        else:
-            idx = np.argpartition(amps, -top_n)[-top_n:]
-            order = idx[np.argsort(amps[idx])[::-1]]
-        return [{"hz": float(freqs[i]), "amp": float(amps[i])} for i in order]
+        smoothed = cls._smooth_spectrum(amps, bins=smoothing_bins)
+        floor_amp = cls._noise_floor(smoothed)
+        threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + 1e-9)
+
+        peak_idx: list[int] = []
+        for idx in range(1, smoothed.size - 1):
+            amp = float(smoothed[idx])
+            if amp < threshold:
+                continue
+            if amp >= float(smoothed[idx - 1]) and amp > float(smoothed[idx + 1]):
+                peak_idx.append(idx)
+
+        if not peak_idx:
+            if smoothed.size > 1:
+                candidate = int(np.argmax(smoothed[1:]) + 1)
+            else:
+                candidate = int(np.argmax(smoothed))
+            if candidate >= 0 and float(smoothed[candidate]) > 0:
+                peak_idx = [candidate]
+
+        peak_idx.sort(key=lambda idx: float(smoothed[idx]), reverse=True)
+        peaks: list[dict[str, float]] = []
+        for idx in peak_idx[:top_n]:
+            raw_amp = float(amps[idx])
+            peaks.append(
+                {
+                    "hz": float(freqs[idx]),
+                    "amp": raw_amp,
+                    "snr_ratio": (raw_amp + 1e-9) / (floor_amp + 1e-9),
+                }
+            )
+        return peaks
 
     def _fft_params(self, sample_rate_hz: int) -> tuple[np.ndarray, np.ndarray]:
         cached = self._fft_cache.get(sample_rate_hz)
@@ -125,12 +191,14 @@ class SignalProcessor:
             buf.sample_rate_hz = int(sample_rate_hz)
         sr = buf.sample_rate_hz or self.sample_rate_hz
 
-        n_time = min(buf.count, self.max_samples)
+        desired_samples = int(max(1.0, float(sr) * float(self.waveform_seconds)))
+        n_time = min(buf.count, self.max_samples, max(1, desired_samples))
         time_window = self._latest(buf, n_time)
+        time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
         metrics: dict[str, Any] = {}
         for axis_idx, axis in enumerate(AXES):
-            axis_data = time_window[axis_idx]
+            axis_data = time_window_detrended[axis_idx]
             if axis_data.size == 0:
                 continue
             rms = float(np.sqrt(np.mean(np.square(axis_data), dtype=np.float64)))
@@ -141,10 +209,27 @@ class SignalProcessor:
                 "peaks": [],
             }
 
+        if time_window_detrended.size > 0:
+            vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
+            vib_mag_rms = float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64)))
+            vib_mag_p2p = float(np.max(vib_mag) - np.min(vib_mag))
+        else:
+            vib_mag_rms = 0.0
+            vib_mag_p2p = 0.0
+
+        metrics["combined"] = {
+            "vib_mag_rms": vib_mag_rms,
+            "vib_mag_p2p": vib_mag_p2p,
+            "noise_floor_amp": None,
+            "peaks": [],
+        }
+
         if buf.count >= self.fft_n:
             fft_block = self._latest(buf, self.fft_n)
+            fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
             freq_slice, valid_idx = self._fft_params(sr)
             spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
+            axis_amp_slices: list[np.ndarray] = []
 
             for axis_idx, axis in enumerate(AXES):
                 spec = np.abs(
@@ -156,16 +241,39 @@ class SignalProcessor:
                 if (self.fft_n % 2) == 0 and spec.size > 1:
                     spec[-1] *= 0.5
                 amp_slice = spec[valid_idx]
-                if amp_slice.size > 1:
-                    amp_for_peaks = amp_slice.copy()
+                amp_for_peaks = amp_slice.copy()
+                if amp_for_peaks.size > 1:
                     amp_for_peaks[0] = 0.0
-                else:
-                    amp_for_peaks = amp_slice
                 metrics.setdefault(axis, {"rms": 0.0, "p2p": 0.0, "peaks": []})
-                metrics[axis]["peaks"] = self._top_peaks(freq_slice, amp_for_peaks, top_n=3)
+                metrics[axis]["peaks"] = self._top_peaks(
+                    freq_slice,
+                    amp_for_peaks,
+                    top_n=3,
+                    floor_ratio=2.5,
+                    smoothing_bins=3,
+                )
                 spectrum_by_axis[axis] = {
                     "freq": freq_slice.astype(np.float32),
                     "amp": amp_slice.astype(np.float32),
+                }
+                axis_amp_slices.append(amp_for_peaks)
+
+            if axis_amp_slices:
+                combined_amp = np.sqrt(
+                    np.sum(np.square(np.vstack(axis_amp_slices), dtype=np.float64), axis=0)
+                ).astype(np.float32)
+                combined_floor = self._noise_floor(combined_amp)
+                metrics["combined"]["noise_floor_amp"] = combined_floor
+                metrics["combined"]["peaks"] = self._top_peaks(
+                    freq_slice,
+                    combined_amp,
+                    top_n=5,
+                    floor_ratio=3.0,
+                    smoothing_bins=5,
+                )
+                spectrum_by_axis["combined"] = {
+                    "freq": freq_slice.astype(np.float32),
+                    "amp": combined_amp.astype(np.float32),
                 }
             buf.latest_spectrum = spectrum_by_axis
 
@@ -222,12 +330,9 @@ class SignalProcessor:
         waveform_raw = self._latest(buf, buf.count)
         sr = buf.sample_rate_hz or self.sample_rate_hz
         waveform_step = max(1, sr // max(1, self.waveform_display_hz))
-        decimated = waveform_raw[:, :: waveform_step]
+        decimated = waveform_raw[:, ::waveform_step]
         points = decimated.shape[1]
-        x = (
-            (np.arange(points, dtype=np.float32) - (points - 1))
-            * (waveform_step / sr)
-        )
+        x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
 
         waveform = {"t": x.tolist()}
         for axis_idx, axis in enumerate(AXES):
@@ -270,9 +375,7 @@ class SignalProcessor:
 
     def evict_clients(self, keep_client_ids: set[str]) -> None:
         stale_ids = [
-            client_id
-            for client_id in self._buffers.keys()
-            if client_id not in keep_client_ids
+            client_id for client_id in self._buffers.keys() if client_id not in keep_client_ids
         ]
         for client_id in stale_ids:
             self._buffers.pop(client_id, None)

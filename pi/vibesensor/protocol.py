@@ -167,7 +167,7 @@ def parse_data(data: bytes) -> DataMessage:
     if len(data) != expected_len:
         raise ProtocolError(f"DATA payload size mismatch: expected {expected_len}, got {len(data)}")
 
-    payload = memoryview(data)[DATA_HEADER.size:]
+    payload = memoryview(data)[DATA_HEADER.size :]
     samples = np.frombuffer(payload, dtype="<i2").reshape(sample_count, 3).copy()
     return DataMessage(
         client_id=client_id,
