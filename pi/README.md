@@ -39,9 +39,21 @@ pip install -e ".[dev]"
 python -m vibesensor.app --config config.dev.yaml
 ```
 
+## Local Docker run (server only)
+
+Run from repository root:
+
+```bash
+docker compose up --build
+```
+
+This runs only the FastAPI/UDP server path and skips AP/hotspot configuration.
+
 ## API
 
 - `GET /api/clients`
+- `GET /api/client-locations`
+- `POST /api/clients/{client_id}/location`
 - `POST /api/clients/{client_id}/rename`
 - `POST /api/clients/{client_id}/identify`
 - `WS /ws`

@@ -7,12 +7,17 @@
     <link rel="stylesheet" href="/uplot.min.css" />
     <style>
       :root {
-        --bg: radial-gradient(circle at top, #f8f0d8 0%, #f4f1e7 45%, #e8ecef 100%);
-        --ink: #14213d;
-        --card: rgba(255, 255, 255, 0.82);
-        --accent: #2d6a4f;
-        --warn: #b23a48;
-        --line: rgba(20, 33, 61, 0.12);
+        --bg: linear-gradient(180deg, #f3f7f9 0%, #edf2f5 100%);
+        --ink: #1c2738;
+        --card: #ffffff;
+        --line: #d8e1e8;
+        --primary: #0b7285;
+        --primary-dark: #095c6c;
+        --accent: #2b9348;
+        --warn: #c44536;
+        --muted: #5b6779;
+        --nav: #13293d;
+        --nav-active: #1b4965;
       }
 
       * {
@@ -21,15 +26,26 @@
 
       body {
         margin: 0;
-        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        font-family: "Segoe UI", "Trebuchet MS", sans-serif;
         background: var(--bg);
         color: var(--ink);
       }
 
       .wrap {
-        max-width: 1150px;
+        max-width: 1200px;
         margin: 0 auto;
         padding: 1rem;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: 0.8rem;
+        border: 1px solid var(--line);
+        border-radius: 0.9rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f3f8fb 100%);
+        box-shadow: 0 10px 24px rgba(19, 41, 61, 0.08);
       }
 
       .topbar {
@@ -42,8 +58,49 @@
 
       .title {
         margin: 0;
-        font-size: 1.8rem;
+        font-size: 1.7rem;
         letter-spacing: 0.03em;
+      }
+
+      .menu {
+        margin-top: 0.9rem;
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.2rem;
+        position: relative;
+        z-index: 2;
+      }
+
+      .menu-btn {
+        border: 0;
+        border-radius: 999px;
+        background: #e8eef3;
+        color: #24405a;
+        padding: 0.58rem 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background-color 120ms ease, color 120ms ease, transform 80ms ease;
+      }
+
+      .menu-btn.active {
+        background: var(--nav);
+        color: #fff;
+      }
+
+      .menu-btn:hover {
+        background: #d8e5ef;
+      }
+
+      .menu-btn:active {
+        transform: translateY(1px);
+      }
+
+      .menu-btn:focus-visible {
+        outline: 2px solid #0f62fe;
+        outline-offset: 2px;
       }
 
       .speed {
@@ -55,12 +112,6 @@
         text-align: right;
       }
 
-      .controls,
-      .meta,
-      .charts {
-        margin-top: 1rem;
-      }
-
       .panel {
         border: 1px solid var(--line);
         border-radius: 0.8rem;
@@ -68,10 +119,70 @@
         padding: 0.75rem;
       }
 
-      .controls {
+      .view {
+        display: none;
+        margin-top: 1rem;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .controls,
+      .meta,
+      .charts,
+      .settings-grid,
+      .log-actions {
+        margin-top: 1rem;
+      }
+
+      .controls,
+      .settings-grid,
+      .log-actions {
         display: grid;
         gap: 0.75rem;
         grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      }
+
+      .settings-layout {
+        display: grid;
+        gap: 0.85rem;
+      }
+
+      .settings-groups {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      .settings-group {
+        border: 1px dashed var(--line);
+        border-radius: 0.7rem;
+        background: #f8fbfd;
+        padding: 0.7rem;
+      }
+
+      .settings-group h3 {
+        margin: 0 0 0.55rem;
+        font-size: 0.88rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #2f4f67;
+      }
+
+      .settings-subgrid {
+        display: grid;
+        gap: 0.65rem;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      }
+
+      .settings-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .settings-actions button {
+        min-width: 12rem;
       }
 
       .field {
@@ -103,13 +214,19 @@
       }
 
       button.primary {
-        background: var(--accent);
+        background: var(--primary);
         color: #fff;
         border-color: transparent;
       }
 
       button.warn {
         background: var(--warn);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      button.success {
+        background: var(--accent);
         color: #fff;
         border-color: transparent;
       }
@@ -167,21 +284,6 @@
         color: var(--warn);
       }
 
-      .settings-panel {
-        margin-top: 0.75rem;
-        display: none;
-      }
-
-      .settings-panel.open {
-        display: block;
-      }
-
-      .settings-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-        gap: 0.75rem;
-      }
-
       .log-box {
         max-height: 220px;
         overflow: auto;
@@ -206,7 +308,7 @@
       .matrix-note {
         font-size: 0.84rem;
         margin-top: 0.3rem;
-        color: #355070;
+        color: var(--muted);
       }
 
       .matrix-wrap {
@@ -253,102 +355,394 @@
         white-space: pre-line;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
       }
+
+      .logging-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .live-speed-row {
+        margin-top: 0.75rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+      }
+
+      .live-speed-row label {
+        min-width: 11rem;
+      }
+
+      .live-speed-row input {
+        width: 9rem;
+      }
+
+      .badge {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+
+      .badge.on {
+        background: #d8f3dc;
+        color: #1b4332;
+      }
+
+      .badge.off {
+        background: #ffe8d6;
+        color: #9c2f00;
+      }
+
+      .subtle {
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .logs-table th,
+      .logs-table td {
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        padding: 0.55rem;
+      }
+
+      .logs-table th {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      .logs-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .clients-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+
+      .clients-table th,
+      .clients-table td {
+        border-bottom: 1px solid var(--line);
+        padding: 0.5rem;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      .clients-table th {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+
+      .clients-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .row-action {
+        width: 100%;
+      }
+
+      .status-pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.12rem 0.45rem;
+        font-size: 0.74rem;
+        font-weight: 700;
+        margin-top: 0.25rem;
+      }
+
+      .status-pill.online {
+        background: #d8f3dc;
+        color: #1b4332;
+      }
+
+      .status-pill.offline {
+        background: #e9ecef;
+        color: #495057;
+      }
+
+      .report-insights p {
+        margin: 0.35rem 0;
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <div class="topbar">
-        <h1 class="title">VibeSensor Frequency Dashboard</h1>
-        <div id="speed" class="speed">Speed: -- m/s</div>
-      </div>
+      <header class="site-header">
+        <div class="topbar">
+          <h1 class="title">VibeSensor Frequency Live</h1>
+          <div id="speed" class="speed">Speed: -- m/s</div>
+        </div>
 
-      <div class="controls">
-        <div class="field panel">
-          <label for="clientSelect">Client (for Rename / Identify)</label>
-          <select id="clientSelect"></select>
-        </div>
-        <div class="field panel">
-          <label for="renameInput">Rename Client</label>
-          <input id="renameInput" type="text" maxlength="32" placeholder="New name" />
-        </div>
-        <div class="field panel">
-          <label>&nbsp;</label>
-          <button id="renameBtn" class="primary">Save Name</button>
-        </div>
-        <div class="field panel">
-          <label>&nbsp;</label>
-          <button id="identifyBtn" class="warn">Identify (Blink)</button>
-        </div>
-        <div class="field panel">
-          <label>&nbsp;</label>
-          <button id="settingsToggle">Vehicle Settings</button>
-        </div>
-      </div>
+        <nav class="menu" aria-label="Primary">
+          <button
+            type="button"
+            class="menu-btn active"
+            data-view="dashboardView"
+            id="tab-dashboard"
+            role="tab"
+            aria-controls="dashboardView"
+            aria-selected="true"
+          >
+            Live
+          </button>
+          <button
+            type="button"
+            class="menu-btn"
+            data-view="logsView"
+            id="tab-logs"
+            role="tab"
+            aria-controls="logsView"
+            aria-selected="false"
+          >
+            Logs
+          </button>
+          <button
+            type="button"
+            class="menu-btn"
+            data-view="reportView"
+            id="tab-report"
+            role="tab"
+            aria-controls="reportView"
+            aria-selected="false"
+          >
+            Report
+          </button>
+          <button
+            type="button"
+            class="menu-btn"
+            data-view="settingsView"
+            id="tab-settings"
+            role="tab"
+            aria-controls="settingsView"
+            aria-selected="false"
+          >
+            Settings
+          </button>
+        </nav>
+      </header>
 
-        <div id="settingsPanel" class="panel settings-panel">
-        <div class="settings-grid">
-          <div class="field">
-            <label for="tireWidthInput">Tire Width (mm)</label>
-            <input id="tireWidthInput" type="number" min="100" step="1" />
+      <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
+        <div class="panel">
+          <div class="logging-row">
+            <strong>Run Logging</strong>
+            <span id="loggingStatus" class="badge off">Stopped</span>
+            <button id="startLoggingBtn" class="success">Start Logging</button>
+            <button id="stopLoggingBtn" class="warn">Stop Logging</button>
           </div>
-          <div class="field">
-            <label for="tireAspectInput">Tire Aspect (%)</label>
-            <input id="tireAspectInput" type="number" min="20" step="1" />
-          </div>
-          <div class="field">
-            <label for="rimInput">Rim Size (in)</label>
-            <input id="rimInput" type="number" min="10" step="0.5" />
-          </div>
-          <div class="field">
-            <label for="finalDriveInput">Final Drive Ratio</label>
-            <input id="finalDriveInput" type="number" step="0.01" min="0.1" />
-          </div>
-          <div class="field">
-            <label for="gearRatioInput">Current Gear Ratio</label>
-            <input id="gearRatioInput" type="number" step="0.01" min="0.1" />
-          </div>
-          <div class="field">
-            <label for="speedOverrideInput">Speed Override (km/h, used when GPS missing)</label>
+          <div class="live-speed-row">
+            <label for="speedOverrideInput">Speed Override (km/h)</label>
             <input id="speedOverrideInput" type="number" step="0.1" min="0" />
+            <button id="applySpeedOverrideBtn" class="primary">Apply Override</button>
           </div>
-          <div class="field">
-            <label>&nbsp;</label>
+          <div id="currentLogFile" class="subtle">Current file: --</div>
+        </div>
+
+        <div class="meta">
+          <div class="panel" id="lastSeen">Last seen: --</div>
+          <div class="panel" id="dropped">Dropped frames: --</div>
+          <div class="panel" id="framesTotal">Frames total: --</div>
+          <div class="panel" id="linkState">WS: connecting...</div>
+        </div>
+
+        <div class="charts">
+          <div class="panel chart-box">
+            <div id="specChart"></div>
+            <div id="legend" class="legend"></div>
+            <div id="bandLegend" class="legend band-legend"></div>
+          </div>
+          <div class="panel">
+            <strong>Detected Vibrations</strong>
+            <div id="vibrationLog" class="log-box"></div>
+          </div>
+          <div class="panel">
+            <strong>Vibration Count Live</strong>
+            <div class="matrix-note">
+              Levels use peak-over-floor dB bands (L1-L5), grouped by source type.
+            </div>
+            <div class="matrix-wrap">
+              <table id="vibrationMatrix" class="vib-matrix"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="logsView" class="view" role="tabpanel" aria-labelledby="tab-logs" hidden>
+        <div class="panel">
+          <div class="log-actions">
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="refreshLogsBtn" class="primary">Refresh Logs</button>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <div id="logsSummary" class="subtle">No log files yet.</div>
+            </div>
+          </div>
+          <table class="logs-table">
+            <thead>
+              <tr>
+                <th>File</th>
+                <th>Updated</th>
+                <th>Size</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody">
+              <tr>
+                <td colspan="4">No logs found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reportView" class="view" role="tabpanel" aria-labelledby="tab-report" hidden>
+        <div class="panel">
+          <div class="controls">
+            <div class="field">
+              <label for="reportLogSelect">Saved run</label>
+              <select id="reportLogSelect"></select>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="loadInsightsBtn" class="primary">Load Insights</button>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="downloadReportBtn" class="success">Generate PDF Report</button>
+            </div>
+          </div>
+          <div id="reportInsights" class="report-insights subtle" style="margin-top: 0.8rem">
+            Select a saved run and click <strong>Load Insights</strong>.
+          </div>
+        </div>
+      </section>
+
+      <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>
+        <div class="panel">
+          <strong>Client Locations</strong>
+          <div class="subtle">Set location and identify by client. Offline clients can still be assigned.</div>
+          <table class="clients-table" style="margin-top: 0.7rem">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>MAC Address</th>
+                <th>Location</th>
+                <th>Identify</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+            <tbody id="clientsSettingsBody">
+              <tr>
+                <td colspan="5">No clients detected yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel settings-layout">
+          <div class="settings-groups">
+            <section class="settings-group">
+              <h3>Vehicle Setup</h3>
+              <div class="settings-subgrid">
+                <div class="field">
+                  <label for="tireWidthInput">Tire Width (mm)</label>
+                  <input id="tireWidthInput" type="number" min="100" step="1" />
+                </div>
+                <div class="field">
+                  <label for="tireAspectInput">Tire Aspect (%)</label>
+                  <input id="tireAspectInput" type="number" min="20" step="1" />
+                </div>
+                <div class="field">
+                  <label for="rimInput">Rim Size (in)</label>
+                  <input id="rimInput" type="number" min="10" step="0.5" />
+                </div>
+                <div class="field">
+                  <label for="finalDriveInput">Final Drive Ratio</label>
+                  <input id="finalDriveInput" type="number" step="0.01" min="0.1" />
+                </div>
+                <div class="field">
+                  <label for="gearRatioInput">Current Gear Ratio</label>
+                  <input id="gearRatioInput" type="number" step="0.01" min="0.1" />
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-group">
+              <h3>Order Band Widths</h3>
+              <div class="settings-subgrid">
+                <div class="field">
+                  <label for="wheelBandwidthInput">Wheel Bandwidth (%)</label>
+                  <input id="wheelBandwidthInput" type="number" step="0.1" min="1" max="40" />
+                </div>
+                <div class="field">
+                  <label for="driveshaftBandwidthInput">Driveshaft Bandwidth (%)</label>
+                  <input id="driveshaftBandwidthInput" type="number" step="0.1" min="1" max="40" />
+                </div>
+                <div class="field">
+                  <label for="engineBandwidthInput">Engine Bandwidth (%)</label>
+                  <input id="engineBandwidthInput" type="number" step="0.1" min="1" max="40" />
+                </div>
+                <div class="field">
+                  <label for="minAbsBandHzInput">Min Half-width (Hz)</label>
+                  <input id="minAbsBandHzInput" type="number" step="0.1" min="0" max="10" />
+                </div>
+                <div class="field">
+                  <label for="maxBandHalfWidthInput">Max Half-width (%)</label>
+                  <input id="maxBandHalfWidthInput" type="number" step="0.1" min="1" max="25" />
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-group">
+              <h3>Uncertainty Model</h3>
+              <div class="subtle" style="margin-bottom: 0.55rem">
+                Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.
+              </div>
+              <div class="settings-subgrid">
+                <div class="field">
+                  <label for="speedUncertaintyInput">Speed Uncertainty (%)</label>
+                  <input id="speedUncertaintyInput" type="number" step="0.1" min="0" max="20" />
+                </div>
+                <div class="field">
+                  <label for="tireDiameterUncertaintyInput">Tire Diameter Uncertainty (%)</label>
+                  <input id="tireDiameterUncertaintyInput" type="number" step="0.1" min="0" max="20" />
+                </div>
+                <div class="field">
+                  <label for="finalDriveUncertaintyInput">Final Drive Uncertainty (%)</label>
+                  <input id="finalDriveUncertaintyInput" type="number" step="0.1" min="0" max="10" />
+                </div>
+                <div class="field">
+                  <label for="gearUncertaintyInput">Gear/Slip Uncertainty (%)</label>
+                  <input id="gearUncertaintyInput" type="number" step="0.1" min="0" max="20" />
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="settings-actions">
             <button id="saveSettingsBtn" class="primary">Save Settings</button>
           </div>
         </div>
-      </div>
-
-      <div class="meta">
-        <div class="panel" id="lastSeen">Last seen: --</div>
-        <div class="panel" id="dropped">Dropped frames: --</div>
-        <div class="panel" id="framesTotal">Frames total: --</div>
-        <div class="panel" id="linkState">WS: connecting...</div>
-      </div>
-
-      <div class="charts">
-        <div class="panel chart-box">
-          <div id="specChart"></div>
-          <div id="legend" class="legend"></div>
-          <div id="bandLegend" class="legend band-legend"></div>
-        </div>
-        <div class="panel">
-          <strong>Detected Vibrations</strong>
-          <div id="vibrationLog" class="log-box"></div>
-        </div>
-        <div class="panel">
-          <strong>Vibration Count Dashboard</strong>
-          <div class="matrix-note">
-            Levels use peak-over-floor dB bands (L1-L5), grouped by source type.
-          </div>
-          <div class="matrix-wrap">
-            <table id="vibrationMatrix" class="vib-matrix"></table>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
     <div id="matrixTooltip" class="matrix-tooltip"></div>
 
     <script src="/uplot.min.js"></script>
-    <script src="/app.js"></script>
+    <script src="/app.js?v=20260215h"></script>
   </body>
 </html>

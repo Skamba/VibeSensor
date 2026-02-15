@@ -1,0 +1,13 @@
+services:
+  vibesensor-server:
+    build:
+      context: .
+      dockerfile: pi/Dockerfile
+    container_name: vibesensor-server
+    ports:
+      - "8000:8000/tcp"
+      - "9000:9000/udp"
+      - "9001:9001/udp"
+    volumes:
+      - ./pi/data:/app/pi/data
+    restart: unless-stopped
