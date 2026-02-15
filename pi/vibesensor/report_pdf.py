@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
 from datetime import UTC, datetime
 from io import BytesIO
@@ -13,6 +14,8 @@ from .report_analysis import (
 )
 from .report_i18n import tr as _tr
 from .report_i18n import variants as _tr_variants
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _pdf_escape(text: str) -> str:
@@ -110,6 +113,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
 
     def tr(key: str, **kwargs: object) -> str:
         return _tr(lang, key, **kwargs)
+
+    def text(en_text: str, nl_text: str) -> str:
+        return nl_text if lang == "nl" else en_text
 
     styles = getSampleStyleSheet()
     style_title = ParagraphStyle(
@@ -213,6 +219,11 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             return tr("NOT_AVAILABLE")
         name_map = {
             "dominant_peak_amp_g": tr("DOMINANT_PEAK_AMPLITUDE"),
+            "vib_mag_rms_g": text("Vibration magnitude RMS", "Trillingsgrootte RMS"),
+            "vib_mag_p2p_g": text(
+                "Vibration magnitude peak-to-peak",
+                "Trillingsgrootte piek-tot-piek",
+            ),
             "not_available": tr("NOT_AVAILABLE"),
         }
         label = name_map.get(
@@ -280,25 +291,51 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 break
         return actions
 
-    def location_hotspots(samples_obj: object) -> tuple[list[dict[str, object]], str, int, int]:
+    def location_hotspots(
+        samples_obj: object,
+        findings_obj: object,
+    ) -> tuple[list[dict[str, object]], str, int, int]:
         if not isinstance(samples_obj, list):
             return [], tr("LOCATION_ANALYSIS_UNAVAILABLE"), 0, 0
         all_locations: set[str] = set()
         amp_by_location: dict[str, list[float]] = defaultdict(list)
-        for sample in samples_obj:
-            if not isinstance(sample, dict):
-                continue
-            client_name = str(sample.get("client_name") or "").strip()
-            client_id = str(sample.get("client_id") or "").strip()
-            location = client_name or (
-                f"Sensor {client_id[-4:]}" if client_id else tr("UNLABELED_SENSOR")
-            )
-            all_locations.add(location)
-            amp = _as_float(sample.get("dominant_peak_amp_g"))
-            if amp is None:
-                amp = _as_float(sample.get("accel_magnitude_rms_g"))
-            if amp is not None and amp > 0:
-                amp_by_location[location].append(amp)
+
+        matched_points: list[dict[str, object]] = []
+        if isinstance(findings_obj, list):
+            for finding in findings_obj:
+                if not isinstance(finding, dict):
+                    continue
+                rows = finding.get("matched_points")
+                if isinstance(rows, list) and rows:
+                    matched_points = [row for row in rows if isinstance(row, dict)]
+                    break
+
+        if matched_points:
+            for row in matched_points:
+                location = str(row.get("location") or "").strip()
+                amp = _as_float(row.get("amp"))
+                if not location:
+                    continue
+                all_locations.add(location)
+                if amp is not None and amp > 0:
+                    amp_by_location[location].append(amp)
+        else:
+            for sample in samples_obj:
+                if not isinstance(sample, dict):
+                    continue
+                client_name = str(sample.get("client_name") or "").strip()
+                client_id = str(sample.get("client_id") or "").strip()
+                location = client_name or (
+                    f"Sensor {client_id[-4:]}" if client_id else tr("UNLABELED_SENSOR")
+                )
+                all_locations.add(location)
+                amp = _as_float(sample.get("dominant_peak_amp_g"))
+                if amp is None:
+                    amp = _as_float(sample.get("vib_mag_rms_g"))
+                if amp is None:
+                    amp = _as_float(sample.get("accel_magnitude_rms_g"))
+                if amp is not None and amp > 0:
+                    amp_by_location[location].append(amp)
 
         rows: list[dict[str, object]] = []
         for location, amps in amp_by_location.items():
@@ -331,6 +368,17 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             strongest_loc=strongest_loc,
             strongest_peak=strongest_peak,
         )
+        if matched_points:
+            summary = text(
+                (
+                    "Order-matched comparison: strongest response is at {strongest_loc} "
+                    "({strongest_peak:.4f} g)."
+                ),
+                (
+                    "Orde-gematchte vergelijking: sterkste respons zit bij {strongest_loc} "
+                    "({strongest_peak:.4f} g)."
+                ),
+            ).format(strongest_loc=strongest_loc, strongest_peak=strongest_peak)
         if (
             monitored_count >= 3
             and active_count == monitored_count
@@ -527,6 +575,13 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             req(summary.get("sensor_model"), "CONSEQUENCE_SENSOR_SANITY_LIMITS_CANNOT_BE_APPLIED"),
         ],
         [
+            text("Acceleration Scale (g/LSB)", "Versnellingsschaal (g/LSB)"),
+            req(
+                summary.get("accel_scale_g_per_lsb"),
+                "CONSEQUENCE_SENSOR_SANITY_LIMITS_CANNOT_BE_APPLIED",
+            ),
+        ],
+        [
             tr("RAW_SAMPLE_RATE_HZ_LABEL"),
             req(summary.get("raw_sample_rate_hz"), "CONSEQUENCE_FREQUENCY_CONFIDENCE_REDUCED"),
         ],
@@ -597,7 +652,8 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     ]
 
     location_rows, location_summary, active_locations, monitored_locations = location_hotspots(
-        summary.get("samples", [])
+        summary.get("samples", []),
+        findings,
     )
     finding_ids = {
         str(item.get("finding_id", "")).strip().upper()
@@ -849,42 +905,20 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         story.append(mk_table(speed_rows, col_widths=[130, 90, 140, 140]))
 
     story.extend([Paragraph(tr("PLOTS"), style_h2)])
-    accel_mag = plots.get("accel_magnitude", []) if isinstance(plots, dict) else []
-    accel_axes = plots.get("accel_axes", {}) if isinstance(plots, dict) else {}
+    vib_mag = plots.get("vib_magnitude", []) if isinstance(plots, dict) else []
     dominant_freq = plots.get("dominant_freq", []) if isinstance(plots, dict) else []
     amp_vs_speed = plots.get("amp_vs_speed", []) if isinstance(plots, dict) else []
+    matched_amp_vs_speed = plots.get("matched_amp_vs_speed", []) if isinstance(plots, dict) else []
+    metadata_obj = summary.get("metadata", {}) if isinstance(summary.get("metadata"), dict) else {}
+    units_obj = metadata_obj.get("units", {}) if isinstance(metadata_obj, dict) else {}
+    accel_units = str(units_obj.get("accel_x_g") or "g")
 
     story.append(
         line_plot(
-            title=tr("PLOT_ACCEL_MAG_OVER_TIME"),
+            title=text("Vibration Magnitude (RMS) Over Time", "Trillingsgrootte (RMS) over tijd"),
             x_label=tr("TIME_S"),
-            y_label="|a| (g)",
-            series=[(tr("PLOT_SERIES_MAGNITUDE"), "#1f77b4", accel_mag)],
-        )
-    )
-    story.append(Spacer(1, 6))
-    story.append(
-        line_plot(
-            title=tr("PLOT_PER_AXIS_ACCEL_OVER_TIME"),
-            x_label=tr("TIME_S"),
-            y_label="accel (g)",
-            series=[
-                (
-                    "accel_x_g",
-                    "#d62728",
-                    accel_axes.get("x", []) if isinstance(accel_axes, dict) else [],
-                ),
-                (
-                    "accel_y_g",
-                    "#2ca02c",
-                    accel_axes.get("y", []) if isinstance(accel_axes, dict) else [],
-                ),
-                (
-                    "accel_z_g",
-                    "#1f77b4",
-                    accel_axes.get("z", []) if isinstance(accel_axes, dict) else [],
-                ),
-            ],
+            y_label=f"vibration ({accel_units})",
+            series=[(tr("PLOT_SERIES_MAGNITUDE"), "#1f77b4", vib_mag)],
         )
     )
     if dominant_freq:
@@ -912,10 +946,41 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             line_plot(
                 title=tr("PLOT_AMP_VS_SPEED_BINS"),
                 x_label=tr("SPEED_KM_H"),
-                y_label=tr("PLOT_Y_MEAN_AMPLITUDE_G"),
+                y_label=f"amplitude ({accel_units})",
                 series=[(tr("PLOT_SERIES_MEAN_AMPLITUDE"), "#ff7f0e", amp_vs_speed)],
             )
         )
+    if isinstance(matched_amp_vs_speed, list) and matched_amp_vs_speed:
+        series: list[tuple[str, str, list[tuple[float, float]]]] = []
+        palette = ["#e63946", "#2a9d8f", "#3a86ff", "#f4a261"]
+        for idx, row in enumerate(matched_amp_vs_speed[:4]):
+            if not isinstance(row, dict):
+                continue
+            label = str(row.get("label") or f"Series {idx + 1}")
+            points = row.get("points")
+            if not isinstance(points, list):
+                continue
+            clean_points: list[tuple[float, float]] = []
+            for point in points:
+                if isinstance(point, tuple) and len(point) == 2:
+                    clean_points.append((float(point[0]), float(point[1])))
+                elif isinstance(point, list) and len(point) == 2:
+                    clean_points.append((float(point[0]), float(point[1])))
+            if clean_points:
+                series.append((label, palette[idx % len(palette)], clean_points))
+        if series:
+            story.append(Spacer(1, 6))
+            story.append(
+                line_plot(
+                    title=text(
+                        "Matched Amplitude vs Speed (Top Findings)",
+                        "Gematchte amplitude vs snelheid (topbevindingen)",
+                    ),
+                    x_label=tr("SPEED_KM_H"),
+                    y_label=f"amplitude ({accel_units})",
+                    series=series,
+                )
+            )
 
     story.extend(
         [
@@ -1060,4 +1125,8 @@ def build_report_pdf(summary: dict[str, object]) -> bytes:
     try:
         return _reportlab_pdf(summary)
     except Exception:
+        LOGGER.warning(
+            "ReportLab PDF generation failed, using fallback PDF renderer.",
+            exc_info=True,
+        )
         return _fallback_pdf(summary)

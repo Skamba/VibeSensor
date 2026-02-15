@@ -39,9 +39,9 @@ DEFAULT_GEAR_RATIO = 0.64
 def _calc_default_orders() -> dict[str, float]:
     speed_mps = DEFAULT_SPEED_KMH / 3.6
     diameter_m = (
-        (DEFAULT_RIM_IN * 25.4 + 2.0 * DEFAULT_TIRE_WIDTH_MM * (DEFAULT_TIRE_ASPECT_PCT / 100.0))
-        / 1000.0
-    )
+        DEFAULT_RIM_IN * 25.4
+        + 2.0 * DEFAULT_TIRE_WIDTH_MM * (DEFAULT_TIRE_ASPECT_PCT / 100.0)
+    ) / 1000.0
     wheel_1x = speed_mps / (np.pi * diameter_m)
     shaft_1x = wheel_1x * DEFAULT_FINAL_DRIVE
     engine_1x = shaft_1x * DEFAULT_GEAR_RATIO
@@ -73,7 +73,11 @@ class Profile:
 PROFILE_LIBRARY: dict[str, Profile] = {
     "engine_idle": Profile(
         name="engine_idle",
-        tones=((13.0, (170.0, 120.0, 250.0)), (26.0, (55.0, 40.0, 85.0)), (39.0, (30.0, 24.0, 45.0))),
+        tones=(
+            (13.0, (170.0, 120.0, 250.0)),
+            (26.0, (55.0, 40.0, 85.0)),
+            (39.0, (30.0, 24.0, 45.0)),
+        ),
         noise_std=22.0,
         bump_probability=0.001,
         bump_decay=0.96,
@@ -83,7 +87,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     ),
     "rough_road": Profile(
         name="rough_road",
-        tones=((8.0, (80.0, 90.0, 130.0)), (15.0, (105.0, 95.0, 140.0)), (34.0, (55.0, 45.0, 85.0))),
+        tones=(
+            (8.0, (80.0, 90.0, 130.0)),
+            (15.0, (105.0, 95.0, 140.0)),
+            (34.0, (55.0, 45.0, 85.0)),
+        ),
         noise_std=28.0,
         bump_probability=0.012,
         bump_decay=0.92,
@@ -93,7 +101,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     ),
     "wheel_imbalance": Profile(
         name="wheel_imbalance",
-        tones=((11.0, (220.0, 125.0, 170.0)), (22.0, (70.0, 45.0, 60.0)), (3.2, (28.0, 22.0, 35.0))),
+        tones=(
+            (11.0, (220.0, 125.0, 170.0)),
+            (22.0, (70.0, 45.0, 60.0)),
+            (3.2, (28.0, 22.0, 35.0)),
+        ),
         noise_std=24.0,
         bump_probability=0.004,
         bump_decay=0.94,
@@ -103,7 +115,11 @@ PROFILE_LIBRARY: dict[str, Profile] = {
     ),
     "rear_body": Profile(
         name="rear_body",
-        tones=((6.5, (70.0, 88.0, 120.0)), (14.0, (48.0, 60.0, 82.0)), (28.0, (34.0, 28.0, 50.0))),
+        tones=(
+            (6.5, (70.0, 88.0, 120.0)),
+            (14.0, (48.0, 60.0, 82.0)),
+            (28.0, (34.0, 28.0, 50.0)),
+        ),
         noise_std=22.0,
         bump_probability=0.006,
         bump_decay=0.95,
@@ -139,14 +155,20 @@ class SimClient:
     start_offset_s: float = 0.0
     control_transport: asyncio.DatagramTransport | None = None
     data_transport: asyncio.DatagramTransport | None = None
-    bump_state: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
-    phase_offsets: np.ndarray = field(default_factory=lambda: np.zeros(3, dtype=np.float32))
+    bump_state: np.ndarray = field(
+        default_factory=lambda: np.zeros(3, dtype=np.float32)
+    )
+    phase_offsets: np.ndarray = field(
+        default_factory=lambda: np.zeros(3, dtype=np.float32)
+    )
     rng: np.random.Generator | None = None
 
     def __post_init__(self) -> None:
         seed = int.from_bytes(self.client_id, "little")
         self.rng = np.random.default_rng(seed)
-        self.phase_offsets = np.asarray(self.rng.uniform(0.0, np.pi, size=3), dtype=np.float32)
+        self.phase_offsets = np.asarray(
+            self.rng.uniform(0.0, np.pi, size=3), dtype=np.float32
+        )
         # Intentional slight timing mismatch between sensors to mimic real deployments.
         self.send_period_scale = float(self.rng.uniform(0.997, 1.003))
         self.send_jitter_s = float(self.rng.uniform(0.001, 0.007))
@@ -186,7 +208,9 @@ class SimClient:
         dt = 1.0 / self.sample_rate_hz
         t = self.phase_s + np.arange(self.frame_samples, dtype=np.float32) * dt
 
-        modulation = 1.0 + profile.modulation_depth * np.sin(2 * np.pi * profile.modulation_hz * t)
+        modulation = 1.0 + profile.modulation_depth * np.sin(
+            2 * np.pi * profile.modulation_hz * t
+        )
         signal = np.zeros((self.frame_samples, 3), dtype=np.float32)
 
         for freq_hz, amps_xyz in profile.tones:
@@ -206,15 +230,21 @@ class SimClient:
             for freq_hz, amps_xyz in common_tones:
                 omega_t = 2.0 * np.pi * freq_hz * t
                 signal[:, 0] += self.common_event_gain * amps_xyz[0] * np.sin(omega_t)
-                signal[:, 1] += self.common_event_gain * amps_xyz[1] * np.sin(omega_t + 0.2)
-                signal[:, 2] += self.common_event_gain * amps_xyz[2] * np.sin(omega_t + 0.4)
+                signal[:, 1] += (
+                    self.common_event_gain * amps_xyz[1] * np.sin(omega_t + 0.2)
+                )
+                signal[:, 2] += (
+                    self.common_event_gain * amps_xyz[2] * np.sin(omega_t + 0.4)
+                )
 
         signal *= modulation[:, None]
 
         for i in range(self.frame_samples):
             if self.rng.random() < profile.bump_probability:
                 jitter = self.rng.uniform(0.85, 1.15, size=3).astype(np.float32)
-                self.bump_state += np.asarray(profile.bump_strength, dtype=np.float32) * jitter
+                self.bump_state += (
+                    np.asarray(profile.bump_strength, dtype=np.float32) * jitter
+                )
             signal[i] += self.bump_state
             self.bump_state *= profile.bump_decay
 
@@ -247,12 +277,18 @@ class ClientProtocol(asyncio.DatagramProtocol):
         if cmd.client_id != self.sim.client_id:
             return
         if cmd.cmd_id == CMD_IDENTIFY:
-            duration_ms = int.from_bytes(cmd.params[:2], "little") if len(cmd.params) >= 2 else 1000
+            duration_ms = (
+                int.from_bytes(cmd.params[:2], "little")
+                if len(cmd.params) >= 2
+                else 1000
+            )
             print(f"{self.sim.name}: identify {duration_ms}ms from {addr[0]}:{addr[1]}")
             self.sim.pulse(1.4)
             ack = pack_ack(self.sim.client_id, cmd.cmd_seq, status=0)
             if self.sim.control_transport is not None:
-                self.sim.control_transport.sendto(ack, (self.sim.server_host, self.sim.server_control_port))
+                self.sim.control_transport.sendto(
+                    ack, (self.sim.server_host, self.sim.server_control_port)
+                )
 
 
 class DataProtocol(asyncio.DatagramProtocol):
@@ -323,8 +359,12 @@ def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None
             return None
         time.sleep(0.2)
 
-    if _check_server_running(args.server_host, args.server_http_port, timeout_s=args.server_check_timeout):
-        print(f"Server already running at {_server_health_url(args.server_host, args.server_http_port)}")
+    if _check_server_running(
+        args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
+    ):
+        print(
+            f"Server already running at {_server_health_url(args.server_host, args.server_http_port)}"
+        )
         return None
 
     config_path = Path(args.server_config)
@@ -347,9 +387,15 @@ def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None
                     f"{_server_health_url(args.server_host, args.server_http_port)}"
                 )
                 return None
-            raise RuntimeError(f"Auto-started server exited early with code {proc.returncode}")
-        if _check_server_running(args.server_host, args.server_http_port, timeout_s=args.server_check_timeout):
-            print(f"Server is now reachable at {_server_health_url(args.server_host, args.server_http_port)}")
+            raise RuntimeError(
+                f"Auto-started server exited early with code {proc.returncode}"
+            )
+        if _check_server_running(
+            args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
+        ):
+            print(
+                f"Server is now reachable at {_server_health_url(args.server_host, args.server_http_port)}"
+            )
             return proc
         time.sleep(0.3)
     proc.terminate()
@@ -377,7 +423,9 @@ def find_targets(clients: list[SimClient], token: str) -> list[SimClient]:
     return []
 
 
-def apply_command(clients: list[SimClient], line: str, stop_event: asyncio.Event) -> str:
+def apply_command(
+    clients: list[SimClient], line: str, stop_event: asyncio.Event
+) -> str:
     parts = shlex.split(line)
     if not parts:
         return ""
@@ -553,7 +601,9 @@ async def road_scene_loop(clients: list[SimClient], stop_event: asyncio.Event) -
         await asyncio.sleep(duration)
 
 
-async def run_client(sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event) -> None:
+async def run_client(
+    sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event
+) -> None:
     loop = asyncio.get_running_loop()
     control_transport, _ = await loop.create_datagram_endpoint(
         lambda: ClientProtocol(sim),
@@ -580,7 +630,9 @@ async def wait_stop(stop_event: asyncio.Event) -> None:
     raise asyncio.CancelledError()
 
 
-async def hello_loop(sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event) -> None:
+async def hello_loop(
+    sim: SimClient, hello_interval_s: float, stop_event: asyncio.Event
+) -> None:
     while not stop_event.is_set():
         if sim.control_transport is not None:
             packet = pack_hello(
@@ -590,7 +642,9 @@ async def hello_loop(sim: SimClient, hello_interval_s: float, stop_event: asynci
                 name=sim.name,
                 firmware_version="sim-0.2",
             )
-            sim.control_transport.sendto(packet, (sim.server_host, sim.server_control_port))
+            sim.control_transport.sendto(
+                packet, (sim.server_host, sim.server_control_port)
+            )
         await asyncio.sleep(hello_interval_s)
 
 
@@ -625,7 +679,9 @@ async def async_main(args: argparse.Namespace) -> None:
     if not args.no_auto_server:
         managed_server = maybe_start_server(args)
 
-    names = [n.strip() for n in args.names.split(",") if n.strip()] if args.names else []
+    names = (
+        [n.strip() for n in args.names.split(",") if n.strip()] if args.names else []
+    )
     while len(names) < args.count:
         names.append(f"sim-{len(names) + 1}")
 
@@ -644,7 +700,9 @@ async def async_main(args: argparse.Namespace) -> None:
         for i in range(args.count)
     ]
 
-    interactive = args.interactive or (not args.no_interactive and args.duration <= 0 and sys.stdin.isatty())
+    interactive = args.interactive or (
+        not args.no_interactive and args.duration <= 0 and sys.stdin.isatty()
+    )
     stop_event = asyncio.Event()
     tasks: list[asyncio.Task[Any]] = []
 
@@ -666,7 +724,9 @@ async def async_main(args: argparse.Namespace) -> None:
 
     try:
         for client in clients:
-            tasks.append(asyncio.create_task(run_client(client, args.hello_interval, stop_event)))
+            tasks.append(
+                asyncio.create_task(run_client(client, args.hello_interval, stop_event))
+            )
         tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
         if args.duration > 0:
             tasks.append(asyncio.create_task(auto_stop(args.duration, stop_event)))
@@ -692,16 +752,33 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--server-data-port", type=int, default=9000)
     parser.add_argument("--server-control-port", type=int, default=9001)
     parser.add_argument("--count", type=int, default=5)
-    parser.add_argument("--names", default="front-left,front-right,rear-left,rear-right,trunk")
+    parser.add_argument(
+        "--names", default="front-left,front-right,rear-left,rear-right,trunk"
+    )
     parser.add_argument("--sample-rate-hz", type=int, default=800)
     parser.add_argument("--frame-samples", type=int, default=200)
     parser.add_argument("--hello-interval", type=float, default=2.0)
     parser.add_argument("--client-control-base", type=int, default=9100)
-    parser.add_argument("--duration", type=float, default=0.0, help="Optional run duration in seconds")
-    parser.add_argument("--interactive", action="store_true", help="Force interactive command mode")
-    parser.add_argument("--no-interactive", action="store_true", help="Disable interactive command mode")
-    parser.add_argument("--no-auto-server", action="store_true", help="Disable local server auto-start check")
-    parser.add_argument("--server-http-port", type=int, default=8000, help="HTTP port for server health check")
+    parser.add_argument(
+        "--duration", type=float, default=0.0, help="Optional run duration in seconds"
+    )
+    parser.add_argument(
+        "--interactive", action="store_true", help="Force interactive command mode"
+    )
+    parser.add_argument(
+        "--no-interactive", action="store_true", help="Disable interactive command mode"
+    )
+    parser.add_argument(
+        "--no-auto-server",
+        action="store_true",
+        help="Disable local server auto-start check",
+    )
+    parser.add_argument(
+        "--server-http-port",
+        type=int,
+        default=8000,
+        help="HTTP port for server health check",
+    )
     parser.add_argument(
         "--server-config",
         default="pi/config.dev.yaml",
@@ -713,7 +790,12 @@ def parse_args() -> argparse.Namespace:
         default=10.0,
         help="Seconds to wait for auto-started server readiness",
     )
-    parser.add_argument("--server-check-timeout", type=float, default=1.0, help="Per-check HTTP timeout in seconds")
+    parser.add_argument(
+        "--server-check-timeout",
+        type=float,
+        default=1.0,
+        help="Per-check HTTP timeout in seconds",
+    )
     return parser.parse_args()
 
 

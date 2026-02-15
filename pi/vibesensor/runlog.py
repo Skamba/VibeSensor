@@ -62,41 +62,63 @@ def as_int_or_none(value: object) -> int | None:
     return int(round(out))
 
 
-def default_units() -> dict[str, str]:
+def default_units(*, accel_units: str = "g") -> dict[str, str]:
     return {
         "t_s": "s",
         "speed_kmh": "km/h",
         "gps_speed_kmh": "km/h",
-        "accel_x_g": "g",
-        "accel_y_g": "g",
-        "accel_z_g": "g",
+        "accel_x_g": accel_units,
+        "accel_y_g": accel_units,
+        "accel_z_g": accel_units,
         "engine_rpm": "rpm",
         "gear": "ratio",
         "dominant_freq_hz": "Hz",
-        "dominant_peak_amp_g": "g",
-        "accel_magnitude_rms_g": "g",
-        "accel_magnitude_p2p_g": "g",
+        "dominant_peak_amp_g": accel_units,
+        "accel_magnitude_rms_g": accel_units,
+        "accel_magnitude_p2p_g": accel_units,
+        "vib_mag_rms_g": accel_units,
+        "vib_mag_p2p_g": accel_units,
+        "noise_floor_amp": accel_units,
     }
 
 
-def default_amplitude_definitions() -> dict[str, dict[str, str]]:
+def default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[str, str]]:
     return {
         "accel_magnitude_rms_g": {
             "statistic": "RMS",
-            "units": "g",
-            "definition": "sqrt((x_rms^2 + y_rms^2 + z_rms^2) / 3) from latest analysis window",
+            "units": accel_units,
+            "definition": "RMS of detrended vector vibration magnitude in the analysis window",
         },
         "accel_magnitude_p2p_g": {
             "statistic": "P2P",
-            "units": "g",
-            "definition": "maximum per-axis peak-to-peak acceleration from latest analysis window",
+            "units": accel_units,
+            "definition": (
+                "peak-to-peak of detrended vector vibration magnitude in the analysis window"
+            ),
+        },
+        "vib_mag_rms_g": {
+            "statistic": "RMS",
+            "units": accel_units,
+            "definition": "RMS of detrended vector vibration magnitude in the analysis window",
+        },
+        "vib_mag_p2p_g": {
+            "statistic": "P2P",
+            "units": accel_units,
+            "definition": (
+                "peak-to-peak of detrended vector vibration magnitude in the analysis window"
+            ),
+        },
+        "noise_floor_amp": {
+            "statistic": "Floor",
+            "units": accel_units,
+            "definition": "combined-spectrum noise floor amplitude (20th percentile, DC removed)",
         },
         "dominant_peak_amp_g": {
             "statistic": "Peak",
-            "units": "g",
+            "units": accel_units,
             "definition": (
-                "largest single-sided FFT peak amplitude across axes "
-                "from the latest FFT block"
+                "largest combined-spectrum single-sided FFT peak amplitude "
+                "from the latest FFT block (DC removed)"
             ),
         },
     }
@@ -112,9 +134,11 @@ def create_run_metadata(
     fft_window_size_samples: int | None,
     fft_window_type: str | None,
     peak_picker_method: str,
+    accel_scale_g_per_lsb: float | None,
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
 ) -> dict[str, Any]:
+    accel_units = "g" if accel_scale_g_per_lsb is not None else "raw_lsb"
     return {
         "record_type": RUN_METADATA_TYPE,
         "schema_version": RUN_SCHEMA_VERSION,
@@ -127,8 +151,9 @@ def create_run_metadata(
         "fft_window_size_samples": fft_window_size_samples,
         "fft_window_type": fft_window_type,
         "peak_picker_method": peak_picker_method,
-        "units": default_units(),
-        "amplitude_definitions": default_amplitude_definitions(),
+        "accel_scale_g_per_lsb": accel_scale_g_per_lsb,
+        "units": default_units(accel_units=accel_units),
+        "amplitude_definitions": default_amplitude_definitions(accel_units=accel_units),
         "incomplete_for_order_analysis": bool(incomplete_for_order_analysis),
     }
 
@@ -157,7 +182,22 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     normalized["dominant_peak_amp_g"] = as_float_or_none(record.get("dominant_peak_amp_g"))
     normalized["accel_magnitude_rms_g"] = as_float_or_none(record.get("accel_magnitude_rms_g"))
     normalized["accel_magnitude_p2p_g"] = as_float_or_none(record.get("accel_magnitude_p2p_g"))
+    normalized["vib_mag_rms_g"] = as_float_or_none(record.get("vib_mag_rms_g"))
+    normalized["vib_mag_p2p_g"] = as_float_or_none(record.get("vib_mag_p2p_g"))
+    normalized["noise_floor_amp"] = as_float_or_none(record.get("noise_floor_amp"))
     normalized["sample_rate_hz"] = as_int_or_none(record.get("sample_rate_hz"))
+    top_peaks = record.get("top_peaks")
+    normalized_peaks: list[dict[str, float]] = []
+    if isinstance(top_peaks, list):
+        for peak in top_peaks[:10]:
+            if not isinstance(peak, dict):
+                continue
+            hz = as_float_or_none(peak.get("hz"))
+            amp = as_float_or_none(peak.get("amp"))
+            if hz is None or amp is None or hz <= 0:
+                continue
+            normalized_peaks.append({"hz": hz, "amp": amp})
+    normalized["top_peaks"] = normalized_peaks
     return normalized
 
 

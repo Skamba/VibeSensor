@@ -1,48 +1,43 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from math import sqrt
+from math import ceil, floor, log1p, sqrt
 from pathlib import Path
 from statistics import mean
 from typing import Any
 
-from .diagnostics_shared import ORDER_CLASS_KEYS, build_diagnostic_settings, classify_peak_hz
-from .report_helpers import (
-    as_float as _as_float,
-)
-from .report_helpers import (
-    effective_engine_rpm as _effective_engine_rpm,
-)
-from .report_helpers import (
-    mean_variance as _mean_variance,
-)
-from .report_helpers import (
-    outlier_summary as _outlier_summary,
-)
-from .report_helpers import (
-    percent_missing as _percent_missing,
-)
-from .report_helpers import (
-    sensor_limit_g as _sensor_limit_g,
-)
-from .report_helpers import (
-    speed_breakdown as _speed_breakdown,
-)
-from .report_helpers import (
-    tire_reference_from_metadata as _tire_reference_from_metadata,
-)
+from .analysis_settings import tire_circumference_m_from_spec
 from .report_i18n import tr as _tr
 from .runlog import parse_iso8601, read_jsonl_run
 
+SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
 SPEED_MIN_POINTS = 8
+
+ORDER_TOLERANCE_REL = 0.08
+ORDER_TOLERANCE_MIN_HZ = 0.5
+ORDER_MIN_MATCH_POINTS = 4
+ORDER_MIN_COVERAGE_POINTS = 6
 
 
 def _normalize_lang(lang: object) -> str:
     if isinstance(lang, str) and lang.strip().lower().startswith("nl"):
         return "nl"
     return "en"
+
+
+def _as_float(value: object) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    if out != out:  # NaN
+        return None
+    return out
 
 
 def _format_duration(seconds: float) -> str:
@@ -58,6 +53,136 @@ def _required_text(value: object, consequence: str, lang: object = "en") -> str:
     return str(value)
 
 
+def _text(lang: object, en_text: str, nl_text: str) -> str:
+    return nl_text if _normalize_lang(lang) == "nl" else en_text
+
+
+def _percent_missing(samples: list[dict[str, Any]], key: str) -> float:
+    if not samples:
+        return 100.0
+    missing = sum(1 for sample in samples if sample.get(key) in (None, ""))
+    return (missing / len(samples)) * 100.0
+
+
+def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
+    if not values:
+        return None, None
+    m = mean(values)
+    var = sum((v - m) ** 2 for v in values) / len(values)
+    return m, var
+
+
+def _percentile(sorted_values: list[float], q: float) -> float:
+    if not sorted_values:
+        return 0.0
+    if len(sorted_values) == 1:
+        return sorted_values[0]
+    pos = max(0.0, min(1.0, q)) * (len(sorted_values) - 1)
+    lo = floor(pos)
+    hi = ceil(pos)
+    if lo == hi:
+        return sorted_values[lo]
+    frac = pos - lo
+    return sorted_values[lo] + ((sorted_values[hi] - sorted_values[lo]) * frac)
+
+
+def _outlier_summary(values: list[float]) -> dict[str, object]:
+    if not values:
+        return {
+            "count": 0,
+            "outlier_count": 0,
+            "outlier_pct": 0.0,
+            "lower_bound": None,
+            "upper_bound": None,
+        }
+    sorted_vals = sorted(values)
+    q1 = _percentile(sorted_vals, 0.25)
+    q3 = _percentile(sorted_vals, 0.75)
+    iqr = max(0.0, q3 - q1)
+    low = q1 - (1.5 * iqr)
+    high = q3 + (1.5 * iqr)
+    outliers = [v for v in sorted_vals if v < low or v > high]
+    return {
+        "count": len(sorted_vals),
+        "outlier_count": len(outliers),
+        "outlier_pct": (len(outliers) / len(sorted_vals)) * 100.0,
+        "lower_bound": low,
+        "upper_bound": high,
+    }
+
+
+def _speed_bin_label(kmh: float) -> str:
+    low = int(kmh // SPEED_BIN_WIDTH_KMH) * SPEED_BIN_WIDTH_KMH
+    high = low + SPEED_BIN_WIDTH_KMH
+    return f"{low}-{high} km/h"
+
+
+def _speed_bin_sort_key(label: str) -> int:
+    head = label.split(" ", 1)[0]
+    low_text = head.split("-", 1)[0]
+    try:
+        return int(low_text)
+    except ValueError:
+        return 0
+
+
+def _sensor_limit_g(sensor_model: object) -> float | None:
+    if not isinstance(sensor_model, str):
+        return None
+    if "adxl345" in sensor_model.lower():
+        return 16.0
+    return None
+
+
+def _tire_reference_from_metadata(metadata: dict[str, Any]) -> tuple[float | None, str | None]:
+    direct = _as_float(metadata.get("tire_circumference_m"))
+    if direct is not None and direct > 0:
+        return direct, "metadata.tire_circumference_m"
+
+    derived = tire_circumference_m_from_spec(
+        _as_float(metadata.get("tire_width_mm")),
+        _as_float(metadata.get("tire_aspect_pct")),
+        _as_float(metadata.get("rim_in")),
+    )
+    if derived is not None and derived > 0:
+        return derived, "derived_from_tire_dimensions"
+    return None, None
+
+
+def _effective_engine_rpm(
+    sample: dict[str, Any],
+    metadata: dict[str, Any],
+    tire_circumference_m: float | None,
+) -> tuple[float | None, str]:
+    measured = _as_float(sample.get("engine_rpm"))
+    if measured is not None and measured > 0:
+        return measured, str(sample.get("engine_rpm_source") or "measured")
+
+    estimated_in_sample = _as_float(sample.get("engine_rpm_estimated"))
+    if estimated_in_sample is not None and estimated_in_sample > 0:
+        return estimated_in_sample, "estimated_from_speed_and_ratios"
+
+    speed_kmh = _as_float(sample.get("speed_kmh"))
+    final_drive_ratio = _as_float(sample.get("final_drive_ratio")) or _as_float(
+        metadata.get("final_drive_ratio")
+    )
+    gear_ratio = _as_float(sample.get("gear")) or _as_float(metadata.get("current_gear_ratio"))
+    if (
+        speed_kmh is None
+        or speed_kmh <= 0
+        or tire_circumference_m is None
+        or tire_circumference_m <= 0
+        or final_drive_ratio is None
+        or final_drive_ratio <= 0
+        or gear_ratio is None
+        or gear_ratio <= 0
+    ):
+        return None, "missing"
+
+    wheel_hz = (speed_kmh / 3.6) / tire_circumference_m
+    return wheel_hz * final_drive_ratio * gear_ratio * 60.0, "estimated_from_speed_and_ratios"
+
+
 def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[str]]:
     if not path.exists():
         raise FileNotFoundError(path)
@@ -67,13 +192,60 @@ def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[st
     return dict(run_data.metadata), list(run_data.samples), []
 
 
+def _primary_vibration_amp(sample: dict[str, Any]) -> float | None:
+    return (
+        _as_float(sample.get("vib_mag_rms_g"))
+        or _as_float(sample.get("accel_magnitude_rms_g"))
+        or _as_float(sample.get("dominant_peak_amp_g"))
+    )
+
+
+def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
+    grouped: dict[str, list[float]] = defaultdict(list)
+    counts: dict[str, int] = defaultdict(int)
+    for sample in samples:
+        speed = _as_float(sample.get("speed_kmh"))
+        if speed is None or speed <= 0:
+            continue
+        label = _speed_bin_label(speed)
+        counts[label] += 1
+        amp = _primary_vibration_amp(sample)
+        if amp is not None:
+            grouped[label].append(amp)
+
+    rows: list[dict[str, object]] = []
+    for label in sorted(counts.keys(), key=_speed_bin_sort_key):
+        values = grouped.get(label, [])
+        rows.append(
+            {
+                "speed_range": label,
+                "count": counts[label],
+                "mean_amplitude_g": mean(values) if values else None,
+                "max_amplitude_g": max(values) if values else None,
+            }
+        )
+    return rows
+
+
+def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
+    if len(x_vals) != len(y_vals) or len(x_vals) < 3:
+        return None
+    mx = mean(x_vals)
+    my = mean(y_vals)
+    cov = sum((x - mx) * (y - my) for x, y in zip(x_vals, y_vals, strict=False))
+    sx = sqrt(sum((x - mx) ** 2 for x in x_vals))
+    sy = sqrt(sum((y - my) ** 2 for y in y_vals))
+    if sx <= 1e-9 or sy <= 1e-9:
+        return None
+    return abs(cov / (sx * sy))
+
+
 def _reference_missing_finding(
     *,
     finding_id: str,
     suspected_source: str,
     evidence_summary: str,
     quick_checks: list[str],
-    falsifiers: list[str],
     lang: object = "en",
 ) -> dict[str, object]:
     return {
@@ -89,260 +261,352 @@ def _reference_missing_finding(
         },
         "confidence_0_to_1": 1.0,
         "quick_checks": quick_checks[:3],
-        "falsifiers": falsifiers[:3],
     }
 
 
-def _diagnostic_settings_from_metadata(metadata: dict[str, Any]) -> dict[str, float]:
-    return build_diagnostic_settings(
-        {
-            "tire_width_mm": metadata.get("tire_width_mm"),
-            "tire_aspect_pct": metadata.get("tire_aspect_pct"),
-            "rim_in": metadata.get("rim_in"),
-            "final_drive_ratio": metadata.get("final_drive_ratio"),
-            "current_gear_ratio": metadata.get("current_gear_ratio"),
-            "wheel_bandwidth_pct": metadata.get("wheel_bandwidth_pct"),
-            "driveshaft_bandwidth_pct": metadata.get("driveshaft_bandwidth_pct"),
-            "engine_bandwidth_pct": metadata.get("engine_bandwidth_pct"),
-            "speed_uncertainty_pct": metadata.get("speed_uncertainty_pct"),
-            "tire_diameter_uncertainty_pct": metadata.get("tire_diameter_uncertainty_pct"),
-            "final_drive_uncertainty_pct": metadata.get("final_drive_uncertainty_pct"),
-            "gear_uncertainty_pct": metadata.get("gear_uncertainty_pct"),
-            "min_abs_band_hz": metadata.get("min_abs_band_hz"),
-            "max_band_half_width_pct": metadata.get("max_band_half_width_pct"),
+def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
+    top_peaks = sample.get("top_peaks")
+    out: list[tuple[float, float]] = []
+    if isinstance(top_peaks, list):
+        for peak in top_peaks[:8]:
+            if not isinstance(peak, dict):
+                continue
+            hz = _as_float(peak.get("hz"))
+            amp = _as_float(peak.get("amp"))
+            if hz is None or amp is None or hz <= 0:
+                continue
+            out.append((hz, amp))
+    if out:
+        return out
+    dom_hz = _as_float(sample.get("dominant_freq_hz"))
+    dom_amp = _as_float(sample.get("dominant_peak_amp_g"))
+    if dom_hz is not None and dom_hz > 0 and dom_amp is not None:
+        return [(dom_hz, dom_amp)]
+    return []
+
+
+def _location_label(sample: dict[str, Any]) -> str:
+    client_name_raw = str(sample.get("client_name") or "").strip()
+    if client_name_raw:
+        return client_name_raw
+    client_id_raw = str(sample.get("client_id") or "").strip()
+    if client_id_raw:
+        return f"Sensor {client_id_raw[-4:]}"
+    return "Unlabeled sensor"
+
+
+def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> float | None:
+    speed_kmh = _as_float(sample.get("speed_kmh"))
+    if speed_kmh is None or speed_kmh <= 0:
+        return None
+    if tire_circumference_m is None or tire_circumference_m <= 0:
+        return None
+    return (speed_kmh / 3.6) / tire_circumference_m
+
+
+def _driveshaft_hz(
+    sample: dict[str, Any],
+    metadata: dict[str, Any],
+    tire_circumference_m: float | None,
+) -> float | None:
+    whz = _wheel_hz(sample, tire_circumference_m)
+    fd = _as_float(sample.get("final_drive_ratio")) or _as_float(metadata.get("final_drive_ratio"))
+    if whz is None or fd is None or fd <= 0:
+        return None
+    return whz * fd
+
+
+def _engine_hz(
+    sample: dict[str, Any],
+    metadata: dict[str, Any],
+    tire_circumference_m: float | None,
+) -> tuple[float | None, str]:
+    rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
+    if rpm is None or rpm <= 0:
+        return None, src
+    return rpm / 60.0, src
+
+
+def _order_label(lang: object, order: int, base: str) -> str:
+    if _normalize_lang(lang) == "nl":
+        names = {"wheel": "wielorde", "engine": "motororde", "driveshaft": "aandrijfasorde"}
+    else:
+        names = {"wheel": "wheel order", "engine": "engine order", "driveshaft": "driveshaft order"}
+    return f"{order}x {names.get(base, base)}"
+
+
+@dataclass(slots=True)
+class _OrderHypothesis:
+    key: str
+    suspected_source: str
+    order_label_base: str
+    order: int
+
+    def predicted_hz(
+        self,
+        sample: dict[str, Any],
+        metadata: dict[str, Any],
+        tire_circumference_m: float | None,
+    ) -> tuple[float | None, str]:
+        if self.key.startswith("wheel_"):
+            base = _wheel_hz(sample, tire_circumference_m)
+            return (base * self.order, "speed+tire") if base is not None else (None, "missing")
+        if self.key.startswith("driveshaft_"):
+            base = _driveshaft_hz(sample, metadata, tire_circumference_m)
+            if base is None:
+                return None, "missing"
+            return base * self.order, "speed+tire+final_drive"
+        if self.key.startswith("engine_"):
+            base, src = _engine_hz(sample, metadata, tire_circumference_m)
+            return (base * self.order, src) if base is not None else (None, "missing")
+        return None, "missing"
+
+
+def _order_hypotheses() -> list[_OrderHypothesis]:
+    return [
+        _OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1),
+        _OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2),
+        _OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1),
+        _OrderHypothesis("engine_1x", "engine", "engine", 1),
+        _OrderHypothesis("engine_2x", "engine", "engine", 2),
+    ]
+
+
+def _quick_checks_for_source(lang: object, source: str) -> list[str]:
+    if source == "wheel/tire":
+        return [
+            _tr(lang, "SWAP_FRONT_REAR_WHEEL_POSITIONS_AND_REPEAT_THE"),
+            _tr(lang, "INSPECT_WHEEL_BALANCE_AND_RADIAL_LATERAL_RUNOUT"),
+            _tr(lang, "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER"),
+        ]
+    if source == "driveline":
+        return [
+            _tr(lang, "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER"),
+            _tr(lang, "REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK"),
+            _tr(lang, "CROSS_CHECK_WITH_A_SECOND_SENSOR_LOCATION_TO"),
+        ]
+    if source == "engine":
+        return [
+            _tr(lang, "HOLD_ENGINE_AT_THE_SAME_RPM_IN_NEUTRAL"),
+            _tr(lang, "INSPECT_ENGINE_MOUNTS_AND_ACCESSORY_DRIVE"),
+            _tr(lang, "COMPARE_UNDER_LOAD_VS_NO_LOAD_AT_MATCHED"),
+        ]
+    return [
+        _tr(lang, "REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK"),
+        _tr(lang, "CROSS_CHECK_WITH_A_SECOND_SENSOR_LOCATION_TO"),
+    ]
+
+
+def _location_speedbin_summary(
+    matches: list[dict[str, object]],
+    lang: object,
+) -> tuple[str, dict[str, object] | None]:
+    grouped: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    for row in matches:
+        speed = _as_float(row.get("speed_kmh"))
+        amp = _as_float(row.get("amp"))
+        location = str(row.get("location") or "").strip()
+        if speed is None or speed <= 0 or amp is None or amp <= 0 or not location:
+            continue
+        grouped[_speed_bin_label(speed)][location].append(amp)
+
+    if not grouped:
+        return "", None
+
+    best: dict[str, object] | None = None
+    for bin_label, per_loc in grouped.items():
+        ranked = sorted(
+            ((loc, mean(vals)) for loc, vals in per_loc.items() if vals),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        if not ranked:
+            continue
+        top_loc, top_amp = ranked[0]
+        second_amp = ranked[1][1] if len(ranked) > 1 else top_amp
+        dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
+        candidate = {
+            "speed_range": bin_label,
+            "location": top_loc,
+            "mean_amp": top_amp,
+            "dominance_ratio": dominance,
+            "location_count": len(ranked),
         }
+        if best is None or float(candidate["mean_amp"]) > float(best["mean_amp"]):
+            best = candidate
+
+    if best is None:
+        return "", None
+
+    sentence = _text(
+        lang,
+        (
+            "Strongest at {location} in {speed_range} "
+            "(~{dominance:.2f}x vs next location in that speed bin)."
+        ),
+        (
+            "Sterkst bij {location} in {speed_range} "
+            "(~{dominance:.2f}x t.o.v. volgende locatie in die snelheidsband)."
+        ),
+    ).format(
+        location=best["location"],
+        speed_range=best["speed_range"],
+        dominance=float(best["dominance_ratio"]),
     )
+    return sentence, best
 
 
-def _dominant_cluster_finding(
+def _build_order_findings(
     *,
     metadata: dict[str, Any],
     samples: list[dict[str, Any]],
     speed_sufficient: bool,
     tire_circumference_m: float | None,
-    tire_reference_label: str | None,
     engine_ref_sufficient: bool,
     raw_sample_rate_hz: float | None,
-    lang: object = "en",
-) -> dict[str, object] | None:
-    PeakPoint = tuple[float, float | None, float | None, str | None, str | None]
-    freq_points: list[PeakPoint] = []
-    for sample in samples:
-        hz = _as_float(sample.get("dominant_freq_hz"))
-        if hz is None or hz <= 0:
-            continue
-        amp = _as_float(sample.get("dominant_peak_amp_g"))
-        speed = _as_float(sample.get("speed_kmh"))
-        client_name_raw = str(sample.get("client_name") or "").strip()
-        client_name = client_name_raw if client_name_raw else None
-        client_id_raw = str(sample.get("client_id") or "").strip()
-        client_id = client_id_raw if client_id_raw else None
-        freq_points.append((hz, amp, speed, client_name, client_id))
-    if not freq_points:
-        return None
-
-    freq_bin_hz = 0.5
-    clusters: dict[float, list[PeakPoint]] = defaultdict(list)
-    for point in freq_points:
-        key = round(point[0] / freq_bin_hz) * freq_bin_hz
-        clusters[key].append(point)
-    dominant_cluster = max(
-        clusters.values(),
-        key=lambda cluster: (
-            len(cluster),
-            mean([p[1] for p in cluster if p[1] is not None])
-            if any(p[1] is not None for p in cluster)
-            else 0,
-        ),
-    )
-
-    freq_values = [p[0] for p in dominant_cluster]
-    amp_values = [p[1] for p in dominant_cluster if p[1] is not None]
-    center_hz = mean(freq_values)
-    amp_mean = mean(amp_values) if amp_values else None
-
-    settings = _diagnostic_settings_from_metadata(metadata)
-    class_scores: dict[str, float] = defaultdict(float)
-    class_best: dict[str, dict[str, object]] = {}
-    for hz, amp, speed_kmh, _client_name, _client_id in dominant_cluster:
-        speed_mps = (speed_kmh / 3.6) if isinstance(speed_kmh, float) and speed_kmh > 0 else None
-        classified = classify_peak_hz(peak_hz=hz, speed_mps=speed_mps, settings=settings)
-        class_key = str(classified.get("key") or "other")
-        weight = float(amp) if isinstance(amp, float) and amp > 0 else 1.0
-        class_scores[class_key] += weight
-        existing = class_best.get(class_key)
-        rel_err = classified.get("rel_err")
-        rel_err_num = float(rel_err) if isinstance(rel_err, (int, float)) else 999.0
-        if existing is None:
-            class_best[class_key] = {"payload": classified, "rel_err": rel_err_num}
-        elif rel_err_num < float(existing.get("rel_err", 999.0)):
-            class_best[class_key] = {"payload": classified, "rel_err": rel_err_num}
-
-    dominant_class = max(class_scores.keys(), key=lambda key: class_scores[key])
-    dominant_payload = class_best.get(dominant_class, {}).get("payload", {"key": "other"})
-    suspected_source = str(dominant_payload.get("suspected_source") or "unknown")
-
-    evidence = _tr(
-        lang,
-        "DOMINANT_FREQUENCY_CLUSTER_NEAR_CENTER_HZ_2F_HZ",
-        center_hz=center_hz,
-        count=len(dominant_cluster),
-    )
-    freq_or_order = f"{center_hz:.2f} Hz"
-    quick_checks = [
-        _tr(lang, "REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK"),
-        _tr(lang, "CROSS_CHECK_WITH_A_SECOND_SENSOR_LOCATION_TO"),
-    ]
-    falsifiers = [
-        _tr(lang, "PEAK_DISAPPEARS_AFTER_SENSOR_REMOUNT_OR_CABLE_RESEAT"),
-        _tr(lang, "PEAK_FREQUENCY_SHIFTS_RANDOMLY_WITH_NO_REPEATABLE_OPERATING"),
-    ]
-    reference_bonus = 0.0
-
-    if dominant_class in {"wheel1", "wheel2"}:
-        order_num = 1 if dominant_class == "wheel1" else 2
-        rel_err = float(class_best[dominant_class]["rel_err"])
-        tire_ref_note = (
-            _tr(lang, "MEASURED_TIRE_CIRCUMFERENCE")
-            if tire_reference_label == "metadata.tire_circumference_m"
-            else _tr(lang, "TIRE_SIZE")
-        )
-        evidence = _tr(
-            lang,
-            "FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND",
-            tire_ref_note=tire_ref_note,
-            best_order=order_num,
-            best_error=rel_err,
-        )
-        freq_or_order = _tr(lang, "BEST_ORDER_X_WHEEL_ORDER", best_order=order_num)
-        quick_checks = [
-            _tr(lang, "SWAP_FRONT_REAR_WHEEL_POSITIONS_AND_REPEAT_THE"),
-            _tr(lang, "INSPECT_WHEEL_BALANCE_AND_RADIAL_LATERAL_RUNOUT"),
-            _tr(lang, "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER"),
-        ]
-        falsifiers = [
-            _tr(lang, "ORDER_MATCH_DEGRADES_WHEN_USING_MEASURED_TIRE_CIRCUMFERENCE"),
-            _tr(lang, "PEAK_DOES_NOT_SCALE_WITH_VEHICLE_SPEED_ACROSS"),
-        ]
-        reference_bonus = 0.18
-    elif dominant_class in {"eng1", "eng2"} and engine_ref_sufficient:
-        order_num = 1 if dominant_class == "eng1" else 2
-        rel_err = float(class_best[dominant_class]["rel_err"])
-        evidence = _tr(
-            lang,
-            "FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST",
-            ref_label=_tr(lang, "ENGINE_RPM_ESTIMATED_FROM_VEHICLE_SPEED_AND_DRIVETRAIN"),
-            best_order=order_num,
-            best_error=rel_err,
-        )
-        freq_or_order = _tr(lang, "BEST_ORDER_X_ENGINE_ORDER", best_order=order_num)
-        quick_checks = [
-            _tr(lang, "HOLD_ENGINE_AT_THE_SAME_RPM_IN_NEUTRAL"),
-            _tr(lang, "INSPECT_ENGINE_MOUNTS_AND_ACCESSORY_DRIVE"),
-            _tr(lang, "COMPARE_UNDER_LOAD_VS_NO_LOAD_AT_MATCHED"),
-        ]
-        falsifiers = [
-            _tr(lang, "PEAK_DOES_NOT_TRACK_RPM_DURING_STEADY_STATE"),
-            _tr(lang, "PEAK_FOLLOWS_WHEEL_SPEED_INSTEAD_OF_ENGINE_SPEED"),
-        ]
-        reference_bonus = 0.18
-    elif dominant_class == "road":
-        suspected_source = "body resonance"
-        quick_checks = [
-            _tr(lang, "TAP_TEST_NEARBY_PANELS_SEATS_AND_COMPARE_RESONANCE"),
-            _tr(lang, "ADD_TEMPORARY_DAMPING_MASS_AND_REPEAT_THE_RUN"),
-        ]
-        falsifiers = [
-            _tr(lang, "FREQUENCY_SCALES_CLEARLY_WITH_WHEEL_OR_ENGINE_REFERENCES"),
-            _tr(lang, "PEAK_VANISHES_WHEN_SENSOR_IS_MOVED_OFF_THE"),
-        ]
-        reference_bonus = 0.08
-    elif dominant_class in ORDER_CLASS_KEYS:
-        reference_bonus = 0.12
-        order_label = str(dominant_payload.get("order_label") or "")
-        if order_label:
-            freq_or_order = order_label
-
-    # Add location-based evidence so findings can point to the most likely physical source.
-    location_amp_values: dict[str, list[float]] = defaultdict(list)
-    observed_locations: set[str] = set()
-    for _hz, amp, _speed, client_name, client_id in dominant_cluster:
-        label = client_name or (f"Sensor {client_id[-4:]}" if client_id else "Unlabeled sensor")
-        observed_locations.add(label)
-        if amp is not None and amp > 0:
-            location_amp_values[label].append(amp)
-    if location_amp_values:
-        strongest_location = max(
-            location_amp_values.keys(),
-            key=lambda name: max(location_amp_values[name]),
-        )
-        strongest_peak = max(location_amp_values[strongest_location])
-        coverage_count = len(observed_locations)
-        location_count = len(location_amp_values)
-        if location_count >= 2:
-            if location_count == coverage_count:
-                distribution_text = _tr(
-                    lang,
-                    "DETECTED_ACROSS_ALL_MONITORED_LOCATIONS_LOCATION_COUNT",
-                    location_count=location_count,
-                )
-            else:
-                distribution_text = _tr(
-                    lang,
-                    "DETECTED_AT_LOCATION_COUNT_OF_COVERAGE_COUNT_MONITORED",
-                    location_count=location_count,
-                    coverage_count=coverage_count,
-                )
-        else:
-            distribution_text = _tr(lang, "DETECTED_AT_ONE_MONITORED_LOCATION")
-        evidence += _tr(
-            lang,
-            "SPATIAL_PATTERN_SIGNATURE_WAS_DISTRIBUTION_TEXT_WITH_THE",
-            distribution_text=distribution_text,
-            strongest_location=strongest_location,
-            strongest_peak=strongest_peak,
-        )
-        if (
-            suspected_source == "wheel/tire"
-            and location_count >= 3
-            and "wheel" in strongest_location.lower()
-        ):
-            evidence += _tr(
-                lang,
-                "THIS_MOST_STRONGLY_INDICATES_A_FAULT_NEAR_THE",
-                strongest_location=strongest_location,
-            )
-            reference_bonus += 0.05
-
-    coverage = len(dominant_cluster) / max(1, len(freq_points))
-    amp_ratio = (
-        (amp_mean / max(amp_values))
-        if amp_values and amp_mean is not None and max(amp_values) > 0
-        else 0.0
-    )
-    confidence = 0.30 + (0.35 * coverage) + (0.17 * amp_ratio) + reference_bonus
-    confidence = max(0.1, min(0.97, confidence))
-
-    amp_value = amp_mean
-    amp_definition = _tr(lang, "LARGEST_SINGLE_SIDED_FFT_PEAK_AMPLITUDE_ACROSS_AXES")
+    accel_units: str,
+    lang: object,
+) -> list[dict[str, object]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
-        freq_or_order = _tr(lang, "REFERENCE_MISSING")
+        return []
 
-    return {
-        "finding_id": "F001",
-        "suspected_source": suspected_source,
-        "evidence_summary": evidence,
-        "frequency_hz_or_order": freq_or_order,
-        "amplitude_metric": {
-            "name": "dominant_peak_amp_g",
-            "value": amp_value,
-            "units": "g",
-            "definition": amp_definition,
-        },
-        "confidence_0_to_1": confidence,
-        "quick_checks": quick_checks[:3],
-        "falsifiers": falsifiers[:3],
-    }
+    findings: list[tuple[float, dict[str, object]]] = []
+    for hypothesis in _order_hypotheses():
+        if hypothesis.key.startswith(("wheel_", "driveshaft_")) and (
+            not speed_sufficient or tire_circumference_m is None or tire_circumference_m <= 0
+        ):
+            continue
+        if hypothesis.key.startswith("engine_") and not engine_ref_sufficient:
+            continue
+
+        possible = 0
+        matched = 0
+        matched_amp: list[float] = []
+        matched_floor: list[float] = []
+        rel_errors: list[float] = []
+        predicted_vals: list[float] = []
+        measured_vals: list[float] = []
+        matched_points: list[dict[str, object]] = []
+        ref_sources: set[str] = set()
+
+        for sample in samples:
+            peaks = _sample_top_peaks(sample)
+            if not peaks:
+                continue
+            predicted_hz, ref_source = hypothesis.predicted_hz(
+                sample,
+                metadata,
+                tire_circumference_m,
+            )
+            if predicted_hz is None or predicted_hz <= 0:
+                continue
+            possible += 1
+            ref_sources.add(ref_source)
+
+            tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL)
+            best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
+            delta_hz = abs(best_hz - predicted_hz)
+            if delta_hz > tolerance_hz:
+                continue
+
+            matched += 1
+            rel_errors.append(delta_hz / max(1e-9, predicted_hz))
+            matched_amp.append(best_amp)
+            floor_amp = _as_float(sample.get("noise_floor_amp")) or 0.0
+            matched_floor.append(max(0.0, floor_amp))
+            predicted_vals.append(predicted_hz)
+            measured_vals.append(best_hz)
+            matched_points.append(
+                {
+                    "t_s": _as_float(sample.get("t_s")),
+                    "speed_kmh": _as_float(sample.get("speed_kmh")),
+                    "predicted_hz": predicted_hz,
+                    "matched_hz": best_hz,
+                    "amp": best_amp,
+                    "location": _location_label(sample),
+                }
+            )
+
+        if possible < ORDER_MIN_COVERAGE_POINTS or matched < ORDER_MIN_MATCH_POINTS:
+            continue
+        match_rate = matched / max(1, possible)
+        if match_rate < 0.25:
+            continue
+
+        mean_amp = mean(matched_amp) if matched_amp else 0.0
+        mean_floor = mean(matched_floor) if matched_floor else 0.0
+        mean_rel_err = mean(rel_errors) if rel_errors else 1.0
+        corr = _corr_abs(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+        corr_val = corr if corr is not None else 0.0
+
+        error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
+        snr_score = min(1.0, log1p(mean_amp / max(1e-6, mean_floor)) / 2.5)
+        confidence = (
+            0.20
+            + (0.35 * match_rate)
+            + (0.20 * error_score)
+            + (0.15 * corr_val)
+            + (0.10 * snr_score)
+        )
+        confidence = max(0.08, min(0.97, confidence))
+
+        ranking_score = (
+            match_rate
+            * log1p(mean_amp / max(1e-6, mean_floor))
+            * max(0.0, (1.0 - min(1.0, mean_rel_err / 0.5)))
+        )
+
+        location_line, location_hotspot = _location_speedbin_summary(matched_points, lang=lang)
+        ref_text = ", ".join(sorted(ref_sources))
+        evidence = _text(
+            lang,
+            (
+                "{order_label} tracked over {matched}/{possible} samples "
+                "(match rate {match_rate:.0%}, mean relative error {mean_rel_err:.3f}, "
+                "reference {ref_text})."
+            ),
+            (
+                "{order_label} gevolgd over {matched}/{possible} samples "
+                "(trefferratio {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, "
+                "referentie {ref_text})."
+            ),
+        ).format(
+            order_label=_order_label(lang, hypothesis.order, hypothesis.order_label_base),
+            matched=matched,
+            possible=possible,
+            match_rate=match_rate,
+            mean_rel_err=mean_rel_err,
+            ref_text=ref_text,
+        )
+        if location_line:
+            evidence = f"{evidence} {location_line}"
+
+        finding = {
+            "finding_id": "F_ORDER",
+            "suspected_source": hypothesis.suspected_source,
+            "evidence_summary": evidence,
+            "frequency_hz_or_order": _order_label(
+                lang, hypothesis.order, hypothesis.order_label_base
+            ),
+            "amplitude_metric": {
+                "name": "dominant_peak_amp_g",
+                "value": mean_amp,
+                "units": accel_units,
+                "definition": _text(
+                    lang,
+                    "Mean matched peak amplitude from the combined FFT spectrum.",
+                    "Gemiddelde gematchte piekamplitude uit het gecombineerde FFT-spectrum.",
+                ),
+            },
+            "confidence_0_to_1": confidence,
+            "quick_checks": _quick_checks_for_source(lang, hypothesis.suspected_source),
+            "matched_points": matched_points,
+            "location_hotspot": location_hotspot,
+        }
+        findings.append((ranking_score, finding))
+
+    findings.sort(key=lambda item: item[0], reverse=True)
+    return [item[1] for item in findings[:3]]
 
 
 def _build_findings(
@@ -355,58 +619,51 @@ def _build_findings(
     lang: object = "en",
 ) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
+    tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
+    units_obj = metadata.get("units")
+    accel_units = str(units_obj.get("accel_x_g")) if isinstance(units_obj, dict) else "g"
 
     if not speed_sufficient:
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_SPEED",
                 suspected_source="unknown",
-                evidence_summary=(
-                    _tr(
-                        lang,
-                        "VEHICLE_SPEED_COVERAGE_IS_SPEED_NON_NULL_PCT",
-                        speed_non_null_pct=speed_non_null_pct,
-                        threshold=SPEED_COVERAGE_MIN_PCT,
-                    )
+                evidence_summary=_tr(
+                    lang,
+                    "VEHICLE_SPEED_COVERAGE_IS_SPEED_NON_NULL_PCT",
+                    speed_non_null_pct=speed_non_null_pct,
+                    threshold=SPEED_COVERAGE_MIN_PCT,
                 ),
                 quick_checks=[
                     _tr(lang, "RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
                     _tr(lang, "VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
                 ],
-                falsifiers=[
-                    _tr(lang, "COVERAGE_RISES_ABOVE_THRESHOLD_AND_WHEEL_ORDER_CHECKS"),
-                ],
                 lang=lang,
             )
         )
 
-    tire_circumference_m, tire_reference_label = _tire_reference_from_metadata(metadata)
     if speed_sufficient and not (tire_circumference_m and tire_circumference_m > 0):
         findings.append(
             _reference_missing_finding(
                 finding_id="REF_WHEEL",
                 suspected_source="wheel/tire",
-                evidence_summary=(
-                    _tr(lang, "VEHICLE_SPEED_IS_AVAILABLE_BUT_TIRE_CIRCUMFERENCE_REFERENCE")
+                evidence_summary=_tr(
+                    lang,
+                    "VEHICLE_SPEED_IS_AVAILABLE_BUT_TIRE_CIRCUMFERENCE_REFERENCE",
                 ),
                 quick_checks=[
                     _tr(lang, "PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
                     _tr(lang, "RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
-                ],
-                falsifiers=[
-                    _tr(lang, "WHEEL_ORDER_LABELS_BECOME_AVAILABLE_ONCE_TIRE_REFERENCE"),
                 ],
                 lang=lang,
             )
         )
 
     engine_ref_count = 0
-    engine_ref_sources: set[str] = set()
     for sample in samples:
-        rpm, source = _effective_engine_rpm(sample, metadata, tire_circumference_m)
+        rpm, _ = _effective_engine_rpm(sample, metadata, tire_circumference_m)
         if rpm is not None and rpm > 0:
             engine_ref_count += 1
-            engine_ref_sources.add(source)
     engine_rpm_non_null_pct = (engine_ref_count / len(samples) * 100.0) if samples else 0.0
     engine_ref_sufficient = engine_rpm_non_null_pct >= SPEED_COVERAGE_MIN_PCT
     if not engine_ref_sufficient:
@@ -414,46 +671,17 @@ def _build_findings(
             _reference_missing_finding(
                 finding_id="REF_ENGINE",
                 suspected_source="engine",
-                evidence_summary=(
-                    _tr(
-                        lang,
-                        "ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON",
-                        engine_rpm_non_null_pct=engine_rpm_non_null_pct,
-                    )
+                evidence_summary=_tr(
+                    lang,
+                    "ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON",
+                    engine_rpm_non_null_pct=engine_rpm_non_null_pct,
                 ),
                 quick_checks=[
                     _tr(lang, "LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
                     _tr(lang, "KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
                 ],
-                falsifiers=[
-                    _tr(lang, "ENGINE_ORDER_CHECKS_BECOME_AVAILABLE_WITH_ADEQUATE_RPM"),
-                ],
                 lang=lang,
             )
-        )
-    elif engine_ref_sources == {"estimated_from_speed_and_ratios"}:
-        findings.append(
-            {
-                "finding_id": "INFO_ENGINE_REF",
-                "suspected_source": "engine",
-                "evidence_summary": (
-                    _tr(lang, "ENGINE_ORDER_REFERENCE_IS_DERIVED_FROM_VEHICLE_SPEED")
-                ),
-                "frequency_hz_or_order": _tr(lang, "REFERENCE_AVAILABLE_DERIVED"),
-                "amplitude_metric": {
-                    "name": "not_available",
-                    "value": None,
-                    "units": "n/a",
-                    "definition": _tr(lang, "INFORMATIONAL_REFERENCE_NOTE"),
-                },
-                "confidence_0_to_1": 0.7,
-                "quick_checks": [
-                    _tr(lang, "VALIDATE_GEARING_SLIP_ASSUMPTIONS_AGAINST_REAL_RPM_IF"),
-                ],
-                "falsifiers": [
-                    _tr(lang, "MEASURED_RPM_BASED_ORDER_MATCHING_DISAGREES_WITH_DERIVED"),
-                ],
-            }
         )
 
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
@@ -461,100 +689,56 @@ def _build_findings(
             _reference_missing_finding(
                 finding_id="REF_SAMPLE_RATE",
                 suspected_source="unknown",
-                evidence_summary=(
-                    _tr(lang, "RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT")
-                ),
-                quick_checks=[
-                    _tr(lang, "RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN"),
-                ],
-                falsifiers=[
-                    _tr(lang, "FREQUENCY_CONFIDENCE_IMPROVES_ONCE_SAMPLE_RATE_METADATA_IS"),
-                ],
+                evidence_summary=_tr(lang, "RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
+                quick_checks=[_tr(lang, "RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
                 lang=lang,
             )
         )
 
-    dominant = _dominant_cluster_finding(
-        metadata=metadata,
-        samples=samples,
-        speed_sufficient=speed_sufficient,
-        tire_circumference_m=tire_circumference_m if speed_sufficient else None,
-        tire_reference_label=tire_reference_label,
-        engine_ref_sufficient=engine_ref_sufficient,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        lang=lang,
+    findings.extend(
+        _build_order_findings(
+            metadata=metadata,
+            samples=samples,
+            speed_sufficient=speed_sufficient,
+            tire_circumference_m=tire_circumference_m if speed_sufficient else None,
+            engine_ref_sufficient=engine_ref_sufficient,
+            raw_sample_rate_hz=raw_sample_rate_hz,
+            accel_units=accel_units,
+            lang=lang,
+        )
     )
-    if dominant is not None:
-        findings.append(dominant)
 
     findings.sort(key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True)
     for idx, finding in enumerate(findings, start=1):
-        existing = str(finding.get("finding_id", "")).strip()
-        if not existing or existing.startswith("F"):
+        fid = str(finding.get("finding_id", "")).strip()
+        if not fid.startswith("REF_"):
             finding["finding_id"] = f"F{idx:03d}"
     return findings
-
-
-def build_findings_for_samples(
-    *,
-    metadata: dict[str, Any],
-    samples: list[dict[str, Any]],
-    lang: str | None = None,
-) -> list[dict[str, object]]:
-    language = _normalize_lang(lang)
-    speed_values = [
-        speed
-        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
-        if speed is not None and speed > 0
-    ]
-    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
-    speed_sufficient = (
-        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
-    )
-    raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
-    return _build_findings(
-        metadata=metadata,
-        samples=samples,
-        speed_sufficient=speed_sufficient,
-        speed_non_null_pct=speed_non_null_pct,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        lang=language,
-    )
 
 
 def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     samples: list[dict[str, Any]] = summary.get("samples", [])
     raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
-    accel_mag_points: list[tuple[float, float]] = []
-    accel_x_points: list[tuple[float, float]] = []
-    accel_y_points: list[tuple[float, float]] = []
-    accel_z_points: list[tuple[float, float]] = []
+    vib_mag_points: list[tuple[float, float]] = []
     dominant_freq_points: list[tuple[float, float]] = []
     speed_amp_points: list[tuple[float, float]] = []
+    matched_by_finding: list[dict[str, object]] = []
 
     for sample in samples:
         t_s = _as_float(sample.get("t_s"))
         if t_s is None:
             continue
-
-        ax = _as_float(sample.get("accel_x_g"))
-        ay = _as_float(sample.get("accel_y_g"))
-        az = _as_float(sample.get("accel_z_g"))
-        if ax is not None:
-            accel_x_points.append((t_s, ax))
-        if ay is not None:
-            accel_y_points.append((t_s, ay))
-        if az is not None:
-            accel_z_points.append((t_s, az))
-        if ax is not None and ay is not None and az is not None:
-            accel_mag_points.append((t_s, sqrt((ax * ax) + (ay * ay) + (az * az))))
-
+        vib = _primary_vibration_amp(sample)
+        if vib is not None:
+            vib_mag_points.append((t_s, vib))
         if raw_sample_rate_hz and raw_sample_rate_hz > 0:
             dominant_hz = _as_float(sample.get("dominant_freq_hz"))
             if dominant_hz is not None and dominant_hz > 0:
                 dominant_freq_points.append((t_s, dominant_hz))
 
     for row in summary.get("speed_breakdown", []):
+        if not isinstance(row, dict):
+            continue
         speed_range = str(row.get("speed_range", ""))
         if "-" not in speed_range:
             continue
@@ -570,16 +754,63 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
             continue
         speed_amp_points.append(((low + high) / 2.0, amp))
 
+    for finding in summary.get("findings", []):
+        if not isinstance(finding, dict):
+            continue
+        points_raw = finding.get("matched_points")
+        if not isinstance(points_raw, list):
+            continue
+        points: list[tuple[float, float]] = []
+        for row in points_raw:
+            if not isinstance(row, dict):
+                continue
+            speed = _as_float(row.get("speed_kmh"))
+            amp = _as_float(row.get("amp"))
+            if speed is None or amp is None or speed <= 0:
+                continue
+            points.append((speed, amp))
+        if points:
+            matched_by_finding.append(
+                {
+                    "label": str(finding.get("frequency_hz_or_order") or finding.get("finding_id")),
+                    "points": points,
+                }
+            )
+
     return {
-        "accel_magnitude": accel_mag_points,
-        "accel_axes": {
-            "x": accel_x_points,
-            "y": accel_y_points,
-            "z": accel_z_points,
-        },
+        "vib_magnitude": vib_mag_points,
         "dominant_freq": dominant_freq_points,
         "amp_vs_speed": speed_amp_points,
+        "matched_amp_vs_speed": matched_by_finding,
     }
+
+
+def build_findings_for_samples(
+    *,
+    metadata: dict[str, Any],
+    samples: list[dict[str, Any]],
+    lang: str | None = None,
+) -> list[dict[str, object]]:
+    language = _normalize_lang(lang)
+    rows = list(samples) if isinstance(samples, list) else []
+    speed_values = [
+        speed
+        for speed in (_as_float(sample.get("speed_kmh")) for sample in rows)
+        if speed is not None and speed > 0
+    ]
+    speed_non_null_pct = (len(speed_values) / len(rows) * 100.0) if rows else 0.0
+    speed_sufficient = (
+        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
+    )
+    raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
+    return _build_findings(
+        metadata=dict(metadata),
+        samples=rows,
+        speed_sufficient=speed_sufficient,
+        speed_non_null_pct=speed_non_null_pct,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        lang=language,
+    )
 
 
 def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
@@ -640,13 +871,7 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
         if sample["x"] is not None and sample["y"] is not None and sample["z"] is not None
     ]
     amp_metric_values = [
-        value
-        for value in (
-            _as_float(sample.get("accel_magnitude_rms_g"))
-            or _as_float(sample.get("dominant_peak_amp_g"))
-            for sample in samples
-        )
-        if value is not None
+        value for value in (_primary_vibration_amp(sample) for sample in samples) if value
     ]
 
     sat_count = 0
@@ -677,7 +902,14 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
             language, "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
         )
 
-    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang=language)
+    findings = _build_findings(
+        metadata=metadata,
+        samples=samples,
+        speed_sufficient=speed_sufficient,
+        speed_non_null_pct=speed_non_null_pct,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        lang=language,
+    )
 
     summary: dict[str, Any] = {
         "file_name": log_path.name,
@@ -695,6 +927,7 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
         "fft_window_size_samples": metadata.get("fft_window_size_samples"),
         "fft_window_type": metadata.get("fft_window_type"),
         "peak_picker_method": metadata.get("peak_picker_method"),
+        "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
         "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
         "metadata": metadata,
         "warnings": warnings,

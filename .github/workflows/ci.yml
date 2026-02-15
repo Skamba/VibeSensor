@@ -16,6 +16,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -24,6 +28,7 @@ jobs:
       - name: Lint
         run: |
           ruff check pi/vibesensor pi/tests tools/simulator
+          ruff format --check pi/vibesensor pi/tests tools/simulator
 
       - name: Line endings
         run: |
@@ -36,7 +41,14 @@ jobs:
 
       - name: Unit tests
         run: |
-          pytest -q pi/tests
+          pytest -q -m "not selenium" pi/tests
+
+      - name: UI typecheck + build
+        run: |
+          cd ui
+          npm ci
+          npm run typecheck
+          npm run build
 
       - name: Config preflight
         run: |

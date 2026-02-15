@@ -91,12 +91,7 @@ def vehicle_orders_hz(
         return None
     final_drive_ratio = _as_float(spec_settings.get("final_drive_ratio"))
     gear_ratio = _as_float(spec_settings.get("current_gear_ratio"))
-    if (
-        final_drive_ratio is None
-        or final_drive_ratio <= 0
-        or gear_ratio is None
-        or gear_ratio <= 0
-    ):
+    if final_drive_ratio is None or final_drive_ratio <= 0 or gear_ratio is None or gear_ratio <= 0:
         return None
 
     wheel_hz = speed_mps / circumference
