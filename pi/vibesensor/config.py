@@ -32,6 +32,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "fft_n": 2048,
         "spectrum_max_hz": 200,
         "client_ttl_seconds": 120,
+        "accel_scale_g_per_lsb": None,
     },
     "logging": {
         "log_metrics": True,
@@ -105,6 +106,7 @@ class ProcessingConfig:
     fft_n: int
     spectrum_max_hz: int
     client_ttl_seconds: int
+    accel_scale_g_per_lsb: float | None
 
 
 @dataclass(slots=True)
@@ -165,6 +167,11 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     data_host, data_port = _split_host_port(str(merged["udp"]["data_listen"]))
     control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))
 
+    accel_scale_raw = merged["processing"].get("accel_scale_g_per_lsb")
+    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, (int, float)) else None
+    if accel_scale is not None and accel_scale <= 0:
+        accel_scale = None
+
     app_config = AppConfig(
         ap=APConfig(
             ssid=str(merged["ap"]["ssid"]),
@@ -194,6 +201,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             fft_n=int(merged["processing"]["fft_n"]),
             spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
             client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
+            accel_scale_g_per_lsb=accel_scale,
         ),
         logging=LoggingConfig(
             log_metrics=bool(merged["logging"]["log_metrics"]),

@@ -23,6 +23,7 @@ Required fields:
 - `fft_window_size_samples`
 - `fft_window_type`
 - `peak_picker_method`
+- `accel_scale_g_per_lsb` (`null` if unknown / not converted)
 - `units`
 - `amplitude_definitions`
 
@@ -54,8 +55,12 @@ Common derived fields:
 
 - `dominant_freq_hz`
 - `dominant_peak_amp_g`
-- `accel_magnitude_rms_g`
-- `accel_magnitude_p2p_g`
+- `vib_mag_rms_g` (preferred vibration metric; DC removed)
+- `vib_mag_p2p_g`
+- `noise_floor_amp`
+- `top_peaks` (list of `{hz, amp}` from combined spectrum)
+- `accel_magnitude_rms_g` (backward-compatible alias)
+- `accel_magnitude_p2p_g` (backward-compatible alias)
 
 ### `run_end`
 
@@ -73,6 +78,10 @@ The report pipeline does not infer orders without references.
 
 When missing, report findings include explicit `reference missing` entries and
 order-specific claims are skipped.
+
+Order tracking uses per-sample predicted order frequencies and matches against
+`top_peaks` within tolerance, so wheel/driveline/engine findings remain valid
+when speed changes during the run.
 
 ## Commands
 

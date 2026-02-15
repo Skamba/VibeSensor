@@ -22,6 +22,7 @@ from .live_diagnostics import LiveDiagnosticsEngine
 from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
 from .registry import ClientRegistry
+from .sensor_units import get_accel_scale_g_per_lsb
 from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
 from .ws_hub import WebSocketHub
@@ -107,12 +108,18 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         config.clients_json_path,
         stale_ttl_seconds=config.processing.client_ttl_seconds,
     )
+    accel_scale_g_per_lsb = (
+        config.processing.accel_scale_g_per_lsb
+        if config.processing.accel_scale_g_per_lsb is not None
+        else get_accel_scale_g_per_lsb(config.logging.sensor_model)
+    )
     processor = SignalProcessor(
         sample_rate_hz=config.processing.sample_rate_hz,
         waveform_seconds=config.processing.waveform_seconds,
         waveform_display_hz=config.processing.waveform_display_hz,
         fft_n=config.processing.fft_n,
         spectrum_max_hz=config.processing.spectrum_max_hz,
+        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
     )
     ws_hub = WebSocketHub()
     control_plane = UDPControlPlane(
@@ -134,7 +141,8 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         default_sample_rate_hz=config.processing.sample_rate_hz,
         fft_window_size_samples=config.processing.fft_n,
         fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
+        peak_picker_method="combined_spectrum_localmax_floor_ratio",
+        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
     )
     live_diagnostics = LiveDiagnosticsEngine()
 

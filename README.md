@@ -59,6 +59,10 @@ Open:
 Run logs are written as `metrics_*.jsonl` records with required metadata and
 required per-sample fields (`t_s`, `speed_kmh`, `accel_x_g/y_g/z_g`).
 
+Processing uses explicit sensor scaling (`accel_scale_g_per_lsb`) and removes DC
+before vibration RMS/P2P and FFT metrics, so reported amplitudes represent
+vibration content instead of gravity offset.
+
 Schema reference:
 
 - `docs/run_schema_v2.md`
@@ -73,6 +77,9 @@ If speed or sample-rate references are missing, the report degrades gracefully:
 
 - speed-binned and wheel-order sections are skipped with explicit reason text
 - findings include `reference missing` entries instead of speculative order labels
+
+When references are available, report findings use order tracking over changing
+speed via per-sample matched peaks (`top_peaks`) instead of fixed-Hz clustering.
 
 ## Run With Docker (Single Entrypoint)
 

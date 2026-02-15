@@ -23,6 +23,7 @@ def _run_metadata(
     rim_in: float | None = None,
     final_drive_ratio: float | None = None,
     current_gear_ratio: float | None = None,
+    accel_scale_g_per_lsb: float | None = 1.0 / 256.0,
 ) -> dict:
     metadata = {
         "record_type": "run_metadata",
@@ -36,12 +37,15 @@ def _run_metadata(
         "fft_window_size_samples": 2048,
         "fft_window_type": "hann",
         "peak_picker_method": "max_peak_amp_across_axes",
+        "accel_scale_g_per_lsb": accel_scale_g_per_lsb,
         "units": {
             "t_s": "s",
             "speed_kmh": "km/h",
             "accel_x_g": "g",
             "accel_y_g": "g",
             "accel_z_g": "g",
+            "vib_mag_rms_g": "g",
+            "vib_mag_p2p_g": "g",
         },
         "amplitude_definitions": {
             "dominant_peak_amp_g": {"statistic": "Peak", "units": "g", "definition": "FFT peak"}
@@ -78,6 +82,7 @@ def _sample(
         "timestamp_utc": f"2026-02-15T12:00:{idx:02d}+00:00",
         "t_s": t_s,
         "client_id": "c1",
+        "client_name": "front-left wheel",
         "speed_kmh": speed_kmh,
         "gps_speed_kmh": speed_kmh,
         "engine_rpm": None,
@@ -87,9 +92,16 @@ def _sample(
         "accel_z_g": 0.01 + (idx * 0.0002),
         "accel_magnitude_rms_g": 0.05 + (idx * 0.0007),
         "accel_magnitude_p2p_g": 0.12 + (idx * 0.001),
+        "vib_mag_rms_g": 0.05 + (idx * 0.0007),
+        "vib_mag_p2p_g": 0.12 + (idx * 0.001),
         "dominant_freq_hz": dominant_freq_hz,
         "dominant_peak_amp_g": dominant_peak_amp_g,
         "dominant_axis": "x",
+        "top_peaks": [
+            {"hz": dominant_freq_hz, "amp": dominant_peak_amp_g},
+            {"hz": dominant_freq_hz + 8.0, "amp": dominant_peak_amp_g * 0.45},
+        ],
+        "noise_floor_amp": max(0.001, dominant_peak_amp_g * 0.08),
     }
 
 
@@ -124,8 +136,12 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     assert summary["findings"]
     assert any("order" in str(f.get("frequency_hz_or_order", "")) for f in summary["findings"])
     plots = summary["plots"]
-    assert plots["accel_magnitude"]
-    assert plots["accel_axes"]["x"]
+    assert plots["vib_magnitude"]
+    assert any(
+        "wheel order" in str(series.get("label", "")).lower()
+        for series in plots.get("matched_amp_vs_speed", [])
+        if isinstance(series, dict)
+    )
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
@@ -181,6 +197,11 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     assert summary["raw_sample_rate_hz"] is None
     assert any(f.get("finding_id") == "REF_SAMPLE_RATE" for f in summary["findings"])
+    assert all(
+        "order" not in str(f.get("frequency_hz_or_order", "")).lower()
+        for f in summary["findings"]
+        if str(f.get("finding_id", "")).startswith("F")
+    )
     assert summary["findings"]
 
     pdf = build_report_pdf(summary)
@@ -218,3 +239,34 @@ def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
     finding_ids = {str(f.get("finding_id")) for f in summary["findings"]}
     assert "REF_WHEEL" not in finding_ids
     assert "REF_ENGINE" not in finding_ids
+
+
+def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_units.jsonl"
+    records: list[dict] = [
+        _run_metadata(
+            run_id="run-01",
+            raw_sample_rate_hz=800,
+            tire_circumference_m=2.2,
+            accel_scale_g_per_lsb=1.0 / 256.0,
+        )
+    ]
+    for idx in range(10):
+        speed = 50 + idx
+        wheel_hz = (speed / 3.6) / 2.2
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=float(speed),
+                dominant_freq_hz=wheel_hz,
+                dominant_peak_amp_g=0.08 + (idx * 0.0006),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    assert summary["accel_scale_g_per_lsb"] == (1.0 / 256.0)
+    units = summary["metadata"]["units"]
+    assert units["accel_x_g"] == "g"
+    assert units["vib_mag_rms_g"] == "g"

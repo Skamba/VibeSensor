@@ -36,6 +36,7 @@ class MetricsLogger:
         fft_window_size_samples: int,
         fft_window_type: str = "hann",
         peak_picker_method: str = "max_peak_amp_across_axes",
+        accel_scale_g_per_lsb: float | None = None,
     ):
         self.enabled = bool(enabled)
         self.log_path = log_path
@@ -49,6 +50,11 @@ class MetricsLogger:
         self.fft_window_size_samples = int(fft_window_size_samples)
         self.fft_window_type = fft_window_type
         self.peak_picker_method = peak_picker_method
+        self.accel_scale_g_per_lsb = (
+            float(accel_scale_g_per_lsb)
+            if isinstance(accel_scale_g_per_lsb, (int, float)) and accel_scale_g_per_lsb > 0
+            else None
+        )
         self._lock = RLock()
         self._active_path: Path | None = None
         self._run_id: str | None = None
@@ -151,6 +157,7 @@ class MetricsLogger:
             else None,
             fft_window_type=self.fft_window_type or None,
             peak_picker_method=self.peak_picker_method,
+            accel_scale_g_per_lsb=self.accel_scale_g_per_lsb,
             incomplete_for_order_analysis=incomplete,
         )
         metadata.update(
@@ -202,6 +209,23 @@ class MetricsLogger:
 
     @staticmethod
     def _dominant_peak(metrics: dict[str, object]) -> tuple[float | None, float | None, str | None]:
+        combined_metrics = metrics.get("combined")
+        if isinstance(combined_metrics, dict):
+            combined_peaks = combined_metrics.get("peaks")
+            if isinstance(combined_peaks, list):
+                for peak in combined_peaks:
+                    if not isinstance(peak, dict):
+                        continue
+                    try:
+                        hz = float(peak.get("hz"))
+                        amp = float(peak.get("amp"))
+                    except (TypeError, ValueError):
+                        continue
+                    if math.isnan(hz) or math.isnan(amp) or math.isinf(hz) or math.isinf(amp):
+                        continue
+                    if hz > 0 and amp >= 0:
+                        return hz, amp, "combined"
+
         best_hz: float | None = None
         best_amp: float | None = None
         best_axis: str | None = None
@@ -296,13 +320,45 @@ class MetricsLogger:
                 )
                 if isinstance(val, float)
             ]
+            vib_mag_rms = self._safe_metric(metrics, "combined", "vib_mag_rms")
+            vib_mag_p2p = self._safe_metric(metrics, "combined", "vib_mag_p2p")
             accel_magnitude_rms_g = (
-                math.sqrt(sum(v * v for v in rms_vals) / max(1.0, float(len(rms_vals))))
-                if rms_vals
-                else None
+                vib_mag_rms
+                if isinstance(vib_mag_rms, float)
+                else (
+                    math.sqrt(sum(v * v for v in rms_vals) / max(1.0, float(len(rms_vals))))
+                    if rms_vals
+                    else None
+                )
             )
-            accel_magnitude_p2p_g = max(p2p_vals) if p2p_vals else None
+            accel_magnitude_p2p_g = (
+                vib_mag_p2p
+                if isinstance(vib_mag_p2p, float)
+                else (max(p2p_vals) if p2p_vals else None)
+            )
             dominant_hz, dominant_amp, dominant_axis = self._dominant_peak(metrics)
+            noise_floor_amp = self._safe_metric(metrics, "combined", "noise_floor_amp")
+            top_peaks_raw = (
+                metrics.get("combined", {}).get("peaks") if isinstance(metrics, dict) else None
+            )
+            top_peaks: list[dict[str, float]] = []
+            if isinstance(top_peaks_raw, list):
+                for peak in top_peaks_raw[:5]:
+                    if not isinstance(peak, dict):
+                        continue
+                    try:
+                        hz = float(peak.get("hz"))
+                        amp = float(peak.get("amp"))
+                    except (TypeError, ValueError):
+                        continue
+                    if (
+                        not math.isnan(hz)
+                        and not math.isnan(amp)
+                        and not math.isinf(hz)
+                        and not math.isinf(amp)
+                        and hz > 0
+                    ):
+                        top_peaks.append({"hz": hz, "amp": amp})
 
             sample_rate_hz = (
                 self.processor.latest_sample_rate_hz(record.client_id)
@@ -338,9 +394,13 @@ class MetricsLogger:
                     "accel_z_g": accel_z_g,
                     "accel_magnitude_rms_g": accel_magnitude_rms_g,
                     "accel_magnitude_p2p_g": accel_magnitude_p2p_g,
+                    "vib_mag_rms_g": accel_magnitude_rms_g,
+                    "vib_mag_p2p_g": accel_magnitude_p2p_g,
                     "dominant_freq_hz": dominant_hz,
                     "dominant_peak_amp_g": dominant_amp,
                     "dominant_axis": dominant_axis,
+                    "top_peaks": top_peaks,
+                    "noise_floor_amp": noise_floor_amp,
                     "frames_dropped_total": int(record.frames_dropped),
                     "queue_overflow_drops": int(record.queue_overflow_drops),
                 }

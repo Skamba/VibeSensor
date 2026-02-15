@@ -144,6 +144,9 @@ import { WsClient, type WsUiState } from "./ws";
       max_band_half_width_pct: 8.0,
       band_tolerance_model_version: bandToleranceModelVersion,
       speed_override_kmh: 100,
+      event_min_abs_peak_g: 0.01,
+      event_peak_floor_ratio: 3.0,
+      event_db_floor_eps_ratio: 0.05,
     },
     chartBands: [],
     vibrationMessages: [],
@@ -299,6 +302,15 @@ import { WsClient, type WsUiState } from "./ws";
       }
       if (typeof parsed.speed_override_kmh === "number") {
         state.vehicleSettings.speed_override_kmh = parsed.speed_override_kmh;
+      }
+      if (typeof parsed.event_min_abs_peak_g === "number") {
+        state.vehicleSettings.event_min_abs_peak_g = parsed.event_min_abs_peak_g;
+      }
+      if (typeof parsed.event_peak_floor_ratio === "number") {
+        state.vehicleSettings.event_peak_floor_ratio = parsed.event_peak_floor_ratio;
+      }
+      if (typeof parsed.event_db_floor_eps_ratio === "number") {
+        state.vehicleSettings.event_db_floor_eps_ratio = parsed.event_db_floor_eps_ratio;
       }
       if ((state.vehicleSettings.band_tolerance_model_version || 0) < bandToleranceModelVersion) {
         Object.assign(state.vehicleSettings, buildRecommendedBandDefaults(state.vehicleSettings));
@@ -1189,7 +1201,12 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function severityFromPeak(peakAmp, floorAmp, sensorCount) {
-    const db = 20 * Math.log10((Math.max(0, peakAmp) + 1) / (Math.max(0, floorAmp) + 1));
+    const peak = Math.max(0, Number(peakAmp) || 0);
+    const floor = Math.max(0, Number(floorAmp) || 0);
+    const epsRatio = Math.max(0.001, Number(state.vehicleSettings.event_db_floor_eps_ratio) || 0.05);
+    const minAbsPeak = Math.max(1e-6, Number(state.vehicleSettings.event_min_abs_peak_g) || 0.01);
+    const eps = Math.max(minAbsPeak * 0.05, floor * epsRatio);
+    const db = 20 * Math.log10((peak + eps) / (floor + eps));
     // Multi-sensor synchronous detections are stronger indicators than single-sensor events.
     const adjustedDb = sensorCount >= 2 ? db + 2 : db;
     for (const band of severityBands) {
@@ -1435,9 +1452,11 @@ import { WsClient, type WsUiState } from "./ws";
       }
       localMaxima.sort((a, b) => vals[b] - vals[a]);
       const chosen = [];
+      const minAbsPeak = Math.max(0, Number(state.vehicleSettings.event_min_abs_peak_g) || 0.01);
+      const floorRatio = Math.max(1.05, Number(state.vehicleSettings.event_peak_floor_ratio) || 3.0);
       for (const idx of localMaxima) {
         if (chosen.length >= 4) break;
-        if (vals[idx] <= Math.max(40, floor * 2.6)) continue;
+        if (vals[idx] <= Math.max(minAbsPeak, floor * floorRatio)) continue;
         // Avoid selecting harmonic duplicates that are too close.
         if (chosen.some((j) => Math.abs(freq[j] - freq[idx]) < 1.2)) continue;
         chosen.push(idx);
