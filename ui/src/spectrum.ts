@@ -45,7 +45,10 @@ export class SpectrumChart {
         title: text.title,
         width: this.computeWidth(),
         height: this.height,
-        scales: { x: { time: false } },
+        scales: {
+          x: { time: false },
+          y: { range: [0, 50] },
+        },
         axes: [{ label: text.axisHz }, { label: text.axisAmplitude }],
         series,
         plugins,

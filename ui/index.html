@@ -333,6 +333,10 @@
         font-weight: 600;
       }
 
+      .empty-state[hidden] {
+        display: none !important;
+      }
+
       .legend {
         display: flex;
         flex-wrap: wrap;
@@ -739,6 +743,12 @@
             <div class="field">
               <label>&nbsp;</label>
               <button id="refreshLogsBtn" class="btn btn--primary" data-i18n="logs.refresh">Refresh Logs</button>
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button id="deleteAllLogsBtn" class="btn btn--danger" data-i18n="logs.delete_all" disabled>
+                Delete All Logs
+              </button>
             </div>
             <div class="field">
               <label>&nbsp;</label>

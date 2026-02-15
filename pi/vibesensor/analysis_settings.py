@@ -9,6 +9,15 @@ DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
     "rim_in": 21.0,
     "final_drive_ratio": 3.08,
     "current_gear_ratio": 0.64,
+    "wheel_bandwidth_pct": 6.0,
+    "driveshaft_bandwidth_pct": 5.6,
+    "engine_bandwidth_pct": 6.2,
+    "speed_uncertainty_pct": 0.6,
+    "tire_diameter_uncertainty_pct": 1.2,
+    "final_drive_uncertainty_pct": 0.2,
+    "gear_uncertainty_pct": 0.5,
+    "min_abs_band_hz": 0.4,
+    "max_band_half_width_pct": 8.0,
 }
 
 
@@ -37,12 +46,32 @@ class AnalysisSettingsStore:
     @staticmethod
     def _sanitize(payload: dict[str, float]) -> dict[str, float]:
         out: dict[str, float] = {}
+        positive_required = {
+            "tire_width_mm",
+            "tire_aspect_pct",
+            "rim_in",
+            "final_drive_ratio",
+            "current_gear_ratio",
+            "wheel_bandwidth_pct",
+            "driveshaft_bandwidth_pct",
+            "engine_bandwidth_pct",
+            "max_band_half_width_pct",
+        }
+        non_negative = {
+            "speed_uncertainty_pct",
+            "tire_diameter_uncertainty_pct",
+            "final_drive_uncertainty_pct",
+            "gear_uncertainty_pct",
+            "min_abs_band_hz",
+        }
         for key in DEFAULT_ANALYSIS_SETTINGS:
             raw = payload.get(key)
             if raw is None:
                 continue
             value = float(raw)
-            if value <= 0:
+            if key in positive_required and value <= 0:
+                continue
+            if key in non_negative and value < 0:
                 continue
             out[key] = value
         return out
@@ -55,4 +84,3 @@ class AnalysisSettingsStore:
         with self._lock:
             self._values.update(self._sanitize(payload))
             return dict(self._values)
-
