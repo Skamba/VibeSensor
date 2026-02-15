@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -99,7 +100,7 @@ class RuntimeState:
 
 def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
-    config.logging.metrics_csv_path.parent.mkdir(parents=True, exist_ok=True)
+    config.logging.metrics_log_path.parent.mkdir(parents=True, exist_ok=True)
     config.clients_json_path.parent.mkdir(parents=True, exist_ok=True)
 
     registry = ClientRegistry(
@@ -123,7 +124,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     analysis_settings = AnalysisSettingsStore()
     metrics_logger = MetricsLogger(
         enabled=config.logging.log_metrics,
-        csv_path=config.logging.metrics_csv_path,
+        log_path=config.logging.metrics_log_path,
         metrics_log_hz=config.logging.metrics_log_hz,
         registry=registry,
         gps_monitor=gps_monitor,
@@ -149,14 +150,41 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         live_diagnostics=live_diagnostics,
     )
 
-    app = FastAPI(title="VibeSensor")
-    app.state.runtime = runtime
-    app.include_router(create_router(runtime))
-    if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
-        app.mount("/", StaticFiles(directory=PI_DIR / "public", html=True), name="public")
+    async def processing_loop() -> None:
+        interval = 1.0 / max(1, config.processing.fft_update_hz)
+        while True:
+            runtime.registry.evict_stale()
+            active_ids = runtime.registry.active_client_ids()
+            sample_rates: dict[str, int] = {}
+            for client_id in active_ids:
+                record = runtime.registry.get(client_id)
+                if record is None:
+                    continue
+                sample_rates[client_id] = record.sample_rate_hz
+                client_rate = int(record.sample_rate_hz or 0)
+                default_rate = runtime.config.processing.sample_rate_hz
+                if (
+                    client_rate > 0
+                    and client_rate != default_rate
+                    and client_id not in runtime.sample_rate_mismatch_logged
+                ):
+                    runtime.sample_rate_mismatch_logged.add(client_id)
+                    LOGGER.warning(
+                        "Client %s uses sample_rate_hz=%d; default config is %d.",
+                        client_id,
+                        client_rate,
+                        default_rate,
+                    )
+            metrics_by_client = runtime.processor.compute_all(
+                active_ids,
+                sample_rates_hz=sample_rates,
+            )
+            for client_id, metrics in metrics_by_client.items():
+                runtime.registry.set_latest_metrics(client_id, metrics)
+            runtime.processor.evict_clients(set(active_ids))
+            await asyncio.sleep(interval)
 
-    @app.on_event("startup")
-    async def on_startup() -> None:
+    async def start_runtime() -> None:
         runtime.data_transport = await start_udp_data_receiver(
             host=config.udp.data_host,
             port=config.udp.data_port,
@@ -164,41 +192,6 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             processor=runtime.processor,
         )
         await runtime.control_plane.start()
-
-        async def processing_loop() -> None:
-            interval = 1.0 / max(1, config.processing.fft_update_hz)
-            while True:
-                runtime.registry.evict_stale()
-                active_ids = runtime.registry.active_client_ids()
-                sample_rates: dict[str, int] = {}
-                for client_id in active_ids:
-                    record = runtime.registry.get(client_id)
-                    if record is None:
-                        continue
-                    sample_rates[client_id] = record.sample_rate_hz
-                    client_rate = int(record.sample_rate_hz or 0)
-                    default_rate = runtime.config.processing.sample_rate_hz
-                    if (
-                        client_rate > 0
-                        and client_rate != default_rate
-                        and client_id not in runtime.sample_rate_mismatch_logged
-                    ):
-                        runtime.sample_rate_mismatch_logged.add(client_id)
-                        LOGGER.warning(
-                            "Client %s uses sample_rate_hz=%d; default config is %d.",
-                            client_id,
-                            client_rate,
-                            default_rate,
-                        )
-                metrics_by_client = runtime.processor.compute_all(
-                    active_ids,
-                    sample_rates_hz=sample_rates,
-                )
-                for client_id, metrics in metrics_by_client.items():
-                    runtime.registry.set_latest_metrics(client_id, metrics)
-                runtime.processor.evict_clients(set(active_ids))
-                await asyncio.sleep(interval)
-
         runtime.tasks = [
             asyncio.create_task(processing_loop(), name="processing-loop"),
             asyncio.create_task(
@@ -213,8 +206,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             asyncio.create_task(runtime.gps_monitor.run(), name="gps-speed"),
         ]
 
-    @app.on_event("shutdown")
-    async def on_shutdown() -> None:
+    async def stop_runtime() -> None:
         for task in runtime.tasks:
             task.cancel()
         await asyncio.gather(*runtime.tasks, return_exceptions=True)
@@ -226,6 +218,20 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         if runtime.data_transport is not None:
             runtime.data_transport.close()
             runtime.data_transport = None
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        await start_runtime()
+        try:
+            yield
+        finally:
+            await stop_runtime()
+
+    app = FastAPI(title="VibeSensor", lifespan=lifespan)
+    app.state.runtime = runtime
+    app.include_router(create_router(runtime))
+    if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
+        app.mount("/", StaticFiles(directory=PI_DIR / "public", html=True), name="public")
 
     return app
 
