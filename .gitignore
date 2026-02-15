@@ -61,3 +61,7 @@ image/pi-gen/out/*
 # General build artifacts
 build_artifacts/*
 !build_artifacts/.gitkeep
+
+# Frontend build/runtime artifacts
+ui/node_modules/
+ui/dist/

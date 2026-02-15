@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import logging
+import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -128,7 +129,8 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app = FastAPI(title="VibeSensor")
     app.state.runtime = runtime
     app.include_router(create_router(runtime))
-    app.mount("/", StaticFiles(directory=PI_DIR / "public", html=True), name="public")
+    if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
+        app.mount("/", StaticFiles(directory=PI_DIR / "public", html=True), name="public")
 
     @app.on_event("startup")
     async def on_startup() -> None:
