@@ -74,10 +74,15 @@ If speed or sample-rate references are missing, the report degrades gracefully:
 - speed-binned and wheel-order sections are skipped with explicit reason text
 - findings include `reference missing` entries instead of speculative order labels
 
-## Local Test In Docker (No AP/Hotspot)
+## Run With Docker (Single Entrypoint)
 
-This path runs only the telemetry server for local testing. It does not run
-Raspberry Pi Access Point/hotspot setup.
+Use Docker Compose for both development and local runtime. This path does not
+run Raspberry Pi AP/hotspot setup.
+
+Compose starts two services:
+
+- `vibesensor-server` (Python): UDP ingest + processing + `/api` + `/ws`
+- `vibesensor-web` (nginx): serves built UI and proxies `/api` + `/ws` to server
 
 ```bash
 docker compose up --build
@@ -85,7 +90,7 @@ docker compose up --build
 
 Then open:
 
-- `http://localhost:8000`
+- `http://localhost:8000` (served by nginx)
 
 To stream test data from host:
 
