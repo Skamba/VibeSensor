@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import math
 import time
+from collections import deque
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
@@ -54,6 +55,9 @@ class MetricsLogger:
         self._run_start_utc: str | None = None
         self._run_start_mono_s: float | None = None
         self._metadata_written = False
+        self._live_start_utc = utc_now_iso()
+        self._live_start_mono_s = time.monotonic()
+        self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
         if self.enabled:
             self._start_new_session_locked()
 
@@ -115,6 +119,20 @@ class MetricsLogger:
             self._metadata_written = False
             return self.status()
 
+    def analysis_snapshot(
+        self,
+        max_rows: int = 4000,
+    ) -> tuple[dict[str, object], list[dict[str, object]]]:
+        with self._lock:
+            run_id = self._run_id or "live"
+            start_time_utc = self._run_start_utc or self._live_start_utc
+            metadata = self._run_metadata_record(run_id=run_id, start_time_utc=start_time_utc)
+            metadata["end_time_utc"] = utc_now_iso()
+            samples = list(self._live_samples)
+            if max_rows > 0 and len(samples) > max_rows:
+                samples = samples[-max_rows:]
+            return metadata, samples
+
     def _run_metadata_record(self, run_id: str, start_time_utc: str) -> dict[str, object]:
         settings = self.analysis_settings.snapshot()
         feature_interval_s = 1.0 / max(1.0, float(self.metrics_log_hz))
@@ -142,6 +160,15 @@ class MetricsLogger:
                 "rim_in": settings.get("rim_in"),
                 "final_drive_ratio": settings.get("final_drive_ratio"),
                 "current_gear_ratio": settings.get("current_gear_ratio"),
+                "wheel_bandwidth_pct": settings.get("wheel_bandwidth_pct"),
+                "driveshaft_bandwidth_pct": settings.get("driveshaft_bandwidth_pct"),
+                "engine_bandwidth_pct": settings.get("engine_bandwidth_pct"),
+                "speed_uncertainty_pct": settings.get("speed_uncertainty_pct"),
+                "tire_diameter_uncertainty_pct": settings.get("tire_diameter_uncertainty_pct"),
+                "final_drive_uncertainty_pct": settings.get("final_drive_uncertainty_pct"),
+                "gear_uncertainty_pct": settings.get("gear_uncertainty_pct"),
+                "min_abs_band_hz": settings.get("min_abs_band_hz"),
+                "max_band_half_width_pct": settings.get("max_band_half_width_pct"),
             }
         )
         metadata["tire_circumference_m"] = tire_circumference_m_from_spec(
@@ -346,6 +373,16 @@ class MetricsLogger:
     async def run(self) -> None:
         interval = 1.0 / self.metrics_log_hz
         while True:
+            timestamp_utc = utc_now_iso()
+            live_t_s = max(0.0, time.monotonic() - self._live_start_mono_s)
+            live_rows = self._build_sample_records(
+                run_id=self._run_id or "live",
+                t_s=live_t_s,
+                timestamp_utc=timestamp_utc,
+            )
+            if live_rows:
+                with self._lock:
+                    self._live_samples.extend(live_rows)
             snapshot = self._session_snapshot()
             if snapshot is not None:
                 path, run_id, start_time_utc, start_mono_s = snapshot
