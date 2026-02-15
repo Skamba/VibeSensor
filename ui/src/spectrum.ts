@@ -42,14 +42,25 @@ export class SpectrumChart {
 
     this.plot = new uPlot(
       {
-        title: text.title,
+        title: "",
         width: this.computeWidth(),
         height: this.height,
         scales: {
           x: { time: false },
           y: { range: [0, 50] },
         },
-        axes: [{ label: text.axisHz }, { label: text.axisAmplitude }],
+        axes: [
+          {
+            label: text.axisHz,
+            stroke: this.cssVar("--muted", "#5a6b82"),
+            grid: { stroke: this.cssVar("--border", "#d7e1ee"), width: 1 },
+          },
+          {
+            label: text.axisAmplitude,
+            stroke: this.cssVar("--muted", "#5a6b82"),
+            grid: { stroke: this.cssVar("--border", "#d7e1ee"), width: 1 },
+          },
+        ],
         series,
         plugins,
       },
@@ -123,6 +134,12 @@ export class SpectrumChart {
       });
     });
     this.resizeObserver.observe(this.measureEl);
+  }
+
+
+  private cssVar(name: string, fallback: string): string {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return value || fallback;
   }
 
   private computeWidth(): number {
