@@ -207,16 +207,20 @@ def create_router(state: RuntimeState) -> APIRouter:
         return {"name": path.name, "status": "deleted"}
 
     @router.get("/api/logs/{log_name}/insights")
-    async def get_log_insights(log_name: str, lang: str | None = Query(default=None)) -> dict:
+    async def get_log_insights(
+        log_name: str,
+        lang: str | None = Query(default=None),
+        include_samples: int = Query(default=0, ge=0, le=1),
+    ) -> dict:
         path = _safe_log_path(state, log_name)
-        return summarize_log(path, lang=lang)
+        return summarize_log(path, lang=lang, include_samples=bool(include_samples))
 
     @router.get("/api/logs/{log_name}/report.pdf")
     async def download_report_pdf(
         log_name: str, lang: str | None = Query(default=None)
     ) -> Response:
         path = _safe_log_path(state, log_name)
-        summary = summarize_log(path, lang=lang)
+        summary = summarize_log(path, lang=lang, include_samples=True)
         pdf = build_report_pdf(summary)
         return Response(
             content=pdf,

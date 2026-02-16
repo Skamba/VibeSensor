@@ -840,9 +840,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 if not isinstance(row, dict):
                     continue
                 loc = _canonical_location(row.get("location"))
-                mean_g = _as_float(row.get("mean_intensity_g"))
-                if loc and mean_g is not None and mean_g > 0:
-                    amp_by_location[loc] = mean_g
+                p95_g = _as_float(row.get("p95_intensity_g")) or _as_float(row.get("mean_intensity_g"))
+                if loc and p95_g is not None and p95_g > 0:
+                    amp_by_location[loc] = p95_g
         if not amp_by_location:
             # Backward-compatible fallback for older summaries.
             for row in location_rows:
@@ -885,6 +885,19 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 ),
                 fontName="Helvetica",
                 fontSize=7.4,
+                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+            )
+        )
+        drawing.add(
+            String(
+                8,
+                drawing_h - 44,
+                text(
+                    "Heat colors use p95 vibration intensity per location.",
+                    "Heat-kleuren gebruiken p95 trillingsintensiteit per locatie.",
+                ),
+                fontName="Helvetica",
+                fontSize=7.2,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
             )
         )
@@ -1288,6 +1301,63 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         )
 
     story.extend([PageBreak(), car_location_diagram(top_causes or findings)])
+    sensor_stats_rows = [
+        row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)
+    ]
+    story.extend([PageBreak(), Paragraph(text("Sensor statistics", "Sensorstatistieken"), style_h2)])
+    if sensor_stats_rows:
+        stat_table_rows = [
+            [
+                text("Location", "Locatie"),
+                text("Samples", "Samples"),
+                "P50 (g)",
+                "P95 (g)",
+                text("Max (g)", "Max (g)"),
+                text("Dropped Δ", "Verlies Δ"),
+                text("Overflow Δ", "Overflow Δ"),
+                text("L1-L5 (%)", "L1-L5 (%)"),
+            ]
+        ]
+        for row in sensor_stats_rows:
+            bucket_dist = (
+                row.get("strength_bucket_distribution", {})
+                if isinstance(row.get("strength_bucket_distribution"), dict)
+                else {}
+            )
+            bucket_pct = "/".join(
+                f"{(_as_float(bucket_dist.get(f'percent_time_l{idx}')) or 0.0):.0f}"
+                for idx in range(1, 6)
+            )
+            stat_table_rows.append(
+                [
+                    str(row.get("location") or tr("UNKNOWN")),
+                    str(int(_as_float(row.get("sample_count") or row.get("samples")) or 0)),
+                    f"{(_as_float(row.get('p50_intensity_g')) or 0.0):.4f}",
+                    f"{(_as_float(row.get('p95_intensity_g')) or 0.0):.4f}",
+                    f"{(_as_float(row.get('max_intensity_g')) or 0.0):.4f}",
+                    str(int(_as_float(row.get("dropped_frames_delta")) or 0)),
+                    str(int(_as_float(row.get("queue_overflow_drops_delta")) or 0)),
+                    bucket_pct,
+                ]
+            )
+        story.append(
+            mk_table(
+                stat_table_rows,
+                col_widths=[130, 56, 70, 70, 70, 70, 70, 78],
+                repeat_rows=1,
+            )
+        )
+        story.append(
+            Paragraph(
+                text(
+                    "L1-L5 shows approximate time share per severity strength bucket.",
+                    "L1-L5 toont de benaderde tijdsverdeling per ernstniveau.",
+                ),
+                style_note,
+            )
+        )
+    else:
+        story.append(Paragraph(tr("NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND"), style_note))
 
     if isinstance(findings, list) and findings:
         for idx, finding in enumerate(findings[:3], start=1):
