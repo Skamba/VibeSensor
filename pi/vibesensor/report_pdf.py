@@ -991,7 +991,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     )
     steady_speed = bool(speed_stats.get("steady_speed"))
 
-    location_rows, location_summary, active_locations_count, monitored_locations = location_hotspots(
+    location_rows, _, _, _ = location_hotspots(
         summary.get("samples", []),
         findings,
     )
