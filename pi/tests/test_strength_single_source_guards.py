@@ -7,6 +7,7 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+# Lightweight smoke tests: string guards intentionally enforce "no local reimplementation" patterns.
 def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
     text = _read(Path(__file__).resolve().parents[1] / "vibesensor" / "live_diagnostics.py")
     assert "strength_db_above_floor(" not in text
