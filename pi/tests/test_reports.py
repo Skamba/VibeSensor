@@ -151,9 +151,9 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
-    _assert_pdf_contains(pdf, "Next steps test plan")
-    _assert_pdf_contains(pdf, "Sensor placement and hotspots")
-    _assert_pdf_contains(pdf, "Finding 1")
+    _assert_pdf_contains(pdf, "What to check first")
+    _assert_pdf_contains(pdf, "Evidence and Hotspots")
+    _assert_pdf_contains(pdf, "Workshop Summary")
 
 
 def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
