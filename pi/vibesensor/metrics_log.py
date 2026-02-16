@@ -306,39 +306,25 @@ class MetricsLogger:
             accel_y_g = latest_xyz[1] if latest_xyz else None
             accel_z_g = latest_xyz[2] if latest_xyz else None
 
-            rms_vals = [
-                val
-                for val in (
-                    self._safe_metric(metrics, "x", "rms"),
-                    self._safe_metric(metrics, "y", "rms"),
-                    self._safe_metric(metrics, "z", "rms"),
-                )
-                if isinstance(val, float)
-            ]
-            p2p_vals = [
-                val
-                for val in (
-                    self._safe_metric(metrics, "x", "p2p"),
-                    self._safe_metric(metrics, "y", "p2p"),
-                    self._safe_metric(metrics, "z", "p2p"),
-                )
-                if isinstance(val, float)
-            ]
             vib_mag_rms = self._safe_metric(metrics, "combined", "vib_mag_rms")
             vib_mag_p2p = self._safe_metric(metrics, "combined", "vib_mag_p2p")
+            if vib_mag_rms is None:
+                raise ValueError(
+                    f"Missing required metrics.combined.vib_mag_rms for client '{record.client_id}'"
+                )
+            if vib_mag_p2p is None:
+                raise ValueError(
+                    f"Missing required metrics.combined.vib_mag_p2p for client '{record.client_id}'"
+                )
             accel_magnitude_rms_g = (
                 vib_mag_rms
                 if isinstance(vib_mag_rms, float)
-                else (
-                    math.sqrt(sum(v * v for v in rms_vals) / max(1.0, float(len(rms_vals))))
-                    if rms_vals
-                    else None
-                )
+                else None
             )
             accel_magnitude_p2p_g = (
                 vib_mag_p2p
                 if isinstance(vib_mag_p2p, float)
-                else (max(p2p_vals) if p2p_vals else None)
+                else None
             )
             strength_metrics: dict[str, object] = {}
             root_strength_metrics = metrics.get("strength_metrics")
@@ -366,7 +352,9 @@ class MetricsLogger:
             strength_floor_amp_g = self._safe_metric(
                 {"combined": strength_metrics}, "combined", "strength_floor_amp_g"
             )
-            strength_db = self._safe_metric({"combined": strength_metrics}, "combined", "strength_db")
+            strength_db = self._safe_metric(
+                {"combined": strength_metrics}, "combined", "strength_db"
+            )
             strength_bucket = (
                 str(strength_metrics.get("strength_bucket"))
                 if strength_metrics.get("strength_bucket") not in (None, "")
