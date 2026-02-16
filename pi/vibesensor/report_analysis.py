@@ -143,8 +143,7 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
         }
     vmin = min(speed_values)
     vmax = max(speed_values)
-    vmean = mean(speed_values)
-    var = sum((value - vmean) ** 2 for value in speed_values) / max(1, len(speed_values))
+    vmean, var = _mean_variance(speed_values)
     stddev = sqrt(var)
     vrange = max(0.0, vmax - vmin)
     return {
