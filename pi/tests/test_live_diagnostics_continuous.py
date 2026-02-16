@@ -44,7 +44,18 @@ def test_live_matrix_seconds_accumulate_during_throttled_emission(monkeypatch) -
     peak_idx = 320
     base = [0.8 for _ in freq]
     base[peak_idx] = 150.0
-    spectra = {"freq": freq, "clients": {"c1": {"freq": freq, "x": base, "y": base, "z": base}}}
+    spectra = {
+        "freq": freq,
+        "clients": {
+            "c1": {
+                "freq": freq,
+                "x": base,
+                "y": base,
+                "z": base,
+                "combined_spectrum_amp_g": base,
+            }
+        },
+    }
 
     snapshots = []
     for _ in range(12):

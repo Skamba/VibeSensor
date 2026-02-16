@@ -340,10 +340,37 @@ class MetricsLogger:
                 if isinstance(vib_mag_p2p, float)
                 else (max(p2p_vals) if p2p_vals else None)
             )
-            dominant_hz, dominant_amp, dominant_axis = self._dominant_peak(metrics)
-            noise_floor_amp = self._safe_metric(metrics, "combined", "noise_floor_amp")
-            top_peaks_raw = (
-                metrics.get("combined", {}).get("peaks") if isinstance(metrics, dict) else None
+            strength_metrics: dict[str, object] = {}
+            root_strength_metrics = metrics.get("strength_metrics")
+            if isinstance(root_strength_metrics, dict):
+                strength_metrics = root_strength_metrics
+            elif isinstance(metrics.get("combined"), dict):
+                nested_strength_metrics = metrics.get("combined", {}).get("strength_metrics")
+                if isinstance(nested_strength_metrics, dict):
+                    strength_metrics = nested_strength_metrics
+            top_peaks_raw = strength_metrics.get("top_strength_peaks")
+            dominant_hz = None
+            dominant_axis = "combined"
+            if isinstance(top_peaks_raw, list) and top_peaks_raw:
+                first_peak = top_peaks_raw[0]
+                if isinstance(first_peak, dict):
+                    dominant_hz = self._safe_metric({"combined": first_peak}, "combined", "hz")
+            dominant_amp = self._safe_metric(
+                {"combined": strength_metrics},
+                "combined",
+                "strength_peak_band_rms_amp_g",
+            )
+            noise_floor_amp_p20_g = self._safe_metric(
+                {"combined": strength_metrics}, "combined", "noise_floor_amp_p20_g"
+            )
+            strength_floor_amp_g = self._safe_metric(
+                {"combined": strength_metrics}, "combined", "strength_floor_amp_g"
+            )
+            strength_db = self._safe_metric({"combined": strength_metrics}, "combined", "strength_db")
+            strength_bucket = (
+                str(strength_metrics.get("strength_bucket"))
+                if strength_metrics.get("strength_bucket") not in (None, "")
+                else None
             )
             top_peaks: list[dict[str, float]] = []
             if isinstance(top_peaks_raw, list):
@@ -352,7 +379,7 @@ class MetricsLogger:
                         continue
                     try:
                         hz = float(peak.get("hz"))
-                        amp = float(peak.get("amp"))
+                        amp = float(peak.get("strength_peak_band_rms_amp_g") or peak.get("amp"))
                     except (TypeError, ValueError):
                         continue
                     if (
@@ -404,7 +431,12 @@ class MetricsLogger:
                     "dominant_peak_amp_g": dominant_amp,
                     "dominant_axis": dominant_axis,
                     "top_peaks": top_peaks,
-                    "noise_floor_amp": noise_floor_amp,
+                    "noise_floor_amp_p20_g": noise_floor_amp_p20_g,
+                    "strength_floor_amp_g": strength_floor_amp_g,
+                    "strength_peak_band_rms_amp_g": dominant_amp,
+                    "strength_db": strength_db,
+                    "strength_bucket": strength_bucket,
+                    "noise_floor_amp": noise_floor_amp_p20_g,
                     "frames_dropped_total": int(record.frames_dropped),
                     "queue_overflow_drops": int(record.queue_overflow_drops),
                 }

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import isfinite
 from time import monotonic
 from typing import Any
 
+from .analysis.strength_metrics import compute_strength_metrics
 from .diagnostics_shared import (
     build_diagnostic_settings,
     classify_peak_hz,
@@ -13,7 +13,6 @@ from .diagnostics_shared import (
 )
 from .report_analysis import build_findings_for_samples
 from .strength_bands import BANDS, band_rank
-from .strength_scoring import compute_band_rms, compute_floor_rms, strength_db_above_floor
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
@@ -494,11 +493,6 @@ class LiveDiagnosticsEngine:
         spectra: dict[str, Any],
         settings: dict[str, float],
     ) -> list[_RecentEvent]:
-        fallback_freq = [
-            float(value)
-            for value in (spectra.get("freq") if isinstance(spectra.get("freq"), list) else [])
-            if isinstance(value, (int, float))
-        ]
         client_map = {
             str(client.get("id")): str(client.get("name") or client.get("id") or "")
             for client in clients
@@ -509,91 +503,52 @@ class LiveDiagnosticsEngine:
             return []
 
         settings_bundle = build_diagnostic_settings(settings)
-        entries: list[tuple[str, str, list[float], list[float]]] = []
-        target_freq: list[float] = []
+        entries: list[tuple[str, str, list[dict[str, Any]], float]] = []
         for client_id, payload in clients_payload.items():
             if not isinstance(payload, dict):
                 continue
-            x_raw = payload.get("x")
-            y_raw = payload.get("y")
-            z_raw = payload.get("z")
-            if (
-                not isinstance(x_raw, list)
-                or not isinstance(y_raw, list)
-                or not isinstance(z_raw, list)
-            ):
+            strength_metrics = payload.get("strength_metrics")
+            if not isinstance(strength_metrics, dict):
+                freq_raw = payload.get("freq")
+                combined_raw = payload.get("combined_spectrum_amp_g")
+                if isinstance(freq_raw, list) and isinstance(combined_raw, list):
+                    strength_metrics = compute_strength_metrics(
+                        freq_hz=[float(value) for value in freq_raw if isinstance(value, (int, float))],
+                        combined_spectrum_amp_g_values=[
+                            float(value) for value in combined_raw if isinstance(value, (int, float))
+                        ],
+                        peak_bandwidth_hz=1.2,
+                        peak_separation_hz=1.2,
+                        top_n=5,
+                    )
+            if not isinstance(strength_metrics, dict):
                 continue
-            client_freq_raw = payload.get("freq")
-            client_freq = (
-                [float(v) for v in client_freq_raw if isinstance(v, (int, float))]
-                if isinstance(client_freq_raw, list) and client_freq_raw
-                else fallback_freq
-            )
-            n = min(len(client_freq), len(x_raw), len(y_raw), len(z_raw))
-            if n <= 0:
-                continue
-            blend: list[float] = []
-            freq_slice = client_freq[:n]
-            for idx in range(n):
-                x = float(x_raw[idx])
-                y = float(y_raw[idx])
-                z = float(z_raw[idx])
-                blend.append(((x * x) + (y * y) + (z * z)) / 3.0)
-            blend = [value**0.5 for value in blend]
-            if not target_freq:
-                target_freq = freq_slice
-            elif len(freq_slice) != len(target_freq) or any(
-                abs(freq_slice[idx] - target_freq[idx]) > 1e-6 for idx in range(len(target_freq))
-            ):
-                blend = _interpolate_to_target(freq_slice, blend, target_freq)
-            if not blend:
+            peaks_raw = strength_metrics.get("top_strength_peaks")
+            if not isinstance(peaks_raw, list):
                 continue
             label = client_map.get(str(client_id), str(client_id))
-            entries.append((str(client_id), label, target_freq, blend))
+            # Keep `floor_amp` fallback for older payloads that still use legacy key names.
+            floor_amp = float(
+                strength_metrics.get("strength_floor_amp_g")
+                or strength_metrics.get("floor_amp")
+                or 0.0
+            )
+            entries.append((str(client_id), label, peaks_raw, floor_amp))
 
         now_ms = int(monotonic() * 1000.0)
         events: list[_RecentEvent] = []
-        for client_id, label, freq, values in entries:
-            if len(values) < 10:
-                continue
-            min_hz = max(0.0, freq[0] if freq else 0.0)
-            max_hz = freq[-1] if freq else 0.0
-
-            local_maxima: list[int] = []
-            for idx in range(2, len(values) - 2):
-                if values[idx] > values[idx - 1] and values[idx] >= values[idx + 1]:
-                    local_maxima.append(idx)
-            local_maxima.sort(key=lambda idx: values[idx], reverse=True)
-            top_peaks = local_maxima[:4]
-            floor_amp = compute_floor_rms(
-                freq=freq,
-                values=values,
-                peak_indexes=top_peaks,
-                exclusion_hz=1.2,
-                min_hz=min_hz,
-                max_hz=max_hz,
-            )
-
-            candidates: list[tuple[int, float, float]] = []
-            for idx in local_maxima:
-                band_rms = compute_band_rms(freq=freq, values=values, center_idx=idx, bandwidth_hz=1.2)
-                strength_db = strength_db_above_floor(band_rms=band_rms, floor_rms=floor_amp)
-                if not isfinite(strength_db):
+        for client_id, label, peaks_raw, floor_amp in entries:
+            for peak in peaks_raw[:4]:
+                if not isinstance(peak, dict):
                     continue
-                candidates.append((idx, band_rms, strength_db))
-            candidates.sort(key=lambda item: item[2], reverse=True)
-
-            chosen: list[tuple[int, float, float]] = []
-            for item in candidates:
-                if len(chosen) >= 4:
-                    break
-                idx = item[0]
-                if any(abs(freq[prev_idx] - freq[idx]) < 1.2 for prev_idx, _, _ in chosen):
+                try:
+                    peak_hz = float(peak.get("hz"))
+                    band_rms = float(
+                        peak.get("strength_peak_band_rms_amp_g") or peak.get("amp") or 0.0
+                    )
+                    strength_db = float(peak.get("strength_db") or 0.0)
+                except (TypeError, ValueError):
                     continue
-                chosen.append(item)
-
-            for idx, band_rms, strength_db in chosen:
-                peak_hz = float(freq[idx])
                 classification = classify_peak_hz(
                     peak_hz=peak_hz,
                     speed_mps=speed_mps,

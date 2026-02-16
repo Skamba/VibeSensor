@@ -6,6 +6,8 @@ from typing import Any
 
 import numpy as np
 
+from .analysis.strength_metrics import combined_spectrum_amp_g, compute_strength_metrics
+
 AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class ClientBuffer:
     sample_rate_hz: int = 0
     latest_metrics: dict[str, Any] = field(default_factory=dict)
     latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
+    latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
 
 
 class SignalProcessor:
@@ -259,23 +262,37 @@ class SignalProcessor:
                 axis_amp_slices.append(amp_for_peaks)
 
             if axis_amp_slices:
-                combined_amp = np.sqrt(
-                    np.sum(np.square(np.vstack(axis_amp_slices), dtype=np.float64), axis=0)
-                ).astype(np.float32)
-                combined_floor = self._noise_floor(combined_amp)
-                metrics["combined"]["noise_floor_amp"] = combined_floor
-                metrics["combined"]["peaks"] = self._top_peaks(
-                    freq_slice,
-                    combined_amp,
-                    top_n=5,
-                    floor_ratio=3.0,
-                    smoothing_bins=5,
+                combined_amp = np.asarray(
+                    combined_spectrum_amp_g(
+                        axis_spectra_amp_g=axis_amp_slices,  # type: ignore[arg-type]
+                        axis_count_for_mean=len(axis_amp_slices),
+                    ),
+                    dtype=np.float32,
                 )
+                strength_metrics = compute_strength_metrics(
+                    freq_hz=freq_slice.tolist(),
+                    combined_spectrum_amp_g_values=combined_amp.tolist(),
+                    peak_bandwidth_hz=1.2,
+                    peak_separation_hz=1.2,
+                    top_n=5,
+                )
+                metrics["combined"]["noise_floor_amp"] = float(
+                    strength_metrics["noise_floor_amp_p20_g"]
+                )
+                metrics["combined"]["peaks"] = list(strength_metrics["top_strength_peaks"])
+                metrics["combined"]["strength_metrics"] = dict(strength_metrics)
+                metrics["strength_metrics"] = dict(strength_metrics)
                 spectrum_by_axis["combined"] = {
                     "freq": freq_slice,
                     "amp": combined_amp,
                 }
+                buf.latest_strength_metrics = dict(strength_metrics)
+            else:
+                buf.latest_strength_metrics = {}
             buf.latest_spectrum = spectrum_by_axis
+        else:
+            buf.latest_spectrum = {}
+            buf.latest_strength_metrics = {}
 
         buf.latest_metrics = metrics
         return metrics
@@ -294,12 +311,25 @@ class SignalProcessor:
     def spectrum_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
         if buf is None or not buf.latest_spectrum:
-            return {"x": [], "y": [], "z": []}
-        return {
+            return {
+                "x": [],
+                "y": [],
+                "z": [],
+                "combined_spectrum_amp_g": [],
+                "combined": [],
+                "strength_metrics": {},
+            }
+        payload = {
             "x": buf.latest_spectrum["x"]["amp"].tolist(),
             "y": buf.latest_spectrum["y"]["amp"].tolist(),
             "z": buf.latest_spectrum["z"]["amp"].tolist(),
+            "combined_spectrum_amp_g": (
+                buf.latest_spectrum.get("combined", {}).get("amp", np.array([])).tolist()
+            ),
+            "strength_metrics": dict(buf.latest_strength_metrics),
         }
+        payload["combined"] = list(payload["combined_spectrum_amp_g"])
+        return payload
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
         freq: list[float] = []
@@ -344,8 +374,22 @@ class SignalProcessor:
             spectrum["freq"] = freq.tolist()
             for axis in AXES:
                 spectrum[axis] = buf.latest_spectrum[axis]["amp"].tolist()
+            combined = buf.latest_spectrum.get("combined")
+            spectrum["combined_spectrum_amp_g"] = (
+                combined["amp"].tolist() if isinstance(combined, dict) and "amp" in combined else []
+            )
+            spectrum["combined"] = list(spectrum["combined_spectrum_amp_g"])
+            spectrum["strength_metrics"] = dict(buf.latest_strength_metrics)
         else:
-            spectrum = {"freq": [], "x": [], "y": [], "z": []}
+            spectrum = {
+                "freq": [],
+                "x": [],
+                "y": [],
+                "z": [],
+                "combined_spectrum_amp_g": [],
+                "combined": [],
+                "strength_metrics": {},
+            }
 
         return {
             "client_id": client_id,
