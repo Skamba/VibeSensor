@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from math import log10, sqrt
+from math import sqrt
 from typing import Any
 
 from .analysis_settings import tire_circumference_m_from_spec
+from .strength_bands import DECAY_TICKS, HYSTERESIS_DB, PERSISTENCE_TICKS, band_by_key, band_rank, bucket_for_strength
 
 DEFAULT_DIAGNOSTIC_SETTINGS: dict[str, float] = {
     "tire_width_mm": 285.0,
@@ -263,26 +264,76 @@ def classify_peak_hz(
     }
 
 
-SEVERITY_BANDS: tuple[tuple[str, float, float], ...] = (
-    ("l5", 40.0, float("inf")),
-    ("l4", 34.0, 40.0),
-    ("l3", 28.0, 34.0),
-    ("l2", 22.0, 28.0),
-    ("l1", 16.0, 22.0),
-)
-
-
 def severity_from_peak(
     *,
-    peak_amp: float,
-    floor_amp: float,
+    strength_db: float,
+    band_rms: float,
     sensor_count: int,
-) -> dict[str, float | str] | None:
-    if peak_amp <= 0:
-        return None
-    db = 20.0 * log10((max(0.0, peak_amp) + 1.0) / (max(0.0, floor_amp) + 1.0))
-    adjusted_db = db + 2.0 if sensor_count >= 2 else db
-    for key, min_db, max_db in SEVERITY_BANDS:
-        if adjusted_db >= min_db and adjusted_db < max_db:
-            return {"key": key, "db": adjusted_db}
-    return None
+    prior_state: dict[str, Any] | None = None,
+) -> dict[str, float | str | dict[str, Any]] | None:
+    state = dict(prior_state or {})
+    state.setdefault("current_bucket", None)
+    state.setdefault("pending_bucket", None)
+    state.setdefault("consecutive_up", 0)
+    state.setdefault("consecutive_down", 0)
+    adjusted_db = float(strength_db) + (3.0 if sensor_count >= 2 else 0.0)
+    candidate_bucket = bucket_for_strength(adjusted_db, float(band_rms))
+    current_bucket = state.get("current_bucket")
+
+    if candidate_bucket is None:
+        if current_bucket is not None:
+            current_band = band_by_key(str(current_bucket))
+            if current_band and adjusted_db < float(current_band["min_db"]) - HYSTERESIS_DB:
+                state["consecutive_down"] = int(state.get("consecutive_down", 0)) + 1
+                if int(state["consecutive_down"]) >= DECAY_TICKS:
+                    state["current_bucket"] = None
+                    state["pending_bucket"] = None
+                    state["consecutive_down"] = 0
+                    state["consecutive_up"] = 0
+            else:
+                state["consecutive_down"] = 0
+        return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}
+
+    state["consecutive_down"] = 0
+    if current_bucket is None:
+        pending = state.get("pending_bucket")
+        if pending == candidate_bucket:
+            state["consecutive_up"] = int(state.get("consecutive_up", 0)) + 1
+        else:
+            state["pending_bucket"] = candidate_bucket
+            state["consecutive_up"] = 1
+        if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
+            state["current_bucket"] = candidate_bucket
+            state["pending_bucket"] = None
+            state["consecutive_up"] = 0
+        return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}
+
+    current_rank = band_rank(str(current_bucket))
+    candidate_rank = band_rank(str(candidate_bucket))
+    if candidate_rank > current_rank:
+        pending = state.get("pending_bucket")
+        if pending == candidate_bucket:
+            state["consecutive_up"] = int(state.get("consecutive_up", 0)) + 1
+        else:
+            state["pending_bucket"] = candidate_bucket
+            state["consecutive_up"] = 1
+        if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
+            state["current_bucket"] = candidate_bucket
+            state["pending_bucket"] = None
+            state["consecutive_up"] = 0
+    elif candidate_rank < current_rank:
+        current_band = band_by_key(str(current_bucket))
+        if current_band and adjusted_db < float(current_band["min_db"]) - HYSTERESIS_DB:
+            state["consecutive_down"] = int(state.get("consecutive_down", 0)) + 1
+            if int(state["consecutive_down"]) >= DECAY_TICKS:
+                state["current_bucket"] = candidate_bucket
+                state["pending_bucket"] = None
+                state["consecutive_down"] = 0
+                state["consecutive_up"] = 0
+        else:
+            state["consecutive_down"] = 0
+    else:
+        state["pending_bucket"] = None
+        state["consecutive_up"] = 0
+
+    return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}

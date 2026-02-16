@@ -4,7 +4,9 @@ import asyncio
 import math
 import time
 from collections import deque
-from datetime import UTC, datetime
+from datetime import datetime, timezone
+
+UTC = timezone.utc
 from pathlib import Path
 from threading import RLock
 from uuid import uuid4
