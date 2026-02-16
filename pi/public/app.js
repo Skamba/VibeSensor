@@ -1001,120 +1001,20 @@
       .join("");
   }
 
-  function classifyPeak(peakHz) {
-    const orders = vehicleOrdersHz();
-    const candidates = [];
-    if (orders) {
-      const {
-        wheelHz,
-        driveHz,
-        engineHz,
-        wheelUncertaintyPct,
-        driveUncertaintyPct,
-        engineUncertaintyPct,
-      } = orders;
-      const wheelTol = toleranceForOrder(
-        state.vehicleSettings.wheel_bandwidth_pct,
-        wheelHz,
-        wheelUncertaintyPct,
-      );
-      const driveTol = toleranceForOrder(
-        state.vehicleSettings.driveshaft_bandwidth_pct,
-        driveHz,
-        driveUncertaintyPct,
-      );
-      const engineTol = toleranceForOrder(
-        state.vehicleSettings.engine_bandwidth_pct,
-        engineHz,
-        engineUncertaintyPct,
-      );
-      candidates.push({
-        cause: t("cause.wheel1"),
-        hz: wheelHz,
-        tol: wheelTol,
-        key: "wheel1",
-      });
-      candidates.push({
-        cause: t("cause.wheel2"),
-        hz: wheelHz * 2,
-        tol: wheelTol,
-        key: "wheel2",
-      });
-      const overlapTol = Math.max(0.03, driveUncertaintyPct + engineUncertaintyPct);
-      if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < overlapTol) {
-        candidates.push({
-          cause: t("cause.shaft_eng1"),
-          hz: driveHz,
-          tol: Math.max(driveTol, engineTol),
-          key: "shaft_eng1",
-        });
-      } else {
-        candidates.push({
-          cause: t("cause.shaft1"),
-          hz: driveHz,
-          tol: driveTol,
-          key: "shaft1",
-        });
-        candidates.push({
-          cause: t("cause.eng1"),
-          hz: engineHz,
-          tol: engineTol,
-          key: "eng1",
-        });
-      }
-      candidates.push({
-        cause: t("cause.eng2"),
-        hz: engineHz * 2,
-        tol: engineTol,
-        key: "eng2",
-      });
-    }
-    let best = null;
-    let bestErr = Number.POSITIVE_INFINITY;
-    for (const c of candidates) {
-      if (!(c.hz > 0.2)) continue;
-      const relErr = Math.abs(peakHz - c.hz) / c.hz;
-      if (relErr <= c.tol && relErr < bestErr) {
-        best = c;
-        bestErr = relErr;
-      }
-    }
-    if (best) return best;
-    if (peakHz >= 3 && peakHz <= 12) return { cause: t("cause.road"), key: "road" };
-    return { cause: t("cause.other"), key: "other" };
+  function severityLabelKey(severityKey) {
+    const band = severityBands.find((entry) => entry.key === severityKey);
+    return band ? band.labelKey : "matrix.severity.l1";
   }
 
-  function sourceKeysFromClassKey(classKey) {
-    if (classKey === "shaft_eng1") return ["driveshaft", "engine"];
-    if (classKey === "eng1" || classKey === "eng2") return ["engine"];
-    if (classKey === "shaft1") return ["driveshaft"];
-    if (classKey === "wheel1" || classKey === "wheel2") return ["wheel"];
-    return ["other"];
-  }
-
-  function severityFromPeak(peakAmp, floorAmp, sensorCount) {
-    const db = 20 * Math.log10((Math.max(0, peakAmp) + 1) / (Math.max(0, floorAmp) + 1));
-    // Multi-sensor synchronous detections are stronger indicators than single-sensor events.
-    const adjustedDb = sensorCount >= 2 ? db + 2 : db;
-    for (const band of severityBands) {
-      if (adjustedDb >= band.minDb && adjustedDb < band.maxDb) {
-        return { key: band.key, labelKey: band.labelKey, db: adjustedDb };
-      }
-    }
-    return null;
-  }
-
-  function updateMatrixCell(sourceKey, severityKey, contributorLabel) {
-    const src = state.eventMatrix[sourceKey];
-    if (!src) return;
-    const cell = src[severityKey];
-    if (!cell) return;
-    cell.count += 1;
-    cell.contributors[contributorLabel] = (cell.contributors[contributorLabel] || 0) + 1;
-  }
-
-  function updateMatrixCells(sourceKeys, severityKey, contributorLabel) {
-    for (const key of sourceKeys) updateMatrixCell(key, severityKey, contributorLabel);
+  function causeLabel(classKey) {
+    if (classKey === "wheel1") return t("cause.wheel1");
+    if (classKey === "wheel2") return t("cause.wheel2");
+    if (classKey === "shaft1") return t("cause.shaft1");
+    if (classKey === "eng1") return t("cause.eng1");
+    if (classKey === "eng2") return t("cause.eng2");
+    if (classKey === "shaft_eng1") return t("cause.shaft_eng1");
+    if (classKey === "road") return t("cause.road");
+    return t("cause.other");
   }
 
   function tooltipForCell(sourceKey, severityKey) {
@@ -1198,33 +1098,61 @@
     bindMatrixTooltips();
   }
 
-  function pushRecentEvents(events, nowTs) {
+  function applyDiagnostics(diagnostics) {
+    state.eventMatrix = createEmptyMatrix();
+    const matrix = diagnostics?.matrix;
+    if (matrix && typeof matrix === "object") {
+      for (const src of sourceColumns) {
+        const sourceRow = matrix[src.key];
+        if (!sourceRow || typeof sourceRow !== "object") continue;
+        for (const band of severityBands) {
+          const cell = sourceRow[band.key];
+          if (!cell || typeof cell !== "object") continue;
+          state.eventMatrix[src.key][band.key] = {
+            count: Number(cell.count) || 0,
+            contributors:
+              cell.contributors && typeof cell.contributors === "object"
+                ? { ...cell.contributors }
+                : {},
+          };
+        }
+      }
+    }
+    state.vibrationMessages = [];
+    const events = Array.isArray(diagnostics?.events) ? diagnostics.events : [];
     for (const ev of events) {
-      state.recentDetectionEvents.push({
-        ts: nowTs,
-        sensorId: ev.sensorId,
-        sensorLabel: ev.sensorLabel,
-        peakHz: ev.peakHz,
-        peakAmp: ev.peakAmp,
-        floorAmp: ev.floorAmp,
-        cls: ev.cls,
-      });
+      if (!ev || typeof ev !== "object") continue;
+      const severityKey = String(ev.severity_key || "");
+      if (!severityKey) continue;
+      const severityText = t(severityLabelKey(severityKey));
+      const classKey = String(ev.class_key || "other");
+      const cause = causeLabel(classKey);
+      if (ev.kind === "multi") {
+        const labels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels.join(", ") : "";
+        pushVibrationMessage(
+          t("msg.multi_detected", {
+            count: Number(ev.sensor_count) || 0,
+            labels,
+            hz: fmt(Number(ev.peak_hz), 2),
+            amp: fmt(Number(ev.peak_amp), 1),
+            severity: severityText,
+            cause,
+          }),
+        );
+      } else {
+        pushVibrationMessage(
+          t("msg.single_detected", {
+            sensor: String(ev.sensor_label || ev.sensor_id || ""),
+            hz: fmt(Number(ev.peak_hz), 2),
+            amp: fmt(Number(ev.peak_amp), 1),
+            severity: severityText,
+            cause,
+          }),
+        );
+      }
     }
-    const cutoff = nowTs - multiSyncWindowMs;
-    state.recentDetectionEvents = state.recentDetectionEvents.filter((ev) => ev.ts >= cutoff);
-  }
-
-  function buildMultiGroupsFromWindow() {
-    const grouped = new Map();
-    for (const ev of state.recentDetectionEvents) {
-      const freqBin = Math.round(ev.peakHz / multiFreqBinHz);
-      const gKey = `${ev.cls.key}:${freqBin}`;
-      if (!grouped.has(gKey)) grouped.set(gKey, new Map());
-      const sensorMap = grouped.get(gKey);
-      const prev = sensorMap.get(ev.sensorId);
-      if (!prev || ev.ts > prev.ts) sensorMap.set(ev.sensorId, ev);
-    }
-    return grouped;
+    renderVibrationLog();
+    renderMatrix();
   }
 
   function renderSpectrum() {
@@ -1268,10 +1196,8 @@
       const clientFreq = Array.isArray(s.freq) && s.freq.length ? s.freq : fallbackFreq;
       const n = Math.min(clientFreq.length, s.x.length, s.y.length, s.z.length);
       if (!n) continue;
-      let blended = new Array(n);
-      for (let j = 0; j < n; j++) {
-        blended[j] = Math.sqrt((s.x[j] * s.x[j] + s.y[j] * s.y[j] + s.z[j] * s.z[j]) / 3.0);
-      }
+      let blended = Array.isArray(s.combined_spectrum_amp_g) ? s.combined_spectrum_amp_g.slice(0, n) : [];
+      if (!blended.length) continue;
       const freqSlice = clientFreq.slice(0, n);
       if (!targetFreq.length) {
         targetFreq = freqSlice;
@@ -1305,114 +1231,6 @@
     const data = [targetFreq.slice(0, minLen)];
     for (const e of entries) data.push(e.values.slice(0, minLen));
     state.spectrumPlot.setData(data);
-    detectVibrationEvents(data, entries);
-  }
-
-  function detectVibrationEvents(data, entries) {
-    const freq = data[0] || [];
-    if (!freq.length) return;
-    const sensorEvents = [];
-
-    for (let s = 0; s < entries.length; s++) {
-      const vals = data[s + 1];
-      if (!Array.isArray(vals) || vals.length < 10) continue;
-      const floor = vals.slice(5).sort((a, b) => a - b)[Math.floor(Math.max(1, vals.length - 5) / 2)] || 0;
-      const localMaxima = [];
-      for (let i = 2; i < vals.length - 2; i++) {
-        if (vals[i] > vals[i - 1] && vals[i] >= vals[i + 1]) localMaxima.push(i);
-      }
-      localMaxima.sort((a, b) => vals[b] - vals[a]);
-      const chosen = [];
-      for (const idx of localMaxima) {
-        if (chosen.length >= 4) break;
-        if (vals[idx] <= Math.max(40, floor * 2.6)) continue;
-        // Avoid selecting harmonic duplicates that are too close.
-        if (chosen.some((j) => Math.abs(freq[j] - freq[idx]) < 1.2)) continue;
-        chosen.push(idx);
-      }
-      for (const idx of chosen) {
-        const peakAmp = vals[idx];
-        const peakHz = freq[idx];
-        const cls = classifyPeak(peakHz);
-        sensorEvents.push({
-          sensorId: entries[s].id,
-          sensorLabel: entries[s].label,
-          peakHz,
-          peakAmp,
-          floorAmp: floor,
-          cls,
-        });
-      }
-    }
-
-    const now = Date.now();
-    if (!sensorEvents.length) {
-      pushRecentEvents([], now);
-      return;
-    }
-    pushRecentEvents(sensorEvents, now);
-    const usedSensors = new Set();
-
-    // Group across a sliding time window so slightly out-of-sync sensors still combine.
-    const grouped = buildMultiGroupsFromWindow();
-
-    for (const [gKey, sensorMap] of grouped.entries()) {
-      const group = Array.from(sensorMap.values());
-      if (group.length < 2) continue;
-      let sumHz = 0;
-      let sumAmp = 0;
-      let sumFloor = 0;
-      const labels = [];
-      for (const ev of group) {
-        usedSensors.add(ev.sensorId);
-        sumHz += ev.peakHz;
-        sumAmp += ev.peakAmp;
-        sumFloor += ev.floorAmp;
-        labels.push(ev.sensorLabel);
-      }
-      const avgHz = sumHz / group.length;
-      const avgAmp = sumAmp / group.length;
-      const avgFloor = sumFloor / group.length;
-      const prevGlobal = state.lastDetectionGlobal[gKey];
-      if (prevGlobal && now - prevGlobal.ts < 3000 && Math.abs(prevGlobal.hz - avgHz) < 1.2) continue;
-      state.lastDetectionGlobal[gKey] = { ts: now, hz: avgHz };
-      const sev = severityFromPeak(avgAmp, avgFloor, group.length);
-      if (!sev) continue;
-      const srcKeys = sourceKeysFromClassKey(group[0].cls.key);
-      updateMatrixCells(srcKeys, sev.key, `combined(${labels.join(", ")})`);
-      pushVibrationMessage(
-        t("msg.multi_detected", {
-          count: group.length,
-          labels: labels.join(", "),
-          hz: fmt(avgHz, 2),
-          amp: fmt(avgAmp, 1),
-          severity: t(sev.labelKey),
-          cause: group[0].cls.cause,
-        }),
-      );
-    }
-
-    for (const ev of sensorEvents) {
-      if (usedSensors.has(ev.sensorId)) continue;
-      const key = `${ev.sensorId}:${ev.cls.key}`;
-      const prev = state.lastDetectionByClient[key];
-      if (prev && now - prev.ts < 3500 && Math.abs(prev.hz - ev.peakHz) < 1.0) continue;
-      state.lastDetectionByClient[key] = { ts: now, hz: ev.peakHz };
-      const sev = severityFromPeak(ev.peakAmp, ev.floorAmp, 1);
-      if (!sev) continue;
-      const srcKeys = sourceKeysFromClassKey(ev.cls.key);
-      updateMatrixCells(srcKeys, sev.key, ev.sensorLabel);
-      pushVibrationMessage(
-        t("msg.single_detected", {
-          sensor: ev.sensorLabel,
-          hz: fmt(ev.peakHz, 2),
-          amp: fmt(ev.peakAmp, 1),
-          severity: t(sev.labelKey),
-          cause: ev.cls.cause,
-        }),
-      );
-    }
-    renderMatrix();
   }
 
   function sendSelection() {
@@ -1485,6 +1303,7 @@
     if (payload.spectra) {
       renderSpectrum();
     }
+    applyDiagnostics(payload.diagnostics || {});
     const row = state.clients.find((c) => c.id === state.selectedClientId);
     renderStatus(row);
   }

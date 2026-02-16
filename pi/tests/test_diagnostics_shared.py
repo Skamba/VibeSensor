@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from vibesensor.analysis.strength_metrics import compute_strength_metrics
 from vibesensor.diagnostics_shared import (
     build_diagnostic_settings,
     classify_peak_hz,
@@ -11,7 +12,11 @@ from vibesensor.diagnostics_shared import (
     vehicle_orders_hz,
 )
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
-from vibesensor.report_analysis import build_findings_for_samples, summarize_log
+from vibesensor.report_analysis import (
+    _sensor_intensity_by_location,
+    build_findings_for_samples,
+    summarize_log,
+)
 
 
 def test_tolerance_for_order_honors_floor_and_cap() -> None:
@@ -87,7 +92,18 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
         live = engine.update(
             speed_mps=speed_mps,
             clients=[{"id": "c1", "name": "front-left"}],
-            spectra={"freq": freq, "clients": {"c1": {"freq": freq, "x": spec, "y": spec, "z": spec}}},
+            spectra={
+                "freq": freq,
+                "clients": {
+                    "c1": {
+                        "freq": freq,
+                        "x": spec,
+                        "y": spec,
+                        "z": spec,
+                        "combined_spectrum_amp_g": spec,
+                    }
+                },
+            },
             settings=settings,
         )
     assert live["events"]
@@ -218,3 +234,57 @@ def test_live_top_finding_uses_same_report_finding_logic() -> None:
     assert isinstance(live_top, dict)
     assert live_top.get("suspected_source") == report_top.get("suspected_source")
     assert live_top.get("frequency_hz_or_order") == report_top.get("frequency_hz_or_order")
+
+
+def test_live_strength_db_matches_report_strength_db_from_same_metrics() -> None:
+    freq = [idx / 10.0 for idx in range(1, 1200)]
+    combined = [0.5 for _ in freq]
+    combined[400] = 140.0
+    strength = compute_strength_metrics(
+        freq_hz=freq,
+        combined_spectrum_amp_g_values=combined,
+        peak_bandwidth_hz=1.2,
+        peak_separation_hz=1.2,
+        top_n=4,
+    )
+
+    engine = LiveDiagnosticsEngine()
+    live = {}
+    for _ in range(3):
+        live = engine.update(
+            speed_mps=27.8,
+            clients=[{"id": "c1", "name": "front-left"}],
+            spectra={
+                "freq": freq,
+                "clients": {
+                    "c1": {
+                        "freq": freq,
+                        "combined_spectrum_amp_g": combined,
+                        "strength_metrics": strength,
+                    }
+                },
+            },
+            settings=build_diagnostic_settings({}),
+        )
+    assert live["events"]
+    event_db = float(live["events"][0]["severity_db"])
+
+    rows = _sensor_intensity_by_location(
+        [
+            {
+                "client_id": "c1",
+                "client_name": "front-left",
+                "strength_db": strength["strength_db"],
+                "strength_bucket": strength["strength_bucket"],
+                "strength_peak_band_rms_amp_g": strength["strength_peak_band_rms_amp_g"],
+                "strength_floor_amp_g": strength["strength_floor_amp_g"],
+                "noise_floor_amp_p20_g": strength["noise_floor_amp_p20_g"],
+            }
+        ]
+    )
+    assert rows
+    distribution = rows[0]["strength_bucket_distribution"]
+    assert isinstance(distribution, dict)
+    bucket = str(strength["strength_bucket"])
+    assert int(distribution["counts"][bucket]) == 1
+    assert abs(event_db - float(strength["strength_db"])) < 1e-6
