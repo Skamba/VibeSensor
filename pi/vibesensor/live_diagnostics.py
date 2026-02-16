@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from time import monotonic
 from typing import Any
 
-from .analysis.strength_metrics import compute_strength_metrics
 from .diagnostics_shared import (
     build_diagnostic_settings,
     classify_peak_hz,
@@ -16,6 +16,7 @@ from .strength_bands import BANDS, band_rank
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
+LOGGER = logging.getLogger(__name__)
 
 
 def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
@@ -111,6 +112,7 @@ class LiveDiagnosticsEngine:
         self._active_levels_by_source: dict[str, dict[str, Any]] = {}
         self._active_levels_by_sensor: dict[str, dict[str, Any]] = {}
         self._last_update_ts_ms: int | None = None
+        self._last_error: str | None = None
 
     def reset(self) -> None:
         self._matrix = _new_matrix()
@@ -121,6 +123,7 @@ class LiveDiagnosticsEngine:
         self._active_levels_by_source = {}
         self._active_levels_by_sensor = {}
         self._last_update_ts_ms = None
+        self._last_error = None
 
     def _update_matrix(self, source_key: str, severity_key: str, contributor_label: str) -> None:
         if source_key not in self._matrix:
@@ -219,6 +222,7 @@ class LiveDiagnosticsEngine:
             },
             "findings": list(self._latest_findings),
             "top_finding": top_finding,
+            "error": self._last_error,
         }
 
     def update(
@@ -238,10 +242,12 @@ class LiveDiagnosticsEngine:
                     samples=finding_samples,
                     lang="en",
                 )
-            except Exception:
+            except ValueError as exc:
+                LOGGER.warning("Live diagnostics findings unavailable: %s", exc)
                 self._latest_findings = []
 
         if spectra is None:
+            self._last_error = None
             self._latest_events = []
             return self.snapshot()
 
@@ -252,12 +258,21 @@ class LiveDiagnosticsEngine:
         self._last_update_ts_ms = now_ms
         self._accumulate_matrix_seconds(dt_seconds)
 
-        sensor_events = self._detect_sensor_events(
-            speed_mps=speed_mps,
-            clients=clients,
-            spectra=spectra,
-            settings=settings or {},
-        )
+        try:
+            sensor_events = self._detect_sensor_events(
+                speed_mps=speed_mps,
+                clients=clients,
+                spectra=spectra,
+                settings=settings or {},
+            )
+            self._last_error = None
+        except ValueError as exc:
+            LOGGER.warning(
+                "Live diagnostics update skipped due to invalid spectra payload: %s",
+                exc,
+            )
+            self._last_error = str(exc)
+            sensor_events = []
         # Keep continuous tracker state updated every tick, and only throttle log emission.
         emitted_events: list[dict[str, Any]] = []
         active_by_source: dict[str, dict[str, Any]] = {}
@@ -509,30 +524,17 @@ class LiveDiagnosticsEngine:
                 continue
             strength_metrics = payload.get("strength_metrics")
             if not isinstance(strength_metrics, dict):
-                freq_raw = payload.get("freq")
-                combined_raw = payload.get("combined_spectrum_amp_g")
-                if isinstance(freq_raw, list) and isinstance(combined_raw, list):
-                    strength_metrics = compute_strength_metrics(
-                        freq_hz=[float(value) for value in freq_raw if isinstance(value, (int, float))],
-                        combined_spectrum_amp_g_values=[
-                            float(value) for value in combined_raw if isinstance(value, (int, float))
-                        ],
-                        peak_bandwidth_hz=1.2,
-                        peak_separation_hz=1.2,
-                        top_n=5,
-                    )
-            if not isinstance(strength_metrics, dict):
-                continue
+                raise ValueError(
+                    "Missing required strength_metrics payload for live diagnostics."
+                )
             peaks_raw = strength_metrics.get("top_strength_peaks")
             if not isinstance(peaks_raw, list):
-                continue
+                raise ValueError("Missing top_strength_peaks in strength_metrics payload.")
             label = client_map.get(str(client_id), str(client_id))
-            # Keep `floor_amp` fallback for older payloads that still use legacy key names.
-            floor_amp = float(
-                strength_metrics.get("strength_floor_amp_g")
-                or strength_metrics.get("floor_amp")
-                or 0.0
-            )
+            floor_raw = strength_metrics.get("strength_floor_amp_g")
+            if floor_raw in (None, ""):
+                raise ValueError("Missing strength_floor_amp_g in strength_metrics payload.")
+            floor_amp = float(floor_raw)
             entries.append((str(client_id), label, peaks_raw, floor_amp))
 
         now_ms = int(monotonic() * 1000.0)
@@ -543,10 +545,8 @@ class LiveDiagnosticsEngine:
                     continue
                 try:
                     peak_hz = float(peak.get("hz"))
-                    band_rms = float(
-                        peak.get("strength_peak_band_rms_amp_g") or peak.get("amp") or 0.0
-                    )
-                    strength_db = float(peak.get("strength_db") or 0.0)
+                    band_rms = float(peak.get("strength_peak_band_rms_amp_g"))
+                    strength_db = float(peak.get("strength_db"))
                 except (TypeError, ValueError):
                     continue
                 classification = classify_peak_hz(
