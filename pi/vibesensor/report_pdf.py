@@ -443,8 +443,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         )
         title_html = f"<b>{escape(title)}</b>"
         if badge:
-            pill_bg = REPORT_COLORS.get(f"pill_{tone}_bg", REPORT_COLORS["pill_low_bg"])
-            pill_text = REPORT_COLORS.get(f"pill_{tone}_text", REPORT_COLORS["pill_low_text"])
+            pill_tone = _tone_to_pill_tone(tone)
+            pill_bg = REPORT_COLORS.get(f"pill_{pill_tone}_bg", REPORT_COLORS["pill_low_bg"])
+            pill_text = REPORT_COLORS.get(f"pill_{pill_tone}_text", REPORT_COLORS["pill_low_text"])
             title_html += (
                 f'  <font size="7" color="{pill_text}">'
                 f'<span backColor="{pill_bg}"> {escape(badge)} </span></font>'
@@ -473,13 +474,19 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         )
         return card
 
+    def _tone_to_pill_tone(tone: str) -> str:
+        """Map card/confidence tones to pill theme keys (high/medium/low)."""
+        tone_map = {"success": "high", "warn": "medium", "neutral": "low", "error": "low"}
+        return tone_map.get(tone, "low")
+
     def _confidence_pill_html(conf_0_to_1: float) -> str:
         """Return a small HTML snippet for the confidence pill."""
         label_key, tone, pct_text = confidence_label(conf_0_to_1)
         label = tr(label_key)
-        pill_bg = REPORT_COLORS.get(f"pill_{tone}_bg", REPORT_COLORS["pill_low_bg"])
+        pill_tone = _tone_to_pill_tone(tone)
+        pill_bg = REPORT_COLORS.get(f"pill_{pill_tone}_bg", REPORT_COLORS["pill_low_bg"])
         pill_text_color = REPORT_COLORS.get(
-            f"pill_{tone}_text", REPORT_COLORS["pill_low_text"]
+            f"pill_{pill_tone}_text", REPORT_COLORS["pill_low_text"]
         )
         return (
             f'<font color="{pill_text_color}">'
