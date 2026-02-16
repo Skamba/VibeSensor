@@ -37,7 +37,7 @@ import {
   type StrengthBand,
 } from "./diagnostics";
 import { orderBandFills } from "./theme";
-import { escapeHtml } from "./format";
+import { escapeHtml, fmt, fmtBytes, fmtTs, formatInt } from "./format";
 import {
   buildRecommendedBandDefaults,
   combinedRelativeUncertainty,
@@ -334,30 +334,6 @@ import { WsClient, type WsUiState } from "./ws";
     els.minAbsBandHzInput.value = String(state.vehicleSettings.min_abs_band_hz);
     els.maxBandHalfWidthInput.value = String(state.vehicleSettings.max_band_half_width_pct);
     els.speedOverrideInput.value = String(state.vehicleSettings.speed_override_kmh);
-  }
-
-  function fmt(n, digits = 2) {
-    if (typeof n !== "number" || !Number.isFinite(n)) return "--";
-    return n.toFixed(digits);
-  }
-
-  function fmtBytes(bytes) {
-    if (!(typeof bytes === "number") || bytes < 0) return "--";
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  function fmtTs(iso) {
-    if (!iso) return "--";
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString();
-  }
-
-  function formatInt(value) {
-    if (typeof value !== "number" || !Number.isFinite(value)) return "--";
-    return new Intl.NumberFormat().format(Math.round(value));
   }
 
   function setStatValue(container, value) {
