@@ -13,6 +13,7 @@ from .diagnostics_shared import (
 )
 from .report_analysis import build_findings_for_samples
 from .strength_bands import BANDS
+from .strength_bands import band_rank
 from .strength_scoring import compute_band_rms, compute_floor_rms, strength_db_above_floor
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
@@ -86,31 +87,39 @@ class _RecentEvent:
     class_key: str
 
 
+@dataclass(slots=True)
+class _TrackerLevelState:
+    last_strength_db: float = -120.0
+    last_band_rms_g: float = 0.0
+    current_bucket_key: str | None = None
+    last_update_ms: int = 0
+    last_peak_hz: float = 0.0
+    last_class_key: str = "other"
+    last_sensor_label: str = ""
+    last_emitted_ms: int = 0
+    severity_state: dict[str, Any] | None = None
+
+
 class LiveDiagnosticsEngine:
     def __init__(self) -> None:
         self._matrix = _new_matrix()
-        self._recent_events: list[_RecentEvent] = []
-        self._last_detection_by_client: dict[str, dict[str, float | int]] = {}
-        self._last_detection_global: dict[str, dict[str, float | int]] = {}
-        self._multi_sync_window_ms = 500
+        self._sensor_trackers: dict[str, _TrackerLevelState] = {}
+        self._combined_trackers: dict[str, _TrackerLevelState] = {}
+        self._multi_sync_window_ms = 800
         self._multi_freq_bin_hz = 1.5
+        self._heartbeat_emit_ms = 3000
         self._latest_events: list[dict[str, Any]] = []
         self._latest_findings: list[dict[str, Any]] = []
-        self._bucket_state_by_sensor_class: dict[str, dict[str, Any]] = {}
-        self._bucket_state_by_class: dict[str, dict[str, Any]] = {}
         self._active_levels_by_source: dict[str, dict[str, Any]] = {}
         self._active_levels_by_sensor: dict[str, dict[str, Any]] = {}
         self._last_update_ts_ms: int | None = None
 
     def reset(self) -> None:
         self._matrix = _new_matrix()
-        self._recent_events = []
-        self._last_detection_by_client = {}
-        self._last_detection_global = {}
+        self._sensor_trackers = {}
+        self._combined_trackers = {}
         self._latest_events = []
         self._latest_findings = []
-        self._bucket_state_by_sensor_class = {}
-        self._bucket_state_by_class = {}
         self._active_levels_by_source = {}
         self._active_levels_by_sensor = {}
         self._last_update_ts_ms = None
@@ -142,6 +151,55 @@ class LiveDiagnosticsEngine:
     ) -> None:
         for source_key in source_keys:
             self._update_matrix(source_key, severity_key, contributor_label)
+
+    def _should_emit_event(
+        self,
+        *,
+        tracker: _TrackerLevelState,
+        previous_bucket: str | None,
+        current_bucket: str | None,
+        now_ms: int,
+    ) -> bool:
+        if current_bucket is None:
+            return False
+        prev_rank = band_rank(previous_bucket or "")
+        cur_rank = band_rank(current_bucket)
+        if previous_bucket is None or cur_rank > prev_rank:
+            return True
+        return now_ms - tracker.last_emitted_ms >= self._heartbeat_emit_ms
+
+    def _matrix_transition_bucket(
+        self, previous_bucket: str | None, current_bucket: str | None
+    ) -> str | None:
+        if current_bucket is None:
+            return None
+        if previous_bucket is None:
+            return current_bucket
+        if band_rank(current_bucket) > band_rank(previous_bucket):
+            return current_bucket
+        return None
+
+    def _upsert_active_level(
+        self,
+        *,
+        active_by_source: dict[str, dict[str, Any]],
+        source_keys: tuple[str, ...],
+        bucket_key: str,
+        strength_db: float,
+        sensor_label: str,
+        class_key: str,
+        peak_hz: float,
+    ) -> None:
+        for source_key in source_keys:
+            existing = active_by_source.get(source_key)
+            if existing is None or strength_db > float(existing.get("strength_db", -1e9)):
+                active_by_source[source_key] = {
+                    "bucket_key": bucket_key,
+                    "strength_db": strength_db,
+                    "sensor_label": sensor_label,
+                    "class_key": class_key,
+                    "peak_hz": peak_hz,
+                }
 
     def snapshot(self) -> dict[str, Any]:
         top_finding: dict[str, Any] | None = None
@@ -202,169 +260,227 @@ class LiveDiagnosticsEngine:
             spectra=spectra,
             settings=settings or {},
         )
-        self._recent_events.extend(sensor_events)
-        cutoff = now_ms - self._multi_sync_window_ms
-        self._recent_events = [event for event in self._recent_events if event.ts_ms >= cutoff]
-
+        # Keep continuous tracker state updated every tick, and only throttle log emission.
         emitted_events: list[dict[str, Any]] = []
-        used_sensor_ids: set[str] = set()
-        grouped: dict[str, dict[str, _RecentEvent]] = {}
-        for event in self._recent_events:
-            freq_bin = round(event.peak_hz / self._multi_freq_bin_hz)
-            key = f"{event.class_key}:{freq_bin}"
-            sensor_map = grouped.setdefault(key, {})
-            previous = sensor_map.get(event.sensor_id)
-            if previous is None or event.ts_ms > previous.ts_ms:
-                sensor_map[event.sensor_id] = event
-
         active_by_source: dict[str, dict[str, Any]] = {}
         active_by_sensor: dict[str, dict[str, Any]] = {}
-        seen_sensor_tracker_keys: set[str] = set()
-        seen_group_classes: set[str] = set()
 
-        for group_key, sensor_map in grouped.items():
-            group = list(sensor_map.values())
-            if len(group) < 2:
-                continue
-            avg_hz = sum(event.peak_hz for event in group) / len(group)
-            avg_amp = sum(event.peak_amp for event in group) / len(group)
-            avg_floor = sum(event.floor_amp for event in group) / len(group)
-            avg_strength = sum(event.strength_db for event in group) / len(group)
-            previous = self._last_detection_global.get(group_key)
-            if previous is not None:
-                prev_ts = int(previous["ts_ms"])
-                prev_hz = float(previous["peak_hz"])
-                if now_ms - prev_ts < 3000 and abs(prev_hz - avg_hz) < 1.2:
-                    continue
-            class_key = group[0].class_key
-            state_key = f"combined:{class_key}"
-            seen_group_classes.add(class_key)
-            severity = severity_from_peak(
-                strength_db=avg_strength,
-                band_rms=avg_amp,
-                sensor_count=len(group),
-                prior_state=self._bucket_state_by_class.get(state_key),
-            )
-            self._bucket_state_by_class[state_key] = dict((severity or {}).get("state") or self._bucket_state_by_class.get(state_key) or {})
-            if severity is None or not severity.get("key"):
-                continue
-            self._last_detection_global[group_key] = {"ts_ms": now_ms, "peak_hz": avg_hz}
-            source_keys = source_keys_from_class_key(class_key)
-            labels = [event.sensor_label for event in group]
-            contributor = f"combined({', '.join(labels)})"
-            self._update_matrix_many(source_keys, str(severity["key"]), contributor)
-            for source_key in source_keys:
-                existing = active_by_source.get(source_key)
-                if existing is None or float(severity["db"]) > float(existing.get("strength_db", -1e9)):
-                    active_by_source[source_key] = {
-                        "bucket_key": str(severity["key"]),
-                        "strength_db": float(severity["db"]),
-                        "sensor_label": contributor,
-                        "class_key": class_key,
-                        "peak_hz": avg_hz,
-                    }
-            for event in group:
-                used_sensor_ids.add(event.sensor_id)
-                active_by_sensor[event.sensor_id] = {
-                    "bucket_key": str(severity["key"]),
-                    "strength_db": float(severity["db"]),
-                    "class_key": class_key,
-                    "peak_hz": event.peak_hz,
-                }
-            emitted_events.append(
-                {
-                    "kind": "multi",
-                    "class_key": class_key,
-                    "sensor_count": len(group),
-                    "sensor_labels": labels,
-                    "peak_hz": avg_hz,
-                    "peak_amp": avg_amp,
-                    "floor_amp": avg_floor,
-                    "severity_key": str(severity["key"]),
-                    "severity_db": float(severity["db"]),
-                }
-            )
-
+        latest_by_tracker: dict[str, _RecentEvent] = {}
         for event in sensor_events:
             tracker_key = f"{event.sensor_id}:{event.class_key}"
-            seen_sensor_tracker_keys.add(tracker_key)
-            if event.sensor_id in used_sensor_ids:
-                continue
-            dedupe_key = tracker_key
-            previous = self._last_detection_by_client.get(dedupe_key)
-            if previous is not None:
-                prev_ts = int(previous["ts_ms"])
-                prev_hz = float(previous["peak_hz"])
-                if now_ms - prev_ts < 3500 and abs(prev_hz - event.peak_hz) < 1.0:
-                    continue
+            previous = latest_by_tracker.get(tracker_key)
+            if previous is None or event.strength_db > previous.strength_db:
+                latest_by_tracker[tracker_key] = event
+
+        for tracker_key, event in latest_by_tracker.items():
+            tracker = self._sensor_trackers.get(tracker_key) or _TrackerLevelState()
+            previous_bucket = tracker.current_bucket_key
             severity = severity_from_peak(
                 strength_db=event.strength_db,
                 band_rms=event.peak_amp,
                 sensor_count=1,
-                prior_state=self._bucket_state_by_sensor_class.get(tracker_key),
+                prior_state=tracker.severity_state,
             )
-            self._bucket_state_by_sensor_class[tracker_key] = dict((severity or {}).get("state") or self._bucket_state_by_sensor_class.get(tracker_key) or {})
-            if severity is None or not severity.get("key"):
-                continue
-            self._last_detection_by_client[dedupe_key] = {"ts_ms": now_ms, "peak_hz": event.peak_hz}
-            source_keys = source_keys_from_class_key(event.class_key)
-            self._update_matrix_many(source_keys, str(severity["key"]), event.sensor_label)
-            for source_key in source_keys:
-                existing = active_by_source.get(source_key)
-                if existing is None or float(severity["db"]) > float(existing.get("strength_db", -1e9)):
-                    active_by_source[source_key] = {
-                        "bucket_key": str(severity["key"]),
-                        "strength_db": float(severity["db"]),
-                        "sensor_label": event.sensor_label,
+            tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
+            tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+            tracker.last_strength_db = float((severity or {}).get("db") or event.strength_db)
+            tracker.last_band_rms_g = float(event.peak_amp)
+            tracker.last_update_ms = now_ms
+            tracker.last_peak_hz = float(event.peak_hz)
+            tracker.last_class_key = event.class_key
+            tracker.last_sensor_label = event.sensor_label
+            self._sensor_trackers[tracker_key] = tracker
+
+            if tracker.current_bucket_key:
+                source_keys = source_keys_from_class_key(event.class_key)
+                self._upsert_active_level(
+                    active_by_source=active_by_source,
+                    source_keys=source_keys,
+                    bucket_key=tracker.current_bucket_key,
+                    strength_db=tracker.last_strength_db,
+                    sensor_label=event.sensor_label,
+                    class_key=event.class_key,
+                    peak_hz=event.peak_hz,
+                )
+                sensor_existing = active_by_sensor.get(event.sensor_id)
+                if sensor_existing is None or tracker.last_strength_db > float(sensor_existing.get("strength_db", -1e9)):
+                    active_by_sensor[event.sensor_id] = {
+                        "bucket_key": tracker.current_bucket_key,
+                        "strength_db": tracker.last_strength_db,
                         "class_key": event.class_key,
                         "peak_hz": event.peak_hz,
                     }
-            sensor_existing = active_by_sensor.get(event.sensor_id)
-            if sensor_existing is None or float(severity["db"]) > float(sensor_existing.get("strength_db", -1e9)):
-                active_by_sensor[event.sensor_id] = {
-                    "bucket_key": str(severity["key"]),
-                    "strength_db": float(severity["db"]),
-                    "class_key": event.class_key,
-                    "peak_hz": event.peak_hz,
-                }
-            emitted_events.append(
-                {
-                    "kind": "single",
-                    "class_key": event.class_key,
-                    "sensor_count": 1,
-                    "sensor_id": event.sensor_id,
-                    "sensor_label": event.sensor_label,
-                    "sensor_labels": [event.sensor_label],
-                    "peak_hz": event.peak_hz,
-                    "peak_amp": event.peak_amp,
-                    "floor_amp": event.floor_amp,
-                    "severity_key": str(severity["key"]),
-                    "severity_db": float(severity["db"]),
-                }
-            )
 
-        for key, state in list(self._bucket_state_by_sensor_class.items()):
-            if key in seen_sensor_tracker_keys:
+            transition_bucket = self._matrix_transition_bucket(previous_bucket, tracker.current_bucket_key)
+            if transition_bucket:
+                source_keys = source_keys_from_class_key(event.class_key)
+                self._update_matrix_many(source_keys, transition_bucket, event.sensor_label)
+
+            if self._should_emit_event(
+                tracker=tracker,
+                previous_bucket=previous_bucket,
+                current_bucket=tracker.current_bucket_key,
+                now_ms=now_ms,
+            ):
+                tracker.last_emitted_ms = now_ms
+                emitted_events.append(
+                    {
+                        "kind": "single",
+                        "class_key": event.class_key,
+                        "sensor_count": 1,
+                        "sensor_id": event.sensor_id,
+                        "sensor_label": event.sensor_label,
+                        "sensor_labels": [event.sensor_label],
+                        "peak_hz": event.peak_hz,
+                        "peak_amp": event.peak_amp,
+                        "floor_amp": event.floor_amp,
+                        "severity_key": tracker.current_bucket_key,
+                        "severity_db": tracker.last_strength_db,
+                    }
+                )
+
+        seen_tracker_keys = set(latest_by_tracker)
+        for tracker_key, tracker in list(self._sensor_trackers.items()):
+            if tracker_key in seen_tracker_keys:
                 continue
             severity = severity_from_peak(
                 strength_db=-120.0,
                 band_rms=0.0,
                 sensor_count=1,
-                prior_state=state,
+                prior_state=tracker.severity_state,
             )
-            self._bucket_state_by_sensor_class[key] = dict((severity or {}).get("state") or state)
+            tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
+            tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+            tracker.last_strength_db = float((severity or {}).get("db") or -120.0)
 
-        for key, state in list(self._bucket_state_by_class.items()):
-            cls = key.split(":", 1)[1] if ":" in key else key
-            if cls in seen_group_classes:
+        # Source/sensor active levels come from continuous tracker state (not emitted events).
+        for tracker_key, tracker in self._sensor_trackers.items():
+            if tracker.current_bucket_key is None:
+                continue
+            sensor_id, _, class_key = tracker_key.partition(":")
+            source_keys = source_keys_from_class_key(class_key or tracker.last_class_key)
+            self._upsert_active_level(
+                active_by_source=active_by_source,
+                source_keys=source_keys,
+                bucket_key=tracker.current_bucket_key,
+                strength_db=tracker.last_strength_db,
+                sensor_label=tracker.last_sensor_label,
+                class_key=class_key or tracker.last_class_key,
+                peak_hz=tracker.last_peak_hz,
+            )
+            sensor_existing = active_by_sensor.get(sensor_id)
+            if sensor_existing is None or tracker.last_strength_db > float(sensor_existing.get("strength_db", -1e9)):
+                active_by_sensor[sensor_id] = {
+                    "bucket_key": tracker.current_bucket_key,
+                    "strength_db": tracker.last_strength_db,
+                    "class_key": class_key or tracker.last_class_key,
+                    "peak_hz": tracker.last_peak_hz,
+                }
+
+        # Build combined groups from fresh per-sensor continuous tracker state.
+        fresh_sensor_trackers: list[_TrackerLevelState] = []
+        for tracker in self._sensor_trackers.values():
+            if tracker.current_bucket_key is None:
+                continue
+            if now_ms - tracker.last_update_ms > self._multi_sync_window_ms:
+                continue
+            fresh_sensor_trackers.append(tracker)
+
+        by_class: dict[str, list[_TrackerLevelState]] = {}
+        for tracker in fresh_sensor_trackers:
+            by_class.setdefault(tracker.last_class_key, []).append(tracker)
+
+        seen_combined_keys: set[str] = set()
+        for class_key, trackers in by_class.items():
+            trackers.sort(key=lambda item: item.last_peak_hz)
+            groups: list[list[_TrackerLevelState]] = []
+            for tracker in trackers:
+                if not groups:
+                    groups.append([tracker])
+                    continue
+                prev = groups[-1][-1]
+                if abs(prev.last_peak_hz - tracker.last_peak_hz) <= self._multi_freq_bin_hz:
+                    groups[-1].append(tracker)
+                else:
+                    groups.append([tracker])
+
+            for group in groups:
+                if len(group) < 2:
+                    continue
+                avg_hz = sum(item.last_peak_hz for item in group) / len(group)
+                avg_amp = sum(item.last_band_rms_g for item in group) / len(group)
+                avg_strength = sum(item.last_strength_db for item in group) / len(group)
+                freq_bin = round(avg_hz / self._multi_freq_bin_hz)
+                combined_key = f"combined:{class_key}:{freq_bin}"
+                seen_combined_keys.add(combined_key)
+                tracker = self._combined_trackers.get(combined_key) or _TrackerLevelState(last_class_key=class_key)
+                previous_bucket = tracker.current_bucket_key
+                severity = severity_from_peak(
+                    strength_db=avg_strength,
+                    band_rms=avg_amp,
+                    sensor_count=len(group),
+                    prior_state=tracker.severity_state,
+                )
+                tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
+                tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+                tracker.last_strength_db = float((severity or {}).get("db") or avg_strength)
+                tracker.last_band_rms_g = avg_amp
+                tracker.last_update_ms = now_ms
+                tracker.last_peak_hz = avg_hz
+                tracker.last_class_key = class_key
+                tracker.last_sensor_label = f"combined({', '.join(item.last_sensor_label for item in group)})"
+                self._combined_trackers[combined_key] = tracker
+
+                if tracker.current_bucket_key:
+                    source_keys = source_keys_from_class_key(class_key)
+                    self._upsert_active_level(
+                        active_by_source=active_by_source,
+                        source_keys=source_keys,
+                        bucket_key=tracker.current_bucket_key,
+                        strength_db=tracker.last_strength_db,
+                        sensor_label=tracker.last_sensor_label,
+                        class_key=class_key,
+                        peak_hz=avg_hz,
+                    )
+
+                transition_bucket = self._matrix_transition_bucket(previous_bucket, tracker.current_bucket_key)
+                if transition_bucket:
+                    source_keys = source_keys_from_class_key(class_key)
+                    self._update_matrix_many(source_keys, transition_bucket, tracker.last_sensor_label)
+
+                if self._should_emit_event(
+                    tracker=tracker,
+                    previous_bucket=previous_bucket,
+                    current_bucket=tracker.current_bucket_key,
+                    now_ms=now_ms,
+                ):
+                    tracker.last_emitted_ms = now_ms
+                    emitted_events.append(
+                        {
+                            "kind": "multi",
+                            "class_key": class_key,
+                            "sensor_count": len(group),
+                            "sensor_labels": [item.last_sensor_label for item in group],
+                            "peak_hz": avg_hz,
+                            "peak_amp": avg_amp,
+                            "floor_amp": None,
+                            "severity_key": tracker.current_bucket_key,
+                            "severity_db": tracker.last_strength_db,
+                        }
+                    )
+
+        for combined_key, tracker in list(self._combined_trackers.items()):
+            if combined_key in seen_combined_keys:
                 continue
             severity = severity_from_peak(
                 strength_db=-120.0,
                 band_rms=0.0,
-                sensor_count=1,
-                prior_state=state,
+                sensor_count=2,
+                prior_state=tracker.severity_state,
             )
-            self._bucket_state_by_class[key] = dict((severity or {}).get("state") or state)
+            tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
+            tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+            tracker.last_strength_db = float((severity or {}).get("db") or -120.0)
 
         self._active_levels_by_source = active_by_source
         self._active_levels_by_sensor = active_by_sensor

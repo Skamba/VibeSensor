@@ -25,11 +25,17 @@ import {
   multiFreqBinHz,
   multiSyncWindowMs,
   palette,
-  severityBands,
   sourceColumns,
   treadWearModel,
 } from "./constants";
 import { SpectrumChart } from "./spectrum";
+import {
+  createEmptyMatrix,
+  normalizeStrengthBands,
+  severityFromPeak,
+  sourceKeysFromClassKey,
+  type StrengthBand,
+} from "./diagnostics";
 import { orderBandFills } from "./theme";
 import { WsClient, type WsUiState } from "./ws";
   const els: any = {
@@ -60,6 +66,7 @@ import { WsClient, type WsUiState } from "./ws";
     legend: document.getElementById("legend"),
     bandLegend: document.getElementById("bandLegend"),
     strengthChart: document.getElementById("strengthChart"),
+    strengthTooltip: document.getElementById("strengthTooltip"),
     tireWidthInput: document.getElementById("tireWidthInput"),
     tireAspectInput: document.getElementById("tireAspectInput"),
     rimInput: document.getElementById("rimInput"),
@@ -127,6 +134,7 @@ import { WsClient, type WsUiState } from "./ws";
     lastDetectionByClient: {},
     lastDetectionGlobal: {},
     recentDetectionEvents: [],
+    strengthBands: normalizeStrengthBands([]),
     eventMatrix: createEmptyMatrix(),
     pendingPayload: null,
     renderQueued: false,
@@ -227,17 +235,6 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   Object.assign(state.vehicleSettings, buildRecommendedBandDefaults(state.vehicleSettings));
-
-  function createEmptyMatrix() {
-    const matrix = {};
-    for (const src of sourceColumns) {
-      matrix[src.key] = {};
-      for (const band of severityBands) {
-        matrix[src.key][band.key] = { count: 0, seconds: 0, contributors: {} };
-      }
-    }
-    return matrix;
-  }
 
   function loadVehicleSettings() {
     try {
@@ -1185,26 +1182,6 @@ import { WsClient, type WsUiState } from "./ws";
     return { cause: t("cause.other"), key: "other" };
   }
 
-  function sourceKeysFromClassKey(classKey) {
-    if (classKey === "shaft_eng1") return ["driveshaft", "engine"];
-    if (classKey === "eng1" || classKey === "eng2") return ["engine"];
-    if (classKey === "shaft1") return ["driveshaft"];
-    if (classKey === "wheel1" || classKey === "wheel2") return ["wheel"];
-    return ["other"];
-  }
-
-  function severityFromPeak(peakAmp, floorAmp, sensorCount) {
-    const db = amplitudeDbAboveFloor(peakAmp, floorAmp);
-    // Multi-sensor synchronous detections are stronger indicators than single-sensor events.
-    const adjustedDb = sensorCount >= 2 ? db + 2 : db;
-    for (const band of severityBands) {
-      if (adjustedDb >= band.minDb && adjustedDb < band.maxDb) {
-        return { key: band.key, labelKey: band.labelKey, db: adjustedDb };
-      }
-    }
-    return null;
-  }
-
   function amplitudeDbAboveFloor(peakAmp, floorAmp) {
     const peak = Math.max(0, Number(peakAmp) || 0);
     const floor = Math.max(0, Number(floorAmp) || 0);
@@ -1229,7 +1206,7 @@ import { WsClient, type WsUiState } from "./ws";
 
   function tooltipForCell(sourceKey, severityKey) {
     const source = sourceColumns.find((s) => s.key === sourceKey);
-    const band = severityBands.find((b) => b.key === severityKey);
+    const band = state.strengthBands.find((b: StrengthBand) => b.key === severityKey);
     const cell = state.eventMatrix[sourceKey]?.[severityKey];
     if (!cell || cell.count === 0) {
       return `${t(source?.labelKey || sourceKey)} / ${t(band?.labelKey || severityKey)}\n${t("tooltip.no_events")}`;
@@ -1296,8 +1273,8 @@ import { WsClient, type WsUiState } from "./ws";
     const header = `<thead><tr><th>${escapeHtml(t("matrix.amplitude_group"))}</th>${sourceColumns
       .map((s) => `<th>${escapeHtml(t(s.labelKey))}</th>`)
       .join("")}</tr></thead>`;
-    const bodyRows = severityBands
-      .map((band) => {
+    const bodyRows = [...state.strengthBands].sort((a: StrengthBand, b: StrengthBand) => b.min_db - a.min_db)
+      .map((band: StrengthBand) => {
         const cells = sourceColumns
           .map((src) => {
             const val = state.eventMatrix[src.key][band.key].count;
@@ -1312,10 +1289,14 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function applyServerDiagnostics(diagnostics) {
+    state.strengthBands = normalizeStrengthBands(diagnostics.strength_bands);
     if (diagnostics.matrix) {
       state.eventMatrix = diagnostics.matrix;
-      renderMatrix();
+    } else {
+      state.eventMatrix = createEmptyMatrix(state.strengthBands);
     }
+    renderMatrix();
+
     const events = Array.isArray(diagnostics.events) ? diagnostics.events : [];
     if (events.length) {
       for (const ev of events.slice(0, 6)) {
@@ -1331,26 +1312,38 @@ import { WsClient, type WsUiState } from "./ws";
     pushStrengthSample(bySource);
   }
 
+  function yRangeFromBands(): [number, number] {
+    const bands = state.strengthBands as StrengthBand[];
+    if (!bands.length) return [0, 50];
+    const min = Math.max(0, Math.floor(Math.min(...bands.map((band) => band.min_db)) - 4));
+    const max = Math.ceil(Math.max(...bands.map((band) => band.min_db)) + 10);
+    return [min, max];
+  }
+
   function ensureStrengthChart() {
     if (!els.strengthChart) return;
     if (state.strengthPlot) return;
-    const shades = [
-      [10, 16, "rgba(59,130,246,0.08)"],
-      [16, 22, "rgba(34,197,94,0.08)"],
-      [22, 28, "rgba(234,179,8,0.08)"],
-      [28, 34, "rgba(249,115,22,0.08)"],
-      [34, 60, "rgba(239,68,68,0.08)"],
-    ];
     const shadePlugin = {
       hooks: {
         drawClear: [
           (u) => {
             const ctx = u.ctx;
-            for (const [lo, hi, fill] of shades) {
-              const y0 = u.valToPos(hi, "y", true);
-              const y1 = u.valToPos(lo, "y", true);
-              ctx.fillStyle = fill;
+            const ordered = [...(state.strengthBands as StrengthBand[])].sort((a, b) => a.min_db - b.min_db);
+            for (let idx = 0; idx < ordered.length; idx++) {
+              const band = ordered[idx];
+              const nextMin = idx + 1 < ordered.length ? ordered[idx + 1].min_db : yRangeFromBands()[1];
+              const y0 = u.valToPos(nextMin, "y", true);
+              const y1 = u.valToPos(band.min_db, "y", true);
+              ctx.fillStyle = `hsla(${220 - idx * 35}, 70%, 55%, 0.08)`;
               ctx.fillRect(u.bbox.left, y0, u.bbox.width, y1 - y0);
+              ctx.strokeStyle = "rgba(79,93,115,0.28)";
+              ctx.beginPath();
+              ctx.moveTo(u.bbox.left, y1);
+              ctx.lineTo(u.bbox.left + u.bbox.width, y1);
+              ctx.stroke();
+              ctx.fillStyle = "#4f5d73";
+              ctx.font = "11px Segoe UI";
+              ctx.fillText(band.key.toUpperCase(), u.bbox.left + u.bbox.width + 8, y1 + 4);
             }
           },
         ],
@@ -1358,8 +1351,14 @@ import { WsClient, type WsUiState } from "./ws";
           (u) => {
             const idx = u.cursor?.idx;
             if (idx == null || idx < 0) {
-              state.strengthHoverText = "";
+              if (els.strengthTooltip) els.strengthTooltip.style.display = "none";
               return;
+            }
+            const labels = ["wheel", "driveshaft", "engine", "other"];
+            const lines = labels.map((label, i) => `${label}: ${fmt((u.data[i + 1]?.[idx] as number) || 0, 1)} dB`);
+            if (els.strengthTooltip) {
+              els.strengthTooltip.textContent = lines.join("\n");
+              els.strengthTooltip.style.display = "block";
             }
           },
         ],
@@ -1369,8 +1368,8 @@ import { WsClient, type WsUiState } from "./ws";
       {
         title: "Strength over time",
         width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)),
-        height: 220,
-        scales: { x: { time: false }, y: { range: [0, 50] } },
+        height: 240,
+        scales: { x: { time: false }, y: { range: yRangeFromBands() } },
         axes: [{ label: "s" }, { label: "Strength (dB over floor)" }],
         series: [
           { label: "t" },
@@ -1384,6 +1383,15 @@ import { WsClient, type WsUiState } from "./ws";
       [[], [], [], [], []],
       els.strengthChart,
     );
+
+    const resize = () => {
+      if (!state.strengthPlot || !els.strengthChart) return;
+      state.strengthPlot.setSize({ width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240 });
+    };
+    window.addEventListener("resize", resize);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) resize();
+    });
   }
 
   function pushStrengthSample(bySource) {
@@ -1395,7 +1403,8 @@ import { WsClient, type WsUiState } from "./ws";
       const level = bySource?.[key];
       state.strengthHistory[key].push(level?.strength_db || 0);
     }
-    while (state.strengthHistory.t.length > 600) {
+    const windowSeconds = 60;
+    while (state.strengthHistory.t.length && now - state.strengthHistory.t[0] > windowSeconds) {
       state.strengthHistory.t.shift();
       state.strengthHistory.wheel.shift();
       state.strengthHistory.driveshaft.shift();
@@ -1404,6 +1413,7 @@ import { WsClient, type WsUiState } from "./ws";
     }
     const t0 = state.strengthHistory.t[0] || now;
     const relT = state.strengthHistory.t.map((v) => v - t0);
+    state.strengthPlot.setScale("y", { min: yRangeFromBands()[0], max: yRangeFromBands()[1] });
     state.strengthPlot.setData([
       relT,
       state.strengthHistory.wheel,
@@ -1617,7 +1627,7 @@ import { WsClient, type WsUiState } from "./ws";
       const prevGlobal = state.lastDetectionGlobal[gKey];
       if (prevGlobal && now - prevGlobal.ts < 3000 && Math.abs(prevGlobal.hz - avgHz) < 1.2) continue;
       state.lastDetectionGlobal[gKey] = { ts: now, hz: avgHz };
-      const sev = severityFromPeak(avgAmp, avgFloor, group.length);
+      const sev = severityFromPeak(avgAmp, avgFloor, group.length, state.strengthBands);
       if (!sev) continue;
       const srcKeys = sourceKeysFromClassKey(group[0].cls.key);
       updateMatrixCells(srcKeys, sev.key, `combined(${labels.join(", ")})`);
@@ -1639,7 +1649,7 @@ import { WsClient, type WsUiState } from "./ws";
       const prev = state.lastDetectionByClient[key];
       if (prev && now - prev.ts < 3500 && Math.abs(prev.hz - ev.peakHz) < 1.0) continue;
       state.lastDetectionByClient[key] = { ts: now, hz: ev.peakHz };
-      const sev = severityFromPeak(ev.peakAmp, ev.floorAmp, 1);
+      const sev = severityFromPeak(ev.peakAmp, ev.floorAmp, 1, state.strengthBands);
       if (!sev) continue;
       const srcKeys = sourceKeysFromClassKey(ev.cls.key);
       updateMatrixCells(srcKeys, sev.key, ev.sensorLabel);
