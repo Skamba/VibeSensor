@@ -253,8 +253,8 @@ class SignalProcessor:
                     smoothing_bins=3,
                 )
                 spectrum_by_axis[axis] = {
-                    "freq": freq_slice.astype(np.float32),
-                    "amp": amp_slice.astype(np.float32),
+                    "freq": freq_slice,
+                    "amp": amp_slice,
                 }
                 axis_amp_slices.append(amp_for_peaks)
 
@@ -272,8 +272,8 @@ class SignalProcessor:
                     smoothing_bins=5,
                 )
                 spectrum_by_axis["combined"] = {
-                    "freq": freq_slice.astype(np.float32),
-                    "amp": combined_amp.astype(np.float32),
+                    "freq": freq_slice,
+                    "amp": combined_amp,
                 }
             buf.latest_spectrum = spectrum_by_axis
 
