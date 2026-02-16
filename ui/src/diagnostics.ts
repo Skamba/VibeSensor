@@ -1,11 +1,11 @@
 import { severityBands, sourceColumns } from "./constants";
 
-export function createEmptyMatrix(): Record<string, Record<string, { count: number; contributors: Record<string, number> }>> {
-  const matrix: Record<string, Record<string, { count: number; contributors: Record<string, number> }>> = {};
+export function createEmptyMatrix(): Record<string, Record<string, { count: number; seconds: number; contributors: Record<string, number> }>> {
+  const matrix: Record<string, Record<string, { count: number; seconds: number; contributors: Record<string, number> }>> = {};
   for (const src of sourceColumns) {
     matrix[src.key] = {};
     for (const band of severityBands) {
-      matrix[src.key][band.key] = { count: 0, contributors: {} };
+      matrix[src.key][band.key] = { count: 0, seconds: 0, contributors: {} };
     }
   }
   return matrix;
@@ -20,7 +20,10 @@ export function sourceKeysFromClassKey(classKey: string): string[] {
 }
 
 export function relativeDbAboveFloor(amplitude: number, floorAmplitude: number): number {
-  return 20 * Math.log10((Math.max(0, amplitude) + 1) / (Math.max(0, floorAmplitude) + 1));
+  const peak = Math.max(0, amplitude);
+  const floor = Math.max(0, floorAmplitude);
+  const eps = Math.max(1e-9, floor * 0.05);
+  return 20 * Math.log10((peak + eps) / (floor + eps));
 }
 
 export function severityFromPeak(
@@ -29,10 +32,9 @@ export function severityFromPeak(
   sensorCount: number,
 ): { key: string; labelKey: string; db: number } | null {
   const db = relativeDbAboveFloor(peakAmp, floorAmp);
-  // Multi-sensor synchronous detections are stronger indicators than single-sensor events.
-  const adjustedDb = sensorCount >= 2 ? db + 2 : db;
+  const adjustedDb = sensorCount >= 2 ? db + 3 : db;
   for (const band of severityBands) {
-    if (adjustedDb >= band.minDb && adjustedDb < band.maxDb) {
+    if (adjustedDb >= band.minDb && adjustedDb < band.maxDb && peakAmp >= band.minAmp) {
       return { key: band.key, labelKey: band.labelKey, db: adjustedDb };
     }
   }

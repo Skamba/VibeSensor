@@ -18,7 +18,7 @@ export const defaultLocationCodes = [
   "rear_center_seat",
   "rear_right_seat",
   "trunk",
-];
+] as const;
 
 export const bandToleranceModelVersion = 2;
 
@@ -27,22 +27,22 @@ export const treadWearModel = {
   new_tread_mm: 7.9,
   worn_tread_mm: 1.6,
   safety_margin_pct: 0.3,
-};
+} as const;
 
 export const sourceColumns = [
   { key: "engine", labelKey: "matrix.source.engine" },
   { key: "driveshaft", labelKey: "matrix.source.driveshaft" },
   { key: "wheel", labelKey: "matrix.source.wheel" },
   { key: "other", labelKey: "matrix.source.other" },
-];
+] as const;
 
 export const severityBands = [
-  { key: "l5", labelKey: "matrix.severity.l5", minDb: 40, maxDb: Number.POSITIVE_INFINITY },
-  { key: "l4", labelKey: "matrix.severity.l4", minDb: 34, maxDb: 40 },
-  { key: "l3", labelKey: "matrix.severity.l3", minDb: 28, maxDb: 34 },
-  { key: "l2", labelKey: "matrix.severity.l2", minDb: 22, maxDb: 28 },
-  { key: "l1", labelKey: "matrix.severity.l1", minDb: 16, maxDb: 22 },
-];
+  { key: "l5", labelKey: "matrix.severity.l5", minDb: 34, maxDb: Number.POSITIVE_INFINITY, minAmp: 0.048 },
+  { key: "l4", labelKey: "matrix.severity.l4", minDb: 28, maxDb: 34, minAmp: 0.024 },
+  { key: "l3", labelKey: "matrix.severity.l3", minDb: 22, maxDb: 28, minAmp: 0.012 },
+  { key: "l2", labelKey: "matrix.severity.l2", minDb: 16, maxDb: 22, minAmp: 0.006 },
+  { key: "l1", labelKey: "matrix.severity.l1", minDb: 10, maxDb: 16, minAmp: 0.003 },
+] as const;
 
 export const multiSyncWindowMs = 500;
 export const multiFreqBinHz = 1.5;
