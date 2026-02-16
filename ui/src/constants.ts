@@ -1,3 +1,7 @@
+import { chartSeriesPalette } from "./theme";
+
+export const palette = chartSeriesPalette;
+
 export const defaultLocationCodes = [
   "front_left_wheel",
   "front_right_wheel",
@@ -16,22 +20,14 @@ export const defaultLocationCodes = [
   "trunk",
 ] as const;
 
-export const palette = [
-  "#2563eb",
-  "#14b8a6",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
-  "#84cc16",
-  "#f97316",
-] as const;
+export const bandToleranceModelVersion = 2;
 
-export const bandToleranceModelVersion = "v2-order-bandwidth+uncertainty";
-export const treadWearModel = "v1-sanity-reference";
-
-export const multiSyncWindowMs = 500;
-export const multiFreqBinHz = 1.5;
+export const treadWearModel = {
+  // 10/32 in (~7.9 mm) new to 2/32 in (~1.6 mm) legal minimum.
+  new_tread_mm: 7.9,
+  worn_tread_mm: 1.6,
+  safety_margin_pct: 0.3,
+} as const;
 
 export const sourceColumns = [
   { key: "engine", labelKey: "matrix.source.engine" },
@@ -47,3 +43,6 @@ export const severityBands = [
   { key: "l2", labelKey: "matrix.severity.l2", minDb: 16, maxDb: 22, minAmp: 0.006 },
   { key: "l1", labelKey: "matrix.severity.l1", minDb: 10, maxDb: 16, minAmp: 0.003 },
 ] as const;
+
+export const multiSyncWindowMs = 500;
+export const multiFreqBinHz = 1.5;
