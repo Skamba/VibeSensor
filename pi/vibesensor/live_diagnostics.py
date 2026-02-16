@@ -527,6 +527,7 @@ class LiveDiagnosticsEngine:
             if not isinstance(peaks_raw, list):
                 continue
             label = client_map.get(str(client_id), str(client_id))
+            # Keep `floor_amp` fallback for older payloads that still use legacy key names.
             floor_amp = float(
                 strength_metrics.get("strength_floor_amp_g")
                 or strength_metrics.get("floor_amp")

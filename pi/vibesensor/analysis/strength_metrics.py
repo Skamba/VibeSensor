@@ -7,6 +7,7 @@ from ..strength_bands import bucket_for_strength
 
 STRENGTH_EPSILON_MIN_G = 1e-9
 STRENGTH_EPSILON_FLOOR_RATIO = 0.05
+PEAK_THRESHOLD_FLOOR_RATIO = 2.6
 
 
 def _median(values: list[float]) -> float:
@@ -32,7 +33,7 @@ def _percentile(sorted_values: list[float], q: float) -> float:
 
 
 def combined_spectrum_amp_g(
-    *, axis_spectra_amp_g: list[list[float]], axis_count_for_mean: int = 3
+    *, axis_spectra_amp_g: list[list[float]], axis_count_for_mean: int | None = None
 ) -> list[float]:
     """
     Canonical combined spectrum amplitude definition.
@@ -45,7 +46,11 @@ def combined_spectrum_amp_g(
     target_len = min((len(axis) for axis in axis_spectra_amp_g), default=0)
     if target_len <= 0:
         return []
-    divisor = max(1.0, float(axis_count_for_mean))
+    divisor = (
+        max(1.0, float(axis_count_for_mean))
+        if axis_count_for_mean is not None
+        else max(1.0, float(len(axis_spectra_amp_g)))
+    )
     out: list[float] = [0.0] * target_len
     for idx in range(target_len):
         sq_sum = 0.0
@@ -157,7 +162,10 @@ def compute_strength_metrics(
     freq = [float(v) for v in freq_hz[:n]]
     combined = [max(0.0, float(v)) for v in combined_spectrum_amp_g_values[:n]]
     floor_p20 = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
-    threshold = max(floor_p20 * 2.6, floor_p20 + STRENGTH_EPSILON_MIN_G)
+    threshold = max(
+        floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
+        floor_p20 + STRENGTH_EPSILON_MIN_G,
+    )
 
     local_maxima: list[int] = []
     for idx in range(1, n - 1):
@@ -238,4 +246,3 @@ def compute_strength_metrics(
         "peak_amp": top_band_rms,
         "floor_amp": float(floor_strength),
     }
-

@@ -237,6 +237,7 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     normalized["strength_bucket"] = (
         str(record.get("strength_bucket")) if record.get("strength_bucket") not in (None, "") else None
     )
+    # Legacy aliases: keep older readers working without recomputing strength metrics.
     normalized["noise_floor_amp"] = normalized["noise_floor_amp_p20_g"]
     normalized["dominant_peak_amp_g"] = normalized["strength_peak_band_rms_amp_g"]
     normalized["sample_rate_hz"] = as_int_or_none(record.get("sample_rate_hz"))

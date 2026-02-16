@@ -264,7 +264,7 @@ class SignalProcessor:
             if axis_amp_slices:
                 combined_amp = np.asarray(
                     combined_spectrum_amp_g(
-                        axis_spectra_amp_g=[amp.tolist() for amp in axis_amp_slices],
+                        axis_spectra_amp_g=axis_amp_slices,  # type: ignore[arg-type]
                         axis_count_for_mean=len(axis_amp_slices),
                     ),
                     dtype=np.float32,
