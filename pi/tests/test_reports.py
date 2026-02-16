@@ -122,6 +122,10 @@ def _sample(
             {"hz": dominant_freq_hz + 8.0, "amp": dominant_peak_amp_g * 0.45},
         ],
         "noise_floor_amp": max(0.001, dominant_peak_amp_g * 0.08),
+        "strength_floor_amp_g": max(0.001, dominant_peak_amp_g * 0.08),
+        "strength_peak_band_rms_amp_g": dominant_peak_amp_g,
+        "strength_db": 22.0,
+        "strength_bucket": "l2",
     }
 
 

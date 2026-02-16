@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from vibesensor.analysis.strength_metrics import compute_strength_metrics
 from vibesensor.diagnostics_shared import severity_from_peak
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 from vibesensor.strength_bands import DECAY_TICKS, HYSTERESIS_DB, band_by_key
@@ -44,6 +45,13 @@ def test_live_matrix_seconds_accumulate_during_throttled_emission(monkeypatch) -
     peak_idx = 320
     base = [0.8 for _ in freq]
     base[peak_idx] = 150.0
+    strength_metrics = compute_strength_metrics(
+        freq_hz=freq,
+        combined_spectrum_amp_g_values=base,
+        peak_bandwidth_hz=1.2,
+        peak_separation_hz=1.2,
+        top_n=5,
+    )
     spectra = {
         "freq": freq,
         "clients": {
@@ -53,6 +61,7 @@ def test_live_matrix_seconds_accumulate_during_throttled_emission(monkeypatch) -
                 "y": base,
                 "z": base,
                 "combined_spectrum_amp_g": base,
+                "strength_metrics": strength_metrics,
             }
         },
     }

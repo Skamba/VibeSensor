@@ -52,6 +52,10 @@ def _make_sample(t_s: float, speed_kmh: float, amp: float = 0.01) -> dict:
         "dominant_freq_hz": 15.0,
         "dominant_peak_amp_g": amp * 2,
         "noise_floor_amp": amp * 0.1,
+        "strength_floor_amp_g": amp * 0.1,
+        "strength_peak_band_rms_amp_g": amp * 2,
+        "strength_db": 20.0,
+        "strength_bucket": "l2",
         "client_name": "Front Left",
     }
 
@@ -162,3 +166,14 @@ def test_summarize_log_non_jsonl(tmp_path: Path) -> None:
     csv_path.write_text("a,b,c\n1,2,3\n")
     with pytest.raises(ValueError):
         summarize_log(csv_path)
+
+
+def test_summarize_log_missing_precomputed_strength_metrics_raises(tmp_path: Path) -> None:
+    log_path = tmp_path / "run_missing_strength.jsonl"
+    metadata = _make_metadata()
+    sample = _make_sample(0.0, 80.0, 0.02)
+    sample.pop("strength_db", None)
+    end = create_run_end_record("test-run", "2025-01-01T00:00:10+00:00")
+    append_jsonl_records(log_path, [metadata, sample, end])
+    with pytest.raises(ValueError, match="Missing required precomputed strength metrics"):
+        summarize_log(log_path)
