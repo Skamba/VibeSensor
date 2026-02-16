@@ -166,8 +166,12 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
     _assert_pdf_contains(pdf, "What to check first")
+    _assert_pdf_contains(pdf, "Certainty")
+    _assert_pdf_contains(pdf, "Speed")
+    _assert_pdf_contains(pdf, "Frequency")
     _assert_pdf_contains(pdf, "Evidence and Hotspots")
     _assert_pdf_contains(pdf, "Workshop Summary")
+    assert b"Spectrogram" not in pdf
 
 
 def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
@@ -360,6 +364,42 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(tmp
     assert set(strength["counts"].keys()) == {"l1", "l2", "l3", "l4", "l5"}
     pct_sum = sum(strength[f"percent_time_l{idx}"] for idx in range(1, 6))
     assert pct_sum == pytest.approx(100.0, rel=1e-6)
+
+
+def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_location_stats_partial_sensor.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+
+    for idx in range(10):
+        full_sensor = _sample(
+            idx,
+            speed_kmh=60.0 + idx,
+            dominant_freq_hz=20.0,
+            dominant_peak_amp_g=0.09 + (idx * 0.001),
+        )
+        full_sensor["client_id"] = "full-1"
+        full_sensor["client_name"] = "front-left wheel"
+        records.append(full_sensor)
+
+        if 2 <= idx <= 7:
+            partial_sensor = _sample(
+                idx,
+                speed_kmh=60.0 + idx,
+                dominant_freq_hz=19.0,
+                dominant_peak_amp_g=0.07 + (idx * 0.001),
+            )
+            partial_sensor["client_id"] = "partial-2"
+            partial_sensor["client_name"] = "front-right wheel"
+            records.append(partial_sensor)
+
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    assert summary["sensor_locations"] == ["front-left wheel", "front-right wheel"]
+    rows = summary["sensor_intensity_by_location"]
+    assert len(rows) == 2
+    assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
 
 
 def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:

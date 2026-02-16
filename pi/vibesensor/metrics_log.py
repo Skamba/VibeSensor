@@ -292,7 +292,11 @@ class MetricsLogger:
             engine_rpm_estimated = wheel_hz * final_drive_ratio * gear_ratio * 60.0
 
         records: list[dict[str, object]] = []
-        for record in self.registry.iter_records():
+        active_client_ids = sorted(set(self.registry.active_client_ids()))
+        for client_id in active_client_ids:
+            record = self.registry.get(client_id)
+            if record is None:
+                continue
             metrics = record.latest_metrics
             if not metrics:
                 continue
@@ -373,7 +377,7 @@ class MetricsLogger:
                     "run_id": run_id,
                     "timestamp_utc": timestamp_utc,
                     "t_s": t_s,
-                    "client_id": record.client_id,
+                    "client_id": client_id,
                     "client_name": record.name,
                     "sample_rate_hz": int(sample_rate_hz) if sample_rate_hz else None,
                     "speed_kmh": speed_kmh,
