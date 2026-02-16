@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections import defaultdict
 from datetime import UTC, datetime
 from io import BytesIO
 from statistics import mean
 
+from . import __version__
 from .report_analysis import (
     _as_float,
     _normalize_lang,
@@ -26,79 +28,6 @@ from .report_theme import (
 )
 
 LOGGER = logging.getLogger(__name__)
-
-
-def _pdf_escape(text: str) -> str:
-    return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-
-
-def _fallback_pdf(summary: dict[str, object]) -> bytes:
-    lang = _normalize_lang(summary.get("lang"))
-    generated = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
-    findings = summary.get("findings", [])
-
-    lines = [
-        _tr(lang, "VIBESENSOR_NVH_REPORT"),
-        "",
-        _tr(lang, "GENERATED_GENERATED", generated=generated),
-        _tr(lang, "RUN_FILE_NAME", name=summary.get("file_name", "")),
-        f"Run ID: {summary.get('run_id', '')}",
-        _tr(lang, "ROWS_ROWS", rows=summary.get("rows", 0)),
-        _tr(lang, "DURATION_DURATION_1F_S", duration=float(summary.get("duration_s", 0.0))),
-        _tr(lang, "FINDINGS"),
-    ]
-    if isinstance(findings, list) and findings:
-        for idx, finding in enumerate(findings[:8], start=1):
-            if not isinstance(finding, dict):
-                continue
-            lines.append(
-                f"{idx}. {finding.get('suspected_source', 'unknown')} | "
-                f"{finding.get('evidence_summary', '')}"
-            )
-    else:
-        lines.append(_tr(lang, "T_1_NO_FINDINGS_GENERATED"))
-
-    lines = lines[:44]
-    content_lines = ["BT", "/F1 11 Tf", "50 790 Td", "14 TL"]
-    for i, line in enumerate(lines):
-        safe = _pdf_escape(str(line))
-        if i == 0:
-            content_lines.append(f"({safe}) Tj")
-        else:
-            content_lines.append(f"T* ({safe}) Tj")
-    content_lines.append("ET")
-    content = "\n".join(content_lines).encode("latin-1", errors="replace")
-
-    objects = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        (
-            b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-            b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>"
-        ),
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        f"<< /Length {len(content)} >>".encode("ascii") + b"\nstream\n" + content + b"\nendstream",
-    ]
-
-    out = bytearray(b"%PDF-1.4\n")
-    offsets = [0]
-    for idx, obj in enumerate(objects, start=1):
-        offsets.append(len(out))
-        out.extend(f"{idx} 0 obj\n".encode("ascii"))
-        out.extend(obj)
-        out.extend(b"\nendobj\n")
-
-    xref_start = len(out)
-    out.extend(f"xref\n0 {len(offsets)}\n".encode("ascii"))
-    out.extend(b"0000000000 65535 f \n")
-    for off in offsets[1:]:
-        out.extend(f"{off:010d} 00000 n \n".encode("ascii"))
-    out.extend(
-        f"trailer << /Size {len(offsets)} /Root 1 0 R >>\nstartxref\n{xref_start}\n%%EOF\n".encode(
-            "ascii"
-        )
-    )
-    return bytes(out)
 
 
 def _reportlab_pdf(summary: dict[str, object]) -> bytes:
@@ -479,7 +408,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         tone_map = {"success": "high", "warn": "medium", "neutral": "low", "error": "low"}
         return tone_map.get(tone, "low")
 
-    def _confidence_pill_html(conf_0_to_1: float) -> str:
+    def _confidence_pill_html(conf_0_to_1: float, *, show_percent: bool = False) -> str:
         """Return a small HTML snippet for the confidence pill."""
         label_key, tone, pct_text = confidence_label(conf_0_to_1)
         label = tr(label_key)
@@ -488,11 +417,13 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         pill_text_color = REPORT_COLORS.get(
             f"pill_{pill_tone}_text", REPORT_COLORS["pill_low_text"]
         )
-        return (
+        html = (
             f'<font color="{pill_text_color}">'
             f'<span backColor="{pill_bg}"> {escape(label)} </span></font>'
-            f' <font size="6" color="{REPORT_COLORS["text_muted"]}">{escape(pct_text)}</font>'
         )
+        if show_percent:
+            html += f' <font size="6" color="{REPORT_COLORS["text_muted"]}">{escape(pct_text)}</font>'
+        return html
 
     def downsample(
         points: list[tuple[float, float]], max_points: int = 260
@@ -673,6 +604,208 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             )
         return drawing
 
+    def compact_note_panel(title: str, note: str, width: float, height: float = 170) -> Table:
+        panel = Table(
+            [
+                [Paragraph(f"<b>{escape(title)}</b>", style_note)],
+                [Spacer(1, 6)],
+                [Paragraph(escape(note), style_note)],
+            ],
+            colWidths=[width],
+            rowHeights=[16, 8, height - 24],
+        )
+        panel.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(REPORT_COLORS["surface"])),
+                (
+                    "BOX",
+                    (0, 0),
+                    (-1, -1),
+                    0.6,
+                    colors.HexColor(REPORT_COLORS["card_neutral_border"]),
+                ),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROUNDEDCORNERS", [CARD_RADIUS, CARD_RADIUS, CARD_RADIUS, CARD_RADIUS]),
+            ])
+        )
+        return panel
+
+    def spectrogram_plot(
+        title: str,
+        spectrogram: dict[str, object],
+        width: float,
+        height: int = 170,
+    ) -> Drawing:
+        drawing = Drawing(width, height)
+        drawing.add(
+            String(
+                8,
+                height - 15,
+                title,
+                fontName="Helvetica-Bold",
+                fontSize=9,
+                fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
+            )
+        )
+
+        x_bins = spectrogram.get("x_bins", []) if isinstance(spectrogram, dict) else []
+        y_bins = spectrogram.get("y_bins", []) if isinstance(spectrogram, dict) else []
+        cells = spectrogram.get("cells", []) if isinstance(spectrogram, dict) else []
+        max_amp = _as_float(spectrogram.get("max_amp")) if isinstance(spectrogram, dict) else 0.0
+
+        if (
+            not isinstance(x_bins, list)
+            or not isinstance(y_bins, list)
+            or not isinstance(cells, list)
+            or not x_bins
+            or not y_bins
+            or not cells
+            or not max_amp
+        ):
+            drawing.add(
+                String(
+                    8,
+                    height - 32,
+                    tr("PLOT_NO_DATA_AVAILABLE"),
+                    fontSize=8,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
+                )
+            )
+            return drawing
+
+        plot_x0 = 44
+        plot_y0 = 28
+        plot_w = width - 62
+        plot_h = height - 52
+        cols = max(1, len(x_bins))
+        rows = max(1, len(y_bins))
+        cell_w = plot_w / cols
+        cell_h = plot_h / rows
+
+        def _hex_to_rgb(value: str) -> tuple[int, int, int]:
+            txt = value.strip().lstrip("#")
+            return (int(txt[0:2], 16), int(txt[2:4], 16), int(txt[4:6], 16))
+
+        def _rgb_to_hex(rgb: tuple[int, int, int]) -> str:
+            return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+
+        def _blend(a: str, b: str, t: float) -> str:
+            t_clamped = max(0.0, min(1.0, t))
+            ar, ag, ab = _hex_to_rgb(a)
+            br, bg, bb = _hex_to_rgb(b)
+            return _rgb_to_hex(
+                (
+                    int(round(ar + ((br - ar) * t_clamped))),
+                    int(round(ag + ((bg - ag) * t_clamped))),
+                    int(round(ab + ((bb - ab) * t_clamped))),
+                )
+            )
+
+        for yi, row in enumerate(cells):
+            if not isinstance(row, list):
+                continue
+            for xi, amp in enumerate(row):
+                level = ((_as_float(amp) or 0.0) / max_amp) if max_amp and max_amp > 0 else 0.0
+                color_hex = _blend(REPORT_COLORS["surface_alt"], REPORT_PLOT_COLORS["vibration"], level)
+                drawing.add(
+                    Rect(
+                        plot_x0 + (xi * cell_w),
+                        plot_y0 + (yi * cell_h),
+                        max(0.1, cell_w),
+                        max(0.1, cell_h),
+                        fillColor=colors.HexColor(color_hex),
+                        strokeColor=colors.HexColor(REPORT_COLORS["surface_alt"]),
+                        strokeWidth=0.2,
+                    )
+                )
+
+        drawing.add(
+            Line(
+                plot_x0,
+                plot_y0,
+                plot_x0 + plot_w,
+                plot_y0,
+                strokeColor=colors.HexColor(REPORT_COLORS["axis"]),
+            )
+        )
+        drawing.add(
+            Line(
+                plot_x0,
+                plot_y0,
+                plot_x0,
+                plot_y0 + plot_h,
+                strokeColor=colors.HexColor(REPORT_COLORS["axis"]),
+            )
+        )
+
+        x_label_key = str(spectrogram.get("x_label_key") or "TIME_S")
+        drawing.add(
+            String(
+                plot_x0 + (plot_w / 2) - 18,
+                8,
+                tr(x_label_key),
+                fontSize=6.5,
+                fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
+            )
+        )
+        drawing.add(
+            String(
+                8,
+                plot_y0 + (plot_h / 2),
+                tr("FREQUENCY_HZ"),
+                fontSize=6.5,
+                fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
+            )
+        )
+
+        x_start = _as_float(x_bins[0]) if x_bins else None
+        x_end = _as_float(x_bins[-1]) if x_bins else None
+        y_start = _as_float(y_bins[0]) if y_bins else None
+        y_end = _as_float(y_bins[-1]) if y_bins else None
+        if x_start is not None and x_end is not None:
+            drawing.add(
+                String(
+                    plot_x0,
+                    plot_y0 - 10,
+                    f"{x_start:.0f}",
+                    fontSize=6,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                )
+            )
+            drawing.add(
+                String(
+                    plot_x0 + plot_w - 12,
+                    plot_y0 - 10,
+                    f"{x_end:.0f}",
+                    fontSize=6,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                )
+            )
+        if y_start is not None and y_end is not None:
+            drawing.add(
+                String(
+                    plot_x0 - 24,
+                    plot_y0,
+                    f"{y_start:.0f}",
+                    fontSize=6,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                )
+            )
+            drawing.add(
+                String(
+                    plot_x0 - 26,
+                    plot_y0 + plot_h - 2,
+                    f"{y_end:.0f}",
+                    fontSize=6,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                )
+            )
+        return drawing
+
     def _canonical_location(raw: object) -> str:
         token = str(raw or "").strip().lower().replace("_", "-")
         if "front" in token and "left" in token and "wheel" in token:
@@ -700,18 +833,19 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     def car_location_diagram(
         top_findings: list[dict[str, object]],
         diagram_width: float | None = None,
+        diagram_height: float = 252,
     ) -> Drawing:
         d_width = diagram_width if diagram_width is not None else content_width * 0.44
         bmw_length_mm = 5007.0
         bmw_width_mm = 1894.0
         length_width_ratio = bmw_length_mm / bmw_width_mm
 
-        drawing_h = 370
+        drawing_h = max(220.0, float(diagram_height))
         drawing = Drawing(d_width, drawing_h)
-        car_h = 280.0
+        car_h = max(162.0, drawing_h - 88.0)
         car_w = car_h / length_width_ratio
         x0 = (d_width - car_w) / 2.0
-        y0 = 50.0
+        y0 = 32.0
         cx = x0 + (car_w / 2)
         cy = y0 + (car_h / 2)
 
@@ -986,6 +1120,8 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         return _required_text(value, tr(consequence_key), lang=lang)
 
     report_date = summary.get("report_date") or datetime.now(UTC).isoformat()
+    git_sha = str(os.getenv("GIT_SHA", "")).strip()
+    version_marker = f"v{__version__} ({git_sha[:8]})" if git_sha else f"v{__version__}"
     quality = summary.get("data_quality", {})
     required_missing = quality.get("required_missing_pct", {}) if isinstance(quality, dict) else {}
     speed_cov = quality.get("speed_coverage", {}) if isinstance(quality, dict) else {}
@@ -1073,9 +1209,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         tc = top_causes[0]
         tc_source = human_source(tc.get("source") or tc.get("suspected_source"))
         tc_conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
-        tc_pill = _confidence_pill_html(tc_conf)
-        tc_sigs = tc.get("signatures_observed", [])
-        sigs_text = ", ".join(str(s) for s in tc_sigs) if tc_sigs else tr("UNKNOWN")
+        tc_pill = _confidence_pill_html(tc_conf, show_percent=False)
         tc_loc = str(tc.get("strongest_location") or tr("UNKNOWN"))
         tc_speed = str(tc.get("strongest_speed_band") or tr("UNKNOWN"))
         cause_tone = tc.get("confidence_tone", "neutral")
@@ -1084,7 +1218,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             [
                 Paragraph(f"<b>{escape(tc_source)}</b> {tc_pill}", style_note),
                 Paragraph(
-                    f"{tr('SIGNATURES_OBSERVED_LABEL')}: {escape(sigs_text)}<br/>"
                     f"{tr('STRONGEST_LOCATION')}: {escape(tc_loc)}<br/>"
                     f"{tr('STRONGEST_SPEED_BAND')}: {escape(tc_speed)}",
                     style_small,
@@ -1170,13 +1303,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         if second > 0:
             dominance_ratio = strongest_peak_g / second
 
-    all_sigs: list[str] = []
-    for tc in top_causes:
-        for s in tc.get("signatures_observed", []):
-            if str(s) not in all_sigs:
-                all_sigs.append(str(s))
-    sigs_str = ", ".join(all_sigs) if all_sigs else tr("UNKNOWN")
-
     ref_complete = any(
         str(item.get("state") or "") == "pass"
         for item in run_suitability
@@ -1188,7 +1314,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         [tr("STRONGEST_LOCATION"), f"{strongest_loc_text} ({strongest_peak_g:.4f} g)"],
         [tr("DOMINANCE_RATIO"), f"{dominance_ratio:.2f}x"],
         [tr("STRONGEST_SPEED_BAND"), str(top_causes[0].get("strongest_speed_band") or tr("UNKNOWN")) if top_causes else tr("UNKNOWN")],
-        [tr("OBSERVED_SIGNATURES"), sigs_str],
         [tr("REFERENCE_COMPLETENESS"), ref_text_val],
     ]
 
@@ -1228,120 +1353,135 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     # ═════════════════════════════════════════════════════════════════════
     story.append(PageBreak())
     story.append(Paragraph(tr("EVIDENCE_AND_HOTSPOTS"), style_title))
+    left_width = content_width * 0.45
+    right_width = content_width * 0.55
 
-    chart_width = content_width * 0.54
-    chart_height = 185
-    chart1: Drawing | None = None
-    chart2: Drawing | None = None
-    chart_note_key = "CHART_INTERPRETATION_SWEEP"
+    diagram = car_location_diagram(top_causes or findings, diagram_width=left_width)
 
-    if steady_speed:
-        chart_note_key = "CHART_INTERPRETATION_STEADY"
-        vib_points = plots.get("vib_magnitude", [])
-        freq_points = plots.get("dominant_freq", [])
-        if isinstance(vib_points, list) and vib_points:
-            chart1 = line_plot(
-                title=tr("AMPLITUDE_VS_TIME"),
-                x_label=tr("TIME_S"),
-                y_label=text("amplitude (g)", "amplitude (g)"),
-                series=[
-                    (
-                        tr("PLOT_SERIES_MAGNITUDE"),
-                        REPORT_PLOT_COLORS["vibration"],
-                        vib_points,
-                    )
-                ],
-                width=chart_width,
-                height=chart_height,
-            )
-        if isinstance(freq_points, list) and freq_points:
-            chart2 = line_plot(
-                title=tr("DOMINANT_FREQ_VS_TIME"),
-                x_label=tr("TIME_S"),
-                y_label=tr("FREQUENCY_HZ"),
-                series=[
-                    (
-                        tr("PLOT_DOM_FREQ_OVER_TIME"),
-                        REPORT_PLOT_COLORS["dominant_freq"],
-                        freq_points,
-                    )
-                ],
-                width=chart_width,
-                height=chart_height,
+    fft_points = plots.get("fft_spectrum", [])
+    fft_chart: Drawing | None = None
+    if isinstance(fft_points, list) and fft_points:
+        fft_chart = line_plot(
+            title=text("FFT spectrum (global)", "FFT-spectrum (globaal)"),
+            x_label=tr("FREQUENCY_HZ"),
+            y_label=text("amplitude (g)", "amplitude (g)"),
+            series=[
+                (
+                    text("max amplitude", "maximale amplitude"),
+                    REPORT_PLOT_COLORS["vibration"],
+                    fft_points,
+                )
+            ],
+            width=right_width,
+            height=168,
+        )
+
+    spectrogram_data = plots.get("peaks_spectrogram", {})
+    spectrogram_chart = spectrogram_plot(
+        text("Spectrogram (from peaks)", "Spectrogram (uit pieken)"),
+        spectrogram_data if isinstance(spectrogram_data, dict) else {},
+        width=right_width,
+        height=168,
+    )
+
+    peaks_rows = [
+        [
+            text("Rank", "Rang"),
+            text("Frequency (Hz)", "Frequentie (Hz)"),
+            text("Order", "Orde"),
+            text("Max amp (g)", "Max amp (g)"),
+            text("Typical speed", "Typische snelheid"),
+        ]
+    ]
+    peaks_table_items = plots.get("peaks_table", [])
+    if isinstance(peaks_table_items, list) and peaks_table_items:
+        for row in peaks_table_items[:10]:
+            if not isinstance(row, dict):
+                continue
+            peaks_rows.append(
+                [
+                    str(int(_as_float(row.get("rank")) or 0)),
+                    f"{(_as_float(row.get('frequency_hz')) or 0.0):.1f}",
+                    str(row.get("order_label") or "-"),
+                    f"{(_as_float(row.get('max_amp_g')) or 0.0):.4f}",
+                    str(row.get("typical_speed_band") or "-"),
+                ]
             )
     else:
-        matched_series = plots.get("matched_amp_vs_speed", [])
-        freq_series = plots.get("freq_vs_speed_by_finding", [])
-        if isinstance(matched_series, list) and matched_series:
-            plot_series = []
-            for idx_s, series_data in enumerate(matched_series[:3]):
-                if not isinstance(series_data, dict):
-                    continue
-                pts = series_data.get("points", [])
-                if not isinstance(pts, list) or not pts:
-                    continue
-                color = REPORT_PLOT_COLORS["matched_series"][
-                    idx_s % len(REPORT_PLOT_COLORS["matched_series"])
-                ]
-                plot_series.append((str(series_data.get("label", "")), color, pts))
-            if plot_series:
-                chart1 = line_plot(
-                    title=text(
-                        "Matched amplitude vs speed",
-                        "Gematchte amplitude vs snelheid",
-                    ),
-                    x_label=tr("SPEED_KM_H"),
-                    y_label=text("amplitude (g)", "amplitude (g)"),
-                    series=plot_series,
-                    width=chart_width,
-                    height=chart_height,
-                )
-        if isinstance(freq_series, list) and freq_series:
-            for fs in freq_series[:1]:
-                if not isinstance(fs, dict):
-                    continue
-                freq_m = fs.get("matched", [])
-                freq_p = fs.get("predicted", [])
-                if isinstance(freq_m, list) and freq_m:
-                    chart2 = line_plot(
-                        title=text(
-                            "Frequency vs speed with predicted curve",
-                            "Frequentie vs snelheid met voorspelde curve",
-                        ),
-                        x_label=tr("SPEED_KM_H"),
-                        y_label=tr("FREQUENCY_HZ"),
-                        series=[
-                            (text("matched", "gematcht"), REPORT_PLOT_COLORS["vibration"], freq_m),
-                            (
-                                text("predicted", "voorspeld"),
-                                REPORT_PLOT_COLORS["predicted_curve"],
-                                freq_p if isinstance(freq_p, list) else [],
-                            ),
-                        ],
-                        width=chart_width,
-                        height=chart_height,
-                    )
+        peaks_rows.append([
+            "-",
+            "-",
+            "-",
+            "-",
+            tr("PLOT_NO_DATA_AVAILABLE"),
+        ])
 
-    # Layout: left = car diagram, right = stacked charts
-    diagram = car_location_diagram(top_causes or findings, diagram_width=content_width * 0.42)
-    right_elements: list[object] = []
-    if chart1:
-        right_elements.append(chart1)
-    if chart2:
-        right_elements.append(Spacer(1, 6))
-        right_elements.append(chart2)
-    if not right_elements:
-        right_elements.append(Paragraph(tr("PLOT_NO_DATA_AVAILABLE"), style_note))
-    right_elements.append(Spacer(1, 4))
-    right_elements.append(Paragraph(tr(chart_note_key), style_small))
-
-    right_table = Table([[e] for e in right_elements], colWidths=[chart_width])
-    right_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
-    page2_layout = Table(
-        [[diagram, right_table]],
-        colWidths=[content_width * 0.44, content_width * 0.56],
+    peaks_table_block = styled_table(
+        peaks_rows,
+        col_widths=[32, 72, 68, 72, 138],
     )
-    page2_layout.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+
+    left_column = Table(
+        [
+            [diagram],
+            [Paragraph(f"<b>{text('Top Peaks', 'Top pieken')}</b>", style_h3)],
+            [peaks_table_block],
+        ],
+        colWidths=[left_width],
+    )
+    left_column.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+            ]
+        )
+    )
+
+    right_blocks: list[object] = []
+    if fft_chart is not None:
+        right_blocks.append(fft_chart)
+    else:
+        right_blocks.append(
+            compact_note_panel(
+                text("FFT spectrum (global)", "FFT-spectrum (globaal)"),
+                tr("PLOT_NO_DATA_AVAILABLE"),
+                right_width,
+                168,
+            )
+        )
+    right_blocks.append(Spacer(1, 6))
+    right_blocks.append(spectrogram_chart)
+
+    right_column = Table([[item] for item in right_blocks], colWidths=[right_width])
+    right_column.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
+
+    page2_layout = Table(
+        [[left_column, right_column]],
+        colWidths=[left_width, right_width],
+    )
+    page2_layout.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
     story.append(page2_layout)
 
     # ═════════════════════════════════════════════════════════════════════
@@ -1687,7 +1827,13 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                     ptext(finding.get("evidence_summary", "")),
                     ptext(human_frequency_text(finding.get("frequency_hz_or_order"))),
                     ptext(human_amp_text(finding.get("amplitude_metric"))),
-                    Paragraph(_confidence_pill_html(_as_float(finding.get("confidence_0_to_1")) or 0.0), style_note),
+                    Paragraph(
+                        _confidence_pill_html(
+                            _as_float(finding.get("confidence_0_to_1")) or 0.0,
+                            show_percent=True,
+                        ),
+                        style_note,
+                    ),
                     human_list(finding.get("quick_checks")),
                 ]
             )
@@ -1715,17 +1861,21 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         bottomMargin=bottom_margin,
         pageCompression=0,
     )
+    doc.title = f"VibeSensor Report {version_marker}"
+    doc.subject = version_marker
+    doc.author = "VibeSensor"
 
     def draw_footer(canvas, document) -> None:  # pragma: no cover - formatting callback
         canvas.saveState()
         canvas.setFont("Helvetica", 8)
         canvas.setFillColor(colors.HexColor(REPORT_COLORS["text_muted"]))
         canvas.drawString(document.leftMargin, 12, tr("REPORT_FOOTER_TITLE"))
-        canvas.drawRightString(
-            page_size[0] - document.rightMargin,
+        canvas.drawCentredString(
+            page_size[0] / 2.0,
             12,
             tr("PAGE_LABEL", page=canvas.getPageNumber()),
         )
+        canvas.drawRightString(page_size[0] - document.rightMargin, 12, version_marker)
         canvas.restoreState()
 
     doc.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)
@@ -1735,9 +1885,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
 def build_report_pdf(summary: dict[str, object]) -> bytes:
     try:
         return _reportlab_pdf(summary)
-    except Exception:
-        LOGGER.warning(
-            "ReportLab PDF generation failed, using fallback PDF renderer.",
-            exc_info=True,
-        )
-        return _fallback_pdf(summary)
+    except Exception as exc:
+        LOGGER.error("ReportLab PDF generation failed.", exc_info=True)
+        raise RuntimeError("ReportLab PDF generation failed") from exc

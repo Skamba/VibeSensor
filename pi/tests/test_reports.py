@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import re
+from io import BytesIO
 from pathlib import Path
 
 import pytest
+from pypdf import PdfReader
 
+from vibesensor import __version__
 from vibesensor.reports import build_report_pdf, summarize_log
 
 
@@ -17,6 +21,16 @@ def _write_jsonl(path: Path, records: list[dict]) -> None:
 
 def _assert_pdf_contains(pdf_bytes: bytes, text: str) -> None:
     assert text.encode("latin-1", errors="ignore") in pdf_bytes
+
+
+def _extract_media_box(pdf_bytes: bytes) -> tuple[float, float, float, float]:
+    text = pdf_bytes.decode("latin-1", errors="ignore")
+    match = re.search(
+        r"/MediaBox\s*\[\s*([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s+([0-9.]+)\s*\]",
+        text,
+    )
+    assert match is not None
+    return tuple(float(match.group(idx)) for idx in range(1, 5))
 
 
 def _run_metadata(
@@ -346,3 +360,60 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(tmp
     assert set(strength["counts"].keys()) == {"l1", "l2", "l3", "l4", "l5"}
     pct_sum = sum(strength[f"percent_time_l{idx}"] for idx in range(1, 6))
     assert pct_sum == pytest.approx(100.0, rel=1e-6)
+
+
+def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_a4_landscape.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(12):
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=55.0 + idx,
+                dominant_freq_hz=14.0 + (idx * 0.2),
+                dominant_peak_amp_g=0.07 + (idx * 0.0006),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    pdf = build_report_pdf(summary)
+    x0, y0, x1, y1 = _extract_media_box(pdf)
+    width = x1 - x0
+    height = y1 - y0
+
+    assert width > height
+    assert width == pytest.approx(841.9, abs=2.0)
+    assert height == pytest.approx(595.3, abs=2.0)
+
+
+def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("GIT_SHA", "a1b2c3d4e5f6")
+
+    run_path = tmp_path / "run_version_marker.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(8):
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=48.0 + idx,
+                dominant_freq_hz=16.0,
+                dominant_peak_amp_g=0.05 + (idx * 0.001),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    pdf = build_report_pdf(summary)
+    marker = f"v{__version__} (a1b2c3d4)"
+    reader = PdfReader(BytesIO(pdf))
+    text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
+    meta = reader.metadata
+    meta_blob = " ".join(
+        str(value)
+        for value in (getattr(meta, "title", None), getattr(meta, "subject", None))
+        if value
+    )
+    assert marker in text_blob or marker in meta_blob
