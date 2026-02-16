@@ -1,4 +1,5 @@
 import "uplot/dist/uPlot.min.css";
+import uPlot from "uplot";
 import "./styles/app.css";
 import * as I18N from "./i18n";
 import {
@@ -58,6 +59,7 @@ import { WsClient, type WsUiState } from "./ws";
     spectrumOverlay: document.getElementById("spectrumOverlay"),
     legend: document.getElementById("legend"),
     bandLegend: document.getElementById("bandLegend"),
+    strengthChart: document.getElementById("strengthChart"),
     tireWidthInput: document.getElementById("tireWidthInput"),
     tireAspectInput: document.getElementById("tireAspectInput"),
     rimInput: document.getElementById("rimInput"),
@@ -134,6 +136,16 @@ import { WsClient, type WsUiState } from "./ws";
     locationCodes: defaultLocationCodes.slice(),
     hasSpectrumData: false,
     hasReceivedPayload: false,
+    useServerDiagnostics: false,
+    strengthPlot: null,
+    strengthHoverText: "",
+    strengthHistory: {
+      t: [],
+      wheel: [],
+      driveshaft: [],
+      engine: [],
+      other: [],
+    },
   };
 
   function t(key: string, vars?: Record<string, unknown>) {
@@ -221,7 +233,7 @@ import { WsClient, type WsUiState } from "./ws";
     for (const src of sourceColumns) {
       matrix[src.key] = {};
       for (const band of severityBands) {
-        matrix[src.key][band.key] = { count: 0, contributors: {} };
+        matrix[src.key][band.key] = { count: 0, seconds: 0, contributors: {} };
       }
     }
     return matrix;
@@ -1225,6 +1237,7 @@ import { WsClient, type WsUiState } from "./ws";
     const parts = [
       `${t(source?.labelKey || sourceKey)} / ${t(band?.labelKey || severityKey)}`,
       t("tooltip.total_events", { count: cell.count }),
+      `Seconds: ${fmt(cell.seconds || 0, 1)}` ,
     ];
     const entries = (Object.entries(cell.contributors) as Array<[string, number]>).sort(
       (a, b) => b[1] - a[1],
@@ -1296,6 +1309,108 @@ import { WsClient, type WsUiState } from "./ws";
       .join("");
     els.vibrationMatrix.innerHTML = `${header}<tbody>${bodyRows}</tbody>`;
     bindMatrixTooltips();
+  }
+
+  function applyServerDiagnostics(diagnostics) {
+    if (diagnostics.matrix) {
+      state.eventMatrix = diagnostics.matrix;
+      renderMatrix();
+    }
+    const events = Array.isArray(diagnostics.events) ? diagnostics.events : [];
+    if (events.length) {
+      for (const ev of events.slice(0, 6)) {
+        const labels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels.join(", ") : (ev.sensor_label || "--");
+        pushVibrationMessage(
+          `Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(ev.severity_db || 0, 1)} dB) @ ${fmt(ev.peak_hz || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`,
+        );
+      }
+    }
+
+    const levels = diagnostics.levels || {};
+    const bySource = levels.by_source || {};
+    pushStrengthSample(bySource);
+  }
+
+  function ensureStrengthChart() {
+    if (!els.strengthChart) return;
+    if (state.strengthPlot) return;
+    const shades = [
+      [10, 16, "rgba(59,130,246,0.08)"],
+      [16, 22, "rgba(34,197,94,0.08)"],
+      [22, 28, "rgba(234,179,8,0.08)"],
+      [28, 34, "rgba(249,115,22,0.08)"],
+      [34, 60, "rgba(239,68,68,0.08)"],
+    ];
+    const shadePlugin = {
+      hooks: {
+        drawClear: [
+          (u) => {
+            const ctx = u.ctx;
+            for (const [lo, hi, fill] of shades) {
+              const y0 = u.valToPos(hi, "y", true);
+              const y1 = u.valToPos(lo, "y", true);
+              ctx.fillStyle = fill;
+              ctx.fillRect(u.bbox.left, y0, u.bbox.width, y1 - y0);
+            }
+          },
+        ],
+        setCursor: [
+          (u) => {
+            const idx = u.cursor?.idx;
+            if (idx == null || idx < 0) {
+              state.strengthHoverText = "";
+              return;
+            }
+          },
+        ],
+      },
+    };
+    state.strengthPlot = new uPlot(
+      {
+        title: "Strength over time",
+        width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)),
+        height: 220,
+        scales: { x: { time: false }, y: { range: [0, 50] } },
+        axes: [{ label: "s" }, { label: "Strength (dB over floor)" }],
+        series: [
+          { label: "t" },
+          { label: "wheel", stroke: "#2563eb", width: 2 },
+          { label: "driveshaft", stroke: "#14b8a6", width: 2 },
+          { label: "engine", stroke: "#f59e0b", width: 2 },
+          { label: "other", stroke: "#8b5cf6", width: 2 },
+        ],
+        plugins: [shadePlugin],
+      },
+      [[], [], [], [], []],
+      els.strengthChart,
+    );
+  }
+
+  function pushStrengthSample(bySource) {
+    ensureStrengthChart();
+    if (!state.strengthPlot) return;
+    const now = Date.now() / 1000;
+    state.strengthHistory.t.push(now);
+    for (const key of ["wheel", "driveshaft", "engine", "other"]) {
+      const level = bySource?.[key];
+      state.strengthHistory[key].push(level?.strength_db || 0);
+    }
+    while (state.strengthHistory.t.length > 600) {
+      state.strengthHistory.t.shift();
+      state.strengthHistory.wheel.shift();
+      state.strengthHistory.driveshaft.shift();
+      state.strengthHistory.engine.shift();
+      state.strengthHistory.other.shift();
+    }
+    const t0 = state.strengthHistory.t[0] || now;
+    const relT = state.strengthHistory.t.map((v) => v - t0);
+    state.strengthPlot.setData([
+      relT,
+      state.strengthHistory.wheel,
+      state.strengthHistory.driveshaft,
+      state.strengthHistory.engine,
+      state.strengthHistory.other,
+    ]);
   }
 
   function pushRecentEvents(events, nowTs) {
@@ -1427,7 +1542,9 @@ import { WsClient, type WsUiState } from "./ws";
     state.hasSpectrumData = true;
     state.spectrumPlot.setData(dbData);
     updateSpectrumOverlay();
-    detectVibrationEvents(linearData, entries);
+    if (!state.useServerDiagnostics) {
+      detectVibrationEvents(linearData, entries);
+    }
   }
 
   function detectVibrationEvents(data, entries) {
@@ -1612,6 +1729,12 @@ import { WsClient, type WsUiState } from "./ws";
         const z = Array.isArray(clientSpec?.z) ? clientSpec.z.length : 0;
         return fx > 0 && (x > 0 || y > 0 || z > 0);
       });
+    }
+    if (payload.diagnostics && typeof payload.diagnostics === "object") {
+      applyServerDiagnostics(payload.diagnostics);
+      state.useServerDiagnostics = true;
+    } else {
+      state.useServerDiagnostics = false;
     }
     renderSpeedReadout();
     if (payload.spectra) {

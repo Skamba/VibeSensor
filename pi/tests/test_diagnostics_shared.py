@@ -56,11 +56,16 @@ def test_classify_peak_matches_engine_order() -> None:
 
 
 def test_severity_from_peak_thresholds() -> None:
-    low = severity_from_peak(peak_amp=5.0, floor_amp=5.0, sensor_count=1)
-    high = severity_from_peak(peak_amp=120.0, floor_amp=1.0, sensor_count=1)
-    assert low is None or low["key"] in {"l1", "l2"}
+    state = None
+    low = severity_from_peak(strength_db=4.0, band_rms=0.002, sensor_count=1, prior_state=state)
+    assert low is not None
+    assert low["key"] is None
+    high = None
+    for _ in range(3):
+        high = severity_from_peak(strength_db=35.0, band_rms=0.06, sensor_count=1, prior_state=state)
+        state = None if high is None else dict(high.get("state") or {})
     assert high is not None
-    assert high["key"] in {"l4", "l5"}
+    assert high["key"] == "l5"
 
 
 def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
