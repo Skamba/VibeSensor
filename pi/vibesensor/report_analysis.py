@@ -9,10 +9,6 @@ from statistics import mean
 from typing import Any
 
 from .analysis_settings import tire_circumference_m_from_spec
-from .analysis.strength_metrics import (
-    strength_bucket as canonical_strength_bucket,
-    strength_db as canonical_strength_db,
-)
 from .report_i18n import tr as _tr
 from .runlog import parse_iso8601, read_jsonl_run
 
@@ -44,6 +40,24 @@ def _as_float(value: object) -> float | None:
     if out != out:  # NaN
         return None
     return out
+
+
+def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
+    for idx, sample in enumerate(samples):
+        missing: list[str] = []
+        if _as_float(sample.get("strength_peak_band_rms_amp_g")) is None:
+            missing.append("strength_peak_band_rms_amp_g")
+        if _as_float(sample.get("strength_floor_amp_g")) is None:
+            missing.append("strength_floor_amp_g")
+        if _as_float(sample.get("strength_db")) is None:
+            missing.append("strength_db")
+        if sample.get("strength_bucket") in (None, ""):
+            missing.append("strength_bucket")
+        if missing:
+            fields = ", ".join(missing)
+            raise ValueError(
+                f"Missing required precomputed strength metrics in sample index {idx}: {fields}"
+            )
 
 
 def _format_duration(seconds: float) -> str:
@@ -292,28 +306,15 @@ def _sensor_intensity_by_location(
         overflow_total = _as_float(sample.get("queue_overflow_drops"))
         if overflow_total is not None:
             overflow_totals[location].append(overflow_total)
-        peaks = _sample_top_peaks(sample)
-        band_rms = (
-            _as_float(sample.get("strength_peak_band_rms_amp_g"))
-            or (peaks[0][1] if peaks else (_as_float(sample.get("dominant_peak_amp_g")) or amp))
-            or 0.0
-        )
-        floor_amp = (
-            _as_float(sample.get("strength_floor_amp_g"))
-            or _as_float(sample.get("noise_floor_amp_p20_g"))
-            or _as_float(sample.get("noise_floor_amp"))
-            or 0.0
-        )
+        band_rms = _as_float(sample.get("strength_peak_band_rms_amp_g"))
+        floor_amp = _as_float(sample.get("strength_floor_amp_g"))
         strength_db = _as_float(sample.get("strength_db"))
-        if strength_db is None:
-            strength_db = canonical_strength_db(
-                strength_peak_band_rms_amp_g=max(0.0, band_rms),
-                strength_floor_amp_g=max(0.0, floor_amp),
+        bucket = str(sample.get("strength_bucket") or "")
+        if band_rms is None or floor_amp is None or strength_db is None or not bucket:
+            raise ValueError(
+                "Missing required precomputed strength metrics for report summary "
+                f"(sample location={location})."
             )
-        bucket = str(sample.get("strength_bucket") or "") or canonical_strength_bucket(
-            strength_db=float(strength_db),
-            strength_peak_band_rms_amp_g=max(0.0, band_rms),
-        )
         if bucket:
             strength_bucket_counts[location][bucket] += 1
             strength_bucket_totals[location] += 1
@@ -1032,7 +1033,7 @@ def _build_order_findings(
             matched += 1
             rel_errors.append(delta_hz / max(1e-9, predicted_hz))
             matched_amp.append(best_amp)
-            floor_amp = _as_float(sample.get("noise_floor_amp")) or 0.0
+            floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
             matched_floor.append(max(0.0, floor_amp))
             predicted_vals.append(predicted_hz)
             measured_vals.append(best_hz)
@@ -1763,6 +1764,7 @@ def build_findings_for_samples(
 ) -> list[dict[str, object]]:
     language = _normalize_lang(lang)
     rows = list(samples) if isinstance(samples, list) else []
+    _validate_required_strength_metrics(rows)
     speed_values = [
         speed
         for speed in (_as_float(sample.get("speed_kmh")) for sample in rows)
@@ -1790,6 +1792,7 @@ def summarize_log(
 ) -> dict[str, object]:
     language = _normalize_lang(lang)
     metadata, samples, warnings = _load_run(log_path)
+    _validate_required_strength_metrics(samples)
 
     run_id = str(metadata.get("run_id") or f"run-{log_path.stem}")
     start_ts = parse_iso8601(metadata.get("start_time_utc"))

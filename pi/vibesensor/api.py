@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,6 +16,8 @@ from .reports import build_report_pdf, summarize_log
 
 if TYPE_CHECKING:
     from .app import RuntimeState
+
+LOGGER = logging.getLogger(__name__)
 
 
 class RenameRequest(BaseModel):
@@ -211,14 +214,22 @@ def create_router(state: RuntimeState) -> APIRouter:
         include_samples: int = Query(default=0, ge=0, le=1),
     ) -> dict:
         path = _safe_log_path(state, log_name)
-        return summarize_log(path, lang=lang, include_samples=bool(include_samples))
+        try:
+            return summarize_log(path, lang=lang, include_samples=bool(include_samples))
+        except ValueError as exc:
+            LOGGER.warning("Failed to summarize log '%s': %s", log_name, exc)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @router.get("/api/logs/{log_name}/report.pdf")
     async def download_report_pdf(
         log_name: str, lang: str | None = Query(default=None)
     ) -> Response:
         path = _safe_log_path(state, log_name)
-        summary = summarize_log(path, lang=lang, include_samples=True)
+        try:
+            summary = summarize_log(path, lang=lang, include_samples=True)
+        except ValueError as exc:
+            LOGGER.warning("Failed to build report PDF for '%s': %s", log_name, exc)
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
         pdf = build_report_pdf(summary)
         return Response(
             content=pdf,
