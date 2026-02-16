@@ -1,0 +1,164 @@
+from __future__ import annotations
+
+from vibesensor.live_diagnostics import (
+    _interpolate_to_target,
+    _new_matrix,
+    _copy_matrix,
+    LiveDiagnosticsEngine,
+    SOURCE_KEYS,
+    SEVERITY_KEYS,
+)
+
+
+# -- _new_matrix ---------------------------------------------------------------
+
+
+def test_new_matrix_structure() -> None:
+    m = _new_matrix()
+    assert set(m.keys()) == set(SOURCE_KEYS)
+    for source in SOURCE_KEYS:
+        assert set(m[source].keys()) == set(SEVERITY_KEYS)
+        for severity in SEVERITY_KEYS:
+            cell = m[source][severity]
+            assert cell["count"] == 0
+            assert cell["seconds"] == 0.0
+            assert cell["contributors"] == {}
+
+
+# -- _copy_matrix --------------------------------------------------------------
+
+
+def test_copy_matrix_is_deep() -> None:
+    m = _new_matrix()
+    m["engine"]["l1"]["count"] = 5
+    m["engine"]["l1"]["contributors"]["sensor_a"] = 3
+    copy = _copy_matrix(m)
+    assert copy["engine"]["l1"]["count"] == 5
+    assert copy["engine"]["l1"]["contributors"]["sensor_a"] == 3
+    # Mutating copy should not affect original
+    copy["engine"]["l1"]["count"] = 99
+    assert m["engine"]["l1"]["count"] == 5
+
+
+# -- _interpolate_to_target ---------------------------------------------------
+
+
+def test_interpolate_empty_source() -> None:
+    assert _interpolate_to_target([], [], [1.0, 2.0]) == []
+
+
+def test_interpolate_empty_desired() -> None:
+    result = _interpolate_to_target([1.0, 2.0], [10.0, 20.0], [])
+    assert result == [10.0, 20.0]
+
+
+def test_interpolate_single_source_point() -> None:
+    # len(source) < 2 → returns []
+    assert _interpolate_to_target([1.0], [10.0], [1.0]) == []
+
+
+def test_interpolate_exact_match() -> None:
+    result = _interpolate_to_target([1.0, 2.0, 3.0], [10.0, 20.0, 30.0], [1.0, 2.0, 3.0])
+    assert len(result) == 3
+    assert abs(result[0] - 10.0) < 1e-9
+    assert abs(result[1] - 20.0) < 1e-9
+    assert abs(result[2] - 30.0) < 1e-9
+
+
+def test_interpolate_midpoint() -> None:
+    result = _interpolate_to_target([0.0, 10.0], [0.0, 100.0], [5.0])
+    assert len(result) == 1
+    assert abs(result[0] - 50.0) < 1e-9
+
+
+def test_interpolate_beyond_source_uses_last() -> None:
+    result = _interpolate_to_target([0.0, 10.0], [0.0, 100.0], [20.0])
+    assert len(result) == 1
+    assert abs(result[0] - 100.0) < 1e-9
+
+
+# -- LiveDiagnosticsEngine.reset -----------------------------------------------
+
+
+def test_engine_reset_clears_state() -> None:
+    engine = LiveDiagnosticsEngine()
+    engine.reset()
+    snap = engine.snapshot()
+    assert snap["events"] == []
+    assert snap["findings"] == []
+    # Matrix should be all zeros
+    for source in SOURCE_KEYS:
+        for severity in SEVERITY_KEYS:
+            assert snap["matrix"][source][severity]["count"] == 0
+
+
+# -- LiveDiagnosticsEngine.snapshot structure ----------------------------------
+
+
+def test_engine_snapshot_has_expected_keys() -> None:
+    engine = LiveDiagnosticsEngine()
+    snap = engine.snapshot()
+    assert "matrix" in snap
+    assert "events" in snap
+    assert "strength_bands" in snap
+    assert "levels" in snap
+    assert "findings" in snap
+    assert "top_finding" in snap
+
+
+# -- LiveDiagnosticsEngine._should_emit_event ----------------------------------
+
+
+def test_should_emit_on_new_bucket() -> None:
+    from vibesensor.live_diagnostics import _TrackerLevelState
+    engine = LiveDiagnosticsEngine()
+    tracker = _TrackerLevelState()
+    assert engine._should_emit_event(
+        tracker=tracker, previous_bucket=None, current_bucket="l1", now_ms=1000
+    ) is True
+
+
+def test_should_not_emit_on_no_bucket() -> None:
+    from vibesensor.live_diagnostics import _TrackerLevelState
+    engine = LiveDiagnosticsEngine()
+    tracker = _TrackerLevelState()
+    assert engine._should_emit_event(
+        tracker=tracker, previous_bucket=None, current_bucket=None, now_ms=1000
+    ) is False
+
+
+def test_should_emit_on_escalation() -> None:
+    from vibesensor.live_diagnostics import _TrackerLevelState
+    engine = LiveDiagnosticsEngine()
+    tracker = _TrackerLevelState()
+    assert engine._should_emit_event(
+        tracker=tracker, previous_bucket="l1", current_bucket="l3", now_ms=1000
+    ) is True
+
+
+# -- _matrix_transition_bucket -------------------------------------------------
+
+
+def test_matrix_transition_new_bucket() -> None:
+    engine = LiveDiagnosticsEngine()
+    assert engine._matrix_transition_bucket(None, "l1") == "l1"
+
+
+def test_matrix_transition_escalation() -> None:
+    engine = LiveDiagnosticsEngine()
+    assert engine._matrix_transition_bucket("l1", "l3") == "l3"
+
+
+def test_matrix_transition_same_level_returns_none() -> None:
+    engine = LiveDiagnosticsEngine()
+    assert engine._matrix_transition_bucket("l2", "l2") is None
+
+
+def test_matrix_transition_downgrade_returns_none() -> None:
+    engine = LiveDiagnosticsEngine()
+    assert engine._matrix_transition_bucket("l3", "l1") is None
+
+
+def test_matrix_transition_none_current_returns_none() -> None:
+    engine = LiveDiagnosticsEngine()
+    assert engine._matrix_transition_bucket("l2", None) is None
