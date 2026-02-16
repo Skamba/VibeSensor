@@ -43,11 +43,7 @@ function round1(n: number): number {
 }
 
 function rssPct(...parts: number[]): number {
-  let sumSq = 0;
-  for (const p of parts) {
-    if (typeof p === "number" && p > 0) sumSq += p * p;
-  }
-  return Math.sqrt(sumSq);
+  return combinedRelativeUncertainty(...parts);
 }
 
 export function combinedRelativeUncertainty(...parts: number[]): number {

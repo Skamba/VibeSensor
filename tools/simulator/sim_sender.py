@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from dataclasses import dataclass, field
-from pathlib import Path
 import random
 import shlex
 import subprocess
 import sys
 import time
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 from urllib.error import URLError
 from urllib.request import urlopen

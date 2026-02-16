@@ -5,7 +5,14 @@ from math import sqrt
 from typing import Any
 
 from .analysis_settings import tire_circumference_m_from_spec
-from .strength_bands import DECAY_TICKS, HYSTERESIS_DB, PERSISTENCE_TICKS, band_by_key, band_rank, bucket_for_strength
+from .strength_bands import (
+    DECAY_TICKS,
+    HYSTERESIS_DB,
+    PERSISTENCE_TICKS,
+    band_by_key,
+    band_rank,
+    bucket_for_strength,
+)
 
 DEFAULT_DIAGNOSTIC_SETTINGS: dict[str, float] = {
     "tire_width_mm": 285.0,

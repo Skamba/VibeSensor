@@ -12,8 +12,7 @@ from .diagnostics_shared import (
     source_keys_from_class_key,
 )
 from .report_analysis import build_findings_for_samples
-from .strength_bands import BANDS
-from .strength_bands import band_rank
+from .strength_bands import BANDS, band_rank
 from .strength_scoring import compute_band_rms, compute_floor_rms, strength_db_above_floor
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")

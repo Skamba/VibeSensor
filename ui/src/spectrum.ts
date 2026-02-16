@@ -1,4 +1,3 @@
-// @ts-nocheck
 import uPlot from "uplot";
 
 export interface SpectrumSeriesMeta {
@@ -69,7 +68,7 @@ export class SpectrumChart {
     );
   }
 
-  setData(data: number[][]): void {
+  setData(data: uPlot.AlignedData): void {
     if (!this.plot) return;
     this.plot.setData(data);
   }
