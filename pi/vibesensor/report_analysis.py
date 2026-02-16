@@ -3,15 +3,18 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from math import ceil, floor, log1p, log10, sqrt
+from math import ceil, floor, log1p, sqrt
 from pathlib import Path
 from statistics import mean
 from typing import Any
 
 from .analysis_settings import tire_circumference_m_from_spec
+from .analysis.strength_metrics import (
+    strength_bucket as canonical_strength_bucket,
+    strength_db as canonical_strength_db,
+)
 from .report_i18n import tr as _tr
 from .runlog import parse_iso8601, read_jsonl_run
-from .strength_bands import bucket_for_strength
 
 SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
@@ -267,7 +270,6 @@ def _sensor_intensity_by_location(
         lambda: {f"l{idx}": 0 for idx in range(1, 6)}
     )
     strength_bucket_totals: dict[str, int] = defaultdict(int)
-    eps = 1e-9
     for sample in samples:
         if not isinstance(sample, dict):
             continue
@@ -291,11 +293,27 @@ def _sensor_intensity_by_location(
         if overflow_total is not None:
             overflow_totals[location].append(overflow_total)
         peaks = _sample_top_peaks(sample)
-        band_rms = peaks[0][1] if peaks else (_as_float(sample.get("dominant_peak_amp_g")) or amp)
-        floor_amp = _as_float(sample.get("noise_floor_amp")) or 0.0
-        # Approximate per-sample strength as peak-over-floor dB; epsilon avoids log/divide-by-zero.
-        strength_db = 20.0 * log10((max(0.0, band_rms) + eps) / (max(0.0, floor_amp) + eps))
-        bucket = bucket_for_strength(strength_db, max(0.0, band_rms))
+        band_rms = (
+            _as_float(sample.get("strength_peak_band_rms_amp_g"))
+            or (peaks[0][1] if peaks else (_as_float(sample.get("dominant_peak_amp_g")) or amp))
+            or 0.0
+        )
+        floor_amp = (
+            _as_float(sample.get("strength_floor_amp_g"))
+            or _as_float(sample.get("noise_floor_amp_p20_g"))
+            or _as_float(sample.get("noise_floor_amp"))
+            or 0.0
+        )
+        strength_db = _as_float(sample.get("strength_db"))
+        if strength_db is None:
+            strength_db = canonical_strength_db(
+                strength_peak_band_rms_amp_g=max(0.0, band_rms),
+                strength_floor_amp_g=max(0.0, floor_amp),
+            )
+        bucket = str(sample.get("strength_bucket") or "") or canonical_strength_bucket(
+            strength_db=float(strength_db),
+            strength_peak_band_rms_amp_g=max(0.0, band_rms),
+        )
         if bucket:
             strength_bucket_counts[location][bucket] += 1
             strength_bucket_totals[location] += 1

@@ -78,6 +78,11 @@ def default_units(*, accel_units: str = "g") -> dict[str, str]:
         "accel_magnitude_p2p_g": accel_units,
         "vib_mag_rms_g": accel_units,
         "vib_mag_p2p_g": accel_units,
+        "noise_floor_amp_p20_g": accel_units,
+        "strength_floor_amp_g": accel_units,
+        "strength_peak_band_rms_amp_g": accel_units,
+        "strength_db": "dB",
+        "strength_bucket": "band_key",
         "noise_floor_amp": accel_units,
     }
 
@@ -111,14 +116,43 @@ def default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[s
         "noise_floor_amp": {
             "statistic": "Floor",
             "units": accel_units,
+            "definition": (
+                "Legacy alias of noise_floor_amp_p20_g (combined-spectrum 20th percentile, DC removed)"
+            ),
+        },
+        "noise_floor_amp_p20_g": {
+            "statistic": "Floor",
+            "units": accel_units,
             "definition": "combined-spectrum noise floor amplitude (20th percentile, DC removed)",
+        },
+        "strength_floor_amp_g": {
+            "statistic": "Floor",
+            "units": accel_units,
+            "definition": "combined-spectrum floor amplitude after excluding strongest nearby peaks",
+        },
+        "strength_peak_band_rms_amp_g": {
+            "statistic": "Peak band RMS",
+            "units": accel_units,
+            "definition": "RMS amplitude in ±1.2 Hz band around dominant combined-spectrum peak",
+        },
+        "strength_db": {
+            "statistic": "dB above floor",
+            "units": "dB",
+            "definition": (
+                "20*log10((strength_peak_band_rms_amp_g+eps)/(strength_floor_amp_g+eps)); "
+                "eps=max(1e-9, strength_floor_amp_g*0.05)"
+            ),
+        },
+        "strength_bucket": {
+            "statistic": "Bucket",
+            "units": "band_key",
+            "definition": "strength severity bucket derived from strength_db and peak band amplitude",
         },
         "dominant_peak_amp_g": {
             "statistic": "Peak",
             "units": accel_units,
             "definition": (
-                "largest combined-spectrum single-sided FFT peak amplitude "
-                "from the latest FFT block (DC removed)"
+                "Legacy alias of strength_peak_band_rms_amp_g for backward compatibility"
             ),
         },
     }
@@ -184,7 +218,27 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     normalized["accel_magnitude_p2p_g"] = as_float_or_none(record.get("accel_magnitude_p2p_g"))
     normalized["vib_mag_rms_g"] = as_float_or_none(record.get("vib_mag_rms_g"))
     normalized["vib_mag_p2p_g"] = as_float_or_none(record.get("vib_mag_p2p_g"))
-    normalized["noise_floor_amp"] = as_float_or_none(record.get("noise_floor_amp"))
+    normalized["noise_floor_amp_p20_g"] = as_float_or_none(
+        record.get("noise_floor_amp_p20_g")
+        if record.get("noise_floor_amp_p20_g") is not None
+        else record.get("noise_floor_amp")
+    )
+    normalized["strength_floor_amp_g"] = as_float_or_none(
+        record.get("strength_floor_amp_g")
+        if record.get("strength_floor_amp_g") is not None
+        else record.get("noise_floor_amp")
+    )
+    normalized["strength_peak_band_rms_amp_g"] = as_float_or_none(
+        record.get("strength_peak_band_rms_amp_g")
+        if record.get("strength_peak_band_rms_amp_g") is not None
+        else record.get("dominant_peak_amp_g")
+    )
+    normalized["strength_db"] = as_float_or_none(record.get("strength_db"))
+    normalized["strength_bucket"] = (
+        str(record.get("strength_bucket")) if record.get("strength_bucket") not in (None, "") else None
+    )
+    normalized["noise_floor_amp"] = normalized["noise_floor_amp_p20_g"]
+    normalized["dominant_peak_amp_g"] = normalized["strength_peak_band_rms_amp_g"]
     normalized["sample_rate_hz"] = as_int_or_none(record.get("sample_rate_hz"))
     top_peaks = record.get("top_peaks")
     normalized_peaks: list[dict[str, float]] = []

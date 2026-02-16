@@ -140,7 +140,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         default_sample_rate_hz=config.processing.sample_rate_hz,
         fft_window_size_samples=config.processing.fft_n,
         fft_window_type="hann",
-        peak_picker_method="combined_spectrum_localmax_floor_ratio",
+        peak_picker_method="canonical_strength_metrics_module",
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
     )
     live_diagnostics = LiveDiagnosticsEngine()

@@ -104,7 +104,14 @@ def test_latest_sample_rate_hz_default_zero() -> None:
 def test_spectrum_payload_missing_client() -> None:
     proc = _make_processor()
     result = proc.spectrum_payload("unknown")
-    assert result == {"x": [], "y": [], "z": []}
+    assert result == {
+        "x": [],
+        "y": [],
+        "z": [],
+        "combined_spectrum_amp_g": [],
+        "combined": [],
+        "strength_metrics": {},
+    }
 
 
 # -- multi_spectrum_payload ----------------------------------------------------
