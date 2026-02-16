@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from math import ceil, floor, log10, log1p, sqrt
+from math import ceil, floor, log1p, log10, sqrt
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -1240,7 +1240,7 @@ def select_top_causes(
 
     # For each group, pick the highest-confidence finding as representative
     group_reps: list[dict[str, object]] = []
-    for src, members in groups.items():
+    for members in groups.values():
         members_sorted = sorted(
             members,
             key=lambda m: float(m.get("confidence_0_to_1") or 0),
