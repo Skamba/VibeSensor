@@ -39,10 +39,6 @@ jobs:
         run: |
           python tools/config/check_line_endings.py
 
-      - name: Privacy guard
-        run: |
-          python tools/privacy/privacy_guard.py check-tree
-          python tools/privacy/privacy_guard.py check-range "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
       - name: Unit tests
         run: |

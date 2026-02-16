@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from math import ceil, floor, log10, log1p, sqrt
+from math import ceil, floor, log1p, log10, sqrt
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -740,6 +740,16 @@ def _merge_test_plan(
     findings: list[dict[str, object]],
     lang: object,
 ) -> list[dict[str, str]]:
+    # Priority ordering: inspection/visual first, then balance/runout, then deeper
+    ACTION_PRIORITY = {
+        "wheel_tire_condition": 1,       # visual inspection – least invasive
+        "wheel_balance_and_runout": 2,    # balance/runout check
+        "engine_mounts_and_accessories": 3,
+        "driveline_mounts_and_fasteners": 3,
+        "driveline_inspection": 4,
+        "engine_combustion_quality": 5,
+        "general_mechanical_inspection": 6,
+    }
     steps: list[dict[str, str]] = []
     for finding in findings:
         if not isinstance(finding, dict):
@@ -769,10 +779,14 @@ def _merge_test_plan(
             continue
         dedup[action_id] = step
         ordered.append(step)
-        if len(ordered) >= 5:
-            break
+
+    # Sort by priority (least-invasive first), then preserve original order as tiebreak
+    ordered.sort(key=lambda s: ACTION_PRIORITY.get(
+        str(s.get("action_id") or "").strip().lower(), 99
+    ))
+
     if ordered:
-        return ordered
+        return ordered[:5]
     return [
         {
             "action_id": "general_mechanical_inspection",
@@ -1177,6 +1191,111 @@ def _build_findings(
         if not fid.startswith("REF_"):
             finding["finding_id"] = f"F{idx:03d}"
     return findings
+
+
+# ---------------------------------------------------------------------------
+# Confidence label helper
+# ---------------------------------------------------------------------------
+
+def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
+    """Return (label_key, tone, pct_text) for a 0-1 confidence value.
+
+    * label_key: i18n key  – CONFIDENCE_HIGH / CONFIDENCE_MEDIUM / CONFIDENCE_LOW
+    * tone: card/pill tone  – 'success' / 'warn' / 'neutral'
+    * pct_text: e.g. '82%'
+    """
+    pct = max(0.0, min(100.0, conf_0_to_1 * 100.0))
+    pct_text = f"{pct:.0f}%"
+    if conf_0_to_1 >= 0.70:
+        return "CONFIDENCE_HIGH", "success", pct_text
+    if conf_0_to_1 >= 0.40:
+        return "CONFIDENCE_MEDIUM", "warn", pct_text
+    return "CONFIDENCE_LOW", "neutral", pct_text
+
+
+# ---------------------------------------------------------------------------
+# Top-cause selection with drop-off rule and source grouping
+# ---------------------------------------------------------------------------
+
+def select_top_causes(
+    findings: list[dict[str, object]],
+    *,
+    drop_off_points: float = 15.0,
+    max_causes: int = 3,
+) -> list[dict[str, object]]:
+    """Group findings by suspected_source, keep best per group, apply drop-off."""
+    # Only consider non-reference findings
+    diag_findings = [
+        f for f in findings
+        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
+    ]
+    if not diag_findings:
+        return []
+
+    # Group by suspected_source
+    groups: dict[str, list[dict[str, object]]] = defaultdict(list)
+    for f in diag_findings:
+        src = str(f.get("suspected_source") or "unknown").strip().lower()
+        groups[src].append(f)
+
+    # For each group, pick the highest-confidence finding as representative
+    group_reps: list[dict[str, object]] = []
+    for members in groups.values():
+        members_sorted = sorted(
+            members,
+            key=lambda m: float(m.get("confidence_0_to_1") or 0),
+            reverse=True,
+        )
+        representative = dict(members_sorted[0])
+        # Collect all signatures (frequency_hz_or_order) in this group
+        signatures = []
+        for m in members_sorted:
+            sig = str(m.get("frequency_hz_or_order") or "").strip()
+            if sig and sig not in signatures:
+                signatures.append(sig)
+        representative["signatures_observed"] = signatures
+        representative["grouped_count"] = len(members_sorted)
+        group_reps.append(representative)
+
+    # Sort groups by best confidence descending
+    group_reps.sort(
+        key=lambda g: float(g.get("confidence_0_to_1") or 0),
+        reverse=True,
+    )
+
+    # Apply drop-off rule: include causes within drop_off_points of the best
+    best_conf_pct = float(group_reps[0].get("confidence_0_to_1") or 0) * 100.0
+    threshold_pct = best_conf_pct - drop_off_points
+    selected: list[dict[str, object]] = []
+    for rep in group_reps:
+        conf_pct = float(rep.get("confidence_0_to_1") or 0) * 100.0
+        if conf_pct >= threshold_pct or not selected:
+            selected.append(rep)
+        if len(selected) >= max_causes:
+            break
+
+    # Build output in the format expected by the PDF
+    result: list[dict[str, object]] = []
+    for rep in selected:
+        label_key, tone, pct_text = confidence_label(
+            float(rep.get("confidence_0_to_1") or 0)
+        )
+        result.append({
+            "finding_id": rep.get("finding_id"),
+            "source": rep.get("suspected_source"),
+            "confidence": rep.get("confidence_0_to_1"),
+            "confidence_label_key": label_key,
+            "confidence_tone": tone,
+            "confidence_pct": pct_text,
+            "order": rep.get("frequency_hz_or_order"),
+            "signatures_observed": rep.get("signatures_observed", []),
+            "grouped_count": rep.get("grouped_count", 1),
+            "strongest_location": rep.get("strongest_location"),
+            "dominance_ratio": rep.get("dominance_ratio"),
+            "strongest_speed_band": rep.get("strongest_speed_band"),
+            "weak_spatial_separation": rep.get("weak_spatial_separation"),
+        })
+    return result
 
 
 def _most_likely_origin_summary(
@@ -1587,22 +1706,7 @@ def summarize_log(
             if isinstance(sample, dict) and _location_label(sample)
         }
     )
-    top_causes = []
-    for finding in findings[:3]:
-        if not isinstance(finding, dict):
-            continue
-        top_causes.append(
-            {
-                "finding_id": finding.get("finding_id"),
-                "source": finding.get("suspected_source"),
-                "confidence": finding.get("confidence_0_to_1"),
-                "order": finding.get("frequency_hz_or_order"),
-                "strongest_location": finding.get("strongest_location"),
-                "dominance_ratio": finding.get("dominance_ratio"),
-                "strongest_speed_band": finding.get("strongest_speed_band"),
-                "weak_spatial_separation": finding.get("weak_spatial_separation"),
-            }
-        )
+    top_causes = select_top_causes(findings)
 
     sensor_intensity_by_location = _sensor_intensity_by_location(samples)
 
