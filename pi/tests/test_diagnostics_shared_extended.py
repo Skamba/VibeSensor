@@ -13,7 +13,6 @@ from vibesensor.diagnostics_shared import (
     vehicle_orders_hz,
 )
 
-
 # -- _as_float NaN/edge cases -------------------------------------------------
 
 
@@ -72,7 +71,10 @@ def test_combined_uncertainty_negative_ignored() -> None:
 
 
 def test_tolerance_for_order_zero_hz() -> None:
-    assert tolerance_for_order(6.0, 0.0, 0.01, min_abs_band_hz=0.4, max_band_half_width_pct=8.0) == 0.0
+    result = tolerance_for_order(
+        6.0, 0.0, 0.01, min_abs_band_hz=0.4, max_band_half_width_pct=8.0,
+    )
+    assert result == 0.0
 
 
 def test_tolerance_for_order_basic() -> None:
@@ -161,7 +163,11 @@ def test_classify_other_frequency() -> None:
 def test_classify_with_speed_matches_order() -> None:
     # At 25 m/s with default tire (~2m circumference), wheel_hz ≈ 12.5 Hz
     result = classify_peak_hz(peak_hz=12.5, speed_mps=25.0, settings={})
-    assert result["key"] in {"wheel1", "wheel2", "shaft1", "shaft_eng1", "eng1", "eng2", "road", "other"}
+    valid_keys = {
+        "wheel1", "wheel2", "shaft1", "shaft_eng1",
+        "eng1", "eng2", "road", "other",
+    }
+    assert result["key"] in valid_keys
     # It should match something order-related since we have speed
     assert result["matched_hz"] is not None or result["key"] in {"road", "other"}
 
@@ -171,7 +177,10 @@ def test_classify_with_speed_matches_order() -> None:
 
 def test_severity_candidate_none_current_none() -> None:
     """No candidate, no current → key is None."""
-    result = severity_from_peak(strength_db=0.0, band_rms=0.0, sensor_count=1, prior_state=None)
+    result = severity_from_peak(
+            strength_db=0.0, band_rms=0.0,
+            sensor_count=1, prior_state=None,
+        )
     assert result is not None
     assert result["key"] is None
 
@@ -181,13 +190,19 @@ def test_severity_escalation_from_l1_to_l3() -> None:
     state = None
     # First establish L1
     for _ in range(3):
-        out = severity_from_peak(strength_db=11.0, band_rms=0.003, sensor_count=1, prior_state=state)
+        out = severity_from_peak(
+            strength_db=11.0, band_rms=0.003,
+            sensor_count=1, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     assert out["key"] == "l1"
 
     # Now push to L3
     for _ in range(3):
-        out = severity_from_peak(strength_db=23.0, band_rms=0.012, sensor_count=1, prior_state=state)
+        out = severity_from_peak(
+            strength_db=23.0, band_rms=0.012,
+            sensor_count=1, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     assert out["key"] == "l3"
 
@@ -197,19 +212,28 @@ def test_severity_downgrade_with_decay() -> None:
     state = None
     # Establish L3
     for _ in range(3):
-        out = severity_from_peak(strength_db=23.0, band_rms=0.012, sensor_count=1, prior_state=state)
+        out = severity_from_peak(
+            strength_db=23.0, band_rms=0.012,
+            sensor_count=1, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     assert out["key"] == "l3"
 
     # Signal drops to L1 level but needs to be below hysteresis threshold
     for _ in range(4):
-        out = severity_from_peak(strength_db=5.0, band_rms=0.001, sensor_count=1, prior_state=state)
+        out = severity_from_peak(
+            strength_db=5.0, band_rms=0.001,
+            sensor_count=1, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     # Should still be L3 (not enough decay ticks)
     assert out["key"] == "l3"
 
     # 5th tick should cause decay
-    out = severity_from_peak(strength_db=5.0, band_rms=0.001, sensor_count=1, prior_state=state)
+    out = severity_from_peak(
+            strength_db=5.0, band_rms=0.001,
+            sensor_count=1, prior_state=state,
+        )
     state = dict(out.get("state") or {})
     # After decay, should drop to the candidate bucket or None
     assert out["key"] != "l3" or out["key"] is None
@@ -220,13 +244,19 @@ def test_severity_same_rank_resets_counters() -> None:
     state = None
     # Establish L2
     for _ in range(3):
-        out = severity_from_peak(strength_db=17.0, band_rms=0.006, sensor_count=1, prior_state=state)
+        out = severity_from_peak(
+            strength_db=17.0, band_rms=0.006,
+            sensor_count=1, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     assert out["key"] == "l2"
 
     # Continue at L2 → should stay stable
     for _ in range(5):
-        out = severity_from_peak(strength_db=17.0, band_rms=0.006, sensor_count=1, prior_state=state)
+        out = severity_from_peak(
+            strength_db=17.0, band_rms=0.006,
+            sensor_count=1, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     assert out["key"] == "l2"
     assert state["consecutive_up"] == 0
@@ -237,13 +267,19 @@ def test_severity_multi_sensor_bonus() -> None:
     state = None
     # At 8 dB base with single sensor → below L1 (10 dB)
     for _ in range(3):
-        out = severity_from_peak(strength_db=8.0, band_rms=0.003, sensor_count=1, prior_state=state)
+        out = severity_from_peak(
+            strength_db=8.0, band_rms=0.003,
+            sensor_count=1, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     assert out["key"] is None
 
     # At 8 dB base with 2 sensors → 11 dB adjusted → above L1
     state = None
     for _ in range(3):
-        out = severity_from_peak(strength_db=8.0, band_rms=0.003, sensor_count=2, prior_state=state)
+        out = severity_from_peak(
+            strength_db=8.0, band_rms=0.003,
+            sensor_count=2, prior_state=state,
+        )
         state = dict(out.get("state") or {})
     assert out["key"] == "l1"

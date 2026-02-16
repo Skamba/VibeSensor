@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 import yaml
 
 from vibesensor.config import (
@@ -11,7 +12,6 @@ from vibesensor.config import (
     _split_host_port,
     load_config,
 )
-
 
 # -- _split_host_port ---------------------------------------------------------
 
@@ -23,11 +23,8 @@ def test_split_host_port_valid() -> None:
 
 
 def test_split_host_port_missing_colon_raises() -> None:
-    try:
+    with pytest.raises(ValueError):
         _split_host_port("localhost9000")
-        assert False, "Expected ValueError"
-    except ValueError:
-        pass
 
 
 # -- _deep_merge ---------------------------------------------------------------
@@ -89,11 +86,8 @@ def test_read_config_file_valid(tmp_path: Path) -> None:
 def test_read_config_file_non_dict_raises(tmp_path: Path) -> None:
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text("- item1\n- item2\n")
-    try:
+    with pytest.raises(ValueError):
         _read_config_file(cfg_path)
-        assert False, "Expected ValueError"
-    except ValueError:
-        pass
 
 
 # -- load_config accel_scale negative ------------------------------------------

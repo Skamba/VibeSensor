@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import log10, sqrt
+from math import sqrt
 
 from vibesensor.strength_scoring import (
     _median,
@@ -8,7 +8,6 @@ from vibesensor.strength_scoring import (
     compute_floor_rms,
     strength_db_above_floor,
 )
-
 
 # -- _median ------------------------------------------------------------------
 
