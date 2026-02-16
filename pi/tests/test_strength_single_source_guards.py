@@ -32,7 +32,7 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
     ]
     assert scripts
     forbidden_combined_spectrum = re.compile(
-        r"Math\.sqrt\(\([^)]*\+[^)]*\+[^)]*\)/3\)"
+        r"Math\.sqrt\(\([^)]*\+[^)]*\+[^)]*\)\s*/\s*3\)"
     )
     for script in scripts:
         text = _read(public_dir / script)
