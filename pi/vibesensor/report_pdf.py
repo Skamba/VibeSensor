@@ -1178,10 +1178,10 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     ref_text_val = text("Complete", "Compleet") if ref_complete else text("Incomplete", "Incompleet")
 
     evidence_snapshot_rows = [
-        [tr("STRONGEST_LOCATION"), f"{escape(strongest_loc_text)} ({strongest_peak_g:.4f} g)"],
+        [tr("STRONGEST_LOCATION"), f"{strongest_loc_text} ({strongest_peak_g:.4f} g)"],
         [tr("DOMINANCE_RATIO"), f"{dominance_ratio:.2f}x"],
         [tr("STRONGEST_SPEED_BAND"), str(top_causes[0].get("strongest_speed_band") or tr("UNKNOWN")) if top_causes else tr("UNKNOWN")],
-        [tr("OBSERVED_SIGNATURES"), escape(sigs_str)],
+        [tr("OBSERVED_SIGNATURES"), sigs_str],
         [tr("REFERENCE_COMPLETENESS"), ref_text_val],
     ]
 
