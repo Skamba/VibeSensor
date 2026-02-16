@@ -8,8 +8,6 @@ export type StrengthBand = {
   labelKey?: string;
 };
 
-export const SEVERITY_ORDER = ["l5", "l4", "l3", "l2", "l1"] as const;
-
 export function normalizeStrengthBands(input: unknown): StrengthBand[] {
   const parsed = Array.isArray(input)
     ? input
@@ -54,7 +52,7 @@ export function sourceKeysFromClassKey(classKey: string): string[] {
   return ["other"];
 }
 
-export function relativeDbAboveFloor(amplitude: number, floorAmplitude: number): number {
+function relativeDbAboveFloor(amplitude: number, floorAmplitude: number): number {
   const peak = Math.max(0, amplitude);
   const floor = Math.max(0, floorAmplitude);
   const eps = Math.max(1e-9, floor * 0.05);
