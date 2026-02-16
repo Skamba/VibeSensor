@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from vibesensor.reports import build_report_pdf, summarize_log
 
 
@@ -308,3 +310,39 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
     _assert_pdf_contains(pdf, "Amplitude at steady speed")
+
+
+def test_sensor_location_stats_include_percentiles_and_strength_distribution(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_location_stats.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    amps = [0.1, 0.2, 0.3, 0.4]
+    for idx, amp in enumerate(amps):
+        sample = _sample(
+            idx,
+            speed_kmh=55.0 + idx,
+            dominant_freq_hz=18.0,
+            dominant_peak_amp_g=amp,
+        )
+        sample["vib_mag_rms_g"] = amp
+        sample["frames_dropped_total"] = idx * 2
+        sample["queue_overflow_drops"] = idx
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    assert "samples" not in summary
+    rows = summary["sensor_intensity_by_location"]
+    assert rows
+    row = rows[0]
+    assert row["sample_count"] == 4
+    assert row["p50_intensity_g"] == pytest.approx(0.25, rel=1e-6)
+    assert row["p95_intensity_g"] == pytest.approx(0.385, rel=1e-6)
+    assert row["max_intensity_g"] == pytest.approx(0.4, rel=1e-6)
+    assert row["dropped_frames_delta"] == 6
+    assert row["queue_overflow_drops_delta"] == 3
+    strength = row["strength_bucket_distribution"]
+    assert strength["total"] > 0
+    assert set(strength["counts"].keys()) == {"l1", "l2", "l3", "l4", "l5"}
+    pct_sum = sum(strength[f"percent_time_l{idx}"] for idx in range(1, 6))
+    assert pct_sum == pytest.approx(100.0, rel=1e-6)

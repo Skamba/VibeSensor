@@ -51,10 +51,6 @@ import { WsClient, type WsUiState } from "./ws";
     refreshLogsBtn: document.getElementById("refreshLogsBtn"),
     logsSummary: document.getElementById("logsSummary"),
     logsTableBody: document.getElementById("logsTableBody"),
-    reportLogSelect: document.getElementById("reportLogSelect"),
-    loadInsightsBtn: document.getElementById("loadInsightsBtn"),
-    downloadReportBtn: document.getElementById("downloadReportBtn"),
-    reportInsights: document.getElementById("reportInsights"),
     clientsSettingsBody: document.getElementById("clientsSettingsBody"),
     lastSeen: document.getElementById("lastSeen"),
     dropped: document.getElementById("dropped"),
@@ -105,7 +101,8 @@ import { WsClient, type WsUiState } from "./ws";
     speedMps: null,
     activeViewId: "dashboardView",
     logs: [],
-    selectedLogName: null,
+    expandedLogName: null,
+    logDetailsByName: {},
     loggingStatus: { enabled: false, current_file: null },
     locationOptions: [],
     vehicleSettings: {
@@ -219,7 +216,6 @@ import { WsClient, type WsUiState } from "./ws";
     renderSpeedReadout();
     renderLoggingStatus();
     renderLogsTable();
-    renderReportSelect();
     renderVibrationLog();
     renderMatrix();
     renderWsState();
@@ -228,8 +224,16 @@ import { WsClient, type WsUiState } from "./ws";
       state.spectrumPlot = null;
       renderSpectrum();
     }
-    if (forceReloadInsights && state.selectedLogName) {
-      void loadReportInsights();
+    if (forceReloadInsights && state.expandedLogName) {
+      const logName = state.expandedLogName;
+      const detail = state.logDetailsByName?.[logName];
+      const shouldReloadInsights = Boolean(detail?.insights);
+      delete state.logDetailsByName[logName];
+      void loadLogPreview(logName, true).then(() => {
+        if (shouldReloadInsights) {
+          void loadLogInsights(logName, true);
+        }
+      });
     }
     updateSpectrumOverlay();
   }
@@ -853,33 +857,261 @@ import { WsClient, type WsUiState } from "./ws";
     } catch (_err) {}
   }
 
-  function selectLog(logName) {
-    state.selectedLogName = logName || null;
-    if (state.selectedLogName) {
-      els.reportLogSelect.value = state.selectedLogName;
+  function ensureLogDetail(logName) {
+    if (!state.logDetailsByName[logName]) {
+      state.logDetailsByName[logName] = {
+        preview: null,
+        previewLoading: false,
+        previewError: "",
+        insights: null,
+        insightsLoading: false,
+        insightsError: "",
+        pdfLoading: false,
+        pdfError: "",
+      };
+    }
+    return state.logDetailsByName[logName];
+  }
+
+  function collapseExpandedLog() {
+    const previous = state.expandedLogName;
+    state.expandedLogName = null;
+    if (previous) {
+      delete state.logDetailsByName[previous];
     }
   }
 
-  function renderReportSelect() {
-    els.reportLogSelect.innerHTML = "";
+  function normalizeLogLocationKey(location) {
+    const raw = String(location || "")
+      .toLowerCase()
+      .replace(/[_-]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!raw) return "";
+    if (raw.includes("front left") && raw.includes("wheel")) return "front-left wheel";
+    if (raw.includes("front right") && raw.includes("wheel")) return "front-right wheel";
+    if (raw.includes("rear left") && raw.includes("wheel")) return "rear-left wheel";
+    if (raw.includes("rear right") && raw.includes("wheel")) return "rear-right wheel";
+    if (raw.includes("engine")) return "engine bay";
+    if (raw.includes("drive") && raw.includes("tunnel")) return "driveshaft tunnel";
+    if (raw.includes("driver") && raw.includes("seat")) return "driver seat";
+    if (raw.includes("trunk")) return "trunk";
+    return raw;
+  }
+
+  function normalizeUnit(value, min, max) {
+    if (!(typeof value === "number") || !Number.isFinite(value)) return 0;
+    if (!(typeof min === "number") || !(typeof max === "number") || max <= min) return 1;
+    return Math.max(0, Math.min(1, (value - min) / (max - min)));
+  }
+
+  function heatColor(norm) {
+    const hue = Math.round(212 - (norm * 190));
+    return `hsl(${hue} 76% 48%)`;
+  }
+
+  function metricFromLocationStat(row) {
+    if (!row || typeof row !== "object") return null;
+    return (
+      Number(row.p95_intensity_g ?? row.p95 ?? row.mean_intensity_g ?? row.max_intensity_g) || null
+    );
+  }
+
+  function summarizeFindings(summary) {
+    const findings = Array.isArray(summary?.findings) ? summary.findings : [];
+    return findings.slice(0, 3);
+  }
+
+  function renderPreviewHeatmap(summary) {
+    const positions = [
+      { key: "front-left wheel", top: 23, left: 20 },
+      { key: "front-right wheel", top: 23, left: 80 },
+      { key: "rear-left wheel", top: 76, left: 20 },
+      { key: "rear-right wheel", top: 76, left: 80 },
+      { key: "engine bay", top: 30, left: 50 },
+      { key: "driveshaft tunnel", top: 51, left: 50 },
+      { key: "driver seat", top: 43, left: 40 },
+      { key: "trunk", top: 86, left: 50 },
+    ];
+    const statsRows = Array.isArray(summary?.sensor_intensity_by_location)
+      ? summary.sensor_intensity_by_location
+      : [];
+    const metricByLocation = {};
+    for (const row of statsRows) {
+      const key = normalizeLogLocationKey(row?.location);
+      const metric = metricFromLocationStat(row);
+      if (key && typeof metric === "number" && Number.isFinite(metric)) {
+        metricByLocation[key] = metric;
+      }
+    }
+    const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
+    const min = values.length ? Math.min(...values) : null;
+    const max = values.length ? Math.max(...values) : null;
+    const dots = positions
+      .map((point) => {
+        const value = metricByLocation[point.key];
+        const hasValue = typeof value === "number" && Number.isFinite(value);
+        const norm = normalizeUnit(value, min, max);
+        const fill = hasValue ? heatColor(norm) : "var(--md-sys-color-outline-variant)";
+        const valueLabel = hasValue ? `${fmt(value, 4)} g` : t("logs.not_available");
+        return `<div class="mini-car-dot${hasValue ? "" : " mini-car-dot--muted"}" style="top:${point.top}%;left:${point.left}%;background:${fill}" title="${escapeHtml(point.key)}: ${escapeHtml(valueLabel)}"></div>`;
+      })
+      .join("");
+    return `
+      <div class="mini-car-wrap">
+        <div class="mini-car-title">${escapeHtml(t("logs.preview_heatmap_title"))}</div>
+        <div class="mini-car">${dots}</div>
+      </div>
+    `;
+  }
+
+  function renderPreviewStats(summary) {
+    const rows = Array.isArray(summary?.sensor_intensity_by_location)
+      ? summary.sensor_intensity_by_location
+      : [];
+    if (!rows.length) {
+      return `<p class="subtle">${escapeHtml(t("logs.preview_unavailable"))}</p>`;
+    }
+    const body = rows
+      .map((row) => {
+        const dropped = row?.dropped_frames_delta ?? row?.frames_dropped_delta;
+        const overflow = row?.queue_overflow_drops_delta;
+        return `
+          <tr>
+            <td>${escapeHtml(row.location || "--")}</td>
+            <td class="numeric">${fmt(row.p50_intensity_g ?? row.p50, 4)}</td>
+            <td class="numeric">${fmt(row.p95_intensity_g ?? row.p95, 4)}</td>
+            <td class="numeric">${fmt(row.max_intensity_g, 4)}</td>
+            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>
+            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>
+            <td class="numeric">${formatInt(row.sample_count ?? row.samples)}</td>
+          </tr>`;
+      })
+      .join("");
+    return `
+      <div class="logs-preview-stats">
+        <div class="mini-car-title">${escapeHtml(t("logs.preview_stats_title"))}</div>
+        <table class="logs-preview-table">
+          <thead>
+            <tr>
+              <th>${escapeHtml(t("logs.table.location"))}</th>
+              <th class="numeric">p50</th>
+              <th class="numeric">p95</th>
+              <th class="numeric">max</th>
+              <th class="numeric">${escapeHtml(t("logs.table.dropped_delta"))}</th>
+              <th class="numeric">${escapeHtml(t("logs.table.overflow_delta"))}</th>
+              <th class="numeric">${escapeHtml(t("logs.table.samples"))}</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderInsightsBlock(detail) {
+    const findings = summarizeFindings(detail.insights);
+    const ctaLabel = detail.insights ? t("logs.reload_insights") : t("logs.load_insights");
+    const loading = detail.insightsLoading;
+    const findingsMarkup = findings.length
+      ? findings
+          .map((finding) => {
+            const source = finding?.suspected_source || t("report.missing");
+            const confidence =
+              typeof finding?.confidence_0_to_1 === "number" ? fmt(finding.confidence_0_to_1, 2) : "--";
+            return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(finding?.evidence_summary || "")}</li>`;
+          })
+          .join("")
+      : `<li>${escapeHtml(t("report.no_findings_for_run"))}</li>`;
+    return `
+      <div class="logs-insights-block">
+        <div class="logs-insights-actions">
+          <button class="btn btn--primary" data-log-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("logs.loading_insights") : ctaLabel)}</button>
+          ${detail.insightsError ? `<span class="logs-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}
+        </div>
+        ${detail.insights ? `<ul class="logs-findings-list">${findingsMarkup}</ul>` : ""}
+      </div>
+    `;
+  }
+
+  function renderLogDetailsRow(logRow, detail) {
+    if (!detail) return "";
+    const summary = detail.preview;
+    const runSummary = summary
+      ? [
+          `${t("report.file")}: ${logRow.name}`,
+          `${t("logs.summary_created")}: ${fmtTs(summary.start_time_utc)}`,
+          `${t("logs.summary_updated")}: ${fmtTs(logRow.updated_at)}`,
+          `${t("logs.summary_size")}: ${fmtBytes(logRow.size_bytes)}`,
+          `${t("report.duration")}: ${fmt(summary.duration_s, 1)} s`,
+          `${t("logs.summary_sensor_count")}: ${formatInt(summary.sensor_count_used)}`,
+        ].join(" · ")
+      : "";
+    let previewMarkup = "";
+    if (detail.previewLoading) {
+      previewMarkup = `<p class="subtle">${escapeHtml(t("logs.loading_preview"))}</p>`;
+    } else if (detail.previewError) {
+      previewMarkup = `<p class="logs-inline-error">${escapeHtml(detail.previewError)}</p>`;
+    } else if (summary) {
+      previewMarkup = `
+        <div class="logs-details-preview">
+          ${renderPreviewHeatmap(summary)}
+          ${renderPreviewStats(summary)}
+        </div>
+      `;
+    } else {
+      previewMarkup = `<p class="subtle">${escapeHtml(t("logs.preview_unavailable"))}</p>`;
+    }
+    return `
+      <tr class="logs-details-row">
+        <td colspan="4">
+          <div class="logs-details-card">
+            ${runSummary ? `<div class="logs-run-summary">${escapeHtml(runSummary)}</div>` : ""}
+            ${previewMarkup}
+            ${renderInsightsBlock(detail)}
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function renderLogsTable() {
     if (!state.logs.length) {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = t("logs.no_available");
-      els.reportLogSelect.appendChild(opt);
-      state.selectedLogName = null;
+      els.logsSummary.textContent = t("logs.none");
+      els.logsTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("logs.none_found"))}</td></tr>`;
+      collapseExpandedLog();
       return;
     }
+    if (state.expandedLogName && !state.logs.some((row) => row.name === state.expandedLogName)) {
+      collapseExpandedLog();
+    }
+    els.logsSummary.textContent = t("logs.available_count", { count: state.logs.length });
+    const rows = [];
     for (const row of state.logs) {
-      const opt = document.createElement("option");
-      opt.value = row.name;
-      opt.textContent = row.name;
-      els.reportLogSelect.appendChild(opt);
+      const detail = ensureLogDetail(row.name);
+      const pdfLabel = detail.pdfLoading ? t("logs.generating_pdf") : t("logs.generate_pdf");
+      const rowError = detail.pdfError
+        ? `<div class="logs-inline-error">${escapeHtml(detail.pdfError)}</div>`
+        : "";
+      rows.push(`
+        <tr class="logs-row${state.expandedLogName === row.name ? " logs-row--expanded" : ""}" data-log-row="1" data-log="${escapeHtml(row.name)}">
+          <td>${escapeHtml(row.name)}</td>
+          <td>${fmtTs(row.updated_at)}</td>
+          <td class="numeric">${fmtBytes(row.size_bytes)}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--success" data-log-action="download-pdf" data-log="${escapeHtml(row.name)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>
+              <a class="btn btn--muted" href="${logDownloadUrl(row.name)}" download="${escapeHtml(row.name)}" data-log-action="download-raw" data-log="${escapeHtml(row.name)}">${escapeHtml(t("logs.raw"))}</a>
+              <button class="btn btn--danger" data-log-action="delete-log" data-log="${escapeHtml(row.name)}">${escapeHtml(t("logs.delete"))}</button>
+            </div>
+            ${rowError}
+          </td>
+        </tr>`);
+      if (state.expandedLogName === row.name) {
+        rows.push(renderLogDetailsRow(row, detail));
+      }
     }
-    if (!state.selectedLogName || !state.logs.some((l) => l.name === state.selectedLogName)) {
-      state.selectedLogName = state.logs[0].name;
-    }
-    els.reportLogSelect.value = state.selectedLogName;
+    els.logsTableBody.innerHTML = rows.join("");
   }
 
   async function refreshLocationOptions() {
@@ -895,47 +1127,6 @@ import { WsClient, type WsUiState } from "./ws";
       state.locationOptions = buildLocationOptions(state.locationCodes);
     }
     maybeRenderClientsSettingsList(true);
-  }
-
-  function renderLogsTable() {
-    if (!state.logs.length) {
-      els.logsSummary.textContent = t("logs.none");
-      els.logsTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("logs.none_found"))}</td></tr>`;
-      renderReportSelect();
-      return;
-    }
-    els.logsSummary.textContent = t("logs.available_count", { count: state.logs.length });
-    els.logsTableBody.innerHTML = state.logs
-      .map(
-        (row) => `
-      <tr>
-        <td>${row.name}</td>
-        <td>${fmtTs(row.updated_at)}</td>
-        <td class="numeric">${fmtBytes(row.size_bytes)}</td>
-        <td>
-          <div class="table-actions">
-            <button class="btn btn--primary select-log-btn" data-log="${row.name}">${escapeHtml(t("logs.use_in_report"))}</button>
-            <a class="btn btn--muted" href="${logDownloadUrl(row.name)}" target="_blank" rel="noopener">${escapeHtml(t("logs.raw"))}</a>
-            <button class="btn btn--danger delete-log-btn" data-log="${row.name}">${escapeHtml(t("logs.delete"))}</button>
-          </div>
-        </td>
-      </tr>`,
-      )
-      .join("");
-    els.logsTableBody.querySelectorAll(".select-log-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const logName = btn.dataset.log || null;
-        selectLog(logName);
-        setActiveView("reportView");
-      });
-    });
-    els.logsTableBody.querySelectorAll(".delete-log-btn").forEach((btn) => {
-      btn.addEventListener("click", async () => {
-        const logName = btn.dataset.log || "";
-        await deleteLog(logName);
-      });
-    });
-    renderReportSelect();
   }
 
   async function refreshLogs() {
@@ -959,74 +1150,128 @@ import { WsClient, type WsUiState } from "./ws";
       window.alert(err?.message || t("logs.delete_failed"));
       return;
     }
-    if (state.selectedLogName === logName) {
-      state.selectedLogName = null;
+    if (state.expandedLogName === logName) {
+      collapseExpandedLog();
     }
     await refreshLogs();
   }
 
-  function renderInsights(summary) {
-    if (!summary || typeof summary !== "object") {
-      els.reportInsights.textContent = t("report.no_insights");
+  async function loadLogPreview(logName, force = false) {
+    if (!logName) return;
+    const detail = ensureLogDetail(logName);
+    if (!force && (detail.previewLoading || detail.preview)) return;
+    detail.previewLoading = true;
+    detail.previewError = "";
+    renderLogsTable();
+    try {
+      detail.preview = await getLogInsights(logName, state.lang, false);
+    } catch (err) {
+      detail.previewError = err?.message || t("report.unable_load_insights");
+    } finally {
+      detail.previewLoading = false;
+      renderLogsTable();
+    }
+  }
+
+  async function loadLogInsights(logName, force = false) {
+    if (!logName) return;
+    const detail = ensureLogDetail(logName);
+    if (!force && detail.insightsLoading) return;
+    detail.insightsLoading = true;
+    detail.insightsError = "";
+    renderLogsTable();
+    try {
+      detail.insights = await getLogInsights(logName, state.lang, false);
+    } catch (err) {
+      detail.insightsError = err?.message || t("report.unable_load_insights");
+    } finally {
+      detail.insightsLoading = false;
+      renderLogsTable();
+    }
+  }
+
+  function filenameFromDisposition(headerValue, fallback) {
+    if (!headerValue) return fallback;
+    const utf8Match = headerValue.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8Match && utf8Match[1]) {
+      return decodeURIComponent(utf8Match[1]);
+    }
+    const simpleMatch = headerValue.match(/filename="?([^";]+)"?/i);
+    if (simpleMatch && simpleMatch[1]) {
+      return simpleMatch[1];
+    }
+    return fallback;
+  }
+
+  async function downloadBlobFile(url, fallbackName) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      let detail = `${response.status} ${response.statusText}`;
+      try {
+        const payload = await response.json();
+        if (payload && typeof payload.detail === "string") {
+          detail = payload.detail;
+        }
+      } catch (_err) {}
+      throw new Error(detail);
+    }
+    const blob = await response.blob();
+    const fileName = filenameFromDisposition(
+      response.headers.get("content-disposition"),
+      fallbackName || "download.bin",
+    );
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+  }
+
+  async function downloadReportPdfForLog(logName) {
+    const detail = ensureLogDetail(logName);
+    if (detail.pdfLoading) return;
+    detail.pdfLoading = true;
+    detail.pdfError = "";
+    renderLogsTable();
+    try {
+      await downloadBlobFile(reportPdfUrl(logName, state.lang), `${logName.replace(/\.jsonl$/i, "")}_report.pdf`);
+    } catch (err) {
+      detail.pdfError = err?.message || t("logs.pdf_failed");
+    } finally {
+      detail.pdfLoading = false;
+      renderLogsTable();
+    }
+  }
+
+  function toggleLogDetails(logName) {
+    if (!logName) return;
+    if (state.expandedLogName === logName) {
+      collapseExpandedLog();
+      renderLogsTable();
       return;
     }
-    const findings = Array.isArray(summary.findings) ? summary.findings : [];
-    const topFindings = findings
-      .slice(0, 4)
-      .map((f) => {
-        const confidence = typeof f.confidence_0_to_1 === "number" ? fmt(f.confidence_0_to_1, 2) : "0.00";
-        const source = f.suspected_source || "unknown";
-        const detail = f.evidence_summary || "";
-        return `<p><strong>${source}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}): ${detail}</p>`;
-      })
-      .join("");
-    const speedCoverage = summary?.data_quality?.speed_coverage || {};
-    const speedPct =
-      typeof speedCoverage.non_null_pct === "number"
-        ? `${fmt(speedCoverage.non_null_pct, 1)}%`
-        : t("report.missing");
-    const speedMin =
-      typeof speedCoverage.min_kmh === "number" ? fmt(speedCoverage.min_kmh, 1) : t("report.missing");
-    const speedMax =
-      typeof speedCoverage.max_kmh === "number" ? fmt(speedCoverage.max_kmh, 1) : t("report.missing");
-    const rawSampleRate =
-      typeof summary.raw_sample_rate_hz === "number"
-        ? `${fmt(summary.raw_sample_rate_hz, 1)} Hz`
-        : t("report.missing");
-    const skippedReason =
-      typeof summary.speed_breakdown_skipped_reason === "string"
-        ? `<p><strong>${escapeHtml(t("report.speed_analysis"))}:</strong> ${summary.speed_breakdown_skipped_reason}</p>`
-        : "";
-    els.reportInsights.innerHTML = `
-      <p><strong>${escapeHtml(t("report.file"))}:</strong> ${summary.file_name || "--"}</p>
-      <p><strong>${escapeHtml(t("report.run_id"))}:</strong> ${summary.run_id || t("report.missing")}</p>
-      <p><strong>${escapeHtml(t("report.duration"))}:</strong> ${fmt(summary.duration_s, 1)} s</p>
-      <p><strong>${escapeHtml(t("report.rows"))}:</strong> ${summary.rows || 0}</p>
-      <p><strong>${escapeHtml(t("report.raw_sample_rate"))}:</strong> ${rawSampleRate}</p>
-      <p><strong>${escapeHtml(t("report.speed_coverage"))}:</strong> ${speedPct} (${speedMin}-${speedMax} km/h)</p>
-      <hr />
-      ${skippedReason}
-      ${topFindings || `<p>${escapeHtml(t("report.no_findings_for_run"))}</p>`}
-    `;
+    collapseExpandedLog();
+    state.expandedLogName = logName;
+    renderLogsTable();
+    void loadLogPreview(logName);
   }
 
-  async function loadReportInsights() {
-    const logName = els.reportLogSelect.value;
-    if (!logName) return;
-    selectLog(logName);
-    try {
-      const summary = await getLogInsights(logName, state.lang);
-      renderInsights(summary);
-    } catch (_err) {
-      els.reportInsights.textContent = t("report.unable_load_insights");
+  async function onLogsTableAction(action, logName) {
+    if (!action || !logName) return;
+    if (action === "download-pdf") {
+      await downloadReportPdfForLog(logName);
+      return;
     }
-  }
-
-  function downloadReportPdf() {
-    const logName = els.reportLogSelect.value;
-    if (!logName) return;
-    selectLog(logName);
-    window.open(reportPdfUrl(logName, state.lang), "_blank", "noopener");
+    if (action === "delete-log") {
+      await deleteLog(logName);
+      return;
+    }
+    if (action === "load-insights") {
+      await loadLogInsights(logName, true);
+    }
   }
 
   function calculateBands() {
@@ -1929,9 +2174,25 @@ import { WsClient, type WsUiState } from "./ws";
   els.startLoggingBtn.addEventListener("click", startLogging);
   els.stopLoggingBtn.addEventListener("click", stopLogging);
   els.refreshLogsBtn.addEventListener("click", refreshLogs);
-  els.reportLogSelect.addEventListener("change", () => selectLog(els.reportLogSelect.value || null));
-  els.loadInsightsBtn.addEventListener("click", loadReportInsights);
-  els.downloadReportBtn.addEventListener("click", downloadReportPdf);
+  els.logsTableBody.addEventListener("click", (ev) => {
+    const target = ev.target as HTMLElement | null;
+    const actionEl = target?.closest?.("[data-log-action]");
+    if (actionEl) {
+      const action = actionEl.getAttribute("data-log-action");
+      const logName = actionEl.getAttribute("data-log") || state.expandedLogName || "";
+      if (action !== "download-raw") {
+        ev.preventDefault();
+      }
+      ev.stopPropagation();
+      void onLogsTableAction(action, logName);
+      return;
+    }
+    const rowEl = target?.closest?.('tr[data-log-row="1"]');
+    if (rowEl) {
+      const logName = rowEl.getAttribute("data-log") || "";
+      toggleLogDetails(logName);
+    }
+  });
   if (els.applySpeedOverrideBtn) {
     els.applySpeedOverrideBtn.addEventListener("click", applySpeedOverrideFromInput);
   }

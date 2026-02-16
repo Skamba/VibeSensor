@@ -26,9 +26,6 @@
           <button type="button" class="menu-btn" data-view="logsView" id="tab-logs" role="tab" aria-controls="logsView" aria-selected="false" tabindex="-1">
             <span data-i18n="nav.logs">Logs</span>
           </button>
-          <button type="button" class="menu-btn" data-view="reportView" id="tab-report" role="tab" aria-controls="reportView" aria-selected="false" tabindex="-1">
-            <span data-i18n="nav.report">Report</span>
-          </button>
           <button type="button" class="menu-btn" data-view="settingsView" id="tab-settings" role="tab" aria-controls="settingsView" aria-selected="false" tabindex="-1">
             <span data-i18n="nav.settings">Settings</span>
           </button>
@@ -144,28 +141,6 @@
               </tr>
             </tbody>
           </table>
-        </div>
-      </section>
-
-      <section id="reportView" class="view" role="tabpanel" aria-labelledby="tab-report" hidden>
-        <div class="panel card">
-          <div class="controls">
-            <div class="field">
-              <label for="reportLogSelect" data-i18n="report.saved_run">Saved run</label>
-              <select id="reportLogSelect"></select>
-            </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button id="loadInsightsBtn" class="btn btn--primary" data-i18n="report.load_insights">Load Insights</button>
-            </div>
-            <div class="field">
-              <label>&nbsp;</label>
-              <button id="downloadReportBtn" class="btn btn--success" data-i18n="report.generate_pdf">Generate PDF Report</button>
-            </div>
-          </div>
-          <div id="reportInsights" class="report-insights subtle">
-            <span data-i18n="report.select_run_hint">Select a saved run and click <strong>Load Insights</strong>.</span>
-          </div>
         </div>
       </section>
 
