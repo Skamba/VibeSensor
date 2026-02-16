@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 
 UTC = timezone.utc
-from math import ceil, floor, log1p, sqrt
+from math import ceil, floor, log10, log1p, sqrt
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -13,6 +13,7 @@ from typing import Any
 from .analysis_settings import tire_circumference_m_from_spec
 from .report_i18n import tr as _tr
 from .runlog import parse_iso8601, read_jsonl_run
+from .strength_bands import bucket_for_strength
 
 SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
@@ -260,7 +261,14 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
 def _sensor_intensity_by_location(
     samples: list[dict[str, Any]],
 ) -> list[dict[str, float | str | int]]:
-    grouped: dict[str, list[float]] = defaultdict(list)
+    grouped_amp: dict[str, list[float]] = defaultdict(list)
+    dropped_totals: dict[str, list[float]] = defaultdict(list)
+    overflow_totals: dict[str, list[float]] = defaultdict(list)
+    strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
+        lambda: {f"l{idx}": 0 for idx in range(1, 6)}
+    )
+    strength_bucket_totals: dict[str, int] = defaultdict(int)
+    eps = 1e-9
     for sample in samples:
         if not isinstance(sample, dict):
             continue
@@ -270,19 +278,72 @@ def _sensor_intensity_by_location(
         amp = _primary_vibration_amp(sample)
         if amp is None or amp <= 0:
             continue
-        grouped[location].append(float(amp))
+        grouped_amp[location].append(float(amp))
+        dropped_total = _as_float(sample.get("frames_dropped_total"))
+        if dropped_total is None:
+            dropped_total = _as_float(sample.get("dropped_frames"))
+        if dropped_total is None:
+            dropped_total = _as_float(sample.get("frames_dropped"))
+        if dropped_total is not None:
+            dropped_totals[location].append(dropped_total)
+        overflow_total = _as_float(sample.get("queue_overflow_drops"))
+        if overflow_total is not None:
+            overflow_totals[location].append(overflow_total)
+        peaks = _sample_top_peaks(sample)
+        band_rms = peaks[0][1] if peaks else (_as_float(sample.get("dominant_peak_amp_g")) or amp)
+        floor_amp = _as_float(sample.get("noise_floor_amp")) or 0.0
+        # Approximate per-sample strength as peak-over-floor dB; epsilon avoids log/divide-by-zero.
+        strength_db = 20.0 * log10((max(0.0, band_rms) + eps) / (max(0.0, floor_amp) + eps))
+        bucket = bucket_for_strength(strength_db, max(0.0, band_rms))
+        if bucket:
+            strength_bucket_counts[location][bucket] += 1
+            strength_bucket_totals[location] += 1
 
     rows: list[dict[str, float | str | int]] = []
-    for location, values in grouped.items():
+    for location, values in grouped_amp.items():
+        values_sorted = sorted(values)
+        dropped_vals = dropped_totals.get(location, [])
+        overflow_vals = overflow_totals.get(location, [])
+        dropped_delta = (
+            int(max(dropped_vals) - min(dropped_vals)) if len(dropped_vals) >= 2 else 0
+        )
+        overflow_delta = (
+            int(max(overflow_vals) - min(overflow_vals)) if len(overflow_vals) >= 2 else 0
+        )
+        bucket_counts = strength_bucket_counts.get(
+            location, {f"l{idx}": 0 for idx in range(1, 6)}
+        )
+        bucket_total = max(0, strength_bucket_totals.get(location, 0))
+        bucket_distribution: dict[str, float | int] = {
+            "total": bucket_total,
+            "counts": dict(bucket_counts),
+        }
+        for idx in range(1, 6):
+            key = f"l{idx}"
+            bucket_distribution[f"percent_time_{key}"] = (
+                (bucket_counts[key] / bucket_total * 100.0) if bucket_total > 0 else 0.0
+            )
         rows.append(
             {
                 "location": location,
                 "samples": len(values),
+                "sample_count": len(values),
                 "mean_intensity_g": mean(values),
+                "p50_intensity_g": _percentile(values_sorted, 0.50),
+                "p95_intensity_g": _percentile(values_sorted, 0.95),
                 "max_intensity_g": max(values),
+                "dropped_frames_delta": dropped_delta,
+                "queue_overflow_drops_delta": overflow_delta,
+                "strength_bucket_distribution": bucket_distribution,
             }
         )
-    rows.sort(key=lambda row: float(row["mean_intensity_g"]), reverse=True)
+    rows.sort(
+        key=lambda row: (
+            float(row.get("p95_intensity_g") or 0.0),
+            float(row.get("max_intensity_g") or 0.0),
+        ),
+        reverse=True,
+    )
     return rows
 
 
@@ -1322,7 +1383,9 @@ def build_findings_for_samples(
     )
 
 
-def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
+def summarize_log(
+    log_path: Path, lang: str | None = None, include_samples: bool = True
+) -> dict[str, object]:
     language = _normalize_lang(lang)
     metadata, samples, warnings = _load_run(log_path)
 
@@ -1544,6 +1607,8 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
             }
         )
 
+    sensor_intensity_by_location = _sensor_intensity_by_location(samples)
+
     summary: dict[str, Any] = {
         "file_name": log_path.name,
         "run_id": run_id,
@@ -1573,7 +1638,8 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
         "speed_stats": speed_stats,
         "sensor_locations": sensor_locations,
         "sensor_count_used": len(sensor_locations),
-        "sensor_intensity_by_location": _sensor_intensity_by_location(samples),
+        "sensor_intensity_by_location": sensor_intensity_by_location,
+        "sensor_statistics_by_location": sensor_intensity_by_location,
         "run_suitability": run_suitability,
         "samples": samples,
         "data_quality": {
@@ -1609,4 +1675,6 @@ def summarize_log(log_path: Path, lang: str | None = None) -> dict[str, object]:
         },
     }
     summary["plots"] = _plot_data(summary)
+    if not include_samples:
+        summary.pop("samples", None)
     return summary
