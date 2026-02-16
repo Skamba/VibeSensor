@@ -43,22 +43,16 @@ def _as_float(value: object) -> float | None:
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
-    required = (
-        "strength_peak_band_rms_amp_g",
-        "strength_floor_amp_g",
-        "strength_db",
-        "strength_bucket",
-    )
     for idx, sample in enumerate(samples):
         missing: list[str] = []
         if _as_float(sample.get("strength_peak_band_rms_amp_g")) is None:
-            missing.append(required[0])
+            missing.append("strength_peak_band_rms_amp_g")
         if _as_float(sample.get("strength_floor_amp_g")) is None:
-            missing.append(required[1])
+            missing.append("strength_floor_amp_g")
         if _as_float(sample.get("strength_db")) is None:
-            missing.append(required[2])
+            missing.append("strength_db")
         if sample.get("strength_bucket") in (None, ""):
-            missing.append(required[3])
+            missing.append("strength_bucket")
         if missing:
             fields = ", ".join(missing)
             raise ValueError(
