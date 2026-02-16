@@ -20,6 +20,7 @@ dependencies = [
 dev = [
   "pytest>=8,<9",
   "pytest-asyncio>=0.23,<1",
+  "pypdf>=5,<6",
   "ruff>=0.6",
   "selenium>=4.20,<5",
   "websockets>=12,<16",
