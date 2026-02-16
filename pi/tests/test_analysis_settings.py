@@ -8,7 +8,6 @@ from vibesensor.analysis_settings import (
     tire_circumference_m_from_spec,
 )
 
-
 # -- tire_circumference_m_from_spec -------------------------------------------
 
 

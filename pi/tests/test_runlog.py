@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 from pathlib import Path
+
+import pytest
 
 from vibesensor.runlog import (
     RUN_METADATA_TYPE,
@@ -16,7 +17,6 @@ from vibesensor.runlog import (
     parse_iso8601,
     read_jsonl_run,
 )
-
 
 # -- parse_iso8601 ------------------------------------------------------------
 
@@ -174,20 +174,14 @@ def test_append_and_read_roundtrip(tmp_path: Path) -> None:
 def test_read_jsonl_run_missing_metadata_raises(tmp_path: Path) -> None:
     path = tmp_path / "bad.jsonl"
     path.write_text('{"record_type": "sample", "t_s": 1.0}\n')
-    try:
+    with pytest.raises(ValueError):
         read_jsonl_run(path)
-        assert False, "Expected ValueError"
-    except ValueError:
-        pass
 
 
 def test_read_jsonl_run_file_not_found(tmp_path: Path) -> None:
     path = tmp_path / "nonexistent.jsonl"
-    try:
+    with pytest.raises(FileNotFoundError):
         read_jsonl_run(path)
-        assert False, "Expected FileNotFoundError"
-    except FileNotFoundError:
-        pass
 
 
 def test_read_jsonl_run_skips_blank_lines(tmp_path: Path) -> None:

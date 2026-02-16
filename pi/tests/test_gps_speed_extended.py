@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from vibesensor.gps_speed import GPSSpeedMonitor
 
-
 # -- effective_speed_mps -------------------------------------------------------
 
 

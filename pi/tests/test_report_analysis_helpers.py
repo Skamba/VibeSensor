@@ -21,7 +21,6 @@ from vibesensor.report_analysis import (
     _wheel_hz,
 )
 
-
 # -- _normalize_lang -----------------------------------------------------------
 
 

@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import math
-
 from vibesensor.metrics_log import MetricsLogger
-
 
 # -- MetricsLogger._safe_metric ------------------------------------------------
 

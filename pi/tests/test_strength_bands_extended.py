@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from vibesensor.strength_bands import band_by_key, band_rank, bucket_for_strength
 
-
 # -- bucket_for_strength -------------------------------------------------------
 
 
