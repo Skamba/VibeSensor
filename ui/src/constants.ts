@@ -36,12 +36,13 @@ export const sourceColumns = [
   { key: "other", labelKey: "matrix.source.other" },
 ] as const;
 
-export const severityBands = [
-  { key: "l5", labelKey: "matrix.severity.l5", minDb: 34, maxDb: Number.POSITIVE_INFINITY, minAmp: 0.048 },
-  { key: "l4", labelKey: "matrix.severity.l4", minDb: 28, maxDb: 34, minAmp: 0.024 },
-  { key: "l3", labelKey: "matrix.severity.l3", minDb: 22, maxDb: 28, minAmp: 0.012 },
-  { key: "l2", labelKey: "matrix.severity.l2", minDb: 16, maxDb: 22, minAmp: 0.006 },
-  { key: "l1", labelKey: "matrix.severity.l1", minDb: 10, maxDb: 16, minAmp: 0.003 },
+// Deprecated fallback until server diagnostics are available.
+export const defaultStrengthBands = [
+  { key: "l1", min_db: 10, min_amp: 0.003 },
+  { key: "l2", min_db: 16, min_amp: 0.006 },
+  { key: "l3", min_db: 22, min_amp: 0.012 },
+  { key: "l4", min_db: 28, min_amp: 0.024 },
+  { key: "l5", min_db: 34, min_amp: 0.048 },
 ] as const;
 
 export const multiSyncWindowMs = 500;
