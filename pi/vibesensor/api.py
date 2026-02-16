@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
-
-UTC = timezone.utc
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
