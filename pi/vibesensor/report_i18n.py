@@ -20,6 +20,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Appendix C: Detailed Findings Table",
         "nl": "Bijlage C: Gedetailleerde bevindingstabel",
     },
+    "AMPLITUDE_VS_TIME": {
+        "en": "Vibration amplitude vs time",
+        "nl": "Trillingsamplitude vs tijd",
+    },
     "AXIS": {"en": "Axis", "nl": "As"},
     "BEST_ORDER_X_ENGINE_ORDER": {
         "en": "{best_order}x engine order",
@@ -71,7 +75,12 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "Dominant frequency near {center_hz:.2f} Hz shows weak speed coupling (abs corr {corr:.2f}); likely structural resonance path.",
         "nl": "Dominante frequentie rond {center_hz:.2f} Hz toont zwakke snelheidskoppeling (abs corr {corr:.2f}); waarschijnlijk structureel resonantiepad.",
     },
+    "DOMINANT_FREQ_VS_TIME": {
+        "en": "Dominant frequency vs time",
+        "nl": "Dominante frequentie vs tijd",
+    },
     "DOMINANT_PEAK_AMPLITUDE": {"en": "Dominant peak amplitude", "nl": "Dominante piekamplitude"},
+    "DOMINANCE_RATIO": {"en": "Dominance ratio", "nl": "Dominantieverhouding"},
     "DURATION": {"en": "Duration", "nl": "Duur"},
     "DURATION_DURATION_1F_S": {"en": "Duration: {duration:.1f}s", "nl": "Duur: {duration:.1f}s"},
     "ENGINE_ORDER_CHECKS_BECOME_AVAILABLE_WITH_ADEQUATE_RPM": {
@@ -91,7 +100,17 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Dekking van motor-snelheidsreferentie is {engine_rpm_non_null_pct:.1f}%, wat onvoldoende is voor motororde-matching.",
     },
     "ESTIMATED_TIME": {"en": "Estimated Time", "nl": "Geschatte tijd"},
+    "EVIDENCE_AND_HOTSPOTS": {
+        "en": "Evidence and Hotspots",
+        "nl": "Bewijs en hotspots",
+    },
+    "EVIDENCE_SNAPSHOT": {
+        "en": "Evidence snapshot",
+        "nl": "Bewijsoverzicht",
+    },
+    "ETA": {"en": "ETA", "nl": "Geschatte tijd"},
     "FINDINGS": {"en": "Findings:", "nl": "Bevindingen:"},
+    "FALSIFY": {"en": "Falsify", "nl": "Weerleg"},
     "FINDING_INDEX_SOURCE": {
         "en": "Finding {index}: {source}",
         "nl": "Bevinding {index}: {source}",
@@ -115,6 +134,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "GENERATED_GENERATED": {"en": "Generated: {generated}", "nl": "Gegenereerd: {generated}"},
     "HIGH": {"en": "High", "nl": "Hoog"},
+    "HEAT_LEGEND_LESS": {"en": "Less vibration", "nl": "Minder trilling"},
+    "HEAT_LEGEND_MORE": {"en": "More vibration", "nl": "Meeste trilling"},
     "HOLD_ENGINE_AT_THE_SAME_RPM_IN_NEUTRAL": {
         "en": "Hold engine at the same RPM in neutral and verify the signature.",
         "nl": "Houd de motor op hetzelfde toerental in neutraal en controleer de signatuur.",
@@ -142,6 +163,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "en": "largest single-sided FFT peak amplitude across axes from the dominant frequency cluster",
         "nl": "grootste enkelzijdige FFT-piekamplitude over assen uit de dominante frequentiecluster",
     },
+    "LANG_EN": {"en": "EN", "nl": "EN"},
+    "LANG_NL": {"en": "NL", "nl": "NL"},
     "LOCATION": {"en": "Location", "nl": "Locatie"},
     "LOCATION_ANALYSIS_UNAVAILABLE": {
         "en": "Location analysis unavailable.",
@@ -191,6 +214,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
     "MISSING_WHEEL_REFERENCE": {"en": "Missing wheel reference", "nl": "Wielreferentie ontbreekt"},
     "MOST_LIKELY_ORIGIN": {"en": "Most likely origin", "nl": "Meest waarschijnlijke oorsprong"},
     "NONE_LISTED": {"en": "None listed", "nl": "Geen items"},
+    "OBSERVED_SIGNATURES": {
+        "en": "Observed signatures",
+        "nl": "Waargenomen signaturen",
+    },
     "NOT_AVAILABLE": {"en": "Not available", "nl": "Niet beschikbaar"},
     "NOT_AVAILABLE_2": {"en": "not available", "nl": "niet beschikbaar"},
     "NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA": {
@@ -211,6 +238,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Orde-match verslechtert bij gebruik van gemeten bandenomtrek.",
     },
     "OVERALL_STATUS": {"en": "Overall status", "nl": "Algemene status"},
+    "ONE_SENSOR_NOTE": {
+        "en": "Only one sensor active; spatial comparison unavailable. Neutral fill shown.",
+        "nl": "Slechts één sensor actief; ruimtelijke vergelijking niet beschikbaar. Neutrale vulling getoond.",
+    },
     "PEAK_AMPLITUDE_G": {"en": "Peak Amplitude (g)", "nl": "Piekamplitude (g)"},
     "PEAK_DISAPPEARS_AFTER_SENSOR_REMOUNT_OR_CABLE_RESEAT": {
         "en": "Peak disappears after sensor remount or cable reseat.",
@@ -243,6 +274,11 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Geef bandenomtrek of bandenmaat (breedte/profiel/velg) op in run-metadata.",
     },
     "RANKED_FINDINGS": {"en": "Ranked Findings", "nl": "Gerangschikte bevindingen"},
+    "REFERENCE_COMPLETENESS": {
+        "en": "Reference completeness",
+        "nl": "Referentiecompleetheid",
+    },
+    "RUN_CONDITIONS": {"en": "Run conditions", "nl": "Runcondities"},
     "RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT": {
         "en": "Raw accelerometer sample rate is missing, so dominant-frequency confidence is reduced and spectral trend interpretation is limited.",
         "nl": "De ruwe bemonsteringsfrequentie van de accelerometer ontbreekt, waardoor de betrouwbaarheid van de dominante frequentie lager is en de interpretatie van de spectrale trend beperkt blijft.",
@@ -318,6 +354,18 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Bewijs voor {source} vereist aanvullende controles.",
     },
     "SOURCE_WHEEL_TIRE": {"en": "Wheel / Tire", "nl": "Wiel / Band"},
+    "SIGNATURES_OBSERVED_LABEL": {
+        "en": "Signatures observed",
+        "nl": "Waargenomen signaturen",
+    },
+    "STRONGEST_LOCATION": {
+        "en": "Strongest location",
+        "nl": "Sterkste locatie",
+    },
+    "STRONGEST_SPEED_BAND": {
+        "en": "Strongest speed band",
+        "nl": "Sterkste snelheidsband",
+    },
     "SUMMARY": {"en": "Summary", "nl": "Samenvatting"},
     "SWAP_FRONT_REAR_WHEEL_POSITIONS_AND_REPEAT_THE": {
         "en": "Swap front/rear wheel positions and repeat the run.",
@@ -400,7 +448,19 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Locatierangschikking niet beschikbaar",
     },
     "LIKELY_SOURCE_LABEL": {"en": "Likely source", "nl": "Waarschijnlijke bron"},
+    "CONFIDENCE_HIGH": {"en": "High", "nl": "Hoog"},
+    "CONFIDENCE_MEDIUM": {"en": "Medium", "nl": "Middel"},
+    "CONFIDENCE_LOW": {"en": "Low", "nl": "Laag"},
     "CONFIDENCE_LABEL": {"en": "Confidence", "nl": "Score"},
+    "CONFIRM": {"en": "Confirm", "nl": "Bevestig"},
+    "CHART_INTERPRETATION_SWEEP": {
+        "en": "Charts show how vibration amplitude and frequency track with vehicle speed. A clear rising pattern confirms speed-dependent excitation.",
+        "nl": "Grafieken tonen hoe trillingsamplitude en frequentie meebewegen met voertuigsnelheid. Een duidelijk stijgend patroon bevestigt snelheidsafhankelijke aanstoting.",
+    },
+    "CHART_INTERPRETATION_STEADY": {
+        "en": "Charts show vibration amplitude and dominant frequency over time at near-constant speed. Consistent patterns indicate a repeatable source.",
+        "nl": "Grafieken tonen trillingsamplitude en dominante frequentie over tijd bij vrijwel constante snelheid. Consistente patronen duiden op een herhaalbare bron.",
+    },
     "MATCHED_FREQUENCY_ORDER": {
         "en": "Matched Frequency / Order",
         "nl": "Overeenkomende frequentie / orde",
@@ -523,6 +583,10 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "TIRE_SIZE": {"en": "tire size", "nl": "bandenmaat"},
     "TOP_ACTIONS": {"en": "Top Actions", "nl": "Topacties"},
+    "TOP_SUSPECTED_CAUSE": {
+        "en": "Top suspected cause",
+        "nl": "Top vermoedelijke oorzaak",
+    },
     "T_10_20_MIN": {"en": "10-20 min", "nl": "10-20 min"},
     "T_15_30_MIN": {"en": "15-30 min", "nl": "15-30 min"},
     "T_1_NO_FINDINGS_GENERATED": {
@@ -531,6 +595,16 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
     },
     "T_20_40_MIN": {"en": "20-40 min", "nl": "20-40 min"},
     "UNKNOWN": {"en": "Unknown", "nl": "Onbekend"},
+    "WHAT": {"en": "What", "nl": "Wat"},
+    "WHAT_TO_CHECK_FIRST": {
+        "en": "What to check first",
+        "nl": "Wat eerst te controleren",
+    },
+    "WORKSHOP_SUMMARY": {
+        "en": "Workshop Summary",
+        "nl": "Werkplaatsoverzicht",
+    },
+    "WHY_SHORT": {"en": "Why", "nl": "Waarom"},
     "UNLABELED_SENSOR": {"en": "Unlabeled sensor", "nl": "Sensor zonder label"},
     "VALIDATE_GEARING_SLIP_ASSUMPTIONS_AGAINST_REAL_RPM_IF": {
         "en": "Validate gearing/slip assumptions against real RPM if available.",
