@@ -87,6 +87,13 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
     base = [1.0 for _ in freq]
     spec = base[:]
     spec[spike_idx] = 150.0
+    strength_metrics = compute_strength_metrics(
+        freq_hz=freq,
+        combined_spectrum_amp_g_values=spec,
+        peak_bandwidth_hz=1.2,
+        peak_separation_hz=1.2,
+        top_n=5,
+    )
     live = {}
     for _ in range(3):
         live = engine.update(
@@ -101,6 +108,7 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
                         "y": spec,
                         "z": spec,
                         "combined_spectrum_amp_g": spec,
+                        "strength_metrics": strength_metrics,
                     }
                 },
             },
@@ -150,6 +158,10 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
                 "accel_magnitude_rms_g": 0.04,
                 "dominant_freq_hz": wheel_hz * 1.01,
                 "dominant_peak_amp_g": 0.09 + (idx * 0.0005),
+                "strength_floor_amp_g": 0.0075,
+                "strength_peak_band_rms_amp_g": 0.09 + (idx * 0.0005),
+                "strength_db": 22.0,
+                "strength_bucket": "l2",
             }
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -208,6 +220,10 @@ def test_live_top_finding_uses_same_report_finding_logic() -> None:
             "speed_kmh": speed_kmh,
             "dominant_freq_hz": wheel_hz * 1.01,
             "dominant_peak_amp_g": 0.09 + (idx * 0.0005),
+            "strength_floor_amp_g": 0.0075,
+            "strength_peak_band_rms_amp_g": 0.09 + (idx * 0.0005),
+            "strength_db": 22.0,
+            "strength_bucket": "l2",
         }
         for idx in range(60)
     ]
