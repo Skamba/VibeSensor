@@ -507,3 +507,16 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
     min-width: 0;
   }
 }
+
+.strength-chart {
+  position: relative;
+}
+
+.strength-tooltip {
+  display: none;
+  right: 20px;
+  left: auto;
+  top: auto;
+  bottom: 20px;
+  position: fixed;
+}
