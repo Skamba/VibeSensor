@@ -257,8 +257,10 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
 
 def _sensor_intensity_by_location(
     samples: list[dict[str, Any]],
+    include_locations: set[str] | None = None,
 ) -> list[dict[str, float | str | int]]:
     grouped_amp: dict[str, list[float]] = defaultdict(list)
+    sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[float]] = defaultdict(list)
     overflow_totals: dict[str, list[float]] = defaultdict(list)
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
@@ -272,10 +274,12 @@ def _sensor_intensity_by_location(
         location = _location_label(sample)
         if not location:
             continue
-        amp = _primary_vibration_amp(sample)
-        if amp is None or amp <= 0:
+        if include_locations is not None and location not in include_locations:
             continue
-        grouped_amp[location].append(float(amp))
+        sample_counts[location] += 1
+        amp = _primary_vibration_amp(sample)
+        if amp is not None and amp > 0:
+            grouped_amp[location].append(float(amp))
         dropped_total = _as_float(sample.get("frames_dropped_total"))
         if dropped_total is None:
             dropped_total = _as_float(sample.get("dropped_frames"))
@@ -297,7 +301,12 @@ def _sensor_intensity_by_location(
             strength_bucket_totals[location] += 1
 
     rows: list[dict[str, float | str | int]] = []
-    for location, values in grouped_amp.items():
+    target_locations = set(sample_counts.keys())
+    if include_locations is not None:
+        target_locations |= set(include_locations)
+
+    for location in sorted(target_locations):
+        values = grouped_amp.get(location, [])
         values_sorted = sorted(values)
         dropped_vals = dropped_totals.get(location, [])
         overflow_vals = overflow_totals.get(location, [])
@@ -320,15 +329,16 @@ def _sensor_intensity_by_location(
             bucket_distribution[f"percent_time_{key}"] = (
                 (bucket_counts[key] / bucket_total * 100.0) if bucket_total > 0 else 0.0
             )
+        sample_count = int(sample_counts.get(location, 0))
         rows.append(
             {
                 "location": location,
-                "samples": len(values),
-                "sample_count": len(values),
-                "mean_intensity_g": mean(values),
-                "p50_intensity_g": _percentile(values_sorted, 0.50),
-                "p95_intensity_g": _percentile(values_sorted, 0.95),
-                "max_intensity_g": max(values),
+            "samples": sample_count,
+            "sample_count": sample_count,
+            "mean_intensity_g": mean(values) if values else None,
+            "p50_intensity_g": _percentile(values_sorted, 0.50) if values else None,
+            "p95_intensity_g": _percentile(values_sorted, 0.95) if values else None,
+            "max_intensity_g": max(values) if values else None,
                 "dropped_frames_delta": dropped_delta,
                 "queue_overflow_drops_delta": overflow_delta,
                 "strength_bucket_distribution": bucket_distribution,
@@ -410,6 +420,53 @@ def _location_label(sample: dict[str, Any]) -> str:
     if client_id_raw:
         return f"Sensor {client_id_raw[-4:]}"
     return "Unlabeled sensor"
+
+
+def _locations_connected_throughout_run(samples: list[dict[str, Any]]) -> set[str]:
+    by_location_times: dict[str, list[float]] = defaultdict(list)
+    all_times: list[float] = []
+
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        location = _location_label(sample)
+        if not location:
+            continue
+        t_s = _as_float(sample.get("t_s"))
+        if t_s is None:
+            continue
+        by_location_times[location].append(t_s)
+        all_times.append(t_s)
+
+    if not by_location_times:
+        return set()
+    if not all_times:
+        return set(by_location_times.keys())
+
+    run_start = min(all_times)
+    run_end = max(all_times)
+    run_duration = max(0.0, run_end - run_start)
+    edge_tolerance_s = max(0.75, min(3.0, run_duration * 0.08))
+
+    counts_by_location = {
+        location: len(times)
+        for location, times in by_location_times.items()
+    }
+    max_count = max(counts_by_location.values()) if counts_by_location else 0
+    min_required_count = int(max_count * 0.80) if max_count >= 5 else 1
+
+    connected: set[str] = set()
+    for location, times in by_location_times.items():
+        if not times:
+            continue
+        if len(times) < min_required_count:
+            continue
+        loc_start = min(times)
+        loc_end = max(times)
+        if loc_start <= (run_start + edge_tolerance_s) and loc_end >= (run_end - edge_tolerance_s):
+            connected.add(location)
+
+    return connected if connected else set(by_location_times.keys())
 
 
 def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> float | None:
@@ -739,7 +796,7 @@ def _finding_actions_for_source(
 def _merge_test_plan(
     findings: list[dict[str, object]],
     lang: object,
-) -> list[dict[str, str]]:
+) -> list[dict[str, object]]:
     # Priority ordering: inspection/visual first, then balance/runout, then deeper
     ACTION_PRIORITY = {
         "wheel_tire_condition": 1,       # visual inspection – least invasive
@@ -750,27 +807,47 @@ def _merge_test_plan(
         "engine_combustion_quality": 5,
         "general_mechanical_inspection": 6,
     }
-    steps: list[dict[str, str]] = []
+    steps: list[dict[str, object]] = []
     for finding in findings:
         if not isinstance(finding, dict):
             continue
+        finding_confidence = _as_float(finding.get("confidence_0_to_1"))
+        finding_speed_band = str(finding.get("strongest_speed_band") or "").strip()
+        finding_frequency = str(finding.get("frequency_hz_or_order") or "").strip()
         actions = finding.get("actions")
         if isinstance(actions, list) and actions:
-            steps.extend([step for step in actions if isinstance(step, dict)])
+            for step in actions:
+                if not isinstance(step, dict):
+                    continue
+                enriched_step = dict(step)
+                if finding_confidence is not None:
+                    enriched_step.setdefault("certainty_0_to_1", f"{finding_confidence:.4f}")
+                if finding_speed_band:
+                    enriched_step.setdefault("speed_band", finding_speed_band)
+                if finding_frequency:
+                    enriched_step.setdefault("frequency_hz_or_order", finding_frequency)
+                steps.append(enriched_step)
             continue
         source = str(finding.get("suspected_source") or "").strip().lower()
-        steps.extend(
-            _finding_actions_for_source(
-                lang,
-                source,
-                strongest_location=str(finding.get("strongest_location") or ""),
-                strongest_speed_band=str(finding.get("strongest_speed_band") or ""),
-                weak_spatial_separation=bool(finding.get("weak_spatial_separation")),
-            )
+        generated_steps = _finding_actions_for_source(
+            lang,
+            source,
+            strongest_location=str(finding.get("strongest_location") or ""),
+            strongest_speed_band=str(finding.get("strongest_speed_band") or ""),
+            weak_spatial_separation=bool(finding.get("weak_spatial_separation")),
         )
+        for step in generated_steps:
+            enriched_step = dict(step)
+            if finding_confidence is not None:
+                enriched_step.setdefault("certainty_0_to_1", f"{finding_confidence:.4f}")
+            if finding_speed_band:
+                enriched_step.setdefault("speed_band", finding_speed_band)
+            if finding_frequency:
+                enriched_step.setdefault("frequency_hz_or_order", finding_frequency)
+            steps.append(enriched_step)
 
-    dedup: dict[str, dict[str, str]] = {}
-    ordered: list[dict[str, str]] = []
+    dedup: dict[str, dict[str, object]] = {}
+    ordered: list[dict[str, object]] = []
     for step in steps:
         action_id = str(step.get("action_id") or "").strip().lower()
         if not action_id:
@@ -1890,6 +1967,8 @@ def summarize_log(
             ),
         },
     ]
+    top_causes = select_top_causes(findings)
+
     sensor_locations = sorted(
         {
             _location_label(sample)
@@ -1897,9 +1976,10 @@ def summarize_log(
             if isinstance(sample, dict) and _location_label(sample)
         }
     )
-    top_causes = select_top_causes(findings)
-
-    sensor_intensity_by_location = _sensor_intensity_by_location(samples)
+    sensor_intensity_by_location = _sensor_intensity_by_location(
+        samples,
+        include_locations=set(sensor_locations),
+    )
 
     summary: dict[str, Any] = {
         "file_name": log_path.name,

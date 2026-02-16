@@ -452,6 +452,9 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
     "CONFIDENCE_MEDIUM": {"en": "Medium", "nl": "Middel"},
     "CONFIDENCE_LOW": {"en": "Low", "nl": "Laag"},
     "CONFIDENCE_LABEL": {"en": "Confidence", "nl": "Score"},
+    "CERTAINTY": {"en": "Certainty", "nl": "Zekerheid"},
+    "SPEED": {"en": "Speed", "nl": "Snelheid"},
+    "FREQUENCY": {"en": "Frequency", "nl": "Frequentie"},
     "CONFIRM": {"en": "Confirm", "nl": "Bevestig"},
     "CHART_INTERPRETATION_SWEEP": {
         "en": "Charts show how vibration amplitude and frequency track with vehicle speed. A clear rising pattern confirms speed-dependent excitation.",
