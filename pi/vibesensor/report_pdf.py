@@ -10,10 +10,20 @@ from .report_analysis import (
     _as_float,
     _normalize_lang,
     _required_text,
+    confidence_label,
 )
 from .report_i18n import tr as _tr
 from .report_i18n import variants as _tr_variants
-from .report_theme import FINDING_SOURCE_COLORS, REPORT_COLORS, REPORT_PLOT_COLORS
+from .report_theme import (
+    CARD_PADDING,
+    CARD_RADIUS,
+    FINDING_SOURCE_COLORS,
+    HEAT_HIGH,
+    HEAT_LOW,
+    HEAT_MID,
+    REPORT_COLORS,
+    REPORT_PLOT_COLORS,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -96,7 +106,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
 
     from reportlab.graphics.shapes import Circle, Drawing, Line, PolyLine, Rect, String
     from reportlab.lib import colors
-    from reportlab.lib.pagesizes import LETTER, landscape
+    from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.platypus import (
         KeepTogether,
@@ -108,8 +118,13 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         TableStyle,
     )
 
-    page_size = landscape(LETTER)
-    content_width = page_size[0] - 48
+    # ── Page setup (A4 landscape) ────────────────────────────────────────
+    page_size = landscape(A4)
+    left_margin = 28
+    right_margin = 28
+    top_margin = 30
+    bottom_margin = 24
+    content_width = page_size[0] - left_margin - right_margin
     lang = _normalize_lang(summary.get("lang"))
 
     def tr(key: str, **kwargs: object) -> str:
@@ -118,13 +133,14 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     def text(en_text: str, nl_text: str) -> str:
         return nl_text if lang == "nl" else en_text
 
+    # ── Typography hierarchy ─────────────────────────────────────────────
     styles = getSampleStyleSheet()
     style_title = ParagraphStyle(
         "TitleMain",
         parent=styles["Heading1"],
-        fontSize=18,
+        fontSize=16,
         textColor=colors.HexColor(REPORT_COLORS["text_primary"]),
-        spaceAfter=8,
+        spaceAfter=6,
     )
     style_h2 = ParagraphStyle(
         "H2",
@@ -134,22 +150,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         spaceAfter=4,
         spaceBefore=8,
     )
-    style_body = ParagraphStyle("Body", parent=styles["BodyText"], fontSize=8.5, leading=11)
-    style_note = ParagraphStyle(
-        "Note",
-        parent=styles["BodyText"],
-        fontSize=8,
-        leading=10.5,
-        textColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
-    )
-    style_table_head = ParagraphStyle(
-        "TableHead",
-        parent=style_note,
-        fontName="Helvetica-Bold",
-        fontSize=7.5,
-        leading=9.0,
-        textColor=colors.HexColor(REPORT_COLORS["text_primary"]),
-    )
     style_h3 = ParagraphStyle(
         "H3",
         parent=styles["Heading3"],
@@ -158,6 +158,29 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         textColor=colors.HexColor(REPORT_COLORS["text_primary"]),
         spaceBefore=5,
         spaceAfter=2,
+    )
+    style_body = ParagraphStyle("Body", parent=styles["BodyText"], fontSize=8.5, leading=11)
+    style_note = ParagraphStyle(
+        "Note",
+        parent=styles["BodyText"],
+        fontSize=8,
+        leading=10.5,
+        textColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
+    )
+    style_small = ParagraphStyle(
+        "Small",
+        parent=styles["BodyText"],
+        fontSize=7,
+        leading=9,
+        textColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+    )
+    style_table_head = ParagraphStyle(
+        "TableHead",
+        parent=style_note,
+        fontName="Helvetica-Bold",
+        fontSize=7.5,
+        leading=9.0,
+        textColor=colors.HexColor(REPORT_COLORS["text_primary"]),
     )
 
     def ptext(value: object, *, header: bool = False, break_underscores: bool = False) -> Paragraph:
@@ -244,56 +267,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             return ptext(tr("NONE_LISTED"))
         lines = [f"{i + 1}. {escape(val)}" for i, val in enumerate(cleaned)]
         return Paragraph("<br/>".join(lines), style_note)
-
-    def top_actions(findings_list: object) -> list[dict[str, str]]:
-        if not isinstance(findings_list, list):
-            return []
-        actions: list[dict[str, str]] = []
-        for finding in findings_list:
-            if not isinstance(finding, dict):
-                continue
-            fid = str(finding.get("finding_id", "")).strip().upper()
-            source = human_source(finding.get("suspected_source"))
-            confidence = _as_float(finding.get("confidence_0_to_1")) or 0.0
-            checks = finding.get("quick_checks")
-            action_text = (
-                str(checks[0]).strip()
-                if isinstance(checks, list) and checks and str(checks[0]).strip()
-                else text(
-                    "Perform direct mechanical inspection on the highest-risk component path.",
-                    "Voer een directe mechanische inspectie uit op het hoogste-risicopad.",
-                )
-            )
-            if fid in {"REF_SPEED", "REF_WHEEL", "REF_ENGINE", "REF_SAMPLE_RATE"}:
-                priority = tr("HIGH")
-                eta = tr("T_10_20_MIN")
-            elif confidence >= 0.72:
-                priority = tr("HIGH")
-                eta = tr("T_20_40_MIN")
-            elif confidence >= 0.45:
-                priority = tr("MEDIUM")
-                eta = tr("T_15_30_MIN")
-            else:
-                priority = tr("LOW")
-                eta = tr("T_10_20_MIN")
-            reason = str(finding.get("evidence_summary", "")).strip()
-            if len(reason) > 180:
-                reason = reason[:177].rstrip() + "..."
-            actions.append(
-                {
-                    "priority": priority,
-                    "action": action_text,
-                    "why": reason
-                    or tr(
-                        "SOURCE_EVIDENCE_REQUIRES_ADDITIONAL_CHECKS",
-                        source=source,
-                    ),
-                    "eta": eta,
-                }
-            )
-            if len(actions) >= 3:
-                break
-        return actions
 
     def location_hotspots(
         samples_obj: object,
@@ -397,58 +370,122 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                     )
         return rows, summary, active_count, monitored_count
 
-    def mk_table(
+    def styled_table(
         data: list[list[object]],
         col_widths: list[int] | None = None,
         header: bool = True,
+        zebra: bool = True,
         repeat_rows: int | None = None,
     ) -> Table:
+        """Create a polished table with optional header bg, zebra, and light separators."""
         table = Table(
             data,
             colWidths=col_widths,
             repeatRows=repeat_rows if repeat_rows is not None else (1 if header else 0),
         )
-        style = TableStyle(
-            [
-                (
-                    "LINEABOVE",
-                    (0, 0),
-                    (-1, 0),
-                    0.7,
-                    colors.HexColor(REPORT_COLORS["table_header_border"]),
-                ),
-                (
-                    "LINEBELOW",
-                    (0, 0),
-                    (-1, 0),
-                    0.7,
-                    colors.HexColor(REPORT_COLORS["table_header_border"]),
-                ),
-                (
-                    "LINEBELOW",
-                    (0, 1),
-                    (-1, -1),
-                    0.35,
-                    colors.HexColor(REPORT_COLORS["table_row_border"]),
-                ),
-                ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
-                ("FONTSIZE", (0, 0), (-1, -1), 8),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 5),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-            ]
-        )
+        cmds: list[tuple[object, ...]] = [
+            ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+            ("FONTSIZE", (0, 0), (-1, -1), 8),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 5),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+            ("TOPPADDING", (0, 0), (-1, -1), 4),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            (
+                "LINEBELOW",
+                (0, 0),
+                (-1, 0),
+                0.7,
+                colors.HexColor(REPORT_COLORS["table_header_border"]),
+            ),
+            (
+                "LINEBELOW",
+                (0, 1),
+                (-1, -1),
+                0.3,
+                colors.HexColor(REPORT_COLORS["table_row_border"]),
+            ),
+        ]
         if header:
-            style.add(
-                "BACKGROUND", (0, 0), (-1, 0), colors.HexColor(REPORT_COLORS["table_header_bg"])
-            )
-            style.add("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor(REPORT_COLORS["text_primary"]))
-            style.add("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold")
-            style.add("BOX", (0, 0), (-1, -1), 0.45, colors.HexColor(REPORT_COLORS["table_box"]))
-        table.setStyle(style)
+            cmds.extend([
+                (
+                    "BACKGROUND",
+                    (0, 0),
+                    (-1, 0),
+                    colors.HexColor(REPORT_COLORS["table_header_bg"]),
+                ),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor(REPORT_COLORS["text_primary"])),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ])
+        if zebra and len(data) > 2:
+            for row_idx in range(2 if header else 1, len(data), 2):
+                cmds.append(
+                    (
+                        "BACKGROUND",
+                        (0, row_idx),
+                        (-1, row_idx),
+                        colors.HexColor(REPORT_COLORS["table_zebra_bg"]),
+                    )
+                )
+        table.setStyle(TableStyle(cmds))
         return table
+
+    def make_card(
+        title: str,
+        body_flowables: list[object],
+        badge: str | None = None,
+        tone: str = "neutral",
+    ) -> Table:
+        """Build a Material-style card with title, optional badge, and body flowables."""
+        tone_bg = REPORT_COLORS.get(f"card_{tone}_bg", REPORT_COLORS["card_neutral_bg"])
+        tone_border = REPORT_COLORS.get(
+            f"card_{tone}_border", REPORT_COLORS["card_neutral_border"]
+        )
+        title_html = f"<b>{escape(title)}</b>"
+        if badge:
+            pill_bg = REPORT_COLORS.get(f"pill_{tone}_bg", REPORT_COLORS["pill_low_bg"])
+            pill_text = REPORT_COLORS.get(f"pill_{tone}_text", REPORT_COLORS["pill_low_text"])
+            title_html += (
+                f'  <font size="7" color="{pill_text}">'
+                f'<span backColor="{pill_bg}"> {escape(badge)} </span></font>'
+            )
+        rows: list[list[object]] = [[Paragraph(title_html, style_note)]]
+        for flowable in body_flowables:
+            rows.append([flowable])
+        card = Table(rows, colWidths=[None])
+        card.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(tone_bg)),
+                (
+                    "BOX",
+                    (0, 0),
+                    (-1, -1),
+                    0.6,
+                    colors.HexColor(tone_border),
+                ),
+                ("LEFTPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                ("RIGHTPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                ("TOPPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROUNDEDCORNERS", [CARD_RADIUS, CARD_RADIUS, CARD_RADIUS, CARD_RADIUS]),
+            ])
+        )
+        return card
+
+    def _confidence_pill_html(conf_0_to_1: float) -> str:
+        """Return a small HTML snippet for the confidence pill."""
+        label_key, tone, pct_text = confidence_label(conf_0_to_1)
+        label = tr(label_key)
+        pill_bg = REPORT_COLORS.get(f"pill_{tone}_bg", REPORT_COLORS["pill_low_bg"])
+        pill_text_color = REPORT_COLORS.get(
+            f"pill_{tone}_text", REPORT_COLORS["pill_low_text"]
+        )
+        return (
+            f'<font color="{pill_text_color}">'
+            f'<span backColor="{pill_bg}"> {escape(label)} </span></font>'
+            f' <font size="6" color="{REPORT_COLORS["text_muted"]}">{escape(pct_text)}</font>'
+        )
 
     def downsample(
         points: list[tuple[float, float]], max_points: int = 260
@@ -467,17 +504,20 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         x_label: str,
         y_label: str,
         series: list[tuple[str, str, list[tuple[float, float]]]],
+        width: float | None = None,
+        height: int = 195,
     ) -> Drawing:
-        drawing = Drawing(content_width, 236)
+        plot_width = width if width is not None else content_width
+        drawing = Drawing(plot_width, height)
         plot_x0 = 52
-        plot_y0 = 34
-        plot_w = content_width - 88
-        plot_h = 160
+        plot_y0 = 30
+        plot_w = plot_width - 88
+        plot_h = height - 60
 
         drawing.add(
             String(
                 8,
-                214,
+                height - 16,
                 title,
                 fontName="Helvetica-Bold",
                 fontSize=9,
@@ -492,7 +532,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             drawing.add(
                 String(
                     8,
-                    198,
+                    height - 32,
                     tr("PLOT_NO_DATA_AVAILABLE"),
                     fontSize=8,
                     fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
@@ -581,7 +621,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         drawing.add(
             String(
                 plot_x0 + (plot_w / 2) - 18,
-                10,
+                6,
                 x_label,
                 fontSize=7,
                 fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
@@ -598,7 +638,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         )
 
         legend_x = plot_x0 + 4
-        legend_y = 196
+        legend_y = height - 30
         for idx, (name, color, points) in enumerate(active_series):
             flat_points: list[float] = []
             for x_val, y_val in points:
@@ -650,19 +690,21 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         src = str(source or "unknown").strip().lower()
         return FINDING_SOURCE_COLORS.get(src, FINDING_SOURCE_COLORS["unknown"])
 
-    def car_location_diagram(top_findings: list[dict[str, object]]) -> Drawing:
-        # BMW 640i Gran Coupe reference proportions (official BMW press data):
-        # length 5007 mm, width 1894 mm -> L/W ~= 2.64.
+    def car_location_diagram(
+        top_findings: list[dict[str, object]],
+        diagram_width: float | None = None,
+    ) -> Drawing:
+        d_width = diagram_width if diagram_width is not None else content_width * 0.44
         bmw_length_mm = 5007.0
         bmw_width_mm = 1894.0
         length_width_ratio = bmw_length_mm / bmw_width_mm
 
-        drawing_h = 500
-        drawing = Drawing(content_width, drawing_h)
-        car_h = 370.0
+        drawing_h = 370
+        drawing = Drawing(d_width, drawing_h)
+        car_h = 280.0
         car_w = car_h / length_width_ratio
-        x0 = (content_width - car_w) / 2.0
-        y0 = 74.0
+        x0 = (d_width - car_w) / 2.0
+        y0 = 50.0
         cx = x0 + (car_w / 2)
         cy = y0 + (car_h / 2)
 
@@ -690,20 +732,14 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             )
 
         def _amp_heat_color(norm: float) -> str:
-            # Green (less vibration) -> yellow -> red (most vibration).
             if norm <= 0.5:
-                return _blend("#2ca25f", "#f0cf4a", norm * 2.0)
-            return _blend("#f0cf4a", "#d73027", (norm - 0.5) * 2.0)
+                return _blend(HEAT_LOW, HEAT_MID, norm * 2.0)
+            return _blend(HEAT_MID, HEAT_HIGH, (norm - 0.5) * 2.0)
 
         # Outer body
         drawing.add(
             Rect(
-                x0,
-                y0,
-                car_w,
-                car_h,
-                rx=30,
-                ry=30,
+                x0, y0, car_w, car_h, rx=24, ry=24,
                 fillColor=colors.HexColor(REPORT_COLORS["surface"]),
                 strokeColor=colors.HexColor(REPORT_COLORS["border"]),
                 strokeWidth=1.4,
@@ -712,104 +748,68 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         # Cabin
         drawing.add(
             Rect(
-                x0 + (car_w * 0.08),
-                y0 + (car_h * 0.10),
-                car_w * 0.84,
-                car_h * 0.80,
-                rx=20,
-                ry=20,
+                x0 + (car_w * 0.08), y0 + (car_h * 0.10),
+                car_w * 0.84, car_h * 0.80,
+                rx=16, ry=16,
                 fillColor=colors.HexColor("#ffffff"),
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.7,
             )
         )
-        # Center tunnel line
+        # Center tunnel
         drawing.add(
             Line(
-                cx,
-                y0 + 22,
-                cx,
-                y0 + car_h - 22,
+                cx, y0 + 18, cx, y0 + car_h - 18,
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.8,
             )
         )
-        # Axle guides
+        # Axles
         front_axle_y = y0 + (car_h * 0.84)
         rear_axle_y = y0 + (car_h * 0.16)
         drawing.add(
             Line(
-                x0 + (car_w * 0.14),
-                front_axle_y,
-                x0 + (car_w * 0.86),
-                front_axle_y,
+                x0 + (car_w * 0.14), front_axle_y, x0 + (car_w * 0.86), front_axle_y,
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.6,
             )
         )
         drawing.add(
             Line(
-                x0 + (car_w * 0.14),
-                rear_axle_y,
-                x0 + (car_w * 0.86),
-                rear_axle_y,
+                x0 + (car_w * 0.14), rear_axle_y, x0 + (car_w * 0.86), rear_axle_y,
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.6,
             )
         )
-        # Wheels
+        # Wheel circles
         wheel_fill = colors.HexColor("#f8fbff")
         wheel_stroke = colors.HexColor(REPORT_COLORS["axis"])
         wheel_x_left = x0 + (car_w * 0.14)
         wheel_x_right = x0 + (car_w * 0.86)
         for wx, wy in [
-            (wheel_x_left, front_axle_y),  # front-left
-            (wheel_x_right, front_axle_y),  # front-right
-            (wheel_x_left, rear_axle_y),  # rear-left
-            (wheel_x_right, rear_axle_y),  # rear-right
+            (wheel_x_left, front_axle_y),
+            (wheel_x_right, front_axle_y),
+            (wheel_x_left, rear_axle_y),
+            (wheel_x_right, rear_axle_y),
         ]:
             drawing.add(
-                Circle(wx, wy, 14, fillColor=wheel_fill, strokeColor=wheel_stroke, strokeWidth=1.0)
+                Circle(wx, wy, 11, fillColor=wheel_fill, strokeColor=wheel_stroke, strokeWidth=1.0)
             )
 
         # Orientation labels
         drawing.add(
             String(
-                cx - 20,
-                y0 + car_h + 26,
+                cx - 16, y0 + car_h + 16,
                 text("FRONT", "VOOR"),
-                fontName="Helvetica-Bold",
-                fontSize=10,
+                fontName="Helvetica-Bold", fontSize=8,
                 fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
             )
         )
         drawing.add(
             String(
-                cx - 18,
-                y0 - 22,
+                cx - 14, y0 - 16,
                 text("REAR", "ACHTER"),
-                fontName="Helvetica-Bold",
-                fontSize=10,
-                fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
-            )
-        )
-        drawing.add(
-            String(
-                x0 - 46,
-                cy - 4,
-                text("LEFT", "LINKS"),
-                fontName="Helvetica-Bold",
-                fontSize=10,
-                fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
-            )
-        )
-        drawing.add(
-            String(
-                x0 + car_w + 16,
-                cy - 4,
-                text("RIGHT", "RECHTS"),
-                fontName="Helvetica-Bold",
-                fontSize=10,
+                fontName="Helvetica-Bold", fontSize=8,
                 fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
             )
         )
@@ -838,7 +838,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 if not isinstance(row, dict):
                     continue
                 loc = _canonical_location(row.get("location"))
-                p95_g = _as_float(row.get("p95_intensity_g")) or _as_float(row.get("mean_intensity_g"))
+                p95_g = _as_float(row.get("p95_intensity_g")) or _as_float(
+                    row.get("mean_intensity_g")
+                )
                 if loc and p95_g is not None and p95_g > 0:
                     amp_by_location[loc] = p95_g
         if not amp_by_location:
@@ -863,47 +865,25 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                     finding.get("source") or finding.get("suspected_source")
                 )
 
+        # Title
         drawing.add(
             String(
-                8,
-                drawing_h - 18,
-                tr("SENSOR_PLACEMENT_AND_HOTSPOTS"),
-                fontName="Helvetica-Bold",
-                fontSize=10,
+                4, drawing_h - 14,
+                tr("EVIDENCE_AND_HOTSPOTS"),
+                fontName="Helvetica-Bold", fontSize=9,
                 fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
             )
         )
-        drawing.add(
-            String(
-                8,
-                drawing_h - 32,
-                text(
-                    "BMW 640i ratio used: length/width = 5007/1894 (2.64).",
-                    "BMW 640i-verhouding gebruikt: lengte/breedte = 5007/1894 (2,64).",
-                ),
-                fontName="Helvetica",
-                fontSize=7.4,
-                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
-            )
-        )
-        drawing.add(
-            String(
-                8,
-                drawing_h - 44,
-                text(
-                    "Heat colors use p95 vibration intensity per location.",
-                    "Heat-kleuren gebruiken p95 trillingsintensiteit per locatie.",
-                ),
-                fontName="Helvetica",
-                fontSize=7.2,
-                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
-            )
-        )
+
+        single_sensor = len(amp_by_location) <= 1 and (min_amp is None or min_amp == max_amp)
 
         for name, (px, py) in location_points.items():
             is_active = name in active_locations or name in amp_by_location
             amp = amp_by_location.get(name)
-            if amp is not None and min_amp is not None and max_amp is not None:
+            if single_sensor and is_active:
+                fill = REPORT_COLORS["text_secondary"]
+                radius = 5.4
+            elif amp is not None and min_amp is not None and max_amp is not None:
                 if max_amp > min_amp:
                     norm = (amp - min_amp) / (max_amp - min_amp)
                 else:
@@ -929,27 +909,22 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             )
             drawing.add(
                 String(
-                    px + 10,
-                    py - 2,
-                    name,
-                    fontSize=6.8,
+                    px + 10, py - 2, name,
+                    fontSize=6,
                     fillColor=colors.HexColor(
                         REPORT_COLORS["ink"] if is_active else REPORT_COLORS["text_muted"]
                     ),
                 )
             )
 
-        # Heat legend (green -> red).
-        legend_y = 24
-        legend_x = 10
+        # Heat legend with numeric endpoints
+        legend_y = 18
+        legend_x = 8
         for i in range(0, 11):
             step = i / 10.0
             drawing.add(
                 Rect(
-                    legend_x + (i * 9),
-                    legend_y,
-                    9,
-                    8,
+                    legend_x + (i * 8), legend_y, 8, 7,
                     fillColor=colors.HexColor(_amp_heat_color(step)),
                     strokeColor=colors.HexColor(_amp_heat_color(step)),
                     strokeWidth=0.2,
@@ -957,24 +932,47 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             )
         drawing.add(
             String(
-                legend_x,
-                legend_y - 10,
-                text("Less vibration", "Minder trilling"),
-                fontName="Helvetica",
-                fontSize=7.2,
+                legend_x, legend_y - 10,
+                tr("HEAT_LEGEND_LESS"),
+                fontName="Helvetica", fontSize=6.5,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
             )
         )
         drawing.add(
             String(
-                legend_x + 92,
-                legend_y - 10,
-                text("Most vibration", "Meeste trilling"),
-                fontName="Helvetica",
-                fontSize=7.2,
+                legend_x + 82, legend_y - 10,
+                tr("HEAT_LEGEND_MORE"),
+                fontName="Helvetica", fontSize=6.5,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
             )
         )
+        # Numeric min/max (p95 g values)
+        if min_amp is not None and max_amp is not None:
+            drawing.add(
+                String(
+                    legend_x, legend_y + 10,
+                    f"{min_amp:.4f} g",
+                    fontName="Helvetica", fontSize=6,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                )
+            )
+            drawing.add(
+                String(
+                    legend_x + 70, legend_y + 10,
+                    f"{max_amp:.4f} g",
+                    fontName="Helvetica", fontSize=6,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                )
+            )
+        if single_sensor:
+            drawing.add(
+                String(
+                    legend_x, legend_y - 20,
+                    tr("ONE_SENSOR_NOTE"),
+                    fontName="Helvetica", fontSize=6,
+                    fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                )
+            )
         return drawing
 
     def req(value: object, consequence_key: str) -> str:
@@ -988,100 +986,12 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     outliers = quality.get("outliers", {}) if isinstance(quality, dict) else {}
     findings = summary.get("findings", [])
     plots = summary.get("plots", {}) if isinstance(summary.get("plots"), dict) else {}
+    speed_stats = (
+        summary.get("speed_stats", {}) if isinstance(summary.get("speed_stats"), dict) else {}
+    )
+    steady_speed = bool(speed_stats.get("steady_speed"))
 
-    metadata_rows = [
-        [tr("FIELD"), tr("VALUE")],
-        [
-            tr("START_TIME_UTC"),
-            req(summary.get("start_time_utc"), "CONSEQUENCE_TIMELINE_ALIGNMENT_IMPOSSIBLE"),
-        ],
-        [
-            tr("END_TIME_UTC"),
-            req(summary.get("end_time_utc"), "CONSEQUENCE_DURATION_INFERRED_FROM_LAST_SAMPLE"),
-        ],
-        [
-            tr("SENSOR_MODEL"),
-            req(summary.get("sensor_model"), "CONSEQUENCE_SENSOR_SANITY_LIMITS_CANNOT_BE_APPLIED"),
-        ],
-        [
-            text("Acceleration Scale (g/LSB)", "Versnellingsschaal (g/LSB)"),
-            req(
-                summary.get("accel_scale_g_per_lsb"),
-                "CONSEQUENCE_SENSOR_SANITY_LIMITS_CANNOT_BE_APPLIED",
-            ),
-        ],
-        [
-            tr("RAW_SAMPLE_RATE_HZ_LABEL"),
-            req(summary.get("raw_sample_rate_hz"), "CONSEQUENCE_FREQUENCY_CONFIDENCE_REDUCED"),
-        ],
-        [
-            tr("FEATURE_INTERVAL_S_LABEL"),
-            req(
-                summary.get("feature_interval_s"),
-                "CONSEQUENCE_TIME_DENSITY_INTERPRETATION_REDUCED",
-            ),
-        ],
-        [
-            tr("FFT_WINDOW_SIZE_SAMPLES_LABEL"),
-            req(summary.get("fft_window_size_samples"), "CONSEQUENCE_SPECTRAL_RESOLUTION_UNKNOWN"),
-        ],
-        [
-            tr("FFT_WINDOW_TYPE_LABEL"),
-            req(summary.get("fft_window_type"), "CONSEQUENCE_WINDOW_LEAKAGE_ASSUMPTIONS_UNKNOWN"),
-        ],
-        [
-            tr("PEAK_PICKER_METHOD_LABEL"),
-            req(summary.get("peak_picker_method"), "CONSEQUENCE_PEAK_REPRODUCIBILITY_UNCLEAR"),
-        ],
-        [
-            tr("TIRE_WIDTH_MM_LABEL"),
-            req(
-                summary.get("metadata", {}).get("tire_width_mm"),
-                "CONSEQUENCE_WHEEL_REFERENCE_LESS_PRECISE",
-            )
-            if isinstance(summary.get("metadata"), dict)
-            else req(None, "CONSEQUENCE_WHEEL_REFERENCE_LESS_PRECISE"),
-        ],
-        [
-            tr("TIRE_ASPECT_PCT_LABEL"),
-            req(
-                summary.get("metadata", {}).get("tire_aspect_pct"),
-                "CONSEQUENCE_WHEEL_REFERENCE_LESS_PRECISE",
-            )
-            if isinstance(summary.get("metadata"), dict)
-            else req(None, "CONSEQUENCE_WHEEL_REFERENCE_LESS_PRECISE"),
-        ],
-        [
-            tr("RIM_SIZE_IN_LABEL"),
-            req(
-                summary.get("metadata", {}).get("rim_in"),
-                "CONSEQUENCE_WHEEL_REFERENCE_LESS_PRECISE",
-            )
-            if isinstance(summary.get("metadata"), dict)
-            else req(None, "CONSEQUENCE_WHEEL_REFERENCE_LESS_PRECISE"),
-        ],
-        [
-            tr("FINAL_DRIVE_RATIO_LABEL"),
-            req(
-                summary.get("metadata", {}).get("final_drive_ratio"),
-                "CONSEQUENCE_ENGINE_REFERENCE_MAY_BE_UNAVAILABLE",
-            )
-            if isinstance(summary.get("metadata"), dict)
-            else req(None, "CONSEQUENCE_ENGINE_REFERENCE_MAY_BE_UNAVAILABLE"),
-        ],
-        [
-            tr("CURRENT_GEAR_RATIO_LABEL"),
-            req(
-                summary.get("metadata", {}).get("current_gear_ratio"),
-                "CONSEQUENCE_ENGINE_REFERENCE_MAY_BE_UNAVAILABLE",
-            )
-            if isinstance(summary.get("metadata"), dict)
-            else req(None, "CONSEQUENCE_ENGINE_REFERENCE_MAY_BE_UNAVAILABLE"),
-        ],
-    ]
-    _ = metadata_rows
-
-    location_rows, location_summary, active_locations, monitored_locations = location_hotspots(
+    location_rows, location_summary, active_locations_count, monitored_locations = location_hotspots(
         summary.get("samples", []),
         findings,
     )
@@ -1095,36 +1005,20 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         if isinstance(findings, list) and findings and isinstance(findings[0], dict)
         else {}
     )
-    top_source = (
-        human_source(top_finding.get("suspected_source"))
-        if isinstance(top_finding, dict)
-        else tr("UNKNOWN")
-    )
     top_confidence = (
         _as_float(top_finding.get("confidence_0_to_1")) if isinstance(top_finding, dict) else 0.0
     )
+
+    # Overall status
     if any(fid.startswith("REF_") for fid in finding_ids):
         overall_status = tr("STATUS_REFERENCE_GAPS")
+        status_tone = "warn"
     elif (top_confidence or 0.0) >= 0.7:
         overall_status = tr("STATUS_ACTIONABLE_HIGH_CONFIDENCE")
+        status_tone = "success"
     else:
         overall_status = tr("STATUS_PRELIMINARY")
-
-    origin_reason = tr("ORIGIN_NOT_ENOUGH_LOCATION_CONTRAST")
-    if location_rows:
-        strongest_location = str(location_rows[0]["location"])
-        strongest_peak = float(location_rows[0]["peak_g"])
-        second_peak = (
-            float(location_rows[1]["peak_g"]) if len(location_rows) > 1 else strongest_peak
-        )
-        dominance = (strongest_peak / second_peak) if second_peak > 0 else 1.0
-        origin_reason = tr(
-            "ORIGIN_STRONGEST_PEAK_DOMINANCE",
-            location=strongest_location,
-            dominance=dominance,
-        )
-    elif isinstance(top_finding, dict):
-        origin_reason = str(top_finding.get("evidence_summary", tr("LOCATION_RANKING_UNAVAILABLE")))
+        status_tone = "neutral"
 
     top_causes = [item for item in summary.get("top_causes", []) if isinstance(item, dict)]
     test_plan = [item for item in summary.get("test_plan", []) if isinstance(item, dict)]
@@ -1133,116 +1027,106 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         if isinstance(summary.get("most_likely_origin"), dict)
         else {}
     )
-    speed_stats = (
-        summary.get("speed_stats", {}) if isinstance(summary.get("speed_stats"), dict) else {}
-    )
     run_suitability = [
         item for item in summary.get("run_suitability", []) if isinstance(item, dict)
     ]
 
-    run_header = mk_table(
+    # ═════════════════════════════════════════════════════════════════════
+    # PAGE 1 — Workshop Summary
+    # ═════════════════════════════════════════════════════════════════════
+    lang_indicator = "NL" if lang == "nl" else "EN"
+    header_bar = styled_table(
         [
             [
-                Paragraph("<b>VibeSensor</b>", style_h2),
+                Paragraph(f"<b>{tr('NVH_DIAGNOSTIC_REPORT')}</b>", style_h2),
                 Paragraph(
-                    f"<b>{tr('REPORT_DATE')}:</b> {str(report_date)[:19].replace('T', ' ')}<br/><b>{tr('RUN_ID')}:</b> {summary.get('run_id', '')}",
+                    f"<b>{tr('REPORT_DATE')}:</b> {str(report_date)[:19].replace('T', ' ')}  "
+                    f"<b>{tr('RUN_ID')}:</b> {summary.get('run_id', '')}  "
+                    f"<b>{lang_indicator}</b>",
                     style_note,
                 ),
             ],
         ],
-        col_widths=[content_width * 0.62, content_width * 0.38],
+        col_widths=[content_width * 0.45, content_width * 0.55],
         header=False,
     )
-    run_header.setStyle(
+    header_bar.setStyle(
         TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(REPORT_COLORS["surface"]))])
     )
 
-    top_conf_pct = (_as_float(top_finding.get("confidence_0_to_1")) or 0.0) * 100.0
-    card_status = mk_table(
-        [
-            [Paragraph(f"<b>{tr('OVERALL_STATUS')}</b>", style_note)],
-            [Paragraph(overall_status, style_note)],
-            [
-                Paragraph(
-                    text(
-                        "Use the prioritized concrete checks below to isolate the physical cause.",
-                        "Gebruik de geprioriteerde concrete checks hieronder om de fysieke oorzaak te isoleren.",
-                    ),
-                    style_note,
-                )
-            ],
-        ],
-        header=False,
+    # Card 1: Overall status
+    card_status = make_card(
+        tr("OVERALL_STATUS"),
+        [Paragraph(overall_status, style_note)],
+        tone=status_tone,
     )
-    card_cause = mk_table(
-        [
-            [
-                Paragraph(
-                    f"<b>{text('Top suspected cause', 'Top vermoedelijke oorzaak')}</b>", style_note
-                )
-            ],
-            [Paragraph(top_source, style_note)],
-            [
-                Paragraph(
-                    f"{top_conf_pct:.0f}% | {top_finding.get('frequency_hz_or_order', tr('UNKNOWN'))}",
-                    style_note,
-                )
-            ],
-        ],
-        header=False,
-    )
-    card_conditions = mk_table(
-        [
-            [Paragraph(f"<b>{text('Run conditions', 'Runcondities')}</b>", style_note)],
-            [
-                Paragraph(
-                    (
-                        f"{tr('DURATION')}: {summary.get('record_length', tr('MISSING_DURATION_UNAVAILABLE'))}<br/>"
-                        f"{text('Speed range', 'Snelheidsbereik')}: {(_as_float(speed_stats.get('min_kmh')) or 0.0):.1f}-"
-                        f"{(_as_float(speed_stats.get('max_kmh')) or 0.0):.1f} km/h<br/>"
-                        f"{text('Speed stddev', 'Snelheid stddev')}: {(_as_float(speed_stats.get('stddev_kmh')) or 0.0):.2f} km/h<br/>"
-                        f"{text('Sample rate', 'Bemonsteringsfrequentie')}: {(_as_float(summary.get('raw_sample_rate_hz')) or 0.0):.1f} Hz<br/>"
-                        f"{text('Sensors used', 'Gebruikte sensoren')}: {int(_as_float(summary.get('sensor_count_used')) or 0)}"
-                    ),
-                    style_note,
-                )
-            ],
-        ],
-        header=False,
-    )
-    cards_row = Table(
-        [[card_status, card_cause, card_conditions]], colWidths=[content_width / 3.0] * 3
-    )
-    cards_row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
 
-    cause_rows = [
-        [
-            tr("FINDING"),
-            tr("LIKELY_SOURCE"),
-            tr("CONFIDENCE_LABEL"),
-            text("Strongest location", "Sterkste locatie"),
-            text("Strongest speed band", "Sterkste snelheidsband"),
-        ]
-    ]
-    for idx, cause in enumerate(top_causes[:3], start=1):
-        dominance = _as_float(cause.get("dominance_ratio"))
-        loc = str(cause.get("strongest_location") or tr("UNKNOWN"))
-        if dominance is not None:
-            loc = f"{loc} ({dominance:.2f}x)"
-            if bool(cause.get("weak_spatial_separation")):
-                loc += f" - {text('weak spatial separation', 'zwakke ruimtelijke scheiding')}"
-        cause_rows.append(
+    # Card 2: Top suspected cause (grouped)
+    if top_causes:
+        tc = top_causes[0]
+        tc_source = human_source(tc.get("source") or tc.get("suspected_source"))
+        tc_conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
+        tc_pill = _confidence_pill_html(tc_conf)
+        tc_sigs = tc.get("signatures_observed", [])
+        sigs_text = ", ".join(str(s) for s in tc_sigs) if tc_sigs else tr("UNKNOWN")
+        tc_loc = str(tc.get("strongest_location") or tr("UNKNOWN"))
+        tc_speed = str(tc.get("strongest_speed_band") or tr("UNKNOWN"))
+        cause_tone = tc.get("confidence_tone", "neutral")
+        card_cause = make_card(
+            tr("TOP_SUSPECTED_CAUSE"),
             [
-                str(idx),
-                human_source(cause.get("source") or cause.get("suspected_source")),
-                f"{((_as_float(cause.get('confidence')) or _as_float(cause.get('confidence_0_to_1')) or 0.0) * 100):.0f}%",
-                loc,
-                str(cause.get("strongest_speed_band") or tr("UNKNOWN")),
-            ]
+                Paragraph(f"<b>{escape(tc_source)}</b> {tc_pill}", style_note),
+                Paragraph(
+                    f"{tr('SIGNATURES_OBSERVED_LABEL')}: {escape(sigs_text)}<br/>"
+                    f"{tr('STRONGEST_LOCATION')}: {escape(tc_loc)}<br/>"
+                    f"{tr('STRONGEST_SPEED_BAND')}: {escape(tc_speed)}",
+                    style_small,
+                ),
+            ],
+            tone=cause_tone,
         )
-    if len(cause_rows) == 1:
-        cause_rows.append(["-", tr("UNKNOWN"), "0%", tr("UNKNOWN"), tr("UNKNOWN")])
+    else:
+        card_cause = make_card(
+            tr("TOP_SUSPECTED_CAUSE"),
+            [Paragraph(tr("UNKNOWN"), style_note)],
+            tone="neutral",
+        )
 
+    # Card 3: Run conditions
+    card_conditions = make_card(
+        tr("RUN_CONDITIONS"),
+        [
+            Paragraph(
+                (
+                    f"{tr('DURATION')}: {summary.get('record_length', tr('MISSING_DURATION_UNAVAILABLE'))}<br/>"
+                    f"{text('Speed range', 'Snelheidsbereik')}: "
+                    f"{(_as_float(speed_stats.get('min_kmh')) or 0.0):.1f}"
+                    f"\u2013{(_as_float(speed_stats.get('max_kmh')) or 0.0):.1f} km/h<br/>"
+                    f"{text('Sample rate', 'Bemonsteringsfrequentie')}: "
+                    f"{(_as_float(summary.get('raw_sample_rate_hz')) or 0.0):.0f} Hz<br/>"
+                    f"{text('Sensors', 'Sensoren')}: "
+                    f"{int(_as_float(summary.get('sensor_count_used')) or 0)}"
+                ),
+                style_note,
+            )
+        ],
+        tone="neutral",
+    )
+
+    card_w = content_width / 3.0 - 4
+    cards_row = Table(
+        [[card_status, card_cause, card_conditions]],
+        colWidths=[card_w, card_w, card_w],
+    )
+    cards_row.setStyle(
+        TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 2),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+        ])
+    )
+
+    # "What to check first" section
     if not test_plan:
         test_plan = [
             {
@@ -1251,43 +1135,77 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 "eta": tr("T_10_20_MIN"),
             }
         ]
-    test_plan_rows = [
-        [
-            text("Step", "Stap"),
-            text("What to do", "Wat te doen"),
-            text("Why", "Waarom"),
-            tr("ESTIMATED_TIME"),
-        ]
+    check_first_header = [
+        text("Step", "Stap"),
+        tr("WHAT"),
+        tr("WHY_SHORT"),
+        tr("CONFIRM"),
+        tr("FALSIFY"),
+        tr("ETA"),
     ]
+    check_first_rows = [check_first_header]
     for idx, step in enumerate(test_plan[:5], start=1):
-        test_plan_rows.append(
-            [
-                str(idx),
-                Paragraph(str(step.get("what") or ""), style_note),
-                Paragraph(str(step.get("why") or ""), style_note),
-                str(step.get("eta") or ""),
-            ]
-        )
+        check_first_rows.append([
+            str(idx),
+            Paragraph(str(step.get("what") or ""), style_note),
+            Paragraph(str(step.get("why") or ""), style_note),
+            Paragraph(str(step.get("confirm") or ""), style_small),
+            Paragraph(str(step.get("falsify") or ""), style_small),
+            str(step.get("eta") or ""),
+        ])
+
+    # Evidence snapshot mini-table
+    strongest_loc_text = str(location_rows[0]["location"]) if location_rows else tr("UNKNOWN")
+    strongest_peak_g = float(location_rows[0]["peak_g"]) if location_rows else 0.0
+    dominance_ratio = 1.0
+    if location_rows and len(location_rows) > 1:
+        second = float(location_rows[1]["peak_g"])
+        if second > 0:
+            dominance_ratio = strongest_peak_g / second
+
+    all_sigs: list[str] = []
+    for tc in top_causes:
+        for s in tc.get("signatures_observed", []):
+            if str(s) not in all_sigs:
+                all_sigs.append(str(s))
+    sigs_str = ", ".join(all_sigs) if all_sigs else tr("UNKNOWN")
+
+    ref_complete = any(
+        str(item.get("state") or "") == "pass"
+        for item in run_suitability
+        if "reference" in str(item.get("check") or "").lower()
+    )
+    ref_text_val = text("Complete", "Compleet") if ref_complete else text("Incomplete", "Incompleet")
+
+    evidence_snapshot_rows = [
+        [tr("STRONGEST_LOCATION"), f"{escape(strongest_loc_text)} ({strongest_peak_g:.4f} g)"],
+        [tr("DOMINANCE_RATIO"), f"{dominance_ratio:.2f}x"],
+        [tr("STRONGEST_SPEED_BAND"), str(top_causes[0].get("strongest_speed_band") or tr("UNKNOWN")) if top_causes else tr("UNKNOWN")],
+        [tr("OBSERVED_SIGNATURES"), escape(sigs_str)],
+        [tr("REFERENCE_COMPLETENESS"), ref_text_val],
+    ]
 
     story: list[object] = [
-        Paragraph(tr("NVH_DIAGNOSTIC_REPORT"), style_title),
-        run_header,
+        Paragraph(tr("WORKSHOP_SUMMARY"), style_title),
+        header_bar,
         Spacer(1, 6),
         cards_row,
-        Paragraph(tr("RANKED_FINDINGS"), style_h2),
-        mk_table(cause_rows, col_widths=[50, 130, 90, 260, 150]),
-        Paragraph(text("Next steps test plan", "Volgende stappen testplan"), style_h2),
-        mk_table(test_plan_rows, col_widths=[52, 248, 362, 82]),
+        Spacer(1, 8),
+        Paragraph(f"<b>{tr('WHAT_TO_CHECK_FIRST')}</b>", style_h3),
+        styled_table(
+            check_first_rows,
+            col_widths=[30, 180, 180, 130, 130, 60],
+        ),
+        Spacer(1, 6),
+        Paragraph(f"<b>{tr('EVIDENCE_SNAPSHOT')}</b>", style_h3),
+        styled_table(
+            [[ptext(r[0], header=True), ptext(r[1])] for r in evidence_snapshot_rows],
+            col_widths=[180, 530],
+            header=False,
+        ),
     ]
 
-    if most_origin:
-        story.extend(
-            [
-                Paragraph(tr("MOST_LIKELY_ORIGIN"), style_h2),
-                Paragraph(str(most_origin.get("explanation") or origin_reason), style_note),
-            ]
-        )
-
+    # Warnings
     warnings = summary.get("warnings", [])
     if isinstance(warnings, list) and warnings:
         story.append(Spacer(1, 4))
@@ -1298,7 +1216,130 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             )
         )
 
-    story.extend([PageBreak(), car_location_diagram(top_causes or findings)])
+    # ═════════════════════════════════════════════════════════════════════
+    # PAGE 2 — Evidence and Hotspots
+    # ═════════════════════════════════════════════════════════════════════
+    story.append(PageBreak())
+    story.append(Paragraph(tr("EVIDENCE_AND_HOTSPOTS"), style_title))
+
+    chart_width = content_width * 0.54
+    chart_height = 185
+    chart1: Drawing | None = None
+    chart2: Drawing | None = None
+    chart_note_key = "CHART_INTERPRETATION_SWEEP"
+
+    if steady_speed:
+        chart_note_key = "CHART_INTERPRETATION_STEADY"
+        vib_points = plots.get("vib_magnitude", [])
+        freq_points = plots.get("dominant_freq", [])
+        if isinstance(vib_points, list) and vib_points:
+            chart1 = line_plot(
+                title=tr("AMPLITUDE_VS_TIME"),
+                x_label=tr("TIME_S"),
+                y_label=text("amplitude (g)", "amplitude (g)"),
+                series=[
+                    (
+                        tr("PLOT_SERIES_MAGNITUDE"),
+                        REPORT_PLOT_COLORS["vibration"],
+                        vib_points,
+                    )
+                ],
+                width=chart_width,
+                height=chart_height,
+            )
+        if isinstance(freq_points, list) and freq_points:
+            chart2 = line_plot(
+                title=tr("DOMINANT_FREQ_VS_TIME"),
+                x_label=tr("TIME_S"),
+                y_label=tr("FREQUENCY_HZ"),
+                series=[
+                    (
+                        tr("PLOT_DOM_FREQ_OVER_TIME"),
+                        REPORT_PLOT_COLORS["dominant_freq"],
+                        freq_points,
+                    )
+                ],
+                width=chart_width,
+                height=chart_height,
+            )
+    else:
+        matched_series = plots.get("matched_amp_vs_speed", [])
+        freq_series = plots.get("freq_vs_speed_by_finding", [])
+        if isinstance(matched_series, list) and matched_series:
+            plot_series = []
+            for idx_s, series_data in enumerate(matched_series[:3]):
+                if not isinstance(series_data, dict):
+                    continue
+                pts = series_data.get("points", [])
+                if not isinstance(pts, list) or not pts:
+                    continue
+                color = REPORT_PLOT_COLORS["matched_series"][
+                    idx_s % len(REPORT_PLOT_COLORS["matched_series"])
+                ]
+                plot_series.append((str(series_data.get("label", "")), color, pts))
+            if plot_series:
+                chart1 = line_plot(
+                    title=text(
+                        "Matched amplitude vs speed",
+                        "Gematchte amplitude vs snelheid",
+                    ),
+                    x_label=tr("SPEED_KM_H"),
+                    y_label=text("amplitude (g)", "amplitude (g)"),
+                    series=plot_series,
+                    width=chart_width,
+                    height=chart_height,
+                )
+        if isinstance(freq_series, list) and freq_series:
+            for fs in freq_series[:1]:
+                if not isinstance(fs, dict):
+                    continue
+                freq_m = fs.get("matched", [])
+                freq_p = fs.get("predicted", [])
+                if isinstance(freq_m, list) and freq_m:
+                    chart2 = line_plot(
+                        title=text(
+                            "Frequency vs speed with predicted curve",
+                            "Frequentie vs snelheid met voorspelde curve",
+                        ),
+                        x_label=tr("SPEED_KM_H"),
+                        y_label=tr("FREQUENCY_HZ"),
+                        series=[
+                            (text("matched", "gematcht"), REPORT_PLOT_COLORS["vibration"], freq_m),
+                            (
+                                text("predicted", "voorspeld"),
+                                REPORT_PLOT_COLORS["predicted_curve"],
+                                freq_p if isinstance(freq_p, list) else [],
+                            ),
+                        ],
+                        width=chart_width,
+                        height=chart_height,
+                    )
+
+    # Layout: left = car diagram, right = stacked charts
+    diagram = car_location_diagram(top_causes or findings, diagram_width=content_width * 0.42)
+    right_elements: list[object] = []
+    if chart1:
+        right_elements.append(chart1)
+    if chart2:
+        right_elements.append(Spacer(1, 6))
+        right_elements.append(chart2)
+    if not right_elements:
+        right_elements.append(Paragraph(tr("PLOT_NO_DATA_AVAILABLE"), style_note))
+    right_elements.append(Spacer(1, 4))
+    right_elements.append(Paragraph(tr(chart_note_key), style_small))
+
+    right_table = Table([[e] for e in right_elements], colWidths=[chart_width])
+    right_table.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    page2_layout = Table(
+        [[diagram, right_table]],
+        colWidths=[content_width * 0.44, content_width * 0.56],
+    )
+    page2_layout.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    story.append(page2_layout)
+
+    # ═════════════════════════════════════════════════════════════════════
+    # APPENDIX: Sensor Statistics
+    # ═════════════════════════════════════════════════════════════════════
     sensor_stats_rows = [
         row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)
     ]
@@ -1339,7 +1380,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 ]
             )
         story.append(
-            mk_table(
+            styled_table(
                 stat_table_rows,
                 col_widths=[130, 56, 70, 70, 70, 70, 70, 78],
                 repeat_rows=1,
@@ -1351,133 +1392,16 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                     "L1-L5 shows approximate time share per severity strength bucket.",
                     "L1-L5 toont de benaderde tijdsverdeling per ernstniveau.",
                 ),
-                style_note,
+                style_small,
             )
         )
     else:
         story.append(Paragraph(tr("NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND"), style_note))
 
-    if isinstance(findings, list) and findings:
-        for idx, finding in enumerate(findings[:3], start=1):
-            if not isinstance(finding, dict):
-                continue
-            evidence_metrics = (
-                finding.get("evidence_metrics", {})
-                if isinstance(finding.get("evidence_metrics"), dict)
-                else {}
-            )
-            confidence_pct = f"{((_as_float(finding.get('confidence_0_to_1')) or 0.0) * 100):.0f}%"
-            source = human_source(finding.get("suspected_source"))
-            story.extend(
-                [
-                    PageBreak(),
-                    Paragraph(f"{tr('FINDING')} {idx}: {source} ({confidence_pct})", style_h2),
-                    Paragraph(text("What we think it is", "Wat we denken dat het is"), style_h3),
-                    Paragraph(str(finding.get("evidence_summary", "")), style_note),
-                    mk_table(
-                        [
-                            [text("Metric", "Metriek"), text("Value", "Waarde")],
-                            [
-                                text("Match rate", "Trefferratio"),
-                                f"{((_as_float(evidence_metrics.get('match_rate')) or 0.0) * 100):.1f}%",
-                            ],
-                            [
-                                text("Mean relative error", "Gemiddelde relatieve fout"),
-                                f"{(_as_float(evidence_metrics.get('mean_relative_error')) or 0.0):.3f}",
-                            ],
-                            [
-                                text("Mean matched amplitude", "Gemiddelde gematchte amplitude"),
-                                f"{(_as_float(evidence_metrics.get('mean_matched_amplitude')) or 0.0):.4f} g",
-                            ],
-                            [
-                                text("Strongest speed band", "Sterkste snelheidsband"),
-                                str(finding.get("strongest_speed_band") or tr("UNKNOWN")),
-                            ],
-                            [
-                                text("Strongest location", "Sterkste locatie"),
-                                f"{finding.get('strongest_location') or tr('UNKNOWN')} ({(_as_float(finding.get('dominance_ratio')) or 0.0):.2f}x)",
-                            ],
-                        ],
-                        col_widths=[230, 550],
-                    ),
-                ]
-            )
-            matched_points = [
-                row for row in finding.get("matched_points", []) if isinstance(row, dict)
-            ]
-            amp_points = []
-            freq_measured = []
-            freq_pred = []
-            for row in matched_points:
-                spd = _as_float(row.get("speed_kmh"))
-                amp = _as_float(row.get("amp"))
-                mhz = _as_float(row.get("matched_hz"))
-                phz = _as_float(row.get("predicted_hz"))
-                if spd is not None and amp is not None:
-                    amp_points.append((spd, amp))
-                if spd is not None and mhz is not None:
-                    freq_measured.append((spd, mhz))
-                if spd is not None and phz is not None:
-                    freq_pred.append((spd, phz))
-            if amp_points:
-                story.append(
-                    line_plot(
-                        title=text(
-                            "Order track: matched amplitude vs speed",
-                            "Ordertrack: gematchte amplitude vs snelheid",
-                        ),
-                        x_label=tr("SPEED_KM_H"),
-                        y_label=text("amplitude (g)", "amplitude (g)"),
-                        series=[
-                            (
-                                str(finding.get("frequency_hz_or_order") or tr("UNKNOWN")),
-                                _source_color(finding.get("suspected_source")),
-                                amp_points,
-                            )
-                        ],
-                    )
-                )
-            if freq_measured:
-                story.append(
-                    line_plot(
-                        title=text(
-                            "Frequency vs speed with predicted order curve",
-                            "Frequentie vs snelheid met voorspelde ordecurve",
-                        ),
-                        x_label=tr("SPEED_KM_H"),
-                        y_label=tr("FREQUENCY_HZ"),
-                        series=[
-                            (
-                                text("matched", "gematcht"),
-                                REPORT_PLOT_COLORS["vibration"],
-                                freq_measured,
-                            ),
-                            (
-                                text("predicted", "voorspeld"),
-                                REPORT_PLOT_COLORS["predicted_curve"],
-                                freq_pred,
-                            ),
-                        ],
-                    )
-                )
-            story.extend(
-                [
-                    Paragraph(text("What to do next", "Volgende stap"), style_h3),
-                    Paragraph(
-                        str(
-                            finding.get("next_sensor_move")
-                            or text(
-                                "Start with direct inspection at the strongest location and related components.",
-                                "Start met directe inspectie op de sterkste locatie en gerelateerde componenten.",
-                            )
-                        ),
-                        style_note,
-                    ),
-                ]
-            )
-
+    # ═════════════════════════════════════════════════════════════════════
+    # APPENDIX: Speed-Binned Analysis
+    # ═════════════════════════════════════════════════════════════════════
     story.extend([PageBreak(), Paragraph(tr("SPEED_BINNED_ANALYSIS"), style_h2)])
-    steady_speed = bool(speed_stats.get("steady_speed"))
     if steady_speed:
         dist = (
             plots.get("steady_speed_distribution", {})
@@ -1489,7 +1413,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 Paragraph(
                     text("Amplitude at steady speed", "Amplitude bij constante snelheid"), style_h3
                 ),
-                mk_table(
+                styled_table(
                     [
                         [text("Percentile", "Percentiel"), text("Amplitude (g)", "Amplitude (g)")],
                         ["P10", f"{(_as_float(dist.get('p10')) or 0.0):.4f}"],
@@ -1542,7 +1466,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                         tr("MISSING_SPEED_BINS_UNAVAILABLE"),
                     ]
                 )
-            story.append(mk_table(speed_rows, col_widths=[130, 90, 140, 140]))
+            story.append(styled_table(speed_rows, col_widths=[130, 90, 140, 140]))
 
     story.extend([PageBreak(), Paragraph(tr("APPENDIX_A_DATA_QUALITY_CHECKS"), style_h2)])
     if run_suitability:
@@ -1557,7 +1481,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         story.extend(
             [
                 Paragraph(text("Run suitability", "Geschiktheid van de run"), style_h3),
-                mk_table(suit_rows, col_widths=[190, 100, 470]),
+                styled_table(suit_rows, col_widths=[190, 100, 470]),
             ]
         )
     missing_rows = [[tr("REQUIRED_COLUMN"), tr("MISSING")]]
@@ -1570,7 +1494,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 f"{pct:.1f}%" if pct is not None else missing_text,
             ]
         )
-    story.append(mk_table(missing_rows, col_widths=[300, 120]))
+    story.append(styled_table(missing_rows, col_widths=[300, 120]))
 
     speed_note = tr(
         "SPEED_COVERAGE_LINE",
@@ -1598,7 +1522,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             req(accel_sanity.get("z_variance_g2"), "CONSEQUENCE_VARIANCE_UNAVAILABLE"),
         ],
     ]
-    story.append(mk_table(sanity_rows, col_widths=[100, 170, 170]))
+    story.append(styled_table(sanity_rows, col_widths=[100, 170, 170]))
 
     limit_text = req(accel_sanity.get("sensor_limit_g"), "CONSEQUENCE_SENSOR_LIMIT_UNKNOWN")
     sat_count_text = int(_as_float(accel_sanity.get("saturation_count")) or 0)
@@ -1709,25 +1633,25 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             KeepTogether(
                 [
                     Paragraph(text("Timing", "Timing"), style_h3),
-                    mk_table(timing_rows, col_widths=[250, 470]),
+                    styled_table(timing_rows, col_widths=[250, 470]),
                 ]
             ),
             Spacer(1, 4),
             KeepTogether(
                 [
                     Paragraph(text("Sensor", "Sensor"), style_h3),
-                    mk_table(sensor_rows, col_widths=[250, 470]),
+                    styled_table(sensor_rows, col_widths=[250, 470]),
                 ]
             ),
             Spacer(1, 4),
             KeepTogether(
-                [Paragraph(text("FFT", "FFT"), style_h3), mk_table(fft_rows, col_widths=[250, 470])]
+                [Paragraph(text("FFT", "FFT"), style_h3), styled_table(fft_rows, col_widths=[250, 470])]
             ),
             Spacer(1, 4),
             KeepTogether(
                 [
                     Paragraph(text("Vehicle", "Voertuig"), style_h3),
-                    mk_table(vehicle_rows, col_widths=[250, 470]),
+                    styled_table(vehicle_rows, col_widths=[250, 470]),
                 ]
             ),
         ]
@@ -1756,7 +1680,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                     ptext(finding.get("evidence_summary", "")),
                     ptext(human_frequency_text(finding.get("frequency_hz_or_order"))),
                     ptext(human_amp_text(finding.get("amplitude_metric"))),
-                    ptext(f"{((_as_float(finding.get('confidence_0_to_1')) or 0.0) * 100):.0f}%"),
+                    Paragraph(_confidence_pill_html(_as_float(finding.get("confidence_0_to_1")) or 0.0), style_note),
                     human_list(finding.get("quick_checks")),
                 ]
             )
@@ -1772,16 +1696,16 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 ptext(tr("RECORD_ADDITIONAL_DATA")),
             ]
         )
-    story.append(mk_table(detailed_rows, col_widths=[90, 84, 230, 118, 166, 58, 70], repeat_rows=1))
+    story.append(styled_table(detailed_rows, col_widths=[90, 84, 230, 118, 166, 58, 70], repeat_rows=1))
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
         pagesize=page_size,
-        leftMargin=24,
-        rightMargin=24,
-        topMargin=28,
-        bottomMargin=22,
+        leftMargin=left_margin,
+        rightMargin=right_margin,
+        topMargin=top_margin,
+        bottomMargin=bottom_margin,
         pageCompression=0,
     )
 
