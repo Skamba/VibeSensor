@@ -57,6 +57,7 @@ import { WsClient, type WsUiState } from "./ws";
     startLoggingBtn: document.getElementById("startLoggingBtn"),
     stopLoggingBtn: document.getElementById("stopLoggingBtn"),
     refreshLogsBtn: document.getElementById("refreshLogsBtn"),
+    deleteAllLogsBtn: document.getElementById("deleteAllLogsBtn"),
     logsSummary: document.getElementById("logsSummary"),
     logsTableBody: document.getElementById("logsTableBody"),
     clientsSettingsBody: document.getElementById("clientsSettingsBody"),
@@ -109,6 +110,7 @@ import { WsClient, type WsUiState } from "./ws";
     speedMps: null,
     activeViewId: "dashboardView",
     logs: [],
+    deleteAllLogsInFlight: false,
     expandedLogName: null,
     logDetailsByName: {},
     loggingStatus: { enabled: false, current_file: null },
@@ -152,6 +154,7 @@ import { WsClient, type WsUiState } from "./ws";
     useServerDiagnostics: false,
     strengthPlot: null,
     strengthHoverText: "",
+    strengthFrameTotalsByClient: {},
     strengthHistory: {
       t: [],
       wheel: [],
@@ -839,20 +842,27 @@ import { WsClient, type WsUiState } from "./ws";
     const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
     const min = values.length ? Math.min(...values) : null;
     const max = values.length ? Math.max(...values) : null;
+    const knownPositionKeys = new Set(positions.map((point) => point.key));
+    const unmappedLocationKeys = Object.keys(metricByLocation).filter((key) => !knownPositionKeys.has(key));
     const dots = positions
       .map((point) => {
         const value = metricByLocation[point.key];
         const hasValue = typeof value === "number" && Number.isFinite(value);
+        if (!hasValue) return "";
         const norm = normalizeUnit(value, min, max);
-        const fill = hasValue ? heatColor(norm) : "var(--md-sys-color-outline-variant)";
-        const valueLabel = hasValue ? `${fmt(value, 4)} g` : t("logs.not_available");
-        return `<div class="mini-car-dot${hasValue ? "" : " mini-car-dot--muted"}" style="top:${point.top}%;left:${point.left}%;background:${fill}" title="${escapeHtml(point.key)}: ${escapeHtml(valueLabel)}"></div>`;
+        const fill = heatColor(norm);
+        const valueLabel = `${fmt(value, 4)} g`;
+        return `<div class="mini-car-dot" style="top:${point.top}%;left:${point.left}%;background:${fill}" title="${escapeHtml(point.key)}: ${escapeHtml(valueLabel)}"></div>`;
       })
       .join("");
+    const unmappedSummary = unmappedLocationKeys.length
+      ? `<div class="subtle">${escapeHtml(unmappedLocationKeys.join(", "))}</div>`
+      : "";
     return `
       <div class="mini-car-wrap">
         <div class="mini-car-title">${escapeHtml(t("logs.preview_heatmap_title"))}</div>
         <div class="mini-car">${dots}</div>
+        ${unmappedSummary}
       </div>
     `;
   }
@@ -968,6 +978,9 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function renderLogsTable() {
+    if (els.deleteAllLogsBtn) {
+      els.deleteAllLogsBtn.disabled = state.deleteAllLogsInFlight || state.logs.length === 0;
+    }
     if (!state.logs.length) {
       els.logsSummary.textContent = t("logs.none");
       els.logsTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("logs.none_found"))}</td></tr>`;
@@ -1046,6 +1059,46 @@ import { WsClient, type WsUiState } from "./ws";
       collapseExpandedLog();
     }
     await refreshLogs();
+  }
+
+  async function deleteAllLogs() {
+    const names = state.logs
+      .map((row) => (row && typeof row.name === "string" ? row.name : ""))
+      .filter((name) => Boolean(name));
+    if (!names.length) return;
+    const ok = window.confirm(t("logs.delete_all_confirm", { count: names.length }));
+    if (!ok) return;
+
+    state.deleteAllLogsInFlight = true;
+    renderLogsTable();
+    let deleted = 0;
+    let failed = 0;
+    let firstError = "";
+    for (const name of names) {
+      try {
+        await deleteLogApi(name);
+        deleted += 1;
+        delete state.logDetailsByName[name];
+        if (state.expandedLogName === name) {
+          collapseExpandedLog();
+        }
+      } catch (err) {
+        failed += 1;
+        if (!firstError) {
+          firstError = err?.message || t("logs.delete_failed");
+        }
+      }
+    }
+    state.deleteAllLogsInFlight = false;
+    await refreshLogs();
+    if (failed > 0) {
+      const summary = t("logs.delete_all_partial", {
+        deleted,
+        total: names.length,
+        failed,
+      });
+      window.alert(firstError ? `${summary}\n${firstError}` : summary);
+    }
   }
 
   async function loadLogPreview(logName, force = false) {
@@ -1437,7 +1490,28 @@ import { WsClient, type WsUiState } from "./ws";
     bindMatrixTooltips();
   }
 
-  function applyServerDiagnostics(diagnostics) {
+  function hasFreshSensorFrames(clients) {
+    const rows = Array.isArray(clients) ? clients : [];
+    let hasFresh = false;
+    const nextTotals = {};
+    for (const row of rows) {
+      const clientId = row?.id;
+      if (!clientId) continue;
+      const framesTotal = Number(row?.frames_total ?? 0);
+      if (!Number.isFinite(framesTotal)) continue;
+      const prev = Number(state.strengthFrameTotalsByClient?.[clientId]);
+      if (!Number.isFinite(prev)) {
+        if (framesTotal > 0) hasFresh = true;
+      } else if (framesTotal > prev) {
+        hasFresh = true;
+      }
+      nextTotals[clientId] = framesTotal;
+    }
+    state.strengthFrameTotalsByClient = nextTotals;
+    return hasFresh;
+  }
+
+  function applyServerDiagnostics(diagnostics, hasFreshFrames = false) {
     state.strengthBands = normalizeStrengthBands(diagnostics.strength_bands);
     if (diagnostics.matrix) {
       state.eventMatrix = diagnostics.matrix;
@@ -1458,7 +1532,9 @@ import { WsClient, type WsUiState } from "./ws";
 
     const levels = diagnostics.levels || {};
     const bySource = levels.by_source || {};
-    pushStrengthSample(bySource);
+    if (hasFreshFrames) {
+      pushStrengthSample(bySource);
+    }
   }
 
   function yRangeFromBands(): [number, number] {
@@ -1889,8 +1965,9 @@ import { WsClient, type WsUiState } from "./ws";
         return fx > 0 && (x > 0 || y > 0 || z > 0);
       });
     }
+    const hasFreshFrames = hasFreshSensorFrames(state.clients);
     if (payload.diagnostics && typeof payload.diagnostics === "object") {
-      applyServerDiagnostics(payload.diagnostics);
+      applyServerDiagnostics(payload.diagnostics, hasFreshFrames);
       state.useServerDiagnostics = true;
     } else {
       state.useServerDiagnostics = false;
@@ -2078,6 +2155,11 @@ import { WsClient, type WsUiState } from "./ws";
   els.startLoggingBtn.addEventListener("click", startLogging);
   els.stopLoggingBtn.addEventListener("click", stopLogging);
   els.refreshLogsBtn.addEventListener("click", refreshLogs);
+  if (els.deleteAllLogsBtn) {
+    els.deleteAllLogsBtn.addEventListener("click", () => {
+      void deleteAllLogs();
+    });
+  }
   els.logsTableBody.addEventListener("click", (ev) => {
     const target = ev.target as HTMLElement | null;
     const actionEl = target?.closest?.("[data-log-action]");

@@ -808,13 +808,26 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
 
     def _canonical_location(raw: object) -> str:
         token = str(raw or "").strip().lower().replace("_", "-")
-        if "front" in token and "left" in token and "wheel" in token:
+        compact = "".join(ch for ch in token if ch.isalnum())
+        if (
+            ("front" in token and "left" in token and "wheel" in token)
+            or compact in {"frontleft", "frontleftwheel", "fl", "flwheel"}
+        ):
             return "front-left wheel"
-        if "front" in token and "right" in token and "wheel" in token:
+        if (
+            ("front" in token and "right" in token and "wheel" in token)
+            or compact in {"frontright", "frontrightwheel", "fr", "frwheel"}
+        ):
             return "front-right wheel"
-        if "rear" in token and "left" in token and "wheel" in token:
+        if (
+            ("rear" in token and "left" in token and "wheel" in token)
+            or compact in {"rearleft", "rearleftwheel", "rl", "rlwheel"}
+        ):
             return "rear-left wheel"
-        if "rear" in token and "right" in token and "wheel" in token:
+        if (
+            ("rear" in token and "right" in token and "wheel" in token)
+            or compact in {"rearright", "rearrightwheel", "rr", "rrwheel"}
+        ):
             return "rear-right wheel"
         if "trunk" in token:
             return "trunk"
@@ -1267,31 +1280,54 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     )
 
     # "What to check first" section
+    primary_speed_band = str(top_finding.get("strongest_speed_band") or "").strip()
+    if not primary_speed_band and top_causes:
+        primary_speed_band = str(top_causes[0].get("strongest_speed_band") or "").strip()
+    primary_frequency = str(top_finding.get("frequency_hz_or_order") or "").strip()
+
     if not test_plan:
         test_plan = [
             {
                 "what": tr("COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
                 "why": tr("NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
-                "eta": tr("T_10_20_MIN"),
+                "certainty_0_to_1": "0.0",
+                "speed_band": primary_speed_band,
+                "frequency_hz_or_order": primary_frequency,
             }
         ]
     check_first_header = [
         text("Step", "Stap"),
         tr("WHAT"),
         tr("WHY_SHORT"),
-        tr("CONFIRM"),
-        tr("FALSIFY"),
-        tr("ETA"),
+        tr("CERTAINTY"),
+        tr("SPEED"),
+        tr("FREQUENCY"),
     ]
     check_first_rows = [check_first_header]
     for idx, step in enumerate(test_plan[:5], start=1):
+        certainty = _as_float(step.get("certainty_0_to_1"))
+        if certainty is None:
+            certainty = _as_float(step.get("confidence_0_to_1"))
+        if certainty is None:
+            certainty = top_confidence
+        certainty = max(0.0, min(1.0, certainty or 0.0))
+        certainty_text = f"{confidence_label(certainty)} ({certainty:.2f})"
+        speed_text = str(
+            step.get("speed_band")
+            or step.get("strongest_speed_band")
+            or primary_speed_band
+            or tr("UNKNOWN")
+        )
+        frequency_text = human_frequency_text(
+            step.get("frequency_hz_or_order") or primary_frequency or tr("UNKNOWN")
+        )
         check_first_rows.append([
             str(idx),
             Paragraph(str(step.get("what") or ""), style_note),
             Paragraph(str(step.get("why") or ""), style_note),
-            Paragraph(str(step.get("confirm") or ""), style_small),
-            Paragraph(str(step.get("falsify") or ""), style_small),
-            str(step.get("eta") or ""),
+            Paragraph(certainty_text, style_small),
+            Paragraph(speed_text, style_small),
+            Paragraph(frequency_text, style_small),
         ])
 
     # Evidence snapshot mini-table
@@ -1326,7 +1362,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         Paragraph(f"<b>{tr('WHAT_TO_CHECK_FIRST')}</b>", style_h3),
         styled_table(
             check_first_rows,
-            col_widths=[30, 180, 180, 130, 130, 60],
+            col_widths=[30, 180, 180, 95, 115, 110],
         ),
         Spacer(1, 6),
         Paragraph(f"<b>{tr('EVIDENCE_SNAPSHOT')}</b>", style_h3),
@@ -1375,14 +1411,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             width=right_width,
             height=168,
         )
-
-    spectrogram_data = plots.get("peaks_spectrogram", {})
-    spectrogram_chart = spectrogram_plot(
-        text("Spectrogram (from peaks)", "Spectrogram (uit pieken)"),
-        spectrogram_data if isinstance(spectrogram_data, dict) else {},
-        width=right_width,
-        height=168,
-    )
 
     peaks_rows = [
         [
@@ -1453,9 +1481,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 168,
             )
         )
-    right_blocks.append(Spacer(1, 6))
-    right_blocks.append(spectrogram_chart)
-
     right_column = Table([[item] for item in right_blocks], colWidths=[right_width])
     right_column.setStyle(
         TableStyle(
