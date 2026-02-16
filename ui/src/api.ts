@@ -67,8 +67,14 @@ export async function deleteLog(logName: string): Promise<void> {
   await apiJson(`/api/logs/${encodeURIComponent(logName)}`, { method: "DELETE" });
 }
 
-export async function getLogInsights(logName: string, lang: string): Promise<any> {
-  return apiJson(`/api/logs/${encodeURIComponent(logName)}/insights?lang=${encodeURIComponent(lang)}`);
+export async function getLogInsights(
+  logName: string,
+  lang: string,
+  includeSamples = false,
+): Promise<any> {
+  return apiJson(
+    `/api/logs/${encodeURIComponent(logName)}/insights?lang=${encodeURIComponent(lang)}&include_samples=${includeSamples ? "1" : "0"}`,
+  );
 }
 
 export async function setClientLocation(clientId: string, locationCode: string): Promise<any> {
