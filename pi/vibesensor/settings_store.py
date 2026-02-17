@@ -7,7 +7,7 @@ from pathlib import Path
 from threading import RLock
 from typing import Any
 
-from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 
 LOGGER = logging.getLogger(__name__)
 
@@ -35,40 +35,8 @@ def _parse_manual_speed(value: Any) -> float | None:
 
 
 def _sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
-    """Sanitize car aspects using the same rules as AnalysisSettingsStore."""
-    positive_required = {
-        "tire_width_mm",
-        "tire_aspect_pct",
-        "rim_in",
-        "final_drive_ratio",
-        "current_gear_ratio",
-        "wheel_bandwidth_pct",
-        "driveshaft_bandwidth_pct",
-        "engine_bandwidth_pct",
-        "max_band_half_width_pct",
-    }
-    non_negative = {
-        "speed_uncertainty_pct",
-        "tire_diameter_uncertainty_pct",
-        "final_drive_uncertainty_pct",
-        "gear_uncertainty_pct",
-        "min_abs_band_hz",
-    }
-    out: dict[str, float] = {}
-    for key in DEFAULT_CAR_ASPECTS:
-        val = raw.get(key)
-        if val is None:
-            continue
-        try:
-            value = float(val)
-        except (TypeError, ValueError):
-            continue
-        if key in positive_required and value <= 0:
-            continue
-        if key in non_negative and value < 0:
-            continue
-        out[key] = value
-    return out
+    """Sanitize car aspects using the canonical validation from analysis_settings."""
+    return sanitize_settings(raw, allowed_keys=DEFAULT_CAR_ASPECTS)
 
 
 def _validate_car(car: dict[str, Any]) -> dict[str, Any]:

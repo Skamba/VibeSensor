@@ -4,14 +4,14 @@ export interface WsClientOptions {
   url: string;
   staleAfterMs?: number;
   reconnectDelayMs?: number;
-  hasData?: (payload: any) => boolean;
-  onPayload: (payload: any) => void;
+  hasData?: (payload: Record<string, unknown>) => boolean;
+  onPayload: (payload: Record<string, unknown>) => void;
   onStateChange: (state: WsUiState) => void;
 }
 
 export class WsClient {
   private readonly options: Required<Omit<WsClientOptions, "onPayload" | "onStateChange">> & {
-    onPayload: (payload: any) => void;
+    onPayload: (payload: Record<string, unknown>) => void;
     onStateChange: (state: WsUiState) => void;
   };
 
@@ -28,10 +28,12 @@ export class WsClient {
     this.options = {
       staleAfterMs: 3000,
       reconnectDelayMs: 1200,
-      hasData: (payload: any) => {
-        const clients = payload?.spectra?.clients;
+      hasData: (payload: Record<string, unknown>) => {
+        const spectra = payload?.spectra;
+        if (!spectra || typeof spectra !== "object") return false;
+        const clients = (spectra as Record<string, unknown>).clients;
         if (!clients || typeof clients !== "object") return false;
-        return Object.keys(clients).length > 0;
+        return Object.keys(clients as object).length > 0;
       },
       ...options,
     };
@@ -61,7 +63,7 @@ export class WsClient {
     }
   }
 
-  send(payload: any): void {
+  send(payload: Record<string, unknown>): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(payload));
     }
@@ -79,7 +81,7 @@ export class WsClient {
     };
 
     this.ws.onmessage = (event) => {
-      let payload: any;
+      let payload: Record<string, unknown>;
       try {
         payload = JSON.parse(event.data);
       } catch {

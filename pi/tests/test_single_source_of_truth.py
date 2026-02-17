@@ -194,3 +194,228 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
     for fname in ("metrics_log.py", "report_analysis.py"):
         source = (root / "vibesensor" / fname).read_text(encoding="utf-8")
         assert "* 60.0" not in source, f"{fname} still contains inline engine RPM formula (* 60.0)"
+
+
+def test_simulator_defaults_match_analysis_settings() -> None:
+    """Simulator vehicle defaults must be imported from the canonical source."""
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(root / "tools" / "simulator"))
+    # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
+    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    # The simulator should NOT contain hardcoded tire/vehicle values as literal assignments
+    for line in sim_source.splitlines():
+        stripped = line.strip()
+        # Skip comments and the DEFAULT_SPEED_KMH (which is simulator-specific)
+        if stripped.startswith("#") or "DEFAULT_SPEED_KMH" in stripped:
+            continue
+        for val in ("285.0", "= 30.0", "= 21.0", "= 3.08", "= 0.64"):
+            assert val not in stripped, (
+                f"sim_sender.py hardcodes vehicle default '{val}' instead of "
+                "importing from DEFAULT_ANALYSIS_SETTINGS"
+            )
+
+
+def test_simulator_no_production_asserts() -> None:
+    """Simulator module-level and standalone functions must not use bare assert."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    lines = sim_source.splitlines()
+    in_method = False
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        # Track whether we're inside a class method (indented def inside class)
+        if stripped.startswith("def ") and not line.startswith(" "):
+            in_method = False
+        elif stripped.startswith("def ") and line.startswith("    "):
+            in_method = True
+        # Only flag asserts in module-level or standalone functions
+        if not in_method and stripped.startswith("assert "):
+            raise AssertionError(
+                f"sim_sender.py:{i} uses bare assert in non-method context: {stripped!r}"
+            )
+
+
+def test_esp_protocol_constants_match_python() -> None:
+    """ESP C++ protocol constants must match the Python protocol module."""
+    import re
+    from pathlib import Path
+
+    from vibesensor.protocol import (
+        ACK_BYTES,
+        CMD_HEADER_BYTES,
+        CMD_IDENTIFY,
+        CMD_IDENTIFY_BYTES,
+        DATA_HEADER_BYTES,
+        HELLO_FIXED_BYTES,
+        MSG_ACK,
+        MSG_CMD,
+        MSG_DATA,
+        MSG_HELLO,
+        VERSION,
+    )
+
+    root = Path(__file__).resolve().parents[2]
+    header = (root / "esp" / "lib" / "vibesensor_proto" / "vibesensor_proto.h").read_text(
+        encoding="utf-8"
+    )
+
+    def _cpp_const(name: str) -> int:
+        """Extract a simple integer constexpr value from the header."""
+        m = re.search(rf"{name}\s*=\s*(\d+)", header)
+        assert m, f"C++ constant {name} not found in vibesensor_proto.h"
+        return int(m.group(1))
+
+    assert _cpp_const("kProtoVersion") == VERSION
+    assert _cpp_const("kMsgHello") == MSG_HELLO
+    assert _cpp_const("kMsgData") == MSG_DATA
+    assert _cpp_const("kMsgCmd") == MSG_CMD
+    assert _cpp_const("kMsgAck") == MSG_ACK
+    assert _cpp_const("kCmdIdentify") == CMD_IDENTIFY
+
+    # Byte-size constants are computed as expressions in C++; verify by evaluating
+    # with kClientIdBytes = 6
+    py_sizes = {
+        "HELLO_FIXED_BYTES": HELLO_FIXED_BYTES,
+        "DATA_HEADER_BYTES": DATA_HEADER_BYTES,
+        "ACK_BYTES": ACK_BYTES,
+        "CMD_HEADER_BYTES": CMD_HEADER_BYTES,
+        "CMD_IDENTIFY_BYTES": CMD_IDENTIFY_BYTES,
+    }
+    cpp_names = {
+        "HELLO_FIXED_BYTES": "kHelloFixedBytes",
+        "DATA_HEADER_BYTES": "kDataHeaderBytes",
+        "ACK_BYTES": "kAckBytes",
+        "CMD_HEADER_BYTES": "kCmdHeaderBytes",
+        "CMD_IDENTIFY_BYTES": "kCmdIdentifyBytes",
+    }
+    # Evaluate C++ expressions by substituting kClientIdBytes and kCmdHeaderBytes
+    for py_name, expected in py_sizes.items():
+        cpp_name = cpp_names[py_name]
+        m = re.search(rf"constexpr\s+size_t\s+{cpp_name}\s*=\s*(.+);", header)
+        assert m, f"C++ constant {cpp_name} not found"
+        expr = m.group(1).strip()
+        # Substitute known constants for eval
+        expr = expr.replace("kClientIdBytes", "6").replace("kCmdHeaderBytes", str(CMD_HEADER_BYTES))
+        computed = eval(expr)  # noqa: S307
+        assert computed == expected, f"{cpp_name} = {computed} but Python {py_name} = {expected}"
+
+
+def test_protocol_docs_byte_sizes_match() -> None:
+    """docs/protocol.md byte sizes must match the Python protocol module."""
+    import re
+    from pathlib import Path
+
+    from vibesensor.protocol import (
+        ACK_BYTES,
+        CMD_HEADER_BYTES,
+        CMD_IDENTIFY_BYTES,
+        DATA_HEADER_BYTES,
+        HELLO_FIXED_BYTES,
+    )
+
+    root = Path(__file__).resolve().parents[2]
+    doc = (root / "docs" / "protocol.md").read_text(encoding="utf-8")
+
+    expected = {
+        "HELLO fixed bytes": HELLO_FIXED_BYTES,
+        "DATA header bytes": DATA_HEADER_BYTES,
+        "CMD header bytes": CMD_HEADER_BYTES,
+        "CMD identify bytes": CMD_IDENTIFY_BYTES,
+        "ACK bytes": ACK_BYTES,
+    }
+    for label, value in expected.items():
+        pattern = rf"{re.escape(label)}.*`(\d+)`"
+        m = re.search(pattern, doc, re.IGNORECASE)
+        assert m, f"docs/protocol.md missing entry for '{label}'"
+        doc_value = int(m.group(1))
+        assert doc_value == value, (
+            f"docs/protocol.md says {label} = {doc_value} but code says {value}"
+        )
+
+
+def test_sanitize_settings_is_single_source() -> None:
+    """settings_store._sanitize_aspects must use the canonical sanitize_settings."""
+    import inspect
+
+    from vibesensor.analysis_settings import sanitize_settings
+    from vibesensor.settings_store import _sanitize_aspects
+
+    # The function should delegate to sanitize_settings (check source contains the call)
+    source = inspect.getsource(_sanitize_aspects)
+    assert "sanitize_settings" in source, (
+        "_sanitize_aspects must delegate to sanitize_settings from analysis_settings"
+    )
+
+    # Both must use the same validation logic — verify on a known-invalid input
+    bad = {"tire_width_mm": -1.0, "rim_in": 21.0}
+    assert sanitize_settings(bad) == _sanitize_aspects(bad)
+
+
+def test_sanitize_settings_rejects_invalid() -> None:
+    """sanitize_settings must drop invalid values."""
+    from vibesensor.analysis_settings import sanitize_settings
+
+    result = sanitize_settings(
+        {
+            "tire_width_mm": -1.0,  # positive required, should be dropped
+            "rim_in": 21.0,  # valid
+            "speed_uncertainty_pct": -0.5,  # non-negative, should be dropped
+            "final_drive_ratio": "not_a_number",  # invalid type
+        }
+    )
+    assert "tire_width_mm" not in result
+    assert "speed_uncertainty_pct" not in result
+    assert "final_drive_ratio" not in result
+    assert result["rim_in"] == 21.0
+
+
+def test_validation_sets_cover_all_settings_keys() -> None:
+    """Every key in DEFAULT_ANALYSIS_SETTINGS must be in exactly one validation set."""
+    from vibesensor.analysis_settings import (
+        NON_NEGATIVE_KEYS,
+        POSITIVE_REQUIRED_KEYS,
+    )
+
+    all_keys = set(DEFAULT_ANALYSIS_SETTINGS)
+    covered = POSITIVE_REQUIRED_KEYS | NON_NEGATIVE_KEYS
+    uncovered = all_keys - covered
+    assert not uncovered, (
+        f"Keys not in any validation set: {uncovered}. "
+        "Add them to POSITIVE_REQUIRED_KEYS or NON_NEGATIVE_KEYS."
+    )
+    overlap = POSITIVE_REQUIRED_KEYS & NON_NEGATIVE_KEYS
+    assert not overlap, f"Keys in both validation sets: {overlap}"
+
+
+def test_esp_ports_match_python_defaults() -> None:
+    """ESP server port constants must match Python DEFAULT_CONFIG."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    main_cpp = (root / "esp" / "src" / "main.cpp").read_text(encoding="utf-8")
+
+    m_data = re.search(r"kServerDataPort\s*=\s*(\d+)", main_cpp)
+    m_ctrl = re.search(r"kServerControlPort\s*=\s*(\d+)", main_cpp)
+    assert m_data and m_ctrl, "ESP port constants not found in main.cpp"
+    esp_data_port = int(m_data.group(1))
+    esp_ctrl_port = int(m_ctrl.group(1))
+
+    from vibesensor.config import DEFAULT_CONFIG
+
+    py_data = DEFAULT_CONFIG["udp"]["data_listen"]
+    py_ctrl = DEFAULT_CONFIG["udp"]["control_listen"]
+    py_data_port = int(str(py_data).rsplit(":", 1)[-1])
+    py_ctrl_port = int(str(py_ctrl).rsplit(":", 1)[-1])
+
+    assert esp_data_port == py_data_port, (
+        f"ESP data port {esp_data_port} != Python default {py_data_port}"
+    )
+    assert esp_ctrl_port == py_ctrl_port, (
+        f"ESP control port {esp_ctrl_port} != Python default {py_ctrl_port}"
+    )

@@ -2,6 +2,7 @@ import "uplot/dist/uPlot.min.css";
 import uPlot from "uplot";
 import "./styles/app.css";
 import * as I18N from "./i18n";
+import type { CarRecord, CarLibraryModel, CarLibraryGearbox, CarLibraryTireOption } from "./api";
 import {
   deleteLog as deleteLogApi,
   getAnalysisSettings,
@@ -144,7 +145,7 @@ import { WsClient, type WsUiState } from "./ws";
       max_band_half_width_pct: 8.0,
     },
     // Car management
-    cars: [] as any[],
+    cars: [] as CarRecord[],
     activeCarId: null as string | null,
     // Speed source
     speedSource: "gps" as string,
@@ -2102,9 +2103,9 @@ import { WsClient, type WsUiState } from "./ws";
     brand: "",
     carType: "",
     model: "",
-    selectedModel: null as any,
-    selectedGearbox: null as any,
-    selectedTire: null as any,
+    selectedModel: null as CarLibraryModel | null,
+    selectedGearbox: null as CarLibraryGearbox | null,
+    selectedTire: null as CarLibraryTireOption | null,
   };
 
   function openWizard() {
@@ -2283,7 +2284,7 @@ import { WsClient, type WsUiState } from "./ws";
     });
   }
 
-  function updateWizTireInputs(tire: any) {
+  function updateWizTireInputs(tire: CarLibraryTireOption | null) {
     const tw = document.getElementById("wizTireWidth") as HTMLInputElement;
     const ta = document.getElementById("wizTireAspect") as HTMLInputElement;
     const ri = document.getElementById("wizRim") as HTMLInputElement;

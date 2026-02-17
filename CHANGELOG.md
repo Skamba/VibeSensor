@@ -94,3 +94,44 @@
 - **Comprehensive new tests** — `test_constants_and_helpers.py` (13 tests),
   `extract_client_id_hex` tests in `test_protocol.py` (3 tests), plus updated
   guardrail tests (total: 310 tests passing).
+- **Named timing constants** — `ws_hub.py` and `gps_speed.py` now use named
+  module-level constants (`_SEND_TIMEOUT_S`, `_SEND_ERROR_LOG_INTERVAL_S`,
+  `_GPS_POLL_INTERVAL_S`, `_SPEED_STALE_TIMEOUT_S`) instead of inline magic
+  numbers.
+- **Simulator defaults from canonical source** — `sim_sender.py` now imports
+  vehicle defaults from `DEFAULT_ANALYSIS_SETTINGS` instead of hardcoding
+  tire/drivetrain constants. Assert statements replaced with `ValueError`.
+- **TypeScript type safety overhaul** — Added typed API response interfaces
+  (`CarsPayload`, `SpeedSourcePayload`, `CarLibraryModel`, `CarLibraryGearbox`,
+  `CarLibraryTireOption`, `CarRecord`, `LogEntry`) to `api.ts`. Replaced all
+  `as any` casts in `main.ts` wizard state and all `any` payload types in
+  `ws.ts` with `Record<string, unknown>`. Strict `any`-type budget enforced by
+  guardrail test.
+- **Extracted `_apply_severity_to_tracker()`** — Four near-identical
+  severity-processing blocks in `live_diagnostics.py` consolidated into a
+  single method, reducing `update()` by ~30 lines.
+- **Intentional error handling** — Added debug logging to previously silent
+  catch blocks: `live_diagnostics.py` peak parsing, `api.py`
+  `WebSocketDisconnect`, simulator command parsing.
+- **ESP firmware improvements** — Named constants for hello interval,
+  control port base, and I2C clock speed. `ADXL345::write_reg()` now returns
+  `bool` for error detection; `begin()` validates every register write.
+  WiFi credential coupling with `pi/config.yaml` documented.
+- **Protocol documentation fix** — `docs/protocol.md` HELLO fixed bytes
+  corrected from 17 to 18.
+- **Settings sanitization consolidation** — Extracted `sanitize_settings()` as
+  the canonical validation function in `analysis_settings.py` with
+  `POSITIVE_REQUIRED_KEYS` and `NON_NEGATIVE_KEYS` as single-source
+  frozensets. `settings_store._sanitize_aspects` now delegates to it. Added
+  `try/except` with logging for non-numeric values.
+- **Config equivalence documented** — `config.docker.yaml` documents
+  intentional identity with `config.dev.yaml`.
+- **ESP README updated** — Added error handling section, synthetic waveform
+  fallback docs, and config cross-reference notes.
+- **New guardrail tests (22 total)** — ESP protocol constants match Python,
+  docs byte sizes match code, simulator defaults from canonical source,
+  no bare assert in simulator, validation sets cover all keys, ESP ports
+  match Python config, TypeScript `any`-type budget.
+- **Test coverage push** — 30 new tests: `ws_hub.py` (8), protocol error
+  paths (15), settings_store edge cases (7). Key modules now 90–99% coverage.
+  Total: 391 tests passing.

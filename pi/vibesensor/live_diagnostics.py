@@ -181,6 +181,34 @@ class LiveDiagnosticsEngine:
             return current_bucket
         return None
 
+    @staticmethod
+    def _apply_severity_to_tracker(
+        tracker: _TrackerLevelState,
+        strength_db: float,
+        band_rms: float,
+        sensor_count: int,
+        fallback_db: float | None = None,
+    ) -> str | None:
+        """Apply severity_from_peak to a tracker, updating its state in-place.
+
+        Returns the previous bucket key so callers can detect transitions.
+        """
+        previous_bucket = tracker.current_bucket_key
+        severity = severity_from_peak(
+            strength_db=strength_db,
+            band_rms=band_rms,
+            sensor_count=sensor_count,
+            prior_state=tracker.severity_state,
+        )
+        tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
+        tracker.current_bucket_key = (
+            str(severity["key"]) if severity and severity.get("key") else None
+        )
+        tracker.last_strength_db = float(
+            (severity or {}).get("db") or (fallback_db if fallback_db is not None else strength_db)
+        )
+        return previous_bucket
+
     def _upsert_active_level(
         self,
         *,
@@ -292,20 +320,12 @@ class LiveDiagnosticsEngine:
 
         for tracker_key, event in latest_by_tracker.items():
             tracker = self._sensor_trackers.get(tracker_key) or _TrackerLevelState()
-            previous_bucket = tracker.current_bucket_key
-            severity = severity_from_peak(
+            previous_bucket = self._apply_severity_to_tracker(
+                tracker,
                 strength_db=event.strength_db,
                 band_rms=event.peak_amp,
                 sensor_count=1,
-                prior_state=tracker.severity_state,
             )
-            tracker.severity_state = dict(
-                (severity or {}).get("state") or tracker.severity_state or {}
-            )
-            tracker.current_bucket_key = (
-                str(severity["key"]) if severity and severity.get("key") else None
-            )
-            tracker.last_strength_db = float((severity or {}).get("db") or event.strength_db)
             tracker.last_band_rms_g = float(event.peak_amp)
             tracker.last_update_ms = now_ms
             tracker.last_peak_hz = float(event.peak_hz)
@@ -369,19 +389,13 @@ class LiveDiagnosticsEngine:
         for tracker_key, tracker in list(self._sensor_trackers.items()):
             if tracker_key in seen_tracker_keys:
                 continue
-            severity = severity_from_peak(
+            self._apply_severity_to_tracker(
+                tracker,
                 strength_db=SILENCE_DB,
                 band_rms=0.0,
                 sensor_count=1,
-                prior_state=tracker.severity_state,
+                fallback_db=SILENCE_DB,
             )
-            tracker.severity_state = dict(
-                (severity or {}).get("state") or tracker.severity_state or {}
-            )
-            tracker.current_bucket_key = (
-                str(severity["key"]) if severity and severity.get("key") else None
-            )
-            tracker.last_strength_db = float((severity or {}).get("db") or SILENCE_DB)
 
         # Source/sensor active levels come from continuous tracker state (not emitted events).
         for tracker_key, tracker in self._sensor_trackers.items():
@@ -448,20 +462,12 @@ class LiveDiagnosticsEngine:
                 tracker = self._combined_trackers.get(combined_key) or _TrackerLevelState(
                     last_class_key=class_key
                 )
-                previous_bucket = tracker.current_bucket_key
-                severity = severity_from_peak(
+                previous_bucket = self._apply_severity_to_tracker(
+                    tracker,
                     strength_db=avg_strength,
                     band_rms=avg_amp,
                     sensor_count=len(group),
-                    prior_state=tracker.severity_state,
                 )
-                tracker.severity_state = dict(
-                    (severity or {}).get("state") or tracker.severity_state or {}
-                )
-                tracker.current_bucket_key = (
-                    str(severity["key"]) if severity and severity.get("key") else None
-                )
-                tracker.last_strength_db = float((severity or {}).get("db") or avg_strength)
                 tracker.last_band_rms_g = avg_amp
                 tracker.last_update_ms = now_ms
                 tracker.last_peak_hz = avg_hz
@@ -516,19 +522,13 @@ class LiveDiagnosticsEngine:
         for combined_key, tracker in list(self._combined_trackers.items()):
             if combined_key in seen_combined_keys:
                 continue
-            severity = severity_from_peak(
+            self._apply_severity_to_tracker(
+                tracker,
                 strength_db=SILENCE_DB,
                 band_rms=0.0,
                 sensor_count=2,
-                prior_state=tracker.severity_state,
+                fallback_db=SILENCE_DB,
             )
-            tracker.severity_state = dict(
-                (severity or {}).get("state") or tracker.severity_state or {}
-            )
-            tracker.current_bucket_key = (
-                str(severity["key"]) if severity and severity.get("key") else None
-            )
-            tracker.last_strength_db = float((severity or {}).get("db") or SILENCE_DB)
 
         self._active_levels_by_source = active_by_source
         self._active_levels_by_sensor = active_by_sensor
@@ -580,7 +580,8 @@ class LiveDiagnosticsEngine:
                     peak_hz = float(peak.get("hz"))
                     band_rms = float(peak.get("strength_peak_band_rms_amp_g"))
                     strength_db = float(peak.get("strength_db"))
-                except (TypeError, ValueError):
+                except (TypeError, ValueError) as exc:
+                    LOGGER.debug("Skipping invalid peak for %s: %s", client_id, exc)
                     continue
                 classification = classify_peak_hz(
                     peak_hz=peak_hz,
