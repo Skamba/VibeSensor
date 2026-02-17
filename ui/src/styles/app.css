@@ -538,6 +538,30 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
 .settings-actions { display: flex; justify-content: flex-end; }
 .settings-actions .btn,
 .settings-actions button { min-width: 12rem; }
+.settings-tabs {
+  display: flex; gap: var(--space-1); margin-bottom: var(--space-3);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 0;
+}
+.settings-tab {
+  padding: var(--space-2) var(--space-3); border: none; background: none;
+  cursor: pointer; font: inherit; color: var(--muted);
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+}
+.settings-tab:hover { color: var(--text); }
+.settings-tab.active { color: var(--brand-500); border-bottom-color: var(--brand-500); font-weight: 600; }
+.settings-tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+.settings-tab-panel { display: none; }
+.settings-tab-panel.active { display: block; }
+.car-selector { display: flex; gap: var(--space-2); align-items: center; margin: var(--space-2) 0; flex-wrap: wrap; }
+.car-picker { flex: 1; min-width: 160px; }
+.car-identity { margin: var(--space-2) 0; }
+.speed-source-options { display: flex; gap: var(--space-3); margin: var(--space-2) 0; flex-wrap: wrap; }
+.radio-label { display: flex; align-items: center; gap: var(--space-1); cursor: pointer; }
+.manual-speed-row { display: flex; gap: var(--space-2); align-items: flex-end; margin: var(--space-2) 0; flex-wrap: wrap; }
+.manual-speed-row label { min-width: 140px; }
+.manual-speed-row input { max-width: 150px; }
 .field { display: flex; flex-direction: column; gap: var(--space-1); }
 label { font-size: 0.86rem; color: var(--pill-muted-text); }
 
