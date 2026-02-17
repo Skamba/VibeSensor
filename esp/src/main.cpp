@@ -5,13 +5,11 @@
 #include <esp_timer.h>
 
 #include "adxl345.h"
+#include "vibesensor_network.h"
 #include "vibesensor_proto.h"
 
 namespace {
 
-// WiFi credentials must match pi/config.yaml ap.ssid / ap.psk.
-constexpr char kWifiSsid[] = "VibeSensor";
-constexpr char kWifiPsk[] = "vibesensor123";
 constexpr char kClientName[] = "vibe-node";
 constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
 
@@ -20,7 +18,7 @@ constexpr uint16_t kFrameSamples = 200;
 constexpr uint16_t kServerDataPort = 9000;
 constexpr uint16_t kServerControlPort = 9001;
 constexpr uint16_t kControlPortBase = 9010;
-constexpr size_t kFrameQueueLen = 4;
+constexpr size_t kFrameQueueLen = 16;
 constexpr size_t kMaxDatagramBytes = 1500;
 constexpr uint32_t kHelloIntervalMs = 2000;
 constexpr uint32_t kWifiConnectTimeoutMs = 15000;
@@ -29,7 +27,8 @@ constexpr uint32_t kWifiRetryIntervalMs = 4000;
 constexpr uint8_t kWifiInitialConnectAttempts = 3;
 constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 constexpr size_t kSensorReadBatchSamples = 8;
-constexpr size_t kMaxTxFramesPerLoop = 3;
+constexpr size_t kMaxTxFramesPerLoop = 1;
+constexpr uint32_t kDataRetransmitIntervalMs = 120;
 
 // Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
 constexpr int kI2cSdaPin = 26;
@@ -47,13 +46,13 @@ constexpr uint16_t kLedPixels = static_cast<uint16_t>(VIBESENSOR_LED_PIXELS);
 constexpr uint16_t kLedWavePeriodMs = 900;
 constexpr uint16_t kLedWaveStepMs = 30;
 
-const IPAddress kServerIp(192, 168, 4, 1);
-
 struct DataFrame {
   uint32_t seq;
   uint64_t t0_us;
   uint16_t sample_count;
   int16_t xyz[kFrameSamples * 3];
+  bool transmitted;
+  uint32_t last_tx_ms;
 };
 
 TwoWire& g_i2c = Wire;
@@ -127,6 +126,8 @@ void enqueue_frame() {
   frame.seq = g_next_seq++;
   frame.t0_us = g_build_t0_us;
   frame.sample_count = g_build_count;
+  frame.transmitted = false;
+  frame.last_tx_ms = 0;
   memcpy(frame.xyz, g_build_xyz, static_cast<size_t>(g_build_count) * 3 * sizeof(int16_t));
 
   g_q_head = (g_q_head + 1) % kFrameQueueLen;
@@ -134,14 +135,33 @@ void enqueue_frame() {
   g_build_count = 0;
 }
 
-bool pop_frame(DataFrame* out) {
-  if (g_q_size == 0 || out == nullptr) {
-    return false;
+DataFrame* peek_frame() {
+  if (g_q_size == 0) {
+    return nullptr;
   }
-  *out = g_queue[g_q_tail];
+  return &g_queue[g_q_tail];
+}
+
+void drop_front_frame() {
+  if (g_q_size == 0) {
+    return;
+  }
   g_q_tail = (g_q_tail + 1) % kFrameQueueLen;
   g_q_size--;
-  return true;
+}
+
+bool seq_less_or_equal(uint32_t lhs, uint32_t rhs) {
+  return static_cast<int32_t>(lhs - rhs) <= 0;
+}
+
+void ack_data_frames(uint32_t last_seq_received) {
+  while (g_q_size > 0) {
+    const DataFrame& front = g_queue[g_q_tail];
+    if (!seq_less_or_equal(front.seq, last_seq_received)) {
+      break;
+    }
+    drop_front_frame();
+  }
 }
 
 void synth_sample(int16_t* x, int16_t* y, int16_t* z) {
@@ -227,7 +247,7 @@ void send_hello() {
     return;
   }
 
-  g_control_udp.beginPacket(kServerIp, kServerControlPort);
+  g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort);
   g_control_udp.write(packet, len);
   g_control_udp.endPacket();
 }
@@ -241,25 +261,43 @@ void service_hello() {
 }
 
 void service_tx() {
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+
   uint8_t packet[kMaxDatagramBytes];
   for (size_t sent = 0; sent < kMaxTxFramesPerLoop; ++sent) {
-    DataFrame frame;
-    if (!pop_frame(&frame)) {
+    DataFrame* frame = peek_frame();
+    if (frame == nullptr) {
       return;
     }
+
+    uint32_t now_ms = millis();
+    if (frame->transmitted && (now_ms - frame->last_tx_ms) < kDataRetransmitIntervalMs) {
+      return;
+    }
+
     size_t len = vibesensor::pack_data(packet,
                                        sizeof(packet),
                                        g_client_id,
-                                       frame.seq,
-                                       frame.t0_us,
-                                       frame.xyz,
-                                       frame.sample_count);
+                                       frame->seq,
+                                       frame->t0_us,
+                                       frame->xyz,
+                                       frame->sample_count);
     if (len == 0) {
+      drop_front_frame();
       continue;
     }
-    g_data_udp.beginPacket(kServerIp, kServerDataPort);
+
+    if (g_data_udp.beginPacket(vibesensor_network::server_ip, kServerDataPort) != 1) {
+      break;
+    }
     g_data_udp.write(packet, len);
-    g_data_udp.endPacket();
+    if (g_data_udp.endPacket() != 1) {
+      break;
+    }
+    frame->transmitted = true;
+    frame->last_tx_ms = now_ms;
   }
 }
 
@@ -269,7 +307,7 @@ void send_ack(uint32_t cmd_seq, uint8_t status) {
   if (len == 0) {
     return;
   }
-  g_control_udp.beginPacket(kServerIp, kServerControlPort);
+  g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort);
   g_control_udp.write(packet, len);
   g_control_udp.endPacket();
 }
@@ -282,6 +320,15 @@ void service_control_rx() {
   uint8_t packet[64];
   size_t read = static_cast<size_t>(g_control_udp.read(packet, sizeof(packet)));
   if (read == 0) {
+    return;
+  }
+
+  if (packet[0] == vibesensor::kMsgDataAck) {
+    uint32_t last_seq_received = 0;
+    bool ok_ack = vibesensor::parse_data_ack(packet, read, g_client_id, &last_seq_received);
+    if (ok_ack) {
+      ack_data_frames(last_seq_received);
+    }
     return;
   }
 
@@ -307,6 +354,25 @@ void service_control_rx() {
   }
 }
 
+void service_data_rx() {
+  while (true) {
+    int packet_size = g_data_udp.parsePacket();
+    if (packet_size <= 0) {
+      return;
+    }
+    uint8_t packet[32];
+    size_t read = static_cast<size_t>(g_data_udp.read(packet, sizeof(packet)));
+    if (read == 0 || packet[0] != vibesensor::kMsgDataAck) {
+      continue;
+    }
+    uint32_t last_seq_received = 0;
+    bool ok_ack = vibesensor::parse_data_ack(packet, read, g_client_id, &last_seq_received);
+    if (ok_ack) {
+      ack_data_frames(last_seq_received);
+    }
+  }
+}
+
 void service_blink() {
   uint32_t now = millis();
   if (g_blink_until_ms == 0 || static_cast<int32_t>(g_blink_until_ms - now) <= 0) {
@@ -329,7 +395,7 @@ void service_blink() {
 bool connect_wifi() {
   WiFi.mode(WIFI_STA);
   for (uint8_t attempt = 1; attempt <= kWifiInitialConnectAttempts; ++attempt) {
-    WiFi.begin(kWifiSsid, kWifiPsk);
+    WiFi.begin(vibesensor_network::wifi_ssid, vibesensor_network::wifi_psk);
     Serial.printf("Connecting WiFi (attempt %u/%u)", attempt, kWifiInitialConnectAttempts);
     uint32_t start_ms = millis();
     while (WiFi.status() != WL_CONNECTED) {
@@ -364,13 +430,18 @@ void service_wifi() {
   g_last_wifi_retry_ms = now;
   Serial.println("WiFi disconnected, retrying...");
   WiFi.disconnect(true, true);
-  WiFi.begin(kWifiSsid, kWifiPsk);
+  WiFi.begin(vibesensor_network::wifi_ssid, vibesensor_network::wifi_psk);
 }
 
 }  // namespace
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Boot network target:");
+  Serial.print("  SSID: ");
+  Serial.println(vibesensor_network::wifi_ssid);
+  Serial.print("  Server IP: ");
+  Serial.println(vibesensor_network::server_ip);
   g_led_strip.begin();
   clear_leds();
 
@@ -400,6 +471,7 @@ void setup() {
 
 void loop() {
   service_wifi();
+  service_data_rx();
   service_sampling();
   service_tx();
   service_hello();

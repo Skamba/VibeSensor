@@ -13,18 +13,21 @@ MSG_HELLO = 1
 MSG_DATA = 2
 MSG_CMD = 3
 MSG_ACK = 4
+MSG_DATA_ACK = 5
 
 CMD_IDENTIFY = 1
 
 HELLO_BASE = struct.Struct("<BB6sHHB")
 DATA_HEADER = struct.Struct("<BB6sIQH")
 ACK_STRUCT = struct.Struct("<BB6sIB")
+DATA_ACK_STRUCT = struct.Struct("<BB6sI")
 CMD_HEADER = struct.Struct("<BB6sBI")
 CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
 
 HELLO_FIXED_BYTES = 1 + 1 + CLIENT_ID_BYTES + 2 + 2 + 1 + 1 + 4
 DATA_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 8 + 2
 ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 1
+DATA_ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4
 CMD_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 1 + 4
 CMD_IDENTIFY_BYTES = CMD_HEADER_BYTES + 2
 
@@ -65,6 +68,12 @@ class AckMessage:
     client_id: bytes
     cmd_seq: int
     status: int
+
+
+@dataclass(slots=True)
+class DataAckMessage:
+    client_id: bytes
+    last_seq_received: int
 
 
 def client_id_hex(client_id: bytes) -> str:
@@ -228,3 +237,16 @@ def parse_ack(data: bytes) -> AckMessage:
 
 def pack_ack(client_id: bytes, cmd_seq: int, status: int = 0) -> bytes:
     return ACK_STRUCT.pack(MSG_ACK, VERSION, client_id, cmd_seq, status & 0xFF)
+
+
+def parse_data_ack(data: bytes) -> DataAckMessage:
+    if len(data) != DATA_ACK_STRUCT.size:
+        raise ProtocolError("DATA_ACK has unexpected size")
+    msg_type, version, client_id, last_seq_received = DATA_ACK_STRUCT.unpack_from(data, 0)
+    if msg_type != MSG_DATA_ACK or version != VERSION:
+        raise ProtocolError("Invalid DATA_ACK header")
+    return DataAckMessage(client_id=client_id, last_seq_received=last_seq_received)
+
+
+def pack_data_ack(client_id: bytes, last_seq_received: int) -> bytes:
+    return DATA_ACK_STRUCT.pack(MSG_DATA_ACK, VERSION, client_id, last_seq_received & 0xFFFFFFFF)

@@ -109,8 +109,29 @@ def test_spectrum_payload_missing_client() -> None:
         "y": [],
         "z": [],
         "combined_spectrum_amp_g": [],
+        "combined_spectrum_db_above_floor": [],
         "strength_metrics": {},
     }
+
+
+def test_spectrum_payload_db_above_floor_consistent_with_strength_floor() -> None:
+    proc = _make_processor(sample_rate_hz=800, fft_n=256, spectrum_max_hz=200)
+    t = np.arange(400, dtype=np.float32) / np.float32(800.0)
+    tone = (0.03 * np.sin(2.0 * np.pi * 32.0 * t)).astype(np.float32)
+    samples = np.column_stack((tone, tone * 0.8, tone * 0.6)).astype(np.float32)
+    proc.ingest("client1", samples, sample_rate_hz=800)
+    proc.compute_metrics("client1")
+
+    result = proc.spectrum_payload("client1")
+    combined = np.asarray(result["combined_spectrum_amp_g"], dtype=np.float64)
+    combined_db = np.asarray(result["combined_spectrum_db_above_floor"], dtype=np.float64)
+    floor = float(result["strength_metrics"].get("strength_floor_amp_g", 0.0))
+    eps = max(1e-9, floor * 0.05)
+    expected_db = 20.0 * np.log10((np.maximum(0.0, combined) + eps) / (floor + eps))
+
+    assert combined.size > 0
+    assert combined_db.size == combined.size
+    np.testing.assert_allclose(combined_db, expected_db, rtol=1e-6, atol=1e-6)
 
 
 # -- multi_spectrum_payload ----------------------------------------------------

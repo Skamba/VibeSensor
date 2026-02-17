@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import random
 import shlex
 import subprocess
@@ -11,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import numpy as np
 
@@ -125,6 +126,22 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         bump_strength=(30.0, 24.0, 45.0),
         modulation_hz=0.22,
         modulation_depth=0.12,
+    ),
+    "wheel_mild_imbalance": Profile(
+        name="wheel_mild_imbalance",
+        tones=(
+            # Slight wheel issue: mostly a stable 1x wheel-order tone with
+            # a weaker 2x harmonic and very low subharmonic content.
+            (DEFAULT_ORDER_HZ["wheel_1x"], (105.0, 62.0, 80.0)),
+            (DEFAULT_ORDER_HZ["wheel_2x"], (28.0, 18.0, 24.0)),
+            (DEFAULT_ORDER_HZ["wheel_1x"] * 0.52, (8.0, 6.0, 10.0)),
+        ),
+        noise_std=14.0,
+        bump_probability=0.001,
+        bump_decay=0.96,
+        bump_strength=(10.0, 8.0, 14.0),
+        modulation_hz=0.18,
+        modulation_depth=0.08,
     ),
     "rear_body": Profile(
         name="rear_body",
@@ -339,6 +356,10 @@ def _server_health_url(host: str, port: int) -> str:
     return f"http://{_normalize_http_host(host)}:{port}/api/clients"
 
 
+def _speed_override_url(host: str, port: int) -> str:
+    return f"http://{_normalize_http_host(host)}:{port}/api/simulator/speed-override"
+
+
 def _check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
     url = _server_health_url(host, port)
     try:
@@ -346,6 +367,21 @@ def _check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
             return resp.status == 200
     except (URLError, OSError, TimeoutError):
         return False
+
+
+def set_server_speed_override_kmh(host: str, port: int, speed_kmh: float, timeout_s: float) -> float | None:
+    payload = json.dumps({"speed_kmh": float(speed_kmh)}).encode("utf-8")
+    req = Request(
+        _speed_override_url(host, port),
+        data=payload,
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
+    with urlopen(req, timeout=timeout_s) as resp:
+        body = resp.read()
+    parsed = json.loads(body.decode("utf-8")) if body else {}
+    value = parsed.get("speed_kmh")
+    return float(value) if isinstance(value, (int, float)) else None
 
 
 def _start_local_server(config_path: Path) -> subprocess.Popen[str]:
@@ -421,6 +457,32 @@ def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None
 def choose_default_profile(index: int) -> str:
     ordered = ("engine_idle", "wheel_imbalance", "rear_body", "rough_road")
     return ordered[index % len(ordered)]
+
+
+def apply_one_wheel_mild_scenario(clients: list[SimClient], fault_wheel: str) -> None:
+    """Configure a deterministic scenario with one slight wheel fault.
+
+    Non-fault sensors remain quiet/low-gain while the selected wheel carries
+    a mild 1x-dominant wheel-order signature.
+    """
+    target = fault_wheel.strip().lower()
+    for client in clients:
+        normalized_name = client.name.strip().lower()
+        client.common_event_gain = 0.0
+        client.scene_mode = "one-wheel-mild"
+        if normalized_name == target:
+            client.profile_name = "wheel_mild_imbalance"
+            client.scene_gain = 0.58
+            client.scene_noise_gain = 0.82
+            client.amp_scale = 1.0
+            client.noise_scale = 1.0
+            client.pulse(0.35)
+        else:
+            client.profile_name = "engine_idle"
+            client.scene_gain = 0.05
+            client.scene_noise_gain = 0.75
+            client.amp_scale = 0.18
+            client.noise_scale = 0.85
 
 
 def find_targets(clients: list[SimClient], token: str) -> list[SimClient]:
@@ -717,6 +779,20 @@ async def async_main(args: argparse.Namespace) -> None:
         for i in range(args.count)
     ]
 
+    if args.scenario == "one-wheel-mild":
+        apply_one_wheel_mild_scenario(clients, args.fault_wheel)
+
+    override_speed_kmh = max(0.0, float(args.speed_kmh))
+    if override_speed_kmh > 0.0:
+        applied_speed = set_server_speed_override_kmh(
+            args.server_host,
+            args.server_http_port,
+            override_speed_kmh,
+            args.server_check_timeout,
+        )
+        shown_speed = applied_speed if applied_speed is not None else override_speed_kmh
+        print(f"Applied server speed override: {shown_speed:.1f} km/h")
+
     interactive = args.interactive or (
         not args.no_interactive and args.duration <= 0 and sys.stdin.isatty()
     )
@@ -744,7 +820,13 @@ async def async_main(args: argparse.Namespace) -> None:
             tasks.append(
                 asyncio.create_task(run_client(client, args.hello_interval, stop_event))
             )
-        tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
+        if args.scenario == "road":
+            tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
+        else:
+            print(
+                f"[scenario] fixed={args.scenario} fault_wheel={args.fault_wheel} "
+                "(no road-scene randomization)"
+            )
         if args.duration > 0:
             tasks.append(asyncio.create_task(auto_stop(args.duration, stop_event)))
         if interactive:
@@ -778,6 +860,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--client-control-base", type=int, default=9100)
     parser.add_argument(
         "--duration", type=float, default=0.0, help="Optional run duration in seconds"
+    )
+    parser.add_argument(
+        "--speed-kmh",
+        type=float,
+        default=DEFAULT_SPEED_KMH,
+        help="Server manual speed override (km/h) applied before run",
+    )
+    parser.add_argument(
+        "--scenario",
+        choices=("road", "one-wheel-mild"),
+        default="road",
+        help="Simulation scenario: random road scene or deterministic mild single-wheel fault",
+    )
+    parser.add_argument(
+        "--fault-wheel",
+        default="front-right",
+        help="Client name to apply the mild wheel fault to when --scenario one-wheel-mild",
     )
     parser.add_argument(
         "--interactive", action="store_true", help="Force interactive command mode"

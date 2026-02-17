@@ -34,10 +34,26 @@ pio device monitor
 
 ## Configure
 
-Edit constants in `src/main.cpp`:
+Default network target already matches the Pi hotspot configuration:
 
-- `kWifiSsid`, `kWifiPsk` — must match `pi/config.yaml` `ap.ssid` / `ap.psk`
-- `kServerIp`, `kServerDataPort`, `kServerControlPort` — must match `pi/config.yaml` `udp.*`
+- SSID `VibeSensor`
+- PSK `vibesensor123`
+- Server IP `192.168.4.1`
+- UDP ports `9000/9001`
+
+Optional override via local file (recommended for non-default networks):
+
+1. Copy `include/vibesensor_network.local.example.h` to `include/vibesensor_network.local.h`
+2. Edit:
+  - `VIBESENSOR_WIFI_SSID`
+  - `VIBESENSOR_WIFI_PSK`
+  - `VIBESENSOR_SERVER_IP_OCTETS`
+3. Build and flash again
+
+`include/vibesensor_network.local.h` is gitignored; do not commit secrets.
+
+Other firmware settings (client name / I2C) remain in `src/main.cpp`:
+
 - `kClientName`
 - I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)
 

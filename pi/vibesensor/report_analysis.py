@@ -26,6 +26,9 @@ ORDER_TOLERANCE_REL = 0.08
 ORDER_TOLERANCE_MIN_HZ = 0.5
 ORDER_MIN_MATCH_POINTS = 4
 ORDER_MIN_COVERAGE_POINTS = 6
+ORDER_MIN_CONFIDENCE = 0.25
+ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
+CONSTANT_SPEED_STDDEV_KMH = 0.5
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
 
@@ -37,6 +40,9 @@ def _normalize_lang(lang: object) -> str:
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
+    valid_samples = 0
+    first_missing_index: int | None = None
+    first_missing_fields: list[str] = []
     for idx, sample in enumerate(samples):
         missing: list[str] = []
         if _as_float(sample.get("strength_peak_band_rms_amp_g")) is None:
@@ -45,13 +51,19 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
             missing.append("strength_floor_amp_g")
         if _as_float(sample.get("strength_db")) is None:
             missing.append("strength_db")
-        if sample.get("strength_bucket") in (None, ""):
-            missing.append("strength_bucket")
-        if missing:
-            fields = ", ".join(missing)
-            raise ValueError(
-                f"Missing required precomputed strength metrics in sample index {idx}: {fields}"
-            )
+        if not missing:
+            valid_samples += 1
+            continue
+        if first_missing_index is None:
+            first_missing_index = idx
+            first_missing_fields = missing
+
+    if samples and valid_samples == 0:
+        fields = ", ".join(first_missing_fields)
+        idx = first_missing_index if first_missing_index is not None else 0
+        raise ValueError(
+            f"Missing required precomputed strength metrics in sample index {idx}: {fields}"
+        )
 
 
 def _format_duration(seconds: float) -> str:
@@ -286,11 +298,8 @@ def _sensor_intensity_by_location(
         floor_amp = _as_float(sample.get("strength_floor_amp_g"))
         strength_db = _as_float(sample.get("strength_db"))
         bucket = str(sample.get("strength_bucket") or "")
-        if band_rms is None or floor_amp is None or strength_db is None or not bucket:
-            raise ValueError(
-                "Missing required precomputed strength metrics for report summary "
-                f"(sample location={location})."
-            )
+        if band_rms is None or floor_amp is None or strength_db is None:
+            continue
         if bucket:
             strength_bucket_counts[location][bucket] += 1
             strength_bucket_totals[location] += 1
@@ -855,16 +864,8 @@ def _merge_test_plan(
     return [
         {
             "action_id": "general_mechanical_inspection",
-            "what": _text(
-                lang,
-                "Inspect wheel bearings, suspension bushings, subframe mounts, and loose fasteners in the vibration path.",
-                "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in het trillingspad.",
-            ),
-            "why": _text(
-                lang,
-                "No specific source could be ranked with enough confidence.",
-                "Er kon geen specifieke bron met voldoende betrouwbaarheid worden gerangschikt.",
-            ),
+            "what": _tr(lang, "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
+            "why": _tr(lang, "NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
             "confirm": _text(
                 lang,
                 "A concrete mechanical issue is identified.",
@@ -951,6 +952,7 @@ def _build_order_findings(
     samples: list[dict[str, Any]],
     speed_sufficient: bool,
     steady_speed: bool,
+    speed_stddev_kmh: float | None,
     tire_circumference_m: float | None,
     engine_ref_sufficient: bool,
     raw_sample_rate_hz: float | None,
@@ -1020,13 +1022,25 @@ def _build_order_findings(
         if possible < ORDER_MIN_COVERAGE_POINTS or matched < ORDER_MIN_MATCH_POINTS:
             continue
         match_rate = matched / max(1, possible)
-        if match_rate < 0.25:
+        # At constant speed the predicted frequency never varies, so random
+        # broadband peaks match by chance at ~30-40%.  A genuine order source
+        # would be present in the vast majority of samples.  Require a much
+        # higher match rate before claiming a finding.
+        constant_speed = (
+            speed_stddev_kmh is not None and speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
+        )
+        min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
+        if match_rate < min_match_rate:
             continue
 
         mean_amp = mean(matched_amp) if matched_amp else 0.0
         mean_floor = mean(matched_floor) if matched_floor else 0.0
         mean_rel_err = mean(rel_errors) if rel_errors else 1.0
         corr = _corr_abs(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+        # When speed is constant, predicted Hz never varies so correlation
+        # is degenerate (undefined or misleading).  Zero it out.
+        if constant_speed:
+            corr = None
         corr_val = corr if corr is not None else 0.0
 
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
@@ -1146,7 +1160,11 @@ def _build_order_findings(
         findings.append((ranking_score, finding))
 
     findings.sort(key=lambda item: item[0], reverse=True)
-    return [item[1] for item in findings[:3]]
+    return [
+        item[1]
+        for item in findings[:3]
+        if float(item[1].get("confidence_0_to_1", 0)) >= ORDER_MIN_CONFIDENCE
+    ]
 
 
 def _build_findings(
@@ -1155,6 +1173,7 @@ def _build_findings(
     samples: list[dict[str, Any]],
     speed_sufficient: bool,
     steady_speed: bool,
+    speed_stddev_kmh: float | None,
     speed_non_null_pct: float,
     raw_sample_rate_hz: float | None,
     lang: object = "en",
@@ -1242,6 +1261,7 @@ def _build_findings(
             samples=samples,
             speed_sufficient=speed_sufficient,
             steady_speed=steady_speed,
+            speed_stddev_kmh=speed_stddev_kmh,
             tire_circumference_m=tire_circumference_m if speed_sufficient else None,
             engine_ref_sufficient=engine_ref_sufficient,
             raw_sample_rate_hz=raw_sample_rate_hz,
@@ -1291,11 +1311,13 @@ def select_top_causes(
     max_causes: int = 3,
 ) -> list[dict[str, object]]:
     """Group findings by suspected_source, keep best per group, apply drop-off."""
-    # Only consider non-reference findings
+    # Only consider non-reference findings that meet the hard confidence floor
     diag_findings = [
         f
         for f in findings
-        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
+        if isinstance(f, dict)
+        and not str(f.get("finding_id", "")).startswith("REF_")
+        and float(f.get("confidence_0_to_1") or 0) >= ORDER_MIN_CONFIDENCE
     ]
     if not diag_findings:
         return []
@@ -1753,6 +1775,7 @@ def build_findings_for_samples(
         samples=rows,
         speed_sufficient=speed_sufficient,
         steady_speed=bool(speed_stats.get("steady_speed")),
+        speed_stddev_kmh=_as_float(speed_stats.get("stddev_kmh")),
         speed_non_null_pct=speed_non_null_pct,
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,
@@ -1857,6 +1880,7 @@ def summarize_log(
         samples=samples,
         speed_sufficient=speed_sufficient,
         steady_speed=bool(speed_stats.get("steady_speed")),
+        speed_stddev_kmh=_as_float(speed_stats.get("stddev_kmh")),
         speed_non_null_pct=speed_non_null_pct,
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,

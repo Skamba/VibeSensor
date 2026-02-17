@@ -250,10 +250,12 @@ def test_esp_protocol_constants_match_python() -> None:
         CMD_HEADER_BYTES,
         CMD_IDENTIFY,
         CMD_IDENTIFY_BYTES,
+        DATA_ACK_BYTES,
         DATA_HEADER_BYTES,
         HELLO_FIXED_BYTES,
         MSG_ACK,
         MSG_CMD,
+        MSG_DATA_ACK,
         MSG_DATA,
         MSG_HELLO,
         VERSION,
@@ -275,6 +277,7 @@ def test_esp_protocol_constants_match_python() -> None:
     assert _cpp_const("kMsgData") == MSG_DATA
     assert _cpp_const("kMsgCmd") == MSG_CMD
     assert _cpp_const("kMsgAck") == MSG_ACK
+    assert _cpp_const("kMsgDataAck") == MSG_DATA_ACK
     assert _cpp_const("kCmdIdentify") == CMD_IDENTIFY
 
     # Byte-size constants are computed as expressions in C++; verify by evaluating
@@ -283,6 +286,7 @@ def test_esp_protocol_constants_match_python() -> None:
         "HELLO_FIXED_BYTES": HELLO_FIXED_BYTES,
         "DATA_HEADER_BYTES": DATA_HEADER_BYTES,
         "ACK_BYTES": ACK_BYTES,
+        "DATA_ACK_BYTES": DATA_ACK_BYTES,
         "CMD_HEADER_BYTES": CMD_HEADER_BYTES,
         "CMD_IDENTIFY_BYTES": CMD_IDENTIFY_BYTES,
     }
@@ -290,6 +294,7 @@ def test_esp_protocol_constants_match_python() -> None:
         "HELLO_FIXED_BYTES": "kHelloFixedBytes",
         "DATA_HEADER_BYTES": "kDataHeaderBytes",
         "ACK_BYTES": "kAckBytes",
+        "DATA_ACK_BYTES": "kDataAckBytes",
         "CMD_HEADER_BYTES": "kCmdHeaderBytes",
         "CMD_IDENTIFY_BYTES": "kCmdIdentifyBytes",
     }
@@ -314,6 +319,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
         ACK_BYTES,
         CMD_HEADER_BYTES,
         CMD_IDENTIFY_BYTES,
+        DATA_ACK_BYTES,
         DATA_HEADER_BYTES,
         HELLO_FIXED_BYTES,
     )
@@ -327,6 +333,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
         "CMD header bytes": CMD_HEADER_BYTES,
         "CMD identify bytes": CMD_IDENTIFY_BYTES,
         "ACK bytes": ACK_BYTES,
+        "DATA_ACK bytes": DATA_ACK_BYTES,
     }
     for label, value in expected.items():
         pattern = rf"{re.escape(label)}.*`(\d+)`"

@@ -148,8 +148,7 @@ class ClientRegistry:
             client_id = client_id_hex(hello.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
-            hello_port = int(hello.control_port)
-            record.control_addr = (addr[0], hello_port if hello_port > 0 else addr[1])
+            record.control_addr = addr
             record.sample_rate_hz = hello.sample_rate_hz
             record.firmware_version = hello.firmware_version
             record.queue_overflow_drops = hello.queue_overflow_drops

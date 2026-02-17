@@ -219,6 +219,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         speed_kmh = (override_mps * MPS_TO_KMH) if isinstance(override_mps, (int, float)) else None
         return {"speed_kmh": speed_kmh}
 
+    @router.post("/api/simulator/speed-override")
+    async def set_simulator_speed_override(req: SpeedOverrideRequest) -> dict:
+        return await set_speed_override(req)
+
     @router.get("/api/analysis-settings")
     async def get_analysis_settings() -> dict:
         return state.analysis_settings.snapshot()
@@ -393,5 +397,17 @@ def create_router(state: RuntimeState) -> APIRouter:
         from .car_library import get_models_for_brand_type
 
         return {"models": get_models_for_brand_type(brand, car_type)}
+
+    @router.get("/api/debug/spectrum/{client_id}")
+    async def debug_spectrum(client_id: str) -> dict:
+        """Detailed spectrum debug info for independent verification."""
+        normalized = _normalize_client_id_or_400(client_id)
+        return state.processor.debug_spectrum(normalized)
+
+    @router.get("/api/debug/raw-samples/{client_id}")
+    async def debug_raw_samples(client_id: str, n: int = Query(default=2048, ge=1, le=6400)) -> dict:
+        """Raw time-domain samples in g for offline analysis."""
+        normalized = _normalize_client_id_or_400(client_id)
+        return state.processor.raw_samples(normalized, n_samples=n)
 
     return router
