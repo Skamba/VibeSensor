@@ -1,0 +1,226 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from vibesensor.settings_store import (
+    DEFAULT_CAR_ASPECTS,
+    SettingsStore,
+    _sanitize_aspects,
+    _validate_car,
+    _validate_sensor,
+)
+
+# -- _sanitize_aspects --------------------------------------------------------
+
+
+def test_sanitize_aspects_filters_invalid_positive_required() -> None:
+    out = _sanitize_aspects({"tire_width_mm": -1.0, "rim_in": 0.0})
+    assert "tire_width_mm" not in out
+    assert "rim_in" not in out
+
+
+def test_sanitize_aspects_allows_valid() -> None:
+    out = _sanitize_aspects({"tire_width_mm": 225.0, "rim_in": 18.0})
+    assert out["tire_width_mm"] == 225.0
+    assert out["rim_in"] == 18.0
+
+
+def test_sanitize_aspects_rejects_negative_non_negative() -> None:
+    out = _sanitize_aspects({"speed_uncertainty_pct": -0.1})
+    assert "speed_uncertainty_pct" not in out
+
+
+def test_sanitize_aspects_allows_zero_non_negative() -> None:
+    out = _sanitize_aspects({"speed_uncertainty_pct": 0.0})
+    assert out["speed_uncertainty_pct"] == 0.0
+
+
+def test_sanitize_aspects_ignores_unknown() -> None:
+    out = _sanitize_aspects({"unknown_key": 42.0})
+    assert "unknown_key" not in out
+
+
+# -- _validate_car -------------------------------------------------------------
+
+
+def test_validate_car_fills_defaults() -> None:
+    car = _validate_car({})
+    assert car["name"] == "Unnamed Car"
+    assert car["type"] == "sedan"
+    assert car["id"]
+    assert car["aspects"] == DEFAULT_CAR_ASPECTS
+
+
+def test_validate_car_preserves_aspects() -> None:
+    car = _validate_car({"aspects": {"tire_width_mm": 245.0}})
+    assert car["aspects"]["tire_width_mm"] == 245.0
+    assert car["aspects"]["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
+
+
+def test_validate_car_truncates_name() -> None:
+    car = _validate_car({"name": "x" * 100})
+    assert len(car["name"]) <= 64
+
+
+# -- _validate_sensor ----------------------------------------------------------
+
+
+def test_validate_sensor_defaults_name_to_mac() -> None:
+    sensor = _validate_sensor("aa:bb:cc:dd:ee:ff", {})
+    assert sensor["name"] == "aa:bb:cc:dd:ee:ff"
+    assert sensor["location"] == ""
+
+
+def test_validate_sensor_uses_provided_name() -> None:
+    sensor = _validate_sensor("aa:bb:cc:dd:ee:ff", {"name": "Front Left"})
+    assert sensor["name"] == "Front Left"
+
+
+# -- SettingsStore full lifecycle -----------------------------------------------
+
+
+def test_store_default_has_one_car() -> None:
+    store = SettingsStore()
+    snap = store.snapshot()
+    assert len(snap["cars"]) == 1
+    assert snap["activeCarId"] == snap["cars"][0]["id"]
+    assert snap["speedSource"] == "gps"
+    assert snap["manualSpeedKph"] is None
+
+
+def test_store_add_and_delete_car() -> None:
+    store = SettingsStore()
+    initial_id = store.snapshot()["cars"][0]["id"]
+    store.add_car({"name": "Track Car", "type": "coupe"})
+    snap = store.snapshot()
+    assert len(snap["cars"]) == 2
+    new_car = snap["cars"][1]
+    assert new_car["name"] == "Track Car"
+    assert new_car["type"] == "coupe"
+
+    store.delete_car(new_car["id"])
+    assert len(store.snapshot()["cars"]) == 1
+    assert store.snapshot()["cars"][0]["id"] == initial_id
+
+
+def test_store_cannot_delete_last_car() -> None:
+    store = SettingsStore()
+    car_id = store.snapshot()["cars"][0]["id"]
+    with pytest.raises(ValueError, match="Cannot delete the last car"):
+        store.delete_car(car_id)
+
+
+def test_store_update_car_aspects() -> None:
+    store = SettingsStore()
+    car_id = store.snapshot()["cars"][0]["id"]
+    store.update_car(car_id, {"aspects": {"tire_width_mm": 245.0}})
+    aspects = store.active_car_aspects()
+    assert aspects["tire_width_mm"] == 245.0
+    assert aspects["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
+
+
+def test_store_set_active_car() -> None:
+    store = SettingsStore()
+    store.add_car({"name": "Second Car"})
+    second_id = store.snapshot()["cars"][1]["id"]
+    store.set_active_car(second_id)
+    assert store.snapshot()["activeCarId"] == second_id
+
+
+def test_store_set_active_car_unknown_raises() -> None:
+    store = SettingsStore()
+    with pytest.raises(ValueError, match="Unknown car id"):
+        store.set_active_car("nonexistent-id")
+
+
+# -- speed source ---------------------------------------------------------------
+
+
+def test_store_update_speed_source_manual() -> None:
+    store = SettingsStore()
+    result = store.update_speed_source({"speedSource": "manual", "manualSpeedKph": 80})
+    assert result["speedSource"] == "manual"
+    assert result["manualSpeedKph"] == 80.0
+    assert store.speed_source == "manual"
+    assert store.manual_speed_kph == 80.0
+
+
+def test_store_update_speed_source_gps_clears_manual() -> None:
+    store = SettingsStore()
+    store.update_speed_source({"speedSource": "manual", "manualSpeedKph": 80})
+    store.update_speed_source({"speedSource": "gps", "manualSpeedKph": None})
+    assert store.speed_source == "gps"
+    assert store.manual_speed_kph is None
+
+
+def test_store_invalid_speed_source_defaults_to_gps() -> None:
+    store = SettingsStore()
+    store.update_speed_source({"speedSource": "unknown"})
+    assert store.speed_source == "gps"
+
+
+# -- sensors -------------------------------------------------------------------
+
+
+def test_store_set_and_get_sensor() -> None:
+    store = SettingsStore()
+    store.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "FL Wheel", "location": "front_left_wheel"})
+    sensors = store.get_sensors()
+    assert "aa:bb:cc:dd:ee:ff" in sensors
+    assert sensors["aa:bb:cc:dd:ee:ff"]["name"] == "FL Wheel"
+    assert sensors["aa:bb:cc:dd:ee:ff"]["location"] == "front_left_wheel"
+
+
+def test_store_sensor_name_defaults_to_mac() -> None:
+    store = SettingsStore()
+    assert store.sensor_name("aa:bb:cc:dd:ee:ff") == "aa:bb:cc:dd:ee:ff"
+
+
+def test_store_remove_sensor() -> None:
+    store = SettingsStore()
+    store.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "Test"})
+    assert store.remove_sensor("aa:bb:cc:dd:ee:ff") is True
+    assert store.remove_sensor("aa:bb:cc:dd:ee:ff") is False
+
+
+def test_store_ensure_sensor() -> None:
+    store = SettingsStore()
+    store.ensure_sensor("aa:bb:cc:dd:ee:ff")
+    sensors = store.get_sensors()
+    assert "aa:bb:cc:dd:ee:ff" in sensors
+    assert sensors["aa:bb:cc:dd:ee:ff"]["name"] == "aa:bb:cc:dd:ee:ff"
+
+
+# -- persistence ---------------------------------------------------------------
+
+
+def test_store_persists_and_loads(tmp_path: Path) -> None:
+    persist = tmp_path / "settings.json"
+    store1 = SettingsStore(persist_path=persist)
+    store1.add_car({"name": "Persisted Car", "type": "suv"})
+    store1.update_speed_source({"speedSource": "manual", "manualSpeedKph": 60})
+    store1.set_sensor("11:22:33:44:55:66", {"name": "Rear", "location": "rear_left_wheel"})
+
+    store2 = SettingsStore(persist_path=persist)
+    snap = store2.snapshot()
+    assert len(snap["cars"]) == 2
+    assert snap["cars"][1]["name"] == "Persisted Car"
+    assert snap["speedSource"] == "manual"
+    assert snap["manualSpeedKph"] == 60.0
+    assert snap["sensorsByMac"]["11:22:33:44:55:66"]["name"] == "Rear"
+
+
+def test_store_handles_corrupt_persist_file(tmp_path: Path) -> None:
+    persist = tmp_path / "settings.json"
+    persist.write_text("not valid json", encoding="utf-8")
+    store = SettingsStore(persist_path=persist)
+    # Should fall back to defaults without crashing
+    assert len(store.snapshot()["cars"]) == 1
+
+
+def test_store_handles_missing_persist_file(tmp_path: Path) -> None:
+    persist = tmp_path / "settings.json"
+    store = SettingsStore(persist_path=persist)
+    assert len(store.snapshot()["cars"]) == 1

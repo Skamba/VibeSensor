@@ -96,12 +96,98 @@ def _list_logs(state: RuntimeState) -> list[dict]:
     return out
 
 
+def _sync_active_car_to_analysis(state: RuntimeState) -> None:
+    """Push active car aspects into the shared AnalysisSettingsStore."""
+    aspects = state.settings_store.active_car_aspects()
+    state.analysis_settings.update(aspects)
+
+
+def _sync_speed_source_to_gps(state: RuntimeState) -> None:
+    """Push speed-source settings into GPSSpeedMonitor."""
+    ss = state.settings_store.get_speed_source()
+    if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
+        state.gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
+    else:
+        state.gps_monitor.set_speed_override_kmh(None)
+
+
 def create_router(state: RuntimeState) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/health")
     async def health() -> dict:
         return {"status": "ok"}
+
+    # -- new settings endpoints (3-tab model) ----------------------------------
+
+    @router.get("/api/settings")
+    async def get_settings() -> dict:
+        return state.settings_store.snapshot()
+
+    @router.get("/api/settings/cars")
+    async def get_cars() -> dict:
+        return state.settings_store.get_cars()
+
+    @router.post("/api/settings/cars")
+    async def add_car(req: dict) -> dict:
+        result = state.settings_store.add_car(req)
+        _sync_active_car_to_analysis(state)
+        return result
+
+    @router.put("/api/settings/cars/{car_id}")
+    async def update_car(car_id: str, req: dict) -> dict:
+        try:
+            result = state.settings_store.update_car(car_id, req)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        _sync_active_car_to_analysis(state)
+        return result
+
+    @router.delete("/api/settings/cars/{car_id}")
+    async def delete_car(car_id: str) -> dict:
+        try:
+            result = state.settings_store.delete_car(car_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        _sync_active_car_to_analysis(state)
+        return result
+
+    @router.post("/api/settings/cars/active")
+    async def set_active_car(req: dict) -> dict:
+        car_id = req.get("carId", "")
+        try:
+            result = state.settings_store.set_active_car(car_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        _sync_active_car_to_analysis(state)
+        return result
+
+    @router.get("/api/settings/speed-source")
+    async def get_speed_source() -> dict:
+        return state.settings_store.get_speed_source()
+
+    @router.post("/api/settings/speed-source")
+    async def update_speed_source(req: dict) -> dict:
+        result = state.settings_store.update_speed_source(req)
+        _sync_speed_source_to_gps(state)
+        return result
+
+    @router.get("/api/settings/sensors")
+    async def get_sensors() -> dict:
+        return {"sensorsByMac": state.settings_store.get_sensors()}
+
+    @router.post("/api/settings/sensors/{mac}")
+    async def update_sensor(mac: str, req: dict) -> dict:
+        return state.settings_store.set_sensor(mac, req)
+
+    @router.delete("/api/settings/sensors/{mac}")
+    async def delete_sensor(mac: str) -> dict:
+        removed = state.settings_store.remove_sensor(mac)
+        if not removed:
+            raise HTTPException(status_code=404, detail="Unknown sensor MAC")
+        return {"mac": mac, "status": "removed"}
+
+    # -- legacy endpoints (adapters) -------------------------------------------
 
     @router.get("/api/clients")
     async def get_clients() -> dict:
@@ -113,13 +199,24 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/speed-override")
     async def get_speed_override() -> dict:
+        ss = state.settings_store.get_speed_source()
+        if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
+            return {"speed_kmh": ss["manualSpeedKph"]}
         override_mps = state.gps_monitor.override_speed_mps
         speed_kmh = (override_mps * MPS_TO_KMH) if isinstance(override_mps, (int, float)) else None
         return {"speed_kmh": speed_kmh}
 
     @router.post("/api/speed-override")
     async def set_speed_override(req: SpeedOverrideRequest) -> dict:
-        speed_kmh = state.gps_monitor.set_speed_override_kmh(req.speed_kmh)
+        if req.speed_kmh is not None and req.speed_kmh > 0:
+            state.settings_store.update_speed_source(
+                {"speedSource": "manual", "manualSpeedKph": req.speed_kmh}
+            )
+        else:
+            state.settings_store.update_speed_source({"speedSource": "gps", "manualSpeedKph": None})
+        _sync_speed_source_to_gps(state)
+        override_mps = state.gps_monitor.override_speed_mps
+        speed_kmh = (override_mps * MPS_TO_KMH) if isinstance(override_mps, (int, float)) else None
         return {"speed_kmh": speed_kmh}
 
     @router.get("/api/analysis-settings")
@@ -140,6 +237,8 @@ def create_router(state: RuntimeState) -> APIRouter:
             updated = state.registry.set_name(client_id, req.name)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        mac = client_id_mac(updated.client_id)
+        state.settings_store.set_sensor(mac, {"name": req.name})
         return {"id": updated.client_id, "name": updated.name}
 
     @router.post("/api/clients/{client_id}/identify")
@@ -165,9 +264,11 @@ def create_router(state: RuntimeState) -> APIRouter:
                 )
 
         updated = state.registry.set_name(normalized_client_id, label)
+        mac = client_id_mac(updated.client_id)
+        state.settings_store.set_sensor(mac, {"location": req.location_code})
         return {
             "id": updated.client_id,
-            "mac_address": client_id_mac(updated.client_id),
+            "mac_address": mac,
             "location_code": req.location_code,
             "name": updated.name,
         }
@@ -266,5 +367,31 @@ def create_router(state: RuntimeState) -> APIRouter:
             pass
         finally:
             await state.ws_hub.remove(ws)
+
+    @router.get("/api/car-library")
+    async def get_car_library() -> dict:
+        from .car_library import CAR_LIBRARY
+
+        return {"cars": CAR_LIBRARY}
+
+    @router.get("/api/car-library/brands")
+    async def get_car_library_brands() -> dict:
+        from .car_library import get_brands
+
+        return {"brands": get_brands()}
+
+    @router.get("/api/car-library/types")
+    async def get_car_library_types(brand: str = Query(...)) -> dict:
+        from .car_library import get_types_for_brand
+
+        return {"types": get_types_for_brand(brand)}
+
+    @router.get("/api/car-library/models")
+    async def get_car_library_models(
+        brand: str = Query(...), car_type: str = Query(..., alias="type")
+    ) -> dict:
+        from .car_library import get_models_for_brand_type
+
+        return {"models": get_models_for_brand_type(brand, car_type)}
 
     return router

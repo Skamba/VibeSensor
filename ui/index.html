@@ -81,11 +81,6 @@
                   <option value="mps" data-i18n="speed.unit.mps">m/s</option>
                 </select>
               </div>
-              <div class="live-speed-row">
-                <label for="speedOverrideInput" data-i18n="dashboard.speed_override">Speed Override (km/h)</label>
-                <input id="speedOverrideInput" type="number" step="0.1" min="0" />
-                <button id="applySpeedOverrideBtn" class="btn btn--primary" data-i18n="dashboard.apply_override">Apply Override</button>
-              </div>
               <div id="currentLogFile" class="card__subtle">Current file: --</div>
             </div>
 
@@ -148,64 +143,194 @@
       </section>
 
       <section id="settingsView" class="view" role="tabpanel" aria-labelledby="tab-settings" hidden>
-        <div class="panel card">
-          <strong data-i18n="settings.client_locations">Client Locations</strong>
-          <div class="subtle" data-i18n="settings.client_locations_hint">Set location and identify by client. Offline clients can still be assigned.</div>
-          <table class="clients-table">
-            <thead>
-              <tr>
-                <th data-i18n="settings.clients.client">Client</th>
-                <th data-i18n="settings.clients.mac">MAC Address</th>
-                <th data-i18n="settings.clients.location">Location</th>
-                <th data-i18n="settings.clients.identify">Identify</th>
-                <th data-i18n="settings.clients.remove">Remove</th>
-              </tr>
-            </thead>
-            <tbody id="clientsSettingsBody">
-              <tr>
-                <td colspan="5">No clients detected yet.</td>
-              </tr>
-            </tbody>
-          </table>
+        <nav class="settings-tabs" role="tablist">
+          <button type="button" class="settings-tab active" data-settings-tab="carTab" role="tab" aria-controls="carTab" aria-selected="true" tabindex="0">
+            <span data-i18n="settings.tab.car">Car</span>
+          </button>
+          <button type="button" class="settings-tab" data-settings-tab="analysisTab" role="tab" aria-controls="analysisTab" aria-selected="false" tabindex="-1">
+            <span data-i18n="settings.tab.analysis">Analysis</span>
+          </button>
+          <button type="button" class="settings-tab" data-settings-tab="speedSourceTab" role="tab" aria-controls="speedSourceTab" aria-selected="false" tabindex="-1">
+            <span data-i18n="settings.tab.speed_source">Speed Source</span>
+          </button>
+          <button type="button" class="settings-tab" data-settings-tab="sensorsTab" role="tab" aria-controls="sensorsTab" aria-selected="false" tabindex="-1">
+            <span data-i18n="settings.tab.sensors">Sensors</span>
+          </button>
+        </nav>
+
+        <!-- Car Tab -->
+        <div id="carTab" class="settings-tab-panel active" role="tabpanel">
+          <div class="panel card">
+            <div class="car-tab-header">
+              <strong data-i18n="settings.car.manage">Manage Cars</strong>
+              <button id="addCarBtn" class="btn btn--success" data-i18n="settings.car.add_new">+ Add Car</button>
+            </div>
+            <div class="subtle" data-i18n="settings.car.hint">Add cars from the library or enter specs manually. Activate a car to use it for analysis.</div>
+            <table class="car-list-table">
+              <thead>
+                <tr>
+                  <th data-i18n="settings.car.col_status">Status</th>
+                  <th data-i18n="settings.car.col_name">Name</th>
+                  <th data-i18n="settings.car.col_type">Type</th>
+                  <th data-i18n="settings.car.col_tires">Tires</th>
+                  <th data-i18n="settings.car.col_drive">Drive</th>
+                  <th data-i18n="settings.car.col_gear">Top Gear</th>
+                  <th data-i18n="settings.car.col_actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="carListBody">
+                <tr><td colspan="7" data-i18n="settings.car.no_cars">No cars added yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Add Car Wizard (hidden by default) -->
+          <div id="addCarWizard" class="panel card add-car-wizard" hidden>
+            <div class="wizard-header">
+              <strong data-i18n="settings.car.add_title">Add a Car</strong>
+              <button id="wizardCloseBtn" class="btn btn--muted wizard-close">&times;</button>
+            </div>
+            <div class="wizard-steps">
+              <div class="wizard-step-indicators">
+                <span class="wizard-step-dot active" data-step="0">1</span>
+                <span class="wizard-step-dot" data-step="1">2</span>
+                <span class="wizard-step-dot" data-step="2">3</span>
+                <span class="wizard-step-dot" data-step="3">4</span>
+              </div>
+
+              <!-- Step 1: Brand -->
+              <div id="wizardStep0" class="wizard-step active">
+                <h3 data-i18n="settings.car.step_brand">Select Brand</h3>
+                <div class="wizard-options" id="wizardBrandList"></div>
+                <div class="wizard-custom">
+                  <label data-i18n="settings.car.or_custom_brand">Or type a custom brand:</label>
+                  <input id="wizardCustomBrand" type="text" maxlength="32" placeholder="e.g. Mercedes-Benz" />
+                  <button id="wizardCustomBrandBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
+                </div>
+              </div>
+
+              <!-- Step 2: Type -->
+              <div id="wizardStep1" class="wizard-step">
+                <h3 data-i18n="settings.car.step_type">Select Type</h3>
+                <div class="wizard-options" id="wizardTypeList"></div>
+                <div class="wizard-custom">
+                  <label data-i18n="settings.car.or_custom_type">Or type a custom type:</label>
+                  <input id="wizardCustomType" type="text" maxlength="32" placeholder="e.g. Van" />
+                  <button id="wizardCustomTypeBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
+                </div>
+              </div>
+
+              <!-- Step 3: Model -->
+              <div id="wizardStep2" class="wizard-step">
+                <h3 data-i18n="settings.car.step_model">Select Model</h3>
+                <div class="wizard-options wizard-options--list" id="wizardModelList"></div>
+                <div class="wizard-custom">
+                  <label data-i18n="settings.car.or_custom_model">Or type a custom model:</label>
+                  <input id="wizardCustomModel" type="text" maxlength="64" placeholder="e.g. C-Class W205" />
+                  <button id="wizardCustomModelBtn" class="btn btn--primary" data-i18n="settings.car.use_custom">Use Custom</button>
+                </div>
+              </div>
+
+              <!-- Step 4: Wheels & Gearbox -->
+              <div id="wizardStep3" class="wizard-step">
+                <h3 data-i18n="settings.car.step_wheels">Select Wheels</h3>
+                <div class="wizard-options" id="wizardTireList"></div>
+                <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">Select Gearbox</h3>
+                <div class="wizard-options wizard-options--list" id="wizardGearboxList"></div>
+                <div class="wizard-custom-specs">
+                  <strong data-i18n="settings.car.or_manual_specs">Or enter specs manually:</strong>
+                  <div class="settings-subgrid">
+                    <div class="field"><label for="wizTireWidth" data-i18n="settings.tire_width">Tire Width (mm)</label><input id="wizTireWidth" type="number" min="100" step="1" value="225" /></div>
+                    <div class="field"><label for="wizTireAspect" data-i18n="settings.tire_aspect">Tire Aspect (%)</label><input id="wizTireAspect" type="number" min="20" step="1" value="45" /></div>
+                    <div class="field"><label for="wizRim" data-i18n="settings.rim_size">Rim Size (in)</label><input id="wizRim" type="number" min="10" step="0.5" value="18" /></div>
+                    <div class="field"><label for="wizFinalDrive" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label><input id="wizFinalDrive" type="number" step="0.01" min="0.1" value="3.08" /></div>
+                    <div class="field"><label for="wizGearRatio" data-i18n="settings.top_gear_ratio">Top Gear Ratio</label><input id="wizGearRatio" type="number" step="0.01" min="0.1" value="0.64" /></div>
+                  </div>
+                  <button id="wizardManualAddBtn" class="btn btn--success" data-i18n="settings.car.add_with_specs">Add Car with These Specs</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="wizard-nav">
+              <button id="wizardBackBtn" class="btn btn--muted" data-i18n="settings.car.back">Back</button>
+            </div>
+          </div>
         </div>
 
-        <div class="panel card settings-layout">
-          <div class="settings-groups">
-            <section class="settings-group">
-              <h3 data-i18n="settings.group.vehicle_setup">Vehicle Setup</h3>
-              <div class="settings-subgrid">
-                <div class="field"><label for="tireWidthInput" data-i18n="settings.tire_width">Tire Width (mm)</label><input id="tireWidthInput" type="number" min="100" step="1" /></div>
-                <div class="field"><label for="tireAspectInput" data-i18n="settings.tire_aspect">Tire Aspect (%)</label><input id="tireAspectInput" type="number" min="20" step="1" /></div>
-                <div class="field"><label for="rimInput" data-i18n="settings.rim_size">Rim Size (in)</label><input id="rimInput" type="number" min="10" step="0.5" /></div>
-                <div class="field"><label for="finalDriveInput" data-i18n="settings.final_drive_ratio">Final Drive Ratio</label><input id="finalDriveInput" type="number" step="0.01" min="0.1" /></div>
-                <div class="field"><label for="gearRatioInput" data-i18n="settings.current_gear_ratio">Current Gear Ratio</label><input id="gearRatioInput" type="number" step="0.01" min="0.1" /></div>
-              </div>
-            </section>
+        <!-- Analysis Tab -->
+        <div id="analysisTab" class="settings-tab-panel" role="tabpanel" hidden>
+          <div class="panel card settings-layout">
+            <div class="subtle" data-i18n="settings.analysis.hint">These settings apply globally to all cars and control how vibration frequency bands are calculated.</div>
+            <div class="settings-groups">
+              <section class="settings-group">
+                <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>
+                <div class="settings-subgrid">
+                  <div class="field"><label for="wheelBandwidthInput" data-i18n="settings.wheel_bandwidth">Wheel Bandwidth (%)</label><input id="wheelBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
+                  <div class="field"><label for="driveshaftBandwidthInput" data-i18n="settings.driveshaft_bandwidth">Driveshaft Bandwidth (%)</label><input id="driveshaftBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
+                  <div class="field"><label for="engineBandwidthInput" data-i18n="settings.engine_bandwidth">Engine Bandwidth (%)</label><input id="engineBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
+                  <div class="field"><label for="minAbsBandHzInput" data-i18n="settings.min_half_width">Min Half-width (Hz)</label><input id="minAbsBandHzInput" type="number" step="0.1" min="0" max="10" /></div>
+                  <div class="field"><label for="maxBandHalfWidthInput" data-i18n="settings.max_half_width">Max Half-width (%)</label><input id="maxBandHalfWidthInput" type="number" step="0.1" min="1" max="25" /></div>
+                </div>
+              </section>
 
-            <section class="settings-group">
-              <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>
-              <div class="settings-subgrid">
-                <div class="field"><label for="wheelBandwidthInput" data-i18n="settings.wheel_bandwidth">Wheel Bandwidth (%)</label><input id="wheelBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
-                <div class="field"><label for="driveshaftBandwidthInput" data-i18n="settings.driveshaft_bandwidth">Driveshaft Bandwidth (%)</label><input id="driveshaftBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
-                <div class="field"><label for="engineBandwidthInput" data-i18n="settings.engine_bandwidth">Engine Bandwidth (%)</label><input id="engineBandwidthInput" type="number" step="0.1" min="1" max="40" /></div>
-                <div class="field"><label for="minAbsBandHzInput" data-i18n="settings.min_half_width">Min Half-width (Hz)</label><input id="minAbsBandHzInput" type="number" step="0.1" min="0" max="10" /></div>
-                <div class="field"><label for="maxBandHalfWidthInput" data-i18n="settings.max_half_width">Max Half-width (%)</label><input id="maxBandHalfWidthInput" type="number" step="0.1" min="1" max="25" /></div>
-              </div>
-            </section>
-
-            <section class="settings-group">
-              <h3 data-i18n="settings.group.uncertainty_model">Uncertainty Model</h3>
-              <div class="subtle"><span data-i18n="settings.uncertainty_defaults">Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.</span></div>
-              <div class="settings-subgrid">
-                <div class="field"><label for="speedUncertaintyInput" data-i18n="settings.speed_uncertainty">Speed Uncertainty (%)</label><input id="speedUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
-                <div class="field"><label for="tireDiameterUncertaintyInput" data-i18n="settings.tire_diameter_uncertainty">Tire Diameter Uncertainty (%)</label><input id="tireDiameterUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
-                <div class="field"><label for="finalDriveUncertaintyInput" data-i18n="settings.final_drive_uncertainty">Final Drive Uncertainty (%)</label><input id="finalDriveUncertaintyInput" type="number" step="0.1" min="0" max="10" /></div>
-                <div class="field"><label for="gearUncertaintyInput" data-i18n="settings.gear_slip_uncertainty">Gear/Slip Uncertainty (%)</label><input id="gearUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
-              </div>
-            </section>
+              <section class="settings-group">
+                <h3 data-i18n="settings.group.uncertainty_model">Uncertainty Model</h3>
+                <div class="subtle"><span data-i18n="settings.uncertainty_defaults">Defaults use tire wear from 10/32 in to 2/32 in plus safety margin.</span></div>
+                <div class="settings-subgrid">
+                  <div class="field"><label for="speedUncertaintyInput" data-i18n="settings.speed_uncertainty">Speed Uncertainty (%)</label><input id="speedUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
+                  <div class="field"><label for="tireDiameterUncertaintyInput" data-i18n="settings.tire_diameter_uncertainty">Tire Diameter Uncertainty (%)</label><input id="tireDiameterUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
+                  <div class="field"><label for="finalDriveUncertaintyInput" data-i18n="settings.final_drive_uncertainty">Final Drive Uncertainty (%)</label><input id="finalDriveUncertaintyInput" type="number" step="0.1" min="0" max="10" /></div>
+                  <div class="field"><label for="gearUncertaintyInput" data-i18n="settings.gear_slip_uncertainty">Gear/Slip Uncertainty (%)</label><input id="gearUncertaintyInput" type="number" step="0.1" min="0" max="20" /></div>
+                </div>
+              </section>
+            </div>
+            <div class="settings-actions">
+              <button id="saveAnalysisBtn" class="btn btn--primary" data-i18n="settings.analysis.save">Save Analysis Settings</button>
+            </div>
           </div>
-          <div class="settings-actions">
-            <button id="saveSettingsBtn" class="btn btn--primary" data-i18n="settings.save">Save Settings</button>
+        </div>
+
+        <!-- Speed Source Tab -->
+        <div id="speedSourceTab" class="settings-tab-panel" role="tabpanel" hidden>
+          <div class="panel card">
+            <strong data-i18n="settings.speed.title">Speed Source</strong>
+            <div class="subtle" data-i18n="settings.speed.hint">Select how vehicle speed is determined. Manual override is only active when "Manual" is selected.</div>
+            <div class="speed-source-options">
+              <label class="radio-label"><input type="radio" name="speedSourceRadio" value="gps" checked /> <span data-i18n="settings.speed.gps">GPS</span></label>
+              <label class="radio-label"><input type="radio" name="speedSourceRadio" value="obd2" /> <span data-i18n="settings.speed.obd2">OBD-II (stub)</span></label>
+              <label class="radio-label"><input type="radio" name="speedSourceRadio" value="manual" /> <span data-i18n="settings.speed.manual">Manual</span></label>
+            </div>
+            <div class="manual-speed-row">
+              <label for="manualSpeedInput" data-i18n="settings.speed.manual_label">Manual Speed (km/h)</label>
+              <input id="manualSpeedInput" type="number" step="0.1" min="0" />
+            </div>
+            <div class="settings-actions">
+              <button id="saveSpeedSourceBtn" class="btn btn--primary" data-i18n="settings.speed.save">Save Speed Source</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sensors Tab -->
+        <div id="sensorsTab" class="settings-tab-panel" role="tabpanel" hidden>
+          <div class="panel card">
+            <strong data-i18n="settings.sensors.title">Sensors</strong>
+            <div class="subtle" data-i18n="settings.sensors.hint">Manage sensor names and locations. Default name is the MAC address.</div>
+            <table class="clients-table">
+              <thead>
+                <tr>
+                  <th data-i18n="settings.sensors.name">Name</th>
+                  <th data-i18n="settings.sensors.mac">MAC Address</th>
+                  <th data-i18n="settings.sensors.location">Location</th>
+                  <th data-i18n="settings.sensors.identify">Identify</th>
+                  <th data-i18n="settings.sensors.remove">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="sensorsSettingsBody">
+                <tr>
+                  <td colspan="5">No sensors detected yet.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
