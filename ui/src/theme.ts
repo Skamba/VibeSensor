@@ -1,8 +1,3 @@
-export const DESIGN_LANGUAGE = {
-  name: "Material Design 3",
-  version: "1.0",
-};
-
 // Chart palette used across the UI and reports.
 export const chartSeriesPalette = [
   "#0b57d0", // primary
