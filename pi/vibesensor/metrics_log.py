@@ -427,5 +427,8 @@ class MetricsLogger:
                     path, run_id, start_time_utc, start_mono_s = snapshot
                     self._append_records(path, run_id, start_time_utc, start_mono_s)
             except Exception:
-                LOGGER.warning("Metrics logger tick failed; will retry next interval.", exc_info=True)
+                LOGGER.warning(
+                    "Metrics logger tick failed; will retry next interval.",
+                    exc_info=True,
+                )
             await asyncio.sleep(interval)
