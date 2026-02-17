@@ -238,6 +238,13 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app.state.runtime = runtime
     app.include_router(create_router(runtime))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
+        public_index = PI_DIR / "public" / "index.html"
+        if not public_index.exists():
+            message = (
+                "UI not built. Run tools/sync_ui_to_pi_public.py or build the Docker image."
+            )
+            LOGGER.error("%s Missing file: %s", message, public_index)
+            raise RuntimeError(message)
         app.mount("/", StaticFiles(directory=PI_DIR / "public", html=True), name="public")
 
     return app

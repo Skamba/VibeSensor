@@ -8,6 +8,15 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _snippet(text: str, pattern: re.Pattern[str]) -> str:
+    match = pattern.search(text)
+    if not match:
+        return ""
+    start = max(0, match.start() - 60)
+    end = min(len(text), match.end() + 60)
+    return text[start:end].replace("\n", " ")
+
+
 # Lightweight smoke tests: string guards intentionally enforce "no local reimplementation" patterns.
 def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
     text = _read(Path(__file__).resolve().parents[1] / "vibesensor" / "live_diagnostics.py")
@@ -24,25 +33,45 @@ def test_report_analysis_uses_shared_strength_math() -> None:
 
 
 def test_client_assets_do_not_compute_strength_metrics() -> None:
-    public_dir = Path(__file__).resolve().parents[1] / "public"
-    index_text = _read(public_dir / "index.html")
-    scripts = [
-        match.group(1).split("?", 1)[0].lstrip("/")
-        for match in re.finditer(r'<script[^>]+src="([^"]+\.js)"', index_text)
+    repo_root = Path(__file__).resolve().parents[2]
+    candidate_dirs = [repo_root / "ui" / "dist", repo_root / "pi" / "public"]
+    forbidden_patterns = [
+        re.compile(r"Math\.log10|log10\("),
+        re.compile(r"detectVibrationEvents"),
+        re.compile(
+            r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_db\s*&&\s*"
+            r"[A-Za-z_$][\w$]*\s*<\s*[A-Za-z_$][\w$]*\s*&&\s*"
+            r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_amp"
+        ),
+        re.compile(r"x\s*\*\s*x\s*\+\s*y\s*\*\s*y\s*\+\s*z\s*\*\s*z"),
     ]
-    assert scripts
-    forbidden_combined_spectrum = re.compile(
-        r"Math\.sqrt\(\([^)]*\+[^)]*\+[^)]*\)\s*/\s*3\)"
+    scanned = 0
+    for asset_dir in candidate_dirs:
+        assert asset_dir.exists(), f"Missing generated UI assets directory: {asset_dir}"
+        for js_file in asset_dir.rglob("*.js"):
+            scanned += 1
+            text = _read(js_file)
+            for pattern in forbidden_patterns:
+                snippet = _snippet(text, pattern)
+                assert not snippet, f"Forbidden UI metric logic in {js_file}: {snippet}"
+    assert scanned > 0, "No generated JS assets found to validate."
+
+
+def test_strength_metric_definition_is_centralized() -> None:
+    root = Path(__file__).resolve().parents[1] / "vibesensor"
+    python_files = list(root.rglob("*.py"))
+    forbidden_math = re.compile(r"\b(?:math|np)\.log10\(")
+    forbidden_bucket_compare = re.compile(
+        r"(?:>=|<=|>|<)[^\n]{0,80}(?:\[['\"]min_db['\"]\]|\[['\"]min_amp['\"]\]|\.min_db|\.min_amp)|"
+        r"(?:\[['\"]min_db['\"]\]|\[['\"]min_amp['\"]\]|\.min_db|\.min_amp)[^\n]{0,80}(?:>=|<=|>|<)"
     )
-    forbidden_bucket_threshold_compare = re.compile(
-        r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_db\s*&&\s*"
-        r"[A-Za-z_$][\w$]*\s*<\s*[A-Za-z_$][\w$]*\s*&&\s*"
-        r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_amp"
-    )
-    for script in scripts:
-        text = _read(public_dir / script)
-        assert "Math.log10(" not in text
-        assert "severityFromPeak(" not in text
-        assert "detectVibrationEvents(" not in text
-        assert forbidden_combined_spectrum.search(text) is None
-        assert forbidden_bucket_threshold_compare.search(text) is None
+    for path in python_files:
+        if path.name == "strength_metrics.py":
+            continue
+        text = _read(path)
+        assert forbidden_math.search(text) is None, f"Unexpected log10 use in {path}"
+        if path.name in {"strength_bands.py", "diagnostics_shared.py"}:
+            continue
+        assert forbidden_bucket_compare.search(text) is None, (
+            f"Unexpected band thresholds in {path}"
+        )

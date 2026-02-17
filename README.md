@@ -33,11 +33,9 @@ Design language (Material Design 3): `docs/design_language.md`
 ## Quickstart (Any Dev Machine)
 
 ```bash
-cd pi
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ".[dev]"
-python -m vibesensor.app --config config.dev.yaml
+python -m pip install -e "./pi[dev]"
+python tools/sync_ui_to_pi_public.py
+python -m vibesensor.app --config pi/config.dev.yaml
 ```
 
 In another terminal:
@@ -87,10 +85,9 @@ speed via per-sample matched peaks (`top_peaks`) instead of fixed-Hz clustering.
 Use Docker Compose for both development and local runtime. This path does not
 run Raspberry Pi AP/hotspot setup.
 
-Compose starts two services:
+Compose starts one service:
 
-- `vibesensor-server` (Python): UDP ingest + processing + `/api` + `/ws`
-- `vibesensor-web` (nginx): serves built UI and proxies `/api` + `/ws` to server
+- `vibesensor-server` (Python): builds UI, serves `/` from `pi/public`, and exposes `/api` + `/ws`
 
 ```bash
 docker compose up --build
@@ -98,7 +95,7 @@ docker compose up --build
 
 Then open:
 
-- `http://localhost:8000` (served by nginx)
+- `http://localhost:8000` (UI + API + WS from one container)
 
 To stream test data from host:
 
