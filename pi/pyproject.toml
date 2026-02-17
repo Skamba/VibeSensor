@@ -31,7 +31,7 @@ vibesensor-server = "vibesensor.app:main"
 vibesensor-report = "vibesensor.report_cli:main"
 
 [tool.setuptools]
-packages = ["vibesensor"]
+packages = ["vibesensor", "vibesensor.analysis"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
