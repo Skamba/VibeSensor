@@ -43,10 +43,27 @@ export type LogEntry = {
 
 export type CarLibraryModel = {
   model: string;
+  brand: string;
+  type: string;
   tire_width_mm: number;
   tire_aspect_pct: number;
   rim_in: number;
+  gearboxes: CarLibraryGearbox[];
+  tire_options: CarLibraryTireOption[];
   [key: string]: unknown;
+};
+
+export type CarLibraryGearbox = {
+  name: string;
+  final_drive_ratio: number;
+  top_gear_ratio: number;
+};
+
+export type CarLibraryTireOption = {
+  name: string;
+  tire_width_mm: number;
+  tire_aspect_pct: number;
+  rim_in: number;
 };
 
 export function logDownloadUrl(logName: string): string {

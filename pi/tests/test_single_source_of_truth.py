@@ -194,3 +194,47 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
     for fname in ("metrics_log.py", "report_analysis.py"):
         source = (root / "vibesensor" / fname).read_text(encoding="utf-8")
         assert "* 60.0" not in source, f"{fname} still contains inline engine RPM formula (* 60.0)"
+
+
+def test_simulator_defaults_match_analysis_settings() -> None:
+    """Simulator vehicle defaults must be imported from the canonical source."""
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(root / "tools" / "simulator"))
+    # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
+    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    # The simulator should NOT contain hardcoded tire/vehicle values as literal assignments
+    for line in sim_source.splitlines():
+        stripped = line.strip()
+        # Skip comments and the DEFAULT_SPEED_KMH (which is simulator-specific)
+        if stripped.startswith("#") or "DEFAULT_SPEED_KMH" in stripped:
+            continue
+        for val in ("285.0", "= 30.0", "= 21.0", "= 3.08", "= 0.64"):
+            assert val not in stripped, (
+                f"sim_sender.py hardcodes vehicle default '{val}' instead of "
+                "importing from DEFAULT_ANALYSIS_SETTINGS"
+            )
+
+
+def test_simulator_no_production_asserts() -> None:
+    """Simulator module-level and standalone functions must not use bare assert."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    lines = sim_source.splitlines()
+    in_method = False
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        # Track whether we're inside a class method (indented def inside class)
+        if stripped.startswith("def ") and not line.startswith(" "):
+            in_method = False
+        elif stripped.startswith("def ") and line.startswith("    "):
+            in_method = True
+        # Only flag asserts in module-level or standalone functions
+        if not in_method and stripped.startswith("assert "):
+            raise AssertionError(
+                f"sim_sender.py:{i} uses bare assert in non-method context: {stripped!r}"
+            )
