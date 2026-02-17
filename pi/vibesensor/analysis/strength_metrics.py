@@ -3,6 +3,7 @@ from __future__ import annotations
 from math import isfinite, log10, sqrt
 from typing import Any
 
+from ..constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 from ..strength_bands import bucket_for_strength
 
 STRENGTH_EPSILON_MIN_G = 1e-9
@@ -147,8 +148,8 @@ def compute_strength_metrics(
     *,
     freq_hz: list[float],
     combined_spectrum_amp_g_values: list[float],
-    peak_bandwidth_hz: float = 1.2,
-    peak_separation_hz: float = 1.2,
+    peak_bandwidth_hz: float = PEAK_BANDWIDTH_HZ,
+    peak_separation_hz: float = PEAK_SEPARATION_HZ,
     top_n: int = 5,
 ) -> dict[str, Any]:
     n = min(len(freq_hz), len(combined_spectrum_amp_g_values))

@@ -62,3 +62,15 @@
   float converter identity, percentile identity, and dead-alias detection.
 - **Added `GET /api/analysis-settings`** client-side API function for fetching
   server-canonical defaults.
+- **New `constants.py` module** — Shared physical/analysis constants
+  (`MPS_TO_KMH`, `KMH_TO_MPS`, `PEAK_BANDWIDTH_HZ`, `PEAK_SEPARATION_HZ`,
+  `SILENCE_DB`) extracted from 7 files (14 occurrences total) into a single
+  source of truth. All call sites now import from `vibesensor.constants`.
+- **Fixed `config_preflight.py` crash** — Removed reference to deleted
+  `LoggingConfig.metrics_csv_path` attribute that caused an `AttributeError`
+  during CI config validation.
+- **Expanded `.gitignore`** — Added IDE/editor entries (`.idea/`, `.vscode/`,
+  `*.swp`, `*.swo`, `.DS_Store`).
+- **Additional guardrail tests** — 4 new tests in `test_single_source_of_truth`
+  covering constants values, function-signature defaults, and config preflight
+  correctness (total: 13 guardrail assertions).
