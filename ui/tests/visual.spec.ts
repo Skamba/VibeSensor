@@ -5,8 +5,11 @@ test.describe("Live view", () => {
     await page.goto("/?demo=1");
     // Wait for demo data to render (spectrum + car map dots)
     await page.waitForSelector(".car-map-dot--visible", { timeout: 5_000 });
-    // Wait a moment for the event pulse to fire and settle
-    await page.waitForTimeout(1_200);
+    // Wait for the event pulse animation to fire and the pulse class to be removed
+    await page.waitForFunction(
+      () => document.querySelector(".log-row .log-time") !== null,
+      { timeout: 5_000 },
+    );
     await expect(page).toHaveScreenshot("live-view.png", { fullPage: true });
   });
 });
@@ -18,7 +21,8 @@ test.describe("Settings view", () => {
     await page.click('[data-view="settingsView"]');
     // Click the Analysis tab
     await page.click('[data-settings-tab="analysisTab"]');
-    await page.waitForTimeout(300);
+    // Wait for the analysis panel to be visible
+    await page.waitForSelector("#analysisTab.active", { timeout: 3_000 });
     await expect(page).toHaveScreenshot("settings-analysis.png", { fullPage: true });
   });
 });
