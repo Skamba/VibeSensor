@@ -372,3 +372,50 @@ def test_sanitize_settings_rejects_invalid() -> None:
     assert "speed_uncertainty_pct" not in result
     assert "final_drive_ratio" not in result
     assert result["rim_in"] == 21.0
+
+
+def test_validation_sets_cover_all_settings_keys() -> None:
+    """Every key in DEFAULT_ANALYSIS_SETTINGS must be in exactly one validation set."""
+    from vibesensor.analysis_settings import (
+        NON_NEGATIVE_KEYS,
+        POSITIVE_REQUIRED_KEYS,
+    )
+
+    all_keys = set(DEFAULT_ANALYSIS_SETTINGS)
+    covered = POSITIVE_REQUIRED_KEYS | NON_NEGATIVE_KEYS
+    uncovered = all_keys - covered
+    assert not uncovered, (
+        f"Keys not in any validation set: {uncovered}. "
+        "Add them to POSITIVE_REQUIRED_KEYS or NON_NEGATIVE_KEYS."
+    )
+    overlap = POSITIVE_REQUIRED_KEYS & NON_NEGATIVE_KEYS
+    assert not overlap, f"Keys in both validation sets: {overlap}"
+
+
+def test_esp_ports_match_python_defaults() -> None:
+    """ESP server port constants must match Python DEFAULT_CONFIG."""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    main_cpp = (root / "esp" / "src" / "main.cpp").read_text(encoding="utf-8")
+
+    m_data = re.search(r"kServerDataPort\s*=\s*(\d+)", main_cpp)
+    m_ctrl = re.search(r"kServerControlPort\s*=\s*(\d+)", main_cpp)
+    assert m_data and m_ctrl, "ESP port constants not found in main.cpp"
+    esp_data_port = int(m_data.group(1))
+    esp_ctrl_port = int(m_ctrl.group(1))
+
+    from vibesensor.config import DEFAULT_CONFIG
+
+    py_data = DEFAULT_CONFIG["udp"]["data_listen"]
+    py_ctrl = DEFAULT_CONFIG["udp"]["control_listen"]
+    py_data_port = int(str(py_data).rsplit(":", 1)[-1])
+    py_ctrl_port = int(str(py_ctrl).rsplit(":", 1)[-1])
+
+    assert esp_data_port == py_data_port, (
+        f"ESP data port {esp_data_port} != Python default {py_data_port}"
+    )
+    assert esp_ctrl_port == py_ctrl_port, (
+        f"ESP control port {esp_ctrl_port} != Python default {py_ctrl_port}"
+    )
