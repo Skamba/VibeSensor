@@ -24,9 +24,7 @@ def test_diagnostic_settings_is_analysis_settings() -> None:
 
 def test_analysis_settings_keys_match() -> None:
     """Both default dicts have identical keys and values."""
-    assert set(DEFAULT_DIAGNOSTIC_SETTINGS.keys()) == set(
-        DEFAULT_ANALYSIS_SETTINGS.keys()
-    )
+    assert set(DEFAULT_DIAGNOSTIC_SETTINGS.keys()) == set(DEFAULT_ANALYSIS_SETTINGS.keys())
     for key in DEFAULT_ANALYSIS_SETTINGS:
         assert DEFAULT_DIAGNOSTIC_SETTINGS[key] == DEFAULT_ANALYSIS_SETTINGS[key]
 
