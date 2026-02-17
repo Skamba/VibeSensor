@@ -9,6 +9,7 @@ import pytest
 from pypdf import PdfReader
 
 from vibesensor import __version__
+from vibesensor.constants import KMH_TO_MPS
 from vibesensor.reports import build_report_pdf, summarize_log
 
 
@@ -142,7 +143,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     ]
     for idx in range(30):
         speed = 40 + idx
-        wheel_hz = (speed / 3.6) / circumference_m
+        wheel_hz = (speed * KMH_TO_MPS) / circumference_m
         records.append(
             _sample(
                 idx,
@@ -285,7 +286,7 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
     ]
     for idx in range(10):
         speed = 50 + idx
-        wheel_hz = (speed / 3.6) / 2.2
+        wheel_hz = (speed * KMH_TO_MPS) / 2.2
         records.append(
             _sample(
                 idx,

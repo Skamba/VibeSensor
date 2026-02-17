@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report_analysis import (
     _as_float,
     _corr_abs,
@@ -277,7 +278,7 @@ def test_wheel_hz_basic() -> None:
     tire_circ = 2.0  # 2 m circumference
     result = _wheel_hz(sample, tire_circ)
     assert result is not None
-    expected = (90.0 / 3.6) / 2.0
+    expected = (90.0 * KMH_TO_MPS) / 2.0
     assert abs(result - expected) < 1e-9
 
 

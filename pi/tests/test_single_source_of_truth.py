@@ -184,3 +184,13 @@ def test_config_preflight_no_removed_fields() -> None:
     assert "metrics_csv_path" not in source, (
         "config_preflight.py still references removed metrics_csv_path"
     )
+
+
+def test_wheel_hz_and_engine_rpm_single_source() -> None:
+    """wheel_hz and engine_rpm formulas must not be inlined in consumers."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    for fname in ("metrics_log.py", "report_analysis.py"):
+        source = (root / "vibesensor" / fname).read_text(encoding="utf-8")
+        assert "* 60.0" not in source, f"{fname} still contains inline engine RPM formula (* 60.0)"

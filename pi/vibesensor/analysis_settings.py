@@ -3,6 +3,8 @@ from __future__ import annotations
 from math import pi
 from threading import RLock
 
+from .constants import KMH_TO_MPS
+
 DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
     "tire_width_mm": 285.0,
     "tire_aspect_pct": 30.0,
@@ -36,6 +38,18 @@ def tire_circumference_m_from_spec(
     if diameter_m <= 0:
         return None
     return diameter_m * pi
+
+
+def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> float | None:
+    """Wheel rotational frequency from vehicle speed and tire circumference."""
+    if speed_kmh <= 0 or tire_circumference_m <= 0:
+        return None
+    return (speed_kmh * KMH_TO_MPS) / tire_circumference_m
+
+
+def engine_rpm_from_wheel_hz(wheel_hz: float, final_drive_ratio: float, gear_ratio: float) -> float:
+    """Engine RPM from wheel Hz, final-drive ratio, and current gear ratio."""
+    return wheel_hz * final_drive_ratio * gear_ratio * 60.0
 
 
 class AnalysisSettingsStore:
