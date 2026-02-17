@@ -285,7 +285,10 @@ class ClientProtocol(asyncio.DatagramProtocol):
             return
         try:
             cmd = parse_cmd(data)
-        except Exception:
+        except Exception as exc:
+            print(
+                f"{self.sim.name}: ignoring unparseable command from {addr[0]}:{addr[1]}: {exc}"
+            )
             return
         if cmd.client_id != self.sim.client_id:
             return

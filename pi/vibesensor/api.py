@@ -364,7 +364,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                         normalized = value.replace(":", "").lower()
                         await state.ws_hub.update_selected_client(ws, normalized)
         except WebSocketDisconnect:
-            pass
+            LOGGER.debug("WebSocket client disconnected")
         finally:
             await state.ws_hub.remove(ws)
 
