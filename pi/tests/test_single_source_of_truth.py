@@ -5,6 +5,9 @@ These tests prevent regression of the consolidation work by verifying:
 2. Spectrum payloads do not contain dead alias fields
 3. The legacy strength_scoring module is removed
 4. Metrics log records use canonical field names only
+5. as_float_or_none is the single canonical float converter
+6. _percentile is the single canonical percentile implementation
+7. compute_strength_metrics output has no dead alias fields
 """
 
 from __future__ import annotations
@@ -96,3 +99,42 @@ def test_metrics_log_no_legacy_field_names() -> None:
     }
     present = legacy_fields & set(units.keys())
     assert not present, f"Legacy fields still in default_units: {present}"
+
+
+def test_as_float_single_source_of_truth() -> None:
+    """diagnostics_shared._as_float and report_analysis._as_float must be
+    the canonical as_float_or_none from runlog, not local re-definitions."""
+    from vibesensor.diagnostics_shared import _as_float as diag_as_float
+    from vibesensor.report_analysis import _as_float as report_as_float
+    from vibesensor.runlog import as_float_or_none
+
+    assert diag_as_float is as_float_or_none, (
+        "diagnostics_shared._as_float must be imported from runlog.as_float_or_none"
+    )
+    assert report_as_float is as_float_or_none, (
+        "report_analysis._as_float must be imported from runlog.as_float_or_none"
+    )
+
+
+def test_percentile_single_source_of_truth() -> None:
+    """report_analysis._percentile must be imported from
+    analysis.strength_metrics, not re-defined locally."""
+    from vibesensor.analysis.strength_metrics import _percentile as canonical
+    from vibesensor.report_analysis import _percentile
+
+    assert _percentile is canonical, (
+        "report_analysis._percentile must be imported from analysis.strength_metrics"
+    )
+
+
+def test_strength_metrics_no_dead_aliases() -> None:
+    """compute_strength_metrics output must not contain dead alias fields."""
+    from vibesensor.analysis.strength_metrics import compute_strength_metrics
+
+    result = compute_strength_metrics(
+        freq_hz=[1.0, 2.0, 3.0],
+        combined_spectrum_amp_g_values=[0.0, 0.0, 0.0],
+    )
+    dead_aliases = {"peak_amp", "floor_amp"}
+    present = dead_aliases & set(result.keys())
+    assert not present, f"Dead alias fields in compute_strength_metrics: {present}"

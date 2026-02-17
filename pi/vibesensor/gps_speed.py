@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any
+
+LOGGER = logging.getLogger(__name__)
 
 
 class GPSSpeedMonitor:
@@ -48,6 +51,7 @@ class GPSSpeedMonitor:
                     try:
                         payload: dict[str, Any] = json.loads(line.decode("utf-8", errors="replace"))
                     except json.JSONDecodeError:
+                        LOGGER.debug("Ignoring malformed GPS JSON line")
                         continue
                     if payload.get("class") != "TPV":
                         continue
@@ -58,4 +62,5 @@ class GPSSpeedMonitor:
                 await writer.wait_closed()
             except OSError:
                 self.speed_mps = None
+                LOGGER.debug("GPS connection lost, retrying in 2s")
                 await asyncio.sleep(2.0)
