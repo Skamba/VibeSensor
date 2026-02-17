@@ -67,3 +67,10 @@ ui/node_modules/
 ui/dist/
 pi/public/*
 !pi/public/.gitkeep
+
+# IDE / editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store

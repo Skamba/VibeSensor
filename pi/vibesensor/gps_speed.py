@@ -5,6 +5,8 @@ import json
 import logging
 from typing import Any
 
+from .constants import KMH_TO_MPS
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -30,7 +32,7 @@ class GPSSpeedMonitor:
         if speed_val <= 0:
             self.override_speed_mps = None
             return None
-        self.override_speed_mps = speed_val / 3.6
+        self.override_speed_mps = speed_val * KMH_TO_MPS
         return speed_val
 
     async def run(self, host: str = "127.0.0.1", port: int = 2947) -> None:

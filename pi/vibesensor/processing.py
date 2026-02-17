@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 
 from .analysis.strength_metrics import combined_spectrum_amp_g, compute_strength_metrics
+from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
 AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
@@ -272,8 +273,8 @@ class SignalProcessor:
                 strength_metrics = compute_strength_metrics(
                     freq_hz=freq_slice.tolist(),
                     combined_spectrum_amp_g_values=combined_amp.tolist(),
-                    peak_bandwidth_hz=1.2,
-                    peak_separation_hz=1.2,
+                    peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
+                    peak_separation_hz=PEAK_SEPARATION_HZ,
                     top_n=5,
                 )
                 metrics["combined"]["noise_floor_amp_p20_g"] = float(
