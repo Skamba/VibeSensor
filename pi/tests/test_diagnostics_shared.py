@@ -67,7 +67,9 @@ def test_severity_from_peak_thresholds() -> None:
     assert low["key"] is None
     high = None
     for _ in range(3):
-        high = severity_from_peak(strength_db=35.0, band_rms=0.06, sensor_count=1, prior_state=state)
+        high = severity_from_peak(
+            strength_db=35.0, band_rms=0.06, sensor_count=1, prior_state=state
+        )
         state = None if high is None else dict(high.get("state") or {})
     assert high is not None
     assert high["key"] == "l5"

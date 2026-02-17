@@ -36,7 +36,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "logging": {
         "log_metrics": True,
-        "metrics_csv_path": "/var/log/vibesensor/metrics.jsonl",
+        "metrics_log_path": "/var/log/vibesensor/metrics.jsonl",
         "metrics_log_hz": 4,
         "sensor_model": "ADXL345",
     },
@@ -116,11 +116,6 @@ class LoggingConfig:
     metrics_log_hz: int
     sensor_model: str
 
-    @property
-    def metrics_csv_path(self) -> Path:
-        # Backward-compatible alias for older callsites and tooling.
-        return self.metrics_log_path
-
 
 @dataclass(slots=True)
 class GPSConfig:
@@ -156,13 +151,9 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     override = _read_config_file(path)
     merged = _deep_merge(DEFAULT_CONFIG, override)
     logging_cfg = merged.get("logging", {})
-    metrics_log_path_raw = logging_cfg.get("metrics_log_path") or logging_cfg.get(
-        "metrics_csv_path"
-    )
+    metrics_log_path_raw = logging_cfg.get("metrics_log_path")
     if not isinstance(metrics_log_path_raw, str) or not metrics_log_path_raw.strip():
-        raise ValueError(
-            "logging.metrics_log_path (or legacy logging.metrics_csv_path) must be configured."
-        )
+        raise ValueError("logging.metrics_log_path must be configured.")
 
     data_host, data_port = _split_host_port(str(merged["udp"]["data_listen"]))
     control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))

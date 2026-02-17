@@ -217,8 +217,12 @@ class LiveDiagnosticsEngine:
             "events": list(self._latest_events),
             "strength_bands": list(BANDS),
             "levels": {
-                "by_source": {key: dict(value) for key, value in self._active_levels_by_source.items()},
-                "by_sensor": {key: dict(value) for key, value in self._active_levels_by_sensor.items()},
+                "by_source": {
+                    key: dict(value) for key, value in self._active_levels_by_source.items()
+                },
+                "by_sensor": {
+                    key: dict(value) for key, value in self._active_levels_by_sensor.items()
+                },
             },
             "findings": list(self._latest_findings),
             "top_finding": top_finding,
@@ -294,8 +298,12 @@ class LiveDiagnosticsEngine:
                 sensor_count=1,
                 prior_state=tracker.severity_state,
             )
-            tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
-            tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+            tracker.severity_state = dict(
+                (severity or {}).get("state") or tracker.severity_state or {}
+            )
+            tracker.current_bucket_key = (
+                str(severity["key"]) if severity and severity.get("key") else None
+            )
             tracker.last_strength_db = float((severity or {}).get("db") or event.strength_db)
             tracker.last_band_rms_g = float(event.peak_amp)
             tracker.last_update_ms = now_ms
@@ -316,7 +324,9 @@ class LiveDiagnosticsEngine:
                     peak_hz=event.peak_hz,
                 )
                 sensor_existing = active_by_sensor.get(event.sensor_id)
-                if sensor_existing is None or tracker.last_strength_db > float(sensor_existing.get("strength_db", -1e9)):
+                if sensor_existing is None or tracker.last_strength_db > float(
+                    sensor_existing.get("strength_db", -1e9)
+                ):
                     active_by_sensor[event.sensor_id] = {
                         "bucket_key": tracker.current_bucket_key,
                         "strength_db": tracker.last_strength_db,
@@ -324,7 +334,9 @@ class LiveDiagnosticsEngine:
                         "peak_hz": event.peak_hz,
                     }
 
-            transition_bucket = self._matrix_transition_bucket(previous_bucket, tracker.current_bucket_key)
+            transition_bucket = self._matrix_transition_bucket(
+                previous_bucket, tracker.current_bucket_key
+            )
             if transition_bucket:
                 source_keys = source_keys_from_class_key(event.class_key)
                 self._update_matrix_many(source_keys, transition_bucket, event.sensor_label)
@@ -362,8 +374,12 @@ class LiveDiagnosticsEngine:
                 sensor_count=1,
                 prior_state=tracker.severity_state,
             )
-            tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
-            tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+            tracker.severity_state = dict(
+                (severity or {}).get("state") or tracker.severity_state or {}
+            )
+            tracker.current_bucket_key = (
+                str(severity["key"]) if severity and severity.get("key") else None
+            )
             tracker.last_strength_db = float((severity or {}).get("db") or -120.0)
 
         # Source/sensor active levels come from continuous tracker state (not emitted events).
@@ -382,7 +398,9 @@ class LiveDiagnosticsEngine:
                 peak_hz=tracker.last_peak_hz,
             )
             sensor_existing = active_by_sensor.get(sensor_id)
-            if sensor_existing is None or tracker.last_strength_db > float(sensor_existing.get("strength_db", -1e9)):
+            if sensor_existing is None or tracker.last_strength_db > float(
+                sensor_existing.get("strength_db", -1e9)
+            ):
                 active_by_sensor[sensor_id] = {
                     "bucket_key": tracker.current_bucket_key,
                     "strength_db": tracker.last_strength_db,
@@ -426,7 +444,9 @@ class LiveDiagnosticsEngine:
                 freq_bin = round(avg_hz / self._multi_freq_bin_hz)
                 combined_key = f"combined:{class_key}:{freq_bin}"
                 seen_combined_keys.add(combined_key)
-                tracker = self._combined_trackers.get(combined_key) or _TrackerLevelState(last_class_key=class_key)
+                tracker = self._combined_trackers.get(combined_key) or _TrackerLevelState(
+                    last_class_key=class_key
+                )
                 previous_bucket = tracker.current_bucket_key
                 severity = severity_from_peak(
                     strength_db=avg_strength,
@@ -434,14 +454,20 @@ class LiveDiagnosticsEngine:
                     sensor_count=len(group),
                     prior_state=tracker.severity_state,
                 )
-                tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
-                tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+                tracker.severity_state = dict(
+                    (severity or {}).get("state") or tracker.severity_state or {}
+                )
+                tracker.current_bucket_key = (
+                    str(severity["key"]) if severity and severity.get("key") else None
+                )
                 tracker.last_strength_db = float((severity or {}).get("db") or avg_strength)
                 tracker.last_band_rms_g = avg_amp
                 tracker.last_update_ms = now_ms
                 tracker.last_peak_hz = avg_hz
                 tracker.last_class_key = class_key
-                tracker.last_sensor_label = f"combined({', '.join(item.last_sensor_label for item in group)})"
+                tracker.last_sensor_label = (
+                    f"combined({', '.join(item.last_sensor_label for item in group)})"
+                )
                 self._combined_trackers[combined_key] = tracker
 
                 if tracker.current_bucket_key:
@@ -456,10 +482,14 @@ class LiveDiagnosticsEngine:
                         peak_hz=avg_hz,
                     )
 
-                transition_bucket = self._matrix_transition_bucket(previous_bucket, tracker.current_bucket_key)
+                transition_bucket = self._matrix_transition_bucket(
+                    previous_bucket, tracker.current_bucket_key
+                )
                 if transition_bucket:
                     source_keys = source_keys_from_class_key(class_key)
-                    self._update_matrix_many(source_keys, transition_bucket, tracker.last_sensor_label)
+                    self._update_matrix_many(
+                        source_keys, transition_bucket, tracker.last_sensor_label
+                    )
 
                 if self._should_emit_event(
                     tracker=tracker,
@@ -491,8 +521,12 @@ class LiveDiagnosticsEngine:
                 sensor_count=2,
                 prior_state=tracker.severity_state,
             )
-            tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
-            tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
+            tracker.severity_state = dict(
+                (severity or {}).get("state") or tracker.severity_state or {}
+            )
+            tracker.current_bucket_key = (
+                str(severity["key"]) if severity and severity.get("key") else None
+            )
             tracker.last_strength_db = float((severity or {}).get("db") or -120.0)
 
         self._active_levels_by_source = active_by_source
@@ -524,9 +558,7 @@ class LiveDiagnosticsEngine:
                 continue
             strength_metrics = payload.get("strength_metrics")
             if not isinstance(strength_metrics, dict):
-                raise ValueError(
-                    "Missing required strength_metrics payload for live diagnostics."
-                )
+                raise ValueError("Missing required strength_metrics payload for live diagnostics.")
             peaks_raw = strength_metrics.get("top_strength_peaks")
             if not isinstance(peaks_raw, list):
                 raise ValueError("Missing top_strength_peaks in strength_metrics payload.")

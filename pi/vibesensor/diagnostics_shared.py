@@ -4,7 +4,10 @@ from collections.abc import Mapping
 from math import sqrt
 from typing import Any
 
-from .analysis_settings import tire_circumference_m_from_spec
+from .analysis_settings import (
+    DEFAULT_ANALYSIS_SETTINGS,
+    tire_circumference_m_from_spec,
+)
 from .strength_bands import (
     DECAY_TICKS,
     HYSTERESIS_DB,
@@ -14,22 +17,8 @@ from .strength_bands import (
     bucket_for_strength,
 )
 
-DEFAULT_DIAGNOSTIC_SETTINGS: dict[str, float] = {
-    "tire_width_mm": 285.0,
-    "tire_aspect_pct": 30.0,
-    "rim_in": 21.0,
-    "final_drive_ratio": 3.08,
-    "current_gear_ratio": 0.64,
-    "wheel_bandwidth_pct": 6.0,
-    "driveshaft_bandwidth_pct": 5.6,
-    "engine_bandwidth_pct": 6.2,
-    "speed_uncertainty_pct": 0.6,
-    "tire_diameter_uncertainty_pct": 1.2,
-    "final_drive_uncertainty_pct": 0.2,
-    "gear_uncertainty_pct": 0.5,
-    "min_abs_band_hz": 0.4,
-    "max_band_half_width_pct": 8.0,
-}
+# Single source of truth: reuse the canonical defaults from analysis_settings.
+DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
 ORDER_CLASS_KEYS = {"wheel1", "wheel2", "shaft_eng1", "shaft1", "eng1", "eng2"}
 

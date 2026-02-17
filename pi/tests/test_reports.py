@@ -334,7 +334,9 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     _assert_pdf_contains(pdf, "Amplitude at steady speed")
 
 
-def test_sensor_location_stats_include_percentiles_and_strength_distribution(tmp_path: Path) -> None:
+def test_sensor_location_stats_include_percentiles_and_strength_distribution(
+    tmp_path: Path,
+) -> None:
     run_path = tmp_path / "run_location_stats.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
     amps = [0.1, 0.2, 0.3, 0.4]
@@ -432,7 +434,9 @@ def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
     assert height == pytest.approx(595.3, abs=2.0)
 
 
-def test_report_pdf_footer_contains_version_marker(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_report_pdf_footer_contains_version_marker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("GIT_SHA", "a1b2c3d4e5f6")
 
     run_path = tmp_path / "run_version_marker.jsonl"
