@@ -238,3 +238,68 @@ def test_simulator_no_production_asserts() -> None:
             raise AssertionError(
                 f"sim_sender.py:{i} uses bare assert in non-method context: {stripped!r}"
             )
+
+
+def test_esp_protocol_constants_match_python() -> None:
+    """ESP C++ protocol constants must match the Python protocol module."""
+    import re
+    from pathlib import Path
+
+    from vibesensor.protocol import (
+        ACK_BYTES,
+        CMD_HEADER_BYTES,
+        CMD_IDENTIFY,
+        CMD_IDENTIFY_BYTES,
+        DATA_HEADER_BYTES,
+        HELLO_FIXED_BYTES,
+        MSG_ACK,
+        MSG_CMD,
+        MSG_DATA,
+        MSG_HELLO,
+        VERSION,
+    )
+
+    root = Path(__file__).resolve().parents[2]
+    header = (root / "esp" / "lib" / "vibesensor_proto" / "vibesensor_proto.h").read_text(
+        encoding="utf-8"
+    )
+
+    def _cpp_const(name: str) -> int:
+        """Extract a simple integer constexpr value from the header."""
+        m = re.search(rf"{name}\s*=\s*(\d+)", header)
+        assert m, f"C++ constant {name} not found in vibesensor_proto.h"
+        return int(m.group(1))
+
+    assert _cpp_const("kProtoVersion") == VERSION
+    assert _cpp_const("kMsgHello") == MSG_HELLO
+    assert _cpp_const("kMsgData") == MSG_DATA
+    assert _cpp_const("kMsgCmd") == MSG_CMD
+    assert _cpp_const("kMsgAck") == MSG_ACK
+    assert _cpp_const("kCmdIdentify") == CMD_IDENTIFY
+
+    # Byte-size constants are computed as expressions in C++; verify by evaluating
+    # with kClientIdBytes = 6
+    py_sizes = {
+        "HELLO_FIXED_BYTES": HELLO_FIXED_BYTES,
+        "DATA_HEADER_BYTES": DATA_HEADER_BYTES,
+        "ACK_BYTES": ACK_BYTES,
+        "CMD_HEADER_BYTES": CMD_HEADER_BYTES,
+        "CMD_IDENTIFY_BYTES": CMD_IDENTIFY_BYTES,
+    }
+    cpp_names = {
+        "HELLO_FIXED_BYTES": "kHelloFixedBytes",
+        "DATA_HEADER_BYTES": "kDataHeaderBytes",
+        "ACK_BYTES": "kAckBytes",
+        "CMD_HEADER_BYTES": "kCmdHeaderBytes",
+        "CMD_IDENTIFY_BYTES": "kCmdIdentifyBytes",
+    }
+    # Evaluate C++ expressions by substituting kClientIdBytes and kCmdHeaderBytes
+    for py_name, expected in py_sizes.items():
+        cpp_name = cpp_names[py_name]
+        m = re.search(rf"constexpr\s+size_t\s+{cpp_name}\s*=\s*(.+);", header)
+        assert m, f"C++ constant {cpp_name} not found"
+        expr = m.group(1).strip()
+        # Substitute known constants for eval
+        expr = expr.replace("kClientIdBytes", "6").replace("kCmdHeaderBytes", str(CMD_HEADER_BYTES))
+        computed = eval(expr)  # noqa: S307
+        assert computed == expected, f"{cpp_name} = {computed} but Python {py_name} = {expected}"

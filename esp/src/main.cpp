@@ -9,6 +9,7 @@
 
 namespace {
 
+// WiFi credentials must match pi/config.yaml ap.ssid / ap.psk.
 constexpr char kWifiSsid[] = "VibeSensor";
 constexpr char kWifiPsk[] = "vibesensor123";
 constexpr char kClientName[] = "vibe-node";
@@ -18,8 +19,10 @@ constexpr uint16_t kSampleRateHz = 800;
 constexpr uint16_t kFrameSamples = 200;
 constexpr uint16_t kServerDataPort = 9000;
 constexpr uint16_t kServerControlPort = 9001;
+constexpr uint16_t kControlPortBase = 9010;
 constexpr size_t kFrameQueueLen = 4;
 constexpr size_t kMaxDatagramBytes = 1500;
+constexpr uint32_t kHelloIntervalMs = 2000;
 constexpr uint32_t kWifiConnectTimeoutMs = 15000;
 constexpr uint32_t kWifiRetryBackoffMs = 2000;
 constexpr uint32_t kWifiRetryIntervalMs = 4000;
@@ -231,7 +234,7 @@ void send_hello() {
 
 void service_hello() {
   uint32_t now = millis();
-  if (now - g_last_hello_ms >= 2000) {
+  if (now - g_last_hello_ms >= kHelloIntervalMs) {
     send_hello();
     g_last_hello_ms = now;
   }
@@ -380,7 +383,7 @@ void setup() {
     memcpy(g_client_id, fallback, sizeof(g_client_id));
   }
 
-  g_control_port = static_cast<uint16_t>(9010 + (g_client_id[5] % 100));
+  g_control_port = static_cast<uint16_t>(kControlPortBase + (g_client_id[5] % 100));
   g_data_udp.begin(0);
   g_control_udp.begin(g_control_port);
 
