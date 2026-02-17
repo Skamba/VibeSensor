@@ -255,8 +255,8 @@ def test_esp_protocol_constants_match_python() -> None:
         HELLO_FIXED_BYTES,
         MSG_ACK,
         MSG_CMD,
-        MSG_DATA_ACK,
         MSG_DATA,
+        MSG_DATA_ACK,
         MSG_HELLO,
         VERSION,
     )

@@ -405,7 +405,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         return state.processor.debug_spectrum(normalized)
 
     @router.get("/api/debug/raw-samples/{client_id}")
-    async def debug_raw_samples(client_id: str, n: int = Query(default=2048, ge=1, le=6400)) -> dict:
+    async def debug_raw_samples(
+        client_id: str,
+        n: int = Query(default=2048, ge=1, le=6400),
+    ) -> dict:
         """Raw time-domain samples in g for offline analysis."""
         normalized = _normalize_client_id_or_400(client_id)
         return state.processor.raw_samples(normalized, n_samples=n)

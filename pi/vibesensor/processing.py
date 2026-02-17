@@ -52,7 +52,9 @@ class SignalProcessor:
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._spike_filter_enabled = True
-        self._trace_strength_alignment = os.getenv("VIBESENSOR_TRACE_STRENGTH_ALIGNMENT", "").strip().lower() in {
+        self._trace_strength_alignment = os.getenv(
+            "VIBESENSOR_TRACE_STRENGTH_ALIGNMENT", ""
+        ).strip().lower() in {
             "1",
             "true",
             "yes",
@@ -463,7 +465,11 @@ class SignalProcessor:
         """Return detailed spectrum debug info for independent verification."""
         buf = self._buffers.get(client_id)
         if buf is None or buf.count < self.fft_n:
-            return {"error": "insufficient samples", "count": buf.count if buf else 0, "fft_n": self.fft_n}
+            return {
+                "error": "insufficient samples",
+                "count": buf.count if buf else 0,
+                "fft_n": self.fft_n,
+            }
         sr = buf.sample_rate_hz or self.sample_rate_hz
         fft_block = self._latest(buf, self.fft_n).copy()
 
@@ -521,25 +527,33 @@ class SignalProcessor:
         sorted_idx = np.argsort(combined_amp)[::-1]
         top_bins = []
         for i in sorted_idx[:10]:
-            top_bins.append({
-                "bin": int(i),
-                "freq_hz": float(freq_slice[i]),
-                "combined_amp_g": float(combined_amp[i]),
-                "x_amp_g": float(axis_amps["x"][i]),
-                "y_amp_g": float(axis_amps["y"][i]),
-                "z_amp_g": float(axis_amps["z"][i]),
-            })
+            top_bins.append(
+                {
+                    "bin": int(i),
+                    "freq_hz": float(freq_slice[i]),
+                    "combined_amp_g": float(combined_amp[i]),
+                    "x_amp_g": float(axis_amps["x"][i]),
+                    "y_amp_g": float(axis_amps["y"][i]),
+                    "z_amp_g": float(axis_amps["z"][i]),
+                }
+            )
 
         db_above_floor = sm.get("combined_spectrum_db_above_floor", [])
-        top_db_idx = sorted(range(len(db_above_floor)), key=lambda i: db_above_floor[i], reverse=True)[:10]
+        top_db_idx = sorted(
+            range(len(db_above_floor)),
+            key=lambda i: db_above_floor[i],
+            reverse=True,
+        )[:10]
         top_db_bins = []
         for i in top_db_idx:
-            top_db_bins.append({
-                "bin": i,
-                "freq_hz": float(freq_slice[i]) if i < len(freq_slice) else 0.0,
-                "db_above_floor": float(db_above_floor[i]),
-                "combined_amp_g": float(combined_amp[i]) if i < len(combined_amp) else 0.0,
-            })
+            top_db_bins.append(
+                {
+                    "bin": i,
+                    "freq_hz": float(freq_slice[i]) if i < len(freq_slice) else 0.0,
+                    "db_above_floor": float(db_above_floor[i]),
+                    "combined_amp_g": float(combined_amp[i]) if i < len(combined_amp) else 0.0,
+                }
+            )
 
         return {
             "client_id": client_id,
