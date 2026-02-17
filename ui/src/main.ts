@@ -1977,6 +1977,7 @@ import { WsClient, type WsUiState } from "./ws";
     model: "",
     selectedModel: null as any,
     selectedGearbox: null as any,
+    selectedTire: null as any,
   };
 
   function openWizard() {
@@ -1986,6 +1987,7 @@ import { WsClient, type WsUiState } from "./ws";
     wizState.model = "";
     wizState.selectedModel = null;
     wizState.selectedGearbox = null;
+    wizState.selectedTire = null;
     if (els.addCarWizard) els.addCarWizard.hidden = false;
     loadWizardStep();
   }
@@ -2080,13 +2082,7 @@ import { WsClient, type WsUiState } from "./ws";
           const idx = Number(btn.getAttribute("data-idx"));
           wizState.selectedModel = models[idx] || null;
           wizState.model = wizState.selectedModel?.model || "";
-          // Pre-fill manual specs from model defaults
-          const tw = document.getElementById("wizTireWidth") as HTMLInputElement;
-          const ta = document.getElementById("wizTireAspect") as HTMLInputElement;
-          const ri = document.getElementById("wizRim") as HTMLInputElement;
-          if (tw && wizState.selectedModel) tw.value = String(wizState.selectedModel.tire_width_mm);
-          if (ta && wizState.selectedModel) ta.value = String(wizState.selectedModel.tire_aspect_pct);
-          if (ri && wizState.selectedModel) ri.value = String(wizState.selectedModel.rim_in);
+          wizState.selectedTire = null;
           wizState.step = 3;
           loadWizardStep();
         });
@@ -2097,6 +2093,35 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function loadGearboxStep() {
+    // -- Tire options section --
+    const tireContainer = document.getElementById("wizardTireList");
+    if (tireContainer) {
+      const tireOptions = wizState.selectedModel?.tire_options || [];
+      if (tireOptions.length > 0) {
+        tireContainer.innerHTML = tireOptions
+          .map((to, idx) => `<button type="button" class="wiz-opt${idx === 0 ? " selected" : ""}" data-tire-idx="${idx}">
+            <span>${escapeHtml(to.name)}</span>
+            <span class="wiz-opt-detail">${to.tire_width_mm}/${to.tire_aspect_pct}R${to.rim_in}</span>
+          </button>`)
+          .join("");
+        // Auto-select first tire option
+        wizState.selectedTire = tireOptions[0];
+        updateWizTireInputs(tireOptions[0]);
+        tireContainer.querySelectorAll(".wiz-opt").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const idx = Number(btn.getAttribute("data-tire-idx"));
+            wizState.selectedTire = tireOptions[idx] || tireOptions[0];
+            updateWizTireInputs(wizState.selectedTire);
+            tireContainer.querySelectorAll(".wiz-opt").forEach((b) => b.classList.remove("selected"));
+            btn.classList.add("selected");
+          });
+        });
+      } else {
+        tireContainer.innerHTML = "";
+      }
+    }
+
+    // -- Gearbox options section --
     const container = document.getElementById("wizardGearboxList");
     if (!container) return;
     const gearboxes = wizState.selectedModel?.gearboxes || [];
@@ -2107,7 +2132,7 @@ import { WsClient, type WsUiState } from "./ws";
     container.innerHTML = gearboxes
       .map((gb, idx) => `<button type="button" class="wiz-opt" data-idx="${idx}">
         <span>${escapeHtml(gb.name)}</span>
-        <span class="wiz-opt-detail">FD: ${fmt(gb.final_drive_ratio, 2)} · Gear: ${fmt(gb.default_gear_ratio, 2)}</span>
+        <span class="wiz-opt-detail">FD: ${fmt(gb.final_drive_ratio, 2)} · Top Gear: ${fmt(gb.top_gear_ratio, 2)}</span>
       </button>`)
       .join("");
     container.querySelectorAll(".wiz-opt").forEach((btn) => {
@@ -2115,17 +2140,26 @@ import { WsClient, type WsUiState } from "./ws";
         const idx = Number(btn.getAttribute("data-idx"));
         const gb = gearboxes[idx];
         if (!gb) return;
-        const m = wizState.selectedModel;
+        const tire = wizState.selectedTire || wizState.selectedModel;
         const carName = `${wizState.brand} ${wizState.model}`;
         await addCarFromWizard(carName, wizState.carType, {
-          tire_width_mm: m.tire_width_mm,
-          tire_aspect_pct: m.tire_aspect_pct,
-          rim_in: m.rim_in,
+          tire_width_mm: tire.tire_width_mm,
+          tire_aspect_pct: tire.tire_aspect_pct,
+          rim_in: tire.rim_in,
           final_drive_ratio: gb.final_drive_ratio,
-          current_gear_ratio: gb.default_gear_ratio,
+          current_gear_ratio: gb.top_gear_ratio,
         });
       });
     });
+  }
+
+  function updateWizTireInputs(tire: any) {
+    const tw = document.getElementById("wizTireWidth") as HTMLInputElement;
+    const ta = document.getElementById("wizTireAspect") as HTMLInputElement;
+    const ri = document.getElementById("wizRim") as HTMLInputElement;
+    if (tw && tire) tw.value = String(tire.tire_width_mm);
+    if (ta && tire) ta.value = String(tire.tire_aspect_pct);
+    if (ri && tire) ri.value = String(tire.rim_in);
   }
 
   async function addCarFromWizard(name: string, carType: string, aspects: Record<string, number>) {
