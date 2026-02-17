@@ -8,6 +8,7 @@ All multi-byte numeric fields use little-endian encoding.
 - `2`: DATA
 - `3`: CMD
 - `4`: ACK
+- `5`: DATA_ACK
 
 ## Field layout
 
@@ -17,6 +18,7 @@ All multi-byte numeric fields use little-endian encoding.
 - CMD header bytes: `13`
 - CMD identify bytes: `15`
 - ACK bytes: `13`
+- DATA_ACK bytes: `12`
 
 ## HELLO (`type=1`)
 
@@ -57,3 +59,10 @@ All multi-byte numeric fields use little-endian encoding.
 - `u8[6] client_id`
 - `u32 cmd_seq`
 - `u8 status`
+
+## DATA_ACK (`type=5`)
+
+- `u8 type`
+- `u8 version`
+- `u8[6] client_id`
+- `u32 last_seq_received`

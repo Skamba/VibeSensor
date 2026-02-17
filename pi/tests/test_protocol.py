@@ -8,8 +8,10 @@ from vibesensor.protocol import (
     CMD_HEADER_BYTES,
     CMD_IDENTIFY,
     CMD_IDENTIFY_BYTES,
+    DATA_ACK_BYTES,
     DATA_HEADER_BYTES,
     HELLO_FIXED_BYTES,
+    MSG_DATA_ACK,
     MSG_DATA,
     MSG_HELLO,
     ProtocolError,
@@ -18,9 +20,11 @@ from vibesensor.protocol import (
     extract_client_id_hex,
     pack_ack,
     pack_cmd_identify,
+    pack_data_ack,
     pack_data,
     pack_hello,
     parse_ack,
+    parse_data_ack,
     parse_client_id,
     parse_cmd,
     parse_data,
@@ -81,6 +85,7 @@ def test_protocol_layout_constants_match_esp_side() -> None:
     assert HELLO_FIXED_BYTES == 18
     assert DATA_HEADER_BYTES == 22
     assert ACK_BYTES == 13
+    assert DATA_ACK_BYTES == 12
     assert CMD_HEADER_BYTES == 13
     assert CMD_IDENTIFY_BYTES == 15
 
@@ -213,3 +218,25 @@ def test_parse_ack_invalid_header() -> None:
     pkt = ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6, 0, 0)
     with pytest.raises(ProtocolError, match="Invalid ACK header"):
         parse_ack(pkt)
+
+
+def test_data_ack_roundtrip() -> None:
+    client_id = bytes.fromhex("aabbccddeeff")
+    pkt = pack_data_ack(client_id, last_seq_received=1234)
+    assert pkt[0] == MSG_DATA_ACK
+    decoded = parse_data_ack(pkt)
+    assert decoded.client_id == client_id
+    assert decoded.last_seq_received == 1234
+
+
+def test_parse_data_ack_wrong_size() -> None:
+    with pytest.raises(ProtocolError, match="DATA_ACK has unexpected size"):
+        parse_data_ack(b"\x05\x01\x00")
+
+
+def test_parse_data_ack_invalid_header() -> None:
+    from vibesensor.protocol import DATA_ACK_STRUCT
+
+    pkt = DATA_ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6, 0)
+    with pytest.raises(ProtocolError, match="Invalid DATA_ACK header"):
+        parse_data_ack(pkt)

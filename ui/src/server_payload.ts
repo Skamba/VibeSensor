@@ -3,6 +3,7 @@ import type { StrengthBand } from "./diagnostics";
 export type AdaptedSpectrum = {
   freq: number[];
   combined: number[];
+  combinedDbAboveFloor: number[];
   strength_metrics: Record<string, unknown>;
 };
 
@@ -52,6 +53,13 @@ function asNumberArray(value: unknown): number[] {
   return Array.isArray(value) ? value.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
 }
 
+function spectrumDbFromLinear(combined: number[], floorAmp: number): number[] {
+  const floor = Math.max(0, Number(floorAmp) || 0);
+  const eps = Math.max(1e-9, floor * 0.05);
+  const denom = floor + eps;
+  return combined.map((raw) => 20 * Math.log10((Math.max(0, Number(raw) || 0) + eps) / denom));
+}
+
 export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPayload {
   if (!payload || typeof payload !== "object") {
     throw new Error("Missing websocket payload.");
@@ -98,6 +106,15 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
       const freq = asNumberArray(specObj.freq);
       const combined = asNumberArray(specObj.combined_spectrum_amp_g);
       const strengthMetrics = specObj.strength_metrics;
+      const combinedDbRaw = asNumberArray(specObj.combined_spectrum_db_above_floor);
+      const fallbackFloor =
+        strengthMetrics && typeof strengthMetrics === "object"
+          ? Number((strengthMetrics as Record<string, unknown>).strength_floor_amp_g)
+          : 0;
+      const combinedDbAboveFloor =
+        combinedDbRaw.length === combined.length
+          ? combinedDbRaw
+          : spectrumDbFromLinear(combined, Number.isFinite(fallbackFloor) ? fallbackFloor : 0);
       if (!freq.length || !combined.length || !strengthMetrics || typeof strengthMetrics !== "object") {
         throw new Error(
           `Missing spectra.combined_spectrum_amp_g or strength_metrics for client ${clientId}.`,
@@ -106,6 +123,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
       adapted.spectra.clients[clientId] = {
         freq,
         combined,
+        combinedDbAboveFloor,
         strength_metrics: strengthMetrics as Record<string, unknown>,
       };
     }

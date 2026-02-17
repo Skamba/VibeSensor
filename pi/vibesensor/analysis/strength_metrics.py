@@ -140,6 +140,26 @@ def strength_db(
     return 20.0 * log10((band + eps) / (floor + eps))
 
 
+def spectrum_db_above_floor(
+    *,
+    combined_spectrum_amp_g: list[float],
+    strength_floor_amp_g: float,
+    epsilon_g: float | None = None,
+) -> list[float]:
+    floor = max(0.0, float(strength_floor_amp_g))
+    eps = (
+        max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
+        if epsilon_g is None
+        else max(STRENGTH_EPSILON_MIN_G, float(epsilon_g))
+    )
+    floor_term = floor + eps
+    out: list[float] = []
+    for raw_value in combined_spectrum_amp_g:
+        amp = max(0.0, float(raw_value))
+        out.append(20.0 * log10((amp + eps) / floor_term))
+    return out
+
+
 def strength_bucket(*, strength_db: float, strength_peak_band_rms_amp_g: float) -> str | None:
     return bucket_for_strength(float(strength_db), float(strength_peak_band_rms_amp_g))
 
@@ -156,6 +176,7 @@ def compute_strength_metrics(
     if n <= 0:
         return {
             "combined_spectrum_amp_g": [],
+            "combined_spectrum_db_above_floor": [],
             "noise_floor_amp_p20_g": 0.0,
             "strength_floor_amp_g": 0.0,
             "strength_peak_band_rms_amp_g": 0.0,
@@ -238,8 +259,14 @@ def compute_strength_metrics(
             }
         )
 
+    combined_db = spectrum_db_above_floor(
+        combined_spectrum_amp_g=combined,
+        strength_floor_amp_g=float(floor_strength),
+    )
+
     return {
         "combined_spectrum_amp_g": combined,
+        "combined_spectrum_db_above_floor": combined_db,
         "noise_floor_amp_p20_g": float(floor_p20),
         "strength_floor_amp_g": float(floor_strength),
         "strength_peak_band_rms_amp_g": top_band_rms,
