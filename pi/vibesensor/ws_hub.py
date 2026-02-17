@@ -9,6 +9,13 @@ from fastapi import WebSocket
 
 LOGGER = logging.getLogger(__name__)
 
+# Timing constants for WebSocket broadcast
+_SEND_TIMEOUT_S: float = 0.5
+"""Per-connection send timeout; connections exceeding this are dropped."""
+
+_SEND_ERROR_LOG_INTERVAL_S: float = 10.0
+"""Minimum interval between logged send-error warnings to avoid log spam."""
+
 
 @dataclass(slots=True)
 class WSConnection:
@@ -20,9 +27,9 @@ class WebSocketHub:
     def __init__(self):
         self._connections: dict[int, WSConnection] = {}
         self._lock = asyncio.Lock()
-        self._send_timeout_s = 0.5
+        self._send_timeout_s = _SEND_TIMEOUT_S
         self._last_send_error_log_ts = 0.0
-        self._send_error_log_interval_s = 10.0
+        self._send_error_log_interval_s = _SEND_ERROR_LOG_INTERVAL_S
 
     async def add(self, websocket: WebSocket, selected_client_id: str | None) -> None:
         async with self._lock:
