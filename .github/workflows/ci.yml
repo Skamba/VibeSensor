@@ -49,10 +49,59 @@ jobs:
         run: |
           pytest -q -m "not selenium" pi/tests
 
-      - name: Docker image smoke
+      - name: Docker smoke test
         run: |
+          set -euo pipefail
+
+          echo "=== Building Docker image ==="
           docker build -f pi/Dockerfile -t vibesensor-ci .
-          docker run --rm vibesensor-ci test -f /app/pi/public/index.html
+
+          echo "=== Starting container ==="
+          CID=$(docker run -d -p 8080:8000 vibesensor-ci)
+          cleanup() { docker logs "$CID" 2>&1 || true; docker rm -f "$CID" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+
+          echo "=== Waiting for server readiness (up to 60s) ==="
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:8080/api/health >/dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "FAIL: server did not become ready within 60s"
+              exit 1
+            fi
+            sleep 1
+          done
+
+          echo "=== Verifying container is still running ==="
+          docker inspect -f '{{.State.Running}}' "$CID" | grep -q true
+
+          echo "=== Health endpoint ==="
+          curl -sf http://127.0.0.1:8080/api/health | grep -q '"status":"ok"'
+
+          echo "=== UI served (GET /) ==="
+          curl -sf http://127.0.0.1:8080/ | grep -q '</html>'
+
+          echo "=== Static asset exists ==="
+          curl -sf http://127.0.0.1:8080/ | grep -qo '/assets/index-[^"]*\.js'
+
+          echo "=== API endpoint (/api/clients) ==="
+          curl -sf http://127.0.0.1:8080/api/clients | grep -q '"clients"'
+
+          echo "=== WebSocket upgrade (/ws) ==="
+          WS_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
+            -H 'Upgrade: websocket' \
+            -H 'Connection: Upgrade' \
+            -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' \
+            -H 'Sec-WebSocket-Version: 13' \
+            http://127.0.0.1:8080/ws || true)
+          if [ "$WS_CODE" != "101" ]; then
+            echo "FAIL: WebSocket upgrade returned $WS_CODE (expected 101)"
+            exit 1
+          fi
+
+          echo "=== All Docker smoke checks passed ==="
 
       - name: Config preflight
         run: |
