@@ -458,7 +458,7 @@ import { WsClient, type WsUiState } from "./ws";
       els.spectrumOverlay.textContent = t("spectrum.stale");
       return;
     }
-    if (!state.hasSpectrumData || state.wsState === "no_data") {
+    if (!state.hasSpectrumData) {
       els.spectrumOverlay.hidden = false;
       els.spectrumOverlay.textContent = t("spectrum.empty");
       return;
@@ -556,8 +556,28 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function locationCodeForClient(client) {
+    const explicitCode = String(client?.location_code || client?.locationCode || "").trim();
+    if (explicitCode && state.locationCodes.includes(explicitCode)) {
+      return explicitCode;
+    }
+
     const name = String(client?.name || "").trim();
     if (!name) return "";
+
+    const normalizedName = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
+    const shorthandMap: Record<string, string> = {
+      "front left": "front_left_wheel",
+      "front right": "front_right_wheel",
+      "rear left": "rear_left_wheel",
+      "rear right": "rear_right_wheel",
+      "driver": "driver_seat",
+    };
+    for (const [token, code] of Object.entries(shorthandMap)) {
+      if (normalizedName.includes(token) && state.locationCodes.includes(code)) {
+        return code;
+      }
+    }
+
     for (const code of state.locationCodes) {
       const labels = I18N.getForAllLangs(`location.${code}`);
       if (labels.some((label) => label === name)) return code;
@@ -1817,11 +1837,11 @@ import { WsClient, type WsUiState } from "./ws";
 
     for (const [i, client] of state.clients.entries()) {
       const s = state.spectra.clients?.[client.id];
-      if (!s || !Array.isArray(s.combined_spectrum_amp_g)) continue;
+      if (!s || !Array.isArray(s.combined_spectrum_db_above_floor)) continue;
       const clientFreq = Array.isArray(s.freq) && s.freq.length ? s.freq : fallbackFreq;
-      const n = Math.min(clientFreq.length, s.combined_spectrum_amp_g.length);
+      const n = Math.min(clientFreq.length, s.combined_spectrum_db_above_floor.length);
       if (!n) continue;
-      let blended = s.combined_spectrum_amp_g.slice(0, n);
+      let blended = s.combined_spectrum_db_above_floor.slice(0, n);
       const freqSlice = clientFreq.slice(0, n);
       if (!targetFreq.length) {
         targetFreq = freqSlice;
@@ -1938,6 +1958,7 @@ import { WsClient, type WsUiState } from "./ws";
             {
               freq: spectrum.freq,
               combined_spectrum_amp_g: spectrum.combined,
+              combined_spectrum_db_above_floor: spectrum.combinedDbAboveFloor,
               strength_metrics: spectrum.strength_metrics,
             },
           ]),
@@ -1955,8 +1976,6 @@ import { WsClient, type WsUiState } from "./ws";
       state.hasSpectrumData = (Object.values(adapted.spectra.clients) as Array<any>).some(
         (clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
       );
-    } else {
-      state.hasSpectrumData = false;
     }
     const hasFreshFrames = hasFreshSensorFrames(state.clients);
     applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
@@ -2536,9 +2555,11 @@ import { WsClient, type WsUiState } from "./ws";
       demoClients.forEach((client, idx) => {
         const pk = peakConfigs[idx];
         const combined = sineSpectrum(baseNoise, pk.hz, pk.amp);
+        const combinedDb = sineSpectrum(Array.from({ length: freqArr.length }, () => -22), pk.hz, pk.db);
         demoSpectra[client.id] = {
           freq: freqArr,
           combined_spectrum_amp_g: combined,
+          combined_spectrum_db_above_floor: combinedDb,
           strength_metrics: {
             strength_peak_band_rms_amp_g: pk.amp * 0.8,
             strength_floor_amp_g: 0.001,

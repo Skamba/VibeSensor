@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -50,6 +51,30 @@ class SignalProcessor:
         self._fft_window = np.hanning(self.fft_n).astype(np.float32)
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+        self._spike_filter_enabled = True
+        self._trace_strength_alignment = os.getenv(
+            "VIBESENSOR_TRACE_STRENGTH_ALIGNMENT", ""
+        ).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    @staticmethod
+    def _medfilt3(block: np.ndarray) -> np.ndarray:
+        """Apply a 3-point median filter per-row (per-axis).
+
+        Eliminates isolated single-sample spikes caused by I2C bus
+        glitches while preserving genuine vibration signal content.
+        Edge samples are left unchanged.
+        """
+        if block.shape[-1] < 3:
+            return block
+        stacked = np.stack([block[:, :-2], block[:, 1:-1], block[:, 2:]], axis=0)
+        filtered = block.copy()
+        filtered[:, 1:-1] = np.median(stacked, axis=0)
+        return filtered
 
     def _get_or_create(self, client_id: str) -> ClientBuffer:
         buf = self._buffers.get(client_id)
@@ -198,6 +223,8 @@ class SignalProcessor:
         desired_samples = int(max(1.0, float(sr) * float(self.waveform_seconds)))
         n_time = min(buf.count, self.max_samples, max(1, desired_samples))
         time_window = self._latest(buf, n_time)
+        if self._spike_filter_enabled:
+            time_window = self._medfilt3(time_window)
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
         metrics: dict[str, Any] = {}
@@ -230,6 +257,8 @@ class SignalProcessor:
 
         if buf.count >= self.fft_n:
             fft_block = self._latest(buf, self.fft_n)
+            if self._spike_filter_enabled:
+                fft_block = self._medfilt3(fft_block)
             fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
             freq_slice, valid_idx = self._fft_params(sr)
             spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
@@ -288,6 +317,21 @@ class SignalProcessor:
                     "amp": combined_amp,
                 }
                 buf.latest_strength_metrics = dict(strength_metrics)
+                if self._trace_strength_alignment:
+                    peak_linear = float(strength_metrics.get("strength_peak_band_rms_amp_g") or 0.0)
+                    floor_linear = float(strength_metrics.get("strength_floor_amp_g") or 0.0)
+                    peak_over_floor_db = float(strength_metrics.get("strength_db") or 0.0)
+                    combined_db = strength_metrics.get("combined_spectrum_db_above_floor") or []
+                    graph_peak_db = float(max(combined_db)) if combined_db else 0.0
+                    LOGGER.debug(
+                        "strength-alignment client=%s floor_linear=%.6g peak_linear=%.6g "
+                        "peak_over_floor_db=%.3f graph_peak_db=%.3f",
+                        client_id,
+                        floor_linear,
+                        peak_linear,
+                        peak_over_floor_db,
+                        graph_peak_db,
+                    )
             else:
                 buf.latest_strength_metrics = {}
             buf.latest_spectrum = spectrum_by_axis
@@ -317,6 +361,7 @@ class SignalProcessor:
                 "y": [],
                 "z": [],
                 "combined_spectrum_amp_g": [],
+                "combined_spectrum_db_above_floor": [],
                 "strength_metrics": {},
             }
         return {
@@ -325,6 +370,9 @@ class SignalProcessor:
             "z": buf.latest_spectrum["z"]["amp"].tolist(),
             "combined_spectrum_amp_g": (
                 buf.latest_spectrum.get("combined", {}).get("amp", np.array([])).tolist()
+            ),
+            "combined_spectrum_db_above_floor": list(
+                buf.latest_strength_metrics.get("combined_spectrum_db_above_floor") or []
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
@@ -412,6 +460,141 @@ class SignalProcessor:
             return None
         rate = int(buf.sample_rate_hz or 0)
         return rate if rate > 0 else None
+
+    def debug_spectrum(self, client_id: str) -> dict[str, Any]:
+        """Return detailed spectrum debug info for independent verification."""
+        buf = self._buffers.get(client_id)
+        if buf is None or buf.count < self.fft_n:
+            return {
+                "error": "insufficient samples",
+                "count": buf.count if buf else 0,
+                "fft_n": self.fft_n,
+            }
+        sr = buf.sample_rate_hz or self.sample_rate_hz
+        fft_block = self._latest(buf, self.fft_n).copy()
+
+        # Stats before filtering / mean removal
+        raw_mean = [float(fft_block[i].mean()) for i in range(3)]
+        raw_std = [float(fft_block[i].std()) for i in range(3)]
+        raw_min = [float(fft_block[i].min()) for i in range(3)]
+        raw_max = [float(fft_block[i].max()) for i in range(3)]
+
+        # Spike filter (same as compute_metrics path)
+        if self._spike_filter_enabled:
+            fft_block = self._medfilt3(fft_block)
+
+        # Mean removal
+        fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
+        detrended_std = [float(fft_block[i].std()) for i in range(3)]
+
+        # Compute per-axis spectrum
+        freq_slice, valid_idx = self._fft_params(sr)
+        axis_amps = {}
+        axis_amp_slices = []
+        for axis_idx, axis in enumerate(AXES):
+            windowed = fft_block[axis_idx] * self._fft_window
+            spec = np.abs(np.fft.rfft(windowed)).astype(np.float32)
+            spec *= self._fft_scale
+            if spec.size > 0:
+                spec[0] *= 0.5
+            if (self.fft_n % 2) == 0 and spec.size > 1:
+                spec[-1] *= 0.5
+            amp_slice = spec[valid_idx]
+            axis_amps[axis] = amp_slice
+            amp_for_combined = amp_slice.copy()
+            if amp_for_combined.size > 1:
+                amp_for_combined[0] = 0.0
+            axis_amp_slices.append(amp_for_combined)
+
+        combined_amp = np.asarray(
+            combined_spectrum_amp_g(
+                axis_spectra_amp_g=axis_amp_slices,
+                axis_count_for_mean=len(axis_amp_slices),
+            ),
+            dtype=np.float32,
+        )
+
+        # Strength metrics
+        sm = compute_strength_metrics(
+            freq_hz=freq_slice.tolist(),
+            combined_spectrum_amp_g_values=combined_amp.tolist(),
+            peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
+            peak_separation_hz=PEAK_SEPARATION_HZ,
+            top_n=5,
+        )
+
+        # Top 10 bins by combined amplitude
+        sorted_idx = np.argsort(combined_amp)[::-1]
+        top_bins = []
+        for i in sorted_idx[:10]:
+            top_bins.append(
+                {
+                    "bin": int(i),
+                    "freq_hz": float(freq_slice[i]),
+                    "combined_amp_g": float(combined_amp[i]),
+                    "x_amp_g": float(axis_amps["x"][i]),
+                    "y_amp_g": float(axis_amps["y"][i]),
+                    "z_amp_g": float(axis_amps["z"][i]),
+                }
+            )
+
+        db_above_floor = sm.get("combined_spectrum_db_above_floor", [])
+        top_db_idx = sorted(
+            range(len(db_above_floor)),
+            key=lambda i: db_above_floor[i],
+            reverse=True,
+        )[:10]
+        top_db_bins = []
+        for i in top_db_idx:
+            top_db_bins.append(
+                {
+                    "bin": i,
+                    "freq_hz": float(freq_slice[i]) if i < len(freq_slice) else 0.0,
+                    "db_above_floor": float(db_above_floor[i]),
+                    "combined_amp_g": float(combined_amp[i]) if i < len(combined_amp) else 0.0,
+                }
+            )
+
+        return {
+            "client_id": client_id,
+            "sample_rate_hz": sr,
+            "fft_n": self.fft_n,
+            "fft_scale": self._fft_scale,
+            "window": "hann",
+            "spectrum_max_hz": self.spectrum_max_hz,
+            "freq_bins": len(freq_slice),
+            "freq_resolution_hz": float(sr) / self.fft_n,
+            "raw_stats": {
+                "mean_g": raw_mean,
+                "std_g": raw_std,
+                "min_g": raw_min,
+                "max_g": raw_max,
+            },
+            "detrended_std_g": detrended_std,
+            "strength_floor_amp_g": float(sm.get("strength_floor_amp_g", 0)),
+            "noise_floor_amp_p20_g": float(sm.get("noise_floor_amp_p20_g", 0)),
+            "strength_db": float(sm.get("strength_db", 0)),
+            "top_bins_by_amplitude": top_bins,
+            "top_bins_by_db": top_db_bins,
+            "strength_peaks": list(sm.get("top_strength_peaks", [])),
+        }
+
+    def raw_samples(self, client_id: str, n_samples: int = 2048) -> dict[str, Any]:
+        """Return raw time-domain samples (in g) for independent analysis."""
+        buf = self._buffers.get(client_id)
+        if buf is None or buf.count == 0:
+            return {"error": "no data", "count": 0}
+        sr = buf.sample_rate_hz or self.sample_rate_hz
+        n = min(n_samples, buf.count)
+        block = self._latest(buf, n)
+        return {
+            "client_id": client_id,
+            "sample_rate_hz": sr,
+            "n_samples": n,
+            "x": block[0].tolist(),
+            "y": block[1].tolist(),
+            "z": block[2].tolist(),
+        }
 
     def evict_clients(self, keep_client_ids: set[str]) -> None:
         stale_ids = [

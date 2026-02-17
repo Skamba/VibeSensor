@@ -3,6 +3,7 @@ import type { StrengthBand } from "./diagnostics";
 export type AdaptedSpectrum = {
   freq: number[];
   combined: number[];
+  combinedDbAboveFloor: number[];
   strength_metrics: Record<string, unknown>;
 };
 
@@ -98,6 +99,8 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
       const freq = asNumberArray(specObj.freq);
       const combined = asNumberArray(specObj.combined_spectrum_amp_g);
       const strengthMetrics = specObj.strength_metrics;
+      const combinedDbRaw = asNumberArray(specObj.combined_spectrum_db_above_floor);
+      const combinedDbAboveFloor = combinedDbRaw.length === combined.length ? combinedDbRaw : [];
       if (!freq.length || !combined.length || !strengthMetrics || typeof strengthMetrics !== "object") {
         throw new Error(
           `Missing spectra.combined_spectrum_amp_g or strength_metrics for client ${clientId}.`,
@@ -106,6 +109,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
       adapted.spectra.clients[clientId] = {
         freq,
         combined,
+        combinedDbAboveFloor,
         strength_metrics: strengthMetrics as Record<string, unknown>,
       };
     }

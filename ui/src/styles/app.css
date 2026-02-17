@@ -52,6 +52,7 @@
   --row-hover: #f3f0fe;
   --chart-grid: #dcdfe6;
   --tooltip-bg: rgba(15, 17, 23, 0.96);
+  --tooltip-fg: #f3f5ff;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -689,7 +690,7 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
   display: none;
   pointer-events: none;
   background: var(--tooltip-bg);
-  color: var(--on-fill);
+  color: var(--tooltip-fg);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
   font-size: 0.82rem;
@@ -783,6 +784,7 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
     --row-hover: rgba(139, 92, 246, 0.08);
     --chart-grid: #2a2d38;
     --tooltip-bg: rgba(10, 12, 18, 0.96);
+    --tooltip-fg: #e4e5ea;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);

@@ -185,4 +185,40 @@ size_t pack_ack(uint8_t* out,
   return o;
 }
 
+size_t pack_data_ack(uint8_t* out,
+                     size_t out_len,
+                     const uint8_t client_id[6],
+                     uint32_t last_seq_received) {
+  if (out_len < kDataAckBytes) {
+    return 0;
+  }
+  size_t o = 0;
+  out[o++] = kMsgDataAck;
+  out[o++] = kProtoVersion;
+  memcpy(out + o, client_id, 6);
+  o += 6;
+  write_u32_le(out + o, last_seq_received);
+  o += 4;
+  return o;
+}
+
+bool parse_data_ack(const uint8_t* data,
+                    size_t len,
+                    const uint8_t expected_client_id[6],
+                    uint32_t* out_last_seq_received) {
+  if (len != kDataAckBytes) {
+    return false;
+  }
+  if (data[0] != kMsgDataAck || data[1] != kProtoVersion) {
+    return false;
+  }
+  if (memcmp(data + 2, expected_client_id, 6) != 0) {
+    return false;
+  }
+  if (out_last_seq_received != nullptr) {
+    *out_last_seq_received = read_u32_le(data + 8);
+  }
+  return true;
+}
+
 }  // namespace vibesensor

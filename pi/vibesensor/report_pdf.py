@@ -1360,7 +1360,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         if certainty is None:
             certainty = top_confidence
         certainty = max(0.0, min(1.0, certainty or 0.0))
-        certainty_text = f"{confidence_label(certainty)} ({certainty:.2f})"
+        certainty_text = f"{certainty:.2f}"
         speed_text = str(
             step.get("speed_band")
             or step.get("strongest_speed_band")
