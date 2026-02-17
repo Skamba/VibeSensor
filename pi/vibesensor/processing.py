@@ -223,7 +223,7 @@ class SignalProcessor:
         metrics["combined"] = {
             "vib_mag_rms": vib_mag_rms,
             "vib_mag_p2p": vib_mag_p2p,
-            "noise_floor_amp": None,
+            "noise_floor_amp_p20_g": None,
             "peaks": [],
         }
 
@@ -276,7 +276,7 @@ class SignalProcessor:
                     peak_separation_hz=1.2,
                     top_n=5,
                 )
-                metrics["combined"]["noise_floor_amp"] = float(
+                metrics["combined"]["noise_floor_amp_p20_g"] = float(
                     strength_metrics["noise_floor_amp_p20_g"]
                 )
                 metrics["combined"]["peaks"] = list(strength_metrics["top_strength_peaks"])

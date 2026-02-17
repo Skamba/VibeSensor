@@ -67,7 +67,7 @@ class _FakeRegistry:
                     "combined": {
                         "vib_mag_rms": 0.09,
                         "vib_mag_p2p": 0.20,
-                        "noise_floor_amp": 0.01,
+                        "noise_floor_amp_p20_g": 0.01,
                         "peaks": [{"hz": 15.0, "amp": 0.12}],
                     },
                     "x": {"rms": 0.04, "p2p": 0.11, "peaks": [{"hz": 15.0, "amp": 0.12}]},
@@ -83,7 +83,7 @@ class _FakeRegistry:
                     "combined": {
                         "vib_mag_rms": 0.22,
                         "vib_mag_p2p": 0.40,
-                        "noise_floor_amp": 0.02,
+                        "noise_floor_amp_p20_g": 0.02,
                         "peaks": [{"hz": 28.0, "amp": 0.26}],
                     },
                     "x": {"rms": 0.10, "p2p": 0.22, "peaks": [{"hz": 28.0, "amp": 0.26}]},

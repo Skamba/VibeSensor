@@ -214,11 +214,7 @@ def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[st
 
 
 def _primary_vibration_amp(sample: dict[str, Any]) -> float | None:
-    return (
-        _as_float(sample.get("vib_mag_rms_g"))
-        or _as_float(sample.get("accel_magnitude_rms_g"))
-        or _as_float(sample.get("dominant_peak_amp_g"))
-    )
+    return _as_float(sample.get("vib_mag_rms_g"))
 
 
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
@@ -273,10 +269,6 @@ def _sensor_intensity_by_location(
         if amp is not None and amp > 0:
             grouped_amp[location].append(float(amp))
         dropped_total = _as_float(sample.get("frames_dropped_total"))
-        if dropped_total is None:
-            dropped_total = _as_float(sample.get("dropped_frames"))
-        if dropped_total is None:
-            dropped_total = _as_float(sample.get("frames_dropped"))
         if dropped_total is not None:
             dropped_totals[location].append(dropped_total)
         overflow_total = _as_float(sample.get("queue_overflow_drops"))
@@ -397,7 +389,7 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
     if out:
         return out
     dom_hz = _as_float(sample.get("dominant_freq_hz"))
-    dom_amp = _as_float(sample.get("dominant_peak_amp_g"))
+    dom_amp = _as_float(sample.get("strength_peak_band_rms_amp_g"))
     if dom_hz is not None and dom_hz > 0 and dom_amp is not None:
         return [(dom_hz, dom_amp)]
     return []
@@ -1106,7 +1098,7 @@ def _build_order_findings(
                 lang, hypothesis.order, hypothesis.order_label_base
             ),
             "amplitude_metric": {
-                "name": "dominant_peak_amp_g",
+                "name": "strength_peak_band_rms_amp_g",
                 "value": mean_amp,
                 "units": accel_units,
                 "definition": _text(

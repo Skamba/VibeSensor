@@ -68,7 +68,11 @@ def _run_metadata(
             "vib_mag_p2p_g": "g",
         },
         "amplitude_definitions": {
-            "dominant_peak_amp_g": {"statistic": "Peak", "units": "g", "definition": "FFT peak"}
+            "strength_peak_band_rms_amp_g": {
+                "statistic": "Peak band RMS",
+                "units": "g",
+                "definition": "RMS amplitude in band around dominant peak",
+            }
         },
         "incomplete_for_order_analysis": raw_sample_rate_hz is None,
     }
@@ -92,7 +96,7 @@ def _sample(
     *,
     speed_kmh: float | None,
     dominant_freq_hz: float,
-    dominant_peak_amp_g: float,
+    peak_amp_g: float,
 ) -> dict:
     t_s = idx * 0.5
     return {
@@ -110,20 +114,17 @@ def _sample(
         "accel_x_g": 0.03 + (idx * 0.0005),
         "accel_y_g": 0.02 + (idx * 0.0003),
         "accel_z_g": 0.01 + (idx * 0.0002),
-        "accel_magnitude_rms_g": 0.05 + (idx * 0.0007),
-        "accel_magnitude_p2p_g": 0.12 + (idx * 0.001),
         "vib_mag_rms_g": 0.05 + (idx * 0.0007),
         "vib_mag_p2p_g": 0.12 + (idx * 0.001),
         "dominant_freq_hz": dominant_freq_hz,
-        "dominant_peak_amp_g": dominant_peak_amp_g,
         "dominant_axis": "x",
         "top_peaks": [
-            {"hz": dominant_freq_hz, "amp": dominant_peak_amp_g},
-            {"hz": dominant_freq_hz + 8.0, "amp": dominant_peak_amp_g * 0.45},
+            {"hz": dominant_freq_hz, "amp": peak_amp_g},
+            {"hz": dominant_freq_hz + 8.0, "amp": peak_amp_g * 0.45},
         ],
-        "noise_floor_amp": max(0.001, dominant_peak_amp_g * 0.08),
-        "strength_floor_amp_g": max(0.001, dominant_peak_amp_g * 0.08),
-        "strength_peak_band_rms_amp_g": dominant_peak_amp_g,
+        "noise_floor_amp_p20_g": max(0.001, peak_amp_g * 0.08),
+        "strength_floor_amp_g": max(0.001, peak_amp_g * 0.08),
+        "strength_peak_band_rms_amp_g": peak_amp_g,
         "strength_db": 22.0,
         "strength_bucket": "l2",
     }
@@ -147,7 +148,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
                 idx,
                 speed_kmh=float(speed),
                 dominant_freq_hz=wheel_hz,
-                dominant_peak_amp_g=0.09 + (idx * 0.001),
+                peak_amp_g=0.09 + (idx * 0.001),
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -187,7 +188,7 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
                 idx,
                 speed_kmh=None,
                 dominant_freq_hz=14.0,
-                dominant_peak_amp_g=0.08,
+                peak_amp_g=0.08,
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -219,7 +220,7 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
                 idx,
                 speed_kmh=float(speed),
                 dominant_freq_hz=20.0,
-                dominant_peak_amp_g=0.06 + (idx * 0.0005),
+                peak_amp_g=0.06 + (idx * 0.0005),
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -260,7 +261,7 @@ def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
                 idx,
                 speed_kmh=float(speed),
                 dominant_freq_hz=6.5 + (idx * 0.05),
-                dominant_peak_amp_g=0.08 + (idx * 0.0008),
+                peak_amp_g=0.08 + (idx * 0.0008),
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -290,7 +291,7 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
                 idx,
                 speed_kmh=float(speed),
                 dominant_freq_hz=wheel_hz,
-                dominant_peak_amp_g=0.08 + (idx * 0.0006),
+                peak_amp_g=0.08 + (idx * 0.0006),
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -320,7 +321,7 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
                 idx,
                 speed_kmh=speed,
                 dominant_freq_hz=22.0 + (idx * 0.02),
-                dominant_peak_amp_g=0.08 + (idx * 0.0003),
+                peak_amp_g=0.08 + (idx * 0.0003),
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -345,7 +346,7 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(
             idx,
             speed_kmh=55.0 + idx,
             dominant_freq_hz=18.0,
-            dominant_peak_amp_g=amp,
+            peak_amp_g=amp,
         )
         sample["vib_mag_rms_g"] = amp
         sample["frames_dropped_total"] = idx * 2
@@ -381,7 +382,7 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
             idx,
             speed_kmh=60.0 + idx,
             dominant_freq_hz=20.0,
-            dominant_peak_amp_g=0.09 + (idx * 0.001),
+            peak_amp_g=0.09 + (idx * 0.001),
         )
         full_sensor["client_id"] = "full-1"
         full_sensor["client_name"] = "front-left wheel"
@@ -392,7 +393,7 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
                 idx,
                 speed_kmh=60.0 + idx,
                 dominant_freq_hz=19.0,
-                dominant_peak_amp_g=0.07 + (idx * 0.001),
+                peak_amp_g=0.07 + (idx * 0.001),
             )
             partial_sensor["client_id"] = "partial-2"
             partial_sensor["client_name"] = "front-right wheel"
@@ -417,7 +418,7 @@ def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
                 idx,
                 speed_kmh=55.0 + idx,
                 dominant_freq_hz=14.0 + (idx * 0.2),
-                dominant_peak_amp_g=0.07 + (idx * 0.0006),
+                peak_amp_g=0.07 + (idx * 0.0006),
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -447,7 +448,7 @@ def test_report_pdf_footer_contains_version_marker(
                 idx,
                 speed_kmh=48.0 + idx,
                 dominant_freq_hz=16.0,
-                dominant_peak_amp_g=0.05 + (idx * 0.001),
+                peak_amp_g=0.05 + (idx * 0.001),
             )
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
