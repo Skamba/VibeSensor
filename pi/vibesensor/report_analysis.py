@@ -3,13 +3,15 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from math import ceil, floor, log1p, sqrt
+from math import floor, log1p, sqrt
 from pathlib import Path
 from statistics import mean
 from typing import Any
 
+from .analysis.strength_metrics import _percentile
 from .analysis_settings import tire_circumference_m_from_spec
 from .report_i18n import tr as _tr
+from .runlog import as_float_or_none as _as_float
 from .runlog import parse_iso8601, read_jsonl_run
 
 SPEED_BIN_WIDTH_KMH = 10
@@ -28,18 +30,6 @@ def _normalize_lang(lang: object) -> str:
     if isinstance(lang, str) and lang.strip().lower().startswith("nl"):
         return "nl"
     return "en"
-
-
-def _as_float(value: object) -> float | None:
-    if value in (None, ""):
-        return None
-    try:
-        out = float(value)
-    except (TypeError, ValueError):
-        return None
-    if out != out:  # NaN
-        return None
-    return out
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
@@ -90,20 +80,6 @@ def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
     m = mean(values)
     var = sum((v - m) ** 2 for v in values) / len(values)
     return m, var
-
-
-def _percentile(sorted_values: list[float], q: float) -> float:
-    if not sorted_values:
-        return 0.0
-    if len(sorted_values) == 1:
-        return sorted_values[0]
-    pos = max(0.0, min(1.0, q)) * (len(sorted_values) - 1)
-    lo = floor(pos)
-    hi = ceil(pos)
-    if lo == hi:
-        return sorted_values[lo]
-    frac = pos - lo
-    return sorted_values[lo] + ((sorted_values[hi] - sorted_values[lo]) * frac)
 
 
 def _outlier_summary(values: list[float]) -> dict[str, object]:

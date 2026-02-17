@@ -21,11 +21,11 @@ def test_as_float_nan_returns_none() -> None:
 
 
 def test_as_float_inf_returns_none() -> None:
-    # Infinity is still a valid float in this implementation (no inf check),
-    # but NaN is rejected. Let's verify actual behavior.
+    # Canonical as_float_or_none rejects both NaN and Inf.
     result = _as_float(float("inf"))
-    # The function only checks NaN (out != out); inf should pass through.
-    assert result == float("inf")
+    assert result is None
+    result_neg = _as_float(float("-inf"))
+    assert result_neg is None
 
 
 def test_as_float_non_convertible() -> None:
