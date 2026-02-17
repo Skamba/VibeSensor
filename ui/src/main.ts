@@ -2001,8 +2001,10 @@ import { WsClient, type WsUiState } from "./ws";
     return model || "Custom Car";
   }
 
+  const WIZARD_STEP_COUNT = 4;
+
   function loadWizardStep() {
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < WIZARD_STEP_COUNT; i++) {
       const stepEl = document.getElementById(`wizardStep${i}`);
       if (stepEl) stepEl.classList.toggle("active", i === wizState.step);
     }
@@ -2105,12 +2107,13 @@ import { WsClient, type WsUiState } from "./ws";
           </button>`)
           .join("");
         // Auto-select first tire option
-        wizState.selectedTire = tireOptions[0];
-        updateWizTireInputs(tireOptions[0]);
+        const defaultTire = tireOptions[0];
+        wizState.selectedTire = defaultTire;
+        updateWizTireInputs(defaultTire);
         tireContainer.querySelectorAll(".wiz-opt").forEach((btn) => {
           btn.addEventListener("click", () => {
             const idx = Number(btn.getAttribute("data-tire-idx"));
-            wizState.selectedTire = tireOptions[idx] || tireOptions[0];
+            wizState.selectedTire = tireOptions[idx] || defaultTire;
             updateWizTireInputs(wizState.selectedTire);
             tireContainer.querySelectorAll(".wiz-opt").forEach((b) => b.classList.remove("selected"));
             btn.classList.add("selected");
