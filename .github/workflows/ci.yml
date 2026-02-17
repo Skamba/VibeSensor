@@ -39,17 +39,21 @@ jobs:
         run: |
           python tools/config/check_line_endings.py
 
+      - name: UI typecheck + build + sync
+        run: |
+          python tools/sync_ui_to_pi_public.py
+          cd ui
+          npm run typecheck
+
 
       - name: Unit tests
         run: |
           pytest -q -m "not selenium" pi/tests
 
-      - name: UI typecheck + build
+      - name: Docker image smoke
         run: |
-          cd ui
-          npm ci
-          npm run typecheck
-          npm run build
+          docker build -f pi/Dockerfile -t vibesensor-ci .
+          docker run --rm vibesensor-ci test -f /app/pi/public/index.html
 
       - name: Config preflight
         run: |

@@ -22,8 +22,6 @@ import {
 import {
   bandToleranceModelVersion,
   defaultLocationCodes,
-  multiFreqBinHz,
-  multiSyncWindowMs,
   palette,
   sourceColumns,
   treadWearModel,
@@ -32,8 +30,6 @@ import { SpectrumChart } from "./spectrum";
 import {
   createEmptyMatrix,
   normalizeStrengthBands,
-  severityFromPeak,
-  sourceKeysFromClassKey,
   type StrengthBand,
 } from "./diagnostics";
 import { orderBandFills } from "./theme";
@@ -45,6 +41,7 @@ import {
   tireDiameterMeters,
   toleranceForOrder,
 } from "./vehicle_math";
+import { adaptServerPayload } from "./server_payload";
 import { WsClient, type WsUiState } from "./ws";
   const els: any = {
     menuButtons: Array.from(document.querySelectorAll(".menu-btn")),
@@ -132,15 +129,9 @@ import { WsClient, type WsUiState } from "./ws";
       max_band_half_width_pct: 8.0,
       band_tolerance_model_version: bandToleranceModelVersion,
       speed_override_kmh: 100,
-      event_min_abs_peak_g: 0.01,
-      event_peak_floor_ratio: 3.0,
-      event_db_floor_eps_ratio: 0.05,
     },
     chartBands: [],
     vibrationMessages: [],
-    lastDetectionByClient: {},
-    lastDetectionGlobal: {},
-    recentDetectionEvents: [],
     strengthBands: normalizeStrengthBands([]),
     eventMatrix: createEmptyMatrix(),
     pendingPayload: null,
@@ -151,7 +142,7 @@ import { WsClient, type WsUiState } from "./ws";
     locationCodes: defaultLocationCodes.slice(),
     hasSpectrumData: false,
     hasReceivedPayload: false,
-    useServerDiagnostics: false,
+    payloadError: null as string | null,
     strengthPlot: null,
     strengthHoverText: "",
     strengthFrameTotalsByClient: {},
@@ -299,15 +290,6 @@ import { WsClient, type WsUiState } from "./ws";
       if (typeof parsed.speed_override_kmh === "number") {
         state.vehicleSettings.speed_override_kmh = parsed.speed_override_kmh;
       }
-      if (typeof parsed.event_min_abs_peak_g === "number") {
-        state.vehicleSettings.event_min_abs_peak_g = parsed.event_min_abs_peak_g;
-      }
-      if (typeof parsed.event_peak_floor_ratio === "number") {
-        state.vehicleSettings.event_peak_floor_ratio = parsed.event_peak_floor_ratio;
-      }
-      if (typeof parsed.event_db_floor_eps_ratio === "number") {
-        state.vehicleSettings.event_db_floor_eps_ratio = parsed.event_db_floor_eps_ratio;
-      }
       if ((state.vehicleSettings.band_tolerance_model_version || 0) < bandToleranceModelVersion) {
         Object.assign(state.vehicleSettings, buildRecommendedBandDefaults(state.vehicleSettings));
       }
@@ -403,6 +385,10 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function renderWsState() {
+    if (state.payloadError) {
+      setPillState(els.linkState, "bad", "Payload error");
+      return;
+    }
     const keyByState = {
       connecting: "ws.connecting",
       connected: "ws.connected",
@@ -423,6 +409,11 @@ import { WsClient, type WsUiState } from "./ws";
 
   function updateSpectrumOverlay() {
     if (!els.spectrumOverlay) return;
+    if (state.payloadError) {
+      els.spectrumOverlay.hidden = false;
+      els.spectrumOverlay.textContent = state.payloadError;
+      return;
+    }
     if (!state.hasReceivedPayload && state.wsState === "connecting") {
       els.spectrumOverlay.hidden = false;
       els.spectrumOverlay.textContent = t("spectrum.loading");
@@ -729,9 +720,6 @@ import { WsClient, type WsUiState } from "./ws";
 
   function resetLiveVibrationCounts() {
     state.eventMatrix = createEmptyMatrix();
-    state.recentDetectionEvents = [];
-    state.lastDetectionByClient = {};
-    state.lastDetectionGlobal = {};
     renderMatrix();
   }
 
@@ -1295,117 +1283,6 @@ import { WsClient, type WsUiState } from "./ws";
       .join("");
   }
 
-  function classifyPeak(peakHz) {
-    const orders = vehicleOrdersHz();
-    const candidates = [];
-    if (orders) {
-      const {
-        wheelHz,
-        driveHz,
-        engineHz,
-        wheelUncertaintyPct,
-        driveUncertaintyPct,
-        engineUncertaintyPct,
-      } = orders;
-      const wheelTol = toleranceForOrder(
-        state.vehicleSettings.wheel_bandwidth_pct,
-        wheelHz,
-        wheelUncertaintyPct,
-        state.vehicleSettings.min_abs_band_hz,
-        state.vehicleSettings.max_band_half_width_pct,
-      );
-      const driveTol = toleranceForOrder(
-        state.vehicleSettings.driveshaft_bandwidth_pct,
-        driveHz,
-        driveUncertaintyPct,
-        state.vehicleSettings.min_abs_band_hz,
-        state.vehicleSettings.max_band_half_width_pct,
-      );
-      const engineTol = toleranceForOrder(
-        state.vehicleSettings.engine_bandwidth_pct,
-        engineHz,
-        engineUncertaintyPct,
-        state.vehicleSettings.min_abs_band_hz,
-        state.vehicleSettings.max_band_half_width_pct,
-      );
-      candidates.push({
-        cause: t("cause.wheel1"),
-        hz: wheelHz,
-        tol: wheelTol,
-        key: "wheel1",
-      });
-      candidates.push({
-        cause: t("cause.wheel2"),
-        hz: wheelHz * 2,
-        tol: wheelTol,
-        key: "wheel2",
-      });
-      const overlapTol = Math.max(0.03, driveUncertaintyPct + engineUncertaintyPct);
-      if (Math.abs(driveHz - engineHz) / Math.max(1e-6, engineHz) < overlapTol) {
-        candidates.push({
-          cause: t("cause.shaft_eng1"),
-          hz: driveHz,
-          tol: Math.max(driveTol, engineTol),
-          key: "shaft_eng1",
-        });
-      } else {
-        candidates.push({
-          cause: t("cause.shaft1"),
-          hz: driveHz,
-          tol: driveTol,
-          key: "shaft1",
-        });
-        candidates.push({
-          cause: t("cause.eng1"),
-          hz: engineHz,
-          tol: engineTol,
-          key: "eng1",
-        });
-      }
-      candidates.push({
-        cause: t("cause.eng2"),
-        hz: engineHz * 2,
-        tol: engineTol,
-        key: "eng2",
-      });
-    }
-    let best = null;
-    let bestErr = Number.POSITIVE_INFINITY;
-    for (const c of candidates) {
-      if (!(c.hz > 0.2)) continue;
-      const relErr = Math.abs(peakHz - c.hz) / c.hz;
-      if (relErr <= c.tol && relErr < bestErr) {
-        best = c;
-        bestErr = relErr;
-      }
-    }
-    if (best) return best;
-    if (peakHz >= 3 && peakHz <= 12) return { cause: t("cause.road"), key: "road" };
-    return { cause: t("cause.other"), key: "other" };
-  }
-
-  function amplitudeDbAboveFloor(peakAmp, floorAmp) {
-    const peak = Math.max(0, Number(peakAmp) || 0);
-    const floor = Math.max(0, Number(floorAmp) || 0);
-    const epsRatio = Math.max(0.001, Number(state.vehicleSettings.event_db_floor_eps_ratio) || 0.05);
-    const minAbsPeak = Math.max(1e-6, Number(state.vehicleSettings.event_min_abs_peak_g) || 0.01);
-    const eps = Math.max(minAbsPeak * 0.05, floor * epsRatio);
-    return Math.max(0, 20 * Math.log10((peak + eps) / (floor + eps)));
-  }
-
-  function updateMatrixCell(sourceKey, severityKey, contributorLabel) {
-    const src = state.eventMatrix[sourceKey];
-    if (!src) return;
-    const cell = src[severityKey];
-    if (!cell) return;
-    cell.count += 1;
-    cell.contributors[contributorLabel] = (cell.contributors[contributorLabel] || 0) + 1;
-  }
-
-  function updateMatrixCells(sourceKeys, severityKey, contributorLabel) {
-    for (const key of sourceKeys) updateMatrixCell(key, severityKey, contributorLabel);
-  }
-
   function tooltipForCell(sourceKey, severityKey) {
     const source = sourceColumns.find((s) => s.key === sourceKey);
     const band = state.strengthBands.find((b: StrengthBand) => b.key === severityKey);
@@ -1648,35 +1525,6 @@ import { WsClient, type WsUiState } from "./ws";
     ]);
   }
 
-  function pushRecentEvents(events, nowTs) {
-    for (const ev of events) {
-      state.recentDetectionEvents.push({
-        ts: nowTs,
-        sensorId: ev.sensorId,
-        sensorLabel: ev.sensorLabel,
-        peakHz: ev.peakHz,
-        peakAmp: ev.peakAmp,
-        floorAmp: ev.floorAmp,
-        cls: ev.cls,
-      });
-    }
-    const cutoff = nowTs - multiSyncWindowMs;
-    state.recentDetectionEvents = state.recentDetectionEvents.filter((ev) => ev.ts >= cutoff);
-  }
-
-  function buildMultiGroupsFromWindow() {
-    const grouped = new Map<string, Map<string, any>>();
-    for (const ev of state.recentDetectionEvents) {
-      const freqBin = Math.round(ev.peakHz / multiFreqBinHz);
-      const gKey = `${ev.cls.key}:${freqBin}`;
-      if (!grouped.has(gKey)) grouped.set(gKey, new Map());
-      const sensorMap = grouped.get(gKey)!;
-      const prev = sensorMap.get(ev.sensorId);
-      if (!prev || ev.ts > prev.ts) sensorMap.set(ev.sensorId, ev);
-    }
-    return grouped;
-  }
-
   function renderSpectrum() {
     const fallbackFreq = Array.isArray(state.spectra.freq) ? state.spectra.freq : [];
     const entries = [];
@@ -1714,14 +1562,11 @@ import { WsClient, type WsUiState } from "./ws";
 
     for (const [i, client] of state.clients.entries()) {
       const s = state.spectra.clients?.[client.id];
-      if (!s || !Array.isArray(s.x) || !Array.isArray(s.y) || !Array.isArray(s.z)) continue;
+      if (!s || !Array.isArray(s.combined_spectrum_amp_g)) continue;
       const clientFreq = Array.isArray(s.freq) && s.freq.length ? s.freq : fallbackFreq;
-      const n = Math.min(clientFreq.length, s.x.length, s.y.length, s.z.length);
+      const n = Math.min(clientFreq.length, s.combined_spectrum_amp_g.length);
       if (!n) continue;
-      let blended = new Array(n);
-      for (let j = 0; j < n; j++) {
-        blended[j] = Math.sqrt((s.x[j] * s.x[j] + s.y[j] * s.y[j] + s.z[j] * s.z[j]) / 3.0);
-      }
+      let blended = s.combined_spectrum_amp_g.slice(0, n);
       const freqSlice = clientFreq.slice(0, n);
       if (!targetFreq.length) {
         targetFreq = freqSlice;
@@ -1763,132 +1608,10 @@ import { WsClient, type WsUiState } from "./ws";
       updateSpectrumOverlay();
       return;
     }
-    const minLen = Math.min(targetFreq.length, ...entries.map((e) => e.values.length));
-    const linearData = [targetFreq.slice(0, minLen)];
-    for (const e of entries) linearData.push(e.values.slice(0, minLen));
-
-    // Plot the same peak-over-floor dB scale used by live vibration severity.
-    const dbData = [linearData[0]];
-    for (let seriesIdx = 1; seriesIdx < linearData.length; seriesIdx++) {
-      const vals = linearData[seriesIdx];
-      const floor = vals.slice(5).sort((a, b) => a - b)[Math.floor(Math.max(1, vals.length - 5) / 2)] || 0;
-      dbData.push(vals.map((amp) => amplitudeDbAboveFloor(amp, floor)));
-    }
     state.hasSpectrumData = true;
-    state.spectrumPlot.setData(dbData);
+    const minLen = Math.min(targetFreq.length, ...entries.map((e) => e.values.length));
+    state.spectrumPlot.setData([targetFreq.slice(0, minLen), ...entries.map((e) => e.values.slice(0, minLen))]);
     updateSpectrumOverlay();
-    if (!state.useServerDiagnostics) {
-      detectVibrationEvents(linearData, entries);
-    }
-  }
-
-  function detectVibrationEvents(data, entries) {
-    const freq = data[0] || [];
-    if (!freq.length) return;
-    const sensorEvents = [];
-
-    for (let s = 0; s < entries.length; s++) {
-      const vals = data[s + 1];
-      if (!Array.isArray(vals) || vals.length < 10) continue;
-      const floor = vals.slice(5).sort((a, b) => a - b)[Math.floor(Math.max(1, vals.length - 5) / 2)] || 0;
-      const localMaxima = [];
-      for (let i = 2; i < vals.length - 2; i++) {
-        if (vals[i] > vals[i - 1] && vals[i] >= vals[i + 1]) localMaxima.push(i);
-      }
-      localMaxima.sort((a, b) => vals[b] - vals[a]);
-      const chosen = [];
-      const minAbsPeak = Math.max(0, Number(state.vehicleSettings.event_min_abs_peak_g) || 0.01);
-      const floorRatio = Math.max(1.05, Number(state.vehicleSettings.event_peak_floor_ratio) || 3.0);
-      for (const idx of localMaxima) {
-        if (chosen.length >= 4) break;
-        if (vals[idx] <= Math.max(minAbsPeak, floor * floorRatio)) continue;
-        // Avoid selecting harmonic duplicates that are too close.
-        if (chosen.some((j) => Math.abs(freq[j] - freq[idx]) < 1.2)) continue;
-        chosen.push(idx);
-      }
-      for (const idx of chosen) {
-        const peakAmp = vals[idx];
-        const peakHz = freq[idx];
-        const cls = classifyPeak(peakHz);
-        sensorEvents.push({
-          sensorId: entries[s].id,
-          sensorLabel: entries[s].label,
-          peakHz,
-          peakAmp,
-          floorAmp: floor,
-          cls,
-        });
-      }
-    }
-
-    const now = Date.now();
-    if (!sensorEvents.length) {
-      pushRecentEvents([], now);
-      return;
-    }
-    pushRecentEvents(sensorEvents, now);
-    const usedSensors = new Set();
-
-    // Group across a sliding time window so slightly out-of-sync sensors still combine.
-    const grouped = buildMultiGroupsFromWindow();
-
-    for (const [gKey, sensorMap] of grouped.entries()) {
-      const group = Array.from(sensorMap.values());
-      if (group.length < 2) continue;
-      let sumHz = 0;
-      let sumAmp = 0;
-      let sumFloor = 0;
-      const labels = [];
-      for (const ev of group) {
-        usedSensors.add(ev.sensorId);
-        sumHz += ev.peakHz;
-        sumAmp += ev.peakAmp;
-        sumFloor += ev.floorAmp;
-        labels.push(ev.sensorLabel);
-      }
-      const avgHz = sumHz / group.length;
-      const avgAmp = sumAmp / group.length;
-      const avgFloor = sumFloor / group.length;
-      const prevGlobal = state.lastDetectionGlobal[gKey];
-      if (prevGlobal && now - prevGlobal.ts < 3000 && Math.abs(prevGlobal.hz - avgHz) < 1.2) continue;
-      state.lastDetectionGlobal[gKey] = { ts: now, hz: avgHz };
-      const sev = severityFromPeak(avgAmp, avgFloor, group.length, state.strengthBands);
-      if (!sev) continue;
-      const srcKeys = sourceKeysFromClassKey(group[0].cls.key);
-      updateMatrixCells(srcKeys, sev.key, `combined(${labels.join(", ")})`);
-      pushVibrationMessage(
-        t("msg.multi_detected", {
-          count: group.length,
-          labels: labels.join(", "),
-          hz: fmt(avgHz, 2),
-          amp: fmt(avgAmp, 1),
-          severity: t(sev.labelKey),
-          cause: group[0].cls.cause,
-        }),
-      );
-    }
-
-    for (const ev of sensorEvents) {
-      if (usedSensors.has(ev.sensorId)) continue;
-      const key = `${ev.sensorId}:${ev.cls.key}`;
-      const prev = state.lastDetectionByClient[key];
-      if (prev && now - prev.ts < 3500 && Math.abs(prev.hz - ev.peakHz) < 1.0) continue;
-      state.lastDetectionByClient[key] = { ts: now, hz: ev.peakHz };
-      const sev = severityFromPeak(ev.peakAmp, ev.floorAmp, 1, state.strengthBands);
-      if (!sev) continue;
-      const srcKeys = sourceKeysFromClassKey(ev.cls.key);
-      updateMatrixCells(srcKeys, sev.key, ev.sensorLabel);
-      pushVibrationMessage(
-        t("msg.single_detected", {
-          sensor: ev.sensorLabel,
-          hz: fmt(ev.peakHz, 2),
-          amp: fmt(ev.peakAmp, 1),
-          severity: t(sev.labelKey),
-          cause: ev.cls.cause,
-        }),
-      );
-    }
-    renderMatrix();
   }
 
   function sendSelection() {
@@ -1938,10 +1661,33 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function applyPayload(payload) {
+    let adapted;
+    try {
+      adapted = adaptServerPayload(payload);
+    } catch (err) {
+      state.payloadError = err instanceof Error ? err.message : "Invalid server payload.";
+      state.hasSpectrumData = false;
+      renderWsState();
+      updateSpectrumOverlay();
+      return;
+    }
+    state.payloadError = null;
+    renderWsState();
     const prevSelected = state.selectedClientId;
-    state.clients = payload.clients || [];
-    if (payload.spectra) {
-      state.spectra = payload.spectra;
+    state.clients = adapted.clients;
+    if (adapted.spectra) {
+      state.spectra = {
+        clients: Object.fromEntries(
+          Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, any]) => [
+            clientId,
+            {
+              freq: spectrum.freq,
+              combined_spectrum_amp_g: spectrum.combined,
+              strength_metrics: spectrum.strength_metrics,
+            },
+          ]),
+        ),
+      };
     }
     updateClientSelection();
     maybeRenderClientsSettingsList();
@@ -1949,31 +1695,18 @@ import { WsClient, type WsUiState } from "./ws";
       sendSelection();
     }
 
-    if (typeof payload.speed_mps === "number") {
-      state.speedMps = payload.speed_mps;
+    state.speedMps = adapted.speed_mps;
+    if (adapted.spectra) {
+      state.hasSpectrumData = (Object.values(adapted.spectra.clients) as Array<any>).some(
+        (clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
+      );
     } else {
-      state.speedMps = null;
-    }
-    if (payload.spectra) {
-      const clientsObj = payload?.spectra?.clients || {};
-      const entries = Object.values(clientsObj);
-      state.hasSpectrumData = entries.some((clientSpec: any) => {
-        const fx = Array.isArray(clientSpec?.freq) ? clientSpec.freq.length : 0;
-        const x = Array.isArray(clientSpec?.x) ? clientSpec.x.length : 0;
-        const y = Array.isArray(clientSpec?.y) ? clientSpec.y.length : 0;
-        const z = Array.isArray(clientSpec?.z) ? clientSpec.z.length : 0;
-        return fx > 0 && (x > 0 || y > 0 || z > 0);
-      });
+      state.hasSpectrumData = false;
     }
     const hasFreshFrames = hasFreshSensorFrames(state.clients);
-    if (payload.diagnostics && typeof payload.diagnostics === "object") {
-      applyServerDiagnostics(payload.diagnostics, hasFreshFrames);
-      state.useServerDiagnostics = true;
-    } else {
-      state.useServerDiagnostics = false;
-    }
+    applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
-    if (payload.spectra) {
+    if (adapted.spectra) {
       renderSpectrum();
     } else {
       updateSpectrumOverlay();

@@ -36,14 +36,5 @@ export const sourceColumns = [
   { key: "other", labelKey: "matrix.source.other" },
 ] as const;
 
-// Deprecated fallback until server diagnostics are available.
-export const defaultStrengthBands = [
-  { key: "l1", min_db: 10, min_amp: 0.003 },
-  { key: "l2", min_db: 16, min_amp: 0.006 },
-  { key: "l3", min_db: 22, min_amp: 0.012 },
-  { key: "l4", min_db: 28, min_amp: 0.024 },
-  { key: "l5", min_db: 34, min_amp: 0.048 },
-] as const;
-
 export const multiSyncWindowMs = 500;
 export const multiFreqBinHz = 1.5;
