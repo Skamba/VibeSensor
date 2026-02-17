@@ -20,15 +20,6 @@ export const defaultLocationCodes = [
   "trunk",
 ] as const;
 
-export const bandToleranceModelVersion = 2;
-
-export const treadWearModel = {
-  // 10/32 in (~7.9 mm) new to 2/32 in (~1.6 mm) legal minimum.
-  new_tread_mm: 7.9,
-  worn_tread_mm: 1.6,
-  safety_margin_pct: 0.3,
-} as const;
-
 export const sourceColumns = [
   { key: "engine", labelKey: "matrix.source.engine" },
   { key: "driveshaft", labelKey: "matrix.source.driveshaft" },

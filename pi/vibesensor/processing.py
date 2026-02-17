@@ -316,10 +316,9 @@ class SignalProcessor:
                 "y": [],
                 "z": [],
                 "combined_spectrum_amp_g": [],
-                "combined": [],
                 "strength_metrics": {},
             }
-        payload = {
+        return {
             "x": buf.latest_spectrum["x"]["amp"].tolist(),
             "y": buf.latest_spectrum["y"]["amp"].tolist(),
             "z": buf.latest_spectrum["z"]["amp"].tolist(),
@@ -328,8 +327,6 @@ class SignalProcessor:
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
-        payload["combined"] = list(payload["combined_spectrum_amp_g"])
-        return payload
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
         freq: list[float] = []
@@ -378,7 +375,6 @@ class SignalProcessor:
             spectrum["combined_spectrum_amp_g"] = (
                 combined["amp"].tolist() if isinstance(combined, dict) and "amp" in combined else []
             )
-            spectrum["combined"] = list(spectrum["combined_spectrum_amp_g"])
             spectrum["strength_metrics"] = dict(buf.latest_strength_metrics)
         else:
             spectrum = {
@@ -387,7 +383,6 @@ class SignalProcessor:
                 "y": [],
                 "z": [],
                 "combined_spectrum_amp_g": [],
-                "combined": [],
                 "strength_metrics": {},
             }
 

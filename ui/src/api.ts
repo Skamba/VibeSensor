@@ -39,6 +39,10 @@ export async function setSpeedOverride(speedKmh: number | null): Promise<any> {
   });
 }
 
+export async function getAnalysisSettings(): Promise<any> {
+  return apiJson("/api/analysis-settings");
+}
+
 export async function setAnalysisSettings(payload: Record<string, number>): Promise<any> {
   return apiJson("/api/analysis-settings", {
     method: "POST",

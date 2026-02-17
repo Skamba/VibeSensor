@@ -117,7 +117,8 @@ def default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[s
             "statistic": "Floor",
             "units": accel_units,
             "definition": (
-                "Legacy alias of noise_floor_amp_p20_g (combined-spectrum 20th percentile, DC removed)"
+                "Legacy alias of noise_floor_amp_p20_g "
+                "(combined-spectrum 20th percentile, DC removed)"
             ),
         },
         "noise_floor_amp_p20_g": {
@@ -128,7 +129,9 @@ def default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[s
         "strength_floor_amp_g": {
             "statistic": "Floor",
             "units": accel_units,
-            "definition": "combined-spectrum floor amplitude after excluding strongest nearby peaks",
+            "definition": (
+                "combined-spectrum floor amplitude after excluding strongest nearby peaks"
+            ),
         },
         "strength_peak_band_rms_amp_g": {
             "statistic": "Peak band RMS",
@@ -146,7 +149,9 @@ def default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[s
         "strength_bucket": {
             "statistic": "Bucket",
             "units": "band_key",
-            "definition": "strength severity bucket derived from strength_db and peak band amplitude",
+            "definition": (
+                "strength severity bucket derived from strength_db and peak band amplitude"
+            ),
         },
         "dominant_peak_amp_g": {
             "statistic": "Peak",
@@ -235,7 +240,9 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     )
     normalized["strength_db"] = as_float_or_none(record.get("strength_db"))
     normalized["strength_bucket"] = (
-        str(record.get("strength_bucket")) if record.get("strength_bucket") not in (None, "") else None
+        str(record.get("strength_bucket"))
+        if record.get("strength_bucket") not in (None, "")
+        else None
     )
     # Legacy aliases: keep older readers working without recomputing strength metrics.
     normalized["noise_floor_amp"] = normalized["noise_floor_amp_p20_g"]

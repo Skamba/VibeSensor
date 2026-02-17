@@ -35,9 +35,7 @@ def _make_metadata(**overrides) -> dict:
     )
     defaults.update(overrides)
     valid_keys = create_run_metadata.__code__.co_varnames
-    return create_run_metadata(
-        **{k: v for k, v in defaults.items() if k in valid_keys}
-    )
+    return create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})
 
 
 def _make_sample(t_s: float, speed_kmh: float, amp: float = 0.01) -> dict:

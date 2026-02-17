@@ -39,7 +39,8 @@ def combined_spectrum_amp_g(
     Canonical combined spectrum amplitude definition.
 
     Input axis arrays must be single-sided FFT amplitude magnitudes in g.
-    Output is sqrt(mean(axis_amp^2)) per frequency bin, i.e. sqrt((x^2+y^2+z^2)/3) when 3 axes exist.
+    Output is sqrt(mean(axis_amp^2)) per frequency bin,
+    i.e. sqrt((x^2+y^2+z^2)/3) when 3 axes exist.
     """
     if not axis_spectra_amp_g:
         return []
@@ -64,7 +65,9 @@ def combined_spectrum_amp_g(
 def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
     if not combined_spectrum_amp_g:
         return 0.0
-    band = combined_spectrum_amp_g[1:] if len(combined_spectrum_amp_g) > 1 else combined_spectrum_amp_g
+    band = (
+        combined_spectrum_amp_g[1:] if len(combined_spectrum_amp_g) > 1 else combined_spectrum_amp_g
+    )
     finite = sorted(value for value in band if isfinite(value) and value >= 0.0)
     return _percentile(finite, 0.20)
 
@@ -121,7 +124,10 @@ def strength_peak_band_rms_amp_g(
 
 
 def strength_db(
-    *, strength_peak_band_rms_amp_g: float, strength_floor_amp_g: float, epsilon_g: float | None = None
+    *,
+    strength_peak_band_rms_amp_g: float,
+    strength_floor_amp_g: float,
+    epsilon_g: float | None = None,
 ) -> float:
     floor = max(0.0, float(strength_floor_amp_g))
     band = max(0.0, float(strength_peak_band_rms_amp_g))
