@@ -34,9 +34,15 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
     forbidden_combined_spectrum = re.compile(
         r"Math\.sqrt\(\([^)]*\+[^)]*\+[^)]*\)\s*/\s*3\)"
     )
+    forbidden_bucket_threshold_compare = re.compile(
+        r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_db\s*&&\s*"
+        r"[A-Za-z_$][\w$]*\s*<\s*[A-Za-z_$][\w$]*\s*&&\s*"
+        r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_amp"
+    )
     for script in scripts:
         text = _read(public_dir / script)
         assert "Math.log10(" not in text
         assert "severityFromPeak(" not in text
         assert "detectVibrationEvents(" not in text
         assert forbidden_combined_spectrum.search(text) is None
+        assert forbidden_bucket_threshold_compare.search(text) is None
