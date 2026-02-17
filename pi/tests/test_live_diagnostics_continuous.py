@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from vibesensor.analysis.strength_metrics import compute_strength_metrics
+from vibesensor.constants import SILENCE_DB
 from vibesensor.diagnostics_shared import severity_from_peak
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 from vibesensor.strength_bands import DECAY_TICKS, HYSTERESIS_DB, band_by_key
@@ -27,7 +28,7 @@ def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
 
     for _ in range(DECAY_TICKS):
         out = severity_from_peak(
-            strength_db=-120.0, band_rms=0.0, sensor_count=1, prior_state=state
+            strength_db=SILENCE_DB, band_rms=0.0, sensor_count=1, prior_state=state
         )
         state = dict((out or {}).get("state") or state or {})
     assert out is not None
