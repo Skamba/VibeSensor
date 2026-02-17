@@ -316,8 +316,8 @@ class MetricsLogger:
                 raise ValueError(
                     f"Missing required metrics.combined.vib_mag_p2p for client '{record.client_id}'"
                 )
-            accel_magnitude_rms_g = vib_mag_rms if isinstance(vib_mag_rms, float) else None
-            accel_magnitude_p2p_g = vib_mag_p2p if isinstance(vib_mag_p2p, float) else None
+            vib_mag_rms_g = vib_mag_rms if isinstance(vib_mag_rms, float) else None
+            vib_mag_p2p_g = vib_mag_p2p if isinstance(vib_mag_p2p, float) else None
             strength_metrics: dict[str, object] = {}
             root_strength_metrics = metrics.get("strength_metrics")
             if isinstance(root_strength_metrics, dict):
@@ -403,12 +403,9 @@ class MetricsLogger:
                     "accel_x_g": accel_x_g,
                     "accel_y_g": accel_y_g,
                     "accel_z_g": accel_z_g,
-                    "accel_magnitude_rms_g": accel_magnitude_rms_g,
-                    "accel_magnitude_p2p_g": accel_magnitude_p2p_g,
-                    "vib_mag_rms_g": accel_magnitude_rms_g,
-                    "vib_mag_p2p_g": accel_magnitude_p2p_g,
+                    "vib_mag_rms_g": vib_mag_rms_g,
+                    "vib_mag_p2p_g": vib_mag_p2p_g,
                     "dominant_freq_hz": dominant_hz,
-                    "dominant_peak_amp_g": dominant_amp,
                     "dominant_axis": dominant_axis,
                     "top_peaks": top_peaks,
                     "noise_floor_amp_p20_g": noise_floor_amp_p20_g,
@@ -416,7 +413,6 @@ class MetricsLogger:
                     "strength_peak_band_rms_amp_g": dominant_amp,
                     "strength_db": strength_db,
                     "strength_bucket": strength_bucket,
-                    "noise_floor_amp": noise_floor_amp_p20_g,
                     "frames_dropped_total": int(record.frames_dropped),
                     "queue_overflow_drops": int(record.queue_overflow_drops),
                 }
