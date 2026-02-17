@@ -1,48 +1,77 @@
 # Design Language
 
-This repo uses **Material Design 3** as its single design language for both:
-- `ui/` (web application)
-- `pi/vibesensor/report_pdf.py` (generated PDF reports)
+This repo uses a **minimal, flat design system** with a purple accent for both:
+- `ui/` (web application) — auto light/dark via `prefers-color-scheme`
+- `pi/vibesensor/report_pdf.py` (generated PDF reports) — light/print-friendly
 
 ## Goals
 - One visual system across live UI and exported reports.
-- Clear action hierarchy (primary vs secondary vs destructive).
+- Modern, minimal, calm aesthetic suited for laptop/tablet-in-car use.
+- Clear action hierarchy (primary vs neutral vs destructive).
 - Stable, token-driven styling (no ad-hoc colors in feature code).
 
+## Accent Color
+Single accent: **purple** (`#7c3aed` light mode, `#a78bfa` dark mode).
+Used for: primary actions, active tabs, focus rings, key highlights.
+
 ## Color Roles
-Core Material-style roles used in this project:
-- `primary`: main actions and active navigation
+Core token roles:
+- `primary`: main actions and active navigation (purple)
 - `surface` / `surface-container`: cards, backgrounds, panels
 - `on-surface` / `on-surface-variant`: main and secondary text
 - `outline` / `outline-variant`: borders and table separators
-- `tertiary`: success/status positive feedback
-- `error`: destructive actions and critical status
+- `tertiary`: success/status positive feedback (green)
+- `error`: destructive actions and critical status (red)
 
 Web tokens are defined in:
-- `ui/src/styles/app.css` (`:root` `--md-sys-color-*` tokens)
+- `ui/src/styles/app.css` (`:root` + `@media (prefers-color-scheme: dark)`)
 
 Report tokens are defined in:
 - `pi/vibesensor/report_theme.py`
 
+## Theme
+- **Auto theme**: default follows system preference (`prefers-color-scheme`).
+- Light: `#f8f9fb` background, `#ffffff` surface, calm neutrals.
+- Dark: `#0f1117` background, `#1a1d27` surface, muted borders.
+- Both modes are intentionally designed (not just inverted).
+
+## Drive Sizing Mode
+Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max-width: 1024px`):
+- 44px minimum touch targets
+- Increased spacing and font sizes
+- Optimized for glanceability and easy tapping
+
 ## Component Rules
 - Buttons:
-  - `btn--primary`: main action in a section
-  - `btn--success`: positive/run actions
-  - `btn--danger`: destructive/stop/delete actions
+  - `btn--primary`: main action (purple)
+  - Neutral buttons on Live view (no green/red for start/stop)
+  - State communicated via status pill + clear text
+  - Flat, no gradients
 - Pills:
   - `pill--ok`, `pill--muted`, `pill--bad` map to status states
+- Cards:
+  - Subtle borders, no heavy shadows
+  - Full-bleed page background (no boxed "app container" look)
 - Tables:
   - Header row uses surface-container-high + strong text
-  - Body uses subtle separators and striped rows
+  - Body uses subtle separators and optional zebra rows
 - Charts:
-  - Shared palette is defined in `ui/src/theme.ts`
-  - Order bands and series colors come from shared theme constants, not inline literals
+  - Shared palette in `ui/src/theme.ts` (purple as first series color)
+  - Order bands and series colors come from shared theme constants
+
+## Live View Car Map
+- Top-down SVG car map positioned right of the spectrum chart (split layout).
+- Heat coloring per location using report-consistent p95 intensity metric over a 10-second rolling window.
+- Event pulse: glow ring + brief blink animation on new vibration events.
+- Tapping the car map does nothing for now.
+- Location taxonomy: reuses report's canonical location codes from `pi/vibesensor/locations.py`.
 
 ## Do / Don't
 - Do use existing tokens and classes.
 - Do add new tokens only in theme/token files.
 - Don't hardcode hex/rgba values inside feature logic.
 - Don't introduce alternate visual systems per page.
+- Don't compute strength metrics in client-side UI code (guardrail enforced by tests).
 
 ## PDF Report Layout
 

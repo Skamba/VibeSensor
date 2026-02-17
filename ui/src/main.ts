@@ -77,6 +77,7 @@ import { WsClient, type WsUiState } from "./ws";
     bandLegend: document.getElementById("bandLegend"),
     strengthChart: document.getElementById("strengthChart"),
     strengthTooltip: document.getElementById("strengthTooltip"),
+    liveCarMapDots: document.getElementById("liveCarMapDots"),
     // Analysis tab inputs
     wheelBandwidthInput: document.getElementById("wheelBandwidthInput"),
     driveshaftBandwidthInput: document.getElementById("driveshaftBandwidthInput"),
@@ -171,7 +172,32 @@ import { WsClient, type WsUiState } from "./ws";
       engine: [],
       other: [],
     },
+    // Car map rolling window
+    carMapSamples: [] as Array<{ ts: number; byLocation: Record<string, number> }>,
+    carMapPulseLocations: new Set<string>(),
   };
+
+  // Car map location positions (% from top-left of the car-map container).
+  // Uses the report's canonical location codes from pi/vibesensor/locations.py.
+  const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
+    front_left_wheel:     { top: 24, left: 15 },
+    front_right_wheel:    { top: 24, left: 85 },
+    rear_left_wheel:      { top: 72, left: 15 },
+    rear_right_wheel:     { top: 72, left: 85 },
+    engine_bay:           { top: 18, left: 50 },
+    front_subframe:       { top: 30, left: 50 },
+    transmission:         { top: 42, left: 50 },
+    driveshaft_tunnel:    { top: 52, left: 50 },
+    driver_seat:          { top: 44, left: 35 },
+    front_passenger_seat: { top: 44, left: 65 },
+    rear_left_seat:       { top: 60, left: 32 },
+    rear_center_seat:     { top: 60, left: 50 },
+    rear_right_seat:      { top: 60, left: 68 },
+    rear_subframe:        { top: 72, left: 50 },
+    trunk:                { top: 84, left: 50 },
+  };
+
+  const CAR_MAP_WINDOW_MS = 10_000;
 
   function t(key: string, vars?: Record<string, unknown>) {
     return I18N.get(state.lang, key, vars);
@@ -933,6 +959,87 @@ import { WsClient, type WsUiState } from "./ws";
     );
   }
 
+  // ── Live car map ──────────────────────────────────────────────
+
+  function pushCarMapSample(byLocation: Record<string, number>) {
+    const now = Date.now();
+    state.carMapSamples.push({ ts: now, byLocation });
+    const cutoff = now - CAR_MAP_WINDOW_MS;
+    state.carMapSamples = state.carMapSamples.filter((s) => s.ts >= cutoff);
+  }
+
+  function carMapIntensityByLocation(): Record<string, number> {
+    if (!state.carMapSamples.length) return {};
+    const accum: Record<string, number[]> = {};
+    for (const sample of state.carMapSamples) {
+      for (const [loc, val] of Object.entries(sample.byLocation) as Array<[string, number]>) {
+        if (!accum[loc]) accum[loc] = [];
+        accum[loc].push(val);
+      }
+    }
+    const result: Record<string, number> = {};
+    for (const [loc, values] of Object.entries(accum)) {
+      // Use the same metric as the PDF report: p95 of accumulated intensities
+      const sorted = [...values].sort((a, b) => a - b);
+      const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+      result[loc] = sorted[idx];
+    }
+    return result;
+  }
+
+  function triggerCarMapPulse(locationCodes: string[]) {
+    for (const code of locationCodes) {
+      state.carMapPulseLocations.add(code);
+    }
+    renderCarMap();
+    // Clear pulse after animation completes
+    setTimeout(() => {
+      for (const code of locationCodes) {
+        state.carMapPulseLocations.delete(code);
+      }
+      renderCarMap();
+    }, 750);
+  }
+
+  function renderCarMap() {
+    if (!els.liveCarMapDots) return;
+    const intensity = carMapIntensityByLocation();
+    const values = Object.values(intensity);
+    const min = values.length ? Math.min(...values) : 0;
+    const max = values.length ? Math.max(...values) : 0;
+
+    const dots: string[] = [];
+    for (const [code, pos] of Object.entries(CAR_MAP_POSITIONS)) {
+      const val = intensity[code];
+      const hasVal = typeof val === "number" && Number.isFinite(val) && val > 0;
+      const norm = hasVal ? normalizeUnit(val, min, max) : 0;
+      const fill = hasVal ? heatColor(norm) : "var(--border)";
+      const visible = hasVal ? " car-map-dot--visible" : "";
+      const pulse = state.carMapPulseLocations.has(code) ? " car-map-dot--pulse" : "";
+      dots.push(
+        `<div class="car-map-dot${visible}${pulse}" style="top:${pos.top}%;left:${pos.left}%;background:${fill}" data-location="${code}"></div>`
+      );
+    }
+    els.liveCarMapDots.innerHTML = dots.join("");
+  }
+
+  function extractLiveLocationIntensity(): Record<string, number> {
+    const byLocation: Record<string, number> = {};
+    if (!state.spectra?.clients || !state.clients?.length) return byLocation;
+    for (const client of state.clients) {
+      const code = locationCodeForClient(client);
+      if (!code) continue;
+      const spec = state.spectra.clients[client.id];
+      if (!spec?.strength_metrics) continue;
+      // Use the same metric as the PDF: strength_peak_band_rms_amp_g
+      const amp = Number(spec.strength_metrics.strength_peak_band_rms_amp_g);
+      if (Number.isFinite(amp) && amp > 0) {
+        byLocation[code] = Math.max(byLocation[code] || 0, amp);
+      }
+    }
+    return byLocation;
+  }
+
   function summarizeFindings(summary) {
     const findings = Array.isArray(summary?.findings) ? summary.findings : [];
     return findings.slice(0, 3);
@@ -1531,13 +1638,27 @@ import { WsClient, type WsUiState } from "./ws";
     renderMatrix();
 
     const events = Array.isArray(diagnostics.events) ? diagnostics.events : [];
+    const eventPulseLocations: string[] = [];
     if (events.length) {
       for (const ev of events.slice(0, 6)) {
         const labels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels.join(", ") : (ev.sensor_label || "--");
         pushVibrationMessage(
           `Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(ev.severity_db || 0, 1)} dB) @ ${fmt(ev.peak_hz || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`,
         );
+        // Find location codes for pulse animation
+        const sensorLabels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels : ev.sensor_label ? [ev.sensor_label] : [];
+        for (const label of sensorLabels) {
+          for (const client of state.clients) {
+            if ((client.name || client.id) === label) {
+              const code = locationCodeForClient(client);
+              if (code) eventPulseLocations.push(code);
+            }
+          }
+        }
       }
+    }
+    if (eventPulseLocations.length) {
+      triggerCarMapPulse(eventPulseLocations);
     }
 
     const levels = diagnostics.levels || {};
@@ -1839,6 +1960,12 @@ import { WsClient, type WsUiState } from "./ws";
     const hasFreshFrames = hasFreshSensorFrames(state.clients);
     applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
+    // Update live car map with rolling intensity data
+    const liveIntensity = extractLiveLocationIntensity();
+    if (Object.keys(liveIntensity).length) {
+      pushCarMapSample(liveIntensity);
+    }
+    renderCarMap();
     if (adapted.spectra) {
       renderSpectrum();
     } else {
@@ -2357,4 +2484,117 @@ import { WsClient, type WsUiState } from "./ws";
   void loadCarsFromServer();
   refreshLoggingStatus();
   refreshLogs();
-  connectWS();
+
+  // Demo mode: inject deterministic data for visual testing (activated via ?demo=1).
+  const isDemoMode = new URLSearchParams(window.location.search).has("demo");
+  if (isDemoMode) {
+    (function runDemoMode() {
+      // Freeze WS state to "connected"
+      state.wsState = "connected";
+      renderWsState();
+
+      const demoClients = [
+        { id: "aabbcc001122", name: "Front Left Wheel", mac_address: "AA:BB:CC:00:11:22", connected: true, last_seen_age_ms: 42, dropped_frames: 0, frames_total: 8400 },
+        { id: "aabbcc001133", name: "Front Right Wheel", mac_address: "AA:BB:CC:00:11:33", connected: true, last_seen_age_ms: 38, dropped_frames: 1, frames_total: 8395 },
+        { id: "aabbcc001144", name: "Rear Left Wheel", mac_address: "AA:BB:CC:00:11:44", connected: true, last_seen_age_ms: 45, dropped_frames: 0, frames_total: 8388 },
+        { id: "aabbcc001155", name: "Rear Right Wheel", mac_address: "AA:BB:CC:00:11:55", connected: true, last_seen_age_ms: 51, dropped_frames: 0, frames_total: 8401 },
+        { id: "aabbcc001166", name: "Engine Bay", mac_address: "AA:BB:CC:00:11:66", connected: true, last_seen_age_ms: 39, dropped_frames: 2, frames_total: 8390 },
+      ];
+
+      // Generate deterministic spectrum frequencies (0-250 Hz)
+      const freqCount = 256;
+      const freqArr: number[] = [];
+      for (let i = 0; i < freqCount; i++) freqArr.push((i / freqCount) * 250);
+
+      function sineSpectrum(baseAmps: number[], peakHz: number, peakAmp: number): number[] {
+        return freqArr.map((hz, i) => {
+          const base = baseAmps[i % baseAmps.length] || 0.001;
+          const dist = Math.abs(hz - peakHz);
+          const peak = dist < 8 ? peakAmp * Math.exp(-dist * dist / 18) : 0;
+          return base + peak;
+        });
+      }
+
+      // Seeded base noise
+      const baseNoise: number[] = [];
+      let seed = 42;
+      for (let i = 0; i < freqCount; i++) {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        baseNoise.push(0.0008 + (seed % 100) * 0.00004);
+      }
+
+      const demoSpectra: Record<string, any> = {};
+      // Pre-computed demo data per sensor (no runtime metric computation in UI).
+      const peakConfigs = [
+        { hz: 12.3, amp: 0.032, db: 15.1, bucket: "l2" }, // FL wheel
+        { hz: 12.1, amp: 0.025, db: 14.0, bucket: "l2" }, // FR wheel
+        { hz: 12.5, amp: 0.018, db: 12.6, bucket: "l2" }, // RL wheel
+        { hz: 12.2, amp: 0.045, db: 16.5, bucket: "l2" }, // RR wheel — strongest
+        { hz: 36.8, amp: 0.012, db: 10.8, bucket: "l2" }, // Engine
+      ];
+      demoClients.forEach((client, idx) => {
+        const pk = peakConfigs[idx];
+        const combined = sineSpectrum(baseNoise, pk.hz, pk.amp);
+        demoSpectra[client.id] = {
+          freq: freqArr,
+          combined_spectrum_amp_g: combined,
+          strength_metrics: {
+            strength_peak_band_rms_amp_g: pk.amp * 0.8,
+            strength_floor_amp_g: 0.001,
+            strength_db: pk.db,
+            strength_bucket: pk.bucket,
+          },
+        };
+      });
+
+      const demoStrengthBands = [
+        { key: "l1", min_db: 0 },
+        { key: "l2", min_db: 10 },
+        { key: "l3", min_db: 18 },
+        { key: "l4", min_db: 28 },
+        { key: "l5", min_db: 40 },
+      ];
+
+      const demoPayload = {
+        server_time: new Date().toISOString(),
+        clients: demoClients,
+        speed_mps: 22.2, // ~80 km/h
+        spectra: { clients: demoSpectra },
+        diagnostics: {
+          strength_bands: demoStrengthBands,
+          matrix: null,
+          events: [],
+          levels: { by_source: { wheel: 14.2, driveshaft: 8.1, engine: 6.5, other: 3.2 } },
+        },
+      };
+
+      // Apply initial payload
+      state.hasReceivedPayload = true;
+      applyPayload(demoPayload);
+
+      // After a short delay, inject an event to show the pulse animation
+      const demoEventTimeout = setTimeout(() => {
+        const eventPayload = {
+          ...demoPayload,
+          diagnostics: {
+            ...demoPayload.diagnostics,
+            events: [
+              {
+                severity_key: "l3",
+                severity_db: 22.5,
+                peak_hz: 12.2,
+                class_key: "wheel",
+                sensor_labels: ["Rear Right Wheel"],
+              },
+            ],
+          },
+        };
+        applyPayload(eventPayload);
+      }, 800);
+
+      // Expose cleanup for tests
+      (window as any).__vibesensorDemoCleanup = () => clearTimeout(demoEventTimeout);
+    })();
+  } else {
+    connectWS();
+  }
