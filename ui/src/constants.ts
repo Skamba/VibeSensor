@@ -26,6 +26,3 @@ export const sourceColumns = [
   { key: "wheel", labelKey: "matrix.source.wheel" },
   { key: "other", labelKey: "matrix.source.other" },
 ] as const;
-
-export const multiSyncWindowMs = 500;
-export const multiFreqBinHz = 1.5;

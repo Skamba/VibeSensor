@@ -4,18 +4,6 @@ export type TireSpec = {
   rimIn: number;
 };
 
-export type VehicleSettings = {
-  tire_width_mm: number;
-  tire_aspect_pct: number;
-  rim_in: number;
-  speed_uncertainty_pct: number;
-  tire_diameter_uncertainty_pct: number;
-  final_drive_uncertainty_pct: number;
-  gear_uncertainty_pct: number;
-  min_abs_band_hz: number;
-  max_band_half_width_pct: number;
-};
-
 export function parseTireSpec(raw: unknown): TireSpec | null {
   if (!raw || typeof raw !== "object") return null;
   const typed = raw as { widthMm?: unknown; aspect?: unknown; rimIn?: unknown };
@@ -30,10 +18,6 @@ export function tireDiameterMeters(spec: TireSpec): number {
   const sidewallMm = spec.widthMm * (spec.aspect / 100);
   const diameterMm = spec.rimIn * 25.4 + sidewallMm * 2;
   return diameterMm / 1000;
-}
-
-export function clamp(n: number, lo: number, hi: number): number {
-  return Math.min(hi, Math.max(lo, n));
 }
 
 export function combinedRelativeUncertainty(...parts: number[]): number {
