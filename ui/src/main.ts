@@ -2555,17 +2555,14 @@ import { WsClient, type WsUiState } from "./ws";
       demoClients.forEach((client, idx) => {
         const pk = peakConfigs[idx];
         const combined = sineSpectrum(baseNoise, pk.hz, pk.amp);
-        const floorAmp = 0.001;
-        const eps = Math.max(1e-9, floorAmp * 0.05);
+        const combinedDb = sineSpectrum(Array.from({ length: freqArr.length }, () => -22), pk.hz, pk.db);
         demoSpectra[client.id] = {
           freq: freqArr,
           combined_spectrum_amp_g: combined,
-          combined_spectrum_db_above_floor: combined.map((v) =>
-            20 * Math.log10((Math.max(0, Number(v) || 0) + eps) / (floorAmp + eps)),
-          ),
+          combined_spectrum_db_above_floor: combinedDb,
           strength_metrics: {
             strength_peak_band_rms_amp_g: pk.amp * 0.8,
-            strength_floor_amp_g: floorAmp,
+            strength_floor_amp_g: 0.001,
             strength_db: pk.db,
             strength_bucket: pk.bucket,
           },
