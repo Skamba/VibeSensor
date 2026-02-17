@@ -174,3 +174,17 @@ def test_summarize_log_missing_precomputed_strength_metrics_raises(tmp_path: Pat
     append_jsonl_records(log_path, [metadata, sample, end])
     with pytest.raises(ValueError, match="Missing required precomputed strength metrics"):
         summarize_log(log_path)
+
+
+def test_summarize_log_allows_partial_missing_precomputed_strength_metrics(tmp_path: Path) -> None:
+    log_path = tmp_path / "run_partial_missing_strength.jsonl"
+    metadata = _make_metadata()
+    sample_missing = _make_sample(0.0, 80.0, 0.02)
+    sample_missing.pop("strength_db", None)
+    sample_valid = _make_sample(0.5, 82.0, 0.021)
+    end = create_run_end_record("test-run", "2025-01-01T00:00:10+00:00")
+    append_jsonl_records(log_path, [metadata, sample_missing, sample_valid, end])
+
+    summary = summarize_log(log_path)
+    assert summary["rows"] == 2
+    assert summary["findings"] is not None

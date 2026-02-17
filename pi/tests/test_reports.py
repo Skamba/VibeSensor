@@ -436,6 +436,31 @@ def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
     assert height == pytest.approx(595.3, abs=2.0)
 
 
+def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_missing_strength_bucket.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(12):
+        sample = _sample(
+            idx,
+            speed_kmh=60.0 + idx,
+            dominant_freq_hz=15.0 + (idx * 0.2),
+            peak_amp_g=0.08 + (idx * 0.0004),
+        )
+        if idx % 3 == 0:
+            sample["strength_bucket"] = None
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    row = summary["sensor_intensity_by_location"][0]
+    assert row["sample_count"] == 12
+    assert row["strength_bucket_distribution"]["total"] == 8
+
+    pdf = build_report_pdf(summary)
+    assert pdf.startswith(b"%PDF")
+
+
 def test_report_pdf_footer_contains_version_marker(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

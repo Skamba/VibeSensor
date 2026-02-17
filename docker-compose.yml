@@ -5,10 +5,7 @@ services:
       dockerfile: pi/Dockerfile
     environment:
       - VIBESENSOR_SERVE_STATIC=1
-    ports:
-      - "8000:8000"
-      - "9000:9000/udp"
-      - "9001:9001/udp"
+    network_mode: host
     volumes:
       - ./pi/data:/app/pi/data
     restart: unless-stopped

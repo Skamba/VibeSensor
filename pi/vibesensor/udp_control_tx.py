@@ -7,10 +7,12 @@ import time
 
 from .protocol import (
     MSG_ACK,
+    MSG_DATA_ACK,
     MSG_HELLO,
     ProtocolError,
     extract_client_id_hex,
     pack_cmd_identify,
+    pack_data_ack,
     parse_ack,
     parse_client_id,
     parse_hello,
@@ -40,7 +42,10 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
                 self.registry.update_from_hello(hello, addr, now_ts)
             elif msg_type == MSG_ACK:
                 ack = parse_ack(data)
+                LOGGER.info("ACK from %s: cmd_seq=%s status=%s", addr, ack.cmd_seq, ack.status)
                 self.registry.update_from_ack(ack, now_ts)
+            elif msg_type == MSG_DATA_ACK:
+                return
         except ProtocolError as exc:
             client_id = extract_client_id_hex(data)
             LOGGER.debug("Control parse error from %s (client=%s): %s", addr, client_id, exc)
@@ -86,3 +91,19 @@ class UDPControlPlane:
         self.transport.sendto(payload, record.control_addr)
         self.registry.mark_cmd_sent(normalized_client_id, self._cmd_seq)
         return True, self._cmd_seq
+
+    def send_data_ack(self, client_id: str, last_seq_received: int) -> bool:
+        if self.transport is None:
+            return False
+        try:
+            normalized_client_id = parse_client_id(client_id).hex()
+        except ValueError:
+            return False
+
+        record = self.registry.get(normalized_client_id)
+        if record is None or record.control_addr is None:
+            return False
+
+        payload = pack_data_ack(bytes.fromhex(record.client_id), int(last_seq_received))
+        self.transport.sendto(payload, record.control_addr)
+        return True

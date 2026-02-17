@@ -44,3 +44,20 @@ Useful options:
 - `--server-data-port 9000 --server-control-port 9001`
 - `--interactive` force CLI mode
 - `--no-interactive` disable CLI mode
+
+Deterministic mild single-wheel fault scenario:
+
+```bash
+python tools/simulator/sim_sender.py \
+  --server-host 127.0.0.1 \
+  --count 5 \
+  --names front-left,front-right,rear-left,rear-right,trunk \
+  --scenario one-wheel-mild \
+  --fault-wheel front-right \
+  --speed-kmh 100 \
+  --duration 40 \
+  --no-interactive
+```
+
+This runs one slight wheel-order fault on the selected wheel while keeping other
+sensors mostly quiet, so the report should localize to that wheel.

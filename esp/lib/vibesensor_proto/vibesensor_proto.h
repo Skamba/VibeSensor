@@ -9,6 +9,7 @@ constexpr size_t kClientIdBytes = 6;
 constexpr size_t kHelloFixedBytes = 1 + 1 + kClientIdBytes + 2 + 2 + 1 + 1 + 4;
 constexpr size_t kDataHeaderBytes = 1 + 1 + kClientIdBytes + 4 + 8 + 2;
 constexpr size_t kAckBytes = 1 + 1 + kClientIdBytes + 4 + 1;
+constexpr size_t kDataAckBytes = 1 + 1 + kClientIdBytes + 4;
 constexpr size_t kCmdHeaderBytes = 1 + 1 + kClientIdBytes + 1 + 4;
 constexpr size_t kCmdIdentifyBytes = kCmdHeaderBytes + 2;
 
@@ -17,6 +18,7 @@ enum MessageType : uint8_t {
   kMsgData = 2,
   kMsgCmd = 3,
   kMsgAck = 4,
+  kMsgDataAck = 5,
 };
 
 enum CommandId : uint8_t {
@@ -55,5 +57,15 @@ size_t pack_ack(uint8_t* out,
                 const uint8_t client_id[6],
                 uint32_t cmd_seq,
                 uint8_t status);
+
+size_t pack_data_ack(uint8_t* out,
+                     size_t out_len,
+                     const uint8_t client_id[6],
+                     uint32_t last_seq_received);
+
+bool parse_data_ack(const uint8_t* data,
+                    size_t len,
+                    const uint8_t expected_client_id[6],
+                    uint32_t* out_last_seq_received);
 
 }  // namespace vibesensor

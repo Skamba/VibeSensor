@@ -200,12 +200,20 @@ pio run -t upload
 pio device monitor
 ```
 
-Edit `esp/src/main.cpp` before flashing:
+Defaults work out of the box for the Pi hotspot in this repo:
 
-- `kWifiSsid`, `kWifiPsk`
-- `kClientName`
-- `kServerIp`
-- ADXL345 I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)
+- SSID: `VibeSensor`
+- PSK: `vibesensor123`
+- Server IP: `192.168.4.1`
+- UDP ports: `9000/9001`
+
+Optional network override (local/untracked):
+
+1. Copy `esp/include/vibesensor_network.local.example.h` to `esp/include/vibesensor_network.local.h`
+2. Edit SSID, password, and server IP in `vibesensor_network.local.h`
+3. Build/flash again (`pio run -t upload`)
+
+The local file is gitignored and should never be committed.
 
 ## Protocol Summary
 

@@ -1,5 +1,4 @@
 #include "adxl345.h"
-#include <array>
 
 namespace {
 constexpr uint8_t REG_DEVID = 0x00;
@@ -71,21 +70,27 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved, size_t max_samples) {
     return 0;
   }
   size_t count = entries < max_samples ? entries : max_samples;
-  constexpr size_t kBurstSamples = 12;
-  std::array<uint8_t, kBurstSamples * 6> raw{};
-  size_t written = 0;
-  while (written < count) {
-    size_t chunk = (count - written) < kBurstSamples ? (count - written) : kBurstSamples;
-    size_t bytes = chunk * 6;
-    read_multi(REG_DATAX0, raw.data(), bytes);
-    for (size_t i = 0; i < chunk; ++i) {
-      const size_t in = i * 6;
-      const size_t out = (written + i) * 3;
-      xyz_interleaved[out + 0] = static_cast<int16_t>(raw[in + 0] | (raw[in + 1] << 8));
-      xyz_interleaved[out + 1] = static_cast<int16_t>(raw[in + 2] | (raw[in + 3] << 8));
-      xyz_interleaved[out + 2] = static_cast<int16_t>(raw[in + 4] | (raw[in + 5] << 8));
+
+  // Read each FIFO entry individually (6 bytes per entry).
+  // The ADXL345 FIFO pops one entry per complete 6-byte read of
+  // registers 0x32-0x37.  A single I2C transaction requesting more
+  // than 6 bytes reads past the data registers into FIFO_CTL/STATUS
+  // and the rest of the register map — corrupting every sample after
+  // the first.
+  //
+  // The datasheet requires >= 5 µs between the end of one data-register
+  // read (transition past 0x37) and the start of the next FIFO read or
+  // FIFO_STATUS read, so the FIFO entry is fully popped.
+  uint8_t raw[6];
+  for (size_t i = 0; i < count; ++i) {
+    if (i > 0) {
+      delayMicroseconds(5);
     }
-    written += chunk;
+    read_multi(REG_DATAX0, raw, 6);
+    const size_t out = i * 3;
+    xyz_interleaved[out + 0] = static_cast<int16_t>(raw[0] | (raw[1] << 8));
+    xyz_interleaved[out + 1] = static_cast<int16_t>(raw[2] | (raw[3] << 8));
+    xyz_interleaved[out + 2] = static_cast<int16_t>(raw[4] | (raw[5] << 8));
   }
   return count;
 }
