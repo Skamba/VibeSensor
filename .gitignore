@@ -65,3 +65,5 @@ build_artifacts/*
 # Frontend build/runtime artifacts
 ui/node_modules/
 ui/dist/
+pi/public/*
+!pi/public/.gitkeep
