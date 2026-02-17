@@ -27,6 +27,6 @@ class ADXL345 {
   bool available_;
 
   uint8_t read_reg(uint8_t reg);
-  void write_reg(uint8_t reg, uint8_t value);
+  bool write_reg(uint8_t reg, uint8_t value);
   void read_multi(uint8_t reg, uint8_t* out, size_t len);
 };

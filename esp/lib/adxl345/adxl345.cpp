@@ -12,6 +12,7 @@ constexpr uint8_t REG_FIFO_CTL = 0x38;
 constexpr uint8_t REG_FIFO_STATUS = 0x39;
 
 constexpr uint8_t VALUE_DEVID = 0xE5;
+constexpr uint32_t kI2cClockHz = 400000;
 }  // namespace
 
 ADXL345::ADXL345(TwoWire& wire,
@@ -28,7 +29,7 @@ ADXL345::ADXL345(TwoWire& wire,
 
 bool ADXL345::begin() {
   wire_.begin(sda_pin_, scl_pin_);
-  wire_.setClock(400000);
+  wire_.setClock(kI2cClockHz);
 
   uint8_t devid = read_reg(REG_DEVID);
   if (devid != VALUE_DEVID) {
@@ -37,17 +38,19 @@ bool ADXL345::begin() {
   }
 
   // Standby while configuring.
-  write_reg(REG_POWER_CTL, 0x00);
+  if (!write_reg(REG_POWER_CTL, 0x00)) { available_ = false; return false; }
   // Full resolution + +/-16g.
-  write_reg(REG_DATA_FORMAT, 0x0B);
+  if (!write_reg(REG_DATA_FORMAT, 0x0B)) { available_ = false; return false; }
   // 800 Hz output data rate.
-  write_reg(REG_BW_RATE, 0x0D);
+  if (!write_reg(REG_BW_RATE, 0x0D)) { available_ = false; return false; }
   // FIFO stream mode with configurable watermark.
-  write_reg(REG_FIFO_CTL, static_cast<uint8_t>(0x80 | (fifo_watermark_ & 0x1F)));
+  if (!write_reg(REG_FIFO_CTL, static_cast<uint8_t>(0x80 | (fifo_watermark_ & 0x1F)))) {
+    available_ = false; return false;
+  }
   // Enable watermark interrupt bit (optional, polled in this prototype).
-  write_reg(REG_INT_ENABLE, 0x02);
+  if (!write_reg(REG_INT_ENABLE, 0x02)) { available_ = false; return false; }
   // Measurement mode.
-  write_reg(REG_POWER_CTL, 0x08);
+  if (!write_reg(REG_POWER_CTL, 0x08)) { available_ = false; return false; }
 
   available_ = true;
   return true;
@@ -99,11 +102,11 @@ uint8_t ADXL345::read_reg(uint8_t reg) {
   return wire_.read();
 }
 
-void ADXL345::write_reg(uint8_t reg, uint8_t value) {
+bool ADXL345::write_reg(uint8_t reg, uint8_t value) {
   wire_.beginTransmission(i2c_addr_);
   wire_.write(reg);
   wire_.write(value);
-  wire_.endTransmission(true);
+  return wire_.endTransmission(true) == 0;
 }
 
 void ADXL345::read_multi(uint8_t reg, uint8_t* out, size_t len) {
