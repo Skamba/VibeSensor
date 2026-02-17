@@ -11,9 +11,17 @@
   property alias is also removed.
 - **Removed legacy log field aliases** — `accel_magnitude_rms_g`,
   `accel_magnitude_p2p_g`, `dominant_peak_amp_g`, and `noise_floor_amp` are no
-  longer written to new metrics log records. The canonical names are
-  `vib_mag_rms_g`, `vib_mag_p2p_g`, `strength_peak_band_rms_amp_g`, and
-  `noise_floor_amp_p20_g`.
+  longer written to new metrics log records **and no longer read from old log
+  files**. The canonical names are `vib_mag_rms_g`, `vib_mag_p2p_g`,
+  `strength_peak_band_rms_amp_g`, and `noise_floor_amp_p20_g`.
+- **Removed legacy frames_dropped fallback** — `dropped_frames` and
+  `frames_dropped` aliases are no longer read. Use `frames_dropped_total`.
+- **Removed dead `MetricsLogger._dominant_peak`** — Unused static method
+  deleted (dead since strength_metrics refactor).
+- **Removed dead `peak_amp`/`floor_amp` aliases** —
+  `compute_strength_metrics()` no longer returns these redundant fields.
+- **Removed unused UI exports** — `VehicleSettings`, `clamp`,
+  `DESIGN_LANGUAGE`, `multiSyncWindowMs`, `multiFreqBinHz` removed.
 - **Removed `"combined"` alias from spectrum payloads** — WebSocket and API
   spectrum payloads no longer include the redundant `combined` field. Use
   `combined_spectrum_amp_g` instead.
