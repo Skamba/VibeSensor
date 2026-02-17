@@ -368,4 +368,30 @@ def create_router(state: RuntimeState) -> APIRouter:
         finally:
             await state.ws_hub.remove(ws)
 
+    @router.get("/api/car-library")
+    async def get_car_library() -> dict:
+        from .car_library import CAR_LIBRARY
+
+        return {"cars": CAR_LIBRARY}
+
+    @router.get("/api/car-library/brands")
+    async def get_car_library_brands() -> dict:
+        from .car_library import get_brands
+
+        return {"brands": get_brands()}
+
+    @router.get("/api/car-library/types")
+    async def get_car_library_types(brand: str = Query(...)) -> dict:
+        from .car_library import get_types_for_brand
+
+        return {"types": get_types_for_brand(brand)}
+
+    @router.get("/api/car-library/models")
+    async def get_car_library_models(
+        brand: str = Query(...), car_type: str = Query(..., alias="type")
+    ) -> dict:
+        from .car_library import get_models_for_brand_type
+
+        return {"models": get_models_for_brand_type(brand, car_type)}
+
     return router
