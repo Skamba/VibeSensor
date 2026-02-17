@@ -309,6 +309,81 @@ input:focus-visible,
 .dashboard-grid__strength { grid-area: strength; }
 .dashboard-grid__full { grid-area: matrix; }
 
+/* Spectrum + Car map split */
+.spectrum-split {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: var(--space-4);
+  align-items: start;
+}
+.spectrum-split__chart { min-width: 0; }
+.spectrum-split__map { display: flex; align-items: flex-start; justify-content: center; }
+
+.car-map {
+  position: relative;
+  width: 200px;
+  aspect-ratio: 200 / 340;
+}
+.car-map__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.car-map__body {
+  fill: var(--surface-2);
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+.car-map__wheel {
+  fill: var(--muted);
+  opacity: 0.35;
+}
+.car-map__axle {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.car-map__windshield {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1;
+}
+.car-map__dots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.car-map-dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: background 600ms ease;
+  opacity: 0;
+}
+.car-map-dot--visible { opacity: 1; }
+.car-map-dot--pulse {
+  animation: car-map-pulse 700ms ease-out;
+}
+@keyframes car-map-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.6); opacity: 1; }
+  40% { box-shadow: 0 0 12px 6px rgba(124, 58, 237, 0.4); opacity: 0.7; }
+  70% { box-shadow: 0 0 18px 10px rgba(124, 58, 237, 0.1); opacity: 1; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@media (max-width: 980px) {
+  .spectrum-split {
+    grid-template-columns: 1fr;
+  }
+  .spectrum-split__map {
+    justify-content: center;
+  }
+  .car-map { width: 160px; }
+}
+
 .spectrum-wrap { position: relative; min-height: 360px; }
 #specChart {
   border: 1px solid var(--border);
