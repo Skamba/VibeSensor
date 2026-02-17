@@ -220,14 +220,14 @@ def test_sensor_limit_unknown() -> None:
 
 
 def test_primary_vibration_amp_prefers_vib_mag_rms() -> None:
-    sample = {"vib_mag_rms_g": 0.05, "accel_magnitude_rms_g": 0.04, "dominant_peak_amp_g": 0.03}
+    sample = {"vib_mag_rms_g": 0.05}
     assert _primary_vibration_amp(sample) == 0.05
 
 
-def test_primary_vibration_amp_fallback_chain() -> None:
-    assert _primary_vibration_amp({"accel_magnitude_rms_g": 0.04}) == 0.04
-    assert _primary_vibration_amp({"dominant_peak_amp_g": 0.03}) == 0.03
+def test_primary_vibration_amp_returns_none_for_missing() -> None:
     assert _primary_vibration_amp({}) is None
+    # Legacy field names are no longer supported.
+    assert _primary_vibration_amp({"accel_magnitude_rms_g": 0.04}) is None
 
 
 # -- _sample_top_peaks ---------------------------------------------------------
@@ -241,7 +241,7 @@ def test_sample_top_peaks_from_top_peaks_field() -> None:
 
 
 def test_sample_top_peaks_falls_back_to_dominant() -> None:
-    sample = {"dominant_freq_hz": 25.0, "dominant_peak_amp_g": 0.15}
+    sample = {"dominant_freq_hz": 25.0, "strength_peak_band_rms_amp_g": 0.15}
     peaks = _sample_top_peaks(sample)
     assert len(peaks) == 1
     assert peaks[0] == (25.0, 0.15)
