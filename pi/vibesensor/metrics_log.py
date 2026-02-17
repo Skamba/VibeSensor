@@ -316,16 +316,8 @@ class MetricsLogger:
                 raise ValueError(
                     f"Missing required metrics.combined.vib_mag_p2p for client '{record.client_id}'"
                 )
-            accel_magnitude_rms_g = (
-                vib_mag_rms
-                if isinstance(vib_mag_rms, float)
-                else None
-            )
-            accel_magnitude_p2p_g = (
-                vib_mag_p2p
-                if isinstance(vib_mag_p2p, float)
-                else None
-            )
+            accel_magnitude_rms_g = vib_mag_rms if isinstance(vib_mag_rms, float) else None
+            accel_magnitude_p2p_g = vib_mag_p2p if isinstance(vib_mag_p2p, float) else None
             strength_metrics: dict[str, object] = {}
             root_strength_metrics = metrics.get("strength_metrics")
             if isinstance(root_strength_metrics, dict):

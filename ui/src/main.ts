@@ -4,6 +4,7 @@ import "./styles/app.css";
 import * as I18N from "./i18n";
 import {
   deleteLog as deleteLogApi,
+  getAnalysisSettings,
   getClientLocations,
   getLogInsights,
   getLoggingStatus,
@@ -20,11 +21,9 @@ import {
   stopLoggingRun,
 } from "./api";
 import {
-  bandToleranceModelVersion,
   defaultLocationCodes,
   palette,
   sourceColumns,
-  treadWearModel,
 } from "./constants";
 import { SpectrumChart } from "./spectrum";
 import {
@@ -35,7 +34,6 @@ import {
 import { orderBandFills } from "./theme";
 import { escapeHtml, fmt, fmtBytes, fmtTs, formatInt } from "./format";
 import {
-  buildRecommendedBandDefaults,
   combinedRelativeUncertainty,
   parseTireSpec,
   tireDiameterMeters,
@@ -127,7 +125,6 @@ import { WsClient, type WsUiState } from "./ws";
       gear_uncertainty_pct: 0.5,
       min_abs_band_hz: 0.4,
       max_band_half_width_pct: 8.0,
-      band_tolerance_model_version: bandToleranceModelVersion,
       speed_override_kmh: 100,
     },
     chartBands: [],
@@ -240,8 +237,6 @@ import { WsClient, type WsUiState } from "./ws";
     updateSpectrumOverlay();
   }
 
-  Object.assign(state.vehicleSettings, buildRecommendedBandDefaults(state.vehicleSettings));
-
   function loadVehicleSettings() {
     try {
       const raw = window.localStorage.getItem(settingsStorageKey);
@@ -284,16 +279,9 @@ import { WsClient, type WsUiState } from "./ws";
       if (typeof parsed.max_band_half_width_pct === "number") {
         state.vehicleSettings.max_band_half_width_pct = parsed.max_band_half_width_pct;
       }
-      if (typeof parsed.band_tolerance_model_version === "number") {
-        state.vehicleSettings.band_tolerance_model_version = parsed.band_tolerance_model_version;
-      }
       if (typeof parsed.speed_override_kmh === "number") {
         state.vehicleSettings.speed_override_kmh = parsed.speed_override_kmh;
       }
-      if ((state.vehicleSettings.band_tolerance_model_version || 0) < bandToleranceModelVersion) {
-        Object.assign(state.vehicleSettings, buildRecommendedBandDefaults(state.vehicleSettings));
-      }
-      state.vehicleSettings.band_tolerance_model_version = bandToleranceModelVersion;
     } catch (_err) {
       // Ignore malformed local storage values.
     }
@@ -699,6 +687,25 @@ import { WsClient, type WsUiState } from "./ws";
       await setAnalysisSettings(payload);
     } catch (_err) {
       // Keep UI local settings even if backend update fails transiently.
+    }
+  }
+
+  async function loadAnalysisSettingsFromServer() {
+    try {
+      const serverSettings = await getAnalysisSettings();
+      if (serverSettings && typeof serverSettings === "object") {
+        for (const key of Object.keys(state.vehicleSettings)) {
+          if (key === "speed_override_kmh") continue;
+          if (typeof serverSettings[key] === "number") {
+            state.vehicleSettings[key] = serverSettings[key];
+          }
+        }
+        saveVehicleSettings();
+        syncSettingsInputs();
+        renderSpectrum();
+      }
+    } catch (_err) {
+      // Keep UI local defaults when server is unreachable.
     }
   }
 
@@ -1823,7 +1830,6 @@ import { WsClient, type WsUiState } from "./ws";
     state.vehicleSettings.gear_uncertainty_pct = gearUncertainty;
     state.vehicleSettings.min_abs_band_hz = minAbsBandHz;
     state.vehicleSettings.max_band_half_width_pct = maxBandHalfWidth;
-    state.vehicleSettings.band_tolerance_model_version = bandToleranceModelVersion;
     state.vehicleSettings.speed_override_kmh = speedOverride;
     saveVehicleSettings();
     void syncAnalysisSettingsToServer();
@@ -1943,7 +1949,7 @@ import { WsClient, type WsUiState } from "./ws";
   setActiveView("dashboardView");
   refreshLocationOptions();
   void loadSpeedOverrideFromServer();
-  void syncAnalysisSettingsToServer();
+  void loadAnalysisSettingsFromServer();
   void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
   refreshLoggingStatus();
   refreshLogs();

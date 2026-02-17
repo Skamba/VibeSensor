@@ -329,15 +329,11 @@ def _sensor_intensity_by_location(
         values_sorted = sorted(values)
         dropped_vals = dropped_totals.get(location, [])
         overflow_vals = overflow_totals.get(location, [])
-        dropped_delta = (
-            int(max(dropped_vals) - min(dropped_vals)) if len(dropped_vals) >= 2 else 0
-        )
+        dropped_delta = int(max(dropped_vals) - min(dropped_vals)) if len(dropped_vals) >= 2 else 0
         overflow_delta = (
             int(max(overflow_vals) - min(overflow_vals)) if len(overflow_vals) >= 2 else 0
         )
-        bucket_counts = strength_bucket_counts.get(
-            location, {f"l{idx}": 0 for idx in range(1, 6)}
-        )
+        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(1, 6)})
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
         bucket_distribution: dict[str, float | int] = {
             "total": bucket_total,
@@ -352,12 +348,12 @@ def _sensor_intensity_by_location(
         rows.append(
             {
                 "location": location,
-            "samples": sample_count,
-            "sample_count": sample_count,
-            "mean_intensity_g": mean(values) if values else None,
-            "p50_intensity_g": _percentile(values_sorted, 0.50) if values else None,
-            "p95_intensity_g": _percentile(values_sorted, 0.95) if values else None,
-            "max_intensity_g": max(values) if values else None,
+                "samples": sample_count,
+                "sample_count": sample_count,
+                "mean_intensity_g": mean(values) if values else None,
+                "p50_intensity_g": _percentile(values_sorted, 0.50) if values else None,
+                "p95_intensity_g": _percentile(values_sorted, 0.95) if values else None,
+                "max_intensity_g": max(values) if values else None,
                 "dropped_frames_delta": dropped_delta,
                 "queue_overflow_drops_delta": overflow_delta,
                 "strength_bucket_distribution": bucket_distribution,
@@ -467,10 +463,7 @@ def _locations_connected_throughout_run(samples: list[dict[str, Any]]) -> set[st
     run_duration = max(0.0, run_end - run_start)
     edge_tolerance_s = max(0.75, min(3.0, run_duration * 0.08))
 
-    counts_by_location = {
-        location: len(times)
-        for location, times in by_location_times.items()
-    }
+    counts_by_location = {location: len(times) for location, times in by_location_times.items()}
     max_count = max(counts_by_location.values()) if counts_by_location else 0
     min_required_count = int(max_count * 0.80) if max_count >= 5 else 1
 
@@ -818,8 +811,8 @@ def _merge_test_plan(
 ) -> list[dict[str, object]]:
     # Priority ordering: inspection/visual first, then balance/runout, then deeper
     ACTION_PRIORITY = {
-        "wheel_tire_condition": 1,       # visual inspection – least invasive
-        "wheel_balance_and_runout": 2,    # balance/runout check
+        "wheel_tire_condition": 1,  # visual inspection – least invasive
+        "wheel_balance_and_runout": 2,  # balance/runout check
         "engine_mounts_and_accessories": 3,
         "driveline_mounts_and_fasteners": 3,
         "driveline_inspection": 4,
@@ -877,9 +870,9 @@ def _merge_test_plan(
         ordered.append(step)
 
     # Sort by priority (least-invasive first), then preserve original order as tiebreak
-    ordered.sort(key=lambda s: ACTION_PRIORITY.get(
-        str(s.get("action_id") or "").strip().lower(), 99
-    ))
+    ordered.sort(
+        key=lambda s: ACTION_PRIORITY.get(str(s.get("action_id") or "").strip().lower(), 99)
+    )
 
     if ordered:
         return ordered[:5]
@@ -1293,6 +1286,7 @@ def _build_findings(
 # Confidence label helper
 # ---------------------------------------------------------------------------
 
+
 def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
     """Return (label_key, tone, pct_text) for a 0-1 confidence value.
 
@@ -1313,6 +1307,7 @@ def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
 # Top-cause selection with drop-off rule and source grouping
 # ---------------------------------------------------------------------------
 
+
 def select_top_causes(
     findings: list[dict[str, object]],
     *,
@@ -1322,7 +1317,8 @@ def select_top_causes(
     """Group findings by suspected_source, keep best per group, apply drop-off."""
     # Only consider non-reference findings
     diag_findings = [
-        f for f in findings
+        f
+        for f in findings
         if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
     ]
     if not diag_findings:
@@ -1373,24 +1369,24 @@ def select_top_causes(
     # Build output in the format expected by the PDF
     result: list[dict[str, object]] = []
     for rep in selected:
-        label_key, tone, pct_text = confidence_label(
-            float(rep.get("confidence_0_to_1") or 0)
+        label_key, tone, pct_text = confidence_label(float(rep.get("confidence_0_to_1") or 0))
+        result.append(
+            {
+                "finding_id": rep.get("finding_id"),
+                "source": rep.get("suspected_source"),
+                "confidence": rep.get("confidence_0_to_1"),
+                "confidence_label_key": label_key,
+                "confidence_tone": tone,
+                "confidence_pct": pct_text,
+                "order": rep.get("frequency_hz_or_order"),
+                "signatures_observed": rep.get("signatures_observed", []),
+                "grouped_count": rep.get("grouped_count", 1),
+                "strongest_location": rep.get("strongest_location"),
+                "dominance_ratio": rep.get("dominance_ratio"),
+                "strongest_speed_band": rep.get("strongest_speed_band"),
+                "weak_spatial_separation": rep.get("weak_spatial_separation"),
+            }
         )
-        result.append({
-            "finding_id": rep.get("finding_id"),
-            "source": rep.get("suspected_source"),
-            "confidence": rep.get("confidence_0_to_1"),
-            "confidence_label_key": label_key,
-            "confidence_tone": tone,
-            "confidence_pct": pct_text,
-            "order": rep.get("frequency_hz_or_order"),
-            "signatures_observed": rep.get("signatures_observed", []),
-            "grouped_count": rep.get("grouped_count", 1),
-            "strongest_location": rep.get("strongest_location"),
-            "dominance_ratio": rep.get("dominance_ratio"),
-            "strongest_speed_band": rep.get("strongest_speed_band"),
-            "weak_spatial_separation": rep.get("weak_spatial_separation"),
-        })
     return result
 
 

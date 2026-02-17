@@ -109,7 +109,6 @@ def test_spectrum_payload_missing_client() -> None:
         "y": [],
         "z": [],
         "combined_spectrum_amp_g": [],
-        "combined": [],
         "strength_metrics": {},
     }
 

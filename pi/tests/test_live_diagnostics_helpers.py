@@ -110,29 +110,41 @@ def test_engine_snapshot_has_expected_keys() -> None:
 
 def test_should_emit_on_new_bucket() -> None:
     from vibesensor.live_diagnostics import _TrackerLevelState
+
     engine = LiveDiagnosticsEngine()
     tracker = _TrackerLevelState()
-    assert engine._should_emit_event(
-        tracker=tracker, previous_bucket=None, current_bucket="l1", now_ms=1000
-    ) is True
+    assert (
+        engine._should_emit_event(
+            tracker=tracker, previous_bucket=None, current_bucket="l1", now_ms=1000
+        )
+        is True
+    )
 
 
 def test_should_not_emit_on_no_bucket() -> None:
     from vibesensor.live_diagnostics import _TrackerLevelState
+
     engine = LiveDiagnosticsEngine()
     tracker = _TrackerLevelState()
-    assert engine._should_emit_event(
-        tracker=tracker, previous_bucket=None, current_bucket=None, now_ms=1000
-    ) is False
+    assert (
+        engine._should_emit_event(
+            tracker=tracker, previous_bucket=None, current_bucket=None, now_ms=1000
+        )
+        is False
+    )
 
 
 def test_should_emit_on_escalation() -> None:
     from vibesensor.live_diagnostics import _TrackerLevelState
+
     engine = LiveDiagnosticsEngine()
     tracker = _TrackerLevelState()
-    assert engine._should_emit_event(
-        tracker=tracker, previous_bucket="l1", current_bucket="l3", now_ms=1000
-    ) is True
+    assert (
+        engine._should_emit_event(
+            tracker=tracker, previous_bucket="l1", current_bucket="l3", now_ms=1000
+        )
+        is True
+    )
 
 
 # -- _matrix_transition_bucket -------------------------------------------------
