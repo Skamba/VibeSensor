@@ -53,12 +53,31 @@
             <div class="card__header">
               <div class="card__title" data-i18n="chart.spectrum_title">Multi-Sensor Blended Spectrum</div>
             </div>
-            <div id="specChartWrap" class="spectrum-wrap">
-              <div id="specChart"></div>
-              <div id="spectrumOverlay" class="empty-state" hidden>Waiting for sensor data...</div>
+            <div class="spectrum-split">
+              <div class="spectrum-split__chart">
+                <div id="specChartWrap" class="spectrum-wrap">
+                  <div id="specChart"></div>
+                  <div id="spectrumOverlay" class="empty-state" hidden>Waiting for sensor data...</div>
+                </div>
+                <div id="legend" class="legend"></div>
+                <div id="bandLegend" class="legend band-legend"></div>
+              </div>
+              <div class="spectrum-split__map">
+                <div class="car-map" id="liveCarMap">
+                  <svg class="car-map__svg" viewBox="0 0 200 340" aria-label="Car top-down map">
+                    <rect x="30" y="30" width="140" height="280" rx="50" ry="50" class="car-map__body" />
+                    <rect x="20" y="60" width="18" height="50" rx="8" class="car-map__wheel" />
+                    <rect x="162" y="60" width="18" height="50" rx="8" class="car-map__wheel" />
+                    <rect x="20" y="215" width="18" height="50" rx="8" class="car-map__wheel" />
+                    <rect x="162" y="215" width="18" height="50" rx="8" class="car-map__wheel" />
+                    <line x1="100" y1="130" x2="100" y2="230" class="car-map__axle" />
+                    <rect x="60" y="30" width="80" height="45" rx="20" class="car-map__windshield" />
+                    <rect x="60" y="270" width="80" height="35" rx="15" class="car-map__windshield" />
+                  </svg>
+                  <div class="car-map__dots" id="liveCarMapDots"></div>
+                </div>
+              </div>
             </div>
-            <div id="legend" class="legend"></div>
-            <div id="bandLegend" class="legend band-legend"></div>
           </div>
 
           <div class="dashboard-grid__side">

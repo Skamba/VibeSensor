@@ -77,6 +77,7 @@ import { WsClient, type WsUiState } from "./ws";
     bandLegend: document.getElementById("bandLegend"),
     strengthChart: document.getElementById("strengthChart"),
     strengthTooltip: document.getElementById("strengthTooltip"),
+    liveCarMapDots: document.getElementById("liveCarMapDots"),
     // Analysis tab inputs
     wheelBandwidthInput: document.getElementById("wheelBandwidthInput"),
     driveshaftBandwidthInput: document.getElementById("driveshaftBandwidthInput"),
@@ -171,7 +172,32 @@ import { WsClient, type WsUiState } from "./ws";
       engine: [],
       other: [],
     },
+    // Car map rolling window
+    carMapSamples: [] as Array<{ ts: number; byLocation: Record<string, number> }>,
+    carMapPulseLocations: new Set<string>(),
   };
+
+  // Car map location positions (% from top-left of the car-map container).
+  // Uses the report's canonical location codes from pi/vibesensor/locations.py.
+  const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
+    front_left_wheel:     { top: 24, left: 15 },
+    front_right_wheel:    { top: 24, left: 85 },
+    rear_left_wheel:      { top: 72, left: 15 },
+    rear_right_wheel:     { top: 72, left: 85 },
+    engine_bay:           { top: 18, left: 50 },
+    front_subframe:       { top: 30, left: 50 },
+    transmission:         { top: 42, left: 50 },
+    driveshaft_tunnel:    { top: 52, left: 50 },
+    driver_seat:          { top: 44, left: 35 },
+    front_passenger_seat: { top: 44, left: 65 },
+    rear_left_seat:       { top: 60, left: 32 },
+    rear_center_seat:     { top: 60, left: 50 },
+    rear_right_seat:      { top: 60, left: 68 },
+    rear_subframe:        { top: 72, left: 50 },
+    trunk:                { top: 84, left: 50 },
+  };
+
+  const CAR_MAP_WINDOW_MS = 10_000;
 
   function t(key: string, vars?: Record<string, unknown>) {
     return I18N.get(state.lang, key, vars);
@@ -933,6 +959,87 @@ import { WsClient, type WsUiState } from "./ws";
     );
   }
 
+  // ── Live car map ──────────────────────────────────────────────
+
+  function pushCarMapSample(byLocation: Record<string, number>) {
+    const now = Date.now();
+    state.carMapSamples.push({ ts: now, byLocation });
+    const cutoff = now - CAR_MAP_WINDOW_MS;
+    state.carMapSamples = state.carMapSamples.filter((s) => s.ts >= cutoff);
+  }
+
+  function carMapIntensityByLocation(): Record<string, number> {
+    if (!state.carMapSamples.length) return {};
+    const accum: Record<string, number[]> = {};
+    for (const sample of state.carMapSamples) {
+      for (const [loc, val] of Object.entries(sample.byLocation) as Array<[string, number]>) {
+        if (!accum[loc]) accum[loc] = [];
+        accum[loc].push(val);
+      }
+    }
+    const result: Record<string, number> = {};
+    for (const [loc, values] of Object.entries(accum)) {
+      // Use the same metric as the PDF report: p95 of accumulated intensities
+      const sorted = [...values].sort((a, b) => a - b);
+      const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+      result[loc] = sorted[idx];
+    }
+    return result;
+  }
+
+  function triggerCarMapPulse(locationCodes: string[]) {
+    for (const code of locationCodes) {
+      state.carMapPulseLocations.add(code);
+    }
+    renderCarMap();
+    // Clear pulse after animation completes
+    setTimeout(() => {
+      for (const code of locationCodes) {
+        state.carMapPulseLocations.delete(code);
+      }
+      renderCarMap();
+    }, 750);
+  }
+
+  function renderCarMap() {
+    if (!els.liveCarMapDots) return;
+    const intensity = carMapIntensityByLocation();
+    const values = Object.values(intensity);
+    const min = values.length ? Math.min(...values) : 0;
+    const max = values.length ? Math.max(...values) : 0;
+
+    const dots: string[] = [];
+    for (const [code, pos] of Object.entries(CAR_MAP_POSITIONS)) {
+      const val = intensity[code];
+      const hasVal = typeof val === "number" && Number.isFinite(val) && val > 0;
+      const norm = hasVal ? normalizeUnit(val, min, max) : 0;
+      const fill = hasVal ? heatColor(norm) : "var(--border)";
+      const visible = hasVal ? " car-map-dot--visible" : "";
+      const pulse = state.carMapPulseLocations.has(code) ? " car-map-dot--pulse" : "";
+      dots.push(
+        `<div class="car-map-dot${visible}${pulse}" style="top:${pos.top}%;left:${pos.left}%;background:${fill}" data-location="${code}"></div>`
+      );
+    }
+    els.liveCarMapDots.innerHTML = dots.join("");
+  }
+
+  function extractLiveLocationIntensity(): Record<string, number> {
+    const byLocation: Record<string, number> = {};
+    if (!state.spectra?.clients || !state.clients?.length) return byLocation;
+    for (const client of state.clients) {
+      const code = locationCodeForClient(client);
+      if (!code) continue;
+      const spec = state.spectra.clients[client.id];
+      if (!spec?.strength_metrics) continue;
+      // Use the same metric as the PDF: strength_peak_band_rms_amp_g
+      const amp = Number(spec.strength_metrics.strength_peak_band_rms_amp_g);
+      if (Number.isFinite(amp) && amp > 0) {
+        byLocation[code] = Math.max(byLocation[code] || 0, amp);
+      }
+    }
+    return byLocation;
+  }
+
   function summarizeFindings(summary) {
     const findings = Array.isArray(summary?.findings) ? summary.findings : [];
     return findings.slice(0, 3);
@@ -1531,13 +1638,27 @@ import { WsClient, type WsUiState } from "./ws";
     renderMatrix();
 
     const events = Array.isArray(diagnostics.events) ? diagnostics.events : [];
+    const eventPulseLocations: string[] = [];
     if (events.length) {
       for (const ev of events.slice(0, 6)) {
         const labels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels.join(", ") : (ev.sensor_label || "--");
         pushVibrationMessage(
           `Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(ev.severity_db || 0, 1)} dB) @ ${fmt(ev.peak_hz || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`,
         );
+        // Find location codes for pulse animation
+        const sensorLabels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels : ev.sensor_label ? [ev.sensor_label] : [];
+        for (const label of sensorLabels) {
+          for (const client of state.clients) {
+            if ((client.name || client.id) === label) {
+              const code = locationCodeForClient(client);
+              if (code) eventPulseLocations.push(code);
+            }
+          }
+        }
       }
+    }
+    if (eventPulseLocations.length) {
+      triggerCarMapPulse(eventPulseLocations);
     }
 
     const levels = diagnostics.levels || {};
@@ -1839,6 +1960,12 @@ import { WsClient, type WsUiState } from "./ws";
     const hasFreshFrames = hasFreshSensorFrames(state.clients);
     applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
+    // Update live car map with rolling intensity data
+    const liveIntensity = extractLiveLocationIntensity();
+    if (Object.keys(liveIntensity).length) {
+      pushCarMapSample(liveIntensity);
+    }
+    renderCarMap();
     if (adapted.spectra) {
       renderSpectrum();
     } else {
