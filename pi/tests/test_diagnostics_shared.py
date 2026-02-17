@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from vibesensor.analysis.strength_metrics import compute_strength_metrics
+from vibesensor.constants import MPS_TO_KMH
 from vibesensor.diagnostics_shared import (
     build_diagnostic_settings,
     classify_peak_hz,
@@ -141,7 +142,7 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
             "current_gear_ratio": settings["current_gear_ratio"],
         }
     ]
-    speed_kmh = speed_mps * 3.6
+    speed_kmh = speed_mps * MPS_TO_KMH
     for idx in range(40):
         records.append(
             {
@@ -187,7 +188,7 @@ def test_live_top_finding_uses_same_report_finding_logic() -> None:
     orders = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
     assert orders is not None
     wheel_hz = orders["wheel_hz"]
-    speed_kmh = speed_mps * 3.6
+    speed_kmh = speed_mps * MPS_TO_KMH
 
     metadata = {
         "run_id": "live-run",

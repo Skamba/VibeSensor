@@ -7,6 +7,7 @@ from typing import Any
 from .analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     tire_circumference_m_from_spec,
+    wheel_hz_from_speed_mps,
 )
 from .runlog import as_float_or_none as _as_float
 from .strength_bands import (
@@ -80,7 +81,10 @@ def vehicle_orders_hz(
     if final_drive_ratio is None or final_drive_ratio <= 0 or gear_ratio is None or gear_ratio <= 0:
         return None
 
-    wheel_hz = speed_mps / circumference
+    whz = wheel_hz_from_speed_mps(speed_mps, circumference)
+    if whz is None:
+        return None
+    wheel_hz = whz
     drive_hz = wheel_hz * final_drive_ratio
     engine_hz = drive_hz * gear_ratio
     speed_uncertainty_pct = max(0.0, spec_settings["speed_uncertainty_pct"]) / 100.0

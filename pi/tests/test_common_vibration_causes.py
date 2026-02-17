@@ -5,6 +5,7 @@ from math import pi
 
 import pytest
 
+from vibesensor.constants import KMH_TO_MPS
 from vibesensor.diagnostics_shared import (
     build_diagnostic_settings,
     classify_peak_hz,
@@ -22,7 +23,7 @@ Common-cause cases are based on recurring issues documented in:
 
 
 SPEED_KMH = 100.0
-SPEED_MPS = SPEED_KMH / 3.6
+SPEED_MPS = SPEED_KMH * KMH_TO_MPS
 
 
 @dataclass(frozen=True, slots=True)

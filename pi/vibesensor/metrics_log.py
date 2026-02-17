@@ -9,7 +9,13 @@ from pathlib import Path
 from threading import RLock
 from uuid import uuid4
 
-from .analysis_settings import AnalysisSettingsStore, tire_circumference_m_from_spec
+from .analysis_settings import (
+    AnalysisSettingsStore,
+    engine_rpm_from_wheel_hz,
+    tire_circumference_m_from_spec,
+    wheel_hz_from_speed_kmh,
+)
+from .constants import MPS_TO_KMH
 from .gps_speed import GPSSpeedMonitor
 from .processing import SignalProcessor
 from .registry import ClientRegistry
@@ -221,10 +227,10 @@ class MetricsLogger:
         gps_speed_mps = self.gps_monitor.speed_mps
         effective_speed_mps = self.gps_monitor.effective_speed_mps
         gps_speed_kmh = (
-            (float(gps_speed_mps) * 3.6) if isinstance(gps_speed_mps, (int, float)) else None
+            (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, (int, float)) else None
         )
         speed_kmh = (
-            (float(effective_speed_mps) * 3.6)
+            (float(effective_speed_mps) * MPS_TO_KMH)
             if isinstance(effective_speed_mps, (int, float))
             else None
         )
@@ -243,8 +249,9 @@ class MetricsLogger:
             and isinstance(gear_ratio, float)
             and gear_ratio > 0
         ):
-            wheel_hz = (speed_kmh / 3.6) / tire_circumference_m
-            engine_rpm_estimated = wheel_hz * final_drive_ratio * gear_ratio * 60.0
+            whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
+            if whz is not None:
+                engine_rpm_estimated = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
 
         records: list[dict[str, object]] = []
         active_client_ids = sorted(set(self.registry.active_client_ids()))

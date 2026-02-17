@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from time import monotonic
 from typing import Any
 
+from .constants import SILENCE_DB
 from .diagnostics_shared import (
     build_diagnostic_settings,
     classify_peak_hz,
@@ -88,7 +89,7 @@ class _RecentEvent:
 
 @dataclass(slots=True)
 class _TrackerLevelState:
-    last_strength_db: float = -120.0
+    last_strength_db: float = SILENCE_DB
     last_band_rms_g: float = 0.0
     current_bucket_key: str | None = None
     last_update_ms: int = 0
@@ -369,7 +370,7 @@ class LiveDiagnosticsEngine:
             if tracker_key in seen_tracker_keys:
                 continue
             severity = severity_from_peak(
-                strength_db=-120.0,
+                strength_db=SILENCE_DB,
                 band_rms=0.0,
                 sensor_count=1,
                 prior_state=tracker.severity_state,
@@ -380,7 +381,7 @@ class LiveDiagnosticsEngine:
             tracker.current_bucket_key = (
                 str(severity["key"]) if severity and severity.get("key") else None
             )
-            tracker.last_strength_db = float((severity or {}).get("db") or -120.0)
+            tracker.last_strength_db = float((severity or {}).get("db") or SILENCE_DB)
 
         # Source/sensor active levels come from continuous tracker state (not emitted events).
         for tracker_key, tracker in self._sensor_trackers.items():
@@ -516,7 +517,7 @@ class LiveDiagnosticsEngine:
             if combined_key in seen_combined_keys:
                 continue
             severity = severity_from_peak(
-                strength_db=-120.0,
+                strength_db=SILENCE_DB,
                 band_rms=0.0,
                 sensor_count=2,
                 prior_state=tracker.severity_state,
@@ -527,7 +528,7 @@ class LiveDiagnosticsEngine:
             tracker.current_bucket_key = (
                 str(severity["key"]) if severity and severity.get("key") else None
             )
-            tracker.last_strength_db = float((severity or {}).get("db") or -120.0)
+            tracker.last_strength_db = float((severity or {}).get("db") or SILENCE_DB)
 
         self._active_levels_by_source = active_by_source
         self._active_levels_by_sensor = active_by_sensor
