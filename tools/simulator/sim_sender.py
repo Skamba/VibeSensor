@@ -18,6 +18,11 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "pi"))
 
+from vibesensor.analysis_settings import (  # noqa: E402
+    tire_circumference_m_from_spec,
+    wheel_hz_from_speed_mps,
+)
+from vibesensor.constants import KMH_TO_MPS  # noqa: E402
 from vibesensor.protocol import (  # noqa: E402
     CMD_IDENTIFY,
     MSG_CMD,
@@ -37,12 +42,14 @@ DEFAULT_GEAR_RATIO = 0.64
 
 
 def _calc_default_orders() -> dict[str, float]:
-    speed_mps = DEFAULT_SPEED_KMH / 3.6
-    diameter_m = (
-        DEFAULT_RIM_IN * 25.4
-        + 2.0 * DEFAULT_TIRE_WIDTH_MM * (DEFAULT_TIRE_ASPECT_PCT / 100.0)
-    ) / 1000.0
-    wheel_1x = speed_mps / (np.pi * diameter_m)
+    speed_mps = DEFAULT_SPEED_KMH * KMH_TO_MPS
+    circumference = tire_circumference_m_from_spec(
+        DEFAULT_TIRE_WIDTH_MM, DEFAULT_TIRE_ASPECT_PCT, DEFAULT_RIM_IN
+    )
+    assert circumference is not None
+    whz = wheel_hz_from_speed_mps(speed_mps, circumference)
+    assert whz is not None
+    wheel_1x = whz
     shaft_1x = wheel_1x * DEFAULT_FINAL_DRIVE
     engine_1x = shaft_1x * DEFAULT_GEAR_RATIO
     return {
