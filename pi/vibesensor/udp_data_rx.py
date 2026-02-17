@@ -45,8 +45,9 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 ack_payload = pack_data_ack(msg.client_id, msg.seq)
                 self.transport.sendto(ack_payload, addr)
         except Exception:
-            LOGGER.debug("Error processing datagram from %s: %s", addr, msg.client_id.hex(),
-                         exc_info=True)
+            LOGGER.debug(
+                "Error processing datagram from %s: %s", addr, msg.client_id.hex(), exc_info=True
+            )
 
 
 async def start_udp_data_receiver(
