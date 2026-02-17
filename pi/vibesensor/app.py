@@ -23,6 +23,7 @@ from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
 from .registry import ClientRegistry
 from .sensor_units import get_accel_scale_g_per_lsb
+from .settings_store import SettingsStore
 from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
 from .ws_hub import WebSocketHub
@@ -41,6 +42,7 @@ class RuntimeState:
     analysis_settings: AnalysisSettingsStore
     metrics_logger: MetricsLogger
     live_diagnostics: LiveDiagnosticsEngine
+    settings_store: SettingsStore
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
@@ -128,6 +130,13 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     )
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     analysis_settings = AnalysisSettingsStore()
+    settings_persist = config.clients_json_path.parent / "settings.json"
+    settings_store = SettingsStore(persist_path=settings_persist)
+    # Sync initial settings into analysis store and GPS monitor
+    analysis_settings.update(settings_store.active_car_aspects())
+    ss = settings_store.get_speed_source()
+    if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
+        gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
     metrics_logger = MetricsLogger(
         enabled=config.logging.log_metrics,
         log_path=config.logging.metrics_log_path,
@@ -155,6 +164,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         analysis_settings=analysis_settings,
         metrics_logger=metrics_logger,
         live_diagnostics=live_diagnostics,
+        settings_store=settings_store,
     )
 
     async def processing_loop() -> None:
