@@ -1,9 +1,66 @@
 from __future__ import annotations
 
+import logging
 from math import pi
 from threading import RLock
 
 from .constants import KMH_TO_MPS
+
+LOGGER = logging.getLogger(__name__)
+
+# Validation sets for analysis/car aspect settings (single source of truth).
+POSITIVE_REQUIRED_KEYS: frozenset[str] = frozenset(
+    {
+        "tire_width_mm",
+        "tire_aspect_pct",
+        "rim_in",
+        "final_drive_ratio",
+        "current_gear_ratio",
+        "wheel_bandwidth_pct",
+        "driveshaft_bandwidth_pct",
+        "engine_bandwidth_pct",
+        "max_band_half_width_pct",
+    }
+)
+NON_NEGATIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "speed_uncertainty_pct",
+        "tire_diameter_uncertainty_pct",
+        "final_drive_uncertainty_pct",
+        "gear_uncertainty_pct",
+        "min_abs_band_hz",
+    }
+)
+
+
+def sanitize_settings(
+    payload: dict[str, object],
+    allowed_keys: dict[str, float] | None = None,
+) -> dict[str, float]:
+    """Validate and filter analysis settings, dropping invalid values with logging.
+
+    *allowed_keys* defaults to :data:`DEFAULT_ANALYSIS_SETTINGS`.
+    """
+    allowed = allowed_keys if allowed_keys is not None else DEFAULT_ANALYSIS_SETTINGS
+    out: dict[str, float] = {}
+    for key in allowed:
+        raw = payload.get(key)
+        if raw is None:
+            continue
+        try:
+            value = float(raw)  # type: ignore[arg-type]
+        except (TypeError, ValueError):
+            LOGGER.debug("Dropping non-numeric analysis setting %s=%r", key, raw)
+            continue
+        if key in POSITIVE_REQUIRED_KEYS and value <= 0:
+            LOGGER.debug("Dropping non-positive analysis setting %s=%r", key, value)
+            continue
+        if key in NON_NEGATIVE_KEYS and value < 0:
+            LOGGER.debug("Dropping negative analysis setting %s=%r", key, value)
+            continue
+        out[key] = value
+    return out
+
 
 DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
     "tire_width_mm": 285.0,
@@ -66,36 +123,7 @@ class AnalysisSettingsStore:
 
     @staticmethod
     def _sanitize(payload: dict[str, float]) -> dict[str, float]:
-        out: dict[str, float] = {}
-        positive_required = {
-            "tire_width_mm",
-            "tire_aspect_pct",
-            "rim_in",
-            "final_drive_ratio",
-            "current_gear_ratio",
-            "wheel_bandwidth_pct",
-            "driveshaft_bandwidth_pct",
-            "engine_bandwidth_pct",
-            "max_band_half_width_pct",
-        }
-        non_negative = {
-            "speed_uncertainty_pct",
-            "tire_diameter_uncertainty_pct",
-            "final_drive_uncertainty_pct",
-            "gear_uncertainty_pct",
-            "min_abs_band_hz",
-        }
-        for key in DEFAULT_ANALYSIS_SETTINGS:
-            raw = payload.get(key)
-            if raw is None:
-                continue
-            value = float(raw)
-            if key in positive_required and value <= 0:
-                continue
-            if key in non_negative and value < 0:
-                continue
-            out[key] = value
-        return out
+        return sanitize_settings(payload)
 
     def snapshot(self) -> dict[str, float]:
         with self._lock:

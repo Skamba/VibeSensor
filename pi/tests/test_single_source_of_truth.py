@@ -336,3 +336,39 @@ def test_protocol_docs_byte_sizes_match() -> None:
         assert doc_value == value, (
             f"docs/protocol.md says {label} = {doc_value} but code says {value}"
         )
+
+
+def test_sanitize_settings_is_single_source() -> None:
+    """settings_store._sanitize_aspects must use the canonical sanitize_settings."""
+    import inspect
+
+    from vibesensor.analysis_settings import sanitize_settings
+    from vibesensor.settings_store import _sanitize_aspects
+
+    # The function should delegate to sanitize_settings (check source contains the call)
+    source = inspect.getsource(_sanitize_aspects)
+    assert "sanitize_settings" in source, (
+        "_sanitize_aspects must delegate to sanitize_settings from analysis_settings"
+    )
+
+    # Both must use the same validation logic — verify on a known-invalid input
+    bad = {"tire_width_mm": -1.0, "rim_in": 21.0}
+    assert sanitize_settings(bad) == _sanitize_aspects(bad)
+
+
+def test_sanitize_settings_rejects_invalid() -> None:
+    """sanitize_settings must drop invalid values."""
+    from vibesensor.analysis_settings import sanitize_settings
+
+    result = sanitize_settings(
+        {
+            "tire_width_mm": -1.0,  # positive required, should be dropped
+            "rim_in": 21.0,  # valid
+            "speed_uncertainty_pct": -0.5,  # non-negative, should be dropped
+            "final_drive_ratio": "not_a_number",  # invalid type
+        }
+    )
+    assert "tire_width_mm" not in result
+    assert "speed_uncertainty_pct" not in result
+    assert "final_drive_ratio" not in result
+    assert result["rim_in"] == 21.0
