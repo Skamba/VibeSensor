@@ -51,6 +51,20 @@ export async function setAnalysisSettings(payload: Record<string, number>): Prom
   });
 }
 
+// -- Car library API ----------------------------------------------------------
+
+export async function getCarLibraryBrands(): Promise<any> {
+  return apiJson("/api/car-library/brands");
+}
+
+export async function getCarLibraryTypes(brand: string): Promise<any> {
+  return apiJson(`/api/car-library/types?brand=${encodeURIComponent(brand)}`);
+}
+
+export async function getCarLibraryModels(brand: string, type: string): Promise<any> {
+  return apiJson(`/api/car-library/models?brand=${encodeURIComponent(brand)}&type=${encodeURIComponent(type)}`);
+}
+
 // -- New settings API (3-tab model) -------------------------------------------
 
 export async function getSettingsCars(): Promise<any> {

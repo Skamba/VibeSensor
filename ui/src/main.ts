@@ -5,6 +5,9 @@ import * as I18N from "./i18n";
 import {
   deleteLog as deleteLogApi,
   getAnalysisSettings,
+  getCarLibraryBrands,
+  getCarLibraryModels,
+  getCarLibraryTypes,
   getClientLocations,
   getLogInsights,
   getLoggingStatus,
@@ -74,11 +77,7 @@ import { WsClient, type WsUiState } from "./ws";
     bandLegend: document.getElementById("bandLegend"),
     strengthChart: document.getElementById("strengthChart"),
     strengthTooltip: document.getElementById("strengthTooltip"),
-    tireWidthInput: document.getElementById("tireWidthInput"),
-    tireAspectInput: document.getElementById("tireAspectInput"),
-    rimInput: document.getElementById("rimInput"),
-    finalDriveInput: document.getElementById("finalDriveInput"),
-    gearRatioInput: document.getElementById("gearRatioInput"),
+    // Analysis tab inputs
     wheelBandwidthInput: document.getElementById("wheelBandwidthInput"),
     driveshaftBandwidthInput: document.getElementById("driveshaftBandwidthInput"),
     engineBandwidthInput: document.getElementById("engineBandwidthInput"),
@@ -88,13 +87,13 @@ import { WsClient, type WsUiState } from "./ws";
     gearUncertaintyInput: document.getElementById("gearUncertaintyInput"),
     minAbsBandHzInput: document.getElementById("minAbsBandHzInput"),
     maxBandHalfWidthInput: document.getElementById("maxBandHalfWidthInput"),
-    saveCarSettingsBtn: document.getElementById("saveCarSettingsBtn"),
+    saveAnalysisBtn: document.getElementById("saveAnalysisBtn"),
     // Car tab
-    activeCarSelect: document.getElementById("activeCarSelect"),
+    carListBody: document.getElementById("carListBody"),
     addCarBtn: document.getElementById("addCarBtn"),
-    deleteCarBtn: document.getElementById("deleteCarBtn"),
-    carNameInput: document.getElementById("carNameInput"),
-    carTypeInput: document.getElementById("carTypeInput"),
+    addCarWizard: document.getElementById("addCarWizard"),
+    wizardCloseBtn: document.getElementById("wizardCloseBtn"),
+    wizardBackBtn: document.getElementById("wizardBackBtn"),
     // Speed source tab
     manualSpeedInput: document.getElementById("manualSpeedInput"),
     saveSpeedSourceBtn: document.getElementById("saveSpeedSourceBtn"),
@@ -311,20 +310,16 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function syncSettingsInputs() {
-    els.tireWidthInput.value = String(state.vehicleSettings.tire_width_mm);
-    els.tireAspectInput.value = String(state.vehicleSettings.tire_aspect_pct);
-    els.rimInput.value = String(state.vehicleSettings.rim_in);
-    els.finalDriveInput.value = String(state.vehicleSettings.final_drive_ratio);
-    els.gearRatioInput.value = String(state.vehicleSettings.current_gear_ratio);
-    els.wheelBandwidthInput.value = String(state.vehicleSettings.wheel_bandwidth_pct);
-    els.driveshaftBandwidthInput.value = String(state.vehicleSettings.driveshaft_bandwidth_pct);
-    els.engineBandwidthInput.value = String(state.vehicleSettings.engine_bandwidth_pct);
-    els.speedUncertaintyInput.value = String(state.vehicleSettings.speed_uncertainty_pct);
-    els.tireDiameterUncertaintyInput.value = String(state.vehicleSettings.tire_diameter_uncertainty_pct);
-    els.finalDriveUncertaintyInput.value = String(state.vehicleSettings.final_drive_uncertainty_pct);
-    els.gearUncertaintyInput.value = String(state.vehicleSettings.gear_uncertainty_pct);
-    els.minAbsBandHzInput.value = String(state.vehicleSettings.min_abs_band_hz);
-    els.maxBandHalfWidthInput.value = String(state.vehicleSettings.max_band_half_width_pct);
+    // Analysis tab inputs only (bandwidths + uncertainties)
+    if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(state.vehicleSettings.wheel_bandwidth_pct);
+    if (els.driveshaftBandwidthInput) els.driveshaftBandwidthInput.value = String(state.vehicleSettings.driveshaft_bandwidth_pct);
+    if (els.engineBandwidthInput) els.engineBandwidthInput.value = String(state.vehicleSettings.engine_bandwidth_pct);
+    if (els.speedUncertaintyInput) els.speedUncertaintyInput.value = String(state.vehicleSettings.speed_uncertainty_pct);
+    if (els.tireDiameterUncertaintyInput) els.tireDiameterUncertaintyInput.value = String(state.vehicleSettings.tire_diameter_uncertainty_pct);
+    if (els.finalDriveUncertaintyInput) els.finalDriveUncertaintyInput.value = String(state.vehicleSettings.final_drive_uncertainty_pct);
+    if (els.gearUncertaintyInput) els.gearUncertaintyInput.value = String(state.vehicleSettings.gear_uncertainty_pct);
+    if (els.minAbsBandHzInput) els.minAbsBandHzInput.value = String(state.vehicleSettings.min_abs_band_hz);
+    if (els.maxBandHalfWidthInput) els.maxBandHalfWidthInput.value = String(state.vehicleSettings.max_band_half_width_pct);
   }
 
   function setStatValue(container, value) {
@@ -754,18 +749,80 @@ import { WsClient, type WsUiState } from "./ws";
   }
 
   function syncCarSelector() {
-    if (!els.activeCarSelect) return;
-    els.activeCarSelect.innerHTML = state.cars
-      .map((car) => `<option value="${escapeHtml(car.id)}">${escapeHtml(car.name)}</option>`)
+    // Replaced by renderCarList
+    renderCarList();
+  }
+
+  function renderCarList() {
+    if (!els.carListBody) return;
+    if (!state.cars.length) {
+      els.carListBody.innerHTML = `<tr><td colspan="7">${escapeHtml(t("settings.car.no_cars"))}</td></tr>`;
+      return;
+    }
+    els.carListBody.innerHTML = state.cars
+      .map((car) => {
+        const isActive = car.id === state.activeCarId;
+        const a = car.aspects || {};
+        const tireStr = `${a.tire_width_mm || "?"}/${a.tire_aspect_pct || "?"}R${a.rim_in || "?"}`;
+        const driveStr = `${fmt(a.final_drive_ratio, 2)}`;
+        const gearStr = `${fmt(a.current_gear_ratio, 2)}`;
+        return `<tr data-car-id="${escapeHtml(car.id)}">
+          <td><span class="car-active-pill ${isActive ? "active" : "inactive"}">${isActive ? escapeHtml(t("settings.car.active_label")) : escapeHtml(t("settings.car.inactive_label"))}</span></td>
+          <td><strong>${escapeHtml(car.name)}</strong></td>
+          <td>${escapeHtml(car.type)}</td>
+          <td><code>${escapeHtml(tireStr)}</code></td>
+          <td>${escapeHtml(driveStr)}</td>
+          <td>${escapeHtml(gearStr)}</td>
+          <td class="car-list-actions">${isActive ? "" : `<button class="btn btn--success car-activate-btn" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t("settings.car.activate"))}</button>`}<button class="btn btn--danger car-delete-btn" data-car-id="${escapeHtml(car.id)}">${escapeHtml(t("settings.car.delete"))}</button></td>
+        </tr>`;
+      })
       .join("");
-    els.activeCarSelect.value = state.activeCarId || "";
+
+    els.carListBody.querySelectorAll(".car-activate-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const carId = btn.getAttribute("data-car-id");
+        if (!carId) return;
+        try {
+          const result = await setActiveSettingsCar(carId);
+          if (result?.cars) {
+            state.cars = result.cars;
+            state.activeCarId = result.activeCarId;
+            syncActiveCarToInputs();
+            renderCarList();
+            renderSpectrum();
+          }
+        } catch (_err) {}
+      });
+    });
+
+    els.carListBody.querySelectorAll(".car-delete-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const carId = btn.getAttribute("data-car-id");
+        if (!carId) return;
+        const car = state.cars.find((c) => c.id === carId);
+        if (state.cars.length <= 1) {
+          window.alert(t("settings.car.cannot_delete_last"));
+          return;
+        }
+        const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
+        if (!ok) return;
+        try {
+          const result = await deleteSettingsCar(carId);
+          if (result?.cars) {
+            state.cars = result.cars;
+            state.activeCarId = result.activeCarId;
+            syncActiveCarToInputs();
+            renderCarList();
+            renderSpectrum();
+          }
+        } catch (_err) {}
+      });
+    });
   }
 
   function syncActiveCarToInputs() {
     const car = state.cars.find((c) => c.id === state.activeCarId);
     if (!car) return;
-    if (els.carNameInput) els.carNameInput.value = car.name || "";
-    if (els.carTypeInput) els.carTypeInput.value = car.type || "";
     // Push aspects into vehicleSettings
     if (car.aspects && typeof car.aspects === "object") {
       for (const key of Object.keys(car.aspects)) {
@@ -1838,56 +1895,31 @@ import { WsClient, type WsUiState } from "./ws";
     }
   }
 
-  function saveSettingsFromInputs() {
-    const parsed = parseTireSpec({
-      widthMm: Number(els.tireWidthInput.value),
-      aspect: Number(els.tireAspectInput.value),
-      rimIn: Number(els.rimInput.value),
-    });
-    const finalDrive = Number(els.finalDriveInput.value);
-    const gear = Number(els.gearRatioInput.value);
-    const wheelBandwidth = Number(els.wheelBandwidthInput.value);
-    const driveshaftBandwidth = Number(els.driveshaftBandwidthInput.value);
-    const engineBandwidth = Number(els.engineBandwidthInput.value);
-    const speedUncertainty = Number(els.speedUncertaintyInput.value);
-    const tireDiameterUncertainty = Number(els.tireDiameterUncertaintyInput.value);
-    const finalDriveUncertainty = Number(els.finalDriveUncertaintyInput.value);
-    const gearUncertainty = Number(els.gearUncertaintyInput.value);
-    const minAbsBandHz = Number(els.minAbsBandHzInput.value);
-    const maxBandHalfWidth = Number(els.maxBandHalfWidthInput.value);
+  // -- Analysis tab save (bandwidths + uncertainty — NOT car-dependent) ---------
+
+  function saveAnalysisFromInputs() {
+    const wheelBandwidth = Number(els.wheelBandwidthInput?.value);
+    const driveshaftBandwidth = Number(els.driveshaftBandwidthInput?.value);
+    const engineBandwidth = Number(els.engineBandwidthInput?.value);
+    const speedUncertainty = Number(els.speedUncertaintyInput?.value);
+    const tireDiameterUncertainty = Number(els.tireDiameterUncertaintyInput?.value);
+    const finalDriveUncertainty = Number(els.finalDriveUncertaintyInput?.value);
+    const gearUncertainty = Number(els.gearUncertaintyInput?.value);
+    const minAbsBandHz = Number(els.minAbsBandHzInput?.value);
+    const maxBandHalfWidth = Number(els.maxBandHalfWidthInput?.value);
     const validBandwidths =
-      wheelBandwidth > 0 &&
-      wheelBandwidth <= 40 &&
-      driveshaftBandwidth > 0 &&
-      driveshaftBandwidth <= 40 &&
-      engineBandwidth > 0 &&
-      engineBandwidth <= 40;
+      wheelBandwidth > 0 && wheelBandwidth <= 40 &&
+      driveshaftBandwidth > 0 && driveshaftBandwidth <= 40 &&
+      engineBandwidth > 0 && engineBandwidth <= 40;
     const validUncertainty =
-      speedUncertainty >= 0 &&
-      speedUncertainty <= 20 &&
-      tireDiameterUncertainty >= 0 &&
-      tireDiameterUncertainty <= 20 &&
-      finalDriveUncertainty >= 0 &&
-      finalDriveUncertainty <= 10 &&
-      gearUncertainty >= 0 &&
-      gearUncertainty <= 20;
+      speedUncertainty >= 0 && speedUncertainty <= 20 &&
+      tireDiameterUncertainty >= 0 && tireDiameterUncertainty <= 20 &&
+      finalDriveUncertainty >= 0 && finalDriveUncertainty <= 10 &&
+      gearUncertainty >= 0 && gearUncertainty <= 20;
     const validBandLimits =
       minAbsBandHz >= 0 && minAbsBandHz <= 10 && maxBandHalfWidth > 0 && maxBandHalfWidth <= 25;
-    if (
-      !parsed ||
-      !(finalDrive > 0 && gear > 0) ||
-      !validBandwidths ||
-      !validUncertainty ||
-      !validBandLimits
-    ) {
-      return;
-    }
+    if (!validBandwidths || !validUncertainty || !validBandLimits) return;
 
-    state.vehicleSettings.tire_width_mm = parsed.widthMm;
-    state.vehicleSettings.tire_aspect_pct = parsed.aspect;
-    state.vehicleSettings.rim_in = parsed.rimIn;
-    state.vehicleSettings.final_drive_ratio = finalDrive;
-    state.vehicleSettings.current_gear_ratio = gear;
     state.vehicleSettings.wheel_bandwidth_pct = wheelBandwidth;
     state.vehicleSettings.driveshaft_bandwidth_pct = driveshaftBandwidth;
     state.vehicleSettings.engine_bandwidth_pct = engineBandwidth;
@@ -1899,25 +1931,7 @@ import { WsClient, type WsUiState } from "./ws";
     state.vehicleSettings.max_band_half_width_pct = maxBandHalfWidth;
     saveVehicleSettings();
     void syncAnalysisSettingsToServer();
-
-    // Also save car name, type, and aspects to server
-    const carName = (els.carNameInput?.value || "").trim();
-    const carType = (els.carTypeInput?.value || "").trim();
-    if (state.activeCarId) {
-      void updateSettingsCar(state.activeCarId, {
-        name: carName || undefined,
-        type: carType || undefined,
-        aspects: { ...state.vehicleSettings },
-      }).then((result) => {
-        if (result?.cars) {
-          state.cars = result.cars;
-          state.activeCarId = result.activeCarId;
-          syncCarSelector();
-        }
-      }).catch(() => {});
-    }
     renderSpectrum();
-    renderSpeedReadout();
   }
 
   function saveSpeedSourceFromInputs() {
@@ -1954,70 +1968,250 @@ import { WsClient, type WsUiState } from "./ws";
     });
   });
 
-  // -- Car management buttons --------------------------------------------------
+  // -- Add Car Wizard ---------------------------------------------------------
 
-  if (els.activeCarSelect) {
-    els.activeCarSelect.addEventListener("change", async () => {
-      const carId = els.activeCarSelect.value;
-      if (!carId) return;
-      try {
-        const result = await setActiveSettingsCar(carId);
-        if (result?.cars) {
-          state.cars = result.cars;
-          state.activeCarId = result.activeCarId;
-          syncCarSelector();
-          syncActiveCarToInputs();
-          renderSpectrum();
-        }
-      } catch (_err) {}
+  const wizState = {
+    step: 0,
+    brand: "",
+    carType: "",
+    model: "",
+    selectedModel: null as any,
+    selectedGearbox: null as any,
+  };
+
+  function openWizard() {
+    wizState.step = 0;
+    wizState.brand = "";
+    wizState.carType = "";
+    wizState.model = "";
+    wizState.selectedModel = null;
+    wizState.selectedGearbox = null;
+    if (els.addCarWizard) els.addCarWizard.hidden = false;
+    loadWizardStep();
+  }
+
+  function closeWizard() {
+    if (els.addCarWizard) els.addCarWizard.hidden = true;
+  }
+
+  function loadWizardStep() {
+    for (let i = 0; i < 4; i++) {
+      const stepEl = document.getElementById(`wizardStep${i}`);
+      if (stepEl) stepEl.classList.toggle("active", i === wizState.step);
+    }
+    document.querySelectorAll(".wizard-step-dot").forEach((dot) => {
+      const s = Number(dot.getAttribute("data-step"));
+      dot.classList.toggle("active", s === wizState.step);
+      dot.classList.toggle("done", s < wizState.step);
+    });
+    if (els.wizardBackBtn) els.wizardBackBtn.style.display = wizState.step > 0 ? "" : "none";
+
+    if (wizState.step === 0) loadBrandStep();
+    else if (wizState.step === 1) loadTypeStep();
+    else if (wizState.step === 2) loadModelStep();
+    else if (wizState.step === 3) loadGearboxStep();
+  }
+
+  async function loadBrandStep() {
+    const container = document.getElementById("wizardBrandList");
+    if (!container) return;
+    container.innerHTML = "<em>Loading...</em>";
+    try {
+      const data = await getCarLibraryBrands();
+      container.innerHTML = (data.brands || [])
+        .map((b) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(b)}">${escapeHtml(b)}</button>`)
+        .join("");
+      container.querySelectorAll(".wiz-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          wizState.brand = btn.getAttribute("data-value") || "";
+          wizState.step = 1;
+          loadWizardStep();
+        });
+      });
+    } catch (_err) {
+      container.innerHTML = "<em>Could not load brands</em>";
+    }
+  }
+
+  async function loadTypeStep() {
+    const container = document.getElementById("wizardTypeList");
+    if (!container) return;
+    container.innerHTML = "<em>Loading...</em>";
+    try {
+      const data = await getCarLibraryTypes(wizState.brand);
+      container.innerHTML = (data.types || [])
+        .map((t2) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(t2)}">${escapeHtml(t2)}</button>`)
+        .join("");
+      container.querySelectorAll(".wiz-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          wizState.carType = btn.getAttribute("data-value") || "";
+          wizState.step = 2;
+          loadWizardStep();
+        });
+      });
+    } catch (_err) {
+      container.innerHTML = "<em>Could not load types</em>";
+    }
+  }
+
+  async function loadModelStep() {
+    const container = document.getElementById("wizardModelList");
+    if (!container) return;
+    container.innerHTML = "<em>Loading...</em>";
+    try {
+      const data = await getCarLibraryModels(wizState.brand, wizState.carType);
+      const models = data.models || [];
+      container.innerHTML = models
+        .map((m, idx) => {
+          const tireStr = `${m.tire_width_mm}/${m.tire_aspect_pct}R${m.rim_in}`;
+          return `<button type="button" class="wiz-opt" data-idx="${idx}">
+            <span>${escapeHtml(m.model)}</span>
+            <span class="wiz-opt-detail">${escapeHtml(tireStr)}</span>
+          </button>`;
+        })
+        .join("");
+      container.querySelectorAll(".wiz-opt").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.getAttribute("data-idx"));
+          wizState.selectedModel = models[idx] || null;
+          wizState.model = wizState.selectedModel?.model || "";
+          // Pre-fill manual specs from model defaults
+          const tw = document.getElementById("wizTireWidth") as HTMLInputElement;
+          const ta = document.getElementById("wizTireAspect") as HTMLInputElement;
+          const ri = document.getElementById("wizRim") as HTMLInputElement;
+          if (tw && wizState.selectedModel) tw.value = String(wizState.selectedModel.tire_width_mm);
+          if (ta && wizState.selectedModel) ta.value = String(wizState.selectedModel.tire_aspect_pct);
+          if (ri && wizState.selectedModel) ri.value = String(wizState.selectedModel.rim_in);
+          wizState.step = 3;
+          loadWizardStep();
+        });
+      });
+    } catch (_err) {
+      container.innerHTML = "<em>Could not load models</em>";
+    }
+  }
+
+  function loadGearboxStep() {
+    const container = document.getElementById("wizardGearboxList");
+    if (!container) return;
+    const gearboxes = wizState.selectedModel?.gearboxes || [];
+    if (!gearboxes.length) {
+      container.innerHTML = "<em>No pre-defined gearboxes. Enter specs manually below.</em>";
+      return;
+    }
+    container.innerHTML = gearboxes
+      .map((gb, idx) => `<button type="button" class="wiz-opt" data-idx="${idx}">
+        <span>${escapeHtml(gb.name)}</span>
+        <span class="wiz-opt-detail">FD: ${fmt(gb.final_drive_ratio, 2)} · Gear: ${fmt(gb.default_gear_ratio, 2)}</span>
+      </button>`)
+      .join("");
+    container.querySelectorAll(".wiz-opt").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const idx = Number(btn.getAttribute("data-idx"));
+        const gb = gearboxes[idx];
+        if (!gb) return;
+        const m = wizState.selectedModel;
+        const carName = `${wizState.brand} ${wizState.model}`;
+        await addCarFromWizard(carName, wizState.carType, {
+          tire_width_mm: m.tire_width_mm,
+          tire_aspect_pct: m.tire_aspect_pct,
+          rim_in: m.rim_in,
+          final_drive_ratio: gb.final_drive_ratio,
+          current_gear_ratio: gb.default_gear_ratio,
+        });
+      });
     });
   }
 
-  if (els.addCarBtn) {
-    els.addCarBtn.addEventListener("click", async () => {
-      try {
-        const result = await addSettingsCar({ name: "New Car", type: "sedan" });
-        if (result?.cars) {
-          state.cars = result.cars;
-          state.activeCarId = result.activeCarId;
-          // Select the newly added car (last in array)
-          const newCar = result.cars[result.cars.length - 1];
-          if (newCar) {
-            state.activeCarId = newCar.id;
-            const setResult = await setActiveSettingsCar(newCar.id);
-            if (setResult?.cars) {
-              state.cars = setResult.cars;
-              state.activeCarId = setResult.activeCarId;
-            }
+  async function addCarFromWizard(name: string, carType: string, aspects: Record<string, number>) {
+    try {
+      const fullAspects = { ...state.vehicleSettings, ...aspects };
+      const result = await addSettingsCar({ name, type: carType, aspects: fullAspects });
+      if (result?.cars) {
+        state.cars = result.cars;
+        const newCar = result.cars[result.cars.length - 1];
+        if (newCar) {
+          const setResult = await setActiveSettingsCar(newCar.id);
+          if (setResult?.cars) {
+            state.cars = setResult.cars;
+            state.activeCarId = setResult.activeCarId;
           }
-          syncCarSelector();
-          syncActiveCarToInputs();
         }
-      } catch (_err) {}
+        syncActiveCarToInputs();
+        renderCarList();
+        renderSpectrum();
+      }
+    } catch (_err) {}
+    closeWizard();
+  }
+
+  // Wizard button handlers
+  if (els.addCarBtn) {
+    els.addCarBtn.addEventListener("click", openWizard);
+  }
+  if (els.wizardCloseBtn) {
+    els.wizardCloseBtn.addEventListener("click", closeWizard);
+  }
+  if (els.wizardBackBtn) {
+    els.wizardBackBtn.addEventListener("click", () => {
+      if (wizState.step > 0) {
+        wizState.step--;
+        loadWizardStep();
+      }
     });
   }
 
-  if (els.deleteCarBtn) {
-    els.deleteCarBtn.addEventListener("click", async () => {
-      if (!state.activeCarId) return;
-      const car = state.cars.find((c) => c.id === state.activeCarId);
-      if (state.cars.length <= 1) {
-        window.alert(t("settings.car.cannot_delete_last"));
-        return;
-      }
-      const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
-      if (!ok) return;
-      try {
-        const result = await deleteSettingsCar(state.activeCarId);
-        if (result?.cars) {
-          state.cars = result.cars;
-          state.activeCarId = result.activeCarId;
-          syncCarSelector();
-          syncActiveCarToInputs();
-          renderSpectrum();
-        }
-      } catch (_err) {}
+  // Custom brand/type/model buttons
+  document.getElementById("wizardCustomBrandBtn")?.addEventListener("click", () => {
+    const input = document.getElementById("wizardCustomBrand") as HTMLInputElement;
+    const val = input?.value?.trim();
+    if (!val) return;
+    wizState.brand = val;
+    wizState.step = 1;
+    loadWizardStep();
+  });
+
+  document.getElementById("wizardCustomTypeBtn")?.addEventListener("click", () => {
+    const input = document.getElementById("wizardCustomType") as HTMLInputElement;
+    const val = input?.value?.trim();
+    if (!val) return;
+    wizState.carType = val;
+    wizState.step = 2;
+    loadWizardStep();
+  });
+
+  document.getElementById("wizardCustomModelBtn")?.addEventListener("click", () => {
+    const input = document.getElementById("wizardCustomModel") as HTMLInputElement;
+    const val = input?.value?.trim();
+    if (!val) return;
+    wizState.model = val;
+    wizState.selectedModel = null;
+    wizState.step = 3;
+    loadWizardStep();
+  });
+
+  // Manual specs add button
+  document.getElementById("wizardManualAddBtn")?.addEventListener("click", async () => {
+    const tw = Number((document.getElementById("wizTireWidth") as HTMLInputElement)?.value);
+    const ta = Number((document.getElementById("wizTireAspect") as HTMLInputElement)?.value);
+    const ri = Number((document.getElementById("wizRim") as HTMLInputElement)?.value);
+    const fd = Number((document.getElementById("wizFinalDrive") as HTMLInputElement)?.value);
+    const gr = Number((document.getElementById("wizGearRatio") as HTMLInputElement)?.value);
+    if (!(tw > 0 && ta > 0 && ri > 0 && fd > 0 && gr > 0)) return;
+    const name = wizState.brand ? `${wizState.brand} ${wizState.model || "Custom"}` : (wizState.model || "Custom Car");
+    await addCarFromWizard(name, wizState.carType || "Custom", {
+      tire_width_mm: tw,
+      tire_aspect_pct: ta,
+      rim_in: ri,
+      final_drive_ratio: fd,
+      current_gear_ratio: gr,
     });
+  });
+
+  // -- Analysis tab save button ------------------------------------------------
+
+  if (els.saveAnalysisBtn) {
+    els.saveAnalysisBtn.addEventListener("click", saveAnalysisFromInputs);
   }
 
   // -- Speed source save button ------------------------------------------------
@@ -2109,9 +2303,6 @@ import { WsClient, type WsUiState } from "./ws";
       saveSpeedUnit(els.speedUnitSelect.value);
       renderSpeedReadout();
     });
-  }
-  if (els.saveCarSettingsBtn) {
-    els.saveCarSettingsBtn.addEventListener("click", saveSettingsFromInputs);
   }
 
   loadVehicleSettings();
