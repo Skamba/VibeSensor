@@ -1,12 +1,12 @@
 // Chart palette used across the UI and reports.
 export const chartSeriesPalette = [
-  "#0b57d0", // primary
-  "#0f9d58", // tertiary
-  "#9334e6", // accent
-  "#ef6c00", // warning-like
+  "#7c3aed", // primary (purple)
+  "#0f9d58", // tertiary (green)
+  "#e07020", // warm accent
   "#c5221f", // error
   "#007b83", // cyan accent
   "#8e6c00", // olive accent
+  "#d946ef", // fuchsia accent
 ];
 
 export const orderBandFills = {

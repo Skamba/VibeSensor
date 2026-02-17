@@ -68,6 +68,10 @@ ui/dist/
 pi/public/*
 !pi/public/.gitkeep
 
+# Playwright test artifacts
+ui/tests/test-results/
+ui/playwright-report/
+
 # IDE / editor files
 .idea/
 .vscode/

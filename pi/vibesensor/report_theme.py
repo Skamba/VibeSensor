@@ -1,31 +1,31 @@
 from __future__ import annotations
 
-# Material Design 3 inspired roles used by PDF report rendering.
+# Aligned with ui/src/styles/app.css design tokens (purple accent, print-friendly light).
 REPORT_COLORS = {
-    "ink": "#152131",
-    "muted": "#4f5d73",
-    "border": "#cad5e4",
-    "surface": "#f4f7fb",
-    "surface_alt": "#e8eef6",
-    "primary": "#0b57d0",
+    "ink": "#1a1c24",
+    "muted": "#52555e",
+    "border": "#c4c7d0",
+    "surface": "#f8f9fb",
+    "surface_alt": "#f1f2f6",
+    "primary": "#7c3aed",
     "success": "#0f9d58",
     "warning": "#b35d00",
     "danger": "#c5221f",
     "axis": "#7b8da0",
-    "table_header_bg": "#e8eef5",
-    "table_header_border": "#b9c7d5",
-    "table_row_border": "#d6dee8",
-    "table_box": "#c8d3df",
-    "text_primary": "#1f3a52",
-    "text_secondary": "#4f5d73",
-    "text_muted": "#5a6778",
+    "table_header_bg": "#f1f2f6",
+    "table_header_border": "#c4c7d0",
+    "table_row_border": "#dcdfe6",
+    "table_box": "#c4c7d0",
+    "text_primary": "#1a1c24",
+    "text_secondary": "#52555e",
+    "text_muted": "#6b6e78",
     # Card tone backgrounds
-    "card_neutral_bg": "#f4f7fb",
+    "card_neutral_bg": "#f8f9fb",
     "card_success_bg": "#e7f5ee",
     "card_warn_bg": "#fef3e0",
     "card_error_bg": "#fce8e6",
     # Card tone borders
-    "card_neutral_border": "#cad5e4",
+    "card_neutral_border": "#c4c7d0",
     "card_success_border": "#a8dab5",
     "card_warn_border": "#f5c98a",
     "card_error_border": "#f5a6a2",
@@ -34,10 +34,10 @@ REPORT_COLORS = {
     "pill_high_text": "#0d7a45",
     "pill_medium_bg": "#fef3e0",
     "pill_medium_text": "#8a4500",
-    "pill_low_bg": "#f4f7fb",
-    "pill_low_text": "#4f5d73",
+    "pill_low_bg": "#f1f2f6",
+    "pill_low_text": "#52555e",
     # Zebra striping
-    "table_zebra_bg": "#f8fafc",
+    "table_zebra_bg": "#fafafc",
 }
 
 REPORT_SPACING = {"xs": 4, "sm": 8, "md": 12, "lg": 18}
@@ -49,18 +49,18 @@ CARD_RADIUS = 8
 
 # Shared plot accents (aligned with ui/src/theme.ts palette intent).
 REPORT_PLOT_COLORS = {
-    "vibration": "#0b57d0",
-    "dominant_freq": "#9334e6",
-    "amplitude_speed": "#ef6c00",
-    "matched_series": ["#0b57d0", "#0f9d58", "#9334e6", "#ef6c00"],
-    "predicted_curve": "#4f5d73",
+    "vibration": "#7c3aed",
+    "dominant_freq": "#d946ef",
+    "amplitude_speed": "#e07020",
+    "matched_series": ["#7c3aed", "#0f9d58", "#d946ef", "#e07020"],
+    "predicted_curve": "#52555e",
 }
 
 FINDING_SOURCE_COLORS = {
     "wheel/tire": "#0f9d58",
-    "driveline": "#0b57d0",
+    "driveline": "#7c3aed",
     "engine": "#c5221f",
-    "unknown": "#4f5d73",
+    "unknown": "#52555e",
 }
 
 # Heat-map endpoint colors for the car diagram.
