@@ -68,7 +68,7 @@ class RuntimeState:
 
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
-            "speed_mps": self.gps_monitor.speed_mps,
+            "speed_mps": self.gps_monitor.effective_speed_mps,
             "clients": clients,
             "selected_client_id": active,
         }
@@ -170,35 +170,38 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     async def processing_loop() -> None:
         interval = 1.0 / max(1, config.processing.fft_update_hz)
         while True:
-            runtime.registry.evict_stale()
-            active_ids = runtime.registry.active_client_ids()
-            sample_rates: dict[str, int] = {}
-            for client_id in active_ids:
-                record = runtime.registry.get(client_id)
-                if record is None:
-                    continue
-                sample_rates[client_id] = record.sample_rate_hz
-                client_rate = int(record.sample_rate_hz or 0)
-                default_rate = runtime.config.processing.sample_rate_hz
-                if (
-                    client_rate > 0
-                    and client_rate != default_rate
-                    and client_id not in runtime.sample_rate_mismatch_logged
-                ):
-                    runtime.sample_rate_mismatch_logged.add(client_id)
-                    LOGGER.warning(
-                        "Client %s uses sample_rate_hz=%d; default config is %d.",
-                        client_id,
-                        client_rate,
-                        default_rate,
-                    )
-            metrics_by_client = runtime.processor.compute_all(
-                active_ids,
-                sample_rates_hz=sample_rates,
-            )
-            for client_id, metrics in metrics_by_client.items():
-                runtime.registry.set_latest_metrics(client_id, metrics)
-            runtime.processor.evict_clients(set(active_ids))
+            try:
+                runtime.registry.evict_stale()
+                active_ids = runtime.registry.active_client_ids()
+                sample_rates: dict[str, int] = {}
+                for client_id in active_ids:
+                    record = runtime.registry.get(client_id)
+                    if record is None:
+                        continue
+                    sample_rates[client_id] = record.sample_rate_hz
+                    client_rate = int(record.sample_rate_hz or 0)
+                    default_rate = runtime.config.processing.sample_rate_hz
+                    if (
+                        client_rate > 0
+                        and client_rate != default_rate
+                        and client_id not in runtime.sample_rate_mismatch_logged
+                    ):
+                        runtime.sample_rate_mismatch_logged.add(client_id)
+                        LOGGER.warning(
+                            "Client %s uses sample_rate_hz=%d; default config is %d.",
+                            client_id,
+                            client_rate,
+                            default_rate,
+                        )
+                metrics_by_client = runtime.processor.compute_all(
+                    active_ids,
+                    sample_rates_hz=sample_rates,
+                )
+                for client_id, metrics in metrics_by_client.items():
+                    runtime.registry.set_latest_metrics(client_id, metrics)
+                runtime.processor.evict_clients(set(active_ids))
+            except Exception:
+                LOGGER.warning("Processing loop tick failed; will retry.", exc_info=True)
             await asyncio.sleep(interval)
 
     async def start_runtime() -> None:

@@ -24,10 +24,10 @@ class GPSSpeedMonitor:
 
     @property
     def effective_speed_mps(self) -> float | None:
-        if isinstance(self.speed_mps, (int, float)):
-            return float(self.speed_mps)
         if isinstance(self.override_speed_mps, (int, float)):
             return float(self.override_speed_mps)
+        if isinstance(self.speed_mps, (int, float)):
+            return float(self.speed_mps)
         return None
 
     def set_speed_override_kmh(self, speed_kmh: float | None) -> float | None:
@@ -68,7 +68,7 @@ class GPSSpeedMonitor:
                         self.speed_mps = float(speed)
                 writer.close()
                 await writer.wait_closed()
-            except OSError:
+            except Exception:
                 self.speed_mps = None
                 LOGGER.debug("GPS connection lost, retrying in %gs", _GPS_RECONNECT_DELAY_S)
                 await asyncio.sleep(_GPS_RECONNECT_DELAY_S)
