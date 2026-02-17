@@ -694,8 +694,7 @@ import { WsClient, type WsUiState } from "./ws";
     try {
       const serverSettings = await getAnalysisSettings();
       if (serverSettings && typeof serverSettings === "object") {
-        for (const key of Object.keys(state.vehicleSettings)) {
-          if (key === "speed_override_kmh") continue;
+        for (const key of Object.keys(serverSettings)) {
           if (typeof serverSettings[key] === "number") {
             state.vehicleSettings[key] = serverSettings[key];
           }
