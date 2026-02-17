@@ -303,3 +303,36 @@ def test_esp_protocol_constants_match_python() -> None:
         expr = expr.replace("kClientIdBytes", "6").replace("kCmdHeaderBytes", str(CMD_HEADER_BYTES))
         computed = eval(expr)  # noqa: S307
         assert computed == expected, f"{cpp_name} = {computed} but Python {py_name} = {expected}"
+
+
+def test_protocol_docs_byte_sizes_match() -> None:
+    """docs/protocol.md byte sizes must match the Python protocol module."""
+    import re
+    from pathlib import Path
+
+    from vibesensor.protocol import (
+        ACK_BYTES,
+        CMD_HEADER_BYTES,
+        CMD_IDENTIFY_BYTES,
+        DATA_HEADER_BYTES,
+        HELLO_FIXED_BYTES,
+    )
+
+    root = Path(__file__).resolve().parents[2]
+    doc = (root / "docs" / "protocol.md").read_text(encoding="utf-8")
+
+    expected = {
+        "HELLO fixed bytes": HELLO_FIXED_BYTES,
+        "DATA header bytes": DATA_HEADER_BYTES,
+        "CMD header bytes": CMD_HEADER_BYTES,
+        "CMD identify bytes": CMD_IDENTIFY_BYTES,
+        "ACK bytes": ACK_BYTES,
+    }
+    for label, value in expected.items():
+        pattern = rf"{re.escape(label)}.*`(\d+)`"
+        m = re.search(pattern, doc, re.IGNORECASE)
+        assert m, f"docs/protocol.md missing entry for '{label}'"
+        doc_value = int(m.group(1))
+        assert doc_value == value, (
+            f"docs/protocol.md says {label} = {doc_value} but code says {value}"
+        )
