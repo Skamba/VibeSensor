@@ -12,7 +12,7 @@ All multi-byte numeric fields use little-endian encoding.
 ## Field layout
 
 - `client_id`: 6 bytes (MAC-derived)
-- HELLO fixed bytes (without name/fw payload bytes): `17`
+- HELLO fixed bytes (without name/fw payload bytes): `18`
 - DATA header bytes (without sample payload): `22`
 - CMD header bytes: `13`
 - CMD identify bytes: `15`
