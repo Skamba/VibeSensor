@@ -13,12 +13,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 17"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 17.0,
+            },
+            {
+                "name": 'Sport Line 18"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'M Sport 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -33,12 +53,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "7-speed dual-clutch (DKG)",
                 "final_drive_ratio": 3.636,
-                "default_gear_ratio": 0.710,
+                "top_gear_ratio": 0.710,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -54,12 +94,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -74,12 +134,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -95,12 +175,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (Aisin)",
                 "final_drive_ratio": 3.294,
-                "default_gear_ratio": 0.674,
+                "top_gear_ratio": 0.674,
             },
             {
                 "name": "6-speed automatic (Aisin)",
                 "final_drive_ratio": 3.416,
-                "default_gear_ratio": 0.825,
+                "top_gear_ratio": 0.825,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 17"',
+                "tire_width_mm": 205.0,
+                "tire_aspect_pct": 55.0,
+                "rim_in": 17.0,
+            },
+            {
+                "name": 'Sport Line 18"',
+                "tire_width_mm": 215.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'M Sport 19"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 19.0,
             },
         ],
         "tire_width_mm": 205.0,
@@ -116,12 +216,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -136,12 +256,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -157,12 +297,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -177,7 +337,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -193,12 +373,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -213,7 +413,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -228,7 +448,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.640,
+                "top_gear_ratio": 0.640,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -244,7 +484,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -259,7 +519,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -275,7 +555,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -290,7 +590,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Sport Line 21"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -305,7 +625,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.640,
+                "top_gear_ratio": 0.640,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Sport Line 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 255.0,
@@ -321,7 +661,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Sport Line 21"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -336,7 +696,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Sport Line 21"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -351,7 +731,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Sport Line 21"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -367,12 +767,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (Aisin)",
                 "final_drive_ratio": 3.294,
-                "default_gear_ratio": 0.674,
+                "top_gear_ratio": 0.674,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.385,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 17"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 17.0,
+            },
+            {
+                "name": 'Sport Line 18"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'M Sport 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -387,7 +807,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed dual-clutch (DKG)",
                 "final_drive_ratio": 3.636,
-                "default_gear_ratio": 0.710,
+                "top_gear_ratio": 0.710,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -403,12 +843,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (Aisin)",
                 "final_drive_ratio": 3.294,
-                "default_gear_ratio": 0.674,
+                "top_gear_ratio": 0.674,
             },
             {
                 "name": "7-speed dual-clutch (DKG)",
                 "final_drive_ratio": 3.636,
-                "default_gear_ratio": 0.710,
+                "top_gear_ratio": 0.710,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -423,7 +883,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed dual-clutch (DKG)",
                 "final_drive_ratio": 3.636,
-                "default_gear_ratio": 0.710,
+                "top_gear_ratio": 0.710,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 225.0,
@@ -439,12 +919,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.385,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 18.0,
+            },
+            {
+                "name": 'Sport Line 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'M Sport 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -459,7 +959,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -474,7 +994,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.640,
+                "top_gear_ratio": 0.640,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -490,7 +1030,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -505,7 +1065,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 245.0,
@@ -521,7 +1101,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.154,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 255.0,
@@ -536,7 +1136,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Sport Line 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 295.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -552,7 +1172,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.154,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 255.0,
@@ -567,7 +1207,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Sport Line 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 295.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -583,7 +1243,27 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.154,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 21"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'Sport Line 22"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 22.0,
+            },
+            {
+                "name": 'M Sport 22"',
+                "tire_width_mm": 295.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -599,12 +1279,32 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.231,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Sport Line 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'M Sport 21"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 255.0,
@@ -620,12 +1320,26 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed dual-clutch (M-DCT)",
                 "final_drive_ratio": 3.154,
-                "default_gear_ratio": 0.714,
+                "top_gear_ratio": 0.714,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.793,
+                "top_gear_ratio": 0.793,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Performance 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 255.0,
@@ -640,12 +1354,26 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Performance 20"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -661,12 +1389,26 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed dual-clutch (M-DCT)",
                 "final_drive_ratio": 3.154,
-                "default_gear_ratio": 0.714,
+                "top_gear_ratio": 0.714,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.793,
+                "top_gear_ratio": 0.793,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Performance 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 255.0,
@@ -681,12 +1423,26 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 2.813,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.812,
+                "top_gear_ratio": 0.812,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Performance 20"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -702,7 +1458,21 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed automatic (ZF 8HP)",
                 "final_drive_ratio": 3.154,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Performance 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -718,8 +1488,17 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "Single-speed fixed gear (EV)",
                 "final_drive_ratio": 9.079,
-                "default_gear_ratio": 1.0,
+                "top_gear_ratio": 1.0,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 20.0,
+            },
+            {"name": 'Sport 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 40.0, "rim_in": 21.0},
         ],
         "tire_width_mm": 255.0,
         "tire_aspect_pct": 45.0,
@@ -734,8 +1513,17 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "Single-speed fixed gear (EV)",
                 "final_drive_ratio": 8.698,
-                "default_gear_ratio": 1.0,
+                "top_gear_ratio": 1.0,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {"name": 'Sport 20"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 40.0,
@@ -751,13 +1539,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ200)",
                 "final_drive_ratio": 3.786,
-                "default_gear_ratio": 0.680,
+                "top_gear_ratio": 0.680,
             },
             {
                 "name": "5-speed manual",
                 "final_drive_ratio": 3.652,
-                "default_gear_ratio": 0.854,
+                "top_gear_ratio": 0.854,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 17"',
+                "tire_width_mm": 215.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 17.0,
+            },
+            {"name": 'Sport 18"', "tire_width_mm": 225.0, "tire_aspect_pct": 40.0, "rim_in": 18.0},
+            {"name": 'S line 19"', "tire_width_mm": 235.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
         ],
         "tire_width_mm": 215.0,
         "tire_aspect_pct": 45.0,
@@ -771,13 +1569,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ200)",
                 "final_drive_ratio": 3.786,
-                "default_gear_ratio": 0.680,
+                "top_gear_ratio": 0.680,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 17"',
+                "tire_width_mm": 215.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 17.0,
+            },
+            {"name": 'Sport 18"', "tire_width_mm": 225.0, "tire_aspect_pct": 40.0, "rim_in": 18.0},
+            {"name": 'S line 19"', "tire_width_mm": 235.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
         ],
         "tire_width_mm": 215.0,
         "tire_aspect_pct": 45.0,
@@ -792,13 +1600,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ381)",
                 "final_drive_ratio": 4.769,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 17"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 17.0,
+            },
+            {"name": 'Sport 18"', "tire_width_mm": 235.0, "tire_aspect_pct": 40.0, "rim_in": 18.0},
+            {"name": 'S line 19"', "tire_width_mm": 245.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
         ],
         "tire_width_mm": 225.0,
         "tire_aspect_pct": 45.0,
@@ -812,13 +1630,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ381)",
                 "final_drive_ratio": 4.769,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 235.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 245.0, "tire_aspect_pct": 30.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 225.0,
         "tire_aspect_pct": 40.0,
@@ -833,18 +1661,28 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "7-speed S tronic (DL501)",
                 "final_drive_ratio": 3.444,
-                "default_gear_ratio": 0.680,
+                "top_gear_ratio": 0.680,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 225.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 235.0, "tire_aspect_pct": 40.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 245.0, "tire_aspect_pct": 35.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 225.0,
         "tire_aspect_pct": 45.0,
@@ -858,13 +1696,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DL382)",
                 "final_drive_ratio": 3.564,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 40.0,
@@ -878,13 +1726,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "7-speed S tronic (DL501)",
                 "final_drive_ratio": 3.444,
-                "default_gear_ratio": 0.680,
+                "top_gear_ratio": 0.680,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 40.0,
@@ -898,8 +1756,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DL382)",
                 "final_drive_ratio": 3.564,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 40.0,
@@ -914,13 +1782,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "7-speed S tronic (DL501)",
                 "final_drive_ratio": 3.444,
-                "default_gear_ratio": 0.680,
+                "top_gear_ratio": 0.680,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {"name": 'Sport 20"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 20.0},
+            {"name": 'S line 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 40.0,
@@ -934,8 +1812,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DL382)",
                 "final_drive_ratio": 3.564,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 19.0,
+            },
+            {"name": 'Sport 20"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 20.0},
+            {"name": 'S line 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 40.0,
@@ -950,8 +1838,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DL501)",
                 "final_drive_ratio": 3.444,
-                "default_gear_ratio": 0.680,
+                "top_gear_ratio": 0.680,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {"name": 'Sport 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
+            {"name": 'S line 22"', "tire_width_mm": 275.0, "tire_aspect_pct": 25.0, "rim_in": 22.0},
         ],
         "tire_width_mm": 255.0,
         "tire_aspect_pct": 35.0,
@@ -965,8 +1863,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DL382)",
                 "final_drive_ratio": 3.564,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {"name": 'Sport 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
+            {"name": 'S line 22"', "tire_width_mm": 275.0, "tire_aspect_pct": 25.0, "rim_in": 22.0},
         ],
         "tire_width_mm": 255.0,
         "tire_aspect_pct": 35.0,
@@ -981,8 +1889,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 2.848,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {"name": 'Sport 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 35.0, "rim_in": 21.0},
+            {"name": 'S line 22"', "tire_width_mm": 275.0, "tire_aspect_pct": 30.0, "rim_in": 22.0},
         ],
         "tire_width_mm": 255.0,
         "tire_aspect_pct": 40.0,
@@ -996,8 +1914,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 2.848,
-                "default_gear_ratio": 0.640,
+                "top_gear_ratio": 0.640,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 20.0,
+            },
+            {"name": 'Sport 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 35.0, "rim_in": 21.0},
+            {"name": 'S line 22"', "tire_width_mm": 275.0, "tire_aspect_pct": 30.0, "rim_in": 22.0},
         ],
         "tire_width_mm": 255.0,
         "tire_aspect_pct": 40.0,
@@ -1012,13 +1940,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ381)",
                 "final_drive_ratio": 4.769,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 17"',
+                "tire_width_mm": 215.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 17.0,
+            },
+            {"name": 'Sport 18"', "tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 18.0},
+            {"name": 'S line 19"', "tire_width_mm": 235.0, "tire_aspect_pct": 40.0, "rim_in": 19.0},
         ],
         "tire_width_mm": 215.0,
         "tire_aspect_pct": 50.0,
@@ -1033,13 +1971,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ500)",
                 "final_drive_ratio": 4.077,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 245.0, "tire_aspect_pct": 45.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 255.0, "tire_aspect_pct": 40.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 235.0,
         "tire_aspect_pct": 50.0,
@@ -1053,8 +2001,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ381)",
                 "final_drive_ratio": 4.769,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 45.0,
+                "rim_in": 19.0,
+            },
+            {"name": 'Sport 20"', "tire_width_mm": 245.0, "tire_aspect_pct": 40.0, "rim_in": 20.0},
+            {"name": 'S line 21"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 21.0},
         ],
         "tire_width_mm": 235.0,
         "tire_aspect_pct": 45.0,
@@ -1069,13 +2027,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
             {
                 "name": "7-speed S tronic (DL501)",
                 "final_drive_ratio": 3.444,
-                "default_gear_ratio": 0.680,
+                "top_gear_ratio": 0.680,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 55.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 245.0, "tire_aspect_pct": 50.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 255.0, "tire_aspect_pct": 45.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 235.0,
         "tire_aspect_pct": 55.0,
@@ -1089,8 +2057,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DL382)",
                 "final_drive_ratio": 3.564,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 19.0,
+            },
+            {"name": 'Sport 20"', "tire_width_mm": 245.0, "tire_aspect_pct": 45.0, "rim_in": 20.0},
+            {"name": 'S line 21"', "tire_width_mm": 255.0, "tire_aspect_pct": 40.0, "rim_in": 21.0},
         ],
         "tire_width_mm": 235.0,
         "tire_aspect_pct": 50.0,
@@ -1105,8 +2083,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.333,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 20.0,
+            },
+            {"name": 'Sport 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 45.0, "rim_in": 21.0},
+            {"name": 'S line 22"', "tire_width_mm": 275.0, "tire_aspect_pct": 40.0, "rim_in": 22.0},
         ],
         "tire_width_mm": 255.0,
         "tire_aspect_pct": 50.0,
@@ -1121,8 +2109,18 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.333,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 21.0,
+            },
+            {"name": 'Sport 22"', "tire_width_mm": 295.0, "tire_aspect_pct": 35.0, "rim_in": 22.0},
+            {"name": 'S line 22"', "tire_width_mm": 305.0, "tire_aspect_pct": 30.0, "rim_in": 22.0},
         ],
         "tire_width_mm": 285.0,
         "tire_aspect_pct": 40.0,
@@ -1137,13 +2135,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "6-speed S tronic (DQ250)",
                 "final_drive_ratio": 3.444,
-                "default_gear_ratio": 0.742,
+                "top_gear_ratio": 0.742,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 18"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 40.0,
+                "rim_in": 18.0,
+            },
+            {"name": 'Sport 19"', "tire_width_mm": 255.0, "tire_aspect_pct": 35.0, "rim_in": 19.0},
+            {"name": 'S line 20"', "tire_width_mm": 265.0, "tire_aspect_pct": 30.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 40.0,
@@ -1157,13 +2165,23 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ381)",
                 "final_drive_ratio": 4.769,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
             },
             {
                 "name": "6-speed manual",
                 "final_drive_ratio": 3.462,
-                "default_gear_ratio": 0.840,
+                "top_gear_ratio": 0.840,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 245.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 19.0,
+            },
+            {"name": 'Sport 20"', "tire_width_mm": 255.0, "tire_aspect_pct": 30.0, "rim_in": 20.0},
+            {"name": 'S line 21"', "tire_width_mm": 265.0, "tire_aspect_pct": 25.0, "rim_in": 21.0},
         ],
         "tire_width_mm": 245.0,
         "tire_aspect_pct": 35.0,
@@ -1178,7 +2196,21 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DL800)",
                 "final_drive_ratio": 3.538,
-                "default_gear_ratio": 0.714,
+                "top_gear_ratio": 0.714,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 295.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Performance 21"',
+                "tire_width_mm": 305.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 295.0,
@@ -1194,7 +2226,21 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "7-speed S tronic (DQ500)",
                 "final_drive_ratio": 4.077,
-                "default_gear_ratio": 0.725,
+                "top_gear_ratio": 0.725,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 255.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 19.0,
+            },
+            {
+                "name": 'Performance 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 20.0,
             },
         ],
         "tire_width_mm": 255.0,
@@ -1210,7 +2256,21 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Performance 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -1225,7 +2285,21 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 275.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 20.0,
+            },
+            {
+                "name": 'Performance 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 21.0,
             },
         ],
         "tire_width_mm": 275.0,
@@ -1241,7 +2315,21 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'Performance 22"',
+                "tire_width_mm": 295.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 285.0,
@@ -1257,7 +2345,21 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "8-speed tiptronic (ZF 8HP)",
                 "final_drive_ratio": 3.077,
-                "default_gear_ratio": 0.667,
+                "top_gear_ratio": 0.667,
+            },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 21"',
+                "tire_width_mm": 285.0,
+                "tire_aspect_pct": 30.0,
+                "rim_in": 21.0,
+            },
+            {
+                "name": 'Performance 22"',
+                "tire_width_mm": 295.0,
+                "tire_aspect_pct": 25.0,
+                "rim_in": 22.0,
             },
         ],
         "tire_width_mm": 285.0,
@@ -1273,8 +2375,17 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "2-speed automatic (rear) / single-speed (front)",
                 "final_drive_ratio": 8.057,
-                "default_gear_ratio": 1.0,
+                "top_gear_ratio": 1.0,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 20"',
+                "tire_width_mm": 265.0,
+                "tire_aspect_pct": 35.0,
+                "rim_in": 20.0,
+            },
+            {"name": 'Sport 21"', "tire_width_mm": 275.0, "tire_aspect_pct": 30.0, "rim_in": 21.0},
         ],
         "tire_width_mm": 265.0,
         "tire_aspect_pct": 35.0,
@@ -1289,8 +2400,17 @@ CAR_LIBRARY: list[dict] = [
             {
                 "name": "Single-speed fixed gear (EV)",
                 "final_drive_ratio": 9.756,
-                "default_gear_ratio": 1.0,
+                "top_gear_ratio": 1.0,
             },
+        ],
+        "tire_options": [
+            {
+                "name": 'Standard 19"',
+                "tire_width_mm": 235.0,
+                "tire_aspect_pct": 50.0,
+                "rim_in": 19.0,
+            },
+            {"name": 'Sport 20"', "tire_width_mm": 245.0, "tire_aspect_pct": 45.0, "rim_in": 20.0},
         ],
         "tire_width_mm": 235.0,
         "tire_aspect_pct": 50.0,
