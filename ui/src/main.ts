@@ -9,6 +9,8 @@ import {
   getLogInsights,
   getLoggingStatus,
   getLogs,
+  getSettingsCars,
+  getSettingsSpeedSource,
   getSpeedOverride,
   identifyClient as identifyClientApi,
   logDownloadUrl,
@@ -19,6 +21,11 @@ import {
   setSpeedOverride,
   startLoggingRun,
   stopLoggingRun,
+  addSettingsCar,
+  updateSettingsCar,
+  deleteSettingsCar,
+  setActiveSettingsCar,
+  updateSettingsSpeedSource,
 } from "./api";
 import {
   defaultLocationCodes,
@@ -55,7 +62,7 @@ import { WsClient, type WsUiState } from "./ws";
     deleteAllLogsBtn: document.getElementById("deleteAllLogsBtn"),
     logsSummary: document.getElementById("logsSummary"),
     logsTableBody: document.getElementById("logsTableBody"),
-    clientsSettingsBody: document.getElementById("clientsSettingsBody"),
+    sensorsSettingsBody: document.getElementById("sensorsSettingsBody"),
     lastSeen: document.getElementById("lastSeen"),
     dropped: document.getElementById("dropped"),
     framesTotal: document.getElementById("framesTotal"),
@@ -81,9 +88,19 @@ import { WsClient, type WsUiState } from "./ws";
     gearUncertaintyInput: document.getElementById("gearUncertaintyInput"),
     minAbsBandHzInput: document.getElementById("minAbsBandHzInput"),
     maxBandHalfWidthInput: document.getElementById("maxBandHalfWidthInput"),
-    speedOverrideInput: document.getElementById("speedOverrideInput"),
-    applySpeedOverrideBtn: document.getElementById("applySpeedOverrideBtn"),
-    saveSettingsBtn: document.getElementById("saveSettingsBtn"),
+    saveCarSettingsBtn: document.getElementById("saveCarSettingsBtn"),
+    // Car tab
+    activeCarSelect: document.getElementById("activeCarSelect"),
+    addCarBtn: document.getElementById("addCarBtn"),
+    deleteCarBtn: document.getElementById("deleteCarBtn"),
+    carNameInput: document.getElementById("carNameInput"),
+    carTypeInput: document.getElementById("carTypeInput"),
+    // Speed source tab
+    manualSpeedInput: document.getElementById("manualSpeedInput"),
+    saveSpeedSourceBtn: document.getElementById("saveSpeedSourceBtn"),
+    // Settings sub-tabs
+    settingsTabs: Array.from(document.querySelectorAll(".settings-tab")),
+    settingsTabPanels: Array.from(document.querySelectorAll(".settings-tab-panel")),
     vibrationLog: document.getElementById("vibrationLog"),
     vibrationMatrix: document.getElementById("vibrationMatrix"),
     matrixTooltip: document.getElementById("matrixTooltip"),
@@ -125,8 +142,13 @@ import { WsClient, type WsUiState } from "./ws";
       gear_uncertainty_pct: 0.5,
       min_abs_band_hz: 0.4,
       max_band_half_width_pct: 8.0,
-      speed_override_kmh: 100,
     },
+    // Car management
+    cars: [] as any[],
+    activeCarId: null as string | null,
+    // Speed source
+    speedSource: "gps" as string,
+    manualSpeedKph: null as number | null,
     chartBands: [],
     vibrationMessages: [],
     strengthBands: normalizeStrengthBands([]),
@@ -135,7 +157,7 @@ import { WsClient, type WsUiState } from "./ws";
     renderQueued: false,
     lastRenderTsMs: 0,
     minRenderIntervalMs: 100,
-    clientsSettingsSignature: "",
+    sensorsSettingsSignature: "",
     locationCodes: defaultLocationCodes.slice(),
     hasSpectrumData: false,
     hasReceivedPayload: false,
@@ -210,8 +232,8 @@ import { WsClient, type WsUiState } from "./ws";
       els.speedUnitSelect.value = state.speedUnit;
     }
     state.locationOptions = buildLocationOptions(state.locationCodes);
-    state.clientsSettingsSignature = "";
-    maybeRenderClientsSettingsList(true);
+    state.sensorsSettingsSignature = "";
+    maybeRenderSensorsSettingsList(true);
     renderSpeedReadout();
     renderLoggingStatus();
     renderLogsTable();
@@ -279,9 +301,6 @@ import { WsClient, type WsUiState } from "./ws";
       if (typeof parsed.max_band_half_width_pct === "number") {
         state.vehicleSettings.max_band_half_width_pct = parsed.max_band_half_width_pct;
       }
-      if (typeof parsed.speed_override_kmh === "number") {
-        state.vehicleSettings.speed_override_kmh = parsed.speed_override_kmh;
-      }
     } catch (_err) {
       // Ignore malformed local storage values.
     }
@@ -306,7 +325,6 @@ import { WsClient, type WsUiState } from "./ws";
     els.gearUncertaintyInput.value = String(state.vehicleSettings.gear_uncertainty_pct);
     els.minAbsBandHzInput.value = String(state.vehicleSettings.min_abs_band_hz);
     els.maxBandHalfWidthInput.value = String(state.vehicleSettings.max_band_half_width_pct);
-    els.speedOverrideInput.value = String(state.vehicleSettings.speed_override_kmh);
   }
 
   function setStatValue(container, value) {
@@ -351,8 +369,9 @@ import { WsClient, type WsUiState } from "./ws";
 
   function effectiveSpeedMps() {
     if (typeof state.speedMps === "number" && state.speedMps > 0) return state.speedMps;
-    const overrideMps = (state.vehicleSettings.speed_override_kmh || 0) / 3.6;
-    if (overrideMps > 0) return overrideMps;
+    if (state.speedSource === "manual" && typeof state.manualSpeedKph === "number" && state.manualSpeedKph > 0) {
+      return state.manualSpeedKph / 3.6;
+    }
     return null;
   }
 
@@ -536,7 +555,7 @@ import { WsClient, type WsUiState } from "./ws";
     return opts.join("");
   }
 
-  function clientsSettingsSignature() {
+  function sensorsSettingsSignature() {
     const clientPart = state.clients
       .map((client) => {
         const connected = client.connected ? "1" : "0";
@@ -549,11 +568,11 @@ import { WsClient, type WsUiState } from "./ws";
     return `${clientPart}##${locationPart}`;
   }
 
-  function maybeRenderClientsSettingsList(force = false) {
-    const nextSig = clientsSettingsSignature();
-    if (!force && nextSig === state.clientsSettingsSignature) return;
-    state.clientsSettingsSignature = nextSig;
-    renderClientsSettingsList();
+  function maybeRenderSensorsSettingsList(force = false) {
+    const nextSig = sensorsSettingsSignature();
+    if (!force && nextSig === state.sensorsSettingsSignature) return;
+    state.sensorsSettingsSignature = nextSig;
+    renderSensorsSettingsList();
   }
 
   function updateClientSelection() {
@@ -574,13 +593,13 @@ import { WsClient, type WsUiState } from "./ws";
     }
   }
 
-  function renderClientsSettingsList() {
-    if (!els.clientsSettingsBody) return;
+  function renderSensorsSettingsList() {
+    if (!els.sensorsSettingsBody) return;
     if (!state.clients.length) {
-      els.clientsSettingsBody.innerHTML = `<tr><td colspan="5">${escapeHtml(t("settings.no_clients"))}</td></tr>`;
+      els.sensorsSettingsBody.innerHTML = `<tr><td colspan="5">${escapeHtml(t("settings.sensors.no_sensors"))}</td></tr>`;
       return;
     }
-    els.clientsSettingsBody.innerHTML = state.clients
+    els.sensorsSettingsBody.innerHTML = state.clients
       .map((client) => {
         const selectedCode = locationCodeForClient(client);
         const connected = Boolean(client.connected);
@@ -606,7 +625,7 @@ import { WsClient, type WsUiState } from "./ws";
       })
       .join("");
 
-    els.clientsSettingsBody.querySelectorAll(".row-location-select").forEach((select) => {
+    els.sensorsSettingsBody.querySelectorAll(".row-location-select").forEach((select) => {
       select.addEventListener("change", async () => {
         const clientId = select.getAttribute("data-client-id");
         if (!clientId) return;
@@ -615,7 +634,7 @@ import { WsClient, type WsUiState } from "./ws";
       });
     });
 
-    els.clientsSettingsBody.querySelectorAll(".row-identify").forEach((btn) => {
+    els.sensorsSettingsBody.querySelectorAll(".row-identify").forEach((btn) => {
       btn.addEventListener("click", async () => {
         if (btn.hasAttribute("disabled")) return;
         const clientId = btn.getAttribute("data-client-id");
@@ -624,7 +643,7 @@ import { WsClient, type WsUiState } from "./ws";
       });
     });
 
-    els.clientsSettingsBody.querySelectorAll(".row-remove").forEach((btn) => {
+    els.sensorsSettingsBody.querySelectorAll(".row-remove").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const clientId = btn.getAttribute("data-client-id");
         if (!clientId) return;
@@ -648,30 +667,42 @@ import { WsClient, type WsUiState } from "./ws";
     setStatValue(els.framesTotal, formatInt(clientRow.frames_total ?? 0));
   }
 
-  async function syncSpeedOverrideToServer(speedKmh) {
-    const normalized = typeof speedKmh === "number" && speedKmh > 0 ? speedKmh : null;
+  async function syncSpeedSourceToServer() {
     try {
-      const payload = await setSpeedOverride(normalized);
-      if (typeof payload?.speed_kmh === "number") {
-        state.vehicleSettings.speed_override_kmh = payload.speed_kmh;
-        els.speedOverrideInput.value = String(payload.speed_kmh);
+      await updateSettingsSpeedSource({
+        speedSource: state.speedSource,
+        manualSpeedKph: state.manualSpeedKph,
+      });
+      // Also sync legacy speed-override endpoint
+      if (state.speedSource === "manual" && state.manualSpeedKph != null) {
+        await setSpeedOverride(state.manualSpeedKph);
+      } else {
+        await setSpeedOverride(null);
       }
     } catch (_err) {
-      // Ignore transient API errors; UI can still use local override for charting.
+      // Ignore transient API errors.
     }
   }
 
-  async function loadSpeedOverrideFromServer() {
+  async function loadSpeedSourceFromServer() {
     try {
-      const payload = await getSpeedOverride();
-      if (typeof payload?.speed_kmh === "number") {
-        state.vehicleSettings.speed_override_kmh = payload.speed_kmh;
-        saveVehicleSettings();
-        syncSettingsInputs();
+      const payload = await getSettingsSpeedSource();
+      if (payload && typeof payload === "object") {
+        if (typeof payload.speedSource === "string") state.speedSource = payload.speedSource;
+        state.manualSpeedKph = typeof payload.manualSpeedKph === "number" ? payload.manualSpeedKph : null;
+        syncSpeedSourceInputs();
         renderSpeedReadout();
       }
     } catch (_err) {
-      // Fallback to local override when backend value is unavailable.
+      // Fallback to defaults.
+    }
+  }
+
+  function syncSpeedSourceInputs() {
+    const radios = document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]');
+    radios.forEach((r) => { r.checked = r.value === state.speedSource; });
+    if (els.manualSpeedInput) {
+      els.manualSpeedInput.value = state.manualSpeedKph != null ? String(state.manualSpeedKph) : "";
     }
   }
 
@@ -706,6 +737,45 @@ import { WsClient, type WsUiState } from "./ws";
     } catch (_err) {
       // Keep UI local defaults when server is unreachable.
     }
+  }
+
+  async function loadCarsFromServer() {
+    try {
+      const payload = await getSettingsCars();
+      if (Array.isArray(payload?.cars)) {
+        state.cars = payload.cars;
+        state.activeCarId = payload.activeCarId || (payload.cars[0]?.id ?? null);
+        syncCarSelector();
+        syncActiveCarToInputs();
+      }
+    } catch (_err) {
+      // Keep defaults.
+    }
+  }
+
+  function syncCarSelector() {
+    if (!els.activeCarSelect) return;
+    els.activeCarSelect.innerHTML = state.cars
+      .map((car) => `<option value="${escapeHtml(car.id)}">${escapeHtml(car.name)}</option>`)
+      .join("");
+    els.activeCarSelect.value = state.activeCarId || "";
+  }
+
+  function syncActiveCarToInputs() {
+    const car = state.cars.find((c) => c.id === state.activeCarId);
+    if (!car) return;
+    if (els.carNameInput) els.carNameInput.value = car.name || "";
+    if (els.carTypeInput) els.carTypeInput.value = car.type || "";
+    // Push aspects into vehicleSettings
+    if (car.aspects && typeof car.aspects === "object") {
+      for (const key of Object.keys(car.aspects)) {
+        if (typeof car.aspects[key] === "number") {
+          state.vehicleSettings[key] = car.aspects[key];
+        }
+      }
+    }
+    saveVehicleSettings();
+    syncSettingsInputs();
   }
 
   function renderLoggingStatus() {
@@ -1025,7 +1095,7 @@ import { WsClient, type WsUiState } from "./ws";
       state.locationCodes = defaultLocationCodes.slice();
       state.locationOptions = buildLocationOptions(state.locationCodes);
     }
-    maybeRenderClientsSettingsList(true);
+    maybeRenderSensorsSettingsList(true);
   }
 
   async function refreshLogs() {
@@ -1696,7 +1766,7 @@ import { WsClient, type WsUiState } from "./ws";
       };
     }
     updateClientSelection();
-    maybeRenderClientsSettingsList();
+    maybeRenderSensorsSettingsList();
     if (prevSelected !== state.selectedClientId) {
       sendSelection();
     }
@@ -1736,7 +1806,7 @@ import { WsClient, type WsUiState } from "./ws";
     if (selected) {
       const client = state.clients.find((c) => c.id === clientId);
       if (client) client.name = selected.label;
-      maybeRenderClientsSettingsList();
+      maybeRenderSensorsSettingsList();
     }
   }
 
@@ -1762,7 +1832,7 @@ import { WsClient, type WsUiState } from "./ws";
       state.selectedClientId = null;
     }
     updateClientSelection();
-    maybeRenderClientsSettingsList();
+    maybeRenderSensorsSettingsList();
     if (prevSelected !== state.selectedClientId) {
       sendSelection();
     }
@@ -1785,7 +1855,6 @@ import { WsClient, type WsUiState } from "./ws";
     const gearUncertainty = Number(els.gearUncertaintyInput.value);
     const minAbsBandHz = Number(els.minAbsBandHzInput.value);
     const maxBandHalfWidth = Number(els.maxBandHalfWidthInput.value);
-    const speedOverride = Number(els.speedOverrideInput.value);
     const validBandwidths =
       wheelBandwidth > 0 &&
       wheelBandwidth <= 40 &&
@@ -1807,7 +1876,6 @@ import { WsClient, type WsUiState } from "./ws";
     if (
       !parsed ||
       !(finalDrive > 0 && gear > 0) ||
-      !(speedOverride >= 0) ||
       !validBandwidths ||
       !validUncertainty ||
       !validBandLimits
@@ -1829,22 +1897,133 @@ import { WsClient, type WsUiState } from "./ws";
     state.vehicleSettings.gear_uncertainty_pct = gearUncertainty;
     state.vehicleSettings.min_abs_band_hz = minAbsBandHz;
     state.vehicleSettings.max_band_half_width_pct = maxBandHalfWidth;
-    state.vehicleSettings.speed_override_kmh = speedOverride;
     saveVehicleSettings();
     void syncAnalysisSettingsToServer();
-    void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
+
+    // Also save car name, type, and aspects to server
+    const carName = (els.carNameInput?.value || "").trim();
+    const carType = (els.carTypeInput?.value || "").trim();
+    if (state.activeCarId) {
+      void updateSettingsCar(state.activeCarId, {
+        name: carName || undefined,
+        type: carType || undefined,
+        aspects: { ...state.vehicleSettings },
+      }).then((result) => {
+        if (result?.cars) {
+          state.cars = result.cars;
+          state.activeCarId = result.activeCarId;
+          syncCarSelector();
+        }
+      }).catch(() => {});
+    }
     renderSpectrum();
     renderSpeedReadout();
   }
 
-  function applySpeedOverrideFromInput() {
-    const speedOverride = Number(els.speedOverrideInput.value);
-    if (!(speedOverride >= 0)) return;
-    state.vehicleSettings.speed_override_kmh = speedOverride;
-    saveVehicleSettings();
-    void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
-    renderSpectrum();
+  function saveSpeedSourceFromInputs() {
+    const radios = document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]');
+    let src = "gps";
+    radios.forEach((r) => { if (r.checked) src = r.value; });
+    const manual = Number(els.manualSpeedInput?.value);
+    state.speedSource = src;
+    state.manualSpeedKph = (src === "manual" && manual > 0) ? manual : null;
+    void syncSpeedSourceToServer();
     renderSpeedReadout();
+  }
+
+  // -- Settings sub-tab switching -----------------------------------------------
+
+  function setActiveSettingsTab(tabId: string) {
+    els.settingsTabs.forEach((tab) => {
+      const isActive = tab.getAttribute("data-settings-tab") === tabId;
+      tab.classList.toggle("active", isActive);
+      tab.setAttribute("aria-selected", isActive ? "true" : "false");
+      tab.tabIndex = isActive ? 0 : -1;
+    });
+    els.settingsTabPanels.forEach((panel) => {
+      const isActive = panel.id === tabId;
+      panel.classList.toggle("active", isActive);
+      panel.hidden = !isActive;
+    });
+  }
+
+  els.settingsTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const tabId = tab.getAttribute("data-settings-tab");
+      if (tabId) setActiveSettingsTab(tabId);
+    });
+  });
+
+  // -- Car management buttons --------------------------------------------------
+
+  if (els.activeCarSelect) {
+    els.activeCarSelect.addEventListener("change", async () => {
+      const carId = els.activeCarSelect.value;
+      if (!carId) return;
+      try {
+        const result = await setActiveSettingsCar(carId);
+        if (result?.cars) {
+          state.cars = result.cars;
+          state.activeCarId = result.activeCarId;
+          syncCarSelector();
+          syncActiveCarToInputs();
+          renderSpectrum();
+        }
+      } catch (_err) {}
+    });
+  }
+
+  if (els.addCarBtn) {
+    els.addCarBtn.addEventListener("click", async () => {
+      try {
+        const result = await addSettingsCar({ name: "New Car", type: "sedan" });
+        if (result?.cars) {
+          state.cars = result.cars;
+          state.activeCarId = result.activeCarId;
+          // Select the newly added car (last in array)
+          const newCar = result.cars[result.cars.length - 1];
+          if (newCar) {
+            state.activeCarId = newCar.id;
+            const setResult = await setActiveSettingsCar(newCar.id);
+            if (setResult?.cars) {
+              state.cars = setResult.cars;
+              state.activeCarId = setResult.activeCarId;
+            }
+          }
+          syncCarSelector();
+          syncActiveCarToInputs();
+        }
+      } catch (_err) {}
+    });
+  }
+
+  if (els.deleteCarBtn) {
+    els.deleteCarBtn.addEventListener("click", async () => {
+      if (!state.activeCarId) return;
+      const car = state.cars.find((c) => c.id === state.activeCarId);
+      if (state.cars.length <= 1) {
+        window.alert(t("settings.car.cannot_delete_last"));
+        return;
+      }
+      const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
+      if (!ok) return;
+      try {
+        const result = await deleteSettingsCar(state.activeCarId);
+        if (result?.cars) {
+          state.cars = result.cars;
+          state.activeCarId = result.activeCarId;
+          syncCarSelector();
+          syncActiveCarToInputs();
+          renderSpectrum();
+        }
+      } catch (_err) {}
+    });
+  }
+
+  // -- Speed source save button ------------------------------------------------
+
+  if (els.saveSpeedSourceBtn) {
+    els.saveSpeedSourceBtn.addEventListener("click", saveSpeedSourceFromInputs);
   }
 
   function activateTabByIndex(index) {
@@ -1917,9 +2096,6 @@ import { WsClient, type WsUiState } from "./ws";
       toggleLogDetails(logName);
     }
   });
-  if (els.applySpeedOverrideBtn) {
-    els.applySpeedOverrideBtn.addEventListener("click", applySpeedOverrideFromInput);
-  }
   if (els.languageSelect) {
     els.languageSelect.value = state.lang;
     els.languageSelect.addEventListener("change", () => {
@@ -1934,22 +2110,18 @@ import { WsClient, type WsUiState } from "./ws";
       renderSpeedReadout();
     });
   }
-  els.speedOverrideInput.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter") {
-      ev.preventDefault();
-      applySpeedOverrideFromInput();
-    }
-  });
-  els.saveSettingsBtn.addEventListener("click", saveSettingsFromInputs);
+  if (els.saveCarSettingsBtn) {
+    els.saveCarSettingsBtn.addEventListener("click", saveSettingsFromInputs);
+  }
 
   loadVehicleSettings();
   syncSettingsInputs();
   applyLanguage(false);
   setActiveView("dashboardView");
   refreshLocationOptions();
-  void loadSpeedOverrideFromServer();
+  void loadSpeedSourceFromServer();
   void loadAnalysisSettingsFromServer();
-  void syncSpeedOverrideToServer(state.vehicleSettings.speed_override_kmh);
+  void loadCarsFromServer();
   refreshLoggingStatus();
   refreshLogs();
   connectWS();

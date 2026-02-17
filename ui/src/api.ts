@@ -51,6 +51,72 @@ export async function setAnalysisSettings(payload: Record<string, number>): Prom
   });
 }
 
+// -- New settings API (3-tab model) -------------------------------------------
+
+export async function getSettingsCars(): Promise<any> {
+  return apiJson("/api/settings/cars");
+}
+
+export async function addSettingsCar(car: Record<string, any>): Promise<any> {
+  return apiJson("/api/settings/cars", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(car),
+  });
+}
+
+export async function updateSettingsCar(carId: string, car: Record<string, any>): Promise<any> {
+  return apiJson(`/api/settings/cars/${encodeURIComponent(carId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(car),
+  });
+}
+
+export async function deleteSettingsCar(carId: string): Promise<any> {
+  return apiJson(`/api/settings/cars/${encodeURIComponent(carId)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function setActiveSettingsCar(carId: string): Promise<any> {
+  return apiJson("/api/settings/cars/active", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ carId }),
+  });
+}
+
+export async function getSettingsSpeedSource(): Promise<any> {
+  return apiJson("/api/settings/speed-source");
+}
+
+export async function updateSettingsSpeedSource(data: Record<string, any>): Promise<any> {
+  return apiJson("/api/settings/speed-source", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getSettingsSensors(): Promise<any> {
+  return apiJson("/api/settings/sensors");
+}
+
+export async function updateSettingsSensor(mac: string, data: Record<string, any>): Promise<any> {
+  return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSettingsSensor(mac: string): Promise<any> {
+  return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
+    method: "DELETE",
+  });
+}
+
 export async function getLoggingStatus(): Promise<any> {
   return apiJson("/api/logging/status");
 }
