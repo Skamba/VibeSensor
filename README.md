@@ -10,7 +10,36 @@ End-to-end prototype for local/offline car vibration sensing:
 - Diagnostics/report pipeline uses reproducible run logs (`.jsonl`) with explicit references
 
 Hardware list and wiring notes: `hardware/README.md`
-Design language (Material Design 3): `docs/design_language.md`
+Design language: `docs/design_language.md`
+
+## Development Commands
+
+### Quick checks (everyday, fast)
+
+```bash
+# Python lint + format
+ruff check pi/vibesensor pi/tests tools/simulator
+ruff format --check pi/vibesensor pi/tests tools/simulator
+
+# Python tests (fast, excludes Selenium)
+pytest -q -m "not selenium" pi/tests
+
+# UI typecheck + build
+cd ui && npm run typecheck && npm run build
+```
+
+### Visual snapshot tests (run after UI changes)
+
+```bash
+cd ui
+npx playwright install chromium   # first time only
+npm run test:visual               # compare against baselines
+npm run test:visual:update        # regenerate baselines after intentional changes
+```
+
+The visual tests use a deterministic demo mode (`?demo=1` query param) with fixed payloads.
+Screenshots are captured for 4 viewports (laptop-light, laptop-dark, tablet-light, tablet-dark)
+across the Live view and Settings/Analysis view. Baselines live in `ui/tests/snapshots/`.
 
 ## Repository Layout
 
