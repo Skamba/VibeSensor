@@ -214,8 +214,9 @@ def create_router(state: RuntimeState) -> APIRouter:
             )
         else:
             state.settings_store.update_speed_source({"speedSource": "gps", "manualSpeedKph": None})
-        speed_kmh = state.gps_monitor.set_speed_override_kmh(req.speed_kmh)
         _sync_speed_source_to_gps(state)
+        override_mps = state.gps_monitor.override_speed_mps
+        speed_kmh = (override_mps * MPS_TO_KMH) if isinstance(override_mps, (int, float)) else None
         return {"speed_kmh": speed_kmh}
 
     @router.get("/api/analysis-settings")

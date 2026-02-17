@@ -27,6 +27,13 @@ def _new_car_id() -> str:
     return str(uuid.uuid4())
 
 
+def _parse_manual_speed(value: Any) -> float | None:
+    """Return a positive float speed or None."""
+    if isinstance(value, (int, float)) and float(value) > 0:
+        return float(value)
+    return None
+
+
 def _sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
     """Sanitize car aspects using the same rules as AnalysisSettingsStore."""
     positive_required = {
@@ -132,11 +139,7 @@ class SettingsStore:
             # Speed source
             src = str(raw.get("speedSource") or "gps")
             self._speed_source = src if src in VALID_SPEED_SOURCES else "gps"
-            manual = raw.get("manualSpeedKph")
-            if isinstance(manual, (int, float)) and manual > 0:
-                self._manual_speed_kph = float(manual)
-            else:
-                self._manual_speed_kph = None
+            self._manual_speed_kph = _parse_manual_speed(raw.get("manualSpeedKph"))
             obd2 = raw.get("obd2Config")
             self._obd2_config = obd2 if isinstance(obd2, dict) else {}
 
@@ -258,8 +261,8 @@ class SettingsStore:
             manual = data.get("manualSpeedKph")
             if manual is None:
                 self._manual_speed_kph = None
-            elif isinstance(manual, (int, float)):
-                self._manual_speed_kph = float(manual) if float(manual) > 0 else None
+            else:
+                self._manual_speed_kph = _parse_manual_speed(manual)
             obd2 = data.get("obd2Config")
             if isinstance(obd2, dict):
                 self._obd2_config = obd2
