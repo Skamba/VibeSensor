@@ -7,6 +7,7 @@ import numpy as np
 
 VERSION = 1
 CLIENT_ID_BYTES = 6
+CLIENT_ID_OFFSET = 2  # Byte offset of the client_id field in all message types.
 
 MSG_HELLO = 1
 MSG_DATA = 2
@@ -70,6 +71,14 @@ def client_id_hex(client_id: bytes) -> str:
     if len(client_id) != 6:
         raise ValueError(f"client_id must be 6 bytes, got {len(client_id)}")
     return client_id.hex()
+
+
+def extract_client_id_hex(data: bytes) -> str | None:
+    """Extract client_id as hex string from a raw protocol message, or None."""
+    end = CLIENT_ID_OFFSET + CLIENT_ID_BYTES
+    if len(data) < end:
+        return None
+    return data[CLIENT_ID_OFFSET:end].hex()
 
 
 def client_id_mac(client_id: bytes | str) -> str:

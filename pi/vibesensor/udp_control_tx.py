@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import random
 import time
 
@@ -8,12 +9,15 @@ from .protocol import (
     MSG_ACK,
     MSG_HELLO,
     ProtocolError,
+    extract_client_id_hex,
     pack_cmd_identify,
     parse_ack,
     parse_client_id,
     parse_hello,
 )
 from .registry import ClientRegistry
+
+LOGGER = logging.getLogger(__name__)
 
 
 class ControlDatagramProtocol(asyncio.DatagramProtocol):
@@ -37,8 +41,9 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
             elif msg_type == MSG_ACK:
                 ack = parse_ack(data)
                 self.registry.update_from_ack(ack, now_ts)
-        except ProtocolError:
-            client_id = data[2:8].hex() if len(data) >= 8 else None
+        except ProtocolError as exc:
+            client_id = extract_client_id_hex(data)
+            LOGGER.debug("Control parse error from %s (client=%s): %s", addr, client_id, exc)
             self.registry.note_parse_error(client_id)
 
 
@@ -77,7 +82,7 @@ class UDPControlPlane:
             return False, None
 
         self._cmd_seq = (self._cmd_seq + 1) & 0xFFFFFFFF
-        payload = pack_cmd_identify(parse_client_id(record.client_id), self._cmd_seq, duration_ms)
+        payload = pack_cmd_identify(bytes.fromhex(record.client_id), self._cmd_seq, duration_ms)
         self.transport.sendto(payload, record.control_addr)
         self.registry.mark_cmd_sent(normalized_client_id, self._cmd_seq)
         return True, self._cmd_seq
