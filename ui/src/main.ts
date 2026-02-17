@@ -1994,6 +1994,11 @@ import { WsClient, type WsUiState } from "./ws";
     if (els.addCarWizard) els.addCarWizard.hidden = true;
   }
 
+  function buildWizardCarName(brand: string, model: string): string {
+    if (brand) return `${brand} ${model || "Custom"}`;
+    return model || "Custom Car";
+  }
+
   function loadWizardStep() {
     for (let i = 0; i < 4; i++) {
       const stepEl = document.getElementById(`wizardStep${i}`);
@@ -2198,7 +2203,7 @@ import { WsClient, type WsUiState } from "./ws";
     const fd = Number((document.getElementById("wizFinalDrive") as HTMLInputElement)?.value);
     const gr = Number((document.getElementById("wizGearRatio") as HTMLInputElement)?.value);
     if (!(tw > 0 && ta > 0 && ri > 0 && fd > 0 && gr > 0)) return;
-    const name = wizState.brand ? `${wizState.brand} ${wizState.model || "Custom"}` : (wizState.model || "Custom Car");
+    const name = buildWizardCarName(wizState.brand, wizState.model);
     await addCarFromWizard(name, wizState.carType || "Custom", {
       tire_width_mm: tw,
       tire_aspect_pct: ta,

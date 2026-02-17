@@ -1314,9 +1314,12 @@ def get_models_for_brand_type(brand: str, car_type: str) -> list[dict]:
     return [e for e in CAR_LIBRARY if e["brand"] == brand and e["type"] == car_type]
 
 
+# Pre-built lookup for O(1) find_model()
+_MODEL_INDEX: dict[tuple[str, str, str], dict] = {
+    (e["brand"], e["type"], e["model"]): e for e in CAR_LIBRARY
+}
+
+
 def find_model(brand: str, car_type: str, model: str) -> dict | None:
     """Look up a single model entry by brand, type, and model name."""
-    for e in CAR_LIBRARY:
-        if e["brand"] == brand and e["type"] == car_type and e["model"] == model:
-            return e
-    return None
+    return _MODEL_INDEX.get((brand, car_type, model))
