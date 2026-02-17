@@ -52,26 +52,11 @@ export function sourceKeysFromClassKey(classKey: string): string[] {
   return ["other"];
 }
 
-function relativeDbAboveFloor(amplitude: number, floorAmplitude: number): number {
-  const peak = Math.max(0, amplitude);
-  const floor = Math.max(0, floorAmplitude);
-  const eps = Math.max(1e-9, floor * 0.05);
-  return 20 * Math.log10((peak + eps) / (floor + eps));
-}
-
 export function severityFromPeak(
-  peakAmp: number,
-  floorAmp: number,
-  sensorCount: number,
-  strengthBands: StrengthBand[],
+  _peakAmp: number,
+  _floorAmp: number,
+  _sensorCount: number,
+  _strengthBands: StrengthBand[],
 ): { key: string; labelKey: string; db: number } | null {
-  const db = relativeDbAboveFloor(peakAmp, floorAmp);
-  const adjustedDb = sensorCount >= 2 ? db + 3 : db;
-  for (const band of [...strengthBands].sort((a, b) => b.min_db - a.min_db)) {
-    const maxDb = Number.isFinite(band.max_db) ? Number(band.max_db) : Number.POSITIVE_INFINITY;
-    if (adjustedDb >= band.min_db && adjustedDb < maxDb && peakAmp >= band.min_amp) {
-      return { key: band.key, labelKey: band.labelKey || `matrix.severity.${band.key}`, db: adjustedDb };
-    }
-  }
-  return null;
+  throw new Error("Client-side strength bucket derivation is disabled; use server-provided severity_key");
 }
