@@ -1,4 +1,4 @@
-export async function apiJson(path: string, init?: RequestInit): Promise<any> {
+export async function apiJson<T = unknown>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, init);
   if (!response.ok) {
     let detail = `${response.status} ${response.statusText}`;
@@ -12,8 +12,42 @@ export async function apiJson(path: string, init?: RequestInit): Promise<any> {
     }
     throw new Error(detail);
   }
-  return response.json();
+  return response.json() as Promise<T>;
 }
+
+// -- Response types -----------------------------------------------------------
+
+export type CarRecord = {
+  id: string;
+  name: string;
+  type: string;
+  aspects: Record<string, number>;
+  [key: string]: unknown;
+};
+
+export type CarsPayload = {
+  cars: CarRecord[];
+  activeCarId: string | null;
+};
+
+export type SpeedSourcePayload = {
+  speedSource: string;
+  manualSpeedKph: number | null;
+};
+
+export type LogEntry = {
+  name: string;
+  size: number;
+  [key: string]: unknown;
+};
+
+export type CarLibraryModel = {
+  model: string;
+  tire_width_mm: number;
+  tire_aspect_pct: number;
+  rim_in: number;
+  [key: string]: unknown;
+};
 
 export function logDownloadUrl(logName: string): string {
   return `/api/logs/${encodeURIComponent(logName)}`;
@@ -23,15 +57,15 @@ export function reportPdfUrl(logName: string, lang: string): string {
   return `/api/logs/${encodeURIComponent(logName)}/report.pdf?lang=${encodeURIComponent(lang)}`;
 }
 
-export async function getClientLocations(): Promise<any> {
+export async function getClientLocations(): Promise<Record<string, string>> {
   return apiJson("/api/client-locations");
 }
 
-export async function getSpeedOverride(): Promise<any> {
+export async function getSpeedOverride(): Promise<{ speed_kmh: number | null }> {
   return apiJson("/api/speed-override");
 }
 
-export async function setSpeedOverride(speedKmh: number | null): Promise<any> {
+export async function setSpeedOverride(speedKmh: number | null): Promise<{ speed_kmh: number | null }> {
   return apiJson("/api/speed-override", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -39,11 +73,11 @@ export async function setSpeedOverride(speedKmh: number | null): Promise<any> {
   });
 }
 
-export async function getAnalysisSettings(): Promise<any> {
+export async function getAnalysisSettings(): Promise<Record<string, number>> {
   return apiJson("/api/analysis-settings");
 }
 
-export async function setAnalysisSettings(payload: Record<string, number>): Promise<any> {
+export async function setAnalysisSettings(payload: Record<string, number>): Promise<Record<string, number>> {
   return apiJson("/api/analysis-settings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -53,25 +87,25 @@ export async function setAnalysisSettings(payload: Record<string, number>): Prom
 
 // -- Car library API ----------------------------------------------------------
 
-export async function getCarLibraryBrands(): Promise<any> {
+export async function getCarLibraryBrands(): Promise<{ brands: string[] }> {
   return apiJson("/api/car-library/brands");
 }
 
-export async function getCarLibraryTypes(brand: string): Promise<any> {
+export async function getCarLibraryTypes(brand: string): Promise<{ types: string[] }> {
   return apiJson(`/api/car-library/types?brand=${encodeURIComponent(brand)}`);
 }
 
-export async function getCarLibraryModels(brand: string, type: string): Promise<any> {
+export async function getCarLibraryModels(brand: string, type: string): Promise<{ models: CarLibraryModel[] }> {
   return apiJson(`/api/car-library/models?brand=${encodeURIComponent(brand)}&type=${encodeURIComponent(type)}`);
 }
 
 // -- New settings API (3-tab model) -------------------------------------------
 
-export async function getSettingsCars(): Promise<any> {
+export async function getSettingsCars(): Promise<CarsPayload> {
   return apiJson("/api/settings/cars");
 }
 
-export async function addSettingsCar(car: Record<string, any>): Promise<any> {
+export async function addSettingsCar(car: Record<string, unknown>): Promise<CarsPayload> {
   return apiJson("/api/settings/cars", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -79,7 +113,7 @@ export async function addSettingsCar(car: Record<string, any>): Promise<any> {
   });
 }
 
-export async function updateSettingsCar(carId: string, car: Record<string, any>): Promise<any> {
+export async function updateSettingsCar(carId: string, car: Record<string, unknown>): Promise<CarsPayload> {
   return apiJson(`/api/settings/cars/${encodeURIComponent(carId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -87,13 +121,13 @@ export async function updateSettingsCar(carId: string, car: Record<string, any>)
   });
 }
 
-export async function deleteSettingsCar(carId: string): Promise<any> {
+export async function deleteSettingsCar(carId: string): Promise<CarsPayload> {
   return apiJson(`/api/settings/cars/${encodeURIComponent(carId)}`, {
     method: "DELETE",
   });
 }
 
-export async function setActiveSettingsCar(carId: string): Promise<any> {
+export async function setActiveSettingsCar(carId: string): Promise<CarsPayload> {
   return apiJson("/api/settings/cars/active", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -101,11 +135,11 @@ export async function setActiveSettingsCar(carId: string): Promise<any> {
   });
 }
 
-export async function getSettingsSpeedSource(): Promise<any> {
+export async function getSettingsSpeedSource(): Promise<SpeedSourcePayload> {
   return apiJson("/api/settings/speed-source");
 }
 
-export async function updateSettingsSpeedSource(data: Record<string, any>): Promise<any> {
+export async function updateSettingsSpeedSource(data: Record<string, unknown>): Promise<SpeedSourcePayload> {
   return apiJson("/api/settings/speed-source", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -113,11 +147,11 @@ export async function updateSettingsSpeedSource(data: Record<string, any>): Prom
   });
 }
 
-export async function getSettingsSensors(): Promise<any> {
+export async function getSettingsSensors(): Promise<unknown> {
   return apiJson("/api/settings/sensors");
 }
 
-export async function updateSettingsSensor(mac: string, data: Record<string, any>): Promise<any> {
+export async function updateSettingsSensor(mac: string, data: Record<string, unknown>): Promise<unknown> {
   return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -125,25 +159,25 @@ export async function updateSettingsSensor(mac: string, data: Record<string, any
   });
 }
 
-export async function deleteSettingsSensor(mac: string): Promise<any> {
+export async function deleteSettingsSensor(mac: string): Promise<unknown> {
   return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
     method: "DELETE",
   });
 }
 
-export async function getLoggingStatus(): Promise<any> {
+export async function getLoggingStatus(): Promise<unknown> {
   return apiJson("/api/logging/status");
 }
 
-export async function startLoggingRun(): Promise<any> {
+export async function startLoggingRun(): Promise<unknown> {
   return apiJson("/api/logging/start", { method: "POST" });
 }
 
-export async function stopLoggingRun(): Promise<any> {
+export async function stopLoggingRun(): Promise<unknown> {
   return apiJson("/api/logging/stop", { method: "POST" });
 }
 
-export async function getLogs(): Promise<any> {
+export async function getLogs(): Promise<{ logs: LogEntry[] }> {
   return apiJson("/api/logs");
 }
 
@@ -155,13 +189,13 @@ export async function getLogInsights(
   logName: string,
   lang: string,
   includeSamples = false,
-): Promise<any> {
+): Promise<unknown> {
   return apiJson(
     `/api/logs/${encodeURIComponent(logName)}/insights?lang=${encodeURIComponent(lang)}&include_samples=${includeSamples ? "1" : "0"}`,
   );
 }
 
-export async function setClientLocation(clientId: string, locationCode: string): Promise<any> {
+export async function setClientLocation(clientId: string, locationCode: string): Promise<unknown> {
   return apiJson(`/api/clients/${encodeURIComponent(clientId)}/location`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -169,7 +203,7 @@ export async function setClientLocation(clientId: string, locationCode: string):
   });
 }
 
-export async function identifyClient(clientId: string, durationMs = 1500): Promise<any> {
+export async function identifyClient(clientId: string, durationMs = 1500): Promise<unknown> {
   return apiJson(`/api/clients/${encodeURIComponent(clientId)}/identify`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -177,7 +211,7 @@ export async function identifyClient(clientId: string, durationMs = 1500): Promi
   });
 }
 
-export async function removeClient(clientId: string): Promise<any> {
+export async function removeClient(clientId: string): Promise<unknown> {
   return apiJson(`/api/clients/${encodeURIComponent(clientId)}`, {
     method: "DELETE",
   });

@@ -9,6 +9,12 @@ from .constants import KMH_TO_MPS
 
 LOGGER = logging.getLogger(__name__)
 
+_GPS_DISABLED_POLL_S: float = 5.0
+"""Sleep interval when GPS is disabled."""
+
+_GPS_RECONNECT_DELAY_S: float = 2.0
+"""Delay before reconnecting after a GPS connection loss."""
+
 
 class GPSSpeedMonitor:
     def __init__(self, gps_enabled: bool):
@@ -39,7 +45,7 @@ class GPSSpeedMonitor:
         while True:
             if not self.gps_enabled:
                 self.speed_mps = None
-                await asyncio.sleep(5.0)
+                await asyncio.sleep(_GPS_DISABLED_POLL_S)
                 continue
 
             try:
@@ -64,5 +70,5 @@ class GPSSpeedMonitor:
                 await writer.wait_closed()
             except OSError:
                 self.speed_mps = None
-                LOGGER.debug("GPS connection lost, retrying in 2s")
-                await asyncio.sleep(2.0)
+                LOGGER.debug("GPS connection lost, retrying in %gs", _GPS_RECONNECT_DELAY_S)
+                await asyncio.sleep(_GPS_RECONNECT_DELAY_S)

@@ -12,8 +12,9 @@ export function normalizeStrengthBands(input: unknown): StrengthBand[] {
     ? input
         .map((band) => {
           if (!band || typeof band !== "object") return null;
-          const key = String((band as any).key || "").toLowerCase();
-          const minDb = Number((band as any).min_db);
+          const rec = band as Record<string, unknown>;
+          const key = String(rec.key || "").toLowerCase();
+          const minDb = Number(rec.min_db);
           if (!key || !Number.isFinite(minDb)) return null;
           return { key, min_db: minDb } as StrengthBand;
         })

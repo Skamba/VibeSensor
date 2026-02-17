@@ -6,14 +6,42 @@ export type AdaptedSpectrum = {
   strength_metrics: Record<string, unknown>;
 };
 
+export type ClientInfo = {
+  client_id: string;
+  name: string;
+  last_seen_ms: number;
+  sample_rate_hz: number;
+  location_code: string;
+  firmware_version: string;
+  [key: string]: unknown;
+};
+
+export type DiagnosticEvent = {
+  source: string;
+  severity: string;
+  client_id: string;
+  peak_hz: number;
+  strength_db: number;
+  ts_ms: number;
+  [key: string]: unknown;
+};
+
+export type DiagnosticLevel = {
+  current_db: number;
+  band_key: string;
+  [key: string]: unknown;
+};
+
+export type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
+
 export type AdaptedPayload = {
-  clients: any[];
+  clients: ClientInfo[];
   speed_mps: number | null;
   diagnostics: {
     strength_bands: StrengthBand[];
-    matrix: Record<string, Record<string, { count: number; seconds: number; contributors: Record<string, number> }>> | null;
-    events: any[];
-    levels: Record<string, any>;
+    matrix: Record<string, Record<string, MatrixCell>> | null;
+    events: DiagnosticEvent[];
+    levels: Record<string, DiagnosticLevel>;
   };
   spectra: {
     clients: Record<string, AdaptedSpectrum>;
@@ -24,7 +52,7 @@ function asNumberArray(value: unknown): number[] {
   return Array.isArray(value) ? value.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
 }
 
-export function adaptServerPayload(payload: any): AdaptedPayload {
+export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPayload {
   if (!payload || typeof payload !== "object") {
     throw new Error("Missing websocket payload.");
   }
@@ -40,7 +68,7 @@ export function adaptServerPayload(payload: any): AdaptedPayload {
   }
 
   const adapted: AdaptedPayload = {
-    clients: Array.isArray(payload.clients) ? payload.clients : [],
+    clients: Array.isArray(payload.clients) ? (payload.clients as ClientInfo[]) : [],
     speed_mps: typeof payload.speed_mps === "number" ? payload.speed_mps : null,
     diagnostics: {
       strength_bands: strengthBands,
@@ -48,26 +76,28 @@ export function adaptServerPayload(payload: any): AdaptedPayload {
         diagnostics.matrix && typeof diagnostics.matrix === "object"
           ? (diagnostics.matrix as AdaptedPayload["diagnostics"]["matrix"])
           : null,
-      events: Array.isArray(diagnostics.events) ? diagnostics.events : [],
+      events: Array.isArray(diagnostics.events) ? (diagnostics.events as DiagnosticEvent[]) : [],
       levels:
         diagnostics.levels && typeof diagnostics.levels === "object"
-          ? (diagnostics.levels as Record<string, any>)
+          ? (diagnostics.levels as Record<string, DiagnosticLevel>)
           : {},
     },
     spectra: null,
   };
 
   if (payload.spectra && typeof payload.spectra === "object") {
-    const clients = (payload.spectra as any).clients;
+    const spectraObj = payload.spectra as Record<string, unknown>;
+    const clients = spectraObj.clients;
     if (!clients || typeof clients !== "object") {
       throw new Error("Missing spectra.clients payload from server.");
     }
     adapted.spectra = { clients: {} };
     for (const [clientId, spectrum] of Object.entries(clients as Record<string, unknown>)) {
       if (!spectrum || typeof spectrum !== "object") continue;
-      const freq = asNumberArray((spectrum as any).freq);
-      const combined = asNumberArray((spectrum as any).combined_spectrum_amp_g);
-      const strengthMetrics = (spectrum as any).strength_metrics;
+      const specObj = spectrum as Record<string, unknown>;
+      const freq = asNumberArray(specObj.freq);
+      const combined = asNumberArray(specObj.combined_spectrum_amp_g);
+      const strengthMetrics = specObj.strength_metrics;
       if (!freq.length || !combined.length || !strengthMetrics || typeof strengthMetrics !== "object") {
         throw new Error(
           `Missing spectra.combined_spectrum_amp_g or strength_metrics for client ${clientId}.`,
