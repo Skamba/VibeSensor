@@ -161,8 +161,6 @@ def compute_strength_metrics(
             "strength_db": 0.0,
             "strength_bucket": None,
             "top_strength_peaks": [],
-            "peak_amp": 0.0,
-            "floor_amp": 0.0,
         }
 
     freq = [float(v) for v in freq_hz[:n]]
@@ -249,6 +247,4 @@ def compute_strength_metrics(
             strength_db=top_db, strength_peak_band_rms_amp_g=top_band_rms
         ),
         "top_strength_peaks": out_peaks,
-        "peak_amp": top_band_rms,
-        "floor_amp": float(floor_strength),
     }

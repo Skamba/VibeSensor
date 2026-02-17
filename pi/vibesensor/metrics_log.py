@@ -207,51 +207,6 @@ class MetricsLogger:
             return None
         return out
 
-    @staticmethod
-    def _dominant_peak(metrics: dict[str, object]) -> tuple[float | None, float | None, str | None]:
-        combined_metrics = metrics.get("combined")
-        if isinstance(combined_metrics, dict):
-            combined_peaks = combined_metrics.get("peaks")
-            if isinstance(combined_peaks, list):
-                for peak in combined_peaks:
-                    if not isinstance(peak, dict):
-                        continue
-                    try:
-                        hz = float(peak.get("hz"))
-                        amp = float(peak.get("amp"))
-                    except (TypeError, ValueError):
-                        continue
-                    if math.isnan(hz) or math.isnan(amp) or math.isinf(hz) or math.isinf(amp):
-                        continue
-                    if hz > 0 and amp >= 0:
-                        return hz, amp, "combined"
-
-        best_hz: float | None = None
-        best_amp: float | None = None
-        best_axis: str | None = None
-        for axis in ("x", "y", "z"):
-            axis_metrics = metrics.get(axis)
-            if not isinstance(axis_metrics, dict):
-                continue
-            peaks = axis_metrics.get("peaks")
-            if not isinstance(peaks, list) or not peaks:
-                continue
-            for peak in peaks:
-                if not isinstance(peak, dict):
-                    continue
-                try:
-                    hz = float(peak.get("hz"))
-                    amp = float(peak.get("amp"))
-                except (TypeError, ValueError):
-                    continue
-                if math.isnan(hz) or math.isnan(amp) or math.isinf(hz) or math.isinf(amp):
-                    continue
-                if best_amp is None or amp > best_amp:
-                    best_amp = amp
-                    best_hz = hz
-                    best_axis = axis
-        return best_hz, best_amp, best_axis
-
     def _build_sample_records(
         self, *, run_id: str, t_s: float, timestamp_utc: str
     ) -> list[dict[str, object]]:
