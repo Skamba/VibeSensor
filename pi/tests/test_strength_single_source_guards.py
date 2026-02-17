@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 
@@ -23,8 +24,19 @@ def test_report_analysis_uses_shared_strength_math() -> None:
 
 
 def test_client_assets_do_not_compute_strength_metrics() -> None:
-    text = _read(Path(__file__).resolve().parents[1] / "public" / "app.js")
-    assert "Math.log10(" not in text
-    assert "severityFromPeak(" not in text
-    assert "detectVibrationEvents(" not in text
-    assert "s.x[j] * s.x[j]" not in text
+    public_dir = Path(__file__).resolve().parents[1] / "public"
+    index_text = _read(public_dir / "index.html")
+    scripts = [
+        match.group(1).split("?", 1)[0].lstrip("/")
+        for match in re.finditer(r'<script[^>]+src="([^"]+\.js)"', index_text)
+    ]
+    assert scripts
+    forbidden_combined_spectrum = re.compile(
+        r"Math\.sqrt\(\([^)]*\+[^)]*\+[^)]*\)\s*/\s*3\)"
+    )
+    for script in scripts:
+        text = _read(public_dir / script)
+        assert "Math.log10(" not in text
+        assert "severityFromPeak(" not in text
+        assert "detectVibrationEvents(" not in text
+        assert forbidden_combined_spectrum.search(text) is None
