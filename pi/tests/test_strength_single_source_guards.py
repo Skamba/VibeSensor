@@ -75,3 +75,33 @@ def test_strength_metric_definition_is_centralized() -> None:
         assert forbidden_bucket_compare.search(text) is None, (
             f"Unexpected band thresholds in {path}"
         )
+
+
+def test_typescript_any_type_budget() -> None:
+    """Enforce a budget on `as any` / `: any` usage in TypeScript.
+
+    Only the demo cleanup window hook is allowed.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    ui_src = repo_root / "ui" / "src"
+    any_pattern = re.compile(r"\bas\s+any\b|:\s*any\b")
+    # Allowlist: window test hook and large untyped state bags in main.ts
+    allowlist = {
+        "main.ts": {
+            "(window as any).__vibesensorDemoCleanup",
+            "const els: any",
+            "const state: any",
+        },
+    }
+    violations: list[str] = []
+    for ts_file in sorted(ui_src.rglob("*.ts")):
+        allowed_set = allowlist.get(ts_file.name, set())
+        for i, line in enumerate(ts_file.read_text(encoding="utf-8").splitlines(), 1):
+            if any_pattern.search(line):
+                stripped = line.strip()
+                if any(allowed in stripped for allowed in allowed_set):
+                    continue
+                violations.append(f"{ts_file.name}:{i}: {stripped}")
+    assert not violations, (
+        f"Found {len(violations)} unexpected `any` type(s) in TypeScript:\n" + "\n".join(violations)
+    )
