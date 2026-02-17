@@ -99,6 +99,10 @@ def _list_logs(state: RuntimeState) -> list[dict]:
 def create_router(state: RuntimeState) -> APIRouter:
     router = APIRouter()
 
+    @router.get("/api/health")
+    async def health() -> dict:
+        return {"status": "ok"}
+
     @router.get("/api/clients")
     async def get_clients() -> dict:
         return {"clients": state.registry.snapshot_for_api()}

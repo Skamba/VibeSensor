@@ -20,7 +20,7 @@ COPY pi /app/pi
 RUN rm -rf /app/pi/public && mkdir -p /app/pi/public
 COPY --from=ui-build /app/ui/dist/ /app/pi/public/
 
-RUN pip install --no-cache-dir /app/pi
+RUN pip install --no-cache-dir -e /app/pi
 
 EXPOSE 8000/tcp
 EXPOSE 9000/udp
