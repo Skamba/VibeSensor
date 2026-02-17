@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import math
 import time
 from collections import deque
@@ -25,6 +26,8 @@ from .runlog import (
     create_run_metadata,
     utc_now_iso,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MetricsLogger:
@@ -226,6 +229,7 @@ class MetricsLogger:
         gear_ratio = settings.get("current_gear_ratio")
         gps_speed_mps = self.gps_monitor.speed_mps
         effective_speed_mps = self.gps_monitor.effective_speed_mps
+        override_speed_mps = self.gps_monitor.override_speed_mps
         gps_speed_kmh = (
             (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, (int, float)) else None
         )
@@ -235,9 +239,9 @@ class MetricsLogger:
             else None
         )
         speed_source = (
-            "gps"
-            if gps_speed_kmh is not None
-            else ("override" if speed_kmh is not None else "missing")
+            "override"
+            if isinstance(override_speed_mps, (int, float))
+            else ("gps" if gps_speed_kmh is not None else "missing")
         )
         engine_rpm_estimated = None
         if (
@@ -407,18 +411,21 @@ class MetricsLogger:
     async def run(self) -> None:
         interval = 1.0 / self.metrics_log_hz
         while True:
-            timestamp_utc = utc_now_iso()
-            live_t_s = max(0.0, time.monotonic() - self._live_start_mono_s)
-            live_rows = self._build_sample_records(
-                run_id=self._run_id or "live",
-                t_s=live_t_s,
-                timestamp_utc=timestamp_utc,
-            )
-            if live_rows:
-                with self._lock:
-                    self._live_samples.extend(live_rows)
-            snapshot = self._session_snapshot()
-            if snapshot is not None:
-                path, run_id, start_time_utc, start_mono_s = snapshot
-                self._append_records(path, run_id, start_time_utc, start_mono_s)
+            try:
+                timestamp_utc = utc_now_iso()
+                live_t_s = max(0.0, time.monotonic() - self._live_start_mono_s)
+                live_rows = self._build_sample_records(
+                    run_id=self._run_id or "live",
+                    t_s=live_t_s,
+                    timestamp_utc=timestamp_utc,
+                )
+                if live_rows:
+                    with self._lock:
+                        self._live_samples.extend(live_rows)
+                snapshot = self._session_snapshot()
+                if snapshot is not None:
+                    path, run_id, start_time_utc, start_mono_s = snapshot
+                    self._append_records(path, run_id, start_time_utc, start_mono_s)
+            except Exception:
+                LOGGER.warning("Metrics logger tick failed; will retry next interval.", exc_info=True)
             await asyncio.sleep(interval)

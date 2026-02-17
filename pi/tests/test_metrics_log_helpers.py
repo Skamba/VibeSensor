@@ -103,6 +103,7 @@ class _FakeRegistry:
 class _FakeGPSMonitor:
     speed_mps = None
     effective_speed_mps = None
+    override_speed_mps = None
 
 
 class _FakeProcessor:

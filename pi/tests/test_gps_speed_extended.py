@@ -5,11 +5,17 @@ from vibesensor.gps_speed import GPSSpeedMonitor
 # -- effective_speed_mps -------------------------------------------------------
 
 
-def test_gps_speed_has_priority_over_override() -> None:
+def test_gps_used_as_fallback_when_no_override() -> None:
+    m = GPSSpeedMonitor(gps_enabled=True)
+    m.speed_mps = 10.0
+    assert m.effective_speed_mps == 10.0
+
+
+def test_override_has_priority_over_gps() -> None:
     m = GPSSpeedMonitor(gps_enabled=True)
     m.speed_mps = 10.0
     m.override_speed_mps = 25.0
-    assert m.effective_speed_mps == 10.0
+    assert m.effective_speed_mps == 25.0
 
 
 def test_override_used_when_no_gps() -> None:
