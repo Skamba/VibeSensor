@@ -1,5 +1,7 @@
 # Docker overrides — only fields that differ from defaults.
 # Uses local relative paths inside the container working directory.
+# NOTE: identical to config.dev.yaml; kept separate so the Dockerfile
+#       and local-dev entrypoints reference distinct filenames.
 
 logging:
   metrics_log_path: pi/data/metrics.jsonl

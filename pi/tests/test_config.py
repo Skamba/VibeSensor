@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.config import REPO_DIR, load_config
+from vibesensor.config import PI_DIR, REPO_DIR, load_config
 
 
 def _write_config(path: Path, payload: dict) -> None:
@@ -27,3 +27,17 @@ def test_metrics_log_path_resolves_relative(tmp_path: Path) -> None:
     )
     cfg = load_config(config_path)
     assert cfg.logging.metrics_log_path == (REPO_DIR / "pi/data/new_metrics.jsonl")
+
+
+def test_dev_and_docker_configs_equivalent() -> None:
+    """config.dev.yaml and config.docker.yaml must produce identical AppConfig."""
+    dev_cfg = load_config(PI_DIR / "config.dev.yaml")
+    docker_cfg = load_config(PI_DIR / "config.docker.yaml")
+    # Compare all meaningful fields (config_path will differ)
+    assert dev_cfg.logging.metrics_log_path == docker_cfg.logging.metrics_log_path
+    assert dev_cfg.clients_json_path == docker_cfg.clients_json_path
+    assert dev_cfg.server == docker_cfg.server
+    assert dev_cfg.udp == docker_cfg.udp
+    assert dev_cfg.processing == docker_cfg.processing
+    assert dev_cfg.gps == docker_cfg.gps
+    assert dev_cfg.ap == docker_cfg.ap

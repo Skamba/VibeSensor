@@ -10,8 +10,19 @@ Default PlatformIO environment targets `m5stack-atom` (ATOM ESP32-PICO).
 - Buffered frame queue to reduce sample loss during short Wi-Fi stalls
 - UDP command listener for identify blink with ACK response
 - Identify command triggers RGB LED wave animation on ATOM LEDs
-- ADXL345 I2C driver at 800 Hz
-- Synthetic waveform fallback when the sensor is absent
+- ADXL345 I2C driver at 800 Hz with error-checked initialisation
+- Synthetic waveform fallback when the sensor is absent or I2C fails
+
+## Error handling
+
+- **I2C init**: Every register write during `ADXL345::begin()` is validated;
+  if any write fails the sensor is marked unavailable and the firmware falls
+  back to synthetic waveform generation.
+- **I2C reads**: `read_reg()` and `read_multi()` return zeros on bus errors.
+  This is safe because the caller (`read_samples()`) only processes FIFO
+  entries reported by the hardware status register.
+- **Wi-Fi**: Automatic reconnect with configurable retry interval
+  (`kWifiRetryIntervalMs`).
 
 ## Build and flash
 
@@ -25,8 +36,8 @@ pio device monitor
 
 Edit constants in `src/main.cpp`:
 
-- `kWifiSsid`, `kWifiPsk`
-- `kServerIp`, ports
+- `kWifiSsid`, `kWifiPsk` — must match `pi/config.yaml` `ap.ssid` / `ap.psk`
+- `kServerIp`, `kServerDataPort`, `kServerControlPort` — must match `pi/config.yaml` `udp.*`
 - `kClientName`
 - I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)
 

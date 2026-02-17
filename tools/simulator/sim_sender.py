@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "pi"))
 
 from vibesensor.analysis_settings import (  # noqa: E402
+    DEFAULT_ANALYSIS_SETTINGS,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_mps,
 )
@@ -34,11 +35,12 @@ from vibesensor.protocol import (  # noqa: E402
 )
 
 DEFAULT_SPEED_KMH = 100.0
-DEFAULT_TIRE_WIDTH_MM = 285.0
-DEFAULT_TIRE_ASPECT_PCT = 30.0
-DEFAULT_RIM_IN = 21.0
-DEFAULT_FINAL_DRIVE = 3.08
-DEFAULT_GEAR_RATIO = 0.64
+# Vehicle defaults imported from the canonical source of truth.
+DEFAULT_TIRE_WIDTH_MM = DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
+DEFAULT_TIRE_ASPECT_PCT = DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"]
+DEFAULT_RIM_IN = DEFAULT_ANALYSIS_SETTINGS["rim_in"]
+DEFAULT_FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
+DEFAULT_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 
 
 def _calc_default_orders() -> dict[str, float]:
@@ -46,9 +48,11 @@ def _calc_default_orders() -> dict[str, float]:
     circumference = tire_circumference_m_from_spec(
         DEFAULT_TIRE_WIDTH_MM, DEFAULT_TIRE_ASPECT_PCT, DEFAULT_RIM_IN
     )
-    assert circumference is not None
+    if circumference is None:
+        raise ValueError("Failed to compute tire circumference from default specs")
     whz = wheel_hz_from_speed_mps(speed_mps, circumference)
-    assert whz is not None
+    if whz is None:
+        raise ValueError("Failed to compute wheel Hz from default speed/circumference")
     wheel_1x = whz
     shaft_1x = wheel_1x * DEFAULT_FINAL_DRIVE
     engine_1x = shaft_1x * DEFAULT_GEAR_RATIO
@@ -211,7 +215,7 @@ class SimClient:
             self.phase_s += self.frame_samples / self.sample_rate_hz
             return np.zeros((self.frame_samples, 3), dtype=np.int16)
 
-        assert self.rng is not None
+        assert self.rng is not None  # guaranteed by __post_init__
         profile = self.profile
 
         dt = 1.0 / self.sample_rate_hz
@@ -281,7 +285,10 @@ class ClientProtocol(asyncio.DatagramProtocol):
             return
         try:
             cmd = parse_cmd(data)
-        except Exception:
+        except Exception as exc:
+            print(
+                f"{self.sim.name}: ignoring unparseable command from {addr[0]}:{addr[1]}: {exc}"
+            )
             return
         if cmd.client_id != self.sim.client_id:
             return
@@ -658,7 +665,8 @@ async def hello_loop(
 
 
 async def data_loop(sim: SimClient, stop_event: asyncio.Event) -> None:
-    assert sim.rng is not None
+    if sim.rng is None:
+        raise RuntimeError("SimClient.rng must be initialised before data_loop")
     frame_period = (sim.frame_samples / sim.sample_rate_hz) * sim.send_period_scale
     loop = asyncio.get_running_loop()
     next_send = loop.time() + sim.start_offset_s
