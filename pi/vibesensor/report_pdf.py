@@ -171,7 +171,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 return f"{tr('NOT_AVAILABLE')}. {definition}"
             return tr("NOT_AVAILABLE")
         name_map = {
-            "dominant_peak_amp_g": tr("DOMINANT_PEAK_AMPLITUDE"),
+            "strength_peak_band_rms_amp_g": tr("DOMINANT_PEAK_AMPLITUDE"),
             "vib_mag_rms_g": text("Vibration magnitude RMS", "Trillingsgrootte RMS"),
             "vib_mag_p2p_g": text(
                 "Vibration magnitude peak-to-peak",
@@ -235,11 +235,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                     f"Sensor {client_id[-4:]}" if client_id else tr("UNLABELED_SENSOR")
                 )
                 all_locations.add(location)
-                amp = _as_float(sample.get("dominant_peak_amp_g"))
+                amp = _as_float(sample.get("strength_peak_band_rms_amp_g"))
                 if amp is None:
                     amp = _as_float(sample.get("vib_mag_rms_g"))
-                if amp is None:
-                    amp = _as_float(sample.get("accel_magnitude_rms_g"))
                 if amp is not None and amp > 0:
                     amp_by_location[location].append(amp)
 
