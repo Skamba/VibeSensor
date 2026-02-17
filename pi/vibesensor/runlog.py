@@ -188,6 +188,8 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     normalized["engine_rpm"] = as_float_or_none(record.get("engine_rpm"))
     normalized["gear"] = as_float_or_none(record.get("gear"))
     normalized["dominant_freq_hz"] = as_float_or_none(record.get("dominant_freq_hz"))
+    # Read-path fallbacks: old log files on disk may use the prior field names.
+    # New records are written with canonical names only (see metrics_log.py).
     normalized["vib_mag_rms_g"] = as_float_or_none(
         record.get("vib_mag_rms_g")
         if record.get("vib_mag_rms_g") is not None
