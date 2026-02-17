@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from vibesensor.protocol import (
     ACK_BYTES,
@@ -11,11 +12,15 @@ from vibesensor.protocol import (
     HELLO_FIXED_BYTES,
     MSG_DATA,
     MSG_HELLO,
+    ProtocolError,
+    client_id_hex,
     client_id_mac,
     extract_client_id_hex,
+    pack_ack,
     pack_cmd_identify,
     pack_data,
     pack_hello,
+    parse_ack,
     parse_client_id,
     parse_cmd,
     parse_data,
@@ -101,3 +106,110 @@ def test_extract_client_id_hex_too_short() -> None:
     assert extract_client_id_hex(b"\x01\x01") is None
     assert extract_client_id_hex(b"") is None
     assert extract_client_id_hex(b"\x01\x01\xaa\xbb") is None
+
+
+# ---------------------------------------------------------------------------
+# Error path tests
+# ---------------------------------------------------------------------------
+
+
+def test_client_id_hex_rejects_wrong_length() -> None:
+    with pytest.raises(ValueError, match="6 bytes"):
+        client_id_hex(b"\x01\x02")
+
+
+def test_client_id_mac_rejects_wrong_length() -> None:
+    with pytest.raises(ValueError, match="6 bytes"):
+        client_id_mac(b"\x01\x02\x03")
+
+
+def test_parse_client_id_rejects_wrong_length() -> None:
+    with pytest.raises(ValueError, match="12 hex chars"):
+        parse_client_id("abcd")
+
+
+def test_parse_hello_too_short() -> None:
+    with pytest.raises(ProtocolError, match="HELLO too short"):
+        parse_hello(b"\x01")
+
+
+def test_parse_hello_invalid_header() -> None:
+    # Valid length but wrong msg_type
+    data = b"\xff\x01" + b"\x00" * (HELLO_FIXED_BYTES - 2)
+    with pytest.raises(ProtocolError, match="Invalid HELLO header"):
+        parse_hello(data)
+
+
+def test_parse_hello_missing_name() -> None:
+    # Build a hello where name_len says 200 but only 0 bytes remain
+    client_id = bytes.fromhex("aabbccddeeff")
+    header = pack_hello(client_id, 9000, 800, "test")
+    # Truncate after name_len
+    from vibesensor.protocol import HELLO_BASE
+
+    truncated = header[: HELLO_BASE.size]
+    # Patch name_len to something too large
+    truncated = truncated[:-1] + b"\xff"
+    with pytest.raises(ProtocolError, match="HELLO missing name"):
+        parse_hello(truncated)
+
+
+def test_parse_data_too_short() -> None:
+    with pytest.raises(ProtocolError, match="DATA too short"):
+        parse_data(b"\x02\x01")
+
+
+def test_parse_data_invalid_header() -> None:
+    data = b"\xff\x01" + b"\x00" * (DATA_HEADER_BYTES - 2)
+    with pytest.raises(ProtocolError, match="Invalid DATA header"):
+        parse_data(data)
+
+
+def test_parse_data_payload_size_mismatch() -> None:
+    # Build a valid data header with sample_count=1 but no payload
+    client_id = bytes.fromhex("010203040506")
+    samples = np.zeros((1, 3), dtype="<i2")
+    pkt = pack_data(client_id, seq=1, t0_us=0, samples=samples)
+    # Truncate payload
+    with pytest.raises(ProtocolError, match="payload size mismatch"):
+        parse_data(pkt[:-1])
+
+
+def test_pack_data_rejects_wrong_shape() -> None:
+    client_id = bytes.fromhex("010203040506")
+    bad_samples = np.array([1, 2, 3], dtype=np.int16)
+    with pytest.raises(ValueError, match="shaped.*N.*3"):
+        pack_data(client_id, seq=1, t0_us=0, samples=bad_samples)
+
+
+def test_parse_cmd_too_short() -> None:
+    with pytest.raises(ProtocolError, match="CMD too short"):
+        parse_cmd(b"\x03\x01")
+
+
+def test_parse_cmd_invalid_header() -> None:
+    data = b"\xff\x01" + b"\x00" * (CMD_HEADER_BYTES - 2)
+    with pytest.raises(ProtocolError, match="Invalid CMD header"):
+        parse_cmd(data)
+
+
+def test_ack_roundtrip() -> None:
+    client_id = bytes.fromhex("aabbccddeeff")
+    pkt = pack_ack(client_id, cmd_seq=99, status=0)
+    decoded = parse_ack(pkt)
+    assert decoded.client_id == client_id
+    assert decoded.cmd_seq == 99
+    assert decoded.status == 0
+
+
+def test_parse_ack_wrong_size() -> None:
+    with pytest.raises(ProtocolError, match="ACK has unexpected size"):
+        parse_ack(b"\x04\x01\x00")
+
+
+def test_parse_ack_invalid_header() -> None:
+    from vibesensor.protocol import ACK_STRUCT
+
+    pkt = ACK_STRUCT.pack(0xFF, 0x01, b"\x00" * 6, 0, 0)
+    with pytest.raises(ProtocolError, match="Invalid ACK header"):
+        parse_ack(pkt)

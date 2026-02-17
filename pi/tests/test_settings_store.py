@@ -224,3 +224,57 @@ def test_store_handles_missing_persist_file(tmp_path: Path) -> None:
     persist = tmp_path / "settings.json"
     store = SettingsStore(persist_path=persist)
     assert len(store.snapshot()["cars"]) == 1
+
+
+def test_parse_manual_speed_returns_none_for_invalid() -> None:
+    from vibesensor.settings_store import _parse_manual_speed
+
+    assert _parse_manual_speed(None) is None
+    assert _parse_manual_speed("not_a_number") is None
+    assert _parse_manual_speed(-5) is None
+    assert _parse_manual_speed(0) is None
+    assert _parse_manual_speed(60) == 60.0
+
+
+def test_store_update_car_name_and_type() -> None:
+    store = SettingsStore()
+    cars = store.get_cars()["cars"]
+    car_id = cars[0]["id"]
+    result = store.update_car(car_id, {"name": "Updated", "type": "SUV"})
+    updated = next(c for c in result["cars"] if c["id"] == car_id)
+    assert updated["name"] == "Updated"
+    assert updated["type"] == "SUV"
+
+
+def test_store_update_car_unknown_raises() -> None:
+    store = SettingsStore()
+    with pytest.raises(ValueError, match="Unknown car id"):
+        store.update_car("nonexistent", {"name": "X"})
+
+
+def test_store_delete_car_switches_active() -> None:
+    store = SettingsStore()
+    added = store.add_car({"name": "Second"})
+    car_ids = [c["id"] for c in added["cars"]]
+    store.set_active_car(car_ids[1])
+    result = store.delete_car(car_ids[1])
+    # Active car should switch to remaining car
+    assert result["activeCarId"] == car_ids[0]
+
+
+def test_store_delete_car_unknown_raises() -> None:
+    store = SettingsStore()
+    store.add_car({"name": "Extra"})
+    with pytest.raises(ValueError, match="Unknown car id"):
+        store.delete_car("nonexistent")
+
+
+def test_store_sensor_location_default() -> None:
+    store = SettingsStore()
+    assert store.sensor_location("aa:bb:cc:dd:ee:ff") == ""
+
+
+def test_store_obd2_config_update() -> None:
+    store = SettingsStore()
+    result = store.update_speed_source({"obd2Config": {"port": "/dev/ttyUSB0"}})
+    assert result.get("obd2Config") == {"port": "/dev/ttyUSB0"}
