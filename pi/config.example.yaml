@@ -1,3 +1,7 @@
+# VibeSensor configuration file.
+# All values shown below match the built-in defaults (see config.py DEFAULT_CONFIG).
+# Copy to config.yaml and modify only the fields you need to override.
+
 ap:
   ssid: VibeSensor
   psk: vibesensor123

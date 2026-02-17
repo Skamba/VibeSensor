@@ -72,7 +72,7 @@ def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
         },
         "logging": {
             "log_metrics": False,
-            "metrics_csv_path": str(tmp_dir / "metrics.csv"),
+            "metrics_log_path": str(tmp_dir / "metrics.jsonl"),
             "metrics_log_hz": 4,
         },
         "storage": {"clients_json_path": str(persist_path)},

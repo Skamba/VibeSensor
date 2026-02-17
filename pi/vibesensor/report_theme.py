@@ -64,6 +64,6 @@ FINDING_SOURCE_COLORS = {
 }
 
 # Heat-map endpoint colors for the car diagram.
-HEAT_LOW = "#2ca25f"   # green (low vibration)
-HEAT_MID = "#f0cf4a"   # yellow
+HEAT_LOW = "#2ca25f"  # green (low vibration)
+HEAT_MID = "#f0cf4a"  # yellow
 HEAT_HIGH = "#d73027"  # red (high vibration)

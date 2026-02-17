@@ -336,16 +336,18 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             ),
         ]
         if header:
-            cmds.extend([
-                (
-                    "BACKGROUND",
-                    (0, 0),
-                    (-1, 0),
-                    colors.HexColor(REPORT_COLORS["table_header_bg"]),
-                ),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor(REPORT_COLORS["text_primary"])),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ])
+            cmds.extend(
+                [
+                    (
+                        "BACKGROUND",
+                        (0, 0),
+                        (-1, 0),
+                        colors.HexColor(REPORT_COLORS["table_header_bg"]),
+                    ),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor(REPORT_COLORS["text_primary"])),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ]
+            )
         if zebra and len(data) > 2:
             for row_idx in range(2 if header else 1, len(data), 2):
                 cmds.append(
@@ -367,9 +369,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     ) -> Table:
         """Build a Material-style card with title, optional badge, and body flowables."""
         tone_bg = REPORT_COLORS.get(f"card_{tone}_bg", REPORT_COLORS["card_neutral_bg"])
-        tone_border = REPORT_COLORS.get(
-            f"card_{tone}_border", REPORT_COLORS["card_neutral_border"]
-        )
+        tone_border = REPORT_COLORS.get(f"card_{tone}_border", REPORT_COLORS["card_neutral_border"])
         title_html = f"<b>{escape(title)}</b>"
         if badge:
             pill_tone = _tone_to_pill_tone(tone)
@@ -384,22 +384,24 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             rows.append([flowable])
         card = Table(rows, colWidths=[None])
         card.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(tone_bg)),
-                (
-                    "BOX",
-                    (0, 0),
-                    (-1, -1),
-                    0.6,
-                    colors.HexColor(tone_border),
-                ),
-                ("LEFTPADDING", (0, 0), (-1, -1), CARD_PADDING),
-                ("RIGHTPADDING", (0, 0), (-1, -1), CARD_PADDING),
-                ("TOPPADDING", (0, 0), (-1, -1), CARD_PADDING),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), CARD_PADDING),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ROUNDEDCORNERS", [CARD_RADIUS, CARD_RADIUS, CARD_RADIUS, CARD_RADIUS]),
-            ])
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(tone_bg)),
+                    (
+                        "BOX",
+                        (0, 0),
+                        (-1, -1),
+                        0.6,
+                        colors.HexColor(tone_border),
+                    ),
+                    ("LEFTPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                    ("TOPPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), CARD_PADDING),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ROUNDEDCORNERS", [CARD_RADIUS, CARD_RADIUS, CARD_RADIUS, CARD_RADIUS]),
+                ]
+            )
         )
         return card
 
@@ -422,7 +424,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             f'<span backColor="{pill_bg}"> {escape(label)} </span></font>'
         )
         if show_percent:
-            html += f' <font size="6" color="{REPORT_COLORS["text_muted"]}">{escape(pct_text)}</font>'
+            html += (
+                f' <font size="6" color="{REPORT_COLORS["text_muted"]}">{escape(pct_text)}</font>'
+            )
         return html
 
     def downsample(
@@ -615,22 +619,24 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             rowHeights=[16, 8, height - 24],
         )
         panel.setStyle(
-            TableStyle([
-                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(REPORT_COLORS["surface"])),
-                (
-                    "BOX",
-                    (0, 0),
-                    (-1, -1),
-                    0.6,
-                    colors.HexColor(REPORT_COLORS["card_neutral_border"]),
-                ),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ROUNDEDCORNERS", [CARD_RADIUS, CARD_RADIUS, CARD_RADIUS, CARD_RADIUS]),
-            ])
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(REPORT_COLORS["surface"])),
+                    (
+                        "BOX",
+                        (0, 0),
+                        (-1, -1),
+                        0.6,
+                        colors.HexColor(REPORT_COLORS["card_neutral_border"]),
+                    ),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("ROUNDEDCORNERS", [CARD_RADIUS, CARD_RADIUS, CARD_RADIUS, CARD_RADIUS]),
+                ]
+            )
         )
         return panel
 
@@ -710,7 +716,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 continue
             for xi, amp in enumerate(row):
                 level = ((_as_float(amp) or 0.0) / max_amp) if max_amp and max_amp > 0 else 0.0
-                color_hex = _blend(REPORT_COLORS["surface_alt"], REPORT_PLOT_COLORS["vibration"], level)
+                color_hex = _blend(
+                    REPORT_COLORS["surface_alt"], REPORT_PLOT_COLORS["vibration"], level
+                )
                 drawing.add(
                     Rect(
                         plot_x0 + (xi * cell_w),
@@ -809,25 +817,33 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     def _canonical_location(raw: object) -> str:
         token = str(raw or "").strip().lower().replace("_", "-")
         compact = "".join(ch for ch in token if ch.isalnum())
-        if (
-            ("front" in token and "left" in token and "wheel" in token)
-            or compact in {"frontleft", "frontleftwheel", "fl", "flwheel"}
-        ):
+        if ("front" in token and "left" in token and "wheel" in token) or compact in {
+            "frontleft",
+            "frontleftwheel",
+            "fl",
+            "flwheel",
+        }:
             return "front-left wheel"
-        if (
-            ("front" in token and "right" in token and "wheel" in token)
-            or compact in {"frontright", "frontrightwheel", "fr", "frwheel"}
-        ):
+        if ("front" in token and "right" in token and "wheel" in token) or compact in {
+            "frontright",
+            "frontrightwheel",
+            "fr",
+            "frwheel",
+        }:
             return "front-right wheel"
-        if (
-            ("rear" in token and "left" in token and "wheel" in token)
-            or compact in {"rearleft", "rearleftwheel", "rl", "rlwheel"}
-        ):
+        if ("rear" in token and "left" in token and "wheel" in token) or compact in {
+            "rearleft",
+            "rearleftwheel",
+            "rl",
+            "rlwheel",
+        }:
             return "rear-left wheel"
-        if (
-            ("rear" in token and "right" in token and "wheel" in token)
-            or compact in {"rearright", "rearrightwheel", "rr", "rrwheel"}
-        ):
+        if ("rear" in token and "right" in token and "wheel" in token) or compact in {
+            "rearright",
+            "rearrightwheel",
+            "rr",
+            "rrwheel",
+        }:
             return "rear-right wheel"
         if "trunk" in token:
             return "trunk"
@@ -893,7 +909,12 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         # Outer body
         drawing.add(
             Rect(
-                x0, y0, car_w, car_h, rx=24, ry=24,
+                x0,
+                y0,
+                car_w,
+                car_h,
+                rx=24,
+                ry=24,
                 fillColor=colors.HexColor(REPORT_COLORS["surface"]),
                 strokeColor=colors.HexColor(REPORT_COLORS["border"]),
                 strokeWidth=1.4,
@@ -902,9 +923,12 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         # Cabin
         drawing.add(
             Rect(
-                x0 + (car_w * 0.08), y0 + (car_h * 0.10),
-                car_w * 0.84, car_h * 0.80,
-                rx=16, ry=16,
+                x0 + (car_w * 0.08),
+                y0 + (car_h * 0.10),
+                car_w * 0.84,
+                car_h * 0.80,
+                rx=16,
+                ry=16,
                 fillColor=colors.HexColor("#ffffff"),
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.7,
@@ -913,7 +937,10 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         # Center tunnel
         drawing.add(
             Line(
-                cx, y0 + 18, cx, y0 + car_h - 18,
+                cx,
+                y0 + 18,
+                cx,
+                y0 + car_h - 18,
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.8,
             )
@@ -923,14 +950,20 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         rear_axle_y = y0 + (car_h * 0.16)
         drawing.add(
             Line(
-                x0 + (car_w * 0.14), front_axle_y, x0 + (car_w * 0.86), front_axle_y,
+                x0 + (car_w * 0.14),
+                front_axle_y,
+                x0 + (car_w * 0.86),
+                front_axle_y,
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.6,
             )
         )
         drawing.add(
             Line(
-                x0 + (car_w * 0.14), rear_axle_y, x0 + (car_w * 0.86), rear_axle_y,
+                x0 + (car_w * 0.14),
+                rear_axle_y,
+                x0 + (car_w * 0.86),
+                rear_axle_y,
                 strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
                 strokeWidth=0.6,
             )
@@ -953,17 +986,21 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         # Orientation labels
         drawing.add(
             String(
-                cx - 16, y0 + car_h + 16,
+                cx - 16,
+                y0 + car_h + 16,
                 text("FRONT", "VOOR"),
-                fontName="Helvetica-Bold", fontSize=8,
+                fontName="Helvetica-Bold",
+                fontSize=8,
                 fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
             )
         )
         drawing.add(
             String(
-                cx - 14, y0 - 16,
+                cx - 14,
+                y0 - 16,
                 text("REAR", "ACHTER"),
-                fontName="Helvetica-Bold", fontSize=8,
+                fontName="Helvetica-Bold",
+                fontSize=8,
                 fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
             )
         )
@@ -1022,9 +1059,11 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         # Title
         drawing.add(
             String(
-                4, drawing_h - 14,
+                4,
+                drawing_h - 14,
                 tr("EVIDENCE_AND_HOTSPOTS"),
-                fontName="Helvetica-Bold", fontSize=9,
+                fontName="Helvetica-Bold",
+                fontSize=9,
                 fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
             )
         )
@@ -1063,7 +1102,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             )
             drawing.add(
                 String(
-                    px + 10, py - 2, name,
+                    px + 10,
+                    py - 2,
+                    name,
                     fontSize=6,
                     fillColor=colors.HexColor(
                         REPORT_COLORS["ink"] if is_active else REPORT_COLORS["text_muted"]
@@ -1078,7 +1119,10 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             step = i / 10.0
             drawing.add(
                 Rect(
-                    legend_x + (i * 8), legend_y, 8, 7,
+                    legend_x + (i * 8),
+                    legend_y,
+                    8,
+                    7,
                     fillColor=colors.HexColor(_amp_heat_color(step)),
                     strokeColor=colors.HexColor(_amp_heat_color(step)),
                     strokeWidth=0.2,
@@ -1086,17 +1130,21 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             )
         drawing.add(
             String(
-                legend_x, legend_y - 10,
+                legend_x,
+                legend_y - 10,
                 tr("HEAT_LEGEND_LESS"),
-                fontName="Helvetica", fontSize=6.5,
+                fontName="Helvetica",
+                fontSize=6.5,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
             )
         )
         drawing.add(
             String(
-                legend_x + 82, legend_y - 10,
+                legend_x + 82,
+                legend_y - 10,
                 tr("HEAT_LEGEND_MORE"),
-                fontName="Helvetica", fontSize=6.5,
+                fontName="Helvetica",
+                fontSize=6.5,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
             )
         )
@@ -1104,26 +1152,32 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         if min_amp is not None and max_amp is not None:
             drawing.add(
                 String(
-                    legend_x, legend_y + 10,
+                    legend_x,
+                    legend_y + 10,
                     f"{min_amp:.4f} g",
-                    fontName="Helvetica", fontSize=6,
+                    fontName="Helvetica",
+                    fontSize=6,
                     fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
                 )
             )
             drawing.add(
                 String(
-                    legend_x + 70, legend_y + 10,
+                    legend_x + 70,
+                    legend_y + 10,
                     f"{max_amp:.4f} g",
-                    fontName="Helvetica", fontSize=6,
+                    fontName="Helvetica",
+                    fontSize=6,
                     fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
                 )
             )
         if single_sensor:
             drawing.add(
                 String(
-                    legend_x, legend_y - 20,
+                    legend_x,
+                    legend_y - 20,
                     tr("ONE_SENSOR_NOTE"),
-                    fontName="Helvetica", fontSize=6,
+                    fontName="Helvetica",
+                    fontSize=6,
                     fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
                 )
             )
@@ -1178,11 +1232,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
 
     top_causes = [item for item in summary.get("top_causes", []) if isinstance(item, dict)]
     test_plan = [item for item in summary.get("test_plan", []) if isinstance(item, dict)]
-    most_origin = (
-        summary.get("most_likely_origin", {})
-        if isinstance(summary.get("most_likely_origin"), dict)
-        else {}
-    )
     run_suitability = [
         item for item in summary.get("run_suitability", []) if isinstance(item, dict)
     ]
@@ -1272,11 +1321,13 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         colWidths=[card_w, card_w, card_w],
     )
     cards_row.setStyle(
-        TableStyle([
-            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ("LEFTPADDING", (0, 0), (-1, -1), 2),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 2),
-        ])
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 2),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 2),
+            ]
+        )
     )
 
     # "What to check first" section
@@ -1321,14 +1372,16 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         frequency_text = human_frequency_text(
             step.get("frequency_hz_or_order") or primary_frequency or tr("UNKNOWN")
         )
-        check_first_rows.append([
-            str(idx),
-            Paragraph(str(step.get("what") or ""), style_note),
-            Paragraph(str(step.get("why") or ""), style_note),
-            Paragraph(certainty_text, style_small),
-            Paragraph(speed_text, style_small),
-            Paragraph(frequency_text, style_small),
-        ])
+        check_first_rows.append(
+            [
+                str(idx),
+                Paragraph(str(step.get("what") or ""), style_note),
+                Paragraph(str(step.get("why") or ""), style_note),
+                Paragraph(certainty_text, style_small),
+                Paragraph(speed_text, style_small),
+                Paragraph(frequency_text, style_small),
+            ]
+        )
 
     # Evidence snapshot mini-table
     strongest_loc_text = str(location_rows[0]["location"]) if location_rows else tr("UNKNOWN")
@@ -1344,12 +1397,19 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
         for item in run_suitability
         if "reference" in str(item.get("check") or "").lower()
     )
-    ref_text_val = text("Complete", "Compleet") if ref_complete else text("Incomplete", "Incompleet")
+    ref_text_val = (
+        text("Complete", "Compleet") if ref_complete else text("Incomplete", "Incompleet")
+    )
 
     evidence_snapshot_rows = [
         [tr("STRONGEST_LOCATION"), f"{strongest_loc_text} ({strongest_peak_g:.4f} g)"],
         [tr("DOMINANCE_RATIO"), f"{dominance_ratio:.2f}x"],
-        [tr("STRONGEST_SPEED_BAND"), str(top_causes[0].get("strongest_speed_band") or tr("UNKNOWN")) if top_causes else tr("UNKNOWN")],
+        [
+            tr("STRONGEST_SPEED_BAND"),
+            str(top_causes[0].get("strongest_speed_band") or tr("UNKNOWN"))
+            if top_causes
+            else tr("UNKNOWN"),
+        ],
         [tr("REFERENCE_COMPLETENESS"), ref_text_val],
     ]
 
@@ -1436,13 +1496,15 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 ]
             )
     else:
-        peaks_rows.append([
-            "-",
-            "-",
-            "-",
-            "-",
-            tr("PLOT_NO_DATA_AVAILABLE"),
-        ])
+        peaks_rows.append(
+            [
+                "-",
+                "-",
+                "-",
+                "-",
+                tr("PLOT_NO_DATA_AVAILABLE"),
+            ]
+        )
 
     peaks_table_block = styled_table(
         peaks_rows,
@@ -1515,7 +1577,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
     sensor_stats_rows = [
         row for row in summary.get("sensor_intensity_by_location", []) if isinstance(row, dict)
     ]
-    story.extend([PageBreak(), Paragraph(text("Sensor statistics", "Sensorstatistieken"), style_h2)])
+    story.extend(
+        [PageBreak(), Paragraph(text("Sensor statistics", "Sensorstatistieken"), style_h2)]
+    )
     if sensor_stats_rows:
         stat_table_rows = [
             [
@@ -1817,7 +1881,10 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             ),
             Spacer(1, 4),
             KeepTogether(
-                [Paragraph(text("FFT", "FFT"), style_h3), styled_table(fft_rows, col_widths=[250, 470])]
+                [
+                    Paragraph(text("FFT", "FFT"), style_h3),
+                    styled_table(fft_rows, col_widths=[250, 470]),
+                ]
             ),
             Spacer(1, 4),
             KeepTogether(
@@ -1874,7 +1941,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 ptext(tr("RECORD_ADDITIONAL_DATA")),
             ]
         )
-    story.append(styled_table(detailed_rows, col_widths=[90, 84, 230, 118, 166, 58, 70], repeat_rows=1))
+    story.append(
+        styled_table(detailed_rows, col_widths=[90, 84, 230, 118, 166, 58, 70], repeat_rows=1)
+    )
 
     buffer = BytesIO()
     doc = SimpleDocTemplate(
