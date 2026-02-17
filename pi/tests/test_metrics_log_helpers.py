@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from vibesensor.metrics_log import MetricsLogger
 
 # -- MetricsLogger._safe_metric ------------------------------------------------
@@ -206,3 +208,30 @@ def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows[0]["client_id"] == "active"
     assert rows[0]["client_name"] == "front-left wheel"
+
+
+@pytest.mark.parametrize("missing_key", ["vib_mag_rms", "vib_mag_p2p"])
+def test_build_sample_records_requires_combined_vibration_magnitudes(
+    tmp_path: Path, missing_key: str
+) -> None:
+    registry = _FakeRegistry()
+    del registry._records["active"].latest_metrics["combined"][missing_key]
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=registry,
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    with pytest.raises(ValueError, match=missing_key):
+        logger._build_sample_records(
+            run_id="run-1",
+            t_s=1.0,
+            timestamp_utc="2026-02-16T12:00:00+00:00",
+        )
