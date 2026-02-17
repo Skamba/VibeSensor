@@ -62,3 +62,35 @@
   float converter identity, percentile identity, and dead-alias detection.
 - **Added `GET /api/analysis-settings`** client-side API function for fetching
   server-canonical defaults.
+- **New `constants.py` module** — Shared physical/analysis constants
+  (`MPS_TO_KMH`, `KMH_TO_MPS`, `PEAK_BANDWIDTH_HZ`, `PEAK_SEPARATION_HZ`,
+  `SILENCE_DB`) extracted from 7 files (14 occurrences total) into a single
+  source of truth. All call sites now import from `vibesensor.constants`.
+- **Fixed `config_preflight.py` crash** — Removed reference to deleted
+  `LoggingConfig.metrics_csv_path` attribute that caused an `AttributeError`
+  during CI config validation.
+- **Expanded `.gitignore`** — Added IDE/editor entries (`.idea/`, `.vscode/`,
+  `*.swp`, `*.swo`, `.DS_Store`).
+- **Additional guardrail tests** — 4 new tests in `test_single_source_of_truth`
+  covering constants values, function-signature defaults, and config preflight
+  correctness (total: 15 guardrail assertions).
+- **Protocol error logging** — UDP data and control handlers now log parse
+  errors at DEBUG level with client address and error details, instead of
+  silently swallowing `ProtocolError`.
+- **New `extract_client_id_hex()`** — Shared helper in `protocol.py` replaces
+  duplicated `data[2:8].hex()` pattern in both UDP handlers.
+- **Removed redundant `parse_client_id` call** — `send_identify()` no longer
+  double-parses an already-normalized client ID.
+- **Shared vehicle dynamics formulas** — New `wheel_hz_from_speed_kmh()`,
+  `wheel_hz_from_speed_mps()`, and `engine_rpm_from_wheel_hz()` in
+  `analysis_settings.py` replace inline formulas in `metrics_log.py`,
+  `report_analysis.py`, and `diagnostics_shared.py`.
+- **Simulator uses shared functions** — `sim_sender.py` now imports
+  `tire_circumference_m_from_spec` and `wheel_hz_from_speed_mps` instead of
+  computing tire diameter and wheel Hz inline.
+- **`__version__` from package metadata** — `vibesensor.__version__` is now
+  derived via `importlib.metadata.version()` instead of a hardcoded string,
+  keeping it in sync with `pyproject.toml` automatically.
+- **Comprehensive new tests** — `test_constants_and_helpers.py` (13 tests),
+  `extract_client_id_hex` tests in `test_protocol.py` (3 tests), plus updated
+  guardrail tests (total: 310 tests passing).

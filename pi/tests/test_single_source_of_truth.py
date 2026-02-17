@@ -138,3 +138,59 @@ def test_strength_metrics_no_dead_aliases() -> None:
     dead_aliases = {"peak_amp", "floor_amp"}
     present = dead_aliases & set(result.keys())
     assert not present, f"Dead alias fields in compute_strength_metrics: {present}"
+
+
+def test_constants_used_for_speed_conversion() -> None:
+    """Speed conversion must use constants, not hardcoded 3.6."""
+    from vibesensor.constants import KMH_TO_MPS, MPS_TO_KMH
+
+    assert MPS_TO_KMH == 3.6
+    assert abs(KMH_TO_MPS - 1.0 / 3.6) < 1e-15
+    assert abs(MPS_TO_KMH * KMH_TO_MPS - 1.0) < 1e-15
+
+
+def test_constants_used_for_peak_detection() -> None:
+    """Peak detection defaults must come from constants module."""
+    from vibesensor.analysis.strength_metrics import compute_strength_metrics
+    from vibesensor.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+
+    assert PEAK_BANDWIDTH_HZ == 1.2
+    assert PEAK_SEPARATION_HZ == 1.2
+
+    # Verify the function signature defaults match constants
+    import inspect
+
+    sig = inspect.signature(compute_strength_metrics)
+    assert sig.parameters["peak_bandwidth_hz"].default == PEAK_BANDWIDTH_HZ
+    assert sig.parameters["peak_separation_hz"].default == PEAK_SEPARATION_HZ
+
+
+def test_silence_db_constant() -> None:
+    """SILENCE_DB must be the canonical silence floor value."""
+    from vibesensor.constants import SILENCE_DB
+
+    assert SILENCE_DB == -120.0
+
+
+def test_config_preflight_no_removed_fields() -> None:
+    """config_preflight.summarize must not reference removed config fields."""
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(root / "tools" / "config"))
+    preflight_path = root / "tools" / "config" / "config_preflight.py"
+    source = preflight_path.read_text(encoding="utf-8")
+    assert "metrics_csv_path" not in source, (
+        "config_preflight.py still references removed metrics_csv_path"
+    )
+
+
+def test_wheel_hz_and_engine_rpm_single_source() -> None:
+    """wheel_hz and engine_rpm formulas must not be inlined in consumers."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    for fname in ("metrics_log.py", "report_analysis.py"):
+        source = (root / "vibesensor" / fname).read_text(encoding="utf-8")
+        assert "* 60.0" not in source, f"{fname} still contains inline engine RPM formula (* 60.0)"

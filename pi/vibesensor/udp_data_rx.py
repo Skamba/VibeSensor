@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 
 from .processing import SignalProcessor
-from .protocol import MSG_DATA, ProtocolError, parse_data
+from .protocol import MSG_DATA, ProtocolError, extract_client_id_hex, parse_data
 from .registry import ClientRegistry
+
+LOGGER = logging.getLogger(__name__)
 
 
 class DataDatagramProtocol(asyncio.DatagramProtocol):
@@ -21,8 +24,9 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
 
         try:
             msg = parse_data(data)
-        except ProtocolError:
-            client_id = data[2:8].hex() if len(data) >= 8 else None
+        except ProtocolError as exc:
+            client_id = extract_client_id_hex(data)
+            LOGGER.debug("DATA parse error from %s (client=%s): %s", addr, client_id, exc)
             self.registry.note_parse_error(client_id)
             return
 

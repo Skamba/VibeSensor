@@ -9,7 +9,11 @@ from statistics import mean
 from typing import Any
 
 from .analysis.strength_metrics import _percentile
-from .analysis_settings import tire_circumference_m_from_spec
+from .analysis_settings import (
+    engine_rpm_from_wheel_hz,
+    tire_circumference_m_from_spec,
+    wheel_hz_from_speed_kmh,
+)
 from .report_i18n import tr as _tr
 from .runlog import as_float_or_none as _as_float
 from .runlog import parse_iso8601, read_jsonl_run
@@ -200,8 +204,12 @@ def _effective_engine_rpm(
     ):
         return None, "missing"
 
-    wheel_hz = (speed_kmh / 3.6) / tire_circumference_m
-    return wheel_hz * final_drive_ratio * gear_ratio * 60.0, "estimated_from_speed_and_ratios"
+    whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
+    if whz is None:
+        return None, "missing"
+    return engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio), (
+        "estimated_from_speed_and_ratios"
+    )
 
 
 def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[str]]:
@@ -455,7 +463,7 @@ def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> flo
         return None
     if tire_circumference_m is None or tire_circumference_m <= 0:
         return None
-    return (speed_kmh / 3.6) / tire_circumference_m
+    return wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
 
 
 def _driveshaft_hz(

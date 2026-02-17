@@ -10,6 +10,7 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel, Field
 
+from .constants import MPS_TO_KMH
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .reports import build_report_pdf, summarize_log
@@ -109,7 +110,7 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.get("/api/speed-override")
     async def get_speed_override() -> dict:
         override_mps = state.gps_monitor.override_speed_mps
-        speed_kmh = (override_mps * 3.6) if isinstance(override_mps, (int, float)) else None
+        speed_kmh = (override_mps * MPS_TO_KMH) if isinstance(override_mps, (int, float)) else None
         return {"speed_kmh": speed_kmh}
 
     @router.post("/api/speed-override")

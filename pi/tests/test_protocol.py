@@ -12,6 +12,7 @@ from vibesensor.protocol import (
     MSG_DATA,
     MSG_HELLO,
     client_id_mac,
+    extract_client_id_hex,
     pack_cmd_identify,
     pack_data,
     pack_hello,
@@ -77,3 +78,26 @@ def test_protocol_layout_constants_match_esp_side() -> None:
     assert ACK_BYTES == 13
     assert CMD_HEADER_BYTES == 13
     assert CMD_IDENTIFY_BYTES == 15
+
+
+# ---------------------------------------------------------------------------
+# extract_client_id_hex
+# ---------------------------------------------------------------------------
+
+
+def test_extract_client_id_hex_from_data_packet() -> None:
+    client_id = bytes.fromhex("a1b2c3d4e5f6")
+    pkt = pack_data(client_id, seq=1, t0_us=0, samples=np.zeros((1, 3), dtype="<i2"))
+    assert extract_client_id_hex(pkt) == "a1b2c3d4e5f6"
+
+
+def test_extract_client_id_hex_from_hello() -> None:
+    client_id = bytes.fromhex("112233445566")
+    pkt = pack_hello(client_id, control_port=9000, sample_rate_hz=800, name="test")
+    assert extract_client_id_hex(pkt) == "112233445566"
+
+
+def test_extract_client_id_hex_too_short() -> None:
+    assert extract_client_id_hex(b"\x01\x01") is None
+    assert extract_client_id_hex(b"") is None
+    assert extract_client_id_hex(b"\x01\x01\xaa\xbb") is None
