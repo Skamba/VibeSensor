@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -15,6 +16,8 @@ from .protocol import (
     client_id_mac,
     parse_client_id,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 def _sanitize_name(name: str) -> str:
@@ -66,13 +69,17 @@ class ClientRegistry:
                 return
             try:
                 raw = json.loads(self._persist_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
+            except (json.JSONDecodeError, OSError) as exc:
+                LOGGER.warning(
+                    "Could not load persisted names from %s: %s", self._persist_path, exc
+                )
                 return
             for entry in raw.get("clients", []):
                 raw_client_id = str(entry.get("id", ""))
                 try:
                     client_id = _normalize_client_id(raw_client_id)
                 except ValueError:
+                    LOGGER.debug("Skipping invalid client_id in persisted names: %r", raw_client_id)
                     continue
                 name = _sanitize_name(str(entry.get("name", "")))
                 if name:

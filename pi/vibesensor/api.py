@@ -248,6 +248,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                 try:
                     payload = json.loads(message)
                 except json.JSONDecodeError:
+                    LOGGER.debug("Ignoring malformed WS message (not valid JSON)")
                     continue
                 if isinstance(payload, dict) and "client_id" in payload:
                     value = payload["client_id"]

@@ -8,6 +8,7 @@ from .analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     tire_circumference_m_from_spec,
 )
+from .runlog import as_float_or_none as _as_float
 from .strength_bands import (
     DECAY_TICKS,
     HYSTERESIS_DB,
@@ -21,18 +22,6 @@ from .strength_bands import (
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
 ORDER_CLASS_KEYS = {"wheel1", "wheel2", "shaft_eng1", "shaft1", "eng1", "eng2"}
-
-
-def _as_float(value: object) -> float | None:
-    if value in (None, ""):
-        return None
-    try:
-        out = float(value)
-    except (TypeError, ValueError):
-        return None
-    if out != out:  # NaN
-        return None
-    return out
 
 
 def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dict[str, float]:

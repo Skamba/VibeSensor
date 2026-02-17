@@ -188,32 +188,12 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     normalized["engine_rpm"] = as_float_or_none(record.get("engine_rpm"))
     normalized["gear"] = as_float_or_none(record.get("gear"))
     normalized["dominant_freq_hz"] = as_float_or_none(record.get("dominant_freq_hz"))
-    # Read-path fallbacks: old log files on disk may use the prior field names.
-    # New records are written with canonical names only (see metrics_log.py).
-    normalized["vib_mag_rms_g"] = as_float_or_none(
-        record.get("vib_mag_rms_g")
-        if record.get("vib_mag_rms_g") is not None
-        else record.get("accel_magnitude_rms_g")
-    )
-    normalized["vib_mag_p2p_g"] = as_float_or_none(
-        record.get("vib_mag_p2p_g")
-        if record.get("vib_mag_p2p_g") is not None
-        else record.get("accel_magnitude_p2p_g")
-    )
-    normalized["noise_floor_amp_p20_g"] = as_float_or_none(
-        record.get("noise_floor_amp_p20_g")
-        if record.get("noise_floor_amp_p20_g") is not None
-        else record.get("noise_floor_amp")
-    )
-    normalized["strength_floor_amp_g"] = as_float_or_none(
-        record.get("strength_floor_amp_g")
-        if record.get("strength_floor_amp_g") is not None
-        else record.get("noise_floor_amp")
-    )
+    normalized["vib_mag_rms_g"] = as_float_or_none(record.get("vib_mag_rms_g"))
+    normalized["vib_mag_p2p_g"] = as_float_or_none(record.get("vib_mag_p2p_g"))
+    normalized["noise_floor_amp_p20_g"] = as_float_or_none(record.get("noise_floor_amp_p20_g"))
+    normalized["strength_floor_amp_g"] = as_float_or_none(record.get("strength_floor_amp_g"))
     normalized["strength_peak_band_rms_amp_g"] = as_float_or_none(
         record.get("strength_peak_band_rms_amp_g")
-        if record.get("strength_peak_band_rms_amp_g") is not None
-        else record.get("dominant_peak_amp_g")
     )
     normalized["strength_db"] = as_float_or_none(record.get("strength_db"))
     normalized["strength_bucket"] = (
