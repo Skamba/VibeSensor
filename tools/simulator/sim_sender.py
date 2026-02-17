@@ -369,7 +369,9 @@ def _check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
         return False
 
 
-def set_server_speed_override_kmh(host: str, port: int, speed_kmh: float, timeout_s: float) -> float | None:
+def set_server_speed_override_kmh(
+    host: str, port: int, speed_kmh: float, timeout_s: float
+) -> float | None:
     payload = json.dumps({"speed_kmh": float(speed_kmh)}).encode("utf-8")
     req = Request(
         _speed_override_url(host, port),
