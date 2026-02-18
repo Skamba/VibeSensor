@@ -1782,14 +1782,22 @@ def build_findings_for_samples(
     )
 
 
-def summarize_log(
-    log_path: Path, lang: str | None = None, include_samples: bool = True
+def summarize_run_data(
+    metadata: dict[str, Any],
+    samples: list[dict[str, Any]],
+    lang: str | None = None,
+    file_name: str = "run",
+    include_samples: bool = True,
 ) -> dict[str, object]:
+    """Analyse pre-loaded run data and return the full summary dict.
+
+    This is the single computation path used by both the History UI and the
+    PDF report — callers must never re-derive metrics independently.
+    """
     language = _normalize_lang(lang)
-    metadata, samples, warnings = _load_run(log_path)
     _validate_required_strength_metrics(samples)
 
-    run_id = str(metadata.get("run_id") or f"run-{log_path.stem}")
+    run_id = str(metadata.get("run_id") or f"run-{file_name}")
     start_ts = parse_iso8601(metadata.get("start_time_utc"))
     end_ts = parse_iso8601(metadata.get("end_time_utc"))
 
@@ -1999,7 +2007,7 @@ def summarize_log(
     )
 
     summary: dict[str, Any] = {
-        "file_name": log_path.name,
+        "file_name": file_name,
         "run_id": run_id,
         "rows": len(samples),
         "duration_s": duration_s,
@@ -2017,7 +2025,7 @@ def summarize_log(
         "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
         "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
         "metadata": metadata,
-        "warnings": warnings,
+        "warnings": [],
         "speed_breakdown": speed_breakdown,
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
@@ -2067,3 +2075,17 @@ def summarize_log(
     if not include_samples:
         summary.pop("samples", None)
     return summary
+
+
+def summarize_log(
+    log_path: Path, lang: str | None = None, include_samples: bool = True
+) -> dict[str, object]:
+    """Backward-compatible wrapper: reads a JSONL run file and analyses it."""
+    metadata, samples, _warnings = _load_run(log_path)
+    return summarize_run_data(
+        metadata,
+        samples,
+        lang=lang,
+        file_name=log_path.name,
+        include_samples=include_samples,
+    )
