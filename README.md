@@ -1,71 +1,119 @@
-# VibeSensor Prototype
+# VibeSensor
 
-End-to-end prototype for local/offline car vibration sensing:
+Portable, offline car vibration diagnostics using a Raspberry Pi and wireless accelerometer nodes.
 
-- Raspberry Pi 3A+ runs as offline Wi-Fi AP and telemetry server
-- Multiple ESP32 (M5Stack ATOM Lite) clients stream ADXL345 samples (800 Hz)
-- Pi computes live waveform + FFT spectrum + metrics and serves a mobile-friendly web UI
-- Multi-client registry supports naming and identify blink command
-- Dev simulator provides reproducible CI/local testing without Pi/ESP hardware
-- Diagnostics/report pipeline uses reproducible run logs (`.jsonl`) with explicit references
+## What Is VibeSensor?
 
-Hardware list and wiring notes: `hardware/README.md`
-Design language: `docs/design_language.md`
+VibeSensor is an end-to-end system that detects and localizes vehicle vibration issues — wheel imbalance, driveshaft rumble, engine harmonics — using low-cost hardware you can mount anywhere on a car. A Raspberry Pi runs as a standalone Wi-Fi access point, receives 800 Hz accelerometer streams from multiple ESP32 sensor nodes over UDP, performs real-time FFT analysis with automotive order tracking, and serves a mobile-friendly dashboard accessible from any phone or tablet. After a drive, it generates a professional PDF diagnostic report with findings, heatmaps, and evidence charts.
 
-## Development Commands
+No internet connection required. No cloud. Everything runs locally on the Pi.
 
-### Quick checks (everyday, fast)
+## Key Features
 
-```bash
-# Python lint + format
-ruff check pi/vibesensor pi/tests tools/simulator
-ruff format --check pi/vibesensor pi/tests tools/simulator
+**Sensing & Analysis**
+- Multi-sensor 3-axis accelerometer monitoring at 800 Hz (ADXL345)
+- Real-time FFT spectrum with peak detection and noise floor estimation
+- Automotive order tracking — wheel, driveshaft, and engine frequency bands
+- Speed-adaptive analysis using GPS or manual speed input
+- Configurable car profiles (tire specs, gear ratios, drive ratios)
 
-# Python tests (fast, excludes Selenium)
-pytest -q -m "not selenium" pi/tests
+**Dashboard**
+- Live spectrum chart, car heatmap, and vibration event log
+- Multi-sensor overview with identify-blink for physical location
+- Recording controls with automatic silence detection
+- Run history with per-run insights and PDF export
+- Car settings wizard with vehicle library
+- English and Dutch language support
 
-# Python tests with live progress/ETA insight
-python3 tools/tests/pytest_progress.py -- -m "not selenium" pi/tests
+**Deployment**
+- Offline Wi-Fi access point with self-healing hotspot recovery
+- Two deployment paths: manual install or prebuilt SD card image
+- Docker Compose for desktop development and testing
+- systemd services for automatic startup
 
-# UI typecheck + build
-cd ui && npm run typecheck && npm run build
+**Developer Experience**
+- Hardware simulator for full-stack testing without physical sensors
+- 391+ pytest tests with CI integration
+- Playwright visual regression tests across 4 viewports
+- Ruff linting and TypeScript type checking enforced in CI
+- Custom binary UDP protocol with sequence-based loss detection
+
+## System Architecture
+
+```
+  ┌──────────────┐      UDP 9000 (data)       ┌──────────────────┐
+  │  ESP32 + ────│──────────────────────────►  │  Raspberry Pi    │
+  │  ADXL345     │      UDP 9001 (control)     │                  │
+  │  sensor node │  ◄──────────────────────────│  FastAPI server  │
+  └──────────────┘                             │  + FFT engine    │
+                                               │  + report gen    │
+  ┌──────────────┐      UDP 9000 (data)        │                  │
+  │  ESP32 + ────│──────────────────────────►  │                  │
+  │  ADXL345     │                             │                  │
+  └──────────────┘                             └────────┬─────────┘
+                                                        │
+        ┌───────────┐    HTTP 8000 + WebSocket  ────────┘
+        │  Phone /  │◄──────────────────────────────────
+        │  Tablet   │   (live spectrum, controls, PDF)
+        └───────────┘
 ```
 
-### Visual snapshot tests (run after UI changes)
-
-```bash
-cd ui
-npx playwright install chromium   # first time only
-npm run test:visual               # compare against baselines
-npm run test:visual:update        # regenerate baselines after intentional changes
-```
-
-The visual tests use a deterministic demo mode (`?demo=1` query param) with fixed payloads.
-Screenshots are captured for 4 viewports (laptop-light, laptop-dark, tablet-light, tablet-dark)
-across the Live view and Settings/Analysis view. Baselines live in `ui/tests/snapshots/`.
+Sensors connect to the Pi's Wi-Fi AP, stream accelerometer data via UDP, and the Pi pushes processed spectra and diagnostics to the browser over WebSocket. The phone just needs a browser — no app install.
 
 ## Repository Layout
 
 ```
 .
-├─ pi/
-│  ├─ pyproject.toml
-│  ├─ config.yaml
-│  ├─ config.dev.yaml
-│  ├─ config.example.yaml
-│  ├─ public/
-│  ├─ scripts/
-│  ├─ systemd/
-│  └─ vibesensor/
-├─ esp/
-├─ tools/simulator/
-└─ .github/workflows/ci.yml
+├── pi/                  Python backend (FastAPI + signal processing + reports)
+│   ├── vibesensor/      Application package (31 modules)
+│   ├── tests/           pytest suite (391+ tests)
+│   ├── scripts/         Install and hotspot setup scripts
+│   ├── systemd/         Service unit files
+│   └── data/            Runtime settings and persisted state
+├── ui/                  TypeScript frontend (Vite + uPlot)
+│   ├── src/             Application source (12 modules)
+│   └── tests/           Playwright visual regression tests
+├── esp/                 ESP32 firmware (PlatformIO, C++)
+│   ├── src/             Firmware source
+│   └── lib/             ADXL345 driver and protocol library
+├── hardware/            Bill of materials and wiring reference
+├── image/pi-gen/        Raspberry Pi OS image builder (pi-gen + Docker)
+├── tools/
+│   ├── simulator/       Fake ESP32 clients for testing without hardware
+│   ├── config/          Config validation and line-ending checks
+│   └── tests/           Test runner utilities
+├── docs/                Protocol spec, run schema, design language
+├── examples/            Sample run data for report generation
+├── docker-compose.yml   Single-command local development
+├── CHANGELOG.md         Version history
+└── AGENTS.md            AI agent operating rules
 ```
 
-## Quickstart (Any Dev Machine)
+Each component has its own README with setup instructions and details.
+
+## Quick Start
+
+### Docker (fastest)
 
 ```bash
-python -m pip install -e "./pi[dev]"
+git clone https://github.com/Skamba/VibeSensor.git
+cd VibeSensor
+docker compose up --build
+```
+
+In another terminal, start the simulator:
+
+```bash
+pip install -e "./pi[dev]"
+python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
+```
+
+Open http://localhost:8000.
+
+### Native Python
+
+```bash
+pip install -e "./pi[dev]"
 python tools/sync_ui_to_pi_public.py
 python -m vibesensor.app --config pi/config.dev.yaml
 ```
@@ -76,126 +124,50 @@ In another terminal:
 python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
 ```
 
-The simulator stays running while you use the UI and supports interactive commands:
-`help`, `list`, `set`, `pulse`, `pause`, `resume`, `quit`.
-In the dashboard Vehicle Settings panel, tire settings are split into 3 fields
-(width mm / aspect % / rim inches), with defaults for a 640i setup: `285 / 30 / R21`.
+Open http://localhost:8000.
 
-Open:
+The simulator supports interactive commands — type `help` to see options like
+`list`, `set <sensor> profile <name>`, `pulse`, `pause`, `resume`.
 
-- `http://localhost:8000`
+## Deploying to Raspberry Pi
 
-## Diagnostics v2 (Schema + Reporting)
+Both deployment modes target Raspberry Pi 3 A+ with Bookworm Lite.
 
-Run logs are written as `metrics_*.jsonl` records with required metadata and
-required per-sample fields (`t_s`, `speed_kmh`, `accel_x_g/y_g/z_g`).
+### Mode A: Manual install
 
-Processing uses explicit sensor scaling (`accel_scale_g_per_lsb`) and removes DC
-before vibration RMS/P2P and FFT metrics, so reported amplitudes represent
-vibration content instead of gravity offset.
-
-Schema reference:
-
-- `docs/run_schema_v2.md`
-
-Generate a report from a saved run:
+Flash official Raspberry Pi OS Lite, then on the Pi:
 
 ```bash
-vibesensor-report pi/data/metrics_20260215_120000.jsonl
-```
-
-If speed or sample-rate references are missing, the report degrades gracefully:
-
-- speed-binned and wheel-order sections are skipped with explicit reason text
-- findings include `reference missing` entries instead of speculative order labels
-
-When references are available, report findings use order tracking over changing
-speed via per-sample matched peaks (`top_peaks`) instead of fixed-Hz clustering.
-
-## Run With Docker (Single Entrypoint)
-
-Use Docker Compose for both development and local runtime. This path does not
-run Raspberry Pi AP/hotspot setup.
-
-Compose starts one service:
-
-- `vibesensor-server` (Python): builds UI, serves `/` from `pi/public`, and exposes `/api` + `/ws`
-
-```bash
-docker compose up --build
-```
-
-Then open:
-
-- `http://localhost:8000` (UI + API + WS from one container)
-
-To stream test data from host:
-
-```bash
-python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
-```
-
-Stop container:
-
-```bash
-docker compose down
-```
-
-## Two Ways To Deploy
-
-Both deployment modes use idempotent scripts:
-
-- `pi/scripts/install_pi.sh`
-- `pi/scripts/hotspot_nmcli.sh`
-
-### Mode A: Manual install on stock Raspberry Pi OS (Bookworm Lite)
-
-Flash official Raspberry Pi OS Lite to SD card, then run on the Pi:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y git
+sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
 sudo ./pi/scripts/install_pi.sh
-# Optional: configure uplink update credentials (kept out of git)
-sudo cp pi/wifi-secrets.example.env /etc/vibesensor/wifi-secrets.env
-sudo nano /etc/vibesensor/wifi-secrets.env
-sudo chmod 600 /etc/vibesensor/wifi-secrets.env
 sudo ./pi/scripts/hotspot_nmcli.sh
-sudo systemctl status vibesensor
 ```
 
-`pi/scripts/hotspot_nmcli.sh` scans for the configured uplink Wi-Fi for up to
-10 seconds. If found, it waits for git update activity to complete, then
-disconnects and starts the hotspot. If not found, it starts the hotspot
-immediately.
+See [pi/README.md](pi/README.md) for configuration and uplink-update details.
 
-### Mode B: Prebuilt custom image (pi-gen + Docker, Raspberry Pi 3 A+ target)
+### Mode B: Prebuilt image
 
-Run on a Linux build machine:
+Build on a Linux machine with Docker:
 
 ```bash
-git clone https://github.com/Skamba/VibeSensor.git
-cd VibeSensor
-./image/pi-gen/build.sh   # outputs an .img in image/pi-gen/out/
+./image/pi-gen/build.sh
 ```
 
-Then flash the produced `.img` (or `.img.xz`/`.zip` artifact) using Raspberry Pi Imager.  
-After first boot, no manual install steps are required; hotspot + server are already enabled.
+Flash the output image from `image/pi-gen/out/` and boot — no manual steps needed.
 
-See image build notes: `image/pi-gen/README.md`
+See [image/pi-gen/README.md](image/pi-gen/README.md) for details.
 
-## Verification (Both Modes)
+### Verification
 
-Default AP credentials in this repo are for local prototype use only. Change
-SSID/PSK before any real-world deployment.
+Connect a phone to the `VibeSensor` Wi-Fi (PSK: `vibesensor123`) and open
+http://192.168.4.1:8000. Sensor nodes should appear within seconds.
 
-- Phone: connect to SSID `VibeSensor` (PSK `vibesensor123`)
-- Open: `http://192.168.4.1:8000`
-- You should see the UI, and clients should appear within a few seconds.
+> Default AP credentials are for prototype use only. Change SSID/PSK before
+> real-world deployment.
 
-## ESP Setup (PlatformIO)
+## ESP Sensor Setup
 
 ```bash
 cd esp
@@ -203,52 +175,86 @@ pio run -t upload
 pio device monitor
 ```
 
-Defaults work out of the box for the Pi hotspot in this repo:
-
-- SSID: `VibeSensor`
-- PSK: `vibesensor123`
-- Server IP: `192.168.4.1`
-- UDP ports: `9000/9001`
-
-Optional network override (local/untracked):
-
-1. Copy `esp/include/vibesensor_network.local.example.h` to `esp/include/vibesensor_network.local.h`
-2. Edit SSID, password, and server IP in `vibesensor_network.local.h`
-3. Build/flash again (`pio run -t upload`)
-
-The local file is gitignored and should never be committed.
+Defaults match the Pi hotspot out of the box. See [esp/README.md](esp/README.md)
+for network overrides and pin configuration.
 
 ## Protocol Summary
 
-UDP datagrams:
+UDP datagrams between ESP32 nodes and the Pi:
 
-- HELLO (`type=1`) client identity, name, control port
-- DATA (`type=2`) sample frames with sequence numbers
-- CMD (`type=3`) server command (`identify`)
-- ACK (`type=4`) command acknowledgment
+| Type | ID | Purpose |
+|------|----|---------|
+| HELLO | 1 | Client identity, name, firmware version, control port |
+| DATA | 2 | Accelerometer sample frames with sequence numbers |
+| CMD | 3 | Server → client command (e.g., identify blink) |
+| ACK | 4 | Command acknowledgment |
+| DATA_ACK | 5 | Data receipt acknowledgment |
 
-Loss detection uses sequence gaps on the Pi (`frames_dropped` per client).
-Canonical field/size reference: `docs/protocol.md`.
+All multi-byte fields are little-endian. Loss detection uses sequence gaps.
+Full field layout: [docs/protocol.md](docs/protocol.md).
+
+## Development
+
+### Lint and format
+
+```bash
+ruff check pi/vibesensor pi/tests tools/simulator
+ruff format --check pi/vibesensor pi/tests tools/simulator
+```
+
+### Tests
+
+```bash
+# Fast run (excludes browser tests)
+pytest -q -m "not selenium" pi/tests
+
+# With live progress and ETA
+python3 tools/tests/pytest_progress.py -- -m "not selenium" pi/tests
+
+# UI typecheck + build
+cd ui && npm run typecheck && npm run build
+```
+
+### Visual snapshot tests
+
+```bash
+cd ui
+npx playwright install chromium   # first time only
+npm run test:visual               # compare against baselines
+npm run test:visual:update        # regenerate after intentional changes
+```
+
+Screenshots are captured for 4 viewports (laptop-light, laptop-dark,
+tablet-light, tablet-dark) using a deterministic demo mode (`?demo=1`).
+Baselines live in `ui/tests/snapshots/`.
+
+## Reports
+
+Generate a PDF diagnostic report from a recorded run:
+
+```bash
+vibesensor-report path/to/metrics_run.jsonl
+```
+
+Reports adapt to available data — if speed or engine RPM references are missing,
+order-specific sections are skipped with explicit reason text instead of
+speculative labels. See [docs/run_schema_v2.md](docs/run_schema_v2.md) for the
+run log format and [examples/](examples/) for sample data.
 
 ## Troubleshooting
 
-- Phone says “No internet”:
-  - expected for offline AP; stay connected and open `http://192.168.4.1:8000`
-- No clients visible:
-  - verify ESP joined SSID, Pi UDP ports `9000/9001` open locally
-  - verify server is bound on `0.0.0.0:8000`
-- High dropped frames:
-  - reduce Wi-Fi contention
-  - keep ESP close to Pi AP
-  - check AP channel and frame size
-- Hotspot has no DHCP leases:
-  - rerun `pi/scripts/hotspot_nmcli.sh` (it configures NetworkManager dnsmasq mode)
+- **Phone says "No internet"** — expected for offline AP; stay connected and
+  open http://192.168.4.1:8000
+- **No clients visible** — verify ESP joined SSID, Pi UDP ports 9000/9001 open,
+  server bound on 0.0.0.0:8000
+- **High dropped frames** — reduce Wi-Fi contention, keep ESP close to Pi,
+  check AP channel
+- **Hotspot has no DHCP leases** — rerun `pi/scripts/hotspot_nmcli.sh`
 
 ## Developer Safeguards
 
-To enable versioned local hooks (privacy guard + metadata checks):
+Enable versioned local hooks (privacy guard + metadata checks):
 
 ```bash
 git config core.hooksPath .githooks
-git config user.email "8420201+Skamba@users.noreply.github.com"
 ```

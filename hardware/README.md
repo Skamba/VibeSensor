@@ -1,33 +1,29 @@
-# Hardware Used
+# Hardware
 
-This prototype is built with the following hardware:
+Bill of materials for the VibeSensor prototype.
 
-1. Raspberry Pi 3 A+
-2. M5Stack ATOM Lite ESP32 IoT M5 Development Kit
-3. M5Stack 3-Axis Digital Accelerometer Unit (ADXL345)
-4. M5Stack Atomic Battery Base (200mAh)
+## Components
 
-## Role Of Each Part
+| # | Part | Role |
+|---|------|------|
+| 1 | Raspberry Pi 3 A+ | Wi-Fi AP, server, web UI host |
+| 2 | M5Stack ATOM Lite ESP32 | Sensor node — samples accelerometer, streams UDP |
+| 3 | M5Stack ADXL345 3-Axis Accelerometer Unit | Vibration measurement (3-axis, 800 Hz) |
+| 4 | M5Stack Atomic Battery Base (200 mAh) | Portable power for the ATOM Lite node |
 
-1. Raspberry Pi 3 A+:
-Hosts the local Wi-Fi AP, runs the VibeSensor server, and serves the web UI.
+Multiple sensor nodes (items 2-4) can connect to a single Pi simultaneously.
 
-2. M5Stack ATOM Lite ESP32:
-Runs the firmware that samples accelerometer data and streams UDP telemetry to the Pi.
+## Wiring
 
-3. M5Stack ADXL345 Unit:
-Provides 3-axis acceleration measurements for vibration analysis.
+The ESP32 connects to the ADXL345 via I2C over the ATOM Lite 4-pin Unit port:
 
-4. M5Stack Atomic Battery Base (200mAh):
-Portable power base for the ATOM Lite node.
+| Signal | GPIO |
+|--------|------|
+| SDA | GPIO26 |
+| SCL | GPIO32 |
+| ADDR | 0x53 |
+| Power/GND | Via 4-pin Unit cable |
 
-## ESP32 <-> ADXL345 4-Pin Unit Cable (Current Firmware Defaults)
+No soldering required — the M5Stack components connect with plug-in cables.
 
-The firmware is configured for I2C over the ATOM Lite Unit port:
-
-- `SDA -> GPIO26`
-- `SCL -> GPIO32`
-- `ADDR = 0x53`
-- `Power/GND via the 4-pin Unit cable`
-
-See `esp/README.md` for firmware and pin configuration details.
+See [esp/README.md](../esp/README.md) for firmware configuration.
