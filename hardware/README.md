@@ -26,4 +26,4 @@ The ESP32 connects to the ADXL345 via I2C over the ATOM Lite 4-pin Unit port:
 
 No soldering required — the M5Stack components connect with plug-in cables.
 
-See [esp/README.md](../esp/README.md) for firmware configuration.
+See [firmware/esp/README.md](../firmware/esp/README.md) for firmware configuration.

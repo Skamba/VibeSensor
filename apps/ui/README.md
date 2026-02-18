@@ -15,14 +15,14 @@ server over HTTP (REST) and WebSocket (live data).
 ## Setup
 
 ```bash
-cd ui
+cd apps/ui
 npm ci
 npm run dev          # Dev server on http://localhost:5173
 npm run build        # Production build to dist/
 npm run typecheck    # Type check without emitting
 ```
 
-The built output in `dist/` is copied to `pi/public/` for serving by FastAPI.
+The built output in `dist/` is copied to `apps/server/public/` for serving by FastAPI.
 Use `python tools/sync_ui_to_pi_public.py` from the repo root to build and sync
 in one step.
 

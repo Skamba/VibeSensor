@@ -10,11 +10,11 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 4. Device deployment: build Pi image and boot into preconfigured hotspot mode.
 
 ## Architecture Overview
-- ESP firmware (`esp/`): UDP frame sender + control ACKs.
-- Backend (`pi/vibesensor/`): FastAPI app, UDP ingestion, signal processing, diagnostics, history storage.
-- Frontend (`ui/src/`): WebSocket-driven dashboard and settings UI.
+- ESP firmware (`firmware/esp/`): UDP frame sender + control ACKs.
+- Backend (`apps/server/vibesensor/`): FastAPI app, UDP ingestion, signal processing, diagnostics, history storage.
+- Frontend (`apps/ui/src/`): WebSocket-driven dashboard and settings UI.
 - Tooling (`tools/simulator/`): multi-client simulator and WS smoke checks.
-- Image build (`image/pi-gen/`): deterministic Pi image generation with VibeSensor stage.
+- Image build (`infra/pi-image/pi-gen/`): deterministic Pi image generation with VibeSensor stage.
 
 ### Data Flow Boundaries
 1. UDP ingress (`udp_data_rx.py`) updates registry + processor buffers.
@@ -24,13 +24,13 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 5. API/router (`api.py`) exposes health, client state, settings, reports.
 
 ## Where to Change What
-- UI behavior/labels: `ui/src/main.ts`, `ui/src/i18n.ts`, `pi/public/` sync path.
-- API routes/contracts: `pi/vibesensor/api.py`.
-- Runtime orchestration/timers: `pi/vibesensor/app.py`.
-- Signal/math logic: `pi/vibesensor/processing.py`, `pi/vibesensor/analysis/*`.
-- Hotspot/deployment logic: `pi/scripts/hotspot_nmcli.sh`, `pi/systemd/*.service`, `image/pi-gen/build.sh`.
-- Config schema/defaults: `pi/vibesensor/config.py`, `pi/config.example.yaml`.
-- Tests: `pi/tests/` (pytest), `ui/tests/` (Playwright snapshots).
+- UI behavior/labels: `apps/ui/src/main.ts`, `apps/ui/src/i18n.ts`, `apps/server/public/` sync path.
+- API routes/contracts: `apps/server/vibesensor/api.py`.
+- Runtime orchestration/timers: `apps/server/vibesensor/app.py`.
+- Signal/math logic: `apps/server/vibesensor/processing.py`, `apps/server/vibesensor/analysis/*`.
+- Hotspot/deployment logic: `apps/server/scripts/hotspot_nmcli.sh`, `apps/server/systemd/*.service`, `infra/pi-image/pi-gen/build.sh`.
+- Config schema/defaults: `apps/server/vibesensor/config.py`, `apps/server/config.example.yaml`.
+- Tests: `apps/server/tests/` (pytest), `apps/ui/tests/` (Playwright snapshots).
 
 ## Must-Not-Break Invariants
 - Canonical vibration severity metric is `vibration_strength_db`; do not replace with raw g-value proxies.
@@ -41,7 +41,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 
 ## Coding Conventions
 - Python style: Ruff-enforced, explicit signatures, small focused modules.
-- Tests: fast-focused pytest files under `pi/tests/`, avoid heavy integration unless requested.
+- Tests: fast-focused pytest files under `apps/server/tests/`, avoid heavy integration unless requested.
 - Frontend: TypeScript strict checks, no ad-hoc runtime contracts; use existing i18n keys.
 - Infra: prefer deterministic scripts, fail-fast assertions, low-noise logs.
 
