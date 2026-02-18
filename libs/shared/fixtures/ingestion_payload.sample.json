@@ -1,0 +1,9 @@
+{
+  "client_name": "sensor-front-left",
+  "seq": 42,
+  "timestamp_ms": 1739870400000,
+  "samples": [
+    { "x_g": 0.012, "y_g": -0.008, "z_g": 1.002 },
+    { "x_g": 0.011, "y_g": -0.007, "z_g": 1.001 }
+  ]
+}

@@ -12,7 +12,9 @@ def _run(command: list[str], cwd: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build ui/ and sync dist output into pi/public.")
+    parser = argparse.ArgumentParser(
+        description="Build apps/ui and sync dist output into apps/server/public."
+    )
     parser.add_argument(
         "--skip-npm-ci",
         action="store_true",
@@ -21,9 +23,9 @@ def main() -> None:
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[1]
-    ui_dir = repo_root / "ui"
+    ui_dir = repo_root / "apps" / "ui"
     dist_dir = ui_dir / "dist"
-    public_dir = repo_root / "pi" / "public"
+    public_dir = repo_root / "apps" / "server" / "public"
 
     if not args.skip_npm_ci:
         _run(["npm", "ci"], cwd=ui_dir)

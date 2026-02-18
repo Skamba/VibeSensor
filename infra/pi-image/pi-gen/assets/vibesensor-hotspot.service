@@ -1,0 +1,18 @@
+[Unit]
+Description=Configure VibeSensor hotspot
+After=NetworkManager.service
+Wants=NetworkManager.service
+After=vibesensor-rfkill-unblock.service
+Wants=vibesensor-rfkill-unblock.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh
+TimeoutStartSec=300
+Restart=on-failure
+RestartSec=5
+RemainAfterExit=yes
+SyslogIdentifier=vibesensor-hotspot
+
+[Install]
+WantedBy=multi-user.target

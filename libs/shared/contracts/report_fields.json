@@ -1,0 +1,11 @@
+{
+  "run_id": "run_id",
+  "timestamp_utc": "timestamp_utc",
+  "client_id": "client_id",
+  "client_name": "client_name",
+  "speed_kmh": "speed_kmh",
+  "dominant_freq_hz": "dominant_freq_hz",
+  "vibration_strength_db": "vibration_strength_db",
+  "strength_bucket": "strength_bucket",
+  "top_peaks": "top_peaks"
+}

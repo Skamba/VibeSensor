@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import os
+import shlex
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+LOG_DIR = ROOT / "artifacts" / "ai" / "logs"
+PYTHON = sys.executable
+
+
+def _ensure_dirs() -> None:
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _stamp() -> str:
+    return dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+
+
+def _run_step(step: str, command: list[str], cwd: Path | None = None) -> int:
+    _ensure_dirs()
+    log_path = LOG_DIR / f"{_stamp()}-{step}.log"
+    cmd_display = " ".join(shlex.quote(part) for part in command)
+    started = time.time()
+    with log_path.open("w", encoding="utf-8") as logf:
+        logf.write(f"$ {cmd_display}\n")
+        proc = subprocess.run(
+            command,
+            cwd=str(cwd or ROOT),
+            stdout=logf,
+            stderr=subprocess.STDOUT,
+            check=False,
+            text=True,
+        )
+    elapsed = time.time() - started
+    if proc.returncode == 0:
+        print(f"OK   {step:<20} {elapsed:5.1f}s  log={log_path.relative_to(ROOT)}")
+        return 0
+
+    print(f"FAIL {step:<20} {elapsed:5.1f}s  log={log_path.relative_to(ROOT)}")
+    try:
+        tail = log_path.read_text(encoding="utf-8").splitlines()[-20:]
+    except OSError:
+        tail = []
+    if tail:
+        print("--- log tail ---")
+        for line in tail:
+            print(line)
+    return proc.returncode
+
+
+def run_ai_check() -> int:
+    steps = [
+        ("ruff-check", ["ruff", "check", "apps/server/vibesensor", "apps/server/tests", "apps/simulator"]),
+        (
+            "ruff-format-check",
+            ["ruff", "format", "--check", "apps/server/vibesensor", "apps/server/tests", "apps/simulator"],
+        ),
+        ("line-endings", [PYTHON, "tools/config/check_line_endings.py"]),
+    ]
+    for name, cmd in steps:
+        rc = _run_step(name, cmd)
+        if rc != 0:
+            return rc
+
+    smoke_test = ROOT / "apps" / "server" / "tests" / "test_ai_smoke.py"
+    if smoke_test.exists():
+        rc = _run_step("smoke-tests", [PYTHON, "-m", "pytest", "-q", "-m", "smoke", str(smoke_test)])
+        if rc != 0:
+            return rc
+    else:
+        print("SKIP smoke-tests          test_ai_smoke.py not present")
+
+    return 0
+
+
+def run_ai_test(pytest_args: list[str]) -> int:
+    if not pytest_args:
+        pytest_args = ["-q", "-m", "not selenium and not long_sim", "apps/server/tests"]
+    return _run_step("targeted-pytest", [PYTHON, "-m", "pytest", *pytest_args])
+
+
+def run_ai_smoke() -> int:
+    smoke_test = ROOT / "apps" / "server" / "tests" / "test_ai_smoke.py"
+    if smoke_test.exists():
+        return _run_step(
+            "smoke-tests",
+            [PYTHON, "-m", "pytest", "-q", "-m", "smoke", str(smoke_test)],
+        )
+    return _run_step(
+        "health-smoke",
+        [PYTHON, "-m", "pytest", "-q", "apps/server/tests/test_health_endpoint.py"],
+    )
+
+
+def run_ai_pack() -> int:
+    script = ROOT / "scripts" / "ai" / "pack"
+    if not script.exists():
+        print("Missing scripts/ai/pack")
+        return 2
+    return _run_step("context-pack", [str(script)])
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Low-noise AI maintenance task runner")
+    parser.add_argument("task", choices=["ai:check", "ai:test", "ai:smoke", "ai:pack"])
+    parser.add_argument("args", nargs=argparse.REMAINDER, help="extra args (use -- for ai:test)")
+    return parser.parse_args()
+
+
+def main() -> int:
+    os.chdir(ROOT)
+    args = parse_args()
+    extra = list(args.args)
+    if extra and extra[0] == "--":
+        extra = extra[1:]
+
+    if args.task == "ai:check":
+        return run_ai_check()
+    if args.task == "ai:test":
+        return run_ai_test(extra)
+    if args.task == "ai:smoke":
+        return run_ai_smoke()
+    if args.task == "ai:pack":
+        return run_ai_pack()
+    return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
