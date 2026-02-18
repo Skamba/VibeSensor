@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-# Aligned with ui/src/styles/app.css design tokens (purple accent, print-friendly light).
+# Aligned with apps/ui/src/styles/app.css design tokens (purple accent, print-friendly light).
 REPORT_COLORS = {
     "ink": "#1a1c24",
     "muted": "#52555e",
@@ -47,7 +47,7 @@ REPORT_RADIUS = {"sm": 6, "md": 10}
 CARD_PADDING = 10
 CARD_RADIUS = 8
 
-# Shared plot accents (aligned with ui/src/theme.ts palette intent).
+# Shared plot accents (aligned with apps/ui/src/theme.ts palette intent).
 REPORT_PLOT_COLORS = {
     "vibration": "#7c3aed",
     "dominant_freq": "#d946ef",

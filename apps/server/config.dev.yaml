@@ -2,7 +2,7 @@
 # Uses local relative paths instead of system paths.
 
 logging:
-  metrics_log_path: pi/data/metrics.jsonl
+  metrics_log_path: apps/server/data/metrics.jsonl
 
 storage:
-  clients_json_path: pi/data/clients.json
+  clients_json_path: apps/server/data/clients.json

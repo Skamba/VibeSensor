@@ -23,10 +23,10 @@ def test_metrics_log_path_resolves_relative(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
     _write_config(
         config_path,
-        {"logging": {"metrics_log_path": "pi/data/new_metrics.jsonl"}},
+        {"logging": {"metrics_log_path": "apps/server/data/new_metrics.jsonl"}},
     )
     cfg = load_config(config_path)
-    assert cfg.logging.metrics_log_path == (REPO_DIR / "pi/data/new_metrics.jsonl")
+    assert cfg.logging.metrics_log_path == (REPO_DIR / "apps/server/data/new_metrics.jsonl")
 
 
 def test_dev_and_docker_configs_equivalent() -> None:

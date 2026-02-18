@@ -16,10 +16,10 @@ with no manual setup.
 ```bash
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
-./image/pi-gen/build.sh
+./infra/pi-image/pi-gen/build.sh
 ```
 
-Output image: `image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
+Output image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
 
 ## What's Included
 
@@ -27,7 +27,7 @@ The image contains:
 
 - Raspberry Pi OS Lite (Bookworm, arm64)
 - VibeSensor Python server with all dependencies
-- Built web UI (served from `pi/public/`)
+- Built web UI (served from `apps/server/public/`)
 - systemd services enabled at boot:
   - `vibesensor.service` — FastAPI server
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
@@ -47,5 +47,5 @@ start automatically on first boot.
 produce the image. It adds a custom stage that:
 
 1. Copies the VibeSensor repository into `/opt/VibeSensor`
-2. Runs `pi/scripts/install_pi.sh` (deps, venv, systemd units)
+2. Runs `apps/server/scripts/install_pi.sh` (deps, venv, systemd units)
 3. Enables the hotspot and self-heal services

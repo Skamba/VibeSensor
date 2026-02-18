@@ -1,8 +1,8 @@
 # Design Language
 
 This repo uses a **minimal, flat design system** with a purple accent for both:
-- `ui/` (web application) — auto light/dark via `prefers-color-scheme`
-- `pi/vibesensor/report_pdf.py` (generated PDF reports) — light/print-friendly
+- `apps/ui/` (web application) — auto light/dark via `prefers-color-scheme`
+- `apps/server/vibesensor/report_pdf.py` (generated PDF reports) — light/print-friendly
 
 ## Goals
 - One visual system across live UI and exported reports.
@@ -24,10 +24,10 @@ Core token roles:
 - `error`: destructive actions and critical status (red)
 
 Web tokens are defined in:
-- `ui/src/styles/app.css` (`:root` + `@media (prefers-color-scheme: dark)`)
+- `apps/ui/src/styles/app.css` (`:root` + `@media (prefers-color-scheme: dark)`)
 
 Report tokens are defined in:
-- `pi/vibesensor/report_theme.py`
+- `apps/server/vibesensor/report_theme.py`
 
 ## Theme
 - **Auto theme**: default follows system preference (`prefers-color-scheme`).
@@ -56,7 +56,7 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
   - Header row uses surface-container-high + strong text
   - Body uses subtle separators and optional zebra rows
 - Charts:
-  - Shared palette in `ui/src/theme.ts` (purple as first series color)
+  - Shared palette in `apps/ui/src/theme.ts` (purple as first series color)
   - Order bands and series colors come from shared theme constants
 
 ## Live View Car Map
@@ -64,7 +64,7 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 - Heat coloring per location using report-consistent p95 intensity metric over a 10-second rolling window.
 - Event pulse: glow ring + brief blink animation on new vibration events.
 - Tapping the car map does nothing for now.
-- Location taxonomy: reuses report's canonical location codes from `pi/vibesensor/locations.py`.
+- Location taxonomy: reuses report's canonical location codes from `apps/server/vibesensor/locations.py`.
 
 ## Do / Don't
 - Do use existing tokens and classes.
