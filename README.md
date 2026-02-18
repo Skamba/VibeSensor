@@ -64,24 +64,27 @@ Sensors connect to the Pi's Wi-Fi AP, stream accelerometer data via UDP, and the
 
 ```
 .
-├── pi/                  Python backend (FastAPI + signal processing + reports)
-│   ├── vibesensor/      Application package (31 modules)
-│   ├── tests/           pytest suite (391+ tests)
-│   ├── scripts/         Install and hotspot setup scripts
-│   ├── systemd/         Service unit files
-│   └── data/            Runtime settings and persisted state
-├── ui/                  TypeScript frontend (Vite + uPlot)
-│   ├── src/             Application source (12 modules)
-│   └── tests/           Playwright visual regression tests
-├── esp/                 ESP32 firmware (PlatformIO, C++)
-│   ├── src/             Firmware source
-│   └── lib/             ADXL345 driver and protocol library
+├── apps/
+│   ├── server/          Python backend (FastAPI + signal processing + reports)
+│   ├── ui/              TypeScript frontend (Vite + uPlot)
+│   └── simulator/       Runnable simulator + websocket smoke tools
+├── firmware/
+│   └── esp/             ESP32 firmware (PlatformIO, C++)
+├── libs/
+│   ├── core/            Pure domain logic (no IO/framework)
+│   ├── adapters/        Integration/path adapters
+│   └── shared/          Canonical contracts/schemas/constants
+├── infra/
+│   ├── pi-image/        Raspberry Pi image build pipeline
+│   ├── docker/          Dockerfiles and container tooling
+│   └── ci/              CI helpers
 ├── hardware/            Bill of materials and wiring reference
-├── image/pi-gen/        Raspberry Pi OS image builder (pi-gen + Docker)
+├── image/pi-gen/        Legacy compatibility link to infra/pi-image/pi-gen
 ├── tools/
-│   ├── simulator/       Fake ESP32 clients for testing without hardware
+│   ├── simulator/       Legacy compatibility link to apps/simulator
 │   ├── config/          Config validation and line-ending checks
 │   └── tests/           Test runner utilities
+├── artifacts/           Build/runtime artifacts (non-source)
 ├── docs/                Protocol spec, run schema, design language
 ├── examples/            Sample run data for report generation
 ├── docker-compose.yml   Single-command local development
@@ -104,8 +107,8 @@ docker compose up --build
 In another terminal, start the simulator:
 
 ```bash
-pip install -e "./pi[dev]"
-python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
+pip install -e "./apps/server[dev]"
+python apps/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
 ```
 
 Open http://localhost:8000.
@@ -113,15 +116,15 @@ Open http://localhost:8000.
 ### Native Python
 
 ```bash
-pip install -e "./pi[dev]"
+pip install -e "./apps/server[dev]"
 python tools/sync_ui_to_pi_public.py
-python -m vibesensor.app --config pi/config.dev.yaml
+python -m vibesensor.app --config apps/server/config.dev.yaml
 ```
 
 In another terminal:
 
 ```bash
-python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
+python apps/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
 ```
 
 Open http://localhost:8000.
@@ -141,23 +144,23 @@ Flash official Raspberry Pi OS Lite, then on the Pi:
 sudo apt-get update && sudo apt-get install -y git
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
-sudo ./pi/scripts/install_pi.sh
-sudo ./pi/scripts/hotspot_nmcli.sh
+sudo ./apps/server/scripts/install_pi.sh
+sudo ./apps/server/scripts/hotspot_nmcli.sh
 ```
 
-See [pi/README.md](pi/README.md) for configuration and uplink-update details.
+See [apps/server/README.md](apps/server/README.md) for configuration and uplink-update details.
 
 ### Mode B: Prebuilt image
 
 Build on a Linux machine with Docker:
 
 ```bash
-./image/pi-gen/build.sh
+./infra/pi-image/pi-gen/build.sh
 ```
 
-Flash the output image from `image/pi-gen/out/` and boot — no manual steps needed.
+Flash the output image from `infra/pi-image/pi-gen/out/` and boot — no manual steps needed.
 
-See [image/pi-gen/README.md](image/pi-gen/README.md) for details.
+See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for details.
 
 ### Verification
 
@@ -170,12 +173,12 @@ http://192.168.4.1:8000. Sensor nodes should appear within seconds.
 ## ESP Sensor Setup
 
 ```bash
-cd esp
+cd firmware/esp
 pio run -t upload
 pio device monitor
 ```
 
-Defaults match the Pi hotspot out of the box. See [esp/README.md](esp/README.md)
+Defaults match the Pi hotspot out of the box. See [firmware/esp/README.md](firmware/esp/README.md)
 for network overrides and pin configuration.
 
 ## Protocol Summary

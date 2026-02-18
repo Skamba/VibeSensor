@@ -48,36 +48,41 @@ __pycache__/
 .pytest_cache/
 
 # Runtime data
-pi/data/*.csv
-pi/data/*.jsonl
-pi/data/*.db
-pi/data/*.db-shm
-pi/data/*.db-wal
-pi/data/clients.json
-pi/wifi-secrets.env
+apps/server/data/*.csv
+apps/server/data/*.jsonl
+apps/server/data/*.db
+apps/server/data/*.db-shm
+apps/server/data/*.db-wal
+apps/server/data/clients.json
+apps/server/wifi-secrets.env
 
 # Image build artifacts
-image/pi-gen/.cache/
-image/pi-gen/out/*
-!image/pi-gen/out/.gitkeep
+infra/pi-image/pi-gen/.cache/
+infra/pi-image/pi-gen/out/*
+!infra/pi-image/pi-gen/out/.gitkeep
 
 # General build artifacts
-build_artifacts/*
-!build_artifacts/.gitkeep
+artifacts/build_artifacts/*
+!artifacts/build_artifacts/.gitkeep
 
 # AI workflow artifacts
 artifacts/ai/*
 !artifacts/ai/.gitkeep
 
 # Frontend build/runtime artifacts
-ui/node_modules/
-ui/dist/
-pi/public/*
-!pi/public/.gitkeep
+apps/ui/node_modules/
+apps/ui/dist/
+apps/server/public/*
+!apps/server/public/.gitkeep
 
 # Playwright test artifacts
-ui/tests/test-results/
-ui/playwright-report/
+apps/ui/tests/test-results/
+apps/ui/playwright-report/
+
+# Generic artifacts/caches
+artifacts/**
+!artifacts/.gitkeep
+!artifacts/ai/.gitkeep
 
 # IDE / editor files
 .idea/
