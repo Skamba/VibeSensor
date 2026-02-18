@@ -58,10 +58,10 @@ def _run_step(step: str, command: list[str], cwd: Path | None = None) -> int:
 
 def run_ai_check() -> int:
     steps = [
-        ("ruff-check", ["ruff", "check", "pi/vibesensor", "pi/tests", "tools/simulator"]),
+        ("ruff-check", ["ruff", "check", "apps/server/vibesensor", "apps/server/tests", "apps/simulator"]),
         (
             "ruff-format-check",
-            ["ruff", "format", "--check", "pi/vibesensor", "pi/tests", "tools/simulator"],
+            ["ruff", "format", "--check", "apps/server/vibesensor", "apps/server/tests", "apps/simulator"],
         ),
         ("line-endings", [PYTHON, "tools/config/check_line_endings.py"]),
     ]
@@ -70,7 +70,7 @@ def run_ai_check() -> int:
         if rc != 0:
             return rc
 
-    smoke_test = ROOT / "pi" / "tests" / "test_ai_smoke.py"
+    smoke_test = ROOT / "apps" / "server" / "tests" / "test_ai_smoke.py"
     if smoke_test.exists():
         rc = _run_step("smoke-tests", [PYTHON, "-m", "pytest", "-q", "-m", "smoke", str(smoke_test)])
         if rc != 0:
@@ -83,12 +83,12 @@ def run_ai_check() -> int:
 
 def run_ai_test(pytest_args: list[str]) -> int:
     if not pytest_args:
-        pytest_args = ["-q", "-m", "not selenium and not long_sim", "pi/tests"]
+        pytest_args = ["-q", "-m", "not selenium and not long_sim", "apps/server/tests"]
     return _run_step("targeted-pytest", [PYTHON, "-m", "pytest", *pytest_args])
 
 
 def run_ai_smoke() -> int:
-    smoke_test = ROOT / "pi" / "tests" / "test_ai_smoke.py"
+    smoke_test = ROOT / "apps" / "server" / "tests" / "test_ai_smoke.py"
     if smoke_test.exists():
         return _run_step(
             "smoke-tests",
@@ -96,7 +96,7 @@ def run_ai_smoke() -> int:
         )
     return _run_step(
         "health-smoke",
-        [PYTHON, "-m", "pytest", "-q", "pi/tests/test_health_endpoint.py"],
+        [PYTHON, "-m", "pytest", "-q", "apps/server/tests/test_health_endpoint.py"],
     )
 
 

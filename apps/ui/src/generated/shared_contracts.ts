@@ -1,0 +1,13 @@
+// Generated from libs/shared/ts/contracts.ts
+// Do not edit manually; run tools/config/sync_shared_contracts_to_ui.mjs
+
+export const METRIC_FIELDS = {
+  vibration_strength_db: "vibration_strength_db",
+  strength_bucket: "strength_bucket",
+  peak_hz: "peak_hz",
+  combined_spectrum_amp_g: "combined_spectrum_amp_g",
+  strength_peak_band_rms_amp_g: "strength_peak_band_rms_amp_g",
+  strength_floor_amp_g: "strength_floor_amp_g",
+} as const;
+
+export type MetricFieldKey = keyof typeof METRIC_FIELDS;

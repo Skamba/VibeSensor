@@ -1,0 +1,12 @@
+[Unit]
+Description=Unblock Wi-Fi rfkill state before NetworkManager
+Before=NetworkManager.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'if command -v rfkill >/dev/null 2>&1; then rfkill unblock wifi || rfkill unblock all || true; fi'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=NetworkManager.service
