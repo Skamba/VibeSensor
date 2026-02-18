@@ -24,6 +24,9 @@ ruff format --check pi/vibesensor pi/tests tools/simulator
 # Python tests (fast, excludes Selenium)
 pytest -q -m "not selenium" pi/tests
 
+# Python tests with live progress/ETA insight
+python3 tools/tests/pytest_progress.py -- -m "not selenium" pi/tests
+
 # UI typecheck + build
 cd ui && npm run typecheck && npm run build
 ```

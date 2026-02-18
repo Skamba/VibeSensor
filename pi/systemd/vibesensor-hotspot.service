@@ -5,7 +5,8 @@ Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/VibeSensor/pi/scripts/hotspot_nmcli.sh
+Environment=VIBESENSOR_CONFIG_PATH=/etc/vibesensor/config.yaml
+ExecStart=__PI_DIR__/scripts/hotspot_nmcli.sh --config /etc/vibesensor/config.yaml
 RemainAfterExit=yes
 SyslogIdentifier=vibesensor-hotspot
 

@@ -19,6 +19,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "channel": 7,
         "ifname": "wlan0",
         "con_name": "VibeSensor-AP",
+        "self_heal": {
+            "enabled": True,
+            "interval_seconds": 120,
+            "diagnostics_lookback_minutes": 5,
+            "min_restart_interval_seconds": 120,
+            "allow_disable_resolved_stub_listener": False,
+            "state_file": "/var/lib/vibesensor/hotspot-self-heal-state.json",
+        },
     },
     "server": {"host": "0.0.0.0", "port": 8000},
     "udp": {"data_listen": "0.0.0.0:9000", "control_listen": "0.0.0.0:9001"},
@@ -72,6 +80,16 @@ def _resolve_repo_path(path_text: str) -> Path:
 
 
 @dataclass(slots=True)
+class APSelfHealConfig:
+    enabled: bool
+    interval_seconds: int
+    diagnostics_lookback_minutes: int
+    min_restart_interval_seconds: int
+    allow_disable_resolved_stub_listener: bool
+    state_file: Path
+
+
+@dataclass(slots=True)
 class APConfig:
     ssid: str
     psk: str
@@ -79,6 +97,7 @@ class APConfig:
     channel: int
     ifname: str
     con_name: str
+    self_heal: APSelfHealConfig
 
 
 @dataclass(slots=True)
@@ -172,6 +191,37 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             channel=int(merged["ap"]["channel"]),
             ifname=str(merged["ap"]["ifname"]),
             con_name=str(merged["ap"]["con_name"]),
+            self_heal=APSelfHealConfig(
+                enabled=bool(merged["ap"].get("self_heal", {}).get("enabled", True)),
+                interval_seconds=int(
+                    merged["ap"].get("self_heal", {}).get("interval_seconds", 120)
+                ),
+                diagnostics_lookback_minutes=int(
+                    merged["ap"]
+                    .get("self_heal", {})
+                    .get("diagnostics_lookback_minutes", 5)
+                ),
+                min_restart_interval_seconds=int(
+                    merged["ap"]
+                    .get("self_heal", {})
+                    .get("min_restart_interval_seconds", 120)
+                ),
+                allow_disable_resolved_stub_listener=bool(
+                    merged["ap"]
+                    .get("self_heal", {})
+                    .get("allow_disable_resolved_stub_listener", False)
+                ),
+                state_file=_resolve_repo_path(
+                    str(
+                        merged["ap"]
+                        .get("self_heal", {})
+                        .get(
+                            "state_file",
+                            "/var/lib/vibesensor/hotspot-self-heal-state.json",
+                        )
+                    )
+                ),
+            ),
         ),
         server=ServerConfig(
             host=str(merged["server"]["host"]),

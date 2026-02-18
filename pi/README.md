@@ -39,6 +39,15 @@ pip install -e ".[dev]"
 python -m vibesensor.app --config config.dev.yaml
 ```
 
+## Test progress visibility
+
+For longer test runs, use the progress helper to get live completion, pass/fail
+counts, execution rate, and ETA while tests run:
+
+```bash
+python3 tools/tests/pytest_progress.py -- -m "not selenium" pi/tests
+```
+
 ## Local Docker run (server only)
 
 Run from repository root:

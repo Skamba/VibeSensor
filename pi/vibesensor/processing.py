@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -23,6 +24,7 @@ class ClientBuffer:
     latest_metrics: dict[str, Any] = field(default_factory=dict)
     latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
     latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
+    last_ingest_mono_s: float = 0.0
 
 
 class SignalProcessor:
@@ -105,6 +107,7 @@ class SignalProcessor:
             return
         if sample_rate_hz is not None and sample_rate_hz > 0:
             buf.sample_rate_hz = int(sample_rate_hz)
+        buf.last_ingest_mono_s = time.monotonic()
 
         n = int(chunk.shape[0])
         if n >= self.max_samples:
@@ -595,6 +598,27 @@ class SignalProcessor:
             "y": block[1].tolist(),
             "z": block[2].tolist(),
         }
+
+    def client_data_age_s(self, client_id: str) -> float | None:
+        """Seconds since last ingest for *client_id*, or None if unknown."""
+        buf = self._buffers.get(client_id)
+        if buf is None or buf.last_ingest_mono_s <= 0:
+            return None
+        return time.monotonic() - buf.last_ingest_mono_s
+
+    def clients_with_recent_data(
+        self, client_ids: list[str], max_age_s: float = 3.0
+    ) -> list[str]:
+        """Return subset of *client_ids* that received data within *max_age_s*."""
+        now = time.monotonic()
+        result: list[str] = []
+        for cid in client_ids:
+            buf = self._buffers.get(cid)
+            if buf is None or buf.last_ingest_mono_s <= 0:
+                continue
+            if (now - buf.last_ingest_mono_s) <= max_age_s:
+                result.append(cid)
+        return result
 
     def evict_clients(self, keep_client_ids: set[str]) -> None:
         stale_ids = [
