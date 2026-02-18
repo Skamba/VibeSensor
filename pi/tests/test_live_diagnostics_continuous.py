@@ -19,9 +19,7 @@ def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
     l3 = band_by_key("l3")
     assert l3 is not None
     slight_dip = float(l3["min_db"]) - (HYSTERESIS_DB / 2)
-    out = severity_from_peak(
-        vibration_strength_db=slight_dip, sensor_count=1, prior_state=state
-    )
+    out = severity_from_peak(vibration_strength_db=slight_dip, sensor_count=1, prior_state=state)
     state = dict((out or {}).get("state") or state or {})
     assert out is not None
     assert out["key"] == "l3"
