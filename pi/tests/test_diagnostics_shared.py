@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from vibesensor.analysis.strength_metrics import compute_strength_metrics
+from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
 from vibesensor.constants import MPS_TO_KMH
 from vibesensor.diagnostics_shared import (
     build_diagnostic_settings,
@@ -63,14 +63,12 @@ def test_classify_peak_matches_engine_order() -> None:
 
 def test_severity_from_peak_thresholds() -> None:
     state = None
-    low = severity_from_peak(strength_db=4.0, band_rms=0.002, sensor_count=1, prior_state=state)
+    low = severity_from_peak(vibration_strength_db=4.0, sensor_count=1, prior_state=state)
     assert low is not None
     assert low["key"] is None
     high = None
     for _ in range(3):
-        high = severity_from_peak(
-            strength_db=35.0, band_rms=0.06, sensor_count=1, prior_state=state
-        )
+        high = severity_from_peak(vibration_strength_db=35.0, sensor_count=1, prior_state=state)
         state = None if high is None else dict(high.get("state") or {})
     assert high is not None
     assert high["key"] == "l5"
@@ -90,7 +88,7 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
     base = [1.0 for _ in freq]
     spec = base[:]
     spec[spike_idx] = 150.0
-    strength_metrics = compute_strength_metrics(
+    strength_metrics = compute_vibration_strength_db(
         freq_hz=freq,
         combined_spectrum_amp_g_values=spec,
         peak_bandwidth_hz=1.2,
@@ -144,6 +142,7 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
     ]
     speed_kmh = speed_mps * MPS_TO_KMH
     for idx in range(40):
+        peak_amp = 0.09 + (idx * 0.0005)
         records.append(
             {
                 "record_type": "sample",
@@ -158,13 +157,17 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
                 "accel_x_g": 0.02,
                 "accel_y_g": 0.015,
                 "accel_z_g": 0.01,
-                "vib_mag_rms_g": 0.04,
                 "dominant_freq_hz": wheel_hz * 1.01,
-                "noise_floor_amp_p20_g": 0.0075,
-                "strength_floor_amp_g": 0.0075,
-                "strength_peak_band_rms_amp_g": 0.09 + (idx * 0.0005),
-                "strength_db": 22.0,
+                "vibration_strength_db": 22.0,
                 "strength_bucket": "l2",
+                "top_peaks": [
+                    {
+                        "hz": wheel_hz * 1.01,
+                        "amp": peak_amp,
+                        "vibration_strength_db": 22.0,
+                        "strength_bucket": "l2",
+                    }
+                ],
             }
         )
     records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
@@ -222,11 +225,16 @@ def test_live_top_finding_uses_same_report_finding_logic() -> None:
             "client_name": "front-left",
             "speed_kmh": speed_kmh,
             "dominant_freq_hz": wheel_hz * 1.01,
-            "noise_floor_amp_p20_g": 0.0075,
-            "strength_floor_amp_g": 0.0075,
-            "strength_peak_band_rms_amp_g": 0.09 + (idx * 0.0005),
-            "strength_db": 22.0,
+            "vibration_strength_db": 22.0,
             "strength_bucket": "l2",
+            "top_peaks": [
+                {
+                    "hz": wheel_hz * 1.01,
+                    "amp": 0.09 + (idx * 0.0005),
+                    "vibration_strength_db": 22.0,
+                    "strength_bucket": "l2",
+                }
+            ],
         }
         for idx in range(60)
     ]
@@ -259,7 +267,7 @@ def test_live_strength_db_matches_report_strength_db_from_same_metrics() -> None
     freq = [idx / 10.0 for idx in range(1, 1200)]
     combined = [0.5 for _ in freq]
     combined[400] = 140.0
-    strength = compute_strength_metrics(
+    strength = compute_vibration_strength_db(
         freq_hz=freq,
         combined_spectrum_amp_g_values=combined,
         peak_bandwidth_hz=1.2,
@@ -286,18 +294,15 @@ def test_live_strength_db_matches_report_strength_db_from_same_metrics() -> None
             settings=build_diagnostic_settings({}),
         )
     assert live["events"]
-    event_db = float(live["events"][0]["severity_db"])
+    event_db = float(live["events"][0]["vibration_strength_db"])
 
     rows = _sensor_intensity_by_location(
         [
             {
                 "client_id": "c1",
                 "client_name": "front-left",
-                "strength_db": strength["strength_db"],
+                "vibration_strength_db": strength["vibration_strength_db"],
                 "strength_bucket": strength["strength_bucket"],
-                "strength_peak_band_rms_amp_g": strength["strength_peak_band_rms_amp_g"],
-                "strength_floor_amp_g": strength["strength_floor_amp_g"],
-                "noise_floor_amp_p20_g": strength["noise_floor_amp_p20_g"],
             }
         ]
     )
@@ -306,4 +311,4 @@ def test_live_strength_db_matches_report_strength_db_from_same_metrics() -> None
     assert isinstance(distribution, dict)
     bucket = str(strength["strength_bucket"])
     assert int(distribution["counts"][bucket]) == 1
-    assert abs(event_db - float(strength["strength_db"])) < 1e-6
+    assert abs(event_db - float(strength["vibration_strength_db"])) < 1e-6

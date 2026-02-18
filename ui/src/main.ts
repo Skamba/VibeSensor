@@ -1053,8 +1053,7 @@ import { WsClient, type WsUiState } from "./ws";
       if (!code) continue;
       const spec = state.spectra.clients[client.id];
       if (!spec?.strength_metrics) continue;
-      // Use the same metric as the PDF: strength_peak_band_rms_amp_g
-      const amp = Number(spec.strength_metrics.strength_peak_band_rms_amp_g);
+      const amp = Number(spec.strength_metrics.vibration_strength_db);
       if (Number.isFinite(amp) && amp > 0) {
         byLocation[code] = Math.max(byLocation[code] || 0, amp);
       }
@@ -1667,7 +1666,7 @@ import { WsClient, type WsUiState } from "./ws";
       for (const ev of events.slice(0, 6)) {
         const labels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels.join(", ") : (ev.sensor_label || "--");
         pushVibrationMessage(
-          `Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(ev.severity_db || 0, 1)} dB) @ ${fmt(ev.peak_hz || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`,
+          `Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(ev.vibration_strength_db || 0, 1)} dB) @ ${fmt(ev.peak_hz || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`,
         );
         // Find location codes for pulse animation
         const sensorLabels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels : ev.sensor_label ? [ev.sensor_label] : [];
@@ -1781,7 +1780,7 @@ import { WsClient, type WsUiState } from "./ws";
     state.strengthHistory.t.push(now);
     for (const key of ["wheel", "driveshaft", "engine", "other"]) {
       const level = bySource?.[key];
-      state.strengthHistory[key].push(level?.strength_db || 0);
+      state.strengthHistory[key].push(level?.vibration_strength_db || 0);
     }
     const windowSeconds = 60;
     while (state.strengthHistory.t.length && now - state.strengthHistory.t[0] > windowSeconds) {
@@ -1840,11 +1839,11 @@ import { WsClient, type WsUiState } from "./ws";
 
     for (const [i, client] of state.clients.entries()) {
       const s = state.spectra.clients?.[client.id];
-      if (!s || !Array.isArray(s.combined_spectrum_db_above_floor)) continue;
+      if (!s || !Array.isArray(s.combined)) continue;
       const clientFreq = Array.isArray(s.freq) && s.freq.length ? s.freq : fallbackFreq;
-      const n = Math.min(clientFreq.length, s.combined_spectrum_db_above_floor.length);
+      const n = Math.min(clientFreq.length, s.combined.length);
       if (!n) continue;
-      let blended = s.combined_spectrum_db_above_floor.slice(0, n);
+      let blended = s.combined.slice(0, n);
       const freqSlice = clientFreq.slice(0, n);
       if (!targetFreq.length) {
         targetFreq = freqSlice;
@@ -1961,7 +1960,6 @@ import { WsClient, type WsUiState } from "./ws";
             {
               freq: spectrum.freq,
               combined_spectrum_amp_g: spectrum.combined,
-              combined_spectrum_db_above_floor: spectrum.combinedDbAboveFloor,
               strength_metrics: spectrum.strength_metrics,
             },
           ]),
@@ -2560,15 +2558,11 @@ import { WsClient, type WsUiState } from "./ws";
       demoClients.forEach((client, idx) => {
         const pk = peakConfigs[idx];
         const combined = sineSpectrum(baseNoise, pk.hz, pk.amp);
-        const combinedDb = sineSpectrum(Array.from({ length: freqArr.length }, () => -22), pk.hz, pk.db);
         demoSpectra[client.id] = {
           freq: freqArr,
           combined_spectrum_amp_g: combined,
-          combined_spectrum_db_above_floor: combinedDb,
           strength_metrics: {
-            strength_peak_band_rms_amp_g: pk.amp * 0.8,
-            strength_floor_amp_g: 0.001,
-            strength_db: pk.db,
+            vibration_strength_db: pk.db,
             strength_bucket: pk.bucket,
           },
         };
@@ -2608,7 +2602,7 @@ import { WsClient, type WsUiState } from "./ws";
             events: [
               {
                 severity_key: "l3",
-                severity_db: 22.5,
+                vibration_strength_db: 22.5,
                 peak_hz: 12.2,
                 class_key: "wheel",
                 sensor_labels: ["Rear Right Wheel"],

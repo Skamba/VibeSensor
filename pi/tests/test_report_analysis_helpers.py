@@ -12,7 +12,7 @@ from vibesensor.report_analysis import (
     _outlier_summary,
     _percent_missing,
     _percentile,
-    _primary_vibration_amp,
+    _primary_vibration_strength_db,
     _sample_top_peaks,
     _sensor_limit_g,
     _speed_bin_label,
@@ -217,18 +217,18 @@ def test_sensor_limit_unknown() -> None:
     assert _sensor_limit_g(42) is None
 
 
-# -- _primary_vibration_amp ----------------------------------------------------
+# -- _primary_vibration_strength_db -------------------------------------------
 
 
-def test_primary_vibration_amp_prefers_vib_mag_rms() -> None:
-    sample = {"vib_mag_rms_g": 0.05}
-    assert _primary_vibration_amp(sample) == 0.05
+def test_primary_vibration_strength_db_reads_canonical_field() -> None:
+    sample = {"vibration_strength_db": 22.5}
+    assert _primary_vibration_strength_db(sample) == 22.5
 
 
-def test_primary_vibration_amp_returns_none_for_missing() -> None:
-    assert _primary_vibration_amp({}) is None
-    # Legacy field names are no longer supported.
-    assert _primary_vibration_amp({"accel_magnitude_rms_g": 0.04}) is None
+def test_primary_vibration_strength_db_returns_none_for_missing() -> None:
+    assert _primary_vibration_strength_db({}) is None
+    # Old g-based fields are no longer supported.
+    assert _primary_vibration_strength_db({"vib_mag_rms_g": 0.04}) is None
 
 
 # -- _sample_top_peaks ---------------------------------------------------------
@@ -241,11 +241,11 @@ def test_sample_top_peaks_from_top_peaks_field() -> None:
     assert peaks[0] == (15.0, 0.1)
 
 
-def test_sample_top_peaks_falls_back_to_dominant() -> None:
-    sample = {"dominant_freq_hz": 25.0, "strength_peak_band_rms_amp_g": 0.15}
+def test_sample_top_peaks_returns_empty_without_top_peaks_key() -> None:
+    # No top_peaks key → returns empty list (no fallback to dominant_freq_hz)
+    sample = {"dominant_freq_hz": 25.0, "vibration_strength_db": 22.0}
     peaks = _sample_top_peaks(sample)
-    assert len(peaks) == 1
-    assert peaks[0] == (25.0, 0.15)
+    assert len(peaks) == 0
 
 
 def test_sample_top_peaks_filters_invalid() -> None:

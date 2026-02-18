@@ -65,14 +65,13 @@ def _run_metadata(
             "accel_x_g": "g",
             "accel_y_g": "g",
             "accel_z_g": "g",
-            "vib_mag_rms_g": "g",
-            "vib_mag_p2p_g": "g",
+            "vibration_strength_db": "dB",
         },
         "amplitude_definitions": {
-            "strength_peak_band_rms_amp_g": {
-                "statistic": "Peak band RMS",
-                "units": "g",
-                "definition": "RMS amplitude in band around dominant peak",
+            "vibration_strength_db": {
+                "statistic": "Peak band RMS vs noise floor",
+                "units": "dB",
+                "definition": "20*log10((peak_band_rms + eps) / (floor + eps))",
             }
         },
         "incomplete_for_order_analysis": raw_sample_rate_hz is None,
@@ -115,18 +114,23 @@ def _sample(
         "accel_x_g": 0.03 + (idx * 0.0005),
         "accel_y_g": 0.02 + (idx * 0.0003),
         "accel_z_g": 0.01 + (idx * 0.0002),
-        "vib_mag_rms_g": 0.05 + (idx * 0.0007),
-        "vib_mag_p2p_g": 0.12 + (idx * 0.001),
         "dominant_freq_hz": dominant_freq_hz,
         "dominant_axis": "x",
         "top_peaks": [
-            {"hz": dominant_freq_hz, "amp": peak_amp_g},
-            {"hz": dominant_freq_hz + 8.0, "amp": peak_amp_g * 0.45},
+            {
+                "hz": dominant_freq_hz,
+                "amp": peak_amp_g,
+                "vibration_strength_db": 22.0,
+                "strength_bucket": "l2",
+            },
+            {
+                "hz": dominant_freq_hz + 8.0,
+                "amp": peak_amp_g * 0.45,
+                "vibration_strength_db": 14.0,
+                "strength_bucket": None,
+            },
         ],
-        "noise_floor_amp_p20_g": max(0.001, peak_amp_g * 0.08),
-        "strength_floor_amp_g": max(0.001, peak_amp_g * 0.08),
-        "strength_peak_band_rms_amp_g": peak_amp_g,
-        "strength_db": 22.0,
+        "vibration_strength_db": 22.0,
         "strength_bucket": "l2",
     }
 
@@ -302,7 +306,7 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
     assert summary["accel_scale_g_per_lsb"] == (1.0 / 256.0)
     units = summary["metadata"]["units"]
     assert units["accel_x_g"] == "g"
-    assert units["vib_mag_rms_g"] == "g"
+    assert units["vibration_strength_db"] == "dB"
 
 
 def test_steady_speed_report_wording(tmp_path: Path) -> None:
@@ -349,7 +353,7 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(
             dominant_freq_hz=18.0,
             peak_amp_g=amp,
         )
-        sample["vib_mag_rms_g"] = amp
+        # amp is no longer used for vibration_strength_db (already set to 22.0 in _sample)
         sample["frames_dropped_total"] = idx * 2
         sample["queue_overflow_drops"] = idx
         records.append(sample)
@@ -362,9 +366,9 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(
     assert rows
     row = rows[0]
     assert row["sample_count"] == 4
-    assert row["p50_intensity_g"] == pytest.approx(0.25, rel=1e-6)
-    assert row["p95_intensity_g"] == pytest.approx(0.385, rel=1e-6)
-    assert row["max_intensity_g"] == pytest.approx(0.4, rel=1e-6)
+    assert row["p50_intensity_db"] == pytest.approx(22.0, rel=1e-6)
+    assert row["p95_intensity_db"] == pytest.approx(22.0, rel=1e-6)
+    assert row["max_intensity_db"] == pytest.approx(22.0, rel=1e-6)
     assert row["dropped_frames_delta"] == 6
     assert row["queue_overflow_drops_delta"] == 3
     strength = row["strength_bucket_distribution"]

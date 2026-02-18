@@ -8,7 +8,7 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-from .analysis.strength_metrics import _percentile
+from .analysis.vibration_strength import _percentile
 from .analysis_settings import (
     engine_rpm_from_wheel_hz,
     tire_circumference_m_from_spec,
@@ -45,12 +45,8 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
     first_missing_fields: list[str] = []
     for idx, sample in enumerate(samples):
         missing: list[str] = []
-        if _as_float(sample.get("strength_peak_band_rms_amp_g")) is None:
-            missing.append("strength_peak_band_rms_amp_g")
-        if _as_float(sample.get("strength_floor_amp_g")) is None:
-            missing.append("strength_floor_amp_g")
-        if _as_float(sample.get("strength_db")) is None:
-            missing.append("strength_db")
+        if _as_float(sample.get("vibration_strength_db")) is None:
+            missing.append("vibration_strength_db")
         if not missing:
             valid_samples += 1
             continue
@@ -233,8 +229,8 @@ def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[st
     return dict(run_data.metadata), list(run_data.samples), []
 
 
-def _primary_vibration_amp(sample: dict[str, Any]) -> float | None:
-    return _as_float(sample.get("vib_mag_rms_g"))
+def _primary_vibration_strength_db(sample: dict[str, Any]) -> float | None:
+    return _as_float(sample.get("vibration_strength_db"))
 
 
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
@@ -246,7 +242,7 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
             continue
         label = _speed_bin_label(speed)
         counts[label] += 1
-        amp = _primary_vibration_amp(sample)
+        amp = _primary_vibration_strength_db(sample)
         if amp is not None:
             grouped[label].append(amp)
 
@@ -257,8 +253,8 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
             {
                 "speed_range": label,
                 "count": counts[label],
-                "mean_amplitude_g": mean(values) if values else None,
-                "max_amplitude_g": max(values) if values else None,
+                "mean_vibration_strength_db": mean(values) if values else None,
+                "max_vibration_strength_db": max(values) if values else None,
             }
         )
     return rows
@@ -285,8 +281,8 @@ def _sensor_intensity_by_location(
         if include_locations is not None and location not in include_locations:
             continue
         sample_counts[location] += 1
-        amp = _primary_vibration_amp(sample)
-        if amp is not None and amp > 0:
+        amp = _primary_vibration_strength_db(sample)
+        if amp is not None:
             grouped_amp[location].append(float(amp))
         dropped_total = _as_float(sample.get("frames_dropped_total"))
         if dropped_total is not None:
@@ -294,11 +290,9 @@ def _sensor_intensity_by_location(
         overflow_total = _as_float(sample.get("queue_overflow_drops"))
         if overflow_total is not None:
             overflow_totals[location].append(overflow_total)
-        band_rms = _as_float(sample.get("strength_peak_band_rms_amp_g"))
-        floor_amp = _as_float(sample.get("strength_floor_amp_g"))
-        strength_db = _as_float(sample.get("strength_db"))
+        vibration_strength_db = _as_float(sample.get("vibration_strength_db"))
         bucket = str(sample.get("strength_bucket") or "")
-        if band_rms is None or floor_amp is None or strength_db is None:
+        if vibration_strength_db is None:
             continue
         if bucket:
             strength_bucket_counts[location][bucket] += 1
@@ -335,10 +329,10 @@ def _sensor_intensity_by_location(
                 "location": location,
                 "samples": sample_count,
                 "sample_count": sample_count,
-                "mean_intensity_g": mean(values) if values else None,
-                "p50_intensity_g": _percentile(values_sorted, 0.50) if values else None,
-                "p95_intensity_g": _percentile(values_sorted, 0.95) if values else None,
-                "max_intensity_g": max(values) if values else None,
+                "mean_intensity_db": mean(values) if values else None,
+                "p50_intensity_db": _percentile(values_sorted, 0.50) if values else None,
+                "p95_intensity_db": _percentile(values_sorted, 0.95) if values else None,
+                "max_intensity_db": max(values) if values else None,
                 "dropped_frames_delta": dropped_delta,
                 "queue_overflow_drops_delta": overflow_delta,
                 "strength_bucket_distribution": bucket_distribution,
@@ -346,8 +340,8 @@ def _sensor_intensity_by_location(
         )
     rows.sort(
         key=lambda row: (
-            float(row.get("p95_intensity_g") or 0.0),
-            float(row.get("max_intensity_g") or 0.0),
+            float(row.get("p95_intensity_db") or 0.0),
+            float(row.get("max_intensity_db") or 0.0),
         ),
         reverse=True,
     )
@@ -403,13 +397,7 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
             if hz is None or amp is None or hz <= 0:
                 continue
             out.append((hz, amp))
-    if out:
-        return out
-    dom_hz = _as_float(sample.get("dominant_freq_hz"))
-    dom_amp = _as_float(sample.get("strength_peak_band_rms_amp_g"))
-    if dom_hz is not None and dom_hz > 0 and dom_amp is not None:
-        return [(dom_hz, dom_amp)]
-    return []
+    return out
 
 
 def _location_label(sample: dict[str, Any]) -> str:
@@ -1651,7 +1639,7 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         t_s = _as_float(sample.get("t_s"))
         if t_s is None:
             continue
-        vib = _primary_vibration_amp(sample)
+        vib = _primary_vibration_strength_db(sample)
         if vib is not None:
             vib_mag_points.append((t_s, vib))
         if raw_sample_rate_hz and raw_sample_rate_hz > 0:
@@ -1852,7 +1840,7 @@ def summarize_run_data(
         if sample["x"] is not None and sample["y"] is not None and sample["z"] is not None
     ]
     amp_metric_values = [
-        value for value in (_primary_vibration_amp(sample) for sample in samples) if value
+        value for value in (_primary_vibration_strength_db(sample) for sample in samples) if value
     ]
 
     sat_count = 0
