@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import re
+import shutil
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+OUT = ROOT / "artifacts" / "ai" / "context-bundle"
+DOCS_AI = ROOT / "docs" / "ai"
+
+
+def write_top_tree(path: Path, depth: int = 2) -> None:
+    lines: list[str] = []
+
+    def walk(p: Path, level: int) -> None:
+        if level > depth:
+            return
+        try:
+            entries = sorted(p.iterdir(), key=lambda x: (x.is_file(), x.name.lower()))
+        except OSError:
+            return
+        for entry in entries:
+            rel = entry.relative_to(ROOT)
+            indent = "  " * level
+            suffix = "/" if entry.is_dir() else ""
+            lines.append(f"{indent}{rel}{suffix}")
+            if entry.is_dir():
+                if rel.parts and rel.parts[0] in {".git", "ui/node_modules", "image/pi-gen/.cache", "build_artifacts"}:
+                    continue
+                walk(entry, level + 1)
+
+    walk(ROOT, 0)
+    (OUT / "repo-tree-L2.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def parse_key_files_from_map(map_path: Path) -> list[Path]:
+    content = map_path.read_text(encoding="utf-8")
+    paths = re.findall(r"`([^`]+)`", content)
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for p in paths:
+        if "/" not in p:
+            continue
+        if p in seen:
+            continue
+        seen.add(p)
+        abs_path = ROOT / p
+        if abs_path.exists() and abs_path.is_file():
+            unique.append(abs_path)
+    return unique[:40]
+
+
+def write_headers(files: list[Path], max_lines: int = 80) -> None:
+    hdr_dir = OUT / "headers"
+    if hdr_dir.exists():
+        shutil.rmtree(hdr_dir)
+    hdr_dir.mkdir(parents=True, exist_ok=True)
+    index_lines: list[str] = []
+    for fp in files:
+        rel = fp.relative_to(ROOT)
+        target = hdr_dir / (str(rel).replace("/", "__") + ".txt")
+        try:
+            lines = fp.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        excerpt = "\n".join(lines[:max_lines]) + "\n"
+        target.write_text(excerpt, encoding="utf-8")
+        index_lines.append(f"{rel} -> {target.relative_to(OUT)}")
+    (OUT / "headers-index.txt").write_text("\n".join(index_lines) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    OUT.mkdir(parents=True, exist_ok=True)
+
+    docs_out = OUT / "docs-ai"
+    if docs_out.exists():
+        shutil.rmtree(docs_out)
+    shutil.copytree(DOCS_AI, docs_out)
+
+    write_top_tree(ROOT, depth=2)
+    key_files = parse_key_files_from_map(ROOT / "docs" / "ai" / "map.md")
+    write_headers(key_files)
+
+    cheatsheet = OUT / "commands-cheatsheet.txt"
+    runbooks = (ROOT / "docs" / "ai" / "runbooks.md").read_text(encoding="utf-8")
+    cheatsheet.write_text(runbooks, encoding="utf-8")
+
+    print("AI context bundle created")
+    print(f"- path: {OUT}")
+    print(f"- docs copied: {len(list(docs_out.glob('*.md')))}")
+    print(f"- key headers: {len(key_files)}")
+    print("- details: headers-index.txt, repo-tree-L2.txt, commands-cheatsheet.txt")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

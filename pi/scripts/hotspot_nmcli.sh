@@ -152,6 +152,10 @@ for k, v in ap.items():
 PY
 )"
 
+# Boot invariant:
+# 1) bring up AP offline first (must succeed with no internet),
+# 2) optional uplink update remains non-fatal and must never block AP startup.
+
 if ! command -v nmcli >/dev/null 2>&1; then
   echo "nmcli not found. Install NetworkManager first."
   exit 1
