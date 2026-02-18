@@ -41,6 +41,7 @@ Guardrails for Copilot
 - Keep PRs small and self-contained. Add tests for behavior changes. Prefer backwards-compatible changes unless the task explicitly requests breaking changes.
 - For normal validation, run one simulator end-to-end smoke pass; run the full unit-heavy suite only when explicitly requested.
 - Do not modify unrelated files or reformat the whole repo.
+- Default PR mode: check PR status checks and review feedback, fix all blocking issues, push updates, and continue monitoring until required checks are fully green.
 
 End-to-end validation via Docker
 - After making backend or frontend changes, always rebuild and test using the Docker container:

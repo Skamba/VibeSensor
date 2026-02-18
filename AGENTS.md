@@ -1,4 +1,8 @@
 Agent operating rules
+- Default PR mode:
+  - After opening/updating a PR, check all status checks and review feedback.
+  - Fix blocking issues immediately, push updates, and keep monitoring until required checks are green.
+
 - How to explore the repo efficiently:
   - Start at `pi/` for backend entry points and `ui/` for frontend. Follow imports from `pi/vibesensor/__init__.py` and `pi/vibesensor/app.py`.
   - Use `pi/tests/` to see expected behaviour and fixtures; tests are the fastest way to understand runtime contracts.

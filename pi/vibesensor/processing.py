@@ -606,9 +606,7 @@ class SignalProcessor:
             return None
         return time.monotonic() - buf.last_ingest_mono_s
 
-    def clients_with_recent_data(
-        self, client_ids: list[str], max_age_s: float = 3.0
-    ) -> list[str]:
+    def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         """Return subset of *client_ids* that received data within *max_age_s*."""
         now = time.monotonic()
         result: list[str] = []

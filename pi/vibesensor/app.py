@@ -184,9 +184,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 # Only recompute metrics for clients that received new data
                 # since the last tick.  This prevents stale ring-buffer data
                 # from cycling through the pipeline indefinitely.
-                fresh_ids = runtime.processor.clients_with_recent_data(
-                    active_ids, max_age_s=3.0
-                )
+                fresh_ids = runtime.processor.clients_with_recent_data(active_ids, max_age_s=3.0)
                 sample_rates: dict[str, int] = {}
                 for client_id in fresh_ids:
                     record = runtime.registry.get(client_id)

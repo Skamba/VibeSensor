@@ -197,14 +197,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                     merged["ap"].get("self_heal", {}).get("interval_seconds", 120)
                 ),
                 diagnostics_lookback_minutes=int(
-                    merged["ap"]
-                    .get("self_heal", {})
-                    .get("diagnostics_lookback_minutes", 5)
+                    merged["ap"].get("self_heal", {}).get("diagnostics_lookback_minutes", 5)
                 ),
                 min_restart_interval_seconds=int(
-                    merged["ap"]
-                    .get("self_heal", {})
-                    .get("min_restart_interval_seconds", 120)
+                    merged["ap"].get("self_heal", {}).get("min_restart_interval_seconds", 120)
                 ),
                 allow_disable_resolved_stub_listener=bool(
                     merged["ap"]

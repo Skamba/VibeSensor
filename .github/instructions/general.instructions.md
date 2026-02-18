@@ -2,6 +2,7 @@
 applyTo: "**"
 ---
 Validation (always required)
+- Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
 - After any backend or frontend change, rebuild and test via the Docker container before considering the work done:
   1. `docker compose build --pull`
   2. `docker compose up -d`
