@@ -65,10 +65,16 @@ class _FakeRegistry:
                 name="front-left wheel",
                 sample_rate_hz=800,
                 latest_metrics={
+                    "strength_metrics": {
+                        "vibration_strength_db": 22.0,
+                        "strength_bucket": "l2",
+                        "top_peaks": [
+                            {"hz": 15.0, "amp": 0.12,
+                             "vibration_strength_db": 22.0, "strength_bucket": "l2"},
+                        ],
+                        "combined_spectrum_amp_g": [],
+                    },
                     "combined": {
-                        "vib_mag_rms": 0.09,
-                        "vib_mag_p2p": 0.20,
-                        "noise_floor_amp_p20_g": 0.01,
                         "peaks": [{"hz": 15.0, "amp": 0.12}],
                     },
                     "x": {"rms": 0.04, "p2p": 0.11, "peaks": [{"hz": 15.0, "amp": 0.12}]},
@@ -81,10 +87,16 @@ class _FakeRegistry:
                 name="rear-right wheel",
                 sample_rate_hz=800,
                 latest_metrics={
+                    "strength_metrics": {
+                        "vibration_strength_db": 28.0,
+                        "strength_bucket": "l4",
+                        "top_peaks": [
+                            {"hz": 28.0, "amp": 0.26,
+                             "vibration_strength_db": 28.0, "strength_bucket": "l4"},
+                        ],
+                        "combined_spectrum_amp_g": [],
+                    },
                     "combined": {
-                        "vib_mag_rms": 0.22,
-                        "vib_mag_p2p": 0.40,
-                        "noise_floor_amp_p20_g": 0.02,
                         "peaks": [{"hz": 28.0, "amp": 0.26}],
                     },
                     "x": {"rms": 0.10, "p2p": 0.22, "peaks": [{"hz": 28.0, "amp": 0.26}]},
@@ -176,31 +188,7 @@ def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
     assert rows[0]["client_name"] == "front-left wheel"
 
 
-@pytest.mark.parametrize("missing_key", ["vib_mag_rms", "vib_mag_p2p"])
-def test_build_sample_records_requires_combined_vibration_magnitudes(
-    tmp_path: Path, missing_key: str
-) -> None:
-    registry = _FakeRegistry()
-    del registry._records["active"].latest_metrics["combined"][missing_key]
-    logger = MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=2,
-        registry=registry,
-        gps_monitor=_FakeGPSMonitor(),
-        processor=_FakeProcessor(),
-        analysis_settings=_FakeAnalysisSettings(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=1024,
-    )
 
-    with pytest.raises(ValueError, match=missing_key):
-        logger._build_sample_records(
-            run_id="run-1",
-            t_s=1.0,
-            timestamp_utc="2026-02-16T12:00:00+00:00",
-        )
 
 
 def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None:

@@ -54,13 +54,9 @@ Recommended:
 Common derived fields:
 
 - `dominant_freq_hz`
-- `dominant_peak_amp_g`
-- `vib_mag_rms_g` (preferred vibration metric; DC removed)
-- `vib_mag_p2p_g`
-- `noise_floor_amp`
-- `top_peaks` (list of `{hz, amp}` from combined spectrum)
-- `accel_magnitude_rms_g` (backward-compatible alias)
-- `accel_magnitude_p2p_g` (backward-compatible alias)
+- `vibration_strength_db` (canonical vibration severity metric in dB — see `docs/metrics.md`)
+- `strength_bucket` (severity band key: `l1`–`l5` or `null`)
+- `top_peaks` (list of `{hz, amp, vibration_strength_db, strength_bucket}` from combined spectrum)
 
 ### `run_end`
 
@@ -92,3 +88,18 @@ vibesensor-report path/to/metrics_20260215_120000.jsonl
 ```
 
 Legacy CSV files are intentionally not supported in this lab setup.
+
+## Removed Fields (schema history)
+
+The following fields were present in earlier runs and are no longer written.
+`normalize_sample_record()` in `runlog.py` handles backward compatibility when reading old files.
+
+| Removed field | Replacement |
+|---------------|-------------|
+| `vib_mag_rms_g` | (removed — use `vibration_strength_db`) |
+| `vib_mag_p2p_g` | (removed) |
+| `noise_floor_amp_p20_g` | (removed — internal intermediate) |
+| `strength_floor_amp_g` | (removed — internal intermediate) |
+| `strength_peak_band_rms_amp_g` | `top_peaks[0].amp` |
+| `strength_db` | `vibration_strength_db` |
+| `top_strength_peaks` | `top_peaks` |

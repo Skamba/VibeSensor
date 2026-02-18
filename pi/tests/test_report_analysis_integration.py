@@ -46,13 +46,12 @@ def _make_sample(t_s: float, speed_kmh: float, amp: float = 0.01) -> dict:
         "accel_x_g": amp,
         "accel_y_g": amp,
         "accel_z_g": amp,
-        "vib_mag_rms_g": amp,
         "dominant_freq_hz": 15.0,
-        "noise_floor_amp_p20_g": amp * 0.1,
-        "strength_floor_amp_g": amp * 0.1,
-        "strength_peak_band_rms_amp_g": amp * 2,
-        "strength_db": 20.0,
+        "vibration_strength_db": 20.0,
         "strength_bucket": "l2",
+        "top_peaks": [
+            {"hz": 15.0, "amp": amp, "vibration_strength_db": 20.0, "strength_bucket": "l2"},
+        ],
         "client_name": "Front Left",
     }
 
@@ -169,7 +168,7 @@ def test_summarize_log_missing_precomputed_strength_metrics_raises(tmp_path: Pat
     log_path = tmp_path / "run_missing_strength.jsonl"
     metadata = _make_metadata()
     sample = _make_sample(0.0, 80.0, 0.02)
-    sample.pop("strength_db", None)
+    sample.pop("vibration_strength_db", None)
     end = create_run_end_record("test-run", "2025-01-01T00:00:10+00:00")
     append_jsonl_records(log_path, [metadata, sample, end])
     with pytest.raises(ValueError, match="Missing required precomputed strength metrics"):
@@ -180,7 +179,7 @@ def test_summarize_log_allows_partial_missing_precomputed_strength_metrics(tmp_p
     log_path = tmp_path / "run_partial_missing_strength.jsonl"
     metadata = _make_metadata()
     sample_missing = _make_sample(0.0, 80.0, 0.02)
-    sample_missing.pop("strength_db", None)
+    sample_missing.pop("vibration_strength_db", None)
     sample_valid = _make_sample(0.5, 82.0, 0.021)
     end = create_run_end_record("test-run", "2025-01-01T00:00:10+00:00")
     append_jsonl_records(log_path, [metadata, sample_missing, sample_valid, end])
