@@ -103,6 +103,7 @@ class _FakeRegistry:
 class _FakeGPSMonitor:
     speed_mps = None
     effective_speed_mps = None
+    override_speed_mps = None
 
 
 class _FakeProcessor:
@@ -174,3 +175,91 @@ def test_build_sample_records_requires_combined_vibration_magnitudes(
             t_s=1.0,
             timestamp_utc="2026-02-16T12:00:00+00:00",
         )
+
+
+def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None:
+    """speed_source should be 'override' when override_speed_mps is set."""
+    gps = _FakeGPSMonitor()
+    gps.speed_mps = 10.0  # GPS available
+    gps.override_speed_mps = 20.0  # Override active
+    gps.effective_speed_mps = 20.0  # Override takes priority
+
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=gps,
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    rows = logger._build_sample_records(
+        run_id="run-1",
+        t_s=1.0,
+        timestamp_utc="2026-02-16T12:00:00+00:00",
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["speed_source"] == "override"
+    assert rows[0]["speed_kmh"] == pytest.approx(20.0 * 3.6, abs=0.01)
+
+
+def test_speed_source_reports_gps_when_no_override(tmp_path: Path) -> None:
+    """speed_source should be 'gps' when GPS is available and no override."""
+    gps = _FakeGPSMonitor()
+    gps.speed_mps = 10.0
+    gps.override_speed_mps = None
+    gps.effective_speed_mps = 10.0
+
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=gps,
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    rows = logger._build_sample_records(
+        run_id="run-1",
+        t_s=1.0,
+        timestamp_utc="2026-02-16T12:00:00+00:00",
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["speed_source"] == "gps"
+    assert rows[0]["speed_kmh"] == pytest.approx(10.0 * 3.6, abs=0.01)
+
+
+def test_speed_source_reports_missing_when_nothing_set(tmp_path: Path) -> None:
+    """speed_source should be 'missing' when neither GPS nor override is set."""
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    rows = logger._build_sample_records(
+        run_id="run-1",
+        t_s=1.0,
+        timestamp_utc="2026-02-16T12:00:00+00:00",
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["speed_source"] == "missing"
+    assert rows[0]["speed_kmh"] is None

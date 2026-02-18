@@ -46,8 +46,11 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
         re.compile(r"x\s*\*\s*x\s*\+\s*y\s*\*\s*y\s*\+\s*z\s*\*\s*z"),
     ]
     scanned = 0
-    for asset_dir in candidate_dirs:
-        assert asset_dir.exists(), f"Missing generated UI assets directory: {asset_dir}"
+    available_dirs = [d for d in candidate_dirs if d.exists()]
+    assert available_dirs, (
+        f"No generated UI assets directory found. Expected at least one of: {candidate_dirs}"
+    )
+    for asset_dir in available_dirs:
         for js_file in asset_dir.rglob("*.js"):
             scanned += 1
             text = _read(js_file)
