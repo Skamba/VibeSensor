@@ -157,30 +157,22 @@ if ! command -v nmcli >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! dpkg -s dnsmasq >/dev/null 2>&1; then
-  run_as_root apt-get update
-  run_as_root apt-get install -y dnsmasq
+if ! command -v dnsmasq >/dev/null 2>&1; then
+  echo "WARNING: dnsmasq not found. Hotspot AP can still come up, but DHCP/DNS may not work."
 fi
 
-run_as_root python3 - <<'PY'
-from configparser import ConfigParser
-from pathlib import Path
-
-path = Path("/etc/NetworkManager/NetworkManager.conf")
-cfg = ConfigParser()
-if path.exists():
-    cfg.read(path)
-if "main" not in cfg:
-    cfg["main"] = {}
-cfg["main"]["dns"] = "dnsmasq"
-with path.open("w", encoding="utf-8") as fh:
-    cfg.write(fh)
-PY
+run_as_root install -d /etc/NetworkManager/conf.d
+run_as_root tee /etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf >/dev/null <<'EOF'
+[main]
+dns=dnsmasq
+EOF
 
 run_as_root systemctl disable --now dnsmasq.service >/dev/null 2>&1 || true
-run_as_root systemctl restart NetworkManager
-
-maybe_update_from_uplink
+if ! run_as_root nmcli general reload >/dev/null 2>&1; then
+  if ! run_as_root systemctl reload NetworkManager >/dev/null 2>&1; then
+    run_as_root systemctl restart NetworkManager
+  fi
+fi
 
 if ! run_as_root nmcli -t -f NAME connection show | grep -Fxq "${CON_NAME}"; then
   run_as_root nmcli connection add type wifi ifname "${IFNAME}" con-name "${CON_NAME}" autoconnect yes ssid "${SSID}"
@@ -197,4 +189,10 @@ run_as_root nmcli connection modify "${CON_NAME}" \
   ipv6.method ignore
 
 run_as_root nmcli connection up "${CON_NAME}"
+
+if ! maybe_update_from_uplink; then
+  echo "WARNING: uplink update step failed; continuing with hotspot enabled."
+fi
+
+run_as_root nmcli connection up "${CON_NAME}" >/dev/null 2>&1 || true
 run_as_root nmcli -f GENERAL.STATE,IP4.ADDRESS connection show "${CON_NAME}"
