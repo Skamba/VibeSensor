@@ -171,12 +171,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 return f"{tr('NOT_AVAILABLE')}. {definition}"
             return tr("NOT_AVAILABLE")
         name_map = {
-            "strength_peak_band_rms_amp_g": tr("DOMINANT_PEAK_AMPLITUDE"),
-            "vib_mag_rms_g": text("Vibration magnitude RMS", "Trillingsgrootte RMS"),
-            "vib_mag_p2p_g": text(
-                "Vibration magnitude peak-to-peak",
-                "Trillingsgrootte piek-tot-piek",
-            ),
+            "vibration_strength_db": text("Vibration strength", "Trillingssterkte"),
             "not_available": tr("NOT_AVAILABLE"),
         }
         label = name_map.get(
@@ -235,9 +230,7 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                     f"Sensor {client_id[-4:]}" if client_id else tr("UNLABELED_SENSOR")
                 )
                 all_locations.add(location)
-                amp = _as_float(sample.get("strength_peak_band_rms_amp_g"))
-                if amp is None:
-                    amp = _as_float(sample.get("vib_mag_rms_g"))
+                amp = _as_float(sample.get("vibration_strength_db"))
                 if amp is not None and amp > 0:
                     amp_by_location[location].append(amp)
 
@@ -1027,8 +1020,8 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 if not isinstance(row, dict):
                     continue
                 loc = _canonical_location(row.get("location"))
-                p95_g = _as_float(row.get("p95_intensity_g")) or _as_float(
-                    row.get("mean_intensity_g")
+                p95_g = _as_float(row.get("p95_intensity_db")) or _as_float(
+                    row.get("mean_intensity_db")
                 )
                 if loc and p95_g is not None and p95_g > 0:
                     amp_by_location[loc] = p95_g
@@ -1583,9 +1576,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
             [
                 text("Location", "Locatie"),
                 text("Samples", "Samples"),
-                "P50 (g)",
-                "P95 (g)",
-                text("Max (g)", "Max (g)"),
+                "P50 (dB)",
+                "P95 (dB)",
+                text("Max (dB)", "Max (dB)"),
                 text("Dropped Δ", "Verlies Δ"),
                 text("Overflow Δ", "Overflow Δ"),
                 text("L1-L5 (%)", "L1-L5 (%)"),
@@ -1605,9 +1598,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                 [
                     str(row.get("location") or tr("UNKNOWN")),
                     str(int(_as_float(row.get("sample_count") or row.get("samples")) or 0)),
-                    f"{(_as_float(row.get('p50_intensity_g')) or 0.0):.4f}",
-                    f"{(_as_float(row.get('p95_intensity_g')) or 0.0):.4f}",
-                    f"{(_as_float(row.get('max_intensity_g')) or 0.0):.4f}",
+                    f"{(_as_float(row.get('p50_intensity_db')) or 0.0):.1f}",
+                    f"{(_as_float(row.get('p95_intensity_db')) or 0.0):.1f}",
+                    f"{(_as_float(row.get('max_intensity_db')) or 0.0):.1f}",
                     str(int(_as_float(row.get("dropped_frames_delta")) or 0)),
                     str(int(_as_float(row.get("queue_overflow_drops_delta")) or 0)),
                     bucket_pct,
@@ -1682,11 +1675,11 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:
                         str(row.get("speed_range", "")),
                         str(int(_as_float(row.get("count")) or 0)),
                         req(
-                            row.get("mean_amplitude_g"),
+                            row.get("mean_vibration_strength_db"),
                             "CONSEQUENCE_SPEED_BIN_AMPLITUDE_UNAVAILABLE",
                         ),
                         req(
-                            row.get("max_amplitude_g"),
+                            row.get("max_vibration_strength_db"),
                             "CONSEQUENCE_SPEED_BIN_AMPLITUDE_UNAVAILABLE",
                         ),
                     ]

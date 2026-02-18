@@ -73,62 +73,25 @@ def default_units(*, accel_units: str = "g") -> dict[str, str]:
         "engine_rpm": "rpm",
         "gear": "ratio",
         "dominant_freq_hz": "Hz",
-        "vib_mag_rms_g": accel_units,
-        "vib_mag_p2p_g": accel_units,
-        "noise_floor_amp_p20_g": accel_units,
-        "strength_floor_amp_g": accel_units,
-        "strength_peak_band_rms_amp_g": accel_units,
-        "strength_db": "dB",
+        "vibration_strength_db": "dB",
         "strength_bucket": "band_key",
     }
 
 
 def default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[str, str]]:
     return {
-        "vib_mag_rms_g": {
-            "statistic": "RMS",
-            "units": accel_units,
-            "definition": ("RMS of detrended vector vibration magnitude in the analysis window"),
-        },
-        "vib_mag_p2p_g": {
-            "statistic": "P2P",
-            "units": accel_units,
-            "definition": (
-                "peak-to-peak of detrended vector vibration magnitude in the analysis window"
-            ),
-        },
-        "noise_floor_amp_p20_g": {
-            "statistic": "Floor",
-            "units": accel_units,
-            "definition": ("combined-spectrum noise floor amplitude (20th percentile, DC removed)"),
-        },
-        "strength_floor_amp_g": {
-            "statistic": "Floor",
-            "units": accel_units,
-            "definition": (
-                "combined-spectrum floor amplitude after excluding strongest nearby peaks"
-            ),
-        },
-        "strength_peak_band_rms_amp_g": {
-            "statistic": "Peak band RMS",
-            "units": accel_units,
-            "definition": ("RMS amplitude in ±1.2 Hz band around dominant combined-spectrum peak"),
-        },
-        "strength_db": {
+        "vibration_strength_db": {
             "statistic": "dB above floor",
             "units": "dB",
             "definition": (
-                "20*log10((strength_peak_band_rms_amp_g+eps)"
-                "/(strength_floor_amp_g+eps)); "
-                "eps=max(1e-9, strength_floor_amp_g*0.05)"
+                "20*log10((peak_band_rms_amp_g+eps)/(floor_amp_g+eps)); "
+                "eps=max(1e-9, floor_amp_g*0.05)"
             ),
         },
         "strength_bucket": {
             "statistic": "Bucket",
             "units": "band_key",
-            "definition": (
-                "strength severity bucket derived from strength_db and peak band amplitude"
-            ),
+            "definition": "strength severity bucket derived from vibration_strength_db",
         },
     }
 
@@ -188,14 +151,10 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     normalized["engine_rpm"] = as_float_or_none(record.get("engine_rpm"))
     normalized["gear"] = as_float_or_none(record.get("gear"))
     normalized["dominant_freq_hz"] = as_float_or_none(record.get("dominant_freq_hz"))
-    normalized["vib_mag_rms_g"] = as_float_or_none(record.get("vib_mag_rms_g"))
-    normalized["vib_mag_p2p_g"] = as_float_or_none(record.get("vib_mag_p2p_g"))
-    normalized["noise_floor_amp_p20_g"] = as_float_or_none(record.get("noise_floor_amp_p20_g"))
-    normalized["strength_floor_amp_g"] = as_float_or_none(record.get("strength_floor_amp_g"))
-    normalized["strength_peak_band_rms_amp_g"] = as_float_or_none(
-        record.get("strength_peak_band_rms_amp_g")
+    # Backward-compat: old runs wrote "strength_db"; new runs write "vibration_strength_db".
+    normalized["vibration_strength_db"] = as_float_or_none(
+        record.get("vibration_strength_db") or record.get("strength_db")
     )
-    normalized["strength_db"] = as_float_or_none(record.get("strength_db"))
     normalized["strength_bucket"] = (
         str(record.get("strength_bucket"))
         if record.get("strength_bucket") not in (None, "")
