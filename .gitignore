@@ -50,6 +50,9 @@ __pycache__/
 # Runtime data
 pi/data/*.csv
 pi/data/*.jsonl
+pi/data/*.db
+pi/data/*.db-shm
+pi/data/*.db-wal
 pi/data/clients.json
 pi/wifi-secrets.env
 

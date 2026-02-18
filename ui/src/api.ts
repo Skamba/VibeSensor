@@ -35,10 +35,12 @@ export type SpeedSourcePayload = {
   manualSpeedKph: number | null;
 };
 
-export type LogEntry = {
-  name: string;
-  size: number;
-  [key: string]: unknown;
+export type HistoryEntry = {
+  run_id: string;
+  status: string;
+  start_time_utc: string;
+  end_time_utc?: string;
+  sample_count: number;
 };
 
 export type CarLibraryModel = {
@@ -66,12 +68,12 @@ export type CarLibraryTireOption = {
   rim_in: number;
 };
 
-export function logDownloadUrl(logName: string): string {
-  return `/api/logs/${encodeURIComponent(logName)}`;
+export function historyExportUrl(runId: string): string {
+  return `/api/history/${encodeURIComponent(runId)}/export`;
 }
 
-export function reportPdfUrl(logName: string, lang: string): string {
-  return `/api/logs/${encodeURIComponent(logName)}/report.pdf?lang=${encodeURIComponent(lang)}`;
+export function historyReportPdfUrl(runId: string, lang: string): string {
+  return `/api/history/${encodeURIComponent(runId)}/report.pdf?lang=${encodeURIComponent(lang)}`;
 }
 
 export async function getClientLocations(): Promise<Record<string, string>> {
@@ -194,21 +196,21 @@ export async function stopLoggingRun(): Promise<unknown> {
   return apiJson("/api/logging/stop", { method: "POST" });
 }
 
-export async function getLogs(): Promise<{ logs: LogEntry[] }> {
-  return apiJson("/api/logs");
+export async function getHistory(): Promise<{ runs: HistoryEntry[] }> {
+  return apiJson("/api/history");
 }
 
-export async function deleteLog(logName: string): Promise<void> {
-  await apiJson(`/api/logs/${encodeURIComponent(logName)}`, { method: "DELETE" });
+export async function deleteHistoryRun(runId: string): Promise<void> {
+  await apiJson(`/api/history/${encodeURIComponent(runId)}`, { method: "DELETE" });
 }
 
-export async function getLogInsights(
-  logName: string,
+export async function getHistoryInsights(
+  runId: string,
   lang: string,
   includeSamples = false,
 ): Promise<unknown> {
   return apiJson(
-    `/api/logs/${encodeURIComponent(logName)}/insights?lang=${encodeURIComponent(lang)}&include_samples=${includeSamples ? "1" : "0"}`,
+    `/api/history/${encodeURIComponent(runId)}/insights?lang=${encodeURIComponent(lang)}&include_samples=${includeSamples ? "1" : "0"}`,
   );
 }
 

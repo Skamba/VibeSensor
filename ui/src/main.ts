@@ -4,22 +4,22 @@ import "./styles/app.css";
 import * as I18N from "./i18n";
 import type { CarRecord, CarLibraryModel, CarLibraryGearbox, CarLibraryTireOption } from "./api";
 import {
-  deleteLog as deleteLogApi,
+  deleteHistoryRun as deleteHistoryRunApi,
   getAnalysisSettings,
   getCarLibraryBrands,
   getCarLibraryModels,
   getCarLibraryTypes,
   getClientLocations,
-  getLogInsights,
+  getHistoryInsights,
   getLoggingStatus,
-  getLogs,
+  getHistory,
   getSettingsCars,
   getSettingsSpeedSource,
   getSpeedOverride,
   identifyClient as identifyClientApi,
-  logDownloadUrl,
+  historyExportUrl,
   removeClient as removeClientApi,
-  reportPdfUrl,
+  historyReportPdfUrl,
   setAnalysisSettings,
   setClientLocation as setClientLocationApi,
   setSpeedOverride,
@@ -62,10 +62,10 @@ import { WsClient, type WsUiState } from "./ws";
     currentLogFile: document.getElementById("currentLogFile"),
     startLoggingBtn: document.getElementById("startLoggingBtn"),
     stopLoggingBtn: document.getElementById("stopLoggingBtn"),
-    refreshLogsBtn: document.getElementById("refreshLogsBtn"),
-    deleteAllLogsBtn: document.getElementById("deleteAllLogsBtn"),
-    logsSummary: document.getElementById("logsSummary"),
-    logsTableBody: document.getElementById("logsTableBody"),
+    refreshHistoryBtn: document.getElementById("refreshHistoryBtn"),
+    deleteAllRunsBtn: document.getElementById("deleteAllRunsBtn"),
+    historySummary: document.getElementById("historySummary"),
+    historyTableBody: document.getElementById("historyTableBody"),
     sensorsSettingsBody: document.getElementById("sensorsSettingsBody"),
     lastSeen: document.getElementById("lastSeen"),
     dropped: document.getElementById("dropped"),
@@ -122,10 +122,10 @@ import { WsClient, type WsUiState } from "./ws";
     spectra: { freq: [], clients: {} },
     speedMps: null,
     activeViewId: "dashboardView",
-    logs: [],
-    deleteAllLogsInFlight: false,
-    expandedLogName: null,
-    logDetailsByName: {},
+    runs: [],
+    deleteAllRunsInFlight: false,
+    expandedRunId: null,
+    runDetailsById: {},
     loggingStatus: { enabled: false, current_file: null },
     locationOptions: [],
     vehicleSettings: {
@@ -262,7 +262,7 @@ import { WsClient, type WsUiState } from "./ws";
     maybeRenderSensorsSettingsList(true);
     renderSpeedReadout();
     renderLoggingStatus();
-    renderLogsTable();
+    renderHistoryTable();
     renderVibrationLog();
     renderMatrix();
     renderWsState();
@@ -271,14 +271,14 @@ import { WsClient, type WsUiState } from "./ws";
       state.spectrumPlot = null;
       renderSpectrum();
     }
-    if (forceReloadInsights && state.expandedLogName) {
-      const logName = state.expandedLogName;
-      const detail = state.logDetailsByName?.[logName];
+    if (forceReloadInsights && state.expandedRunId) {
+      const runId = state.expandedRunId;
+      const detail = state.runDetailsById?.[runId];
       const shouldReloadInsights = Boolean(detail?.insights);
-      delete state.logDetailsByName[logName];
-      void loadLogPreview(logName, true).then(() => {
+      delete state.runDetailsById[runId];
+      void loadRunPreview(runId, true).then(() => {
         if (shouldReloadInsights) {
-          void loadLogInsights(logName, true);
+          void loadRunInsights(runId, true);
         }
       });
     }
@@ -901,7 +901,7 @@ import { WsClient, type WsUiState } from "./ws";
       state.loggingStatus = await startLoggingRun();
       resetLiveVibrationCounts();
       renderLoggingStatus();
-      await refreshLogs();
+      await refreshHistory();
     } catch (_err) {}
   }
 
@@ -909,13 +909,13 @@ import { WsClient, type WsUiState } from "./ws";
     try {
       state.loggingStatus = await stopLoggingRun();
       renderLoggingStatus();
-      await refreshLogs();
+      await refreshHistory();
     } catch (_err) {}
   }
 
-  function ensureLogDetail(logName) {
-    if (!state.logDetailsByName[logName]) {
-      state.logDetailsByName[logName] = {
+  function ensureRunDetail(runId) {
+    if (!state.runDetailsById[runId]) {
+      state.runDetailsById[runId] = {
         preview: null,
         previewLoading: false,
         previewError: "",
@@ -926,14 +926,14 @@ import { WsClient, type WsUiState } from "./ws";
         pdfError: "",
       };
     }
-    return state.logDetailsByName[logName];
+    return state.runDetailsById[runId];
   }
 
-  function collapseExpandedLog() {
-    const previous = state.expandedLogName;
-    state.expandedLogName = null;
+  function collapseExpandedRun() {
+    const previous = state.expandedRunId;
+    state.expandedRunId = null;
     if (previous) {
-      delete state.logDetailsByName[previous];
+      delete state.runDetailsById[previous];
     }
   }
 
@@ -1102,7 +1102,7 @@ import { WsClient, type WsUiState } from "./ws";
       : "";
     return `
       <div class="mini-car-wrap">
-        <div class="mini-car-title">${escapeHtml(t("logs.preview_heatmap_title"))}</div>
+        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>
         <div class="mini-car">${dots}</div>
         ${unmappedSummary}
       </div>
@@ -1114,7 +1114,7 @@ import { WsClient, type WsUiState } from "./ws";
       ? summary.sensor_intensity_by_location
       : [];
     if (!rows.length) {
-      return `<p class="subtle">${escapeHtml(t("logs.preview_unavailable"))}</p>`;
+      return `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
     }
     const body = rows
       .map((row) => {
@@ -1133,18 +1133,18 @@ import { WsClient, type WsUiState } from "./ws";
       })
       .join("");
     return `
-      <div class="logs-preview-stats">
-        <div class="mini-car-title">${escapeHtml(t("logs.preview_stats_title"))}</div>
-        <table class="logs-preview-table">
+      <div class="history-preview-stats">
+        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>
+        <table class="history-preview-table">
           <thead>
             <tr>
-              <th>${escapeHtml(t("logs.table.location"))}</th>
+              <th>${escapeHtml(t("history.table.location"))}</th>
               <th class="numeric">p50</th>
               <th class="numeric">p95</th>
               <th class="numeric">max</th>
-              <th class="numeric">${escapeHtml(t("logs.table.dropped_delta"))}</th>
-              <th class="numeric">${escapeHtml(t("logs.table.overflow_delta"))}</th>
-              <th class="numeric">${escapeHtml(t("logs.table.samples"))}</th>
+              <th class="numeric">${escapeHtml(t("history.table.dropped_delta"))}</th>
+              <th class="numeric">${escapeHtml(t("history.table.overflow_delta"))}</th>
+              <th class="numeric">${escapeHtml(t("history.table.samples"))}</th>
             </tr>
           </thead>
           <tbody>${body}</tbody>
@@ -1155,7 +1155,7 @@ import { WsClient, type WsUiState } from "./ws";
 
   function renderInsightsBlock(detail) {
     const findings = summarizeFindings(detail.insights);
-    const ctaLabel = detail.insights ? t("logs.reload_insights") : t("logs.load_insights");
+    const ctaLabel = detail.insights ? t("history.reload_insights") : t("history.load_insights");
     const loading = detail.insightsLoading;
     const findingsMarkup = findings.length
       ? findings
@@ -1168,49 +1168,48 @@ import { WsClient, type WsUiState } from "./ws";
           .join("")
       : `<li>${escapeHtml(t("report.no_findings_for_run"))}</li>`;
     return `
-      <div class="logs-insights-block">
-        <div class="logs-insights-actions">
-          <button class="btn btn--primary" data-log-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("logs.loading_insights") : ctaLabel)}</button>
-          ${detail.insightsError ? `<span class="logs-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}
+      <div class="history-insights-block">
+        <div class="history-insights-actions">
+          <button class="btn btn--primary" data-run-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("history.loading_insights") : ctaLabel)}</button>
+          ${detail.insightsError ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}
         </div>
-        ${detail.insights ? `<ul class="logs-findings-list">${findingsMarkup}</ul>` : ""}
+        ${detail.insights ? `<ul class="history-findings-list">${findingsMarkup}</ul>` : ""}
       </div>
     `;
   }
 
-  function renderLogDetailsRow(logRow, detail) {
+  function renderRunDetailsRow(run, detail) {
     if (!detail) return "";
     const summary = detail.preview;
     const runSummary = summary
       ? [
-          `${t("report.file")}: ${logRow.name}`,
-          `${t("logs.summary_created")}: ${fmtTs(summary.start_time_utc)}`,
-          `${t("logs.summary_updated")}: ${fmtTs(logRow.updated_at)}`,
-          `${t("logs.summary_size")}: ${fmtBytes(logRow.size_bytes)}`,
-          `${t("report.duration")}: ${fmt(summary.duration_s, 1)} s`,
-          `${t("logs.summary_sensor_count")}: ${formatInt(summary.sensor_count_used)}`,
+          `${t("report.run_id")}: ${run.run_id}`,
+          `${t("history.summary_created")}: ${fmtTs(summary.start_time_utc)}`,
+          `${t("history.summary_updated")}: ${fmtTs(run.end_time_utc)}`,
+          `${t("history.summary_size")}: ${fmt(summary.duration_s, 1)} s`,
+          `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used)}`,
         ].join(" · ")
       : "";
     let previewMarkup = "";
     if (detail.previewLoading) {
-      previewMarkup = `<p class="subtle">${escapeHtml(t("logs.loading_preview"))}</p>`;
+      previewMarkup = `<p class="subtle">${escapeHtml(t("history.loading_preview"))}</p>`;
     } else if (detail.previewError) {
-      previewMarkup = `<p class="logs-inline-error">${escapeHtml(detail.previewError)}</p>`;
+      previewMarkup = `<p class="history-inline-error">${escapeHtml(detail.previewError)}</p>`;
     } else if (summary) {
       previewMarkup = `
-        <div class="logs-details-preview">
+        <div class="history-details-preview">
           ${renderPreviewHeatmap(summary)}
           ${renderPreviewStats(summary)}
         </div>
       `;
     } else {
-      previewMarkup = `<p class="subtle">${escapeHtml(t("logs.preview_unavailable"))}</p>`;
+      previewMarkup = `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
     }
     return `
-      <tr class="logs-details-row">
+      <tr class="history-details-row">
         <td colspan="4">
-          <div class="logs-details-card">
-            ${runSummary ? `<div class="logs-run-summary">${escapeHtml(runSummary)}</div>` : ""}
+          <div class="history-details-card">
+            ${runSummary ? `<div class="history-run-summary">${escapeHtml(runSummary)}</div>` : ""}
             ${previewMarkup}
             ${renderInsightsBlock(detail)}
           </div>
@@ -1219,46 +1218,46 @@ import { WsClient, type WsUiState } from "./ws";
     `;
   }
 
-  function renderLogsTable() {
-    if (els.deleteAllLogsBtn) {
-      els.deleteAllLogsBtn.disabled = state.deleteAllLogsInFlight || state.logs.length === 0;
+  function renderHistoryTable() {
+    if (els.deleteAllRunsBtn) {
+      els.deleteAllRunsBtn.disabled = state.deleteAllRunsInFlight || state.runs.length === 0;
     }
-    if (!state.logs.length) {
-      els.logsSummary.textContent = t("logs.none");
-      els.logsTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("logs.none_found"))}</td></tr>`;
-      collapseExpandedLog();
+    if (!state.runs.length) {
+      els.historySummary.textContent = t("history.none");
+      els.historyTableBody.innerHTML = `<tr><td colspan="4">${escapeHtml(t("history.none_found"))}</td></tr>`;
+      collapseExpandedRun();
       return;
     }
-    if (state.expandedLogName && !state.logs.some((row) => row.name === state.expandedLogName)) {
-      collapseExpandedLog();
+    if (state.expandedRunId && !state.runs.some((row) => row.run_id === state.expandedRunId)) {
+      collapseExpandedRun();
     }
-    els.logsSummary.textContent = t("logs.available_count", { count: state.logs.length });
+    els.historySummary.textContent = t("history.available_count", { count: state.runs.length });
     const rows = [];
-    for (const row of state.logs) {
-      const detail = ensureLogDetail(row.name);
-      const pdfLabel = detail.pdfLoading ? t("logs.generating_pdf") : t("logs.generate_pdf");
+    for (const run of state.runs) {
+      const detail = ensureRunDetail(run.run_id);
+      const pdfLabel = detail.pdfLoading ? t("history.generating_pdf") : t("history.generate_pdf");
       const rowError = detail.pdfError
-        ? `<div class="logs-inline-error">${escapeHtml(detail.pdfError)}</div>`
+        ? `<div class="history-inline-error">${escapeHtml(detail.pdfError)}</div>`
         : "";
       rows.push(`
-        <tr class="logs-row${state.expandedLogName === row.name ? " logs-row--expanded" : ""}" data-log-row="1" data-log="${escapeHtml(row.name)}">
-          <td>${escapeHtml(row.name)}</td>
-          <td>${fmtTs(row.updated_at)}</td>
-          <td class="numeric">${fmtBytes(row.size_bytes)}</td>
+        <tr class="history-row${state.expandedRunId === run.run_id ? " history-row--expanded" : ""}" data-run-row="1" data-run="${escapeHtml(run.run_id)}">
+          <td>${escapeHtml(run.run_id)}</td>
+          <td>${fmtTs(run.start_time_utc)}</td>
+          <td class="numeric">${formatInt(run.sample_count)}</td>
           <td>
             <div class="table-actions">
-              <button class="btn btn--success" data-log-action="download-pdf" data-log="${escapeHtml(row.name)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>
-              <a class="btn btn--muted" href="${logDownloadUrl(row.name)}" download="${escapeHtml(row.name)}" data-log-action="download-raw" data-log="${escapeHtml(row.name)}">${escapeHtml(t("logs.raw"))}</a>
-              <button class="btn btn--danger" data-log-action="delete-log" data-log="${escapeHtml(row.name)}">${escapeHtml(t("logs.delete"))}</button>
+              <button class="btn btn--success" data-run-action="download-pdf" data-run="${escapeHtml(run.run_id)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>
+              <a class="btn btn--muted" href="${historyExportUrl(run.run_id)}" download="${escapeHtml(run.run_id)}" data-run-action="download-raw" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.export"))}</a>
+              <button class="btn btn--danger" data-run-action="delete-run" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.delete"))}</button>
             </div>
             ${rowError}
           </td>
         </tr>`);
-      if (state.expandedLogName === row.name) {
-        rows.push(renderLogDetailsRow(row, detail));
+      if (state.expandedRunId === run.run_id) {
+        rows.push(renderRunDetailsRow(run, detail));
       }
     }
-    els.logsTableBody.innerHTML = rows.join("");
+    els.historyTableBody.innerHTML = rows.join("");
   }
 
   async function refreshLocationOptions() {
@@ -1276,65 +1275,65 @@ import { WsClient, type WsUiState } from "./ws";
     maybeRenderSensorsSettingsList(true);
   }
 
-  async function refreshLogs() {
+  async function refreshHistory() {
     try {
-      const payload = await getLogs();
-      state.logs = Array.isArray(payload.logs) ? payload.logs : [];
-      renderLogsTable();
+      const payload = await getHistory();
+      state.runs = Array.isArray(payload.runs) ? payload.runs : [];
+      renderHistoryTable();
     } catch (_err) {
-      state.logs = [];
-      renderLogsTable();
+      state.runs = [];
+      renderHistoryTable();
     }
   }
 
-  async function deleteLog(logName) {
-    if (!logName) return;
-    const ok = window.confirm(t("logs.delete_confirm", { name: logName }));
+  async function deleteRun(runId) {
+    if (!runId) return;
+    const ok = window.confirm(t("history.delete_confirm", { name: runId }));
     if (!ok) return;
     try {
-      await deleteLogApi(logName);
+      await deleteHistoryRunApi(runId);
     } catch (err) {
-      window.alert(err?.message || t("logs.delete_failed"));
+      window.alert(err?.message || t("history.delete_failed"));
       return;
     }
-    if (state.expandedLogName === logName) {
-      collapseExpandedLog();
+    if (state.expandedRunId === runId) {
+      collapseExpandedRun();
     }
-    await refreshLogs();
+    await refreshHistory();
   }
 
-  async function deleteAllLogs() {
-    const names = state.logs
-      .map((row) => (row && typeof row.name === "string" ? row.name : ""))
+  async function deleteAllRuns() {
+    const names = state.runs
+      .map((row) => (row && typeof row.run_id === "string" ? row.run_id : ""))
       .filter((name) => Boolean(name));
     if (!names.length) return;
-    const ok = window.confirm(t("logs.delete_all_confirm", { count: names.length }));
+    const ok = window.confirm(t("history.delete_all_confirm", { count: names.length }));
     if (!ok) return;
 
-    state.deleteAllLogsInFlight = true;
-    renderLogsTable();
+    state.deleteAllRunsInFlight = true;
+    renderHistoryTable();
     let deleted = 0;
     let failed = 0;
     let firstError = "";
     for (const name of names) {
       try {
-        await deleteLogApi(name);
+        await deleteHistoryRunApi(name);
         deleted += 1;
-        delete state.logDetailsByName[name];
-        if (state.expandedLogName === name) {
-          collapseExpandedLog();
+        delete state.runDetailsById[name];
+        if (state.expandedRunId === name) {
+          collapseExpandedRun();
         }
       } catch (err) {
         failed += 1;
         if (!firstError) {
-          firstError = err?.message || t("logs.delete_failed");
+          firstError = err?.message || t("history.delete_failed");
         }
       }
     }
-    state.deleteAllLogsInFlight = false;
-    await refreshLogs();
+    state.deleteAllRunsInFlight = false;
+    await refreshHistory();
     if (failed > 0) {
-      const summary = t("logs.delete_all_partial", {
+      const summary = t("history.delete_all_partial", {
         deleted,
         total: names.length,
         failed,
@@ -1343,37 +1342,37 @@ import { WsClient, type WsUiState } from "./ws";
     }
   }
 
-  async function loadLogPreview(logName, force = false) {
-    if (!logName) return;
-    const detail = ensureLogDetail(logName);
+  async function loadRunPreview(runId, force = false) {
+    if (!runId) return;
+    const detail = ensureRunDetail(runId);
     if (!force && (detail.previewLoading || detail.preview)) return;
     detail.previewLoading = true;
     detail.previewError = "";
-    renderLogsTable();
+    renderHistoryTable();
     try {
-      detail.preview = await getLogInsights(logName, state.lang, false);
+      detail.preview = await getHistoryInsights(runId, state.lang, false);
     } catch (err) {
       detail.previewError = err?.message || t("report.unable_load_insights");
     } finally {
       detail.previewLoading = false;
-      renderLogsTable();
+      renderHistoryTable();
     }
   }
 
-  async function loadLogInsights(logName, force = false) {
-    if (!logName) return;
-    const detail = ensureLogDetail(logName);
+  async function loadRunInsights(runId, force = false) {
+    if (!runId) return;
+    const detail = ensureRunDetail(runId);
     if (!force && detail.insightsLoading) return;
     detail.insightsLoading = true;
     detail.insightsError = "";
-    renderLogsTable();
+    renderHistoryTable();
     try {
-      detail.insights = await getLogInsights(logName, state.lang, false);
+      detail.insights = await getHistoryInsights(runId, state.lang, false);
     } catch (err) {
       detail.insightsError = err?.message || t("report.unable_load_insights");
     } finally {
       detail.insightsLoading = false;
-      renderLogsTable();
+      renderHistoryTable();
     }
   }
 
@@ -1417,47 +1416,47 @@ import { WsClient, type WsUiState } from "./ws";
     setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
   }
 
-  async function downloadReportPdfForLog(logName) {
-    const detail = ensureLogDetail(logName);
+  async function downloadReportPdfForRun(runId) {
+    const detail = ensureRunDetail(runId);
     if (detail.pdfLoading) return;
     detail.pdfLoading = true;
     detail.pdfError = "";
-    renderLogsTable();
+    renderHistoryTable();
     try {
-      await downloadBlobFile(reportPdfUrl(logName, state.lang), `${logName.replace(/\.jsonl$/i, "")}_report.pdf`);
+      await downloadBlobFile(historyReportPdfUrl(runId, state.lang), `${runId}_report.pdf`);
     } catch (err) {
-      detail.pdfError = err?.message || t("logs.pdf_failed");
+      detail.pdfError = err?.message || t("history.pdf_failed");
     } finally {
       detail.pdfLoading = false;
-      renderLogsTable();
+      renderHistoryTable();
     }
   }
 
-  function toggleLogDetails(logName) {
-    if (!logName) return;
-    if (state.expandedLogName === logName) {
-      collapseExpandedLog();
-      renderLogsTable();
+  function toggleRunDetails(runId) {
+    if (!runId) return;
+    if (state.expandedRunId === runId) {
+      collapseExpandedRun();
+      renderHistoryTable();
       return;
     }
-    collapseExpandedLog();
-    state.expandedLogName = logName;
-    renderLogsTable();
-    void loadLogPreview(logName);
+    collapseExpandedRun();
+    state.expandedRunId = runId;
+    renderHistoryTable();
+    void loadRunPreview(runId);
   }
 
-  async function onLogsTableAction(action, logName) {
-    if (!action || !logName) return;
+  async function onHistoryTableAction(action, runId) {
+    if (!action || !runId) return;
     if (action === "download-pdf") {
-      await downloadReportPdfForLog(logName);
+      await downloadReportPdfForRun(runId);
       return;
     }
-    if (action === "delete-log") {
-      await deleteLog(logName);
+    if (action === "delete-run") {
+      await deleteRun(runId);
       return;
     }
     if (action === "load-insights") {
-      await loadLogInsights(logName, true);
+      await loadRunInsights(runId, true);
     }
   }
 
@@ -2445,29 +2444,29 @@ import { WsClient, type WsUiState } from "./ws";
   });
   els.startLoggingBtn.addEventListener("click", startLogging);
   els.stopLoggingBtn.addEventListener("click", stopLogging);
-  els.refreshLogsBtn.addEventListener("click", refreshLogs);
-  if (els.deleteAllLogsBtn) {
-    els.deleteAllLogsBtn.addEventListener("click", () => {
-      void deleteAllLogs();
+  els.refreshHistoryBtn.addEventListener("click", refreshHistory);
+  if (els.deleteAllRunsBtn) {
+    els.deleteAllRunsBtn.addEventListener("click", () => {
+      void deleteAllRuns();
     });
   }
-  els.logsTableBody.addEventListener("click", (ev) => {
+  els.historyTableBody.addEventListener("click", (ev) => {
     const target = ev.target as HTMLElement | null;
-    const actionEl = target?.closest?.("[data-log-action]");
+    const actionEl = target?.closest?.("[data-run-action]");
     if (actionEl) {
-      const action = actionEl.getAttribute("data-log-action");
-      const logName = actionEl.getAttribute("data-log") || state.expandedLogName || "";
+      const action = actionEl.getAttribute("data-run-action");
+      const runId = actionEl.getAttribute("data-run") || state.expandedRunId || "";
       if (action !== "download-raw") {
         ev.preventDefault();
       }
       ev.stopPropagation();
-      void onLogsTableAction(action, logName);
+      void onHistoryTableAction(action, runId);
       return;
     }
-    const rowEl = target?.closest?.('tr[data-log-row="1"]');
+    const rowEl = target?.closest?.('tr[data-run-row="1"]');
     if (rowEl) {
-      const logName = rowEl.getAttribute("data-log") || "";
-      toggleLogDetails(logName);
+      const runId = rowEl.getAttribute("data-run") || "";
+      toggleRunDetails(runId);
     }
   });
   if (els.languageSelect) {
@@ -2494,7 +2493,7 @@ import { WsClient, type WsUiState } from "./ws";
   void loadAnalysisSettingsFromServer();
   void loadCarsFromServer();
   refreshLoggingStatus();
-  refreshLogs();
+  refreshHistory();
 
   // Demo mode: inject deterministic data for visual testing (activated via ?demo=1).
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");

@@ -115,6 +115,7 @@ class LoggingConfig:
     metrics_log_path: Path
     metrics_log_hz: int
     sensor_model: str
+    history_db_path: Path
 
 
 @dataclass(slots=True)
@@ -199,6 +200,14 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             metrics_log_path=_resolve_repo_path(metrics_log_path_raw),
             metrics_log_hz=int(merged["logging"]["metrics_log_hz"]),
             sensor_model=str(merged["logging"].get("sensor_model", "ADXL345")),
+            history_db_path=_resolve_repo_path(
+                str(
+                    merged.get("logging", {}).get(
+                        "history_db_path",
+                        str(_resolve_repo_path(metrics_log_path_raw).parent / "history.db"),
+                    )
+                )
+            ),
         ),
         gps=GPSConfig(
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
