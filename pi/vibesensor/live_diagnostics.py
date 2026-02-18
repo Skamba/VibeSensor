@@ -281,7 +281,6 @@ class LiveDiagnosticsEngine:
 
         if spectra is None:
             self._last_error = None
-            self._latest_events = []
             return self.snapshot()
 
         now_ms = int(monotonic() * 1000.0)

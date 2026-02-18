@@ -61,7 +61,17 @@ class WebSocketHub:
             return
 
         async def _send(conn: WSConnection) -> WebSocket | None:
-            payload = payload_builder(conn.selected_client_id)
+            try:
+                payload = payload_builder(conn.selected_client_id)
+            except Exception:
+                now = asyncio.get_running_loop().time()
+                if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:
+                    self._last_send_error_log_ts = now
+                    LOGGER.warning(
+                        "WebSocket payload build failed; skipping connection.",
+                        exc_info=True,
+                    )
+                return None
             try:
                 await asyncio.wait_for(
                     conn.websocket.send_json(payload),
@@ -91,7 +101,10 @@ class WebSocketHub:
     ) -> None:
         interval = 1.0 / max(1, hz)
         while True:
-            if on_tick is not None:
-                on_tick()
-            await self.broadcast(payload_builder)
+            try:
+                if on_tick is not None:
+                    on_tick()
+                await self.broadcast(payload_builder)
+            except Exception:
+                LOGGER.warning("WebSocket broadcast tick failed; will retry.", exc_info=True)
             await asyncio.sleep(interval)

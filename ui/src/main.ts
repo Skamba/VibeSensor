@@ -391,9 +391,6 @@ import { WsClient, type WsUiState } from "./ws";
 
   function effectiveSpeedMps() {
     if (typeof state.speedMps === "number" && state.speedMps > 0) return state.speedMps;
-    if (state.speedSource === "manual" && typeof state.manualSpeedKph === "number" && state.manualSpeedKph > 0) {
-      return state.manualSpeedKph / 3.6;
-    }
     return null;
   }
 
@@ -401,13 +398,9 @@ import { WsClient, type WsUiState } from "./ws";
     const unitLabel = selectedSpeedUnitLabel();
     if (typeof state.speedMps === "number") {
       const value = speedValueInSelectedUnit(state.speedMps);
-      els.speed.textContent = t("speed.gps", { value: fmt(value, 1), unit: unitLabel });
-      return;
-    }
-    const spd = effectiveSpeedMps();
-    if (spd) {
-      const value = speedValueInSelectedUnit(spd);
-      els.speed.textContent = t("speed.override", { value: fmt(value, 1), unit: unitLabel });
+      const isOverride = state.speedSource === "manual" && typeof state.manualSpeedKph === "number" && state.manualSpeedKph > 0;
+      const key = isOverride ? "speed.override" : "speed.gps";
+      els.speed.textContent = t(key, { value: fmt(value, 1), unit: unitLabel });
       return;
     }
     els.speed.textContent = t("speed.none", { unit: unitLabel });
@@ -1653,8 +1646,6 @@ import { WsClient, type WsUiState } from "./ws";
     state.strengthBands = normalizeStrengthBands(diagnostics.strength_bands);
     if (diagnostics.matrix) {
       state.eventMatrix = diagnostics.matrix;
-    } else {
-      state.eventMatrix = createEmptyMatrix(state.strengthBands);
     }
     renderMatrix();
 

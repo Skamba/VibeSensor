@@ -95,3 +95,20 @@ async def test_ws_connection_dataclass() -> None:
     conn = WSConnection(websocket=ws, selected_client_id="test_id")
     assert conn.websocket is ws
     assert conn.selected_client_id == "test_id"
+
+
+@pytest.mark.asyncio
+async def test_broadcast_survives_payload_builder_exception() -> None:
+    """broadcast() should not crash when payload_builder raises."""
+    hub = WebSocketHub()
+    ws = _make_ws()
+    await hub.add(ws, "client_a")
+
+    def failing_builder(client_id):
+        raise RuntimeError("Payload build error")
+
+    # Should not raise; the exception is caught inside _send
+    await hub.broadcast(failing_builder)
+    # Connection should NOT be removed (builder failed, not send)
+    conns = await hub._snapshot()
+    assert len(conns) == 1

@@ -46,7 +46,9 @@ export class SpectrumChart {
         height: this.height,
         scales: {
           x: { time: false },
-          y: { range: [0, 50] },
+          y: {
+            range: (_self, min, max) => [0, Math.max(50, Math.ceil((max || 50) * 1.1))],
+          },
         },
         axes: [
           {
