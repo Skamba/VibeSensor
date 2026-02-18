@@ -16,7 +16,7 @@ accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 ## Project Structure
 
 ```
-esp/
+firmware/esp/
 ├── src/
 │   └── main.cpp              Firmware entry point
 ├── lib/
@@ -42,7 +42,7 @@ esp/
 ## Build and Flash
 
 ```bash
-cd esp
+cd firmware/esp
 pio run -t upload
 pio device monitor
 ```

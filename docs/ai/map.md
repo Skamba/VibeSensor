@@ -1,45 +1,45 @@
 # VibeSensor AI Entry-Point Map
 
 ## Key Entry Points (canonical)
-- `pi/vibesensor/app.py` - app factory, runtime loop, WS payload assembly.
-- `pi/vibesensor/api.py` - HTTP endpoints and request/response surface.
-- `pi/vibesensor/processing.py` - signal buffers, FFT, metrics, freshness filtering.
-- `pi/vibesensor/metrics_log.py` - run/session logging and history integration.
-- `pi/vibesensor/live_diagnostics.py` - event detection engine logic.
-- `pi/vibesensor/config.py` - config defaults, schema mapping, typed dataclasses.
-- `pi/vibesensor/history_db.py` - persisted run DB interfaces.
-- `pi/vibesensor/report_pdf.py` - report generation pipeline.
-- `pi/vibesensor/report_i18n.py` - translatable report string keys.
-- `pi/vibesensor/registry.py` - client liveness and metadata registry.
-- `pi/vibesensor/ws_hub.py` - websocket client fanout and broadcast.
-- `pi/scripts/hotspot_nmcli.sh` - AP provisioning (must be offline-safe).
-- `pi/systemd/vibesensor-hotspot.service` - hotspot boot orchestration unit.
-- `image/pi-gen/build.sh` - Pi image wrapper + stage generation + assertions.
-- `image/pi-gen/assets/vibesensor-hotspot.service` - baked image hotspot unit.
-- `tools/simulator/sim_sender.py` - synthetic sensor traffic source.
-- `tools/simulator/ws_smoke.py` - websocket smoke verifier.
-- `ui/src/main.ts` - UI state reducer/render orchestration.
-- `ui/src/ws.ts` - websocket client and payload contract handling.
+- `apps/server/vibesensor/app.py` - app factory, runtime loop, WS payload assembly.
+- `apps/server/vibesensor/api.py` - HTTP endpoints and request/response surface.
+- `apps/server/vibesensor/processing.py` - signal buffers, FFT, metrics, freshness filtering.
+- `apps/server/vibesensor/metrics_log.py` - run/session logging and history integration.
+- `apps/server/vibesensor/live_diagnostics.py` - event detection engine logic.
+- `apps/server/vibesensor/config.py` - config defaults, schema mapping, typed dataclasses.
+- `apps/server/vibesensor/history_db.py` - persisted run DB interfaces.
+- `apps/server/vibesensor/report_pdf.py` - report generation pipeline.
+- `apps/server/vibesensor/report_i18n.py` - translatable report string keys.
+- `apps/server/vibesensor/registry.py` - client liveness and metadata registry.
+- `apps/server/vibesensor/ws_hub.py` - websocket client fanout and broadcast.
+- `apps/server/scripts/hotspot_nmcli.sh` - AP provisioning (must be offline-safe).
+- `apps/server/systemd/vibesensor-hotspot.service` - hotspot boot orchestration unit.
+- `infra/pi-image/pi-gen/build.sh` - Pi image wrapper + stage generation + assertions.
+- `infra/pi-image/pi-gen/assets/vibesensor-hotspot.service` - baked image hotspot unit.
+- `apps/simulator/sim_sender.py` - synthetic sensor traffic source.
+- `apps/simulator/ws_smoke.py` - websocket smoke verifier.
+- `apps/ui/src/main.ts` - UI state reducer/render orchestration.
+- `apps/ui/src/ws.ts` - websocket client and payload contract handling.
 - `.github/workflows/ci.yml` - CI critical checks and smoke flow.
 
 ## Module Boundaries
 - **Acquisition**: `udp_data_rx.py`, `registry.py`.
 - **Computation**: `processing.py`, `analysis/*`, `live_diagnostics.py`.
-- **Delivery**: `app.py`, `api.py`, `ws_hub.py`, `ui/src/*`.
+- **Delivery**: `app.py`, `api.py`, `ws_hub.py`, `apps/ui/src/*`.
 - **Persistence**: `metrics_log.py`, `history_db.py`, `runlog.py`.
-- **Device Ops**: `pi/scripts/*`, `pi/systemd/*`, `image/pi-gen/*`.
+- **Device Ops**: `apps/server/scripts/*`, `apps/server/systemd/*`, `infra/pi-image/pi-gen/*`.
 
 ## Hot Spots (read before touching)
-- `pi/vibesensor/app.py` (high fan-in, scheduling-sensitive).
-- `ui/src/main.ts` (large orchestrator; keep changes scoped).
-- `image/pi-gen/build.sh` (artifact correctness + mount assertions).
-- `pi/scripts/hotspot_nmcli.sh` (boot-critical behavior).
+- `apps/server/vibesensor/app.py` (high fan-in, scheduling-sensitive).
+- `apps/ui/src/main.ts` (large orchestrator; keep changes scoped).
+- `infra/pi-image/pi-gen/build.sh` (artifact correctness + mount assertions).
+- `apps/server/scripts/hotspot_nmcli.sh` (boot-critical behavior).
 
 ## Safe Change Areas
-- New focused backend helpers: `pi/vibesensor/analysis/*`.
-- Test additions: `pi/tests/test_*` with narrow scope.
+- New focused backend helpers: `apps/server/vibesensor/analysis/*`.
+- Test additions: `apps/server/tests/test_*` with narrow scope.
 - AI docs/runbooks: `docs/ai/*`.
-- Simulator-only enhancements: `tools/simulator/*`.
+- Simulator-only enhancements: `apps/simulator/*`.
 
 ## File Selection Heuristic (<=10 files)
 1. Pick one hot spot + directly imported helpers.

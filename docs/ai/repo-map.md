@@ -25,12 +25,6 @@
 4. UI reads server payloads and renders diagnostics using shared keys.
 5. Reports/export consume same metric contracts.
 
-## Compatibility links
-Legacy paths remain as symlinks for migration safety:
-- pi -> apps/server
-- ui -> apps/ui
-- esp -> firmware/esp
-- image/pi-gen -> infra/pi-image/pi-gen
-- tools/simulator -> apps/simulator
-
-Prefer canonical paths in new changes.
+## Path policy
+Use canonical paths only: `apps/server`, `apps/ui`, `apps/simulator`,
+`firmware/esp`, `infra/pi-image/pi-gen`, `docs`, and `libs`.

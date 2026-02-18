@@ -48,7 +48,7 @@ Key modules in `vibesensor/`:
 ### Local development
 
 ```bash
-cd pi
+cd apps/server
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
@@ -85,7 +85,7 @@ paths — all other values use built-in defaults.
 ## Files
 
 ```
-pi/
+apps/server/
 ├── pyproject.toml           Package metadata and dependencies
 ├── config.yaml              Active Pi configuration
 ├── config.dev.yaml          Local dev overrides (repo-relative paths)
@@ -222,10 +222,10 @@ vibesensor-report path/to/run.jsonl --output report.pdf --summary-json summary.j
 
 ```bash
 # Fast run (excludes browser tests)
-pytest -q -m "not selenium" pi/tests
+pytest -q -m "not selenium" apps/server/tests
 
 # With live progress and ETA
-python3 tools/tests/pytest_progress.py -- -m "not selenium" pi/tests
+python3 tools/tests/pytest_progress.py -- -m "not selenium" apps/server/tests
 ```
 
 Test markers:

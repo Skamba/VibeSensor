@@ -118,7 +118,7 @@
 - Updated `docs/ai/runbooks.md` with scoped triage command.
 
 ### Validate
-- Command: `scripts/ai/triage pi/vibesensor --symbol clients_with_recent_data`
+- Command: `scripts/ai/triage apps/server/vibesensor --symbol clients_with_recent_data`
 - Result: concise summary printed; detailed report persisted to artifacts log.
 
 ### Why this reduces prompt size
@@ -139,8 +139,8 @@
 3. Ensure `ai:smoke` and `ai:check` run them quietly.
 
 ### Implement
-- Added `smoke` marker in `pi/pyproject.toml`.
-- Added `pi/tests/test_ai_smoke.py` with three minimal checks:
+- Added `smoke` marker in `apps/server/pyproject.toml`.
+- Added `apps/server/tests/test_ai_smoke.py` with three minimal checks:
 	- `/api/health` route registration.
 	- no runtime `apt-get` in hotspot script.
 	- image build wrapper includes hotspot dependency/drop-in assertions.
@@ -166,12 +166,12 @@
 2. Add in-code invariant comments where boot/runtime ordering matters.
 
 ### Implement
-- Added `pi/vibesensor/BOUNDARIES.md` with orchestration/computation/API/persistence/device boundaries.
-- Added module-level boundary docstring in `pi/vibesensor/app.py`.
-- Added explicit boot-order invariant comment in `pi/scripts/hotspot_nmcli.sh`.
+- Added `apps/server/vibesensor/BOUNDARIES.md` with orchestration/computation/API/persistence/device boundaries.
+- Added module-level boundary docstring in `apps/server/vibesensor/app.py`.
+- Added explicit boot-order invariant comment in `apps/server/scripts/hotspot_nmcli.sh`.
 
 ### Validate
-- Command: `bash -n pi/scripts/hotspot_nmcli.sh && ruff check pi/vibesensor/app.py pi/tests/test_ai_smoke.py && scripts/ai/task ai:smoke`
+- Command: `bash -n apps/server/scripts/hotspot_nmcli.sh && ruff check apps/server/vibesensor/app.py apps/server/tests/test_ai_smoke.py && scripts/ai/task ai:smoke`
 - Result: all checks pass.
 
 ### Why this reduces prompt size
@@ -199,7 +199,7 @@
 - Command:
 	- `make ai-check`
 	- `make ai-pack`
-	- `scripts/ai/task ai:test -- pi/tests/test_ai_smoke.py -q`
+	- `scripts/ai/task ai:test -- apps/server/tests/test_ai_smoke.py -q`
 	- `make ai-smoke`
 - Result: all commands pass; logs persisted to `artifacts/ai/logs/`.
 
