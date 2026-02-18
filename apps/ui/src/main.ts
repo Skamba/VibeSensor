@@ -180,7 +180,7 @@ import { METRIC_FIELDS } from "./generated/shared_contracts";
   };
 
   // Car map location positions (% from top-left of the car-map container).
-  // Uses the report's canonical location codes from pi/vibesensor/locations.py.
+  // Uses the report's canonical location codes from apps/server/vibesensor/locations.py.
   const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
     front_left_wheel:     { top: 24, left: 15 },
     front_right_wheel:    { top: 24, left: 85 },

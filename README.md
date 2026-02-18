@@ -63,33 +63,25 @@ Sensors connect to the Pi's Wi-Fi AP, stream accelerometer data via UDP, and the
 ## Repository Layout
 
 ```
-.
-├── apps/
-│   ├── server/          Python backend (FastAPI + signal processing + reports)
-│   ├── ui/              TypeScript frontend (Vite + uPlot)
-│   └── simulator/       Runnable simulator + websocket smoke tools
-├── firmware/
-│   └── esp/             ESP32 firmware (PlatformIO, C++)
-├── libs/
-│   ├── core/            Pure domain logic (no IO/framework)
-│   ├── adapters/        Integration/path adapters
-│   └── shared/          Canonical contracts/schemas/constants
-├── infra/
-│   ├── pi-image/        Raspberry Pi image build pipeline
-│   ├── docker/          Dockerfiles and container tooling
-│   └── ci/              CI helpers
-├── hardware/            Bill of materials and wiring reference
-├── image/pi-gen/        Legacy compatibility link to infra/pi-image/pi-gen
-├── tools/
-│   ├── simulator/       Legacy compatibility link to apps/simulator
-│   ├── config/          Config validation and line-ending checks
-│   └── tests/           Test runner utilities
-├── artifacts/           Build/runtime artifacts (non-source)
-├── docs/                Protocol spec, run schema, design language
-├── examples/            Sample run data for report generation
-├── docker-compose.yml   Single-command local development
-├── CHANGELOG.md         Version history
-└── AGENTS.md            AI agent operating rules
+apps/
+  server/      Python backend (FastAPI + signal processing + reports)
+  ui/          TypeScript frontend (Vite + uPlot)
+  simulator/   Runnable simulator + websocket smoke tools
+firmware/
+  esp/         ESP32 firmware (PlatformIO, C++)
+libs/
+  core/        Pure domain logic (no IO/framework)
+  adapters/    Integration/path adapters
+  shared/      Canonical contracts/schemas/constants
+infra/
+  pi-image/    Raspberry Pi image build pipeline
+  docker/      Dockerfiles and container tooling
+  ci/          CI helpers
+docs/          Protocol spec, run schema, design language
+hardware/      Bill of materials and wiring reference
+examples/      Sample run data for report generation
+tools/         Utilities (config checks, tests, support scripts)
+artifacts/     Build/runtime artifacts (non-source)
 ```
 
 Each component has its own README with setup instructions and details.
@@ -201,27 +193,27 @@ Full field layout: [docs/protocol.md](docs/protocol.md).
 ### Lint and format
 
 ```bash
-ruff check pi/vibesensor pi/tests tools/simulator
-ruff format --check pi/vibesensor pi/tests tools/simulator
+ruff check apps/server/vibesensor apps/server/tests apps/simulator
+ruff format --check apps/server/vibesensor apps/server/tests apps/simulator
 ```
 
 ### Tests
 
 ```bash
 # Fast run (excludes browser tests)
-pytest -q -m "not selenium" pi/tests
+pytest -q -m "not selenium" apps/server/tests
 
 # With live progress and ETA
-python3 tools/tests/pytest_progress.py -- -m "not selenium" pi/tests
+python3 tools/tests/pytest_progress.py -- -m "not selenium" apps/server/tests
 
 # UI typecheck + build
-cd ui && npm run typecheck && npm run build
+cd apps/ui && npm run typecheck && npm run build
 ```
 
 ### Visual snapshot tests
 
 ```bash
-cd ui
+cd apps/ui
 npx playwright install chromium   # first time only
 npm run test:visual               # compare against baselines
 npm run test:visual:update        # regenerate after intentional changes
@@ -229,7 +221,7 @@ npm run test:visual:update        # regenerate after intentional changes
 
 Screenshots are captured for 4 viewports (laptop-light, laptop-dark,
 tablet-light, tablet-dark) using a deterministic demo mode (`?demo=1`).
-Baselines live in `ui/tests/snapshots/`.
+Baselines live in `apps/ui/tests/snapshots/`.
 
 ## Reports
 
@@ -252,7 +244,7 @@ run log format and [examples/](examples/) for sample data.
   server bound on 0.0.0.0:8000
 - **High dropped frames** — reduce Wi-Fi contention, keep ESP close to Pi,
   check AP channel
-- **Hotspot has no DHCP leases** — rerun `pi/scripts/hotspot_nmcli.sh`
+- **Hotspot has no DHCP leases** — rerun `apps/server/scripts/hotspot_nmcli.sh`
 
 ## Developer Safeguards
 

@@ -16,5 +16,5 @@ Use this when changing backend code without scanning the whole package.
 - Rule: logging flow should only ingest fresh client data.
 
 ## Device/Ops Surface
-- `pi/scripts/hotspot_nmcli.sh`: offline AP bring-up first, optional uplink second.
-- `pi/systemd/*.service`: startup behavior and boot-time guarantees.
+- `apps/server/scripts/hotspot_nmcli.sh`: offline AP bring-up first, optional uplink second.
+- `apps/server/systemd/*.service`: startup behavior and boot-time guarantees.
