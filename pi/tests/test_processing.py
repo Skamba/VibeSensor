@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from math import pi, sqrt
 
 import numpy as np
@@ -58,3 +59,42 @@ def test_processing_window_seconds_uses_client_sample_rate() -> None:
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
     # If more than the last 8 seconds were used, RMS would be much higher.
     assert float(metrics["x"]["rms"]) < 0.12
+
+
+def test_client_data_age_tracks_ingest_freshness() -> None:
+    processor = SignalProcessor(
+        sample_rate_hz=800,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=1024,
+        spectrum_max_hz=200,
+    )
+
+    assert processor.client_data_age_s("unknown") is None
+
+    samples = np.zeros((10, 3), dtype=np.float32)
+    processor.ingest("c1", samples, sample_rate_hz=800)
+
+    age = processor.client_data_age_s("c1")
+    assert age is not None
+    assert age < 1.0
+
+
+def test_clients_with_recent_data_filters_stale() -> None:
+    processor = SignalProcessor(
+        sample_rate_hz=800,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=1024,
+        spectrum_max_hz=200,
+    )
+
+    samples = np.zeros((10, 3), dtype=np.float32)
+    processor.ingest("c1", samples, sample_rate_hz=800)
+    processor.ingest("c2", samples, sample_rate_hz=800)
+
+    # Make c2's last ingest look old by patching its timestamp
+    processor._buffers["c2"].last_ingest_mono_s = time.monotonic() - 10.0
+
+    result = processor.clients_with_recent_data(["c1", "c2", "c3"], max_age_s=3.0)
+    assert result == ["c1"]

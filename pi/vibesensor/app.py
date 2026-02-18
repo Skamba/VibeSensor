@@ -67,6 +67,9 @@ class RuntimeState:
         if active is None and clients:
             active = clients[0]["id"]
         client_ids = [c["id"] for c in clients]
+        # Only include spectrum data for clients with recent UDP data
+        # to prevent stale buffer data from driving diagnostics/events.
+        fresh_ids = self.processor.clients_with_recent_data(client_ids, max_age_s=3.0)
 
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
@@ -77,8 +80,8 @@ class RuntimeState:
         analysis_settings_snapshot = self.analysis_settings.snapshot()
         analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
         if self.ws_include_heavy:
-            payload["spectra"] = self.processor.multi_spectrum_payload(client_ids)
-            if active is not None:
+            payload["spectra"] = self.processor.multi_spectrum_payload(fresh_ids)
+            if active is not None and active in fresh_ids:
                 payload["selected"] = self.processor.selected_payload(active)
             else:
                 payload["selected"] = {}
@@ -178,8 +181,14 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             try:
                 runtime.registry.evict_stale()
                 active_ids = runtime.registry.active_client_ids()
+                # Only recompute metrics for clients that received new data
+                # since the last tick.  This prevents stale ring-buffer data
+                # from cycling through the pipeline indefinitely.
+                fresh_ids = runtime.processor.clients_with_recent_data(
+                    active_ids, max_age_s=3.0
+                )
                 sample_rates: dict[str, int] = {}
-                for client_id in active_ids:
+                for client_id in fresh_ids:
                     record = runtime.registry.get(client_id)
                     if record is None:
                         continue
@@ -199,7 +208,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                             default_rate,
                         )
                 metrics_by_client = runtime.processor.compute_all(
-                    active_ids,
+                    fresh_ids,
                     sample_rates_hz=sample_rates,
                 )
                 for client_id, metrics in metrics_by_client.items():

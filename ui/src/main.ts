@@ -878,8 +878,15 @@ import { WsClient, type WsUiState } from "./ws";
   function renderLoggingStatus() {
     const status = state.loggingStatus || { enabled: false, current_file: null };
     const on = Boolean(status.enabled);
+    const hasActiveClients = state.clients.some((client) => Boolean(client?.connected));
     setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
     els.currentLogFile.textContent = t("status.current_file", { value: status.current_file || "--" });
+    if (els.startLoggingBtn) {
+      els.startLoggingBtn.disabled = !hasActiveClients;
+    }
+    if (els.stopLoggingBtn) {
+      els.stopLoggingBtn.disabled = !hasActiveClients;
+    }
   }
 
   async function refreshLoggingStatus() {
@@ -1041,6 +1048,7 @@ import { WsClient, type WsUiState } from "./ws";
     const byLocation: Record<string, number> = {};
     if (!state.spectra?.clients || !state.clients?.length) return byLocation;
     for (const client of state.clients) {
+      if (!client?.connected) continue;
       const code = locationCodeForClient(client);
       if (!code) continue;
       const spec = state.spectra.clients[client.id];
@@ -1648,6 +1656,11 @@ import { WsClient, type WsUiState } from "./ws";
     }
     renderMatrix();
 
+    // Only process events and trigger car map pulses when sensors are
+    // actively producing new data.  Without this guard stale buffered data
+    // would keep generating UI events after sensors disconnect.
+    if (!hasFreshFrames) return;
+
     const events = Array.isArray(diagnostics.events) ? diagnostics.events : [];
     const eventPulseLocations: string[] = [];
     if (events.length) {
@@ -1957,6 +1970,7 @@ import { WsClient, type WsUiState } from "./ws";
     }
     updateClientSelection();
     maybeRenderSensorsSettingsList();
+    renderLoggingStatus();
     if (prevSelected !== state.selectedClientId) {
       sendSelection();
     }
@@ -2027,6 +2041,7 @@ import { WsClient, type WsUiState } from "./ws";
     }
     updateClientSelection();
     maybeRenderSensorsSettingsList();
+    renderLoggingStatus();
     if (prevSelected !== state.selectedClientId) {
       sendSelection();
     }

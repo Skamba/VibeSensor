@@ -43,12 +43,6 @@ jobs:
           python tools/sync_ui_to_pi_public.py
           cd ui
           npm run typecheck
-
-
-      - name: Unit tests
-        run: |
-          pytest -q -m "not selenium and not long_sim" pi/tests
-
       - name: Docker smoke test
         run: |
           set -euo pipefail
@@ -108,7 +102,7 @@ jobs:
           python tools/config/config_preflight.py pi/config.example.yaml
           python tools/config/config_preflight.py pi/config.dev.yaml
 
-      - name: Simulator + websocket smoke
+      - name: Normal test suite (single simulator E2E smoke)
         run: |
           set -euo pipefail
           python -m vibesensor.app --config pi/config.dev.yaml >server.log 2>&1 &
@@ -149,3 +143,7 @@ jobs:
             exit 1
           fi
           wait "${SIM_PID}"
+
+          # Extended/unit-heavy test suites are intentionally not part of normal CI.
+          # Run on request, e.g.:
+          #   python tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" pi/tests

@@ -5,8 +5,11 @@ Repository overview
 Common commands (exact as found in CI / repo files)
 - Install Python deps (dev):
   - python -m pip install -e "./pi[dev]"
-- Run backend tests (fast):
-  - pytest -q -m "not selenium" pi/tests
+- Run normal test suite (default):
+  - python tools/simulator/sim_sender.py --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
+  - python tools/simulator/ws_smoke.py --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
+- Run extended test suite (on request only):
+  - python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" pi/tests
 - Lint / format checks (as used in CI):
   - ruff check pi/vibesensor pi/tests tools/simulator
   - ruff format --check pi/vibesensor pi/tests tools/simulator
@@ -36,5 +39,13 @@ How to add a feature safely
 
 Guardrails for Copilot
 - Keep PRs small and self-contained. Add tests for behavior changes. Prefer backwards-compatible changes unless the task explicitly requests breaking changes.
-- Run the fast test suite (`pytest -q -m "not selenium" pi/tests`) locally before pushing changes.
+- For normal validation, run one simulator end-to-end smoke pass; run the full unit-heavy suite only when explicitly requested.
 - Do not modify unrelated files or reformat the whole repo.
+
+End-to-end validation via Docker
+- After making backend or frontend changes, always rebuild and test using the Docker container:
+  - `docker compose build --pull`
+  - `docker compose up -d`
+- Verify the running container by checking `docker compose ps` and confirming the service is healthy.
+- Use the simulator (`python3 tools/simulator/sim_sender.py --count 5 --duration 10 --no-interactive`) to send test data and confirm the UI updates correctly.
+- After the simulator finishes, verify the UI stops showing new detections and the car map stops animating (no stale-data artifacts).
