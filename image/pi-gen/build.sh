@@ -79,6 +79,12 @@ cp -a files/opt/VibeSensor "${ROOTFS_DIR}/opt/"
 
 install -d "${ROOTFS_DIR}/etc/vibesensor" "${ROOTFS_DIR}/var/lib/vibesensor" "${ROOTFS_DIR}/var/log/vibesensor"
 install -d "${ROOTFS_DIR}/etc/systemd/system"
+install -d "${ROOTFS_DIR}/etc/NetworkManager/conf.d"
+
+cat >"${ROOTFS_DIR}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf" <<'NMCONF'
+[main]
+dns=dnsmasq
+NMCONF
 
 if [ ! -f "${ROOTFS_DIR}/etc/vibesensor/config.yaml" ]; then
   install -m 0644 \
@@ -120,6 +126,11 @@ ln -sf /etc/systemd/system/vibesensor-hotspot-self-heal.timer \
   "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants/vibesensor-hotspot-self-heal.timer"
 EOF
 chmod +x "${STAGE_STEP_DIR}/00-run.sh"
+
+cat >"${STAGE_STEP_DIR}/00-packages" <<'EOF'
+network-manager
+dnsmasq
+EOF
 
 # Ensure this custom stage is exported as the final image artifact.
 touch "${STAGE_DIR}/EXPORT_IMAGE"
@@ -245,6 +256,16 @@ if [ ! -d "${ROOT_MNT}/opt/VibeSensor" ]; then
   exit 1
 fi
 
+if [ ! -x "${ROOT_MNT}/usr/bin/nmcli" ]; then
+  echo "Validation failed: missing executable ${ROOT_MNT}/usr/bin/nmcli"
+  exit 1
+fi
+
+if [ ! -x "${ROOT_MNT}/usr/sbin/dnsmasq" ]; then
+  echo "Validation failed: missing executable ${ROOT_MNT}/usr/sbin/dnsmasq"
+  exit 1
+fi
+
 if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service" ]; then
   echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"
   exit 1
@@ -255,14 +276,38 @@ if [ ! -d "${ROOT_MNT}/etc/vibesensor" ]; then
   exit 1
 fi
 
+if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/pi/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
+  echo "Validation failed: hotspot script still contains apt-get"
+  exit 1
+fi
+
+if [ ! -f "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf" ]; then
+  echo "Validation failed: missing ${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
+  exit 1
+fi
+
 echo "=== Validation: /opt/VibeSensor exists ==="
 ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
+
+echo "=== Validation: nmcli + dnsmasq binaries ==="
+ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}/usr/sbin/dnsmasq"
 
 echo "=== Validation: vibesensor systemd units ==="
 ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
 
 echo "=== Validation: /etc/vibesensor ==="
 ls -la "${ROOT_MNT}/etc/vibesensor"
+
+echo "=== Validation: NetworkManager conf.d drop-in ==="
+cat "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
+
+echo "=== Validation: hotspot script has no apt-get ==="
+if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/pi/scripts/hotspot_nmcli.sh"; then
+  echo "ERROR: found apt-get in hotspot script"
+  exit 1
+else
+  echo "OK: no apt-get found"
+fi
 
 cleanup_mounts
 trap - EXIT

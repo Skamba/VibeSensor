@@ -6,6 +6,9 @@ Wants=NetworkManager.service
 [Service]
 Type=oneshot
 ExecStart=/opt/VibeSensor/pi/scripts/hotspot_nmcli.sh
+TimeoutStartSec=300
+StandardOutput=journal
+StandardError=journal
 RemainAfterExit=yes
 SyslogIdentifier=vibesensor-hotspot
 
