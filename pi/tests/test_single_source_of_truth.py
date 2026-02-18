@@ -7,7 +7,7 @@ These tests prevent regression of the consolidation work by verifying:
 4. Metrics log records use canonical field names only
 5. as_float_or_none is the single canonical float converter
 6. _percentile is the single canonical percentile implementation
-7. compute_strength_metrics output has no dead alias fields
+7. compute_vibration_strength_db output has no dead alias fields
 """
 
 from __future__ import annotations
@@ -96,9 +96,16 @@ def test_metrics_log_no_legacy_field_names() -> None:
         "accel_magnitude_p2p_g",
         "dominant_peak_amp_g",
         "noise_floor_amp",
+        "vib_mag_rms_g",
+        "vib_mag_p2p_g",
+        "noise_floor_amp_p20_g",
+        "strength_floor_amp_g",
+        "strength_peak_band_rms_amp_g",
+        "strength_db",
     }
     present = legacy_fields & set(units.keys())
     assert not present, f"Legacy fields still in default_units: {present}"
+    assert "vibration_strength_db" in units, "vibration_strength_db missing from default_units"
 
 
 def test_as_float_single_source_of_truth() -> None:
@@ -118,26 +125,35 @@ def test_as_float_single_source_of_truth() -> None:
 
 def test_percentile_single_source_of_truth() -> None:
     """report_analysis._percentile must be imported from
-    analysis.strength_metrics, not re-defined locally."""
-    from vibesensor.analysis.strength_metrics import _percentile as canonical
+    analysis.vibration_strength, not re-defined locally."""
+    from vibesensor.analysis.vibration_strength import _percentile as canonical
     from vibesensor.report_analysis import _percentile
 
     assert _percentile is canonical, (
-        "report_analysis._percentile must be imported from analysis.strength_metrics"
+        "report_analysis._percentile must be imported from analysis.vibration_strength"
     )
 
 
 def test_strength_metrics_no_dead_aliases() -> None:
-    """compute_strength_metrics output must not contain dead alias fields."""
-    from vibesensor.analysis.strength_metrics import compute_strength_metrics
+    """compute_vibration_strength_db output must not contain dead alias fields."""
+    from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
 
-    result = compute_strength_metrics(
+    result = compute_vibration_strength_db(
         freq_hz=[1.0, 2.0, 3.0],
         combined_spectrum_amp_g_values=[0.0, 0.0, 0.0],
     )
-    dead_aliases = {"peak_amp", "floor_amp"}
+    dead_aliases = {
+        "peak_amp",
+        "floor_amp",
+        "combined_spectrum_db_above_floor",
+        "strength_peak_band_rms_amp_g",
+        "strength_floor_amp_g",
+        "noise_floor_amp_p20_g",
+        "strength_db",
+        "top_strength_peaks",
+    }
     present = dead_aliases & set(result.keys())
-    assert not present, f"Dead alias fields in compute_strength_metrics: {present}"
+    assert not present, f"Dead alias fields in compute_vibration_strength_db: {present}"
 
 
 def test_constants_used_for_speed_conversion() -> None:
@@ -151,7 +167,7 @@ def test_constants_used_for_speed_conversion() -> None:
 
 def test_constants_used_for_peak_detection() -> None:
     """Peak detection defaults must come from constants module."""
-    from vibesensor.analysis.strength_metrics import compute_strength_metrics
+    from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
     from vibesensor.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
     assert PEAK_BANDWIDTH_HZ == 1.2
@@ -160,7 +176,7 @@ def test_constants_used_for_peak_detection() -> None:
     # Verify the function signature defaults match constants
     import inspect
 
-    sig = inspect.signature(compute_strength_metrics)
+    sig = inspect.signature(compute_vibration_strength_db)
     assert sig.parameters["peak_bandwidth_hz"].default == PEAK_BANDWIDTH_HZ
     assert sig.parameters["peak_separation_hz"].default == PEAK_SEPARATION_HZ
 

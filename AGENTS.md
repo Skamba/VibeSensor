@@ -27,6 +27,13 @@ Agent operating rules
   - After the simulator stops, confirm the UI stops showing new vibration events and animations (no stale-data artifacts).
   - Check container logs with `docker compose logs --tail 50` if anything looks wrong.
 
+- Vibration Strength — Canonical Metric:
+  - The only allowed "how strong is the vibration" metric is `vibration_strength_db` (dB).
+  - Formula: `20 * log10((peak_band_rms_amp_g + eps) / (floor_amp_g + eps))`. Implemented in `pi/vibesensor/analysis/vibration_strength.py`. Never re-implement this formula elsewhere.
+  - Severity classification: call `bucket_for_strength(vibration_strength_db)` from `strength_bands.py`. Never compare raw dB values against band thresholds inline.
+  - Raw g-values (`vib_mag_rms_g`, `strength_peak_band_rms_amp_g`, etc.) must not be used as a proxy for vibration severity.
+  - JSONL field: `vibration_strength_db`. Live event field: `vibration_strength_db`. See `docs/metrics.md` for the full reference.
+
 - Misc rules:
   - Never add secrets to the repository. Use `pi/wifi-secrets.example.env` as a template for device configuration.
   - When altering report text, update `pi/vibesensor/report_i18n.py`.

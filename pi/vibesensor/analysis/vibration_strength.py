@@ -63,7 +63,7 @@ def combined_spectrum_amp_g(
     return out
 
 
-def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
+def _noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
     if not combined_spectrum_amp_g:
         return 0.0
     band = (
@@ -73,7 +73,7 @@ def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
     return _percentile(finite, 0.20)
 
 
-def strength_floor_amp_g(
+def _strength_floor_amp_g(
     *,
     freq_hz: list[float],
     combined_spectrum_amp_g: list[float],
@@ -101,7 +101,7 @@ def strength_floor_amp_g(
     return _median(selected)
 
 
-def strength_peak_band_rms_amp_g(
+def _peak_band_rms_amp_g(
     *,
     freq_hz: list[float],
     combined_spectrum_amp_g: list[float],
@@ -124,14 +124,14 @@ def strength_peak_band_rms_amp_g(
     return sqrt(sq_sum / count)
 
 
-def strength_db(
+def _vibration_strength_db_scalar(
     *,
-    strength_peak_band_rms_amp_g: float,
-    strength_floor_amp_g: float,
+    peak_band_rms_amp_g: float,
+    floor_amp_g: float,
     epsilon_g: float | None = None,
 ) -> float:
-    floor = max(0.0, float(strength_floor_amp_g))
-    band = max(0.0, float(strength_peak_band_rms_amp_g))
+    floor = max(0.0, float(floor_amp_g))
+    band = max(0.0, float(peak_band_rms_amp_g))
     eps = (
         max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
         if epsilon_g is None
@@ -140,31 +140,7 @@ def strength_db(
     return 20.0 * log10((band + eps) / (floor + eps))
 
 
-def spectrum_db_above_floor(
-    *,
-    combined_spectrum_amp_g: list[float],
-    strength_floor_amp_g: float,
-    epsilon_g: float | None = None,
-) -> list[float]:
-    floor = max(0.0, float(strength_floor_amp_g))
-    eps = (
-        max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
-        if epsilon_g is None
-        else max(STRENGTH_EPSILON_MIN_G, float(epsilon_g))
-    )
-    floor_term = floor + eps
-    out: list[float] = []
-    for raw_value in combined_spectrum_amp_g:
-        amp = max(0.0, float(raw_value))
-        out.append(20.0 * log10((amp + eps) / floor_term))
-    return out
-
-
-def strength_bucket(*, strength_db: float, strength_peak_band_rms_amp_g: float) -> str | None:
-    return bucket_for_strength(float(strength_db), float(strength_peak_band_rms_amp_g))
-
-
-def compute_strength_metrics(
+def compute_vibration_strength_db(
     *,
     freq_hz: list[float],
     combined_spectrum_amp_g_values: list[float],
@@ -176,18 +152,14 @@ def compute_strength_metrics(
     if n <= 0:
         return {
             "combined_spectrum_amp_g": [],
-            "combined_spectrum_db_above_floor": [],
-            "noise_floor_amp_p20_g": 0.0,
-            "strength_floor_amp_g": 0.0,
-            "strength_peak_band_rms_amp_g": 0.0,
-            "strength_db": 0.0,
+            "vibration_strength_db": 0.0,
             "strength_bucket": None,
-            "top_strength_peaks": [],
+            "top_peaks": [],
         }
 
     freq = [float(v) for v in freq_hz[:n]]
     combined = [max(0.0, float(v)) for v in combined_spectrum_amp_g_values[:n]]
-    floor_p20 = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
+    floor_p20 = _noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
     threshold = max(
         floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
         floor_p20 + STRENGTH_EPSILON_MIN_G,
@@ -203,7 +175,7 @@ def compute_strength_metrics(
     local_maxima.sort(key=lambda idx: combined[idx], reverse=True)
     peak_indexes = local_maxima[: max(1, top_n)]
 
-    floor_strength = strength_floor_amp_g(
+    floor_strength = _strength_floor_amp_g(
         freq_hz=freq,
         combined_spectrum_amp_g=combined,
         peak_indexes=peak_indexes,
@@ -214,29 +186,27 @@ def compute_strength_metrics(
 
     candidates: list[dict[str, float | str | None]] = []
     for idx in local_maxima:
-        band_rms = strength_peak_band_rms_amp_g(
+        band_rms = _peak_band_rms_amp_g(
             freq_hz=freq,
             combined_spectrum_amp_g=combined,
             center_idx=idx,
             bandwidth_hz=peak_bandwidth_hz,
         )
-        db = strength_db(
-            strength_peak_band_rms_amp_g=band_rms,
-            strength_floor_amp_g=floor_strength,
+        db = _vibration_strength_db_scalar(
+            peak_band_rms_amp_g=band_rms,
+            floor_amp_g=floor_strength,
         )
         if not isfinite(db):
             continue
         candidates.append(
             {
                 "hz": float(freq[idx]),
-                "strength_peak_band_rms_amp_g": float(band_rms),
-                "strength_db": float(db),
-                "strength_bucket": strength_bucket(
-                    strength_db=float(db), strength_peak_band_rms_amp_g=float(band_rms)
-                ),
+                "amp": float(band_rms),
+                "vibration_strength_db": float(db),
+                "strength_bucket": bucket_for_strength(float(db)),
             }
         )
-    candidates.sort(key=lambda item: float(item["strength_db"] or -1e9), reverse=True)
+    candidates.sort(key=lambda item: float(item["vibration_strength_db"] or -1e9), reverse=True)
 
     chosen: list[dict[str, float | str | None]] = []
     for candidate in candidates:
@@ -248,31 +218,11 @@ def compute_strength_metrics(
         chosen.append(candidate)
 
     top_peak = chosen[0] if chosen else None
-    top_band_rms = float((top_peak or {}).get("strength_peak_band_rms_amp_g") or 0.0)
-    top_db = float((top_peak or {}).get("strength_db") or 0.0)
-    out_peaks: list[dict[str, float | str | None]] = []
-    for peak in chosen:
-        out_peaks.append(
-            {
-                **peak,
-                "amp": peak["strength_peak_band_rms_amp_g"],
-            }
-        )
-
-    combined_db = spectrum_db_above_floor(
-        combined_spectrum_amp_g=combined,
-        strength_floor_amp_g=float(floor_strength),
-    )
+    top_db = float((top_peak or {}).get("vibration_strength_db") or 0.0)
 
     return {
         "combined_spectrum_amp_g": combined,
-        "combined_spectrum_db_above_floor": combined_db,
-        "noise_floor_amp_p20_g": float(floor_p20),
-        "strength_floor_amp_g": float(floor_strength),
-        "strength_peak_band_rms_amp_g": top_band_rms,
-        "strength_db": top_db,
-        "strength_bucket": strength_bucket(
-            strength_db=top_db, strength_peak_band_rms_amp_g=top_band_rms
-        ),
-        "top_strength_peaks": out_peaks,
+        "vibration_strength_db": top_db,
+        "strength_bucket": bucket_for_strength(top_db),
+        "top_peaks": list(chosen),
     }

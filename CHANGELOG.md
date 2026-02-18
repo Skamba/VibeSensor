@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased — Canonical Vibration Strength Metric
+
+### Breaking changes
+
+- **Single canonical strength metric: `vibration_strength_db`** — All JSONL run files, WebSocket
+  payloads, API responses, and live event dicts now use `vibration_strength_db` (dB) as the sole
+  "how strong is the vibration" metric. Formula:
+  `20 * log10((peak_band_rms_amp_g + eps) / (floor_amp_g + eps))`.
+  See `docs/metrics.md` for the full reference.
+- **Removed JSONL fields**: `vib_mag_rms_g`, `vib_mag_p2p_g`, `noise_floor_amp_p20_g`,
+  `strength_floor_amp_g`, `strength_peak_band_rms_amp_g`. Use `vibration_strength_db` or
+  `top_peaks[0].amp` instead.
+- **Renamed JSONL field**: `strength_db` → `vibration_strength_db`.
+  `normalize_sample_record()` reads old `strength_db` for backward compatibility.
+- **Renamed live event field**: `severity_db` → `vibration_strength_db`.
+- **Removed WebSocket field**: `combined_spectrum_db_above_floor`.
+  Spectrum charts now use `combined_spectrum_amp_g` (amplitude in g).
+- **Renamed peak list**: `top_strength_peaks` → `top_peaks` (in payloads and JSONL).
+- **Renamed module**: `vibesensor/analysis/strength_metrics.py` → `vibesensor/analysis/vibration_strength.py`.
+  Main entry point: `compute_vibration_strength_db()` (was `compute_strength_metrics()`).
+- **Simplified `bucket_for_strength()`**: removed `band_rms` parameter;
+  bucket classification is now based solely on `vibration_strength_db` (dB).
+- **Simplified `severity_from_peak()`**: removed `band_rms` kwarg; uses `vibration_strength_db` kwarg.
+
+### Improvements
+
+- **`docs/metrics.md`** — New reference document: canonical formula, severity bands, JSONL field
+  table, WebSocket payload examples, and list of removed fields.
+- **`AGENTS.md`** — Added "Vibration Strength — Canonical Metric" operating rule mandating
+  `vibration_strength_db` and `bucket_for_strength()` as the only allowed strength paths.
+- **Guardrail tests updated** — `test_single_source_of_truth.py`, `test_strength_buckets.py`,
+  `test_strength_bands_extended.py`, and `test_processing_extended.py` updated to enforce the new
+  canonical field names and assert removed fields are absent.
+
 ## Unreleased — Maintainability Audit
 
 ### Breaking changes (no backwards compatibility required)

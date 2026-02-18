@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.analysis.strength_metrics import compute_strength_metrics
+from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
 from vibesensor.constants import SILENCE_DB
 from vibesensor.diagnostics_shared import severity_from_peak
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
@@ -11,7 +11,7 @@ def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
     state = None
     out = None
     for _ in range(3):
-        out = severity_from_peak(strength_db=23.0, band_rms=0.02, sensor_count=1, prior_state=state)
+        out = severity_from_peak(vibration_strength_db=23.0, sensor_count=1, prior_state=state)
         state = dict((out or {}).get("state") or {})
     assert out is not None
     assert out["key"] == "l3"
@@ -19,16 +19,14 @@ def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
     l3 = band_by_key("l3")
     assert l3 is not None
     slight_dip = float(l3["min_db"]) - (HYSTERESIS_DB / 2)
-    out = severity_from_peak(
-        strength_db=slight_dip, band_rms=0.02, sensor_count=1, prior_state=state
-    )
+    out = severity_from_peak(vibration_strength_db=slight_dip, sensor_count=1, prior_state=state)
     state = dict((out or {}).get("state") or state or {})
     assert out is not None
     assert out["key"] == "l3"
 
     for _ in range(DECAY_TICKS):
         out = severity_from_peak(
-            strength_db=SILENCE_DB, band_rms=0.0, sensor_count=1, prior_state=state
+            vibration_strength_db=SILENCE_DB, sensor_count=1, prior_state=state
         )
         state = dict((out or {}).get("state") or state or {})
     assert out is not None
@@ -50,7 +48,7 @@ def test_live_matrix_seconds_accumulate_during_throttled_emission(monkeypatch) -
     peak_idx = 320
     base = [0.8 for _ in freq]
     base[peak_idx] = 150.0
-    strength_metrics = compute_strength_metrics(
+    strength_metrics = compute_vibration_strength_db(
         freq_hz=freq,
         combined_spectrum_amp_g_values=base,
         peak_bandwidth_hz=1.2,
@@ -109,7 +107,7 @@ def test_events_persist_when_spectra_is_none(monkeypatch) -> None:
     peak_idx = 320
     base = [0.8 for _ in freq]
     base[peak_idx] = 150.0
-    strength_metrics = compute_strength_metrics(
+    strength_metrics = compute_vibration_strength_db(
         freq_hz=freq,
         combined_spectrum_amp_g_values=base,
         peak_bandwidth_hz=1.2,
@@ -183,7 +181,7 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
     peak_idx = 320
     base = [0.8 for _ in freq]
     base[peak_idx] = 150.0
-    strength_metrics = compute_strength_metrics(
+    strength_metrics = compute_vibration_strength_db(
         freq_hz=freq,
         combined_spectrum_amp_g_values=base,
         peak_bandwidth_hz=1.2,
