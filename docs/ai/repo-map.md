@@ -7,6 +7,25 @@
 - Pi image build: infra/pi-image/pi-gen/build.sh
 - Docker entrypoint: docker-compose.yml (root canonical)
 
+## Read-first files (keep context cost low)
+- Server (start here):
+  - `apps/server/vibesensor/app.py`
+  - `apps/server/vibesensor/api.py`
+  - `apps/server/vibesensor/shared_contracts.py`
+  - `apps/server/vibesensor/processing.py`
+- UI (start here):
+  - `apps/ui/src/main.ts`
+  - `apps/ui/src/server_payload.ts`
+  - `apps/ui/src/generated/shared_contracts.ts`
+- Firmware (start here):
+  - `firmware/esp/src/main.cpp`
+  - `firmware/esp/include/vibesensor_contracts.h`
+  - `firmware/esp/lib/vibesensor_proto/vibesensor_proto.h`
+- Pi image (start here):
+  - `infra/pi-image/pi-gen/build.sh`
+  - `infra/pi-image/pi-gen/stage-vibesensor/00-packages`
+  - `infra/pi-image/pi-gen/stage-vibesensor/04-run.sh`
+
 ## Top-level layout
 - apps/server: backend runtime, API orchestration, tests, scripts, systemd files
 - apps/ui: dashboard frontend

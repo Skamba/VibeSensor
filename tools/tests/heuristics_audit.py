@@ -116,11 +116,11 @@ def check_tooling_docs_noise() -> tuple[bool, list[str]]:
     msgs: list[str] = []
     ok = True
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8", errors="ignore") if (ROOT / "Makefile").exists() else ""
-    for target in ["format:", "lint:", "test:", "smoke:"]:
+    for target in ["format:", "lint:", "test:", "smoke:", "loc:"]:
         if target not in makefile:
             ok = False
             msgs.append(f"missing make target {target}")
-    for doc in [ROOT / "AGENTS.md", ROOT / "README.md", ROOT / "CLAUDE.md"]:
+    for doc in [ROOT / "AGENTS.md", ROOT / "README.md", ROOT / "CLAUDE.md", ROOT / "docs/ai/repo-map.md"]:
         if not doc.exists():
             ok = False
             msgs.append(f"missing {doc.relative_to(ROOT)}")
