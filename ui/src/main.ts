@@ -1248,7 +1248,7 @@ import { WsClient, type WsUiState } from "./ws";
             <div class="table-actions">
               <button class="btn btn--success" data-run-action="download-pdf" data-run="${escapeHtml(run.run_id)}" ${detail.pdfLoading ? "disabled" : ""}>${escapeHtml(pdfLabel)}</button>
               <a class="btn btn--muted" href="${historyExportUrl(run.run_id)}" download="${escapeHtml(run.run_id)}" data-run-action="download-raw" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.export"))}</a>
-              <button class="btn btn--danger" data-run-action="delete-log" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.delete"))}</button>
+              <button class="btn btn--danger" data-run-action="delete-run" data-run="${escapeHtml(run.run_id)}">${escapeHtml(t("history.delete"))}</button>
             </div>
             ${rowError}
           </td>
@@ -1451,7 +1451,7 @@ import { WsClient, type WsUiState } from "./ws";
       await downloadReportPdfForRun(runId);
       return;
     }
-    if (action === "delete-log") {
+    if (action === "delete-run") {
       await deleteRun(runId);
       return;
     }
