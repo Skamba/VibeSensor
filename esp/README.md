@@ -1,7 +1,7 @@
-# ESP32 Firmware (ATOM ESP32-PICO)
+# ESP32 Firmware
 
-This PlatformIO project streams ADXL345 acceleration data to the Pi over UDP.
-Default PlatformIO environment targets `m5stack-atom` (ATOM ESP32-PICO).
+PlatformIO firmware for M5Stack ATOM Lite (ESP32-PICO) that reads an ADXL345
+accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 
 ## Features
 
@@ -13,7 +13,22 @@ Default PlatformIO environment targets `m5stack-atom` (ATOM ESP32-PICO).
 - ADXL345 I2C driver at 800 Hz with error-checked initialisation
 - Synthetic waveform fallback when the sensor is absent or I2C fails
 
-## Error handling
+## Project Structure
+
+```
+esp/
+├── src/
+│   └── main.cpp              Firmware entry point
+├── lib/
+│   ├── adxl345/              I2C driver for ADXL345 accelerometer
+│   └── vibesensor_proto/     Protocol packet builder
+├── include/
+│   ├── vibesensor_network.local.example.h   Network override template
+│   └── vibesensor_network.local.h           Local overrides (gitignored)
+└── platformio.ini            PlatformIO build config
+```
+
+## Error Handling
 
 - **I2C init**: Every register write during `ADXL345::begin()` is validated;
   if any write fails the sensor is marked unavailable and the firmware falls
@@ -24,7 +39,7 @@ Default PlatformIO environment targets `m5stack-atom` (ATOM ESP32-PICO).
 - **Wi-Fi**: Automatic reconnect with configurable retry interval
   (`kWifiRetryIntervalMs`).
 
-## Build and flash
+## Build and Flash
 
 ```bash
 cd esp

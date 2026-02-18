@@ -1,6 +1,10 @@
 # Simulator
 
-`sim_sender.py` spawns multiple fake ESP32 clients that send:
+Spawns fake ESP32 sensor clients for testing VibeSensor without physical
+hardware. Useful for local development, CI smoke tests, and reproducing
+specific vibration scenarios.
+
+`sim_sender.py` sends:
 
 - HELLO packets every 2 seconds
 - DATA frames at 800 Hz sample rate (200 samples per UDP frame)
@@ -45,7 +49,9 @@ Useful options:
 - `--interactive` force CLI mode
 - `--no-interactive` disable CLI mode
 
-Deterministic mild single-wheel fault scenario:
+## Scenarios
+
+Deterministic fault scenarios for reproducible testing:
 
 ```bash
 python tools/simulator/sim_sender.py \
