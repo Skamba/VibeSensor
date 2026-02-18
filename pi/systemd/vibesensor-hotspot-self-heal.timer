@@ -1,0 +1,12 @@
+[Unit]
+Description=Run VibeSensor hotspot self-heal periodically
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=2min
+AccuracySec=10s
+Unit=vibesensor-hotspot-self-heal.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

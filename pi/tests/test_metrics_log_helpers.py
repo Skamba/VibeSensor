@@ -52,6 +52,7 @@ class _FakeRecord:
     name: str
     sample_rate_hz: int
     latest_metrics: dict
+    frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
 
@@ -100,6 +101,11 @@ class _FakeRegistry:
         return self._records.get(client_id)
 
 
+class _NoActiveRegistry(_FakeRegistry):
+    def active_client_ids(self) -> list[str]:
+        return []
+
+
 class _FakeGPSMonitor:
     speed_mps = None
     effective_speed_mps = None
@@ -113,6 +119,10 @@ class _FakeProcessor:
     def latest_sample_rate_hz(self, client_id: str):
         return 800
 
+    def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
+        # In the fake, treat all provided clients as having recent data.
+        return list(client_ids)
+
 
 class _FakeAnalysisSettings:
     def snapshot(self) -> dict[str, float]:
@@ -123,6 +133,22 @@ class _FakeAnalysisSettings:
             "final_drive_ratio": 3.08,
             "current_gear_ratio": 0.64,
         }
+
+
+class _FakeHistoryDB:
+    def __init__(self) -> None:
+        self.create_calls: list[tuple[str, str]] = []
+        self.append_calls: list[tuple[str, int]] = []
+        self.finalize_calls: list[str] = []
+
+    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+        self.create_calls.append((run_id, start_time_utc))
+
+    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+        self.append_calls.append((run_id, len(samples)))
+
+    def finalize_run(self, run_id: str, end_time_utc: str) -> None:
+        self.finalize_calls.append(run_id)
 
 
 def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
@@ -263,3 +289,80 @@ def test_speed_source_reports_missing_when_nothing_set(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows[0]["speed_source"] == "missing"
     assert rows[0]["speed_kmh"] is None
+
+
+def test_stop_without_samples_does_not_persist_history_run(tmp_path: Path) -> None:
+    history_db = _FakeHistoryDB()
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+
+    logger.start_logging()
+    logger.stop_logging()
+
+    assert history_db.create_calls == []
+    assert history_db.append_calls == []
+    assert history_db.finalize_calls == []
+
+
+def test_history_run_created_on_first_sample_append(tmp_path: Path) -> None:
+    history_db = _FakeHistoryDB()
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+
+    timed_out = logger._append_records(path, run_id, start_time_utc, start_mono)
+
+    assert timed_out is False
+    assert history_db.create_calls == [(run_id, start_time_utc)]
+    assert history_db.append_calls == [(run_id, 1)]
+
+
+def test_append_records_reports_timeout_when_no_data_for_threshold(tmp_path: Path) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_NoActiveRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+    logger._last_data_progress_mono_s = 0.0
+
+    timed_out = logger._append_records(path, run_id, start_time_utc, start_mono)
+
+    assert timed_out is True

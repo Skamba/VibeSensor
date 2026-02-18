@@ -103,3 +103,45 @@ def test_load_config_negative_accel_scale(tmp_path: Path) -> None:
         yaml.safe_dump(cfg, f)
     result = load_config(cfg_path)
     assert result.processing.accel_scale_g_per_lsb is None
+
+
+def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
+    cfg = {
+        "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
+    }
+    cfg_path = tmp_path / "config.yaml"
+    with cfg_path.open("w") as f:
+        yaml.safe_dump(cfg, f)
+
+    result = load_config(cfg_path)
+
+    assert result.ap.self_heal.enabled is True
+    assert result.ap.self_heal.interval_seconds == 120
+    assert result.ap.self_heal.allow_disable_resolved_stub_listener is False
+
+
+def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
+    cfg = {
+        "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
+        "ap": {
+            "self_heal": {
+                "enabled": True,
+                "interval_seconds": 180,
+                "diagnostics_lookback_minutes": 7,
+                "min_restart_interval_seconds": 240,
+                "allow_disable_resolved_stub_listener": True,
+                "state_file": "/tmp/hotspot-heal-state.json",
+            }
+        },
+    }
+    cfg_path = tmp_path / "config.yaml"
+    with cfg_path.open("w") as f:
+        yaml.safe_dump(cfg, f)
+
+    result = load_config(cfg_path)
+
+    assert result.ap.self_heal.interval_seconds == 180
+    assert result.ap.self_heal.diagnostics_lookback_minutes == 7
+    assert result.ap.self_heal.min_restart_interval_seconds == 240
+    assert result.ap.self_heal.allow_disable_resolved_stub_listener is True
+    assert result.ap.self_heal.state_file == Path("/tmp/hotspot-heal-state.json")

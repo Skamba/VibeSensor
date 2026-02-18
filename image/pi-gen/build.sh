@@ -67,11 +67,22 @@ install -m 0644 \
   /opt/VibeSensor/image/pi-gen/assets/vibesensor-hotspot.service \
   /etc/systemd/system/vibesensor-hotspot.service
 
+install -m 0644 \
+  /opt/VibeSensor/image/pi-gen/assets/vibesensor-hotspot-self-heal.service \
+  /etc/systemd/system/vibesensor-hotspot-self-heal.service
+
+install -m 0644 \
+  /opt/VibeSensor/image/pi-gen/assets/vibesensor-hotspot-self-heal.timer \
+  /etc/systemd/system/vibesensor-hotspot-self-heal.timer
+
 mkdir -p /etc/systemd/system/multi-user.target.wants
 ln -sf /etc/systemd/system/vibesensor.service \
   /etc/systemd/system/multi-user.target.wants/vibesensor.service
 ln -sf /etc/systemd/system/vibesensor-hotspot.service \
   /etc/systemd/system/multi-user.target.wants/vibesensor-hotspot.service
+mkdir -p /etc/systemd/system/timers.target.wants
+ln -sf /etc/systemd/system/vibesensor-hotspot-self-heal.timer \
+  /etc/systemd/system/timers.target.wants/vibesensor-hotspot-self-heal.timer
 CHROOT
 EOF
 chmod +x "${STAGE_DIR}/00-run.sh"
