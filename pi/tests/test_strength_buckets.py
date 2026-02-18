@@ -19,9 +19,7 @@ def test_persistence_and_decay_behavior() -> None:
     out = None
     # Promote to L2 after persistence ticks.
     for _ in range(3):
-        out = severity_from_peak(
-            vibration_strength_db=17.0, sensor_count=1, prior_state=state
-        )
+        out = severity_from_peak(vibration_strength_db=17.0, sensor_count=1, prior_state=state)
         state = dict(out.get("state") or state or {})
     assert out is not None
     assert out["key"] == "l2"

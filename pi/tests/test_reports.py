@@ -117,10 +117,18 @@ def _sample(
         "dominant_freq_hz": dominant_freq_hz,
         "dominant_axis": "x",
         "top_peaks": [
-            {"hz": dominant_freq_hz, "amp": peak_amp_g,
-             "vibration_strength_db": 22.0, "strength_bucket": "l2"},
-            {"hz": dominant_freq_hz + 8.0, "amp": peak_amp_g * 0.45,
-             "vibration_strength_db": 14.0, "strength_bucket": None},
+            {
+                "hz": dominant_freq_hz,
+                "amp": peak_amp_g,
+                "vibration_strength_db": 22.0,
+                "strength_bucket": "l2",
+            },
+            {
+                "hz": dominant_freq_hz + 8.0,
+                "amp": peak_amp_g * 0.45,
+                "vibration_strength_db": 14.0,
+                "strength_bucket": None,
+            },
         ],
         "vibration_strength_db": 22.0,
         "strength_bucket": "l2",

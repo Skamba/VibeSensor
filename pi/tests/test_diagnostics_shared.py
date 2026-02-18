@@ -68,9 +68,7 @@ def test_severity_from_peak_thresholds() -> None:
     assert low["key"] is None
     high = None
     for _ in range(3):
-        high = severity_from_peak(
-            vibration_strength_db=35.0, sensor_count=1, prior_state=state
-        )
+        high = severity_from_peak(vibration_strength_db=35.0, sensor_count=1, prior_state=state)
         state = None if high is None else dict(high.get("state") or {})
     assert high is not None
     assert high["key"] == "l5"
@@ -164,8 +162,10 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
                 "strength_bucket": "l2",
                 "top_peaks": [
                     {
-                        "hz": wheel_hz * 1.01, "amp": peak_amp,
-                        "vibration_strength_db": 22.0, "strength_bucket": "l2",
+                        "hz": wheel_hz * 1.01,
+                        "amp": peak_amp,
+                        "vibration_strength_db": 22.0,
+                        "strength_bucket": "l2",
                     }
                 ],
             }
