@@ -74,6 +74,11 @@ class MetricsLogger:
         self._run_start_mono_s: float | None = None
         self._metadata_written = False
         self._history_db = history_db
+        self._history_run_created = False
+        self._written_sample_count = 0
+        self._no_data_timeout_s = 3.0
+        self._last_data_progress_mono_s: float | None = None
+        self._last_active_frames_total = 0
         self._live_start_utc = utc_now_iso()
         self._live_start_mono_s = time.monotonic()
         self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
@@ -92,12 +97,40 @@ class MetricsLogger:
         self._run_start_utc = utc_now_iso()
         self._run_start_mono_s = time.monotonic()
         self._metadata_written = False
-        if self._history_db is not None and self._run_id:
-            metadata = self._run_metadata_record(self._run_id, self._run_start_utc)
-            try:
-                self._history_db.create_run(self._run_id, self._run_start_utc, metadata)
-            except Exception:
-                LOGGER.warning("Failed to create history run in DB", exc_info=True)
+        self._history_run_created = False
+        self._written_sample_count = 0
+        self._last_data_progress_mono_s = self._run_start_mono_s
+        self._last_active_frames_total = self._active_frames_total()
+
+    def _active_frames_total(self) -> int:
+        active_ids = self.registry.active_client_ids()
+        total = 0
+        for client_id in active_ids:
+            record = self.registry.get(client_id)
+            if record is None:
+                continue
+            total += int(record.frames_total)
+        return total
+
+    def _refresh_data_progress_marker(self, now_mono_s: float) -> None:
+        current_total = self._active_frames_total()
+        if current_total > self._last_active_frames_total:
+            self._last_active_frames_total = current_total
+            self._last_data_progress_mono_s = now_mono_s
+            return
+        if current_total < self._last_active_frames_total:
+            self._last_active_frames_total = current_total
+            self._last_data_progress_mono_s = now_mono_s
+
+    def _ensure_history_run_created(self, run_id: str, start_time_utc: str) -> None:
+        if self._history_db is None or self._history_run_created:
+            return
+        metadata = self._run_metadata_record(run_id, start_time_utc)
+        try:
+            self._history_db.create_run(run_id, start_time_utc, metadata)
+            self._history_run_created = True
+        except Exception:
+            LOGGER.warning("Failed to create history run in DB", exc_info=True)
 
     def _session_snapshot(self) -> tuple[Path, str, str, float] | None:
         with self._lock:
@@ -136,7 +169,8 @@ class MetricsLogger:
         with self._lock:
             run_id_to_analyze: str | None = None
             if self.enabled and self._active_path and self._run_id:
-                run_id_to_analyze = self._run_id
+                if self._history_run_created and self._written_sample_count > 0:
+                    run_id_to_analyze = self._run_id
                 self._finalize_run_locked()
             self.enabled = False
             self._active_path = None
@@ -144,6 +178,10 @@ class MetricsLogger:
             self._run_start_utc = None
             self._run_start_mono_s = None
             self._metadata_written = False
+            self._history_run_created = False
+            self._written_sample_count = 0
+            self._last_data_progress_mono_s = None
+            self._last_active_frames_total = 0
             result = self.status()
         if run_id_to_analyze and self._history_db is not None:
             self._run_post_analysis(run_id_to_analyze)
@@ -272,7 +310,15 @@ class MetricsLogger:
                 engine_rpm_estimated = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
 
         records: list[dict[str, object]] = []
-        active_client_ids = sorted(set(self.registry.active_client_ids()))
+        # Only include clients that received data recently to avoid
+        # recording stale buffered data with fresh timestamps.
+        active_client_ids = sorted(
+            set(
+                self.processor.clients_with_recent_data(
+                    self.registry.active_client_ids(), max_age_s=3.0
+                )
+            )
+        )
         for client_id in active_client_ids:
             record = self.registry.get(client_id)
             if record is None:
@@ -402,20 +448,30 @@ class MetricsLogger:
 
     def _append_records(
         self, path: Path, run_id: str, start_time_utc: str, run_start_mono_s: float
-    ) -> None:
+    ) -> bool:
         self._ensure_metadata_written(path, run_id, start_time_utc)
         now_mono_s = time.monotonic()
+        self._refresh_data_progress_marker(now_mono_s)
         t_s = max(0.0, now_mono_s - run_start_mono_s)
         timestamp_utc = utc_now_iso()
         rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
-        if rows and self._history_db is not None:
-            try:
-                self._history_db.append_samples(run_id, rows)
-            except Exception:
-                LOGGER.warning("Failed to append samples to history DB", exc_info=True)
+        if rows:
+            self._last_data_progress_mono_s = now_mono_s
+            self._written_sample_count += len(rows)
+            if self._history_db is not None:
+                self._ensure_history_run_created(run_id, start_time_utc)
+                if self._history_run_created:
+                    try:
+                        self._history_db.append_samples(run_id, rows)
+                    except Exception:
+                        LOGGER.warning("Failed to append samples to history DB", exc_info=True)
+
+        if self._last_data_progress_mono_s is None:
+            return False
+        return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
 
     def _finalize_run_locked(self) -> None:
-        if self._active_path is None or not self._run_id:
+        if self._active_path is None or not self._run_id or not self._history_run_created:
             return
         end_utc = utc_now_iso()
         if self._history_db is not None:
@@ -467,7 +523,19 @@ class MetricsLogger:
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
                     path, run_id, start_time_utc, start_mono_s = snapshot
-                    self._append_records(path, run_id, start_time_utc, start_mono_s)
+                    no_data_timeout = self._append_records(
+                        path,
+                        run_id,
+                        start_time_utc,
+                        start_mono_s,
+                    )
+                    if no_data_timeout:
+                        LOGGER.info(
+                            "Auto-stopping run %s after %.1fs without new data",
+                            run_id,
+                            self._no_data_timeout_s,
+                        )
+                        self.stop_logging()
             except Exception:
                 LOGGER.warning(
                     "Metrics logger tick failed; will retry next interval.",

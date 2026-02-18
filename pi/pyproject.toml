@@ -29,6 +29,7 @@ dev = [
 [project.scripts]
 vibesensor-server = "vibesensor.app:main"
 vibesensor-report = "vibesensor.report_cli:main"
+vibesensor-hotspot-self-heal = "vibesensor.hotspot_self_heal:main"
 
 [tool.setuptools]
 packages = ["vibesensor", "vibesensor.analysis"]
