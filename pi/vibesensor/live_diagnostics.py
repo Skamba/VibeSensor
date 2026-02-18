@@ -82,8 +82,7 @@ class _RecentEvent:
     sensor_label: str
     peak_hz: float
     peak_amp: float
-    floor_amp: float
-    strength_db: float
+    vibration_strength_db: float
     class_key: str
 
 
@@ -184,8 +183,7 @@ class LiveDiagnosticsEngine:
     @staticmethod
     def _apply_severity_to_tracker(
         tracker: _TrackerLevelState,
-        strength_db: float,
-        band_rms: float,
+        vibration_strength_db: float,
         sensor_count: int,
         fallback_db: float | None = None,
     ) -> str | None:
@@ -195,8 +193,7 @@ class LiveDiagnosticsEngine:
         """
         previous_bucket = tracker.current_bucket_key
         severity = severity_from_peak(
-            strength_db=strength_db,
-            band_rms=band_rms,
+            vibration_strength_db=vibration_strength_db,
             sensor_count=sensor_count,
             prior_state=tracker.severity_state,
         )
@@ -205,7 +202,8 @@ class LiveDiagnosticsEngine:
             str(severity["key"]) if severity and severity.get("key") else None
         )
         tracker.last_strength_db = float(
-            (severity or {}).get("db") or (fallback_db if fallback_db is not None else strength_db)
+            (severity or {}).get("db")
+            or (fallback_db if fallback_db is not None else vibration_strength_db)
         )
         return previous_bucket
 
@@ -314,15 +312,14 @@ class LiveDiagnosticsEngine:
         for event in sensor_events:
             tracker_key = f"{event.sensor_id}:{event.class_key}"
             previous = latest_by_tracker.get(tracker_key)
-            if previous is None or event.strength_db > previous.strength_db:
+            if previous is None or event.vibration_strength_db > previous.vibration_strength_db:
                 latest_by_tracker[tracker_key] = event
 
         for tracker_key, event in latest_by_tracker.items():
             tracker = self._sensor_trackers.get(tracker_key) or _TrackerLevelState()
             previous_bucket = self._apply_severity_to_tracker(
                 tracker,
-                strength_db=event.strength_db,
-                band_rms=event.peak_amp,
+                vibration_strength_db=event.vibration_strength_db,
                 sensor_count=1,
             )
             tracker.last_band_rms_g = float(event.peak_amp)
@@ -378,9 +375,8 @@ class LiveDiagnosticsEngine:
                         "sensor_labels": [event.sensor_label],
                         "peak_hz": event.peak_hz,
                         "peak_amp": event.peak_amp,
-                        "floor_amp": event.floor_amp,
                         "severity_key": tracker.current_bucket_key,
-                        "severity_db": tracker.last_strength_db,
+                        "vibration_strength_db": tracker.last_strength_db,
                     }
                 )
 
@@ -390,8 +386,7 @@ class LiveDiagnosticsEngine:
                 continue
             self._apply_severity_to_tracker(
                 tracker,
-                strength_db=SILENCE_DB,
-                band_rms=0.0,
+                vibration_strength_db=SILENCE_DB,
                 sensor_count=1,
                 fallback_db=SILENCE_DB,
             )
@@ -463,8 +458,7 @@ class LiveDiagnosticsEngine:
                 )
                 previous_bucket = self._apply_severity_to_tracker(
                     tracker,
-                    strength_db=avg_strength,
-                    band_rms=avg_amp,
+                    vibration_strength_db=avg_strength,
                     sensor_count=len(group),
                 )
                 tracker.last_band_rms_g = avg_amp
@@ -512,9 +506,8 @@ class LiveDiagnosticsEngine:
                             "sensor_labels": [item.last_sensor_label for item in group],
                             "peak_hz": avg_hz,
                             "peak_amp": avg_amp,
-                            "floor_amp": None,
                             "severity_key": tracker.current_bucket_key,
-                            "severity_db": tracker.last_strength_db,
+                            "vibration_strength_db": tracker.last_strength_db,
                         }
                     )
 
@@ -523,8 +516,7 @@ class LiveDiagnosticsEngine:
                 continue
             self._apply_severity_to_tracker(
                 tracker,
-                strength_db=SILENCE_DB,
-                band_rms=0.0,
+                vibration_strength_db=SILENCE_DB,
                 sensor_count=2,
                 fallback_db=SILENCE_DB,
             )
@@ -552,33 +544,29 @@ class LiveDiagnosticsEngine:
             return []
 
         settings_bundle = build_diagnostic_settings(settings)
-        entries: list[tuple[str, str, list[dict[str, Any]], float]] = []
+        entries: list[tuple[str, str, list[dict[str, Any]]]] = []
         for client_id, payload in clients_payload.items():
             if not isinstance(payload, dict):
                 continue
             strength_metrics = payload.get("strength_metrics")
             if not isinstance(strength_metrics, dict):
                 raise ValueError("Missing required strength_metrics payload for live diagnostics.")
-            peaks_raw = strength_metrics.get("top_strength_peaks")
+            peaks_raw = strength_metrics.get("top_peaks")
             if not isinstance(peaks_raw, list):
-                raise ValueError("Missing top_strength_peaks in strength_metrics payload.")
+                raise ValueError("Missing top_peaks in strength_metrics payload.")
             label = client_map.get(str(client_id), str(client_id))
-            floor_raw = strength_metrics.get("strength_floor_amp_g")
-            if floor_raw in (None, ""):
-                raise ValueError("Missing strength_floor_amp_g in strength_metrics payload.")
-            floor_amp = float(floor_raw)
-            entries.append((str(client_id), label, peaks_raw, floor_amp))
+            entries.append((str(client_id), label, peaks_raw))
 
         now_ms = int(monotonic() * 1000.0)
         events: list[_RecentEvent] = []
-        for client_id, label, peaks_raw, floor_amp in entries:
+        for client_id, label, peaks_raw in entries:
             for peak in peaks_raw[:4]:
                 if not isinstance(peak, dict):
                     continue
                 try:
                     peak_hz = float(peak.get("hz"))
-                    band_rms = float(peak.get("strength_peak_band_rms_amp_g"))
-                    strength_db = float(peak.get("strength_db"))
+                    peak_amp = float(peak.get("amp"))
+                    vibration_strength_db = float(peak.get("vibration_strength_db"))
                 except (TypeError, ValueError) as exc:
                     LOGGER.debug("Skipping invalid peak for %s: %s", client_id, exc)
                     continue
@@ -593,9 +581,8 @@ class LiveDiagnosticsEngine:
                         sensor_id=client_id,
                         sensor_label=label,
                         peak_hz=peak_hz,
-                        peak_amp=float(band_rms),
-                        floor_amp=float(floor_amp),
-                        strength_db=float(strength_db),
+                        peak_amp=float(peak_amp),
+                        vibration_strength_db=float(vibration_strength_db),
                         class_key=str(classification["key"]),
                     )
                 )

@@ -255,8 +255,7 @@ def classify_peak_hz(
 
 def severity_from_peak(
     *,
-    strength_db: float,
-    band_rms: float,
+    vibration_strength_db: float,
     sensor_count: int,
     prior_state: dict[str, Any] | None = None,
 ) -> dict[str, float | str | dict[str, Any]] | None:
@@ -265,8 +264,8 @@ def severity_from_peak(
     state.setdefault("pending_bucket", None)
     state.setdefault("consecutive_up", 0)
     state.setdefault("consecutive_down", 0)
-    adjusted_db = float(strength_db) + (3.0 if sensor_count >= 2 else 0.0)
-    candidate_bucket = bucket_for_strength(adjusted_db, float(band_rms))
+    adjusted_db = float(vibration_strength_db) + (3.0 if sensor_count >= 2 else 0.0)
+    candidate_bucket = bucket_for_strength(adjusted_db)
     current_bucket = state.get("current_bucket")
 
     if candidate_bucket is None:

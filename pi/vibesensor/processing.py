@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import logging
-import os
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
 
-from .analysis.strength_metrics import combined_spectrum_amp_g, compute_strength_metrics
+from .analysis.vibration_strength import combined_spectrum_amp_g, compute_vibration_strength_db
 from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
 AXES = ("x", "y", "z")
@@ -54,14 +53,6 @@ class SignalProcessor:
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._spike_filter_enabled = True
-        self._trace_strength_alignment = os.getenv(
-            "VIBESENSOR_TRACE_STRENGTH_ALIGNMENT", ""
-        ).strip().lower() in {
-            "1",
-            "true",
-            "yes",
-            "on",
-        }
 
     @staticmethod
     def _medfilt3(block: np.ndarray) -> np.ndarray:
@@ -254,7 +245,6 @@ class SignalProcessor:
         metrics["combined"] = {
             "vib_mag_rms": vib_mag_rms,
             "vib_mag_p2p": vib_mag_p2p,
-            "noise_floor_amp_p20_g": None,
             "peaks": [],
         }
 
@@ -302,17 +292,14 @@ class SignalProcessor:
                     ),
                     dtype=np.float32,
                 )
-                strength_metrics = compute_strength_metrics(
+                strength_metrics = compute_vibration_strength_db(
                     freq_hz=freq_slice.tolist(),
                     combined_spectrum_amp_g_values=combined_amp.tolist(),
                     peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
                     peak_separation_hz=PEAK_SEPARATION_HZ,
                     top_n=5,
                 )
-                metrics["combined"]["noise_floor_amp_p20_g"] = float(
-                    strength_metrics["noise_floor_amp_p20_g"]
-                )
-                metrics["combined"]["peaks"] = list(strength_metrics["top_strength_peaks"])
+                metrics["combined"]["peaks"] = list(strength_metrics["top_peaks"])
                 metrics["combined"]["strength_metrics"] = dict(strength_metrics)
                 metrics["strength_metrics"] = dict(strength_metrics)
                 spectrum_by_axis["combined"] = {
@@ -320,21 +307,6 @@ class SignalProcessor:
                     "amp": combined_amp,
                 }
                 buf.latest_strength_metrics = dict(strength_metrics)
-                if self._trace_strength_alignment:
-                    peak_linear = float(strength_metrics.get("strength_peak_band_rms_amp_g") or 0.0)
-                    floor_linear = float(strength_metrics.get("strength_floor_amp_g") or 0.0)
-                    peak_over_floor_db = float(strength_metrics.get("strength_db") or 0.0)
-                    combined_db = strength_metrics.get("combined_spectrum_db_above_floor") or []
-                    graph_peak_db = float(max(combined_db)) if combined_db else 0.0
-                    LOGGER.debug(
-                        "strength-alignment client=%s floor_linear=%.6g peak_linear=%.6g "
-                        "peak_over_floor_db=%.3f graph_peak_db=%.3f",
-                        client_id,
-                        floor_linear,
-                        peak_linear,
-                        peak_over_floor_db,
-                        graph_peak_db,
-                    )
             else:
                 buf.latest_strength_metrics = {}
             buf.latest_spectrum = spectrum_by_axis
@@ -364,7 +336,6 @@ class SignalProcessor:
                 "y": [],
                 "z": [],
                 "combined_spectrum_amp_g": [],
-                "combined_spectrum_db_above_floor": [],
                 "strength_metrics": {},
             }
         return {
@@ -373,9 +344,6 @@ class SignalProcessor:
             "z": buf.latest_spectrum["z"]["amp"].tolist(),
             "combined_spectrum_amp_g": (
                 buf.latest_spectrum.get("combined", {}).get("amp", np.array([])).tolist()
-            ),
-            "combined_spectrum_db_above_floor": list(
-                buf.latest_strength_metrics.get("combined_spectrum_db_above_floor") or []
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
@@ -518,7 +486,7 @@ class SignalProcessor:
         )
 
         # Strength metrics
-        sm = compute_strength_metrics(
+        sm = compute_vibration_strength_db(
             freq_hz=freq_slice.tolist(),
             combined_spectrum_amp_g_values=combined_amp.tolist(),
             peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
@@ -541,23 +509,6 @@ class SignalProcessor:
                 }
             )
 
-        db_above_floor = sm.get("combined_spectrum_db_above_floor", [])
-        top_db_idx = sorted(
-            range(len(db_above_floor)),
-            key=lambda i: db_above_floor[i],
-            reverse=True,
-        )[:10]
-        top_db_bins = []
-        for i in top_db_idx:
-            top_db_bins.append(
-                {
-                    "bin": i,
-                    "freq_hz": float(freq_slice[i]) if i < len(freq_slice) else 0.0,
-                    "db_above_floor": float(db_above_floor[i]),
-                    "combined_amp_g": float(combined_amp[i]) if i < len(combined_amp) else 0.0,
-                }
-            )
-
         return {
             "client_id": client_id,
             "sample_rate_hz": sr,
@@ -574,12 +525,9 @@ class SignalProcessor:
                 "max_g": raw_max,
             },
             "detrended_std_g": detrended_std,
-            "strength_floor_amp_g": float(sm.get("strength_floor_amp_g", 0)),
-            "noise_floor_amp_p20_g": float(sm.get("noise_floor_amp_p20_g", 0)),
-            "strength_db": float(sm.get("strength_db", 0)),
+            "vibration_strength_db": float(sm.get("vibration_strength_db", 0)),
             "top_bins_by_amplitude": top_bins,
-            "top_bins_by_db": top_db_bins,
-            "strength_peaks": list(sm.get("top_strength_peaks", [])),
+            "strength_peaks": list(sm.get("top_peaks", [])),
         }
 
     def raw_samples(self, client_id: str, n_samples: int = 2048) -> dict[str, Any]:
