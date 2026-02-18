@@ -1,22 +1,51 @@
-# Prebuilt Image (Mode B, Raspberry Pi 3 A+)
+# Prebuilt Raspberry Pi Image
 
-Build machine commands:
+Builds a custom Raspberry Pi OS Lite (Bookworm) image with VibeSensor
+pre-installed. After flashing to an SD card and booting, the Pi is ready to use
+with no manual setup.
+
+## Prerequisites
+
+- Linux build machine (or WSL2)
+- Docker
+- git, rsync
+- ~20 minutes build time (depends on cache and network)
+
+## Build
 
 ```bash
 git clone https://github.com/Skamba/VibeSensor.git
 cd VibeSensor
-./image/pi-gen/build.sh   # outputs an .img in image/pi-gen/out/
+./image/pi-gen/build.sh
 ```
 
-`build.sh` uses `pi-gen` in Docker, adds VibeSensor into the image, installs the server, and enables:
+Output image: `image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
 
-- `vibesensor.service`
-- `vibesensor-hotspot.service`
+## What's Included
 
-Output image artifacts are written to:
+The image contains:
 
-- `image/pi-gen/out/`
+- Raspberry Pi OS Lite (Bookworm, arm64)
+- VibeSensor Python server with all dependencies
+- Built web UI (served from `pi/public/`)
+- systemd services enabled at boot:
+  - `vibesensor.service` — FastAPI server
+  - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager
+  - `vibesensor-hotspot-self-heal.timer` — periodic AP health check (every 2 min)
 
-The produced image name is `vibesensor-rpi3a-plus-bookworm-lite` and is intended for Raspberry Pi 3 A+.
+## Flash
 
-After flashing the produced image and first boot, no manual install steps are required.
+Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to write the
+`.img` file (or `.img.xz`/`.zip` artifact) to an SD card.
+
+Insert the card into a Raspberry Pi 3 A+ and power on. The hotspot and server
+start automatically on first boot.
+
+## How It Works
+
+`build.sh` uses [pi-gen](https://github.com/RPi-Distro/pi-gen) in Docker to
+produce the image. It adds a custom stage that:
+
+1. Copies the VibeSensor repository into `/opt/VibeSensor`
+2. Runs `pi/scripts/install_pi.sh` (deps, venv, systemd units)
+3. Enables the hotspot and self-heal services
