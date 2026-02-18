@@ -188,8 +188,7 @@ def test_classify_with_speed_matches_order() -> None:
 def test_severity_candidate_none_current_none() -> None:
     """No candidate, no current → key is None."""
     result = severity_from_peak(
-        strength_db=0.0,
-        band_rms=0.0,
+        vibration_strength_db=0.0,
         sensor_count=1,
         prior_state=None,
     )
@@ -203,9 +202,8 @@ def test_severity_escalation_from_l1_to_l3() -> None:
     # First establish L1
     for _ in range(3):
         out = severity_from_peak(
-            strength_db=11.0,
-            band_rms=0.003,
-            sensor_count=1,
+        vibration_strength_db=11.0,
+        sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
@@ -214,9 +212,8 @@ def test_severity_escalation_from_l1_to_l3() -> None:
     # Now push to L3
     for _ in range(3):
         out = severity_from_peak(
-            strength_db=23.0,
-            band_rms=0.012,
-            sensor_count=1,
+        vibration_strength_db=23.0,
+        sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
@@ -229,9 +226,8 @@ def test_severity_downgrade_with_decay() -> None:
     # Establish L3
     for _ in range(3):
         out = severity_from_peak(
-            strength_db=23.0,
-            band_rms=0.012,
-            sensor_count=1,
+        vibration_strength_db=23.0,
+        sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
@@ -240,9 +236,8 @@ def test_severity_downgrade_with_decay() -> None:
     # Signal drops to L1 level but needs to be below hysteresis threshold
     for _ in range(4):
         out = severity_from_peak(
-            strength_db=5.0,
-            band_rms=0.001,
-            sensor_count=1,
+        vibration_strength_db=5.0,
+        sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
@@ -251,8 +246,7 @@ def test_severity_downgrade_with_decay() -> None:
 
     # 5th tick should cause decay
     out = severity_from_peak(
-        strength_db=5.0,
-        band_rms=0.001,
+        vibration_strength_db=5.0,
         sensor_count=1,
         prior_state=state,
     )
@@ -267,9 +261,8 @@ def test_severity_same_rank_resets_counters() -> None:
     # Establish L2
     for _ in range(3):
         out = severity_from_peak(
-            strength_db=17.0,
-            band_rms=0.006,
-            sensor_count=1,
+        vibration_strength_db=17.0,
+        sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
@@ -278,9 +271,8 @@ def test_severity_same_rank_resets_counters() -> None:
     # Continue at L2 → should stay stable
     for _ in range(5):
         out = severity_from_peak(
-            strength_db=17.0,
-            band_rms=0.006,
-            sensor_count=1,
+        vibration_strength_db=17.0,
+        sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
@@ -294,9 +286,8 @@ def test_severity_multi_sensor_bonus() -> None:
     # At 8 dB base with single sensor → below L1 (10 dB)
     for _ in range(3):
         out = severity_from_peak(
-            strength_db=8.0,
-            band_rms=0.003,
-            sensor_count=1,
+        vibration_strength_db=8.0,
+        sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
@@ -306,9 +297,8 @@ def test_severity_multi_sensor_bonus() -> None:
     state = None
     for _ in range(3):
         out = severity_from_peak(
-            strength_db=8.0,
-            band_rms=0.003,
-            sensor_count=2,
+        vibration_strength_db=8.0,
+        sensor_count=2,
             prior_state=state,
         )
         state = dict(out.get("state") or {})

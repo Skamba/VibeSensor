@@ -69,7 +69,7 @@ def test_strength_metric_definition_is_centralized() -> None:
         r"(?:\[['\"]min_db['\"]\]|\[['\"]min_amp['\"]\]|\.min_db|\.min_amp)[^\n]{0,80}(?:>=|<=|>|<)"
     )
     for path in python_files:
-        if path.name == "strength_metrics.py":
+        if path.name == "vibration_strength.py":
             continue
         text = _read(path)
         assert forbidden_math.search(text) is None, f"Unexpected log10 use in {path}"
