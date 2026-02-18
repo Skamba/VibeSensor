@@ -10,6 +10,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .config import APConfig, APSelfHealConfig, load_config
+from .hotspot_self_heal_steps import (
+    bounce_connection,
+    emit_diagnostics,
+    ensure_ap_connection,
+    handle_port53_conflict,
+    recreate_connection,
+)
 
 LOGGER = logging.getLogger("vibesensor.hotspot.selfheal")
 
@@ -328,148 +335,6 @@ class HealStateStore:
         return True
 
 
-def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | None = None) -> bool:
-    configured_channel = channel if channel is not None else ap.channel
-    con_names = _active_connection_names(
-        runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8)
-    )
-    if ap.con_name not in con_names:
-        added = runner.run(
-            [
-                "nmcli",
-                "connection",
-                "add",
-                "type",
-                "wifi",
-                "ifname",
-                ap.ifname,
-                "con-name",
-                ap.con_name,
-                "autoconnect",
-                "yes",
-                "ssid",
-                ap.ssid,
-            ],
-            timeout_s=10,
-        )
-        if added.returncode != 0:
-            return False
-
-    modified = runner.run(
-        [
-            "nmcli",
-            "connection",
-            "modify",
-            ap.con_name,
-            "802-11-wireless.mode",
-            "ap",
-            "802-11-wireless.band",
-            "bg",
-            "802-11-wireless.channel",
-            str(configured_channel),
-            "802-11-wireless-security.key-mgmt",
-            "wpa-psk",
-            "802-11-wireless-security.psk",
-            ap.psk,
-            "ipv4.method",
-            "shared",
-            "ipv4.addresses",
-            ap.ip,
-            "ipv6.method",
-            "ignore",
-        ],
-        timeout_s=10,
-    )
-    if modified.returncode != 0:
-        return False
-
-    up = runner.run(["nmcli", "connection", "up", ap.con_name, "--wait", "12"], timeout_s=15)
-    return up.returncode == 0
-
-
-def _bounce_connection(ap: APConfig, runner: CommandRunner) -> None:
-    runner.run(["nmcli", "connection", "down", ap.con_name], timeout_s=8)
-    runner.run(["ip", "link", "set", ap.ifname, "up"], timeout_s=5)
-    runner.run(["nmcli", "connection", "up", ap.con_name, "--wait", "10"], timeout_s=12)
-
-
-def _recreate_connection(ap: APConfig, runner: CommandRunner) -> bool:
-    runner.run(["nmcli", "connection", "delete", ap.con_name], timeout_s=8)
-    return _ensure_ap_connection(ap, runner)
-
-
-def _handle_port53_conflict(
-    conflict: str,
-    self_heal: APSelfHealConfig,
-    runner: CommandRunner,
-) -> str:
-    lowered = conflict.lower()
-    if "dnsmasq" in lowered:
-        runner.run(["systemctl", "disable", "--now", "dnsmasq.service"], timeout_s=10)
-        return "stopped standalone dnsmasq service"
-
-    if "systemd-resolved" in lowered or "systemd-resolve" in lowered:
-        if self_heal.allow_disable_resolved_stub_listener:
-            runner.run(
-                [
-                    "/bin/sh",
-                    "-c",
-                    "mkdir -p /etc/systemd/resolved.conf.d && "
-                    "printf '[Resolve]\\nDNSStubListener=no\\n' > "
-                    "/etc/systemd/resolved.conf.d/vibesensor-no-stub.conf",
-                ],
-                timeout_s=10,
-            )
-            runner.run(["systemctl", "restart", "systemd-resolved"], timeout_s=10)
-            return "disabled systemd-resolved DNS stub listener"
-        return (
-            "detected systemd-resolved :53 conflict; set "
-            "ap.self_heal.allow_disable_resolved_stub_listener=true"
-            " to allow automated resolved reconfiguration"
-        )
-
-    return f"detected :53 conflict owner={conflict}; no automatic disruptive action taken"
-
-
-def _emit_diagnostics(
-    ap: APConfig,
-    lookback_minutes: int,
-    runner: CommandRunner,
-    logger: logging.Logger,
-) -> None:
-    commands = [
-        ["nmcli", "device", "status"],
-        ["nmcli", "general", "status"],
-        ["nmcli", "connection", "show", ap.con_name],
-        ["nmcli", "connection", "show", "--active"],
-        ["ip", "addr", "show", "dev", ap.ifname],
-        ["iw", "dev", ap.ifname, "info"],
-        ["rfkill", "list"],
-        [
-            "journalctl",
-            "-u",
-            "NetworkManager",
-            "--since",
-            f"-{max(1, lookback_minutes)} min",
-            "--no-pager",
-            "-n",
-            "120",
-        ],
-    ]
-
-    logger.warning("hotspot diagnostics begin")
-    for command in commands:
-        res = runner.run(command, timeout_s=10)
-        logger.warning(
-            "diag cmd=%s rc=%s stdout=%s stderr=%s",
-            " ".join(command),
-            res.returncode,
-            res.stdout,
-            res.stderr,
-        )
-    logger.warning("hotspot diagnostics end")
-
-
 def _log_summary(status: str, ap: APConfig, health: HealthState) -> None:
     LOGGER.info(
         "hotspot health status=%s active=%s iface=%s ip_ok=%s channel=%s last_error=%s issues=%s",
@@ -491,7 +356,7 @@ def run_self_heal_once(
     diagnostics_only: bool = False,
 ) -> int:
     if diagnostics_only:
-        _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
+        emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
         return 0
 
     health = collect_health(ap, self_heal, runner)
@@ -500,7 +365,7 @@ def run_self_heal_once(
         return 0
 
     _log_summary("degraded", ap, health)
-    _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
+    emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
 
     actions: list[HealAction] = []
     if not health.nm_running:
@@ -558,14 +423,14 @@ def run_self_heal_once(
         )
 
     if not health.ap_conn_exists or not health.ap_conn_active:
-        ensured = _ensure_ap_connection(ap, runner)
+        ensured = ensure_ap_connection(ap, runner)
         if not ensured:
-            ensured = _recreate_connection(ap, runner)
+            ensured = recreate_connection(ap, runner)
         if not ensured:
             for fallback_channel in [1, 6, 11]:
                 if fallback_channel == ap.channel:
                     continue
-                if _ensure_ap_connection(ap, runner, channel=fallback_channel):
+                if ensure_ap_connection(ap, runner, channel=fallback_channel):
                     actions.append(
                         HealAction(
                             name="ap_channel_fallback",
@@ -586,7 +451,7 @@ def run_self_heal_once(
         )
 
     if health.ap_conn_active and (not health.iface_up or not health.ap_mode):
-        _bounce_connection(ap, runner)
+        bounce_connection(ap, runner)
         actions.append(
             HealAction(
                 name="bounce_ap",
@@ -598,7 +463,7 @@ def run_self_heal_once(
 
     if not health.dhcp_ok:
         if health.port53_conflict:
-            message = _handle_port53_conflict(health.port53_conflict, self_heal, runner)
+            message = handle_port53_conflict(health.port53_conflict, self_heal, runner)
             actions.append(
                 HealAction(
                     name="port53_conflict",
@@ -607,7 +472,7 @@ def run_self_heal_once(
                     helped=False,
                 )
             )
-        _ensure_ap_connection(ap, runner)
+        ensure_ap_connection(ap, runner)
         if state_store.allow("restart_networkmanager", self_heal.min_restart_interval_seconds):
             runner.run(["systemctl", "restart", "NetworkManager"], timeout_s=15)
             runner.run(["nmcli", "connection", "up", ap.con_name, "--wait", "12"], timeout_s=15)
@@ -644,7 +509,7 @@ def run_self_heal_once(
 
     _log_summary(status, ap, healed)
     if not healed.ok:
-        _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
+        emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
         return 2
     return 0
 
