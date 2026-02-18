@@ -2,18 +2,16 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import UTC, datetime
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from .constants import MPS_TO_KMH
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
-from .reports import build_report_pdf, summarize_log
+from .reports import build_report_pdf, summarize_run_data
 
 if TYPE_CHECKING:
     from .app import RuntimeState
@@ -54,46 +52,11 @@ class AnalysisSettingsRequest(BaseModel):
     max_band_half_width_pct: float | None = Field(default=None, gt=0)
 
 
-def _log_dir(state: RuntimeState) -> Path:
-    return state.config.logging.metrics_log_path.parent
-
-
 def _normalize_client_id_or_400(client_id: str) -> str:
     try:
         return parse_client_id(client_id).hex()
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid client_id") from exc
-
-
-def _safe_log_path(state: RuntimeState, log_name: str) -> Path:
-    candidate = Path(log_name).name
-    if Path(candidate).suffix.lower() != ".jsonl":
-        raise HTTPException(status_code=400, detail="Log name must be a .jsonl file")
-    path = (_log_dir(state) / candidate).resolve()
-    try:
-        path.relative_to(_log_dir(state).resolve())
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid log path") from exc
-    if not path.exists():
-        raise HTTPException(status_code=404, detail="Log file not found")
-    return path
-
-
-def _list_logs(state: RuntimeState) -> list[dict]:
-    out: list[dict] = []
-    log_dir = _log_dir(state)
-    if not log_dir.exists():
-        return out
-    for path in sorted(log_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
-        stat = path.stat()
-        out.append(
-            {
-                "name": path.name,
-                "size_bytes": stat.st_size,
-                "updated_at": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-            }
-        )
-    return out
 
 
 def _sync_active_car_to_analysis(state: RuntimeState) -> None:
@@ -298,53 +261,97 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def stop_logging() -> dict:
         return state.metrics_logger.stop_logging()
 
-    @router.get("/api/logs")
-    async def get_logs() -> dict:
-        return {"logs": _list_logs(state)}
+    @router.get("/api/history")
+    async def get_history() -> dict:
+        return {"runs": state.history_db.list_runs()}
 
-    @router.get("/api/logs/{log_name}")
-    async def download_log(log_name: str) -> FileResponse:
-        path = _safe_log_path(state, log_name)
-        return FileResponse(path, media_type="application/x-ndjson", filename=path.name)
+    @router.get("/api/history/{run_id}")
+    async def get_history_run(run_id: str) -> dict:
+        run = state.history_db.get_run(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        return run
 
-    @router.delete("/api/logs/{log_name}")
-    async def delete_log(log_name: str) -> dict:
-        path = _safe_log_path(state, log_name)
-        status = state.metrics_logger.status()
-        active_file = status.get("current_file")
-        if status.get("enabled") and isinstance(active_file, str) and active_file == path.name:
-            raise HTTPException(status_code=409, detail="Cannot delete active log while logging")
-        path.unlink()
-        return {"name": path.name, "status": "deleted"}
-
-    @router.get("/api/logs/{log_name}/insights")
-    async def get_log_insights(
-        log_name: str,
+    @router.get("/api/history/{run_id}/insights")
+    async def get_history_insights(
+        run_id: str,
         lang: str | None = Query(default=None),
-        include_samples: int = Query(default=0, ge=0, le=1),
     ) -> dict:
-        path = _safe_log_path(state, log_name)
-        try:
-            return summarize_log(path, lang=lang, include_samples=bool(include_samples))
-        except ValueError as exc:
-            LOGGER.warning("Failed to summarize log '%s': %s", log_name, exc)
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        run = state.history_db.get_run(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        if run["status"] == "analyzing":
+            return {"run_id": run_id, "status": "analyzing"}
+        if run["status"] == "error":
+            raise HTTPException(status_code=422, detail=run.get("error_message", "Analysis failed"))
+        analysis = run.get("analysis")
+        if analysis is None:
+            raise HTTPException(status_code=422, detail="No analysis available for this run")
+        return analysis
 
-    @router.get("/api/logs/{log_name}/report.pdf")
-    async def download_report_pdf(
-        log_name: str, lang: str | None = Query(default=None)
+    @router.delete("/api/history/{run_id}")
+    async def delete_history_run(run_id: str) -> dict:
+        active_run_id = state.history_db.get_active_run_id()
+        if active_run_id == run_id:
+            raise HTTPException(
+                status_code=409, detail="Cannot delete the active run; stop recording first"
+            )
+        deleted = state.history_db.delete_run(run_id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Run not found")
+        return {"run_id": run_id, "status": "deleted"}
+
+    @router.get("/api/history/{run_id}/report.pdf")
+    async def download_history_report_pdf(
+        run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
-        path = _safe_log_path(state, log_name)
-        try:
-            summary = summarize_log(path, lang=lang, include_samples=True)
-        except ValueError as exc:
-            LOGGER.warning("Failed to build report PDF for '%s': %s", log_name, exc)
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
-        pdf = build_report_pdf(summary)
+        run = state.history_db.get_run(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        analysis = run.get("analysis")
+        if analysis is None:
+            raise HTTPException(status_code=422, detail="No analysis available for this run")
+        # Re-attach samples for plots/PDF generation if not present
+        if "samples" not in analysis or not analysis["samples"]:
+            from .runlog import normalize_sample_record
+
+            raw_samples = state.history_db.get_run_samples(run_id)
+            analysis["samples"] = [normalize_sample_record(s) for s in raw_samples]
+            # Recompute full summary from stored data for the requested language
+            metadata = run.get("metadata", {})
+            try:
+                analysis = summarize_run_data(
+                    metadata,
+                    analysis["samples"],
+                    lang=lang,
+                    file_name=run_id,
+                    include_samples=True,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+        pdf = build_report_pdf(analysis)
         return Response(
             content=pdf,
             media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{path.stem}_report.pdf"'},
+            headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+        )
+
+    @router.get("/api/history/{run_id}/export")
+    async def export_history_run(run_id: str) -> Response:
+        run = state.history_db.get_run(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        metadata = run.get("metadata", {})
+        samples = state.history_db.get_run_samples(run_id)
+        lines: list[str] = []
+        lines.append(json.dumps(metadata, ensure_ascii=True))
+        for s in samples:
+            lines.append(json.dumps(s, ensure_ascii=True))
+        content = "\n".join(lines) + "\n"
+        return Response(
+            content=content,
+            media_type="application/x-ndjson",
+            headers={"Content-Disposition": f'attachment; filename="{run_id}.jsonl"'},
         )
 
     @router.websocket("/ws")

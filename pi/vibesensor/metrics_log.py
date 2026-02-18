@@ -8,6 +8,7 @@ from collections import deque
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
+from typing import TYPE_CHECKING
 from uuid import uuid4
 
 from .analysis_settings import (
@@ -21,11 +22,12 @@ from .gps_speed import GPSSpeedMonitor
 from .processing import SignalProcessor
 from .registry import ClientRegistry
 from .runlog import (
-    append_jsonl_records,
-    create_run_end_record,
     create_run_metadata,
     utc_now_iso,
 )
+
+if TYPE_CHECKING:
+    from .history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -46,6 +48,7 @@ class MetricsLogger:
         fft_window_type: str = "hann",
         peak_picker_method: str = "max_peak_amp_across_axes",
         accel_scale_g_per_lsb: float | None = None,
+        history_db: HistoryDB | None = None,
     ):
         self.enabled = bool(enabled)
         self.log_path = log_path
@@ -70,6 +73,7 @@ class MetricsLogger:
         self._run_start_utc: str | None = None
         self._run_start_mono_s: float | None = None
         self._metadata_written = False
+        self._history_db = history_db
         self._live_start_utc = utc_now_iso()
         self._live_start_mono_s = time.monotonic()
         self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
@@ -88,6 +92,12 @@ class MetricsLogger:
         self._run_start_utc = utc_now_iso()
         self._run_start_mono_s = time.monotonic()
         self._metadata_written = False
+        if self._history_db is not None and self._run_id:
+            metadata = self._run_metadata_record(self._run_id, self._run_start_utc)
+            try:
+                self._history_db.create_run(self._run_id, self._run_start_utc, metadata)
+            except Exception:
+                LOGGER.warning("Failed to create history run in DB", exc_info=True)
 
     def _session_snapshot(self) -> tuple[Path, str, str, float] | None:
         with self._lock:
@@ -124,7 +134,9 @@ class MetricsLogger:
 
     def stop_logging(self) -> dict[str, str | bool | None]:
         with self._lock:
+            run_id_to_analyze: str | None = None
             if self.enabled and self._active_path and self._run_id:
+                run_id_to_analyze = self._run_id
                 self._finalize_run_locked()
             self.enabled = False
             self._active_path = None
@@ -132,7 +144,10 @@ class MetricsLogger:
             self._run_start_utc = None
             self._run_start_mono_s = None
             self._metadata_written = False
-            return self.status()
+            result = self.status()
+        if run_id_to_analyze and self._history_db is not None:
+            self._run_post_analysis(run_id_to_analyze)
+        return result
 
     def analysis_snapshot(
         self,
@@ -195,9 +210,8 @@ class MetricsLogger:
         return metadata
 
     def _ensure_metadata_written(self, path: Path, run_id: str, start_time_utc: str) -> None:
-        if self._metadata_written and path.exists():
+        if self._metadata_written:
             return
-        append_jsonl_records(path, [self._run_metadata_record(run_id, start_time_utc)])
         self._metadata_written = True
 
     @staticmethod
@@ -394,19 +408,47 @@ class MetricsLogger:
         t_s = max(0.0, now_mono_s - run_start_mono_s)
         timestamp_utc = utc_now_iso()
         rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
-        if rows:
-            append_jsonl_records(path, rows)
+        if rows and self._history_db is not None:
+            try:
+                self._history_db.append_samples(run_id, rows)
+            except Exception:
+                LOGGER.warning("Failed to append samples to history DB", exc_info=True)
 
     def _finalize_run_locked(self) -> None:
         if self._active_path is None or not self._run_id:
             return
-        self._ensure_metadata_written(
-            self._active_path, self._run_id, self._run_start_utc or utc_now_iso()
-        )
-        append_jsonl_records(
-            self._active_path,
-            [create_run_end_record(run_id=self._run_id, end_time_utc=utc_now_iso())],
-        )
+        end_utc = utc_now_iso()
+        if self._history_db is not None:
+            try:
+                self._history_db.finalize_run(self._run_id, end_utc)
+            except Exception:
+                LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
+
+    def _run_post_analysis(self, run_id: str) -> None:
+        """Run thorough post-run analysis and store results in history DB."""
+        if self._history_db is None:
+            return
+        try:
+            from .report_analysis import summarize_run_data
+            from .runlog import normalize_sample_record
+
+            metadata = self._history_db.get_run_metadata(run_id)
+            if metadata is None:
+                LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
+                return
+            raw_samples = self._history_db.get_run_samples(run_id)
+            samples = [normalize_sample_record(s) for s in raw_samples]
+            summary = summarize_run_data(
+                metadata, samples, lang=None, file_name=run_id, include_samples=False
+            )
+            self._history_db.store_analysis(run_id, summary)
+            LOGGER.info("Post-run analysis complete for run %s (%d samples)", run_id, len(samples))
+        except Exception as exc:
+            LOGGER.warning("Post-run analysis failed for run %s: %s", run_id, exc, exc_info=True)
+            try:
+                self._history_db.store_analysis_error(run_id, str(exc))
+            except Exception:
+                LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
 
     async def run(self) -> None:
         interval = 1.0 / self.metrics_log_hz

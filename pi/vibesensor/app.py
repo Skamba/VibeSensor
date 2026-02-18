@@ -18,6 +18,7 @@ from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
 from .config import PI_DIR, AppConfig, load_config
 from .gps_speed import GPSSpeedMonitor
+from .history_db import HistoryDB
 from .live_diagnostics import LiveDiagnosticsEngine
 from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
@@ -43,6 +44,7 @@ class RuntimeState:
     metrics_logger: MetricsLogger
     live_diagnostics: LiveDiagnosticsEngine
     settings_store: SettingsStore
+    history_db: HistoryDB
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
@@ -137,6 +139,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     ss = settings_store.get_speed_source()
     if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
         gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
+    history_db = HistoryDB(config.logging.history_db_path)
     metrics_logger = MetricsLogger(
         enabled=config.logging.log_metrics,
         log_path=config.logging.metrics_log_path,
@@ -151,6 +154,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         fft_window_type="hann",
         peak_picker_method="canonical_strength_metrics_module",
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        history_db=history_db,
     )
     live_diagnostics = LiveDiagnosticsEngine()
 
@@ -165,6 +169,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         metrics_logger=metrics_logger,
         live_diagnostics=live_diagnostics,
         settings_store=settings_store,
+        history_db=history_db,
     )
 
     async def processing_loop() -> None:
