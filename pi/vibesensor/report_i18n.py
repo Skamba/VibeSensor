@@ -175,8 +175,8 @@ _TRANSLATIONS: dict[str, dict[str, str]] = {
         "nl": "Log motortoerental via CAN/OBD voor de hele run, of geef aandrijflijnverhoudingen op.",
     },
     "LOW": {"en": "Low", "nl": "Laag"},
-    "MAX_AMPLITUDE_G": {"en": "Max Amplitude (g)", "nl": "Maximale amplitude (g)"},
-    "MEAN_AMPLITUDE_G": {"en": "Mean Amplitude (g)", "nl": "Gemiddelde amplitude (g)"},
+    "MAX_AMPLITUDE_G": {"en": "Max Strength (dB)", "nl": "Maximale sterkte (dB)"},
+    "MEAN_AMPLITUDE_G": {"en": "Mean Strength (dB)", "nl": "Gemiddelde sterkte (dB)"},
     "MEAN_G": {"en": "Mean (g)", "nl": "Gemiddelde (g)"},
     "MEASURED_ENGINE_RPM": {"en": "measured engine RPM", "nl": "gemeten motortoerental"},
     "MEASURED_RPM_BASED_ORDER_MATCHING_DISAGREES_WITH_DERIVED": {
