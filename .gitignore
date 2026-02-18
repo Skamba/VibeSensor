@@ -65,6 +65,10 @@ image/pi-gen/out/*
 build_artifacts/*
 !build_artifacts/.gitkeep
 
+# AI workflow artifacts
+artifacts/ai/*
+!artifacts/ai/.gitkeep
+
 # Frontend build/runtime artifacts
 ui/node_modules/
 ui/dist/

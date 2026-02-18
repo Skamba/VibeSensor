@@ -40,6 +40,7 @@ testpaths = ["tests"]
 markers = [
     "selenium: browser-based UI tests",
     "long_sim: longer simulated-run tests (>20 s of synthetic data)",
+  "smoke: minimal critical path checks",
 ]
 
 [tool.ruff]
