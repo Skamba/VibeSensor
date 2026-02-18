@@ -111,17 +111,14 @@ def _ap_cfg(tmp_path: Path, *, allow_disable_resolved_stub_listener: bool = Fals
 
 def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult]]:
     nm_dnsmasq = (
-        "123 dnsmasq --conf-file=/dev/null "
-        "--enable-dbus=org.freedesktop.NetworkManager.dnsmasq"
+        "123 dnsmasq --conf-file=/dev/null --enable-dbus=org.freedesktop.NetworkManager.dnsmasq"
     )
     return {
         ("systemctl", "is-active", "NetworkManager"): [_ok("active")],
         ("nmcli", "-t", "-f", "WIFI", "general", "status"): [_ok("enabled")],
         ("nmcli", "device", "status"): [_ok("DEVICE  TYPE  STATE  CONNECTION")],
         ("nmcli", "general", "status"): [_ok("STATE connected")],
-        ("nmcli", "connection", "show", ap.con_name): [
-            _ok("connection.id:VibeSensor-AP")
-        ],
+        ("nmcli", "connection", "show", ap.con_name): [_ok("connection.id:VibeSensor-AP")],
         ("nmcli", "connection", "show", "--active"): [
             _ok(f"NAME  DEVICE\n{ap.con_name}  {ap.ifname}")
         ],

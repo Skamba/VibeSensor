@@ -119,9 +119,7 @@ class _FakeProcessor:
     def latest_sample_rate_hz(self, client_id: str):
         return 800
 
-    def clients_with_recent_data(
-        self, client_ids: list[str], max_age_s: float = 3.0
-    ) -> list[str]:
+    def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         # In the fake, treat all provided clients as having recent data.
         return list(client_ids)
 
