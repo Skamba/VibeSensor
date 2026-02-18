@@ -23,8 +23,8 @@
           <button type="button" class="menu-btn active" data-view="dashboardView" id="tab-dashboard" role="tab" aria-controls="dashboardView" aria-selected="true" tabindex="0">
             <span data-i18n="nav.live">Live</span>
           </button>
-          <button type="button" class="menu-btn" data-view="logsView" id="tab-logs" role="tab" aria-controls="logsView" aria-selected="false" tabindex="-1">
-            <span data-i18n="nav.logs">Logs</span>
+          <button type="button" class="menu-btn" data-view="historyView" id="tab-history" role="tab" aria-controls="historyView" aria-selected="false" tabindex="-1">
+            <span data-i18n="nav.history">History</span>
           </button>
           <button type="button" class="menu-btn" data-view="settingsView" id="tab-settings" role="tab" aria-controls="settingsView" aria-selected="false" tabindex="-1">
             <span data-i18n="nav.settings">Settings</span>
@@ -83,14 +83,14 @@
           <div class="dashboard-grid__side">
             <div class="panel card">
               <div class="card__header">
-                <div class="card__title" data-i18n="dashboard.run_logging">Run Logging</div>
+                <div class="card__title" data-i18n="dashboard.run_recording">Run Recording</div>
               </div>
               <div class="logging-row">
                 <span id="loggingStatus" class="pill pill--muted">Stopped</span>
               </div>
               <div class="logging-actions">
-                <button id="startLoggingBtn" class="btn" data-i18n="dashboard.start_logging">Start Logging</button>
-                <button id="stopLoggingBtn" class="btn" data-i18n="dashboard.stop_logging">Stop Logging</button>
+                <button id="startLoggingBtn" class="btn" data-i18n="dashboard.start_recording">Start Recording</button>
+                <button id="stopLoggingBtn" class="btn" data-i18n="dashboard.stop_recording">Stop Recording</button>
               </div>
               <div class="live-speed-readout">
                 <div id="speed" class="speed">Speed --</div>
@@ -127,34 +127,34 @@
         </div>
       </section>
 
-      <section id="logsView" class="view" role="tabpanel" aria-labelledby="tab-logs" hidden>
+      <section id="historyView" class="view" role="tabpanel" aria-labelledby="tab-history" hidden>
         <div class="panel card">
           <div class="log-actions">
             <div class="field">
               <label>&nbsp;</label>
-              <button id="refreshLogsBtn" class="btn btn--primary" data-i18n="logs.refresh">Refresh Logs</button>
+              <button id="refreshHistoryBtn" class="btn btn--primary" data-i18n="history.refresh">Refresh History</button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <button id="deleteAllLogsBtn" class="btn btn--danger" data-i18n="logs.delete_all" disabled>Delete All Logs</button>
+              <button id="deleteAllRunsBtn" class="btn btn--danger" data-i18n="history.delete_all" disabled>Delete All Runs</button>
             </div>
             <div class="field">
               <label>&nbsp;</label>
-              <div id="logsSummary" class="subtle">No log files yet.</div>
+              <div id="historySummary" class="subtle">No runs yet.</div>
             </div>
           </div>
-          <table class="logs-table">
+          <table class="history-table">
             <thead>
               <tr>
-                <th data-i18n="logs.table.file">File</th>
-                <th data-i18n="logs.table.updated">Updated</th>
-                <th class="numeric" data-i18n="logs.table.size">Size</th>
-                <th data-i18n="logs.table.actions">Actions</th>
+                <th data-i18n="history.table.file">File</th>
+                <th data-i18n="history.table.updated">Updated</th>
+                <th class="numeric" data-i18n="history.table.size">Size</th>
+                <th data-i18n="history.table.actions">Actions</th>
               </tr>
             </thead>
-            <tbody id="logsTableBody">
+            <tbody id="historyTableBody">
               <tr>
-                <td colspan="4">No logs found.</td>
+                <td colspan="4">No runs found.</td>
               </tr>
             </tbody>
           </table>

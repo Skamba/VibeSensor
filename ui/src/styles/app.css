@@ -474,13 +474,13 @@ input:focus-visible,
 
 .matrix-wrap { overflow-x: auto; margin-top: var(--space-3); }
 .vib-matrix,
-.logs-table,
+.history-table,
 .clients-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 
 .vib-matrix th,
 .vib-matrix td,
-.logs-table th,
-.logs-table td,
+.history-table th,
+.history-table td,
 .clients-table th,
 .clients-table td {
   border-bottom: 1px solid var(--border);
@@ -490,7 +490,7 @@ input:focus-visible,
 }
 
 .vib-matrix th,
-.logs-table th,
+.history-table th,
 .clients-table th {
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -499,37 +499,37 @@ input:focus-visible,
   background: var(--surface-2);
 }
 
-.logs-table th,
+.history-table th,
 .clients-table th { position: sticky; top: 0; z-index: 2; }
 .vib-matrix td,
 .vib-matrix th { text-align: center; }
 .vib-matrix th:first-child,
 .vib-matrix td:first-child { text-align: left; }
 .vib-matrix tr:nth-child(even) td,
-.logs-table tbody tr:nth-child(even) td,
+.history-table tbody tr:nth-child(even) td,
 .clients-table tbody tr:nth-child(even) td { background: var(--row-even); }
 .vib-matrix tbody tr:hover td,
-.logs-table tbody tr:hover td,
+.history-table tbody tr:hover td,
 .clients-table tbody tr:hover td { background: var(--row-hover); }
 
-.logs-row { cursor: pointer; }
-.logs-row .table-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.logs-row .table-actions .btn { min-width: 100px; }
-.logs-row--expanded td { background: var(--surface-2) !important; }
-.logs-details-row td { padding: 0 !important; background: transparent !important; border-bottom: 0; }
-.logs-details-card {
+.history-row { cursor: pointer; }
+.history-row .table-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.history-row .table-actions .btn { min-width: 100px; }
+.history-row--expanded td { background: var(--surface-2) !important; }
+.history-details-row td { padding: 0 !important; background: transparent !important; border-bottom: 0; }
+.history-details-card {
   margin: var(--space-2) 0 var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   padding: var(--space-3);
 }
-.logs-run-summary {
+.history-run-summary {
   margin-bottom: var(--space-3);
   color: var(--muted);
   font-size: 0.82rem;
 }
-.logs-details-preview {
+.history-details-preview {
   display: grid;
   gap: var(--space-3);
   grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
@@ -559,31 +559,31 @@ input:focus-visible,
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
 .mini-car-dot--muted { opacity: 0.45; }
-.logs-preview-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-.logs-preview-table th,
-.logs-preview-table td {
+.history-preview-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.history-preview-table th,
+.history-preview-table td {
   border-bottom: 1px solid var(--border);
   padding: 0.35rem 0.45rem;
 }
-.logs-preview-table th {
+.history-preview-table th {
   color: var(--muted);
   font-size: 0.74rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.logs-inline-error {
+.history-inline-error {
   display: inline-flex;
   margin-top: var(--space-2);
   color: var(--danger);
   font-size: 0.82rem;
 }
-.logs-insights-actions {
+.history-insights-actions {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin-top: var(--space-3);
 }
-.logs-findings-list {
+.history-findings-list {
   margin: var(--space-2) 0 0;
   padding-left: 1.1rem;
   font-size: 0.85rem;
@@ -726,7 +726,7 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
     width: 100%;
     min-width: 0;
   }
-  .logs-details-preview { grid-template-columns: 1fr; }
+  .history-details-preview { grid-template-columns: 1fr; }
 }
 
 .strength-chart {
@@ -824,7 +824,7 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
   td.vib-cell[data-severity="l2"] { background: rgba(74, 222, 128, 0.08); }
   td.vib-cell[data-severity="l1"] { background: rgba(139, 92, 246, 0.08); }
 
-  .logs-row--expanded td { background: var(--surface-2) !important; }
+  .history-row--expanded td { background: var(--surface-2) !important; }
 
   .uplot .u-select { background: rgba(167, 139, 250, 0.15); }
 
@@ -865,8 +865,8 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
 
   .vib-matrix th,
   .vib-matrix td,
-  .logs-table th,
-  .logs-table td,
+  .history-table th,
+  .history-table td,
   .clients-table th,
   .clients-table td {
     padding: 0.75rem;
