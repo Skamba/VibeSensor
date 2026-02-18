@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vibesensor.local/contracts/ingestion_payload.schema.json",
+  "title": "ESP Ingestion Payload",
+  "type": "object",
+  "required": ["client_name", "samples"],
+  "properties": {
+    "client_name": { "type": "string", "minLength": 1 },
+    "seq": { "type": ["integer", "number"] },
+    "timestamp_ms": { "type": ["integer", "number"] },
+    "samples": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["x_g", "y_g", "z_g"],
+        "properties": {
+          "x_g": { "type": "number" },
+          "y_g": { "type": "number" },
+          "z_g": { "type": "number" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": true
+}

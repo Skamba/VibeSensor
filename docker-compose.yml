@@ -2,10 +2,10 @@ services:
   vibesensor-server:
     build:
       context: .
-      dockerfile: pi/Dockerfile
+      dockerfile: infra/docker/server.Dockerfile
     environment:
       - VIBESENSOR_SERVE_STATIC=1
     network_mode: host
     volumes:
-      - ./pi/data:/app/pi/data
+      - ./apps/server/data:/app/apps/server/data
     restart: unless-stopped
