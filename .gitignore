@@ -56,6 +56,9 @@ apps/server/data/*.db-wal
 apps/server/data/clients.json
 apps/server/wifi-secrets.env
 
+# Firmware build artifacts
+firmware/esp/.pio/
+
 # Image build artifacts
 infra/pi-image/pi-gen/.cache/
 infra/pi-image/pi-gen/out/*
