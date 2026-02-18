@@ -8,7 +8,7 @@ Use `docs/ai/repo-map.md` first, then read only the minimal files needed.
 - Build Pi image: `./infra/pi-image/pi-gen/build.sh`
 - Firmware build/flash: `cd firmware/esp && pio run -t upload`
 - UI dev/build: `cd apps/ui && npm run dev` / `cd apps/ui && npm run typecheck && npm run build`
-- Lint/test/format/smoke: `make lint` / `make test` / `make format` / `make smoke`
+- Lint/test/format/smoke/loc: `make lint` / `make test` / `make format` / `make smoke` / `make loc`
 
 ## Invariants
 - Shared contracts in `libs/shared/contracts` are canonical.

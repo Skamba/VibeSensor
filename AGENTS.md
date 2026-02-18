@@ -11,7 +11,6 @@ Run server
 
 Build Pi image
 - Canonical: `./infra/pi-image/pi-gen/build.sh`
-- Legacy alias remains: `./image/pi-gen/build.sh`
 
 Firmware (ESP)
 - Build/flash: `cd firmware/esp && pio run -t upload`
@@ -26,6 +25,7 @@ Deterministic commands
 - Lint: `make lint`
 - Test: `make test`
 - Smoke: `make smoke`
+- LOC: `make loc`
 
 Architecture map
 - `apps/server`: FastAPI/runtime composition and orchestration

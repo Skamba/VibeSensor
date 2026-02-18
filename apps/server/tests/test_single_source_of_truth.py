@@ -193,7 +193,7 @@ def test_config_preflight_no_removed_fields() -> None:
     import sys
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(root / "tools" / "config"))
     preflight_path = root / "tools" / "config" / "config_preflight.py"
     source = preflight_path.read_text(encoding="utf-8")
@@ -217,10 +217,10 @@ def test_simulator_defaults_match_analysis_settings() -> None:
     import sys
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
-    sys.path.insert(0, str(root / "tools" / "simulator"))
+    root = Path(__file__).resolve().parents[3]
+    sys.path.insert(0, str(root / "apps" / "simulator"))
     # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
-    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    sim_source = (root / "apps" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
     # The simulator should NOT contain hardcoded tire/vehicle values as literal assignments
     for line in sim_source.splitlines():
         stripped = line.strip()
@@ -238,8 +238,8 @@ def test_simulator_no_production_asserts() -> None:
     """Simulator module-level and standalone functions must not use bare assert."""
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
-    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    root = Path(__file__).resolve().parents[3]
+    sim_source = (root / "apps" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
     lines = sim_source.splitlines()
     in_method = False
     for i, line in enumerate(lines, 1):
@@ -277,10 +277,9 @@ def test_esp_protocol_constants_match_python() -> None:
         VERSION,
     )
 
-    root = Path(__file__).resolve().parents[2]
-    header = (root / "esp" / "lib" / "vibesensor_proto" / "vibesensor_proto.h").read_text(
-        encoding="utf-8"
-    )
+    root = Path(__file__).resolve().parents[3]
+    header_path = root / "firmware" / "esp" / "lib" / "vibesensor_proto" / "vibesensor_proto.h"
+    header = header_path.read_text(encoding="utf-8")
 
     def _cpp_const(name: str) -> int:
         """Extract a simple integer constexpr value from the header."""
@@ -340,7 +339,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
         HELLO_FIXED_BYTES,
     )
 
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     doc = (root / "docs" / "protocol.md").read_text(encoding="utf-8")
 
     expected = {
@@ -420,8 +419,8 @@ def test_esp_ports_match_python_defaults() -> None:
     import re
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
-    main_cpp = (root / "esp" / "src" / "main.cpp").read_text(encoding="utf-8")
+    root = Path(__file__).resolve().parents[3]
+    main_cpp = (root / "firmware" / "esp" / "src" / "main.cpp").read_text(encoding="utf-8")
 
     m_data = re.search(r"kServerDataPort\s*=\s*(\d+)", main_cpp)
     m_ctrl = re.search(r"kServerControlPort\s*=\s*(\d+)", main_cpp)

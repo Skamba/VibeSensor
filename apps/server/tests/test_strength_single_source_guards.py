@@ -33,8 +33,8 @@ def test_report_analysis_uses_shared_strength_math() -> None:
 
 
 def test_client_assets_do_not_compute_strength_metrics() -> None:
-    repo_root = Path(__file__).resolve().parents[2]
-    candidate_dirs = [repo_root / "ui" / "dist", repo_root / "pi" / "public"]
+    repo_root = Path(__file__).resolve().parents[3]
+    candidate_dirs = [repo_root / "apps" / "ui" / "dist", repo_root / "apps" / "server" / "public"]
     forbidden_patterns = [
         re.compile(r"Math\.log10|log10\("),
         re.compile(r"detectVibrationEvents"),
@@ -85,8 +85,8 @@ def test_typescript_any_type_budget() -> None:
 
     Only the demo cleanup window hook is allowed.
     """
-    repo_root = Path(__file__).resolve().parents[2]
-    ui_src = repo_root / "ui" / "src"
+    repo_root = Path(__file__).resolve().parents[3]
+    ui_src = repo_root / "apps" / "ui" / "src"
     any_pattern = re.compile(r"\bas\s+any\b|:\s*any\b")
     # Allowlist: window test hook and large untyped state bags in main.ts
     allowlist = {

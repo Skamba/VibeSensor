@@ -34,6 +34,10 @@ jobs:
           ruff check apps/server/vibesensor apps/server/tests apps/simulator
           ruff format --check apps/server/vibesensor apps/server/tests apps/simulator
 
+      - name: LOC policy
+        run: |
+          make loc
+
       - name: Line endings
         run: |
           python tools/config/check_line_endings.py

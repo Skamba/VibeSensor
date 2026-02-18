@@ -26,9 +26,9 @@ from urllib.request import Request, urlopen
 import pytest
 from pypdf import PdfReader
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "pi"))
-sys.path.insert(0, str(ROOT / "tools" / "simulator"))
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / "apps" / "server"))
+sys.path.insert(0, str(ROOT / "apps" / "simulator"))
 
 from sim_sender import (  # noqa: E402
     SimClient,
@@ -269,7 +269,7 @@ def server(tmp_path):
 
     proc = subprocess.Popen(
         [sys.executable, "-m", "vibesensor.app", "--config", str(cfg)],
-        cwd=str(ROOT / "pi"),
+        cwd=str(ROOT),
         env=env,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,

@@ -55,6 +55,7 @@ apps/server/data/*.db-shm
 apps/server/data/*.db-wal
 apps/server/data/clients.json
 apps/server/wifi-secrets.env
+apps/apps/
 
 # Firmware build artifacts
 firmware/esp/.pio/
