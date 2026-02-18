@@ -36,7 +36,10 @@ packages = ["vibesensor", "vibesensor.analysis"]
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
-markers = ["selenium: browser-based UI tests"]
+markers = [
+    "selenium: browser-based UI tests",
+    "long_sim: longer simulated-run tests (>20 s of synthetic data)",
+]
 
 [tool.ruff]
 line-length = 100
