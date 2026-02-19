@@ -47,10 +47,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
   │  sensor node │  ◄──────────────────────────│  FastAPI server  │
   └──────────────┘                             │  + FFT engine    │
                                                │  + report gen    │
-  ┌──────────────┐      UDP 9000 (data)        │                  │
-  │  ESP32 + ────│──────────────────────────►  │                  │
-  │  ADXL345     │                             │                  │
-  └──────────────┘                             └────────┬─────────┘
+                                               └────────┬─────────┘
                                                         │
         ┌───────────┐    HTTP 8000 + WebSocket  ────────┘
         │  Phone /  │◄──────────────────────────────────
