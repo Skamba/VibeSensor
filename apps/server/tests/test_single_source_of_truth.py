@@ -277,10 +277,9 @@ def test_esp_protocol_constants_match_python() -> None:
         VERSION,
     )
 
-    root = Path(__file__).resolve().parents[2]
-    header = (root / "esp" / "lib" / "vibesensor_proto" / "vibesensor_proto.h").read_text(
-        encoding="utf-8"
-    )
+    root = Path(__file__).resolve().parents[3]
+    proto_h = root / "firmware" / "esp" / "lib" / "vibesensor_proto" / "vibesensor_proto.h"
+    header = proto_h.read_text(encoding="utf-8")
 
     def _cpp_const(name: str) -> int:
         """Extract a simple integer constexpr value from the header."""
@@ -340,7 +339,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
         HELLO_FIXED_BYTES,
     )
 
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     doc = (root / "docs" / "protocol.md").read_text(encoding="utf-8")
 
     expected = {
@@ -420,8 +419,8 @@ def test_esp_ports_match_python_defaults() -> None:
     import re
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
-    main_cpp = (root / "esp" / "src" / "main.cpp").read_text(encoding="utf-8")
+    root = Path(__file__).resolve().parents[3]
+    main_cpp = (root / "firmware" / "esp" / "src" / "main.cpp").read_text(encoding="utf-8")
 
     m_data = re.search(r"kServerDataPort\s*=\s*(\d+)", main_cpp)
     m_ctrl = re.search(r"kServerControlPort\s*=\s*(\d+)", main_cpp)

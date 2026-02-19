@@ -34,7 +34,7 @@ def test_report_analysis_uses_shared_strength_math() -> None:
 
 def test_client_assets_do_not_compute_strength_metrics() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    candidate_dirs = [repo_root / "ui" / "dist", repo_root / "pi" / "public"]
+    candidate_dirs = [repo_root / "ui" / "dist", repo_root / "server" / "public"]
     forbidden_patterns = [
         re.compile(r"Math\.log10|log10\("),
         re.compile(r"detectVibrationEvents"),
