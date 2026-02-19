@@ -2,7 +2,7 @@ services:
   vibesensor-server:
     build:
       context: .
-      dockerfile: infra/docker/server.Dockerfile
+      dockerfile: apps/server/Dockerfile
     environment:
       - VIBESENSOR_SERVE_STATIC=1
     network_mode: host

@@ -20,7 +20,7 @@ specific vibration scenarios.
 ## Run
 
 ```bash
-python tools/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
+vibesensor-sim --count 5 --server-host 127.0.0.1
 ```
 
 With default settings and a TTY, interactive mode is enabled. You can keep this running while using the web UI.
@@ -54,7 +54,7 @@ Useful options:
 Deterministic fault scenarios for reproducible testing:
 
 ```bash
-python tools/simulator/sim_sender.py \
+vibesensor-sim \
   --server-host 127.0.0.1 \
   --count 5 \
   --names front-left,front-right,rear-left,rear-right,trunk \

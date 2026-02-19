@@ -85,7 +85,7 @@
   contain only the fields that differ from the built-in defaults (path
   overrides), reducing duplication from ~40 lines each to ~6 lines.
 - **All ruff lint and format issues resolved** — Zero remaining E501, F841, and
-  I001 violations across `pi/vibesensor`, `pi/tests`, and `tools/simulator`.
+  I001 violations across `pi/vibesensor`, `pi/tests`, and `apps/simulator`.
 - **CI lint step now fails the build** — Removed `continue-on-error: true` from
   the ruff lint step so formatting/style regressions block the pipeline.
 - **Added logging to silent exception handlers** — `registry.py`,
