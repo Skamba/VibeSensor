@@ -6,8 +6,6 @@ from .analysis.vibration_strength import _percentile  # noqa: F401
 from .report.findings import (  # noqa: F401
     _build_findings,
     _build_order_findings,
-    _location_speedbin_summary,
-    _merge_test_plan,
     _reference_missing_finding,
     _sensor_intensity_by_location,
     _speed_breakdown,
@@ -57,6 +55,7 @@ from .report.summary import (  # noqa: F401
     summarize_log,
     summarize_run_data,
 )
+from .report.test_plan import _location_speedbin_summary, _merge_test_plan  # noqa: F401
 from .runlog import as_float_or_none as _as_float  # noqa: F401
 
 __all__ = [
