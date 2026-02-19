@@ -12,22 +12,15 @@ import {
 } from "../api";
 
 export function createVehicleConfigFeature(ctx) {
-  const { state, els, t, settingsStorageKey, escapeHtml, fmt } = ctx;
+  const { state, els, t, escapeHtml, fmt } = ctx;
 
   function loadVehicleSettings() {
-    try {
-      const raw = window.localStorage.getItem(settingsStorageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (typeof parsed !== "object" || !parsed) return;
-      for (const key of Object.keys(state.vehicleSettings)) {
-        if (typeof parsed[key] === "number") state.vehicleSettings[key] = parsed[key];
-      }
-    } catch (_err) {}
+    // Settings are loaded from server via loadAnalysisSettingsFromServer.
+    // This function is kept as a no-op for call-site compatibility.
   }
 
   function saveVehicleSettings() {
-    window.localStorage.setItem(settingsStorageKey, JSON.stringify(state.vehicleSettings));
+    // Vehicle settings are synced to server, no local persistence needed.
   }
 
   function syncSettingsInputs() {

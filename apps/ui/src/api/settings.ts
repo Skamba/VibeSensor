@@ -1,6 +1,30 @@
 import { apiJson } from "./http";
 import type { CarsPayload, SpeedSourcePayload } from "./types";
 
+export async function getSettingsLanguage(): Promise<{ language: string }> {
+  return apiJson("/api/settings/language");
+}
+
+export async function setSettingsLanguage(language: string): Promise<{ language: string }> {
+  return apiJson("/api/settings/language", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ language }),
+  });
+}
+
+export async function getSettingsSpeedUnit(): Promise<{ speedUnit: string }> {
+  return apiJson("/api/settings/speed-unit");
+}
+
+export async function setSettingsSpeedUnit(speedUnit: string): Promise<{ speedUnit: string }> {
+  return apiJson("/api/settings/speed-unit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ speedUnit }),
+  });
+}
+
 export async function getSpeedOverride(): Promise<{ speed_kmh: number | null }> {
   return apiJson("/api/speed-override");
 }

@@ -1,7 +1,8 @@
-"""SQLite-backed persistence for VibeSensor run history.
+"""SQLite-backed persistence for the VibeSensor server.
 
-Stores run metadata, samples and analysis outputs in a single file –
-lightweight enough for a Raspberry Pi 3A+.
+Stores run history (metadata, samples, analysis), application settings
+and client names in a single file – lightweight enough for a
+Raspberry Pi 3A+.
 """
 
 from __future__ import annotations
@@ -22,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
 
 # -- Schema -------------------------------------------------------------------
 
-_SCHEMA_VERSION = 2
+_SCHEMA_VERSION = 3
 
 _SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -49,6 +50,18 @@ CREATE TABLE IF NOT EXISTS samples (
 );
 
 CREATE INDEX IF NOT EXISTS idx_samples_run_id ON samples(run_id);
+
+CREATE TABLE IF NOT EXISTS settings_kv (
+    key         TEXT PRIMARY KEY,
+    value_json  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS client_names (
+    client_id   TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
 """
 
 
@@ -95,9 +108,19 @@ class HistoryDB:
                 )
                 return
             version = int(str(row[0]))
-            if version == 1:
-                self._migrate_v1_to_v2()
-                cur.execute("UPDATE schema_meta SET value = ? WHERE key = ?", ("2", "version"))
+            if version < 1:
+                raise RuntimeError(
+                    f"Unsupported history DB schema version {version}; expected {_SCHEMA_VERSION}"
+                )
+            if version < _SCHEMA_VERSION:
+                if version < 2:
+                    self._migrate_v1_to_v2()
+                if version < 3:
+                    self._migrate_v2_to_v3()
+                cur.execute(
+                    "UPDATE schema_meta SET value = ? WHERE key = ?",
+                    (str(_SCHEMA_VERSION), "version"),
+                )
             elif version != _SCHEMA_VERSION:
                 raise RuntimeError(
                     f"Unsupported history DB schema version {version}; expected {_SCHEMA_VERSION}"
@@ -111,6 +134,24 @@ class HistoryDB:
             self._conn.execute(
                 "UPDATE runs SET sample_count = "
                 "(SELECT COUNT(*) FROM samples s WHERE s.run_id = runs.run_id)"
+            )
+
+    def _migrate_v2_to_v3(self) -> None:
+        """Add settings_kv and client_names tables."""
+        with self._lock:
+            self._conn.executescript(
+                """\
+CREATE TABLE IF NOT EXISTS settings_kv (
+    key         TEXT PRIMARY KEY,
+    value_json  TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS client_names (
+    client_id   TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
+    updated_at  TEXT NOT NULL
+);
+"""
             )
 
     # -- write ----------------------------------------------------------------
@@ -298,3 +339,52 @@ class HistoryDB:
                 ("Recovered stale recording during startup",),
             )
             return cur.rowcount
+
+    # -- settings KV ----------------------------------------------------------
+
+    def get_setting(self, key: str) -> Any | None:
+        with self._cursor() as cur:
+            cur.execute("SELECT value_json FROM settings_kv WHERE key = ?", (key,))
+            row = cur.fetchone()
+        if row is None:
+            return None
+        return json.loads(row[0])
+
+    def set_setting(self, key: str, value: Any) -> None:
+        now = datetime.now(UTC).isoformat()
+        with self._cursor() as cur:
+            cur.execute(
+                "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, "
+                "updated_at = excluded.updated_at",
+                (key, json.dumps(value, ensure_ascii=False), now),
+            )
+
+    def get_settings_snapshot(self) -> dict[str, Any] | None:
+        return self.get_setting("settings_snapshot")
+
+    def set_settings_snapshot(self, snapshot: dict[str, Any]) -> None:
+        self.set_setting("settings_snapshot", snapshot)
+
+    # -- client names ---------------------------------------------------------
+
+    def list_client_names(self) -> dict[str, str]:
+        with self._cursor() as cur:
+            cur.execute("SELECT client_id, name FROM client_names")
+            rows = cur.fetchall()
+        return {row[0]: row[1] for row in rows}
+
+    def upsert_client_name(self, client_id: str, name: str) -> None:
+        now = datetime.now(UTC).isoformat()
+        with self._cursor() as cur:
+            cur.execute(
+                "INSERT INTO client_names (client_id, name, updated_at) VALUES (?, ?, ?) "
+                "ON CONFLICT(client_id) DO UPDATE SET name = excluded.name, "
+                "updated_at = excluded.updated_at",
+                (client_id, name, now),
+            )
+
+    def delete_client_name(self, client_id: str) -> bool:
+        with self._cursor() as cur:
+            cur.execute("DELETE FROM client_names WHERE client_id = ?", (client_id,))
+            return cur.rowcount > 0

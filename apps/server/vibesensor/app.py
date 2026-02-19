@@ -122,8 +122,13 @@ class RuntimeState:
 def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
 
+    history_db = HistoryDB(config.logging.history_db_path)
+    recovered_runs = history_db.recover_stale_recording_runs()
+    if recovered_runs:
+        LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
+
     registry = ClientRegistry(
-        config.clients_json_path,
+        db=history_db,
         stale_ttl_seconds=config.processing.client_ttl_seconds,
     )
     accel_scale_g_per_lsb = (
@@ -147,17 +152,12 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     )
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     analysis_settings = AnalysisSettingsStore()
-    settings_persist = config.clients_json_path.parent / "settings.json"
-    settings_store = SettingsStore(persist_path=settings_persist)
+    settings_store = SettingsStore(db=history_db)
     # Sync initial settings into analysis store and GPS monitor
     analysis_settings.update(settings_store.active_car_aspects())
     ss = settings_store.get_speed_source()
     if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
         gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
-    history_db = HistoryDB(config.logging.history_db_path)
-    recovered_runs = history_db.recover_stale_recording_runs()
-    if recovered_runs:
-        LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
     metrics_logger = MetricsLogger(
         enabled=config.logging.log_metrics,
         log_path=config.logging.metrics_log_path,
@@ -173,10 +173,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         peak_picker_method="canonical_strength_metrics_module",
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         history_db=history_db,
-        write_jsonl=config.logging.write_metrics_jsonl,
         persist_history_db=config.logging.persist_history_db,
-        durable_jsonl_writes=config.logging.durable_jsonl_writes,
-        durable_jsonl_fsync_every_records=config.logging.durable_jsonl_fsync_every_records,
         language_provider=lambda: settings_store.language,
     )
     live_diagnostics = LiveDiagnosticsEngine()

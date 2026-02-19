@@ -23,6 +23,10 @@ export {
   getSettingsSensors,
   updateSettingsSensor,
   deleteSettingsSensor,
+  getSettingsLanguage,
+  setSettingsLanguage,
+  getSettingsSpeedUnit,
+  setSettingsSpeedUnit,
 } from "./api/settings";
 export { getCarLibraryBrands, getCarLibraryTypes, getCarLibraryModels } from "./api/car_library";
 export {

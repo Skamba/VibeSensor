@@ -4,12 +4,14 @@ from pathlib import Path
 
 import numpy as np
 
+from vibesensor.history_db import HistoryDB
 from vibesensor.protocol import DataMessage, HelloMessage
 from vibesensor.registry import ClientRegistry
 
 
 def test_registry_sequence_gap(tmp_path: Path) -> None:
-    registry = ClientRegistry(tmp_path / "clients.json")
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("aabbccddeeff")
 
     hello = HelloMessage(
@@ -34,12 +36,12 @@ def test_registry_sequence_gap(tmp_path: Path) -> None:
 
 
 def test_registry_rename_persist(tmp_path: Path) -> None:
-    persist = tmp_path / "clients.json"
-    registry = ClientRegistry(persist)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = "001122334455"
     registry.set_name(client_id, "rear")
 
-    registry2 = ClientRegistry(persist)
+    registry2 = ClientRegistry(db=db)
     hello = HelloMessage(
         client_id=bytes.fromhex(client_id),
         control_port=9011,
@@ -54,8 +56,8 @@ def test_registry_rename_persist(tmp_path: Path) -> None:
 
 
 def test_registry_rename_normalizes_client_id(tmp_path: Path) -> None:
-    persist = tmp_path / "clients.json"
-    registry = ClientRegistry(persist)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     lower_id = "001122334455"
     upper_id = lower_id.upper()
 
@@ -69,12 +71,12 @@ def test_registry_rename_normalizes_client_id(tmp_path: Path) -> None:
 
 
 def test_registry_snapshot_includes_persisted_offline_clients(tmp_path: Path) -> None:
-    persist = tmp_path / "clients.json"
-    registry = ClientRegistry(persist)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     offline_id = "001122334455"
     registry.set_name(offline_id, "rear-right-wheel")
 
-    registry2 = ClientRegistry(persist)
+    registry2 = ClientRegistry(db=db)
     rows = {row["id"]: row for row in registry2.snapshot_for_api(now=10.0)}
     assert rows[offline_id]["name"] == "rear-right-wheel"
     assert rows[offline_id]["connected"] is False
@@ -82,8 +84,8 @@ def test_registry_snapshot_includes_persisted_offline_clients(tmp_path: Path) ->
 
 
 def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
-    persist = tmp_path / "clients.json"
-    registry = ClientRegistry(persist)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     offline_id = "001122334455"
     active_id = "aabbccddeeff"
 
@@ -97,7 +99,7 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
     )
     registry.update_from_hello(hello, ("192.168.4.2", 9010), now=2.0)
 
-    registry2 = ClientRegistry(persist)
+    registry2 = ClientRegistry(db=db)
     registry2.update_from_hello(hello, ("192.168.4.2", 9010), now=3.0)
     registry2.update_from_hello(
         HelloMessage(
@@ -116,7 +118,8 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
 
 
 def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
-    registry = ClientRegistry(tmp_path / "clients.json")
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     hello = HelloMessage(
         client_id=bytes.fromhex("aabbccddeeff"),
         control_port=9010,
@@ -133,7 +136,8 @@ def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
 
 
 def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
-    registry = ClientRegistry(tmp_path / "clients.json", stale_ttl_seconds=2.0)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db, stale_ttl_seconds=2.0)
 
     fresh = HelloMessage(
         client_id=bytes.fromhex("001122334455"),
@@ -159,21 +163,22 @@ def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
 
 
 def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
-    persist = tmp_path / "clients.json"
-    registry = ClientRegistry(persist)
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = "001122334455"
     registry.set_name(client_id, "front-left")
 
     assert registry.remove_client(client_id) is True
     assert registry.remove_client(client_id) is False
 
-    registry2 = ClientRegistry(persist)
+    registry2 = ClientRegistry(db=db)
     rows = registry2.snapshot_for_api(now=1.0)
     assert rows == []
 
 
 def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path) -> None:
-    registry = ClientRegistry(tmp_path / "clients.json")
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("aabbccddeeff")
     hello = HelloMessage(
         client_id=client_id,
@@ -212,7 +217,8 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
 
 
 def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
-    registry = ClientRegistry(tmp_path / "clients.json")
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("001122334455")
     hello = HelloMessage(
         client_id=client_id,
