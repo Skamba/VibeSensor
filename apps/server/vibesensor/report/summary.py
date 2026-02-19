@@ -15,7 +15,6 @@ from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
 from .findings import (
     _build_findings,
-    _merge_test_plan,
     _sensor_intensity_by_location,
     _speed_breakdown,
 )
@@ -37,6 +36,7 @@ from .helpers import (
     _validate_required_strength_metrics,
 )
 from .plot_data import _plot_data
+from .test_plan import _merge_test_plan
 
 # ---------------------------------------------------------------------------
 # Confidence label helper
