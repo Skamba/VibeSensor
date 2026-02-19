@@ -199,7 +199,10 @@ fi
 
 (
   cd "${PI_GEN_DIR}"
-  ./build-docker.sh
+  # CONTINUE=1 tells build-docker.sh to reuse the existing pigen_work container
+  # (volumes-from) rather than aborting. Safe for full builds too since we
+  # already removed the container above in that path.
+  CONTINUE=1 ./build-docker.sh
 )
 
 find "${PI_GEN_DIR}/deploy" -maxdepth 1 -type f \
