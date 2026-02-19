@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from time import monotonic
 from typing import Any
 
-from .analysis.vibration_strength import _vibration_strength_db_scalar
+from vibesensor_core.strength_bands import BANDS, band_rank
+from vibesensor_core.vibration_strength import _vibration_strength_db_scalar
+
 from .constants import SILENCE_DB
 from .diagnostics_shared import (
     build_diagnostic_settings,
@@ -14,7 +16,6 @@ from .diagnostics_shared import (
     source_keys_from_class_key,
 )
 from .report_analysis import build_findings_for_samples
-from .strength_bands import BANDS, band_rank
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
@@ -568,10 +569,12 @@ class LiveDiagnosticsEngine:
                 continue
             strength_metrics = payload.get("strength_metrics")
             if not isinstance(strength_metrics, dict):
-                raise ValueError("Missing required strength_metrics payload for live diagnostics.")
+                LOGGER.debug("Skipping client %s: missing strength_metrics", client_id)
+                continue
             peaks_raw = strength_metrics.get("top_peaks")
             if not isinstance(peaks_raw, list):
-                raise ValueError("Missing top_peaks in strength_metrics payload.")
+                LOGGER.debug("Skipping client %s: missing top_peaks", client_id)
+                continue
             label = client_map.get(str(client_id), str(client_id))
             entries.append((str(client_id), label, peaks_raw))
 

@@ -96,8 +96,8 @@ class HistoryDB:
                 cur.close()
 
     def _ensure_schema(self) -> None:
-        with self._lock:
-            self._conn.executescript(_SCHEMA_SQL)
+        with self._cursor() as cur:
+            cur.executescript(_SCHEMA_SQL)
         with self._cursor() as cur:
             cur.execute("SELECT value FROM schema_meta WHERE key = ?", ("version",))
             row = cur.fetchone()
@@ -279,19 +279,37 @@ CREATE TABLE IF NOT EXISTS client_names (
     def iter_run_samples(
         self, run_id: str, batch_size: int = 1000, offset: int = 0
     ) -> Iterator[list[dict[str, Any]]]:
-        start = max(0, int(offset))
         size = max(1, int(batch_size))
-        while True:
+        last_id: int | None = None
+        if offset > 0:
             with self._cursor() as cur:
                 cur.execute(
-                    "SELECT sample_json FROM samples WHERE run_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                    (run_id, size, start),
+                    "SELECT id FROM samples WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
+                    (run_id, max(0, int(offset)) - 1),
                 )
+                row = cur.fetchone()
+                if row:
+                    last_id = row[0]
+                else:
+                    return
+        while True:
+            with self._cursor() as cur:
+                if last_id is None:
+                    cur.execute(
+                        "SELECT id, sample_json FROM samples WHERE run_id = ? ORDER BY id LIMIT ?",
+                        (run_id, size),
+                    )
+                else:
+                    cur.execute(
+                        "SELECT id, sample_json FROM samples"
+                        " WHERE run_id = ? AND id > ? ORDER BY id LIMIT ?",
+                        (run_id, last_id, size),
+                    )
                 batch_rows = cur.fetchall()
             if not batch_rows:
                 return
-            yield [json.loads(row[0]) for row in batch_rows]
-            start += len(batch_rows)
+            last_id = batch_rows[-1][0]
+            yield [json.loads(row[1]) for row in batch_rows]
 
     def get_run_metadata(self, run_id: str) -> dict[str, Any] | None:
         with self._cursor() as cur:

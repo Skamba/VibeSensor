@@ -12,6 +12,9 @@ from .domain_models import (
     _sanitize_aspects,
     normalize_sensor_id,
 )
+from .domain_models import (
+    _parse_manual_speed as _parse_manual_speed,  # noqa: F401 — re-export for tests
+)
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
@@ -27,13 +30,6 @@ DEFAULT_CAR: dict[str, Any] = {
 }
 
 
-def _parse_manual_speed(value: Any) -> float | None:
-    """Return a positive float speed or None."""
-    if isinstance(value, (int, float)) and float(value) > 0:
-        return float(value)
-    return None
-
-
 def _validate_car(car: dict[str, Any]) -> dict[str, Any]:
     """Validate car dict – thin wrapper around CarConfig for backward compat."""
     return CarConfig.from_dict(car).to_dict()
@@ -42,10 +38,6 @@ def _validate_car(car: dict[str, Any]) -> dict[str, Any]:
 def _validate_sensor(mac: str, raw: dict[str, Any]) -> dict[str, Any]:
     """Validate sensor dict – thin wrapper around SensorConfig for backward compat."""
     return SensorConfig.from_dict(mac, raw).to_dict()
-
-
-def _normalize_sensor_id(sensor_id: str) -> str:
-    return normalize_sensor_id(sensor_id)
 
 
 class SettingsStore:

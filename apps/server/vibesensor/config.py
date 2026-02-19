@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 
 PI_DIR = Path(__file__).resolve().parents[1]
-REPO_DIR = PI_DIR.parent
+REPO_DIR = PI_DIR.parents[1]
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_CONFIG: dict[str, Any] = {

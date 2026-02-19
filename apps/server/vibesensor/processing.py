@@ -6,8 +6,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
+from vibesensor_core.vibration_strength import (
+    combined_spectrum_amp_g,
+    compute_vibration_strength_db,
+)
 
-from .analysis.vibration_strength import combined_spectrum_amp_g, compute_vibration_strength_db
 from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
 AXES = ("x", "y", "z")
@@ -53,6 +56,7 @@ class SignalProcessor:
         self._fft_window = np.hanning(self.fft_n).astype(np.float32)
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+        self._fft_cache_maxsize = 64
         self._spike_filter_enabled = True
 
     @staticmethod
@@ -138,7 +142,7 @@ class SignalProcessor:
         n = min(n, buf.count)
         start = (buf.write_idx - n) % buf.capacity
         if start + n <= buf.capacity:
-            return buf.data[:, start : start + n]
+            return buf.data[:, start : start + n].copy()
         first = buf.capacity - start
         return np.concatenate((buf.data[:, start:], buf.data[:, : n - first]), axis=1)
 
@@ -220,6 +224,9 @@ class SignalProcessor:
         freq_slice = freqs[valid].astype(np.float32)
         valid_idx = np.flatnonzero(valid)
         self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
+        if len(self._fft_cache) > self._fft_cache_maxsize:
+            oldest = next(iter(self._fft_cache))
+            del self._fft_cache[oldest]
         return freq_slice, valid_idx
 
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:

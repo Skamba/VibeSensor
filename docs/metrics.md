@@ -24,7 +24,7 @@ above the floor.
 
 ### Source of truth
 
-The canonical implementation lives in `apps/server/vibesensor/analysis/vibration_strength.py`:
+The canonical implementation lives in `libs/core/python/vibesensor_core/vibration_strength.py`:
 
 - `compute_vibration_strength_db()` — full pipeline (spectrum → peaks → dB metric)
 - `_vibration_strength_db_scalar()` — low-level scalar helper (private)
@@ -35,7 +35,7 @@ classification — never compare raw dB values against band thresholds inline.
 ## Severity Bands (l1–l5)
 
 Severity classification is performed solely by `bucket_for_strength(vibration_strength_db)` in
-`apps/server/vibesensor/strength_bands.py`.
+`libs/core/python/vibesensor_core/strength_bands.py`.
 
 | Band | Minimum dB |
 |------|-----------|

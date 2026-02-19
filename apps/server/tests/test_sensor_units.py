@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor.sensor_units import get_accel_scale_g_per_lsb
+from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 
 
 def test_adxl345_returns_expected_scale() -> None:

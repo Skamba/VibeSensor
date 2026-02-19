@@ -11,9 +11,10 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
+from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
+
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from .protocol import parse_client_id
-from .shared_contracts import METRIC_FIELDS, REPORT_FIELDS
 
 # ---------------------------------------------------------------------------
 # Shared helpers (previously inlined in runlog / metrics_log)
