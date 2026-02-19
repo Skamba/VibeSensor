@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from vibesensor.analysis.vibration_strength import _vibration_strength_db_scalar
+from vibesensor_core.vibration_strength import _vibration_strength_db_scalar
+
 from vibesensor.diagnostics_shared import severity_from_peak
 
 

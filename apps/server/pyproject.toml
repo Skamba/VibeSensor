@@ -32,7 +32,16 @@ vibesensor-report = "vibesensor.report_cli:main"
 vibesensor-hotspot-self-heal = "vibesensor.hotspot_self_heal:main"
 
 [tool.setuptools]
-packages = ["vibesensor", "vibesensor.analysis", "vibesensor.report"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = [
+  ".",
+  "../../libs/core/python",
+  "../../libs/shared/python",
+  "../../libs/adapters/python",
+]
+include = ["vibesensor*", "vibesensor_core*", "vibesensor_shared*", "vibesensor_adapters*"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

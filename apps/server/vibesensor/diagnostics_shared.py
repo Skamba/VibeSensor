@@ -4,13 +4,7 @@ from collections.abc import Mapping
 from math import sqrt
 from typing import Any
 
-from .analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_mps,
-)
-from .runlog import as_float_or_none as _as_float
-from .strength_bands import (
+from vibesensor_core.strength_bands import (
     DECAY_TICKS,
     HYSTERESIS_DB,
     PERSISTENCE_TICKS,
@@ -18,6 +12,13 @@ from .strength_bands import (
     band_rank,
     bucket_for_strength,
 )
+
+from .analysis_settings import (
+    DEFAULT_ANALYSIS_SETTINGS,
+    tire_circumference_m_from_spec,
+    wheel_hz_from_speed_mps,
+)
+from .runlog import as_float_or_none as _as_float
 
 # Single source of truth: reuse the canonical defaults from analysis_settings.
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS

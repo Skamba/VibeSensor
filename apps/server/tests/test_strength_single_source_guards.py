@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 
@@ -17,6 +18,19 @@ def _snippet(text: str, pattern: re.Pattern[str]) -> str:
     start = max(0, match.start() - 60)
     end = min(len(text), match.end() + 60)
     return text[start:end].replace("\n", " ")
+
+
+def _has_log10_call(text: str) -> bool:
+    tree = ast.parse(text)
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        func = node.func
+        if isinstance(func, ast.Name) and func.id == "log10":
+            return True
+        if isinstance(func, ast.Attribute) and func.attr == "log10":
+            return True
+    return False
 
 
 # Lightweight smoke tests: string guards intentionally enforce "no local reimplementation" patterns.
@@ -62,23 +76,25 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
 
 
 def test_strength_metric_definition_is_centralized() -> None:
-    root = Path(__file__).resolve().parents[1] / "vibesensor"
-    python_files = list(root.rglob("*.py"))
-    forbidden_math = re.compile(r"\b(?:math|np)\.log10\(")
-    forbidden_bucket_compare = re.compile(
-        r"(?:>=|<=|>|<)[^\n]{0,80}(?:\[['\"]min_db['\"]\]|\[['\"]min_amp['\"]\]|\.min_db|\.min_amp)|"
-        r"(?:\[['\"]min_db['\"]\]|\[['\"]min_amp['\"]\]|\.min_db|\.min_amp)[^\n]{0,80}(?:>=|<=|>|<)"
+    repo_root = Path(__file__).resolve().parents[3]
+    server_root = repo_root / "apps" / "server" / "vibesensor"
+    core_vibration_math = (
+        repo_root / "libs" / "core" / "python" / "vibesensor_core" / "vibration_strength.py"
     )
-    for path in python_files:
-        if path.name == "vibration_strength.py":
-            continue
+
+    for path in sorted(server_root.rglob("*.py")):
         text = _read(path)
-        assert forbidden_math.search(text) is None, f"Unexpected log10 use in {path}"
-        if path.name in {"strength_bands.py", "diagnostics_shared.py"}:
-            continue
-        assert forbidden_bucket_compare.search(text) is None, (
-            f"Unexpected band thresholds in {path}"
-        )
+        assert not _has_log10_call(text), f"Unexpected log10 use in {path}"
+
+    assert core_vibration_math.exists(), (
+        f"Missing canonical core math module: {core_vibration_math}"
+    )
+    assert _has_log10_call(_read(core_vibration_math))
+
+
+def test_server_no_local_vibration_strength_module() -> None:
+    path = Path(__file__).resolve().parents[1] / "vibesensor" / "analysis" / "vibration_strength.py"
+    assert not path.exists(), f"Server-local vibration strength module should be removed: {path}"
 
 
 def test_typescript_any_type_budget() -> None:

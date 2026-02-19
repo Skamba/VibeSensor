@@ -21,6 +21,7 @@ from typing import Any
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 
 from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
@@ -31,7 +32,6 @@ from .live_diagnostics import LiveDiagnosticsEngine
 from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
 from .registry import ClientRegistry
-from .sensor_units import get_accel_scale_g_per_lsb
 from .settings_store import SettingsStore
 from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
@@ -252,8 +252,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 runtime.processing_state = "degraded" if consecutive_failures < 25 else "fatal"
                 LOGGER.warning("Processing loop tick failed; will retry.", exc_info=True)
                 if consecutive_failures >= 25:
-                    LOGGER.error("Processing loop entered fatal state after repeated failures")
-                    return
+                    LOGGER.error("Processing loop hit 25 failures; backing off 30 s then resetting")
+                    await asyncio.sleep(30)
+                    consecutive_failures = 0
+                    runtime.processing_state = "degraded"
             delay = (
                 interval
                 if consecutive_failures == 0
@@ -290,7 +292,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         runtime.tasks.clear()
 
         runtime.metrics_logger.stop_logging()
-        runtime.metrics_logger.wait_for_post_analysis(timeout_s=2.0)
+        await asyncio.to_thread(runtime.metrics_logger.wait_for_post_analysis, 2.0)
 
         runtime.control_plane.close()
         if runtime.data_transport is not None:
@@ -324,7 +326,11 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     return app
 
 
-app: FastAPI | None = create_app() if __name__ != "__main__" else None
+app: FastAPI | None = (
+    create_app()
+    if __name__ != "__main__" and os.getenv("VIBESENSOR_DISABLE_AUTO_APP", "0") != "1"
+    else None
+)
 
 
 def main() -> None:

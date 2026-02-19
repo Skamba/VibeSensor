@@ -69,7 +69,9 @@ def _noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
     if not combined_spectrum_amp_g:
         return 0.0
     band = (
-        combined_spectrum_amp_g[1:] if len(combined_spectrum_amp_g) > 1 else combined_spectrum_amp_g
+        combined_spectrum_amp_g[1:]
+        if len(combined_spectrum_amp_g) > 1
+        else combined_spectrum_amp_g
     )
     finite = sorted(value for value in band if isfinite(value) and value >= 0.0)
     return _percentile(finite, 0.20)
@@ -208,14 +210,19 @@ def compute_vibration_strength_db(
                 "strength_bucket": bucket_for_strength(float(db)),
             }
         )
-    candidates.sort(key=lambda item: float(item["vibration_strength_db"] or -1e9), reverse=True)
+    candidates.sort(
+        key=lambda item: float(item["vibration_strength_db"] or -1e9), reverse=True
+    )
 
     chosen: list[dict[str, float | str | None]] = []
     for candidate in candidates:
         if len(chosen) >= top_n:
             break
         hz = float(candidate["hz"] or 0.0)
-        if any(abs(float(existing["hz"] or 0.0) - hz) < peak_separation_hz for existing in chosen):
+        if any(
+            abs(float(existing["hz"] or 0.0) - hz) < peak_separation_hz
+            for existing in chosen
+        ):
             continue
         chosen.append(candidate)
 

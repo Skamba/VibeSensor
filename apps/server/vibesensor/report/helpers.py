@@ -9,7 +9,8 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-from ..analysis.vibration_strength import _percentile
+from vibesensor_core.vibration_strength import _percentile
+
 from ..analysis_settings import (
     engine_rpm_from_wheel_hz,
     tire_circumference_m_from_spec,
