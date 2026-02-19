@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import os
 from datetime import UTC, datetime
-from io import BytesIO
 
 from .. import __version__
 from ..report_analysis import (
@@ -19,6 +18,7 @@ from ..report_theme import (
 )
 from .pdf_charts import line_plot
 from .pdf_diagram import car_location_diagram
+from .pdf_document import build_pdf_document
 from .pdf_helpers import (
     compact_note_panel,
     confidence_pill_html,
@@ -49,7 +49,6 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:  # noqa: C901
     from reportlab.platypus import (
         PageBreak,
         Paragraph,
-        SimpleDocTemplate,
         Spacer,
         Table,
         TableStyle,
@@ -577,36 +576,16 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:  # noqa: C901
         style_table_head=style_table_head,
     )
 
-    # ── Build PDF document ───────────────────────────────────────────────
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=page_size,
-        leftMargin=left_margin,
-        rightMargin=right_margin,
-        topMargin=top_margin,
-        bottomMargin=bottom_margin,
-        pageCompression=0,
+    return build_pdf_document(
+        story=story,
+        page_size=page_size,
+        left_margin=left_margin,
+        right_margin=right_margin,
+        top_margin=top_margin,
+        bottom_margin=bottom_margin,
+        version_marker=version_marker,
+        tr=tr,
     )
-    doc.title = f"VibeSensor Report {version_marker}"
-    doc.subject = version_marker
-    doc.author = "VibeSensor"
-
-    def draw_footer(canvas, document) -> None:  # pragma: no cover - formatting callback
-        canvas.saveState()
-        canvas.setFont("Helvetica", 8)
-        canvas.setFillColor(colors.HexColor(REPORT_COLORS["text_muted"]))
-        canvas.drawString(document.leftMargin, 12, tr("REPORT_FOOTER_TITLE"))
-        canvas.drawCentredString(
-            page_size[0] / 2.0,
-            12,
-            tr("PAGE_LABEL", page=canvas.getPageNumber()),
-        )
-        canvas.drawRightString(page_size[0] - document.rightMargin, 12, version_marker)
-        canvas.restoreState()
-
-    doc.build(story, onFirstPage=draw_footer, onLaterPages=draw_footer)
-    return buffer.getvalue()
 
 
 def build_report_pdf(summary: dict[str, object]) -> bytes:
