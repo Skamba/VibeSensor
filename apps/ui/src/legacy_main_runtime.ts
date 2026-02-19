@@ -17,6 +17,7 @@ import { createSensorsLoggingFeature } from "./legacy/sensors_logging_feature";
 import { createVehicleConfigFeature } from "./legacy/vehicle_config_feature";
 import { createCarWizardFeature } from "./legacy/car_wizard_feature";
 import { createDiagnosticsFeature } from "./legacy/diagnostics_feature";
+import { getSettingsLanguage, setSettingsLanguage, getSettingsSpeedUnit, setSettingsSpeedUnit } from "./api/settings";
 
 export function startLegacyUiApp(): void {
   const els = {
@@ -70,9 +71,6 @@ export function startLegacyUiApp(): void {
     matrixTooltip: document.getElementById("matrixTooltip"),
   };
 
-  const uiLanguageStorageKey = "vibesensor_ui_lang_v1";
-  const settingsStorageKey = "vibesensor_vehicle_settings_v3";
-  const speedUnitStorageKey = "vibesensor_speed_unit";
   const CAR_MAP_POSITIONS = {
     front_left_wheel: { top: 24, left: 15 }, front_right_wheel: { top: 24, left: 85 }, rear_left_wheel: { top: 72, left: 15 }, rear_right_wheel: { top: 72, left: 85 },
     engine_bay: { top: 18, left: 50 }, front_subframe: { top: 30, left: 50 }, transmission: { top: 42, left: 50 }, driveshaft_tunnel: { top: 52, left: 50 },
@@ -80,7 +78,7 @@ export function startLegacyUiApp(): void {
   };
 
   const state = {
-    ws: null, wsState: "connecting", lang: I18N.normalizeLang(window.localStorage.getItem(uiLanguageStorageKey) || "en"), speedUnit: normalizeSpeedUnit(window.localStorage.getItem(speedUnitStorageKey) || "kmh"),
+    ws: null, wsState: "connecting", lang: "en", speedUnit: "kmh",
     clients: [], selectedClientId: null, spectrumPlot: null, spectra: { freq: [], clients: {} }, speedMps: null, activeViewId: "dashboardView", runs: [], deleteAllRunsInFlight: false,
     expandedRunId: null, runDetailsById: {}, loggingStatus: { enabled: false, current_file: null }, locationOptions: [],
     vehicleSettings: { tire_width_mm: 285, tire_aspect_pct: 30, rim_in: 21, final_drive_ratio: 3.08, current_gear_ratio: 0.64, wheel_bandwidth_pct: 6.0, driveshaft_bandwidth_pct: 5.6, engine_bandwidth_pct: 6.2, speed_uncertainty_pct: 0.6, tire_diameter_uncertainty_pct: 1.2, final_drive_uncertainty_pct: 0.2, gear_uncertainty_pct: 0.5, min_abs_band_hz: 0.4, max_band_half_width_pct: 8.0 },
@@ -92,7 +90,7 @@ export function startLegacyUiApp(): void {
 
   function t(key: string, vars?: Record<string, unknown>) { return I18N.get(state.lang, key, vars); }
   function normalizeSpeedUnit(raw) { return raw === "mps" ? "mps" : "kmh"; }
-  function saveSpeedUnit(unit) { state.speedUnit = normalizeSpeedUnit(unit); window.localStorage.setItem(speedUnitStorageKey, state.speedUnit); }
+  function saveSpeedUnit(unit) { state.speedUnit = normalizeSpeedUnit(unit); void setSettingsSpeedUnit(state.speedUnit).catch(() => {}); }
   function speedValueInSelectedUnit(speedMps) { if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null; return state.speedUnit === "mps" ? speedMps : speedMps * 3.6; }
   function selectedSpeedUnitLabel() { return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh"); }
   function setStatValue(container, value) { const valueEl = container?.querySelector?.("[data-value]"); if (valueEl) valueEl.textContent = String(value); else if (container) container.textContent = String(value); }
@@ -145,7 +143,7 @@ export function startLegacyUiApp(): void {
   const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt });
   const diagnosticsFeature = createDiagnosticsFeature({ state, els, t, fmt, escapeHtml, locationCodeForClient: (c) => sensorsFeature.locationCodeForClient(c), carMapPositions: CAR_MAP_POSITIONS, carMapWindowMs: 10_000, metricField: METRIC_FIELDS.vibration_strength_db });
   const sensorsFeature = createSensorsLoggingFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => diagnosticsFeature.renderMatrix(), sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
-  const vehicleFeature = createVehicleConfigFeature({ state, els, t, settingsStorageKey, escapeHtml, fmt, renderSpectrum, renderSpeedReadout });
+  const vehicleFeature = createVehicleConfigFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout });
   const wizardFeature = createCarWizardFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
 
   function applyLanguage(forceReloadInsights = false) {
@@ -310,7 +308,7 @@ export function startLegacyUiApp(): void {
     state.ws.connect();
   }
 
-  const saveLanguage = (lang) => { state.lang = I18N.normalizeLang(lang); window.localStorage.setItem(uiLanguageStorageKey, state.lang); };
+  const saveLanguage = (lang) => { state.lang = I18N.normalizeLang(lang); void setSettingsLanguage(state.lang).catch(() => {}); };
   const activateTabByIndex = (index) => {
     if (!els.menuButtons.length) return;
     const safeIndex = ((index % els.menuButtons.length) + els.menuButtons.length) % els.menuButtons.length;
@@ -364,8 +362,18 @@ export function startLegacyUiApp(): void {
     els.speedUnitSelect.addEventListener("change", () => { saveSpeedUnit(els.speedUnitSelect.value); renderSpeedReadout(); });
   }
 
-  vehicleFeature.loadVehicleSettings();
   vehicleFeature.syncSettingsInputs();
+  // Load language and speed unit from server, then apply
+  void (async () => {
+    try {
+      const langRes = await getSettingsLanguage();
+      if (langRes?.language) { state.lang = I18N.normalizeLang(langRes.language); applyLanguage(true); }
+    } catch (_e) {}
+    try {
+      const unitRes = await getSettingsSpeedUnit();
+      if (unitRes?.speedUnit) { state.speedUnit = normalizeSpeedUnit(unitRes.speedUnit); if (els.speedUnitSelect) els.speedUnitSelect.value = state.speedUnit; renderSpeedReadout(); }
+    } catch (_e) {}
+  })();
   applyLanguage(false);
   setActiveView("dashboardView");
   void sensorsFeature.refreshLocationOptions();

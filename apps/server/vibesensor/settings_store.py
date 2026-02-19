@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
 import logging
-from pathlib import Path
-from threading import RLock
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .domain_models import (
     DEFAULT_CAR_ASPECTS,
@@ -15,6 +12,9 @@ from .domain_models import (
     _sanitize_aspects,
     normalize_sensor_id,
 )
+
+if TYPE_CHECKING:
+    from .history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -49,17 +49,24 @@ def _normalize_sensor_id(sensor_id: str) -> str:
 
 
 class SettingsStore:
-    """Holds the full app settings: cars, speed source, and sensors."""
+    """Holds the full app settings: cars, speed source, and sensors.
 
-    def __init__(self, persist_path: Path | None = None) -> None:
+    Persistence is backed by a :class:`HistoryDB` instance (SQLite).
+    When no *db* is provided the store operates in memory only (useful for tests).
+    """
+
+    def __init__(self, db: HistoryDB | None = None, **_kwargs: Any) -> None:
+        from threading import RLock
+
         self._lock = RLock()
-        self._persist_path = persist_path
+        self._db = db
 
         default_car = CarConfig.from_dict({"id": _new_car_id(), **DEFAULT_CAR})
         self._cars: list[CarConfig] = [default_car]
         self._active_car_id: str = default_car.id
         self._speed_cfg = SpeedSourceConfig.default()
         self._language: str = "en"
+        self._speed_unit: str = "kmh"
         self._sensors: dict[str, SensorConfig] = {}
 
         self._load()
@@ -67,13 +74,9 @@ class SettingsStore:
     # -- persistence -----------------------------------------------------------
 
     def _load(self) -> None:
-        if not self._persist_path or not self._persist_path.exists():
+        if self._db is None:
             return
-        try:
-            raw = json.loads(self._persist_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
-            LOGGER.warning("Could not load settings from %s: %s", self._persist_path, exc)
-            return
+        raw = self._db.get_settings_snapshot()
         if not isinstance(raw, dict):
             return
 
@@ -101,6 +104,9 @@ class SettingsStore:
             language = str(raw.get("language") or "en").strip().lower()
             self._language = language if language in {"en", "nl"} else "en"
 
+            speed_unit = str(raw.get("speedUnit") or "kmh").strip().lower()
+            self._speed_unit = speed_unit if speed_unit in {"kmh", "mps"} else "kmh"
+
             # Sensors
             sensors = raw.get("sensorsByMac")
             if isinstance(sensors, dict):
@@ -116,13 +122,13 @@ class SettingsStore:
                 self._sensors = normalized
 
     def _persist(self) -> None:
-        if not self._persist_path:
+        if self._db is None:
             return
         payload = self.snapshot()
-        self._persist_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self._persist_path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        tmp.replace(self._persist_path)
+        try:
+            self._db.set_settings_snapshot(payload)
+        except Exception:
+            LOGGER.warning("Failed to persist settings to SQLite", exc_info=True)
 
     # -- full snapshot ---------------------------------------------------------
 
@@ -133,6 +139,7 @@ class SettingsStore:
                 "activeCarId": self._active_car_id,
                 **self._speed_cfg.to_dict(),
                 "language": self._language,
+                "speedUnit": self._speed_unit,
                 "sensorsByMac": {sid: s.to_dict() for sid, s in self._sensors.items()},
             }
 
@@ -303,3 +310,17 @@ class SettingsStore:
             self._language = language
             self._persist()
             return self._language
+
+    @property
+    def speed_unit(self) -> str:
+        with self._lock:
+            return self._speed_unit
+
+    def set_speed_unit(self, value: str) -> str:
+        unit = str(value).strip().lower()
+        if unit not in {"kmh", "mps"}:
+            raise ValueError("speed_unit must be 'kmh' or 'mps'")
+        with self._lock:
+            self._speed_unit = unit
+            self._persist()
+            return self._speed_unit

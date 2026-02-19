@@ -39,10 +39,9 @@ def test_logging_flags_allow_db_only_mode(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
     _write_config(
         config_path,
-        {"logging": {"write_metrics_jsonl": False, "persist_history_db": True}},
+        {"logging": {"persist_history_db": True}},
     )
     cfg = load_config(config_path)
-    assert cfg.logging.write_metrics_jsonl is False
     assert cfg.logging.persist_history_db is True
 
 
