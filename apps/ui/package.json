@@ -12,7 +12,9 @@
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc --noEmit",
     "test:visual": "npx playwright test",
-    "test:visual:update": "npx playwright test --update-snapshots"
+    "test:visual:update": "npx playwright test --update-snapshots",
+    "screenshot": "node take-screenshot.mjs",
+    "snapshot:update": "node update-snapshots.mjs"
   },
   "dependencies": {
     "uplot": "^1.6.31"

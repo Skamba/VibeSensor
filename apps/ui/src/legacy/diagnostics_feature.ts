@@ -242,7 +242,7 @@ export function createDiagnosticsFeature(ctx) {
     if (!state.strengthPlot) return;
     const now = Date.now() / 1000;
     state.strengthHistory.t.push(now);
-    for (const key of ["wheel", "driveshaft", "engine", "other"]) state.strengthHistory[key].push(bySource?.[key]?.vibration_strength_db || 0);
+    for (const key of ["wheel", "driveshaft", "engine", "other"]) state.strengthHistory[key].push(bySource?.[key]?.strength_db || 0);
     while (state.strengthHistory.t.length && now - state.strengthHistory.t[0] > 60) {
       state.strengthHistory.t.shift();
       state.strengthHistory.wheel.shift();
