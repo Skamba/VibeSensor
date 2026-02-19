@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from time import monotonic
 from typing import Any
 
+from .analysis.vibration_strength import _vibration_strength_db_scalar
 from .constants import SILENCE_DB
 from .diagnostics_shared import (
     build_diagnostic_settings,
@@ -73,6 +74,20 @@ def _interpolate_to_target(
         ratio = (freq - f0) / (f1 - f0)
         out.append(v0 + ((v1 - v0) * ratio))
     return out
+
+
+def _combine_amplitude_strength_db(values_db: list[float]) -> float:
+    if not values_db:
+        return SILENCE_DB
+    linear = [10.0 ** (float(value) / 20.0) for value in values_db]
+    mean_linear = sum(linear) / max(1, len(linear))
+    if mean_linear <= 0.0:
+        return SILENCE_DB
+    return _vibration_strength_db_scalar(
+        peak_band_rms_amp_g=mean_linear,
+        floor_amp_g=1.0,
+        epsilon_g=1e-9,
+    )
 
 
 @dataclass(slots=True)
@@ -449,7 +464,9 @@ class LiveDiagnosticsEngine:
                     continue
                 avg_hz = sum(item.last_peak_hz for item in group) / len(group)
                 avg_amp = sum(item.last_band_rms_g for item in group) / len(group)
-                avg_strength = sum(item.last_strength_db for item in group) / len(group)
+                avg_strength = _combine_amplitude_strength_db(
+                    [item.last_strength_db for item in group]
+                )
                 freq_bin = round(avg_hz / self._multi_freq_bin_hz)
                 combined_key = f"combined:{class_key}:{freq_bin}"
                 seen_combined_keys.add(combined_key)

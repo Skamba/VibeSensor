@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
+from vibesensor.history_db import HistoryDB
 from vibesensor.metrics_log import MetricsLogger
+from vibesensor.runlog import read_jsonl_run
 
 # -- MetricsLogger._safe_metric ------------------------------------------------
 
@@ -169,6 +173,15 @@ class _FakeHistoryDB:
 
     def finalize_run(self, run_id: str, end_time_utc: str) -> None:
         self.finalize_calls.append(run_id)
+
+
+def _wait_until(predicate, timeout_s: float = 2.0, step_s: float = 0.02) -> bool:
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        time.sleep(step_s)
+    return False
 
 
 def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
@@ -359,3 +372,116 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(tmp_path: Pat
     timed_out = logger._append_records(path, run_id, start_time_utc, start_mono)
 
     assert timed_out is True
+
+
+def test_metrics_jsonl_writes_metadata_samples_and_run_end(tmp_path: Path) -> None:
+    """Metrics logging advertises JSONL output, so the configured file must actually be written.
+
+    A logger session is expected to emit run metadata, sample records, and a run_end marker in
+    canonical runlog format. If the file is never written, tooling that consumes JSONL exports
+    cannot inspect recorded runs despite logging being enabled.
+    """
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(path, run_id, start_time_utc, start_mono)
+    logger.stop_logging()
+
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    payloads = [json.loads(line) for line in lines]
+    assert payloads[0]["record_type"] == "run_metadata"
+    assert any(item.get("record_type") == "sample" for item in payloads)
+    assert payloads[-1]["record_type"] == "run_end"
+    parsed = read_jsonl_run(path)
+    assert parsed.metadata["run_id"] == run_id
+    assert parsed.samples
+
+
+def test_stop_logging_does_not_block_on_post_analysis(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Stopping capture should be fast even when analysis is slow.
+
+    Post-analysis belongs in background processing because users expect stop controls to respond
+    promptly. This test simulates a slow summarizer and requires stop_logging to return quickly
+    while analysis completes asynchronously afterward.
+    """
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(path, run_id, start_time_utc, start_mono)
+
+    def _slow_summary(*args, **kwargs):
+        time.sleep(0.35)
+        return {"summary": "ok"}
+
+    monkeypatch.setattr("vibesensor.report_analysis.summarize_run_data", _slow_summary)
+    started = time.monotonic()
+    logger.stop_logging()
+    elapsed = time.monotonic() - started
+
+    assert elapsed < 0.15
+    assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
+
+
+def test_post_analysis_failure_sets_persistent_error_status(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(path, run_id, start_time_utc, start_mono)
+
+    def _failing_summary(*args, **kwargs):
+        raise RuntimeError("analysis exploded")
+
+    monkeypatch.setattr("vibesensor.report_analysis.summarize_run_data", _failing_summary)
+    logger.stop_logging()
+
+    assert _wait_until(lambda: history_db.get_run_status(run_id) == "error", timeout_s=2.0)
+    run = history_db.get_run(run_id)
+    assert run is not None
+    assert "analysis exploded" in str(run.get("error_message", ""))

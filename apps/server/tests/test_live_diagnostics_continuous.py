@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import math
+from types import MethodType
+
+import pytest
+
 from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
 from vibesensor.constants import SILENCE_DB
 from vibesensor.diagnostics_shared import severity_from_peak
-from vibesensor.live_diagnostics import LiveDiagnosticsEngine
+from vibesensor.live_diagnostics import LiveDiagnosticsEngine, _RecentEvent, _TrackerLevelState
 from vibesensor.strength_bands import DECAY_TICKS, HYSTERESIS_DB, band_by_key
 
 
@@ -224,3 +229,68 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
         settings={},
     )
     assert snap_after["matrix"] == matrix_before, "Matrix should be preserved on light tick"
+
+
+def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch) -> None:
+    """Averaging dB values directly is mathematically wrong for amplitude-derived metrics.
+
+    For amplitude dB values, each sensor must be converted to a linear amplitude ratio before
+    combining. The correct combined dB is `20*log10(mean(10**(db/20)))`, not `mean(db)`.
+    This test fixes the contract for combined multi-sensor diagnostics strength.
+    """
+    now_s = 250.0
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now_s)
+    engine = LiveDiagnosticsEngine()
+
+    def fake_apply(
+        self: LiveDiagnosticsEngine,
+        tracker: _TrackerLevelState,
+        *,
+        vibration_strength_db: float,
+        sensor_count: int,
+        fallback_db: float | None = None,
+    ) -> str | None:
+        previous = tracker.current_bucket_key
+        tracker.current_bucket_key = "l2"
+        tracker.last_strength_db = float(vibration_strength_db)
+        return previous
+
+    monkeypatch.setattr(
+        engine,
+        "_apply_severity_to_tracker",
+        MethodType(fake_apply, engine),
+    )
+
+    sensor_events = [
+        _RecentEvent(
+            ts_ms=250000,
+            sensor_id="s1",
+            sensor_label="front-left",
+            peak_hz=31.0,
+            peak_amp=0.1,
+            vibration_strength_db=10.0,
+            class_key="wheel",
+        ),
+        _RecentEvent(
+            ts_ms=250000,
+            sensor_id="s2",
+            sensor_label="front-right",
+            peak_hz=31.2,
+            peak_amp=0.2,
+            vibration_strength_db=20.0,
+            class_key="wheel",
+        ),
+    ]
+    monkeypatch.setattr(engine, "_detect_sensor_events", lambda **_: sensor_events)
+
+    engine.update(
+        speed_mps=20.0,
+        clients=[{"id": "s1", "name": "front-left"}, {"id": "s2", "name": "front-right"}],
+        spectra={"freq": [1.0], "clients": {}},
+        settings={},
+    )
+
+    assert engine._combined_trackers
+    combined_tracker = next(iter(engine._combined_trackers.values()))
+    expected_db = 20.0 * math.log10((10 ** (10.0 / 20.0) + 10 ** (20.0 / 20.0)) / 2.0)
+    assert combined_tracker.last_strength_db == pytest.approx(expected_db, abs=1e-6)
