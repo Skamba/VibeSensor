@@ -26,8 +26,9 @@
   "speedSource": "manual",
   "manualSpeedKph": 100.0,
   "obd2Config": {},
+  "language": "en",
   "sensorsByMac": {
-    "d8:a0:1d:5d:ae:58": {
+    "d8a01d5dae58": {
       "name": "d8:a0:1d:5d:ae:58",
       "location": "trunk"
     }

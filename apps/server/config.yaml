@@ -27,12 +27,12 @@ processing:
 
 logging:
   log_metrics: true
-  metrics_log_path: /var/log/vibesensor/metrics.jsonl
+  metrics_log_path: data/metrics.jsonl
   metrics_log_hz: 4
   sensor_model: ADXL345
 
 storage:
-  clients_json_path: /var/lib/vibesensor/clients.json
+  clients_json_path: data/clients.json
 
 gps:
   gps_enabled: false

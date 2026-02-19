@@ -8,7 +8,7 @@ import yaml
 from vibesensor.config import (
     _deep_merge,
     _read_config_file,
-    _resolve_repo_path,
+    _resolve_config_path,
     _split_host_port,
     load_config,
 )
@@ -54,18 +54,18 @@ def test_deep_merge_new_key() -> None:
     assert result["b"] == 2
 
 
-# -- _resolve_repo_path --------------------------------------------------------
+# -- _resolve_config_path ------------------------------------------------------
 
 
-def test_resolve_repo_path_absolute() -> None:
-    result = _resolve_repo_path("/tmp/foo.txt")
+def test_resolve_config_path_absolute(tmp_path: Path) -> None:
+    result = _resolve_config_path("/tmp/foo.txt", tmp_path / "config.yaml")
     assert result == Path("/tmp/foo.txt")
 
 
-def test_resolve_repo_path_relative() -> None:
-    result = _resolve_repo_path("data/foo.txt")
-    assert result.name == "foo.txt"
-    assert result.is_absolute()
+def test_resolve_config_path_relative(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.yaml"
+    result = _resolve_config_path("data/foo.txt", config_path)
+    assert result == (tmp_path / "data/foo.txt")
 
 
 # -- _read_config_file ---------------------------------------------------------

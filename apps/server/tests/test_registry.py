@@ -123,11 +123,13 @@ def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
         sample_rate_hz=800,
         name="node",
         firmware_version="fw",
+        frame_samples=200,
     )
     registry.update_from_hello(hello, ("192.168.4.2", 54321), now=1.0)
 
     row = registry.snapshot_for_api(now=1.0)[0]
     assert row["control_addr"] == ("192.168.4.2", 9010)
+    assert row["frame_samples"] == 200
 
 
 def test_registry_evicts_stale_clients(tmp_path: Path) -> None:

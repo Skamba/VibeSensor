@@ -241,6 +241,7 @@ void send_hello() {
                                       g_client_id,
                                       g_control_port,
                                       kSampleRateHz,
+                                      kFrameSamples,
                                       kClientName,
                                       kFirmwareVersion,
                                       g_queue_overflow_drops);

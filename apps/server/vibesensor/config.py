@@ -25,7 +25,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "diagnostics_lookback_minutes": 5,
             "min_restart_interval_seconds": 120,
             "allow_disable_resolved_stub_listener": False,
-            "state_file": "/var/lib/vibesensor/hotspot-self-heal-state.json",
+            "state_file": "data/hotspot-self-heal-state.json",
         },
     },
     "server": {"host": "0.0.0.0", "port": 8000},
@@ -44,12 +44,12 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "logging": {
         "log_metrics": True,
-        "metrics_log_path": "/var/log/vibesensor/metrics.jsonl",
+        "metrics_log_path": "data/metrics.jsonl",
         "metrics_log_hz": 4,
         "sensor_model": "ADXL345",
     },
     "storage": {
-        "clients_json_path": "/var/lib/vibesensor/clients.json",
+        "clients_json_path": "data/clients.json",
     },
     "gps": {"gps_enabled": False, "gps_speed_only": True},
 }
@@ -72,11 +72,11 @@ def _split_host_port(value: str) -> tuple[str, int]:
     return host, int(port)
 
 
-def _resolve_repo_path(path_text: str) -> Path:
+def _resolve_config_path(path_text: str, config_path: Path) -> Path:
     path = Path(path_text)
     if path.is_absolute():
         return path
-    return REPO_DIR / path
+    return config_path.resolve().parent / path
 
 
 @dataclass(slots=True)
@@ -168,12 +168,19 @@ def _read_config_file(path: Path) -> dict[str, Any]:
 
 def load_config(config_path: Path | None = None) -> AppConfig:
     path = config_path or (PI_DIR / "config.yaml")
+    path = path.resolve()
     override = _read_config_file(path)
     merged = _deep_merge(DEFAULT_CONFIG, override)
     logging_cfg = merged.get("logging", {})
     metrics_log_path_raw = logging_cfg.get("metrics_log_path")
+    log_metrics = bool(logging_cfg.get("log_metrics", True))
     if not isinstance(metrics_log_path_raw, str) or not metrics_log_path_raw.strip():
-        raise ValueError("logging.metrics_log_path must be configured.")
+        if log_metrics:
+            raise ValueError(
+                "logging.metrics_log_path must be configured when log_metrics is true."
+            )
+        metrics_log_path_raw = str(DEFAULT_CONFIG["logging"]["metrics_log_path"])
+    metrics_log_path = _resolve_config_path(metrics_log_path_raw, path)
 
     data_host, data_port = _split_host_port(str(merged["udp"]["data_listen"]))
     control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))
@@ -207,15 +214,16 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                     .get("self_heal", {})
                     .get("allow_disable_resolved_stub_listener", False)
                 ),
-                state_file=_resolve_repo_path(
+                state_file=_resolve_config_path(
                     str(
                         merged["ap"]
                         .get("self_heal", {})
                         .get(
                             "state_file",
-                            "/var/lib/vibesensor/hotspot-self-heal-state.json",
+                            str(DEFAULT_CONFIG["ap"]["self_heal"]["state_file"]),
                         )
-                    )
+                    ),
+                    path,
                 ),
             ),
         ),
@@ -242,30 +250,32 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             accel_scale_g_per_lsb=accel_scale,
         ),
         logging=LoggingConfig(
-            log_metrics=bool(merged["logging"]["log_metrics"]),
-            metrics_log_path=_resolve_repo_path(metrics_log_path_raw),
+            log_metrics=log_metrics,
+            metrics_log_path=metrics_log_path,
             metrics_log_hz=int(merged["logging"]["metrics_log_hz"]),
             sensor_model=str(merged["logging"].get("sensor_model", "ADXL345")),
-            history_db_path=_resolve_repo_path(
+            history_db_path=_resolve_config_path(
                 str(
                     merged.get("logging", {}).get(
                         "history_db_path",
-                        str(_resolve_repo_path(metrics_log_path_raw).parent / "history.db"),
+                        str(metrics_log_path.parent / "history.db"),
                     )
-                )
+                ),
+                path,
             ),
         ),
         gps=GPSConfig(
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
             gps_speed_only=bool(merged["gps"]["gps_speed_only"]),
         ),
-        clients_json_path=_resolve_repo_path(
+        clients_json_path=_resolve_config_path(
             str(
                 merged.get(
                     "storage",
                     {},
-                ).get("clients_json_path", "/var/lib/vibesensor/clients.json")
-            )
+                ).get("clients_json_path", str(DEFAULT_CONFIG["storage"]["clients_json_path"]))
+            ),
+            path,
         ),
         config_path=path,
     )

@@ -4,7 +4,7 @@
 #       and local-dev entrypoints reference distinct filenames.
 
 logging:
-  metrics_log_path: apps/server/data/metrics.jsonl
+  metrics_log_path: data/metrics.jsonl
 
 storage:
-  clients_json_path: apps/server/data/clients.json
+  clients_json_path: data/clients.json
