@@ -16,6 +16,8 @@ from pathlib import Path
 from threading import RLock
 from typing import Any
 
+from .domain_models import SensorFrame
+
 LOGGER = logging.getLogger(__name__)
 
 # -- Schema -------------------------------------------------------------------
@@ -131,16 +133,23 @@ class HistoryDB:
                 (run_id, start_time_utc, json.dumps(metadata, ensure_ascii=False), now),
             )
 
-    def append_samples(self, run_id: str, samples: list[dict[str, Any]]) -> None:
+    def append_samples(
+        self, run_id: str, samples: list[dict[str, Any]] | list[SensorFrame]
+    ) -> None:
         if not samples:
             return
+
+        def _to_json(item: dict[str, Any] | SensorFrame) -> str:
+            d = item.to_dict() if isinstance(item, SensorFrame) else item
+            return json.dumps(d, ensure_ascii=False)
+
         chunk_size = 256
         with self._cursor() as cur:
             for start in range(0, len(samples), chunk_size):
                 batch = samples[start : start + chunk_size]
                 cur.executemany(
                     "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
-                    ((run_id, json.dumps(s, ensure_ascii=False)) for s in batch),
+                    ((run_id, _to_json(s)) for s in batch),
                 )
             cur.execute(
                 "UPDATE runs SET sample_count = sample_count + ? WHERE run_id = ?",
