@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from vibesensor.processing import SignalProcessor
 
@@ -138,6 +139,29 @@ def test_multi_spectrum_payload_empty() -> None:
     assert result["clients"] == {}
 
 
+def test_multi_spectrum_payload_rejects_frequency_grid_mismatch() -> None:
+    """A shared `freq` array is only valid when all clients use the same bins.
+
+    If clients have different sampling rates, their FFT bins differ and a shared grid becomes
+    misleading. The payload contract must therefore detect mismatches and return an explicit
+    error payload instead of silently mixing incompatible spectra.
+    """
+    proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
+    samples = np.random.randn(300, 3).astype(np.float32) * 0.01
+
+    proc.ingest("c1", samples, sample_rate_hz=200)
+    proc.ingest("c2", samples, sample_rate_hz=320)
+    proc.compute_metrics("c1", sample_rate_hz=200)
+    proc.compute_metrics("c2", sample_rate_hz=320)
+
+    result = proc.multi_spectrum_payload(["c1", "c2"])
+    assert result["freq"] == []
+    assert result["clients"] == {}
+    assert result["error"] == "frequency_bin_mismatch"
+    assert "c1" in str(result["message"])
+    assert "c2" in str(result["message"])
+
+
 # -- selected_payload ----------------------------------------------------------
 
 
@@ -148,6 +172,28 @@ def test_selected_payload_missing_client() -> None:
     assert result["waveform"] == {}
     assert result["spectrum"] == {}
     assert result["metrics"] == {}
+
+
+def test_selected_payload_waveform_respects_configured_window() -> None:
+    """Waveform serialization should be bounded by `waveform_seconds` at client sample rate.
+
+    Returning the full ring buffer leaks stale data when the configured display window is
+    shorter than buffered history. The selected payload must slice to the configured window
+    before decimation so UI time spans stay consistent.
+    """
+    proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
+    samples = np.random.randn(400, 3).astype(np.float32) * 0.01
+    proc.ingest("client1", samples, sample_rate_hz=50)
+
+    result = proc.selected_payload("client1")
+    waveform = result["waveform"]
+    expected_window_samples = 2 * 50
+    expected_step = max(1, 50 // 25)
+    expected_points = expected_window_samples // expected_step
+
+    assert len(waveform["t"]) == expected_points
+    assert waveform["t"][-1] == pytest.approx(0.0)
+    assert waveform["t"][1] - waveform["t"][0] == pytest.approx(expected_step / 50.0)
 
 
 # -- compute_metrics -----------------------------------------------------------
