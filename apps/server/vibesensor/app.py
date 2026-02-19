@@ -55,7 +55,11 @@ class RuntimeState:
     history_db: HistoryDB
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
+    data_consumer_task: asyncio.Task | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
+    frame_size_mismatch_logged: set[str] = field(default_factory=set)
+    processing_state: str = "ok"
+    processing_failure_count: int = 0
     ws_tick: int = 0
     ws_include_heavy: bool = True
 
@@ -100,6 +104,7 @@ class RuntimeState:
                 settings=analysis_settings_snapshot,
                 finding_metadata=analysis_metadata,
                 finding_samples=analysis_samples,
+                language=self.settings_store.language,
             )
         else:
             payload["diagnostics"] = self.live_diagnostics.update(
@@ -109,14 +114,13 @@ class RuntimeState:
                 settings=analysis_settings_snapshot,
                 finding_metadata=analysis_metadata,
                 finding_samples=analysis_samples,
+                language=self.settings_store.language,
             )
         return payload
 
 
 def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
-    config.logging.metrics_log_path.parent.mkdir(parents=True, exist_ok=True)
-    config.clients_json_path.parent.mkdir(parents=True, exist_ok=True)
 
     registry = ClientRegistry(
         config.clients_json_path,
@@ -185,6 +189,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
     async def processing_loop() -> None:
         interval = 1.0 / max(1, config.processing.fft_update_hz)
+        consecutive_failures = 0
         while True:
             try:
                 runtime.registry.evict_stale()
@@ -213,6 +218,20 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                             client_rate,
                             default_rate,
                         )
+                    frame_samples = int(record.frame_samples or 0)
+                    if (
+                        frame_samples > 0
+                        and frame_samples > runtime.config.processing.fft_n
+                        and client_id not in runtime.frame_size_mismatch_logged
+                    ):
+                        runtime.frame_size_mismatch_logged.add(client_id)
+                        LOGGER.error(
+                            "Client %s reported frame_samples=%d larger than fft_n=%d; "
+                            "ingest may be degraded.",
+                            client_id,
+                            frame_samples,
+                            runtime.config.processing.fft_n,
+                        )
                 metrics_by_client = runtime.processor.compute_all(
                     fresh_ids,
                     sample_rates_hz=sample_rates,
@@ -220,12 +239,25 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 for client_id, metrics in metrics_by_client.items():
                     runtime.registry.set_latest_metrics(client_id, metrics)
                 runtime.processor.evict_clients(set(active_ids))
+                consecutive_failures = 0
+                runtime.processing_state = "ok"
             except Exception:
+                consecutive_failures += 1
+                runtime.processing_failure_count += 1
+                runtime.processing_state = "degraded" if consecutive_failures < 25 else "fatal"
                 LOGGER.warning("Processing loop tick failed; will retry.", exc_info=True)
-            await asyncio.sleep(interval)
+                if consecutive_failures >= 25:
+                    LOGGER.error("Processing loop entered fatal state after repeated failures")
+                    return
+            delay = (
+                interval
+                if consecutive_failures == 0
+                else min(5.0, interval * (2 ** min(6, consecutive_failures)))
+            )
+            await asyncio.sleep(delay)
 
     async def start_runtime() -> None:
-        runtime.data_transport = await start_udp_data_receiver(
+        runtime.data_transport, runtime.data_consumer_task = await start_udp_data_receiver(
             host=config.udp.data_host,
             port=config.udp.data_port,
             registry=runtime.registry,
@@ -258,6 +290,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         if runtime.data_transport is not None:
             runtime.data_transport.close()
             runtime.data_transport = None
+        if runtime.data_consumer_task is not None:
+            runtime.data_consumer_task.cancel()
+            await asyncio.gather(runtime.data_consumer_task, return_exceptions=True)
+            runtime.data_consumer_task = None
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

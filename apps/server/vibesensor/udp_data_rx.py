@@ -12,10 +12,18 @@ LOGGER = logging.getLogger(__name__)
 
 
 class DataDatagramProtocol(asyncio.DatagramProtocol):
-    def __init__(self, registry: ClientRegistry, processor: SignalProcessor):
+    def __init__(
+        self,
+        registry: ClientRegistry,
+        processor: SignalProcessor,
+        queue_maxsize: int = 1024,
+    ):
         self.registry = registry
         self.processor = processor
         self.transport: asyncio.DatagramTransport | None = None
+        self._queue: asyncio.Queue[tuple[bytes, tuple[str, int]]] = asyncio.Queue(
+            maxsize=max(1, queue_maxsize)
+        )
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         self.transport = transport  # type: ignore[assignment]
@@ -25,7 +33,25 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             return
         if data[0] != MSG_DATA:
             return
+        try:
+            self._queue.put_nowait((bytes(data), addr))
+        except asyncio.QueueFull:
+            client_id = extract_client_id_hex(data)
+            self.registry.note_parse_error(client_id)
+            LOGGER.warning(
+                "UDP ingest queue full; dropping packet from %s (client=%s)", addr, client_id
+            )
+            return
 
+    async def process_queue(self) -> None:
+        while True:
+            data, addr = await self._queue.get()
+            try:
+                self._process_datagram(data, addr)
+            finally:
+                self._queue.task_done()
+
+    def _process_datagram(self, data: bytes, addr: tuple[str, int]) -> None:
         try:
             msg = parse_data(data)
         except ProtocolError as exc:
@@ -55,10 +81,12 @@ async def start_udp_data_receiver(
     port: int,
     registry: ClientRegistry,
     processor: SignalProcessor,
-) -> asyncio.DatagramTransport:
+) -> tuple[asyncio.DatagramTransport, asyncio.Task[None]]:
     loop = asyncio.get_running_loop()
+    protocol = DataDatagramProtocol(registry=registry, processor=processor)
     transport, _ = await loop.create_datagram_endpoint(
-        lambda: DataDatagramProtocol(registry=registry, processor=processor),
+        lambda: protocol,
         local_addr=(host, port),
     )
-    return transport
+    consumer = asyncio.create_task(protocol.process_queue(), name="udp-data-consumer")
+    return transport, consumer

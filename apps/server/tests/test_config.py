@@ -5,28 +5,34 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.config import PI_DIR, REPO_DIR, load_config
+from vibesensor.config import PI_DIR, load_config
 
 
 def _write_config(path: Path, payload: dict) -> None:
     path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
-def test_metrics_log_path_is_required(tmp_path: Path) -> None:
+def test_metrics_log_path_required_when_metrics_enabled(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
-    _write_config(config_path, {"logging": {"metrics_log_path": ""}})
-    with pytest.raises(ValueError, match="metrics_log_path must be configured"):
+    _write_config(config_path, {"logging": {"log_metrics": True, "metrics_log_path": ""}})
+    with pytest.raises(
+        ValueError, match="metrics_log_path must be configured when log_metrics is true"
+    ):
         load_config(config_path)
 
 
-def test_metrics_log_path_resolves_relative(tmp_path: Path) -> None:
+def test_metrics_log_path_resolves_relative_to_config_dir(tmp_path: Path) -> None:
     config_path = tmp_path / "config.yaml"
-    _write_config(
-        config_path,
-        {"logging": {"metrics_log_path": "apps/server/data/new_metrics.jsonl"}},
-    )
+    _write_config(config_path, {"logging": {"metrics_log_path": "new_metrics.jsonl"}})
     cfg = load_config(config_path)
-    assert cfg.logging.metrics_log_path == (REPO_DIR / "apps/server/data/new_metrics.jsonl")
+    assert cfg.logging.metrics_log_path == (tmp_path / "new_metrics.jsonl")
+
+
+def test_metrics_log_path_not_required_when_metrics_disabled(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"logging": {"log_metrics": False, "metrics_log_path": ""}})
+    cfg = load_config(config_path)
+    assert cfg.logging.log_metrics is False
 
 
 def test_dev_and_docker_configs_equivalent() -> None:

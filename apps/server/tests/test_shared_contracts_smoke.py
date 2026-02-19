@@ -3,12 +3,18 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from libs.core.python.vibesensor_core.vibration_strength import compute_vibration_strength_db
-from libs.shared.python.vibesensor_shared.contracts import METRIC_FIELDS, validate_ingestion_payload
+from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
+from vibesensor.shared_contracts import METRIC_FIELDS, validate_ingestion_payload
 
 
 def test_ingestion_payload_fixture_validates() -> None:
-    fixture_path = Path("libs/shared/fixtures/ingestion_payload.sample.json")
+    fixture_path = (
+        Path(__file__).resolve().parents[3]
+        / "libs"
+        / "shared"
+        / "fixtures"
+        / "ingestion_payload.sample.json"
+    )
     payload = json.loads(fixture_path.read_text(encoding="utf-8"))
     ok, message = validate_ingestion_payload(payload)
     assert ok, message

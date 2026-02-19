@@ -12,6 +12,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import RLock
 from typing import Any
 
 LOGGER = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class HistoryDB:
 
     def __init__(self, db_path: Path) -> None:
         self.db_path = db_path
+        self._lock = RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
@@ -65,18 +67,20 @@ class HistoryDB:
 
     @contextmanager
     def _cursor(self):
-        cur = self._conn.cursor()
-        try:
-            yield cur
-            self._conn.commit()
-        except Exception:
-            self._conn.rollback()
-            raise
-        finally:
-            cur.close()
+        with self._lock:
+            cur = self._conn.cursor()
+            try:
+                yield cur
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+            finally:
+                cur.close()
 
     def _ensure_schema(self) -> None:
-        self._conn.executescript(_SCHEMA_SQL)
+        with self._lock:
+            self._conn.executescript(_SCHEMA_SQL)
         with self._cursor() as cur:
             cur.execute(
                 "INSERT OR IGNORE INTO schema_meta (key, value) VALUES (?, ?)",
@@ -102,11 +106,14 @@ class HistoryDB:
     def append_samples(self, run_id: str, samples: list[dict[str, Any]]) -> None:
         if not samples:
             return
+        chunk_size = 256
         with self._cursor() as cur:
-            cur.executemany(
-                "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
-                [(run_id, json.dumps(s, ensure_ascii=True)) for s in samples],
-            )
+            for start in range(0, len(samples), chunk_size):
+                batch = samples[start : start + chunk_size]
+                cur.executemany(
+                    "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
+                    ((run_id, json.dumps(s, ensure_ascii=True)) for s in batch),
+                )
 
     def finalize_run(self, run_id: str, end_time_utc: str) -> None:
         with self._cursor() as cur:

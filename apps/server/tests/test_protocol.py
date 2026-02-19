@@ -39,6 +39,7 @@ def test_hello_roundtrip() -> None:
         control_port=9123,
         sample_rate_hz=800,
         name="front-left",
+        frame_samples=200,
         firmware_version="fw-test",
         queue_overflow_drops=7,
     )
@@ -47,6 +48,7 @@ def test_hello_roundtrip() -> None:
     assert decoded.client_id == client_id
     assert decoded.control_port == 9123
     assert decoded.sample_rate_hz == 800
+    assert decoded.frame_samples == 200
     assert decoded.name == "front-left"
     assert decoded.firmware_version == "fw-test"
     assert decoded.queue_overflow_drops == 7
@@ -82,7 +84,7 @@ def test_client_id_mac_roundtrip() -> None:
 
 
 def test_protocol_layout_constants_match_esp_side() -> None:
-    assert HELLO_FIXED_BYTES == 18
+    assert HELLO_FIXED_BYTES == 20
     assert DATA_HEADER_BYTES == 22
     assert ACK_BYTES == 13
     assert DATA_ACK_BYTES == 12
