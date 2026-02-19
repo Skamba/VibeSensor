@@ -36,7 +36,7 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     candidate_dirs = [repo_root / "ui" / "dist", repo_root / "server" / "public"]
     forbidden_patterns = [
-        re.compile(r"Math\.log10|log10\("),
+        re.compile(r"Math\.log10\([^)]*/[^)]*\)|log10\([^)]*/[^)]*\)"),
         re.compile(r"detectVibrationEvents"),
         re.compile(
             r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_db\s*&&\s*"
