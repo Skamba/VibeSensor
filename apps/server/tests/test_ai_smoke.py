@@ -26,7 +26,7 @@ def test_smoke_hotspot_script_has_no_runtime_apt_get() -> None:
 
 @pytest.mark.smoke
 def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
-    build_sh = Path(__file__).resolve().parents[2] / "image" / "pi-gen" / "build.sh"
+    build_sh = Path(__file__).resolve().parents[3] / "infra" / "pi-image" / "pi-gen" / "build.sh"
     text = build_sh.read_text(encoding="utf-8")
     assert "network-manager" in text, "build wrapper must bake network-manager"
     assert "dnsmasq" in text, "build wrapper must bake dnsmasq"

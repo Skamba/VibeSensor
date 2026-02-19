@@ -76,6 +76,14 @@ def maybe_start_server(
             return None
         time.sleep(0.2)
 
+    if check_server_running(
+        args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
+    ):
+        print(
+            f"Server already running at {server_health_url(args.server_host, args.server_http_port)}"
+        )
+        return None
+
     config_path = Path(args.server_config)
     if not config_path.is_absolute():
         config_path = repo_root / config_path
