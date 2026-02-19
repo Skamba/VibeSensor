@@ -95,6 +95,15 @@ install -d "${ROOTFS_DIR}/etc/systemd/system"
 install -d "${ROOTFS_DIR}/etc/NetworkManager/conf.d"
 install -d "${ROOTFS_DIR}/etc/tmpfiles.d"
 
+# Build the Python virtualenv inside the ARM rootfs via QEMU chroot emulation.
+on_chroot << CHROOT_EOF
+set -e
+python3 -m venv /opt/VibeSensor/apps/server/.venv
+/opt/VibeSensor/apps/server/.venv/bin/pip install --upgrade pip --quiet
+/opt/VibeSensor/apps/server/.venv/bin/pip install -e /opt/VibeSensor/apps/server --quiet
+chown -R 1000:1000 /opt/VibeSensor/apps/server/.venv
+CHROOT_EOF
+
 cat >"${ROOTFS_DIR}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf" <<'NMCONF'
 [main]
 dns=dnsmasq
@@ -157,6 +166,8 @@ network-manager
 dnsmasq
 rfkill
 iw
+python3-venv
+python3-pip
 EOF
 
 # Ensure this custom stage is exported as the final image artifact.
@@ -350,6 +361,11 @@ if [ ! -d "${ROOT_MNT}/var/log/wifi" ] && [ ! -f "${ROOT_MNT}/etc/tmpfiles.d/vib
   exit 1
 fi
 
+if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" ]; then
+  echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv"
+  exit 1
+fi
+
 if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
   echo "Validation failed: hotspot script still contains apt-get"
   exit 1
@@ -406,6 +422,9 @@ fi
 
 echo "=== Validation: NetworkManager conf.d drop-in ==="
 cat "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
+
+echo "=== Validation: Python venv ==="
+ls -la "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" || true
 
 echo "=== Validation: hotspot script has no apt-get ==="
 if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"; then
