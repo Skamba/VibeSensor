@@ -2,29 +2,19 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import random
-import shlex
 import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-from urllib.error import URLError
-from urllib.request import Request, urlopen
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "apps" / "server"))
 
-from vibesensor.analysis_settings import (  # noqa: E402
-    DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_mps,
-)
-from vibesensor.constants import KMH_TO_MPS  # noqa: E402
 from vibesensor.protocol import (  # noqa: E402
     CMD_IDENTIFY,
     MSG_CMD,
@@ -35,129 +25,21 @@ from vibesensor.protocol import (  # noqa: E402
     parse_cmd,
 )
 
-DEFAULT_SPEED_KMH = 100.0
-# Vehicle defaults imported from the canonical source of truth.
-DEFAULT_TIRE_WIDTH_MM = DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
-DEFAULT_TIRE_ASPECT_PCT = DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"]
-DEFAULT_RIM_IN = DEFAULT_ANALYSIS_SETTINGS["rim_in"]
-DEFAULT_FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
-DEFAULT_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
-
-
-def _calc_default_orders() -> dict[str, float]:
-    speed_mps = DEFAULT_SPEED_KMH * KMH_TO_MPS
-    circumference = tire_circumference_m_from_spec(
-        DEFAULT_TIRE_WIDTH_MM, DEFAULT_TIRE_ASPECT_PCT, DEFAULT_RIM_IN
-    )
-    if circumference is None:
-        raise ValueError("Failed to compute tire circumference from default specs")
-    whz = wheel_hz_from_speed_mps(speed_mps, circumference)
-    if whz is None:
-        raise ValueError("Failed to compute wheel Hz from default speed/circumference")
-    wheel_1x = whz
-    shaft_1x = wheel_1x * DEFAULT_FINAL_DRIVE
-    engine_1x = shaft_1x * DEFAULT_GEAR_RATIO
-    return {
-        "wheel_1x": float(wheel_1x),
-        "wheel_2x": float(wheel_1x * 2.0),
-        "shaft_1x": float(shaft_1x),
-        "engine_1x": float(engine_1x),
-        "engine_2x": float(engine_1x * 2.0),
-    }
-
-
-DEFAULT_ORDER_HZ = _calc_default_orders()
-LOCAL_SERVER_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0"}
-
-
-@dataclass(frozen=True, slots=True)
-class Profile:
-    name: str
-    tones: tuple[tuple[float, tuple[float, float, float]], ...]
-    noise_std: float
-    bump_probability: float
-    bump_decay: float
-    bump_strength: tuple[float, float, float]
-    modulation_hz: float
-    modulation_depth: float
-
-
-PROFILE_LIBRARY: dict[str, Profile] = {
-    "engine_idle": Profile(
-        name="engine_idle",
-        tones=(
-            (13.0, (170.0, 120.0, 250.0)),
-            (26.0, (55.0, 40.0, 85.0)),
-            (39.0, (30.0, 24.0, 45.0)),
-        ),
-        noise_std=22.0,
-        bump_probability=0.001,
-        bump_decay=0.96,
-        bump_strength=(18.0, 15.0, 28.0),
-        modulation_hz=0.35,
-        modulation_depth=0.10,
-    ),
-    "rough_road": Profile(
-        name="rough_road",
-        tones=(
-            (8.0, (80.0, 90.0, 130.0)),
-            (15.0, (105.0, 95.0, 140.0)),
-            (34.0, (55.0, 45.0, 85.0)),
-        ),
-        noise_std=28.0,
-        bump_probability=0.012,
-        bump_decay=0.92,
-        bump_strength=(45.0, 55.0, 80.0),
-        modulation_hz=0.45,
-        modulation_depth=0.16,
-    ),
-    "wheel_imbalance": Profile(
-        name="wheel_imbalance",
-        tones=(
-            # Keep wheel signatures aligned to the same order model used by
-            # live/report diagnostics so simulated wheel faults classify reliably.
-            (DEFAULT_ORDER_HZ["wheel_1x"], (220.0, 125.0, 170.0)),
-            (DEFAULT_ORDER_HZ["wheel_2x"], (80.0, 52.0, 72.0)),
-            (DEFAULT_ORDER_HZ["wheel_1x"] * 0.52, (24.0, 18.0, 30.0)),
-        ),
-        noise_std=24.0,
-        bump_probability=0.004,
-        bump_decay=0.94,
-        bump_strength=(30.0, 24.0, 45.0),
-        modulation_hz=0.22,
-        modulation_depth=0.12,
-    ),
-    "wheel_mild_imbalance": Profile(
-        name="wheel_mild_imbalance",
-        tones=(
-            # Slight wheel issue: mostly a stable 1x wheel-order tone with
-            # a weaker 2x harmonic and very low subharmonic content.
-            (DEFAULT_ORDER_HZ["wheel_1x"], (105.0, 62.0, 80.0)),
-            (DEFAULT_ORDER_HZ["wheel_2x"], (28.0, 18.0, 24.0)),
-            (DEFAULT_ORDER_HZ["wheel_1x"] * 0.52, (8.0, 6.0, 10.0)),
-        ),
-        noise_std=14.0,
-        bump_probability=0.001,
-        bump_decay=0.96,
-        bump_strength=(10.0, 8.0, 14.0),
-        modulation_hz=0.18,
-        modulation_depth=0.08,
-    ),
-    "rear_body": Profile(
-        name="rear_body",
-        tones=(
-            (6.5, (70.0, 88.0, 120.0)),
-            (14.0, (48.0, 60.0, 82.0)),
-            (28.0, (34.0, 28.0, 50.0)),
-        ),
-        noise_std=22.0,
-        bump_probability=0.006,
-        bump_decay=0.95,
-        bump_strength=(30.0, 34.0, 50.0),
-        modulation_hz=0.28,
-        modulation_depth=0.14,
-    ),
-}
+from commands import (  # noqa: E402
+    apply_command,
+    apply_one_wheel_mild_scenario,
+    choose_default_profile,
+)
+from profiles import (  # noqa: E402
+    DEFAULT_ORDER_HZ,
+    DEFAULT_SPEED_KMH,
+    PROFILE_LIBRARY,
+    Profile,
+)
+from server_http import (  # noqa: E402
+    maybe_start_server,
+    set_server_speed_override_kmh,
+)
 
 
 @dataclass(slots=True)
@@ -346,237 +228,6 @@ def make_client_id(seed: int) -> bytes:
     )
 
 
-def _normalize_http_host(host: str) -> str:
-    if host == "0.0.0.0":
-        return "127.0.0.1"
-    return host
-
-
-def _server_health_url(host: str, port: int) -> str:
-    return f"http://{_normalize_http_host(host)}:{port}/api/clients"
-
-
-def _speed_override_url(host: str, port: int) -> str:
-    return f"http://{_normalize_http_host(host)}:{port}/api/simulator/speed-override"
-
-
-def _check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
-    url = _server_health_url(host, port)
-    try:
-        with urlopen(url, timeout=timeout_s) as resp:
-            return resp.status == 200
-    except (URLError, OSError, TimeoutError):
-        return False
-
-
-def set_server_speed_override_kmh(
-    host: str, port: int, speed_kmh: float, timeout_s: float
-) -> float | None:
-    payload = json.dumps({"speed_kmh": float(speed_kmh)}).encode("utf-8")
-    req = Request(
-        _speed_override_url(host, port),
-        data=payload,
-        method="POST",
-        headers={"Content-Type": "application/json"},
-    )
-    with urlopen(req, timeout=timeout_s) as resp:
-        body = resp.read()
-    parsed = json.loads(body.decode("utf-8")) if body else {}
-    value = parsed.get("speed_kmh")
-    return float(value) if isinstance(value, (int, float)) else None
-
-
-def _start_local_server(config_path: Path) -> subprocess.Popen[str]:
-    cmd = [sys.executable, "-m", "vibesensor.app", "--config", str(config_path)]
-    return subprocess.Popen(cmd, cwd=str(ROOT / "pi"))
-
-
-def maybe_start_server(args: argparse.Namespace) -> subprocess.Popen[str] | None:
-    host = args.server_host.strip().lower()
-    if host not in LOCAL_SERVER_HOSTS:
-        print(
-            f"Auto-start skipped: server host {args.server_host!r} is not local. "
-            "Start the server manually on that host."
-        )
-        return None
-
-    for _ in range(5):
-        if _check_server_running(
-            args.server_host,
-            args.server_http_port,
-            timeout_s=args.server_check_timeout,
-        ):
-            print(
-                "Server already running at "
-                f"{_server_health_url(args.server_host, args.server_http_port)}"
-            )
-            return None
-        time.sleep(0.2)
-
-    if _check_server_running(
-        args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
-    ):
-        print(
-            f"Server already running at {_server_health_url(args.server_host, args.server_http_port)}"
-        )
-        return None
-
-    config_path = Path(args.server_config)
-    if not config_path.is_absolute():
-        config_path = ROOT / config_path
-    print(f"Server not reachable. Starting local app with config: {config_path}")
-    proc = _start_local_server(config_path)
-    deadline = time.monotonic() + args.server_start_timeout
-    while time.monotonic() < deadline:
-        if proc.poll() is not None:
-            # If another process already owns the port, a second start can fail
-            # quickly even though the original server is healthy.
-            if _check_server_running(
-                args.server_host,
-                args.server_http_port,
-                timeout_s=args.server_check_timeout,
-            ):
-                print(
-                    "Detected existing healthy server after auto-start race at "
-                    f"{_server_health_url(args.server_host, args.server_http_port)}"
-                )
-                return None
-            raise RuntimeError(
-                f"Auto-started server exited early with code {proc.returncode}"
-            )
-        if _check_server_running(
-            args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
-        ):
-            print(
-                f"Server is now reachable at {_server_health_url(args.server_host, args.server_http_port)}"
-            )
-            return proc
-        time.sleep(0.3)
-    proc.terminate()
-    raise RuntimeError("Auto-started server did not become ready before timeout")
-
-
-def choose_default_profile(index: int) -> str:
-    ordered = ("engine_idle", "wheel_imbalance", "rear_body", "rough_road")
-    return ordered[index % len(ordered)]
-
-
-def apply_one_wheel_mild_scenario(clients: list[SimClient], fault_wheel: str) -> None:
-    """Configure a deterministic scenario with one slight wheel fault.
-
-    Non-fault sensors remain quiet/low-gain while the selected wheel carries
-    a mild 1x-dominant wheel-order signature.
-    """
-    target = fault_wheel.strip().lower()
-    for client in clients:
-        normalized_name = client.name.strip().lower()
-        client.common_event_gain = 0.0
-        client.scene_mode = "one-wheel-mild"
-        if normalized_name == target:
-            client.profile_name = "wheel_mild_imbalance"
-            client.scene_gain = 0.58
-            client.scene_noise_gain = 0.82
-            client.amp_scale = 1.0
-            client.noise_scale = 1.0
-            client.pulse(0.35)
-        else:
-            client.profile_name = "engine_idle"
-            client.scene_gain = 0.05
-            client.scene_noise_gain = 0.75
-            client.amp_scale = 0.18
-            client.noise_scale = 0.85
-
-
-def find_targets(clients: list[SimClient], token: str) -> list[SimClient]:
-    target = token.strip().lower()
-    if target == "all":
-        return clients
-    by_name = [c for c in clients if c.name.lower() == target]
-    if by_name:
-        return by_name
-    by_id = [c for c in clients if c.client_id.hex() == target]
-    if by_id:
-        return by_id
-    by_mac = [c for c in clients if c.mac_address == target]
-    if by_mac:
-        return by_mac
-    return []
-
-
-def apply_command(
-    clients: list[SimClient], line: str, stop_event: asyncio.Event
-) -> str:
-    parts = shlex.split(line)
-    if not parts:
-        return ""
-
-    cmd = parts[0].lower()
-    if cmd in {"quit", "exit"}:
-        stop_event.set()
-        return "Stopping simulator..."
-    if cmd == "help":
-        return (
-            "Commands: list | profiles | pause <target> | resume <target> | "
-            "pulse <target> [strength] | set <target> profile <name> | "
-            "set <target> amp <float> | set <target> noise <float> | quit"
-        )
-    if cmd == "list":
-        return "\n".join(c.summary() for c in clients)
-    if cmd == "profiles":
-        return "Available profiles: " + ", ".join(PROFILE_LIBRARY.keys())
-
-    if len(parts) < 2:
-        return "Missing target. Try: help"
-
-    targets = find_targets(clients, parts[1])
-    if not targets:
-        return f"No client matches target: {parts[1]!r}"
-
-    if cmd == "pause":
-        for c in targets:
-            c.paused = True
-        return f"Paused {len(targets)} client(s)."
-
-    if cmd == "resume":
-        for c in targets:
-            c.paused = False
-        return f"Resumed {len(targets)} client(s)."
-
-    if cmd == "pulse":
-        strength = 1.0
-        if len(parts) >= 3:
-            strength = max(0.1, float(parts[2]))
-        for c in targets:
-            c.pulse(strength)
-        return f"Injected pulse into {len(targets)} client(s), strength={strength:.2f}."
-
-    if cmd == "set":
-        if len(parts) < 4:
-            return "Usage: set <target> profile|amp|noise <value>"
-        field = parts[2].lower()
-        value = parts[3]
-
-        if field == "profile":
-            if value not in PROFILE_LIBRARY:
-                return f"Unknown profile {value!r}. Use: profiles"
-            for c in targets:
-                c.profile_name = value
-            return f"Set profile={value} for {len(targets)} client(s)."
-        if field == "amp":
-            amp = max(0.0, float(value))
-            for c in targets:
-                c.amp_scale = amp
-            return f"Set amp={amp:.2f} for {len(targets)} client(s)."
-        if field == "noise":
-            noise = max(0.0, float(value))
-            for c in targets:
-                c.noise_scale = noise
-            return f"Set noise={noise:.2f} for {len(targets)} client(s)."
-        return f"Unknown field {field!r}. Use profile|amp|noise"
-
-    return f"Unknown command: {cmd!r}. Try: help"
-
-
 async def command_loop(clients: list[SimClient], stop_event: asyncio.Event) -> None:
     print("Interactive mode enabled. Type 'help' for commands.")
     while not stop_event.is_set():
@@ -586,7 +237,7 @@ async def command_loop(clients: list[SimClient], stop_event: asyncio.Event) -> N
             stop_event.set()
             break
         try:
-            out = apply_command(clients, line, stop_event)
+            out = apply_command(clients, line, stop_event, list(PROFILE_LIBRARY.keys()))
         except Exception as exc:
             print(f"Command error: {exc}")
             continue
@@ -758,7 +409,7 @@ async def auto_stop(delay_s: float, stop_event: asyncio.Event) -> None:
 async def async_main(args: argparse.Namespace) -> None:
     managed_server: subprocess.Popen[str] | None = None
     if not args.no_auto_server:
-        managed_server = maybe_start_server(args)
+        managed_server = maybe_start_server(args, ROOT)
 
     names = (
         [n.strip() for n in args.names.split(",") if n.strip()] if args.names else []
