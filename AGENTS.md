@@ -26,6 +26,8 @@ Deterministic commands
 - Lint: `make lint`
 - Test: `make test`
 - Smoke: `make smoke`
+- LOC check: `make loc`
+- Docs lint: `make docs-lint`
 
 Architecture map
 - `apps/server`: FastAPI/runtime composition and orchestration
