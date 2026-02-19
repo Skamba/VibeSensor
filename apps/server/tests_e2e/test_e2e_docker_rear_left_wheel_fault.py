@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ast
+import csv
 import io
 import json
 import math
@@ -8,6 +10,7 @@ import re
 import subprocess
 import sys
 import time
+import zipfile
 from math import floor
 from pathlib import Path
 from urllib.request import Request, urlopen
@@ -53,28 +56,38 @@ def _normalize_location(s: str) -> str:
     return re.sub(r"[\s\-_]+", " ", str(s).strip().lower())
 
 
-def _parse_export_ndjson(raw: bytes) -> tuple[dict, list[dict]]:
-    """Parse NDJSON export bytes into (metadata_dict, [sample_dicts]).
-
-    The first non-sample line (record_type != "sample") is treated as run metadata.
-    All lines with record_type == "sample" are collected as samples.
-    """
-    metadata: dict = {}
-    samples: list[dict] = []
-    for line in raw.decode("utf-8").splitlines():
-        line = line.strip()
-        if not line:
-            continue
+def _parse_csv_value(value: str) -> object:
+    text = value.strip()
+    if text == "":
+        return text
+    if text == "None":
+        return None
+    if text in {"True", "False"}:
+        return text == "True"
+    if text.startswith(("[", "{")):
         try:
-            record = json.loads(line)
+            return json.loads(text)
         except json.JSONDecodeError:
-            continue
-        if not isinstance(record, dict):
-            continue
-        if str(record.get("record_type", "")) == "sample":
-            samples.append(record)
-        elif not metadata:
-            metadata = record
+            try:
+                return ast.literal_eval(text)
+            except (SyntaxError, ValueError):
+                return text
+    try:
+        if "." in text or "e" in text.lower():
+            return float(text)
+        return int(text)
+    except ValueError:
+        return text
+
+
+def _parse_export_zip(raw: bytes) -> tuple[dict, list[dict]]:
+    with zipfile.ZipFile(io.BytesIO(raw), "r") as archive:
+        names = archive.namelist()
+        json_name = next(name for name in names if name.endswith(".json"))
+        csv_name = next(name for name in names if name.endswith("_raw.csv"))
+        metadata = json.loads(archive.read(json_name).decode("utf-8"))
+        reader = csv.DictReader(io.StringIO(archive.read(csv_name).decode("utf-8")))
+        samples = [{k: _parse_csv_value(v) for k, v in row.items()} for row in reader]
     return metadata, samples
 
 
@@ -630,8 +643,9 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     # ------------------------------------------------------------------
 
     run_payload = _api(base_url, f"/api/history/{run_id}")
-    export_bytes, _ = _api_bytes(base_url, f"/api/history/{run_id}/export")
-    _, export_samples = _parse_export_ndjson(export_bytes)
+    export_bytes, export_content_type = _api_bytes(base_url, f"/api/history/{run_id}/export")
+    assert export_content_type.startswith("application/zip")
+    _, export_samples = _parse_export_zip(export_bytes)
     run_analysis = run_payload.get("analysis") or {}
 
     # Validation 1: primary finding consistent across run payload and insights
