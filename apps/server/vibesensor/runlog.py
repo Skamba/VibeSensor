@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -9,13 +8,38 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .shared_contracts import METRIC_FIELDS, REPORT_FIELDS
+from .domain_models import (
+    RUN_END_TYPE,
+    RUN_METADATA_TYPE,
+    RUN_SAMPLE_TYPE,
+    RUN_SCHEMA_VERSION,
+    RunMetadata,
+    SensorFrame,
+    _as_float_or_none,
+    _as_int_or_none,
+    _default_amplitude_definitions,
+    _default_units,
+)
 
-RUN_SCHEMA_VERSION = "v2-jsonl"
-
-RUN_METADATA_TYPE = "run_metadata"
-RUN_SAMPLE_TYPE = "sample"
-RUN_END_TYPE = "run_end"
+# Re-export constants for backward compatibility
+__all__ = [
+    "RUN_SCHEMA_VERSION",
+    "RUN_METADATA_TYPE",
+    "RUN_SAMPLE_TYPE",
+    "RUN_END_TYPE",
+    "RunData",
+    "utc_now_iso",
+    "parse_iso8601",
+    "as_float_or_none",
+    "as_int_or_none",
+    "default_units",
+    "default_amplitude_definitions",
+    "create_run_metadata",
+    "create_run_end_record",
+    "normalize_sample_record",
+    "append_jsonl_records",
+    "read_jsonl_run",
+]
 
 REQUIRED_SAMPLE_FIELDS = (
     "t_s",
@@ -46,58 +70,11 @@ def parse_iso8601(value: object) -> datetime | None:
         return None
 
 
-def as_float_or_none(value: object) -> float | None:
-    if value in (None, ""):
-        return None
-    try:
-        out = float(value)
-    except (TypeError, ValueError):
-        return None
-    if math.isnan(out) or math.isinf(out):
-        return None
-    return out
-
-
-def as_int_or_none(value: object) -> int | None:
-    out = as_float_or_none(value)
-    if out is None:
-        return None
-    return int(round(out))
-
-
-def default_units(*, accel_units: str = "g") -> dict[str, str]:
-    return {
-        REPORT_FIELDS["timestamp_utc"]: "iso8601",
-        "t_s": "s",
-        REPORT_FIELDS["speed_kmh"]: "km/h",
-        "gps_speed_kmh": "km/h",
-        "accel_x_g": accel_units,
-        "accel_y_g": accel_units,
-        "accel_z_g": accel_units,
-        "engine_rpm": "rpm",
-        "gear": "ratio",
-        REPORT_FIELDS["dominant_freq_hz"]: "Hz",
-        METRIC_FIELDS["vibration_strength_db"]: "dB",
-        METRIC_FIELDS["strength_bucket"]: "band_key",
-    }
-
-
-def default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[str, str]]:
-    return {
-        METRIC_FIELDS["vibration_strength_db"]: {
-            "statistic": "dB above floor",
-            "units": "dB",
-            "definition": (
-                "20*log10((peak_band_rms_amp_g+eps)/(floor_amp_g+eps)); "
-                "eps=max(1e-9, floor_amp_g*0.05)"
-            ),
-        },
-        METRIC_FIELDS["strength_bucket"]: {
-            "statistic": "Bucket",
-            "units": "band_key",
-            "definition": "strength severity bucket derived from vibration_strength_db",
-        },
-    }
+# Delegate to domain_models but keep public names for backward compat.
+as_float_or_none = _as_float_or_none
+as_int_or_none = _as_int_or_none
+default_units = _default_units
+default_amplitude_definitions = _default_amplitude_definitions
 
 
 def create_run_metadata(
@@ -114,24 +91,19 @@ def create_run_metadata(
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
 ) -> dict[str, Any]:
-    accel_units = "g" if accel_scale_g_per_lsb is not None else "raw_lsb"
-    return {
-        "record_type": RUN_METADATA_TYPE,
-        "schema_version": RUN_SCHEMA_VERSION,
-        "run_id": run_id,
-        "start_time_utc": start_time_utc,
-        "end_time_utc": end_time_utc,
-        "sensor_model": sensor_model,
-        "raw_sample_rate_hz": raw_sample_rate_hz,
-        "feature_interval_s": feature_interval_s,
-        "fft_window_size_samples": fft_window_size_samples,
-        "fft_window_type": fft_window_type,
-        "peak_picker_method": peak_picker_method,
-        "accel_scale_g_per_lsb": accel_scale_g_per_lsb,
-        "units": default_units(accel_units=accel_units),
-        "amplitude_definitions": default_amplitude_definitions(accel_units=accel_units),
-        "incomplete_for_order_analysis": bool(incomplete_for_order_analysis),
-    }
+    return RunMetadata.create(
+        run_id=run_id,
+        start_time_utc=start_time_utc,
+        sensor_model=sensor_model,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        feature_interval_s=feature_interval_s,
+        fft_window_size_samples=fft_window_size_samples,
+        fft_window_type=fft_window_type,
+        peak_picker_method=peak_picker_method,
+        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        end_time_utc=end_time_utc,
+        incomplete_for_order_analysis=incomplete_for_order_analysis,
+    ).to_dict()
 
 
 def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> dict[str, Any]:
@@ -144,41 +116,15 @@ def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> dict[
 
 
 def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
+    """Normalize a raw sample dict into canonical form.
+
+    Delegates to :class:`SensorFrame` for field parsing and backward-compat
+    rename (``strength_db`` -> ``vibration_strength_db``).  Extra keys present
+    in *record* but not part of the SensorFrame schema are preserved.
+    """
+    frame = SensorFrame.from_dict(record)
     normalized = dict(record)
-    normalized["record_type"] = RUN_SAMPLE_TYPE
-    normalized["t_s"] = as_float_or_none(record.get("t_s"))
-    normalized["speed_kmh"] = as_float_or_none(record.get("speed_kmh"))
-    normalized["gps_speed_kmh"] = as_float_or_none(record.get("gps_speed_kmh"))
-    normalized["accel_x_g"] = as_float_or_none(record.get("accel_x_g"))
-    normalized["accel_y_g"] = as_float_or_none(record.get("accel_y_g"))
-    normalized["accel_z_g"] = as_float_or_none(record.get("accel_z_g"))
-    normalized["engine_rpm"] = as_float_or_none(record.get("engine_rpm"))
-    normalized["gear"] = as_float_or_none(record.get("gear"))
-    normalized[REPORT_FIELDS["dominant_freq_hz"]] = as_float_or_none(
-        record.get(REPORT_FIELDS["dominant_freq_hz"])
-    )
-    # Backward-compat: old runs wrote "strength_db"; new runs write "vibration_strength_db".
-    normalized[METRIC_FIELDS["vibration_strength_db"]] = as_float_or_none(
-        record.get(METRIC_FIELDS["vibration_strength_db"]) or record.get("strength_db")
-    )
-    normalized[METRIC_FIELDS["strength_bucket"]] = (
-        str(record.get(METRIC_FIELDS["strength_bucket"]))
-        if record.get(METRIC_FIELDS["strength_bucket"]) not in (None, "")
-        else None
-    )
-    normalized["sample_rate_hz"] = as_int_or_none(record.get("sample_rate_hz"))
-    top_peaks = record.get("top_peaks")
-    normalized_peaks: list[dict[str, float]] = []
-    if isinstance(top_peaks, list):
-        for peak in top_peaks[:10]:
-            if not isinstance(peak, dict):
-                continue
-            hz = as_float_or_none(peak.get("hz"))
-            amp = as_float_or_none(peak.get("amp"))
-            if hz is None or amp is None or hz <= 0:
-                continue
-            normalized_peaks.append({"hz": hz, "amp": amp})
-    normalized["top_peaks"] = normalized_peaks
+    normalized.update(frame.to_dict())
     return normalized
 
 
