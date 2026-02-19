@@ -6,7 +6,7 @@ import math
 import time
 from collections import deque
 from collections.abc import Callable
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from threading import RLock, Thread
 from typing import TYPE_CHECKING
@@ -24,8 +24,6 @@ from .gps_speed import GPSSpeedMonitor
 from .processing import SignalProcessor
 from .registry import ClientRegistry
 from .runlog import (
-    append_jsonl_records,
-    create_run_end_record,
     create_run_metadata,
     utc_now_iso,
 )
@@ -55,11 +53,9 @@ class MetricsLogger:
         peak_picker_method: str = "max_peak_amp_across_axes",
         accel_scale_g_per_lsb: float | None = None,
         history_db: HistoryDB | None = None,
-        write_jsonl: bool = True,
         persist_history_db: bool = True,
-        durable_jsonl_writes: bool = False,
-        durable_jsonl_fsync_every_records: int = 100,
         language_provider: Callable[[], str] | None = None,
+        **_kwargs: object,
     ):
         self.enabled = bool(enabled)
         self.log_path = log_path
@@ -79,17 +75,12 @@ class MetricsLogger:
             else None
         )
         self._lock = RLock()
-        self._active_path: Path | None = None
         self._run_id: str | None = None
         self._run_start_utc: str | None = None
         self._run_start_mono_s: float | None = None
-        self._metadata_written = False
         self._last_write_error: str | None = None
         self._history_db = history_db
-        self._write_jsonl = bool(write_jsonl)
         self._persist_history_db = bool(persist_history_db)
-        self._durable_jsonl_writes = bool(durable_jsonl_writes)
-        self._durable_jsonl_fsync_every_records = max(1, int(durable_jsonl_fsync_every_records))
         self._language_provider = language_provider
         self._history_run_created = False
         self._written_sample_count = 0
@@ -103,18 +94,10 @@ class MetricsLogger:
         if self.enabled:
             self._start_new_session_locked()
 
-    def _path_for_new_session(self, now: datetime | None = None) -> Path:
-        ts = now or datetime.now(UTC)
-        date_suffix = ts.strftime("%Y%m%d_%H%M%S")
-        stem = self.log_path.stem
-        return self.log_path.with_name(f"{stem}_{date_suffix}.jsonl")
-
-    def _start_new_session_locked(self, now: datetime | None = None) -> None:
-        self._active_path = self._path_for_new_session(now=now)
+    def _start_new_session_locked(self, now: datetime | None = None) -> None:  # noqa: ARG002
         self._run_id = uuid4().hex
         self._run_start_utc = utc_now_iso()
         self._run_start_mono_s = time.monotonic()
-        self._metadata_written = False
         self._last_write_error = None
         self._history_run_created = False
         self._written_sample_count = 0
@@ -151,18 +134,16 @@ class MetricsLogger:
         except Exception:
             LOGGER.warning("Failed to create history run in DB", exc_info=True)
 
-    def _session_snapshot(self) -> tuple[Path, str, str, float] | None:
+    def _session_snapshot(self) -> tuple[str, str, float] | None:
         with self._lock:
             if (
                 not self.enabled
-                or self._active_path is None
                 or not self._run_id
                 or not self._run_start_utc
                 or self._run_start_mono_s is None
             ):
                 return None
             return (
-                self._active_path,
                 self._run_id,
                 self._run_start_utc,
                 self._run_start_mono_s,
@@ -172,7 +153,7 @@ class MetricsLogger:
         with self._lock:
             return {
                 "enabled": self.enabled,
-                "current_file": self._active_path.name if self._active_path else None,
+                "current_file": None,
                 "run_id": self._run_id,
                 "write_error": self._last_write_error,
                 "analysis_in_progress": any(thread.is_alive() for thread in self._analysis_threads),
@@ -180,7 +161,7 @@ class MetricsLogger:
 
     def start_logging(self) -> dict[str, str | bool | None]:
         with self._lock:
-            if self.enabled and self._active_path and self._run_id:
+            if self.enabled and self._run_id:
                 self._finalize_run_locked()
             self.enabled = True
             self._start_new_session_locked()
@@ -192,16 +173,14 @@ class MetricsLogger:
     def stop_logging(self) -> dict[str, str | bool | None]:
         with self._lock:
             run_id_to_analyze: str | None = None
-            if self.enabled and self._active_path and self._run_id:
+            if self.enabled and self._run_id:
                 if self._history_run_created and self._written_sample_count > 0:
                     run_id_to_analyze = self._run_id
                 self._finalize_run_locked()
             self.enabled = False
-            self._active_path = None
             self._run_id = None
             self._run_start_utc = None
             self._run_start_mono_s = None
-            self._metadata_written = False
             self._last_write_error = None
             self._history_run_created = False
             self._written_sample_count = 0
@@ -273,35 +252,6 @@ class MetricsLogger:
         if self._language_provider is not None:
             metadata["language"] = str(self._language_provider()).strip().lower() or "en"
         return metadata
-
-    def _ensure_metadata_written(self, path: Path, run_id: str, start_time_utc: str) -> None:
-        if self._metadata_written:
-            return
-        metadata = self._run_metadata_record(run_id=run_id, start_time_utc=start_time_utc)
-        if self._write_jsonl_records(path, [metadata]):
-            self._metadata_written = True
-
-    def _write_jsonl_records(self, path: Path, records: list[dict[str, object]]) -> bool:
-        if not records:
-            return True
-        if not self._write_jsonl:
-            return True
-        try:
-            if self._durable_jsonl_writes:
-                append_jsonl_records(
-                    path,
-                    records,
-                    durable=True,
-                    durable_every_records=self._durable_jsonl_fsync_every_records,
-                )
-            else:
-                append_jsonl_records(path, records)
-        except Exception as exc:
-            self._last_write_error = str(exc)
-            LOGGER.warning("Failed to append JSONL metrics records to %s", path, exc_info=True)
-            return False
-        self._last_write_error = None
-        return True
 
     @staticmethod
     def _safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
@@ -468,10 +418,7 @@ class MetricsLogger:
 
         return records
 
-    def _append_records(
-        self, path: Path, run_id: str, start_time_utc: str, run_start_mono_s: float
-    ) -> bool:
-        self._ensure_metadata_written(path, run_id, start_time_utc)
+    def _append_records(self, run_id: str, start_time_utc: str, run_start_mono_s: float) -> bool:
         now_mono_s = time.monotonic()
         self._refresh_data_progress_marker(now_mono_s)
         t_s = max(0.0, now_mono_s - run_start_mono_s)
@@ -479,7 +426,6 @@ class MetricsLogger:
         rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
         if rows:
             self._last_data_progress_mono_s = now_mono_s
-            self._write_jsonl_records(path, rows)
             self._written_sample_count += len(rows)
             if self._history_db is not None and self._persist_history_db:
                 self._ensure_history_run_created(run_id, start_time_utc)
@@ -494,12 +440,11 @@ class MetricsLogger:
         return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
 
     def _finalize_run_locked(self) -> None:
-        if self._active_path is None or not self._run_id:
+        if not self._run_id:
             return
-        end_utc = utc_now_iso()
-        self._write_jsonl_records(self._active_path, [create_run_end_record(self._run_id, end_utc)])
         if not self._history_run_created:
             return
+        end_utc = utc_now_iso()
         if self._history_db is not None:
             try:
                 self._history_db.finalize_run(self._run_id, end_utc)
@@ -591,9 +536,8 @@ class MetricsLogger:
                         self._live_samples.extend(live_rows)
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
-                    path, run_id, start_time_utc, start_mono_s = snapshot
+                    run_id, start_time_utc, start_mono_s = snapshot
                     no_data_timeout = self._append_records(
-                        path,
                         run_id,
                         start_time_utc,
                         start_mono_s,

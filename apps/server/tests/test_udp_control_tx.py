@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.history_db import HistoryDB
 from vibesensor.protocol import HelloMessage, parse_cmd
 from vibesensor.registry import ClientRegistry
 from vibesensor.udp_control_tx import UDPControlPlane
@@ -63,7 +64,7 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
 
 def test_send_data_ack_sends_to_control_addr(tmp_path: Path) -> None:
     client_hex = "aabbccddeeff"
-    registry = ClientRegistry(tmp_path / "clients.json")
+    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
     registry.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex(client_hex),

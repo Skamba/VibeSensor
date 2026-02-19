@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.history_db import HistoryDB
 from vibesensor.settings_store import (
     DEFAULT_CAR_ASPECTS,
     SettingsStore,
@@ -203,10 +204,10 @@ def test_store_ensure_sensor() -> None:
 
 
 def test_store_ensure_sensor_persists_defaults(tmp_path: Path) -> None:
-    persist = tmp_path / "settings.json"
-    store = SettingsStore(persist_path=persist)
+    db = HistoryDB(tmp_path / "history.db")
+    store = SettingsStore(db=db)
     store.ensure_sensor("aa:bb:cc:dd:ee:ff")
-    reloaded = SettingsStore(persist_path=persist)
+    reloaded = SettingsStore(db=db)
     sensors = reloaded.get_sensors()
     assert "aabbccddeeff" in sensors
 
@@ -215,13 +216,13 @@ def test_store_ensure_sensor_persists_defaults(tmp_path: Path) -> None:
 
 
 def test_store_persists_and_loads(tmp_path: Path) -> None:
-    persist = tmp_path / "settings.json"
-    store1 = SettingsStore(persist_path=persist)
+    db = HistoryDB(tmp_path / "history.db")
+    store1 = SettingsStore(db=db)
     store1.add_car({"name": "Persisted Car", "type": "suv"})
     store1.update_speed_source({"speedSource": "manual", "manualSpeedKph": 60})
     store1.set_sensor("11:22:33:44:55:66", {"name": "Rear", "location": "rear_left_wheel"})
 
-    store2 = SettingsStore(persist_path=persist)
+    store2 = SettingsStore(db=db)
     snap = store2.snapshot()
     assert len(snap["cars"]) == 2
     assert snap["cars"][1]["name"] == "Persisted Car"
@@ -230,17 +231,9 @@ def test_store_persists_and_loads(tmp_path: Path) -> None:
     assert snap["sensorsByMac"]["112233445566"]["name"] == "Rear"
 
 
-def test_store_handles_corrupt_persist_file(tmp_path: Path) -> None:
-    persist = tmp_path / "settings.json"
-    persist.write_text("not valid json", encoding="utf-8")
-    store = SettingsStore(persist_path=persist)
+def test_store_handles_no_db() -> None:
+    store = SettingsStore()
     # Should fall back to defaults without crashing
-    assert len(store.snapshot()["cars"]) == 1
-
-
-def test_store_handles_missing_persist_file(tmp_path: Path) -> None:
-    persist = tmp_path / "settings.json"
-    store = SettingsStore(persist_path=persist)
     assert len(store.snapshot()["cars"]) == 1
 
 
