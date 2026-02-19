@@ -574,3 +574,39 @@ def test_db_persists_when_jsonl_disabled(tmp_path: Path) -> None:
     assert history_db.get_run(run_id) is not None
     assert history_db.get_run_samples(run_id)
     assert not path.exists()
+
+
+def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+    for _ in range(13_000):
+        logger._append_records(path, run_id, start_time_utc, start_mono)
+
+    def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
+        return {"row_count": len(samples)}
+
+    monkeypatch.setattr("vibesensor.report_analysis.summarize_run_data", _summary)
+    logger.stop_logging()
+    assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
+    stored = history_db.get_run_analysis(run_id)
+    assert stored is not None
+    assert stored["row_count"] <= 12_000
+    assert stored["analysis_metadata"]["total_sample_count"] >= stored["row_count"]

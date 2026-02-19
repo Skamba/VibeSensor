@@ -20,7 +20,7 @@ LOGGER = logging.getLogger(__name__)
 
 # -- Schema -------------------------------------------------------------------
 
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 
 _SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS runs (
     metadata_json  TEXT NOT NULL,
     analysis_json  TEXT,
     error_message  TEXT,
+    sample_count   INTEGER NOT NULL DEFAULT 0,
     created_at     TEXT NOT NULL
 );
 
@@ -92,10 +93,23 @@ class HistoryDB:
                 )
                 return
             version = int(str(row[0]))
-            if version != _SCHEMA_VERSION:
+            if version == 1:
+                self._migrate_v1_to_v2()
+                cur.execute("UPDATE schema_meta SET value = ? WHERE key = ?", ("2", "version"))
+            elif version != _SCHEMA_VERSION:
                 raise RuntimeError(
                     f"Unsupported history DB schema version {version}; expected {_SCHEMA_VERSION}"
                 )
+
+    def _migrate_v1_to_v2(self) -> None:
+        with self._lock:
+            self._conn.execute(
+                "ALTER TABLE runs ADD COLUMN sample_count INTEGER NOT NULL DEFAULT 0"
+            )
+            self._conn.execute(
+                "UPDATE runs SET sample_count = "
+                "(SELECT COUNT(*) FROM samples s WHERE s.run_id = runs.run_id)"
+            )
 
     # -- write ----------------------------------------------------------------
 
@@ -108,9 +122,13 @@ class HistoryDB:
         now = datetime.now(UTC).isoformat()
         with self._cursor() as cur:
             cur.execute(
+                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
+                ("Recovered stale recording on new run creation",),
+            )
+            cur.execute(
                 "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at) "
                 "VALUES (?, 'recording', ?, ?, ?)",
-                (run_id, start_time_utc, json.dumps(metadata, ensure_ascii=True), now),
+                (run_id, start_time_utc, json.dumps(metadata, ensure_ascii=False), now),
             )
 
     def append_samples(self, run_id: str, samples: list[dict[str, Any]]) -> None:
@@ -122,8 +140,12 @@ class HistoryDB:
                 batch = samples[start : start + chunk_size]
                 cur.executemany(
                     "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
-                    ((run_id, json.dumps(s, ensure_ascii=True)) for s in batch),
+                    ((run_id, json.dumps(s, ensure_ascii=False)) for s in batch),
                 )
+            cur.execute(
+                "UPDATE runs SET sample_count = sample_count + ? WHERE run_id = ?",
+                (len(samples), run_id),
+            )
 
     def finalize_run(self, run_id: str, end_time_utc: str) -> None:
         with self._cursor() as cur:
@@ -136,7 +158,7 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ? WHERE run_id = ?",
-                (json.dumps(analysis, ensure_ascii=True, default=str), run_id),
+                (json.dumps(analysis, ensure_ascii=False, default=str), run_id),
             )
 
     def store_analysis_error(self, run_id: str, error: str) -> None:
@@ -152,8 +174,7 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.execute(
                 "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                "r.created_at, r.error_message, "
-                "(SELECT COUNT(*) FROM samples s WHERE s.run_id = r.run_id) AS sample_count "
+                "r.created_at, r.error_message, r.sample_count "
                 "FROM runs r ORDER BY r.created_at DESC"
             )
             rows = cur.fetchall()
@@ -254,6 +275,17 @@ class HistoryDB:
 
     def get_active_run_id(self) -> str | None:
         with self._cursor() as cur:
-            cur.execute("SELECT run_id FROM runs WHERE status = 'recording' LIMIT 1")
+            cur.execute(
+                "SELECT run_id FROM runs WHERE status = 'recording' "
+                "ORDER BY created_at DESC LIMIT 1"
+            )
             row = cur.fetchone()
         return row[0] if row else None
+
+    def recover_stale_recording_runs(self) -> int:
+        with self._cursor() as cur:
+            cur.execute(
+                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
+                ("Recovered stale recording during startup",),
+            )
+            return cur.rowcount

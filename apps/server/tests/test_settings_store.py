@@ -121,6 +121,14 @@ def test_store_update_car_aspects() -> None:
     assert aspects["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
 
 
+def test_store_update_active_car_aspects() -> None:
+    store = SettingsStore()
+    updated = store.update_active_car_aspects({"tire_width_mm": 255.0, "rim_in": 19.0})
+    assert updated["tire_width_mm"] == 255.0
+    assert updated["rim_in"] == 19.0
+    assert store.active_car_aspects()["tire_width_mm"] == 255.0
+
+
 def test_store_set_active_car() -> None:
     store = SettingsStore()
     store.add_car({"name": "Second Car"})

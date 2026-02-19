@@ -54,6 +54,7 @@ class GPSSpeedMonitor:
                 continue
 
             writer: asyncio.StreamWriter | None = None
+            writer_closed = False
             try:
                 reader, writer = await asyncio.wait_for(
                     asyncio.open_connection(host, port),
@@ -79,6 +80,9 @@ class GPSSpeedMonitor:
             except asyncio.CancelledError:
                 if writer is not None:
                     writer.close()
+                    await writer.wait_closed()
+                    writer_closed = True
+                self.speed_mps = None
                 raise
             except Exception:
                 self.speed_mps = None
@@ -86,6 +90,6 @@ class GPSSpeedMonitor:
                 await asyncio.sleep(reconnect_delay)
                 reconnect_delay = min(_GPS_RECONNECT_MAX_DELAY_S, reconnect_delay * 2.0)
             finally:
-                if writer is not None:
+                if writer is not None and not writer_closed:
                     writer.close()
                     await writer.wait_closed()
