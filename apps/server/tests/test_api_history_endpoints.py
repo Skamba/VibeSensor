@@ -60,6 +60,11 @@ class _FakeHistoryDB:
         for start in range(0, len(self.samples), batch_size):
             yield self.samples[start : start + batch_size]
 
+    def get_run_samples(self, run_id: str) -> list[dict[str, Any]]:
+        if run_id != "run-1":
+            return []
+        return list(self.samples)
+
     def list_runs(self) -> list[dict[str, Any]]:
         return []
 
