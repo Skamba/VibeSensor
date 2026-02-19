@@ -1,4 +1,3 @@
-// @ts-nocheck
 import "uplot/dist/uPlot.min.css";
 import "./styles/app.css";
 import * as I18N from "./i18n";

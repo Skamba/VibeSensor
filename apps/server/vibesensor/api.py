@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from .constants import MPS_TO_KMH
@@ -52,6 +53,31 @@ class AnalysisSettingsRequest(BaseModel):
     max_band_half_width_pct: float | None = Field(default=None, gt=0)
 
 
+class LanguageRequest(BaseModel):
+    language: str = Field(pattern="^(en|nl)$")
+
+
+class CarUpsertRequest(BaseModel):
+    name: str | None = None
+    type: str | None = None
+    aspects: dict[str, float] | None = None
+
+
+class ActiveCarRequest(BaseModel):
+    carId: str = Field(min_length=1)
+
+
+class SpeedSourceRequest(BaseModel):
+    speedSource: str | None = None
+    manualSpeedKph: float | None = None
+    obd2Config: dict[str, object] | None = None
+
+
+class SensorRequest(BaseModel):
+    name: str | None = None
+    location: str | None = None
+
+
 def _normalize_client_id_or_400(client_id: str) -> str:
     try:
         return parse_client_id(client_id).hex()
@@ -77,6 +103,23 @@ def _sync_speed_source_to_gps(state: RuntimeState) -> None:
 def create_router(state: RuntimeState) -> APIRouter:
     router = APIRouter()
 
+    def _analysis_language(run: dict, requested: str | None) -> str:
+        if isinstance(requested, str) and requested.strip():
+            return requested.strip().lower()
+        metadata = run.get("metadata", {})
+        if isinstance(metadata, dict):
+            value = metadata.get("language")
+            if isinstance(value, str) and value.strip():
+                return value.strip().lower()
+        return "en"
+
+    def _iter_normalized_samples(run_id: str, *, batch_size: int = 1000) -> Iterator[dict]:
+        from .runlog import normalize_sample_record
+
+        for batch in state.history_db.iter_run_samples(run_id, batch_size=batch_size):
+            for sample in batch:
+                yield normalize_sample_record(sample)
+
     @router.get("/api/health")
     async def health() -> dict:
         return {
@@ -96,15 +139,15 @@ def create_router(state: RuntimeState) -> APIRouter:
         return state.settings_store.get_cars()
 
     @router.post("/api/settings/cars")
-    async def add_car(req: dict) -> dict:
-        result = state.settings_store.add_car(req)
+    async def add_car(req: CarUpsertRequest) -> dict:
+        result = state.settings_store.add_car(req.model_dump(exclude_none=True))
         _sync_active_car_to_analysis(state)
         return result
 
     @router.put("/api/settings/cars/{car_id}")
-    async def update_car(car_id: str, req: dict) -> dict:
+    async def update_car(car_id: str, req: CarUpsertRequest) -> dict:
         try:
-            result = state.settings_store.update_car(car_id, req)
+            result = state.settings_store.update_car(car_id, req.model_dump(exclude_none=True))
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         _sync_active_car_to_analysis(state)
@@ -120,8 +163,8 @@ def create_router(state: RuntimeState) -> APIRouter:
         return result
 
     @router.post("/api/settings/cars/active")
-    async def set_active_car(req: dict) -> dict:
-        car_id = req.get("carId", "")
+    async def set_active_car(req: ActiveCarRequest) -> dict:
+        car_id = req.carId
         try:
             result = state.settings_store.set_active_car(car_id)
         except ValueError as exc:
@@ -134,8 +177,8 @@ def create_router(state: RuntimeState) -> APIRouter:
         return state.settings_store.get_speed_source()
 
     @router.post("/api/settings/speed-source")
-    async def update_speed_source(req: dict) -> dict:
-        result = state.settings_store.update_speed_source(req)
+    async def update_speed_source(req: SpeedSourceRequest) -> dict:
+        result = state.settings_store.update_speed_source(req.model_dump(exclude_none=True))
         _sync_speed_source_to_gps(state)
         return result
 
@@ -144,9 +187,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         return {"sensorsByMac": state.settings_store.get_sensors()}
 
     @router.post("/api/settings/sensors/{mac}")
-    async def update_sensor(mac: str, req: dict) -> dict:
+    async def update_sensor(mac: str, req: SensorRequest) -> dict:
         try:
-            return state.settings_store.set_sensor(mac, req)
+            state.settings_store.set_sensor(mac, req.model_dump(exclude_none=True))
+            return {"sensorsByMac": state.settings_store.get_sensors()}
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -158,16 +202,16 @@ def create_router(state: RuntimeState) -> APIRouter:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
-        return {"mac": mac, "status": "removed"}
+        return {"sensorsByMac": state.settings_store.get_sensors()}
 
     @router.get("/api/settings/language")
     async def get_language() -> dict:
         return {"language": state.settings_store.language}
 
     @router.post("/api/settings/language")
-    async def set_language(req: dict) -> dict:
+    async def set_language(req: LanguageRequest) -> dict:
         try:
-            language = state.settings_store.set_language(str(req.get("language", "")))
+            language = state.settings_store.set_language(req.language)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"language": language}
@@ -349,25 +393,24 @@ def create_router(state: RuntimeState) -> APIRouter:
         analysis = run.get("analysis")
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
-        # Re-attach samples for plots/PDF generation if not present
-        if "samples" not in analysis or not analysis["samples"]:
-            from .runlog import normalize_sample_record
-
-            raw_samples = state.history_db.get_run_samples(run_id)
-            analysis["samples"] = [normalize_sample_record(s) for s in raw_samples]
-            # Recompute full summary from stored data for the requested language
-            metadata = run.get("metadata", {})
-            try:
-                analysis = summarize_run_data(
-                    metadata,
-                    analysis["samples"],
-                    lang=lang,
-                    file_name=run_id,
-                    include_samples=True,
-                )
-            except ValueError as exc:
-                raise HTTPException(status_code=422, detail=str(exc)) from exc
-        pdf = build_report_pdf(analysis)
+        metadata = run.get("metadata", {})
+        if not isinstance(metadata, dict):
+            metadata = {}
+        samples = list(_iter_normalized_samples(run_id, batch_size=2048))
+        if len(samples) > 12_000:
+            stride = max(1, len(samples) // 12_000)
+            samples = samples[::stride]
+        try:
+            report_model = summarize_run_data(
+                metadata,
+                samples,
+                lang=_analysis_language(run, lang),
+                file_name=run_id,
+                include_samples=True,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        pdf = build_report_pdf(report_model)
         return Response(
             content=pdf,
             media_type="application/pdf",
@@ -380,14 +423,15 @@ def create_router(state: RuntimeState) -> APIRouter:
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found")
         metadata = run.get("metadata", {})
-        samples = state.history_db.get_run_samples(run_id)
-        lines: list[str] = []
-        lines.append(json.dumps(metadata, ensure_ascii=True))
-        for s in samples:
-            lines.append(json.dumps(s, ensure_ascii=True))
-        content = "\n".join(lines) + "\n"
-        return Response(
-            content=content,
+
+        def _stream() -> Iterator[bytes]:
+            yield (json.dumps(metadata, ensure_ascii=True) + "\n").encode("utf-8")
+            for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+                for sample in batch:
+                    yield (json.dumps(sample, ensure_ascii=True) + "\n").encode("utf-8")
+
+        return StreamingResponse(
+            _stream(),
             media_type="application/x-ndjson",
             headers={"Content-Disposition": f'attachment; filename="{run_id}.jsonl"'},
         )
@@ -395,6 +439,11 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.websocket("/ws")
     async def ws_endpoint(ws: WebSocket) -> None:
         selected = ws.query_params.get("client_id")
+        if selected is not None:
+            try:
+                selected = parse_client_id(selected).hex()
+            except ValueError:
+                selected = None
         await ws.accept()
         await state.ws_hub.add(ws, selected)
         try:
@@ -409,8 +458,11 @@ def create_router(state: RuntimeState) -> APIRouter:
                     value = payload["client_id"]
                     if value is None:
                         await state.ws_hub.update_selected_client(ws, None)
-                    elif isinstance(value, str) and len(value.replace(":", "")) == 12:
-                        normalized = value.replace(":", "").lower()
+                    elif isinstance(value, str):
+                        try:
+                            normalized = parse_client_id(value).hex()
+                        except ValueError:
+                            continue
                         await state.ws_hub.update_selected_client(ws, normalized)
         except WebSocketDisconnect:
             LOGGER.debug("WebSocket client disconnected")

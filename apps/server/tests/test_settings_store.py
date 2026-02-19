@@ -187,10 +187,20 @@ def test_store_remove_sensor() -> None:
 
 def test_store_ensure_sensor() -> None:
     store = SettingsStore()
-    store.ensure_sensor("aa:bb:cc:dd:ee:ff")
+    created = store.ensure_sensor("aa:bb:cc:dd:ee:ff")
     sensors = store.get_sensors()
+    assert created["name"] == "aabbccddeeff"
     assert "aabbccddeeff" in sensors
     assert sensors["aabbccddeeff"]["name"] == "aabbccddeeff"
+
+
+def test_store_ensure_sensor_persists_defaults(tmp_path: Path) -> None:
+    persist = tmp_path / "settings.json"
+    store = SettingsStore(persist_path=persist)
+    store.ensure_sensor("aa:bb:cc:dd:ee:ff")
+    reloaded = SettingsStore(persist_path=persist)
+    sensors = reloaded.get_sensors()
+    assert "aabbccddeeff" in sensors
 
 
 # -- persistence ---------------------------------------------------------------

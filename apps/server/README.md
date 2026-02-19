@@ -82,6 +82,12 @@ Configuration is loaded from YAML. See `config.example.yaml` for all options.
 Development configs (`config.dev.yaml`, `config.docker.yaml`) override only
 paths — all other values use built-in defaults.
 
+Default runtime files (when using built-in defaults or `config.example.yaml`):
+- `logging.metrics_log_path` → `apps/server/data/metrics.jsonl` (optional, disabled by default)
+- `logging.history_db_path` → `apps/server/data/history.db`
+- `storage.clients_json_path` → `apps/server/data/clients.json`
+- `ap.self_heal.state_file` → `apps/server/data/hotspot-self-heal-state.json`
+
 ## Files
 
 ```

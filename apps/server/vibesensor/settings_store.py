@@ -302,12 +302,14 @@ class SettingsStore:
             entry = self._sensors_by_mac.get(sensor_id)
             return entry["location"] if entry else ""
 
-    def ensure_sensor(self, mac: str) -> None:
+    def ensure_sensor(self, mac: str) -> dict[str, Any]:
         """Create a sensor entry with defaults if it doesn't exist."""
         sensor_id = _normalize_sensor_id(mac)
         with self._lock:
             if sensor_id not in self._sensors_by_mac:
                 self._sensors_by_mac[sensor_id] = {"name": sensor_id, "location": ""}
+                self._persist()
+            return dict(self._sensors_by_mac[sensor_id])
 
     @property
     def language(self) -> str:
