@@ -353,18 +353,23 @@ def create_router(state: RuntimeState) -> APIRouter:
         analysis = run.get("analysis")
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
-        metadata = run.get("metadata", {})
-        if not isinstance(metadata, dict):
-            metadata = {}
-        language = _analysis_language(run, lang)
-        samples = list(_iter_normalized_samples(run_id, batch_size=1024))
-        return summarize_run_data(
-            metadata,
-            samples,
-            lang=language,
-            file_name=run_id,
-            include_samples=False,
-        )
+        if lang is not None:
+            from .runlog import normalize_sample_record
+
+            raw_samples = state.history_db.get_run_samples(run_id)
+            samples = [normalize_sample_record(s) for s in raw_samples]
+            metadata = run.get("metadata", {})
+            try:
+                analysis = summarize_run_data(
+                    metadata,
+                    samples,
+                    lang=lang,
+                    file_name=run_id,
+                    include_samples=False,
+                )
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return analysis
 
     @router.delete("/api/history/{run_id}")
     async def delete_history_run(run_id: str) -> dict:
