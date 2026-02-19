@@ -65,6 +65,7 @@ def _wait_health(timeout_s: float = 60.0) -> None:
 
 def main() -> int:
     data_dir = Path(tempfile.mkdtemp(prefix="vibesensor-e2e-data-"))
+    shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
     sim_log = data_dir / "sim_sender.log"
     container_started = False
     try:
