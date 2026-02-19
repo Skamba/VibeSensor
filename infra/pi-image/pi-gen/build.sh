@@ -88,7 +88,8 @@ cat >"${STAGE_STEP_DIR}/00-run.sh" <<'EOF'
 install -d "${ROOTFS_DIR}/opt"
 cp -a files/opt/VibeSensor "${ROOTFS_DIR}/opt/"
 
-install -d "${ROOTFS_DIR}/etc/vibesensor" "${ROOTFS_DIR}/var/lib/vibesensor" "${ROOTFS_DIR}/var/log/vibesensor"
+install -d "${ROOTFS_DIR}/etc/vibesensor"
+install -d -o 1000 -g 1000 "${ROOTFS_DIR}/var/lib/vibesensor" "${ROOTFS_DIR}/var/log/vibesensor"
 install -d "${ROOTFS_DIR}/var/log/wifi"
 install -d "${ROOTFS_DIR}/etc/systemd/system"
 install -d "${ROOTFS_DIR}/etc/NetworkManager/conf.d"
