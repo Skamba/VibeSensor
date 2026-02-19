@@ -75,3 +75,31 @@ def test_iter_run_samples_batches(tmp_path: Path) -> None:
     db.append_samples("run-3", [{"i": i} for i in range(11)])
     batches = list(db.iter_run_samples("run-3", batch_size=4))
     assert [len(batch) for batch in batches] == [4, 4, 3]
+
+
+def test_list_runs_uses_incremental_sample_count(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-4", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-4", [{"i": 1}, {"i": 2}, {"i": 3}])
+    run = db.list_runs()[0]
+    assert run["sample_count"] == 3
+
+
+def test_recover_stale_recording_runs_marks_error(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-5", "2026-01-01T00:00:00Z", {"source": "test"})
+    recovered = db.recover_stale_recording_runs()
+    assert recovered == 1
+    run = db.get_run("run-5")
+    assert run is not None
+    assert run["status"] == "error"
+
+
+def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-old", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.create_run("run-new", "2026-01-01T00:01:00Z", {"source": "test"})
+    old_run = db.get_run("run-old")
+    new_run = db.get_run("run-new")
+    assert old_run is not None and old_run["status"] == "error"
+    assert new_run is not None and new_run["status"] == "recording"

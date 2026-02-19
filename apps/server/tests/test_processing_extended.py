@@ -139,13 +139,7 @@ def test_multi_spectrum_payload_empty() -> None:
     assert result["clients"] == {}
 
 
-def test_multi_spectrum_payload_rejects_frequency_grid_mismatch() -> None:
-    """A shared `freq` array is only valid when all clients use the same bins.
-
-    If clients have different sampling rates, their FFT bins differ and a shared grid becomes
-    misleading. The payload contract must therefore detect mismatches and return an explicit
-    error payload instead of silently mixing incompatible spectra.
-    """
+def test_multi_spectrum_payload_returns_per_client_freq_on_mismatch() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
     samples = np.random.randn(300, 3).astype(np.float32) * 0.01
 
@@ -156,10 +150,11 @@ def test_multi_spectrum_payload_rejects_frequency_grid_mismatch() -> None:
 
     result = proc.multi_spectrum_payload(["c1", "c2"])
     assert result["freq"] == []
-    assert result["clients"] == {}
-    assert result["error"] == "frequency_bin_mismatch"
-    assert "c1" in str(result["message"])
-    assert "c2" in str(result["message"])
+    assert sorted(result["clients"]) == ["c1", "c2"]
+    assert result["clients"]["c1"]["freq"]
+    assert result["clients"]["c2"]["freq"]
+    assert result["warning"]["code"] == "frequency_bin_mismatch"
+    assert "c2" in result["warning"]["client_ids"]
 
 
 # -- selected_payload ----------------------------------------------------------

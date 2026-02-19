@@ -44,10 +44,16 @@ class ClientRecord:
     frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
+    server_queue_drops: int = 0
     parse_errors: int = 0
     last_seq: int | None = None
     last_ack_cmd_seq: int | None = None
     last_ack_status: int | None = None
+    reset_count: int = 0
+    last_reset_time: float | None = None
+    last_t0_us: int | None = None
+    timing_jitter_us_ema: float = 0.0
+    timing_drift_us_total: float = 0.0
     latest_metrics: dict[str, Any] = field(default_factory=dict)
 
 
@@ -153,6 +159,9 @@ class ClientRegistry:
             record.control_addr = (addr[0], hello_port if hello_port > 0 else addr[1])
             record.sample_rate_hz = hello.sample_rate_hz
             record.frame_samples = hello.frame_samples
+            if record.firmware_version and hello.firmware_version != record.firmware_version:
+                record.reset_count += 1
+                record.last_reset_time = now_ts
             record.firmware_version = hello.firmware_version
             record.queue_overflow_drops = hello.queue_overflow_drops
             if client_id not in self._user_names:
@@ -173,13 +182,37 @@ class ClientRegistry:
             record.last_seen = now_ts
             record.data_addr = (addr[0], addr[1])
             record.frames_total += 1
+            if (
+                record.sample_rate_hz > 0
+                and data_msg.sample_count > 0
+                and record.last_t0_us is not None
+                and data_msg.t0_us >= record.last_t0_us
+            ):
+                expected_delta_us = (
+                    float(data_msg.sample_count) / float(record.sample_rate_hz)
+                ) * 1_000_000.0
+                actual_delta_us = float(data_msg.t0_us - record.last_t0_us)
+                jitter_us = actual_delta_us - expected_delta_us
+                alpha = 0.2
+                record.timing_jitter_us_ema = (1.0 - alpha) * record.timing_jitter_us_ema + (
+                    alpha * jitter_us
+                )
+                record.timing_drift_us_total += jitter_us
             if record.last_seq is not None:
-                expected = (record.last_seq + 1) & 0xFFFFFFFF
-                if data_msg.seq != expected:
-                    gap = (data_msg.seq - expected) & 0xFFFFFFFF
-                    if gap < 0x80000000:
-                        record.frames_dropped += gap
+                if data_msg.seq < record.last_seq and (record.last_seq - data_msg.seq) > 1000:
+                    record.reset_count += 1
+                    record.last_reset_time = now_ts
+                    record.last_t0_us = None
+                    record.timing_jitter_us_ema = 0.0
+                    record.timing_drift_us_total = 0.0
+                else:
+                    expected = (record.last_seq + 1) & 0xFFFFFFFF
+                    if data_msg.seq != expected:
+                        gap = (data_msg.seq - expected) & 0xFFFFFFFF
+                        if gap < 0x80000000:
+                            record.frames_dropped += gap
             record.last_seq = data_msg.seq
+            record.last_t0_us = data_msg.t0_us
 
     def update_from_ack(self, ack: AckMessage, now: float | None = None) -> None:
         with self._lock:
@@ -200,6 +233,17 @@ class ClientRegistry:
         with self._lock:
             record = self._get_or_create(normalized)
             record.parse_errors += 1
+
+    def note_server_queue_drop(self, client_id: str | None) -> None:
+        if not client_id:
+            return
+        try:
+            normalized = _normalize_client_id(client_id)
+        except ValueError:
+            return
+        with self._lock:
+            record = self._get_or_create(normalized)
+            record.server_queue_drops += 1
 
     def set_name(self, client_id: str, name: str) -> ClientRecord:
         clean = _sanitize_name(name)
@@ -293,9 +337,13 @@ class ClientRegistry:
                             "dropped_frames": 0,
                             "queue_overflow_drops": 0,
                             "parse_errors": 0,
+                            "server_queue_drops": 0,
                             "latest_metrics": {},
                             "last_ack_cmd_seq": None,
                             "last_ack_status": None,
+                            "reset_count": 0,
+                            "last_reset_time": None,
+                            "timing_health": {},
                         }
                     )
                     continue
@@ -321,9 +369,17 @@ class ClientRegistry:
                         "dropped_frames": record.frames_dropped,
                         "queue_overflow_drops": record.queue_overflow_drops,
                         "parse_errors": record.parse_errors,
+                        "server_queue_drops": record.server_queue_drops,
                         "latest_metrics": record.latest_metrics,
                         "last_ack_cmd_seq": record.last_ack_cmd_seq,
                         "last_ack_status": record.last_ack_status,
+                        "reset_count": record.reset_count,
+                        "last_reset_time": record.last_reset_time,
+                        "timing_health": {
+                            "jitter_us_ema": record.timing_jitter_us_ema,
+                            "drift_us_total": record.timing_drift_us_total,
+                            "last_t0_us": record.last_t0_us,
+                        },
                     }
                 )
             return rows

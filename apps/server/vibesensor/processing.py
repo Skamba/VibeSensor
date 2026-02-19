@@ -351,7 +351,7 @@ class SignalProcessor:
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
         shared_freq: list[float] | None = None
         clients: dict[str, dict[str, list[float]]] = {}
-        included_ids: list[str] = []
+        mismatch_ids: list[str] = []
         for client_id in client_ids:
             buf = self._buffers.get(client_id)
             if buf is None or not buf.latest_spectrum:
@@ -365,21 +365,19 @@ class SignalProcessor:
                 rtol=0.0,
                 atol=1e-6,
             ):
-                mismatch_ids = sorted(set(included_ids + [client_id]))
-                return {
-                    "freq": [],
-                    "clients": {},
-                    "error": "frequency_bin_mismatch",
-                    "message": (
-                        "Incompatible frequency bins across selected clients. "
-                        f"Clients: {', '.join(mismatch_ids)}"
-                    ),
-                }
+                mismatch_ids.append(client_id)
             client_payload = self.spectrum_payload(client_id)
             client_payload["freq"] = client_freq
             clients[client_id] = client_payload
-            included_ids.append(client_id)
-        return {"freq": shared_freq or [], "clients": clients}
+        payload: dict[str, Any] = {"freq": shared_freq or [], "clients": clients}
+        if mismatch_ids:
+            payload["warning"] = {
+                "code": "frequency_bin_mismatch",
+                "message": "Per-client frequency axes returned due to sample-rate mismatch.",
+                "client_ids": sorted(mismatch_ids),
+            }
+            payload["freq"] = []
+        return payload
 
     def selected_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)

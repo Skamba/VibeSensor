@@ -56,4 +56,5 @@ def test_datagram_queue_backpressure_drops_when_full() -> None:
     proto.datagram_received(pkt, ("127.0.0.1", 10001))
     proto.datagram_received(pkt, ("127.0.0.1", 10002))
     assert proto._queue.qsize() == 1
-    registry.note_parse_error.assert_called()
+    registry.note_server_queue_drop.assert_called()
+    registry.note_parse_error.assert_not_called()

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -236,3 +237,31 @@ def test_create_run_metadata_units_raw_when_no_scale() -> None:
         accel_scale_g_per_lsb=None,
     )
     assert meta["units"]["accel_x_g"] == "raw_lsb"
+
+
+def test_append_jsonl_records_preserves_unicode_text(tmp_path: Path) -> None:
+    path = tmp_path / "unicode.jsonl"
+    append_jsonl_records(path, [{"sensor_name": "Voorwiel links", "finding": "trilling én geluid"}])
+    text = path.read_text(encoding="utf-8")
+    assert "Voorwiel links" in text
+    assert "\\u00e9" not in text
+
+
+def test_append_jsonl_records_durable_fsync_cadence(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "durable.jsonl"
+    fsync_calls: list[int] = []
+    original_fsync = os.fsync
+    monkeypatch.setattr(os, "fsync", lambda fd: fsync_calls.append(fd))
+    try:
+        append_jsonl_records(
+            path,
+            [{"i": i} for i in range(5)],
+            durable=True,
+            durable_every_records=2,
+        )
+    finally:
+        monkeypatch.setattr(os, "fsync", original_fsync)
+    # At records 2 and 4, plus final flush.
+    assert len(fsync_calls) == 3

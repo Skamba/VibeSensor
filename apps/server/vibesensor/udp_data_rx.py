@@ -37,7 +37,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             self._queue.put_nowait((bytes(data), addr))
         except asyncio.QueueFull:
             client_id = extract_client_id_hex(data)
-            self.registry.note_parse_error(client_id)
+            self.registry.note_server_queue_drop(client_id)
             LOGGER.warning(
                 "UDP ingest queue full; dropping packet from %s (client=%s)", addr, client_id
             )

@@ -95,3 +95,44 @@ async def test_run_can_be_cancelled_while_gps_stream_hangs() -> None:
     await asyncio.gather(task, return_exceptions=True)
     server.close()
     await server.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_run_cancellation_waits_writer_close_once(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+
+    class _FakeReader:
+        async def readline(self) -> bytes:
+            await asyncio.sleep(5)
+            return b""
+
+    class _FakeWriter:
+        def __init__(self) -> None:
+            self.wait_closed_calls = 0
+
+        def write(self, _payload: bytes) -> None:
+            return None
+
+        async def drain(self) -> None:
+            return None
+
+        def close(self) -> None:
+            return None
+
+        async def wait_closed(self) -> None:
+            self.wait_closed_calls += 1
+
+    fake_writer = _FakeWriter()
+
+    async def _open_connection(_host: str, _port: int):
+        return _FakeReader(), fake_writer
+
+    monkeypatch.setattr(asyncio, "open_connection", _open_connection)
+    task = asyncio.create_task(monitor.run(host="127.0.0.1", port=2947))
+    await asyncio.sleep(0.05)
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    assert fake_writer.wait_closed_calls == 1
+    assert monitor.speed_mps is None
