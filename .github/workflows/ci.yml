@@ -43,107 +43,11 @@ jobs:
           python tools/sync_ui_to_pi_public.py
           cd apps/ui
           npm run typecheck
-      - name: Docker smoke test
-        run: |
-          set -euo pipefail
-
-          echo "=== Building Docker image ==="
-          docker build -f infra/docker/server.Dockerfile -t vibesensor-ci .
-
-          echo "=== Starting container ==="
-          CID=$(docker run -d -p 8080:8000 vibesensor-ci)
-          cleanup() { docker logs "$CID" 2>&1 || true; docker rm -f "$CID" >/dev/null 2>&1 || true; }
-          trap cleanup EXIT
-
-          echo "=== Waiting for server readiness (up to 60s) ==="
-          for i in $(seq 1 60); do
-            if curl -sf http://127.0.0.1:8080/api/health >/dev/null 2>&1; then
-              echo "Server ready after ${i}s"
-              break
-            fi
-            if [ "$i" -eq 60 ]; then
-              echo "FAIL: server did not become ready within 60s"
-              exit 1
-            fi
-            sleep 1
-          done
-
-          echo "=== Verifying container is still running ==="
-          docker inspect -f '{{.State.Running}}' "$CID" | grep -q true
-
-          echo "=== Health endpoint ==="
-          curl -sf http://127.0.0.1:8080/api/health | grep -q '"status":"ok"'
-
-          echo "=== UI served (GET /) ==="
-          curl -sf http://127.0.0.1:8080/ | grep -q '</html>'
-
-          echo "=== Static asset exists ==="
-          curl -sf http://127.0.0.1:8080/ | grep -qo '/assets/index-[^"]*\.js'
-
-          echo "=== API endpoint (/api/clients) ==="
-          curl -sf http://127.0.0.1:8080/api/clients | grep -q '"clients"'
-
-          echo "=== WebSocket upgrade (/ws) ==="
-          WS_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
-            -H 'Upgrade: websocket' \
-            -H 'Connection: Upgrade' \
-            -H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' \
-            -H 'Sec-WebSocket-Version: 13' \
-            http://127.0.0.1:8080/ws || true)
-          if [ "$WS_CODE" != "101" ]; then
-            echo "FAIL: WebSocket upgrade returned $WS_CODE (expected 101)"
-            exit 1
-          fi
-
-          echo "=== All Docker smoke checks passed ==="
-
       - name: Config preflight
         run: |
           python tools/config/config_preflight.py apps/server/config.example.yaml
           python tools/config/config_preflight.py apps/server/config.dev.yaml
 
-      - name: Normal test suite (single simulator E2E smoke)
+      - name: Full test suite
         run: |
-          set -euo pipefail
-          python -m vibesensor.app --config apps/server/config.dev.yaml >server.log 2>&1 &
-          SERVER_PID=$!
-          cleanup() {
-            kill "${SIM_PID:-}" >/dev/null 2>&1 || true
-            kill "${SERVER_PID}" >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
-
-          for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:8000/ >/dev/null; then
-              break
-            fi
-            sleep 1
-          done
-
-          python apps/simulator/sim_sender.py \
-            --count 3 \
-            --duration 20 \
-            --server-host 127.0.0.1 \
-            --no-auto-server >sim.log 2>&1 &
-          SIM_PID=$!
-          if ! python apps/simulator/ws_smoke.py \
-            --uri ws://127.0.0.1:8000/ws \
-            --min-clients 3 \
-            --timeout 35 \
-            --debug \
-            --report-every 1 >ws_smoke.log 2>&1; then
-            echo "=== ws_smoke.log ==="
-            cat ws_smoke.log || true
-            echo "=== sim.log (last 200 lines) ==="
-            tail -n 200 sim.log || true
-            echo "=== server.log (last 200 lines) ==="
-            tail -n 200 server.log || true
-            echo "=== /api/clients snapshot ==="
-            curl -sv http://127.0.0.1:8000/api/clients || true
-            exit 1
-          fi
-          wait "${SIM_PID}"
-
-          # Extended/unit-heavy test suites are intentionally not part of normal CI.
-          # Run on request, e.g.:
-          #   python tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
+          make test-all

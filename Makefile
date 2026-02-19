@@ -1,4 +1,4 @@
-.PHONY: setup format lint test smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
+.PHONY: setup format lint test test-all smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
 
 setup:
 	python3 -m pip install -e "./apps/server[dev]"
@@ -13,6 +13,9 @@ lint:
 
 test:
 	python3 -m pytest -q -m "not selenium" apps/server/tests
+
+test-all:
+	python3 tools/tests/run_full_suite.py
 
 smoke:
 	python3 apps/simulator/sim_sender.py --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
