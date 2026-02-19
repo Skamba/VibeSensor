@@ -19,6 +19,7 @@ from .analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
 from .constants import MPS_TO_KMH
+from .domain_models import SensorFrame
 from .gps_speed import GPSSpeedMonitor
 from .processing import SignalProcessor
 from .registry import ClientRegistry
@@ -430,41 +431,40 @@ class MetricsLogger:
                 or self.default_sample_rate_hz
                 or None
             )
-            records.append(
-                {
-                    "record_type": "sample",
-                    "schema_version": "v2-jsonl",
-                    "run_id": run_id,
-                    "timestamp_utc": timestamp_utc,
-                    "t_s": t_s,
-                    "client_id": client_id,
-                    "client_name": record.name,
-                    "sample_rate_hz": int(sample_rate_hz) if sample_rate_hz else None,
-                    "speed_kmh": speed_kmh,
-                    "gps_speed_kmh": gps_speed_kmh,
-                    "speed_source": speed_source,
-                    "engine_rpm": engine_rpm_estimated,
-                    "engine_rpm_source": (
-                        "estimated_from_speed_and_ratios"
-                        if engine_rpm_estimated is not None
-                        else "missing"
-                    ),
-                    "gear": gear_ratio if isinstance(gear_ratio, float) else None,
-                    "final_drive_ratio": final_drive_ratio
-                    if isinstance(final_drive_ratio, float)
-                    else None,
-                    "accel_x_g": accel_x_g,
-                    "accel_y_g": accel_y_g,
-                    "accel_z_g": accel_z_g,
-                    "dominant_freq_hz": dominant_hz,
-                    "dominant_axis": dominant_axis,
-                    "top_peaks": top_peaks,
-                    METRIC_FIELDS["vibration_strength_db"]: vibration_strength_db,
-                    METRIC_FIELDS["strength_bucket"]: strength_bucket,
-                    "frames_dropped_total": int(record.frames_dropped),
-                    "queue_overflow_drops": int(record.queue_overflow_drops),
-                }
+            frame = SensorFrame(
+                record_type="sample",
+                schema_version="v2-jsonl",
+                run_id=run_id,
+                timestamp_utc=timestamp_utc,
+                t_s=t_s,
+                client_id=client_id,
+                client_name=record.name,
+                sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
+                speed_kmh=speed_kmh,
+                gps_speed_kmh=gps_speed_kmh,
+                speed_source=speed_source,
+                engine_rpm=engine_rpm_estimated,
+                engine_rpm_source=(
+                    "estimated_from_speed_and_ratios"
+                    if engine_rpm_estimated is not None
+                    else "missing"
+                ),
+                gear=gear_ratio if isinstance(gear_ratio, float) else None,
+                final_drive_ratio=final_drive_ratio
+                if isinstance(final_drive_ratio, float)
+                else None,
+                accel_x_g=accel_x_g,
+                accel_y_g=accel_y_g,
+                accel_z_g=accel_z_g,
+                dominant_freq_hz=dominant_hz,
+                dominant_axis=dominant_axis,
+                top_peaks=top_peaks,
+                vibration_strength_db=vibration_strength_db,
+                strength_bucket=strength_bucket,
+                frames_dropped_total=int(record.frames_dropped),
+                queue_overflow_drops=int(record.queue_overflow_drops),
             )
+            records.append(frame.to_dict())
 
         return records
 
