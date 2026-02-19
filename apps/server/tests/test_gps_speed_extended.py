@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+
+import pytest
+
 from vibesensor.gps_speed import GPSSpeedMonitor
 
 # -- effective_speed_mps -------------------------------------------------------
@@ -72,3 +76,22 @@ def test_integer_speed_mps_treated_as_float() -> None:
     assert result is not None
     assert isinstance(result, float)
     assert result == 10.0
+
+
+@pytest.mark.asyncio
+async def test_run_can_be_cancelled_while_gps_stream_hangs() -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await asyncio.sleep(10.0)
+        writer.close()
+        await writer.wait_closed()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+    await asyncio.sleep(0.2)
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    server.close()
+    await server.wait_closed()

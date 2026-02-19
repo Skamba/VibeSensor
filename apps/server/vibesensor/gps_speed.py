@@ -15,6 +15,10 @@ _GPS_DISABLED_POLL_S: float = 5.0
 _GPS_RECONNECT_DELAY_S: float = 2.0
 """Delay before reconnecting after a GPS connection loss."""
 
+_GPS_CONNECT_TIMEOUT_S: float = 3.0
+_GPS_READ_TIMEOUT_S: float = 3.0
+_GPS_RECONNECT_MAX_DELAY_S: float = 15.0
+
 
 class GPSSpeedMonitor:
     def __init__(self, gps_enabled: bool):
@@ -42,18 +46,23 @@ class GPSSpeedMonitor:
         return speed_val
 
     async def run(self, host: str = "127.0.0.1", port: int = 2947) -> None:
+        reconnect_delay = _GPS_RECONNECT_DELAY_S
         while True:
             if not self.gps_enabled:
                 self.speed_mps = None
                 await asyncio.sleep(_GPS_DISABLED_POLL_S)
                 continue
 
+            writer: asyncio.StreamWriter | None = None
             try:
-                reader, writer = await asyncio.open_connection(host, port)
+                reader, writer = await asyncio.wait_for(
+                    asyncio.open_connection(host, port),
+                    timeout=_GPS_CONNECT_TIMEOUT_S,
+                )
                 writer.write(b'?WATCH={"enable":true,"json":true};\n')
                 await writer.drain()
                 while True:
-                    line = await reader.readline()
+                    line = await asyncio.wait_for(reader.readline(), timeout=_GPS_READ_TIMEOUT_S)
                     if not line:
                         break
                     try:
@@ -66,9 +75,17 @@ class GPSSpeedMonitor:
                     speed = payload.get("speed")
                     if isinstance(speed, (int, float)):
                         self.speed_mps = float(speed)
-                writer.close()
-                await writer.wait_closed()
+                reconnect_delay = _GPS_RECONNECT_DELAY_S
+            except asyncio.CancelledError:
+                if writer is not None:
+                    writer.close()
+                raise
             except Exception:
                 self.speed_mps = None
-                LOGGER.debug("GPS connection lost, retrying in %gs", _GPS_RECONNECT_DELAY_S)
-                await asyncio.sleep(_GPS_RECONNECT_DELAY_S)
+                LOGGER.debug("GPS connection lost, retrying in %gs", reconnect_delay)
+                await asyncio.sleep(reconnect_delay)
+                reconnect_delay = min(_GPS_RECONNECT_MAX_DELAY_S, reconnect_delay * 2.0)
+            finally:
+                if writer is not None:
+                    writer.close()
+                    await writer.wait_closed()

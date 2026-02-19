@@ -69,6 +69,7 @@ size_t pack_hello(uint8_t* out,
                   const uint8_t client_id[6],
                   uint16_t control_port,
                   uint16_t sample_rate_hz,
+                  uint16_t frame_samples,
                   const char* name,
                   const char* firmware_version,
                   uint32_t queue_overflow_drops) {
@@ -86,6 +87,8 @@ size_t pack_hello(uint8_t* out,
   write_u16_le(out + o, control_port);
   o += 2;
   write_u16_le(out + o, sample_rate_hz);
+  o += 2;
+  write_u16_le(out + o, frame_samples);
   o += 2;
   out[o++] = static_cast<uint8_t>(name_len);
   memcpy(out + o, name, name_len);

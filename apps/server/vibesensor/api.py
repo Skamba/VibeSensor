@@ -79,7 +79,11 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/health")
     async def health() -> dict:
-        return {"status": "ok"}
+        return {
+            "status": "ok",
+            "processing_state": state.processing_state,
+            "processing_failures": state.processing_failure_count,
+        }
 
     # -- new settings endpoints (3-tab model) ----------------------------------
 
@@ -141,14 +145,32 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/sensors/{mac}")
     async def update_sensor(mac: str, req: dict) -> dict:
-        return state.settings_store.set_sensor(mac, req)
+        try:
+            return state.settings_store.set_sensor(mac, req)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @router.delete("/api/settings/sensors/{mac}")
     async def delete_sensor(mac: str) -> dict:
-        removed = state.settings_store.remove_sensor(mac)
+        try:
+            removed = state.settings_store.remove_sensor(mac)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
         return {"mac": mac, "status": "removed"}
+
+    @router.get("/api/settings/language")
+    async def get_language() -> dict:
+        return {"language": state.settings_store.language}
+
+    @router.post("/api/settings/language")
+    async def set_language(req: dict) -> dict:
+        try:
+            language = state.settings_store.set_language(str(req.get("language", "")))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"language": language}
 
     # -- legacy endpoints (adapters) -------------------------------------------
 

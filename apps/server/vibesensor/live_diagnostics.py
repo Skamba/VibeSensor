@@ -280,13 +280,14 @@ class LiveDiagnosticsEngine:
         settings: dict[str, float] | None,
         finding_metadata: dict[str, Any] | None = None,
         finding_samples: list[dict[str, Any]] | None = None,
+        language: str = "en",
     ) -> dict[str, Any]:
         if finding_metadata is not None and finding_samples is not None:
             try:
                 self._latest_findings = build_findings_for_samples(
                     metadata=finding_metadata,
                     samples=finding_samples,
-                    lang="en",
+                    lang=language,
                 )
             except ValueError as exc:
                 LOGGER.warning("Live diagnostics findings unavailable: %s", exc)

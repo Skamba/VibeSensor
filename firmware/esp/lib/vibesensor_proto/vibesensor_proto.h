@@ -6,7 +6,7 @@ namespace vibesensor {
 
 constexpr uint8_t kProtoVersion = 1;
 constexpr size_t kClientIdBytes = 6;
-constexpr size_t kHelloFixedBytes = 1 + 1 + kClientIdBytes + 2 + 2 + 1 + 1 + 4;
+constexpr size_t kHelloFixedBytes = 1 + 1 + kClientIdBytes + 2 + 2 + 2 + 1 + 1 + 4;
 constexpr size_t kDataHeaderBytes = 1 + 1 + kClientIdBytes + 4 + 8 + 2;
 constexpr size_t kAckBytes = 1 + 1 + kClientIdBytes + 4 + 1;
 constexpr size_t kDataAckBytes = 1 + 1 + kClientIdBytes + 4;
@@ -33,6 +33,7 @@ size_t pack_hello(uint8_t* out,
                   const uint8_t client_id[6],
                   uint16_t control_port,
                   uint16_t sample_rate_hz,
+                  uint16_t frame_samples,
                   const char* name,
                   const char* firmware_version,
                   uint32_t queue_overflow_drops = 0);

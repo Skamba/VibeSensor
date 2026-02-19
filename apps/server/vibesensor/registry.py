@@ -37,6 +37,7 @@ class ClientRecord:
     name: str
     firmware_version: str = ""
     sample_rate_hz: int = 0
+    frame_samples: int = 0
     last_seen: float = 0.0
     data_addr: tuple[str, int] | None = None
     control_addr: tuple[str, int] | None = None
@@ -151,6 +152,7 @@ class ClientRegistry:
             hello_port = int(hello.control_port)
             record.control_addr = (addr[0], hello_port if hello_port > 0 else addr[1])
             record.sample_rate_hz = hello.sample_rate_hz
+            record.frame_samples = hello.frame_samples
             record.firmware_version = hello.firmware_version
             record.queue_overflow_drops = hello.queue_overflow_drops
             if client_id not in self._user_names:
@@ -283,6 +285,7 @@ class ClientRegistry:
                             "connected": False,
                             "firmware_version": "",
                             "sample_rate_hz": 0,
+                            "frame_samples": 0,
                             "last_seen_age_ms": None,
                             "data_addr": None,
                             "control_addr": None,
@@ -310,6 +313,7 @@ class ClientRegistry:
                         "connected": connected,
                         "firmware_version": record.firmware_version,
                         "sample_rate_hz": record.sample_rate_hz,
+                        "frame_samples": record.frame_samples,
                         "last_seen_age_ms": age_ms,
                         "data_addr": record.data_addr,
                         "control_addr": record.control_addr,

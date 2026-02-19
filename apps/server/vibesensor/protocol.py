@@ -17,14 +17,14 @@ MSG_DATA_ACK = 5
 
 CMD_IDENTIFY = 1
 
-HELLO_BASE = struct.Struct("<BB6sHHB")
+HELLO_BASE = struct.Struct("<BB6sHHHB")
 DATA_HEADER = struct.Struct("<BB6sIQH")
 ACK_STRUCT = struct.Struct("<BB6sIB")
 DATA_ACK_STRUCT = struct.Struct("<BB6sI")
 CMD_HEADER = struct.Struct("<BB6sBI")
 CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
 
-HELLO_FIXED_BYTES = 1 + 1 + CLIENT_ID_BYTES + 2 + 2 + 1 + 1 + 4
+HELLO_FIXED_BYTES = 1 + 1 + CLIENT_ID_BYTES + 2 + 2 + 2 + 1 + 1 + 4
 DATA_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 8 + 2
 ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 1
 DATA_ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4
@@ -43,6 +43,7 @@ class HelloMessage:
     sample_rate_hz: int
     name: str
     firmware_version: str
+    frame_samples: int = 0
     queue_overflow_drops: int = 0
 
 
@@ -113,6 +114,7 @@ def parse_hello(data: bytes) -> HelloMessage:
         client_id,
         control_port,
         sample_rate_hz,
+        frame_samples,
         name_len,
     ) = HELLO_BASE.unpack_from(data, 0)
     if msg_type != MSG_HELLO or version != VERSION:
@@ -140,6 +142,7 @@ def parse_hello(data: bytes) -> HelloMessage:
         client_id=client_id,
         control_port=control_port,
         sample_rate_hz=sample_rate_hz,
+        frame_samples=frame_samples,
         name=name,
         firmware_version=firmware_version,
         queue_overflow_drops=queue_overflow_drops,
@@ -151,6 +154,7 @@ def pack_hello(
     control_port: int,
     sample_rate_hz: int,
     name: str,
+    frame_samples: int = 0,
     firmware_version: str = "",
     queue_overflow_drops: int = 0,
 ) -> bytes:
@@ -162,6 +166,7 @@ def pack_hello(
         client_id,
         control_port,
         sample_rate_hz,
+        frame_samples,
         len(name_bytes),
     )
     return (
