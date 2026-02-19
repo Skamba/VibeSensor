@@ -346,7 +346,9 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:  # noqa: C901
         else tr("UNKNOWN")
     )
     primary_location_text = (
-        str(top_causes[0].get("strongest_location") or tr("UNKNOWN")) if top_causes else tr("UNKNOWN")
+        str(top_causes[0].get("strongest_location") or tr("UNKNOWN"))
+        if top_causes
+        else tr("UNKNOWN")
     )
     primary_finding_line = text_fn("Primary finding", "Primaire bevinding")
     primary_finding_value = f"{primary_source_text} @ {primary_location_text}"

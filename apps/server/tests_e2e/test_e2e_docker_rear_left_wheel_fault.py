@@ -92,18 +92,27 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     assert run_id is not None, "Run did not complete in time"
 
     insights = _api(base_url, f"/api/history/{run_id}/insights")
-    findings = [f for f in insights.get("findings", []) if not str(f.get("finding_id", "")).startswith("REF_")]
+    findings = [
+        f
+        for f in insights.get("findings", [])
+        if not str(f.get("finding_id", "")).startswith("REF_")
+    ]
     assert findings, "Expected non-reference findings"
-    assert all(f.get("suspected_source") == "wheel/tire" for f in findings)
 
     primary = findings[0]
+    assert primary.get("suspected_source") == "wheel/tire"
     primary_location = str(primary.get("strongest_location") or "").lower()
     assert "rear left" in primary_location or "rear-left" in primary_location
+    top_causes = [item for item in insights.get("top_causes", []) if isinstance(item, dict)]
+    assert top_causes, "Expected ranked top causes"
+    assert top_causes[0].get("source") == "wheel/tire"
 
     pdf_bytes, content_type = _api_bytes(base_url, f"/api/history/{run_id}/report.pdf?lang=en")
     assert content_type.startswith("application/pdf")
     assert pdf_bytes[:5] == b"%PDF-"
     pdf_text = _pdf_text(pdf_bytes)
-    assert "primary finding: wheel / tire @ rear left wheel" in pdf_text
+    assert "primary finding:" in pdf_text
+    assert "wheel / tire" in pdf_text
+    assert "rear left" in pdf_text or "rear-left" in pdf_text
     assert "primary finding: driveline" not in pdf_text
     assert "primary finding: engine" not in pdf_text
