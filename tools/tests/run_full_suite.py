@@ -98,7 +98,7 @@ def main() -> int:
                 "-p",
                 "19001:9001/udp",
                 "-v",
-                f"{data_dir}:/app/apps/apps/server/data",
+                f"{data_dir}:/app/apps/server/data",
                 IMAGE,
             ]
         )
