@@ -123,7 +123,7 @@ def main() -> int:
                 "-m",
                 "pytest",
                 "-q",
-                "apps/server/tests_e2e/test_e2e_docker_rear_left_wheel_fault.py",
+                "apps/server/tests_e2e",
             ],
             env=env,
         )
