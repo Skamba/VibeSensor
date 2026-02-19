@@ -4,11 +4,10 @@
  * Usage: node take-screenshot.mjs [output-path]
  * Exits with code 1 on failure (timeout, no graph data, etc.)
  */
-import { chromium } from "playwright-core";
+import { chromium } from "@playwright/test";
 import { spawn } from "child_process";
 import { writeFileSync } from "fs";
 
-const CHROME_EXEC = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
 const OUTPUT_PATH = process.argv[2] || "/tmp/vibesensor-screenshot.png";
 const SERVER_PORT = 4175;
 const SERVER_TIMEOUT_MS = 20_000;
@@ -44,10 +43,19 @@ async function main() {
     server = await startServer(cwd);
     console.log("Preview server started on port", SERVER_PORT);
 
-    browser = await chromium.launch({
-      executablePath: CHROME_EXEC,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
-    });
+    try {
+      browser = await chromium.launch({
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.toLowerCase().includes("executable doesn't exist")) {
+        throw new Error(
+          "Playwright browser not installed. Run: npx playwright install chromium"
+        );
+      }
+      throw error;
+    }
     const page = await browser.newPage();
     await page.setViewportSize({ width: 1280, height: 800 });
 
