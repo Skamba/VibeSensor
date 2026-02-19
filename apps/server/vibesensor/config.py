@@ -47,10 +47,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "metrics_log_path": "data/metrics.jsonl",
         "metrics_log_hz": 4,
         "sensor_model": "ADXL345",
-        "write_metrics_jsonl": False,
         "persist_history_db": True,
-        "durable_jsonl_writes": False,
-        "durable_jsonl_fsync_every_records": 100,
     },
     "storage": {
         "clients_json_path": "data/clients.json",
@@ -139,10 +136,7 @@ class LoggingConfig:
     metrics_log_hz: int
     sensor_model: str
     history_db_path: Path
-    write_metrics_jsonl: bool
     persist_history_db: bool
-    durable_jsonl_writes: bool
-    durable_jsonl_fsync_every_records: int
 
 
 @dataclass(slots=True)
@@ -271,29 +265,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 ),
                 path,
             ),
-            write_metrics_jsonl=bool(
-                merged["logging"].get(
-                    "write_metrics_jsonl", DEFAULT_CONFIG["logging"]["write_metrics_jsonl"]
-                )
-            ),
             persist_history_db=bool(
                 merged["logging"].get(
                     "persist_history_db", DEFAULT_CONFIG["logging"]["persist_history_db"]
                 )
-            ),
-            durable_jsonl_writes=bool(
-                merged["logging"].get(
-                    "durable_jsonl_writes", DEFAULT_CONFIG["logging"]["durable_jsonl_writes"]
-                )
-            ),
-            durable_jsonl_fsync_every_records=max(
-                1,
-                int(
-                    merged["logging"].get(
-                        "durable_jsonl_fsync_every_records",
-                        DEFAULT_CONFIG["logging"]["durable_jsonl_fsync_every_records"],
-                    )
-                ),
             ),
         ),
         gps=GPSConfig(

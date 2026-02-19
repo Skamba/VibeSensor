@@ -39,7 +39,6 @@ processing:
 logging:
   log_metrics: true
   metrics_log_path: data/metrics.jsonl
-  write_metrics_jsonl: false
   persist_history_db: true
   history_db_path: data/history.db
   metrics_log_hz: 4

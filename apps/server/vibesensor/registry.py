@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import json
 import logging
 import time
 from dataclasses import dataclass, field
-from pathlib import Path
 from threading import RLock
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .protocol import (
     AckMessage,
@@ -16,6 +14,9 @@ from .protocol import (
     client_id_mac,
     parse_client_id,
 )
+
+if TYPE_CHECKING:
+    from .history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
 
@@ -58,82 +59,47 @@ class ClientRecord:
 
 
 class ClientRegistry:
-    def __init__(self, persist_path: Path, stale_ttl_seconds: float = 120.0):
+    def __init__(
+        self,
+        db: HistoryDB | None = None,
+        stale_ttl_seconds: float = 120.0,
+        **_kwargs: Any,
+    ):
         self._lock = RLock()
-        self._persist_path = persist_path
+        self._db = db
         self._stale_ttl_seconds = max(1.0, stale_ttl_seconds)
-        self._persist_min_interval_seconds = 60.0
-        self._last_persist_ts = 0.0
-        self._last_persist_payload = ""
-        self._pending_persist = False
         self._clients: dict[str, ClientRecord] = {}
         self._user_names: dict[str, str] = {}
         self._load_persisted_names()
 
     def _load_persisted_names(self) -> None:
+        if self._db is None:
+            return
         with self._lock:
-            if not self._persist_path.exists():
-                return
             try:
-                raw = json.loads(self._persist_path.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError) as exc:
-                LOGGER.warning(
-                    "Could not load persisted names from %s: %s", self._persist_path, exc
-                )
-                return
-            for entry in raw.get("clients", []):
-                raw_client_id = str(entry.get("id", ""))
-                try:
-                    client_id = _normalize_client_id(raw_client_id)
-                except ValueError:
-                    LOGGER.debug("Skipping invalid client_id in persisted names: %r", raw_client_id)
-                    continue
-                name = _sanitize_name(str(entry.get("name", "")))
-                if name:
-                    self._user_names[client_id] = name
+                rows = self._db.list_client_names()
+                for client_id, name in rows.items():
+                    clean = _sanitize_name(name)
+                    if clean:
+                        self._user_names[client_id] = clean
+            except Exception as exc:
+                LOGGER.warning("Could not load persisted client names from DB: %s", exc)
 
-    def _build_names_payload(self) -> dict[str, Any]:
-        names_by_id: dict[str, str] = dict(self._user_names)
-        for record in self._clients.values():
-            if record.name:
-                names_by_id[record.client_id] = record.name
-        return {
-            "clients": [
-                {"id": client_id, "name": name}
-                for client_id, name in sorted(names_by_id.items(), key=lambda item: item[0])
-            ]
-        }
-
-    def _persist_names(self, *, now_ts: float | None = None, force: bool = False) -> None:
-        payload = self._build_names_payload()
-        payload_text = json.dumps(payload, sort_keys=True, separators=(",", ":"))
-        if payload_text == self._last_persist_payload and self._persist_path.exists():
-            self._pending_persist = False
+    def _persist_name(self, client_id: str, name: str) -> None:
+        if self._db is None:
             return
+        try:
+            self._db.upsert_client_name(client_id, name)
+        except Exception:
+            LOGGER.warning("Failed to persist client name to DB", exc_info=True)
 
-        now_val = time.time() if now_ts is None else now_ts
-        if (
-            not force
-            and self._last_persist_ts > 0.0
-            and (now_val - self._last_persist_ts) < self._persist_min_interval_seconds
-        ):
-            self._pending_persist = True
+    def _delete_persisted_name(self, client_id: str) -> None:
+        if self._db is None:
             return
-
-        self._persist_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = self._persist_path.with_suffix(".tmp")
-        tmp_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-        tmp_path.replace(self._persist_path)
-        self._last_persist_payload = payload_text
-        self._last_persist_ts = now_val
-        self._pending_persist = False
-
-    def _flush_pending_persist(self, now_ts: float) -> None:
-        if not self._pending_persist:
-            return
-        if (now_ts - self._last_persist_ts) < self._persist_min_interval_seconds:
-            return
-        self._persist_names(now_ts=now_ts, force=True)
+        try:
+            self._db.delete_client_name(client_id)
+        except Exception:
+            LOGGER.warning("Failed to delete client name from DB", exc_info=True)
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
         normalized = _normalize_client_id(client_id)
@@ -253,7 +219,7 @@ class ClientRegistry:
             record = self._get_or_create(client_id)
             record.name = clean
             self._user_names[record.client_id] = clean
-            self._persist_names(force=True)
+            self._persist_name(record.client_id, clean)
             return record
 
     def remove_client(self, client_id: str) -> bool:
@@ -266,7 +232,7 @@ class ClientRegistry:
             self._clients.pop(normalized, None)
             self._user_names.pop(normalized, None)
             if existed:
-                self._persist_names(force=True)
+                self._delete_persisted_name(normalized)
             return existed
 
     def set_latest_metrics(self, client_id: str, metrics: dict[str, Any]) -> None:

@@ -77,6 +77,10 @@ class LanguageRequest(BaseModel):
     language: str = Field(pattern="^(en|nl)$")
 
 
+class SpeedUnitRequest(BaseModel):
+    speedUnit: str = Field(pattern="^(kmh|mps)$")
+
+
 class CarUpsertRequest(BaseModel):
     name: str | None = None
     type: str | None = None
@@ -235,6 +239,18 @@ def create_router(state: RuntimeState) -> APIRouter:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"language": language}
+
+    @router.get("/api/settings/speed-unit")
+    async def get_speed_unit() -> dict:
+        return {"speedUnit": state.settings_store.speed_unit}
+
+    @router.post("/api/settings/speed-unit")
+    async def set_speed_unit(req: SpeedUnitRequest) -> dict:
+        try:
+            unit = state.settings_store.set_speed_unit(req.speedUnit)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return {"speedUnit": unit}
 
     # -- legacy endpoints (adapters) -------------------------------------------
 

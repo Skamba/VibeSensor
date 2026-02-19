@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -9,7 +8,6 @@ import pytest
 
 from vibesensor.history_db import HistoryDB
 from vibesensor.metrics_log import MetricsLogger
-from vibesensor.runlog import read_jsonl_run
 
 # -- MetricsLogger._safe_metric ------------------------------------------------
 
@@ -340,9 +338,9 @@ def test_history_run_created_on_first_sample_append(tmp_path: Path) -> None:
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono = snapshot
 
-    timed_out = logger._append_records(path, run_id, start_time_utc, start_mono)
+    timed_out = logger._append_records(run_id, start_time_utc, start_mono)
 
     assert timed_out is False
     assert history_db.create_calls == [(run_id, start_time_utc)]
@@ -366,48 +364,12 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(tmp_path: Pat
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono = snapshot
     logger._last_data_progress_mono_s = 0.0
 
-    timed_out = logger._append_records(path, run_id, start_time_utc, start_mono)
+    timed_out = logger._append_records(run_id, start_time_utc, start_mono)
 
     assert timed_out is True
-
-
-def test_metrics_jsonl_writes_metadata_samples_and_run_end(tmp_path: Path) -> None:
-    """Metrics logging advertises JSONL output, so the configured file must actually be written.
-
-    A logger session is expected to emit run metadata, sample records, and a run_end marker in
-    canonical runlog format. If the file is never written, tooling that consumes JSONL exports
-    cannot inspect recorded runs despite logging being enabled.
-    """
-    logger = MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=2,
-        registry=_FakeRegistry(),
-        gps_monitor=_FakeGPSMonitor(),
-        processor=_FakeProcessor(),
-        analysis_settings=_FakeAnalysisSettings(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=1024,
-    )
-    logger.start_logging()
-    snapshot = logger._session_snapshot()
-    assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(path, run_id, start_time_utc, start_mono)
-    logger.stop_logging()
-
-    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    payloads = [json.loads(line) for line in lines]
-    assert payloads[0]["record_type"] == "run_metadata"
-    assert any(item.get("record_type") == "sample" for item in payloads)
-    assert payloads[-1]["record_type"] == "run_end"
-    parsed = read_jsonl_run(path)
-    assert parsed.metadata["run_id"] == run_id
-    assert parsed.samples
 
 
 def test_stop_logging_does_not_block_on_post_analysis(
@@ -436,8 +398,8 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(path, run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono)
 
     def _slow_summary(*args, **kwargs):
         time.sleep(0.35)
@@ -472,8 +434,8 @@ def test_post_analysis_failure_sets_persistent_error_status(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(path, run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono)
 
     def _failing_summary(*args, **kwargs):
         raise RuntimeError("analysis exploded")
@@ -533,8 +495,8 @@ def test_post_analysis_uses_run_language_from_metadata(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(path, run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono)
 
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return {"lang": lang, "row_count": len(samples)}
@@ -561,19 +523,17 @@ def test_db_persists_when_jsonl_disabled(tmp_path: Path) -> None:
         default_sample_rate_hz=800,
         fft_window_size_samples=1024,
         history_db=history_db,
-        write_jsonl=False,
         persist_history_db=True,
     )
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(path, run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono)
     logger.stop_logging()
 
     assert history_db.get_run(run_id) is not None
     assert history_db.get_run_samples(run_id)
-    assert not path.exists()
 
 
 def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
@@ -596,9 +556,9 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    path, run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono = snapshot
     for _ in range(13_000):
-        logger._append_records(path, run_id, start_time_utc, start_mono)
+        logger._append_records(run_id, start_time_utc, start_mono)
 
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return {"row_count": len(samples)}

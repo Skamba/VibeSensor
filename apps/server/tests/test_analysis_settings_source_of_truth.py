@@ -102,7 +102,10 @@ def _route(router, path: str, method: str = "GET"):
 
 @pytest.mark.asyncio
 async def test_analysis_settings_endpoint_updates_active_car_aspects(tmp_path: Path) -> None:
-    settings_store = SettingsStore(persist_path=tmp_path / "settings.json")
+    from vibesensor.history_db import HistoryDB
+
+    db = HistoryDB(tmp_path / "test.db")
+    settings_store = SettingsStore(db=db)
     analysis_settings = AnalysisSettingsStore()
     analysis_settings.update(settings_store.active_car_aspects())
     state = _State(settings_store=settings_store, analysis_settings=analysis_settings)
