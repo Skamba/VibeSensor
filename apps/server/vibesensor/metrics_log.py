@@ -34,6 +34,7 @@ if TYPE_CHECKING:
     from .history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
+_MAX_POST_ANALYSIS_SAMPLES = 12_000
 
 
 class MetricsLogger:
@@ -55,6 +56,8 @@ class MetricsLogger:
         history_db: HistoryDB | None = None,
         write_jsonl: bool = True,
         persist_history_db: bool = True,
+        durable_jsonl_writes: bool = False,
+        durable_jsonl_fsync_every_records: int = 100,
         language_provider: Callable[[], str] | None = None,
     ):
         self.enabled = bool(enabled)
@@ -84,6 +87,8 @@ class MetricsLogger:
         self._history_db = history_db
         self._write_jsonl = bool(write_jsonl)
         self._persist_history_db = bool(persist_history_db)
+        self._durable_jsonl_writes = bool(durable_jsonl_writes)
+        self._durable_jsonl_fsync_every_records = max(1, int(durable_jsonl_fsync_every_records))
         self._language_provider = language_provider
         self._history_run_created = False
         self._written_sample_count = 0
@@ -281,7 +286,15 @@ class MetricsLogger:
         if not self._write_jsonl:
             return True
         try:
-            append_jsonl_records(path, records)
+            if self._durable_jsonl_writes:
+                append_jsonl_records(
+                    path,
+                    records,
+                    durable=True,
+                    durable_every_records=self._durable_jsonl_fsync_every_records,
+                )
+            else:
+                append_jsonl_records(path, records)
         except Exception as exc:
             self._last_write_error = str(exc)
             LOGGER.warning("Failed to append JSONL metrics records to %s", path, exc_info=True)
@@ -534,11 +547,25 @@ class MetricsLogger:
                 return
             language = str(metadata.get("language") or "en")
             samples: list[dict[str, object]] = []
+            total_sample_count = 0
+            stride = 1
             for batch in self._history_db.iter_run_samples(run_id, batch_size=1024):
-                samples.extend(normalize_sample_record(s) for s in batch)
+                for sample in batch:
+                    total_sample_count += 1
+                    if (total_sample_count - 1) % stride != 0:
+                        continue
+                    samples.append(normalize_sample_record(sample))
+                    if len(samples) > _MAX_POST_ANALYSIS_SAMPLES:
+                        samples = samples[::2]
+                        stride *= 2
             summary = summarize_run_data(
                 metadata, samples, lang=language, file_name=run_id, include_samples=False
             )
+            summary["analysis_metadata"] = {
+                "analyzed_sample_count": len(samples),
+                "total_sample_count": total_sample_count,
+                "sampling_method": "full" if stride == 1 else f"stride_{stride}",
+            }
             self._history_db.store_analysis(run_id, summary)
             LOGGER.info("Post-run analysis complete for run %s (%d samples)", run_id, len(samples))
         except Exception as exc:

@@ -139,13 +139,7 @@ def test_multi_spectrum_payload_empty() -> None:
     assert result["clients"] == {}
 
 
-def test_multi_spectrum_payload_rejects_frequency_grid_mismatch() -> None:
-    """A shared `freq` array is only valid when all clients use the same bins.
-
-    If clients have different sampling rates, their FFT bins differ and a shared grid becomes
-    misleading. The payload contract must therefore detect mismatches and return an explicit
-    error payload instead of silently mixing incompatible spectra.
-    """
+def test_multi_spectrum_payload_returns_per_client_freq_on_mismatch() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
     samples = np.random.randn(300, 3).astype(np.float32) * 0.01
 
@@ -156,10 +150,11 @@ def test_multi_spectrum_payload_rejects_frequency_grid_mismatch() -> None:
 
     result = proc.multi_spectrum_payload(["c1", "c2"])
     assert result["freq"] == []
-    assert result["clients"] == {}
-    assert result["error"] == "frequency_bin_mismatch"
-    assert "c1" in str(result["message"])
-    assert "c2" in str(result["message"])
+    assert sorted(result["clients"]) == ["c1", "c2"]
+    assert result["clients"]["c1"]["freq"]
+    assert result["clients"]["c2"]["freq"]
+    assert result["warning"]["code"] == "frequency_bin_mismatch"
+    assert "c2" in result["warning"]["client_ids"]
 
 
 # -- selected_payload ----------------------------------------------------------
@@ -194,6 +189,24 @@ def test_selected_payload_waveform_respects_configured_window() -> None:
     assert len(waveform["t"]) == expected_points
     assert waveform["t"][-1] == pytest.approx(0.0)
     assert waveform["t"][1] - waveform["t"][0] == pytest.approx(expected_step / 50.0)
+
+
+def test_waveform_window_respects_seconds_for_each_client_sample_rate() -> None:
+    proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
+    low_sr = np.random.randn(400, 3).astype(np.float32) * 0.01
+    high_sr = np.random.randn(1200, 3).astype(np.float32) * 0.01
+    proc.ingest("c-low", low_sr, sample_rate_hz=50)
+    proc.ingest("c-high", high_sr, sample_rate_hz=300)
+
+    low_payload = proc.selected_payload("c-low")
+    high_payload = proc.selected_payload("c-high")
+
+    low_t = low_payload["waveform"]["t"]
+    high_t = high_payload["waveform"]["t"]
+    assert low_t[-1] == pytest.approx(0.0)
+    assert high_t[-1] == pytest.approx(0.0)
+    assert low_t[0] == pytest.approx(-1.96, abs=0.05)
+    assert high_t[0] == pytest.approx(-2.0, abs=0.05)
 
 
 # -- compute_metrics -----------------------------------------------------------

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -181,12 +182,25 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     return normalized
 
 
-def append_jsonl_records(path: Path, records: Iterable[dict[str, Any]]) -> None:
+def append_jsonl_records(
+    path: Path,
+    records: Iterable[dict[str, Any]],
+    *,
+    durable: bool = False,
+    durable_every_records: int = 100,
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    cadence = max(1, int(durable_every_records))
     with path.open("a", encoding="utf-8") as f:
-        for record in records:
-            f.write(json.dumps(record, ensure_ascii=True, separators=(",", ":")))
+        for index, record in enumerate(records, start=1):
+            f.write(json.dumps(record, ensure_ascii=False, separators=(",", ":")))
             f.write("\n")
+            if durable and (index % cadence) == 0:
+                f.flush()
+                os.fsync(f.fileno())
+        if durable:
+            f.flush()
+            os.fsync(f.fileno())
 
 
 def read_jsonl_run(path: Path) -> RunData:
