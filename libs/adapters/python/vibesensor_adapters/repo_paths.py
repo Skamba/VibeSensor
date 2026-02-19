@@ -8,7 +8,9 @@ def find_repo_root(start: Path | None = None) -> Path:
     for candidate in [cursor, *cursor.parents]:
         if (candidate / "libs" / "shared" / "contracts").is_dir():
             return candidate
-    raise FileNotFoundError("Could not locate repository root containing libs/shared/contracts")
+    raise FileNotFoundError(
+        "Could not locate repository root containing libs/shared/contracts"
+    )
 
 
 def shared_contracts_dir(start: Path | None = None) -> Path:

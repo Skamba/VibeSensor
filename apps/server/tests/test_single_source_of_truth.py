@@ -127,7 +127,8 @@ def test_as_float_single_source_of_truth() -> None:
 def test_percentile_single_source_of_truth() -> None:
     """report_analysis._percentile must be imported from
     analysis.vibration_strength, not re-defined locally."""
-    from vibesensor.analysis.vibration_strength import _percentile as canonical
+    from vibesensor_core.vibration_strength import _percentile as canonical
+
     from vibesensor.report_analysis import _percentile
 
     assert _percentile is canonical, (
@@ -137,7 +138,7 @@ def test_percentile_single_source_of_truth() -> None:
 
 def test_strength_metrics_no_dead_aliases() -> None:
     """compute_vibration_strength_db output must not contain dead alias fields."""
-    from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
+    from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
     result = compute_vibration_strength_db(
         freq_hz=[1.0, 2.0, 3.0],
@@ -168,7 +169,8 @@ def test_constants_used_for_speed_conversion() -> None:
 
 def test_constants_used_for_peak_detection() -> None:
     """Peak detection defaults must come from constants module."""
-    from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
+    from vibesensor_core.vibration_strength import compute_vibration_strength_db
+
     from vibesensor.constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
     assert PEAK_BANDWIDTH_HZ == 1.2

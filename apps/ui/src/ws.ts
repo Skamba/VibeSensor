@@ -135,7 +135,7 @@ export class WsClient {
       this.setState("no_data");
       return;
     }
-    const freshnessTime = this.lastServerTimeMs > 0 ? this.lastServerTimeMs : this.lastMessageAtMs;
+    const freshnessTime = this.lastMessageAtMs;
     if (Date.now() - freshnessTime > this.options.staleAfterMs) {
       this.setState("stale");
     }

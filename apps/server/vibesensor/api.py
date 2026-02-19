@@ -25,10 +25,16 @@ def _bounded_sample(
     samples: Iterator[dict],
     *,
     max_items: int,
+    total_hint: int = 0,
 ) -> tuple[list[dict], int, int]:
+    """Down-sample *samples* to at most *max_items*.
+
+    When *total_hint* is available the stride is computed upfront so
+    that we never over-collect and re-halve.
+    """
+    stride: int = max(1, total_hint // max_items) if total_hint > max_items else 1
     kept: list[dict] = []
     total = 0
-    stride = 1
     for sample in samples:
         total += 1
         if (total - 1) % stride != 0:

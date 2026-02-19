@@ -3,8 +3,17 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
-from vibesensor.shared_contracts import METRIC_FIELDS, validate_ingestion_payload
+import vibesensor_adapters
+import vibesensor_core
+import vibesensor_shared
+from vibesensor_core.vibration_strength import compute_vibration_strength_db
+from vibesensor_shared.contracts import METRIC_FIELDS, validate_ingestion_payload
+
+
+def test_lib_packages_import_smoke() -> None:
+    assert vibesensor_core is not None
+    assert vibesensor_shared is not None
+    assert vibesensor_adapters is not None
 
 
 def test_ingestion_payload_fixture_validates() -> None:

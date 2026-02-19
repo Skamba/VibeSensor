@@ -12,6 +12,8 @@ from threading import RLock, Thread
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
+from vibesensor_shared.contracts import METRIC_FIELDS
+
 from .analysis_settings import (
     AnalysisSettingsStore,
     engine_rpm_from_wheel_hz,
@@ -27,7 +29,6 @@ from .runlog import (
     create_run_metadata,
     utc_now_iso,
 )
-from .shared_contracts import METRIC_FIELDS
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB

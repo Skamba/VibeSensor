@@ -1,4 +1,5 @@
-// @ts-nocheck
+// @ts-nocheck — legacy runtime; ~28 DOM-typing errors remain.
+// TODO(tech-debt): incrementally add type-narrowing casts to remove @ts-nocheck.
 import "uplot/dist/uPlot.min.css";
 import "./styles/app.css";
 import * as I18N from "./i18n";

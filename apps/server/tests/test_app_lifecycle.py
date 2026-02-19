@@ -23,6 +23,7 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
         encoding="utf-8",
     )
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
+    monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
     from vibesensor import app as app_module
 
     async def _fake_udp_receiver(*args, **kwargs):

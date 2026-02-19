@@ -64,7 +64,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
     ? (diagnostics.strength_bands as StrengthBand[])
     : [];
   if (!strengthBands.length) {
-    throw new Error("Missing diagnostics.strength_bands payload from server.");
+    // No strength bands yet — return payload with empty bands.
   }
 
   const adapted: AdaptedPayload = {
@@ -99,9 +99,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
       const combined = asNumberArray(specObj.combined_spectrum_amp_g);
       const strengthMetrics = specObj.strength_metrics;
       if (!freq.length || !combined.length || !strengthMetrics || typeof strengthMetrics !== "object") {
-        throw new Error(
-          `Missing spectra.combined_spectrum_amp_g or strength_metrics for client ${clientId}.`,
-        );
+        continue;  // skip this client's incomplete spectrum
       }
       adapted.spectra.clients[clientId] = {
         freq,
