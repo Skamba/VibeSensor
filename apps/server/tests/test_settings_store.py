@@ -168,14 +168,14 @@ def test_store_set_and_get_sensor() -> None:
     store = SettingsStore()
     store.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "FL Wheel", "location": "front_left_wheel"})
     sensors = store.get_sensors()
-    assert "aa:bb:cc:dd:ee:ff" in sensors
-    assert sensors["aa:bb:cc:dd:ee:ff"]["name"] == "FL Wheel"
-    assert sensors["aa:bb:cc:dd:ee:ff"]["location"] == "front_left_wheel"
+    assert "aabbccddeeff" in sensors
+    assert sensors["aabbccddeeff"]["name"] == "FL Wheel"
+    assert sensors["aabbccddeeff"]["location"] == "front_left_wheel"
 
 
 def test_store_sensor_name_defaults_to_mac() -> None:
     store = SettingsStore()
-    assert store.sensor_name("aa:bb:cc:dd:ee:ff") == "aa:bb:cc:dd:ee:ff"
+    assert store.sensor_name("aa:bb:cc:dd:ee:ff") == "aabbccddeeff"
 
 
 def test_store_remove_sensor() -> None:
@@ -189,8 +189,8 @@ def test_store_ensure_sensor() -> None:
     store = SettingsStore()
     store.ensure_sensor("aa:bb:cc:dd:ee:ff")
     sensors = store.get_sensors()
-    assert "aa:bb:cc:dd:ee:ff" in sensors
-    assert sensors["aa:bb:cc:dd:ee:ff"]["name"] == "aa:bb:cc:dd:ee:ff"
+    assert "aabbccddeeff" in sensors
+    assert sensors["aabbccddeeff"]["name"] == "aabbccddeeff"
 
 
 # -- persistence ---------------------------------------------------------------
@@ -209,7 +209,7 @@ def test_store_persists_and_loads(tmp_path: Path) -> None:
     assert snap["cars"][1]["name"] == "Persisted Car"
     assert snap["speedSource"] == "manual"
     assert snap["manualSpeedKph"] == 60.0
-    assert snap["sensorsByMac"]["11:22:33:44:55:66"]["name"] == "Rear"
+    assert snap["sensorsByMac"]["112233445566"]["name"] == "Rear"
 
 
 def test_store_handles_corrupt_persist_file(tmp_path: Path) -> None:
@@ -278,3 +278,10 @@ def test_store_obd2_config_update() -> None:
     store = SettingsStore()
     result = store.update_speed_source({"obd2Config": {"port": "/dev/ttyUSB0"}})
     assert result.get("obd2Config") == {"port": "/dev/ttyUSB0"}
+
+
+def test_store_language_roundtrip() -> None:
+    store = SettingsStore()
+    assert store.language == "en"
+    assert store.set_language("nl") == "nl"
+    assert store.language == "nl"

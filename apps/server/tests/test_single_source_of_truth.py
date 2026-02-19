@@ -13,6 +13,7 @@ These tests prevent regression of the consolidation work by verifying:
 from __future__ import annotations
 
 import importlib
+from pathlib import Path
 
 import pytest
 
@@ -193,7 +194,7 @@ def test_config_preflight_no_removed_fields() -> None:
     import sys
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(root / "tools" / "config"))
     preflight_path = root / "tools" / "config" / "config_preflight.py"
     source = preflight_path.read_text(encoding="utf-8")
@@ -217,7 +218,7 @@ def test_simulator_defaults_match_analysis_settings() -> None:
     import sys
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     sys.path.insert(0, str(root / "tools" / "simulator"))
     # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
     sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
@@ -238,7 +239,7 @@ def test_simulator_no_production_asserts() -> None:
     """Simulator module-level and standalone functions must not use bare assert."""
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
     lines = sim_source.splitlines()
     in_method = False
@@ -440,4 +441,14 @@ def test_esp_ports_match_python_defaults() -> None:
     )
     assert esp_ctrl_port == py_ctrl_port, (
         f"ESP control port {esp_ctrl_port} != Python default {py_ctrl_port}"
+    )
+
+
+def test_server_dockerfile_is_real_build_recipe() -> None:
+    root = Path(__file__).resolve().parents[3]
+    dockerfile = root / "apps" / "server" / "Dockerfile"
+    content = dockerfile.read_text(encoding="utf-8")
+    first_line = content.splitlines()[0].strip()
+    assert first_line.startswith("FROM "), (
+        "apps/server/Dockerfile must be a real Dockerfile, not a placeholder"
     )

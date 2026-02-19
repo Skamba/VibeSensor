@@ -8,6 +8,7 @@ from threading import RLock
 from typing import Any
 
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
+from .protocol import parse_client_id
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,6 +62,10 @@ def _validate_sensor(mac: str, raw: dict[str, Any]) -> dict[str, Any]:
     return {"name": name or mac, "location": location}
 
 
+def _normalize_sensor_id(sensor_id: str) -> str:
+    return parse_client_id(str(sensor_id)).hex()
+
+
 class SettingsStore:
     """Holds the full app settings: cars, speed source, and sensors."""
 
@@ -74,6 +79,7 @@ class SettingsStore:
         self._speed_source: str = "gps"
         self._manual_speed_kph: float | None = None
         self._obd2_config: dict[str, Any] = {}
+        self._language: str = "en"
         self._sensors_by_mac: dict[str, dict[str, Any]] = {}
 
         self._load()
@@ -110,15 +116,22 @@ class SettingsStore:
             self._manual_speed_kph = _parse_manual_speed(raw.get("manualSpeedKph"))
             obd2 = raw.get("obd2Config")
             self._obd2_config = obd2 if isinstance(obd2, dict) else {}
+            language = str(raw.get("language") or "en").strip().lower()
+            self._language = language if language in {"en", "nl"} else "en"
 
             # Sensors
             sensors = raw.get("sensorsByMac")
             if isinstance(sensors, dict):
-                self._sensors_by_mac = {
-                    str(mac): _validate_sensor(str(mac), v)
-                    for mac, v in sensors.items()
-                    if isinstance(v, dict)
-                }
+                normalized: dict[str, dict[str, Any]] = {}
+                for mac, value in sensors.items():
+                    if not isinstance(value, dict):
+                        continue
+                    try:
+                        sensor_id = _normalize_sensor_id(str(mac))
+                    except ValueError:
+                        continue
+                    normalized[sensor_id] = _validate_sensor(sensor_id, value)
+                self._sensors_by_mac = normalized
 
     def _persist(self) -> None:
         if not self._persist_path:
@@ -139,6 +152,7 @@ class SettingsStore:
                 "speedSource": self._speed_source,
                 "manualSpeedKph": self._manual_speed_kph,
                 "obd2Config": dict(self._obd2_config),
+                "language": self._language,
                 "sensorsByMac": {mac: dict(s) for mac, s in self._sensors_by_mac.items()},
             }
 
@@ -254,38 +268,57 @@ class SettingsStore:
             return {mac: dict(s) for mac, s in self._sensors_by_mac.items()}
 
     def set_sensor(self, mac: str, data: dict[str, Any]) -> dict[str, Any]:
+        sensor_id = _normalize_sensor_id(mac)
         with self._lock:
-            existing = self._sensors_by_mac.get(mac, {"name": mac, "location": ""})
+            existing = self._sensors_by_mac.get(sensor_id, {"name": sensor_id, "location": ""})
             if "name" in data:
                 name = str(data["name"]).strip()[:64]
-                existing["name"] = name if name else mac
+                existing["name"] = name if name else sensor_id
             if "location" in data:
                 existing["location"] = str(data["location"]).strip()[:64]
-            self._sensors_by_mac[mac] = existing
+            self._sensors_by_mac[sensor_id] = existing
             self._persist()
-            return {mac: dict(existing)}
+            return {sensor_id: dict(existing)}
 
     def remove_sensor(self, mac: str) -> bool:
+        sensor_id = _normalize_sensor_id(mac)
         with self._lock:
-            removed = self._sensors_by_mac.pop(mac, None) is not None
+            removed = self._sensors_by_mac.pop(sensor_id, None) is not None
             if removed:
                 self._persist()
             return removed
 
     def sensor_name(self, mac: str) -> str:
         """Return the user-set sensor name, or the MAC itself."""
+        sensor_id = _normalize_sensor_id(mac)
         with self._lock:
-            entry = self._sensors_by_mac.get(mac)
-            return entry["name"] if entry else mac
+            entry = self._sensors_by_mac.get(sensor_id)
+            return entry["name"] if entry else sensor_id
 
     def sensor_location(self, mac: str) -> str:
         """Return the sensor's assigned location code, or empty string."""
+        sensor_id = _normalize_sensor_id(mac)
         with self._lock:
-            entry = self._sensors_by_mac.get(mac)
+            entry = self._sensors_by_mac.get(sensor_id)
             return entry["location"] if entry else ""
 
     def ensure_sensor(self, mac: str) -> None:
         """Create a sensor entry with defaults if it doesn't exist."""
+        sensor_id = _normalize_sensor_id(mac)
         with self._lock:
-            if mac not in self._sensors_by_mac:
-                self._sensors_by_mac[mac] = {"name": mac, "location": ""}
+            if sensor_id not in self._sensors_by_mac:
+                self._sensors_by_mac[sensor_id] = {"name": sensor_id, "location": ""}
+
+    @property
+    def language(self) -> str:
+        with self._lock:
+            return self._language
+
+    def set_language(self, value: str) -> str:
+        language = str(value).strip().lower()
+        if language not in {"en", "nl"}:
+            raise ValueError("language must be 'en' or 'nl'")
+        with self._lock:
+            self._language = language
+            self._persist()
+            return self._language

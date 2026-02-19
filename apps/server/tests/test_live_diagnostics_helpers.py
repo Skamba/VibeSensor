@@ -173,3 +173,27 @@ def test_matrix_transition_downgrade_returns_none() -> None:
 def test_matrix_transition_none_current_returns_none() -> None:
     engine = LiveDiagnosticsEngine()
     assert engine._matrix_transition_bucket("l2", None) is None
+
+
+def test_findings_language_is_forwarded(monkeypatch) -> None:
+    engine = LiveDiagnosticsEngine()
+    seen: dict[str, str] = {}
+
+    def _fake_build_findings_for_samples(*, metadata, samples, lang):  # type: ignore[no-untyped-def]
+        seen["lang"] = lang
+        return []
+
+    monkeypatch.setattr(
+        "vibesensor.live_diagnostics.build_findings_for_samples",
+        _fake_build_findings_for_samples,
+    )
+    engine.update(
+        speed_mps=0.0,
+        clients=[],
+        spectra=None,
+        settings={},
+        finding_metadata={},
+        finding_samples=[],
+        language="nl",
+    )
+    assert seen["lang"] == "nl"
