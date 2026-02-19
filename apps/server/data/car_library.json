@@ -1,0 +1,2622 @@
+[
+  {
+    "brand": "BMW",
+    "type": "Hatchback",
+    "model": "1 Series (F20, 2011-2019)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport Line 18\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "M Sport 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 17.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Hatchback",
+    "model": "1 Series (F40, 2019-2025)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "7-speed dual-clutch (DKG)",
+        "final_drive_ratio": 3.636,
+        "top_gear_ratio": 0.71
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "2 Series Coupe (F22, 2014-2021)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "2 Series Coupe (G42, 2022-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Hatchback",
+    "model": "2 Series Active Tourer (F45, 2014-2021)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (Aisin)",
+        "final_drive_ratio": 3.294,
+        "top_gear_ratio": 0.674
+      },
+      {
+        "name": "6-speed automatic (Aisin)",
+        "final_drive_ratio": 3.416,
+        "top_gear_ratio": 0.825
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 205.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport Line 18\"",
+        "tire_width_mm": 215.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "M Sport 19\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 205.0,
+    "tire_aspect_pct": 55.0,
+    "rim_in": 17.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "3 Series (F30, 2012-2019)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "3 Series (G20, 2019-2025)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "4 Series (F32, 2014-2020)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "4 Series (G22, 2021-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "5 Series (F10, 2011-2017)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "5 Series (G30, 2017-2023)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "5 Series (G60, 2024-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.64
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "6 Series Gran Coupe (F06, 2013-2018)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "6 Series Gran Turismo (G32, 2018-2024)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "7 Series (F01, 2011-2015)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "7 Series (G11, 2016-2022)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport Line 21\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "7 Series (G70, 2023-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.64
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport Line 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "8 Series Coupe (G15, 2019-2025)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport Line 21\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Convertible",
+    "model": "8 Series Convertible (G14, 2019-2025)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport Line 21\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "8 Series Gran Coupe (G16, 2020-2025)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport Line 21\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X1 (F48, 2016-2022)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (Aisin)",
+        "final_drive_ratio": 3.294,
+        "top_gear_ratio": 0.674
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.385,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport Line 18\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "M Sport 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 17.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X1 (U11, 2023-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed dual-clutch (DKG)",
+        "final_drive_ratio": 3.636,
+        "top_gear_ratio": 0.71
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X2 (F39, 2018-2023)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (Aisin)",
+        "final_drive_ratio": 3.294,
+        "top_gear_ratio": 0.674
+      },
+      {
+        "name": "7-speed dual-clutch (DKG)",
+        "final_drive_ratio": 3.636,
+        "top_gear_ratio": 0.71
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X2 (U10, 2024-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed dual-clutch (DKG)",
+        "final_drive_ratio": 3.636,
+        "top_gear_ratio": 0.71
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X3 (F25, 2011-2017)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.385,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport Line 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "M Sport 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X3 (G01, 2018-2024)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X3 (G45, 2025-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.64
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X4 (F26, 2015-2018)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X4 (G02, 2019-2025)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X5 (F15, 2014-2018)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.154,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X5 (G05, 2019-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport Line 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 295.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X6 (F16, 2015-2019)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.154,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X6 (G06, 2020-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport Line 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 295.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "X7 (G07, 2019-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.154,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 21\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "Sport Line 22\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 22.0
+      },
+      {
+        "name": "M Sport 22\"",
+        "tire_width_mm": 295.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 21.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Convertible",
+    "model": "Z4 (G29, 2019-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport Line 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "M Sport 21\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "M3 (F80, 2014-2018)",
+    "gearboxes": [
+      {
+        "name": "7-speed dual-clutch (M-DCT)",
+        "final_drive_ratio": 3.154,
+        "top_gear_ratio": 0.714
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.793
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Performance 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "M3 (G80, 2021-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Performance 20\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "M4 (F82, 2014-2020)",
+    "gearboxes": [
+      {
+        "name": "7-speed dual-clutch (M-DCT)",
+        "final_drive_ratio": 3.154,
+        "top_gear_ratio": 0.714
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.793
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Performance 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Coupe",
+    "model": "M4 (G82, 2021-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 2.813,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.812
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Performance 20\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "M5 (F90, 2018-2024)",
+    "gearboxes": [
+      {
+        "name": "8-speed automatic (ZF 8HP)",
+        "final_drive_ratio": 3.154,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Performance 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "SUV",
+    "model": "iX (I20, 2022-2026)",
+    "gearboxes": [
+      {
+        "name": "Single-speed fixed gear (EV)",
+        "final_drive_ratio": 9.079,
+        "top_gear_ratio": 1.0
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "BMW",
+    "type": "Sedan",
+    "model": "i4 (G26, 2022-2026)",
+    "gearboxes": [
+      {
+        "name": "Single-speed fixed gear (EV)",
+        "final_drive_ratio": 8.698,
+        "top_gear_ratio": 1.0
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Hatchback",
+    "model": "A1 (8X, 2011-2018)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ200)",
+        "final_drive_ratio": 3.786,
+        "top_gear_ratio": 0.68
+      },
+      {
+        "name": "5-speed manual",
+        "final_drive_ratio": 3.652,
+        "top_gear_ratio": 0.854
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 215.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "S line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 215.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 17.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Hatchback",
+    "model": "A1 (GB, 2019-2024)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ200)",
+        "final_drive_ratio": 3.786,
+        "top_gear_ratio": 0.68
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 215.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "S line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 215.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 17.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A3 (8V, 2013-2020)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ381)",
+        "final_drive_ratio": 4.769,
+        "top_gear_ratio": 0.725
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport 18\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "S line 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 17.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A3 (8Y, 2021-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ381)",
+        "final_drive_ratio": 4.769,
+        "top_gear_ratio": 0.725
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A4 (B8, 2011-2016)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "7-speed S tronic (DL501)",
+        "final_drive_ratio": 3.444,
+        "top_gear_ratio": 0.68
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 225.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A4 (B9, 2016-2024)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DL382)",
+        "final_drive_ratio": 3.564,
+        "top_gear_ratio": 0.725
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Coupe",
+    "model": "A5 (B8, 2012-2016)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "7-speed S tronic (DL501)",
+        "final_drive_ratio": 3.444,
+        "top_gear_ratio": 0.68
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Coupe",
+    "model": "A5 (B9, 2017-2024)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DL382)",
+        "final_drive_ratio": 3.564,
+        "top_gear_ratio": 0.725
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A6 (C7, 2011-2018)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "7-speed S tronic (DL501)",
+        "final_drive_ratio": 3.444,
+        "top_gear_ratio": 0.68
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "S line 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A6 (C8, 2019-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DL382)",
+        "final_drive_ratio": 3.564,
+        "top_gear_ratio": 0.725
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "S line 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A7 Sportback (C7, 2011-2018)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DL501)",
+        "final_drive_ratio": 3.444,
+        "top_gear_ratio": 0.68
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "S line 22\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A7 Sportback (C8, 2019-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DL382)",
+        "final_drive_ratio": 3.564,
+        "top_gear_ratio": 0.725
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "S line 22\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A8 (D4, 2011-2017)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 2.848,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "S line 22\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "A8 (D5, 2018-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 2.848,
+        "top_gear_ratio": 0.64
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "S line 22\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q2 (GA, 2017-2024)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ381)",
+        "final_drive_ratio": 4.769,
+        "top_gear_ratio": 0.725
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 17\"",
+        "tire_width_mm": 215.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 17.0
+      },
+      {
+        "name": "Sport 18\"",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "S line 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 19.0
+      }
+    ],
+    "tire_width_mm": 215.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 17.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q3 (8U, 2012-2018)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ500)",
+        "final_drive_ratio": 4.077,
+        "top_gear_ratio": 0.725
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 235.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q3 (F3, 2019-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ381)",
+        "final_drive_ratio": 4.769,
+        "top_gear_ratio": 0.725
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "S line 21\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 235.0,
+    "tire_aspect_pct": 45.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q5 (8R, 2011-2017)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "7-speed S tronic (DL501)",
+        "final_drive_ratio": 3.444,
+        "top_gear_ratio": 0.68
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 235.0,
+    "tire_aspect_pct": 55.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q5 (FY, 2017-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DL382)",
+        "final_drive_ratio": 3.564,
+        "top_gear_ratio": 0.725
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "S line 21\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 235.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q7 (4M, 2016-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.333,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "S line 22\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q8 (4M8, 2019-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.333,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "Sport 22\"",
+        "tire_width_mm": 295.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 22.0
+      },
+      {
+        "name": "S line 22\"",
+        "tire_width_mm": 305.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 285.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 21.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Coupe",
+    "model": "TT (8J, 2011-2014)",
+    "gearboxes": [
+      {
+        "name": "6-speed S tronic (DQ250)",
+        "final_drive_ratio": 3.444,
+        "top_gear_ratio": 0.742
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 18\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0
+      },
+      {
+        "name": "Sport 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "S line 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 40.0,
+    "rim_in": 18.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Coupe",
+    "model": "TT (8S, 2015-2023)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ381)",
+        "final_drive_ratio": 4.769,
+        "top_gear_ratio": 0.725
+      },
+      {
+        "name": "6-speed manual",
+        "final_drive_ratio": 3.462,
+        "top_gear_ratio": 0.84
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport 20\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "S line 21\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 245.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Coupe",
+    "model": "R8 (4S, 2015-2024)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DL800)",
+        "final_drive_ratio": 3.538,
+        "top_gear_ratio": 0.714
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 295.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Performance 21\"",
+        "tire_width_mm": 305.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 295.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "RS 3 (8V/8Y, 2017-2026)",
+    "gearboxes": [
+      {
+        "name": "7-speed S tronic (DQ500)",
+        "final_drive_ratio": 4.077,
+        "top_gear_ratio": 0.725
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 255.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Performance 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 255.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 19.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Wagon",
+    "model": "RS 4 Avant (B9, 2018-2024)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Performance 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Coupe",
+    "model": "RS 5 (B9, 2018-2024)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Performance 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 275.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Wagon",
+    "model": "RS 6 Avant (C8, 2020-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "Performance 22\"",
+        "tire_width_mm": 295.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 285.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 21.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "RS 7 Sportback (C8, 2020-2026)",
+    "gearboxes": [
+      {
+        "name": "8-speed tiptronic (ZF 8HP)",
+        "final_drive_ratio": 3.077,
+        "top_gear_ratio": 0.667
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 21\"",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      },
+      {
+        "name": "Performance 22\"",
+        "tire_width_mm": 295.0,
+        "tire_aspect_pct": 25.0,
+        "rim_in": 22.0
+      }
+    ],
+    "tire_width_mm": 285.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 21.0
+  },
+  {
+    "brand": "Audi",
+    "type": "Sedan",
+    "model": "e-tron GT (J1, 2022-2026)",
+    "gearboxes": [
+      {
+        "name": "2-speed automatic (rear) / single-speed (front)",
+        "final_drive_ratio": 8.057,
+        "top_gear_ratio": 1.0
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 20\"",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 35.0,
+        "rim_in": 20.0
+      },
+      {
+        "name": "Sport 21\"",
+        "tire_width_mm": 275.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0
+      }
+    ],
+    "tire_width_mm": 265.0,
+    "tire_aspect_pct": 35.0,
+    "rim_in": 20.0
+  },
+  {
+    "brand": "Audi",
+    "type": "SUV",
+    "model": "Q4 e-tron (FZ, 2022-2026)",
+    "gearboxes": [
+      {
+        "name": "Single-speed fixed gear (EV)",
+        "final_drive_ratio": 9.756,
+        "top_gear_ratio": 1.0
+      }
+    ],
+    "tire_options": [
+      {
+        "name": "Standard 19\"",
+        "tire_width_mm": 235.0,
+        "tire_aspect_pct": 50.0,
+        "rim_in": 19.0
+      },
+      {
+        "name": "Sport 20\"",
+        "tire_width_mm": 245.0,
+        "tire_aspect_pct": 45.0,
+        "rim_in": 20.0
+      }
+    ],
+    "tire_width_mm": 235.0,
+    "tire_aspect_pct": 50.0,
+    "rim_in": 19.0
+  }
+]
