@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 import argparse
-import json
 import logging
-import re
 import subprocess
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .config import APConfig, APSelfHealConfig, load_config
+from .hotspot_parsers import (
+    HealStateStore,
+    expected_ip_match,
+    nm_log_signals,
+    parse_active_conn_device,
+    parse_active_connection_names,
+    parse_ip,
+    parse_iw_info,
+    parse_port53_conflict,
+    parse_rfkill_blocked,
+)
 
 LOGGER = logging.getLogger("vibesensor.hotspot.selfheal")
 
@@ -93,92 +101,11 @@ def _run_ok(runner: CommandRunner, argv: list[str], timeout_s: int = 10) -> bool
     return runner.run(argv, timeout_s=timeout_s).returncode == 0
 
 
-def _active_connection_names(result: CommandResult) -> list[str]:
-    rows = []
-    for line in result.stdout.splitlines():
-        line = line.strip()
-        if line:
-            rows.append(line)
-    return rows
-
-
-def _parse_active_conn_device(con_name: str, result: CommandResult) -> tuple[bool, str | None]:
-    for row in result.stdout.splitlines():
-        parts = [piece.strip() for piece in row.split(":", maxsplit=1)]
-        if len(parts) != 2:
-            continue
-        name, device = parts
-        if name == con_name:
-            return True, device if device else None
-    return False, None
-
-
-def _parse_ip(ip_show_output: str) -> str | None:
-    for line in ip_show_output.splitlines():
-        line = line.strip()
-        if line.startswith("inet "):
-            fields = line.split()
-            if len(fields) >= 2:
-                return fields[1]
-    return None
-
-
-def _expected_ip_match(expected_cidr: str, actual_cidr: str | None) -> bool:
-    if actual_cidr is None:
-        return False
-    expected_ip = expected_cidr.split("/", maxsplit=1)[0]
-    actual_ip = actual_cidr.split("/", maxsplit=1)[0]
-    return expected_ip == actual_ip
-
-
-def _parse_iw_info(iw_output: str) -> tuple[bool, str | None]:
-    ap_mode = False
-    channel = None
-    channel_re = re.compile(r"channel\s+(\d+)")
-    for line in iw_output.splitlines():
-        text = line.strip().lower()
-        if text.startswith("type ") and " ap" in f" {text}":
-            ap_mode = True
-        match = channel_re.search(text)
-        if match:
-            channel = match.group(1)
-    return ap_mode, channel
-
-
-def _parse_rfkill_blocked(output: str) -> bool:
-    lowered = output.lower()
-    if "soft blocked: yes" in lowered or "hard blocked: yes" in lowered:
-        return True
-    return False
-
-
-def _nm_log_signals(log_excerpt: str) -> tuple[str | None, str | None]:
-    lower = log_excerpt.lower()
-    if "no address range available" in lower:
-        return "dhcp_no_range", None
-    if "failed to start" in lower and "dnsmasq" in lower:
-        return "dhcp_dnsmasq_start_failed", None
-    if "address already in use" in lower and (":53" in lower or "port 53" in lower):
-        return "port53_conflict", None
-    return None, None
-
-
 def _find_port53_conflict(runner: CommandRunner) -> str | None:
     ss = runner.run(["ss", "-ltnup", "sport", "=", ":53"], timeout_s=5)
     if ss.returncode != 0:
         return None
-    lines = [line.strip() for line in ss.stdout.splitlines() if line.strip()]
-    conflict_names: list[str] = []
-    for line in lines:
-        lowered = line.lower()
-        if "dnsmasq" in lowered and "networkmanager" in lowered:
-            continue
-        if "users:(" in lowered:
-            proc = line.split('users:("', maxsplit=1)[1].split('"', maxsplit=1)[0]
-            conflict_names.append(proc)
-    if not conflict_names:
-        return None
-    return ",".join(sorted(set(conflict_names)))
+    return parse_port53_conflict(ss.stdout)
 
 
 def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRunner) -> HealthState:
@@ -197,7 +124,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
     rfkill_blocked = False
     rfkill_check = runner.run(["rfkill", "list"], timeout_s=5)
     if rfkill_check.returncode == 0:
-        rfkill_blocked = _parse_rfkill_blocked(rfkill_check.stdout)
+        rfkill_blocked = parse_rfkill_blocked(rfkill_check.stdout)
     if rfkill_blocked:
         issues.append("rfkill_blocked")
 
@@ -210,7 +137,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
         issues.append("iface_down")
 
     con_list = runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=5)
-    con_names = _active_connection_names(con_list)
+    con_names = parse_active_connection_names(con_list.stdout)
     ap_conn_exists = ap.con_name in con_names
     if not ap_conn_exists:
         issues.append("ap_connection_missing")
@@ -219,7 +146,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
         ["nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"],
         timeout_s=5,
     )
-    ap_conn_active, active_device = _parse_active_conn_device(ap.con_name, active)
+    ap_conn_active, active_device = parse_active_conn_device(ap.con_name, active.stdout)
     if not ap_conn_active:
         issues.append("ap_connection_inactive")
     elif active_device and active_device != ap.ifname:
@@ -229,13 +156,13 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
     ap_mode = False
     channel = None
     if iw_info.returncode == 0:
-        ap_mode, channel = _parse_iw_info(iw_info.stdout)
+        ap_mode, channel = parse_iw_info(iw_info.stdout)
     if ap_conn_active and not ap_mode:
         issues.append("iface_not_ap_mode")
 
     ip_show = runner.run(["ip", "-4", "addr", "show", "dev", ap.ifname], timeout_s=5)
-    actual_ip = _parse_ip(ip_show.stdout) if ip_show.returncode == 0 else None
-    ip_ok = _expected_ip_match(ap.ip, actual_ip)
+    actual_ip = parse_ip(ip_show.stdout) if ip_show.returncode == 0 else None
+    ip_ok = expected_ip_match(ap.ip, actual_ip)
     if not ip_ok:
         issues.append("ip_mismatch")
 
@@ -252,7 +179,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
         ],
         timeout_s=8,
     )
-    dhcp_log_signal, _ = _nm_log_signals(nm_logs.stdout)
+    dhcp_log_signal, _ = nm_log_signals(nm_logs.stdout)
 
     pgrep_dnsmasq = runner.run(["pgrep", "-af", "dnsmasq"], timeout_s=5)
     nm_dnsmasq_running = False
@@ -298,40 +225,10 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
     )
 
 
-class HealStateStore:
-    def __init__(self, path: Path) -> None:
-        self._path = path
-
-    def _load(self) -> dict[str, float]:
-        if not self._path.exists():
-            return {}
-        try:
-            data = json.loads(self._path.read_text(encoding="utf-8"))
-            if not isinstance(data, dict):
-                return {}
-            return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
-        except Exception:
-            return {}
-
-    def _save(self, data: dict[str, float]) -> None:
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-        self._path.write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
-
-    def allow(self, key: str, min_interval_s: int) -> bool:
-        data = self._load()
-        now = time.time()
-        last = data.get(key, 0.0)
-        if now - last < max(0, min_interval_s):
-            return False
-        data[key] = now
-        self._save(data)
-        return True
-
-
 def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | None = None) -> bool:
     configured_channel = channel if channel is not None else ap.channel
-    con_names = _active_connection_names(
-        runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8)
+    con_names = parse_active_connection_names(
+        runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8).stdout
     )
     if ap.con_name not in con_names:
         added = runner.run(
