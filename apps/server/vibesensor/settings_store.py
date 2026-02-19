@@ -2,30 +2,29 @@ from __future__ import annotations
 
 import json
 import logging
-import uuid
 from pathlib import Path
 from threading import RLock
 from typing import Any
 
-from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
-from .protocol import parse_client_id
+from .domain_models import (
+    DEFAULT_CAR_ASPECTS,
+    CarConfig,
+    SensorConfig,
+    SpeedSourceConfig,
+    _new_car_id,
+    _sanitize_aspects,
+    normalize_sensor_id,
+)
 
 LOGGER = logging.getLogger(__name__)
 
-VALID_SPEED_SOURCES = ("gps", "obd2", "manual")
-
-DEFAULT_CAR_ASPECTS: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
-
+# Re-export for backwards compatibility with tests that import these helpers.
 DEFAULT_CAR: dict[str, Any] = {
     "id": "",
     "name": "Default Car",
     "type": "sedan",
     "aspects": dict(DEFAULT_CAR_ASPECTS),
 }
-
-
-def _new_car_id() -> str:
-    return str(uuid.uuid4())
 
 
 def _parse_manual_speed(value: Any) -> float | None:
@@ -35,35 +34,18 @@ def _parse_manual_speed(value: Any) -> float | None:
     return None
 
 
-def _sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
-    """Sanitize car aspects using the canonical validation from analysis_settings."""
-    return sanitize_settings(raw, allowed_keys=DEFAULT_CAR_ASPECTS)
-
-
 def _validate_car(car: dict[str, Any]) -> dict[str, Any]:
-    car_id = str(car.get("id") or _new_car_id())
-    name = str(car.get("name") or "Unnamed Car").strip()[:64]
-    car_type = str(car.get("type") or "sedan").strip()[:32]
-    raw_aspects = car.get("aspects") or {}
-    aspects = dict(DEFAULT_CAR_ASPECTS)
-    if isinstance(raw_aspects, dict):
-        aspects.update(_sanitize_aspects(raw_aspects))
-    return {
-        "id": car_id,
-        "name": name or "Unnamed Car",
-        "type": car_type or "sedan",
-        "aspects": aspects,
-    }
+    """Validate car dict – thin wrapper around CarConfig for backward compat."""
+    return CarConfig.from_dict(car).to_dict()
 
 
 def _validate_sensor(mac: str, raw: dict[str, Any]) -> dict[str, Any]:
-    name = str(raw.get("name") or mac).strip()[:64]
-    location = str(raw.get("location") or "").strip()[:64]
-    return {"name": name or mac, "location": location}
+    """Validate sensor dict – thin wrapper around SensorConfig for backward compat."""
+    return SensorConfig.from_dict(mac, raw).to_dict()
 
 
 def _normalize_sensor_id(sensor_id: str) -> str:
-    return parse_client_id(str(sensor_id)).hex()
+    return normalize_sensor_id(sensor_id)
 
 
 class SettingsStore:
@@ -73,14 +55,12 @@ class SettingsStore:
         self._lock = RLock()
         self._persist_path = persist_path
 
-        default_car = _validate_car({"id": _new_car_id(), **DEFAULT_CAR})
-        self._cars: list[dict[str, Any]] = [default_car]
-        self._active_car_id: str = default_car["id"]
-        self._speed_source: str = "gps"
-        self._manual_speed_kph: float | None = None
-        self._obd2_config: dict[str, Any] = {}
+        default_car = CarConfig.from_dict({"id": _new_car_id(), **DEFAULT_CAR})
+        self._cars: list[CarConfig] = [default_car]
+        self._active_car_id: str = default_car.id
+        self._speed_cfg = SpeedSourceConfig.default()
         self._language: str = "en"
-        self._sensors_by_mac: dict[str, dict[str, Any]] = {}
+        self._sensors: dict[str, SensorConfig] = {}
 
         self._load()
 
@@ -101,37 +81,39 @@ class SettingsStore:
             # Cars
             raw_cars = raw.get("cars")
             if isinstance(raw_cars, list) and raw_cars:
-                self._cars = [_validate_car(c) for c in raw_cars if isinstance(c, dict)]
+                self._cars = [CarConfig.from_dict(c) for c in raw_cars if isinstance(c, dict)]
             if not self._cars:
-                default_car = _validate_car({"id": _new_car_id(), **DEFAULT_CAR})
+                default_car = CarConfig.from_dict({"id": _new_car_id(), **DEFAULT_CAR})
                 self._cars = [default_car]
 
             active_id = str(raw.get("activeCarId") or "")
-            car_ids = {c["id"] for c in self._cars}
-            self._active_car_id = active_id if active_id in car_ids else self._cars[0]["id"]
+            car_ids = {c.id for c in self._cars}
+            self._active_car_id = active_id if active_id in car_ids else self._cars[0].id
 
             # Speed source
-            src = str(raw.get("speedSource") or "gps")
-            self._speed_source = src if src in VALID_SPEED_SOURCES else "gps"
-            self._manual_speed_kph = _parse_manual_speed(raw.get("manualSpeedKph"))
-            obd2 = raw.get("obd2Config")
-            self._obd2_config = obd2 if isinstance(obd2, dict) else {}
+            self._speed_cfg = SpeedSourceConfig.from_dict(
+                {
+                    "speedSource": raw.get("speedSource"),
+                    "manualSpeedKph": raw.get("manualSpeedKph"),
+                    "obd2Config": raw.get("obd2Config"),
+                }
+            )
             language = str(raw.get("language") or "en").strip().lower()
             self._language = language if language in {"en", "nl"} else "en"
 
             # Sensors
             sensors = raw.get("sensorsByMac")
             if isinstance(sensors, dict):
-                normalized: dict[str, dict[str, Any]] = {}
+                normalized: dict[str, SensorConfig] = {}
                 for mac, value in sensors.items():
                     if not isinstance(value, dict):
                         continue
                     try:
-                        sensor_id = _normalize_sensor_id(str(mac))
+                        sensor_id = normalize_sensor_id(str(mac))
                     except ValueError:
                         continue
-                    normalized[sensor_id] = _validate_sensor(sensor_id, value)
-                self._sensors_by_mac = normalized
+                    normalized[sensor_id] = SensorConfig.from_dict(sensor_id, value)
+                self._sensors = normalized
 
     def _persist(self) -> None:
         if not self._persist_path:
@@ -147,13 +129,11 @@ class SettingsStore:
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             return {
-                "cars": [dict(c, aspects=dict(c["aspects"])) for c in self._cars],
+                "cars": [c.to_dict() for c in self._cars],
                 "activeCarId": self._active_car_id,
-                "speedSource": self._speed_source,
-                "manualSpeedKph": self._manual_speed_kph,
-                "obd2Config": dict(self._obd2_config),
+                **self._speed_cfg.to_dict(),
                 "language": self._language,
-                "sensorsByMac": {mac: dict(s) for mac, s in self._sensors_by_mac.items()},
+                "sensorsByMac": {sid: s.to_dict() for sid, s in self._sensors.items()},
             }
 
     # -- car operations --------------------------------------------------------
@@ -161,7 +141,7 @@ class SettingsStore:
     def get_cars(self) -> dict[str, Any]:
         with self._lock:
             return {
-                "cars": [dict(c, aspects=dict(c["aspects"])) for c in self._cars],
+                "cars": [c.to_dict() for c in self._cars],
                 "activeCarId": self._active_car_id,
             }
 
@@ -169,11 +149,11 @@ class SettingsStore:
         """Return the active car's aspects as a flat analysis-settings dict."""
         with self._lock:
             car = self._find_car(self._active_car_id)
-            return dict(car["aspects"]) if car else dict(DEFAULT_CAR_ASPECTS)
+            return dict(car.aspects) if car else dict(DEFAULT_CAR_ASPECTS)
 
-    def _find_car(self, car_id: str) -> dict[str, Any] | None:
+    def _find_car(self, car_id: str) -> CarConfig | None:
         for c in self._cars:
-            if c["id"] == car_id:
+            if c.id == car_id:
                 return c
         return None
 
@@ -189,7 +169,7 @@ class SettingsStore:
     def add_car(self, car_data: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
             car_data["id"] = _new_car_id()
-            car = _validate_car(car_data)
+            car = CarConfig.from_dict(car_data)
             self._cars.append(car)
             self._persist()
             return self.get_cars()
@@ -202,13 +182,13 @@ class SettingsStore:
             if "name" in car_data:
                 name = str(car_data["name"]).strip()[:64]
                 if name:
-                    car["name"] = name
+                    car.name = name
             if "type" in car_data:
                 car_type = str(car_data["type"]).strip()[:32]
                 if car_type:
-                    car["type"] = car_type
+                    car.type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
-                car["aspects"].update(_sanitize_aspects(car_data["aspects"]))
+                car.aspects.update(_sanitize_aspects(car_data["aspects"]))
             self._persist()
             return self.get_cars()
 
@@ -217,9 +197,9 @@ class SettingsStore:
             car = self._find_car(self._active_car_id)
             if car is None:
                 raise ValueError("No active car configured")
-            car["aspects"].update(_sanitize_aspects(aspects))
+            car.aspects.update(_sanitize_aspects(aspects))
             self._persist()
-            return dict(car["aspects"])
+            return dict(car.aspects)
 
     def delete_car(self, car_id: str) -> dict[str, Any]:
         with self._lock:
@@ -228,9 +208,9 @@ class SettingsStore:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
-            self._cars = [c for c in self._cars if c["id"] != car_id]
+            self._cars = [c for c in self._cars if c.id != car_id]
             if self._active_car_id == car_id:
-                self._active_car_id = self._cars[0]["id"]
+                self._active_car_id = self._cars[0].id
             self._persist()
             return self.get_cars()
 
@@ -238,87 +218,77 @@ class SettingsStore:
 
     def get_speed_source(self) -> dict[str, Any]:
         with self._lock:
-            return {
-                "speedSource": self._speed_source,
-                "manualSpeedKph": self._manual_speed_kph,
-                "obd2Config": dict(self._obd2_config),
-            }
+            return self._speed_cfg.to_dict()
 
     def update_speed_source(self, data: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
-            src = data.get("speedSource")
-            if isinstance(src, str) and src in VALID_SPEED_SOURCES:
-                self._speed_source = src
-            manual = data.get("manualSpeedKph")
-            if manual is None:
-                self._manual_speed_kph = None
-            else:
-                self._manual_speed_kph = _parse_manual_speed(manual)
-            obd2 = data.get("obd2Config")
-            if isinstance(obd2, dict):
-                self._obd2_config = obd2
+            self._speed_cfg.apply_update(data)
             self._persist()
-            return self.get_speed_source()
+            return self._speed_cfg.to_dict()
 
     @property
     def speed_source(self) -> str:
         with self._lock:
-            return self._speed_source
+            return self._speed_cfg.speed_source
 
     @property
     def manual_speed_kph(self) -> float | None:
         with self._lock:
-            return self._manual_speed_kph
+            return self._speed_cfg.manual_speed_kph
 
     # -- sensors ---------------------------------------------------------------
 
     def get_sensors(self) -> dict[str, dict[str, Any]]:
         with self._lock:
-            return {mac: dict(s) for mac, s in self._sensors_by_mac.items()}
+            return {sid: s.to_dict() for sid, s in self._sensors.items()}
 
     def set_sensor(self, mac: str, data: dict[str, Any]) -> dict[str, Any]:
-        sensor_id = _normalize_sensor_id(mac)
+        sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            existing = self._sensors_by_mac.get(sensor_id, {"name": sensor_id, "location": ""})
+            existing = self._sensors.get(sensor_id)
+            if existing is None:
+                existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
             if "name" in data:
                 name = str(data["name"]).strip()[:64]
-                existing["name"] = name if name else sensor_id
+                existing.name = name if name else sensor_id
             if "location" in data:
-                existing["location"] = str(data["location"]).strip()[:64]
-            self._sensors_by_mac[sensor_id] = existing
+                existing.location = str(data["location"]).strip()[:64]
+            self._sensors[sensor_id] = existing
             self._persist()
-            return {sensor_id: dict(existing)}
+            return {sensor_id: existing.to_dict()}
 
     def remove_sensor(self, mac: str) -> bool:
-        sensor_id = _normalize_sensor_id(mac)
+        sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            removed = self._sensors_by_mac.pop(sensor_id, None) is not None
+            removed = self._sensors.pop(sensor_id, None) is not None
             if removed:
                 self._persist()
             return removed
 
     def sensor_name(self, mac: str) -> str:
         """Return the user-set sensor name, or the MAC itself."""
-        sensor_id = _normalize_sensor_id(mac)
+        sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            entry = self._sensors_by_mac.get(sensor_id)
-            return entry["name"] if entry else sensor_id
+            entry = self._sensors.get(sensor_id)
+            return entry.name if entry else sensor_id
 
     def sensor_location(self, mac: str) -> str:
         """Return the sensor's assigned location code, or empty string."""
-        sensor_id = _normalize_sensor_id(mac)
+        sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            entry = self._sensors_by_mac.get(sensor_id)
-            return entry["location"] if entry else ""
+            entry = self._sensors.get(sensor_id)
+            return entry.location if entry else ""
 
     def ensure_sensor(self, mac: str) -> dict[str, Any]:
         """Create a sensor entry with defaults if it doesn't exist."""
-        sensor_id = _normalize_sensor_id(mac)
+        sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            if sensor_id not in self._sensors_by_mac:
-                self._sensors_by_mac[sensor_id] = {"name": sensor_id, "location": ""}
+            if sensor_id not in self._sensors:
+                self._sensors[sensor_id] = SensorConfig(
+                    sensor_id=sensor_id, name=sensor_id, location=""
+                )
                 self._persist()
-            return dict(self._sensors_by_mac[sensor_id])
+            return self._sensors[sensor_id].to_dict()
 
     @property
     def language(self) -> str:
