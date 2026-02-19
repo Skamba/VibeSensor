@@ -14,6 +14,8 @@ IMG_SUFFIX_BASE="-vibesensor-lite"
 VS_FIRST_USER_NAME="${VS_FIRST_USER_NAME:-pi}"
 VS_FIRST_USER_PASS="${VS_FIRST_USER_PASS:-vibesensor}"
 VS_WPA_COUNTRY="${VS_WPA_COUNTRY:-US}"
+# Set CLEAN=1 to force a full rebuild from scratch (default: incremental, reuses stage0-2)
+CLEAN="${CLEAN:-0}"
 
 if [ "${USE_QEMU:-0}" = "1" ]; then
   IMG_SUFFIX="${IMG_SUFFIX_BASE}-qemu"
@@ -64,9 +66,10 @@ mkdir -p "${STAGE_REPO_DIR}"
 cat >"${STAGE_DIR}/prerun.sh" <<'EOF'
 #!/bin/bash -e
 
-if [ ! -d "${ROOTFS_DIR}" ]; then
-  copy_previous
-fi
+# Always start stage-vibesensor from a clean copy of stage2's rootfs so that
+# incremental builds (with stage0/1/2 skipped) still produce a correct image.
+rm -rf "${ROOTFS_DIR}"
+copy_previous
 EOF
 chmod +x "${STAGE_DIR}/prerun.sh"
 
@@ -174,11 +177,27 @@ ENABLE_SSH=1
 STAGE_LIST="stage0 stage1 stage2 stage-vibesensor"
 EOF
 
-(
-  cd "${PI_GEN_DIR}"
-  if docker ps -a --format '{{.Names}}' | grep -Fxq pigen_work; then
+PREV_WORK_EXISTS=0
+if docker ps -a --format '{{.Names}}' | grep -Fxq pigen_work; then
+  PREV_WORK_EXISTS=1
+fi
+
+if [ "${CLEAN}" = "1" ] || [ "${PREV_WORK_EXISTS}" = "0" ]; then
+  if [ "${PREV_WORK_EXISTS}" = "1" ]; then
+    echo "CLEAN=1: removing previous pigen_work container"
     docker rm -v pigen_work >/dev/null
   fi
+  rm -f "${PI_GEN_DIR}/stage0/SKIP" "${PI_GEN_DIR}/stage1/SKIP" "${PI_GEN_DIR}/stage2/SKIP"
+  echo "Full build: rebuilding all stages"
+else
+  echo "Incremental build: skipping stage0/1/2 (set CLEAN=1 to rebuild from scratch)"
+  touch "${PI_GEN_DIR}/stage0/SKIP"
+  touch "${PI_GEN_DIR}/stage1/SKIP"
+  touch "${PI_GEN_DIR}/stage2/SKIP"
+fi
+
+(
+  cd "${PI_GEN_DIR}"
   ./build-docker.sh
 )
 
