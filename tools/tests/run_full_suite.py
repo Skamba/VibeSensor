@@ -16,7 +16,9 @@ CONTAINER = f"vibesensor-full-suite-{os.getpid()}"
 BASE_URL = "http://127.0.0.1:18000"
 
 
-def _run(cmd: list[str], *, check: bool = True, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def _run(
+    cmd: list[str], *, check: bool = True, env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     print("+", " ".join(cmd), flush=True)
     return subprocess.run(cmd, cwd=str(ROOT), check=check, text=True, env=env)
 
@@ -67,9 +69,21 @@ def main() -> int:
     container_started = False
     try:
         _run(["python3", "tools/sync_ui_to_pi_public.py"])
-        _run(["python3", "-m", "pytest", "-q", "-m", "not selenium", "apps/server/tests"])
+        _run(
+            ["python3", "-m", "pytest", "-q", "-m", "not selenium", "apps/server/tests"]
+        )
 
-        _run(["docker", "build", "-f", "infra/docker/server.Dockerfile", "-t", IMAGE, "."])
+        _run(
+            [
+                "docker",
+                "build",
+                "-f",
+                "infra/docker/server.Dockerfile",
+                "-t",
+                IMAGE,
+                ".",
+            ]
+        )
         _run(
             [
                 "docker",
