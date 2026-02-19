@@ -18,6 +18,26 @@ if TYPE_CHECKING:
     from .app import RuntimeState
 
 LOGGER = logging.getLogger(__name__)
+_MAX_REPORT_SAMPLES = 12_000
+
+
+def _bounded_sample(
+    samples: Iterator[dict],
+    *,
+    max_items: int,
+) -> tuple[list[dict], int, int]:
+    kept: list[dict] = []
+    total = 0
+    stride = 1
+    for sample in samples:
+        total += 1
+        if (total - 1) % stride != 0:
+            continue
+        kept.append(sample)
+        if len(kept) > max_items:
+            kept = kept[::2]
+            stride *= 2
+    return kept, total, stride
 
 
 class RenameRequest(BaseModel):
@@ -258,8 +278,11 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/analysis-settings")
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> dict:
-        updated = state.analysis_settings.update(req.model_dump(exclude_none=True))
-        return updated
+        changes = req.model_dump(exclude_none=True)
+        if changes:
+            state.settings_store.update_active_car_aspects(changes)
+            _sync_active_car_to_analysis(state)
+        return state.analysis_settings.snapshot()
 
     @router.post("/api/clients/{client_id}/rename")
     async def rename_client(client_id: str, req: RenameRequest) -> dict:
@@ -356,8 +379,15 @@ def create_router(state: RuntimeState) -> APIRouter:
         if lang is not None:
             from .runlog import normalize_sample_record
 
-            raw_samples = state.history_db.get_run_samples(run_id)
-            samples = [normalize_sample_record(s) for s in raw_samples]
+            normalized_iter = (
+                normalize_sample_record(sample)
+                for batch in state.history_db.iter_run_samples(run_id)
+                for sample in batch
+            )
+            samples, total_samples, stride = _bounded_sample(
+                normalized_iter,
+                max_items=_MAX_REPORT_SAMPLES,
+            )
             metadata = run.get("metadata", {})
             try:
                 analysis = summarize_run_data(
@@ -369,6 +399,12 @@ def create_router(state: RuntimeState) -> APIRouter:
                 )
             except ValueError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
+            if stride > 1 and isinstance(analysis, dict):
+                analysis["sampling"] = {
+                    "total_samples": total_samples,
+                    "analyzed_samples": len(samples),
+                    "method": f"stride_{stride}",
+                }
         return analysis
 
     @router.delete("/api/history/{run_id}")
@@ -396,10 +432,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         metadata = run.get("metadata", {})
         if not isinstance(metadata, dict):
             metadata = {}
-        samples = list(_iter_normalized_samples(run_id, batch_size=2048))
-        if len(samples) > 12_000:
-            stride = max(1, len(samples) // 12_000)
-            samples = samples[::stride]
+        samples, total_samples, stride = _bounded_sample(
+            _iter_normalized_samples(run_id, batch_size=2048),
+            max_items=_MAX_REPORT_SAMPLES,
+        )
         try:
             report_model = summarize_run_data(
                 metadata,
@@ -411,6 +447,14 @@ def create_router(state: RuntimeState) -> APIRouter:
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         pdf = build_report_pdf(report_model)
+        if stride > 1:
+            LOGGER.info(
+                "PDF report sample downsampling applied for run %s: total=%d analyzed=%d stride=%d",
+                run_id,
+                total_samples,
+                len(samples),
+                stride,
+            )
         return Response(
             content=pdf,
             media_type="application/pdf",
@@ -425,10 +469,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         metadata = run.get("metadata", {})
 
         def _stream() -> Iterator[bytes]:
-            yield (json.dumps(metadata, ensure_ascii=True) + "\n").encode("utf-8")
+            yield (json.dumps(metadata, ensure_ascii=False) + "\n").encode("utf-8")
             for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
                 for sample in batch:
-                    yield (json.dumps(sample, ensure_ascii=True) + "\n").encode("utf-8")
+                    yield (json.dumps(sample, ensure_ascii=False) + "\n").encode("utf-8")
 
         return StreamingResponse(
             _stream(),

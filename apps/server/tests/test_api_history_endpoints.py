@@ -233,3 +233,13 @@ async def test_ws_selected_client_id_validation() -> None:
     await endpoint(ws)
     assert None in state.ws_hub.selected_updates
     assert "aabbccddeeff" in state.ws_hub.selected_updates
+
+
+@pytest.mark.asyncio
+async def test_history_insights_lang_sampling_is_bounded() -> None:
+    router, _ = _make_router_and_state(language="en", sample_count=30_000)
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
+    payload = await endpoint("run-1", "en")
+    sampling = payload.get("sampling", {})
+    assert sampling.get("analyzed_samples", 0) <= 12_000
+    assert sampling.get("total_samples") == 30_000

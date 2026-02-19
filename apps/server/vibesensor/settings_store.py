@@ -212,6 +212,15 @@ class SettingsStore:
             self._persist()
             return self.get_cars()
 
+    def update_active_car_aspects(self, aspects: dict[str, Any]) -> dict[str, Any]:
+        with self._lock:
+            car = self._find_car(self._active_car_id)
+            if car is None:
+                raise ValueError("No active car configured")
+            car["aspects"].update(_sanitize_aspects(aspects))
+            self._persist()
+            return dict(car["aspects"])
+
     def delete_car(self, car_id: str) -> dict[str, Any]:
         with self._lock:
             if len(self._cars) <= 1:

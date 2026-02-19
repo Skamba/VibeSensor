@@ -170,3 +170,69 @@ def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
     registry2 = ClientRegistry(persist)
     rows = registry2.snapshot_for_api(now=1.0)
     assert rows == []
+
+
+def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path) -> None:
+    registry = ClientRegistry(tmp_path / "clients.json")
+    client_id = bytes.fromhex("aabbccddeeff")
+    hello = HelloMessage(
+        client_id=client_id,
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("192.168.4.2", 9010), now=1.0)
+    samples = np.zeros((200, 3), dtype=np.int16)
+    registry.update_from_data(
+        DataMessage(
+            client_id=client_id,
+            seq=5000,
+            t0_us=1_000_000,
+            sample_count=200,
+            samples=samples,
+        ),
+        ("192.168.4.2", 50000),
+        now=2.0,
+    )
+    registry.update_from_data(
+        DataMessage(
+            client_id=client_id,
+            seq=10,
+            t0_us=1_250_000,
+            sample_count=200,
+            samples=samples,
+        ),
+        ("192.168.4.2", 50000),
+        now=3.0,
+    )
+    row = registry.snapshot_for_api(now=3.0)[0]
+    assert row["reset_count"] == 1
+    assert row["dropped_frames"] == 0
+
+
+def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
+    registry = ClientRegistry(tmp_path / "clients.json")
+    client_id = bytes.fromhex("001122334455")
+    hello = HelloMessage(
+        client_id=client_id,
+        control_port=9010,
+        sample_rate_hz=1000,
+        name="node",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("192.168.4.2", 9010), now=1.0)
+    samples = np.zeros((100, 3), dtype=np.int16)
+    registry.update_from_data(
+        DataMessage(client_id=client_id, seq=1, t0_us=1_000_000, sample_count=100, samples=samples),
+        ("192.168.4.2", 50000),
+        now=2.0,
+    )
+    registry.update_from_data(
+        DataMessage(client_id=client_id, seq=2, t0_us=1_105_000, sample_count=100, samples=samples),
+        ("192.168.4.2", 50000),
+        now=3.0,
+    )
+    timing = registry.snapshot_for_api(now=3.0)[0]["timing_health"]
+    assert timing["last_t0_us"] == 1_105_000
+    assert isinstance(timing["jitter_us_ema"], float)
