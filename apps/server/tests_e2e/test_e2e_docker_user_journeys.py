@@ -6,6 +6,7 @@ Run locally via `make test-all` (uses tools/tests/run_full_suite.py harness).
 
 from __future__ import annotations
 
+import csv
 import io
 import json
 import math
@@ -14,6 +15,7 @@ import re
 import subprocess
 import sys
 import time
+import zipfile
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -270,7 +272,7 @@ def test_e2e_docker_user_journeys() -> None:
         )
         assert float(metadata_1["tire_circumference_m"]) == pytest.approx(expected_circ, abs=1e-6)
 
-        # E2E-5/6/7: Manual speed, NDJSON export format, and delete semantics.
+        # E2E-5/6/7: Manual speed, ZIP export format, and delete semantics.
         _api_json(
             base_url,
             "/api/settings/speed-source",
@@ -295,18 +297,20 @@ def test_e2e_docker_user_journeys() -> None:
         created_run_ids.append(run_id_2)
 
         export_bytes, export_content_type = _api_bytes(base_url, f"/api/history/{run_id_2}/export")
-        assert export_content_type.startswith("application/x-ndjson")
-        assert export_bytes.endswith(b"\n")
-        lines = export_bytes.decode("utf-8").splitlines()
-        assert len(lines) > 1
-        export_metadata = json.loads(lines[0])
-        assert str(export_metadata.get("run_id")) == run_id_2
-        samples = [json.loads(line) for line in lines[1:]]
-        assert samples
+        assert export_content_type.startswith("application/zip")
+        with zipfile.ZipFile(io.BytesIO(export_bytes), "r") as archive:
+            names = set(archive.namelist())
+            assert names == {f"{run_id_2}.json", f"{run_id_2}_raw.csv"}
+            run_details = json.loads(archive.read(f"{run_id_2}.json").decode("utf-8"))
+            assert str(run_details.get("run_id")) == run_id_2
+            rows = list(
+                csv.DictReader(io.StringIO(archive.read(f"{run_id_2}_raw.csv").decode("utf-8")))
+            )
+        assert rows
         speed_values = [
-            float(sample["speed_kmh"])
-            for sample in samples
-            if isinstance(sample.get("speed_kmh"), (int, float))
+            float(row["speed_kmh"])
+            for row in rows
+            if row.get("speed_kmh") not in (None, "")
         ]
         assert len(speed_values) >= 10
         close_to_80 = [value for value in speed_values if abs(value - 80.0) <= 2.0]
