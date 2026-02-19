@@ -20,5 +20,9 @@
   },
   "include": [
     "src"
+  ],
+  "exclude": [
+    "src/legacy/**",
+    "src/legacy_main_runtime.ts"
   ]
 }

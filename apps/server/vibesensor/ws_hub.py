@@ -59,10 +59,15 @@ class WebSocketHub:
         conns = await self._snapshot()
         if not conns:
             return
+        payload_cache: dict[str | None, dict] = {}
 
         async def _send(conn: WSConnection) -> WebSocket | None:
             try:
-                payload = payload_builder(conn.selected_client_id)
+                if conn.selected_client_id not in payload_cache:
+                    payload_cache[conn.selected_client_id] = payload_builder(
+                        conn.selected_client_id
+                    )
+                payload = payload_cache[conn.selected_client_id]
             except Exception:
                 now = asyncio.get_running_loop().time()
                 if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:

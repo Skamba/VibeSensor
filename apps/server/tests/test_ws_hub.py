@@ -112,3 +112,19 @@ async def test_broadcast_survives_payload_builder_exception() -> None:
     # Connection should NOT be removed (builder failed, not send)
     conns = await hub._snapshot()
     assert len(conns) == 1
+
+
+@pytest.mark.asyncio
+async def test_broadcast_builds_payload_once_per_unique_selection() -> None:
+    hub = WebSocketHub()
+    ws1 = _make_ws()
+    ws2 = _make_ws()
+    ws3 = _make_ws()
+    await hub.add(ws1, "same")
+    await hub.add(ws2, "same")
+    await hub.add(ws3, None)
+    payload_builder = MagicMock(side_effect=lambda selected: {"selected": selected})
+
+    await hub.broadcast(payload_builder)
+
+    assert payload_builder.call_count == 2
