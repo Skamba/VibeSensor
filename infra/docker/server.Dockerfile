@@ -8,7 +8,6 @@ RUN npm ci
 RUN mkdir -p /app/tools/config
 COPY tools/config/sync_shared_contracts_to_ui.mjs /app/tools/config/sync_shared_contracts_to_ui.mjs
 COPY libs/ /app/libs/
-COPY libs/ /app/apps/libs/
 COPY apps/ui/ ./
 RUN npm run typecheck && npm run build
 

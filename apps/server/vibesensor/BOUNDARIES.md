@@ -4,7 +4,10 @@ Use this when changing backend code without scanning the whole package.
 
 ## Orchestration vs Computation
 - `app.py`: orchestrates runtime loops, task startup/shutdown, payload assembly.
-- `processing.py` + `analysis/*`: owns FFT/metrics computation.
+- FFT/metrics computation source of truth lives in `vibesensor_core`
+	(`libs/core/python/vibesensor_core/vibration_strength.py` and
+	`libs/core/python/vibesensor_core/strength_bands.py`).
+- `processing.py` orchestrates calls into core computation.
 - Rule: do not move algorithm details into `app.py`.
 
 ## API Surface

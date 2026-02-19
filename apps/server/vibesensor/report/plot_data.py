@@ -6,7 +6,8 @@ from __future__ import annotations
 from math import floor
 from typing import Any
 
-from ..analysis.vibration_strength import _percentile
+from vibesensor_core.vibration_strength import _percentile
+
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     _primary_vibration_strength_db,

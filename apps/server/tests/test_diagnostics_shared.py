@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from vibesensor.analysis.vibration_strength import compute_vibration_strength_db
+from vibesensor_core.vibration_strength import compute_vibration_strength_db
+
 from vibesensor.constants import MPS_TO_KMH
 from vibesensor.diagnostics_shared import (
     build_diagnostic_settings,

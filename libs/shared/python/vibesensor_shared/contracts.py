@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from libs.adapters.python.vibesensor_adapters.repo_paths import shared_contracts_dir
+from vibesensor_adapters.repo_paths import shared_contracts_dir
 
 
 def _contracts_dir() -> Path:
