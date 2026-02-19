@@ -17,6 +17,7 @@ LOGGER = logging.getLogger(__name__)
 @dataclass(slots=True)
 class ClientBuffer:
     data: np.ndarray
+    capacity: int
     write_idx: int = 0
     count: int = 0
     sample_rate_hz: int = 0
@@ -73,9 +74,22 @@ class SignalProcessor:
         buf = self._buffers.get(client_id)
         if buf is None:
             data = np.zeros((3, self.max_samples), dtype=np.float32)
-            buf = ClientBuffer(data=data)
+            buf = ClientBuffer(data=data, capacity=self.max_samples)
             self._buffers[client_id] = buf
         return buf
+
+    def _resize_buffer(self, buf: ClientBuffer, new_capacity: int) -> None:
+        new_capacity = max(1, int(new_capacity))
+        if new_capacity == buf.capacity:
+            return
+        latest = self._latest(buf, min(buf.count, new_capacity))
+        resized = np.zeros((3, new_capacity), dtype=np.float32)
+        if latest.size:
+            resized[:, : latest.shape[1]] = latest
+        buf.data = resized
+        buf.capacity = new_capacity
+        buf.write_idx = latest.shape[1] % new_capacity
+        buf.count = min(latest.shape[1], new_capacity)
 
     def ingest(
         self,
@@ -98,32 +112,34 @@ class SignalProcessor:
             return
         if sample_rate_hz is not None and sample_rate_hz > 0:
             buf.sample_rate_hz = int(sample_rate_hz)
+            self._resize_buffer(buf, buf.sample_rate_hz * self.waveform_seconds)
         buf.last_ingest_mono_s = time.monotonic()
 
         n = int(chunk.shape[0])
-        if n >= self.max_samples:
-            chunk = chunk[-self.max_samples :]
-            n = self.max_samples
+        capacity = buf.capacity
+        if n >= capacity:
+            chunk = chunk[-capacity:]
+            n = capacity
 
         end = buf.write_idx + n
-        if end <= self.max_samples:
+        if end <= capacity:
             buf.data[:, buf.write_idx : end] = chunk.T
         else:
-            first = self.max_samples - buf.write_idx
+            first = capacity - buf.write_idx
             buf.data[:, buf.write_idx :] = chunk[:first].T
-            buf.data[:, : end % self.max_samples] = chunk[first:].T
+            buf.data[:, : end % capacity] = chunk[first:].T
 
-        buf.write_idx = end % self.max_samples
-        buf.count = min(self.max_samples, buf.count + n)
+        buf.write_idx = end % capacity
+        buf.count = min(capacity, buf.count + n)
 
     def _latest(self, buf: ClientBuffer, n: int) -> np.ndarray:
         if n <= 0 or buf.count == 0:
             return np.empty((3, 0), dtype=np.float32)
         n = min(n, buf.count)
-        start = (buf.write_idx - n) % self.max_samples
-        if start + n <= self.max_samples:
+        start = (buf.write_idx - n) % buf.capacity
+        if start + n <= buf.capacity:
             return buf.data[:, start : start + n]
-        first = self.max_samples - start
+        first = buf.capacity - start
         return np.concatenate((buf.data[:, start:], buf.data[:, : n - first]), axis=1)
 
     @staticmethod
@@ -215,7 +231,7 @@ class SignalProcessor:
         sr = buf.sample_rate_hz or self.sample_rate_hz
 
         desired_samples = int(max(1.0, float(sr) * float(self.waveform_seconds)))
-        n_time = min(buf.count, self.max_samples, max(1, desired_samples))
+        n_time = min(buf.count, buf.capacity, max(1, desired_samples))
         time_window = self._latest(buf, n_time)
         if self._spike_filter_enabled:
             time_window = self._medfilt3(time_window)
@@ -393,7 +409,7 @@ class SignalProcessor:
         sr = buf.sample_rate_hz or self.sample_rate_hz
         window_samples = min(
             buf.count,
-            self.max_samples,
+            buf.capacity,
             max(1, int(sr * max(1, self.waveform_seconds))),
         )
         waveform_raw = self._latest(buf, window_samples)
@@ -439,7 +455,7 @@ class SignalProcessor:
         buf = self._buffers.get(client_id)
         if buf is None or buf.count == 0:
             return None
-        idx = (buf.write_idx - 1) % self.max_samples
+        idx = (buf.write_idx - 1) % buf.capacity
         return (
             float(buf.data[0, idx]),
             float(buf.data[1, idx]),

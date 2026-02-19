@@ -191,6 +191,24 @@ def test_selected_payload_waveform_respects_configured_window() -> None:
     assert waveform["t"][1] - waveform["t"][0] == pytest.approx(expected_step / 50.0)
 
 
+def test_waveform_window_respects_seconds_for_each_client_sample_rate() -> None:
+    proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
+    low_sr = np.random.randn(400, 3).astype(np.float32) * 0.01
+    high_sr = np.random.randn(1200, 3).astype(np.float32) * 0.01
+    proc.ingest("c-low", low_sr, sample_rate_hz=50)
+    proc.ingest("c-high", high_sr, sample_rate_hz=300)
+
+    low_payload = proc.selected_payload("c-low")
+    high_payload = proc.selected_payload("c-high")
+
+    low_t = low_payload["waveform"]["t"]
+    high_t = high_payload["waveform"]["t"]
+    assert low_t[-1] == pytest.approx(0.0)
+    assert high_t[-1] == pytest.approx(0.0)
+    assert low_t[0] == pytest.approx(-1.96, abs=0.05)
+    assert high_t[0] == pytest.approx(-2.0, abs=0.05)
+
+
 # -- compute_metrics -----------------------------------------------------------
 
 
