@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import csv
+import io
 import json
 import logging
+import zipfile
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from .constants import MPS_TO_KMH
@@ -488,18 +491,38 @@ def create_router(state: RuntimeState) -> APIRouter:
         run = state.history_db.get_run(run_id)
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found")
-        metadata = run.get("metadata", {})
+        fieldnames: list[str] = []
+        fieldname_set: set[str] = set()
+        sample_rows: list[dict] = []
+        for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+            for sample in batch:
+                sample_rows.append(sample)
+                for key in sample:
+                    if key not in fieldname_set:
+                        fieldname_set.add(key)
+                        fieldnames.append(key)
 
-        def _stream() -> Iterator[bytes]:
-            yield (json.dumps(metadata, ensure_ascii=False) + "\n").encode("utf-8")
-            for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
-                for sample in batch:
-                    yield (json.dumps(sample, ensure_ascii=False) + "\n").encode("utf-8")
+        csv_buffer = io.StringIO(newline="")
+        if fieldnames:
+            writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(sample_rows)
 
-        return StreamingResponse(
-            _stream(),
-            media_type="application/x-ndjson",
-            headers={"Content-Disposition": f'attachment; filename="{run_id}.jsonl"'},
+        run_details = dict(run)
+        run_details["sample_count"] = len(sample_rows)
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr(
+                f"{run_id}.json",
+                json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
+            )
+            archive.writestr(f"{run_id}_raw.csv", csv_buffer.getvalue())
+
+        return Response(
+            content=zip_buffer.getvalue(),
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{run_id}.zip"'},
         )
 
     @router.websocket("/ws")

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import csv
+import io
 import json
+import zipfile
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -208,15 +211,18 @@ async def test_report_pdf_respects_lang_query() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_export_streams_ndjson() -> None:
+async def test_history_export_streams_zip_with_json_and_csv() -> None:
     router, _ = _make_router_and_state(language="en", sample_count=1000)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
-    body = b"".join([chunk async for chunk in response.body_iterator])
-    lines = [line for line in body.decode("utf-8").splitlines() if line]
-    assert lines[0].startswith("{")
-    assert lines[-1].startswith("{")
-    assert len(lines) == 1001
+    with zipfile.ZipFile(io.BytesIO(response.body), "r") as archive:
+        names = set(archive.namelist())
+        assert names == {"run-1.json", "run-1_raw.csv"}
+        metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
+        assert metadata["run_id"] == "run-1"
+        assert metadata["sample_count"] == 1000
+        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        assert len(rows) == 1000
 
 
 @pytest.mark.asyncio
