@@ -84,7 +84,14 @@ export function runDemoMode(deps: DemoDeps): void {
       strength_bands: demoStrengthBands,
       matrix: null,
       events: [],
-      levels: { by_source: { wheel: 14.2, driveshaft: 8.1, engine: 6.5, other: 3.2 } },
+      levels: {
+        by_source: {
+          wheel: { strength_db: 14.2, bucket_key: "l2" },
+          driveshaft: { strength_db: 8.1, bucket_key: "l1" },
+          engine: { strength_db: 6.5, bucket_key: "l1" },
+          other: { strength_db: 3.2, bucket_key: "l1" },
+        },
+      },
     },
   };
 
@@ -92,8 +99,11 @@ export function runDemoMode(deps: DemoDeps): void {
   applyPayload(demoPayload);
 
   const demoEventTimeout = setTimeout(() => {
+    // Increment frames_total so hasFreshSensorFrames returns true and events are processed
+    const eventClients = demoClients.map((c) => ({ ...c, frames_total: c.frames_total + 50 }));
     const eventPayload = {
       ...demoPayload,
+      clients: eventClients,
       diagnostics: {
         ...demoPayload.diagnostics,
         events: [
