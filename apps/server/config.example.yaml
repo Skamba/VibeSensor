@@ -15,7 +15,7 @@ ap:
     diagnostics_lookback_minutes: 5
     min_restart_interval_seconds: 120
     allow_disable_resolved_stub_listener: false
-    state_file: /var/lib/vibesensor/hotspot-self-heal-state.json
+    state_file: data/hotspot-self-heal-state.json
 
 server:
   host: 0.0.0.0
@@ -38,12 +38,15 @@ processing:
 
 logging:
   log_metrics: true
-  metrics_log_path: /var/log/vibesensor/metrics.jsonl
+  metrics_log_path: data/metrics.jsonl
+  write_metrics_jsonl: false
+  persist_history_db: true
+  history_db_path: data/history.db
   metrics_log_hz: 4
   sensor_model: ADXL345
 
 storage:
-  clients_json_path: /var/lib/vibesensor/clients.json
+  clients_json_path: data/clients.json
 
 gps:
   gps_enabled: false

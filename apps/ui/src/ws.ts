@@ -23,6 +23,7 @@ export class WsClient {
   private lastServerTimeMs = 0;
   private hasData = false;
   private manuallyClosed = false;
+  private reconnectAttempt = 0;
 
   constructor(options: WsClientOptions) {
     this.options = {
@@ -92,6 +93,7 @@ export class WsClient {
       const parsedServerTime = Date.parse(String(payload?.server_time || ""));
       this.lastServerTimeMs = Number.isFinite(parsedServerTime) ? parsedServerTime : receivedAt;
       this.hasData = this.hasData || this.options.hasData(payload);
+      this.reconnectAttempt = 0;
       this.setState(this.hasData ? "connected" : "no_data");
       this.options.onPayload(payload);
     };
@@ -115,7 +117,16 @@ export class WsClient {
     this.reconnectTimer = window.setTimeout(() => {
       this.reconnectTimer = null;
       this.open("reconnecting");
-    }, this.options.reconnectDelayMs);
+    }, this.nextReconnectDelayMs());
+  }
+
+  private nextReconnectDelayMs(): number {
+    const base = Math.max(250, this.options.reconnectDelayMs);
+    const exp = Math.min(6, this.reconnectAttempt);
+    const raw = Math.min(15000, base * (2 ** exp));
+    const jitter = raw * 0.25 * Math.random();
+    this.reconnectAttempt += 1;
+    return Math.round(raw + jitter);
   }
 
   private tickStale(): void {

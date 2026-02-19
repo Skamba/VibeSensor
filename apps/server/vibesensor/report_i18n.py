@@ -16,12 +16,14 @@ _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "report_i18n.json
 
 @lru_cache(maxsize=1)
 def _load_translations() -> dict[str, dict[str, str]]:
-    with open(_DATA_FILE) as fh:
-        data: dict[str, dict[str, str]] = json.load(fh)
+    if not _DATA_FILE.exists():
+        raise RuntimeError(f"Missing translation file: {_DATA_FILE}")
+    try:
+        with open(_DATA_FILE, encoding="utf-8") as fh:
+            data: dict[str, dict[str, str]] = json.load(fh)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"Invalid translation file: {_DATA_FILE}") from exc
     return data
-
-
-_TRANSLATIONS: dict[str, dict[str, str]] = _load_translations()
 
 
 def normalize_lang(lang: object) -> str:
@@ -31,7 +33,7 @@ def normalize_lang(lang: object) -> str:
 
 
 def tr(lang: object, key: str, **kwargs: Any) -> str:
-    values = _TRANSLATIONS.get(key)
+    values = _load_translations().get(key)
     if values is None:
         template = key
     else:
@@ -41,7 +43,7 @@ def tr(lang: object, key: str, **kwargs: Any) -> str:
 
 
 def variants(key: str) -> tuple[str, str]:
-    values = _TRANSLATIONS.get(key)
+    values = _load_translations().get(key)
     if values is None:
         return key, key
     return values.get("en", key), values.get("nl", key)

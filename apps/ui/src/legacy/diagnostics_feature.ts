@@ -1,4 +1,3 @@
-// @ts-nocheck
 import uPlot from "uplot";
 import { createEmptyMatrix, normalizeStrengthBands } from "../diagnostics";
 import { sourceColumns } from "../constants";

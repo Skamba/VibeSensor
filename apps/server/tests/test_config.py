@@ -35,6 +35,17 @@ def test_metrics_log_path_not_required_when_metrics_disabled(tmp_path: Path) -> 
     assert cfg.logging.log_metrics is False
 
 
+def test_logging_flags_allow_db_only_mode(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(
+        config_path,
+        {"logging": {"write_metrics_jsonl": False, "persist_history_db": True}},
+    )
+    cfg = load_config(config_path)
+    assert cfg.logging.write_metrics_jsonl is False
+    assert cfg.logging.persist_history_db is True
+
+
 def test_dev_and_docker_configs_equivalent() -> None:
     """config.dev.yaml and config.docker.yaml must produce identical AppConfig."""
     dev_cfg = load_config(PI_DIR / "config.dev.yaml")
