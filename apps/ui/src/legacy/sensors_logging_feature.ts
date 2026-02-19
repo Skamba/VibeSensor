@@ -1,4 +1,3 @@
-// @ts-nocheck
 import * as I18N from "../i18n";
 import {
   getClientLocations,

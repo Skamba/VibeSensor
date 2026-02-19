@@ -485,3 +485,92 @@ def test_post_analysis_failure_sets_persistent_error_status(
     run = history_db.get_run(run_id)
     assert run is not None
     assert "analysis exploded" in str(run.get("error_message", ""))
+
+
+def test_analysis_snapshot_isolated_per_logging_run(tmp_path: Path) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    logger.start_logging()
+    logger._live_samples.append({"run_marker": "run1"})
+    logger.stop_logging()
+
+    logger.start_logging()
+    metadata, samples = logger.analysis_snapshot()
+
+    assert metadata["run_id"] != "live"
+    assert all(sample.get("run_marker") != "run1" for sample in samples)
+
+
+def test_post_analysis_uses_run_language_from_metadata(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+        language_provider=lambda: "nl",
+    )
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(path, run_id, start_time_utc, start_mono)
+
+    def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
+        return {"lang": lang, "row_count": len(samples)}
+
+    monkeypatch.setattr("vibesensor.report_analysis.summarize_run_data", _summary)
+    logger.stop_logging()
+    assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=2.0)
+    stored = history_db.get_run_analysis(run_id)
+    assert stored is not None
+    assert stored["lang"] == "nl"
+
+
+def test_db_persists_when_jsonl_disabled(tmp_path: Path) -> None:
+    history_db = HistoryDB(tmp_path / "history.db")
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+        write_jsonl=False,
+        persist_history_db=True,
+    )
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    path, run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(path, run_id, start_time_utc, start_mono)
+    logger.stop_logging()
+
+    assert history_db.get_run(run_id) is not None
+    assert history_db.get_run_samples(run_id)
+    assert not path.exists()

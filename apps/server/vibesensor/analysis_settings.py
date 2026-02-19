@@ -32,6 +32,20 @@ NON_NEGATIVE_KEYS: frozenset[str] = frozenset(
     }
 )
 
+_BOUNDS: dict[str, tuple[float, float]] = {
+    "wheel_bandwidth_pct": (0.1, 100.0),
+    "driveshaft_bandwidth_pct": (0.1, 100.0),
+    "engine_bandwidth_pct": (0.1, 100.0),
+    "speed_uncertainty_pct": (0.0, 100.0),
+    "tire_diameter_uncertainty_pct": (0.0, 100.0),
+    "final_drive_uncertainty_pct": (0.0, 100.0),
+    "gear_uncertainty_pct": (0.0, 100.0),
+    "final_drive_ratio": (0.1, 20.0),
+    "current_gear_ratio": (0.1, 20.0),
+    "min_abs_band_hz": (0.0, 500.0),
+    "max_band_half_width_pct": (0.1, 100.0),
+}
+
 
 def sanitize_settings(
     payload: dict[str, object],
@@ -58,6 +72,13 @@ def sanitize_settings(
         if key in NON_NEGATIVE_KEYS and value < 0:
             LOGGER.debug("Dropping negative analysis setting %s=%r", key, value)
             continue
+        bounds = _BOUNDS.get(key)
+        if bounds is not None:
+            lower, upper = bounds
+            bounded = min(max(value, lower), upper)
+            if bounded != value:
+                LOGGER.info("Clamped analysis setting %s from %r to %r", key, value, bounded)
+            value = bounded
         out[key] = value
     return out
 

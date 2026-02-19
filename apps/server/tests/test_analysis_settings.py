@@ -88,3 +88,24 @@ def test_update_rejects_invalid_and_keeps_old() -> None:
     store = AnalysisSettingsStore()
     store.update({"tire_width_mm": -5.0})
     assert store.snapshot()["tire_width_mm"] == DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
+
+
+def test_sanitize_clamps_absurd_values() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize(
+        {
+            "wheel_bandwidth_pct": 99999,
+            "speed_uncertainty_pct": 99999,
+            "min_abs_band_hz": 99999,
+        }
+    )
+    assert out["wheel_bandwidth_pct"] == 100.0
+    assert out["speed_uncertainty_pct"] == 100.0
+    assert out["min_abs_band_hz"] == 500.0
+
+
+def test_sanitize_keeps_normal_values_unchanged() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"wheel_bandwidth_pct": 6.0, "speed_uncertainty_pct": 0.6})
+    assert out["wheel_bandwidth_pct"] == 6.0
+    assert out["speed_uncertainty_pct"] == 0.6
