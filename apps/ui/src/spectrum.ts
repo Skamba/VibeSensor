@@ -47,7 +47,12 @@ export class SpectrumChart {
         scales: {
           x: { time: false },
           y: {
-            range: (_self, min, max) => [0, Math.max(50, Math.ceil((max || 50) * 1.1))],
+            range: (_self, _min, max) => {
+              if (!max || max <= 0) return [0, 0.1];
+              // Round up to 2 significant figures for a clean axis
+              const magnitude = Math.pow(10, Math.floor(Math.log10(max * 1.1)));
+              return [0, Math.ceil((max * 1.1) / magnitude) * magnitude];
+            },
           },
         },
         axes: [

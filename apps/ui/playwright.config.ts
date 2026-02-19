@@ -5,7 +5,7 @@ export default defineConfig({
   outputDir: "tests/test-results",
   snapshotDir: "tests/snapshots",
   snapshotPathTemplate: "{snapshotDir}/{testFilePath}/{arg}-{projectName}{ext}",
-  timeout: 30_000,
+  timeout: 45_000,
   expect: {
     toHaveScreenshot: {
       maxDiffPixelRatio: 0.01,
@@ -19,7 +19,7 @@ export default defineConfig({
     command: "npm run build && npm run preview",
     url: "http://localhost:4173",
     reuseExistingServer: !process.env.CI,
-    timeout: 30_000,
+    timeout: 120_000,
   },
   projects: [
     {

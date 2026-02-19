@@ -16,6 +16,26 @@ Use `docs/ai/repo-map.md` first, then read only the minimal files needed.
 - `apps/server` composes adapters + core.
 - Prefer `apps/*`, `libs/*`, `infra/*` paths over legacy compatibility links.
 
+## AI PR checklist — UI changes
+When opening a PR that touches `apps/ui/`:
+1. Build: `cd apps/ui && npm run build`
+2. Take a screenshot and verify graph data (fails non-zero if chart is empty):
+   ```
+   cd apps/ui && npm run screenshot -- /tmp/vibesensor-pr-screenshot.png
+   ```
+3. Commit the screenshot to the branch so it travels with the PR:
+   ```
+   cp /tmp/vibesensor-pr-screenshot.png docs/screenshots/latest-live-view.png
+   git add docs/screenshots/latest-live-view.png
+   git commit -m "chore: update UI screenshot"
+   git push -u origin <branch>
+   ```
+4. Reference it in the PR body (replace BRANCH with the actual branch name):
+   ```
+   ![Live view screenshot](https://raw.githubusercontent.com/Skamba/VibeSensor/<BRANCH>/docs/screenshots/latest-live-view.png)
+   ```
+5. Regenerate snapshots if chart or layout changed: `cd apps/ui && npm run snapshot:update`
+
 ## Noise control
 Avoid scanning these unless explicitly needed:
 - `artifacts/`
