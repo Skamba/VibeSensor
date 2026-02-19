@@ -1,3 +1,3 @@
-import { startLegacyUiApp } from "./legacy_main_runtime";
+import { startUiApp } from "./app/start_ui_app";
 
-startLegacyUiApp();
+startUiApp();

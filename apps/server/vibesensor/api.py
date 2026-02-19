@@ -258,7 +258,7 @@ def create_router(state: RuntimeState) -> APIRouter:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"speedUnit": unit}
 
-    # -- legacy endpoints (adapters) -------------------------------------------
+    # -- client & location endpoints -------------------------------------------
 
     @router.get("/api/clients")
     async def get_clients() -> dict:

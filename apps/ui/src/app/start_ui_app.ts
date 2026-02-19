@@ -1,123 +1,69 @@
-// @ts-nocheck — legacy runtime; ~28 DOM-typing errors remain.
-// TODO(tech-debt): incrementally add type-narrowing casts to remove @ts-nocheck.
+import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
-import "./styles/app.css";
-import * as I18N from "./i18n";
-import { defaultLocationCodes, palette } from "./constants";
-import { SpectrumChart } from "./spectrum";
-import { escapeHtml, fmt, fmtTs, formatInt } from "./format";
-import { combinedRelativeUncertainty, parseTireSpec, tireDiameterMeters, toleranceForOrder } from "./vehicle_math";
-import { adaptServerPayload } from "./server_payload";
-import { WsClient } from "./ws";
-import { METRIC_FIELDS } from "./generated/shared_contracts";
-import { runDemoMode } from "./features/demo/runDemoMode";
-import { orderBandFills } from "./theme";
-import { createEmptyMatrix } from "./diagnostics";
-import { createHistoryFeature } from "./legacy/history_feature";
-import { createSensorsLoggingFeature } from "./legacy/sensors_logging_feature";
-import { createVehicleConfigFeature } from "./legacy/vehicle_config_feature";
-import { createCarWizardFeature } from "./legacy/car_wizard_feature";
-import { createDiagnosticsFeature } from "./legacy/diagnostics_feature";
-import { getSettingsLanguage, setSettingsLanguage, getSettingsSpeedUnit, setSettingsSpeedUnit } from "./api/settings";
+import "../styles/app.css";
+import * as I18N from "../i18n";
+import { defaultLocationCodes, palette } from "../constants";
+import { SpectrumChart } from "../spectrum";
+import { escapeHtml, fmt, fmtTs, formatInt } from "../format";
+import { combinedRelativeUncertainty, parseTireSpec, tireDiameterMeters, toleranceForOrder } from "../vehicle_math";
+import { adaptServerPayload } from "../server_payload";
+import type { AdaptedSpectrum } from "../server_payload";
+import { WsClient } from "../ws";
+import { METRIC_FIELDS } from "../generated/shared_contracts";
+import { runDemoMode } from "../features/demo/runDemoMode";
+import { orderBandFills } from "../theme";
+import { createEmptyMatrix } from "../diagnostics";
+import { getSettingsLanguage, setSettingsLanguage, getSettingsSpeedUnit, setSettingsSpeedUnit } from "../api/settings";
+import { createUiDomRegistry } from "./dom/ui_dom_registry";
+import { createAppState } from "./state/ui_app_state";
+import { createHistoryFeature } from "./features/history_feature";
+import { createRealtimeFeature } from "./features/realtime_feature";
+import { createSettingsFeature } from "./features/settings_feature";
+import { createCarsFeature } from "./features/cars_feature";
+import { createDashboardFeature } from "./features/dashboard_feature";
+import type { AppState, ChartBand, ClientRow } from "./state/ui_app_state";
+import type { UiDomElements } from "./dom/ui_dom_registry";
 
-export function startLegacyUiApp(): void {
-  const els = {
-    menuButtons: Array.from(document.querySelectorAll(".menu-btn")),
-    views: Array.from(document.querySelectorAll(".view")),
-    languageSelect: document.getElementById("languageSelect"),
-    speedUnitSelect: document.getElementById("speedUnitSelect"),
-    speed: document.getElementById("speed"),
-    loggingStatus: document.getElementById("loggingStatus"),
-    currentLogFile: document.getElementById("currentLogFile"),
-    startLoggingBtn: document.getElementById("startLoggingBtn"),
-    stopLoggingBtn: document.getElementById("stopLoggingBtn"),
-    refreshHistoryBtn: document.getElementById("refreshHistoryBtn"),
-    deleteAllRunsBtn: document.getElementById("deleteAllRunsBtn"),
-    historySummary: document.getElementById("historySummary"),
-    historyTableBody: document.getElementById("historyTableBody"),
-    sensorsSettingsBody: document.getElementById("sensorsSettingsBody"),
-    lastSeen: document.getElementById("lastSeen"),
-    dropped: document.getElementById("dropped"),
-    framesTotal: document.getElementById("framesTotal"),
-    linkState: document.getElementById("linkState"),
-    specChartWrap: document.getElementById("specChartWrap"),
-    specChart: document.getElementById("specChart"),
-    spectrumOverlay: document.getElementById("spectrumOverlay"),
-    legend: document.getElementById("legend"),
-    bandLegend: document.getElementById("bandLegend"),
-    strengthChart: document.getElementById("strengthChart"),
-    strengthTooltip: document.getElementById("strengthTooltip"),
-    liveCarMapDots: document.getElementById("liveCarMapDots"),
-    wheelBandwidthInput: document.getElementById("wheelBandwidthInput"),
-    driveshaftBandwidthInput: document.getElementById("driveshaftBandwidthInput"),
-    engineBandwidthInput: document.getElementById("engineBandwidthInput"),
-    speedUncertaintyInput: document.getElementById("speedUncertaintyInput"),
-    tireDiameterUncertaintyInput: document.getElementById("tireDiameterUncertaintyInput"),
-    finalDriveUncertaintyInput: document.getElementById("finalDriveUncertaintyInput"),
-    gearUncertaintyInput: document.getElementById("gearUncertaintyInput"),
-    minAbsBandHzInput: document.getElementById("minAbsBandHzInput"),
-    maxBandHalfWidthInput: document.getElementById("maxBandHalfWidthInput"),
-    saveAnalysisBtn: document.getElementById("saveAnalysisBtn"),
-    carListBody: document.getElementById("carListBody"),
-    addCarBtn: document.getElementById("addCarBtn"),
-    addCarWizard: document.getElementById("addCarWizard"),
-    wizardCloseBtn: document.getElementById("wizardCloseBtn"),
-    wizardBackBtn: document.getElementById("wizardBackBtn"),
-    manualSpeedInput: document.getElementById("manualSpeedInput"),
-    saveSpeedSourceBtn: document.getElementById("saveSpeedSourceBtn"),
-    settingsTabs: Array.from(document.querySelectorAll(".settings-tab")),
-    settingsTabPanels: Array.from(document.querySelectorAll(".settings-tab-panel")),
-    vibrationLog: document.getElementById("vibrationLog"),
-    vibrationMatrix: document.getElementById("vibrationMatrix"),
-    matrixTooltip: document.getElementById("matrixTooltip"),
-  };
+export function startUiApp(): void {
+  const els: UiDomElements = createUiDomRegistry();
+  const state: AppState = createAppState();
 
-  const CAR_MAP_POSITIONS = {
+  const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
     front_left_wheel: { top: 24, left: 15 }, front_right_wheel: { top: 24, left: 85 }, rear_left_wheel: { top: 72, left: 15 }, rear_right_wheel: { top: 72, left: 85 },
     engine_bay: { top: 18, left: 50 }, front_subframe: { top: 30, left: 50 }, transmission: { top: 42, left: 50 }, driveshaft_tunnel: { top: 52, left: 50 },
     driver_seat: { top: 44, left: 35 }, front_passenger_seat: { top: 44, left: 65 }, rear_left_seat: { top: 60, left: 32 }, rear_center_seat: { top: 60, left: 50 }, rear_right_seat: { top: 60, left: 68 }, rear_subframe: { top: 72, left: 50 }, trunk: { top: 84, left: 50 },
   };
 
-  const state = {
-    ws: null, wsState: "connecting", lang: "en", speedUnit: "kmh",
-    clients: [], selectedClientId: null, spectrumPlot: null, spectra: { freq: [], clients: {} }, speedMps: null, activeViewId: "dashboardView", runs: [], deleteAllRunsInFlight: false,
-    expandedRunId: null, runDetailsById: {}, loggingStatus: { enabled: false, current_file: null }, locationOptions: [],
-    vehicleSettings: { tire_width_mm: 285, tire_aspect_pct: 30, rim_in: 21, final_drive_ratio: 3.08, current_gear_ratio: 0.64, wheel_bandwidth_pct: 6.0, driveshaft_bandwidth_pct: 5.6, engine_bandwidth_pct: 6.2, speed_uncertainty_pct: 0.6, tire_diameter_uncertainty_pct: 1.2, final_drive_uncertainty_pct: 0.2, gear_uncertainty_pct: 0.5, min_abs_band_hz: 0.4, max_band_half_width_pct: 8.0 },
-    cars: [], activeCarId: null, speedSource: "gps", manualSpeedKph: null, chartBands: [], vibrationMessages: [], strengthBands: [], eventMatrix: createEmptyMatrix(),
-    pendingPayload: null, renderQueued: false, lastRenderTsMs: 0, minRenderIntervalMs: 100, sensorsSettingsSignature: "", locationCodes: defaultLocationCodes.slice(), hasSpectrumData: false,
-    hasReceivedPayload: false, payloadError: null, strengthPlot: null, strengthFrameTotalsByClient: {}, strengthHistory: { t: [], wheel: [], driveshaft: [], engine: [], other: [] },
-    carMapSamples: [], carMapPulseLocations: new Set(),
-  };
+  function t(key: string, vars?: Record<string, any>): string { return I18N.get(state.lang, key, vars); }
+  function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
+  function saveSpeedUnit(unit: string): void { state.speedUnit = normalizeSpeedUnit(unit); void setSettingsSpeedUnit(state.speedUnit).catch(() => {}); }
+  function speedValueInSelectedUnit(speedMps: number | null): number | null { if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null; return state.speedUnit === "mps" ? speedMps : speedMps * 3.6; }
+  function selectedSpeedUnitLabel(): string { return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh"); }
+  function setStatValue(container: HTMLElement | null, value: string | number): void { const valueEl = container?.querySelector?.("[data-value]"); if (valueEl) valueEl.textContent = String(value); else if (container) container.textContent = String(value); }
+  function setPillState(el: HTMLElement | null, variant: string, text: string): void { if (!el) return; el.className = `pill pill--${variant}`; el.textContent = text; }
+  function colorForClient(index: number): string { return palette[index % palette.length]; }
+  function effectiveSpeedMps(): number | null { return (typeof state.speedMps === "number" && state.speedMps > 0) ? state.speedMps : null; }
 
-  function t(key: string, vars?: Record<string, unknown>) { return I18N.get(state.lang, key, vars); }
-  function normalizeSpeedUnit(raw) { return raw === "mps" ? "mps" : "kmh"; }
-  function saveSpeedUnit(unit) { state.speedUnit = normalizeSpeedUnit(unit); void setSettingsSpeedUnit(state.speedUnit).catch(() => {}); }
-  function speedValueInSelectedUnit(speedMps) { if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null; return state.speedUnit === "mps" ? speedMps : speedMps * 3.6; }
-  function selectedSpeedUnitLabel() { return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh"); }
-  function setStatValue(container, value) { const valueEl = container?.querySelector?.("[data-value]"); if (valueEl) valueEl.textContent = String(value); else if (container) container.textContent = String(value); }
-  function setPillState(el, variant, text) { if (!el) return; el.className = `pill pill--${variant}`; el.textContent = text; }
-  function colorForClient(index) { return palette[index % palette.length]; }
-  function effectiveSpeedMps() { return (typeof state.speedMps === "number" && state.speedMps > 0) ? state.speedMps : null; }
-
-  function renderSpeedReadout() {
+  function renderSpeedReadout(): void {
+    if (!els.speed) return;
     const unitLabel = selectedSpeedUnitLabel();
     if (typeof state.speedMps === "number") {
       const value = speedValueInSelectedUnit(state.speedMps);
       const isOverride = state.speedSource === "manual" && typeof state.manualSpeedKph === "number" && state.manualSpeedKph > 0;
-      els.speed.textContent = t(isOverride ? "speed.override" : "speed.gps", { value: fmt(value, 1), unit: unitLabel });
+      els.speed.textContent = t(isOverride ? "speed.override" : "speed.gps", { value: fmt(value!, 1), unit: unitLabel });
       return;
     }
     els.speed.textContent = t("speed.none", { unit: unitLabel });
   }
 
-  function renderWsState() {
+  function renderWsState(): void {
     if (state.payloadError) return setPillState(els.linkState, "bad", "Payload error");
-    const keyByState = { connecting: "ws.connecting", connected: "ws.connected", reconnecting: "ws.reconnecting", stale: "ws.stale", no_data: "ws.no_data" };
-    const variantByState = { connecting: "muted", connected: "ok", reconnecting: "warn", stale: "bad", no_data: "muted" };
+    const keyByState: Record<string, string> = { connecting: "ws.connecting", connected: "ws.connected", reconnecting: "ws.reconnecting", stale: "ws.stale", no_data: "ws.no_data" };
+    const variantByState: Record<string, string> = { connecting: "muted", connected: "ok", reconnecting: "warn", stale: "bad", no_data: "muted" };
     setPillState(els.linkState, variantByState[state.wsState] || "muted", t(keyByState[state.wsState] || "ws.connecting"));
   }
 
-  function updateSpectrumOverlay() {
+  function updateSpectrumOverlay(): void {
     if (!els.spectrumOverlay) return;
     if (state.payloadError) { els.spectrumOverlay.hidden = false; els.spectrumOverlay.textContent = state.payloadError; return; }
     if (!state.hasReceivedPayload && state.wsState === "connecting") { els.spectrumOverlay.hidden = false; els.spectrumOverlay.textContent = t("spectrum.loading"); return; }
@@ -128,7 +74,7 @@ export function startLegacyUiApp(): void {
     els.spectrumOverlay.textContent = "";
   }
 
-  function setActiveView(viewId) {
+  function setActiveView(viewId: string): void {
     const valid = els.views.some((v) => v.id === viewId);
     state.activeViewId = valid ? viewId : "dashboardView";
     for (const view of els.views) { const isActive = view.id === state.activeViewId; view.classList.toggle("active", isActive); view.hidden = !isActive; }
@@ -141,13 +87,14 @@ export function startLegacyUiApp(): void {
     if (state.activeViewId === "dashboardView" && state.spectrumPlot) state.spectrumPlot.resize();
   }
 
+  // Create features — cross-feature callbacks use lazy references via closures.
   const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt });
-  const diagnosticsFeature = createDiagnosticsFeature({ state, els, t, fmt, escapeHtml, locationCodeForClient: (c) => sensorsFeature.locationCodeForClient(c), carMapPositions: CAR_MAP_POSITIONS, carMapWindowMs: 10_000, metricField: METRIC_FIELDS.vibration_strength_db });
-  const sensorsFeature = createSensorsLoggingFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => diagnosticsFeature.renderMatrix(), sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
-  const vehicleFeature = createVehicleConfigFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout });
-  const wizardFeature = createCarWizardFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
+  const diagnosticsFeature = createDashboardFeature({ state, els, t, fmt, escapeHtml, locationCodeForClient: (c) => sensorsFeature.locationCodeForClient(c), carMapPositions: CAR_MAP_POSITIONS, carMapWindowMs: 10_000, metricField: METRIC_FIELDS.vibration_strength_db });
+  const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => diagnosticsFeature.renderMatrix(), sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
+  const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout });
+  const wizardFeature = createCarsFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
 
-  function applyLanguage(forceReloadInsights = false) {
+  function applyLanguage(forceReloadInsights = false): void {
     document.documentElement.lang = state.lang;
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
@@ -187,14 +134,14 @@ export function startLegacyUiApp(): void {
     return { wheelHz, driveHz, engineHz, wheelUncertaintyPct, driveUncertaintyPct, engineUncertaintyPct };
   }
 
-  function calculateBands() {
+  function calculateBands(): ChartBand[] {
     const orders = vehicleOrdersHz();
     if (!orders) return [];
-    const mk = (label, center, spread, color) => ({ label, min_hz: Math.max(0, center * (1 - spread)), max_hz: center * (1 + spread), color });
+    const mk = (label: string, center: number, spread: number, color: string): ChartBand => ({ label, min_hz: Math.max(0, center * (1 - spread)), max_hz: center * (1 + spread), color });
     const wheelSpread = toleranceForOrder(state.vehicleSettings.wheel_bandwidth_pct, orders.wheelHz, orders.wheelUncertaintyPct, state.vehicleSettings.min_abs_band_hz, state.vehicleSettings.max_band_half_width_pct);
     const driveSpread = toleranceForOrder(state.vehicleSettings.driveshaft_bandwidth_pct, orders.driveHz, orders.driveUncertaintyPct, state.vehicleSettings.min_abs_band_hz, state.vehicleSettings.max_band_half_width_pct);
     const engineSpread = toleranceForOrder(state.vehicleSettings.engine_bandwidth_pct, orders.engineHz, orders.engineUncertaintyPct, state.vehicleSettings.min_abs_band_hz, state.vehicleSettings.max_band_half_width_pct);
-    const out = [mk(t("bands.wheel_1x"), orders.wheelHz, wheelSpread, orderBandFills.wheel1), mk(t("bands.wheel_2x"), orders.wheelHz * 2, wheelSpread, orderBandFills.wheel2)];
+    const out: ChartBand[] = [mk(t("bands.wheel_1x"), orders.wheelHz, wheelSpread, orderBandFills.wheel1), mk(t("bands.wheel_2x"), orders.wheelHz * 2, wheelSpread, orderBandFills.wheel2)];
     const overlapTol = Math.max(0.03, orders.driveUncertaintyPct + orders.engineUncertaintyPct);
     if (Math.abs(orders.driveHz - orders.engineHz) / Math.max(1e-6, orders.engineHz) < overlapTol) out.push(mk(t("bands.driveshaft_engine_1x"), orders.driveHz, Math.max(driveSpread, engineSpread), orderBandFills.driveshaftEngine1));
     else { out.push(mk(t("bands.driveshaft_1x"), orders.driveHz, driveSpread, orderBandFills.driveshaft1)); out.push(mk(t("bands.engine_1x"), orders.engineHz, engineSpread, orderBandFills.engine1)); }
@@ -202,20 +149,21 @@ export function startLegacyUiApp(): void {
     return out;
   }
 
-  function bandPlugin() {
-    return { hooks: { draw: [(u) => { if (!state.chartBands.length) return; const ctx = u.ctx; const top = u.bbox.top; const height = u.bbox.height; for (const b of state.chartBands) { if (!(b.max_hz > b.min_hz)) continue; const x1 = u.valToPos(b.min_hz, "x", true); const x2 = u.valToPos(b.max_hz, "x", true); ctx.fillStyle = b.color; ctx.fillRect(x1, top, Math.max(1, x2 - x1), height); } }] } };
+  function bandPlugin(): uPlot.Plugin {
+    return { hooks: { draw: [(u: uPlot) => { if (!state.chartBands.length) return; const ctx2 = u.ctx; const top = u.bbox.top; const height = u.bbox.height; for (const b of state.chartBands) { if (!(b.max_hz > b.min_hz)) continue; const x1 = u.valToPos(b.min_hz, "x", true); const x2 = u.valToPos(b.max_hz, "x", true); ctx2.fillStyle = b.color; ctx2.fillRect(x1, top, Math.max(1, x2 - x1), height); } }] } };
   }
 
-  function recreateSpectrumPlot(seriesMeta) {
+  function recreateSpectrumPlot(seriesMeta: { id: string; label: string; color: string; values: number[] }[]): void {
     if (state.spectrumPlot) { state.spectrumPlot.destroy(); state.spectrumPlot = null; }
-    state.spectrumPlot = new SpectrumChart(els.specChart, els.spectrumOverlay, 360, els.specChartWrap);
+    state.spectrumPlot = new SpectrumChart(els.specChart!, els.spectrumOverlay, 360, els.specChartWrap);
     state.spectrumPlot.ensurePlot(seriesMeta, { title: t("chart.spectrum_title"), axisHz: t("chart.axis.hz"), axisAmplitude: t("chart.axis.amplitude") }, [bandPlugin()]);
   }
 
-  function renderSpectrum() {
+  function renderSpectrum(): void {
     const fallbackFreq = Array.isArray(state.spectra.freq) ? state.spectra.freq : [];
-    const entries = []; let targetFreq = [];
-    const interpolateToTarget = (sourceFreq, sourceVals, desiredFreq) => {
+    const entries: { id: string; label: string; color: string; values: number[] }[] = [];
+    let targetFreq: number[] = [];
+    const interpolateToTarget = (sourceFreq: number[], sourceVals: number[], desiredFreq: number[]): number[] => {
       if (!Array.isArray(sourceFreq) || !Array.isArray(sourceVals)) return [];
       if (!Array.isArray(desiredFreq) || !desiredFreq.length) return sourceVals.slice();
       if (sourceFreq.length !== sourceVals.length || sourceFreq.length < 2) return [];
@@ -242,7 +190,7 @@ export function startLegacyUiApp(): void {
     }
     if (!state.spectrumPlot || state.spectrumPlot.getSeriesCount() !== entries.length + 1) recreateSpectrumPlot(entries);
     else state.spectrumPlot.ensurePlot(entries, { title: t("chart.spectrum_title"), axisHz: t("chart.axis.hz"), axisAmplitude: t("chart.axis.amplitude") }, [bandPlugin()]);
-    state.spectrumPlot.renderLegend(els.legend, entries);
+    state.spectrumPlot!.renderLegend(els.legend!, entries);
     state.chartBands = calculateBands();
     if (els.bandLegend) {
       els.bandLegend.innerHTML = "";
@@ -252,15 +200,15 @@ export function startLegacyUiApp(): void {
         els.bandLegend.appendChild(row);
       }
     }
-    if (!targetFreq.length || !entries.length) { state.hasSpectrumData = false; state.spectrumPlot.setData([[], ...entries.map(() => [])]); updateSpectrumOverlay(); return; }
+    if (!targetFreq.length || !entries.length) { state.hasSpectrumData = false; state.spectrumPlot!.setData([[], ...entries.map(() => [] as number[])]); updateSpectrumOverlay(); return; }
     state.hasSpectrumData = true;
     const minLen = Math.min(targetFreq.length, ...entries.map((e) => e.values.length));
-    state.spectrumPlot.setData([targetFreq.slice(0, minLen), ...entries.map((e) => e.values.slice(0, minLen))]);
+    state.spectrumPlot!.setData([targetFreq.slice(0, minLen), ...entries.map((e) => e.values.slice(0, minLen))]);
     updateSpectrumOverlay();
   }
 
-  function sendSelection() { if (state.ws) state.ws.send({ client_id: state.selectedClientId }); }
-  function queueRender() {
+  function sendSelection(): void { if (state.ws) state.ws.send({ client_id: state.selectedClientId }); }
+  function queueRender(): void {
     if (state.renderQueued) return;
     state.renderQueued = true;
     window.requestAnimationFrame(() => {
@@ -273,22 +221,22 @@ export function startLegacyUiApp(): void {
     });
   }
 
-  function applyPayload(payload) {
+  function applyPayload(payload: Record<string, any>): void {
     let adapted;
     try { adapted = adaptServerPayload(payload); }
     catch (err) { state.payloadError = err instanceof Error ? err.message : "Invalid server payload."; state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
     state.payloadError = null; renderWsState();
     const prevSelected = state.selectedClientId;
-    state.clients = adapted.clients;
+    state.clients = adapted.clients as unknown as ClientRow[];
     if (adapted.spectra) {
-      state.spectra = { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]) => [clientId, { freq: spectrum.freq, combined_spectrum_amp_g: spectrum.combined, strength_metrics: spectrum.strength_metrics, combined: spectrum.combined }])) };
+      state.spectra = { freq: [], clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, AdaptedSpectrum]) => [clientId, { freq: spectrum.freq, combined_spectrum_amp_g: spectrum.combined, strength_metrics: spectrum.strength_metrics as Record<string, any>, combined: spectrum.combined }])) };
     }
     sensorsFeature.updateClientSelection();
     sensorsFeature.maybeRenderSensorsSettingsList();
     sensorsFeature.renderLoggingStatus();
     if (prevSelected !== state.selectedClientId) sendSelection();
     state.speedMps = adapted.speed_mps;
-    if (adapted.spectra) state.hasSpectrumData = Object.values(adapted.spectra.clients).some((clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
+    if (adapted.spectra) state.hasSpectrumData = Object.values(adapted.spectra.clients).some((clientSpec: AdaptedSpectrum) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
     const hasFreshFrames = diagnosticsFeature.hasFreshSensorFrames(state.clients);
     diagnosticsFeature.applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
@@ -299,7 +247,7 @@ export function startLegacyUiApp(): void {
     sensorsFeature.renderStatus(state.clients.find((c) => c.id === state.selectedClientId));
   }
 
-  function connectWS() {
+  function connectWS(): void {
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
     state.ws = new WsClient({
       url: `${proto}//${window.location.host}/ws`, staleAfterMs: 3000,
@@ -309,8 +257,8 @@ export function startLegacyUiApp(): void {
     state.ws.connect();
   }
 
-  const saveLanguage = (lang) => { state.lang = I18N.normalizeLang(lang); void setSettingsLanguage(state.lang).catch(() => {}); };
-  const activateTabByIndex = (index) => {
+  const saveLanguage = (lang: string): void => { state.lang = I18N.normalizeLang(lang); void setSettingsLanguage(state.lang).catch(() => {}); };
+  const activateTabByIndex = (index: number): void => {
     if (!els.menuButtons.length) return;
     const safeIndex = ((index % els.menuButtons.length) + els.menuButtons.length) % els.menuButtons.length;
     const btn = els.menuButtons[safeIndex];
@@ -320,7 +268,7 @@ export function startLegacyUiApp(): void {
   };
 
   els.menuButtons.forEach((btn, idx) => {
-    const onActivate = () => { const viewId = btn.dataset.view; if (viewId) setActiveView(viewId); };
+    const onActivate = (): void => { const viewId = btn.dataset.view; if (viewId) setActiveView(viewId); };
     btn.addEventListener("click", onActivate);
     btn.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); onActivate(); return; }
@@ -335,32 +283,32 @@ export function startLegacyUiApp(): void {
   wizardFeature.bindWizardHandlers();
   if (els.saveAnalysisBtn) els.saveAnalysisBtn.addEventListener("click", vehicleFeature.saveAnalysisFromInputs);
   if (els.saveSpeedSourceBtn) els.saveSpeedSourceBtn.addEventListener("click", vehicleFeature.saveSpeedSourceFromInputs);
-  els.startLoggingBtn.addEventListener("click", sensorsFeature.startLogging);
-  els.stopLoggingBtn.addEventListener("click", sensorsFeature.stopLogging);
-  els.refreshHistoryBtn.addEventListener("click", historyFeature.refreshHistory);
+  if (els.startLoggingBtn) els.startLoggingBtn.addEventListener("click", sensorsFeature.startLogging);
+  if (els.stopLoggingBtn) els.stopLoggingBtn.addEventListener("click", sensorsFeature.stopLogging);
+  if (els.refreshHistoryBtn) els.refreshHistoryBtn.addEventListener("click", historyFeature.refreshHistory);
   if (els.deleteAllRunsBtn) els.deleteAllRunsBtn.addEventListener("click", () => void historyFeature.deleteAllRuns());
-  els.historyTableBody.addEventListener("click", (ev) => {
-    const target = ev.target;
-    const actionEl = target?.closest?.("[data-run-action]");
+  if (els.historyTableBody) els.historyTableBody.addEventListener("click", (ev) => {
+    const target = ev.target as HTMLElement;
+    const actionEl = target?.closest?.("[data-run-action]") as HTMLElement | null;
     if (actionEl) {
       const action = actionEl.getAttribute("data-run-action");
       const runId = actionEl.getAttribute("data-run") || state.expandedRunId || "";
       if (action !== "download-raw") ev.preventDefault();
       ev.stopPropagation();
-      void historyFeature.onHistoryTableAction(action, runId);
+      void historyFeature.onHistoryTableAction(action || "", runId);
       return;
     }
-    const rowEl = target?.closest?.('tr[data-run-row="1"]');
+    const rowEl = target?.closest?.('tr[data-run-row="1"]') as HTMLElement | null;
     if (rowEl) historyFeature.toggleRunDetails(rowEl.getAttribute("data-run") || "");
   });
 
   if (els.languageSelect) {
     els.languageSelect.value = state.lang;
-    els.languageSelect.addEventListener("change", () => { saveLanguage(els.languageSelect.value); applyLanguage(true); });
+    els.languageSelect.addEventListener("change", () => { saveLanguage(els.languageSelect!.value); applyLanguage(true); });
   }
   if (els.speedUnitSelect) {
     els.speedUnitSelect.value = state.speedUnit;
-    els.speedUnitSelect.addEventListener("change", () => { saveSpeedUnit(els.speedUnitSelect.value); renderSpeedReadout(); });
+    els.speedUnitSelect.addEventListener("change", () => { saveSpeedUnit(els.speedUnitSelect!.value); renderSpeedReadout(); });
   }
 
   vehicleFeature.syncSettingsInputs();
@@ -369,11 +317,11 @@ export function startLegacyUiApp(): void {
     try {
       const langRes = await getSettingsLanguage();
       if (langRes?.language) { state.lang = I18N.normalizeLang(langRes.language); applyLanguage(true); }
-    } catch (_e) {}
+    } catch (_e) { /* ignore */ }
     try {
       const unitRes = await getSettingsSpeedUnit();
       if (unitRes?.speedUnit) { state.speedUnit = normalizeSpeedUnit(unitRes.speedUnit); if (els.speedUnitSelect) els.speedUnitSelect.value = state.speedUnit; renderSpeedReadout(); }
-    } catch (_e) {}
+    } catch (_e) { /* ignore */ }
   })();
   applyLanguage(false);
   setActiveView("dashboardView");
