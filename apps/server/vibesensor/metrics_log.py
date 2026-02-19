@@ -7,7 +7,7 @@ import time
 from collections import deque
 from datetime import UTC, datetime
 from pathlib import Path
-from threading import RLock
+from threading import RLock, Thread
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
@@ -22,6 +22,8 @@ from .gps_speed import GPSSpeedMonitor
 from .processing import SignalProcessor
 from .registry import ClientRegistry
 from .runlog import (
+    append_jsonl_records,
+    create_run_end_record,
     create_run_metadata,
     utc_now_iso,
 )
@@ -74,6 +76,7 @@ class MetricsLogger:
         self._run_start_utc: str | None = None
         self._run_start_mono_s: float | None = None
         self._metadata_written = False
+        self._last_write_error: str | None = None
         self._history_db = history_db
         self._history_run_created = False
         self._written_sample_count = 0
@@ -83,6 +86,7 @@ class MetricsLogger:
         self._live_start_utc = utc_now_iso()
         self._live_start_mono_s = time.monotonic()
         self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
+        self._analysis_threads: list[Thread] = []
         if self.enabled:
             self._start_new_session_locked()
 
@@ -98,6 +102,7 @@ class MetricsLogger:
         self._run_start_utc = utc_now_iso()
         self._run_start_mono_s = time.monotonic()
         self._metadata_written = False
+        self._last_write_error = None
         self._history_run_created = False
         self._written_sample_count = 0
         self._last_data_progress_mono_s = self._run_start_mono_s
@@ -156,6 +161,8 @@ class MetricsLogger:
                 "enabled": self.enabled,
                 "current_file": self._active_path.name if self._active_path else None,
                 "run_id": self._run_id,
+                "write_error": self._last_write_error,
+                "analysis_in_progress": any(thread.is_alive() for thread in self._analysis_threads),
             }
 
     def start_logging(self) -> dict[str, str | bool | None]:
@@ -179,13 +186,14 @@ class MetricsLogger:
             self._run_start_utc = None
             self._run_start_mono_s = None
             self._metadata_written = False
+            self._last_write_error = None
             self._history_run_created = False
             self._written_sample_count = 0
             self._last_data_progress_mono_s = None
             self._last_active_frames_total = 0
             result = self.status()
         if run_id_to_analyze and self._history_db is not None:
-            self._run_post_analysis(run_id_to_analyze)
+            self._schedule_post_analysis(run_id_to_analyze)
         return result
 
     def analysis_snapshot(
@@ -251,7 +259,21 @@ class MetricsLogger:
     def _ensure_metadata_written(self, path: Path, run_id: str, start_time_utc: str) -> None:
         if self._metadata_written:
             return
-        self._metadata_written = True
+        metadata = self._run_metadata_record(run_id=run_id, start_time_utc=start_time_utc)
+        if self._write_jsonl_records(path, [metadata]):
+            self._metadata_written = True
+
+    def _write_jsonl_records(self, path: Path, records: list[dict[str, object]]) -> bool:
+        if not records:
+            return True
+        try:
+            append_jsonl_records(path, records)
+        except Exception as exc:
+            self._last_write_error = str(exc)
+            LOGGER.warning("Failed to append JSONL metrics records to %s", path, exc_info=True)
+            return False
+        self._last_write_error = None
+        return True
 
     @staticmethod
     def _safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
@@ -430,6 +452,7 @@ class MetricsLogger:
         rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
         if rows:
             self._last_data_progress_mono_s = now_mono_s
+            self._write_jsonl_records(path, rows)
             self._written_sample_count += len(rows)
             if self._history_db is not None:
                 self._ensure_history_run_created(run_id, start_time_utc)
@@ -444,14 +467,31 @@ class MetricsLogger:
         return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
 
     def _finalize_run_locked(self) -> None:
-        if self._active_path is None or not self._run_id or not self._history_run_created:
+        if self._active_path is None or not self._run_id:
             return
         end_utc = utc_now_iso()
+        self._write_jsonl_records(self._active_path, [create_run_end_record(self._run_id, end_utc)])
+        if not self._history_run_created:
+            return
         if self._history_db is not None:
             try:
                 self._history_db.finalize_run(self._run_id, end_utc)
             except Exception:
                 LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
+
+    def _schedule_post_analysis(self, run_id: str) -> None:
+        def _target() -> None:
+            try:
+                self._run_post_analysis(run_id)
+            finally:
+                with self._lock:
+                    self._analysis_threads = [t for t in self._analysis_threads if t.is_alive()]
+
+        thread = Thread(target=_target, name=f"metrics-post-analysis-{run_id[:8]}", daemon=True)
+        with self._lock:
+            self._analysis_threads = [t for t in self._analysis_threads if t.is_alive()]
+            self._analysis_threads.append(thread)
+        thread.start()
 
     def _run_post_analysis(self, run_id: str) -> None:
         """Run thorough post-run analysis and store results in history DB."""

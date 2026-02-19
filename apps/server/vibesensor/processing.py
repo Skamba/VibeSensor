@@ -349,19 +349,37 @@ class SignalProcessor:
         }
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
-        freq: list[float] = []
+        shared_freq: list[float] | None = None
         clients: dict[str, dict[str, list[float]]] = {}
+        included_ids: list[str] = []
         for client_id in client_ids:
             buf = self._buffers.get(client_id)
             if buf is None or not buf.latest_spectrum:
                 continue
             client_freq = buf.latest_spectrum["x"]["freq"].tolist()
-            if not freq:
-                freq = client_freq
+            if shared_freq is None:
+                shared_freq = client_freq
+            elif len(client_freq) != len(shared_freq) or not np.allclose(
+                np.asarray(client_freq, dtype=np.float32),
+                np.asarray(shared_freq, dtype=np.float32),
+                rtol=0.0,
+                atol=1e-6,
+            ):
+                mismatch_ids = sorted(set(included_ids + [client_id]))
+                return {
+                    "freq": [],
+                    "clients": {},
+                    "error": "frequency_bin_mismatch",
+                    "message": (
+                        "Incompatible frequency bins across selected clients. "
+                        f"Clients: {', '.join(mismatch_ids)}"
+                    ),
+                }
             client_payload = self.spectrum_payload(client_id)
             client_payload["freq"] = client_freq
             clients[client_id] = client_payload
-        return {"freq": freq, "clients": clients}
+            included_ids.append(client_id)
+        return {"freq": shared_freq or [], "clients": clients}
 
     def selected_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
@@ -374,8 +392,13 @@ class SignalProcessor:
                 "metrics": {},
             }
 
-        waveform_raw = self._latest(buf, buf.count)
         sr = buf.sample_rate_hz or self.sample_rate_hz
+        window_samples = min(
+            buf.count,
+            self.max_samples,
+            max(1, int(sr * max(1, self.waveform_seconds))),
+        )
+        waveform_raw = self._latest(buf, window_samples)
         waveform_step = max(1, sr // max(1, self.waveform_display_hz))
         decimated = waveform_raw[:, ::waveform_step]
         points = decimated.shape[1]
