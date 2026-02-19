@@ -39,6 +39,7 @@ pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
     "selenium: browser-based UI tests",
+    "e2e: docker-based end-to-end tests",
     "long_sim: longer simulated-run tests (>20 s of synthetic data)",
   "smoke: minimal critical path checks",
 ]

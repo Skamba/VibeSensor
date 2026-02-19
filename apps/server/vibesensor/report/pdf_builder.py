@@ -340,6 +340,16 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:  # noqa: C901
         ],
         [tr("REFERENCE_COMPLETENESS"), ref_text_val],
     ]
+    primary_source_text = (
+        human_source(top_causes[0].get("source") or top_causes[0].get("suspected_source"), tr=tr)
+        if top_causes
+        else tr("UNKNOWN")
+    )
+    primary_location_text = (
+        str(top_causes[0].get("strongest_location") or tr("UNKNOWN")) if top_causes else tr("UNKNOWN")
+    )
+    primary_finding_line = text_fn("Primary finding", "Primaire bevinding")
+    primary_finding_value = f"{primary_source_text} @ {primary_location_text}"
 
     story: list[object] = [
         Paragraph(tr("WORKSHOP_SUMMARY"), style_title),
@@ -347,6 +357,11 @@ def _reportlab_pdf(summary: dict[str, object]) -> bytes:  # noqa: C901
         Spacer(1, 6),
         cards_row,
         Spacer(1, 8),
+        Paragraph(
+            f"<b>{escape(primary_finding_line)}:</b> {escape(primary_finding_value)}",
+            style_note,
+        ),
+        Spacer(1, 6),
         Paragraph(f"<b>{tr('WHAT_TO_CHECK_FIRST')}</b>", style_h3),
         styled_table(
             check_first_rows,
