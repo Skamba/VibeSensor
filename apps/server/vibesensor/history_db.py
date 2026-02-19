@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -82,10 +83,19 @@ class HistoryDB:
         with self._lock:
             self._conn.executescript(_SCHEMA_SQL)
         with self._cursor() as cur:
-            cur.execute(
-                "INSERT OR IGNORE INTO schema_meta (key, value) VALUES (?, ?)",
-                ("version", str(_SCHEMA_VERSION)),
-            )
+            cur.execute("SELECT value FROM schema_meta WHERE key = ?", ("version",))
+            row = cur.fetchone()
+            if row is None:
+                cur.execute(
+                    "INSERT INTO schema_meta (key, value) VALUES (?, ?)",
+                    ("version", str(_SCHEMA_VERSION)),
+                )
+                return
+            version = int(str(row[0]))
+            if version != _SCHEMA_VERSION:
+                raise RuntimeError(
+                    f"Unsupported history DB schema version {version}; expected {_SCHEMA_VERSION}"
+                )
 
     # -- write ----------------------------------------------------------------
 
@@ -190,12 +200,27 @@ class HistoryDB:
         return entry
 
     def get_run_samples(self, run_id: str) -> list[dict[str, Any]]:
-        with self._cursor() as cur:
-            cur.execute(
-                "SELECT sample_json FROM samples WHERE run_id = ? ORDER BY id",
-                (run_id,),
-            )
-            return [json.loads(row[0]) for row in cur.fetchall()]
+        rows: list[dict[str, Any]] = []
+        for batch in self.iter_run_samples(run_id):
+            rows.extend(batch)
+        return rows
+
+    def iter_run_samples(
+        self, run_id: str, batch_size: int = 1000, offset: int = 0
+    ) -> Iterator[list[dict[str, Any]]]:
+        start = max(0, int(offset))
+        size = max(1, int(batch_size))
+        while True:
+            with self._cursor() as cur:
+                cur.execute(
+                    "SELECT sample_json FROM samples WHERE run_id = ? ORDER BY id LIMIT ? OFFSET ?",
+                    (run_id, size, start),
+                )
+                batch_rows = cur.fetchall()
+            if not batch_rows:
+                return
+            yield [json.loads(row[0]) for row in batch_rows]
+            start += len(batch_rows)
 
     def get_run_metadata(self, run_id: str) -> dict[str, Any] | None:
         with self._cursor() as cur:

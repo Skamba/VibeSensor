@@ -5,6 +5,7 @@ import logging
 import math
 import time
 from collections import deque
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock, Thread
@@ -52,6 +53,9 @@ class MetricsLogger:
         peak_picker_method: str = "max_peak_amp_across_axes",
         accel_scale_g_per_lsb: float | None = None,
         history_db: HistoryDB | None = None,
+        write_jsonl: bool = True,
+        persist_history_db: bool = True,
+        language_provider: Callable[[], str] | None = None,
     ):
         self.enabled = bool(enabled)
         self.log_path = log_path
@@ -78,6 +82,9 @@ class MetricsLogger:
         self._metadata_written = False
         self._last_write_error: str | None = None
         self._history_db = history_db
+        self._write_jsonl = bool(write_jsonl)
+        self._persist_history_db = bool(persist_history_db)
+        self._language_provider = language_provider
         self._history_run_created = False
         self._written_sample_count = 0
         self._no_data_timeout_s = 3.0
@@ -171,6 +178,9 @@ class MetricsLogger:
                 self._finalize_run_locked()
             self.enabled = True
             self._start_new_session_locked()
+            self._live_samples.clear()
+            self._live_start_utc = self._run_start_utc or utc_now_iso()
+            self._live_start_mono_s = self._run_start_mono_s or time.monotonic()
             return self.status()
 
     def stop_logging(self) -> dict[str, str | bool | None]:
@@ -254,6 +264,8 @@ class MetricsLogger:
             settings.get("tire_aspect_pct"),
             settings.get("rim_in"),
         )
+        if self._language_provider is not None:
+            metadata["language"] = str(self._language_provider()).strip().lower() or "en"
         return metadata
 
     def _ensure_metadata_written(self, path: Path, run_id: str, start_time_utc: str) -> None:
@@ -265,6 +277,8 @@ class MetricsLogger:
 
     def _write_jsonl_records(self, path: Path, records: list[dict[str, object]]) -> bool:
         if not records:
+            return True
+        if not self._write_jsonl:
             return True
         try:
             append_jsonl_records(path, records)
@@ -454,7 +468,7 @@ class MetricsLogger:
             self._last_data_progress_mono_s = now_mono_s
             self._write_jsonl_records(path, rows)
             self._written_sample_count += len(rows)
-            if self._history_db is not None:
+            if self._history_db is not None and self._persist_history_db:
                 self._ensure_history_run_created(run_id, start_time_utc)
                 if self._history_run_created:
                     try:
@@ -493,6 +507,19 @@ class MetricsLogger:
             self._analysis_threads.append(thread)
         thread.start()
 
+    def wait_for_post_analysis(self, timeout_s: float = 5.0) -> None:
+        deadline = time.monotonic() + max(0.0, timeout_s)
+        while True:
+            with self._lock:
+                active = [t for t in self._analysis_threads if t.is_alive()]
+                self._analysis_threads = active
+            if not active:
+                return
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return
+            active[0].join(timeout=min(0.2, remaining))
+
     def _run_post_analysis(self, run_id: str) -> None:
         """Run thorough post-run analysis and store results in history DB."""
         if self._history_db is None:
@@ -505,10 +532,12 @@ class MetricsLogger:
             if metadata is None:
                 LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
                 return
-            raw_samples = self._history_db.get_run_samples(run_id)
-            samples = [normalize_sample_record(s) for s in raw_samples]
+            language = str(metadata.get("language") or "en")
+            samples: list[dict[str, object]] = []
+            for batch in self._history_db.iter_run_samples(run_id, batch_size=1024):
+                samples.extend(normalize_sample_record(s) for s in batch)
             summary = summarize_run_data(
-                metadata, samples, lang=None, file_name=run_id, include_samples=False
+                metadata, samples, lang=language, file_name=run_id, include_samples=False
             )
             self._history_db.store_analysis(run_id, summary)
             LOGGER.info("Post-run analysis complete for run %s (%d samples)", run_id, len(samples))

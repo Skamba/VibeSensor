@@ -170,6 +170,9 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         peak_picker_method="canonical_strength_metrics_module",
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         history_db=history_db,
+        write_jsonl=config.logging.write_metrics_jsonl,
+        persist_history_db=config.logging.persist_history_db,
+        language_provider=lambda: settings_store.language,
     )
     live_diagnostics = LiveDiagnosticsEngine()
 
@@ -285,6 +288,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         runtime.tasks.clear()
 
         runtime.metrics_logger.stop_logging()
+        runtime.metrics_logger.wait_for_post_analysis(timeout_s=2.0)
 
         runtime.control_plane.close()
         if runtime.data_transport is not None:
@@ -294,6 +298,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             runtime.data_consumer_task.cancel()
             await asyncio.gather(runtime.data_consumer_task, return_exceptions=True)
             runtime.data_consumer_task = None
+        runtime.history_db.close()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
