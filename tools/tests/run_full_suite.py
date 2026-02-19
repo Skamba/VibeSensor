@@ -17,10 +17,14 @@ BASE_URL = "http://127.0.0.1:18000"
 
 
 def _run(
-    cmd: list[str], *, check: bool = True, env: dict[str, str] | None = None
+    cmd: list[str],
+    *,
+    check: bool = True,
+    env: dict[str, str] | None = None,
+    cwd: Path = ROOT,
 ) -> subprocess.CompletedProcess[str]:
     print("+", " ".join(cmd), flush=True)
-    return subprocess.run(cmd, cwd=str(ROOT), check=check, text=True, env=env)
+    return subprocess.run(cmd, cwd=str(cwd), check=check, text=True, env=env)
 
 
 def _api_snapshot(path: str) -> str:
@@ -70,6 +74,12 @@ def main() -> int:
     container_started = False
     try:
         _run(["python3", "tools/sync_ui_to_pi_public.py"])
+        _run(
+            ["npx", "playwright", "install", "chromium"],
+            env={**os.environ, "PLAYWRIGHT_SKIP_BROWSER_GC": "1"},
+            cwd=ROOT / "apps" / "ui",
+        )
+        _run(["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui")
         _run(
             ["python3", "-m", "pytest", "-q", "-m", "not selenium", "apps/server/tests"]
         )
