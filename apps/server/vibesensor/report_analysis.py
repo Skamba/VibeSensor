@@ -6,13 +6,11 @@ from .analysis.vibration_strength import _percentile  # noqa: F401
 from .report.findings import (  # noqa: F401
     _build_findings,
     _build_order_findings,
-    _finding_actions_for_source,
     _location_speedbin_summary,
     _merge_test_plan,
     _reference_missing_finding,
     _sensor_intensity_by_location,
     _speed_breakdown,
-    _wheel_hz,
 )
 from .report.helpers import (  # noqa: F401
     CONSTANT_SPEED_STDDEV_KMH,
@@ -47,6 +45,10 @@ from .report.helpers import (  # noqa: F401
     _text,
     _tire_reference_from_metadata,
     _validate_required_strength_metrics,
+)
+from .report.order_analysis import (  # noqa: F401
+    _finding_actions_for_source,
+    _wheel_hz,
 )
 from .report.summary import (  # noqa: F401
     build_findings_for_samples,
