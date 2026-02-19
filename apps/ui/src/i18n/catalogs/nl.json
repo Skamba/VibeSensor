@@ -196,7 +196,7 @@
   "tooltip.by_sensor_scope": "Per sensorbereik:",
   "chart.spectrum_title": "Gemengd spectrum van meerdere sensoren",
   "chart.axis.hz": "Hz",
-  "chart.axis.amplitude": "Amplitude (dB)",
+  "chart.axis.amplitude": "Amplitude (g)",
   "bands.wheel_1x": "Wiel 1x",
   "bands.wheel_2x": "Wiel 2x",
   "bands.driveshaft_engine_1x": "Aandrijfas+Motor 1x",
