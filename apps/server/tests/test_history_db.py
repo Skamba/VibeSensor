@@ -103,3 +103,115 @@ def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
     new_run = db.get_run("run-new")
     assert old_run is not None and old_run["status"] == "error"
     assert new_run is not None and new_run["status"] == "recording"
+
+
+def test_future_schema_version_raises(tmp_path: Path) -> None:
+    db_path = tmp_path / "history.db"
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
+    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', '99')")
+    conn.commit()
+    conn.close()
+
+    with pytest.raises(RuntimeError, match="Unsupported history DB schema version"):
+        HistoryDB(db_path)
+
+
+def test_delete_run_cascades_samples(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-del", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-del", [{"i": i} for i in range(5)])
+    assert len(db.get_run_samples("run-del")) == 5
+
+    db.delete_run("run-del")
+
+    # Verify samples are gone at the SQL level (CASCADE)
+    with db._cursor() as cur:
+        cur.execute("SELECT COUNT(*) FROM samples WHERE run_id = ?", ("run-del",))
+        assert cur.fetchone()[0] == 0
+
+
+def test_run_status_transitions(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+
+    # recording → analyzing → complete
+    db.create_run("run-st", "2026-01-01T00:00:00Z", {"source": "test"})
+    assert db.get_run_status("run-st") == "recording"
+
+    db.finalize_run("run-st", "2026-01-01T00:10:00Z")
+    assert db.get_run_status("run-st") == "analyzing"
+
+    db.store_analysis("run-st", {"score": 42})
+    assert db.get_run_status("run-st") == "complete"
+
+    # analyzing → error via store_analysis_error
+    db.create_run("run-err", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.finalize_run("run-err", "2026-01-01T00:10:00Z")
+    db.store_analysis_error("run-err", "something went wrong")
+    assert db.get_run_status("run-err") == "error"
+
+
+def test_append_empty_samples_is_noop(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-empty", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-empty", [{"i": 1}])
+    db.append_samples("run-empty", [])
+    run = db.list_runs()[0]
+    assert run["sample_count"] == 1
+
+
+def test_client_names_crud(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+
+    # Initially empty
+    assert db.list_client_names() == {}
+
+    # Insert
+    db.upsert_client_name("client-1", "Alice")
+    db.upsert_client_name("client-2", "Bob")
+    names = db.list_client_names()
+    assert names == {"client-1": "Alice", "client-2": "Bob"}
+
+    # Update existing
+    db.upsert_client_name("client-1", "Alice Updated")
+    assert db.list_client_names()["client-1"] == "Alice Updated"
+
+    # Delete
+    assert db.delete_client_name("client-2") is True
+    assert db.delete_client_name("client-2") is False
+    assert "client-2" not in db.list_client_names()
+
+
+def test_settings_kv_roundtrip(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+
+    # Missing key returns None
+    assert db.get_setting("missing") is None
+
+    # String
+    db.set_setting("name", "VibeSensor")
+    assert db.get_setting("name") == "VibeSensor"
+
+    # Integer
+    db.set_setting("count", 42)
+    assert db.get_setting("count") == 42
+
+    # Float
+    db.set_setting("ratio", 3.14)
+    assert db.get_setting("ratio") == 3.14
+
+    # Boolean
+    db.set_setting("enabled", True)
+    assert db.get_setting("enabled") is True
+
+    # None
+    db.set_setting("empty", None)
+    assert db.get_setting("empty") is None
+
+    # Dict
+    db.set_setting("nested", {"a": [1, 2, 3]})
+    assert db.get_setting("nested") == {"a": [1, 2, 3]}
+
+    # Overwrite existing key
+    db.set_setting("name", "Updated")
+    assert db.get_setting("name") == "Updated"
