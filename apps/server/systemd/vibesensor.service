@@ -6,6 +6,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=__SERVICE_USER__
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 WorkingDirectory=__PI_DIR__
 ExecStartPre=/usr/bin/test -r /etc/vibesensor/config.yaml
 ExecStartPre=/usr/bin/test -w /var/log/vibesensor
