@@ -249,3 +249,45 @@ async def test_history_insights_lang_sampling_is_bounded() -> None:
     sampling = payload.get("sampling", {})
     assert sampling.get("analyzed_samples", 0) <= 12_000
     assert sampling.get("total_samples") == 30_000
+
+
+@pytest.mark.asyncio
+async def test_delete_active_run_returns_409() -> None:
+    """DELETE /api/history/{run_id} returns 409 when run is active."""
+
+    @dataclass
+    class _ActiveDB(_FakeHistoryDB):
+        def get_active_run_id(self) -> str | None:
+            return "run-1"
+
+    metadata = {
+        "run_id": "run-1",
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "end_time_utc": "2026-01-01T00:00:20Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "en",
+    }
+    samples = [_sample(i) for i in range(5)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    db = _ActiveDB(metadata, samples, analysis)
+    state = _FakeState(db, _FakeWsHub())
+    app = FastAPI()
+    router = create_router(state)
+    app.include_router(router)
+
+    # Find the DELETE endpoint specifically
+    delete_endpoint = None
+    for route in router.routes:
+        if getattr(route, "path", "") == "/api/history/{run_id}":
+            if "DELETE" in getattr(route, "methods", set()):
+                delete_endpoint = route.endpoint
+                break
+    assert delete_endpoint is not None
+
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_endpoint("run-1")
+    assert exc_info.value.status_code == 409
