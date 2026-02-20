@@ -154,7 +154,7 @@ See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for detai
 ### Verification
 
 Connect a phone to the `VibeSensor` Wi-Fi (PSK: `vibesensor123`) and open
-http://192.168.4.1:8000. Sensor nodes should appear within seconds.
+http://10.4.0.1:8000. Sensor nodes should appear within seconds.
 
 > Default AP credentials are for prototype use only. Change SSID/PSK before
 > real-world deployment.
@@ -236,7 +236,7 @@ run log format and [examples/](examples/) for sample data.
 ## Troubleshooting
 
 - **Phone says "No internet"** — expected for offline AP; stay connected and
-  open http://192.168.4.1:8000
+  open http://10.4.0.1:8000
 - **No clients visible** — verify ESP joined SSID, Pi UDP ports 9000/9001 open,
   server bound on 0.0.0.0:8000
 - **High dropped frames** — reduce Wi-Fi contention, keep ESP close to Pi,
