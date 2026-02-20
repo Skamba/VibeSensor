@@ -250,7 +250,7 @@ export function startUiApp(): void {
   function connectWS(): void {
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
     state.ws = new WsClient({
-      url: `${proto}//${window.location.host}/ws`, staleAfterMs: 3000,
+      url: `${proto}//${window.location.host}/ws`, staleAfterMs: 10000,
       onPayload: (payload) => { state.hasReceivedPayload = true; state.pendingPayload = payload; queueRender(); },
       onStateChange: (nextState) => { state.wsState = nextState; renderWsState(); updateSpectrumOverlay(); if (nextState === "connected" || nextState === "no_data") sendSelection(); },
     });

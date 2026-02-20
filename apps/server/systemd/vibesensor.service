@@ -6,10 +6,12 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=__SERVICE_USER__
+PermissionsStartOnly=true
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 WorkingDirectory=__PI_DIR__
 ExecStartPre=/usr/bin/test -r /etc/vibesensor/config.yaml
+ExecStartPre=/usr/bin/chown -R __SERVICE_USER__:__SERVICE_USER__ /var/log/vibesensor /var/lib/vibesensor
 ExecStartPre=/usr/bin/test -w /var/log/vibesensor
 ExecStartPre=/usr/bin/test -w /var/lib/vibesensor
 ExecStart=__VENV_DIR__/bin/python -m vibesensor.app --config /etc/vibesensor/config.yaml
