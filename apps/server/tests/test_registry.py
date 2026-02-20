@@ -21,13 +21,13 @@ def test_registry_sequence_gap(tmp_path: Path) -> None:
         name="node-1",
         firmware_version="fw",
     )
-    registry.update_from_hello(hello, ("192.168.4.2", 9010), now=1.0)
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
 
     samples = np.zeros((200, 3), dtype=np.int16)
     msg0 = DataMessage(client_id=client_id, seq=0, t0_us=10, sample_count=200, samples=samples)
     msg1 = DataMessage(client_id=client_id, seq=2, t0_us=20, sample_count=200, samples=samples)
-    registry.update_from_data(msg0, ("192.168.4.2", 50000), now=2.0)
-    registry.update_from_data(msg1, ("192.168.4.2", 50000), now=3.0)
+    registry.update_from_data(msg0, ("10.4.0.2", 50000), now=2.0)
+    registry.update_from_data(msg1, ("10.4.0.2", 50000), now=3.0)
 
     row = registry.snapshot_for_api(now=3.0)[0]
     assert row["frames_total"] == 2
@@ -49,7 +49,7 @@ def test_registry_rename_persist(tmp_path: Path) -> None:
         name="ignored",
         firmware_version="fw2",
     )
-    registry2.update_from_hello(hello, ("192.168.4.3", 9011), now=5.0)
+    registry2.update_from_hello(hello, ("10.4.0.3", 9011), now=5.0)
 
     row = registry2.snapshot_for_api(now=5.0)[0]
     assert row["name"] == "rear"
@@ -97,10 +97,10 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
         name="active-node",
         firmware_version="fw",
     )
-    registry.update_from_hello(hello, ("192.168.4.2", 9010), now=2.0)
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=2.0)
 
     registry2 = ClientRegistry(db=db)
-    registry2.update_from_hello(hello, ("192.168.4.2", 9010), now=3.0)
+    registry2.update_from_hello(hello, ("10.4.0.2", 9010), now=3.0)
     registry2.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex(offline_id),
@@ -109,7 +109,7 @@ def test_registry_persist_keeps_offline_names(tmp_path: Path) -> None:
             name="should-not-overwrite",
             firmware_version="fw",
         ),
-        ("192.168.4.3", 9011),
+        ("10.4.0.3", 9011),
         now=4.0,
     )
 
@@ -128,10 +128,10 @@ def test_registry_hello_uses_advertised_control_port(tmp_path: Path) -> None:
         firmware_version="fw",
         frame_samples=200,
     )
-    registry.update_from_hello(hello, ("192.168.4.2", 54321), now=1.0)
+    registry.update_from_hello(hello, ("10.4.0.2", 54321), now=1.0)
 
     row = registry.snapshot_for_api(now=1.0)[0]
-    assert row["control_addr"] == ("192.168.4.2", 9010)
+    assert row["control_addr"] == ("10.4.0.2", 9010)
     assert row["frame_samples"] == 200
 
 
@@ -153,8 +153,8 @@ def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
         name="stale",
         firmware_version="fw",
     )
-    registry.update_from_hello(stale, ("192.168.4.2", 9000), now=1.0)
-    registry.update_from_hello(fresh, ("192.168.4.3", 9001), now=3.0)
+    registry.update_from_hello(stale, ("10.4.0.2", 9000), now=1.0)
+    registry.update_from_hello(fresh, ("10.4.0.3", 9001), now=3.0)
 
     assert set(registry.active_client_ids(now=3.1)) == {"001122334455"}
     evicted = registry.evict_stale(now=3.1)
@@ -187,7 +187,7 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
         name="node",
         firmware_version="fw",
     )
-    registry.update_from_hello(hello, ("192.168.4.2", 9010), now=1.0)
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
     samples = np.zeros((200, 3), dtype=np.int16)
     registry.update_from_data(
         DataMessage(
@@ -197,7 +197,7 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
             sample_count=200,
             samples=samples,
         ),
-        ("192.168.4.2", 50000),
+        ("10.4.0.2", 50000),
         now=2.0,
     )
     registry.update_from_data(
@@ -208,7 +208,7 @@ def test_registry_detects_sensor_reset_on_large_sequence_backstep(tmp_path: Path
             sample_count=200,
             samples=samples,
         ),
-        ("192.168.4.2", 50000),
+        ("10.4.0.2", 50000),
         now=3.0,
     )
     row = registry.snapshot_for_api(now=3.0)[0]
@@ -227,16 +227,16 @@ def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
         name="node",
         firmware_version="fw",
     )
-    registry.update_from_hello(hello, ("192.168.4.2", 9010), now=1.0)
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
     samples = np.zeros((100, 3), dtype=np.int16)
     registry.update_from_data(
         DataMessage(client_id=client_id, seq=1, t0_us=1_000_000, sample_count=100, samples=samples),
-        ("192.168.4.2", 50000),
+        ("10.4.0.2", 50000),
         now=2.0,
     )
     registry.update_from_data(
         DataMessage(client_id=client_id, seq=2, t0_us=1_105_000, sample_count=100, samples=samples),
-        ("192.168.4.2", 50000),
+        ("10.4.0.2", 50000),
         now=3.0,
     )
     timing = registry.snapshot_for_api(now=3.0)[0]["timing_health"]

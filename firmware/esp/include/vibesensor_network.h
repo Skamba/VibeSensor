@@ -15,7 +15,7 @@
 #endif
 
 #ifndef VIBESENSOR_SERVER_IP_OCTETS
-#define VIBESENSOR_SERVER_IP_OCTETS 192, 168, 4, 1
+#define VIBESENSOR_SERVER_IP_OCTETS 10, 4, 0, 1
 #endif
 
 namespace vibesensor_network {
