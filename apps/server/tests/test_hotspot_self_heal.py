@@ -5,10 +5,10 @@ from pathlib import Path
 
 from vibesensor.config import APConfig, APSelfHealConfig
 from vibesensor.hotspot_self_heal import (
-    _ensure_ap_connection,
     CommandResult,
     CommandRunner,
     HealStateStore,
+    _ensure_ap_connection,
     collect_health,
     run_self_heal_once,
 )
