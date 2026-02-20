@@ -22,7 +22,7 @@ Common commands (exact as found in CI / repo files)
   - docker compose up -d
 
 Repo conventions
-- Backend code: placed under `apps/server/vibesensor/`. Keep modules small and prefer explicit function signatures.
+- Backend code: placed under `apps/server/vibesensor/`. Keep files/modules short where practical, but avoid splitting that harms human maintainability; prefer explicit function signatures.
 - Tests live under `apps/server/tests/` and use pytest. Selenium-marked tests are slow/optional and excluded in CI with `-m "not selenium"`.
 - Strings that appear in generated reports are internationalised via `apps/server/data/report_i18n.json` and loaded by `apps/server/vibesensor/report_i18n.py`.
 

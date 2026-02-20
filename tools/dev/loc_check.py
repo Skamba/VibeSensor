@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""LOC check – enforce H2 file-size heuristics.
+"""File-length advisory for maintainability.
 
-Hard cap: 600 LOC for hand-written tracked source files.
-Soft cap: 450 LOC (warnings only).
+This script intentionally does not enforce LoC limits.
+It reports the longest tracked source files as a refactoring signal only.
 
-Exit 0 if no hard-cap violations, 1 otherwise.
+Guidance:
+- Keep files short where practical.
+- Do not split files mechanically when doing so hurts readability,
+  discoverability, or long-term maintainability.
+
+Exit code is always 0.
 """
 
 from __future__ import annotations
@@ -12,8 +17,7 @@ from __future__ import annotations
 import subprocess
 import sys
 
-HARD_CAP = 600
-SOFT_CAP = 450
+TOP_N = 25
 
 # Extensions considered hand-written source
 SOURCE_EXTS = {".py", ".ts", ".js", ".sh", ".c", ".cpp", ".h"}
@@ -61,8 +65,7 @@ def _should_check(path: str) -> bool:
 
 def main() -> int:
     files = [f for f in _tracked_files() if _should_check(f)]
-    hard_violations: list[tuple[str, int]] = []
-    soft_violations: list[tuple[str, int]] = []
+    measured: list[tuple[str, int]] = []
 
     for path in files:
         try:
@@ -70,27 +73,22 @@ def main() -> int:
                 loc = sum(1 for _ in fh)
         except (OSError, UnicodeDecodeError):
             continue
-        if loc > HARD_CAP:
-            hard_violations.append((path, loc))
-        elif loc > SOFT_CAP:
-            soft_violations.append((path, loc))
+        measured.append((path, loc))
 
-    hard_violations.sort(key=lambda x: -x[1])
-    soft_violations.sort(key=lambda x: -x[1])
+    measured.sort(key=lambda item: (-item[1], item[0]))
 
-    if soft_violations:
-        print(f"⚠  {len(soft_violations)} file(s) exceed soft cap ({SOFT_CAP} LOC):")
-        for path, loc in soft_violations:
-            print(f"   {loc:5d}  {path}")
+    print(
+        "ℹ️  File-length advisory: keep files short where practical, "
+        "without hurting human maintainability."
+    )
+    print(f"Showing top {min(TOP_N, len(measured))} longest tracked source files:")
+    for path, loc in measured[:TOP_N]:
+        print(f"   {loc:5d}  {path}")
 
-    if hard_violations:
-        print(f"❌ {len(hard_violations)} file(s) exceed hard cap ({HARD_CAP} LOC):")
-        for path, loc in hard_violations:
-            print(f"   {loc:5d}  {path}")
-        return 1
-
-    if not soft_violations:
-        print(f"✅ All tracked source files within {HARD_CAP} LOC hard cap.")
+    print(
+        "\nSuggestion: refactor large files when it improves clarity; "
+        "avoid artificial splits that make maintenance harder."
+    )
     return 0
 
 
