@@ -398,6 +398,7 @@ def _build_order_findings(
         if float(item[1].get("confidence_0_to_1", 0)) >= ORDER_MIN_CONFIDENCE
     ]
 
+
 PERSISTENT_PEAK_MIN_PRESENCE = 0.15
 TRANSIENT_BURSTINESS_THRESHOLD = 5.0
 PERSISTENT_PEAK_MAX_FINDINGS = 3
@@ -492,7 +493,10 @@ def _build_persistent_peak_findings(
                 0.10,
                 min(
                     0.75,
-                    0.10 + 0.35 * presence_ratio + 0.15 * snr_score + 0.15 * min(1.0, 1.0 - burstiness / 10.0),
+                    0.10
+                    + 0.35 * presence_ratio
+                    + 0.15 * snr_score
+                    + 0.15 * min(1.0, 1.0 - burstiness / 10.0),
                 ),
             )
 
@@ -525,7 +529,9 @@ def _build_persistent_peak_findings(
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
-            "suspected_source": "unknown_resonance" if peak_type != "transient" else "transient_impact",
+            "suspected_source": "unknown_resonance"
+            if peak_type != "transient"
+            else "transient_impact",
             "evidence_summary": evidence,
             "frequency_hz_or_order": f"{bin_center:.1f} Hz",
             "amplitude_metric": {

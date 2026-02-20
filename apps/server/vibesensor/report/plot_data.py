@@ -45,7 +45,7 @@ def _aggregate_fft_spectrum(
         presence_ratio = len(amps) / max(1, n_samples)
         sorted_amps = sorted(amps)
         p95 = _percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
-        result[bin_center] = presence_ratio * p95
+        result[bin_center] = (presence_ratio**2) * p95
     return sorted(result.items(), key=lambda item: item[0])
 
 
@@ -230,7 +230,7 @@ def _top_peaks_table_rows(
         bucket["p95_amp_g"] = p95_amp
         bucket["presence_ratio"] = presence_ratio
         bucket["burstiness"] = burstiness
-        bucket["persistence_score"] = presence_ratio * p95_amp
+        bucket["persistence_score"] = (presence_ratio**2) * p95_amp
 
     ordered = sorted(
         grouped.values(),
