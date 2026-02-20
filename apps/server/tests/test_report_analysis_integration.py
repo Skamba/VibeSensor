@@ -97,8 +97,7 @@ def test_build_findings_with_speed_data() -> None:
     samples = [_make_sample(float(i) * 0.5, 80.0 + i * 0.5, 0.01 + i * 0.001) for i in range(20)]
     findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
     assert isinstance(findings, list)
-    # Should produce at least some findings
-    assert len(findings) >= 0  # May be 0 if no strong vibrations
+    assert len(findings) > 0, "Expected at least one finding for samples with speed data"
 
 
 def test_build_findings_nl_language() -> None:
@@ -106,6 +105,8 @@ def test_build_findings_nl_language() -> None:
     samples = [_make_sample(float(i) * 0.5, 85.0, 0.05) for i in range(10)]
     findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="nl")
     assert isinstance(findings, list)
+    # Verify the function accepts "nl" without error; the small dataset may not
+    # produce actionable findings, so we only verify return type.
 
 
 # -- summarize_log -------------------------------------------------------------
