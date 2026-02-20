@@ -193,12 +193,10 @@ def test_silence_db_constant() -> None:
 
 def test_config_preflight_no_removed_fields() -> None:
     """config_preflight.summarize must not reference removed config fields."""
-    import sys
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[3]
-    sys.path.insert(0, str(root / "tools" / "config"))
-    preflight_path = root / "tools" / "config" / "config_preflight.py"
+    preflight_path = root / "tools" / "config" / "vibesensor_tools_config" / "config_preflight.py"
     source = preflight_path.read_text(encoding="utf-8")
     assert "metrics_csv_path" not in source, (
         "config_preflight.py still references removed metrics_csv_path"
@@ -217,13 +215,13 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
 
 def test_simulator_defaults_match_analysis_settings() -> None:
     """Simulator vehicle defaults must be imported from the canonical source."""
-    import sys
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[3]
-    sys.path.insert(0, str(root / "tools" / "simulator"))
     # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
-    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
+        encoding="utf-8"
+    )
     # The simulator should NOT contain hardcoded tire/vehicle values as literal assignments
     for line in sim_source.splitlines():
         stripped = line.strip()
@@ -242,7 +240,9 @@ def test_simulator_no_production_asserts() -> None:
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[3]
-    sim_source = (root / "tools" / "simulator" / "sim_sender.py").read_text(encoding="utf-8")
+    sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
+        encoding="utf-8"
+    )
     lines = sim_source.splitlines()
     in_method = False
     for i, line in enumerate(lines, 1):

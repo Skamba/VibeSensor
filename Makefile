@@ -18,8 +18,8 @@ test-all:
 	python3 tools/tests/run_full_suite.py
 
 smoke:
-	python3 apps/simulator/sim_sender.py --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
-	python3 apps/simulator/ws_smoke.py --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
+	vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
+	vibesensor-ws-smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
 
 loc:
 	python3 tools/dev/loc_check.py

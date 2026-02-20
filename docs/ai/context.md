@@ -13,7 +13,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - ESP firmware (`firmware/esp/`): UDP frame sender + control ACKs.
 - Backend (`apps/server/vibesensor/`): FastAPI app, UDP ingestion, signal processing, diagnostics, history storage.
 - Frontend (`apps/ui/src/`): WebSocket-driven dashboard and settings UI.
-- Tooling (`tools/simulator/`): multi-client simulator and WS smoke checks.
+- Tooling (`apps/simulator/`): multi-client simulator and WS smoke checks.
 - Image build (`infra/pi-image/pi-gen/`): deterministic Pi image generation with VibeSensor stage.
 
 ### Data Flow Boundaries

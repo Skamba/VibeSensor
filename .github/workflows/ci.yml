@@ -45,9 +45,13 @@ jobs:
           npm run typecheck
       - name: Config preflight
         run: |
-          python tools/config/config_preflight.py apps/server/config.example.yaml
-          python tools/config/config_preflight.py apps/server/config.dev.yaml
+          vibesensor-config-preflight apps/server/config.example.yaml
+          vibesensor-config-preflight apps/server/config.dev.yaml
 
       - name: Full test suite
         run: |
           make test-all
+
+      - name: Verify no path indirections
+        run: |
+          python tools/dev/verify_no_path_indirections.py
