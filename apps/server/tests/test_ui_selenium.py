@@ -153,9 +153,11 @@ def _activate_settings_subtab(driver: webdriver.Remote, tab_id: str) -> None:
     selector = f'[data-settings-tab="{tab_id}"]'
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector))).click()
     wait.until(
-        lambda d: not d.execute_script(
-            "const el=document.getElementById(arguments[0]); return el ? el.hidden : true;",
-            tab_id,
+        lambda d: (
+            not d.execute_script(
+                "const el=document.getElementById(arguments[0]); return el ? el.hidden : true;",
+                tab_id,
+            )
         )
     )
 
@@ -248,8 +250,7 @@ def test_all_tabs_render_localized_texts(
     _activate_tab(driver, "tab-history", "historyView")
     wait.until(
         lambda d: (
-            d.find_element(By.ID, "refreshHistoryBtn").text.strip()
-            == labels["refresh_history"]
+            d.find_element(By.ID, "refreshHistoryBtn").text.strip() == labels["refresh_history"]
         )
     )
 
@@ -352,8 +353,7 @@ def test_logs_can_be_deleted_with_confirmation(
 
     driver.execute_script("window.confirm = () => true;")
     driver.execute_script(
-        "const btn=document.querySelector(arguments[0]);"
-        " if (btn) btn.click();",
+        "const btn=document.querySelector(arguments[0]); if (btn) btn.click();",
         del_sel,
     )
     wait.until(
