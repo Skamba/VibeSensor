@@ -75,20 +75,20 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 
 ## PDF Report Layout
 
-The generated PDF uses A4 landscape and is structured as a **workshop handout**:
+The generated PDF uses A4 landscape and is structured as a **diagnostic worksheet**:
 
 ### Page structure
-1. **Workshop Summary** (page 1) — header bar, three status cards (Overall Status, Top Suspected Cause, Run Conditions), "What to check first" action table, and an "Evidence snapshot" mini-table.
-2. **Evidence & Hotspots** (page 2) — left column: car hotspot heat-map diagram (42 % width); right column: two stacked adaptive charts (54 % width) with an interpretation note.
-3. **Appendices** — sensor stats, speed-binned analysis tables, and full findings list.
+1. **Diagnostic Worksheet** (page 1) — header bar with date/car metadata, observed signature block (primary system, strength, certainty + reason), system finding cards, single next-steps section, data trust quality bar.
+2. **Evidence & Diagnostics** (page 2) — left column: car hotspot heat-map diagram (42 % width, aspect-ratio preserved); right column: compact pattern evidence panel + diagnostic peaks table (system-relevance oriented).
 
 ### Primitives
 | Primitive | File | Purpose |
 |-----------|------|---------|
-| `make_card(story, title, body, tone)` | `apps/server/vibesensor/report_pdf.py` | MD3 card with tone-based bg/border (`success`, `warn`, `error`, `neutral`) |
-| `styled_table(data, col_widths, zebra)` | `apps/server/vibesensor/report_pdf.py` | Table with theme header and optional zebra-striped rows |
-| `_confidence_pill_html(label, pct, tone)` | `apps/server/vibesensor/report_pdf.py` | Inline HTML pill for High / Medium / Low confidence |
-| `line_plot(…, width, height)` | `apps/server/vibesensor/report_pdf.py` | Parameterised plot that accepts custom size |
+| `make_card(story, title, body, tone)` | `apps/server/vibesensor/report/pdf_helpers.py` | MD3 card with tone-based bg/border (`success`, `warn`, `error`, `neutral`) |
+| `styled_table(data, col_widths, zebra)` | `apps/server/vibesensor/report/pdf_helpers.py` | Table with theme header and optional zebra-striped rows |
+| `parts_for_pattern(system, order)` | `apps/server/vibesensor/report/pattern_parts.py` | Centralized pattern-to-parts mapping |
+| `strength_text(db_value, lang)` | `apps/server/vibesensor/report/strength_labels.py` | Natural-language strength label with dB |
+| `certainty_label(conf, lang, …)` | `apps/server/vibesensor/report/strength_labels.py` | Certainty level + short reason from controlled phrases |
 
 ### Card tone tokens (`report_theme.py`)
 - `card_neutral_bg / _border` — informational
@@ -96,17 +96,8 @@ The generated PDF uses A4 landscape and is structured as a **workshop handout**:
 - `card_warn_bg / _border` — attention needed
 - `card_error_bg / _border` — critical issue
 
-### Confidence pills (`report_theme.py`)
-- `pill_high_bg / _text` (≥ 70 %)
-- `pill_medium_bg / _text` (≥ 40 %)
-- `pill_low_bg / _text` (< 40 %)
-
 ### Heat-map endpoints
 `HEAT_LOW` → `HEAT_MID` → `HEAT_HIGH` define the gradient for the car hotspot diagram.
-
-### Adaptive chart selection
-- **Sweep mode** (variable speed): matched amplitude vs speed + frequency vs speed with predicted curve.
-- **Steady mode** (constant speed): amplitude vs time + dominant frequency vs time.
 
 ### i18n
 All user-visible strings go through `tr(lang, KEY)` in `report_i18n.py`. Add new keys there—never inline literals in `report_pdf.py`.
