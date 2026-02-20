@@ -2,7 +2,8 @@
 
 > Generated: 2026-02-20
 > Baseline: 481 tests passed, 8 selenium deselected
-> After audit: 527 tests passed, 8 selenium deselected
+> After initial audit: 527 tests passed, 8 selenium deselected
+> After gap closure: 539 tests passed, 8 selenium deselected
 
 ---
 
@@ -10,7 +11,7 @@
 
 | Area | Location | Runner | Count |
 |------|----------|--------|-------|
-| Server unit tests | `apps/server/tests/` | pytest, `-m "not selenium"` | 527 |
+| Server unit tests | `apps/server/tests/` | pytest, `-m "not selenium"` | 539 |
 | Selenium UI tests | `apps/server/tests/test_ui_selenium.py` | pytest, `-m selenium` | 8 |
 | Docker E2E tests | `apps/server/tests_e2e/` | pytest via `tools/tests/run_full_suite.py` | 2 suites |
 | UI build checks | `apps/ui/` | npm run build, npm run typecheck | — |
@@ -76,8 +77,8 @@
 | 1. Sensor connection | ✅ | — | ✅ | **FULL** | |
 | 2. UDP data reception | ✅ | — | ✅ | **FULL** | |
 | 3. Start recording | ✅ | — | ✅ | **FULL** | |
-| 4. Live WS data | ✅ hub | ❌ payload | — | **PARTIAL** | `build_ws_payload` untested |
-| 5. Stop + analysis | ✅ DB | — | ✅ | **FULL** | |
+| 4. Live WS data | ✅ hub + payload | — | — | **FULL** | Added `build_ws_payload` shape tests |
+| 5. Stop + analysis | ✅ DB + lifecycle | — | ✅ | **FULL** | Added MetricsLogger lifecycle test |
 | 6. Report generation | ✅ | ✅ | ✅ | **FULL** | Added section heading tests |
 | 7. History listing | ✅ | ✅ | ✅ | **FULL** | |
 | 8. Run deletion | ✅ | ✅ (new) | ✅ | **FULL** | Added 409 guard test, cascade test |
@@ -85,7 +86,7 @@
 | 10. Sensor name/location | ✅ | — | ✅ | **FULL** | |
 | 11. Speed source | ✅ | — | ✅ | **FULL** | |
 | 12. Export/download | ✅ | ✅ | ✅ | **FULL** | |
-| 13. GPS speed | ✅ sync | — | — | **PARTIAL** | Async run() loop untested |
+| 13. GPS speed | ✅ sync + async | — | — | **FULL** | Added run() loop tests (TPV parse, reconnect, disconnect, disabled) |
 | 14. Health check | ✅ (new) | — | — | **FULL** | Added response shape test |
 | 15. Config validation | ✅ | — | — | **FULL** | |
 | 16. Language/i18n | ✅ (new) | ✅ | ✅ | **FULL** | Added key completeness tests |
@@ -167,18 +168,45 @@
 
 All 7 existing tests updated for 3-tab UI restructure. Added `_activate_settings_subtab()` helper.
 
+### New test file: `test_build_ws_payload.py` (5 tests)
+
+| Test | What it validates |
+|------|-------------------|
+| `test_build_ws_payload_returns_required_keys` | Heavy-tick payload contains server_time, speed_mps, clients, selected_client_id, spectra, selected, diagnostics |
+| `test_build_ws_payload_light_tick_omits_spectra_and_selected` | Light-tick omits spectra/selected but includes diagnostics |
+| `test_build_ws_payload_auto_selects_first_client` | When no client selected, first client is auto-selected |
+| `test_build_ws_payload_no_clients` | Empty client list produces empty clients and None selected |
+| `test_on_ws_broadcast_tick_toggles_heavy` | Heavy/light alternation based on push_hz ratio |
+
+### New test file: `test_gps_speed_run_loop.py` (6 tests)
+
+| Test | What it validates |
+|------|-------------------|
+| `test_run_parses_tpv_and_updates_speed` | TPV JSON message correctly sets speed_mps |
+| `test_run_ignores_non_tpv_messages` | Non-TPV messages are skipped |
+| `test_run_reconnects_on_connection_failure` | ConnectionRefusedError triggers retry loop |
+| `test_run_resets_speed_on_disconnect` | speed_mps becomes None after server closes |
+| `test_run_disabled_polls_without_connecting` | gps_enabled=False prevents TCP connection |
+| `test_run_ignores_malformed_json` | Bad JSON skipped, valid TPV still processed |
+
+### Added to `test_metrics_logger_lifecycle.py` (1 test)
+
+| Test | What it validates |
+|------|-------------------|
+| `test_start_append_stop_produces_complete_run_in_db` | Full MetricsLogger lifecycle with real DB: start → append → stop → analyze → status=complete |
+
 ---
 
 ## Remaining Gaps (Lower Priority)
 
-| Gap | Priority | Reason not addressed |
-|-----|----------|---------------------|
-| `build_ws_payload` shape test | P2 | Requires RuntimeState construction; heavy fixture |
-| `GPSSpeedMonitor.run()` async loop | P2 | Requires mock TCP server |
-| `MetricsLogger` full lifecycle integration | P2 | Complex async pipeline; covered by E2E |
-| PDF chart/plot rendering verification | P2 | Image-based; would need visual regression tooling |
-| Car wizard browser flow | P2 | Selenium-only; gated behind marker |
-| WebSocket reconnection/stale detection | P2 | Browser-only; gated behind selenium marker |
+| Gap | Priority | Status |
+|-----|----------|--------|
+| `build_ws_payload` shape test | P2 | ✅ **CLOSED** — `test_build_ws_payload.py` (5 tests) |
+| `GPSSpeedMonitor.run()` async loop | P2 | ✅ **CLOSED** — `test_gps_speed_run_loop.py` (6 tests) |
+| `MetricsLogger` full lifecycle integration | P2 | ✅ **CLOSED** — `test_metrics_logger_lifecycle.py` |
+| PDF chart/plot rendering verification | P2 | Deferred — Image-based; would need visual regression tooling |
+| Car wizard browser flow | P2 | Deferred — Selenium-only; gated behind marker |
+| WebSocket reconnection/stale detection | P2 | Deferred — Browser-only; gated behind selenium marker |
 
 ---
 
@@ -188,19 +216,19 @@ All 7 existing tests updated for 3-tab UI restructure. Added `_activate_settings
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
-| `build_ws_payload` produces wrong shape | Low | High (UI broken) | E2E Docker tests cover indirectly |
-| GPS reconnect loop fails | Low | Medium (no speed data) | Config fallback to manual speed |
+| `build_ws_payload` produces wrong shape | Low | High (UI broken) | **NEW** `test_build_ws_payload.py` validates payload structure |
+| GPS reconnect loop fails | Low | Medium (no speed data) | **NEW** `test_gps_speed_run_loop.py` validates reconnect, parse, disconnect |
 | PDF chart rendering regression | Low | Low (content still correct) | Section heading tests catch structural issues |
 | i18n key added to code but not JSON | **Medium** | Medium (crash on translate) | **NEW** regression test catches this |
 | Strength bucket boundary change | **Medium** | High (wrong severity) | **NEW** exact boundary tests catch this |
 | Schema migration regression | Low | High (DB unusable) | **NEW** v1→v2→v3 + future version tests |
+| MetricsLogger lifecycle breaks | Low | High (no analysis) | **NEW** end-to-end lifecycle test with real DB |
 
 ---
 
 ## Proposed Future Improvements
 
-1. **Add `build_ws_payload` unit test** — Mock minimal RuntimeState, verify payload structure
-2. **Add visual regression for PDF** — Snapshot first page as PNG, compare with tolerance
-3. **Enable selenium in CI** — Currently skipped; would catch UI regressions
-4. **Add libs/core independent test directory** — Core math tests currently live in apps/server/tests
-5. **Add property-based tests for strength math** — Use hypothesis for exhaustive boundary testing
+1. **Add visual regression for PDF** — Snapshot first page as PNG, compare with tolerance
+2. **Enable selenium in CI** — Currently skipped; would catch UI regressions
+3. **Add libs/core independent test directory** — Core math tests currently live in apps/server/tests
+4. **Add property-based tests for strength math** — Use hypothesis for exhaustive boundary testing
