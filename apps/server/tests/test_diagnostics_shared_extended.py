@@ -251,8 +251,8 @@ def test_severity_downgrade_with_decay() -> None:
         prior_state=state,
     )
     state = dict(out.get("state") or {})
-    # After decay, should drop to the candidate bucket or None
-    assert out["key"] != "l3" or out["key"] is None
+    # After decay, should drop below L3
+    assert out["key"] != "l3"
 
 
 def test_severity_same_rank_resets_counters() -> None:
