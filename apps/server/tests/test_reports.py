@@ -503,7 +503,9 @@ def test_report_pdf_footer_contains_version_marker(
 
 def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> None:
     run_path = tmp_path / "run_single_next_steps_heading.jsonl"
-    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800, tire_circumference_m=2.2)]
+    records: list[dict] = [
+        _run_metadata(run_id="run-01", raw_sample_rate_hz=800, tire_circumference_m=2.2)
+    ]
     for idx in range(14):
         speed = 55.0 + idx
         wheel_hz = (speed * KMH_TO_MPS) / 2.2
