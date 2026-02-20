@@ -248,19 +248,16 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
 
     y_cursor = hdr_y - GAP
 
-    # -- Two-column zone: left = observed signature, right = data trust --
-    left_w = W * 0.62
-    right_w = W - left_w - GAP
-
-    obs_h = 42 * mm
+    # -- Observed signature (full-width) --
+    obs_h = 34 * mm
     obs_y = y_cursor - obs_h
 
     # Observed Signature
-    _draw_panel(c, m, obs_y, left_w, obs_h, tr("OBSERVED_SIGNATURE"))
+    _draw_panel(c, m, obs_y, W, obs_h, tr("OBSERVED_SIGNATURE"))
     ox = m + 4 * mm
     oy = obs_y + obs_h - 10.5 * mm
     step = 4.5 * mm
-    lw = 30 * mm
+    lw = 34 * mm
 
     _draw_kv(c, ox, oy, tr("PRIMARY_SYSTEM"), _safe(data.observed.primary_system, na), label_w=lw)
     oy -= step
@@ -288,30 +285,14 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
 
     # Disclaimer
     disc_text = tr("PATTERN_SUGGESTION_DISCLAIMER")
-    _draw_text(c, ox, obs_y + 7 * mm, left_w - 8 * mm, disc_text, size=FS_SMALL, color=MUTED_CLR)
-
-    # Data Trust (right column)
-    _draw_panel(c, m + left_w + GAP, obs_y, right_w, obs_h, tr("DATA_TRUST"))
-    tx = m + left_w + GAP + 4 * mm
-    ty = obs_y + obs_h - 10.5 * mm
-
-    if data.data_trust:
-        for item in data.data_trust[:6]:
-            icon = "\u2713" if item.state == "pass" else "\u26a0"
-            state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
-            _draw_kv(c, tx, ty, item.check, f"{icon} {state_lbl}", label_w=38 * mm, fs=FS_SMALL)
-            ty -= 4.0 * mm
-    else:
-        c.setFillColor(_hex(SUB_CLR))
-        c.setFont(FONT, FS_SMALL)
-        c.drawString(tx, ty, na)
+    _draw_text(c, ox, obs_y + 5.5 * mm, W - 8 * mm, disc_text, size=FS_SMALL, color=MUTED_CLR)
 
     y_cursor = obs_y - GAP
 
     # -- Systems with findings panel --
-    cards = data.system_cards[:3]
+    cards = data.system_cards[:2]
     n_cards = len(cards) if cards else 0
-    cards_h = 80 * mm
+    cards_h = 64 * mm
     cards_y = y_cursor - cards_h
     _draw_panel(c, m, cards_y, W, cards_h, tr("SYSTEMS_WITH_FINDINGS"))
 
@@ -334,10 +315,12 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
 
     y_cursor = cards_y - GAP
 
-    # -- Next steps panel --
-    next_h = 46 * mm
+    # -- Bottom row: next steps + data trust --
+    next_h = 42 * mm
     next_y = y_cursor - next_h
-    _draw_panel(c, m, next_y, W, next_h, tr("NEXT_STEPS"))
+    trust_w = W * 0.28
+    next_w = W - trust_w - GAP
+    _draw_panel(c, m, next_y, next_w, next_h, tr("NEXT_STEPS"))
 
     nx = m + 4 * mm
     ny = next_y + next_h - 11 * mm
@@ -347,7 +330,23 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         c.setFont(FONT, FS_BODY)
         c.drawString(nx, ny, tr("NO_NEXT_STEPS"))
     else:
-        _draw_next_steps_table(c, nx, ny, W - 8 * mm, next_y + 3 * mm, data.next_steps)
+        _draw_next_steps_table(c, nx, ny, next_w - 8 * mm, next_y + 3 * mm, data.next_steps)
+
+    # Data Trust (right-bottom)
+    trust_x = m + next_w + GAP
+    _draw_panel(c, trust_x, next_y, trust_w, next_h, tr("DATA_TRUST"))
+    tx = trust_x + 4 * mm
+    ty = next_y + next_h - 10.5 * mm
+    if data.data_trust:
+        for item in data.data_trust[:6]:
+            icon = "\u2713" if item.state == "pass" else "\u26a0"
+            state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
+            _draw_kv(c, tx, ty, item.check, f"{icon} {state_lbl}", label_w=26 * mm, fs=FS_SMALL)
+            ty -= 3.9 * mm
+    else:
+        c.setFillColor(_hex(SUB_CLR))
+        c.setFont(FONT, FS_SMALL)
+        c.drawString(tx, ty, na)
 
 
 def _draw_system_card(
@@ -384,7 +383,7 @@ def _draw_system_card(
         _safe(card.pattern_summary),
         size=7,
         color=SUB_CLR,
-        max_lines=2,
+        max_lines=1,
     )
 
     # Parts list
@@ -395,7 +394,7 @@ def _draw_system_card(
 
     py = parts_y - 3.6 * mm
     c.setFont(FONT, 6.7)
-    for p in card.parts[:4]:
+    for p in card.parts[:3]:
         if py <= y + 3 * mm:
             break
         c.setFillColor(_hex(TEXT_CLR))
@@ -483,9 +482,9 @@ def _page2(  # noqa: C901
     y_cursor = title_y - GAP
 
     # -- Two-column: left = car visual, right = pattern evidence --
-    left_w = W * 0.42
+    left_w = W * 0.46
     right_w = W - left_w - GAP
-    main_h = 125 * mm
+    main_h = 118 * mm
 
     left_y = y_cursor - main_h
 
@@ -493,11 +492,11 @@ def _page2(  # noqa: C901
     _draw_panel(c, m, left_y, left_w, main_h, tr("EVIDENCE_AND_HOTSPOTS"))
 
     # Compute aspect-preserving box for the car diagram
-    inner_pad = 3 * mm
+    inner_pad = 5 * mm
     box_x = m + inner_pad
     box_y = left_y + inner_pad
     box_w = left_w - 2 * inner_pad
-    box_h = main_h - 12 * mm  # leave room for panel title
+    box_h = main_h - 18 * mm  # leave room for panel title and whitespace
 
     # The car is taller than wide (top-down view, length > width)
     src_w = _BMW_WIDTH_MM
@@ -527,7 +526,7 @@ def _page2(  # noqa: C901
     y_cursor = left_y - GAP
 
     # -- Peaks table --
-    table_h = 46 * mm
+    table_h = 53 * mm
     table_y = y_cursor - table_h
     _draw_panel(c, m, table_y, W, table_h, tr("DIAGNOSTIC_PEAKS"))
     _draw_peaks_table(
@@ -548,7 +547,7 @@ def _draw_pattern_evidence(
 
     rx = x + 4 * mm
     ry = y + h - 10.5 * mm
-    step = 4.3 * mm
+    step = 4.0 * mm
     lw = 32 * mm
 
     systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else "N/A"
@@ -575,7 +574,7 @@ def _draw_pattern_evidence(
         c.setFont(FONT_B, FS_SMALL)
         c.drawString(rx, ry, f"\u26a0 {tr('WARNING_LABEL')}")
         ry -= 3.4 * mm
-        ry = _draw_text(c, rx, ry, w - 8 * mm, ev.warning, size=6, color=WARN_CLR, max_lines=2)
+        ry = _draw_text(c, rx, ry, w - 8 * mm, ev.warning, size=6, color=WARN_CLR, max_lines=1)
         ry -= 2 * mm
 
     # Interpretation
@@ -584,7 +583,7 @@ def _draw_pattern_evidence(
     c.drawString(rx, ry, tr("INTERPRETATION"))
     ry -= 3.6 * mm
     ry = _draw_text(
-        c, rx, ry, w - 8 * mm, _safe(ev.interpretation), size=6, color=SUB_CLR, max_lines=3
+        c, rx, ry, w - 8 * mm, _safe(ev.interpretation), size=6, color=SUB_CLR, max_lines=2
     )
     ry -= 2 * mm
 
@@ -593,7 +592,7 @@ def _draw_pattern_evidence(
     c.setFont(FONT_B, FS_SMALL)
     c.drawString(rx, ry, tr("WHY_PARTS_LISTED"))
     ry -= 3.4 * mm
-    _draw_text(c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text), size=6, color=SUB_CLR, max_lines=4)
+    _draw_text(c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text), size=6, color=SUB_CLR, max_lines=3)
 
 
 def _draw_peaks_table(
