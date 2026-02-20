@@ -30,7 +30,6 @@ constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 constexpr size_t kSensorReadBatchSamples = 8;
 constexpr size_t kMaxTxFramesPerLoop = 1;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
-constexpr uint32_t kDebugIntervalMs = 5000;
 constexpr uint32_t kWifiScanIntervalMs = 20000;
 
 // Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
@@ -90,56 +89,13 @@ uint8_t g_identify_wave_shift = 0;
 bool g_identify_leds_active = false;
 uint32_t g_last_wifi_retry_ms = 0;
 uint32_t g_queue_overflow_drops = 0;
-uint32_t g_last_debug_ms = 0;
 uint32_t g_last_wifi_scan_ms = 0;
-uint32_t g_hello_sent_count = 0;
-uint32_t g_data_sent_count = 0;
-uint32_t g_data_ack_count = 0;
-uint32_t g_last_acked_seq = 0;
-bool g_wifi_handlers_registered = false;
 uint8_t g_target_bssid[6] = {};
 bool g_has_target_bssid = false;
 int32_t g_target_channel = 0;
 
-const char* wl_status_name(wl_status_t status) {
-  switch (status) {
-    case WL_IDLE_STATUS:
-      return "IDLE";
-    case WL_NO_SSID_AVAIL:
-      return "NO_SSID";
-    case WL_SCAN_COMPLETED:
-      return "SCAN_DONE";
-    case WL_CONNECTED:
-      return "CONNECTED";
-    case WL_CONNECT_FAILED:
-      return "CONNECT_FAILED";
-    case WL_CONNECTION_LOST:
-      return "CONNECTION_LOST";
-    case WL_DISCONNECTED:
-      return "DISCONNECTED";
-    default:
-      return "UNKNOWN";
-  }
-}
-
-void log_wifi_scan_result(int found) {
-  Serial.printf("WiFi scan found %d networks; target='%s'\n", found, vibesensor_network::wifi_ssid);
-  for (int i = 0; i < found && i < 8; ++i) {
-    String ssid = WiFi.SSID(i);
-    int32_t rssi = WiFi.RSSI(i);
-    uint8_t enc = WiFi.encryptionType(i);
-    Serial.printf("  [%d] ssid='%s' rssi=%ld enc=%u\n",
-                  i,
-                  ssid.c_str(),
-                  static_cast<long>(rssi),
-                  static_cast<unsigned>(enc));
-  }
-  WiFi.scanDelete();
-}
-
 bool refresh_target_ap() {
   int found = WiFi.scanNetworks(false, true);
-  log_wifi_scan_result(found);
   g_has_target_bssid = false;
   g_target_channel = 0;
   for (int i = 0; i < found; ++i) {
@@ -153,16 +109,9 @@ bool refresh_target_ap() {
     memcpy(g_target_bssid, bssid, sizeof(g_target_bssid));
     g_target_channel = WiFi.channel(i);
     g_has_target_bssid = true;
-    Serial.printf("Using target AP bssid=%02X:%02X:%02X:%02X:%02X:%02X channel=%ld\n",
-                  g_target_bssid[0],
-                  g_target_bssid[1],
-                  g_target_bssid[2],
-                  g_target_bssid[3],
-                  g_target_bssid[4],
-                  g_target_bssid[5],
-                  static_cast<long>(g_target_channel));
     break;
   }
+  WiFi.scanDelete();
   return g_has_target_bssid;
 }
 
@@ -184,23 +133,6 @@ void begin_target_wifi() {
     WiFi.begin(vibesensor_network::wifi_ssid, vibesensor_network::wifi_psk);
   } else {
     WiFi.begin(vibesensor_network::wifi_ssid);
-  }
-}
-
-void on_wifi_event(WiFiEvent_t event, WiFiEventInfo_t info) {
-  switch (event) {
-    case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-      Serial.println("[wifi] STA connected to AP");
-      break;
-    case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-      Serial.printf("[wifi] got IP: %s\n", WiFi.localIP().toString().c_str());
-      break;
-    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
-      Serial.printf("[wifi] disconnected; reason=%u\n",
-                    static_cast<unsigned>(info.wifi_sta_disconnected.reason));
-      break;
-    default:
-      break;
   }
 }
 
@@ -367,7 +299,6 @@ void send_hello() {
   g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort);
   g_control_udp.write(packet, len);
   g_control_udp.endPacket();
-  g_hello_sent_count++;
 }
 
 void service_hello() {
@@ -416,7 +347,6 @@ void service_tx() {
     }
     frame->transmitted = true;
     frame->last_tx_ms = now_ms;
-    g_data_sent_count++;
   }
 }
 
@@ -447,8 +377,6 @@ void service_control_rx() {
     bool ok_ack = vibesensor::parse_data_ack(packet, read, g_client_id, &last_seq_received);
     if (ok_ack) {
       ack_data_frames(last_seq_received);
-      g_data_ack_count++;
-      g_last_acked_seq = last_seq_received;
     }
     return;
   }
@@ -490,41 +418,8 @@ void service_data_rx() {
     bool ok_ack = vibesensor::parse_data_ack(packet, read, g_client_id, &last_seq_received);
     if (ok_ack) {
       ack_data_frames(last_seq_received);
-      g_data_ack_count++;
-      g_last_acked_seq = last_seq_received;
     }
   }
-}
-
-void service_debug() {
-  uint32_t now = millis();
-  if (now - g_last_debug_ms < kDebugIntervalMs) {
-    return;
-  }
-  g_last_debug_ms = now;
-
-  wl_status_t wifi = WiFi.status();
-  const bool connected = wifi == WL_CONNECTED;
-  const char* wl = wl_status_name(wifi);
-  const char* mode = g_sensor_ok ? "adxl345" : "synthetic";
-
-  Serial.printf(
-      "[dbg] t=%lu wifi=%s(%d) ssid='%s' ip=%s server=%s q=%u build=%u drops=%lu "
-      "hello=%lu data_tx=%lu data_ack=%lu ack_seq=%lu mode=%s\n",
-      static_cast<unsigned long>(now),
-      wl,
-      static_cast<int>(wifi),
-      vibesensor_network::wifi_ssid,
-      connected ? WiFi.localIP().toString().c_str() : "0.0.0.0",
-      vibesensor_network::server_ip.toString().c_str(),
-      static_cast<unsigned>(g_q_size),
-      static_cast<unsigned>(g_build_count),
-      static_cast<unsigned long>(g_queue_overflow_drops),
-      static_cast<unsigned long>(g_hello_sent_count),
-      static_cast<unsigned long>(g_data_sent_count),
-      static_cast<unsigned long>(g_data_ack_count),
-      static_cast<unsigned long>(g_last_acked_seq),
-      mode);
 }
 
 void service_blink() {
@@ -547,10 +442,6 @@ void service_blink() {
 }
 
 bool connect_wifi() {
-  if (!g_wifi_handlers_registered) {
-    WiFi.onEvent(on_wifi_event);
-    g_wifi_handlers_registered = true;
-  }
   WiFi.mode(WIFI_STA);
 #ifdef WIFI_AUTH_WPA_PSK
   WiFi.setMinSecurity(WIFI_AUTH_WPA_PSK);
@@ -559,26 +450,19 @@ bool connect_wifi() {
   refresh_target_ap();
   for (uint8_t attempt = 1; attempt <= kWifiInitialConnectAttempts; ++attempt) {
     begin_target_wifi();
-    Serial.printf("Connecting WiFi (attempt %u/%u)", attempt, kWifiInitialConnectAttempts);
     uint32_t start_ms = millis();
     while (WiFi.status() != WL_CONNECTED) {
       if (millis() - start_ms >= kWifiConnectTimeoutMs) {
         break;
       }
       delay(300);
-      Serial.print(".");
     }
     if (WiFi.status() == WL_CONNECTED) {
-      Serial.println();
-      Serial.print("Connected IP: ");
-      Serial.println(WiFi.localIP());
       return true;
     }
-    Serial.println("\nWiFi connect timeout.");
     WiFi.disconnect(true, true);
     delay(kWifiRetryBackoffMs);
   }
-  Serial.println("WiFi unavailable after retries; continuing and retrying in loop.");
   return false;
 }
 
@@ -591,7 +475,6 @@ void service_wifi() {
     return;
   }
   g_last_wifi_retry_ms = now;
-  Serial.println("WiFi disconnected, retrying...");
   if (now - g_last_wifi_scan_ms >= kWifiScanIntervalMs) {
     g_last_wifi_scan_ms = now;
     refresh_target_ap();
@@ -604,11 +487,6 @@ void service_wifi() {
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("Boot network target:");
-  Serial.print("  SSID: ");
-  Serial.println(vibesensor_network::wifi_ssid);
-  Serial.print("  Server IP: ");
-  Serial.println(vibesensor_network::server_ip);
   g_led_strip.begin();
   clear_leds();
 
@@ -616,7 +494,6 @@ void setup() {
 
   String mac = WiFi.macAddress();
   if (!vibesensor::parse_mac(mac, g_client_id)) {
-    Serial.println("Failed to parse MAC, using fallback ID.");
     const uint8_t fallback[6] = {0xD0, 0x5A, 0x00, 0x00, 0x00, 0x01};
     memcpy(g_client_id, fallback, sizeof(g_client_id));
   }
@@ -626,16 +503,9 @@ void setup() {
   g_control_udp.begin(g_control_port);
 
   g_sensor_ok = g_adxl.begin();
-  if (g_sensor_ok) {
-    Serial.println("ADXL345 detected.");
-  } else {
-    Serial.println("ADXL345 not detected, synthetic mode enabled.");
-  }
 
   g_next_sample_due_us = esp_timer_get_time();
   send_hello();
-  g_last_debug_ms = millis();
-  Serial.println("Debug logging enabled: periodic status every 5s.");
 }
 
 void loop() {
@@ -646,6 +516,5 @@ void loop() {
   service_hello();
   service_control_rx();
   service_blink();
-  service_debug();
   delay(1);
 }

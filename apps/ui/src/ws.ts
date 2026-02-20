@@ -27,7 +27,8 @@ export class WsClient {
 
   constructor(options: WsClientOptions) {
     this.options = {
-      staleAfterMs: 3000,
+      // 3s is too aggressive on weaker Pi + hotspot links and causes false stale flicker.
+      staleAfterMs: 10000,
       reconnectDelayMs: 1200,
       hasData: (payload: Record<string, unknown>) => {
         const spectra = payload?.spectra;
