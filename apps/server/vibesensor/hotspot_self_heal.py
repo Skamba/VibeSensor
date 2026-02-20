@@ -230,6 +230,11 @@ def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | No
     con_names = parse_active_connection_names(
         runner.run(["nmcli", "-t", "-f", "NAME", "connection", "show"], timeout_s=8).stdout
     )
+    if not ap.psk and ap.con_name in con_names:
+        # Recreate open AP profiles to guarantee no stale security fields remain.
+        runner.run(["nmcli", "connection", "delete", ap.con_name], timeout_s=8)
+        con_names = [name for name in con_names if name != ap.con_name]
+
     if ap.con_name not in con_names:
         added = runner.run(
             [
@@ -252,31 +257,30 @@ def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | No
         if added.returncode != 0:
             return False
 
-    modified = runner.run(
-        [
-            "nmcli",
-            "connection",
-            "modify",
-            ap.con_name,
-            "802-11-wireless.mode",
-            "ap",
-            "802-11-wireless.band",
-            "bg",
-            "802-11-wireless.channel",
-            str(configured_channel),
-            "802-11-wireless-security.key-mgmt",
-            "wpa-psk",
-            "802-11-wireless-security.psk",
-            ap.psk,
-            "ipv4.method",
-            "shared",
-            "ipv4.addresses",
-            ap.ip,
-            "ipv6.method",
-            "ignore",
-        ],
-        timeout_s=10,
-    )
+    modify_args = [
+        "nmcli",
+        "connection",
+        "modify",
+        ap.con_name,
+        "802-11-wireless.mode",
+        "ap",
+        "802-11-wireless.band",
+        "bg",
+        "802-11-wireless.channel",
+        str(configured_channel),
+        "ipv4.method",
+        "shared",
+        "ipv4.addresses",
+        ap.ip,
+        "ipv6.method",
+        "ignore",
+    ]
+    if ap.psk:
+        modify_args.extend(
+            ["802-11-wireless-security.key-mgmt", "wpa-psk", "802-11-wireless-security.psk", ap.psk]
+        )
+
+    modified = runner.run(modify_args, timeout_s=10)
     if modified.returncode != 0:
         return False
 
