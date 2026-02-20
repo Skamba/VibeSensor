@@ -101,7 +101,7 @@ def _ap_cfg(tmp_path: Path, *, allow_disable_resolved_stub_listener: bool = Fals
     return APConfig(
         ssid="VibeSensor",
         psk="vibesensor123",
-        ip="192.168.4.1/24",
+        ip="10.4.0.1/24",
         channel=7,
         ifname="wlan0",
         con_name="VibeSensor-AP",
@@ -122,7 +122,7 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
         ("nmcli", "connection", "show", "--active"): [
             _ok(f"NAME  DEVICE\n{ap.con_name}  {ap.ifname}")
         ],
-        ("ip", "addr", "show", "dev", ap.ifname): [_ok("3: wlan0\n    inet 192.168.4.1/24")],
+        ("ip", "addr", "show", "dev", ap.ifname): [_ok("3: wlan0\n    inet 10.4.0.1/24")],
         ("rfkill", "list"): [_ok("0: phy0: Wireless LAN\n\tSoft blocked: no\n\tHard blocked: no")],
         ("ip", "link", "show", "dev", ap.ifname): [
             _ok("2: wlan0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP")
@@ -135,7 +135,7 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
             _ok("Interface wlan0\n\ttype AP\n\tchannel 7 (2442 MHz)")
         ],
         ("ip", "-4", "addr", "show", "dev", ap.ifname): [
-            _ok("3: wlan0\n    inet 192.168.4.1/24 brd 192.168.4.255 scope global wlan0")
+            _ok("3: wlan0\n    inet 10.4.0.1/24 brd 10.4.0.255 scope global wlan0")
         ],
         (
             "journalctl",
