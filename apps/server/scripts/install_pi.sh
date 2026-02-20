@@ -48,7 +48,7 @@ run_as_root apt-get install -y \
 python3 -m venv "${VENV_DIR}"
 "${VENV_DIR}/bin/pip" install --upgrade pip
 "${VENV_DIR}/bin/pip" install -e "${PI_DIR}"
-"${VENV_DIR}/bin/python" "${PI_DIR}/../tools/config/config_preflight.py" "${PI_DIR}/config.example.yaml" >/dev/null
+"${VENV_DIR}/bin/vibesensor-config-preflight" "${PI_DIR}/config.example.yaml" >/dev/null
 
 run_as_root install -d /etc/vibesensor
 run_as_root install -d /etc/tmpfiles.d

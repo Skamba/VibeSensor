@@ -89,7 +89,7 @@ def main() -> int:
                 "docker",
                 "build",
                 "-f",
-                "infra/docker/server.Dockerfile",
+                "apps/server/Dockerfile",
                 "-t",
                 IMAGE,
                 ".",

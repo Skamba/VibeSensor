@@ -27,9 +27,12 @@ dev = [
 ]
 
 [project.scripts]
-vibesensor-server = "vibesensor.app:main"
+vibesensor-server = "vibesensor.server_cli:main"
 vibesensor-report = "vibesensor.report_cli:main"
 vibesensor-hotspot-self-heal = "vibesensor.hotspot_self_heal:main"
+vibesensor-sim = "vibesensor_simulator.sim_sender:main"
+vibesensor-ws-smoke = "vibesensor_simulator.ws_smoke:main"
+vibesensor-config-preflight = "vibesensor_tools_config.config_preflight:main"
 
 [tool.setuptools]
 include-package-data = true
@@ -37,11 +40,20 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = [
   ".",
+  "../../apps/simulator",
+  "../../tools/config",
   "../../libs/core/python",
   "../../libs/shared/python",
   "../../libs/adapters/python",
 ]
-include = ["vibesensor*", "vibesensor_core*", "vibesensor_shared*", "vibesensor_adapters*"]
+include = [
+  "vibesensor*",
+  "vibesensor_core*",
+  "vibesensor_shared*",
+  "vibesensor_adapters*",
+  "vibesensor_simulator*",
+  "vibesensor_tools_config*",
+]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
