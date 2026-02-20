@@ -28,7 +28,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
             "state_file": "data/hotspot-self-heal-state.json",
         },
     },
-    "server": {"host": "0.0.0.0", "port": 8000},
+    "server": {"host": "0.0.0.0", "port": 80},
     "udp": {"data_listen": "0.0.0.0:9000", "control_listen": "0.0.0.0:9001"},
     "processing": {
         "sample_rate_hz": 800,
