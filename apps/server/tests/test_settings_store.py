@@ -296,3 +296,23 @@ def test_store_language_roundtrip() -> None:
     assert store.language == "en"
     assert store.set_language("nl") == "nl"
     assert store.language == "nl"
+
+
+def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    # Write invalid JSON directly into the settings_kv table
+    db.set_setting("settings_snapshot", "not-valid-json{{{")
+    store = SettingsStore(db=db)
+    snap = store.snapshot()
+    assert len(snap["cars"]) == 1
+    assert snap["speedSource"] == "gps"
+
+
+def test_store_snapshot_with_empty_cars_falls_back(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.set_settings_snapshot({"cars": [], "activeCarId": ""})
+    store = SettingsStore(db=db)
+    snap = store.snapshot()
+    # Should fall back to one default car
+    assert len(snap["cars"]) >= 1
+    assert snap["activeCarId"] == snap["cars"][0]["id"]
