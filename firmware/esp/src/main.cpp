@@ -2,6 +2,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <esp_heap_caps.h>
 #include <esp_timer.h>
 
 #include "adxl345.h"
@@ -19,7 +20,10 @@ constexpr uint16_t kFrameSamples = 200;
 constexpr uint16_t kServerDataPort = 9000;
 constexpr uint16_t kServerControlPort = 9001;
 constexpr uint16_t kControlPortBase = 9010;
-constexpr size_t kFrameQueueLen = 16;
+// Use a larger queue target and allocate from heap at runtime to avoid
+// static DRAM linker limits while still maximizing buffering when RAM allows.
+constexpr size_t kFrameQueueLenTarget = 128;
+constexpr size_t kFrameQueueLenMin = 16;
 constexpr size_t kMaxDatagramBytes = 1500;
 constexpr uint32_t kHelloIntervalMs = 2000;
 constexpr uint32_t kWifiConnectTimeoutMs = 15000;
@@ -28,7 +32,7 @@ constexpr uint32_t kWifiRetryIntervalMs = 4000;
 constexpr uint8_t kWifiInitialConnectAttempts = 3;
 constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 constexpr size_t kSensorReadBatchSamples = 8;
-constexpr size_t kMaxTxFramesPerLoop = 1;
+constexpr size_t kMaxTxFramesPerLoop = 2;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
 constexpr uint32_t kWifiScanIntervalMs = 20000;
 
@@ -66,7 +70,8 @@ Adafruit_NeoPixel g_led_strip(kLedPixels, LED_BUILTIN, NEO_GRB + NEO_KHZ800);
 uint8_t g_client_id[6] = {};
 uint16_t g_control_port = 9010;
 
-DataFrame g_queue[kFrameQueueLen];
+DataFrame* g_queue = nullptr;
+size_t g_queue_capacity = 0;
 size_t g_q_head = 0;
 size_t g_q_tail = 0;
 size_t g_q_size = 0;
@@ -163,10 +168,15 @@ void enqueue_frame() {
   if (g_build_count == 0) {
     return;
   }
-
-  if (g_q_size == kFrameQueueLen) {
+  if (g_queue == nullptr || g_queue_capacity == 0) {
     g_queue_overflow_drops++;
-    g_q_tail = (g_q_tail + 1) % kFrameQueueLen;
+    g_build_count = 0;
+    return;
+  }
+
+  if (g_q_size == g_queue_capacity) {
+    g_queue_overflow_drops++;
+    g_q_tail = (g_q_tail + 1) % g_queue_capacity;
     g_q_size--;
   }
 
@@ -178,7 +188,7 @@ void enqueue_frame() {
   frame.last_tx_ms = 0;
   memcpy(frame.xyz, g_build_xyz, static_cast<size_t>(g_build_count) * 3 * sizeof(int16_t));
 
-  g_q_head = (g_q_head + 1) % kFrameQueueLen;
+  g_q_head = (g_q_head + 1) % g_queue_capacity;
   g_q_size++;
   g_build_count = 0;
 }
@@ -194,7 +204,7 @@ void drop_front_frame() {
   if (g_q_size == 0) {
     return;
   }
-  g_q_tail = (g_q_tail + 1) % kFrameQueueLen;
+  g_q_tail = (g_q_tail + 1) % g_queue_capacity;
   g_q_size--;
 }
 
@@ -487,6 +497,19 @@ void service_wifi() {
 
 void setup() {
   Serial.begin(115200);
+  for (size_t cap = kFrameQueueLenTarget; cap >= kFrameQueueLenMin; --cap) {
+    auto* mem = static_cast<DataFrame*>(
+        heap_caps_malloc(cap * sizeof(DataFrame), MALLOC_CAP_8BIT));
+    if (mem != nullptr) {
+      g_queue = mem;
+      g_queue_capacity = cap;
+      break;
+    }
+    if (cap == kFrameQueueLenMin) {
+      break;
+    }
+  }
+
   g_led_strip.begin();
   clear_leds();
 
