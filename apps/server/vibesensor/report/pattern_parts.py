@@ -28,7 +28,11 @@ _SYSTEM_PARTS: dict[tuple[str, str], list[tuple[str, str, str]]] = {
         ("cv_joint", "CV joint / drive shaft", "Homokineet / aandrijfas"),
     ],
     ("wheel/tire", "higher"): [
-        ("hub_bearing", "Wheel hub bearing (advanced wear)", "Wielnaaf-lager (gevorderde slijtage)"),
+        (
+            "hub_bearing",
+            "Wheel hub bearing (advanced wear)",
+            "Wielnaaf-lager (gevorderde slijtage)",
+        ),
         ("brake_caliper", "Brake caliper / pad contact", "Remklauw / blokcontact"),
     ],
     ("wheel/tire", "*"): [

@@ -110,9 +110,7 @@ def _build_header(summary, *, tr, text_fn, style_title, style_note, content_widt
         header=False,
     )
     header.setStyle(
-        TableStyle(
-            [("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(REPORT_COLORS["surface"]))]
-        )
+        TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor(REPORT_COLORS["surface"]))])
     )
     return header
 
@@ -134,14 +132,10 @@ def _build_observed_signature(
 
     if top_causes:
         tc = top_causes[0]
-        primary_system = _human_source(
-            tc.get("source") or tc.get("suspected_source"), tr=tr
-        )
+        primary_system = _human_source(tc.get("source") or tc.get("suspected_source"), tr=tr)
         primary_location = str(tc.get("strongest_location") or tr("UNKNOWN"))
         primary_speed = str(tc.get("strongest_speed_band") or tr("UNKNOWN"))
-        conf = _as_float(tc.get("confidence")) or _as_float(
-            tc.get("confidence_0_to_1")
-        ) or 0.0
+        conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
     else:
         primary_system = tr("UNKNOWN")
         primary_location = tr("UNKNOWN")
@@ -152,13 +146,9 @@ def _build_observed_signature(
     str_text = strength_text(db_val, lang=lang)
 
     steady = bool(speed_stats.get("steady_speed"))
-    weak_spatial = bool(
-        top_causes[0].get("weak_spatial_separation") if top_causes else False
-    )
+    weak_spatial = bool(top_causes[0].get("weak_spatial_separation") if top_causes else False)
     sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
-    has_ref_gaps = any(
-        str(f.get("finding_id", "")).startswith("REF_") for f in findings
-    )
+    has_ref_gaps = any(str(f.get("finding_id", "")).startswith("REF_") for f in findings)
 
     cert_key, cert_label_text, cert_pct, cert_reason = certainty_label(
         conf,
@@ -257,9 +247,9 @@ def _build_system_cards(summary, *, tr, text_fn, lang, style_note, style_small, 
         order_label = str(sigs[0]) if sigs else None
         parts = parts_for_pattern(str(src), order_label, lang=lang)
         parts_text = ", ".join(parts) if parts else "\u2014"
-        conf = _as_float(cause.get("confidence")) or _as_float(
-            cause.get("confidence_0_to_1")
-        ) or 0.0
+        conf = (
+            _as_float(cause.get("confidence")) or _as_float(cause.get("confidence_0_to_1")) or 0.0
+        )
         _ck, _cl, _cp, cert_reason = certainty_label(conf, lang=lang)
         tone = cause.get("confidence_tone", "neutral")
         card = make_card(
@@ -330,9 +320,7 @@ def _build_data_trust(summary, *, tr, text_fn, style_note, style_small, content_
     from reportlab.lib import colors
     from reportlab.platypus import Paragraph, Table, TableStyle
 
-    run_suitability = [
-        r for r in summary.get("run_suitability", []) if isinstance(r, dict)
-    ]
+    run_suitability = [r for r in summary.get("run_suitability", []) if isinstance(r, dict)]
     if not run_suitability:
         return [Paragraph(tr("UNKNOWN"), style_note)]
 
@@ -400,8 +388,7 @@ def _build_pattern_evidence_panel(
     )
 
     systems = [
-        _human_source(c.get("source") or c.get("suspected_source"), tr=tr)
-        for c in top_causes[:3]
+        _human_source(c.get("source") or c.get("suspected_source"), tr=tr) for c in top_causes[:3]
     ]
     systems_text = ", ".join(systems) if systems else tr("UNKNOWN")
 
@@ -420,10 +407,14 @@ def _build_pattern_evidence_panel(
     str_text = strength_text(db_val, lang=lang)
 
     conf = (
-        _as_float(top_causes[0].get("confidence"))
-        or _as_float(top_causes[0].get("confidence_0_to_1"))
-        or 0.0
-    ) if top_causes else 0.0
+        (
+            _as_float(top_causes[0].get("confidence"))
+            or _as_float(top_causes[0].get("confidence_0_to_1"))
+            or 0.0
+        )
+        if top_causes
+        else 0.0
+    )
 
     steady = bool(speed_stats.get("steady_speed"))
     weak_spatial = bool(top_causes[0].get("weak_spatial_separation")) if top_causes else False
@@ -443,9 +434,7 @@ def _build_pattern_evidence_panel(
     interp = str(origin.get("explanation", "")) if isinstance(origin, dict) else ""
 
     src = str(
-        (top_causes[0].get("source") or top_causes[0].get("suspected_source"))
-        if top_causes
-        else ""
+        (top_causes[0].get("source") or top_causes[0].get("suspected_source")) if top_causes else ""
     )
     sigs = top_causes[0].get("signatures_observed", []) if top_causes else []
     order_lbl = str(sigs[0]) if sigs else None
@@ -474,12 +463,8 @@ def _build_pattern_evidence_panel(
             ]
         )
     if interp:
-        rows.append(
-            [Paragraph(f"<b>{tr('INTERPRETATION')}:</b> {escape(interp)}", style_small)]
-        )
-    rows.append(
-        [Paragraph(f"<b>{tr('WHY_PARTS_LISTED')}:</b> {escape(why_text)}", style_small)]
-    )
+        rows.append([Paragraph(f"<b>{tr('INTERPRETATION')}:</b> {escape(interp)}", style_small)])
+    rows.append([Paragraph(f"<b>{tr('WHY_PARTS_LISTED')}:</b> {escape(why_text)}", style_small)])
 
     panel = Table(rows, colWidths=[panel_width - 16])
     panel.setStyle(

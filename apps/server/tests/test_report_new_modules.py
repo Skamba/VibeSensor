@@ -188,9 +188,7 @@ def _run_metadata(run_id: str = "run-01", **kwargs) -> dict:
         },
     }
     defaults.update(kwargs)
-    defaults.setdefault(
-        "incomplete_for_order_analysis", defaults.get("raw_sample_rate_hz") is None
-    )
+    defaults.setdefault("incomplete_for_order_analysis", defaults.get("raw_sample_rate_hz") is None)
     return defaults
 
 
@@ -230,9 +228,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     run_path = tmp_path / "no_car.jsonl"
     records: list[dict] = [_run_metadata()]
     for idx in range(15):
-        records.append(
-            _sample(idx, speed_kmh=50.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.08)
-        )
+        records.append(_sample(idx, speed_kmh=50.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.08))
     records.append({"record_type": "run_end", "run_id": "run-01", "schema_version": "v2-jsonl"})
     _write_jsonl(run_path, records)
 
