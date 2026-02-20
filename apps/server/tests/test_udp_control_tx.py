@@ -33,7 +33,7 @@ def test_send_identify_accepts_hex_and_mac_client_ids(
     client_id_input: str,
 ) -> None:
     client_hex = "aabbccddeeff"
-    registry = ClientRegistry(tmp_path / "clients.json")
+    registry = ClientRegistry(db=HistoryDB(tmp_path / "history.db"))
     registry.update_from_hello(
         HelloMessage(
             client_id=bytes.fromhex(client_hex),
