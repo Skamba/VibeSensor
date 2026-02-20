@@ -1,4 +1,4 @@
-"""Tests for new report modules: pattern_parts and strength_labels."""
+"""Tests for new report modules: pattern_parts, strength_labels, aspect ratio, data model."""
 
 from __future__ import annotations
 
@@ -10,6 +10,8 @@ import pytest
 from pypdf import PdfReader
 
 from vibesensor.report.pattern_parts import parts_for_pattern, why_parts_listed
+from vibesensor.report.pdf_builder import assert_aspect_preserved, fit_rect_preserve_aspect
+from vibesensor.report.report_data import ReportTemplateData, map_summary
 from vibesensor.report.strength_labels import certainty_label, strength_label, strength_text
 from vibesensor.reports import build_report_pdf, summarize_log
 
@@ -258,3 +260,83 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
     pdf = build_report_pdf(summary)
     reader = PdfReader(BytesIO(pdf))
     assert len(reader.pages) == 2
+
+
+# ---------------------------------------------------------------------------
+# Aspect ratio preservation (from template spec)
+# ---------------------------------------------------------------------------
+
+
+def test_fit_rect_preserve_aspect_wider_box() -> None:
+    """Box wider than source → fit to height, center horizontally."""
+    x, y, w, h = fit_rect_preserve_aspect(100, 200, 0, 0, 400, 200)
+    assert h == pytest.approx(200.0)
+    assert w == pytest.approx(100.0)
+    assert x == pytest.approx(150.0)  # centered
+
+
+def test_fit_rect_preserve_aspect_taller_box() -> None:
+    """Box taller than source → fit to width, center vertically."""
+    x, y, w, h = fit_rect_preserve_aspect(200, 100, 0, 0, 200, 400)
+    assert w == pytest.approx(200.0)
+    assert h == pytest.approx(100.0)
+    assert y == pytest.approx(150.0)
+
+
+def test_assert_aspect_preserved_ok() -> None:
+    assert_aspect_preserved(100, 200, 50, 100)  # ratio 0.5
+
+
+def test_assert_aspect_preserved_fails() -> None:
+    with pytest.raises(AssertionError, match="distorted"):
+        assert_aspect_preserved(100, 200, 150, 100)  # very different ratio
+
+
+def test_assert_aspect_preserved_zero_dims() -> None:
+    with pytest.raises(AssertionError, match="Invalid"):
+        assert_aspect_preserved(0, 200, 50, 100)
+
+
+# ---------------------------------------------------------------------------
+# map_summary data model
+# ---------------------------------------------------------------------------
+
+
+def test_map_summary_basic(tmp_path: Path) -> None:
+    """map_summary produces a valid ReportTemplateData with expected fields."""
+    run_path = tmp_path / "map_summary.jsonl"
+    records: list[dict] = [_run_metadata(tire_circumference_m=2.2)]
+    for idx in range(20):
+        speed = 50 + idx
+        wheel_hz = (speed * (1000.0 / 3600.0)) / 2.2
+        records.append(
+            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
+        )
+    records.append({"record_type": "run_end", "run_id": "run-01", "schema_version": "v2-jsonl"})
+    _write_jsonl(run_path, records)
+    summary = summarize_log(run_path)
+
+    data = map_summary(summary)
+    assert isinstance(data, ReportTemplateData)
+    assert data.title  # not empty
+    assert data.run_datetime
+    assert data.observed.primary_system
+    assert data.observed.certainty_label
+    assert data.observed.certainty_reason
+    assert data.version_marker
+
+
+def test_map_summary_no_top_causes() -> None:
+    """map_summary handles empty summary gracefully."""
+    summary: dict = {
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert isinstance(data, ReportTemplateData)
+    assert data.system_cards == []
+    assert data.next_steps == []
