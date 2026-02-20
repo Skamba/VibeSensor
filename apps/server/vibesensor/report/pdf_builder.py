@@ -63,7 +63,7 @@ GAP = 4 * mm
 OBSERVED_LABEL_W = 34 * mm
 DATA_TRUST_WIDTH_RATIO = 0.28
 DATA_TRUST_LABEL_W = 26 * mm
-EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.46
+EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.56
 DISCLAIMER_Y_OFFSET = 5.5 * mm
 DATA_TRUST_LINE_STEP = 3.9 * mm
 CAR_PANEL_TITLE_RESERVE = 18 * mm
@@ -292,7 +292,9 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
 
     # Disclaimer
     disc_text = tr("PATTERN_SUGGESTION_DISCLAIMER")
-    _draw_text(c, ox, obs_y + DISCLAIMER_Y_OFFSET, W - 8 * mm, disc_text, size=FS_SMALL, color=MUTED_CLR)
+    _draw_text(
+        c, ox, obs_y + DISCLAIMER_Y_OFFSET, W - 8 * mm, disc_text, size=FS_SMALL, color=MUTED_CLR
+    )
 
     y_cursor = obs_y - GAP
 
@@ -348,7 +350,15 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         for item in data.data_trust[:6]:
             icon = "\u2713" if item.state == "pass" else "\u26a0"
             state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
-            _draw_kv(c, tx, ty, item.check, f"{icon} {state_lbl}", label_w=DATA_TRUST_LABEL_W, fs=FS_SMALL)
+            _draw_kv(
+                c,
+                tx,
+                ty,
+                item.check,
+                f"{icon} {state_lbl}",
+                label_w=DATA_TRUST_LABEL_W,
+                fs=FS_SMALL,
+            )
             ty -= DATA_TRUST_LINE_STEP
     else:
         c.setFillColor(_hex(SUB_CLR))
