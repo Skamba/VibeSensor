@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from math import log1p
+from math import floor, log1p
 from statistics import mean
 from typing import Any
 
@@ -398,6 +398,179 @@ def _build_order_findings(
         if float(item[1].get("confidence_0_to_1", 0)) >= ORDER_MIN_CONFIDENCE
     ]
 
+PERSISTENT_PEAK_MIN_PRESENCE = 0.15
+TRANSIENT_BURSTINESS_THRESHOLD = 5.0
+PERSISTENT_PEAK_MAX_FINDINGS = 3
+
+
+def _classify_peak_type(
+    presence_ratio: float,
+    burstiness: float,
+) -> str:
+    """Classify a frequency peak as ``patterned``, ``persistent``, or ``transient``.
+
+    * **patterned**: high presence and low burstiness → likely a fault vibration.
+    * **persistent**: moderate presence → unknown but repeated resonance.
+    * **transient**: low presence or very high burstiness → one-off impact/thud.
+    """
+    if presence_ratio < PERSISTENT_PEAK_MIN_PRESENCE:
+        return "transient"
+    if burstiness > TRANSIENT_BURSTINESS_THRESHOLD:
+        return "transient"
+    if presence_ratio >= 0.40 and burstiness < 3.0:
+        return "patterned"
+    return "persistent"
+
+
+def _build_persistent_peak_findings(
+    *,
+    samples: list[dict[str, Any]],
+    order_finding_freqs: set[float],
+    accel_units: str,
+    lang: object,
+    freq_bin_hz: float = 2.0,
+) -> list[dict[str, object]]:
+    """Build findings for non-order persistent frequency peaks.
+
+    Uses the same confidence-style scoring as order findings (presence_ratio,
+    error/SNR) so the report is consistent.  Peaks already claimed by order
+    findings are excluded.  Transient peaks are returned separately.
+    """
+    if freq_bin_hz <= 0:
+        freq_bin_hz = 2.0
+
+    bin_amps: dict[float, list[float]] = defaultdict(list)
+    bin_floors: dict[float, list[float]] = defaultdict(list)
+    bin_speeds: dict[float, list[float]] = defaultdict(list)
+    n_samples = 0
+
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        n_samples += 1
+        speed = _as_float(sample.get("speed_kmh"))
+        floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
+        for hz, amp in _sample_top_peaks(sample):
+            if hz <= 0 or amp <= 0:
+                continue
+            bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
+            bin_center = bin_low + (freq_bin_hz / 2.0)
+            bin_amps[bin_center].append(amp)
+            bin_floors[bin_center].append(max(0.0, floor_amp))
+            if speed is not None and speed > 0:
+                bin_speeds[bin_center].append(speed)
+
+    if n_samples == 0:
+        return []
+
+    persistent_findings: list[tuple[float, dict[str, object]]] = []
+    transient_findings: list[tuple[float, dict[str, object]]] = []
+
+    for bin_center, amps in bin_amps.items():
+        # Skip bins already claimed by order findings
+        if any(abs(bin_center - of) < freq_bin_hz for of in order_finding_freqs):
+            continue
+
+        sorted_amps = sorted(amps)
+        count = len(sorted_amps)
+        presence_ratio = count / max(1, n_samples)
+        median_amp = _percentile(sorted_amps, 0.50) if count >= 2 else sorted_amps[0]
+        p95_amp = _percentile(sorted_amps, 0.95) if count >= 2 else sorted_amps[-1]
+        max_amp = sorted_amps[-1]
+        burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
+
+        peak_type = _classify_peak_type(presence_ratio, burstiness)
+
+        mean_floor = mean(bin_floors.get(bin_center, [0.0])) if bin_floors.get(bin_center) else 0.0
+        snr_score = min(1.0, log1p(p95_amp / max(1e-6, mean_floor)) / 2.5)
+
+        # Confidence for persistent/patterned peaks (analogous to order confidence)
+        if peak_type == "transient":
+            confidence = max(0.05, min(0.22, 0.05 + 0.10 * presence_ratio + 0.07 * snr_score))
+        else:
+            confidence = max(
+                0.10,
+                min(
+                    0.75,
+                    0.10 + 0.35 * presence_ratio + 0.15 * snr_score + 0.15 * min(1.0, 1.0 - burstiness / 10.0),
+                ),
+            )
+
+        speeds = bin_speeds.get(bin_center, [])
+        speed_band = "-"
+        if speeds:
+            speed_band = f"{min(speeds):.0f}-{max(speeds):.0f} km/h"
+
+        evidence = _text(
+            lang,
+            (
+                "{freq:.1f} Hz peak present in {pct:.0%} of samples "
+                "(p95 amplitude {p95:.4f} {units}, burstiness {burst:.1f}×, "
+                "classification: {cls})."
+            ),
+            (
+                "{freq:.1f} Hz piek aanwezig in {pct:.0%} van de samples "
+                "(p95 amplitude {p95:.4f} {units}, burstigheid {burst:.1f}×, "
+                "classificatie: {cls})."
+            ),
+        ).format(
+            freq=bin_center,
+            pct=presence_ratio,
+            p95=p95_amp,
+            units=accel_units,
+            burst=burstiness,
+            cls=peak_type,
+        )
+
+        finding: dict[str, object] = {
+            "finding_id": "F_PEAK",
+            "finding_key": f"peak_{bin_center:.0f}hz",
+            "suspected_source": "unknown_resonance" if peak_type != "transient" else "transient_impact",
+            "evidence_summary": evidence,
+            "frequency_hz_or_order": f"{bin_center:.1f} Hz",
+            "amplitude_metric": {
+                "name": "strength_p95_band_rms_amp_g",
+                "value": p95_amp,
+                "units": accel_units,
+                "definition": _text(
+                    lang,
+                    "p95 peak amplitude across matched samples.",
+                    "p95 piekamplitude over gematchte samples.",
+                ),
+            },
+            "confidence_0_to_1": confidence,
+            "quick_checks": [],
+            "peak_classification": peak_type,
+            "evidence_metrics": {
+                "presence_ratio": presence_ratio,
+                "median_amplitude": median_amp,
+                "p95_amplitude": p95_amp,
+                "max_amplitude": max_amp,
+                "burstiness": burstiness,
+                "mean_noise_floor": mean_floor,
+                "sample_count": count,
+                "total_samples": n_samples,
+            },
+            "strongest_speed_band": speed_band if speed_band != "-" else None,
+        }
+
+        ranking_score = presence_ratio * p95_amp
+        if peak_type == "transient":
+            transient_findings.append((ranking_score, finding))
+        else:
+            persistent_findings.append((ranking_score, finding))
+
+    # Sort persistent findings by ranking score, take top N
+    persistent_findings.sort(key=lambda item: item[0], reverse=True)
+    transient_findings.sort(key=lambda item: item[0], reverse=True)
+
+    results: list[dict[str, object]] = []
+    for _score, finding in persistent_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:
+        results.append(finding)
+    for _score, finding in transient_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:
+        results.append(finding)
+    return results
+
 
 def _build_findings(
     *,
@@ -487,16 +660,35 @@ def _build_findings(
             )
         )
 
+    order_findings = _build_order_findings(
+        metadata=metadata,
+        samples=samples,
+        speed_sufficient=speed_sufficient,
+        steady_speed=steady_speed,
+        speed_stddev_kmh=speed_stddev_kmh,
+        tire_circumference_m=tire_circumference_m if speed_sufficient else None,
+        engine_ref_sufficient=engine_ref_sufficient,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        accel_units=accel_units,
+        lang=lang,
+    )
+    findings.extend(order_findings)
+
+    # Collect frequencies already claimed by order findings to avoid duplicates
+    order_freqs: set[float] = set()
+    for of in order_findings:
+        pts = of.get("matched_points")
+        if isinstance(pts, list):
+            for pt in pts:
+                if isinstance(pt, dict):
+                    mhz = _as_float(pt.get("matched_hz"))
+                    if mhz is not None and mhz > 0:
+                        order_freqs.add(mhz)
+
     findings.extend(
-        _build_order_findings(
-            metadata=metadata,
+        _build_persistent_peak_findings(
             samples=samples,
-            speed_sufficient=speed_sufficient,
-            steady_speed=steady_speed,
-            speed_stddev_kmh=speed_stddev_kmh,
-            tire_circumference_m=tire_circumference_m if speed_sufficient else None,
-            engine_ref_sufficient=engine_ref_sufficient,
-            raw_sample_rate_hz=raw_sample_rate_hz,
+            order_finding_freqs=order_freqs,
             accel_units=accel_units,
             lang=lang,
         )
