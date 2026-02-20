@@ -20,7 +20,7 @@ def _aggregate_fft_spectrum(
     *,
     freq_bin_hz: float = 2.0,
 ) -> list[tuple[float, float]]:
-    """Return persistence-weighted FFT spectrum: presence_ratio × p95_amp per bin.
+    """Return persistence-weighted FFT spectrum: presence_ratio² × p95_amp per bin.
 
     This prevents a single transient spike from dominating the diagnostic view.
     """
@@ -188,7 +188,7 @@ def _top_peaks_table_rows(
     """Build ranked peak table using persistence-weighted scoring.
 
     Each frequency bin collects all amplitude observations across samples.
-    Ranking uses ``presence_ratio × p95_amp`` so that persistent peaks
+    Ranking uses ``presence_ratio² × p95_amp`` so that persistent peaks
     rank above one-off transient spikes.
     """
     grouped: dict[float, dict[str, Any]] = {}
