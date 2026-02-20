@@ -3,6 +3,9 @@
 # NOTE: identical to config.dev.yaml; kept separate so the Dockerfile
 #       and local-dev entrypoints reference distinct filenames.
 
+server:
+  port: 8000
+
 logging:
   metrics_log_path: data/metrics.jsonl
 
