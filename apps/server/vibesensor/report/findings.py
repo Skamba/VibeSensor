@@ -560,7 +560,7 @@ def _build_persistent_peak_findings(
             "strongest_speed_band": speed_band if speed_band != "-" else None,
         }
 
-        ranking_score = presence_ratio * p95_amp
+        ranking_score = (presence_ratio**2) * p95_amp
         if peak_type == "transient":
             transient_findings.append((ranking_score, finding))
         else:
