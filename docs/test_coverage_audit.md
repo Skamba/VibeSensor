@@ -163,9 +163,9 @@
 |------|-------------------|
 | `test_delete_active_run_returns_409` | Cannot delete active recording run |
 
-### Fixed in `test_ui_selenium.py` (8 tests updated)
+### Fixed in `test_ui_selenium.py` (7 tests + 1 helper updated)
 
-All 7 existing tests + 1 new helper updated for 3-tab UI restructure.
+All 7 existing tests updated for 3-tab UI restructure. Added `_activate_settings_subtab()` helper.
 
 ---
 
