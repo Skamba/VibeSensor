@@ -970,5 +970,133 @@
   "WHY": {
     "en": "Why",
     "nl": "Waarom"
+  },
+  "DIAGNOSTIC_WORKSHEET": {
+    "en": "Diagnostic Worksheet",
+    "nl": "Diagnostisch werkblad"
+  },
+  "OBSERVED_SIGNATURE": {
+    "en": "Observed Signature",
+    "nl": "Waargenomen signatuur"
+  },
+  "PRIMARY_SYSTEM": {
+    "en": "Primary system",
+    "nl": "Primair systeem"
+  },
+  "STRONGEST_SENSOR": {
+    "en": "Strongest sensor",
+    "nl": "Sterkste sensor"
+  },
+  "STRENGTH": {
+    "en": "Strength",
+    "nl": "Sterkte"
+  },
+  "CERTAINTY_LABEL_FULL": {
+    "en": "Certainty",
+    "nl": "Zekerheid"
+  },
+  "CERTAINTY_REASON": {
+    "en": "Reason",
+    "nl": "Reden"
+  },
+  "PATTERN_SUGGESTION_DISCLAIMER": {
+    "en": "Pattern-based suggestion only — this is not a definitive diagnosis.",
+    "nl": "Alleen patroongebaseerde suggestie — dit is geen definitieve diagnose."
+  },
+  "SYSTEMS_WITH_FINDINGS": {
+    "en": "Systems with findings",
+    "nl": "Systemen met bevindingen"
+  },
+  "PATTERN_SUMMARY": {
+    "en": "Pattern",
+    "nl": "Patroon"
+  },
+  "COMMON_PARTS": {
+    "en": "Common associated parts",
+    "nl": "Veelvoorkomende onderdelen"
+  },
+  "WHY_SHOWN": {
+    "en": "Why shown",
+    "nl": "Waarom getoond"
+  },
+  "NEXT_STEPS": {
+    "en": "Next steps",
+    "nl": "Vervolgstappen"
+  },
+  "DATA_TRUST": {
+    "en": "Data trust",
+    "nl": "Datavertrouwen"
+  },
+  "EVIDENCE_DIAGNOSTICS": {
+    "en": "Evidence & Diagnostics",
+    "nl": "Bewijs & Diagnostiek"
+  },
+  "PATTERN_EVIDENCE": {
+    "en": "Pattern Evidence",
+    "nl": "Patroonbewijs"
+  },
+  "MATCHED_SYSTEMS": {
+    "en": "Matched system(s)",
+    "nl": "Gematchte systemen"
+  },
+  "INTERPRETATION": {
+    "en": "Interpretation",
+    "nl": "Interpretatie"
+  },
+  "WHY_PARTS_LISTED": {
+    "en": "Why these parts were listed",
+    "nl": "Waarom deze onderdelen zijn vermeld"
+  },
+  "DIAGNOSTIC_PEAKS": {
+    "en": "Diagnostic Peaks",
+    "nl": "Diagnostische pieken"
+  },
+  "SYSTEM": {
+    "en": "System",
+    "nl": "Systeem"
+  },
+  "RELEVANCE": {
+    "en": "Relevance",
+    "nl": "Relevantie"
+  },
+  "AMP_G": {
+    "en": "Amp (g)",
+    "nl": "Amp (g)"
+  },
+  "NO_SYSTEMS_WITH_FINDINGS": {
+    "en": "No systems showed significant vibration patterns in this run.",
+    "nl": "Geen systemen toonden significante trillingspatronen in deze run."
+  },
+  "NO_NEXT_STEPS": {
+    "en": "Collect additional data with a wider speed sweep to enable pattern analysis.",
+    "nl": "Verzamel aanvullende gegevens met een bredere snelheidsvariatie voor patroonanalyse."
+  },
+  "CAR_LABEL": {
+    "en": "Car",
+    "nl": "Auto"
+  },
+  "WARNING_LABEL": {
+    "en": "Warning",
+    "nl": "Waarschuwing"
+  },
+  "PASS": {
+    "en": "Pass",
+    "nl": "Goed"
+  },
+  "WARN_SHORT": {
+    "en": "Warn",
+    "nl": "Let op"
+  },
+  "RANK": {
+    "en": "Rank",
+    "nl": "Rang"
+  },
+  "ORDER_LABEL": {
+    "en": "Order",
+    "nl": "Orde"
+  },
+  "SPEED_BAND": {
+    "en": "Speed band",
+    "nl": "Snelheidsband"
   }
 }

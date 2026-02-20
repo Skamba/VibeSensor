@@ -175,12 +175,13 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
-    _assert_pdf_contains(pdf, "What to check first")
+    _assert_pdf_contains(pdf, "Diagnostic Worksheet")
+    _assert_pdf_contains(pdf, "Observed Signature")
     _assert_pdf_contains(pdf, "Certainty")
-    _assert_pdf_contains(pdf, "Speed")
-    _assert_pdf_contains(pdf, "Frequency")
-    _assert_pdf_contains(pdf, "Evidence and Hotspots")
-    _assert_pdf_contains(pdf, "Workshop Summary")
+    _assert_pdf_contains(pdf, "Systems with findings")
+    _assert_pdf_contains(pdf, "Next steps")
+    _assert_pdf_contains(pdf, "Evidence")
+    _assert_pdf_contains(pdf, "Diagnostic Peaks")
     assert b"Spectrogram" not in pdf
 
 
@@ -337,7 +338,9 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
-    _assert_pdf_contains(pdf, "Amplitude at steady speed")
+    # New layout shows certainty reason for steady speed
+    _assert_pdf_contains(pdf, "Certainty")
+    _assert_pdf_contains(pdf, "Diagnostic Worksheet")
 
 
 def test_sensor_location_stats_include_percentiles_and_strength_distribution(
