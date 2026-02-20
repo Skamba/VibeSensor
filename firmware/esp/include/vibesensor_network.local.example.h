@@ -4,5 +4,5 @@
 // Do not commit secrets or private network details.
 
 #define VIBESENSOR_WIFI_SSID "YOUR_WIFI_SSID"
-#define VIBESENSOR_WIFI_PSK "YOUR_WIFI_PASSWORD"
+#define VIBESENSOR_WIFI_PSK ""
 #define VIBESENSOR_SERVER_IP_OCTETS 10, 4, 0, 100

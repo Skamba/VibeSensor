@@ -39,6 +39,7 @@ require_cmd mount
 require_cmd umount
 require_cmd awk
 require_cmd qemu-arm-static
+require_cmd npm
 
 if ! docker info >/dev/null 2>&1; then
   echo "Docker daemon is not available for current user."
@@ -47,6 +48,25 @@ if ! docker info >/dev/null 2>&1; then
 fi
 
 mkdir -p "${CACHE_DIR}" "${OUT_DIR}"
+
+build_ui_bundle() {
+  local ui_dir="${REPO_ROOT}/apps/ui"
+  local server_public_dir="${REPO_ROOT}/apps/server/public"
+
+  if [ ! -d "${ui_dir}/node_modules" ]; then
+    echo "UI dependencies missing; running npm ci in apps/ui"
+    (cd "${ui_dir}" && npm ci)
+  fi
+
+  echo "Building UI bundle"
+  (cd "${ui_dir}" && npm run build)
+
+  echo "Syncing UI bundle into apps/server/public"
+  mkdir -p "${server_public_dir}"
+  rsync -a --delete "${ui_dir}/dist/" "${server_public_dir}/"
+}
+
+build_ui_bundle
 
 if [ -z "${VS_FIRST_USER_NAME}" ] || [ -z "${VS_FIRST_USER_PASS}" ]; then
   echo "VS_FIRST_USER_NAME and VS_FIRST_USER_PASS must be non-empty to avoid first-boot user prompt."
@@ -447,8 +467,15 @@ fi
 if ! run_qemu_chroot /bin/bash -lc '
 set -e
 export VIBESENSOR_DISABLE_AUTO_APP=1
+pkill -f "python -m vibesensor.app" >/dev/null 2>&1 || true
+cp /etc/vibesensor/config.yaml /tmp/vibesensor-smoke-config.yaml
+sed -i \
+  -e "s#^  port: .*#  port: 18080#" \
+  -e "s#^  data_listen: .*#  data_listen: 0.0.0.0:19000#" \
+  -e "s#^  control_listen: .*#  control_listen: 0.0.0.0:19001#" \
+  /tmp/vibesensor-smoke-config.yaml
 set +e
-timeout 10s /opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.app --config /etc/vibesensor/config.yaml >/tmp/vibesensor-smoke.log 2>&1
+timeout 10s /opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.app --config /tmp/vibesensor-smoke-config.yaml >/tmp/vibesensor-smoke.log 2>&1
 code=$?
 set -e
 if [ "$code" -ne 0 ] && [ "$code" -ne 124 ]; then
