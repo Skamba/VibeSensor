@@ -1,4 +1,4 @@
-"""Tests for GPSSpeedMonitor.run() async loop behaviour."""
+"""Tests for GPSSpeedMonitor.run() async loop behavior."""
 
 from __future__ import annotations
 

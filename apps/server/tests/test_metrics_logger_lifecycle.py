@@ -106,7 +106,7 @@ def _wait_until(predicate, timeout_s: float = 2.0, step_s: float = 0.02) -> bool
 def test_start_append_stop_produces_complete_run_in_db(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Full lifecycle: start → append → stop → analyse → complete with a real DB."""
+    """Full lifecycle: start → append → stop → analyze → complete with a real DB."""
     history_db = HistoryDB(tmp_path / "history.db")
     logger = MetricsLogger(
         enabled=False,
