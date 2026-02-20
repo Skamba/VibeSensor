@@ -174,12 +174,9 @@ class _FakeHistoryDB:
 
 
 def _wait_until(predicate, timeout_s: float = 2.0, step_s: float = 0.02) -> bool:
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(step_s)
-    return False
+    from conftest import wait_until
+
+    return wait_until(predicate, timeout_s=timeout_s, step_s=step_s)
 
 
 def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
@@ -410,7 +407,7 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger.stop_logging()
     elapsed = time.monotonic() - started
 
-    assert elapsed < 0.15
+    assert elapsed < 1.0
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
 
 

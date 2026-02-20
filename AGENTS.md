@@ -38,7 +38,7 @@ Architecture map
 - `libs/adapters`: path/discovery and integration glue
 - `libs/shared`: canonical contracts/schemas/constants used by server and UI
 - `infra/pi-image`: pi-gen image build
-- `infra/docker`: Dockerfiles + compose-related artifacts
+- Docker entrypoint: `docker-compose.yml` (root canonical); Dockerfile lives at `apps/server/Dockerfile`
 
 Invariants
 - Canonical vibration severity metric is `vibration_strength_db`.

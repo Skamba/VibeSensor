@@ -18,13 +18,10 @@ KMH_TO_MPS: Final[float] = 1.0 / MPS_TO_KMH
 """Multiply kilometres-per-hour by this to get metres-per-second."""
 
 # ---------------------------------------------------------------------------
-# Spectrum / peak-finding defaults
+# Spectrum / peak-finding defaults (re-exported from core for convenience)
 # ---------------------------------------------------------------------------
-PEAK_BANDWIDTH_HZ: Final[float] = 1.2
-"""Default ±bandwidth (Hz) used for peak detection and peak-separation."""
-
-PEAK_SEPARATION_HZ: Final[float] = 1.2
-"""Default minimum separation between distinct peaks."""
+from vibesensor_core import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ  # noqa: E402, F811
+from vibesensor_core import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ  # noqa: E402, F811
 
 # ---------------------------------------------------------------------------
 # Strength floor

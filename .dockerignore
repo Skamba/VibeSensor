@@ -1,0 +1,41 @@
+# Version control
+.git
+.gitignore
+
+# Python caches
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+
+# Virtual envs
+.venv
+venv
+
+# Node
+apps/ui/node_modules
+
+# Build artifacts
+artifacts/
+apps/ui/dist
+apps/ui/test-results
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# CI / infra not needed at runtime
+.github
+infra/
+firmware/
+hardware/
+docs/
+scripts/ai/
+examples/
+
+# Misc
+.ruff_cache
+.pytest_cache
+.cache

@@ -31,8 +31,8 @@ jobs:
 
       - name: Lint
         run: |
-          ruff check apps/server/vibesensor apps/server/tests apps/simulator
-          ruff format --check apps/server/vibesensor apps/server/tests apps/simulator
+          ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
+          ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
 
       - name: Line endings
         run: |
