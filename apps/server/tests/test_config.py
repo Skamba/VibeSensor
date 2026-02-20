@@ -57,3 +57,17 @@ def test_dev_and_docker_configs_equivalent() -> None:
     assert dev_cfg.processing == docker_cfg.processing
     assert dev_cfg.gps == docker_cfg.gps
     assert dev_cfg.ap == docker_cfg.ap
+
+
+def test_default_server_port_is_80_for_base_config(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {})
+    cfg = load_config(config_path)
+    assert cfg.server.port == 80
+
+
+def test_dev_and_docker_override_server_port_to_8000() -> None:
+    dev_cfg = load_config(PI_DIR / "config.dev.yaml")
+    docker_cfg = load_config(PI_DIR / "config.docker.yaml")
+    assert dev_cfg.server.port == 8000
+    assert docker_cfg.server.port == 8000

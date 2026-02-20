@@ -1,6 +1,9 @@
 # Development overrides — only fields that differ from defaults.
 # Uses local relative paths instead of system paths.
 
+server:
+  port: 8000
+
 logging:
   metrics_log_path: data/metrics.jsonl
 

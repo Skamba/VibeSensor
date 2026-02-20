@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import errno
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -38,6 +39,7 @@ from .udp_data_rx import start_udp_data_receiver
 from .ws_hub import WebSocketHub
 
 LOGGER = logging.getLogger(__name__)
+BACKUP_SERVER_PORT = 8000
 
 
 @dataclass(slots=True)
@@ -340,12 +342,42 @@ def main() -> None:
 
     runtime_app = create_app(config_path=args.config)
     runtime: RuntimeState = runtime_app.state.runtime
-    uvicorn.run(
-        runtime_app,
-        host=runtime.config.server.host,
-        port=runtime.config.server.port,
-        log_level="info",
-    )
+    host = runtime.config.server.host
+    port = runtime.config.server.port
+    try:
+        uvicorn.run(
+            runtime_app,
+            host=host,
+            port=port,
+            log_level="info",
+        )
+    except OSError as exc:
+        bind_error_numbers = {errno.EACCES, errno.EADDRINUSE, 10013, 10048}
+        if port != 80:
+            LOGGER.warning("Failed to bind to configured port %d.", port, exc_info=True)
+            raise
+        if exc.errno not in bind_error_numbers:
+            LOGGER.warning("Port 80 startup failed with non-bind OSError.", exc_info=True)
+            raise
+        LOGGER.warning(
+            "Failed to bind to port 80; retrying on backup port %d.",
+            BACKUP_SERVER_PORT,
+            exc_info=True,
+        )
+        try:
+            uvicorn.run(
+                runtime_app,
+                host=host,
+                port=BACKUP_SERVER_PORT,
+                log_level="info",
+            )
+        except OSError:
+            LOGGER.error(
+                "Failed to bind to both port 80 and backup port %d.",
+                BACKUP_SERVER_PORT,
+                exc_info=True,
+            )
+            raise
 
 
 if __name__ == "__main__":
