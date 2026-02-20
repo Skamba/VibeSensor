@@ -479,6 +479,10 @@
     "en": "Run file: {name}",
     "nl": "Run-bestand: {name}"
   },
+  "RUN_DATE": {
+    "en": "Run date",
+    "nl": "Run-datum"
+  },
   "RUN_ID": {
     "en": "Run ID",
     "nl": "Run-ID"
