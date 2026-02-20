@@ -213,7 +213,7 @@ import sys
 defaults = {
     "ssid": "VibeSensor",
     "psk": "vibesensor123",
-    "ip": "192.168.4.1/24",
+    "ip": "10.4.0.1/24",
     "channel": 7,
     "ifname": "wlan0",
     "con_name": "VibeSensor-AP",

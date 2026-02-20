@@ -53,7 +53,7 @@ Default network target already matches the Pi hotspot configuration:
 
 - SSID `VibeSensor`
 - PSK `vibesensor123`
-- Server IP `192.168.4.1`
+- Server IP `10.4.0.1`
 - UDP ports `9000/9001`
 
 Optional override via local file (recommended for non-default networks):
