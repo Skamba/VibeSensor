@@ -75,7 +75,7 @@ Automatic on touch/coarse-pointer tablet-ish viewports (`pointer: coarse` + `max
 
 ## PDF Report Layout
 
-The generated PDF uses A4 landscape and is structured as a **diagnostic worksheet**:
+The generated PDF uses A4 portrait and is structured as a **diagnostic worksheet**:
 
 ### Page structure
 1. **Diagnostic Worksheet** (page 1) — header bar with date/car metadata, observed signature block (primary system, strength, certainty + reason), system finding cards, single next-steps section, data trust quality bar.
@@ -106,4 +106,3 @@ All user-visible strings go through `tr(lang, KEY)` in `report_i18n.py`. Add new
 - Keep focus rings visible (`:focus-visible`).
 - Maintain high text contrast on filled controls.
 - Preserve keyboard usability in tab navigation and form controls.
-
