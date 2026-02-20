@@ -26,7 +26,7 @@ Deterministic commands
 - Lint: `make lint`
 - Test: `make test`
 - Smoke: `make smoke`
-- LOC check: `make loc`
+- File-length advisory: `make loc`
 - Docs lint: `make docs-lint`
 
 Architecture map
@@ -44,4 +44,5 @@ Invariants
 - Canonical vibration severity metric is `vibration_strength_db`.
 - Strength bucket assignment must use `bucket_for_strength` logic.
 - Shared contracts under `libs/shared/contracts` are source of truth.
+- Keep files short where practical, as long as this does not reduce human maintainability.
 - Avoid reading or indexing build outputs/caches (`artifacts/`, `.cache/`, `node_modules/`, `dist/`) unless debugging packaging.
