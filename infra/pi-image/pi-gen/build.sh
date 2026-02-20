@@ -94,6 +94,7 @@ install -d "${ROOTFS_DIR}/var/log/wifi"
 install -d "${ROOTFS_DIR}/etc/systemd/system"
 install -d "${ROOTFS_DIR}/etc/NetworkManager/conf.d"
 install -d "${ROOTFS_DIR}/etc/tmpfiles.d"
+install -d "${ROOTFS_DIR}/etc/ssh/sshd_config.d"
 
 # Build the Python virtualenv inside the ARM rootfs via QEMU chroot emulation.
 on_chroot << CHROOT_EOF
@@ -158,6 +159,14 @@ ln -sf /etc/systemd/system/vibesensor-rfkill-unblock.service \
 mkdir -p "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants"
 ln -sf /etc/systemd/system/vibesensor-hotspot-self-heal.timer \
   "${ROOTFS_DIR}/etc/systemd/system/timers.target.wants/vibesensor-hotspot-self-heal.timer"
+
+# Force password SSH auth for the first user so hotspot-only deployments can
+# always recover the device without pre-provisioned SSH keys.
+cat >"${ROOTFS_DIR}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf" <<'SSHCONF'
+PasswordAuthentication yes
+KbdInteractiveAuthentication no
+UsePAM yes
+SSHCONF
 EOF
 chmod +x "${STAGE_STEP_DIR}/00-run.sh"
 
@@ -186,6 +195,7 @@ FIRST_USER_PASS='${VS_FIRST_USER_PASS}'
 DISABLE_FIRST_BOOT_USER_RENAME=1
 WPA_COUNTRY='${VS_WPA_COUNTRY}'
 ENABLE_SSH=1
+PUBKEY_ONLY_SSH=0
 STAGE_LIST="stage0 stage1 stage2 stage-vibesensor"
 EOF
 
@@ -228,19 +238,19 @@ choose_final_artifact() {
   local base_dir="$1"
   local candidate=""
 
-  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "*${IMG_SUFFIX}*.img" | sort | head -n 1 || true)"
+  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "*${IMG_SUFFIX}*.img" | sort -r | head -n 1 || true)"
   if [ -n "${candidate}" ]; then
     printf '%s\n' "${candidate}"
     return 0
   fi
 
-  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "*${IMG_SUFFIX}*.img.xz" | sort | head -n 1 || true)"
+  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "*${IMG_SUFFIX}*.img.xz" | sort -r | head -n 1 || true)"
   if [ -n "${candidate}" ]; then
     printf '%s\n' "${candidate}"
     return 0
   fi
 
-  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "*${IMG_SUFFIX}*.zip" | sort | head -n 1 || true)"
+  candidate="$(find "${base_dir}" -maxdepth 1 -type f -name "*${IMG_SUFFIX}*.zip" | sort -r | head -n 1 || true)"
   if [ -n "${candidate}" ]; then
     printf '%s\n' "${candidate}"
     return 0
@@ -361,8 +371,9 @@ if [ ! -d "${ROOT_MNT}/var/log/wifi" ] && [ ! -f "${ROOT_MNT}/etc/tmpfiles.d/vib
   exit 1
 fi
 
-if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" ]; then
-  echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv"
+if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" ] && \
+   [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python" ]; then
+  echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin"
   exit 1
 fi
 
@@ -391,6 +402,35 @@ if ! grep -E "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/passwd" >/dev/null 2>&1;
   exit 1
 fi
 
+if [ ! -f "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf" ]; then
+  echo "Validation failed: missing SSH password-auth drop-in"
+  exit 1
+fi
+
+if ! grep -Eq '^PasswordAuthentication[[:space:]]+yes$' "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf"; then
+  echo "Validation failed: SSH password auth drop-in does not enable PasswordAuthentication"
+  exit 1
+fi
+
+SHADOW_LINE="$(sudo grep -E "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/shadow" || true)"
+SHADOW_HASH="$(printf '%s\n' "${SHADOW_LINE}" | cut -d: -f2)"
+if [ -z "${SHADOW_HASH}" ] || [ "${SHADOW_HASH}" = "*" ] || [ "${SHADOW_HASH}" = "!" ]; then
+  echo "Validation failed: first user '${VS_FIRST_USER_NAME}' has no usable password hash"
+  exit 1
+fi
+
+if ! python3 - "${VS_FIRST_USER_PASS}" "${SHADOW_HASH}" <<'PY'
+import crypt
+import sys
+plain = sys.argv[1]
+shadow_hash = sys.argv[2]
+sys.exit(0 if crypt.crypt(plain, shadow_hash) == shadow_hash else 1)
+PY
+then
+  echo "Validation failed: first user password hash does not match VS_FIRST_USER_PASS"
+  exit 1
+fi
+
 echo "=== Validation: /opt/VibeSensor exists ==="
 ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
 
@@ -412,6 +452,9 @@ fi
 echo "=== Validation: /etc/vibesensor ==="
 ls -la "${ROOT_MNT}/etc/vibesensor"
 
+echo "=== Validation: SSH auth configuration ==="
+cat "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf"
+
 echo "=== Validation: /var/log/wifi or tmpfiles ==="
 if [ -d "${ROOT_MNT}/var/log/wifi" ]; then
   ls -ld "${ROOT_MNT}/var/log/wifi"
@@ -424,7 +467,7 @@ echo "=== Validation: NetworkManager conf.d drop-in ==="
 cat "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
 
 echo "=== Validation: Python venv ==="
-ls -la "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" || true
+ls -la "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python"* || true
 
 echo "=== Validation: hotspot script has no apt-get ==="
 if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"; then
