@@ -417,8 +417,8 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
 
 
-def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
-    run_path = tmp_path / "run_a4_landscape.jsonl"
+def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_a4_portrait.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
     for idx in range(12):
         records.append(
@@ -438,9 +438,9 @@ def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
     width = x1 - x0
     height = y1 - y0
 
-    assert width > height
-    assert width == pytest.approx(841.9, abs=2.0)
-    assert height == pytest.approx(595.3, abs=2.0)
+    assert height > width
+    assert width == pytest.approx(595.3, abs=2.0)
+    assert height == pytest.approx(841.9, abs=2.0)
 
 
 def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> None:
@@ -499,3 +499,29 @@ def test_report_pdf_footer_contains_version_marker(
         if value
     )
     assert marker in text_blob or marker in meta_blob
+
+
+def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_single_next_steps_heading.jsonl"
+    records: list[dict] = [
+        _run_metadata(run_id="run-01", raw_sample_rate_hz=800, tire_circumference_m=2.2)
+    ]
+    for idx in range(14):
+        speed = 55.0 + idx
+        wheel_hz = (speed * KMH_TO_MPS) / 2.2
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=speed,
+                dominant_freq_hz=wheel_hz,
+                peak_amp_g=0.08 + (idx * 0.0005),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    pdf = build_report_pdf(summary)
+    reader = PdfReader(BytesIO(pdf))
+    text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
+    assert text_blob.count("Next steps") == 1
