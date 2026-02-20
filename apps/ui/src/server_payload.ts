@@ -32,16 +32,22 @@ export type DiagnosticLevel = {
   [key: string]: unknown;
 };
 
+export type DiagnosticLevels = {
+  by_source: Record<string, DiagnosticLevel>;
+  by_sensor: Record<string, DiagnosticLevel>;
+};
+
 export type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
 
 export type AdaptedPayload = {
+  ws_version: number | null;
   clients: ClientInfo[];
   speed_mps: number | null;
   diagnostics: {
     strength_bands: StrengthBand[];
     matrix: Record<string, Record<string, MatrixCell>> | null;
     events: DiagnosticEvent[];
-    levels: Record<string, DiagnosticLevel>;
+    levels: DiagnosticLevels;
   };
   spectra: {
     clients: Record<string, AdaptedSpectrum>;
@@ -68,6 +74,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
   }
 
   const adapted: AdaptedPayload = {
+    ws_version: typeof payload.ws_version === "number" ? payload.ws_version : null,
     clients: Array.isArray(payload.clients) ? (payload.clients as ClientInfo[]) : [],
     speed_mps: typeof payload.speed_mps === "number" ? payload.speed_mps : null,
     diagnostics: {
@@ -79,8 +86,8 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
       events: Array.isArray(diagnostics.events) ? (diagnostics.events as DiagnosticEvent[]) : [],
       levels:
         diagnostics.levels && typeof diagnostics.levels === "object"
-          ? (diagnostics.levels as Record<string, DiagnosticLevel>)
-          : {},
+          ? (diagnostics.levels as DiagnosticLevels)
+          : { by_source: {}, by_sensor: {} },
     },
     spectra: null,
   };

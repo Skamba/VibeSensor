@@ -85,10 +85,10 @@ The generated PDF uses A4 landscape and is structured as a **workshop handout**:
 ### Primitives
 | Primitive | File | Purpose |
 |-----------|------|---------|
-| `make_card(story, title, body, tone)` | `report_pdf.py` | MD3 card with tone-based bg/border (`success`, `warn`, `error`, `neutral`) |
-| `styled_table(data, col_widths, zebra)` | `report_pdf.py` | Table with theme header and optional zebra-striped rows |
-| `_confidence_pill_html(label, pct, tone)` | `report_pdf.py` | Inline HTML pill for High / Medium / Low confidence |
-| `line_plot(…, width, height)` | `report_pdf.py` | Parameterised plot that accepts custom size |
+| `make_card(story, title, body, tone)` | `apps/server/vibesensor/report_pdf.py` | MD3 card with tone-based bg/border (`success`, `warn`, `error`, `neutral`) |
+| `styled_table(data, col_widths, zebra)` | `apps/server/vibesensor/report_pdf.py` | Table with theme header and optional zebra-striped rows |
+| `_confidence_pill_html(label, pct, tone)` | `apps/server/vibesensor/report_pdf.py` | Inline HTML pill for High / Medium / Low confidence |
+| `line_plot(…, width, height)` | `apps/server/vibesensor/report_pdf.py` | Parameterised plot that accepts custom size |
 
 ### Card tone tokens (`report_theme.py`)
 - `card_neutral_bg / _border` — informational

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -92,12 +91,9 @@ class _FakeAnalysisSettings:
 
 
 def _wait_until(predicate, timeout_s: float = 2.0, step_s: float = 0.02) -> bool:
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(step_s)
-    return False
+    from conftest import wait_until
+
+    return wait_until(predicate, timeout_s=timeout_s, step_s=step_s)
 
 
 # -- Test ----------------------------------------------------------------------

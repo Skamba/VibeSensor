@@ -880,3 +880,13 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
   .wrap { padding: var(--space-4); }
   .site-header { padding: var(--space-3) var(--space-4); }
 }
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

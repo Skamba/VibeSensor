@@ -14,6 +14,7 @@ export type CarsPayload = {
 export type SpeedSourcePayload = {
   speedSource: string;
   manualSpeedKph: number | null;
+  obd2Config?: Record<string, unknown>;
 };
 
 export type HistoryEntry = {
