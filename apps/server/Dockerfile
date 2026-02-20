@@ -16,6 +16,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV VIBESENSOR_SERVE_STATIC=1
+ENV VIBESENSOR_CONTRACTS_DIR=/app/libs/shared/contracts
 
 WORKDIR /app
 
@@ -32,4 +33,5 @@ EXPOSE 8000/tcp
 EXPOSE 9000/udp
 EXPOSE 9001/udp
 
+STOPSIGNAL SIGINT
 CMD ["vibesensor-server", "--config", "/app/apps/server/config.docker.yaml"]

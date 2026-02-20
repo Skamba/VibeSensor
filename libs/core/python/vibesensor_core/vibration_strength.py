@@ -35,6 +35,10 @@ def _percentile(sorted_values: list[float], q: float) -> float:
     return float(sorted_values[lo] + ((sorted_values[hi] - sorted_values[lo]) * frac))
 
 
+# Public alias — prefer this over the underscore name in new code.
+percentile = _percentile
+
+
 def combined_spectrum_amp_g(
     *, axis_spectra_amp_g: list[list[float]], axis_count_for_mean: int | None = None
 ) -> list[float]:
@@ -142,6 +146,10 @@ def _vibration_strength_db_scalar(
         else max(STRENGTH_EPSILON_MIN_G, float(epsilon_g))
     )
     return 20.0 * log10((band + eps) / (floor + eps))
+
+
+# Public alias — prefer this over the underscore name in new code.
+vibration_strength_db_scalar = _vibration_strength_db_scalar
 
 
 def compute_vibration_strength_db(

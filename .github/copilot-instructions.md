@@ -1,41 +1,41 @@
 Repository overview
-- VibeSensor: Python-based data-collection and analysis backend (located in `pi/`), a small web UI (`ui/`) built with Node, and device/firmware helpers under `esp/` and `hardware/`.
-- Key runtime artifacts: Docker Compose stack at `docker-compose.yml` and `pi/` Python package (`pi/pyproject.toml`). PDF report generation lives in `pi/vibesensor/report_pdf.py`.
+- VibeSensor: Python-based data-collection and analysis backend (located in `apps/server/`), a small web UI (`apps/ui/`) built with Node, and device/firmware helpers under `firmware/esp/` and `hardware/`.
+- Key runtime artifacts: Docker Compose stack at `docker-compose.yml` and `apps/server/` Python package (`apps/server/pyproject.toml`). PDF report generation lives in `apps/server/vibesensor/report_pdf.py`.
 
 Common commands (exact as found in CI / repo files)
 - Install Python deps (dev):
-  - python -m pip install -e "./pi[dev]"
+  - python -m pip install -e "./apps/server[dev]"
 - Run normal test suite (default):
   - vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
   - vibesensor-ws-smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
 - Run extended test suite (on request only):
-  - python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" pi/tests
+  - python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
 - Lint / format checks (as used in CI):
-  - ruff check pi/vibesensor pi/tests apps/simulator
-  - ruff format --check pi/vibesensor pi/tests apps/simulator
+  - ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
+  - ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
 - Web UI:
-  - cd ui && npm ci
-  - cd ui && npm run build
-  - cd ui && npm run typecheck
+  - cd apps/ui && npm ci
+  - cd apps/ui && npm run build
+  - cd apps/ui && npm run typecheck
 - Docker (local dev / CI):
   - docker compose build --pull
   - docker compose up -d
 
 Repo conventions
-- Backend code: placed under `pi/vibesensor/`. Keep modules small and prefer explicit function signatures.
-- Tests live under `pi/tests/` and use pytest. Selenium-marked tests are slow/optional and excluded in CI with `-m "not selenium"`.
-- Strings that appear in generated reports are internationalised via `pi/vibesensor/report_i18n.py` and must be used with `tr(lang, KEY)`.
+- Backend code: placed under `apps/server/vibesensor/`. Keep modules small and prefer explicit function signatures.
+- Tests live under `apps/server/tests/` and use pytest. Selenium-marked tests are slow/optional and excluded in CI with `-m "not selenium"`.
+- Strings that appear in generated reports are internationalised via `apps/server/data/report_i18n.json` and loaded by `apps/server/vibesensor/report_i18n.py`.
 
 Configuration and secrets
-- Config files: `pi/config.example.yaml`, `pi/config.dev.yaml`, and `pi/config.yaml` live in repo root `pi/`.
-- CI installs the dev package using `python -m pip install -e "./pi[dev]"`; follow that pattern for local dev.
-- Do NOT add secrets to the repo. Keep WiFi or device secrets out of `pi/config.yaml`; sample secrets live in `pi/wifi-secrets.example.env`.
+- Config files: `apps/server/config.example.yaml`, `apps/server/config.dev.yaml`, and `apps/server/config.yaml` live under `apps/server/`.
+- CI installs the dev package using `python -m pip install -e "./apps/server[dev]"`; follow that pattern for local dev.
+- Do NOT add secrets to the repo. Keep WiFi or device secrets out of `apps/server/config.yaml`; sample secrets live in `apps/server/wifi-secrets.example.env`.
 
 How to add a feature safely
-- Add code under `pi/vibesensor/` for backend changes; add small, focused tests in `pi/tests/` that are fast.
-- Update or add i18n keys in `pi/vibesensor/report_i18n.py` when changing report text.
-- For UI changes, modify `ui/` and update the `ui` build scripts; ensure `npm run build` succeeds.
-- If the change affects Docker, update `docker-compose.yml` or `pi/Dockerfile` and test locally with `docker compose up -d`.
+- Add code under `apps/server/vibesensor/` for backend changes; add small, focused tests in `apps/server/tests/` that are fast.
+- Update or add i18n keys in `apps/server/data/report_i18n.json` when changing report text.
+- For UI changes, modify `apps/ui/` and update the `apps/ui` build scripts; ensure `npm run build` succeeds.
+- If the change affects Docker, update `docker-compose.yml` or `apps/server/Dockerfile` and test locally with `docker compose up -d`.
 
 Guardrails for Copilot
 - Keep PRs small and self-contained. Add tests for behavior changes. Prefer backwards-compatible changes unless the task explicitly requests breaking changes.
