@@ -38,6 +38,7 @@ require_cmd losetup
 require_cmd mount
 require_cmd umount
 require_cmd awk
+require_cmd qemu-arm-static
 
 if ! docker info >/dev/null 2>&1; then
   echo "Docker daemon is not available for current user."
@@ -175,8 +176,11 @@ network-manager
 dnsmasq
 rfkill
 iw
+gpsd
+gpsd-clients
 python3-venv
 python3-pip
+libopenblas0-pthread
 EOF
 
 # Ensure this custom stage is exported as the final image artifact.
@@ -280,7 +284,7 @@ case "${FINAL_ARTIFACT}" in
   *.zip)
     require_cmd unzip
     unzip -o "${FINAL_ARTIFACT}" -d "${INSPECT_DIR}" >/dev/null
-    INSPECT_IMG="$(find "${INSPECT_DIR}" -maxdepth 1 -type f -name "*.img" | sort | head -n 1 || true)"
+    INSPECT_IMG="$(find "${INSPECT_DIR}" -maxdepth 1 -type f -name "*.img" | sort -r | head -n 1 || true)"
     if [ -z "${INSPECT_IMG}" ]; then
       echo "ZIP artifact did not contain an .img file: ${FINAL_ARTIFACT}"
       exit 1
@@ -347,9 +351,24 @@ assert_rootfs_binary() {
   printf '%s\n' "${path}"
 }
 
+assert_rootfs_package() {
+  local pkg="$1"
+  if ! awk -v pkg="${pkg}" '
+    BEGIN {in_pkg=0; ok=0}
+    $0 == "Package: " pkg {in_pkg=1; next}
+    /^Package: / && in_pkg {exit}
+    in_pkg && $0 == "Status: install ok installed" {ok=1}
+    END {exit(ok ? 0 : 1)}
+  ' "${ROOT_MNT}/var/lib/dpkg/status"; then
+    echo "Validation failed: package '${pkg}' is not installed in image rootfs"
+    exit 1
+  fi
+}
+
 RFKILL_PATH="$(assert_rootfs_binary rfkill)"
 IW_PATH="$(assert_rootfs_binary iw)"
 DNSMASQ_PATH="$(assert_rootfs_binary dnsmasq)"
+GPSD_PATH="$(assert_rootfs_binary gpsd)"
 
 if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service" ]; then
   echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"
@@ -374,6 +393,68 @@ fi
 if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" ] && \
    [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python" ]; then
   echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin"
+  exit 1
+fi
+
+assert_rootfs_package gpsd
+assert_rootfs_package gpsd-clients
+assert_rootfs_package libopenblas0-pthread
+assert_rootfs_package libgfortran5
+
+OPENBLAS_LIB="$(find "${ROOT_MNT}/usr/lib" -type f -name 'libopenblas*.so*' | head -n 1 || true)"
+if [ -z "${OPENBLAS_LIB}" ]; then
+  echo "Validation failed: OpenBLAS runtime library not found in rootfs"
+  exit 1
+fi
+
+run_qemu_chroot() {
+  # Use qemu-arm-static for deterministic ARM-side validation from x86 host.
+  sudo cp /usr/bin/qemu-arm-static "${ROOT_MNT}/usr/bin/"
+  sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
+}
+
+if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
+import importlib
+mods = [
+    "numpy",
+    "yaml",
+    "reportlab",
+    "fastapi",
+    "uvicorn",
+    "vibesensor",
+    "vibesensor_core",
+    "vibesensor_shared",
+    "vibesensor_adapters",
+]
+for mod in mods:
+    importlib.import_module(mod)
+print("IMPORT_VALIDATION_OK")
+PY
+then
+  echo "Validation failed: Python import smoke test failed in ARM chroot"
+  exit 1
+fi
+
+if ! run_qemu_chroot /bin/bash -lc '
+set -e
+export VIBESENSOR_DISABLE_AUTO_APP=1
+set +e
+timeout 10s /opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.app --config /etc/vibesensor/config.yaml >/tmp/vibesensor-smoke.log 2>&1
+code=$?
+set -e
+if [ "$code" -ne 0 ] && [ "$code" -ne 124 ]; then
+  echo "Server startup smoke command failed with code=${code}"
+  tail -n 80 /tmp/vibesensor-smoke.log || true
+  exit 1
+fi
+if ! grep -q "Application startup complete" /tmp/vibesensor-smoke.log; then
+  echo "Server startup smoke did not reach successful startup"
+  tail -n 80 /tmp/vibesensor-smoke.log || true
+  exit 1
+fi
+echo "SERVER_STARTUP_SMOKE_OK"
+'; then
+  echo "Validation failed: vibesensor.app startup smoke failed in ARM chroot"
   exit 1
 fi
 
@@ -435,7 +516,7 @@ echo "=== Validation: /opt/VibeSensor exists ==="
 ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
 
 echo "=== Validation: nmcli + rfkill + iw + dnsmasq binaries ==="
-ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}"
+ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}"
 
 echo "=== Validation: vibesensor systemd units ==="
 ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
@@ -468,6 +549,9 @@ cat "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
 
 echo "=== Validation: Python venv ==="
 ls -la "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python"* || true
+
+echo "=== Validation: OpenBLAS runtime ==="
+echo "${OPENBLAS_LIB}"
 
 echo "=== Validation: hotspot script has no apt-get ==="
 if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"; then
