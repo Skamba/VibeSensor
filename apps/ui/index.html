@@ -15,7 +15,7 @@
               <option value="en">🇺🇸 English</option>
               <option value="nl">🇳🇱 Nederlands</option>
             </select>
-            <div id="linkState" class="pill pill--muted">Connecting...</div>
+            <div id="linkState" class="pill pill--muted" aria-live="polite">Connecting...</div>
           </div>
         </div>
 
@@ -86,14 +86,14 @@
                 <div class="card__title" data-i18n="dashboard.run_recording">Run Recording</div>
               </div>
               <div class="logging-row">
-                <span id="loggingStatus" class="pill pill--muted">Stopped</span>
+                <span id="loggingStatus" class="pill pill--muted" aria-live="polite">Stopped</span>
               </div>
               <div class="logging-actions">
                 <button id="startLoggingBtn" class="btn" data-i18n="dashboard.start_recording">Start Recording</button>
                 <button id="stopLoggingBtn" class="btn" data-i18n="dashboard.stop_recording">Stop Recording</button>
               </div>
               <div class="live-speed-readout">
-                <div id="speed" class="speed">Speed --</div>
+                <div id="speed" class="speed" aria-live="polite">Speed --</div>
                 <label class="mini-label" for="speedUnitSelect" data-i18n="speed.unit">Unit</label>
                 <select id="speedUnitSelect" class="unit-picker" aria-label="Speed unit">
                   <option value="kmh" data-i18n="speed.unit.kmh">km/h</option>
@@ -107,7 +107,7 @@
               <div class="card__header">
                 <div class="card__title" data-i18n="dashboard.detected_vibrations">Detected Vibrations</div>
               </div>
-              <div id="vibrationLog" class="log-box"></div>
+              <div id="vibrationLog" class="log-box" aria-live="polite"></div>
             </div>
           </div>
 
@@ -207,7 +207,7 @@
           <div id="addCarWizard" class="panel card add-car-wizard" hidden>
             <div class="wizard-header">
               <strong data-i18n="settings.car.add_title">Add a Car</strong>
-              <button id="wizardCloseBtn" class="btn btn--muted wizard-close">&times;</button>
+              <button id="wizardCloseBtn" class="btn btn--muted wizard-close" aria-label="Close wizard">&times;</button>
             </div>
             <div class="wizard-steps">
               <div class="wizard-step-indicators">

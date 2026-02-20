@@ -16,7 +16,7 @@
 - libs/adapters/python/vibesensor_adapters: repository/path integration adapters
 - libs/shared: shared contracts/schemas/constants for server and UI
 - infra/pi-image/pi-gen: Raspberry Pi image build pipeline
-- infra/docker: Dockerfiles/container tooling
+- Docker entrypoint: docker-compose.yml (root); Dockerfile at apps/server/Dockerfile
 
 ## Data flow
 1. ESP sends sensor payloads to server UDP ingress.

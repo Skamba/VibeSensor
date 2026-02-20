@@ -56,13 +56,14 @@ include = [
 ]
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 pythonpath = ["."]
 testpaths = ["tests"]
 markers = [
     "selenium: browser-based UI tests",
     "e2e: docker-based end-to-end tests",
     "long_sim: longer simulated-run tests (>20 s of synthetic data)",
-  "smoke: minimal critical path checks",
+    "smoke: minimal critical path checks",
 ]
 
 [tool.ruff]

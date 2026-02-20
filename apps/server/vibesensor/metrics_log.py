@@ -427,14 +427,16 @@ class MetricsLogger:
         rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
         if rows:
             self._last_data_progress_mono_s = now_mono_s
-            self._written_sample_count += len(rows)
             if self._history_db is not None and self._persist_history_db:
                 self._ensure_history_run_created(run_id, start_time_utc)
                 if self._history_run_created:
                     try:
                         self._history_db.append_samples(run_id, rows)
+                        self._written_sample_count += len(rows)
                     except Exception:
                         LOGGER.warning("Failed to append samples to history DB", exc_info=True)
+            else:
+                self._written_sample_count += len(rows)
 
         if self._last_data_progress_mono_s is None:
             return False
@@ -504,6 +506,10 @@ class MetricsLogger:
                     if len(samples) > _MAX_POST_ANALYSIS_SAMPLES:
                         samples = samples[::2]
                         stride *= 2
+            if not samples:
+                LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
+                self._history_db.store_analysis_error(run_id, "No samples collected during run")
+                return
             summary = summarize_run_data(
                 metadata, samples, lang=language, file_name=run_id, include_samples=False
             )

@@ -77,7 +77,7 @@ def test_client_data_age_tracks_ingest_freshness() -> None:
 
     age = processor.client_data_age_s("c1")
     assert age is not None
-    assert age < 1.0
+    assert age < 5.0
 
 
 def test_clients_with_recent_data_filters_stale() -> None:

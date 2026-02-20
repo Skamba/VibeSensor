@@ -74,6 +74,7 @@ class HistoryDB:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA wal_autocheckpoint=500")
         self._conn.execute("PRAGMA foreign_keys=ON")
         self._ensure_schema()
 
@@ -128,9 +129,13 @@ class HistoryDB:
 
     def _migrate_v1_to_v2(self) -> None:
         with self._lock:
-            self._conn.execute(
-                "ALTER TABLE runs ADD COLUMN sample_count INTEGER NOT NULL DEFAULT 0"
-            )
+            # Idempotent: check if column exists before adding
+            cursor = self._conn.execute("PRAGMA table_info(runs)")
+            columns = {row[1] for row in cursor.fetchall()}
+            if "sample_count" not in columns:
+                self._conn.execute(
+                    "ALTER TABLE runs ADD COLUMN sample_count INTEGER NOT NULL DEFAULT 0"
+                )
             self._conn.execute(
                 "UPDATE runs SET sample_count = "
                 "(SELECT COUNT(*) FROM samples s WHERE s.run_id = runs.run_id)"
@@ -353,8 +358,9 @@ CREATE TABLE IF NOT EXISTS client_names (
     def recover_stale_recording_runs(self) -> int:
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
-                ("Recovered stale recording during startup",),
+                "UPDATE runs SET status = 'error', error_message = ? "
+                "WHERE status IN ('recording', 'analyzing')",
+                ("Recovered stale run during startup",),
             )
             return cur.rowcount
 

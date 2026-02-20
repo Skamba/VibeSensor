@@ -1,14 +1,24 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
-from vibesensor_adapters.repo_paths import shared_contracts_dir
-
 
 def _contracts_dir() -> Path:
-    return shared_contracts_dir(Path(__file__).resolve())
+    # Allow explicit override (e.g. Docker containers with non-editable installs)
+    env_path = os.environ.get("VIBESENSOR_CONTRACTS_DIR")
+    if env_path:
+        return Path(env_path)
+    # Source tree: contracts/ is a sibling of the python/ package directory
+    source_dir = Path(__file__).resolve().parent.parent.parent / "contracts"
+    if source_dir.is_dir():
+        return source_dir
+    raise FileNotFoundError(
+        "Cannot locate shared contracts directory. "
+        "Set VIBESENSOR_CONTRACTS_DIR or run from the source tree."
+    )
 
 
 def _load_json(name: str) -> dict[str, Any]:
