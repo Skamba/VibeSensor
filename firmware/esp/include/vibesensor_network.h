@@ -11,7 +11,7 @@
 #endif
 
 #ifndef VIBESENSOR_WIFI_PSK
-#define VIBESENSOR_WIFI_PSK "vibesensor123"
+#define VIBESENSOR_WIFI_PSK ""
 #endif
 
 #ifndef VIBESENSOR_SERVER_IP_OCTETS

@@ -52,7 +52,7 @@ pio device monitor
 Default network target already matches the Pi hotspot configuration:
 
 - SSID `VibeSensor`
-- PSK `vibesensor123`
+- PSK empty (open test AP)
 - Server IP `10.4.0.1`
 - UDP ports `9000/9001`
 
