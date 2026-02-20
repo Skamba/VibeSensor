@@ -185,9 +185,7 @@ def _compute_bucket_dist_from_samples(samples: list[dict]) -> dict[str, dict]:
         dist: dict = {"total": total, "counts": dict(loc_counts)}
         for i in range(1, 6):
             key = f"l{i}"
-            dist[f"percent_time_{key}"] = (
-                (loc_counts[key] / total * 100.0) if total > 0 else 0.0
-            )
+            dist[f"percent_time_{key}"] = (loc_counts[key] / total * 100.0) if total > 0 else 0.0
         result[location] = dist
     return result
 
@@ -339,9 +337,7 @@ def _validate_bucket_distribution(
     """
     computed = _compute_bucket_dist_from_samples(samples)
     analysis_rows = [
-        row
-        for row in run_analysis.get("sensor_intensity_by_location", [])
-        if isinstance(row, dict)
+        row for row in run_analysis.get("sensor_intensity_by_location", []) if isinstance(row, dict)
     ]
 
     for row in analysis_rows:
@@ -546,8 +542,7 @@ def _validate_pdf_report(pdf_bytes: bytes, primary_finding: dict) -> None:
     # Check multiplier tokens like "1x", "2x", "3x" etc.
     for token in re.findall(r"\d+x", freq_label):
         assert token in pdf, (
-            f"[pdf] multiplier token {token!r} not found in PDF "
-            f"(finding label: {freq_label_raw!r})"
+            f"[pdf] multiplier token {token!r} not found in PDF (finding label: {freq_label_raw!r})"
         )
 
 
@@ -632,11 +627,11 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     assert content_type.startswith("application/pdf")
     assert pdf_bytes[:5] == b"%PDF-"
     pdf_text = _pdf_text(pdf_bytes)
-    assert "primary finding:" in pdf_text
+    assert "primary system:" in pdf_text
     assert "wheel / tire" in pdf_text
     assert "rear left" in pdf_text or "rear-left" in pdf_text
-    assert "primary finding: driveline" not in pdf_text
-    assert "primary finding: engine" not in pdf_text
+    assert "primary system: driveline" not in pdf_text
+    assert "primary system: engine" not in pdf_text
 
     # ------------------------------------------------------------------
     # Alignment validation: cross-source consistency checks
