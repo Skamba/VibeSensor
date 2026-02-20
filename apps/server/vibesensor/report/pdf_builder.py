@@ -16,7 +16,7 @@ import textwrap
 from io import BytesIO
 
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
@@ -38,9 +38,9 @@ LOGGER = logging.getLogger(__name__)
 # Style tokens (aligned with report_theme and template specification)
 # ---------------------------------------------------------------------------
 
-PAGE_SIZE = landscape(A4)
+PAGE_SIZE = A4
 PAGE_W, PAGE_H = PAGE_SIZE
-MARGIN = 12 * mm
+MARGIN = 11 * mm
 
 TEXT_CLR = REPORT_COLORS["text_primary"]
 SUB_CLR = REPORT_COLORS["text_secondary"]
@@ -53,17 +53,17 @@ WARN_CLR = REPORT_COLORS["warning"]
 
 FONT = "Helvetica"
 FONT_B = "Helvetica-Bold"
-FS_TITLE = 13
-FS_H2 = 10
-FS_BODY = 8
-FS_SMALL = 7
+FS_TITLE = 12
+FS_H2 = 9
+FS_BODY = 7
+FS_SMALL = 6
 
 R_CARD = 6
 GAP = 4 * mm
-OBSERVED_LABEL_W = 34 * mm
-DATA_TRUST_WIDTH_RATIO = 0.28
-DATA_TRUST_LABEL_W = 26 * mm
-EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.56
+OBSERVED_LABEL_W = 28 * mm
+DATA_TRUST_WIDTH_RATIO = 0.32
+DATA_TRUST_LABEL_W = 22 * mm
+EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.50
 DISCLAIMER_Y_OFFSET = 5.5 * mm
 DATA_TRUST_LINE_STEP = 3.9 * mm
 CAR_PANEL_TITLE_RESERVE = 18 * mm
