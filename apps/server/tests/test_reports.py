@@ -417,8 +417,8 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
 
 
-def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
-    run_path = tmp_path / "run_a4_landscape.jsonl"
+def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_a4_portrait.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
     for idx in range(12):
         records.append(
@@ -438,9 +438,9 @@ def test_report_pdf_uses_a4_landscape_media_box(tmp_path: Path) -> None:
     width = x1 - x0
     height = y1 - y0
 
-    assert width > height
-    assert width == pytest.approx(841.9, abs=2.0)
-    assert height == pytest.approx(595.3, abs=2.0)
+    assert height > width
+    assert width == pytest.approx(595.3, abs=2.0)
+    assert height == pytest.approx(841.9, abs=2.0)
 
 
 def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> None:
