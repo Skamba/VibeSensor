@@ -310,6 +310,12 @@ if ! run_as_root nmcli general reload >/dev/null 2>&1; then
   fi
 fi
 
+if [ -z "${PSK}" ]; then
+  # For open AP mode, always recreate the profile to avoid stale security
+  # fields (e.g. WEP/WPA remnants) surviving from prior configuration.
+  run_as_root nmcli connection delete "${CON_NAME}" >/dev/null 2>&1 || true
+fi
+
 if ! run_as_root nmcli -t -f NAME connection show | grep -Fxq "${CON_NAME}"; then
   run_as_root nmcli connection add type wifi ifname "${IFNAME}" con-name "${CON_NAME}" autoconnect yes ssid "${SSID}"
 fi
@@ -327,8 +333,7 @@ if [ -n "${PSK}" ]; then
     802-11-wireless-security.key-mgmt wpa-psk \
     802-11-wireless-security.psk "${PSK}"
 else
-  run_as_root nmcli connection modify "${CON_NAME}" \
-    802-11-wireless-security.key-mgmt none
+  :
 fi
 
 if ! run_as_root nmcli connection up "${CON_NAME}"; then

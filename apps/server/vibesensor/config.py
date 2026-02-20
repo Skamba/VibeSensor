@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 DEFAULT_CONFIG: dict[str, Any] = {
     "ap": {
         "ssid": "VibeSensor",
-        "psk": "vibesensor123",
+        "psk": "",
         "ip": "10.4.0.1/24",
         "channel": 7,
         "ifname": "wlan0",
