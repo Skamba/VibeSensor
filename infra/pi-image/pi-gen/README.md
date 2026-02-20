@@ -21,6 +21,16 @@ cd VibeSensor
 
 Output image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
 
+Default SSH credentials in generated images:
+- user: `pi`
+- password: `vibesensor`
+
+Override at build time if needed:
+
+```bash
+VS_FIRST_USER_NAME=pi VS_FIRST_USER_PASS='your-password' ./infra/pi-image/pi-gen/build.sh
+```
+
 ## What's Included
 
 The image contains:
