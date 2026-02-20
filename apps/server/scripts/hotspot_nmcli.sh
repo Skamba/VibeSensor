@@ -212,7 +212,7 @@ import sys
 
 defaults = {
     "ssid": "VibeSensor",
-    "psk": "vibesensor123",
+    "psk": "",
     "ip": "10.4.0.1/24",
     "channel": 7,
     "ifname": "wlan0",
@@ -318,11 +318,18 @@ run_as_root nmcli connection modify "${CON_NAME}" \
   802-11-wireless.mode ap \
   802-11-wireless.band bg \
   802-11-wireless.channel "${CHANNEL}" \
-  802-11-wireless-security.key-mgmt wpa-psk \
-  802-11-wireless-security.psk "${PSK}" \
   ipv4.method shared \
   ipv4.addresses "${IP}" \
   ipv6.method ignore
+
+if [ -n "${PSK}" ]; then
+  run_as_root nmcli connection modify "${CON_NAME}" \
+    802-11-wireless-security.key-mgmt wpa-psk \
+    802-11-wireless-security.psk "${PSK}"
+else
+  run_as_root nmcli connection modify "${CON_NAME}" \
+    802-11-wireless-security.key-mgmt none
+fi
 
 if ! run_as_root nmcli connection up "${CON_NAME}"; then
   echo "AP connection bring-up failed for ${CON_NAME}"

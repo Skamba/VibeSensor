@@ -190,14 +190,14 @@ def test_confidence_label_boundaries(value: float, expected_key: str, expected_t
 # -- PDF section heading coverage --------------------------------------------
 
 _SECTION_HEADING_KEYS = [
-    "WORKSHOP_SUMMARY",
-    "WHAT_TO_CHECK_FIRST",
-    "EVIDENCE_SNAPSHOT",
-    "EVIDENCE_AND_HOTSPOTS",
-    "SPEED_BINNED_ANALYSIS",
-    "APPENDIX_A_DATA_QUALITY_CHECKS",
-    "APPENDIX_B_FULL_RUN_METADATA",
-    "APPENDIX_C_DETAILED_FINDINGS_TABLE",
+    "DIAGNOSTIC_WORKSHEET",
+    "OBSERVED_SIGNATURE",
+    "SYSTEMS_WITH_FINDINGS",
+    "NEXT_STEPS",
+    "DATA_TRUST",
+    "EVIDENCE_DIAGNOSTICS",
+    "PATTERN_EVIDENCE",
+    "DIAGNOSTIC_PEAKS",
 ]
 
 

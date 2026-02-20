@@ -48,6 +48,15 @@ def car_location_diagram(
     car_w = car_h / length_width_ratio
     x0 = (d_width - car_w) / 2.0
     y0 = 32.0
+
+    # Aspect-ratio preservation assertion: the rendered car rectangle must
+    # match the source BMW body ratio within 2 % tolerance.
+    rendered_ratio = car_h / car_w if car_w > 0 else 0.0
+    assert abs(rendered_ratio - length_width_ratio) / length_width_ratio < 0.02, (
+        f"Car visual aspect ratio violated: rendered {rendered_ratio:.4f} "
+        f"vs source {length_width_ratio:.4f}"
+    )
+
     cx = x0 + (car_w / 2)
     cy = y0 + (car_h / 2)
 

@@ -308,9 +308,7 @@ def test_e2e_docker_user_journeys() -> None:
             )
         assert rows
         speed_values = [
-            float(row["speed_kmh"])
-            for row in rows
-            if row.get("speed_kmh") not in (None, "")
+            float(row["speed_kmh"]) for row in rows if row.get("speed_kmh") not in (None, "")
         ]
         assert len(speed_values) >= 10
         close_to_80 = [value for value in speed_values if abs(value - 80.0) <= 2.0]
@@ -354,8 +352,8 @@ def test_e2e_docker_user_journeys() -> None:
         assert type_en.startswith("application/pdf")
         text_nl = _pdf_text(pdf_nl)
         text_en = _pdf_text(pdf_en)
-        assert "werkplaatsoverzicht" in text_nl
-        assert "workshop summary" in text_en
+        assert "diagnostisch werkblad" in text_nl
+        assert "diagnostic worksheet" in text_en
 
     finally:
         for run_id in list(created_run_ids):
