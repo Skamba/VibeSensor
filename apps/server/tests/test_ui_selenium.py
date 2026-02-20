@@ -148,6 +148,18 @@ def _activate_tab(driver: webdriver.Remote, tab_id: str, view_id: str) -> None:
     wait.until(lambda d: d.execute_script(script, view_id))
 
 
+def _activate_settings_subtab(driver: webdriver.Remote, tab_id: str) -> None:
+    wait = WebDriverWait(driver, 10)
+    selector = f'[data-settings-tab="{tab_id}"]'
+    wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector))).click()
+    wait.until(
+        lambda d: not d.execute_script(
+            "const el=document.getElementById(arguments[0]); return el ? el.hidden : true;",
+            tab_id,
+        )
+    )
+
+
 def _set_language(driver: webdriver.Remote, lang: str) -> None:
     wait = WebDriverWait(driver, 10)
     select = wait.until(EC.presence_of_element_located((By.ID, "languageSelect")))
@@ -181,8 +193,7 @@ def test_nav_tabs_switch_views(driver: webdriver.Remote, live_server: dict[str, 
     driver.get(f"{base_url}/")
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "tab-dashboard")))
 
-    _activate_tab(driver, "tab-logs", "logsView")
-    _activate_tab(driver, "tab-report", "reportView")
+    _activate_tab(driver, "tab-history", "historyView")
     _activate_tab(driver, "tab-settings", "settingsView")
     _activate_tab(driver, "tab-dashboard", "dashboardView")
 
@@ -193,24 +204,20 @@ def test_nav_tabs_switch_views(driver: webdriver.Remote, live_server: dict[str, 
         (
             "en",
             {
-                "nav": ["Live", "Logs", "Report", "Settings"],
-                "start_logging": "Start Logging",
-                "refresh_logs": "Refresh Logs",
-                "load_insights": "Load Insights",
-                "generate_pdf": "Generate PDF Report",
-                "save_settings": "Save Settings",
+                "nav": ["Live", "History", "Settings"],
+                "start_recording": "Start Recording",
+                "refresh_history": "Refresh History",
+                "save_analysis": "Save Analysis Settings",
                 "settings_location_header": "Location",
             },
         ),
         (
             "nl",
             {
-                "nav": ["Live", "Logs", "Rapport", "Instellingen"],
-                "start_logging": "Logging starten",
-                "refresh_logs": "Logs verversen",
-                "load_insights": "Inzichten laden",
-                "generate_pdf": "PDF-rapport genereren",
-                "save_settings": "Instellingen opslaan",
+                "nav": ["Live", "Geschiedenis", "Instellingen"],
+                "start_recording": "Opname starten",
+                "refresh_history": "Geschiedenis verversen",
+                "save_analysis": "Analyse-instellingen opslaan",
                 "settings_location_header": "Locatie",
             },
         ),
@@ -235,26 +242,23 @@ def test_all_tabs_render_localized_texts(
 
     _activate_tab(driver, "tab-dashboard", "dashboardView")
     wait.until(
-        lambda d: d.find_element(By.ID, "startLoggingBtn").text.strip() == labels["start_logging"]
+        lambda d: d.find_element(By.ID, "startLoggingBtn").text.strip() == labels["start_recording"]
     )
 
-    _activate_tab(driver, "tab-logs", "logsView")
+    _activate_tab(driver, "tab-history", "historyView")
     wait.until(
-        lambda d: d.find_element(By.ID, "refreshLogsBtn").text.strip() == labels["refresh_logs"]
-    )
-
-    _activate_tab(driver, "tab-report", "reportView")
-    wait.until(
-        lambda d: d.find_element(By.ID, "loadInsightsBtn").text.strip() == labels["load_insights"]
-    )
-    wait.until(
-        lambda d: d.find_element(By.ID, "downloadReportBtn").text.strip() == labels["generate_pdf"]
+        lambda d: (
+            d.find_element(By.ID, "refreshHistoryBtn").text.strip()
+            == labels["refresh_history"]
+        )
     )
 
     _activate_tab(driver, "tab-settings", "settingsView")
+    _activate_settings_subtab(driver, "analysisTab")
     wait.until(
-        lambda d: d.find_element(By.ID, "saveSettingsBtn").text.strip() == labels["save_settings"]
+        lambda d: d.find_element(By.ID, "saveAnalysisBtn").text.strip() == labels["save_analysis"]
     )
+    _activate_settings_subtab(driver, "sensorsTab")
     headers = driver.execute_script(
         "const headers = Array.from(document.querySelectorAll('.clients-table thead th'));"
         "return headers.map((el) => el.textContent.trim());"
@@ -289,6 +293,7 @@ def test_location_selector_has_vehicle_positions(
     driver.get(f"{base_url}/")
     wait = WebDriverWait(driver, 10)
     _activate_tab(driver, "tab-settings", "settingsView")
+    _activate_settings_subtab(driver, "sensorsTab")
 
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "row-location-select")))
     wait.until(
@@ -326,24 +331,37 @@ def test_logs_can_be_deleted_with_confirmation(
     wait.until(EC.element_to_be_clickable((By.ID, "stopLoggingBtn"))).click()
     wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
 
-    _activate_tab(driver, "tab-logs", "logsView")
+    _activate_tab(driver, "tab-history", "historyView")
+    del_sel = '[data-run-action="delete-run"]'
     wait.until(
         lambda d: (
-            d.execute_script("return document.querySelectorAll('.delete-log-btn').length;") >= 1
+            d.execute_script(
+                "return document.querySelectorAll(arguments[0]).length;",
+                del_sel,
+            )
+            >= 1
         )
     )
     before_count = int(
-        driver.execute_script("return document.querySelectorAll('.delete-log-btn').length;")
+        driver.execute_script(
+            "return document.querySelectorAll(arguments[0]).length;",
+            del_sel,
+        )
     )
     assert before_count >= 1
 
     driver.execute_script("window.confirm = () => true;")
     driver.execute_script(
-        "const btn=document.querySelector('.delete-log-btn'); if (btn) btn.click();"
+        "const btn=document.querySelector(arguments[0]);"
+        " if (btn) btn.click();",
+        del_sel,
     )
     wait.until(
         lambda d: (
-            d.execute_script("return document.querySelectorAll('.delete-log-btn').length;")
+            d.execute_script(
+                "return document.querySelectorAll(arguments[0]).length;",
+                del_sel,
+            )
             == max(0, before_count - 1)
         )
     )
@@ -364,19 +382,36 @@ def test_dutch_logs_uses_domain_terms_not_literal_calque(
     wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
 
     _set_language(driver, "nl")
-    _activate_tab(driver, "tab-logs", "logsView")
+    _activate_tab(driver, "tab-history", "historyView")
+    del_sel = '[data-run-action="delete-run"]'
     wait.until(
         lambda d: (
-            d.execute_script("return document.querySelectorAll('.delete-log-btn').length;") >= 1
+            d.execute_script(
+                "return document.querySelectorAll(arguments[0]).length;",
+                del_sel,
+            )
+            >= 1
         )
     )
 
-    raw_labels = driver.execute_script(
-        "const links = Array.from(document.querySelectorAll('#logsTableBody a'));"
-        "return links.map((a) => a.textContent.trim());"
+    # The Dutch history table header should use "Meetrun" (domain term) not a literal calque.
+    headers = driver.execute_script(
+        "const ths = Array.from("
+        "document.querySelectorAll('.history-table thead th'));"
+        "return ths.map((th) => th.textContent.trim());"
     )
-    assert any(label == "RAW-log" for label in raw_labels)
-    assert all(label != "Ruw" for label in raw_labels)
+    assert "Meetrun" in headers
+
+    # Export action buttons should use "Exporteren" (proper Dutch) not a calque.
+    raw_sel = '#historyTableBody [data-run-action="download-raw"]'
+    action_labels = driver.execute_script(
+        "const btns = Array.from("
+        "document.querySelectorAll(arguments[0]));"
+        "return btns.map((b) => b.textContent.trim());",
+        raw_sel,
+    )
+    assert any(label == "Exporteren" for label in action_labels)
+    assert all(label != "Uitvoer" for label in action_labels)
 
 
 def test_offline_client_mac_set_location_and_remove(
@@ -387,6 +422,7 @@ def test_offline_client_mac_set_location_and_remove(
     driver.get(f"{base_url}/")
     wait = WebDriverWait(driver, 10)
     _activate_tab(driver, "tab-settings", "settingsView")
+    _activate_settings_subtab(driver, "sensorsTab")
 
     row_selector = "tr[data-client-id='d05a00000099']"
     wait.until(
