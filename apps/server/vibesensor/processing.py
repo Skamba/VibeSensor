@@ -273,55 +273,18 @@ class SignalProcessor:
 
         if buf.count >= self.fft_n:
             fft_block = self._latest(buf, self.fft_n)
-            if self._spike_filter_enabled:
-                fft_block = self._medfilt3(fft_block)
-            fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
-            freq_slice, valid_idx = self._fft_params(sr)
-            spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
-            axis_amp_slices: list[np.ndarray] = []
+            fft_result = self._compute_fft_spectrum(fft_block, sr)
+            freq_slice = fft_result["freq_slice"]
+            spectrum_by_axis = fft_result["spectrum_by_axis"]
+            axis_amp_slices = fft_result["axis_amp_slices"]
 
-            for axis_idx, axis in enumerate(AXES):
-                spec = np.abs(
-                    np.fft.rfft(fft_block[axis_idx] * self._fft_window),
-                ).astype(np.float32)
-                spec *= self._fft_scale
-                if spec.size > 0:
-                    spec[0] *= 0.5
-                if (self.fft_n % 2) == 0 and spec.size > 1:
-                    spec[-1] *= 0.5
-                amp_slice = spec[valid_idx]
-                amp_for_peaks = amp_slice.copy()
-                if amp_for_peaks.size > 1:
-                    amp_for_peaks[0] = 0.0
+            for axis in fft_result["axis_peaks"]:
                 metrics.setdefault(axis, {"rms": 0.0, "p2p": 0.0, "peaks": []})
-                metrics[axis]["peaks"] = self._top_peaks(
-                    freq_slice,
-                    amp_for_peaks,
-                    top_n=3,
-                    floor_ratio=2.5,
-                    smoothing_bins=3,
-                )
-                spectrum_by_axis[axis] = {
-                    "freq": freq_slice,
-                    "amp": amp_slice,
-                }
-                axis_amp_slices.append(amp_for_peaks)
+                metrics[axis]["peaks"] = fft_result["axis_peaks"][axis]
 
             if axis_amp_slices:
-                combined_amp = np.asarray(
-                    combined_spectrum_amp_g(
-                        axis_spectra_amp_g=axis_amp_slices,  # type: ignore[arg-type]
-                        axis_count_for_mean=len(axis_amp_slices),
-                    ),
-                    dtype=np.float32,
-                )
-                strength_metrics = compute_vibration_strength_db(
-                    freq_hz=freq_slice.tolist(),
-                    combined_spectrum_amp_g_values=combined_amp.tolist(),
-                    peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
-                    peak_separation_hz=PEAK_SEPARATION_HZ,
-                    top_n=5,
-                )
+                combined_amp = fft_result["combined_amp"]
+                strength_metrics = fft_result["strength_metrics"]
                 metrics["combined"]["peaks"] = list(strength_metrics["top_peaks"])
                 metrics["combined"]["strength_metrics"] = dict(strength_metrics)
                 metrics["strength_metrics"] = dict(strength_metrics)
@@ -339,6 +302,80 @@ class SignalProcessor:
 
         buf.latest_metrics = metrics
         return metrics
+
+    def _compute_fft_spectrum(
+        self,
+        fft_block: np.ndarray,
+        sample_rate_hz: int,
+    ) -> dict[str, Any]:
+        """Shared FFT spectrum computation used by both compute_metrics and debug_spectrum.
+
+        Returns a dict with keys: freq_slice, valid_idx, spectrum_by_axis,
+        axis_amp_slices, axis_amps, combined_amp, strength_metrics, axis_peaks.
+        """
+        if self._spike_filter_enabled:
+            fft_block = self._medfilt3(fft_block)
+        fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
+        freq_slice, valid_idx = self._fft_params(sample_rate_hz)
+        spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
+        axis_amp_slices: list[np.ndarray] = []
+        axis_amps: dict[str, np.ndarray] = {}
+        axis_peaks: dict[str, list] = {}
+
+        for axis_idx, axis in enumerate(AXES):
+            windowed = fft_block[axis_idx] * self._fft_window
+            spec = np.abs(np.fft.rfft(windowed)).astype(np.float32)
+            spec *= self._fft_scale
+            if spec.size > 0:
+                spec[0] *= 0.5
+            if (self.fft_n % 2) == 0 and spec.size > 1:
+                spec[-1] *= 0.5
+            amp_slice = spec[valid_idx]
+            amp_for_peaks = amp_slice.copy()
+            if amp_for_peaks.size > 1:
+                amp_for_peaks[0] = 0.0
+            axis_peaks[axis] = self._top_peaks(
+                freq_slice,
+                amp_for_peaks,
+                top_n=3,
+                floor_ratio=2.5,
+                smoothing_bins=3,
+            )
+            spectrum_by_axis[axis] = {
+                "freq": freq_slice,
+                "amp": amp_slice,
+            }
+            axis_amps[axis] = amp_slice
+            axis_amp_slices.append(amp_for_peaks)
+
+        combined_amp = np.empty(0, dtype=np.float32)
+        strength_metrics: dict[str, Any] = {}
+        if axis_amp_slices:
+            combined_amp = np.asarray(
+                combined_spectrum_amp_g(
+                    axis_spectra_amp_g=axis_amp_slices,  # type: ignore[arg-type]
+                    axis_count_for_mean=len(axis_amp_slices),
+                ),
+                dtype=np.float32,
+            )
+            strength_metrics = compute_vibration_strength_db(
+                freq_hz=freq_slice.tolist(),
+                combined_spectrum_amp_g_values=combined_amp.tolist(),
+                peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
+                peak_separation_hz=PEAK_SEPARATION_HZ,
+                top_n=5,
+            )
+
+        return {
+            "freq_slice": freq_slice,
+            "valid_idx": valid_idx,
+            "spectrum_by_axis": spectrum_by_axis,
+            "axis_amp_slices": axis_amp_slices,
+            "axis_amps": axis_amps,
+            "combined_amp": combined_amp,
+            "strength_metrics": strength_metrics,
+            "axis_peaks": axis_peaks,
+        }
 
     def compute_all(
         self,
@@ -494,49 +531,17 @@ class SignalProcessor:
         raw_min = [float(fft_block[i].min()) for i in range(3)]
         raw_max = [float(fft_block[i].max()) for i in range(3)]
 
-        # Spike filter (same as compute_metrics path)
-        if self._spike_filter_enabled:
-            fft_block = self._medfilt3(fft_block)
+        # Use shared FFT computation (same path as compute_metrics)
+        fft_result = self._compute_fft_spectrum(fft_block, sr)
+        freq_slice = fft_result["freq_slice"]
+        axis_amps = fft_result["axis_amps"]
+        combined_amp = fft_result["combined_amp"]
+        sm = fft_result["strength_metrics"]
 
-        # Mean removal
-        fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
-        detrended_std = [float(fft_block[i].std()) for i in range(3)]
-
-        # Compute per-axis spectrum
-        freq_slice, valid_idx = self._fft_params(sr)
-        axis_amps = {}
-        axis_amp_slices = []
-        for axis_idx, axis in enumerate(AXES):
-            windowed = fft_block[axis_idx] * self._fft_window
-            spec = np.abs(np.fft.rfft(windowed)).astype(np.float32)
-            spec *= self._fft_scale
-            if spec.size > 0:
-                spec[0] *= 0.5
-            if (self.fft_n % 2) == 0 and spec.size > 1:
-                spec[-1] *= 0.5
-            amp_slice = spec[valid_idx]
-            axis_amps[axis] = amp_slice
-            amp_for_combined = amp_slice.copy()
-            if amp_for_combined.size > 1:
-                amp_for_combined[0] = 0.0
-            axis_amp_slices.append(amp_for_combined)
-
-        combined_amp = np.asarray(
-            combined_spectrum_amp_g(
-                axis_spectra_amp_g=axis_amp_slices,
-                axis_count_for_mean=len(axis_amp_slices),
-            ),
-            dtype=np.float32,
-        )
-
-        # Strength metrics
-        sm = compute_vibration_strength_db(
-            freq_hz=freq_slice.tolist(),
-            combined_spectrum_amp_g_values=combined_amp.tolist(),
-            peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
-            peak_separation_hz=PEAK_SEPARATION_HZ,
-            top_n=5,
-        )
+        # Detrended std from the filtered block (approximate from axis amps)
+        detrended_std = [
+            float(np.std(fft_block[i] - np.mean(fft_block[i]))) for i in range(3)
+        ]
 
         # Top 10 bins by combined amplitude
         sorted_idx = np.argsort(combined_amp)[::-1]

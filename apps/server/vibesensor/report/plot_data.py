@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 from math import floor
-from typing import Any
+from typing import Any, Literal
 
-from vibesensor_core.vibration_strength import _percentile
+from vibesensor_core.vibration_strength import percentile
 
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
@@ -19,10 +19,12 @@ def _aggregate_fft_spectrum(
     samples: list[dict[str, Any]],
     *,
     freq_bin_hz: float = 2.0,
+    aggregation: str = "persistence",
 ) -> list[tuple[float, float]]:
-    """Return persistence-weighted FFT spectrum: presence_ratio² × p95_amp per bin.
+    """Return aggregated FFT spectrum.
 
-    This prevents a single transient spike from dominating the diagnostic view.
+    aggregation='persistence': presence_ratio² × p95_amp per bin (diagnostic view).
+    aggregation='max': max amplitude per bin (raw/debug view).
     """
     if freq_bin_hz <= 0:
         freq_bin_hz = 2.0
@@ -38,14 +40,17 @@ def _aggregate_fft_spectrum(
             bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
             bin_center = bin_low + (freq_bin_hz / 2.0)
             bin_amps.setdefault(bin_center, []).append(amp)
-    if n_samples == 0:
+    if not bin_amps:
         return []
     result: dict[float, float] = {}
     for bin_center, amps in bin_amps.items():
-        presence_ratio = len(amps) / max(1, n_samples)
-        sorted_amps = sorted(amps)
-        p95 = _percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
-        result[bin_center] = (presence_ratio**2) * p95
+        if aggregation == "max":
+            result[bin_center] = max(amps)
+        else:
+            presence_ratio = len(amps) / max(1, n_samples)
+            sorted_amps = sorted(amps)
+            p95 = percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
+            result[bin_center] = (presence_ratio**2) * p95
     return sorted(result.items(), key=lambda item: item[0])
 
 
@@ -55,24 +60,20 @@ def _aggregate_fft_spectrum_raw(
     freq_bin_hz: float = 2.0,
 ) -> list[tuple[float, float]]:
     """Return max-amplitude FFT spectrum (raw/debug view)."""
-    if freq_bin_hz <= 0:
-        freq_bin_hz = 2.0
-    bins: dict[float, float] = {}
-    for sample in samples:
-        if not isinstance(sample, dict):
-            continue
-        for hz, amp in _sample_top_peaks(sample):
-            if hz <= 0 or amp <= 0:
-                continue
-            bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
-            bin_center = bin_low + (freq_bin_hz / 2.0)
-            current = bins.get(bin_center, 0.0)
-            if amp > current:
-                bins[bin_center] = amp
-    return sorted(bins.items(), key=lambda item: item[0])
+    return _aggregate_fft_spectrum(samples, freq_bin_hz=freq_bin_hz, aggregation="max")
 
 
-def _spectrogram_from_peaks(samples: list[dict[str, Any]]) -> dict[str, Any]:
+def _spectrogram_from_peaks(
+    samples: list[dict[str, Any]],
+    *,
+    aggregation: Literal["persistence", "max"] = "persistence",
+) -> dict[str, Any]:
+    """Build a 2-D spectrogram grid from per-sample peak lists.
+
+    *aggregation* controls cell values:
+    - ``"persistence"`` – ``(presence_ratio²) × p95_amp`` (default, diagnostic view).
+    - ``"max"``         – simple ``max(amplitude)`` per cell (raw/debug view).
+    """
     peak_rows: list[tuple[float, float, float]] = []
     time_values: list[float] = []
     speed_values: list[float] = []
@@ -98,15 +99,16 @@ def _spectrogram_from_peaks(samples: list[dict[str, Any]]) -> dict[str, Any]:
                 peak_rows.append((speed, hz, amp))
 
     use_time = bool(time_values)
+    empty_result: dict[str, Any] = {
+        "x_axis": "none",
+        "x_label_key": "TIME_S",
+        "x_bins": [],
+        "y_bins": [],
+        "cells": [],
+        "max_amp": 0.0,
+    }
     if not use_time and not speed_values:
-        return {
-            "x_axis": "none",
-            "x_label_key": "TIME_S",
-            "x_bins": [],
-            "y_bins": [],
-            "cells": [],
-            "max_amp": 0.0,
-        }
+        return empty_result
 
     x_axis = "time_s" if use_time else "speed_kmh"
     x_values = time_values if use_time else speed_values
@@ -122,25 +124,21 @@ def _spectrogram_from_peaks(samples: list[dict[str, Any]]) -> dict[str, Any]:
 
     peak_freqs = [hz for _x, hz, _amp in peak_rows]
     if not peak_freqs:
-        return {
-            "x_axis": x_axis,
-            "x_label_key": x_label_key,
-            "x_bins": [],
-            "y_bins": [],
-            "cells": [],
-            "max_amp": 0.0,
-        }
+        empty_result.update(x_axis=x_axis, x_label_key=x_label_key)
+        return empty_result
 
     observed_max_hz = max(peak_freqs)
     freq_cap_hz = min(200.0, max(40.0, observed_max_hz))
     freq_bin_hz = max(2.0, freq_cap_hz / 45.0)
 
-    x_sample_counts: dict[float, int] = {}
-    for x_val in x_values:
-        x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
-        x_sample_counts[x_bin_low] = x_sample_counts.get(x_bin_low, 0) + 1
-
+    # Collect amplitudes per (x_bin, y_bin) cell.
     cell_by_bin: dict[tuple[float, float], list[float]] = {}
+    x_sample_counts: dict[float, int] = {}
+    if aggregation == "persistence":
+        for x_val in x_values:
+            x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
+            x_sample_counts[x_bin_low] = x_sample_counts.get(x_bin_low, 0) + 1
+
     for x_val, hz, amp in peak_rows:
         if hz > freq_cap_hz:
             continue
@@ -152,31 +150,31 @@ def _spectrogram_from_peaks(samples: list[dict[str, Any]]) -> dict[str, Any]:
     x_bins = sorted({x for x, _y in cell_by_bin})
     y_bins = sorted({y for _x, y in cell_by_bin})
     if not x_bins or not y_bins:
-        return {
-            "x_axis": x_axis,
-            "x_label_key": x_label_key,
-            "x_bins": [],
-            "y_bins": [],
-            "cells": [],
-            "max_amp": 0.0,
-        }
+        empty_result.update(x_axis=x_axis, x_label_key=x_label_key)
+        return empty_result
 
     x_index = {value: idx for idx, value in enumerate(x_bins)}
     y_index = {value: idx for idx, value in enumerate(y_bins)}
     cells = [[0.0 for _ in x_bins] for _ in y_bins]
     max_amp = 0.0
+
     for (x_key, y_key), amps in cell_by_bin.items():
         yi = y_index[y_key]
         xi = x_index[x_key]
-        sorted_amps = sorted(amps)
-        if not sorted_amps:
-            continue
-        p95_amp = _percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
-        presence_ratio = len(sorted_amps) / max(1, x_sample_counts.get(x_key, 1))
-        diagnostic_val = (presence_ratio**2) * p95_amp
-        cells[yi][xi] = diagnostic_val
-        if diagnostic_val > max_amp:
-            max_amp = diagnostic_val
+        if aggregation == "persistence":
+            sorted_amps = sorted(amps)
+            if not sorted_amps:
+                continue
+            p95_amp = (
+                percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
+            )
+            presence_ratio = len(sorted_amps) / max(1, x_sample_counts.get(x_key, 1))
+            val = (presence_ratio**2) * p95_amp
+        else:
+            val = max(amps)
+        cells[yi][xi] = val
+        if val > max_amp:
+            max_amp = val
 
     return {
         "x_axis": x_axis,
@@ -191,110 +189,8 @@ def _spectrogram_from_peaks(samples: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _spectrogram_from_peaks_raw(samples: list[dict[str, Any]]) -> dict[str, Any]:
-    peak_rows: list[tuple[float, float, float]] = []
-    time_values: list[float] = []
-    speed_values: list[float] = []
-
-    for sample in samples:
-        if not isinstance(sample, dict):
-            continue
-        t_s = _as_float(sample.get("t_s"))
-        speed = _as_float(sample.get("speed_kmh"))
-        peaks = _sample_top_peaks(sample)
-        if t_s is not None and t_s >= 0:
-            time_values.append(t_s)
-        if speed is not None and speed > 0:
-            speed_values.append(speed)
-        if not peaks:
-            continue
-        for hz, amp in peaks:
-            if hz <= 0 or amp <= 0:
-                continue
-            if t_s is not None and t_s >= 0:
-                peak_rows.append((t_s, hz, amp))
-            elif speed is not None and speed > 0:
-                peak_rows.append((speed, hz, amp))
-
-    use_time = bool(time_values)
-    if not use_time and not speed_values:
-        return {
-            "x_axis": "none",
-            "x_label_key": "TIME_S",
-            "x_bins": [],
-            "y_bins": [],
-            "cells": [],
-            "max_amp": 0.0,
-        }
-
-    x_axis = "time_s" if use_time else "speed_kmh"
-    x_values = time_values if use_time else speed_values
-    x_min = min(x_values)
-    x_max = max(x_values)
-    x_span = max(0.0, x_max - x_min)
-    if x_axis == "time_s":
-        x_bin_width = max(2.0, (x_span / 40.0) if x_span > 0 else 2.0)
-        x_label_key = "TIME_S"
-    else:
-        x_bin_width = max(5.0, (x_span / 30.0) if x_span > 0 else 5.0)
-        x_label_key = "SPEED_KM_H"
-
-    peak_freqs = [hz for _x, hz, _amp in peak_rows]
-    if not peak_freqs:
-        return {
-            "x_axis": x_axis,
-            "x_label_key": x_label_key,
-            "x_bins": [],
-            "y_bins": [],
-            "cells": [],
-            "max_amp": 0.0,
-        }
-
-    observed_max_hz = max(peak_freqs)
-    freq_cap_hz = min(200.0, max(40.0, observed_max_hz))
-    freq_bin_hz = max(2.0, freq_cap_hz / 45.0)
-
-    cell_by_bin: dict[tuple[float, float], float] = {}
-    for x_val, hz, amp in peak_rows:
-        if hz > freq_cap_hz:
-            continue
-        x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
-        y_bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
-        key = (x_bin_low, y_bin_low)
-        current = cell_by_bin.get(key, 0.0)
-        if amp > current:
-            cell_by_bin[key] = amp
-
-    x_bins = sorted({x for x, _y in cell_by_bin})
-    y_bins = sorted({y for _x, y in cell_by_bin})
-    if not x_bins or not y_bins:
-        return {
-            "x_axis": x_axis,
-            "x_label_key": x_label_key,
-            "x_bins": [],
-            "y_bins": [],
-            "cells": [],
-            "max_amp": 0.0,
-        }
-
-    x_index = {value: idx for idx, value in enumerate(x_bins)}
-    y_index = {value: idx for idx, value in enumerate(y_bins)}
-    cells = [[0.0 for _ in x_bins] for _ in y_bins]
-    max_amp = max(cell_by_bin.values()) if cell_by_bin else 0.0
-    for (x_key, y_key), amp in cell_by_bin.items():
-        yi = y_index[y_key]
-        xi = x_index[x_key]
-        cells[yi][xi] = amp
-
-    return {
-        "x_axis": x_axis,
-        "x_label_key": x_label_key,
-        "x_bin_width": x_bin_width,
-        "y_bin_width": freq_bin_hz,
-        "x_bins": [x + (x_bin_width / 2.0) for x in x_bins],
-        "y_bins": [y + (freq_bin_hz / 2.0) for y in y_bins],
-        "cells": cells,
-        "max_amp": max_amp,
-    }
+    """Max-amplitude spectrogram (raw/debug view)."""
+    return _spectrogram_from_peaks(samples, aggregation="max")
 
 
 def _top_peaks_table_rows(
@@ -339,8 +235,8 @@ def _top_peaks_table_rows(
         amps = sorted(bucket["amps"])
         count = len(amps)
         presence_ratio = count / max(1, n_samples)
-        median_amp = _percentile(amps, 0.50) if count >= 2 else (amps[0] if amps else 0.0)
-        p95_amp = _percentile(amps, 0.95) if count >= 2 else (amps[-1] if amps else 0.0)
+        median_amp = percentile(amps, 0.50) if count >= 2 else (amps[0] if amps else 0.0)
+        p95_amp = percentile(amps, 0.95) if count >= 2 else (amps[-1] if amps else 0.0)
         max_amp = amps[-1] if amps else 0.0
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
         bucket["max_amp_g"] = max_amp
@@ -484,10 +380,10 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         vals = sorted(v for _t, v in vib_mag_points if v >= 0)
         if vals:
             steady_speed_distribution = {
-                "p10": _percentile(vals, 0.10),
-                "p50": _percentile(vals, 0.50),
-                "p90": _percentile(vals, 0.90),
-                "p95": _percentile(vals, 0.95),
+                "p10": percentile(vals, 0.10),
+                "p50": percentile(vals, 0.50),
+                "p90": percentile(vals, 0.90),
+                "p95": percentile(vals, 0.95),
             }
 
     fft_spectrum = _aggregate_fft_spectrum(samples)

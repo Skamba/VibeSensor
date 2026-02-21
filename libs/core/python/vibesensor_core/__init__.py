@@ -7,19 +7,19 @@ from .strength_bands import band_by_key as band_by_key
 from .strength_bands import band_rank as band_rank
 from .strength_bands import bucket_for_strength as bucket_for_strength
 from .strength_bands import StrengthBand as StrengthBand
+from .vibration_strength import median as median
+from .vibration_strength import noise_floor_amp_p20_g as noise_floor_amp_p20_g
+from .vibration_strength import peak_band_rms_amp_g as peak_band_rms_amp_g
 from .vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ
 from .vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
+from .vibration_strength import percentile as percentile
+from .vibration_strength import strength_floor_amp_g as strength_floor_amp_g
 from .vibration_strength import (
     STRENGTH_EPSILON_FLOOR_RATIO as STRENGTH_EPSILON_FLOOR_RATIO,
 )
 from .vibration_strength import STRENGTH_EPSILON_MIN_G as STRENGTH_EPSILON_MIN_G
-from .vibration_strength import _median as _median
-from .vibration_strength import _noise_floor_amp_p20_g as _noise_floor_amp_p20_g
-from .vibration_strength import _peak_band_rms_amp_g as _peak_band_rms_amp_g
-from .vibration_strength import _percentile as _percentile
-from .vibration_strength import _strength_floor_amp_g as _strength_floor_amp_g
 from .vibration_strength import (
-    _vibration_strength_db_scalar as _vibration_strength_db_scalar,
+    vibration_strength_db_scalar as vibration_strength_db_scalar,
 )
 from .vibration_strength import combined_spectrum_amp_g as combined_spectrum_amp_g
 from .vibration_strength import (
@@ -40,12 +40,12 @@ __all__ = [
     "PEAK_SEPARATION_HZ",
     "STRENGTH_EPSILON_MIN_G",
     "STRENGTH_EPSILON_FLOOR_RATIO",
-    "_median",
-    "_percentile",
+    "median",
+    "percentile",
     "combined_spectrum_amp_g",
-    "_noise_floor_amp_p20_g",
-    "_strength_floor_amp_g",
-    "_peak_band_rms_amp_g",
-    "_vibration_strength_db_scalar",
+    "noise_floor_amp_p20_g",
+    "strength_floor_amp_g",
+    "peak_band_rms_amp_g",
+    "vibration_strength_db_scalar",
     "compute_vibration_strength_db",
 ]

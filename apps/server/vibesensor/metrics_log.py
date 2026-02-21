@@ -6,7 +6,6 @@ import math
 import time
 from collections import deque
 from collections.abc import Callable
-from datetime import datetime
 from pathlib import Path
 from threading import RLock, Thread
 from typing import TYPE_CHECKING
@@ -94,7 +93,7 @@ class MetricsLogger:
         if self.enabled:
             self._start_new_session_locked()
 
-    def _start_new_session_locked(self, now: datetime | None = None) -> None:  # noqa: ARG002
+    def _start_new_session_locked(self) -> None:
         self._run_id = uuid4().hex
         self._run_start_utc = utc_now_iso()
         self._run_start_mono_s = time.monotonic()

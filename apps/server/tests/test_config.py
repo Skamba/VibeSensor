@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.config import PI_DIR, load_config
+from vibesensor.config import SERVER_DIR, load_config
 
 
 def _write_config(path: Path, payload: dict) -> None:
@@ -47,8 +47,8 @@ def test_logging_flags_allow_db_only_mode(tmp_path: Path) -> None:
 
 def test_dev_and_docker_configs_equivalent() -> None:
     """config.dev.yaml and config.docker.yaml must produce identical AppConfig."""
-    dev_cfg = load_config(PI_DIR / "config.dev.yaml")
-    docker_cfg = load_config(PI_DIR / "config.docker.yaml")
+    dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
+    docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
     # Compare all meaningful fields (config_path will differ)
     assert dev_cfg.logging.metrics_log_path == docker_cfg.logging.metrics_log_path
     assert dev_cfg.server == docker_cfg.server
@@ -66,7 +66,7 @@ def test_default_server_port_is_80_for_base_config(tmp_path: Path) -> None:
 
 
 def test_dev_and_docker_override_server_port_to_8000() -> None:
-    dev_cfg = load_config(PI_DIR / "config.dev.yaml")
-    docker_cfg = load_config(PI_DIR / "config.docker.yaml")
+    dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
+    docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
     assert dev_cfg.server.port == 8000
     assert docker_cfg.server.port == 8000

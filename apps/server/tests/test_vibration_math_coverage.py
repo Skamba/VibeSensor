@@ -9,9 +9,9 @@ from vibesensor_core.strength_bands import bucket_for_strength
 from vibesensor_core.vibration_strength import (
     STRENGTH_EPSILON_FLOOR_RATIO,
     STRENGTH_EPSILON_MIN_G,
-    _vibration_strength_db_scalar,
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
+    vibration_strength_db_scalar,
 )
 
 # -- bucket_for_strength exact boundaries ------------------------------------
@@ -39,7 +39,7 @@ def test_bucket_exact_boundaries(db_value: float, expected: str | None) -> None:
     assert bucket_for_strength(db_value) == expected
 
 
-# -- _vibration_strength_db_scalar -------------------------------------------
+# -- vibration_strength_db_scalar -------------------------------------------
 
 
 def test_strength_db_exact_known_value() -> None:
@@ -47,7 +47,7 @@ def test_strength_db_exact_known_value() -> None:
     floor = 1.0
     eps = max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
     expected = 20.0 * log10((band + eps) / (floor + eps))
-    result = _vibration_strength_db_scalar(
+    result = vibration_strength_db_scalar(
         peak_band_rms_amp_g=band,
         floor_amp_g=floor,
     )
@@ -55,7 +55,7 @@ def test_strength_db_exact_known_value() -> None:
 
 
 def test_strength_db_both_zero() -> None:
-    result = _vibration_strength_db_scalar(
+    result = vibration_strength_db_scalar(
         peak_band_rms_amp_g=0.0,
         floor_amp_g=0.0,
     )
@@ -63,11 +63,11 @@ def test_strength_db_both_zero() -> None:
 
 
 def test_strength_db_negative_inputs_clamped() -> None:
-    result = _vibration_strength_db_scalar(
+    result = vibration_strength_db_scalar(
         peak_band_rms_amp_g=-5.0,
         floor_amp_g=-3.0,
     )
-    zero_result = _vibration_strength_db_scalar(
+    zero_result = vibration_strength_db_scalar(
         peak_band_rms_amp_g=0.0,
         floor_amp_g=0.0,
     )

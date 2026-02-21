@@ -7,6 +7,7 @@ and have no dependencies on runner/subprocess infrastructure.
 from __future__ import annotations
 
 import json
+import logging
 import re
 import time
 from pathlib import Path
@@ -118,6 +119,9 @@ class HealStateStore:
                 return {}
             return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
         except Exception:
+            logging.getLogger(__name__).debug(
+                "HealStateStore: ignoring corrupt state file %s", self._path, exc_info=True
+            )
             return {}
 
     def _save(self, data: dict[str, float]) -> None:
