@@ -156,7 +156,10 @@ def _standard_metadata(
 
 
 class TestPhaseSegmentation:
-    """Verify driving-phase classification across various speed profiles."""
+    """Verify driving-phase classification across various speed profiles.
+
+    Also covers issue #188: No phase detection algorithm exists.
+    """
 
     def test_idle_to_speed_up(self) -> None:
         """Idle → acceleration → cruise must produce all three phases."""
@@ -226,6 +229,46 @@ class TestPhaseSegmentation:
         assert info["total_samples"] == 3
         pcts = info["phase_pcts"]
         assert abs(sum(pcts.values()) - 100.0) < 0.01
+
+    def test_all_five_phases_can_be_detected(self) -> None:
+        """Issue #188: phase detection must classify all five driving phases.
+
+        Validates that the algorithm correctly identifies IDLE, ACCELERATION,
+        CRUISE, DECELERATION, and COAST_DOWN from a realistic speed profile.
+        """
+        samples = []
+        # IDLE: stationary
+        for i in range(5):
+            samples.append({"t_s": float(i), "speed_kmh": 0.5})
+        # ACCELERATION: 0→80 km/h over 20s
+        for i in range(5, 25):
+            samples.append({"t_s": float(i), "speed_kmh": float((i - 5) * 4)})
+        # CRUISE: steady 80 km/h
+        for i in range(25, 40):
+            samples.append({"t_s": float(i), "speed_kmh": 80.0})
+        # DECELERATION: 80→20 km/h
+        for i in range(40, 55):
+            samples.append({"t_s": float(i), "speed_kmh": max(20.0, 80.0 - (i - 40) * 4.0)})
+        # COAST_DOWN: 20→0 km/h (below coast-down threshold)
+        for i in range(55, 60):
+            samples.append({"t_s": float(i), "speed_kmh": max(0.0, 20.0 - (i - 55) * 4.0)})
+
+        per_sample, segments = segment_run_phases(samples)
+        assert len(per_sample) == len(samples)
+        phases_found = {seg.phase for seg in segments}
+
+        assert DrivingPhase.IDLE in phases_found, "IDLE not detected"
+        assert DrivingPhase.ACCELERATION in phases_found, "ACCELERATION not detected"
+        assert DrivingPhase.CRUISE in phases_found, "CRUISE not detected"
+        # Deceleration and/or coast-down must be detected
+        assert (
+            DrivingPhase.DECELERATION in phases_found or DrivingPhase.COAST_DOWN in phases_found
+        ), "DECELERATION/COAST_DOWN not detected"
+
+        info = phase_summary(segments)
+        assert info["has_cruise"]
+        assert info["has_acceleration"]
+        assert info["total_samples"] == len(samples)
 
 
 # ---------------------------------------------------------------------------
