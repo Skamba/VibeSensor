@@ -421,7 +421,7 @@ class MetricsLogger:
                 t_s=t_s,
                 client_id=client_id,
                 client_name=record.name,
-                location=record.location,
+                location=str(getattr(record, "location", "") or ""),
                 sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
                 speed_kmh=speed_kmh,
                 gps_speed_kmh=gps_speed_kmh,
