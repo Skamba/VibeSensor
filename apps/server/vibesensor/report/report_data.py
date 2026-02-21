@@ -298,10 +298,12 @@ def map_summary(summary: dict) -> ReportTemplateData:
     data_trust: list[DataTrustItem] = []
     for item in summary.get("run_suitability", []):
         if isinstance(item, dict):
+            check_raw = str(item.get("check") or "")
+            check_text = tr(check_raw) if check_raw.startswith("SUITABILITY_CHECK_") else check_raw
             detail = str(item.get("explanation") or "").strip() or None
             data_trust.append(
                 DataTrustItem(
-                    check=str(item.get("check") or ""),
+                    check=check_text,
                     state=str(item.get("state") or "warn"),
                     detail=detail,
                 )
