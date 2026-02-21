@@ -250,8 +250,7 @@ class TestConfidenceCalibration:
                 (
                     float(finding.get("confidence_0_to_1") or 0.0)
                     for finding in findings
-                    if isinstance(finding, dict)
-                    and not str(finding.get("finding_id", "")).startswith("REF_")
+                    if isinstance(finding, dict) and str(finding.get("finding_id", "")) == "F_ORDER"
                 ),
                 default=0.0,
             )
@@ -261,7 +260,7 @@ class TestConfidenceCalibration:
 
         if low_conf > 0.0 and high_conf > 0.0:
             assert low_conf < high_conf
-            assert low_conf <= high_conf * 0.95
+            assert low_conf <= high_conf * 0.85
 
     def test_negligible_amplitude_capped(self) -> None:
         """Very weak signal (< 2 mg) → confidence capped at 0.45."""
