@@ -540,6 +540,7 @@ def summarize_run_data(
         include_locations=set(sensor_locations),
         lang=language,
         connected_locations=connected_locations,
+        per_sample_phases=_per_sample_phases,  # phase context; issue #192
     )
 
     summary: dict[str, Any] = {
