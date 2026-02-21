@@ -35,6 +35,7 @@ from .helpers import (
     _run_noise_baseline_g,
     _sensor_limit_g,
     _speed_stats,
+    _speed_stats_by_phase,
     _validate_required_strength_metrics,
     weak_spatial_dominance_threshold,
 )
@@ -344,6 +345,7 @@ def summarize_run_data(
     # Phase segmentation
     _per_sample_phases, phase_segments = _segment_run_phases(samples)
     phase_info = _phase_summary(phase_segments)
+    speed_stats_by_phase = _speed_stats_by_phase(samples, _per_sample_phases)
 
     sensor_model = metadata.get("sensor_model")
     sensor_limit = _sensor_limit_g(sensor_model)
@@ -573,6 +575,7 @@ def summarize_run_data(
         "most_likely_origin": most_likely_origin,
         "test_plan": test_plan,
         "speed_stats": speed_stats,
+        "speed_stats_by_phase": speed_stats_by_phase,
         "phase_info": phase_info,
         "sensor_locations": sensor_locations,
         "sensor_locations_connected_throughout": sorted(connected_locations),
