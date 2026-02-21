@@ -4,12 +4,13 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from math import pow
 from statistics import mean
 
-from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
+from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
-from .helpers import _speed_bin_label
+from .helpers import _speed_bin_label, weak_spatial_dominance_threshold
 from .order_analysis import _finding_actions_for_source
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
@@ -120,38 +121,104 @@ def _merge_test_plan(
 def _location_speedbin_summary(
     matches: list[dict[str, object]],
     lang: object,
+    relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
 ) -> tuple[str, dict[str, object] | None]:
-    grouped: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    """Return strongest location summary, optionally restricted to specific speed bins.
+
+    When ``relevant_speed_bins`` is provided, location ranking is computed only
+    from samples that fall inside those speed-bin labels (for example
+    ``{"90-100 km/h"}``). This allows order findings to localize the strongest
+    sensor in the same speed range where the order is most relevant.
+    """
+    allowed_bins = {
+        str(bin_label).strip()
+        for bin_label in (relevant_speed_bins or [])
+        if str(bin_label).strip()
+    }
+    grouped: dict[str, list[dict[str, object]]] = defaultdict(list)
     for row in matches:
         speed = _as_float(row.get("speed_kmh"))
         amp = _as_float(row.get("amp"))
         location = str(row.get("location") or "").strip()
         if speed is None or speed <= 0 or amp is None or amp <= 0 or not location:
             continue
-        grouped[_speed_bin_label(speed)][location].append(amp)
+        speed_bin = _speed_bin_label(speed)
+        if allowed_bins and speed_bin not in allowed_bins:
+            continue
+        grouped[speed_bin].append(
+            {
+                "location": location,
+                "amp": amp,
+                "matched_hz": _as_float(row.get("matched_hz")),
+                "rel_error": _as_float(row.get("rel_error")),
+            }
+        )
 
     if not grouped:
         return "", None
 
     per_bin_results: list[dict[str, object]] = []
     best: dict[str, object] | None = None
-    for bin_label, per_loc in grouped.items():
+    corroboration_amp_multiplier = pow(10.0, MULTI_SENSOR_CORROBORATION_DB / 20.0)
+    for bin_label, rows in grouped.items():
+        if not rows:
+            continue
+
+        per_loc_scores: dict[str, list[float]] = defaultdict(list)
+        per_loc_sample_counts: dict[str, int] = defaultdict(int)
+        per_loc_corroborated_counts: dict[str, list[int]] = defaultdict(list)
+
+        for row in rows:
+            location = str(row.get("location") or "").strip()
+            amp = _as_float(row.get("amp"))
+            if not location or amp is None or amp <= 0:
+                continue
+
+            matched_hz = _as_float(row.get("matched_hz"))
+            rel_error = _as_float(row.get("rel_error"))
+            quality_weight = max(0.0, min(1.0, 1.0 - rel_error)) if rel_error is not None else 1.0
+
+            corroborating_locations: set[str] = set()
+            if matched_hz is not None and matched_hz > 0:
+                tolerance_hz = max(0.75, matched_hz * 0.03)
+                for peer in rows:
+                    peer_location = str(peer.get("location") or "").strip()
+                    peer_hz = _as_float(peer.get("matched_hz"))
+                    if (
+                        not peer_location
+                        or peer_location == location
+                        or peer_hz is None
+                        or abs(peer_hz - matched_hz) > tolerance_hz
+                    ):
+                        continue
+                    corroborating_locations.add(peer_location)
+
+            corroborated_by_n_sensors = 1 + len(corroborating_locations)
+            corroboration_weight = (
+                corroboration_amp_multiplier if corroborated_by_n_sensors >= 2 else 1.0
+            )
+
+            per_loc_scores[location].append(amp * quality_weight * corroboration_weight)
+            per_loc_sample_counts[location] += 1
+            per_loc_corroborated_counts[location].append(corroborated_by_n_sensors)
+
         ranked = sorted(
-            ((loc, mean(vals)) for loc, vals in per_loc.items() if vals),
+            ((loc, mean(vals)) for loc, vals in per_loc_scores.items() if vals),
             key=lambda item: item[1],
             reverse=True,
         )
         if not ranked:
             continue
         top_loc, top_amp = ranked[0]
-        top_count = len(per_loc.get(top_loc, []))
+        top_count = int(per_loc_sample_counts.get(top_loc, 0))
         second_loc = ranked[1][0] if len(ranked) > 1 else top_loc
-        second_count = len(per_loc.get(second_loc, [])) if len(ranked) > 1 else top_count
+        second_count = int(per_loc_sample_counts.get(second_loc, 0)) if len(ranked) > 1 else top_count
         second_amp = ranked[1][1] if len(ranked) > 1 else top_amp
         dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
-        total_samples = sum(len(vals) for vals in per_loc.values())
+        total_samples = sum(per_loc_sample_counts.values())
         ambiguous = len(ranked) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
         display_location = f"ambiguous location: {top_loc} / {second_loc}" if ambiguous else top_loc
+        top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
         candidate = {
             "speed_range": bin_label,
             "location": display_location,
@@ -162,6 +229,7 @@ def _location_speedbin_summary(
             "second_location": second_loc if len(ranked) > 1 else None,
             "top_location_samples": top_count,
             "second_location_samples": second_count,
+            "corroborated_by_n_sensors": top_corroborated_by_n_sensors,
             "total_samples": total_samples,
             "ambiguous_location": ambiguous,
             "ambiguous_locations": [top_loc, second_loc] if ambiguous else [],
@@ -170,7 +238,8 @@ def _location_speedbin_summary(
                 location_count=len(ranked),
                 total_samples=total_samples,
             ),
-            "weak_spatial_separation": dominance < WEAK_SPATIAL_DOMINANCE_THRESHOLD,
+            "weak_spatial_separation": dominance
+            < weak_spatial_dominance_threshold(len(ranked)),
         }
         per_bin_results.append(candidate)
         if best is None or float(candidate["mean_amp"]) > float(best["mean_amp"]):
