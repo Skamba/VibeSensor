@@ -346,6 +346,7 @@ class TestConfidenceCalibration:
         At 4 matches: multiplier = 0.76 (24% less than 1.0)
         Acceptance criteria: penalty >= 15% compared to 20+ matched samples.
         """
+
         # Test formula directly
         def sample_multiplier(matched: int) -> float:
             sample_factor = min(1.0, matched / 20.0)
@@ -758,15 +759,23 @@ class TestSensorIntensityPhaseContext:
         samples = []
         # Location A: idle then cruise
         for i in range(5):
-            samples.append({
-                "t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 4.0,
-                "location_key": "front-left",
-            })
+            samples.append(
+                {
+                    "t_s": float(i),
+                    "speed_kmh": 0.0,
+                    "vibration_strength_db": 4.0,
+                    "location_key": "front-left",
+                }
+            )
         for i in range(5, 15):
-            samples.append({
-                "t_s": float(i), "speed_kmh": 60.0, "vibration_strength_db": 22.0,
-                "location_key": "front-left",
-            })
+            samples.append(
+                {
+                    "t_s": float(i),
+                    "speed_kmh": 60.0,
+                    "vibration_strength_db": 22.0,
+                    "location_key": "front-left",
+                }
+            )
 
         per_sample_phases, _ = segment_run_phases(samples)
         rows = _sensor_intensity_by_location(samples, per_sample_phases=per_sample_phases)
@@ -820,10 +829,7 @@ class TestOrderFindingsPhaseFiltering:
         from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
 
         # Build 5 idle + 15 cruise samples
-        idle = [
-            {"t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 5.0}
-            for i in range(5)
-        ]
+        idle = [{"t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 5.0} for i in range(5)]
         cruise = [
             {
                 "t_s": float(i + 5),
@@ -848,8 +854,7 @@ class TestOrderFindingsPhaseFiltering:
         meta = _standard_metadata()
         # All-IDLE run (no speed data)
         samples = [
-            {"t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 5.0}
-            for i in range(10)
+            {"t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 5.0} for i in range(10)
         ]
         # Should not raise; falls back to full sample set
         summary = summarize_run_data(meta, samples, include_samples=False)
@@ -861,7 +866,7 @@ class TestOrderFindingsPhaseFiltering:
         # Mix of idle + speed samples
         samples = _build_phased_samples(
             [
-                (5, 0.0, 0.0),   # IDLE
+                (5, 0.0, 0.0),  # IDLE
                 (20, 10.0, 80.0),  # ACCEL → CRUISE
             ]
         )
