@@ -199,7 +199,7 @@ export function startUiApp(): void {
     })();
     const toDbOverFloor = (amp: number): number => {
       const safeAmp = Number.isFinite(amp) && amp > 0 ? amp : floorAmp;
-      const db = 20 * Math.log10(safeAmp / floorAmp);
+      const db = 20 * (Math.log10(safeAmp) - Math.log10(floorAmp));
       return Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
     };
     for (const entry of entries) entry.values = entry.values.map(toDbOverFloor);
