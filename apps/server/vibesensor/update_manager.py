@@ -354,7 +354,8 @@ class UpdateManager:
     ) -> tuple[int, str, str]:
         if sudo:
             args = [*_sudo_prefix(), *args]
-        self._log(f"[{phase}] $ {' '.join(self._redacted_args_for_log(args))}")
+        cmd = args[0] if args else "<empty>"
+        self._log(f"[{phase}] $ {cmd} [args redacted]")
         rc, stdout, stderr = await self._runner.run(args, timeout=timeout, env=env)
         if stdout.strip():
             self._log(f"[{phase}] stdout: {_sanitize_log_line(stdout.strip()[:500])}")
