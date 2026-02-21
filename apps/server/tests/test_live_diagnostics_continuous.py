@@ -38,6 +38,38 @@ def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
     assert out["key"] is None
 
 
+def test_severity_frequency_hopping_does_not_promote_within_persistence_ticks() -> None:
+    state = None
+    out = None
+    for peak_hz in (25.0, 80.0, 25.0):
+        out = severity_from_peak(
+            vibration_strength_db=27.0,
+            sensor_count=1,
+            prior_state=state,
+            peak_hz=peak_hz,
+            persistence_freq_bin_hz=1.5,
+        )
+        state = dict((out or {}).get("state") or {})
+    assert out is not None
+    assert out["key"] is None
+
+
+def test_severity_stable_frequency_promotes_within_persistence_ticks() -> None:
+    state = None
+    out = None
+    for _ in range(3):
+        out = severity_from_peak(
+            vibration_strength_db=27.0,
+            sensor_count=1,
+            prior_state=state,
+            peak_hz=25.0,
+            persistence_freq_bin_hz=1.5,
+        )
+        state = dict((out or {}).get("state") or {})
+    assert out is not None
+    assert out["key"] == "l3"
+
+
 def test_live_matrix_seconds_accumulate_during_throttled_emission(monkeypatch) -> None:
     current_s = {"value": 10.0}
 
@@ -296,3 +328,70 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
     combined_tracker = next(iter(engine._combined_trackers.values()))
     expected_db = 20.0 * math.log10((10 ** (10.0 / 20.0) + 10 ** (20.0 / 20.0)) / 2.0)
     assert combined_tracker.last_strength_db == pytest.approx(expected_db, abs=1e-6)
+
+
+def test_levels_by_location_includes_confidence_boost_for_agreement(monkeypatch) -> None:
+    now_s = 300.0
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now_s)
+    engine = LiveDiagnosticsEngine()
+
+    def fake_apply(
+        self: LiveDiagnosticsEngine,
+        tracker: _TrackerLevelState,
+        *,
+        vibration_strength_db: float,
+        sensor_count: int,
+        fallback_db: float | None = None,
+    ) -> str | None:
+        previous = tracker.current_bucket_key
+        tracker.current_bucket_key = "l2"
+        tracker.last_strength_db = float(vibration_strength_db)
+        return previous
+
+    monkeypatch.setattr(
+        engine,
+        "_apply_severity_to_tracker",
+        MethodType(fake_apply, engine),
+    )
+
+    sensor_events = [
+        _RecentEvent(
+            ts_ms=300000,
+            sensor_id="s1",
+            sensor_label="front-left-a",
+            sensor_location="front-left-wheel",
+            peak_hz=40.0,
+            peak_amp=0.12,
+            vibration_strength_db=21.0,
+            class_key="wheel",
+        ),
+        _RecentEvent(
+            ts_ms=300000,
+            sensor_id="s2",
+            sensor_label="front-left-b",
+            sensor_location="front-left-wheel",
+            peak_hz=40.3,
+            peak_amp=0.11,
+            vibration_strength_db=20.0,
+            class_key="wheel",
+        ),
+    ]
+    monkeypatch.setattr(engine, "_detect_sensor_events", lambda **_: sensor_events)
+
+    snap = engine.update(
+        speed_mps=20.0,
+        clients=[
+            {"id": "s1", "name": "front-left-a", "location": "front-left-wheel"},
+            {"id": "s2", "name": "front-left-b", "location": "front-left-wheel"},
+        ],
+        spectra={"freq": [1.0], "clients": {}},
+        settings={},
+    )
+
+    by_location = snap["levels"]["by_location"]
+    assert "front-left-wheel" in by_location
+    row = by_location["front-left-wheel"]
+    assert row["bucket_key"] == "l2"
+    assert row["agreement_count"] == 2
+    assert row["sensor_count"] == 2
+    assert row["confidence"] == pytest.approx(2.0)

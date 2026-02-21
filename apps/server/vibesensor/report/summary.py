@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
-from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -32,9 +31,11 @@ from .helpers import (
     _outlier_summary,
     _percent_missing,
     _primary_vibration_strength_db,
+    _run_noise_baseline_g,
     _sensor_limit_g,
     _speed_stats,
     _validate_required_strength_metrics,
+    weak_spatial_dominance_threshold,
 )
 from .phase_segmentation import (
     phase_summary as _phase_summary,
@@ -84,24 +85,11 @@ def select_top_causes(
         for f in findings
         if isinstance(f, dict)
         and not str(f.get("finding_id", "")).startswith("REF_")
+        and str(f.get("severity") or "diagnostic").strip().lower() != "info"
         and float(f.get("confidence_0_to_1") or 0) >= ORDER_MIN_CONFIDENCE
     ]
     if not diag_findings:
-        transient_candidates = [
-            f
-            for f in findings
-            if isinstance(f, dict)
-            and not str(f.get("finding_id", "")).startswith("REF_")
-            and (
-                str(f.get("suspected_source") or "").strip().lower() == "transient_impact"
-                or str(f.get("peak_classification") or "").strip().lower() == "transient"
-            )
-        ]
-        if not transient_candidates:
-            return []
-        diag_findings = [
-            max(transient_candidates, key=lambda f: float(f.get("confidence_0_to_1") or 0.0))
-        ]
+        return []
 
     # Group by suspected_source
     groups: dict[str, list[dict[str, object]]] = defaultdict(list)
@@ -164,6 +152,7 @@ def select_top_causes(
                 "dominance_ratio": rep.get("dominance_ratio"),
                 "strongest_speed_band": rep.get("strongest_speed_band"),
                 "weak_spatial_separation": rep.get("weak_spatial_separation"),
+                "diagnostic_caveat": rep.get("diagnostic_caveat"),
             }
         )
     return result
@@ -175,13 +164,29 @@ def _most_likely_origin_summary(
     if not findings:
         return {
             "location": _tr(lang, "UNKNOWN"),
+            "alternative_locations": [],
             "source": _tr(lang, "UNKNOWN"),
             "dominance_ratio": None,
             "weak_spatial_separation": True,
             "explanation": _tr(lang, "ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
     top = findings[0]
-    location = str(top.get("strongest_location") or "").strip() or _tr(lang, "UNKNOWN")
+    primary_location = str(top.get("strongest_location") or "").strip() or _tr(lang, "UNKNOWN")
+    alternative_locations: list[str] = []
+    hotspot = top.get("location_hotspot")
+    if isinstance(hotspot, dict):
+        for candidate in hotspot.get("ambiguous_locations", []):
+            loc = str(candidate or "").strip()
+            if loc and loc != primary_location and loc not in alternative_locations:
+                alternative_locations.append(loc)
+        second_location = str(hotspot.get("second_location") or "").strip()
+        if (
+            second_location
+            and second_location != primary_location
+            and second_location not in alternative_locations
+        ):
+            alternative_locations.append(second_location)
+
     source = str(top.get("suspected_source") or "unknown")
     _source_i18n_map = {
         "wheel/tire": "SOURCE_WHEEL_TIRE",
@@ -194,8 +199,15 @@ def _most_likely_origin_summary(
         _tr(lang, source_i18n_key) if source_i18n_key else source.replace("_", " ").title()
     )
     dominance = _as_float(top.get("dominance_ratio"))
+    location_hotspot = top.get("location_hotspot")
+    location_count = _as_float(top.get("location_count"))
+    if location_count is None and isinstance(location_hotspot, dict):
+        location_count = _as_float(location_hotspot.get("location_count"))
+    adaptive_weak_spatial_threshold = weak_spatial_dominance_threshold(
+        int(location_count) if location_count else None
+    )
     weak = bool(top.get("weak_spatial_separation")) or (
-        dominance is not None and dominance < WEAK_SPATIAL_DOMINANCE_THRESHOLD
+        dominance is not None and dominance < adaptive_weak_spatial_threshold
     )
 
     # Spatial disambiguation: check if second-ranked finding disagrees on
@@ -208,13 +220,26 @@ def _most_likely_origin_summary(
         top_conf = _as_float(top.get("confidence_0_to_1")) or 0.0
         if (
             second_loc
-            and location
-            and second_loc != location
+            and primary_location
+            and second_loc != primary_location
             and top_conf > 0
             and second_conf / top_conf >= 0.7  # within 30% confidence
         ):
             spatial_disagreement = True
             weak = True
+            if second_loc not in alternative_locations:
+                alternative_locations.append(second_loc)
+
+    location = primary_location
+    if weak and dominance is not None and dominance < adaptive_weak_spatial_threshold:
+        display_locations = [primary_location, *alternative_locations]
+        location = " / ".join(
+            [
+                candidate
+                for idx, candidate in enumerate(display_locations)
+                if candidate and candidate not in display_locations[:idx]
+            ]
+        )
 
     speed_band = str(top.get("strongest_speed_band") or _tr(lang, "UNKNOWN_SPEED_BAND"))
     explanation = _tr(
@@ -231,6 +256,7 @@ def _most_likely_origin_summary(
         explanation += " " + _tr(lang, "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY")
     return {
         "location": location,
+        "alternative_locations": alternative_locations,
         "source": source,
         "source_human": source_human,
         "dominance_ratio": dominance,
@@ -308,6 +334,7 @@ def summarize_run_data(
         if speed is not None and speed > 0
     ]
     speed_stats = _speed_stats(speed_values)
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
     speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
@@ -499,13 +526,14 @@ def summarize_run_data(
             if isinstance(sample, dict) and _location_label(sample, lang=language)
         }
     )
-    # Only include locations that were connected throughout the run for
-    # intensity aggregation, so intermittent sensors don't skew results.
+    # Mark and de-prioritize sensors not connected throughout the run,
+    # so intermittent sensors don't skew strongest-location ranking.
     connected_locations = _locations_connected_throughout_run(samples, lang=language)
     sensor_intensity_by_location = _sensor_intensity_by_location(
         samples,
         include_locations=set(sensor_locations),
         lang=language,
+        connected_locations=connected_locations,
     )
 
     summary: dict[str, Any] = {
@@ -530,6 +558,7 @@ def summarize_run_data(
         "metadata": metadata,
         "warnings": [],
         "speed_breakdown": speed_breakdown,
+        "run_noise_baseline_g": run_noise_baseline_g,
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
         "top_causes": top_causes,

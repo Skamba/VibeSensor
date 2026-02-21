@@ -346,6 +346,67 @@ def test_map_summary_no_top_causes() -> None:
     assert data.next_steps == []
 
 
+def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> None:
+    from vibesensor.report.summary import _most_likely_origin_summary
+
+    findings = [
+        {
+            "strongest_location": "Rear Left",
+            "location_hotspot": {
+                "ambiguous_locations": ["Rear Left", "Front Right"],
+                "second_location": "Front Right",
+            },
+            "suspected_source": "wheel/tire",
+            "dominance_ratio": 1.05,
+            "weak_spatial_separation": True,
+            "strongest_speed_band": "80-90 km/h",
+            "confidence_0_to_1": 0.81,
+        },
+        {
+            "strongest_location": "Front Right",
+            "suspected_source": "wheel/tire",
+            "confidence_0_to_1": 0.74,
+        },
+    ]
+
+    origin = _most_likely_origin_summary(findings, "en")
+
+    assert origin["weak_spatial_separation"] is True
+    assert origin["location"] == "Rear Left / Front Right"
+    assert origin["alternative_locations"] == ["Front Right"]
+
+
+def test_map_summary_observed_uses_disambiguated_origin_location() -> None:
+    summary: dict = {
+        "lang": "en",
+        "top_causes": [
+            {
+                "source": "wheel/tire",
+                "strongest_location": "Rear Left",
+                "strongest_speed_band": "80-90 km/h",
+                "confidence": 0.83,
+                "weak_spatial_separation": True,
+                "signatures_observed": ["1x wheel order"],
+                "confidence_tone": "warn",
+            }
+        ],
+        "most_likely_origin": {
+            "location": "Rear Left / Front Right",
+            "alternative_locations": ["Front Right"],
+            "explanation": "Weak spatial separation.",
+        },
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+
+    data = map_summary(summary)
+
+    assert data.observed.strongest_sensor_location == "Rear Left / Front Right"
+
+
 def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     summary: dict = {
         "top_causes": [],
@@ -361,6 +422,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
                     "order_label": "",
                     "max_amp_g": 0.9,
                     "p95_amp_g": 0.12,
+                    "strength_db": 18.4,
                     "presence_ratio": 0.85,
                     "persistence_score": 0.0867,
                     "peak_classification": "patterned",
@@ -373,6 +435,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     assert data.peak_rows
     row = data.peak_rows[0]
     assert row.amp_g == "0.1200"
+    assert row.strength_db == "18.4"
     assert "patterned" in row.relevance
     assert "85%" in row.relevance
 

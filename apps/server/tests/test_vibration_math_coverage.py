@@ -20,7 +20,7 @@ from vibesensor_core.vibration_strength import (
 @pytest.mark.parametrize(
     "db_value,expected",
     [
-        (7.999, None),
+        (7.999, "l0"),
         (8.0, "l1"),
         (15.999, "l1"),
         (16.0, "l2"),
@@ -30,7 +30,7 @@ from vibesensor_core.vibration_strength import (
         (36.0, "l4"),
         (45.999, "l4"),
         (46.0, "l5"),
-        (0.0, None),
+        (0.0, "l0"),
         (-10.0, None),
         (100.0, "l5"),
     ],

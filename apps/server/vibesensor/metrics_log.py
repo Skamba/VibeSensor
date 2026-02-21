@@ -377,6 +377,16 @@ class MetricsLogger:
                 if strength_metrics.get(METRIC_FIELDS["strength_bucket"]) not in (None, "")
                 else None
             )
+            strength_peak_amp_g = self._safe_metric(
+                {"combined": strength_metrics},
+                "combined",
+                "peak_amp_g",
+            )
+            strength_floor_amp_g = self._safe_metric(
+                {"combined": strength_metrics},
+                "combined",
+                "noise_floor_amp_g",
+            )
             top_peaks: list[dict[str, object]] = []
             if isinstance(top_peaks_raw, list):
                 for peak in top_peaks_raw[:5]:
@@ -444,6 +454,8 @@ class MetricsLogger:
                 top_peaks=top_peaks,
                 vibration_strength_db=vibration_strength_db,
                 strength_bucket=strength_bucket,
+                strength_peak_amp_g=strength_peak_amp_g,
+                strength_floor_amp_g=strength_floor_amp_g,
                 frames_dropped_total=int(record.frames_dropped),
                 queue_overflow_drops=int(record.queue_overflow_drops),
             )

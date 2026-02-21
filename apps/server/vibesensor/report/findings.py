@@ -8,7 +8,7 @@ from math import floor, log1p
 from statistics import mean
 from typing import Any
 
-from vibesensor_core.vibration_strength import percentile
+from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
 
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -21,10 +21,13 @@ from .helpers import (
     ORDER_TOLERANCE_MIN_HZ,
     ORDER_TOLERANCE_REL,
     SPEED_COVERAGE_MIN_PCT,
+    _amplitude_weighted_speed_window,
     _corr_abs,
     _effective_engine_rpm,
     _location_label,
+    _locations_connected_throughout_run,
     _primary_vibration_strength_db,
+    _run_noise_baseline_g,
     _sample_top_peaks,
     _speed_bin_label,
     _speed_bin_sort_key,
@@ -35,7 +38,70 @@ from .order_analysis import (
     _order_hypotheses,
     _order_label,
 )
+from .strength_labels import _STRENGTH_THRESHOLDS
 from .test_plan import _location_speedbin_summary
+
+_NEGLIGIBLE_STRENGTH_MAX_DB = (
+    float(_STRENGTH_THRESHOLDS[1][0]) if len(_STRENGTH_THRESHOLDS) > 1 else 8.0
+)
+_LIGHT_STRENGTH_MAX_DB = (
+    float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
+)
+
+
+def _weighted_percentile(
+    pairs: list[tuple[float, float]],
+    q: float,
+) -> float | None:
+    if not pairs:
+        return None
+    q_clamped = max(0.0, min(1.0, q))
+    filtered = [(value, weight) for value, weight in pairs if weight > 0]
+    if not filtered:
+        return None
+    ordered = sorted(filtered, key=lambda item: item[0])
+    total_weight = sum(weight for _, weight in ordered)
+    if total_weight <= 0:
+        return None
+    threshold = q_clamped * total_weight
+    cumulative = 0.0
+    for value, weight in ordered:
+        cumulative += weight
+        if cumulative >= threshold:
+            return value
+    return ordered[-1][0]
+
+
+def _speed_profile_from_points(
+    points: list[tuple[float, float]],
+    *,
+    allowed_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
+) -> tuple[float | None, tuple[float, float] | None, str | None]:
+    valid = [(speed, amp) for speed, amp in points if speed > 0 and amp > 0]
+    if allowed_speed_bins:
+        allowed = set(allowed_speed_bins)
+        valid = [(speed, amp) for speed, amp in valid if _speed_bin_label(speed) in allowed]
+    if not valid:
+        return None, None, None
+
+    peak_speed_kmh = max(valid, key=lambda item: item[1])[0]
+    low = _weighted_percentile(valid, 0.10)
+    high = _weighted_percentile(valid, 0.90)
+    if low is None or high is None:
+        return peak_speed_kmh, None, None
+    if high < low:
+        low, high = high, low
+    speed_window_kmh = (low, high)
+    low_speed, high_speed = _amplitude_weighted_speed_window(
+        [speed_kmh for speed_kmh, _amp in valid],
+        [amp for _speed_kmh, amp in valid],
+    )
+    strongest_speed_band = (
+        f"{low_speed:.0f}-{high_speed:.0f} km/h"
+        if low_speed is not None and high_speed is not None
+        else None
+    )
+    return peak_speed_kmh, speed_window_kmh, strongest_speed_band
 
 
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
@@ -70,13 +136,14 @@ def _sensor_intensity_by_location(
     include_locations: set[str] | None = None,
     *,
     lang: object = "en",
-) -> list[dict[str, float | str | int]]:
+    connected_locations: set[str] | None = None,
+) -> list[dict[str, float | str | int | bool]]:
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[float]] = defaultdict(list)
     overflow_totals: dict[str, list[float]] = defaultdict(list)
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
-        lambda: {f"l{idx}": 0 for idx in range(1, 6)}
+        lambda: {f"l{idx}": 0 for idx in range(0, 6)}
     )
     strength_bucket_totals: dict[str, int] = defaultdict(int)
     for sample in samples:
@@ -102,13 +169,18 @@ def _sensor_intensity_by_location(
         if vibration_strength_db is None:
             continue
         if bucket:
-            strength_bucket_counts[location][bucket] += 1
+            strength_bucket_counts[location][bucket] = (
+                strength_bucket_counts[location].get(bucket, 0) + 1
+            )
             strength_bucket_totals[location] += 1
 
-    rows: list[dict[str, float | str | int]] = []
+    rows: list[dict[str, float | str | int | bool]] = []
     target_locations = set(sample_counts.keys())
     if include_locations is not None:
         target_locations |= set(include_locations)
+    max_sample_count = max(
+        (sample_counts.get(location, 0) for location in target_locations), default=0
+    )
 
     for location in sorted(target_locations):
         values = grouped_amp.get(location, [])
@@ -119,7 +191,7 @@ def _sensor_intensity_by_location(
         overflow_delta = (
             int(max(overflow_vals) - min(overflow_vals)) if len(overflow_vals) >= 2 else 0
         )
-        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(1, 6)})
+        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(0, 6)})
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
         bucket_distribution: dict[str, float | int] = {
             "total": bucket_total,
@@ -131,11 +203,19 @@ def _sensor_intensity_by_location(
                 (bucket_counts[key] / bucket_total * 100.0) if bucket_total > 0 else 0.0
             )
         sample_count = int(sample_counts.get(location, 0))
+        sample_coverage_ratio = (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
+        sample_coverage_warning = max_sample_count >= 5 and sample_coverage_ratio <= 0.20
+        partial_coverage = bool(
+            connected_locations is not None and location not in connected_locations
+        )
         rows.append(
             {
                 "location": location,
+                "partial_coverage": partial_coverage,
                 "samples": sample_count,
                 "sample_count": sample_count,
+                "sample_coverage_ratio": sample_coverage_ratio,
+                "sample_coverage_warning": sample_coverage_warning,
                 "mean_intensity_db": mean(values) if values else None,
                 "p50_intensity_db": percentile(values_sorted, 0.50) if values else None,
                 "p95_intensity_db": percentile(values_sorted, 0.95) if values else None,
@@ -147,6 +227,8 @@ def _sensor_intensity_by_location(
         )
     rows.sort(
         key=lambda row: (
+            1 if not bool(row.get("partial_coverage")) else 0,
+            1 if not bool(row.get("sample_coverage_warning")) else 0,
             float(row.get("p95_intensity_db") or 0.0),
             float(row.get("max_intensity_db") or 0.0),
         ),
@@ -165,6 +247,7 @@ def _reference_missing_finding(
 ) -> dict[str, object]:
     return {
         "finding_id": finding_id,
+        "finding_type": "reference",
         "suspected_source": suspected_source,
         "evidence_summary": evidence_summary,
         "frequency_hz_or_order": _tr(lang, "REFERENCE_MISSING"),
@@ -190,6 +273,7 @@ def _build_order_findings(
     engine_ref_sufficient: bool,
     raw_sample_rate_hz: float | None,
     accel_units: str,
+    connected_locations: set[str],
     lang: object,
 ) -> list[dict[str, object]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
@@ -259,6 +343,7 @@ def _build_order_findings(
                     "speed_kmh": _as_float(sample.get("speed_kmh")),
                     "predicted_hz": predicted_hz,
                     "matched_hz": best_hz,
+                    "rel_error": delta_hz / max(1e-9, predicted_hz),
                     "amp": best_amp,
                     "location": _location_label(sample, lang=lang),
                 }
@@ -303,12 +388,35 @@ def _build_order_findings(
             corr = None
         corr_val = corr if corr is not None else 0.0
 
-        # Compute location hotspot BEFORE confidence so spatial info is available
-        location_line, location_hotspot = _location_speedbin_summary(matched_points, lang=lang)
+        # Compute location hotspot BEFORE confidence so spatial info is available.
+        # When order evidence is accepted via focused high-speed coverage,
+        # localize within that same speed band to avoid low-speed road-noise
+        # bins dominating strongest-location selection.
+        relevant_speed_bins = [focused_speed_band] if focused_speed_band else None
+        try:
+            location_line, location_hotspot = _location_speedbin_summary(
+                matched_points,
+                lang=lang,
+                relevant_speed_bins=relevant_speed_bins,
+                connected_locations=connected_locations,
+            )
+        except TypeError as exc:
+            if "connected_locations" not in str(exc):
+                raise
+            location_line, location_hotspot = _location_speedbin_summary(
+                matched_points,
+                lang=lang,
+                relevant_speed_bins=relevant_speed_bins,
+            )
         weak_spatial_separation = (
             bool(location_hotspot.get("weak_spatial_separation"))
             if isinstance(location_hotspot, dict)
             else True
+        )
+        dominance_ratio = (
+            _as_float(location_hotspot.get("dominance_ratio"))
+            if isinstance(location_hotspot, dict)
+            else None
         )
         localization_confidence = (
             float(location_hotspot.get("localization_confidence"))
@@ -323,6 +431,10 @@ def _build_order_findings(
 
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
         snr_score = min(1.0, log1p(mean_amp / max(0.001, mean_floor)) / 2.5)
+        absolute_strength_db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=mean_amp,
+            floor_amp_g=mean_floor,
+        )
 
         # --- Confidence formula (calibrated) ---
         # Base is intentionally low; weight must come from evidence.
@@ -333,16 +445,16 @@ def _build_order_findings(
             + (0.15 * corr_val)
             + (0.15 * snr_score)  # was 0.10 — SNR matters more
         )
-        # Penalty: negligible absolute signal strength
-        if mean_amp < 0.002:  # < 2 mg peak → likely noise
+        # Penalty: negligible/light absolute signal strength (shared dB bands).
+        if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
             confidence = min(confidence, 0.45)
-        elif mean_amp < 0.005:  # < 5 mg → very weak
-            confidence *= 0.90
+        elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
+            confidence *= 0.80
         # Penalty: location ambiguity / weak localization confidence
         confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
         # Penalty: weak spatial separation
         if weak_spatial_separation:
-            confidence *= 0.85
+            confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
         # Penalty: steady/constant speed reduces order-tracking value
         if constant_speed:
             confidence *= 0.75  # was 0.88 for steady; constant is stricter
@@ -382,9 +494,22 @@ def _build_order_findings(
         strongest_location = (
             str(location_hotspot.get("location")) if isinstance(location_hotspot, dict) else ""
         )
-        strongest_speed_band = (
+        hotspot_speed_band = (
             str(location_hotspot.get("speed_range")) if isinstance(location_hotspot, dict) else ""
         )
+        speed_points: list[tuple[float, float]] = []
+        for point in matched_points:
+            point_speed = _as_float(point.get("speed_kmh"))
+            point_amp = _as_float(point.get("amp"))
+            if point_speed is None or point_amp is None:
+                continue
+            speed_points.append((point_speed, point_amp))
+        peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
+            speed_points,
+            allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
+        )
+        if not strongest_speed_band:
+            strongest_speed_band = hotspot_speed_band
         if focused_speed_band and not strongest_speed_band:
             strongest_speed_band = focused_speed_band
         actions = _finding_actions_for_source(
@@ -420,6 +545,8 @@ def _build_order_findings(
             "location_hotspot": location_hotspot,
             "strongest_location": strongest_location or None,
             "strongest_speed_band": strongest_speed_band or None,
+            "peak_speed_kmh": peak_speed_kmh,
+            "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "dominance_ratio": (
                 float(location_hotspot.get("dominance_ratio"))
                 if isinstance(location_hotspot, dict)
@@ -435,6 +562,7 @@ def _build_order_findings(
                 "mean_relative_error": mean_rel_err,
                 "mean_matched_amplitude": mean_amp,
                 "mean_noise_floor": mean_floor,
+                "vibration_strength_db": absolute_strength_db,
                 "possible_samples": possible,
                 "matched_samples": matched,
                 "frequency_correlation": corr,
@@ -466,6 +594,7 @@ def _classify_peak_type(
     *,
     snr: float | None = None,
     spatial_uniformity: float | None = None,
+    speed_uniformity: float | None = None,
 ) -> str:
     """Classify a frequency peak as ``patterned``, ``persistent``, ``transient``, or ``baseline_noise``.
 
@@ -484,9 +613,11 @@ def _classify_peak_type(
         Signal-to-noise ratio (peak amp / noise floor). If below threshold,
         peak is classified as baseline noise regardless of presence.
     spatial_uniformity : float | None
-        Ratio of minimum to maximum amplitude across sensor locations.
-        High uniformity (>0.85) suggests environmental noise rather than
-        a localized source.
+        Fraction of distinct run locations where this peak appears.
+        High values suggest environmental noise rather than a localized source.
+    speed_uniformity : float | None
+        Standard deviation of per-speed-bin hit rates for this peak.
+        Lower values indicate uniform presence across speed bins.
     """
     # Baseline noise: appears everywhere at similar level, or very low SNR
     if snr is not None and snr < BASELINE_NOISE_SNR_THRESHOLD:
@@ -496,6 +627,15 @@ def _classify_peak_type(
         and spatial_uniformity > 0.85
         and presence_ratio >= 0.60
         and burstiness < 2.0
+    ):
+        return "baseline_noise"
+    if (
+        spatial_uniformity is not None
+        and speed_uniformity is not None
+        and spatial_uniformity >= 0.80
+        and speed_uniformity <= 0.10
+        and 0.20 <= presence_ratio <= 0.40
+        and 3.0 <= burstiness <= 5.0
     ):
         return "baseline_noise"
 
@@ -528,6 +668,11 @@ def _build_persistent_peak_findings(
     bin_amps: dict[float, list[float]] = defaultdict(list)
     bin_floors: dict[float, list[float]] = defaultdict(list)
     bin_speeds: dict[float, list[float]] = defaultdict(list)
+    bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
+    bin_location_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    total_speed_bin_counts: dict[str, int] = defaultdict(int)
+    total_locations: set[str] = set()
     n_samples = 0
 
     for sample in samples:
@@ -535,7 +680,13 @@ def _build_persistent_peak_findings(
             continue
         n_samples += 1
         speed = _as_float(sample.get("speed_kmh"))
+        sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
+        if sample_speed_bin is not None:
+            total_speed_bin_counts[sample_speed_bin] += 1
         floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
+        location = _location_label(sample, lang=lang)
+        if location:
+            total_locations.add(location)
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
@@ -545,9 +696,15 @@ def _build_persistent_peak_findings(
             bin_floors[bin_center].append(max(0.0, floor_amp))
             if speed is not None and speed > 0:
                 bin_speeds[bin_center].append(speed)
+                bin_speed_amp_pairs[bin_center].append((speed, amp))
+            if location:
+                bin_location_counts[bin_center][location] += 1
+            if sample_speed_bin is not None:
+                bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
 
     if n_samples == 0:
         return []
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
 
     persistent_findings: list[tuple[float, dict[str, object]]] = []
     transient_findings: list[tuple[float, dict[str, object]]] = []
@@ -566,18 +723,54 @@ def _build_persistent_peak_findings(
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
         mean_floor = mean(bin_floors.get(bin_center, [0.0])) if bin_floors.get(bin_center) else 0.0
-        raw_snr = (p95_amp / max(0.001, mean_floor)) if mean_floor > 0.001 else None
-        peak_type = _classify_peak_type(presence_ratio, burstiness, snr=raw_snr)
+        effective_floor = max(0.001, run_noise_baseline_g or mean_floor or 0.0)
+        raw_snr = p95_amp / effective_floor
+        spatial_uniformity: float | None = None
+        if len(total_locations) >= 2:
+            spatial_uniformity = len(bin_location_counts.get(bin_center, {})) / len(total_locations)
 
-        snr_score = min(1.0, log1p(p95_amp / max(0.001, mean_floor)) / 2.5)
+        speed_uniformity: float | None = None
+        if len(total_speed_bin_counts) >= 2:
+            hit_rates: list[float] = []
+            per_bin_hits = bin_speed_bin_counts.get(bin_center, {})
+            for speed_bin, total_count in total_speed_bin_counts.items():
+                if total_count <= 0:
+                    continue
+                hit_rates.append(float(per_bin_hits.get(speed_bin, 0)) / float(total_count))
+            if hit_rates:
+                hit_rate_mean = mean(hit_rates)
+                speed_uniformity = (
+                    mean([(rate - hit_rate_mean) ** 2 for rate in hit_rates]) ** 0.5
+                    if len(hit_rates) > 1
+                    else 0.0
+                )
+
+        peak_type = _classify_peak_type(
+            presence_ratio,
+            burstiness,
+            snr=raw_snr,
+            spatial_uniformity=spatial_uniformity,
+            speed_uniformity=speed_uniformity,
+        )
+
+        snr_score = min(1.0, log1p(raw_snr) / 2.5)
+        location_counts = bin_location_counts.get(bin_center, {})
+        spatial_concentration = (
+            max(location_counts.values()) / count if location_counts and count > 0 else 1.0
+        )
+        spatial_penalty = (0.35 + 0.65 * spatial_concentration) if location_counts else 1.0
 
         # Confidence for persistent/patterned peaks (analogous to order confidence)
+        peak_strength_db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=p95_amp,
+            floor_amp_g=effective_floor,
+        )
         if peak_type == "baseline_noise":
             confidence = max(0.02, min(0.12, 0.02 + 0.05 * presence_ratio))
         elif peak_type == "transient":
             confidence = max(0.05, min(0.22, 0.05 + 0.10 * presence_ratio + 0.07 * snr_score))
         else:
-            confidence = max(
+            base_confidence = max(
                 0.10,
                 min(
                     0.75,
@@ -587,11 +780,16 @@ def _build_persistent_peak_findings(
                     + 0.15 * min(1.0, 1.0 - burstiness / 10.0),
                 ),
             )
+            confidence = base_confidence * spatial_penalty
+            if location_counts and spatial_concentration <= 0.35:
+                confidence = min(confidence, 0.35)
+            if peak_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
+                confidence = min(confidence, 0.35)
 
-        speeds = bin_speeds.get(bin_center, [])
-        speed_band = "-"
-        if speeds:
-            speed_band = f"{min(speeds):.0f}-{max(speeds):.0f} km/h"
+        peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(
+            bin_speed_amp_pairs.get(bin_center, [])
+        )
+        speed_band = derived_speed_band or "-"
 
         evidence = _tr(
             lang,
@@ -607,6 +805,7 @@ def _build_persistent_peak_findings(
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
+            "severity": "info" if peak_type == "transient" else "diagnostic",
             "suspected_source": (
                 "baseline_noise"
                 if peak_type == "baseline_noise"
@@ -632,9 +831,17 @@ def _build_persistent_peak_findings(
                 "max_amplitude": max_amp,
                 "burstiness": burstiness,
                 "mean_noise_floor": mean_floor,
+                "run_noise_baseline_g": run_noise_baseline_g,
+                "median_relative_to_run_noise": median_amp / effective_floor,
+                "p95_relative_to_run_noise": p95_amp / effective_floor,
                 "sample_count": count,
                 "total_samples": n_samples,
+                "spatial_concentration": spatial_concentration,
+                "spatial_uniformity": spatial_uniformity,
+                "speed_uniformity": speed_uniformity,
             },
+            "peak_speed_kmh": peak_speed_kmh,
+            "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "strongest_speed_band": speed_band if speed_band != "-" else None,
         }
 
@@ -754,6 +961,7 @@ def _build_findings(
         engine_ref_sufficient=engine_ref_sufficient,
         raw_sample_rate_hz=raw_sample_rate_hz,
         accel_units=accel_units,
+        connected_locations=_locations_connected_throughout_run(samples, lang=lang),
         lang=lang,
     )
     findings.extend(order_findings)
@@ -778,7 +986,29 @@ def _build_findings(
         )
     )
 
-    findings.sort(key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True)
+    reference_findings = [
+        item for item in findings if str(item.get("finding_id", "")).startswith("REF_")
+    ]
+    non_reference_findings = [
+        item for item in findings if not str(item.get("finding_id", "")).startswith("REF_")
+    ]
+    informational_findings = [
+        item
+        for item in non_reference_findings
+        if str(item.get("severity") or "").strip().lower() == "info"
+    ]
+    diagnostic_findings = [
+        item
+        for item in non_reference_findings
+        if str(item.get("severity") or "").strip().lower() != "info"
+    ]
+    diagnostic_findings.sort(
+        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
+    )
+    informational_findings.sort(
+        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
+    )
+    findings = reference_findings + diagnostic_findings + informational_findings
     for idx, finding in enumerate(findings, start=1):
         fid = str(finding.get("finding_id", "")).strip()
         if not fid.startswith("REF_"):

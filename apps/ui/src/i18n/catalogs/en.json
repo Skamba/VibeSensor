@@ -164,6 +164,7 @@
   "actions.remove_client_failed": "Failed to remove client.",
   "actions.set_location_failed": "Failed to set location.",
   "vibration.none": "No significant vibration events yet.",
+  "vibration.db_scale_note": "dB is measured above background noise floor.",
   "matrix.amplitude_group": "Amplitude Group",
   "matrix.source.engine": "Engine",
   "matrix.source.driveshaft": "Drive Shaft",

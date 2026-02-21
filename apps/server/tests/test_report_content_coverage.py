@@ -8,8 +8,9 @@ import pytest
 from pypdf import PdfReader
 
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.report import confidence_label, select_top_causes, summarize_log
+from vibesensor.report import confidence_label, pdf_builder, select_top_causes, summarize_log
 from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
 
 _I18N_JSON = Path(__file__).resolve().parent.parent / "data" / "report_i18n.json"
 
@@ -166,10 +167,11 @@ def test_select_top_causes_excludes_reference_findings() -> None:
     assert causes == []
 
 
-def test_select_top_causes_falls_back_to_transient_when_only_transient_exists() -> None:
+def test_select_top_causes_excludes_informational_transient_findings() -> None:
     findings = [
         {
             "finding_id": "F007",
+            "severity": "info",
             "suspected_source": "transient_impact",
             "peak_classification": "transient",
             "confidence_0_to_1": 0.22,
@@ -177,8 +179,45 @@ def test_select_top_causes_falls_back_to_transient_when_only_transient_exists() 
         }
     ]
     causes = select_top_causes(findings)
+    assert causes == []
+
+
+def test_select_top_causes_ignores_info_even_with_high_confidence() -> None:
+    findings = [
+        {
+            "finding_id": "F008",
+            "severity": "info",
+            "suspected_source": "transient_impact",
+            "peak_classification": "transient",
+            "confidence_0_to_1": 0.99,
+            "frequency_hz_or_order": "120.0 Hz",
+        }
+    ]
+    causes = select_top_causes(findings)
+    assert causes == []
+
+
+def test_select_top_causes_prefers_diagnostic_over_info() -> None:
+    findings = [
+        {
+            "finding_id": "F009",
+            "severity": "info",
+            "suspected_source": "transient_impact",
+            "peak_classification": "transient",
+            "confidence_0_to_1": 0.99,
+            "frequency_hz_or_order": "120.0 Hz",
+        },
+        {
+            "finding_id": "F010",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "confidence_0_to_1": 0.26,
+            "frequency_hz_or_order": "1x wheel order",
+        },
+    ]
+    causes = select_top_causes(findings)
     assert len(causes) == 1
-    assert causes[0]["source"] == "transient_impact"
+    assert causes[0]["source"] == "wheel/tire"
 
 
 # -- confidence_label --------------------------------------------------------
@@ -215,6 +254,11 @@ _SECTION_HEADING_KEYS = [
     "DIAGNOSTIC_PEAKS",
 ]
 
+_PEAK_TABLE_COLUMN_KEYS = [
+    "PEAK_AMP_G",
+    "STRENGTH_DB",
+]
+
 
 def _extract_pdf_text(pdf_bytes: bytes) -> str:
     reader = PdfReader(BytesIO(pdf_bytes))
@@ -247,3 +291,60 @@ def test_pdf_nl_contains_dutch_headings(tmp_path: Path) -> None:
         if heading not in text:
             missing.append(f"{key} ({heading!r})")
     assert missing == [], f"Missing Dutch headings in PDF: {missing}"
+
+
+def test_pdf_peaks_table_includes_peak_amp_and_strength_columns(tmp_path: Path) -> None:
+    run_path = _make_run_jsonl(tmp_path)
+    summary = summarize_log(run_path, lang="en")
+    pdf = build_report_pdf(summary)
+    text = _extract_pdf_text(pdf)
+    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+    missing = []
+    for key in _PEAK_TABLE_COLUMN_KEYS:
+        label = i18n[key]["en"]
+        if label not in text:
+            missing.append(f"{key} ({label!r})")
+    assert missing == [], f"Missing peak table columns in PDF: {missing}"
+
+
+def test_pdf_additional_observations_heading_for_transient_findings(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        pdf_builder,
+        "map_summary",
+        lambda _summary: ReportTemplateData(
+            title="Diagnostic worksheet",
+            pattern_evidence=PatternEvidence(),
+            lang="en",
+        ),
+    )
+    monkeypatch.setattr(
+        pdf_builder,
+        "location_hotspots",
+        lambda *_args, **_kwargs: ([], None, None, None),
+    )
+
+    summary = {"samples": [], "top_causes": []}
+    summary["findings"] = [
+        {
+            "finding_id": "F001",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "confidence_0_to_1": 0.55,
+            "frequency_hz_or_order": "1x wheel order",
+        },
+        {
+            "finding_id": "F002",
+            "severity": "info",
+            "suspected_source": "transient_impact",
+            "peak_classification": "transient",
+            "confidence_0_to_1": 0.22,
+            "frequency_hz_or_order": "95.0 Hz",
+        },
+    ]
+
+    pdf = build_report_pdf(summary)
+    text = _extract_pdf_text(pdf)
+    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+    assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text

@@ -286,16 +286,43 @@ def severity_from_peak(
     vibration_strength_db: float,
     sensor_count: int,
     prior_state: dict[str, Any] | None = None,
+    peak_hz: float | None = None,
+    persistence_freq_bin_hz: float | None = None,
 ) -> dict[str, float | str | dict[str, Any]] | None:
     state = dict(prior_state or {})
     state.setdefault("current_bucket", None)
     state.setdefault("pending_bucket", None)
     state.setdefault("consecutive_up", 0)
     state.setdefault("consecutive_down", 0)
+    state.setdefault("last_confirmed_hz", None)
     corroboration = MULTI_SENSOR_CORROBORATION_DB if sensor_count >= 2 else 0.0
     adjusted_db = float(vibration_strength_db) + corroboration
-    candidate_bucket = bucket_for_strength(adjusted_db)
+    candidate_bucket_raw = bucket_for_strength(adjusted_db)
+    candidate_bucket = None if candidate_bucket_raw == "l0" else candidate_bucket_raw
     current_bucket = state.get("current_bucket")
+    peak_hz_value = _as_float(peak_hz)
+    freq_bin_hz = _as_float(persistence_freq_bin_hz)
+    freq_guard_enabled = peak_hz_value is not None and freq_bin_hz is not None and freq_bin_hz > 0
+
+    def _advance_pending(candidate: str) -> None:
+        pending = state.get("pending_bucket")
+        if pending == candidate:
+            if freq_guard_enabled:
+                last_confirmed_hz = _as_float(state.get("last_confirmed_hz"))
+                if last_confirmed_hz is not None and abs(
+                    float(peak_hz_value) - last_confirmed_hz
+                ) > float(freq_bin_hz):
+                    state["consecutive_up"] = 1
+                    state["last_confirmed_hz"] = peak_hz_value
+                    return
+                if last_confirmed_hz is None:
+                    state["last_confirmed_hz"] = peak_hz_value
+            state["consecutive_up"] = int(state.get("consecutive_up", 0)) + 1
+            return
+
+        state["pending_bucket"] = candidate
+        state["consecutive_up"] = 1
+        state["last_confirmed_hz"] = peak_hz_value if freq_guard_enabled else None
 
     if candidate_bucket is None:
         if current_bucket is not None:
@@ -307,37 +334,32 @@ def severity_from_peak(
                     state["pending_bucket"] = None
                     state["consecutive_down"] = 0
                     state["consecutive_up"] = 0
+                    state["last_confirmed_hz"] = None
             else:
                 state["consecutive_down"] = 0
         return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}
 
     state["consecutive_down"] = 0
     if current_bucket is None:
-        pending = state.get("pending_bucket")
-        if pending == candidate_bucket:
-            state["consecutive_up"] = int(state.get("consecutive_up", 0)) + 1
-        else:
-            state["pending_bucket"] = candidate_bucket
-            state["consecutive_up"] = 1
+        _advance_pending(candidate_bucket)
         if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
             state["current_bucket"] = candidate_bucket
             state["pending_bucket"] = None
             state["consecutive_up"] = 0
+            if freq_guard_enabled:
+                state["last_confirmed_hz"] = peak_hz_value
         return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}
 
     current_rank = band_rank(str(current_bucket))
     candidate_rank = band_rank(str(candidate_bucket))
     if candidate_rank > current_rank:
-        pending = state.get("pending_bucket")
-        if pending == candidate_bucket:
-            state["consecutive_up"] = int(state.get("consecutive_up", 0)) + 1
-        else:
-            state["pending_bucket"] = candidate_bucket
-            state["consecutive_up"] = 1
+        _advance_pending(candidate_bucket)
         if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
             state["current_bucket"] = candidate_bucket
             state["pending_bucket"] = None
             state["consecutive_up"] = 0
+            if freq_guard_enabled:
+                state["last_confirmed_hz"] = peak_hz_value
     elif candidate_rank < current_rank:
         current_band = band_by_key(str(current_bucket))
         if current_band and adjusted_db < float(current_band["min_db"]) - HYSTERESIS_DB:
@@ -347,10 +369,12 @@ def severity_from_peak(
                 state["pending_bucket"] = None
                 state["consecutive_down"] = 0
                 state["consecutive_up"] = 0
+                state["last_confirmed_hz"] = None
         else:
             state["consecutive_down"] = 0
     else:
         state["pending_bucket"] = None
         state["consecutive_up"] = 0
+        state["last_confirmed_hz"] = None
 
     return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}

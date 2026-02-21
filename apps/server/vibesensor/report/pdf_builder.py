@@ -81,6 +81,20 @@ def _safe(v: str | None, fallback: str = "—") -> str:
     return str(v).strip() if v and str(v).strip() else fallback
 
 
+def _strength_with_peak(
+    strength_label: str | None,
+    peak_amp_g: float | None,
+    *,
+    fallback: str,
+) -> str:
+    base = _safe(strength_label, fallback)
+    if peak_amp_g is None:
+        return base
+    if "g peak" in base.lower():
+        return base
+    return f"{base} · {peak_amp_g:.3f} g peak"
+
+
 def _draw_panel(
     c: Canvas,
     x: float,
@@ -324,7 +338,18 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     oy -= step
     _draw_kv(c, ox, oy, tr("SPEED_BAND"), _safe(data.observed.speed_band, na), label_w=lw)
     oy -= step
-    _draw_kv(c, ox, oy, tr("STRENGTH"), _safe(data.observed.strength_label, na), label_w=lw)
+    _draw_kv(
+        c,
+        ox,
+        oy,
+        tr("STRENGTH"),
+        _strength_with_peak(
+            data.observed.strength_label,
+            data.observed.strength_peak_amp_g,
+            fallback=na,
+        ),
+        label_w=lw,
+    )
     oy -= step
 
     cert_val = _safe(data.observed.certainty_label, na)
@@ -604,6 +629,21 @@ def _page2(  # noqa: C901
         c, m + 4 * mm, table_y + table_h - 10 * mm, W - 8 * mm, table_y + 3 * mm, data, tr
     )
 
+    transient_findings = [
+        finding
+        for finding in findings
+        if isinstance(finding, dict)
+        and str(finding.get("severity") or "").strip().lower() == "info"
+        and (
+            str(finding.get("suspected_source") or "").strip().lower() == "transient_impact"
+            or str(finding.get("peak_classification") or "").strip().lower() == "transient"
+        )
+    ]
+    if transient_findings:
+        obs_h = 24 * mm
+        obs_y = table_y - GAP - obs_h
+        _draw_additional_observations(c, m, obs_y, W, obs_h, transient_findings, tr)
+
 
 def _draw_pattern_evidence(
     c: Canvas,
@@ -630,7 +670,15 @@ def _draw_pattern_evidence(
     ry -= step
     _draw_kv(c, rx, ry, tr("SPEED_BAND"), _safe(ev.speed_band, na), label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("STRENGTH"), _safe(ev.strength_label, na), label_w=lw, fs=7)
+    _draw_kv(
+        c,
+        rx,
+        ry,
+        tr("STRENGTH"),
+        _strength_with_peak(ev.strength_label, ev.strength_peak_amp_g, fallback=na),
+        label_w=lw,
+        fs=7,
+    )
     ry -= step
 
     cert_val = _safe(ev.certainty_label, na)
@@ -681,12 +729,13 @@ def _draw_peaks_table(
 ) -> None:
     """Diagnostic-first peaks table."""
     col_defs = [
-        (tr("RANK"), 14 * mm),
-        (tr("SYSTEM"), 30 * mm),
-        (tr("FREQUENCY_HZ"), 22 * mm),
-        (tr("ORDER_LABEL"), 28 * mm),
-        (tr("AMP_G"), 20 * mm),
-        (tr("SPEED_BAND"), 28 * mm),
+        (tr("RANK"), 12 * mm),
+        (tr("SYSTEM"), 24 * mm),
+        (tr("FREQUENCY_HZ"), 18 * mm),
+        (tr("ORDER_LABEL"), 24 * mm),
+        (tr("PEAK_AMP_G"), 18 * mm),
+        (tr("STRENGTH_DB"), 16 * mm),
+        (tr("SPEED_BAND"), 22 * mm),
     ]
     used = sum(cw for _, cw in col_defs)
     notes_w = max(20 * mm, w - used)
@@ -732,12 +781,37 @@ def _draw_peaks_table(
             row.freq_hz,
             row.order,
             row.amp_g,
+            row.strength_db,
             row.speed_band,
             row.relevance,
         ]
         for val, (_, cw) in zip(vals, col_defs, strict=True):
             c.drawString(cx_off, y - 4.2 * mm, val)
             cx_off += cw
+
+
+def _draw_additional_observations(
+    c: Canvas,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    transient_findings: list[dict[str, object]],
+    tr,
+) -> None:
+    _draw_panel(c, x, y, w, h, tr("ADDITIONAL_OBSERVATIONS"), fill=SOFT_BG)
+    c.setFillColor(_hex(MUTED_CLR))
+    c.setFont(FONT, 6.5)
+
+    y_cursor = y + h - 10 * mm
+    for finding in transient_findings[:3]:
+        order_label = str(finding.get("frequency_hz_or_order") or "").strip()
+        if not order_label:
+            order_label = tr("SOURCE_TRANSIENT_IMPACT")
+        confidence = float(finding.get("confidence_0_to_1") or 0.0)
+        line = f"• {order_label} ({confidence * 100.0:.0f}%)"
+        c.drawString(x + 4 * mm, y_cursor, line)
+        y_cursor -= 3.5 * mm
 
 
 # ---------------------------------------------------------------------------

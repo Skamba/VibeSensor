@@ -1079,6 +1079,10 @@
     "en": "Diagnostic Peaks",
     "nl": "Diagnostische pieken"
   },
+  "ADDITIONAL_OBSERVATIONS": {
+    "en": "Additional Observations",
+    "nl": "Aanvullende observaties"
+  },
   "SYSTEM": {
     "en": "System",
     "nl": "Systeem"
@@ -1090,6 +1094,14 @@
   "AMP_G": {
     "en": "Amp (g)",
     "nl": "Amp (g)"
+  },
+  "PEAK_AMP_G": {
+    "en": "Peak Amp (g)",
+    "nl": "Piekamp (g)"
+  },
+  "STRENGTH_DB": {
+    "en": "Strength (dB)",
+    "nl": "Sterkte (dB)"
   },
   "NO_SYSTEMS_WITH_FINDINGS": {
     "en": "No systems showed significant vibration patterns in this run.",
