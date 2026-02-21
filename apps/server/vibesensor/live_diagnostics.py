@@ -15,7 +15,7 @@ from .diagnostics_shared import (
     severity_from_peak,
     source_keys_from_class_key,
 )
-from .report_analysis import build_findings_for_samples
+from .report.summary import build_findings_for_samples
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")

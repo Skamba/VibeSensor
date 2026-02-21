@@ -259,7 +259,6 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
         }
 
     monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _fake_summarize)
-    monkeypatch.setattr("vibesensor.report_analysis.summarize_run_data", _fake_summarize)
 
     # Stop logging - should trigger post-analysis
     logger.stop_logging()

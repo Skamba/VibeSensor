@@ -4,7 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
-from .reports import build_report_pdf, summarize_log
+from .report.pdf_builder import build_report_pdf
+from .report.summary import summarize_log
 
 
 def parse_args() -> argparse.Namespace:

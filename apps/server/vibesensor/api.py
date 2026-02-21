@@ -16,7 +16,8 @@ from pydantic import BaseModel, Field
 from .constants import MPS_TO_KMH
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
-from .reports import build_report_pdf, summarize_run_data
+from .report.pdf_builder import build_report_pdf
+from .report.summary import summarize_run_data
 
 if TYPE_CHECKING:
     from .app import RuntimeState
