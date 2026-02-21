@@ -210,9 +210,14 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
         order = 1.0
         order_label_base = "wheel order"
         source = "wheel/tire"
+        suspected_source = "wheel/tire"
 
         @staticmethod
-        def predicted_hz(_sample: dict, _metadata: dict, _circumference: float | None) -> tuple[float, str]:
+        def predicted_hz(
+            _sample: dict,
+            _metadata: dict,
+            _circumference: float | None,
+        ) -> tuple[float, str]:
             return 1.0, "speed_kmh"
 
     monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
@@ -222,7 +227,11 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
         "_location_speedbin_summary",
         lambda _points, **_kwargs: (
             "",
-            {"weak_spatial_separation": False, "localization_confidence": 1.0},
+            {
+                "weak_spatial_separation": False,
+                "localization_confidence": 1.0,
+                "dominance_ratio": 1.2,
+            },
         ),
     )
     monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
@@ -257,9 +266,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
     assert len(findings) == 1
     finding = findings[0]
     confidence = float(finding.get("confidence_0_to_1") or 0.0)
-    match_rate = float(
-        (((finding.get("evidence_metrics") or {}).get("global_match_rate")) or 0.0)
-    )
+    match_rate = float(((finding.get("evidence_metrics") or {}).get("global_match_rate")) or 0.0)
 
     assert match_rate == pytest.approx(0.25)
     assert confidence < 0.25
