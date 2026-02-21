@@ -8,7 +8,8 @@ from math import floor, log1p
 from statistics import mean
 from typing import Any
 
-from vibesensor_core.vibration_strength import percentile
+from vibesensor_core.strength_bands import bucket_for_strength
+from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
 
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -748,6 +749,11 @@ def _build_persistent_peak_findings(
         spatial_penalty = (0.35 + 0.65 * spatial_concentration) if location_counts else 1.0
 
         # Confidence for persistent/patterned peaks (analogous to order confidence)
+        peak_strength_db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=p95_amp,
+            floor_amp_g=effective_floor,
+        )
+        peak_strength_bucket = bucket_for_strength(float(peak_strength_db))
         if peak_type == "baseline_noise":
             confidence = max(0.02, min(0.12, 0.02 + 0.05 * presence_ratio))
         elif peak_type == "transient":
@@ -765,6 +771,8 @@ def _build_persistent_peak_findings(
             )
             confidence = base_confidence * spatial_penalty
             if location_counts and spatial_concentration <= 0.35:
+                confidence = min(confidence, 0.35)
+            if peak_strength_bucket == "l0":
                 confidence = min(confidence, 0.35)
 
         peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(

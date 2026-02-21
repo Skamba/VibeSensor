@@ -202,6 +202,69 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
     assert float(high_str) >= float(low_str)
 
 
+def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class _Hypothesis:
+        key = "wheel_1x"
+        order = 1.0
+        order_label_base = "wheel order"
+        source = "wheel/tire"
+
+        @staticmethod
+        def predicted_hz(_sample: dict, _metadata: dict, _circumference: float | None) -> tuple[float, str]:
+            return 1.0, "speed_kmh"
+
+    monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
+    monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda _points, **_kwargs: (
+            "",
+            {"weak_spatial_separation": False, "localization_confidence": 1.0},
+        ),
+    )
+    monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
+
+    samples: list[dict] = []
+    for idx in range(16):
+        matched = idx < 4
+        samples.append(
+            {
+                "t_s": float(idx),
+                "speed_kmh": 40.0 + idx,
+                "strength_floor_amp_g": 1000.0,
+                "top_peaks": [{"hz": 1.5 if matched else 3.0, "amp": 0.001}],
+                "location": "front_left",
+            }
+        )
+
+    findings = findings_module._build_order_findings(
+        metadata={"units": {"accel_x_g": "g"}},
+        samples=samples,
+        speed_sufficient=True,
+        steady_speed=False,
+        speed_stddev_kmh=12.0,
+        tire_circumference_m=2.036,
+        engine_ref_sufficient=True,
+        raw_sample_rate_hz=200.0,
+        accel_units="g",
+        connected_locations={"front_left"},
+        lang="en",
+    )
+
+    assert len(findings) == 1
+    finding = findings[0]
+    confidence = float(finding.get("confidence_0_to_1") or 0.0)
+    match_rate = float(
+        (((finding.get("evidence_metrics") or {}).get("global_match_rate")) or 0.0)
+    )
+
+    assert match_rate == pytest.approx(0.25)
+    assert confidence < 0.25
+
+
 def test_build_findings_order_exposes_structured_speed_profile() -> None:
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
@@ -648,6 +711,95 @@ def test_build_findings_penalizes_low_localization_confidence(
     )
 
     assert low_conf < high_conf
+
+
+def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+    from vibesensor.report import findings as findings_module
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(24):
+        speed = 65.0 + idx
+        wheel_hz = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
+        samples.append(
+            {
+                **_make_sample(float(idx), speed, 0.03),
+                "top_peaks": [{"hz": wheel_hz, "amp": 0.03}],
+            }
+        )
+
+    def _max_conf(findings: list[dict[str, object]]) -> float:
+        return max(
+            float(f.get("confidence_0_to_1") or 0.0)
+            for f in findings
+            if not str(f.get("finding_id") or "").startswith("REF_")
+        )
+
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+            "strong location",
+            {
+                "location": "Front Left",
+                "speed_range": "70-80 km/h",
+                "dominance_ratio": 2.0,
+                "weak_spatial_separation": False,
+                "localization_confidence": 1.0,
+            },
+        ),
+    )
+    baseline_conf = _max_conf(
+        build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    )
+
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+            "weak location",
+            {
+                "location": "Front Left",
+                "speed_range": "70-80 km/h",
+                "dominance_ratio": 1.15,
+                "weak_spatial_separation": True,
+                "localization_confidence": 1.0,
+            },
+        ),
+    )
+    weak_conf = _max_conf(build_findings_for_samples(metadata=metadata, samples=samples, lang="en"))
+
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+            "near tie location",
+            {
+                "location": "ambiguous location: Front Left / Front Right",
+                "speed_range": "70-80 km/h",
+                "dominance_ratio": 1.04,
+                "weak_spatial_separation": True,
+                "localization_confidence": 1.0,
+            },
+        ),
+    )
+    near_tie_conf = _max_conf(
+        build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    )
+
+    assert weak_conf <= (baseline_conf * 0.80) + 1e-9
+    assert near_tie_conf <= (baseline_conf * 0.70) + 1e-9
+    assert near_tie_conf < weak_conf
 
 
 def test_build_findings_passes_focused_speed_band_to_location_summary(
