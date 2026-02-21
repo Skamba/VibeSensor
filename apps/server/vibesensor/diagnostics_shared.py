@@ -20,6 +20,13 @@ from .analysis_settings import (
 )
 from .runlog import as_float_or_none as _as_float
 
+# Road-surface resonance frequency range (Hz)
+ROAD_RESONANCE_MIN_HZ = 3.0
+ROAD_RESONANCE_MAX_HZ = 12.0
+
+# Multi-sensor corroboration bonus: when ≥2 sensors agree, boost effective dB
+MULTI_SENSOR_CORROBORATION_DB = 3.0
+
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
 
@@ -232,7 +239,7 @@ def classify_peak_hz(
             "order_label": _order_label_for_class_key(class_key),
             "suspected_source": suspected_source_from_class_key(class_key),
         }
-    if 3.0 <= peak_hz <= 12.0:
+    if ROAD_RESONANCE_MIN_HZ <= peak_hz <= ROAD_RESONANCE_MAX_HZ:
         return {
             "key": "road",
             "matched_hz": None,
@@ -262,7 +269,8 @@ def severity_from_peak(
     state.setdefault("pending_bucket", None)
     state.setdefault("consecutive_up", 0)
     state.setdefault("consecutive_down", 0)
-    adjusted_db = float(vibration_strength_db) + (3.0 if sensor_count >= 2 else 0.0)
+    corroboration = MULTI_SENSOR_CORROBORATION_DB if sensor_count >= 2 else 0.0
+    adjusted_db = float(vibration_strength_db) + corroboration
     candidate_bucket = bucket_for_strength(adjusted_db)
     current_bucket = state.get("current_bucket")
 

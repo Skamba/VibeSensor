@@ -6,7 +6,7 @@ from time import monotonic
 from typing import Any
 
 from vibesensor_core.strength_bands import BANDS, band_rank
-from vibesensor_core.vibration_strength import _vibration_strength_db_scalar
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from .constants import SILENCE_DB
 from .diagnostics_shared import (
@@ -54,7 +54,7 @@ def _combine_amplitude_strength_db(values_db: list[float]) -> float:
     mean_linear = sum(linear) / max(1, len(linear))
     if mean_linear <= 0.0:
         return SILENCE_DB
-    return _vibration_strength_db_scalar(
+    return vibration_strength_db_scalar(
         peak_band_rms_amp_g=mean_linear,
         floor_amp_g=1.0,
         epsilon_g=1e-9,

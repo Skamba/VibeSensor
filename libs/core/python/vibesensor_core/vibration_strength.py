@@ -13,14 +13,14 @@ STRENGTH_EPSILON_FLOOR_RATIO = 0.05
 PEAK_THRESHOLD_FLOOR_RATIO = 2.6
 
 
-def _median(values: list[float]) -> float:
+def median(values: list[float]) -> float:
     if not values:
         return 0.0
     ordered = sorted(values)
     return float(ordered[len(ordered) // 2])
 
 
-def _percentile(sorted_values: list[float], q: float) -> float:
+def percentile(sorted_values: list[float], q: float) -> float:
     if not sorted_values:
         return 0.0
     if len(sorted_values) == 1:
@@ -65,7 +65,7 @@ def combined_spectrum_amp_g(
     return out
 
 
-def _noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
+def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
     if not combined_spectrum_amp_g:
         return 0.0
     band = (
@@ -74,10 +74,10 @@ def _noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
         else combined_spectrum_amp_g
     )
     finite = sorted(value for value in band if isfinite(value) and value >= 0.0)
-    return _percentile(finite, 0.20)
+    return percentile(finite, 0.20)
 
 
-def _strength_floor_amp_g(
+def strength_floor_amp_g(
     *,
     freq_hz: list[float],
     combined_spectrum_amp_g: list[float],
@@ -102,10 +102,10 @@ def _strength_floor_amp_g(
         amp = float(combined_spectrum_amp_g[idx])
         if amp >= 0.0 and isfinite(amp):
             selected.append(amp)
-    return _median(selected)
+    return median(selected)
 
 
-def _peak_band_rms_amp_g(
+def peak_band_rms_amp_g(
     *,
     freq_hz: list[float],
     combined_spectrum_amp_g: list[float],
@@ -128,7 +128,7 @@ def _peak_band_rms_amp_g(
     return sqrt(sq_sum / count)
 
 
-def _vibration_strength_db_scalar(
+def vibration_strength_db_scalar(
     *,
     peak_band_rms_amp_g: float,
     floor_amp_g: float,
@@ -163,7 +163,7 @@ def compute_vibration_strength_db(
 
     freq = [float(v) for v in freq_hz[:n]]
     combined = [max(0.0, float(v)) for v in combined_spectrum_amp_g_values[:n]]
-    floor_p20 = _noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
+    floor_p20 = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
     threshold = max(
         floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
         floor_p20 + STRENGTH_EPSILON_MIN_G,
@@ -179,7 +179,7 @@ def compute_vibration_strength_db(
     local_maxima.sort(key=lambda idx: combined[idx], reverse=True)
     peak_indexes = local_maxima[: max(1, top_n)]
 
-    floor_strength = _strength_floor_amp_g(
+    floor_strength = strength_floor_amp_g(
         freq_hz=freq,
         combined_spectrum_amp_g=combined,
         peak_indexes=peak_indexes,
@@ -190,13 +190,13 @@ def compute_vibration_strength_db(
 
     candidates: list[dict[str, float | str | None]] = []
     for idx in local_maxima:
-        band_rms = _peak_band_rms_amp_g(
+        band_rms = peak_band_rms_amp_g(
             freq_hz=freq,
             combined_spectrum_amp_g=combined,
             center_idx=idx,
             bandwidth_hz=peak_bandwidth_hz,
         )
-        db = _vibration_strength_db_scalar(
+        db = vibration_strength_db_scalar(
             peak_band_rms_amp_g=band_rms,
             floor_amp_g=floor_strength,
         )

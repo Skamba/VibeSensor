@@ -8,7 +8,7 @@ from math import floor, log1p
 from statistics import mean
 from typing import Any
 
-from vibesensor_core.vibration_strength import _percentile
+from vibesensor_core.vibration_strength import percentile
 
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -136,8 +136,8 @@ def _sensor_intensity_by_location(
                 "samples": sample_count,
                 "sample_count": sample_count,
                 "mean_intensity_db": mean(values) if values else None,
-                "p50_intensity_db": _percentile(values_sorted, 0.50) if values else None,
-                "p95_intensity_db": _percentile(values_sorted, 0.95) if values else None,
+                "p50_intensity_db": percentile(values_sorted, 0.50) if values else None,
+                "p95_intensity_db": percentile(values_sorted, 0.95) if values else None,
                 "max_intensity_db": max(values) if values else None,
                 "dropped_frames_delta": dropped_delta,
                 "queue_overflow_drops_delta": overflow_delta,
@@ -475,8 +475,8 @@ def _build_persistent_peak_findings(
         sorted_amps = sorted(amps)
         count = len(sorted_amps)
         presence_ratio = count / max(1, n_samples)
-        median_amp = _percentile(sorted_amps, 0.50) if count >= 2 else sorted_amps[0]
-        p95_amp = _percentile(sorted_amps, 0.95) if count >= 2 else sorted_amps[-1]
+        median_amp = percentile(sorted_amps, 0.50) if count >= 2 else sorted_amps[0]
+        p95_amp = percentile(sorted_amps, 0.95) if count >= 2 else sorted_amps[-1]
         max_amp = sorted_amps[-1]
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 

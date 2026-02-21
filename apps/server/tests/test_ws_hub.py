@@ -54,7 +54,10 @@ async def test_broadcast_calls_send_json() -> None:
     payload_builder = MagicMock(return_value={"data": "test"})
     await hub.broadcast(payload_builder)
     payload_builder.assert_called_once_with("client_a")
-    ws.send_json.assert_awaited_once_with({"data": "test"})
+    ws.send_text.assert_awaited_once()
+    import json
+    sent_text = ws.send_text.call_args[0][0]
+    assert json.loads(sent_text) == {"data": "test"}
 
 
 @pytest.mark.asyncio
@@ -70,7 +73,7 @@ async def test_broadcast_removes_dead_connections() -> None:
     hub = WebSocketHub()
     good_ws = _make_ws()
     bad_ws = _make_ws()
-    bad_ws.send_json.side_effect = ConnectionError("gone")
+    bad_ws.send_text.side_effect = ConnectionError("gone")
     await hub.add(good_ws, None)
     await hub.add(bad_ws, None)
     assert len(await hub._snapshot()) == 2

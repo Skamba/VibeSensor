@@ -9,7 +9,7 @@ from pathlib import Path
 from statistics import mean
 from typing import Any
 
-from vibesensor_core.vibration_strength import _percentile
+from vibesensor_core.vibration_strength import percentile
 
 from ..analysis_settings import (
     engine_rpm_from_wheel_hz,
@@ -101,8 +101,8 @@ def _outlier_summary(values: list[float]) -> dict[str, object]:
             "upper_bound": None,
         }
     sorted_vals = sorted(values)
-    q1 = _percentile(sorted_vals, 0.25)
-    q3 = _percentile(sorted_vals, 0.75)
+    q1 = percentile(sorted_vals, 0.25)
+    q3 = percentile(sorted_vals, 0.75)
     iqr = max(0.0, q3 - q1)
     low = q1 - (1.5 * iqr)
     high = q3 + (1.5 * iqr)
