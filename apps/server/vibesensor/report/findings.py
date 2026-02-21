@@ -68,6 +68,8 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
 def _sensor_intensity_by_location(
     samples: list[dict[str, Any]],
     include_locations: set[str] | None = None,
+    *,
+    lang: object = "en",
 ) -> list[dict[str, float | str | int]]:
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
@@ -80,7 +82,7 @@ def _sensor_intensity_by_location(
     for sample in samples:
         if not isinstance(sample, dict):
             continue
-        location = _location_label(sample)
+        location = _location_label(sample, lang=lang)
         if not location:
             continue
         if include_locations is not None and location not in include_locations:
@@ -246,7 +248,7 @@ def _build_order_findings(
                     "predicted_hz": predicted_hz,
                     "matched_hz": best_hz,
                     "amp": best_amp,
-                    "location": _location_label(sample),
+                    "location": _location_label(sample, lang=lang),
                 }
             )
 

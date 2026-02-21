@@ -128,7 +128,9 @@ def location_hotspots(
             client_name = str(sample.get("client_name") or "").strip()
             client_id = str(sample.get("client_id") or "").strip()
             location = client_name or (
-                f"Sensor {client_id[-4:]}" if client_id else tr("UNLABELED_SENSOR")
+                tr("SENSOR_ID_SUFFIX", sensor_id=client_id[-4:])
+                if client_id
+                else tr("UNLABELED_SENSOR")
             )
             all_locations.add(location)
             amp = _as_float(sample.get("vibration_strength_db"))

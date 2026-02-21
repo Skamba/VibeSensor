@@ -258,7 +258,7 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
     return out
 
 
-def _location_label(sample: dict[str, Any]) -> str:
+def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
     """Return a stable English location label for the sample.
 
     NOTE: This is used as a **grouping key** across the data pipeline, so it
@@ -281,18 +281,20 @@ def _location_label(sample: dict[str, Any]) -> str:
         return client_name_raw
     client_id_raw = str(sample.get("client_id") or "").strip()
     if client_id_raw:
-        return f"Sensor {client_id_raw[-4:]}"
-    return "Unlabeled sensor"
+        return _tr(lang, "SENSOR_ID_SUFFIX", sensor_id=client_id_raw[-4:])
+    return _tr(lang, "UNLABELED_SENSOR")
 
 
-def _locations_connected_throughout_run(samples: list[dict[str, Any]]) -> set[str]:
+def _locations_connected_throughout_run(
+    samples: list[dict[str, Any]], *, lang: object = "en"
+) -> set[str]:
     by_location_times: dict[str, list[float]] = defaultdict(list)
     all_times: list[float] = []
 
     for sample in samples:
         if not isinstance(sample, dict):
             continue
-        location = _location_label(sample)
+        location = _location_label(sample, lang=lang)
         if not location:
             continue
         t_s = _as_float(sample.get("t_s"))
