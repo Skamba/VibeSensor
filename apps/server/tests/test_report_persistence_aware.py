@@ -408,6 +408,27 @@ class TestBuildPersistentPeakFindings:
         assert candidates
         assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.35
 
+    def test_negligible_strength_persistent_peak_confidence_is_capped(self) -> None:
+        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.002}]) for i in range(20)]
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        candidates = [
+            f
+            for f in findings
+            if (
+                "41.0" in str(f.get("frequency_hz_or_order", ""))
+                or "40.0" in str(f.get("frequency_hz_or_order", ""))
+            )
+            and str(f.get("peak_classification") or "") in {"patterned", "persistent"}
+        ]
+        assert candidates
+        assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.35
+
     def test_single_thud_classified_as_transient(self) -> None:
         """A peak that appears in only 1 of 20 samples should be transient."""
         samples = []
