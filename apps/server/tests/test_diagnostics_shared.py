@@ -115,6 +115,7 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
         )
     assert live["events"]
     assert any(event.get("class_key") == "wheel1" for event in live["events"])
+    assert all("peak_amp_g" in event for event in live["events"])
 
     # Report path (logged JSONL).
     run_path = tmp_path / "run.jsonl"

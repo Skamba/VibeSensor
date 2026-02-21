@@ -164,6 +164,7 @@
   "actions.remove_client_failed": "Verwijderen van sensor is mislukt.",
   "actions.set_location_failed": "Instellen van locatie is mislukt.",
   "vibration.none": "Nog geen noemenswaardige trillingen.",
+  "vibration.db_scale_note": "dB is gemeten boven de achtergrondruisvloer.",
   "matrix.amplitude_group": "Amplitudegroep",
   "matrix.source.engine": "Motor",
   "matrix.source.driveshaft": "Aandrijfas",
