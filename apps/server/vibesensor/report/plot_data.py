@@ -20,6 +20,41 @@ def _aggregate_fft_spectrum(
     *,
     freq_bin_hz: float = 2.0,
 ) -> list[tuple[float, float]]:
+    """Return persistence-weighted FFT spectrum: presence_ratio² × p95_amp per bin.
+
+    This prevents a single transient spike from dominating the diagnostic view.
+    """
+    if freq_bin_hz <= 0:
+        freq_bin_hz = 2.0
+    bin_amps: dict[float, list[float]] = {}
+    n_samples = 0
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        n_samples += 1
+        for hz, amp in _sample_top_peaks(sample):
+            if hz <= 0 or amp <= 0:
+                continue
+            bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
+            bin_center = bin_low + (freq_bin_hz / 2.0)
+            bin_amps.setdefault(bin_center, []).append(amp)
+    if n_samples == 0:
+        return []
+    result: dict[float, float] = {}
+    for bin_center, amps in bin_amps.items():
+        presence_ratio = len(amps) / max(1, n_samples)
+        sorted_amps = sorted(amps)
+        p95 = _percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
+        result[bin_center] = (presence_ratio**2) * p95
+    return sorted(result.items(), key=lambda item: item[0])
+
+
+def _aggregate_fft_spectrum_raw(
+    samples: list[dict[str, Any]],
+    *,
+    freq_bin_hz: float = 2.0,
+) -> list[tuple[float, float]]:
+    """Return max-amplitude FFT spectrum (raw/debug view)."""
     if freq_bin_hz <= 0:
         freq_bin_hz = 2.0
     bins: dict[float, float] = {}
@@ -150,13 +185,21 @@ def _top_peaks_table_rows(
     top_n: int = 12,
     freq_bin_hz: float = 1.0,
 ) -> list[dict[str, Any]]:
+    """Build ranked peak table using persistence-weighted scoring.
+
+    Each frequency bin collects all amplitude observations across samples.
+    Ranking uses ``presence_ratio² × p95_amp`` so that persistent peaks
+    rank above one-off transient spikes.
+    """
     grouped: dict[float, dict[str, Any]] = {}
     if freq_bin_hz <= 0:
         freq_bin_hz = 1.0
 
+    n_samples = 0
     for sample in samples:
         if not isinstance(sample, dict):
             continue
+        n_samples += 1
         speed = _as_float(sample.get("speed_kmh"))
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
@@ -166,18 +209,32 @@ def _top_peaks_table_rows(
                 freq_key,
                 {
                     "frequency_hz": freq_key,
-                    "max_amp_g": 0.0,
+                    "amps": [],
                     "speeds": [],
                 },
             )
-            if amp > float(bucket["max_amp_g"]):
-                bucket["max_amp_g"] = amp
+            bucket["amps"].append(amp)
             if speed is not None and speed > 0:
                 bucket["speeds"].append(speed)
 
+    for bucket in grouped.values():
+        amps = sorted(bucket["amps"])
+        count = len(amps)
+        presence_ratio = count / max(1, n_samples)
+        median_amp = _percentile(amps, 0.50) if count >= 2 else (amps[0] if amps else 0.0)
+        p95_amp = _percentile(amps, 0.95) if count >= 2 else (amps[-1] if amps else 0.0)
+        max_amp = amps[-1] if amps else 0.0
+        burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
+        bucket["max_amp_g"] = max_amp
+        bucket["median_amp_g"] = median_amp
+        bucket["p95_amp_g"] = p95_amp
+        bucket["presence_ratio"] = presence_ratio
+        bucket["burstiness"] = burstiness
+        bucket["persistence_score"] = (presence_ratio**2) * p95_amp
+
     ordered = sorted(
         grouped.values(),
-        key=lambda item: float(item.get("max_amp_g") or 0.0),
+        key=lambda item: float(item.get("persistence_score") or 0.0),
         reverse=True,
     )[:top_n]
 
@@ -193,6 +250,11 @@ def _top_peaks_table_rows(
                 "frequency_hz": float(item.get("frequency_hz") or 0.0),
                 "order_label": "",
                 "max_amp_g": float(item.get("max_amp_g") or 0.0),
+                "median_amp_g": float(item.get("median_amp_g") or 0.0),
+                "p95_amp_g": float(item.get("p95_amp_g") or 0.0),
+                "presence_ratio": float(item.get("presence_ratio") or 0.0),
+                "burstiness": float(item.get("burstiness") or 0.0),
+                "persistence_score": float(item.get("persistence_score") or 0.0),
                 "typical_speed_band": speed_band,
             }
         )
@@ -296,6 +358,7 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
             }
 
     fft_spectrum = _aggregate_fft_spectrum(samples)
+    fft_spectrum_raw = _aggregate_fft_spectrum_raw(samples)
     peaks_spectrogram = _spectrogram_from_peaks(samples)
     peaks_table = _top_peaks_table_rows(samples)
 
@@ -307,6 +370,7 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         "freq_vs_speed_by_finding": freq_vs_speed_by_finding,
         "steady_speed_distribution": steady_speed_distribution,
         "fft_spectrum": fft_spectrum,
+        "fft_spectrum_raw": fft_spectrum_raw,
         "peaks_spectrogram": peaks_spectrogram,
         "peaks_table": peaks_table,
     }
