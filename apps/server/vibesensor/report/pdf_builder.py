@@ -77,7 +77,7 @@ def _hex(c: str) -> colors.Color:
     return colors.HexColor(c)
 
 
-def _safe(v: str | None, fallback: str = "N/A") -> str:
+def _safe(v: str | None, fallback: str = "—") -> str:
     return str(v).strip() if v and str(v).strip() else fallback
 
 
@@ -251,6 +251,22 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     car_parts = [p for p in (_safe(data.car.name, ""), _safe(data.car.car_type, "")) if p]
     car_text = " \u2014 ".join(car_parts) if car_parts else na
     _draw_kv(c, meta_x, y2, tr("CAR_LABEL"), car_text, label_w=12 * mm, fs=FS_BODY)
+
+    # Duration / sensor count on the right side of y2 row
+    meta_right = meta_x + 100 * mm
+    extra_parts: list[str] = []
+    if data.duration_text:
+        extra_parts.append(f"{tr('DURATION')}: {data.duration_text}")
+    if data.sensor_count:
+        extra_parts.append(f"{data.sensor_count} sensors")
+    if data.sensor_locations:
+        extra_parts.append(", ".join(data.sensor_locations[:6]))
+    if data.sample_count:
+        extra_parts.append(f"{data.sample_count} {tr('SAMPLES').lower()}")
+    if extra_parts:
+        c.setFillColor(_hex(MUTED_CLR))
+        c.setFont(FONT, FS_BODY)
+        c.drawString(meta_right, y2, " \u00b7 ".join(extra_parts))
 
     y_cursor = hdr_y - GAP
 
@@ -566,7 +582,7 @@ def _draw_pattern_evidence(
     step = 4.0 * mm
     lw = 32 * mm
 
-    systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else "N/A"
+    systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else tr("UNKNOWN")
     _draw_kv(c, rx, ry, tr("MATCHED_SYSTEMS"), systems_text, label_w=lw, fs=7)
     ry -= step
     _draw_kv(c, rx, ry, tr("STRONGEST_SENSOR"), _safe(ev.strongest_location), label_w=lw, fs=7)

@@ -539,6 +539,10 @@
     "en": "Wheel / Tire",
     "nl": "Wiel / Band"
   },
+  "SOURCE_TRANSIENT_IMPACT": {
+    "en": "Transient impact",
+    "nl": "Voorbijgaande impact"
+  },
   "SIGNATURES_OBSERVED_LABEL": {
     "en": "Signatures observed",
     "nl": "Waargenomen signaturen"
@@ -1007,6 +1011,14 @@
     "en": "Pattern-based suggestion only — this is not a definitive diagnosis.",
     "nl": "Alleen patroongebaseerde suggestie — dit is geen definitieve diagnose."
   },
+  "PRESENCE": {
+    "en": "presence",
+    "nl": "aanwezigheid"
+  },
+  "SCORE": {
+    "en": "score",
+    "nl": "score"
+  },
   "SYSTEMS_WITH_FINDINGS": {
     "en": "Systems with findings",
     "nl": "Systemen met bevindingen"
@@ -1102,5 +1114,305 @@
   "SPEED_BAND": {
     "en": "Speed band",
     "nl": "Snelheidsband"
+  },
+  "ORIGIN_NO_RANKED_FINDING_AVAILABLE": {
+    "en": "No ranked finding is available yet.",
+    "nl": "Nog geen gerangschikte bevinding beschikbaar."
+  },
+  "UNKNOWN_SPEED_BAND": {
+    "en": "unknown band",
+    "nl": "onbekende band"
+  },
+  "ORIGIN_EXPLANATION_FINDING_1": {
+    "en": "Based on Finding 1 ({source}) matched samples in {speed_band}, strongest at {location}, dominance {dominance}.",
+    "nl": "Gebaseerd op Bevinding 1 ({source}) met gematchte samples in {speed_band}, sterkst bij {location}, dominantie {dominance}."
+  },
+  "NOT_APPLICABLE_SHORT": {
+    "en": "n/a",
+    "nl": "n.v.t."
+  },
+  "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY": {
+    "en": "Weak spatial separation; inspect both top nearby components before replacing parts.",
+    "nl": "Zwakke ruimtelijke scheiding; controleer eerst beide dichtstbijzijnde componenten voordat je onderdelen vervangt."
+  },
+  "SUITABILITY_CHECK_SPEED_VARIATION": {
+    "en": "Speed variation",
+    "nl": "Snelheidsvariatie"
+  },
+  "SUITABILITY_SPEED_VARIATION_PASS": {
+    "en": "Wide enough speed sweep for order tracking.",
+    "nl": "Snelheidssweep is breed genoeg voor orde-tracking."
+  },
+  "SUITABILITY_SPEED_VARIATION_WARN": {
+    "en": "Speed sweep is narrow; repeat with +20 to +30 km/h span.",
+    "nl": "Snelheidssweep is smal; herhaal met +20 tot +30 km/u bereik."
+  },
+  "SUITABILITY_CHECK_SENSOR_COVERAGE": {
+    "en": "Sensor coverage",
+    "nl": "Sensordekking"
+  },
+  "SUITABILITY_SENSOR_COVERAGE_PASS": {
+    "en": "Multiple sensor locations observed.",
+    "nl": "Meerdere sensorlocaties waargenomen."
+  },
+  "SUITABILITY_SENSOR_COVERAGE_WARN": {
+    "en": "Few active sensors; location ranking is weaker.",
+    "nl": "Weinig actieve sensoren; locatierangschikking is zwakker."
+  },
+  "SUITABILITY_CHECK_REFERENCE_COMPLETENESS": {
+    "en": "Reference completeness",
+    "nl": "Referentiecompleetheid"
+  },
+  "SUITABILITY_REFERENCE_COMPLETENESS_PASS": {
+    "en": "Required order references are present.",
+    "nl": "Vereiste ordesreferenties zijn aanwezig."
+  },
+  "SUITABILITY_REFERENCE_COMPLETENESS_WARN": {
+    "en": "Some order references are missing or derived with uncertainty.",
+    "nl": "Sommige ordesreferenties ontbreken of zijn onzeker afgeleid."
+  },
+  "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS": {
+    "en": "Saturation and outliers",
+    "nl": "Saturatie en uitschieters"
+  },
+  "SUITABILITY_SATURATION_PASS": {
+    "en": "No obvious saturation detected.",
+    "nl": "Geen duidelijke saturatie gedetecteerd."
+  },
+  "SUITABILITY_SATURATION_WARN": {
+    "en": "{sat_count} potential saturation samples detected.",
+    "nl": "{sat_count} mogelijke saturatiesamples gedetecteerd."
+  },
+  "SUITABILITY_CHECK_FRAME_INTEGRITY": {
+    "en": "Frame integrity",
+    "nl": "Frame-integriteit"
+  },
+  "SUITABILITY_FRAME_INTEGRITY_PASS": {
+    "en": "No dropped frames or queue overflows detected.",
+    "nl": "Geen verloren frames of wachtrijoverlopen gedetecteerd."
+  },
+  "SUITABILITY_FRAME_INTEGRITY_WARN": {
+    "en": "{total_dropped} dropped frames, {total_overflow} queue overflows detected.",
+    "nl": "{total_dropped} verloren frames, {total_overflow} wachtrijoverlopen gedetecteerd."
+  },
+  "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED": {
+    "en": "A concrete mechanical issue is identified.",
+    "nl": "Een concrete mechanische afwijking wordt vastgesteld."
+  },
+  "FALSIFY_NO_ABNORMAL_PLAY_WEAR_OR_LOOSENESS": {
+    "en": "No abnormal play, wear, or looseness is detected.",
+    "nl": "Er wordt geen abnormale speling, slijtage of losheid gedetecteerd."
+  },
+  "STRONGEST_AT_LOCATION_IN_SPEED_RANGE": {
+    "en": "Strongest at {location} in {speed_range} (~{dominance}x vs next location in that speed bin{weak_note}).",
+    "nl": "Sterkst bij {location} in {speed_range} (~{dominance}x t.o.v. volgende locatie in die snelheidsband{weak_note})."
+  },
+  "WEAK_SPATIAL_SEPARATION_NOTE": {
+    "en": ", weak spatial separation",
+    "nl": ", zwakke ruimtelijke scheiding"
+  },
+  "DIAGRAM_LABEL_FRONT": {
+    "en": "FRONT",
+    "nl": "VOOR"
+  },
+  "DIAGRAM_LABEL_REAR": {
+    "en": "REAR",
+    "nl": "ACHTER"
+  },
+  "CLASSIFICATION_PATTERNED": {
+    "en": "patterned",
+    "nl": "patroonmatig"
+  },
+  "CLASSIFICATION_PERSISTENT": {
+    "en": "persistent",
+    "nl": "aanhoudend"
+  },
+  "CLASSIFICATION_TRANSIENT": {
+    "en": "transient impact",
+    "nl": "voorbijgaande impact"
+  },
+  "WHEEL_FOCUS_FRONT_LEFT": {
+    "en": "front-left wheel",
+    "nl": "linkervoorwiel"
+  },
+  "WHEEL_FOCUS_FRONT_RIGHT": {
+    "en": "front-right wheel",
+    "nl": "rechtervoorwiel"
+  },
+  "WHEEL_FOCUS_REAR_LEFT": {
+    "en": "rear-left wheel",
+    "nl": "linkerachterwiel"
+  },
+  "WHEEL_FOCUS_REAR_RIGHT": {
+    "en": "rear-right wheel",
+    "nl": "rechterachterwiel"
+  },
+  "WHEEL_FOCUS_REAR": {
+    "en": "rear wheels",
+    "nl": "achterwielen"
+  },
+  "WHEEL_FOCUS_FRONT": {
+    "en": "front wheels",
+    "nl": "voorwielen"
+  },
+  "WHEEL_FOCUS_ALL": {
+    "en": "all wheels",
+    "nl": "alle wielen"
+  },
+  "SPEED_HINT_FOCUS": {
+    "en": " with focus around {speed_band}",
+    "nl": " met focus rond {speed_band}"
+  },
+  "LOCATION_HINT_NEAR": {
+    "en": "Near the strongest location ({location}),",
+    "nl": "Nabij de sterkste locatie ({location}),"
+  },
+  "LOCATION_HINT_AT_WHEEL_CORNERS": {
+    "en": "At the wheel/tire corners,",
+    "nl": "Bij de wiel/band-hoeken,"
+  },
+  "ACTION_WHEEL_BALANCE_WHAT": {
+    "en": "Inspect and balance {wheel_focus}; measure radial/lateral runout on the wheel and tire{speed_hint}.",
+    "nl": "Controleer en balanceer {wheel_focus}; meet radiale/laterale slingering op wiel en band{speed_hint}."
+  },
+  "ACTION_WHEEL_BALANCE_WHY": {
+    "en": "{location_hint} wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
+    "nl": "{location_hint} wielorde-signaturen komen meestal door onbalans, slingering of banddeformatie."
+  },
+  "ACTION_WHEEL_BALANCE_CONFIRM": {
+    "en": "A clear imbalance or runout is found and corrected, with vibration complaint reduced.",
+    "nl": "Er wordt duidelijke onbalans of slingering gevonden en gecorrigeerd, waarna de trillingsklacht afneemt."
+  },
+  "ACTION_WHEEL_BALANCE_FALSIFY": {
+    "en": "Balance and runout are within spec on all checked wheels/tires and complaint remains unchanged.",
+    "nl": "Balans en slingering zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft gelijk."
+  },
+  "ACTION_TIRE_CONDITION_WHAT": {
+    "en": "Inspect {wheel_focus} for tire defects: flat spots, belt shift, uneven wear, pressure mismatch.",
+    "nl": "Controleer {wheel_focus} op banddefecten: vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld, drukverschillen."
+  },
+  "ACTION_TIRE_CONDITION_WHY": {
+    "en": "Tire structural issues often create strong 1x/2x wheel-order vibration.",
+    "nl": "Structurele bandproblemen veroorzaken vaak sterke 1x/2x wielorde-trillingen."
+  },
+  "ACTION_TIRE_CONDITION_CONFIRM": {
+    "en": "Visible/measureable tire defect aligns with complaint speed band.",
+    "nl": "Zichtbaar/meetbaar banddefect sluit aan op de klachten-snelheidsband."
+  },
+  "ACTION_TIRE_CONDITION_FALSIFY": {
+    "en": "No tire condition anomaly is found on inspected wheels.",
+    "nl": "Er wordt geen bandtoestandsafwijking gevonden op de gecontroleerde wielen."
+  },
+  "LOCATION_HINT_NEAR_SHORT": {
+    "en": "near {location}",
+    "nl": "nabij {location}"
+  },
+  "LOCATION_HINT_ALONG_DRIVELINE": {
+    "en": "along the tunnel/rear driveline path",
+    "nl": "langs de tunnel/achterste aandrijflijn"
+  },
+  "ACTION_DRIVELINE_INSPECTION_WHAT": {
+    "en": "Inspect propshaft runout/balance, center support bearing, CV/guibo joints {driveline_focus}.",
+    "nl": "Controleer cardanas slingering/balans, middenlager, homokineten/hardy-schijf {driveline_focus}."
+  },
+  "ACTION_DRIVELINE_INSPECTION_WHY": {
+    "en": "Driveline-order vibration is commonly caused by shaft imbalance, joint wear, or support bearing issues.",
+    "nl": "Aandrijflijnorde-trillingen komen vaak door onbalans van de as, slijtage van koppelingen of problemen met het middenlager."
+  },
+  "ACTION_DRIVELINE_INSPECTION_CONFIRM": {
+    "en": "Mechanical defect or out-of-spec runout/play is found in driveline components.",
+    "nl": "Mechanisch defect of buiten-specificatie slingering/speling wordt gevonden in aandrijflijncomponenten."
+  },
+  "ACTION_DRIVELINE_INSPECTION_FALSIFY": {
+    "en": "No driveline play/runout/balance issue is found.",
+    "nl": "Er wordt geen aandrijflijn-issue in speling/slingering/balans gevonden."
+  },
+  "ACTION_DRIVELINE_MOUNTS_WHAT": {
+    "en": "Check driveline mounts and fastening torque (diff mounts, shaft couplings, carrier brackets).",
+    "nl": "Controleer aandrijflijnsteunen en aanhaalmomenten (diff-steunen, askoppelingen, draagbeugels)."
+  },
+  "ACTION_DRIVELINE_MOUNTS_WHY": {
+    "en": "Loose or degraded mounts can amplify normal order content into cabin vibration.",
+    "nl": "Losse of versleten steunen kunnen normale orde-inhoud versterken tot voelbare trillingen in de auto."
+  },
+  "ACTION_DRIVELINE_MOUNTS_CONFIRM": {
+    "en": "Loose mount/fastener or cracked rubber support is found.",
+    "nl": "Losse bevestiging of gescheurde rubbersteun wordt gevonden."
+  },
+  "ACTION_DRIVELINE_MOUNTS_FALSIFY": {
+    "en": "All inspected mounts and fasteners are within condition/torque spec.",
+    "nl": "Alle gecontroleerde steunen en bevestigingen zijn binnen conditie-/koppelspecificatie."
+  },
+  "ACTION_ENGINE_MOUNTS_WHAT": {
+    "en": "Inspect engine mounts and accessory drive (idler, tensioner, pulleys) for play or resonance.",
+    "nl": "Controleer motorsteunen en hulpaandrijving (spanrol, geleiderol, poelies) op speling of resonantie."
+  },
+  "ACTION_ENGINE_MOUNTS_WHY": {
+    "en": "Engine-order vibration often transfers through weakened mounts or accessory imbalance.",
+    "nl": "Motororde-trillingen worden vaak doorgegeven via verzwakte steunen of onbalans in hulpaandrijving."
+  },
+  "ACTION_ENGINE_MOUNTS_CONFIRM": {
+    "en": "A worn mount or accessory imbalance is identified.",
+    "nl": "Een versleten steun of onbalans in hulpaandrijving wordt vastgesteld."
+  },
+  "ACTION_ENGINE_MOUNTS_FALSIFY": {
+    "en": "Mounts and accessory drive are within acceptable condition.",
+    "nl": "Steunen en hulpaandrijving zijn binnen acceptabele conditie."
+  },
+  "ACTION_ENGINE_COMBUSTION_WHAT": {
+    "en": "Check misfire counters and fuel/ignition adaptation for cylinders contributing to roughness.",
+    "nl": "Controleer misfire-tellers en brandstof/ontsteking-adaptaties op cilinders die ruwloop veroorzaken."
+  },
+  "ACTION_ENGINE_COMBUSTION_WHY": {
+    "en": "Combustion imbalance can create engine-order vibration without obvious mechanical noise.",
+    "nl": "Verbrandingsonbalans kan motororde-trillingen geven zonder duidelijk mechanisch geluid."
+  },
+  "ACTION_ENGINE_COMBUSTION_CONFIRM": {
+    "en": "Cylinder-specific deviation aligns with the vibration complaint.",
+    "nl": "Cilinderspecifieke afwijking sluit aan op de trillingsklacht."
+  },
+  "ACTION_ENGINE_COMBUSTION_FALSIFY": {
+    "en": "Combustion quality indicators are stable and balanced.",
+    "nl": "Verbrandingskwaliteits-indicatoren zijn stabiel en gebalanceerd."
+  },
+  "ACTION_GENERAL_FALLBACK_WHY": {
+    "en": "Use direct mechanical checks first because source classification is not specific enough yet.",
+    "nl": "Gebruik eerst directe mechanische controles omdat de bronclassificatie nog niet specifiek genoeg is."
+  },
+  "ACTION_GENERAL_WEAK_SPATIAL_WHY": {
+    "en": "Spatial separation is weak, so prioritize broad underbody and mount checks before part replacement.",
+    "nl": "Ruimtelijke scheiding is zwak, dus prioriteer brede onderstel- en steuncontroles vóór onderdeelvervanging."
+  },
+  "ACTION_GENERAL_INSPECTION_WHAT": {
+    "en": "Inspect wheel bearings, suspension bushings, subframe mounts, and loose fasteners in the hotspot area.",
+    "nl": "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in de hotspot-zone."
+  },
+  "ACTION_GENERAL_INSPECTION_CONFIRM": {
+    "en": "A clear mechanical issue is found at or near the hotspot.",
+    "nl": "Een duidelijke mechanische afwijking wordt bij of nabij de hotspot gevonden."
+  },
+  "ACTION_GENERAL_INSPECTION_FALSIFY": {
+    "en": "No abnormal wear, play, or looseness is found.",
+    "nl": "Er wordt geen abnormale slijtage, speling of losheid gevonden."
+  },
+  "EVIDENCE_ORDER_TRACKED": {
+    "en": "{order_label} tracked over {matched}/{possible} samples (match rate {match_rate:.0%}, mean relative error {mean_rel_err:.3f}, reference {ref_text}).",
+    "nl": "{order_label} gevolgd over {matched}/{possible} samples (trefferratio {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, referentie {ref_text})."
+  },
+  "METRIC_MEAN_MATCHED_PEAK_AMPLITUDE": {
+    "en": "Mean matched peak amplitude from the combined FFT spectrum.",
+    "nl": "Gemiddelde gematchte piekamplitude uit het gecombineerde FFT-spectrum."
+  },
+  "NEXT_SENSOR_MOVE_DEFAULT": {
+    "en": "Inspect the highest-ranked hotspot path first.",
+    "nl": "Controleer eerst het hoogste hotspot-pad."
+  },
+  "EVIDENCE_PEAK_PRESENT": {
+    "en": "{freq:.1f} Hz peak present in {pct:.0%} of samples (p95 amplitude {p95:.4f} {units}, burstiness {burst:.1f}×, classification: {cls}).",
+    "nl": "{freq:.1f} Hz piek aanwezig in {pct:.0%} van de samples (p95 amplitude {p95:.4f} {units}, burstigheid {burst:.1f}×, classificatie: {cls})."
+  },
+  "METRIC_P95_PEAK_AMPLITUDE": {
+    "en": "p95 peak amplitude across matched samples.",
+    "nl": "p95 piekamplitude over gematchte samples."
   }
 }

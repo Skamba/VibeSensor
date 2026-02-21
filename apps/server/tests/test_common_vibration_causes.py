@@ -89,7 +89,7 @@ def _common_cause_cases() -> list[CauseCase]:
         CauseCase("bent_rim", "wheel1", orders["wheel_hz"] * 0.992),
         CauseCase("tire_flat_spot_or_radial_runout", "wheel1", orders["wheel_hz"] * 1.022),
         CauseCase("brake_rotor_thickness_variation", "wheel1", orders["wheel_hz"] * 0.985),
-        CauseCase("tire_non_uniformity_harmonic", "wheel2", orders["wheel_hz"] * 2.0),
+        CauseCase("tire_non_uniformity_harmonic", "wheel2_eng1", orders["wheel_hz"] * 2.0),
         CauseCase("driveshaft_imbalance", "shaft1", orders["drive_hz"] * 1.014),
         CauseCase("cv_joint_or_u_joint_wear", "shaft1", orders["drive_hz"] * 0.986),
         CauseCase("engine_misfire_or_combustion_roughness", "eng1", orders["engine_hz"]),
