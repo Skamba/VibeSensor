@@ -12,6 +12,21 @@ from ..runlog import as_float_or_none as _as_float
 from .helpers import _speed_bin_label
 from .order_analysis import _finding_actions_for_source
 
+NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
+
+
+def _localization_confidence(
+    *,
+    dominance_ratio: float,
+    location_count: int,
+    total_samples: int,
+) -> float:
+    dominance_component = max(0.0, min(1.0, (dominance_ratio - 1.0) / 0.5))
+    location_component = 1.0 / max(1.0, 1.0 + (max(0, location_count - 1) * 0.15))
+    sample_component = min(1.0, max(0.0, total_samples / 10.0))
+    confidence = dominance_component * location_component * (0.6 + 0.4 * sample_component)
+    return max(0.05, min(1.0, confidence))
+
 
 def _merge_test_plan(
     findings: list[dict[str, object]],
@@ -129,14 +144,36 @@ def _location_speedbin_summary(
         if not ranked:
             continue
         top_loc, top_amp = ranked[0]
+        top_count = len(per_loc.get(top_loc, []))
+        second_loc = ranked[1][0] if len(ranked) > 1 else top_loc
+        second_count = len(per_loc.get(second_loc, [])) if len(ranked) > 1 else top_count
         second_amp = ranked[1][1] if len(ranked) > 1 else top_amp
         dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
+        total_samples = sum(len(vals) for vals in per_loc.values())
+        ambiguous = len(ranked) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
+        display_location = (
+            f"ambiguous location: {top_loc} / {second_loc}"
+            if ambiguous
+            else top_loc
+        )
         candidate = {
             "speed_range": bin_label,
-            "location": top_loc,
+            "location": display_location,
             "mean_amp": top_amp,
             "dominance_ratio": dominance,
             "location_count": len(ranked),
+            "top_location": top_loc,
+            "second_location": second_loc if len(ranked) > 1 else None,
+            "top_location_samples": top_count,
+            "second_location_samples": second_count,
+            "total_samples": total_samples,
+            "ambiguous_location": ambiguous,
+            "ambiguous_locations": [top_loc, second_loc] if ambiguous else [],
+            "localization_confidence": _localization_confidence(
+                dominance_ratio=dominance,
+                location_count=len(ranked),
+                total_samples=total_samples,
+            ),
             "weak_spatial_separation": dominance < WEAK_SPATIAL_DOMINANCE_THRESHOLD,
         }
         per_bin_results.append(candidate)
