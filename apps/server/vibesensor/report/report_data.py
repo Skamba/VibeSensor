@@ -141,31 +141,57 @@ def _human_source(source: object, *, tr) -> str:  # type: ignore[type-arg]
     return mapping.get(raw, raw.replace("_", " ").title() if raw else tr("UNKNOWN"))
 
 
+def _finding_strength_values(finding: dict) -> tuple[float | None, float | None]:
+    from math import log10
+
+    amp_metric = finding.get("amplitude_metric")
+    peak_amp_g = _as_float(amp_metric.get("value")) if isinstance(amp_metric, dict) else None
+
+    evidence_metrics = finding.get("evidence_metrics")
+    db_value = (
+        _as_float(evidence_metrics.get("vibration_strength_db"))
+        if isinstance(evidence_metrics, dict)
+        else None
+    )
+    if db_value is not None:
+        return (db_value, peak_amp_g)
+
+    if isinstance(evidence_metrics, dict):
+        noise_floor = _as_float(evidence_metrics.get("mean_noise_floor"))
+        if peak_amp_g is not None and noise_floor is not None and noise_floor > 0:
+            ratio = (peak_amp_g + 1e-12) / (noise_floor + 1e-12)
+            return (20.0 * log10(max(ratio, 1e-12)), peak_amp_g)
+
+    return (None, peak_amp_g)
+
+
 def _top_strength_values(summary: dict) -> tuple[float | None, float | None]:
     """Return best ``(vibration_strength_db, peak_amp_g)`` for observed strength text."""
+    db_value: float | None = None
     peak_amp_g: float | None = None
     for cause in summary.get("top_causes", []):
         if not isinstance(cause, dict):
             continue
-        for f in summary.get("findings", []):
-            if not isinstance(f, dict):
+        for finding in summary.get("findings", []):
+            if not isinstance(finding, dict):
                 continue
-            if f.get("finding_id") == cause.get("finding_id"):
-                amp = f.get("amplitude_metric")
-                if isinstance(amp, dict):
-                    v = _as_float(amp.get("value"))
-                    if v is not None:
-                        peak_amp_g = v
-                        break
-        if peak_amp_g is not None:
+            if finding.get("finding_id") != cause.get("finding_id"):
+                continue
+            finding_db, finding_peak = _finding_strength_values(finding)
+            if db_value is None and finding_db is not None:
+                db_value = finding_db
+            if peak_amp_g is None and finding_peak is not None:
+                peak_amp_g = finding_peak
+            if db_value is not None and peak_amp_g is not None:
+                break
+        if db_value is not None and peak_amp_g is not None:
             break
 
-    db_value: float | None = None
     for row in summary.get("sensor_intensity_by_location", []):
         if isinstance(row, dict):
             v = _as_float(row.get("p95_intensity_db"))
             if v is not None:
-                db_value = v
+                db_value = db_value if db_value is not None else v
                 break
     return (db_value, peak_amp_g)
 
