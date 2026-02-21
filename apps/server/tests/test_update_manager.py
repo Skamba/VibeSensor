@@ -147,9 +147,7 @@ class TestParseWifiDiagnostics:
         log_dir = tmp_path / "wifi"
         log_dir.mkdir()
         (log_dir / "hotspot.log").write_text(
-            "2024-01-01 INFO normaline\n"
-            "2024-01-01 ERROR something failed\n"
-            "2024-01-01 INFO ok\n"
+            "2024-01-01 INFO normaline\n2024-01-01 ERROR something failed\n2024-01-01 INFO ok\n"
         )
         issues = parse_wifi_diagnostics(str(log_dir))
         assert len(issues) >= 1
@@ -172,7 +170,9 @@ class TestParseWifiDiagnostics:
 
 class TestUpdateManager:
     def _make_manager(
-        self, *, runner: FakeRunner | None = None,
+        self,
+        *,
+        runner: FakeRunner | None = None,
     ) -> tuple[UpdateManager, FakeRunner]:
         r = runner or FakeRunner()
         mgr = UpdateManager(
@@ -355,9 +355,7 @@ class TestUpdateManagerAsync:
             await asyncio.wait_for(mgr._task, timeout=10)
 
         assert mgr.status.state == UpdateState.failed
-        issues_text = " ".join(
-            f"{i.message} {i.detail}" for i in mgr.status.issues
-        ).lower()
+        issues_text = " ".join(f"{i.message} {i.detail}" for i in mgr.status.issues).lower()
         assert "privileg" in issues_text
 
     async def test_wifi_connection_failure(self, tmp_path) -> None:
@@ -366,7 +364,9 @@ class TestUpdateManagerAsync:
         runner.set_response("sudo -n true", 0)
         runner.set_response(
             "connection up VibeSensor-Uplink",
-            1, "", "Error: Connection activation failed",
+            1,
+            "",
+            "Error: Connection activation failed",
         )
 
         repo = tmp_path / "repo"
@@ -390,8 +390,7 @@ class TestUpdateManagerAsync:
         assert "connect" in issues_text or "wi-fi" in issues_text
 
         restore_calls = [
-            c for c in runner.calls
-            if "VibeSensor-AP" in " ".join(c[0]) and "up" in " ".join(c[0])
+            c for c in runner.calls if "VibeSensor-AP" in " ".join(c[0]) and "up" in " ".join(c[0])
         ]
         assert len(restore_calls) > 0
 
@@ -419,8 +418,7 @@ class TestUpdateManagerAsync:
 
         assert mgr.status.state == UpdateState.failed
         restore_calls = [
-            c for c in runner.calls
-            if "VibeSensor-AP" in " ".join(c[0]) and "up" in " ".join(c[0])
+            c for c in runner.calls if "VibeSensor-AP" in " ".join(c[0]) and "up" in " ".join(c[0])
         ]
         assert len(restore_calls) > 0
 

@@ -92,8 +92,7 @@ class UpdateJobStatus:
             "last_success_at": self.last_success_at,
             "ssid": self.ssid,
             "issues": [
-                {"phase": i.phase, "message": i.message, "detail": i.detail}
-                for i in self.issues
+                {"phase": i.phase, "message": i.message, "detail": i.detail} for i in self.issues
             ],
             "log_tail": self.log_tail[-50:],
             "exit_code": self.exit_code,
@@ -124,9 +123,7 @@ class CommandRunner:
                 stderr=asyncio.subprocess.PIPE,
                 env=merged_env,
             )
-            stdout_bytes, stderr_bytes = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout
-            )
+            stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
             return (
                 proc.returncode or 0,
                 stdout_bytes.decode(errors="replace"),
@@ -180,11 +177,13 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
             for line in text.splitlines():
                 line = line.strip()
                 if line.startswith("status=") and "FAILED" in line.upper():
-                    issues.append(UpdateIssue(
-                        phase="diagnostics",
-                        message="Hotspot summary reports failure",
-                        detail=line,
-                    ))
+                    issues.append(
+                        UpdateIssue(
+                            phase="diagnostics",
+                            message="Hotspot summary reports failure",
+                            detail=line,
+                        )
+                    )
         except OSError:
             pass
 
@@ -197,11 +196,13 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
                 lower = line.lower()
                 if "error" in lower or "failed" in lower or "timeout" in lower:
                     sanitized = _sanitize_log_line(line)
-                    issues.append(UpdateIssue(
-                        phase="diagnostics",
-                        message="Hotspot log issue",
-                        detail=sanitized,
-                    ))
+                    issues.append(
+                        UpdateIssue(
+                            phase="diagnostics",
+                            message="Hotspot log issue",
+                            detail=sanitized,
+                        )
+                    )
         except OSError:
             pass
 
@@ -211,7 +212,8 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
 def _sanitize_log_line(line: str) -> str:
     """Remove potential credential leaks from log lines."""
     import re
-    line = re.sub(r'(?i)(psk|password|secret|key)\s*[=:]\s*\S+', r'\1=***', line)
+
+    line = re.sub(r"(?i)(psk|password|secret|key)\s*[=:]\s*\S+", r"\1=***", line)
     return line[:500]
 
 
@@ -305,11 +307,13 @@ class UpdateManager:
         LOGGER.info("update: %s", sanitized)
 
     def _add_issue(self, phase: str, message: str, detail: str = "") -> None:
-        self._status.issues.append(UpdateIssue(
-            phase=phase,
-            message=self._redact(message),
-            detail=self._redact(_sanitize_log_line(detail)),
-        ))
+        self._status.issues.append(
+            UpdateIssue(
+                phase=phase,
+                message=self._redact(message),
+                detail=self._redact(_sanitize_log_line(detail)),
+            )
+        )
 
     async def _run_cmd(
         self,
@@ -419,9 +423,7 @@ class UpdateManager:
         # Check sudo / privileges
         if os.geteuid() != 0:
             # Check if we can sudo
-            rc, _, _ = await self._run_cmd(
-                ["sudo", "-n", "true"], phase="validating", timeout=5
-            )
+            rc, _, _ = await self._run_cmd(["sudo", "-n", "true"], phase="validating", timeout=5)
             if rc != 0:
                 self._add_issue(
                     "validating",
@@ -464,12 +466,19 @@ class UpdateManager:
         # Create uplink connection
         rc, _, stderr = await self._run_cmd(
             [
-                "nmcli", "connection", "add",
-                "type", "wifi",
-                "ifname", self._wifi_ifname,
-                "con-name", UPLINK_CONNECTION_NAME,
-                "autoconnect", "no",
-                "ssid", ssid,
+                "nmcli",
+                "connection",
+                "add",
+                "type",
+                "wifi",
+                "ifname",
+                self._wifi_ifname,
+                "con-name",
+                UPLINK_CONNECTION_NAME,
+                "autoconnect",
+                "no",
+                "ssid",
+                ssid,
             ],
             phase="connecting_wifi",
             sudo=True,
@@ -492,12 +501,20 @@ class UpdateManager:
 
                 rc, _, stderr = await self._run_cmd(
                     [
-                        "nmcli", "connection", "modify", UPLINK_CONNECTION_NAME,
-                        "802-11-wireless-security.key-mgmt", "wpa-psk",
-                        "802-11-wireless-security.psk-flags", "0",
-                        "802-11-wireless-security.psk", password,
-                        "ipv4.method", "auto",
-                        "ipv6.method", "ignore",
+                        "nmcli",
+                        "connection",
+                        "modify",
+                        UPLINK_CONNECTION_NAME,
+                        "802-11-wireless-security.key-mgmt",
+                        "wpa-psk",
+                        "802-11-wireless-security.psk-flags",
+                        "0",
+                        "802-11-wireless-security.psk",
+                        password,
+                        "ipv4.method",
+                        "auto",
+                        "ipv6.method",
+                        "ignore",
                     ],
                     phase="connecting_wifi",
                     sudo=True,
@@ -505,9 +522,14 @@ class UpdateManager:
             else:
                 rc, _, stderr = await self._run_cmd(
                     [
-                        "nmcli", "connection", "modify", UPLINK_CONNECTION_NAME,
-                        "ipv4.method", "auto",
-                        "ipv6.method", "ignore",
+                        "nmcli",
+                        "connection",
+                        "modify",
+                        UPLINK_CONNECTION_NAME,
+                        "ipv4.method",
+                        "auto",
+                        "ipv6.method",
+                        "ignore",
                     ],
                     phase="connecting_wifi",
                     sudo=True,

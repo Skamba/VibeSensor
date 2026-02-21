@@ -71,9 +71,7 @@ class GPSSpeedMonitor:
 
     def _fallback_speed_mps(self) -> float | None:
         """Return fallback speed (manual override) if fallback mode is manual."""
-        if self.fallback_mode == "manual" and isinstance(
-            self.override_speed_mps, (int, float)
-        ):
+        if self.fallback_mode == "manual" and isinstance(self.override_speed_mps, (int, float)):
             self.fallback_active = True
             return float(self.override_speed_mps)
         self.fallback_active = True
@@ -166,15 +164,11 @@ class GPSSpeedMonitor:
                 self.connection_state = "connected"
                 self.last_error = None
                 while True:
-                    line = await asyncio.wait_for(
-                        reader.readline(), timeout=_GPS_READ_TIMEOUT_S
-                    )
+                    line = await asyncio.wait_for(reader.readline(), timeout=_GPS_READ_TIMEOUT_S)
                     if not line:
                         break
                     try:
-                        payload: dict[str, Any] = json.loads(
-                            line.decode("utf-8", errors="replace")
-                        )
+                        payload: dict[str, Any] = json.loads(line.decode("utf-8", errors="replace"))
                     except json.JSONDecodeError:
                         LOGGER.debug("Ignoring malformed GPS JSON line")
                         continue
@@ -207,13 +201,9 @@ class GPSSpeedMonitor:
                 self.connection_state = "disconnected"
                 self.last_error = str(exc) or type(exc).__name__
                 self.current_reconnect_delay = reconnect_delay
-                LOGGER.debug(
-                    "GPS connection lost, retrying in %gs", reconnect_delay
-                )
+                LOGGER.debug("GPS connection lost, retrying in %gs", reconnect_delay)
                 await asyncio.sleep(reconnect_delay)
-                reconnect_delay = min(
-                    _GPS_RECONNECT_MAX_DELAY_S, reconnect_delay * 2.0
-                )
+                reconnect_delay = min(_GPS_RECONNECT_MAX_DELAY_S, reconnect_delay * 2.0)
             finally:
                 if writer is not None and not writer_closed:
                     writer.close()
