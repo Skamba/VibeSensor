@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from math import pow
+from math import log1p, pow
 from statistics import mean
 
 from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
@@ -257,7 +257,17 @@ def _location_speedbin_summary(
             < weak_spatial_dominance_threshold(len(ranked_for_winner)),
         }
         per_bin_results.append(candidate)
-        if best is None or float(candidate["mean_amp"]) > float(best["mean_amp"]):
+        # Prefer bins that are both strong and sufficiently sampled.
+        # Pure mean-amplitude ranking lets tiny outlier bins dominate; this
+        # weighted score preserves amplitude leadership while rewarding evidence
+        # density via a logarithmic sample-count factor.
+        candidate_score = float(candidate["mean_amp"]) * log1p(float(total_samples))
+        best_score = (
+            float(best["mean_amp"]) * log1p(float(best.get("total_samples") or 0))
+            if best is not None
+            else float("-inf")
+        )
+        if best is None or candidate_score > best_score:
             best = candidate
 
     if best is None:
