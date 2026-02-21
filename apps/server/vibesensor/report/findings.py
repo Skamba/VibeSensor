@@ -958,6 +958,7 @@ def _build_findings(
     speed_non_null_pct: float,
     raw_sample_rate_hz: float | None,
     lang: object = "en",
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
@@ -1040,7 +1041,11 @@ def _build_findings(
     # IDLE samples (engine-off / stationary) add broadband noise that dilutes
     # order-tracking evidence and inflates persistent-peak presence ratios.
     # Issues #190 and #191.
-    _per_sample_phases, _ = segment_run_phases(samples)
+    # Use pre-computed phases when provided (avoids redundant segmentation).
+    if per_sample_phases is not None and len(per_sample_phases) == len(samples):
+        _per_sample_phases = per_sample_phases
+    else:
+        _per_sample_phases, _ = segment_run_phases(samples)
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)

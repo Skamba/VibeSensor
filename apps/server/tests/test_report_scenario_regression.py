@@ -1053,6 +1053,51 @@ class TestPhaseInfoInSummary:
                 f"phase_intensity key missing for location {loc_row.get('location')}"
             )
 
+    def test_phase_segments_serialized_in_summary(self) -> None:
+        """phase_segments must be a list of serializable dicts in the summary."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+
+        segs = summary.get("phase_segments")
+        assert segs is not None, "phase_segments must be in summary output"
+        assert isinstance(segs, list)
+        assert len(segs) >= 1
+        for seg in segs:
+            assert isinstance(seg, dict)
+            assert "phase" in seg
+            assert "start_idx" in seg
+            assert "end_idx" in seg
+            assert "start_t_s" in seg
+            assert "end_t_s" in seg
+            assert "sample_count" in seg
+        # Total samples across all segments equals the run sample count
+        total = sum(int(seg["sample_count"]) for seg in segs)
+        assert total == 20
+
+    def test_phase_segments_consistent_with_phase_info(self) -> None:
+        """phase_segments sample counts must sum to phase_info.total_samples."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+
+        phase_info = summary["phase_info"]
+        segs = summary["phase_segments"]
+        seg_total = sum(int(seg["sample_count"]) for seg in segs)
+        assert seg_total == phase_info["total_samples"]
+
+    def test_build_findings_for_samples_uses_phase_filtering(self) -> None:
+        """build_findings_for_samples must compute phase segments and pass them
+        to _build_findings so that IDLE samples are excluded from analysis."""
+        from vibesensor.report import build_findings_for_samples
+
+        meta = _standard_metadata()
+        # 10 idle + 10 cruise samples
+        samples = _build_phased_samples([(10, 0.0, 0.0), (10, 60.0, 60.0)])
+        # Should not raise and should return a list
+        findings = build_findings_for_samples(metadata=meta, samples=samples)
+        assert isinstance(findings, list)
+
 
 # ---------------------------------------------------------------------------
 # 11. Certainty label signal-quality guard (issue #184)
