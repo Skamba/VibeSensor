@@ -999,7 +999,12 @@ class TestReferenceFindingDistinguishability:
 
 
 class TestPhaseInfoInSummary:
-    """summarize_run_data should include phase_info in its output."""
+    """summarize_run_data should compute and propagate phase segments.
+
+    Issue #193: summarize_run_data() must compute phase segmentation and
+    propagate phase data to all dependent outputs (phase_info,
+    phase_speed_breakdown, sensor_intensity_by_location.phase_intensity).
+    """
 
     def test_phase_info_present(self) -> None:
         meta = _standard_metadata()
@@ -1009,6 +1014,36 @@ class TestPhaseInfoInSummary:
         assert phase_info is not None
         assert "total_samples" in phase_info
         assert phase_info["total_samples"] == 20
+
+    def test_phase_info_propagated_to_all_dependents(self) -> None:
+        """Issue #193: phase_info, phase_speed_breakdown and location phase_intensity
+        must all be computed in a single summarize_run_data() call."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+
+        # 1. Phase info must be present and correct
+        phase_info = summary.get("phase_info")
+        assert phase_info is not None
+        assert "phase_counts" in phase_info
+        assert "total_samples" in phase_info
+        assert phase_info["total_samples"] == 20
+
+        # 2. Phase speed breakdown must be present
+        psd = summary.get("phase_speed_breakdown")
+        assert psd is not None, "phase_speed_breakdown must be in summary"
+        assert isinstance(psd, list)
+        assert len(psd) >= 1
+        # Sum of counts = total samples
+        total = sum(int(row["count"]) for row in psd)
+        assert total == 20
+
+        # 3. Sensor intensity by location must carry phase_intensity
+        locs = summary.get("sensor_intensity_by_location", [])
+        for loc_row in locs:
+            assert "phase_intensity" in loc_row, (
+                f"phase_intensity key missing for location {loc_row.get('location')}"
+            )
 
 
 # ---------------------------------------------------------------------------
