@@ -148,18 +148,21 @@ def _location_speedbin_summary(
 
     # Attach per-bin breakdown so callers can inspect per-speed-bin location
     # rankings instead of only getting the global winner.
-    best["per_bin_results"] = per_bin_results
+    # Use detached copies to avoid self-referential structures when `best`
+    # points to one of the dicts in `per_bin_results`.
+    best_out = dict(best)
+    best_out["per_bin_results"] = [dict(item) for item in per_bin_results]
 
     sentence = _tr(
         lang,
         "STRONGEST_AT_LOCATION_IN_SPEED_RANGE",
-        location=best["location"],
-        speed_range=best["speed_range"],
-        dominance=f"{float(best['dominance_ratio']):.2f}",
+        location=best_out["location"],
+        speed_range=best_out["speed_range"],
+        dominance=f"{float(best_out['dominance_ratio']):.2f}",
         weak_note=(
             _tr(lang, "WEAK_SPATIAL_SEPARATION_NOTE")
-            if bool(best.get("weak_spatial_separation"))
+            if bool(best_out.get("weak_spatial_separation"))
             else ""
         ),
     )
-    return sentence, best
+    return sentence, best_out
