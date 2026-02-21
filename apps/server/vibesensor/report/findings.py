@@ -38,6 +38,7 @@ from .order_analysis import (
     _order_hypotheses,
     _order_label,
 )
+from .phase_segmentation import diagnostic_sample_mask, segment_run_phases
 from .strength_labels import _STRENGTH_THRESHOLDS
 from .test_plan import _location_speedbin_summary
 
@@ -104,6 +105,55 @@ def _speed_profile_from_points(
     return peak_speed_kmh, speed_window_kmh, strongest_speed_band
 
 
+def _phase_speed_breakdown(
+    samples: list[dict[str, Any]],
+    per_sample_phases: list,
+) -> list[dict[str, object]]:
+    """Group vibration statistics by driving phase (temporal context).
+
+    Unlike ``_speed_breakdown`` which bins by speed magnitude, this function
+    groups by the temporal driving phase (IDLE, ACCELERATION, CRUISE, etc.)
+    so callers can see how vibration differs across phases at the same speed.
+
+    Addresses issue #189: adds temporal phase context to speed breakdown.
+    """
+    from .phase_segmentation import DrivingPhase
+
+    grouped_amp: dict[str, list[float]] = defaultdict(list)
+    grouped_speeds: dict[str, list[float]] = defaultdict(list)
+    counts: dict[str, int] = defaultdict(int)
+
+    for sample, phase in zip(samples, per_sample_phases, strict=False):
+        phase_key = phase.value if isinstance(phase, DrivingPhase) else str(phase)
+        counts[phase_key] += 1
+        speed = _as_float(sample.get("speed_kmh"))
+        if speed is not None and speed > 0:
+            grouped_speeds[phase_key].append(speed)
+        amp = _primary_vibration_strength_db(sample)
+        if amp is not None:
+            grouped_amp[phase_key].append(amp)
+
+    # Output in a canonical phase order
+    phase_order = [p.value for p in DrivingPhase]
+    rows: list[dict[str, object]] = []
+    for phase_key in phase_order:
+        if phase_key not in counts:
+            continue
+        amp_vals = grouped_amp.get(phase_key, [])
+        speed_vals = grouped_speeds.get(phase_key, [])
+        rows.append(
+            {
+                "phase": phase_key,
+                "count": counts[phase_key],
+                "mean_speed_kmh": mean(speed_vals) if speed_vals else None,
+                "max_speed_kmh": max(speed_vals) if speed_vals else None,
+                "mean_vibration_strength_db": mean(amp_vals) if amp_vals else None,
+                "max_vibration_strength_db": max(amp_vals) if amp_vals else None,
+            }
+        )
+    return rows
+
+
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
@@ -137,7 +187,15 @@ def _sensor_intensity_by_location(
     *,
     lang: object = "en",
     connected_locations: set[str] | None = None,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, float | str | int | bool]]:
+    """Compute per-location vibration intensity statistics.
+
+    When ``per_sample_phases`` is provided, also computes per-phase intensity
+    breakdown for each location so callers can see how vibration differs across
+    IDLE, ACCELERATION, CRUISE, etc. at each sensor position.
+    Addresses issue #192: aggregate entire run loses phase context.
+    """
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[float]] = defaultdict(list)
@@ -146,7 +204,11 @@ def _sensor_intensity_by_location(
         lambda: {f"l{idx}": 0 for idx in range(0, 6)}
     )
     strength_bucket_totals: dict[str, int] = defaultdict(int)
-    for sample in samples:
+    # Per-phase intensity: {location: {phase_key: [amp_values]}}
+    phase_amp: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
+
+    for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
             continue
         location = _location_label(sample, lang=lang)
@@ -158,6 +220,9 @@ def _sensor_intensity_by_location(
         amp = _primary_vibration_strength_db(sample)
         if amp is not None:
             grouped_amp[location].append(float(amp))
+            if has_phases and per_sample_phases is not None:
+                phase_key = str(per_sample_phases[i].value if hasattr(per_sample_phases[i], "value") else per_sample_phases[i])
+                phase_amp[location][phase_key].append(float(amp))
         dropped_total = _as_float(sample.get("frames_dropped_total"))
         if dropped_total is not None:
             dropped_totals[location].append(dropped_total)
@@ -208,6 +273,19 @@ def _sensor_intensity_by_location(
         partial_coverage = bool(
             connected_locations is not None and location not in connected_locations
         )
+        # Per-phase intensity summary for this location (issue #192)
+        location_phase_intensity: dict[str, object] | None = None
+        if has_phases:
+            loc_phases = phase_amp.get(location, {})
+            location_phase_intensity = {
+                phase_key: {
+                    "count": len(phase_vals),
+                    "mean_intensity_db": mean(phase_vals) if phase_vals else None,
+                    "max_intensity_db": max(phase_vals) if phase_vals else None,
+                }
+                for phase_key, phase_vals in loc_phases.items()
+                if phase_vals
+            }
         rows.append(
             {
                 "location": location,
@@ -223,6 +301,7 @@ def _sensor_intensity_by_location(
                 "dropped_frames_delta": dropped_delta,
                 "queue_overflow_drops_delta": overflow_delta,
                 "strength_bucket_distribution": bucket_distribution,
+                "phase_intensity": location_phase_intensity,
             }
         )
     rows.sort(
@@ -953,9 +1032,19 @@ def _build_findings(
             )
         )
 
+    # Phase-filter: exclude IDLE samples from order and persistent-peak analysis.
+    # IDLE samples (engine-off / stationary) add broadband noise that dilutes
+    # order-tracking evidence and inflates persistent-peak presence ratios.
+    # Issues #190 and #191.
+    _per_sample_phases, _ = segment_run_phases(samples)
+    _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
+    diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
+    # Fall back to all samples if phase filtering removes too many (< 5 remaining)
+    analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+
     order_findings = _build_order_findings(
         metadata=metadata,
-        samples=samples,
+        samples=analysis_samples,
         speed_sufficient=speed_sufficient,
         steady_speed=steady_speed,
         speed_stddev_kmh=speed_stddev_kmh,
@@ -963,7 +1052,7 @@ def _build_findings(
         engine_ref_sufficient=engine_ref_sufficient,
         raw_sample_rate_hz=raw_sample_rate_hz,
         accel_units=accel_units,
-        connected_locations=_locations_connected_throughout_run(samples, lang=lang),
+        connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
     )
     findings.extend(order_findings)
@@ -981,7 +1070,7 @@ def _build_findings(
 
     findings.extend(
         _build_persistent_peak_findings(
-            samples=samples,
+            samples=analysis_samples,  # IDLE-filtered; issue #191
             order_finding_freqs=order_freqs,
             accel_units=accel_units,
             lang=lang,
