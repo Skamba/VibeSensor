@@ -379,6 +379,7 @@ class SensorFrame:
     t_s: float | None
     client_id: str
     client_name: str
+    location: str
     sample_rate_hz: int | None
     speed_kmh: float | None
     gps_speed_kmh: float | None
@@ -407,6 +408,7 @@ class SensorFrame:
             "t_s": self.t_s,
             "client_id": self.client_id,
             "client_name": self.client_name,
+            "location": self.location,
             "sample_rate_hz": self.sample_rate_hz,
             "speed_kmh": self.speed_kmh,
             "gps_speed_kmh": self.gps_speed_kmh,
@@ -476,6 +478,7 @@ class SensorFrame:
             t_s=t_s,
             client_id=str(record.get("client_id", "")),
             client_name=str(record.get("client_name", "")),
+            location=str(record.get("location", "")),
             sample_rate_hz=sample_rate_hz,
             speed_kmh=speed_kmh,
             gps_speed_kmh=gps_speed_kmh,
