@@ -47,6 +47,24 @@ export interface UiDomElements {
   vibrationLog: HTMLElement | null;
   vibrationMatrix: HTMLElement | null;
   matrixTooltip: HTMLElement | null;
+  updateSsidInput: HTMLInputElement | null;
+  updatePasswordInput: HTMLInputElement | null;
+  updateTogglePasswordBtn: HTMLButtonElement | null;
+  updateStartBtn: HTMLButtonElement | null;
+  updateCancelBtn: HTMLButtonElement | null;
+  updateStatusPanel: HTMLElement | null;
+  gpsStatusPanel: HTMLElement | null;
+  gpsStatusState: HTMLElement | null;
+  gpsStatusDevice: HTMLElement | null;
+  gpsStatusLastUpdate: HTMLElement | null;
+  gpsStatusRawSpeed: HTMLElement | null;
+  gpsStatusEffectiveSpeed: HTMLElement | null;
+  gpsStatusLastError: HTMLElement | null;
+  gpsStatusReconnect: HTMLElement | null;
+  gpsStatusFallback: HTMLElement | null;
+  gpsFallbackPanel: HTMLElement | null;
+  staleTimeoutInput: HTMLInputElement | null;
+  fallbackModeSelect: HTMLSelectElement | null;
 }
 
 function inputEl(id: string): HTMLInputElement | null {
@@ -115,5 +133,23 @@ export function createUiDomRegistry(): UiDomElements {
     vibrationLog: el("vibrationLog"),
     vibrationMatrix: el("vibrationMatrix"),
     matrixTooltip: el("matrixTooltip"),
+    updateSsidInput: inputEl("updateSsidInput"),
+    updatePasswordInput: inputEl("updatePasswordInput"),
+    updateTogglePasswordBtn: btnEl("updateTogglePasswordBtn"),
+    updateStartBtn: btnEl("updateStartBtn"),
+    updateCancelBtn: btnEl("updateCancelBtn"),
+    updateStatusPanel: el("updateStatusPanel"),
+    gpsStatusPanel: el("gpsStatusPanel"),
+    gpsStatusState: el("gpsStatusState"),
+    gpsStatusDevice: el("gpsStatusDevice"),
+    gpsStatusLastUpdate: el("gpsStatusLastUpdate"),
+    gpsStatusRawSpeed: el("gpsStatusRawSpeed"),
+    gpsStatusEffectiveSpeed: el("gpsStatusEffectiveSpeed"),
+    gpsStatusLastError: el("gpsStatusLastError"),
+    gpsStatusReconnect: el("gpsStatusReconnect"),
+    gpsStatusFallback: el("gpsStatusFallback"),
+    gpsFallbackPanel: el("gpsFallbackPanel"),
+    staleTimeoutInput: inputEl("staleTimeoutInput"),
+    fallbackModeSelect: selectEl("fallbackModeSelect"),
   };
 }

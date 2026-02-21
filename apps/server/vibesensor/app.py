@@ -36,6 +36,7 @@ from .registry import ClientRegistry
 from .settings_store import SettingsStore
 from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
+from .update_manager import UpdateManager
 from .ws_hub import WebSocketHub
 
 LOGGER = logging.getLogger(__name__)
@@ -65,6 +66,7 @@ class RuntimeState:
     live_diagnostics: LiveDiagnosticsEngine
     settings_store: SettingsStore
     history_db: HistoryDB
+    update_manager: UpdateManager
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     data_consumer_task: asyncio.Task | None = None
@@ -170,6 +172,10 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     ss = settings_store.get_speed_source()
     if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
         gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
+    gps_monitor.set_fallback_settings(
+        stale_timeout_s=ss.get("staleTimeoutS"),
+        fallback_mode=ss.get("fallbackMode"),
+    )
     metrics_logger = MetricsLogger(
         enabled=config.logging.log_metrics,
         log_path=config.logging.metrics_log_path,
@@ -189,6 +195,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         language_provider=lambda: settings_store.language,
     )
     live_diagnostics = LiveDiagnosticsEngine()
+    update_manager = UpdateManager()
 
     runtime = RuntimeState(
         config=config,
@@ -202,6 +209,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         live_diagnostics=live_diagnostics,
         settings_store=settings_store,
         history_db=history_db,
+        update_manager=update_manager,
     )
 
     async def processing_loop() -> None:

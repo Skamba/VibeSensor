@@ -26,6 +26,8 @@ make ai-check
 scripts/ai/task ai:test -- apps/server/tests/test_config.py -k self_heal -q
 # or
 make ai-test
+# or quicker backend loop with progress output
+make test-fast
 ```
 
 ## Minimal smoke

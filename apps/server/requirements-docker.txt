@@ -1,0 +1,5 @@
+fastapi>=0.111,<1
+numpy>=1.26,<3
+PyYAML>=6,<7
+reportlab>=4,<5
+uvicorn[standard]>=0.30,<1

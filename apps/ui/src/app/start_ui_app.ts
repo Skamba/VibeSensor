@@ -21,6 +21,7 @@ import { createRealtimeFeature } from "./features/realtime_feature";
 import { createSettingsFeature } from "./features/settings_feature";
 import { createCarsFeature } from "./features/cars_feature";
 import { createDashboardFeature } from "./features/dashboard_feature";
+import { createUpdateFeature } from "./features/update_feature";
 import type { AppState, ChartBand, ClientRow } from "./state/ui_app_state";
 import type { UiDomElements } from "./dom/ui_dom_registry";
 
@@ -95,6 +96,7 @@ export function startUiApp(): void {
   const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => diagnosticsFeature.renderMatrix(), sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
   const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout });
   const wizardFeature = createCarsFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
+  const updateFeature = createUpdateFeature({ els, t, escapeHtml });
 
   function applyLanguage(forceReloadInsights = false): void {
     document.documentElement.lang = state.lang;
@@ -296,6 +298,7 @@ export function startUiApp(): void {
 
   vehicleFeature.bindSettingsTabs();
   wizardFeature.bindWizardHandlers();
+  updateFeature.bindUpdateHandlers();
   if (els.saveAnalysisBtn) els.saveAnalysisBtn.addEventListener("click", vehicleFeature.saveAnalysisFromInputs);
   if (els.saveSpeedSourceBtn) els.saveSpeedSourceBtn.addEventListener("click", vehicleFeature.saveSpeedSourceFromInputs);
   if (els.startLoggingBtn) els.startLoggingBtn.addEventListener("click", sensorsFeature.startLogging);
@@ -346,6 +349,8 @@ export function startUiApp(): void {
   void vehicleFeature.loadCarsFromServer();
   void sensorsFeature.refreshLoggingStatus();
   void historyFeature.refreshHistory();
+  updateFeature.startPolling();
+  vehicleFeature.startGpsStatusPolling();
 
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
   if (isDemoMode) runDemoMode({ state, renderWsState, applyPayload });

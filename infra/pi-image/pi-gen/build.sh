@@ -14,6 +14,14 @@ IMG_SUFFIX_BASE="-vibesensor-lite"
 VS_FIRST_USER_NAME="${VS_FIRST_USER_NAME:-pi}"
 VS_FIRST_USER_PASS="${VS_FIRST_USER_PASS:-vibesensor}"
 VS_WPA_COUNTRY="${VS_WPA_COUNTRY:-US}"
+VALIDATE="${VALIDATE:-1}"
+FAST="${FAST:-0}"
+FORCE_UI_BUILD="${FORCE_UI_BUILD:-0}"
+COPY_ARTIFACT_DIR="${COPY_ARTIFACT_DIR:-}"
+PIP_CACHE_DIR="${CACHE_DIR}/pip"
+PIP_CACHE_STAGE_DIR="${SCRIPT_DIR}/.pip-cache-stage"
+UI_HASH_FILE="${CACHE_DIR}/ui-build.hash"
+SERVER_DEPS_HASH_FILE="${CACHE_DIR}/server-deps.hash"
 # Set CLEAN=1 to force a full rebuild from scratch (default: incremental, reuses stage0-2)
 CLEAN="${CLEAN:-0}"
 
@@ -49,17 +57,68 @@ fi
 
 mkdir -p "${CACHE_DIR}" "${OUT_DIR}"
 
+if [ "${FAST}" = "1" ]; then
+  VALIDATE=0
+fi
+
+compute_ui_hash() {
+  (
+    cd "${REPO_ROOT}"
+    git ls-files \
+      apps/ui \
+      libs/shared/contracts \
+      tools/config/sync_shared_contracts_to_ui.mjs \
+      | LC_ALL=C sort \
+      | xargs sha256sum \
+      | sha256sum \
+      | awk '{print $1}'
+  )
+}
+
+compute_server_deps_hash() {
+  (
+    cd "${REPO_ROOT}"
+    local inputs=(
+      "apps/server/pyproject.toml"
+      "apps/server/requirements-docker.txt"
+    )
+    sha256sum "${inputs[@]}" | sha256sum | awk '{print $1}'
+  )
+}
+
 build_ui_bundle() {
   local ui_dir="${REPO_ROOT}/apps/ui"
   local server_public_dir="${REPO_ROOT}/apps/server/public"
+  local should_build="1"
+  local current_hash=""
+  local previous_hash=""
+
+  if [ "${FORCE_UI_BUILD}" != "1" ] && [ -d "${ui_dir}/dist" ]; then
+    current_hash="$(compute_ui_hash || true)"
+    if [ -f "${UI_HASH_FILE}" ]; then
+      previous_hash="$(cat "${UI_HASH_FILE}")"
+    fi
+    if [ -n "${current_hash}" ] && [ "${current_hash}" = "${previous_hash}" ]; then
+      should_build="0"
+      echo "UI sources unchanged; skipping npm run build"
+    fi
+  fi
 
   if [ ! -d "${ui_dir}/node_modules" ]; then
     echo "UI dependencies missing; running npm ci in apps/ui"
     (cd "${ui_dir}" && npm ci)
   fi
 
-  echo "Building UI bundle"
-  (cd "${ui_dir}" && npm run build)
+  if [ "${should_build}" = "1" ]; then
+    echo "Building UI bundle"
+    (cd "${ui_dir}" && npm run build)
+    if [ -z "${current_hash}" ]; then
+      current_hash="$(compute_ui_hash || true)"
+    fi
+    if [ -n "${current_hash}" ]; then
+      printf '%s\n' "${current_hash}" >"${UI_HASH_FILE}"
+    fi
+  fi
 
   echo "Syncing UI bundle into apps/server/public"
   mkdir -p "${server_public_dir}"
@@ -67,6 +126,9 @@ build_ui_bundle() {
 }
 
 build_ui_bundle
+
+SERVER_DEPS_HASH="$(compute_server_deps_hash)"
+printf '%s\n' "${SERVER_DEPS_HASH}" >"${SERVER_DEPS_HASH_FILE}"
 
 if [ -z "${VS_FIRST_USER_NAME}" ] || [ -z "${VS_FIRST_USER_PASS}" ]; then
   echo "VS_FIRST_USER_NAME and VS_FIRST_USER_PASS must be non-empty to avoid first-boot user prompt."
@@ -97,17 +159,41 @@ chmod +x "${STAGE_DIR}/prerun.sh"
 rsync -a --delete \
   --exclude ".git/" \
   --exclude ".venv/" \
+  --exclude ".pytest_cache/" \
+  --exclude ".ruff_cache/" \
+  --exclude ".mypy_cache/" \
+  --exclude ".cache/" \
   --exclude "__pycache__/" \
   --exclude "*.pyc" \
+  --exclude "artifacts/" \
+  --exclude "apps/ui/node_modules/" \
+  --exclude "apps/ui/dist/" \
+  --exclude "apps/ui/test-results/" \
+  --exclude "apps/ui/playwright-report/" \
+  --exclude "apps/server/data/" \
   --exclude "infra/pi-image/pi-gen/.cache/" \
   --exclude "infra/pi-image/pi-gen/out/" \
   "${REPO_ROOT}/" "${STAGE_REPO_DIR}/"
+
+rm -rf "${PIP_CACHE_STAGE_DIR}"
+mkdir -p "${PIP_CACHE_STAGE_DIR}"
+if [ -d "${PIP_CACHE_DIR}" ]; then
+  rsync -a --delete "${PIP_CACHE_DIR}/" "${PIP_CACHE_STAGE_DIR}/"
+fi
+if [ -d "${PIP_CACHE_STAGE_DIR}" ]; then
+  mkdir -p "${STAGE_STEP_DIR}/files/var/cache/pip"
+  rsync -a --delete "${PIP_CACHE_STAGE_DIR}/" "${STAGE_STEP_DIR}/files/var/cache/pip/"
+fi
 
 cat >"${STAGE_STEP_DIR}/00-run.sh" <<'EOF'
 #!/bin/bash -e
 
 install -d "${ROOTFS_DIR}/opt"
 cp -a files/opt/VibeSensor "${ROOTFS_DIR}/opt/"
+install -d "${ROOTFS_DIR}/var/cache/pip"
+if [ -d files/var/cache/pip ]; then
+  cp -a files/var/cache/pip/. "${ROOTFS_DIR}/var/cache/pip/"
+fi
 
 install -d "${ROOTFS_DIR}/etc/vibesensor"
 install -d -o 1000 -g 1000 "${ROOTFS_DIR}/var/lib/vibesensor" "${ROOTFS_DIR}/var/log/vibesensor"
@@ -118,11 +204,53 @@ install -d "${ROOTFS_DIR}/etc/tmpfiles.d"
 install -d "${ROOTFS_DIR}/etc/ssh/sshd_config.d"
 
 # Build the Python virtualenv inside the ARM rootfs via QEMU chroot emulation.
-on_chroot << CHROOT_EOF
+on_chroot << 'CHROOT_EOF'
 set -e
+export PIP_CACHE_DIR=/var/cache/pip
+DEPS_HASH="__SERVER_DEPS_HASH__"
+HASH_FILE=/var/cache/pip/vibesensor-deps.hash
+WHEELHOUSE=/var/cache/pip/wheels
+NEEDS_WHEEL_REBUILD=1
+
+if [ -f "${HASH_FILE}" ] && [ -d "${WHEELHOUSE}" ] && [ -n "$(ls -A "${WHEELHOUSE}" 2>/dev/null)" ]; then
+  if [ "$(cat "${HASH_FILE}")" = "${DEPS_HASH}" ]; then
+    NEEDS_WHEEL_REBUILD=0
+  fi
+fi
+
+if [ "${NEEDS_WHEEL_REBUILD}" = "1" ]; then
+  echo "Dependency hash changed or wheel cache empty; rebuilding ARM wheelhouse"
+  rm -rf "${WHEELHOUSE}"
+  mkdir -p "${WHEELHOUSE}"
+  python3 -m venv /tmp/vibesensor-wheel-build
+  /tmp/vibesensor-wheel-build/bin/pip install --upgrade pip --quiet
+  /tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
+    --cache-dir /var/cache/pip \
+    /opt/VibeSensor/apps/server
+  /tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
+    --cache-dir /var/cache/pip \
+    "setuptools>=68" \
+    "wheel>=0.38"
+  printf '%s\n' "${DEPS_HASH}" > "${HASH_FILE}"
+  rm -rf /tmp/vibesensor-wheel-build
+else
+  echo "Dependency hash unchanged; reusing cached ARM wheelhouse"
+fi
+
 python3 -m venv /opt/VibeSensor/apps/server/.venv
 /opt/VibeSensor/apps/server/.venv/bin/pip install --upgrade pip --quiet
-/opt/VibeSensor/apps/server/.venv/bin/pip install -e /opt/VibeSensor/apps/server --quiet
+/opt/VibeSensor/apps/server/.venv/bin/pip install \
+  --no-index \
+  --find-links "${WHEELHOUSE}" \
+  "setuptools>=68" \
+  "wheel>=0.38" \
+  --quiet
+/opt/VibeSensor/apps/server/.venv/bin/pip install \
+  --no-index \
+  --find-links "${WHEELHOUSE}" \
+  --no-build-isolation \
+  -e /opt/VibeSensor/apps/server \
+  --quiet
 chown -R 1000:1000 /opt/VibeSensor/apps/server/.venv
 CHROOT_EOF
 
@@ -198,6 +326,7 @@ UsePAM yes
 SSHCONF
 EOF
 chmod +x "${STAGE_STEP_DIR}/00-run.sh"
+sed -i "s/__SERVER_DEPS_HASH__/${SERVER_DEPS_HASH}/g" "${STAGE_STEP_DIR}/00-run.sh"
 
 cat >"${STAGE_STEP_DIR}/00-packages" <<'EOF'
 network-manager
@@ -301,147 +430,148 @@ INSPECT_DIR="${OUT_DIR}/inspect"
 mkdir -p "${INSPECT_DIR}"
 INSPECT_IMG="${FINAL_ARTIFACT}"
 
-case "${FINAL_ARTIFACT}" in
-  *.img)
-    ;;
-  *.img.xz)
-    require_cmd xz
-    INSPECT_IMG="${FINAL_ARTIFACT%.xz}"
-    xz -dkf "${FINAL_ARTIFACT}"
-    ;;
-  *.zip)
-    require_cmd unzip
-    unzip -o "${FINAL_ARTIFACT}" -d "${INSPECT_DIR}" >/dev/null
-    INSPECT_IMG="$(find "${INSPECT_DIR}" -maxdepth 1 -type f -name "*.img" | sort -r | head -n 1 || true)"
-    if [ -z "${INSPECT_IMG}" ]; then
-      echo "ZIP artifact did not contain an .img file: ${FINAL_ARTIFACT}"
+if [ "${VALIDATE}" = "1" ]; then
+  case "${FINAL_ARTIFACT}" in
+    *.img)
+      ;;
+    *.img.xz)
+      require_cmd xz
+      INSPECT_IMG="${FINAL_ARTIFACT%.xz}"
+      xz -dkf "${FINAL_ARTIFACT}"
+      ;;
+    *.zip)
+      require_cmd unzip
+      unzip -o "${FINAL_ARTIFACT}" -d "${INSPECT_DIR}" >/dev/null
+      INSPECT_IMG="$(find "${INSPECT_DIR}" -maxdepth 1 -type f -name "*.img" | sort -r | head -n 1 || true)"
+      if [ -z "${INSPECT_IMG}" ]; then
+        echo "ZIP artifact did not contain an .img file: ${FINAL_ARTIFACT}"
+        exit 1
+      fi
+      ;;
+    *)
+      echo "Unsupported artifact format: ${FINAL_ARTIFACT}"
+      exit 1
+      ;;
+  esac
+
+  if [ ! -f "${INSPECT_IMG}" ]; then
+    echo "Inspection image does not exist: ${INSPECT_IMG}"
+    exit 1
+  fi
+
+  MOUNT_DIR="${OUT_DIR}/mount"
+  BOOT_MNT="${MOUNT_DIR}/boot"
+  ROOT_MNT="${MOUNT_DIR}/root"
+  mkdir -p "${BOOT_MNT}" "${ROOT_MNT}"
+
+  LOOP_DEV=""
+  cleanup_mounts() {
+    set +e
+    if mountpoint -q "${ROOT_MNT}"; then
+      sudo umount "${ROOT_MNT}"
+    fi
+    if mountpoint -q "${BOOT_MNT}"; then
+      sudo umount "${BOOT_MNT}"
+    fi
+    if [ -n "${LOOP_DEV}" ]; then
+      sudo losetup -d "${LOOP_DEV}"
+    fi
+  }
+  trap cleanup_mounts EXIT
+
+  LOOP_DEV="$(sudo losetup -Pf --show "${INSPECT_IMG}")"
+  sudo mount "${LOOP_DEV}p1" "${BOOT_MNT}"
+  sudo mount "${LOOP_DEV}p2" "${ROOT_MNT}"
+
+  if [ ! -d "${ROOT_MNT}/opt/VibeSensor" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor"
+    exit 1
+  fi
+
+  if [ ! -x "${ROOT_MNT}/usr/bin/nmcli" ]; then
+    echo "Validation failed: missing executable ${ROOT_MNT}/usr/bin/nmcli"
+    exit 1
+  fi
+
+  assert_rootfs_binary() {
+    local name="$1"
+    local path=""
+    for candidate in "/usr/bin/${name}" "/usr/sbin/${name}" "/bin/${name}" "/sbin/${name}"; do
+      if [ -x "${ROOT_MNT}${candidate}" ]; then
+        path="${candidate}"
+        break
+      fi
+    done
+    if [ -z "${path}" ]; then
+      echo "Validation failed: missing executable '${name}' in rootfs PATH locations"
       exit 1
     fi
-    ;;
-  *)
-    echo "Unsupported artifact format: ${FINAL_ARTIFACT}"
-    exit 1
-    ;;
-esac
+    printf '%s\n' "${path}"
+  }
 
-if [ ! -f "${INSPECT_IMG}" ]; then
-  echo "Inspection image does not exist: ${INSPECT_IMG}"
-  exit 1
-fi
-
-MOUNT_DIR="${OUT_DIR}/mount"
-BOOT_MNT="${MOUNT_DIR}/boot"
-ROOT_MNT="${MOUNT_DIR}/root"
-mkdir -p "${BOOT_MNT}" "${ROOT_MNT}"
-
-LOOP_DEV=""
-cleanup_mounts() {
-  set +e
-  if mountpoint -q "${ROOT_MNT}"; then
-    sudo umount "${ROOT_MNT}"
-  fi
-  if mountpoint -q "${BOOT_MNT}"; then
-    sudo umount "${BOOT_MNT}"
-  fi
-  if [ -n "${LOOP_DEV}" ]; then
-    sudo losetup -d "${LOOP_DEV}"
-  fi
-}
-trap cleanup_mounts EXIT
-
-LOOP_DEV="$(sudo losetup -Pf --show "${INSPECT_IMG}")"
-sudo mount "${LOOP_DEV}p1" "${BOOT_MNT}"
-sudo mount "${LOOP_DEV}p2" "${ROOT_MNT}"
-
-if [ ! -d "${ROOT_MNT}/opt/VibeSensor" ]; then
-  echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor"
-  exit 1
-fi
-
-if [ ! -x "${ROOT_MNT}/usr/bin/nmcli" ]; then
-  echo "Validation failed: missing executable ${ROOT_MNT}/usr/bin/nmcli"
-  exit 1
-fi
-
-assert_rootfs_binary() {
-  local name="$1"
-  local path=""
-  for candidate in "/usr/bin/${name}" "/usr/sbin/${name}" "/bin/${name}" "/sbin/${name}"; do
-    if [ -x "${ROOT_MNT}${candidate}" ]; then
-      path="${candidate}"
-      break
+  assert_rootfs_package() {
+    local pkg="$1"
+    if ! awk -v pkg="${pkg}" '
+      BEGIN {in_pkg=0; ok=0}
+      $0 == "Package: " pkg {in_pkg=1; next}
+      /^Package: / && in_pkg {exit}
+      in_pkg && $0 == "Status: install ok installed" {ok=1}
+      END {exit(ok ? 0 : 1)}
+    ' "${ROOT_MNT}/var/lib/dpkg/status"; then
+      echo "Validation failed: package '${pkg}' is not installed in image rootfs"
+      exit 1
     fi
-  done
-  if [ -z "${path}" ]; then
-    echo "Validation failed: missing executable '${name}' in rootfs PATH locations"
+  }
+
+  RFKILL_PATH="$(assert_rootfs_binary rfkill)"
+  IW_PATH="$(assert_rootfs_binary iw)"
+  DNSMASQ_PATH="$(assert_rootfs_binary dnsmasq)"
+  GPSD_PATH="$(assert_rootfs_binary gpsd)"
+
+  if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"
     exit 1
   fi
-  printf '%s\n' "${path}"
-}
 
-assert_rootfs_package() {
-  local pkg="$1"
-  if ! awk -v pkg="${pkg}" '
-    BEGIN {in_pkg=0; ok=0}
-    $0 == "Package: " pkg {in_pkg=1; next}
-    /^Package: / && in_pkg {exit}
-    in_pkg && $0 == "Status: install ok installed" {ok=1}
-    END {exit(ok ? 0 : 1)}
-  ' "${ROOT_MNT}/var/lib/dpkg/status"; then
-    echo "Validation failed: package '${pkg}' is not installed in image rootfs"
+  if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service"
     exit 1
   fi
-}
 
-RFKILL_PATH="$(assert_rootfs_binary rfkill)"
-IW_PATH="$(assert_rootfs_binary iw)"
-DNSMASQ_PATH="$(assert_rootfs_binary dnsmasq)"
-GPSD_PATH="$(assert_rootfs_binary gpsd)"
+  if [ ! -d "${ROOT_MNT}/etc/vibesensor" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/etc/vibesensor"
+    exit 1
+  fi
 
-if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service" ]; then
-  echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"
-  exit 1
-fi
+  if [ ! -d "${ROOT_MNT}/var/log/wifi" ] && [ ! -f "${ROOT_MNT}/etc/tmpfiles.d/vibesensor-wifi.conf" ]; then
+    echo "Validation failed: missing /var/log/wifi and /etc/tmpfiles.d/vibesensor-wifi.conf"
+    exit 1
+  fi
 
-if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service" ]; then
-  echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-rfkill-unblock.service"
-  exit 1
-fi
+  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" ] && \
+    [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python" ]; then
+    echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin"
+    exit 1
+  fi
 
-if [ ! -d "${ROOT_MNT}/etc/vibesensor" ]; then
-  echo "Validation failed: missing ${ROOT_MNT}/etc/vibesensor"
-  exit 1
-fi
+  assert_rootfs_package gpsd
+  assert_rootfs_package gpsd-clients
+  assert_rootfs_package libopenblas0-pthread
+  assert_rootfs_package libgfortran5
 
-if [ ! -d "${ROOT_MNT}/var/log/wifi" ] && [ ! -f "${ROOT_MNT}/etc/tmpfiles.d/vibesensor-wifi.conf" ]; then
-  echo "Validation failed: missing /var/log/wifi and /etc/tmpfiles.d/vibesensor-wifi.conf"
-  exit 1
-fi
+  OPENBLAS_LIB="$(find "${ROOT_MNT}/usr/lib" -type f -name 'libopenblas*.so*' | head -n 1 || true)"
+  if [ -z "${OPENBLAS_LIB}" ]; then
+    echo "Validation failed: OpenBLAS runtime library not found in rootfs"
+    exit 1
+  fi
 
-if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python3" ] && \
-   [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python" ]; then
-  echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin"
-  exit 1
-fi
+  run_qemu_chroot() {
+    # Use qemu-arm-static for deterministic ARM-side validation from x86 host.
+    sudo cp /usr/bin/qemu-arm-static "${ROOT_MNT}/usr/bin/"
+    sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
+  }
 
-assert_rootfs_package gpsd
-assert_rootfs_package gpsd-clients
-assert_rootfs_package libopenblas0-pthread
-assert_rootfs_package libgfortran5
-
-OPENBLAS_LIB="$(find "${ROOT_MNT}/usr/lib" -type f -name 'libopenblas*.so*' | head -n 1 || true)"
-if [ -z "${OPENBLAS_LIB}" ]; then
-  echo "Validation failed: OpenBLAS runtime library not found in rootfs"
-  exit 1
-fi
-
-run_qemu_chroot() {
-  # Use qemu-arm-static for deterministic ARM-side validation from x86 host.
-  sudo cp /usr/bin/qemu-arm-static "${ROOT_MNT}/usr/bin/"
-  sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
-}
-
-if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
+  if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
 import importlib
 mods = [
     "numpy",
@@ -457,12 +587,12 @@ for mod in mods:
     importlib.import_module(mod)
 print("IMPORT_VALIDATION_OK")
 PY
-then
-  echo "Validation failed: Python import smoke test failed in ARM chroot"
-  exit 1
-fi
+  then
+    echo "Validation failed: Python import smoke test failed in ARM chroot"
+    exit 1
+  fi
 
-if ! run_qemu_chroot /bin/bash -lc '
+  if ! run_qemu_chroot /bin/bash -lc '
 set -e
 export VIBESENSOR_DISABLE_AUTO_APP=1
 pkill -f "python -m vibesensor.app" >/dev/null 2>&1 || true
@@ -488,123 +618,134 @@ if ! grep -q "Application startup complete" /tmp/vibesensor-smoke.log; then
 fi
 echo "SERVER_STARTUP_SMOKE_OK"
 '; then
-  echo "Validation failed: vibesensor.app startup smoke failed in ARM chroot"
-  exit 1
-fi
+    echo "Validation failed: vibesensor.app startup smoke failed in ARM chroot"
+    exit 1
+  fi
 
-if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
-  echo "Validation failed: hotspot script still contains apt-get"
-  exit 1
-fi
+  if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
+    echo "Validation failed: hotspot script still contains apt-get"
+    exit 1
+  fi
 
-if ! grep -n "/var/log/wifi" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
-  echo "Validation failed: hotspot script does not reference /var/log/wifi"
-  exit 1
-fi
+  if ! grep -n "/var/log/wifi" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
+    echo "Validation failed: hotspot script does not reference /var/log/wifi"
+    exit 1
+  fi
 
-if [ ! -f "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf" ]; then
-  echo "Validation failed: missing ${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
-  exit 1
-fi
+  if [ ! -f "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
+    exit 1
+  fi
 
-if [ -f "${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop" ]; then
-  echo "Validation failed: first-boot user wizard still present (${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop)"
-  exit 1
-fi
+  if [ -f "${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop" ]; then
+    echo "Validation failed: first-boot user wizard still present (${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop)"
+    exit 1
+  fi
 
-if ! grep -E "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/passwd" >/dev/null 2>&1; then
-  echo "Validation failed: expected user '${VS_FIRST_USER_NAME}' missing from /etc/passwd"
-  exit 1
-fi
+  if ! grep -E "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/passwd" >/dev/null 2>&1; then
+    echo "Validation failed: expected user '${VS_FIRST_USER_NAME}' missing from /etc/passwd"
+    exit 1
+  fi
 
-if [ ! -f "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf" ]; then
-  echo "Validation failed: missing SSH password-auth drop-in"
-  exit 1
-fi
+  if [ ! -f "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf" ]; then
+    echo "Validation failed: missing SSH password-auth drop-in"
+    exit 1
+  fi
 
-if ! grep -Eq '^PasswordAuthentication[[:space:]]+yes$' "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf"; then
-  echo "Validation failed: SSH password auth drop-in does not enable PasswordAuthentication"
-  exit 1
-fi
+  if ! grep -Eq '^PasswordAuthentication[[:space:]]+yes$' "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf"; then
+    echo "Validation failed: SSH password auth drop-in does not enable PasswordAuthentication"
+    exit 1
+  fi
 
-SHADOW_LINE="$(sudo grep -E "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/shadow" || true)"
-SHADOW_HASH="$(printf '%s\n' "${SHADOW_LINE}" | cut -d: -f2)"
-if [ -z "${SHADOW_HASH}" ] || [ "${SHADOW_HASH}" = "*" ] || [ "${SHADOW_HASH}" = "!" ]; then
-  echo "Validation failed: first user '${VS_FIRST_USER_NAME}' has no usable password hash"
-  exit 1
-fi
+  SHADOW_LINE="$(sudo grep -E "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/shadow" || true)"
+  SHADOW_HASH="$(printf '%s\n' "${SHADOW_LINE}" | cut -d: -f2)"
+  if [ -z "${SHADOW_HASH}" ] || [ "${SHADOW_HASH}" = "*" ] || [ "${SHADOW_HASH}" = "!" ]; then
+    echo "Validation failed: first user '${VS_FIRST_USER_NAME}' has no usable password hash"
+    exit 1
+  fi
 
-if ! python3 - "${VS_FIRST_USER_PASS}" "${SHADOW_HASH}" <<'PY'
+  if ! python3 - "${VS_FIRST_USER_PASS}" "${SHADOW_HASH}" <<'PY'
 import crypt
 import sys
 plain = sys.argv[1]
 shadow_hash = sys.argv[2]
 sys.exit(0 if crypt.crypt(plain, shadow_hash) == shadow_hash else 1)
 PY
-then
-  echo "Validation failed: first user password hash does not match VS_FIRST_USER_PASS"
-  exit 1
-fi
+  then
+    echo "Validation failed: first user password hash does not match VS_FIRST_USER_PASS"
+    exit 1
+  fi
 
-echo "=== Validation: /opt/VibeSensor exists ==="
-ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
+  echo "=== Validation: /opt/VibeSensor exists ==="
+  ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
 
-echo "=== Validation: nmcli + rfkill + iw + dnsmasq binaries ==="
-ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}"
+  echo "=== Validation: nmcli + rfkill + iw + dnsmasq binaries ==="
+  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}"
 
-echo "=== Validation: vibesensor systemd units ==="
-ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
+  echo "=== Validation: vibesensor systemd units ==="
+  ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
 
-echo "=== Validation: first user preconfigured, wizard disabled ==="
-grep -n "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/passwd"
-if [ -f "${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop" ]; then
-  echo "ERROR: piwiz.desktop present"
-  exit 1
+  echo "=== Validation: first user preconfigured, wizard disabled ==="
+  grep -n "^${VS_FIRST_USER_NAME}:" "${ROOT_MNT}/etc/passwd"
+  if [ -f "${ROOT_MNT}/etc/xdg/autostart/piwiz.desktop" ]; then
+    echo "ERROR: piwiz.desktop present"
+    exit 1
+  else
+    echo "OK: piwiz.desktop absent"
+  fi
+
+  echo "=== Validation: /etc/vibesensor ==="
+  ls -la "${ROOT_MNT}/etc/vibesensor"
+
+  echo "=== Validation: SSH auth configuration ==="
+  cat "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf"
+
+  echo "=== Validation: /var/log/wifi or tmpfiles ==="
+  if [ -d "${ROOT_MNT}/var/log/wifi" ]; then
+    ls -ld "${ROOT_MNT}/var/log/wifi"
+  fi
+  if [ -f "${ROOT_MNT}/etc/tmpfiles.d/vibesensor-wifi.conf" ]; then
+    cat "${ROOT_MNT}/etc/tmpfiles.d/vibesensor-wifi.conf"
+  fi
+
+  echo "=== Validation: NetworkManager conf.d drop-in ==="
+  cat "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
+
+  echo "=== Validation: Python venv ==="
+  ls -la "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python"* || true
+
+  echo "=== Validation: OpenBLAS runtime ==="
+  echo "${OPENBLAS_LIB}"
+
+  echo "=== Validation: hotspot script has no apt-get ==="
+  if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"; then
+    echo "ERROR: found apt-get in hotspot script"
+    exit 1
+  else
+    echo "OK: no apt-get found"
+  fi
+
+  echo "=== Validation: hotspot script references /var/log/wifi ==="
+  grep -n "/var/log/wifi" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"
+
+  if [ -d "${ROOT_MNT}/var/cache/pip" ]; then
+    mkdir -p "${PIP_CACHE_DIR}"
+    sudo rsync -a --delete "${ROOT_MNT}/var/cache/pip/" "${PIP_CACHE_DIR}/"
+    sudo chown -R "$(id -u):$(id -g)" "${PIP_CACHE_DIR}"
+  fi
+
+  cleanup_mounts
+  trap - EXIT
 else
-  echo "OK: piwiz.desktop absent"
+  echo "Skipping post-build mount/chroot validation (VALIDATE=0 or FAST=1)."
 fi
 
-echo "=== Validation: /etc/vibesensor ==="
-ls -la "${ROOT_MNT}/etc/vibesensor"
-
-echo "=== Validation: SSH auth configuration ==="
-cat "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf"
-
-echo "=== Validation: /var/log/wifi or tmpfiles ==="
-if [ -d "${ROOT_MNT}/var/log/wifi" ]; then
-  ls -ld "${ROOT_MNT}/var/log/wifi"
-fi
-if [ -f "${ROOT_MNT}/etc/tmpfiles.d/vibesensor-wifi.conf" ]; then
-  cat "${ROOT_MNT}/etc/tmpfiles.d/vibesensor-wifi.conf"
-fi
-
-echo "=== Validation: NetworkManager conf.d drop-in ==="
-cat "${ROOT_MNT}/etc/NetworkManager/conf.d/99-vibesensor-dnsmasq.conf"
-
-echo "=== Validation: Python venv ==="
-ls -la "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python"* || true
-
-echo "=== Validation: OpenBLAS runtime ==="
-echo "${OPENBLAS_LIB}"
-
-echo "=== Validation: hotspot script has no apt-get ==="
-if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"; then
-  echo "ERROR: found apt-get in hotspot script"
-  exit 1
-else
-  echo "OK: no apt-get found"
-fi
-
-echo "=== Validation: hotspot script references /var/log/wifi ==="
-grep -n "/var/log/wifi" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"
-
-cleanup_mounts
-trap - EXIT
-
-mkdir -p /mnt/c/temp
-cp -f "${FINAL_ARTIFACT}" /mnt/c/temp/
-if [ -f "${INSPECT_IMG}" ]; then
-  cp -f "${INSPECT_IMG}" /mnt/c/temp/
+if [ -n "${COPY_ARTIFACT_DIR}" ]; then
+  mkdir -p "${COPY_ARTIFACT_DIR}"
+  cp -f "${FINAL_ARTIFACT}" "${COPY_ARTIFACT_DIR}/"
+  if [ -f "${INSPECT_IMG}" ]; then
+    cp -f "${INSPECT_IMG}" "${COPY_ARTIFACT_DIR}/"
+  fi
 fi
 
 echo "Image artifacts available in: ${OUT_DIR}"
@@ -612,4 +753,6 @@ echo "Final artifact: ${FINAL_ARTIFACT}"
 if [ -f "${INSPECT_IMG}" ]; then
   echo "Inspection image: ${INSPECT_IMG}"
 fi
-echo "Copied artifact to: /mnt/c/temp/$(basename "${FINAL_ARTIFACT}")"
+if [ -n "${COPY_ARTIFACT_DIR}" ]; then
+  echo "Copied artifact to: ${COPY_ARTIFACT_DIR}/$(basename "${FINAL_ARTIFACT}")"
+fi
