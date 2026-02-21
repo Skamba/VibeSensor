@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from math import log1p, pow
+from math import ceil, floor, log1p, pow
 from statistics import mean
 
 from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
@@ -14,6 +14,38 @@ from .helpers import _speed_bin_label, weak_spatial_dominance_threshold
 from .order_analysis import _finding_actions_for_source
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
+
+
+def _weighted_percentile_speed(
+    speed_weight_pairs: list[tuple[float, float]],
+    percentile_0_to_1: float,
+) -> float | None:
+    valid = [(speed, weight) for speed, weight in speed_weight_pairs if speed > 0 and weight > 0]
+    if not valid:
+        return None
+    ordered = sorted(valid, key=lambda item: item[0])
+    total_weight = sum(weight for _, weight in ordered)
+    if total_weight <= 0:
+        return None
+    target = max(0.0, min(1.0, percentile_0_to_1)) * total_weight
+    cumulative = 0.0
+    for speed, weight in ordered:
+        cumulative += weight
+        if cumulative >= target:
+            return speed
+    return ordered[-1][0]
+
+
+def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) -> str | None:
+    p10 = _weighted_percentile_speed(speed_weight_pairs, 0.10)
+    p90 = _weighted_percentile_speed(speed_weight_pairs, 0.90)
+    if p10 is None or p90 is None:
+        return None
+    low = int(floor(min(p10, p90)))
+    high = int(ceil(max(p10, p90)))
+    if high < low:
+        high = low
+    return f"{low}-{high} km/h"
 
 
 def _localization_confidence(
@@ -150,6 +182,7 @@ def _location_speedbin_summary(
             {
                 "location": location,
                 "amp": amp,
+                "speed_kmh": speed,
                 "matched_hz": _as_float(row.get("matched_hz")),
                 "rel_error": _as_float(row.get("rel_error")),
             }
@@ -272,6 +305,29 @@ def _location_speedbin_summary(
 
     if best is None:
         return "", None
+
+    top_location = str(best.get("top_location") or "").strip()
+    speed_weight_pairs = [
+        (
+            float(row.get("speed_kmh") or 0.0),
+            float(row.get("amp") or 0.0),
+        )
+        for rows in grouped.values()
+        for row in rows
+        if str(row.get("location") or "").strip() == top_location
+    ]
+    if not speed_weight_pairs:
+        speed_weight_pairs = [
+            (
+                float(row.get("speed_kmh") or 0.0),
+                float(row.get("amp") or 0.0),
+            )
+            for rows in grouped.values()
+            for row in rows
+        ]
+    weighted_speed_window = _weighted_speed_window_label(speed_weight_pairs)
+    if weighted_speed_window:
+        best["speed_range"] = weighted_speed_window
 
     # Attach per-bin breakdown so callers can inspect per-speed-bin location
     # rankings instead of only getting the global winner.
