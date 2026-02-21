@@ -147,6 +147,17 @@ def _top_strength_db(summary: dict) -> float | None:
     return None
 
 
+def _peak_classification_text(value: object) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized == "patterned":
+        return "patterned"
+    if normalized == "persistent":
+        return "persistent"
+    if normalized == "transient":
+        return "transient impact"
+    return "persistent"
+
+
 # ---------------------------------------------------------------------------
 # Summary → template data mapper
 # ---------------------------------------------------------------------------
@@ -306,23 +317,26 @@ def map_summary(summary: dict) -> ReportTemplateData:
             continue
         rank = str(int(_as_float(row.get("rank")) or 0))
         freq = f"{(_as_float(row.get('frequency_hz')) or 0.0):.1f}"
-        order = str(row.get("order_label") or "\u2014")
-        amp = f"{(_as_float(row.get('max_amp_g')) or 0.0):.4f}"
+        classification = _peak_classification_text(row.get("peak_classification"))
+        order_label = str(row.get("order_label") or "").strip()
+        order = order_label or classification
+        amp = f"{(_as_float(row.get('p95_amp_g')) or 0.0):.4f}"
         speed = str(row.get("typical_speed_band") or "\u2014")
+        presence = float(_as_float(row.get("presence_ratio")) or 0.0)
+        score = float(_as_float(row.get("persistence_score")) or 0.0)
 
         order_lower = order.lower()
         if "wheel" in order_lower:
             system = tr("SOURCE_WHEEL_TIRE")
-            relevance = order
         elif "engine" in order_lower:
             system = tr("SOURCE_ENGINE")
-            relevance = order
         elif "driveshaft" in order_lower or "drive" in order_lower:
             system = tr("SOURCE_DRIVELINE")
-            relevance = order
+        elif "transient" in order_lower:
+            system = "Transient impact"
         else:
             system = "\u2014"
-            relevance = "\u2014"
+        relevance = f"{classification} \u00b7 {presence:.0%} presence \u00b7 score {score:.2f}"
 
         peak_rows.append(
             PeakRow(
