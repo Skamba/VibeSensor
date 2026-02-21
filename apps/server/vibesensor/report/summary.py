@@ -16,6 +16,7 @@ from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
 from .findings import (
     _build_findings,
+    _phase_speed_breakdown,
     _sensor_intensity_by_location,
     _speed_breakdown,
 )
@@ -405,6 +406,11 @@ def summarize_run_data(
             language, "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
         )
 
+    # Phase-grouped speed breakdown: groups by temporal driving phase rather
+    # than speed magnitude, giving context for how vibration varies per phase.
+    # (issue #189)
+    phase_speed_breakdown = _phase_speed_breakdown(samples, _per_sample_phases)
+
     findings = _build_findings(
         metadata=metadata,
         samples=samples,
@@ -534,6 +540,7 @@ def summarize_run_data(
         include_locations=set(sensor_locations),
         lang=language,
         connected_locations=connected_locations,
+        per_sample_phases=_per_sample_phases,  # phase context; issue #192
     )
 
     summary: dict[str, Any] = {
@@ -558,6 +565,7 @@ def summarize_run_data(
         "metadata": metadata,
         "warnings": [],
         "speed_breakdown": speed_breakdown,
+        "phase_speed_breakdown": phase_speed_breakdown,
         "run_noise_baseline_g": run_noise_baseline_g,
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
