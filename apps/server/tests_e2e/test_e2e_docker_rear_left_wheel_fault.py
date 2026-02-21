@@ -408,14 +408,15 @@ def _validate_graph_spikes(
     run_analysis: dict,
     samples: list[dict],
 ) -> None:
-    """Validation 3 – fft_spectrum in analysis is consistent with raw sample top_peaks.
+    """Validation 3 – fft_spectrum_raw in analysis is consistent with raw sample top_peaks.
 
-    Computes an independent FFT spectrum from exported samples using the same 2 Hz
-    binning algorithm as the server, then verifies the top-8 analysis bins exist in
-    the computed spectrum with amplitude within 20% relative tolerance.
+    Computes an independent max-amplitude FFT spectrum from exported samples using
+    the same 2 Hz binning algorithm as the server, then verifies the top-8 analysis
+    bins exist in the computed spectrum with amplitude within 20% relative tolerance.
+    Uses fft_spectrum_raw (max-amplitude) rather than fft_spectrum (persistence-weighted).
     """
     plots = run_analysis.get("plots", {})
-    raw_fft = plots.get("fft_spectrum", [])
+    raw_fft = plots.get("fft_spectrum_raw") or plots.get("fft_spectrum", [])
     if not raw_fft:
         return
 

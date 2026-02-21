@@ -7,6 +7,8 @@ from vibesensor_core.vibration_strength import _percentile  # noqa: F401
 from .report.findings import (  # noqa: F401
     _build_findings,
     _build_order_findings,
+    _build_persistent_peak_findings,
+    _classify_peak_type,
     _reference_missing_finding,
     _sensor_intensity_by_location,
     _speed_breakdown,
