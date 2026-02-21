@@ -377,12 +377,15 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         for item in data.data_trust[:6]:
             icon = "\u2713" if item.state == "pass" else "\u26a0"
             state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
+            value = f"{icon} {state_lbl}"
+            if item.state != "pass" and item.detail:
+                value = f"{icon} {item.detail}"
             _draw_kv(
                 c,
                 tx,
                 ty,
                 item.check,
-                f"{icon} {state_lbl}",
+                value,
                 label_w=DATA_TRUST_LABEL_W,
                 fs=FS_SMALL,
             )

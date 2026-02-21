@@ -375,3 +375,52 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     assert row.amp_g == "0.1200"
     assert "patterned" in row.relevance
     assert "85%" in row.relevance
+
+
+def test_map_summary_data_trust_keeps_warning_detail() -> None:
+    summary: dict = {
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [
+            {
+                "check": "Frame integrity",
+                "state": "warn",
+                "explanation": "3 dropped frames, 2 queue overflows detected.",
+            }
+        ],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert data.data_trust
+    assert data.data_trust[0].state == "warn"
+    assert data.data_trust[0].detail == "3 dropped frames, 2 queue overflows detected."
+
+
+def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
+    summary: dict = {
+        "lang": "en",
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [
+            {
+                "check": "Saturation and outliers",
+                "state": "warn",
+                "explanation": "5 potential saturation samples detected.",
+            },
+            {
+                "check": "Frame integrity",
+                "state": "warn",
+                "explanation": "3 dropped frames, 2 queue overflows detected.",
+            },
+        ],
+        "plots": {},
+        "samples": [],
+    }
+
+    pdf = build_report_pdf(summary)
+    assert b"5 potential saturation samples detected." in pdf
+    assert b"3 dropped frames, 2 queue overflows detected." in pdf
