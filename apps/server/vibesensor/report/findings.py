@@ -221,7 +221,11 @@ def _sensor_intensity_by_location(
         if amp is not None:
             grouped_amp[location].append(float(amp))
             if has_phases and per_sample_phases is not None:
-                phase_key = str(per_sample_phases[i].value if hasattr(per_sample_phases[i], "value") else per_sample_phases[i])
+                phase_key = str(
+                    per_sample_phases[i].value
+                    if hasattr(per_sample_phases[i], "value")
+                    else per_sample_phases[i]
+                )
                 phase_amp[location][phase_key].append(float(amp))
         dropped_total = _as_float(sample.get("frames_dropped_total"))
         if dropped_total is not None:
