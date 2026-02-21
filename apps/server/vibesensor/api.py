@@ -515,9 +515,7 @@ def create_router(state: RuntimeState) -> APIRouter:
         def _build_zip() -> bytes:
             fieldnames: list[str] = []
             fieldname_set: set[str] = set()
-            # First pass: collect field names and write CSV in a streaming fashion
-            csv_buffer = io.StringIO(newline="")
-            writer: csv.DictWriter | None = None
+            # First pass: collect all unique field names and count samples
             sample_count = 0
             for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
                 for sample in batch:
@@ -526,11 +524,8 @@ def create_router(state: RuntimeState) -> APIRouter:
                         if key not in fieldname_set:
                             fieldname_set.add(key)
                             fieldnames.append(key)
-                    if writer is None:
-                        # Initialize writer on first sample to capture field order
-                        pass
-                    # We must buffer rows until all field names are known for DictWriter
-            # Now write CSV with known field names
+
+            # Second pass: write CSV rows batch by batch with known field names
             csv_buffer = io.StringIO(newline="")
             if fieldnames:
                 writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
