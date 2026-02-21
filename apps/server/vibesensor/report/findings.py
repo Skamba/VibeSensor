@@ -358,6 +358,7 @@ def _build_order_findings(
     accel_units: str,
     connected_locations: set[str],
     lang: object,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []
@@ -383,7 +384,7 @@ def _build_order_findings(
         possible_by_speed_bin: dict[str, int] = defaultdict(int)
         matched_by_speed_bin: dict[str, int] = defaultdict(int)
 
-        for sample in samples:
+        for idx, sample in enumerate(samples):
             peaks = _sample_top_peaks(sample)
             if not peaks:
                 continue
@@ -420,6 +421,10 @@ def _build_order_findings(
             matched_floor.append(max(0.0, floor_amp))
             predicted_vals.append(predicted_hz)
             measured_vals.append(best_hz)
+            phase_val: str | None = None
+            if per_sample_phases is not None and idx < len(per_sample_phases):
+                p = per_sample_phases[idx]
+                phase_val = p.value if hasattr(p, "value") else str(p)
             matched_points.append(
                 {
                     "t_s": _as_float(sample.get("t_s")),
@@ -429,6 +434,7 @@ def _build_order_findings(
                     "rel_error": delta_hz / max(1e-9, predicted_hz),
                     "amp": best_amp,
                     "location": _location_label(sample, lang=lang),
+                    "phase": phase_val,
                 }
             )
 
@@ -610,6 +616,22 @@ def _build_order_findings(
             if str(action.get("what") or "").strip()
         ][:3]
 
+        # Compute dominant driving phase from matched samples' phase labels.
+        # Used by _most_likely_origin_summary to express phase-onset context.
+        _PHASE_ONSET_RELEVANT = {"acceleration", "deceleration", "coast_down"}
+        dominant_phase: str | None = None
+        phase_labels = [
+            str(pt["phase"])
+            for pt in matched_points
+            if pt.get("phase") is not None and str(pt["phase"]) in _PHASE_ONSET_RELEVANT
+        ]
+        if phase_labels and len(phase_labels) >= max(2, len(matched_points) // 2):
+            from collections import Counter as _Counter
+
+            top_phase, top_count = _Counter(phase_labels).most_common(1)[0]
+            if top_count / len(matched_points) >= 0.50:
+                dominant_phase = top_phase
+
         finding = {
             "finding_id": "F_ORDER",
             "finding_key": hypothesis.key,
@@ -630,6 +652,7 @@ def _build_order_findings(
             "location_hotspot": location_hotspot,
             "strongest_location": strongest_location or None,
             "strongest_speed_band": strongest_speed_band or None,
+            "dominant_phase": dominant_phase,
             "peak_speed_kmh": peak_speed_kmh,
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "dominance_ratio": (
@@ -1044,7 +1067,12 @@ def _build_findings(
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)
-    analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+    if len(diagnostic_samples) >= 5:
+        analysis_samples = diagnostic_samples
+        analysis_phases = [p for p, k in zip(_per_sample_phases, _diagnostic_mask, strict=False) if k]
+    else:
+        analysis_samples = samples
+        analysis_phases = list(_per_sample_phases)
 
     order_findings = _build_order_findings(
         metadata=metadata,
@@ -1058,6 +1086,7 @@ def _build_findings(
         accel_units=accel_units,
         connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
+        per_sample_phases=analysis_phases,
     )
     findings.extend(order_findings)
 

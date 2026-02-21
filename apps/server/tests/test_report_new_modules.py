@@ -382,7 +382,94 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
     assert origin["alternative_locations"] == ["Front Right"]
 
 
-def test_map_summary_observed_uses_disambiguated_origin_location() -> None:
+def test_most_likely_origin_summary_phase_onset_acceleration() -> None:
+    """When top finding has dominant_phase='acceleration', explanation mentions it."""
+    from vibesensor.report.summary import _most_likely_origin_summary
+
+    findings = [
+        {
+            "strongest_location": "Front Right",
+            "suspected_source": "wheel/tire",
+            "dominance_ratio": 2.5,
+            "weak_spatial_separation": False,
+            "strongest_speed_band": "60-80 km/h",
+            "dominant_phase": "acceleration",
+            "confidence_0_to_1": 0.75,
+        }
+    ]
+
+    origin = _most_likely_origin_summary(findings, "en")
+
+    assert origin["dominant_phase"] == "acceleration"
+    assert "acceleration" in origin["explanation"].lower()
+
+
+def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
+    """Dutch translation of phase-onset note for deceleration."""
+    from vibesensor.report.summary import _most_likely_origin_summary
+
+    findings = [
+        {
+            "strongest_location": "Rear Left",
+            "suspected_source": "wheel/tire",
+            "dominance_ratio": 2.0,
+            "weak_spatial_separation": False,
+            "strongest_speed_band": "40-60 km/h",
+            "dominant_phase": "deceleration",
+            "confidence_0_to_1": 0.70,
+        }
+    ]
+
+    origin = _most_likely_origin_summary(findings, "nl")
+
+    assert origin["dominant_phase"] == "deceleration"
+    assert "deceleratie" in origin["explanation"].lower()
+
+
+def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
+    """Cruise phase does not trigger a phase-onset note (it is the default phase)."""
+    from vibesensor.report.summary import _most_likely_origin_summary
+
+    findings = [
+        {
+            "strongest_location": "Front Left",
+            "suspected_source": "wheel/tire",
+            "dominance_ratio": 3.0,
+            "weak_spatial_separation": False,
+            "strongest_speed_band": "80-100 km/h",
+            "dominant_phase": "cruise",
+            "confidence_0_to_1": 0.80,
+        }
+    ]
+
+    origin = _most_likely_origin_summary(findings, "en")
+
+    # cruise is not a notable onset phase — no onset addendum
+    assert "onset" not in origin["explanation"].lower()
+
+
+def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
+    """When dominant_phase is not set, the explanation has no phase-onset addendum."""
+    from vibesensor.report.summary import _most_likely_origin_summary
+
+    findings = [
+        {
+            "strongest_location": "Front Left",
+            "suspected_source": "wheel/tire",
+            "dominance_ratio": 3.0,
+            "weak_spatial_separation": False,
+            "strongest_speed_band": "80-100 km/h",
+            "confidence_0_to_1": 0.80,
+        }
+    ]
+
+    origin = _most_likely_origin_summary(findings, "en")
+
+    assert origin["dominant_phase"] is None
+    assert "onset" not in origin["explanation"].lower()
+
+
+
     summary: dict = {
         "lang": "en",
         "top_causes": [
