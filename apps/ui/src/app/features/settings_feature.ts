@@ -38,10 +38,6 @@ export interface SettingsFeature {
 export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
   const { state, els, t, escapeHtml, fmt } = ctx;
 
-  function saveVehicleSettings(): void {
-    // Vehicle settings are synced to server, no local persistence needed.
-  }
-
   function syncSettingsInputs(): void {
     if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(state.vehicleSettings.wheel_bandwidth_pct);
     if (els.driveshaftBandwidthInput) els.driveshaftBandwidthInput.value = String(state.vehicleSettings.driveshaft_bandwidth_pct);
@@ -100,7 +96,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         for (const key of Object.keys(serverSettings)) {
           if (typeof serverSettings[key] === "number") state.vehicleSettings[key] = serverSettings[key];
         }
-        saveVehicleSettings();
         syncSettingsInputs();
         ctx.renderSpectrum();
       }
@@ -184,7 +179,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         if (typeof car.aspects[key] === "number") state.vehicleSettings[key] = car.aspects[key];
       }
     }
-    saveVehicleSettings();
     syncSettingsInputs();
   }
 
@@ -211,7 +205,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     state.vehicleSettings.gear_uncertainty_pct = gearUncertainty;
     state.vehicleSettings.min_abs_band_hz = minAbsBandHz;
     state.vehicleSettings.max_band_half_width_pct = maxBandHalfWidth;
-    saveVehicleSettings();
     void syncAnalysisSettingsToServer();
     ctx.renderSpectrum();
   }

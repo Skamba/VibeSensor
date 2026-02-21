@@ -4,13 +4,12 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.domain_models import CarConfig, SensorConfig, _parse_manual_speed
 from vibesensor.history_db import HistoryDB
 from vibesensor.settings_store import (
     DEFAULT_CAR_ASPECTS,
     SettingsStore,
     _sanitize_aspects,
-    _validate_car,
-    _validate_sensor,
 )
 
 # -- _sanitize_aspects --------------------------------------------------------
@@ -47,7 +46,7 @@ def test_sanitize_aspects_ignores_unknown() -> None:
 
 
 def test_validate_car_fills_defaults() -> None:
-    car = _validate_car({})
+    car = CarConfig.from_dict({}).to_dict()
     assert car["name"] == "Unnamed Car"
     assert car["type"] == "sedan"
     assert car["id"]
@@ -55,13 +54,13 @@ def test_validate_car_fills_defaults() -> None:
 
 
 def test_validate_car_preserves_aspects() -> None:
-    car = _validate_car({"aspects": {"tire_width_mm": 245.0}})
+    car = CarConfig.from_dict({"aspects": {"tire_width_mm": 245.0}}).to_dict()
     assert car["aspects"]["tire_width_mm"] == 245.0
     assert car["aspects"]["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
 
 
 def test_validate_car_truncates_name() -> None:
-    car = _validate_car({"name": "x" * 100})
+    car = CarConfig.from_dict({"name": "x" * 100}).to_dict()
     assert len(car["name"]) <= 64
 
 
@@ -69,13 +68,13 @@ def test_validate_car_truncates_name() -> None:
 
 
 def test_validate_sensor_defaults_name_to_mac() -> None:
-    sensor = _validate_sensor("aa:bb:cc:dd:ee:ff", {})
+    sensor = SensorConfig.from_dict("aa:bb:cc:dd:ee:ff", {}).to_dict()
     assert sensor["name"] == "aa:bb:cc:dd:ee:ff"
     assert sensor["location"] == ""
 
 
 def test_validate_sensor_uses_provided_name() -> None:
-    sensor = _validate_sensor("aa:bb:cc:dd:ee:ff", {"name": "Front Left"})
+    sensor = SensorConfig.from_dict("aa:bb:cc:dd:ee:ff", {"name": "Front Left"}).to_dict()
     assert sensor["name"] == "Front Left"
 
 
@@ -152,22 +151,20 @@ def test_store_update_speed_source_manual() -> None:
     result = store.update_speed_source({"speedSource": "manual", "manualSpeedKph": 80})
     assert result["speedSource"] == "manual"
     assert result["manualSpeedKph"] == 80.0
-    assert store.speed_source == "manual"
-    assert store.manual_speed_kph == 80.0
 
 
 def test_store_update_speed_source_gps_clears_manual() -> None:
     store = SettingsStore()
     store.update_speed_source({"speedSource": "manual", "manualSpeedKph": 80})
-    store.update_speed_source({"speedSource": "gps", "manualSpeedKph": None})
-    assert store.speed_source == "gps"
-    assert store.manual_speed_kph is None
+    result = store.update_speed_source({"speedSource": "gps", "manualSpeedKph": None})
+    assert result["speedSource"] == "gps"
+    assert result["manualSpeedKph"] is None
 
 
 def test_store_invalid_speed_source_defaults_to_gps() -> None:
     store = SettingsStore()
-    store.update_speed_source({"speedSource": "unknown"})
-    assert store.speed_source == "gps"
+    result = store.update_speed_source({"speedSource": "unknown"})
+    assert result["speedSource"] == "gps"
 
 
 # -- sensors -------------------------------------------------------------------
@@ -182,11 +179,6 @@ def test_store_set_and_get_sensor() -> None:
     assert sensors["aabbccddeeff"]["location"] == "front_left_wheel"
 
 
-def test_store_sensor_name_defaults_to_mac() -> None:
-    store = SettingsStore()
-    assert store.sensor_name("aa:bb:cc:dd:ee:ff") == "aabbccddeeff"
-
-
 def test_store_remove_sensor() -> None:
     store = SettingsStore()
     store.set_sensor("aa:bb:cc:dd:ee:ff", {"name": "Test"})
@@ -194,19 +186,18 @@ def test_store_remove_sensor() -> None:
     assert store.remove_sensor("aa:bb:cc:dd:ee:ff") is False
 
 
-def test_store_ensure_sensor() -> None:
+def test_store_set_sensor_creates_entry_with_defaults() -> None:
     store = SettingsStore()
-    created = store.ensure_sensor("aa:bb:cc:dd:ee:ff")
+    store.set_sensor("aa:bb:cc:dd:ee:ff", {})
     sensors = store.get_sensors()
-    assert created["name"] == "aabbccddeeff"
     assert "aabbccddeeff" in sensors
     assert sensors["aabbccddeeff"]["name"] == "aabbccddeeff"
 
 
-def test_store_ensure_sensor_persists_defaults(tmp_path: Path) -> None:
+def test_store_set_sensor_persists_defaults(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     store = SettingsStore(db=db)
-    store.ensure_sensor("aa:bb:cc:dd:ee:ff")
+    store.set_sensor("aa:bb:cc:dd:ee:ff", {})
     reloaded = SettingsStore(db=db)
     sensors = reloaded.get_sensors()
     assert "aabbccddeeff" in sensors
@@ -238,8 +229,6 @@ def test_store_handles_no_db() -> None:
 
 
 def test_parse_manual_speed_returns_none_for_invalid() -> None:
-    from vibesensor.settings_store import _parse_manual_speed
-
     assert _parse_manual_speed(None) is None
     assert _parse_manual_speed("not_a_number") is None
     assert _parse_manual_speed(-5) is None
@@ -278,11 +267,6 @@ def test_store_delete_car_unknown_raises() -> None:
     store.add_car({"name": "Extra"})
     with pytest.raises(ValueError, match="Unknown car id"):
         store.delete_car("nonexistent")
-
-
-def test_store_sensor_location_default() -> None:
-    store = SettingsStore()
-    assert store.sensor_location("aa:bb:cc:dd:ee:ff") == ""
 
 
 def test_store_obd2_config_update() -> None:

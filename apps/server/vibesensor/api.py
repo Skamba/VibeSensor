@@ -13,7 +13,6 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .constants import MPS_TO_KMH
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
@@ -51,20 +50,12 @@ def _bounded_sample(
     return kept, total, stride
 
 
-class RenameRequest(BaseModel):
-    name: str = Field(min_length=1, max_length=32)
-
-
 class IdentifyRequest(BaseModel):
     duration_ms: int = Field(default=1500, ge=100, le=60_000)
 
 
 class SetLocationRequest(BaseModel):
     location_code: str = Field(min_length=1, max_length=64)
-
-
-class SpeedOverrideRequest(BaseModel):
-    speed_kmh: float | None = Field(default=None, ge=0)
 
 
 class AnalysisSettingsRequest(BaseModel):
@@ -105,7 +96,6 @@ class ActiveCarRequest(BaseModel):
 class SpeedSourceRequest(BaseModel):
     speedSource: str | None = None
     manualSpeedKph: float | None = None
-    obd2Config: dict[str, object] | None = None
 
 
 class SensorRequest(BaseModel):
@@ -164,10 +154,6 @@ def create_router(state: RuntimeState) -> APIRouter:
         }
 
     # -- new settings endpoints (3-tab model) ----------------------------------
-
-    @router.get("/api/settings")
-    async def get_settings() -> dict:
-        return state.settings_store.snapshot()
 
     @router.get("/api/settings/cars")
     async def get_cars() -> dict:
@@ -273,31 +259,9 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def get_client_locations() -> dict:
         return {"locations": all_locations()}
 
-    @router.get("/api/speed-override")
-    async def get_speed_override() -> dict:
-        ss = state.settings_store.get_speed_source()
-        if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
-            return {"speed_kmh": ss["manualSpeedKph"]}
-        override_mps = state.gps_monitor.override_speed_mps
-        speed_kmh = (override_mps * MPS_TO_KMH) if isinstance(override_mps, (int, float)) else None
-        return {"speed_kmh": speed_kmh}
-
-    @router.post("/api/speed-override")
-    async def set_speed_override(req: SpeedOverrideRequest) -> dict:
-        if req.speed_kmh is not None and req.speed_kmh > 0:
-            state.settings_store.update_speed_source(
-                {"speedSource": "manual", "manualSpeedKph": req.speed_kmh}
-            )
-        else:
-            state.settings_store.update_speed_source({"speedSource": "gps", "manualSpeedKph": None})
-        _sync_speed_source_to_gps(state)
-        override_mps = state.gps_monitor.override_speed_mps
-        speed_kmh = (override_mps * MPS_TO_KMH) if isinstance(override_mps, (int, float)) else None
-        return {"speed_kmh": speed_kmh}
-
     @router.post("/api/simulator/speed-override")
-    async def set_simulator_speed_override(req: SpeedOverrideRequest) -> dict:
-        return await set_speed_override(req)
+    async def set_simulator_speed_override(req: SpeedSourceRequest) -> dict:
+        return await update_speed_source(req)
 
     @router.get("/api/analysis-settings")
     async def get_analysis_settings() -> dict:
@@ -310,19 +274,6 @@ def create_router(state: RuntimeState) -> APIRouter:
             state.settings_store.update_active_car_aspects(changes)
             _sync_active_car_to_analysis(state)
         return state.analysis_settings.snapshot()
-
-    @router.post("/api/clients/{client_id}/rename")
-    async def rename_client(client_id: str, req: RenameRequest) -> dict:
-        target = state.registry.get(client_id)
-        if target is None:
-            raise HTTPException(status_code=404, detail="Unknown client_id")
-        try:
-            updated = state.registry.set_name(client_id, req.name)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        mac = client_id_mac(updated.client_id)
-        state.settings_store.set_sensor(mac, {"name": req.name})
-        return {"id": updated.client_id, "name": updated.name}
 
     @router.post("/api/clients/{client_id}/identify")
     async def identify_client(client_id: str, req: IdentifyRequest) -> dict:
@@ -584,12 +535,6 @@ def create_router(state: RuntimeState) -> APIRouter:
             LOGGER.debug("WebSocket client disconnected")
         finally:
             await state.ws_hub.remove(ws)
-
-    @router.get("/api/car-library")
-    async def get_car_library() -> dict:
-        from .car_library import CAR_LIBRARY
-
-        return {"cars": CAR_LIBRARY}
 
     @router.get("/api/car-library/brands")
     async def get_car_library_brands() -> dict:

@@ -70,7 +70,6 @@ export interface ClientRow {
 
 export interface SpectrumClientData {
   freq: number[];
-  combined_spectrum_amp_g: number[];
   strength_metrics: Record<string, any>;
   combined: number[];
 }
@@ -83,7 +82,7 @@ export interface AppState {
   clients: ClientRow[];
   selectedClientId: string | null;
   spectrumPlot: SpectrumChart | null;
-  spectra: { freq: number[]; clients: Record<string, SpectrumClientData> };
+  spectra: { clients: Record<string, SpectrumClientData> };
   speedMps: number | null;
   activeViewId: string;
   runs: Record<string, any>[];
@@ -132,7 +131,7 @@ export function createAppState(): AppState {
     clients: [],
     selectedClientId: null,
     spectrumPlot: null,
-    spectra: { freq: [], clients: {} },
+    spectra: { clients: {} },
     speedMps: null,
     activeViewId: "dashboardView",
     runs: [],

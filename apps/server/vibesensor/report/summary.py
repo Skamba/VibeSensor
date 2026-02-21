@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
+from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
@@ -26,7 +27,6 @@ from .helpers import (
     _load_run,
     _location_label,
     _mean_variance,
-    _normalize_lang,
     _outlier_summary,
     _percent_missing,
     _primary_vibration_strength_db,
@@ -233,7 +233,7 @@ def build_findings_for_samples(
     samples: list[dict[str, Any]],
     lang: str | None = None,
 ) -> list[dict[str, object]]:
-    language = _normalize_lang(lang)
+    language = normalize_lang(lang)
     rows = list(samples) if isinstance(samples, list) else []
     _validate_required_strength_metrics(rows)
     speed_values = [
@@ -271,7 +271,7 @@ def summarize_run_data(
     This is the single computation path used by both the History UI and the
     PDF report — callers must never re-derive metrics independently.
     """
-    language = _normalize_lang(lang)
+    language = normalize_lang(lang)
     _validate_required_strength_metrics(samples)
 
     run_id = str(metadata.get("run_id") or f"run-{file_name}")

@@ -7,10 +7,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
+from ..report_i18n import normalize_lang
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     _effective_engine_rpm,
-    _normalize_lang,
     _text,
 )
 
@@ -48,7 +48,7 @@ def _engine_hz(
 
 
 def _order_label(lang: object, order: int, base: str) -> str:
-    if _normalize_lang(lang) == "nl":
+    if normalize_lang(lang) == "nl":
         names = {"wheel": "wielorde", "engine": "motororde", "driveshaft": "aandrijfasorde"}
     else:
         names = {"wheel": "wheel order", "engine": "engine order", "driveshaft": "driveshaft order"}

@@ -99,17 +99,6 @@ export class SpectrumChart {
     }
   }
 
-  setOverlay(message: string | null): void {
-    if (!this.overlayEl) return;
-    if (!message) {
-      this.overlayEl.hidden = true;
-      this.overlayEl.textContent = "";
-      return;
-    }
-    this.overlayEl.hidden = false;
-    this.overlayEl.textContent = message;
-  }
-
   destroy(): void {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();

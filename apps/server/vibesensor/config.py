@@ -52,7 +52,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "storage": {
         "clients_json_path": "data/clients.json",
     },
-    "gps": {"gps_enabled": False, "gps_speed_only": True},
+    "gps": {"gps_enabled": False},
 }
 
 
@@ -142,7 +142,6 @@ class LoggingConfig:
 @dataclass(slots=True)
 class GPSConfig:
     gps_enabled: bool
-    gps_speed_only: bool
 
 
 @dataclass(slots=True)
@@ -273,7 +272,6 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         gps=GPSConfig(
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
-            gps_speed_only=bool(merged["gps"]["gps_speed_only"]),
         ),
         clients_json_path=_resolve_config_path(
             str(

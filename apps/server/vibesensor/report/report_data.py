@@ -11,9 +11,9 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from .. import __version__
+from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
-from .helpers import _normalize_lang
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, strength_text
 
@@ -165,7 +165,7 @@ def _peak_classification_text(value: object) -> str:
 
 def map_summary(summary: dict) -> ReportTemplateData:
     """Map a run summary dict to the report template data model."""
-    lang = _normalize_lang(summary.get("lang"))
+    lang = normalize_lang(summary.get("lang"))
 
     def tr(key: str, **kw: object) -> str:
         return _tr(lang, key, **kw)

@@ -60,7 +60,7 @@ def _parse_collected_test_ids(output: str) -> list[str]:
             continue
         if line.endswith("]") and "[" in line and "%" in line:
             continue
-        if line.startswith("tests/") or line.startswith("pi/tests/"):
+        if line.startswith("tests/") or line.startswith("apps/server/tests/"):
             test_ids.append(line)
     return test_ids
 

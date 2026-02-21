@@ -20,7 +20,6 @@ export class WsClient {
   private reconnectTimer: number | null = null;
   private staleTimer: number | null = null;
   private lastMessageAtMs = 0;
-  private lastServerTimeMs = 0;
   private hasData = false;
   private manuallyClosed = false;
   private reconnectAttempt = 0;
@@ -75,7 +74,6 @@ export class WsClient {
     this.setState(initialState);
     this.hasData = false;
     this.lastMessageAtMs = 0;
-    this.lastServerTimeMs = 0;
     this.ws = new WebSocket(this.options.url);
 
     this.ws.onopen = () => {
@@ -91,8 +89,6 @@ export class WsClient {
       }
       const receivedAt = Date.now();
       this.lastMessageAtMs = receivedAt;
-      const parsedServerTime = Date.parse(String(payload?.server_time || ""));
-      this.lastServerTimeMs = Number.isFinite(parsedServerTime) ? parsedServerTime : receivedAt;
       this.hasData = this.hasData || this.options.hasData(payload);
       this.reconnectAttempt = 0;
       this.setState(this.hasData ? "connected" : "no_data");

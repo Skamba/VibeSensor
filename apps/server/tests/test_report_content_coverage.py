@@ -8,8 +8,8 @@ import pytest
 from pypdf import PdfReader
 
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.report_analysis import confidence_label, select_top_causes
-from vibesensor.reports import build_report_pdf, summarize_log
+from vibesensor.report import confidence_label, select_top_causes, summarize_log
+from vibesensor.report.pdf_builder import build_report_pdf
 
 _I18N_JSON = Path(__file__).resolve().parent.parent / "data" / "report_i18n.json"
 

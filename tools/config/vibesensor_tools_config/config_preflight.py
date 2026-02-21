@@ -24,7 +24,6 @@ def summarize(cfg: AppConfig) -> dict[str, object]:
         },
         "paths": {
             "metrics_log_path": str(cfg.logging.metrics_log_path),
-            "clients_json_path": str(cfg.clients_json_path),
         },
         "logging": {
             "sensor_model": cfg.logging.sensor_model,

@@ -563,7 +563,7 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     history_before = _api(base_url, "/api/history")
     assert history_before["runs"] == [], "Expected empty history before E2E run"
 
-    _api(base_url, "/api/speed-override", method="POST", body={"speed_kmh": 100.0})
+    _api(base_url, "/api/settings/speed-source", method="POST", body={"speedSource": "manual", "manualSpeedKph": 100.0})
     start = _api(base_url, "/api/logging/start", method="POST")
     assert start["enabled"] is True
 

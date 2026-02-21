@@ -13,7 +13,6 @@
 - apps/simulator: ingest + websocket smoke simulators
 - firmware/esp: ESP32 firmware
 - libs/core/python/vibesensor_core: pure domain logic (strength bands, unit scaling, vibration strength)
-- libs/adapters/python/vibesensor_adapters: repository/path integration adapters
 - libs/shared: shared contracts/schemas/constants for server and UI
 - infra/pi-image/pi-gen: Raspberry Pi image build pipeline
 - Docker entrypoint: docker-compose.yml (root); Dockerfile at apps/server/Dockerfile

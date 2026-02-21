@@ -63,7 +63,6 @@ class ClientRegistry:
         self,
         db: HistoryDB | None = None,
         stale_ttl_seconds: float = 120.0,
-        **_kwargs: Any,
     ):
         self._lock = RLock()
         self._db = db
@@ -248,10 +247,6 @@ class ClientRegistry:
         with self._lock:
             return self._clients.get(normalized)
 
-    def client_ids(self) -> list[str]:
-        with self._lock:
-            return list(self._clients.keys())
-
     def active_client_ids(self, now: float | None = None) -> list[str]:
         with self._lock:
             now_ts = time.time() if now is None else now
@@ -349,7 +344,3 @@ class ClientRegistry:
                     }
                 )
             return rows
-
-    def iter_records(self) -> list[ClientRecord]:
-        with self._lock:
-            return list(self._clients.values())
