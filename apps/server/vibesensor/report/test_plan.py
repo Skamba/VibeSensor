@@ -151,11 +151,7 @@ def _location_speedbin_summary(
         dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
         total_samples = sum(len(vals) for vals in per_loc.values())
         ambiguous = len(ranked) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
-        display_location = (
-            f"ambiguous location: {top_loc} / {second_loc}"
-            if ambiguous
-            else top_loc
-        )
+        display_location = f"ambiguous location: {top_loc} / {second_loc}" if ambiguous else top_loc
         candidate = {
             "speed_range": bin_label,
             "location": display_location,

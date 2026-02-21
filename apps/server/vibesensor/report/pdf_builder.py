@@ -255,7 +255,9 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     car_text = " \u2014 ".join(car_parts) if car_parts else na
     _draw_kv(c, meta_x, y2, tr("CAR_LABEL"), car_text, label_w=12 * mm, fs=FS_BODY)
     if data.start_time_utc:
-        _draw_kv(c, meta_x, y3, tr("START_TIME_UTC"), data.start_time_utc, label_w=22 * mm, fs=FS_BODY)
+        _draw_kv(
+            c, meta_x, y3, tr("START_TIME_UTC"), data.start_time_utc, label_w=22 * mm, fs=FS_BODY
+        )
     if data.end_time_utc:
         _draw_kv(c, meta_x, y4, tr("END_TIME_UTC"), data.end_time_utc, label_w=22 * mm, fs=FS_BODY)
 
@@ -277,7 +279,9 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         c.setFont(FONT, FS_BODY)
         c.drawString(meta_right, y2, " \u00b7 ".join(extra_parts))
     if data.sensor_model:
-        _draw_kv(c, meta_right, y3, tr("SENSOR_MODEL"), data.sensor_model, label_w=24 * mm, fs=FS_BODY)
+        _draw_kv(
+            c, meta_right, y3, tr("SENSOR_MODEL"), data.sensor_model, label_w=24 * mm, fs=FS_BODY
+        )
     if data.firmware_version:
         firmware_label = "Firmwareversie" if data.lang == "nl" else "Firmware Version"
         _draw_kv(
@@ -290,7 +294,9 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
             fs=FS_BODY,
         )
     if data.tire_spec_text:
-        _draw_kv(c, meta_right, y5, tr("TIRE_SIZE"), data.tire_spec_text, label_w=14 * mm, fs=FS_BODY)
+        _draw_kv(
+            c, meta_right, y5, tr("TIRE_SIZE"), data.tire_spec_text, label_w=14 * mm, fs=FS_BODY
+        )
 
     y_cursor = hdr_y - GAP
 
@@ -659,7 +665,9 @@ def _draw_pattern_evidence(
     c.setFont(FONT_B, FS_SMALL)
     c.drawString(rx, ry, tr("WHY_PARTS_LISTED"))
     ry -= 3.4 * mm
-    _draw_text(c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text, na), size=6, color=SUB_CLR, max_lines=3)
+    _draw_text(
+        c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text, na), size=6, color=SUB_CLR, max_lines=3
+    )
 
 
 def _draw_peaks_table(

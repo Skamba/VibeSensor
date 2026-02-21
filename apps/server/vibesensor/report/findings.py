@@ -231,7 +231,9 @@ def _build_order_findings(
             ref_sources.add(ref_source)
             sample_speed = _as_float(sample.get("speed_kmh"))
             sample_speed_bin = (
-                _speed_bin_label(sample_speed) if sample_speed is not None and sample_speed > 0 else None
+                _speed_bin_label(sample_speed)
+                if sample_speed is not None and sample_speed > 0
+                else None
             )
             if sample_speed_bin is not None:
                 possible_by_speed_bin[sample_speed_bin] += 1

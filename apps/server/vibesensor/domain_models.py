@@ -333,9 +333,7 @@ class RunMetadata:
             start_time_utc=str(data.get("start_time_utc", "")),
             end_time_utc=data.get("end_time_utc"),
             sensor_model=str(data.get("sensor_model", "unknown")),
-            firmware_version=(
-                str(data.get("firmware_version", "")).strip() or None
-            ),
+            firmware_version=(str(data.get("firmware_version", "")).strip() or None),
             raw_sample_rate_hz=_as_int_or_none(data.get("raw_sample_rate_hz")),
             feature_interval_s=_as_float_or_none(data.get("feature_interval_s")),
             fft_window_size_samples=_as_int_or_none(data.get("fft_window_size_samples")),
