@@ -75,6 +75,8 @@ artifacts/ai/*
 # Frontend build/runtime artifacts
 apps/ui/node_modules/
 apps/ui/dist/
+apps/ui/.npm-ci-lock.sha256
+apps/ui/.playwright-chromium-installed
 apps/server/public/*
 !apps/server/public/.gitkeep
 

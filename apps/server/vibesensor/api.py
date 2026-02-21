@@ -96,6 +96,13 @@ class ActiveCarRequest(BaseModel):
 class SpeedSourceRequest(BaseModel):
     speedSource: str | None = None
     manualSpeedKph: float | None = None
+    staleTimeoutS: float | None = None
+    fallbackMode: str | None = None
+
+
+class UpdateStartRequest(BaseModel):
+    ssid: str = Field(min_length=1, max_length=64)
+    password: str = Field(default="", max_length=128)
 
 
 class SensorRequest(BaseModel):
@@ -123,6 +130,10 @@ def _sync_speed_source_to_gps(state: RuntimeState) -> None:
         state.gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
     else:
         state.gps_monitor.set_speed_override_kmh(None)
+    state.gps_monitor.set_fallback_settings(
+        stale_timeout_s=ss.get("staleTimeoutS"),
+        fallback_mode=ss.get("fallbackMode"),
+    )
 
 
 def create_router(state: RuntimeState) -> APIRouter:
@@ -202,6 +213,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         result = state.settings_store.update_speed_source(req.model_dump(exclude_none=True))
         _sync_speed_source_to_gps(state)
         return result
+
+    @router.get("/api/settings/speed-source/status")
+    async def get_speed_source_status() -> dict:
+        return state.gps_monitor.status_dict()
 
     @router.get("/api/settings/sensors")
     async def get_sensors() -> dict:
@@ -537,6 +552,27 @@ def create_router(state: RuntimeState) -> APIRouter:
             LOGGER.debug("WebSocket client disconnected")
         finally:
             await state.ws_hub.remove(ws)
+
+    # -- system update endpoints -----------------------------------------------
+
+    @router.get("/api/settings/update/status")
+    async def get_update_status() -> dict:
+        return state.update_manager.status.to_dict()
+
+    @router.post("/api/settings/update/start")
+    async def start_update(req: UpdateStartRequest) -> dict:
+        try:
+            state.update_manager.start(req.ssid, req.password)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {"status": "started", "ssid": req.ssid}
+
+    @router.post("/api/settings/update/cancel")
+    async def cancel_update() -> dict:
+        cancelled = state.update_manager.cancel()
+        return {"cancelled": cancelled}
 
     @router.get("/api/car-library/brands")
     async def get_car_library_brands() -> dict:
