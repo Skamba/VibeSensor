@@ -69,6 +69,7 @@ class SettingsStore:
                 {
                     "speedSource": raw.get("speedSource"),
                     "manualSpeedKph": raw.get("manualSpeedKph"),
+                    "obd2Config": raw.get("obd2Config"),
                 }
             )
             language = str(raw.get("language") or "en").strip().lower()

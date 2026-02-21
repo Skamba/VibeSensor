@@ -269,6 +269,12 @@ def test_store_delete_car_unknown_raises() -> None:
         store.delete_car("nonexistent")
 
 
+def test_store_obd2_config_update() -> None:
+    store = SettingsStore()
+    result = store.update_speed_source({"obd2Config": {"port": "/dev/ttyUSB0"}})
+    assert result.get("obd2Config") == {"port": "/dev/ttyUSB0"}
+
+
 def test_store_language_roundtrip() -> None:
     store = SettingsStore()
     assert store.language == "en"

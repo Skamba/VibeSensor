@@ -8,6 +8,7 @@ import {
   getSettingsSpeedSource,
   setActiveSettingsCar,
   setAnalysisSettings,
+  setSpeedOverride,
   updateSettingsSpeedSource,
 } from "../../api";
 
@@ -26,6 +27,8 @@ export interface SettingsFeature {
   loadSpeedSourceFromServer(): Promise<void>;
   loadAnalysisSettingsFromServer(): Promise<void>;
   loadCarsFromServer(): Promise<void>;
+  renderCarList(): void;
+  syncActiveCarToInputs(): void;
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
   bindSettingsTabs(): void;
@@ -50,6 +53,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   async function syncSpeedSourceToServer(): Promise<void> {
     try {
       await updateSettingsSpeedSource({ speedSource: state.speedSource, manualSpeedKph: state.manualSpeedKph });
+      if (state.speedSource === "manual" && state.manualSpeedKph != null) await setSpeedOverride(state.manualSpeedKph);
+      else await setSpeedOverride(null);
     } catch (_err) { /* ignore */ }
   }
 
@@ -264,6 +269,8 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     loadSpeedSourceFromServer,
     loadAnalysisSettingsFromServer,
     loadCarsFromServer,
+    renderCarList,
+    syncActiveCarToInputs,
     saveAnalysisFromInputs,
     saveSpeedSourceFromInputs,
     bindSettingsTabs,

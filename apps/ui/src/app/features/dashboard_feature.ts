@@ -26,6 +26,7 @@ export interface DashboardFeature {
   extractLiveLocationIntensity(): Record<string, number>;
   pushCarMapSample(byLocation: Record<string, number>): void;
   renderCarMap(): void;
+  resetLiveVibrationCounts(): void;
 }
 
 export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeature {
@@ -304,7 +305,13 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     pushStrengthSample(bySource);
   }
 
+  function resetLiveVibrationCounts(): void {
+    state.eventMatrix = createEmptyMatrix();
+    renderMatrix();
+  }
+
   return {
+    resetLiveVibrationCounts,
     renderVibrationLog,
     renderMatrix,
     applyServerDiagnostics,

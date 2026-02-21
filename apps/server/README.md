@@ -75,6 +75,7 @@ Configuration is loaded from YAML. See `config.example.yaml` for all options.
 | `udp` | `data_listen` (9000), `control_listen` (9001) |
 | `processing` | `sample_rate_hz`, `fft_n`, `spectrum_max_hz`, `ui_push_hz` |
 | `logging` | `log_metrics`, `metrics_log_path`, `sensor_model` |
+| `storage` | `clients_json_path` |
 | `gps` | `gps_enabled` |
 | `ap` | `ssid`, `psk`, `ip`, `channel`, `self_heal` |
 
@@ -84,6 +85,7 @@ paths — all other values use built-in defaults.
 Default runtime files (when using built-in defaults or `config.example.yaml`):
 - `logging.metrics_log_path` → `apps/server/data/metrics.jsonl` (optional, disabled by default)
 - `logging.history_db_path` → `apps/server/data/history.db`
+- `storage.clients_json_path` → `apps/server/data/clients.json`
 - `ap.self_heal.state_file` → `apps/server/data/hotspot-self-heal-state.json`
 
 ## Files

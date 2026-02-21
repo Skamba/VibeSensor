@@ -1,12 +1,13 @@
 """Guardrail tests ensuring key definitions have a single source of truth.
 
 These tests prevent regression of the consolidation work by verifying:
-1. Spectrum payloads do not contain dead alias fields
-2. The legacy strength_scoring module is removed
-3. Metrics log records use canonical field names only
-4. as_float_or_none is the single canonical float converter
-5. _percentile is the single canonical percentile implementation
-6. compute_vibration_strength_db output has no dead alias fields
+1. DEFAULT_DIAGNOSTIC_SETTINGS is the same object as DEFAULT_ANALYSIS_SETTINGS
+2. Spectrum payloads do not contain dead alias fields
+3. The legacy strength_scoring module is removed
+4. Metrics log records use canonical field names only
+5. as_float_or_none is the single canonical float converter
+6. _percentile is the single canonical percentile implementation
+7. compute_vibration_strength_db output has no dead alias fields
 """
 
 from __future__ import annotations
@@ -17,6 +18,19 @@ from pathlib import Path
 import pytest
 
 from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+from vibesensor.diagnostics_shared import DEFAULT_DIAGNOSTIC_SETTINGS
+
+
+def test_diagnostic_settings_is_analysis_settings() -> None:
+    """DEFAULT_DIAGNOSTIC_SETTINGS must be the same object as DEFAULT_ANALYSIS_SETTINGS."""
+    assert DEFAULT_DIAGNOSTIC_SETTINGS is DEFAULT_ANALYSIS_SETTINGS
+
+
+def test_analysis_settings_keys_match() -> None:
+    """Both default dicts have identical keys and values."""
+    assert set(DEFAULT_DIAGNOSTIC_SETTINGS.keys()) == set(DEFAULT_ANALYSIS_SETTINGS.keys())
+    for key in DEFAULT_ANALYSIS_SETTINGS:
+        assert DEFAULT_DIAGNOSTIC_SETTINGS[key] == DEFAULT_ANALYSIS_SETTINGS[key]
 
 
 def test_strength_scoring_module_removed() -> None:
@@ -75,9 +89,9 @@ def test_selected_payload_has_no_combined_alias() -> None:
 
 def test_metrics_log_no_legacy_field_names() -> None:
     """New metrics log records must not contain legacy field aliases."""
-    from vibesensor.domain_models import _default_units
+    from vibesensor.runlog import default_units
 
-    units = _default_units()
+    units = default_units()
     legacy_fields = {
         "accel_magnitude_rms_g",
         "accel_magnitude_p2p_g",

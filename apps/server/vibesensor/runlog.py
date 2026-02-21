@@ -16,6 +16,9 @@ from .domain_models import (
     RunMetadata,
     SensorFrame,
     _as_float_or_none,
+    _as_int_or_none,
+    _default_amplitude_definitions,
+    _default_units,
 )
 
 __all__ = [
@@ -27,12 +30,23 @@ __all__ = [
     "utc_now_iso",
     "parse_iso8601",
     "as_float_or_none",
+    "as_int_or_none",
+    "default_units",
+    "default_amplitude_definitions",
     "create_run_metadata",
     "create_run_end_record",
     "normalize_sample_record",
     "append_jsonl_records",
     "read_jsonl_run",
 ]
+
+REQUIRED_SAMPLE_FIELDS = (
+    "t_s",
+    "speed_kmh",
+    "accel_x_g",
+    "accel_y_g",
+    "accel_z_g",
+)
 
 
 @dataclass(slots=True)
@@ -56,6 +70,9 @@ def parse_iso8601(value: object) -> datetime | None:
 
 
 as_float_or_none = _as_float_or_none
+as_int_or_none = _as_int_or_none
+default_units = _default_units
+default_amplitude_definitions = _default_amplitude_definitions
 
 
 def create_run_metadata(

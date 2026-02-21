@@ -2,7 +2,7 @@ import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
 import "../styles/app.css";
 import * as I18N from "../i18n";
-
+import { defaultLocationCodes, palette } from "../constants";
 import { SpectrumChart } from "../spectrum";
 import { escapeHtml, fmt, fmtTs, formatInt } from "../format";
 import { combinedRelativeUncertainty, parseTireSpec, tireDiameterMeters, toleranceForOrder } from "../vehicle_math";
@@ -11,7 +11,7 @@ import type { AdaptedSpectrum } from "../server_payload";
 import { WsClient } from "../ws";
 import { METRIC_FIELDS } from "../generated/shared_contracts";
 import { runDemoMode } from "../features/demo/runDemoMode";
-import { chartSeriesPalette, orderBandFills } from "../theme";
+import { orderBandFills } from "../theme";
 import { createEmptyMatrix } from "../diagnostics";
 import { getSettingsLanguage, setSettingsLanguage, getSettingsSpeedUnit, setSettingsSpeedUnit } from "../api/settings";
 import { createUiDomRegistry } from "./dom/ui_dom_registry";
@@ -41,7 +41,7 @@ export function startUiApp(): void {
   function selectedSpeedUnitLabel(): string { return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh"); }
   function setStatValue(container: HTMLElement | null, value: string | number): void { const valueEl = container?.querySelector?.("[data-value]"); if (valueEl) valueEl.textContent = String(value); else if (container) container.textContent = String(value); }
   function setPillState(el: HTMLElement | null, variant: string, text: string): void { if (!el) return; el.className = `pill pill--${variant}`; el.textContent = text; }
-  function colorForClient(index: number): string { return chartSeriesPalette[index % chartSeriesPalette.length]; }
+  function colorForClient(index: number): string { return palette[index % palette.length]; }
   function effectiveSpeedMps(): number | null { return (typeof state.speedMps === "number" && state.speedMps > 0) ? state.speedMps : null; }
 
   function renderSpeedReadout(): void {

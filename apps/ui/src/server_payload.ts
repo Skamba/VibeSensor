@@ -6,7 +6,7 @@ export type AdaptedSpectrum = {
   strength_metrics: Record<string, unknown>;
 };
 
-type ClientInfo = {
+export type ClientInfo = {
   client_id: string;
   name: string;
   last_seen_ms: number;
@@ -16,7 +16,7 @@ type ClientInfo = {
   [key: string]: unknown;
 };
 
-type DiagnosticEvent = {
+export type DiagnosticEvent = {
   source: string;
   severity: string;
   client_id: string;
@@ -26,18 +26,18 @@ type DiagnosticEvent = {
   [key: string]: unknown;
 };
 
-type DiagnosticLevel = {
+export type DiagnosticLevel = {
   current_db: number;
   band_key: string;
   [key: string]: unknown;
 };
 
-type DiagnosticLevels = {
+export type DiagnosticLevels = {
   by_source: Record<string, DiagnosticLevel>;
   by_sensor: Record<string, DiagnosticLevel>;
 };
 
-type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
+export type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
 
 export type AdaptedPayload = {
   clients: ClientInfo[];

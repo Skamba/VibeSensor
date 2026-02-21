@@ -470,8 +470,10 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
 
 
 def test_report_pdf_footer_contains_version_marker(
-    tmp_path: Path,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setenv("GIT_SHA", "a1b2c3d4e5f6")
+
     run_path = tmp_path / "run_version_marker.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
     for idx in range(8):
@@ -488,7 +490,7 @@ def test_report_pdf_footer_contains_version_marker(
 
     summary = summarize_log(run_path)
     pdf = build_report_pdf(summary)
-    marker = f"v{__version__}"
+    marker = f"v{__version__} (a1b2c3d4)"
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
     meta = reader.metadata

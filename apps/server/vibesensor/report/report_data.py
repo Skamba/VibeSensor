@@ -6,12 +6,12 @@ the Canvas-based PDF renderer.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from .. import __version__
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
+from ..report_i18n import normalize_lang, tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, strength_text
@@ -41,6 +41,7 @@ class ObservedSignature:
 @dataclass
 class PartSuggestion:
     name: str
+    why_shown: str | None = None
 
 
 @dataclass
@@ -49,6 +50,7 @@ class SystemFindingCard:
     strongest_location: str | None = None
     pattern_summary: str | None = None
     parts: list[PartSuggestion] = field(default_factory=list)
+    tone: str = "neutral"
 
 
 @dataclass
@@ -237,13 +239,15 @@ def map_summary(summary: dict) -> ReportTemplateData:
             _as_float(cause.get("confidence")) or _as_float(cause.get("confidence_0_to_1")) or 0.0
         )
         _ck, _cl, _cp, c_reason = certainty_label(c_conf, lang=lang)
+        tone = cause.get("confidence_tone", "neutral")
 
         system_cards.append(
             SystemFindingCard(
                 system_name=src_human,
                 strongest_location=location,
                 pattern_summary=pattern_text,
-                parts=[PartSuggestion(name=p) for p in parts_list],
+                parts=[PartSuggestion(name=p, why_shown=c_reason) for p in parts_list],
+                tone=tone,
             )
         )
 
@@ -346,7 +350,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         )
 
     # -- Version marker --
-    version_marker = f"v{__version__}"
+    git_sha = str(os.getenv("GIT_SHA", "")).strip()
+    version_marker = f"v{__version__} ({git_sha[:8]})" if git_sha else f"v{__version__}"
 
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
