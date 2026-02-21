@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS client_names (
             cur.execute(
                 "SELECT run_id, status, start_time_utc, end_time_utc, "
                 "metadata_json, analysis_json, error_message, created_at, "
-                "analysis_version, analysis_started_at, analysis_completed_at "
+                "sample_count, analysis_version, analysis_started_at, analysis_completed_at "
                 "FROM runs WHERE run_id = ?",
                 (run_id,),
             )
@@ -308,6 +308,7 @@ CREATE TABLE IF NOT EXISTS client_names (
             analysis_json,
             error,
             created,
+            sample_count,
             analysis_ver,
             analysis_started,
             analysis_completed,
@@ -319,6 +320,7 @@ CREATE TABLE IF NOT EXISTS client_names (
             "end_time_utc": end,
             "metadata": json.loads(meta_json) if meta_json else {},
             "created_at": created,
+            "sample_count": sample_count,
         }
         if analysis_json:
             entry["analysis"] = json.loads(analysis_json)

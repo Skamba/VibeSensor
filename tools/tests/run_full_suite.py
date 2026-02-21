@@ -124,6 +124,7 @@ def main() -> int:
                 "VIBESENSOR_SIM_DATA_PORT": "19000",
                 "VIBESENSOR_SIM_CONTROL_PORT": "19001",
                 "VIBESENSOR_SIM_DURATION": "12",
+                "VIBESENSOR_SIM_DURATION_LONG": "20",
                 "VIBESENSOR_SIM_LOG": str(sim_log),
             }
         )

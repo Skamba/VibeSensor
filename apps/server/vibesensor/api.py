@@ -285,6 +285,8 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.post("/api/clients/{client_id}/location")
     async def set_client_location(client_id: str, req: SetLocationRequest) -> dict:
         normalized_client_id = _normalize_client_id_or_400(client_id)
+        if state.registry.get(normalized_client_id) is None:
+            raise HTTPException(status_code=404, detail="Unknown client_id")
 
         label = label_for_code(req.location_code)
         if label is None:
