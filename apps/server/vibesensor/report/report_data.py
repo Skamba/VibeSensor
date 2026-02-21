@@ -217,17 +217,21 @@ def map_summary(summary: dict) -> ReportTemplateData:
     speed_stats = (
         summary.get("speed_stats", {}) if isinstance(summary.get("speed_stats"), dict) else {}
     )
+    origin = summary.get("most_likely_origin", {})
+    if not isinstance(origin, dict):
+        origin = {}
+    origin_location = str(origin.get("location") or "").strip()
 
     # -- Observed signature --
     if top_causes:
         tc = top_causes[0]
         primary_system = _human_source(tc.get("source") or tc.get("suspected_source"), tr=tr)
-        primary_location = str(tc.get("strongest_location") or tr("UNKNOWN"))
+        primary_location = origin_location or str(tc.get("strongest_location") or tr("UNKNOWN"))
         primary_speed = str(tc.get("strongest_speed_band") or tr("UNKNOWN"))
         conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
     else:
         primary_system = tr("UNKNOWN")
-        primary_location = tr("UNKNOWN")
+        primary_location = origin_location or tr("UNKNOWN")
         primary_speed = tr("UNKNOWN")
         conf = 0.0
 
@@ -331,7 +335,6 @@ def map_summary(summary: dict) -> ReportTemplateData:
         if top_causes
         else tr("UNKNOWN")
     )
-    origin = summary.get("most_likely_origin", {})
     interp = str(origin.get("explanation", "")) if isinstance(origin, dict) else ""
     src_why = str(
         (top_causes[0].get("source") or top_causes[0].get("suspected_source")) if top_causes else ""
