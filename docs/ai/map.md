@@ -20,7 +20,7 @@
 - `apps/simulator/ws_smoke.py` - websocket smoke verifier.
 - `apps/ui/src/main.ts` - UI state reducer/render orchestration.
 - `apps/ui/src/ws.ts` - websocket client and payload contract handling.
-- `.github/workflows/ci.yml` - CI critical checks and smoke flow.
+- `.github/workflows/ci.yml` - CI critical checks and `make test-all` verification flow.
 
 ## Module Boundaries
 - **Acquisition**: `udp_data_rx.py`, `registry.py`.
@@ -41,7 +41,7 @@
 - AI docs/runbooks: `docs/ai/*`.
 - Simulator-only enhancements: `apps/simulator/*`.
 
-## File Selection Heuristic (<=10 files)
+## File Selection Heuristic (start focused, expand when needed)
 1. Pick one hot spot + directly imported helpers.
 2. Add 1–2 nearest tests.
 3. Add any impacted config/unit file.
