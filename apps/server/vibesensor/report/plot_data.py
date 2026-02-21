@@ -11,6 +11,7 @@ from vibesensor_core.vibration_strength import percentile, vibration_strength_db
 from ..runlog import as_float_or_none as _as_float
 from .findings import _classify_peak_type
 from .helpers import (
+    _amplitude_weighted_speed_window,
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
     _sample_top_peaks,
@@ -255,7 +256,7 @@ def _top_peaks_table_rows(
                     "amps": [],
                     "floor_amps": [],
                     "speeds": [],
-                    "speed_points": [],
+                    "speed_amps": [],
                 },
             )
             bucket["amps"].append(amp)
@@ -264,6 +265,7 @@ def _top_peaks_table_rows(
                 bucket["floor_amps"].append(floor_amp)
             if speed is not None and speed > 0:
                 bucket["speeds"].append(speed)
+                bucket["speed_amps"].append(amp)
 
     for bucket in grouped.values():
         amps = sorted(bucket["amps"])
@@ -308,9 +310,15 @@ def _top_peaks_table_rows(
     rows: list[dict[str, Any]] = []
     for idx, item in enumerate(ordered, start=1):
         speeds = [float(v) for v in item.get("speeds", []) if isinstance(v, (int, float))]
-        speed_band = "-"
-        if speeds:
-            speed_band = f"{min(speeds):.0f}-{max(speeds):.0f} km/h"
+        speed_amps = [
+            float(v) for v in item.get("speed_amps", []) if isinstance(v, (int, float))
+        ]
+        low_speed, high_speed = _amplitude_weighted_speed_window(speeds, speed_amps)
+        speed_band = (
+            f"{low_speed:.0f}-{high_speed:.0f} km/h"
+            if low_speed is not None and high_speed is not None
+            else "-"
+        )
         rows.append(
             {
                 "rank": idx,
