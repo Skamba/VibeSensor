@@ -12,9 +12,7 @@ from typing import Any
 
 from vibesensor_core.strength_bands import bucket_for_strength
 
-from vibesensor.report.findings import (
-    _classify_peak_type,
-)
+from vibesensor.report.findings import _classify_peak_type
 from vibesensor.report.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
@@ -111,6 +109,29 @@ def _build_speed_sweep_samples(
     return samples
 
 
+def _build_phased_samples(
+    phase_segments: list[tuple[int, float, float]],
+    *,
+    start_t_s: float = 0.0,
+    dt_s: float = 1.0,
+) -> list[dict[str, Any]]:
+    """Build samples from phase segments as (count, start_speed, end_speed)."""
+    samples: list[dict[str, Any]] = []
+    t_s = start_t_s
+    for count, speed_start, speed_end in phase_segments:
+        if count <= 0:
+            continue
+        for i in range(count):
+            if count == 1:
+                speed_kmh = float(speed_end)
+            else:
+                ratio = i / (count - 1)
+                speed_kmh = float(speed_start + ((speed_end - speed_start) * ratio))
+            samples.append(_make_sample(t_s=t_s, speed_kmh=speed_kmh))
+            t_s += dt_s
+    return samples
+
+
 def _standard_metadata(
     *,
     tire_circumference_m: float = 2.036,
@@ -138,16 +159,13 @@ class TestPhaseSegmentation:
 
     def test_idle_to_speed_up(self) -> None:
         """Idle → acceleration → cruise must produce all three phases."""
-        samples: list[dict[str, Any]] = []
-        # 5 idle samples (0 km/h)
-        for i in range(5):
-            samples.append(_make_sample(t_s=float(i), speed_kmh=0.0))
-        # 10 acceleration samples (0 → 80)
-        for i in range(10):
-            samples.append(_make_sample(t_s=float(5 + i), speed_kmh=8.0 * (i + 1)))
-        # 10 cruise samples (80 km/h ± 1)
-        for i in range(10):
-            samples.append(_make_sample(t_s=float(15 + i), speed_kmh=80.0 + (i % 2)))
+        samples = _build_phased_samples(
+            [
+                (5, 0.0, 0.0),
+                (10, 8.0, 80.0),
+                (10, 80.0, 81.0),
+            ]
+        )
 
         per_sample, segments = segment_run_phases(samples)
         assert len(per_sample) == 25
@@ -158,28 +176,24 @@ class TestPhaseSegmentation:
 
     def test_stop_go(self) -> None:
         """Repeated stop-go should contain both IDLE and non-IDLE phases."""
-        samples: list[dict[str, Any]] = []
-        t = 0.0
-        for _cycle in range(3):
-            # stopped
-            for _ in range(3):
-                samples.append(_make_sample(t_s=t, speed_kmh=0.0))
-                t += 1.0
-            # moving
-            for j in range(5):
-                samples.append(_make_sample(t_s=t, speed_kmh=30.0 + j * 5.0))
-                t += 1.0
+        samples = _build_phased_samples(
+            [
+                (3, 0.0, 0.0),
+                (5, 30.0, 50.0),
+                (3, 0.0, 0.0),
+                (5, 30.0, 50.0),
+                (3, 0.0, 0.0),
+                (5, 30.0, 50.0),
+            ]
+        )
         per_sample, segments = segment_run_phases(samples)
         idle_count = sum(1 for p in per_sample if p == DrivingPhase.IDLE)
         assert idle_count >= 6, "Stop-go must detect multiple idle phases"
 
     def test_coast_down(self) -> None:
         """Deceleration below coast-down threshold should be labeled COAST_DOWN."""
-        samples: list[dict[str, Any]] = []
         # Decelerating from 50 → 2 km/h
-        for i in range(20):
-            speed = max(0.5, 50.0 - i * 2.8)
-            samples.append(_make_sample(t_s=float(i), speed_kmh=speed))
+        samples = _build_phased_samples([(20, 50.0, 2.0)])
         per_sample, segments = segment_run_phases(samples)
         has_decel = any(
             p in (DrivingPhase.DECELERATION, DrivingPhase.COAST_DOWN) for p in per_sample
@@ -221,6 +235,34 @@ class TestPhaseSegmentation:
 class TestConfidenceCalibration:
     """Validate that confidence scoring reflects real-world signal quality."""
 
+    def test_low_match_count_has_lower_confidence_than_high_count(self) -> None:
+        """Equivalent quality with minimal samples should be penalized vs well-supported runs."""
+        meta = _standard_metadata()
+        low_count_samples = _build_speed_sweep_samples(peak_amp=0.08, vib_db=24.0, n=6)
+        high_count_samples = _build_speed_sweep_samples(peak_amp=0.08, vib_db=24.0, n=40)
+
+        low_summary = summarize_run_data(meta, low_count_samples, include_samples=False)
+        high_summary = summarize_run_data(meta, high_count_samples, include_samples=False)
+
+        def best_order_conf(summary: dict[str, Any]) -> float:
+            findings = summary.get("findings", [])
+            return max(
+                (
+                    float(finding.get("confidence_0_to_1") or 0.0)
+                    for finding in findings
+                    if isinstance(finding, dict)
+                    and not str(finding.get("finding_id", "")).startswith("REF_")
+                ),
+                default=0.0,
+            )
+
+        low_conf = best_order_conf(low_summary)
+        high_conf = best_order_conf(high_summary)
+
+        if low_conf > 0.0 and high_conf > 0.0:
+            assert low_conf < high_conf
+            assert low_conf <= high_conf * 0.95
+
     def test_negligible_amplitude_capped(self) -> None:
         """Very weak signal (< 2 mg) → confidence capped at 0.45."""
         meta = _standard_metadata()
@@ -232,6 +274,36 @@ class TestConfidenceCalibration:
                 continue
             conf = float(finding.get("confidence_0_to_1") or 0)
             assert conf <= 0.46, f"Negligible amp finding {fid} has conf {conf} > 0.45"
+
+    def test_negligible_strength_db_capped_for_multi_sensor_match(self) -> None:
+        """Negligible strength band (<8 dB) must stay at low confidence."""
+        meta = _standard_metadata()
+        locations = ["Front Left Wheel", "Rear Right Wheel", "Front Right Wheel"]
+        samples = _build_speed_sweep_samples(peak_amp=0.02, vib_db=18.0, n=60)
+        for idx, sample in enumerate(samples):
+            sample["strength_floor_amp_g"] = 0.008
+            sample["client_name"] = locations[idx % len(locations)]
+
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        findings = [
+            finding
+            for finding in summary.get("findings", [])
+            if isinstance(finding, dict)
+            and str(finding.get("finding_id", "")).startswith("F")
+            and not str(finding.get("finding_id", "")).startswith("REF_")
+        ]
+        assert findings
+        for finding in findings:
+            evidence_metrics = finding.get("evidence_metrics")
+            if not isinstance(evidence_metrics, dict):
+                continue
+            strength_db = float(evidence_metrics.get("vibration_strength_db") or 0.0)
+            if strength_db < 8.0:
+                conf = float(finding.get("confidence_0_to_1") or 0.0)
+                assert conf <= 0.45, (
+                    f"Negligible strength finding {finding.get('finding_id')} "
+                    f"has conf {conf} at {strength_db:.2f} dB"
+                )
 
     def test_strong_match_high_confidence(self) -> None:
         """Strong wheel-1x match with wide speed sweep → high confidence."""
@@ -278,6 +350,29 @@ class TestConfidenceCalibration:
         if sweep_conf > 0 and steady_conf > 0:
             assert sweep_conf > steady_conf, f"Sweep {sweep_conf} should > steady {steady_conf}"
 
+    def test_steady_speed_confidence_ceiling(self) -> None:
+        """Constant speed findings should remain capped below high-certainty range."""
+        meta = _standard_metadata()
+        steady_samples = _build_speed_sweep_samples(
+            peak_amp=0.04,
+            vib_db=18.0,
+            speed_start_kmh=79.5,
+            speed_end_kmh=80.5,
+            n=24,
+        )
+        steady_summary = summarize_run_data(meta, steady_samples, include_samples=False)
+        max_non_ref_conf = max(
+            (
+                float(f.get("confidence_0_to_1") or 0.0)
+                for f in steady_summary.get("findings", [])
+                if not str(f.get("finding_id", "")).startswith("REF_")
+            ),
+            default=0.0,
+        )
+        assert max_non_ref_conf <= 0.65, (
+            f"Steady speed confidence must be <= 0.65, got {max_non_ref_conf}"
+        )
+
     def test_confidence_label_thresholds(self) -> None:
         """Verify confidence_label returns correct keys at boundaries."""
         key_h, tone_h, pct_h = confidence_label(0.75)
@@ -299,11 +394,11 @@ class TestConfidenceCalibration:
 class TestStrengthBandsAlignment:
     """Ensure strength_bands.py and strength_labels.py agree on thresholds."""
 
-    def test_negligible_returns_none(self) -> None:
-        """dB values 0–7.9 should return None bucket (negligible)."""
-        assert bucket_for_strength(0.0) is None
-        assert bucket_for_strength(5.0) is None
-        assert bucket_for_strength(7.9) is None
+    def test_negligible_returns_l0(self) -> None:
+        """dB values 0–7.9 should return l0 bucket (negligible)."""
+        assert bucket_for_strength(0.0) == "l0"
+        assert bucket_for_strength(5.0) == "l0"
+        assert bucket_for_strength(7.9) == "l0"
 
     def test_l1_starts_at_8(self) -> None:
         assert bucket_for_strength(8.0) == "l1"

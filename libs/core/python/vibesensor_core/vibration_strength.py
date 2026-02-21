@@ -157,6 +157,8 @@ def compute_vibration_strength_db(
         return {
             "combined_spectrum_amp_g": [],
             "vibration_strength_db": 0.0,
+            "peak_amp_g": 0.0,
+            "noise_floor_amp_g": 0.0,
             "strength_bucket": None,
             "top_peaks": [],
         }
@@ -228,10 +230,13 @@ def compute_vibration_strength_db(
 
     top_peak = chosen[0] if chosen else None
     top_db = float((top_peak or {}).get("vibration_strength_db") or 0.0)
+    peak_amp_g = float((top_peak or {}).get("amp") or 0.0)
 
     return {
         "combined_spectrum_amp_g": combined,
         "vibration_strength_db": top_db,
+        "peak_amp_g": peak_amp_g,
+        "noise_floor_amp_g": float(floor_strength),
         "strength_bucket": bucket_for_strength(top_db),
         "top_peaks": list(chosen),
     }

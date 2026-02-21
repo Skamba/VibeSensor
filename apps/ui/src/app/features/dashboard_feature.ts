@@ -112,7 +112,12 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       els.vibrationLog.innerHTML = `<div class="log-row">${ctx.escapeHtml(t("vibration.none"))}</div>`;
       return;
     }
-    els.vibrationLog.innerHTML = state.vibrationMessages.map((m) => `<div class="log-row"><div class="log-time">${m.ts}</div>${m.text}</div>`).join("");
+    const scaleNote = `<div class="log-row">${ctx.escapeHtml(t("vibration.db_scale_note"))}</div>`;
+    els.vibrationLog.innerHTML =
+      scaleNote +
+      state.vibrationMessages
+        .map((m) => `<div class="log-row"><div class="log-time">${m.ts}</div>${m.text}</div>`)
+        .join("");
   }
 
   function tooltipForCell(sourceKey: string, severityKey: string): string {
@@ -282,7 +287,9 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     if (events.length) {
       for (const ev of events.slice(0, 6)) {
         const labels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels.join(", ") : (ev.sensor_label || "--");
-        pushVibrationMessage(`Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(Number(ev.vibration_strength_db) || 0, 1)} dB) @ ${fmt(Number(ev.peak_hz) || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`);
+        const peakAmpG = Number(ev.peak_amp_g ?? ev.peak_amp);
+        const ampText = Number.isFinite(peakAmpG) && peakAmpG > 0 ? ` · ${fmt(peakAmpG, 3)} g` : "";
+        pushVibrationMessage(`Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(Number(ev.vibration_strength_db) || 0, 1)} dB${ampText}) @ ${fmt(Number(ev.peak_hz) || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`);
         const sensorLabels: string[] = Array.isArray(ev.sensor_labels) ? ev.sensor_labels : ev.sensor_label ? [String(ev.sensor_label)] : [];
         for (const label of sensorLabels) {
           for (const client of state.clients) {

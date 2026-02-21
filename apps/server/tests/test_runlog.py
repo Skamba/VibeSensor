@@ -160,6 +160,23 @@ def test_normalize_sample_record_preserves_optional_peak_metadata() -> None:
     assert result["top_peaks"][0]["strength_bucket"] == "l4"
 
 
+def test_normalize_sample_record_preserves_strength_amplitude_fields() -> None:
+    record = {
+        "strength_peak_amp_g": 0.18,
+        "strength_floor_amp_g": 0.004,
+    }
+    result = normalize_sample_record(record)
+    assert result["strength_peak_amp_g"] == 0.18
+    assert result["strength_floor_amp_g"] == 0.004
+
+
+def test_normalize_sample_record_strength_amplitudes_default_to_none_for_old_runs() -> None:
+    record = {"t_s": 1.0}
+    result = normalize_sample_record(record)
+    assert result["strength_peak_amp_g"] is None
+    assert result["strength_floor_amp_g"] is None
+
+
 # -- append_jsonl_records / read_jsonl_run ------------------------------------
 
 

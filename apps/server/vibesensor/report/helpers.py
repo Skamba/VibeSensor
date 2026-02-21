@@ -16,6 +16,7 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
+from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -34,6 +35,19 @@ ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
 CONSTANT_SPEED_STDDEV_KMH = 0.5
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
+
+
+def weak_spatial_dominance_threshold(location_count: int | None) -> float:
+    """Return adaptive dominance threshold for weak spatial separation.
+
+    Baseline is the historical 1.2 ratio for two locations. For larger sensor
+    sets, we require stronger separation (+10% per additional location) because
+    chance ties become more likely as the number of compared locations grows.
+    """
+    if location_count is None:
+        return WEAK_SPATIAL_DOMINANCE_THRESHOLD
+    n_locations = max(2, int(location_count))
+    return WEAK_SPATIAL_DOMINANCE_THRESHOLD * (1.0 + (0.1 * (n_locations - 2)))
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
@@ -129,6 +143,33 @@ def _speed_bin_sort_key(label: str) -> int:
         return int(low_text)
     except ValueError:
         return 0
+
+
+def _amplitude_weighted_speed_window(
+    speeds: list[float],
+    amplitudes: list[float],
+) -> tuple[float | None, float | None]:
+    """Return the dominant amplitude-weighted speed bin window.
+
+    Inputs are expected to be parallel observations for the same phenomenon.
+    """
+    bin_weight: dict[str, float] = defaultdict(float)
+    for speed, amp in zip(speeds, amplitudes, strict=False):
+        speed_val = _as_float(speed)
+        amp_val = _as_float(amp)
+        if speed_val is None or speed_val <= 0 or amp_val is None or amp_val <= 0:
+            continue
+        bin_weight[_speed_bin_label(speed_val)] += amp_val
+
+    if not bin_weight:
+        return (None, None)
+
+    strongest_bin = max(
+        bin_weight.items(),
+        key=lambda item: (item[1], _speed_bin_sort_key(item[0])),
+    )[0]
+    low_kmh = float(_speed_bin_sort_key(strongest_bin))
+    return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
 def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
@@ -256,6 +297,37 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
                 continue
             out.append((hz, amp))
     return out
+
+
+def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
+    """Estimate run-level noise baseline as median of per-sample floor estimates.
+
+    Per-sample floor uses ``strength_floor_amp_g`` when available; otherwise it
+    falls back to P20 of that sample's top-peak amplitudes.
+    """
+    floors: list[float] = []
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        floor_amp = _as_float(sample.get("strength_floor_amp_g"))
+        if floor_amp is not None and floor_amp > 0:
+            floors.append(float(floor_amp))
+            continue
+        peak_amps = [amp for _hz, amp in _sample_top_peaks(sample) if amp > 0]
+        if len(peak_amps) < 3:
+            continue
+        peak_amps_sorted = sorted(peak_amps)
+        floor_from_peaks = (
+            percentile(peak_amps_sorted, 0.20)
+            if len(peak_amps_sorted) >= 2
+            else peak_amps_sorted[0]
+        )
+        if floor_from_peaks > 0:
+            floors.append(float(floor_from_peaks))
+    if not floors:
+        return None
+    floors_sorted = sorted(floors)
+    return percentile(floors_sorted, 0.50) if len(floors_sorted) >= 2 else floors_sorted[0]
 
 
 def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:

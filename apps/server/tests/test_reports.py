@@ -212,12 +212,51 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
     assert summary["speed_breakdown"] == []
     assert any(f.get("finding_id") == "REF_SPEED" for f in summary["findings"])
     assert all(
+        f.get("finding_type") == "reference"
+        for f in summary["findings"]
+        if str(f.get("finding_id", "")).startswith("REF_")
+    )
+    assert all(
         "wheel order" not in str(f.get("frequency_hz_or_order", "")).lower()
         for f in summary["findings"]
     )
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
+
+
+def test_run_suitability_warns_for_degraded_scenario(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_degraded_suitability.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(15):
+        sample = _sample(
+            idx,
+            speed_kmh=None,
+            dominant_freq_hz=14.0,
+            peak_amp_g=0.08,
+        )
+        sample["client_id"] = "solo-1"
+        sample["client_name"] = "front-left wheel"
+        sample["frames_dropped_total"] = idx * 2
+        sample["queue_overflow_drops"] = idx
+        if idx in {0, 5, 10}:
+            sample["accel_x_g"] = 15.9
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    suitability_by_key = {
+        str(item.get("check_key")): item
+        for item in summary["run_suitability"]
+        if isinstance(item, dict)
+    }
+
+    assert suitability_by_key["SUITABILITY_CHECK_SPEED_VARIATION"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_SENSOR_COVERAGE"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_REFERENCE_COMPLETENESS"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]["state"] == "warn"
 
 
 def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
@@ -380,7 +419,7 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(
     assert row["queue_overflow_drops_delta"] == 3
     strength = row["strength_bucket_distribution"]
     assert strength["total"] > 0
-    assert set(strength["counts"].keys()) == {"l1", "l2", "l3", "l4", "l5"}
+    assert set(strength["counts"].keys()) == {"l0", "l1", "l2", "l3", "l4", "l5"}
     pct_sum = sum(strength[f"percent_time_l{idx}"] for idx in range(1, 6))
     assert pct_sum == pytest.approx(100.0, rel=1e-6)
 
@@ -419,6 +458,53 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     rows = summary["sensor_intensity_by_location"]
     assert len(rows) == 2
     assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
+
+
+def test_sensor_location_stats_warn_on_sparse_sensor_keeps_ranking_stable(
+    tmp_path: Path,
+) -> None:
+    run_path = tmp_path / "run_location_stats_sparse_sensor.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+
+    for idx in range(50):
+        full_sensor = _sample(
+            idx,
+            speed_kmh=60.0 + idx,
+            dominant_freq_hz=20.0,
+            peak_amp_g=0.08,
+        )
+        full_sensor["client_id"] = "full-1"
+        full_sensor["client_name"] = "front-left wheel"
+        full_sensor["vibration_strength_db"] = 22.0
+        records.append(full_sensor)
+
+        if idx < 10:
+            sparse_sensor = _sample(
+                idx,
+                speed_kmh=60.0 + idx,
+                dominant_freq_hz=19.0,
+                peak_amp_g=0.09,
+            )
+            sparse_sensor["client_id"] = "sparse-2"
+            sparse_sensor["client_name"] = "front-right wheel"
+            sparse_sensor["vibration_strength_db"] = 40.0
+            records.append(sparse_sensor)
+
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    rows = summary["sensor_intensity_by_location"]
+    assert len(rows) == 2
+    assert rows[0]["location"] == "front-left wheel"
+    assert bool(rows[0]["sample_coverage_warning"]) is False
+    assert bool(rows[0]["partial_coverage"]) is False
+
+    sparse_row = next(row for row in rows if row["location"] == "front-right wheel")
+    assert sparse_row["sample_count"] == 10
+    assert sparse_row["sample_coverage_ratio"] == pytest.approx(0.2, rel=1e-6)
+    assert bool(sparse_row["sample_coverage_warning"]) is True
+    assert bool(sparse_row["partial_coverage"]) is True
 
 
 def test_sensor_location_stats_stay_stable_when_client_name_changes(tmp_path: Path) -> None:

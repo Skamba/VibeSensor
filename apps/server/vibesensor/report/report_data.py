@@ -11,6 +11,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
+
 from .. import __version__
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -35,6 +37,7 @@ class ObservedSignature:
     strongest_sensor_location: str | None = None
     speed_band: str | None = None
     strength_label: str | None = None
+    strength_peak_amp_g: float | None = None
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
@@ -79,6 +82,7 @@ class PatternEvidence:
     strongest_location: str | None = None
     speed_band: str | None = None
     strength_label: str | None = None
+    strength_peak_amp_g: float | None = None
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
@@ -94,6 +98,7 @@ class PeakRow:
     freq_hz: str
     order: str
     amp_g: str
+    strength_db: str
     speed_band: str
     relevance: str
 
@@ -141,26 +146,61 @@ def _human_source(source: object, *, tr) -> str:  # type: ignore[type-arg]
     return mapping.get(raw, raw.replace("_", " ").title() if raw else tr("UNKNOWN"))
 
 
-def _top_strength_db(summary: dict) -> float | None:
-    """Best vibration_strength_db from top cause or sensor intensity."""
+def _finding_strength_values(finding: dict) -> tuple[float | None, float | None]:
+    amp_metric = finding.get("amplitude_metric")
+    peak_amp_g = _as_float(amp_metric.get("value")) if isinstance(amp_metric, dict) else None
+
+    evidence_metrics = finding.get("evidence_metrics")
+    db_value = (
+        _as_float(evidence_metrics.get("vibration_strength_db"))
+        if isinstance(evidence_metrics, dict)
+        else None
+    )
+    if db_value is not None:
+        return (db_value, peak_amp_g)
+
+    if isinstance(evidence_metrics, dict):
+        noise_floor = _as_float(evidence_metrics.get("mean_noise_floor"))
+        if peak_amp_g is not None and noise_floor is not None and noise_floor > 0:
+            return (
+                vibration_strength_db_scalar(
+                    peak_band_rms_amp_g=peak_amp_g, floor_amp_g=noise_floor
+                ),
+                peak_amp_g,
+            )
+
+    return (None, peak_amp_g)
+
+
+def _top_strength_values(summary: dict) -> tuple[float | None, float | None]:
+    """Return best ``(vibration_strength_db, peak_amp_g)`` for observed strength text."""
+    db_value: float | None = None
+    peak_amp_g: float | None = None
     for cause in summary.get("top_causes", []):
         if not isinstance(cause, dict):
             continue
-        for f in summary.get("findings", []):
-            if not isinstance(f, dict):
+        for finding in summary.get("findings", []):
+            if not isinstance(finding, dict):
                 continue
-            if f.get("finding_id") == cause.get("finding_id"):
-                amp = f.get("amplitude_metric")
-                if isinstance(amp, dict):
-                    v = _as_float(amp.get("value"))
-                    if v is not None:
-                        return v
+            if finding.get("finding_id") != cause.get("finding_id"):
+                continue
+            finding_db, finding_peak = _finding_strength_values(finding)
+            if db_value is None and finding_db is not None:
+                db_value = finding_db
+            if peak_amp_g is None and finding_peak is not None:
+                peak_amp_g = finding_peak
+            if db_value is not None and peak_amp_g is not None:
+                break
+        if db_value is not None and peak_amp_g is not None:
+            break
+
     for row in summary.get("sensor_intensity_by_location", []):
         if isinstance(row, dict):
             v = _as_float(row.get("p95_intensity_db"))
             if v is not None:
-                return v
-    return None
+                db_value = db_value if db_value is not None else v
+                break
+    return (db_value, peak_amp_g)
 
 
 def _peak_classification_text(value: object, tr: Callable[..., str] | None = None) -> str:
@@ -210,22 +250,26 @@ def map_summary(summary: dict) -> ReportTemplateData:
     speed_stats = (
         summary.get("speed_stats", {}) if isinstance(summary.get("speed_stats"), dict) else {}
     )
+    origin = summary.get("most_likely_origin", {})
+    if not isinstance(origin, dict):
+        origin = {}
+    origin_location = str(origin.get("location") or "").strip()
 
     # -- Observed signature --
     if top_causes:
         tc = top_causes[0]
         primary_system = _human_source(tc.get("source") or tc.get("suspected_source"), tr=tr)
-        primary_location = str(tc.get("strongest_location") or tr("UNKNOWN"))
+        primary_location = origin_location or str(tc.get("strongest_location") or tr("UNKNOWN"))
         primary_speed = str(tc.get("strongest_speed_band") or tr("UNKNOWN"))
         conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
     else:
         primary_system = tr("UNKNOWN")
-        primary_location = tr("UNKNOWN")
+        primary_location = origin_location or tr("UNKNOWN")
         primary_speed = tr("UNKNOWN")
         conf = 0.0
 
-    db_val = _top_strength_db(summary)
-    str_text = strength_text(db_val, lang=lang)
+    db_val, peak_amp_g = _top_strength_values(summary)
+    str_text = strength_text(db_val, lang=lang, peak_amp_g=peak_amp_g)
 
     steady = bool(speed_stats.get("steady_speed"))
     weak_spatial = bool(top_causes[0].get("weak_spatial_separation") if top_causes else False)
@@ -246,6 +290,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         strongest_sensor_location=primary_location,
         speed_band=primary_speed,
         strength_label=str_text,
+        strength_peak_amp_g=peak_amp_g,
         certainty_label=cert_label_text,
         certainty_pct=cert_pct,
         certainty_reason=cert_reason,
@@ -324,7 +369,6 @@ def map_summary(summary: dict) -> ReportTemplateData:
         if top_causes
         else tr("UNKNOWN")
     )
-    origin = summary.get("most_likely_origin", {})
     interp = str(origin.get("explanation", "")) if isinstance(origin, dict) else ""
     src_why = str(
         (top_causes[0].get("source") or top_causes[0].get("suspected_source")) if top_causes else ""
@@ -340,6 +384,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         strongest_location=pe_loc,
         speed_band=pe_speed,
         strength_label=str_text,
+        strength_peak_amp_g=peak_amp_g,
         certainty_label=cert_label_text,
         certainty_pct=cert_pct,
         certainty_reason=cert_reason,
@@ -360,6 +405,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         order_label = str(row.get("order_label") or "").strip()
         order = order_label or classification
         amp = f"{(_as_float(row.get('p95_amp_g')) or 0.0):.4f}"
+        strength_db_val = _as_float(row.get("strength_db"))
+        strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "—"
         speed = str(row.get("typical_speed_band") or "\u2014")
         presence = float(_as_float(row.get("presence_ratio")) or 0.0)
         score = float(_as_float(row.get("persistence_score")) or 0.0)
@@ -384,6 +431,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
                 freq_hz=freq,
                 order=order,
                 amp_g=amp,
+                strength_db=strength_db,
                 speed_band=speed,
                 relevance=relevance,
             )

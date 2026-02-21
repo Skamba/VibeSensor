@@ -5,8 +5,9 @@ from vibesensor_core.strength_bands import band_by_key, band_rank, bucket_for_st
 # -- bucket_for_strength -------------------------------------------------------
 
 
-def test_bucket_below_threshold_returns_none() -> None:
-    assert bucket_for_strength(vibration_strength_db=5.0) is None
+def test_bucket_below_threshold_returns_l0() -> None:
+    assert bucket_for_strength(vibration_strength_db=0.0) == "l0"
+    assert bucket_for_strength(vibration_strength_db=5.0) == "l0"
 
 
 def test_bucket_l1_threshold() -> None:
@@ -32,6 +33,12 @@ def test_band_by_key_valid() -> None:
     assert band["min_db"] == 8.0
 
 
+def test_band_by_key_l0() -> None:
+    band = band_by_key("l0")
+    assert band is not None
+    assert band["min_db"] == 0.0
+
+
 def test_band_by_key_l5() -> None:
     band = band_by_key("l5")
     assert band is not None
@@ -47,9 +54,10 @@ def test_band_by_key_unknown() -> None:
 
 
 def test_band_rank_ordering() -> None:
-    assert band_rank("l1") == 0
-    assert band_rank("l5") == 4
-    assert band_rank("l3") == 2
+    assert band_rank("l0") == 0
+    assert band_rank("l1") == 1
+    assert band_rank("l5") == 5
+    assert band_rank("l3") == 3
 
 
 def test_band_rank_unknown_returns_neg1() -> None:
