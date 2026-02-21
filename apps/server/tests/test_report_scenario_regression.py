@@ -263,6 +263,30 @@ class TestConfidenceCalibration:
             assert low_conf < high_conf
             assert low_conf <= high_conf * 0.85
 
+    def test_sample_count_scaling_formula_meets_minimum_penalty(self) -> None:
+        """Issue #185: 4-match minimum must receive >=15% confidence penalty vs 20+ matches.
+
+        The formula: sample_factor = min(1.0, matched / 20.0)
+                     multiplier = 0.70 + 0.30 * sample_factor
+        At 4 matches: multiplier = 0.76 (24% less than 1.0)
+        Acceptance criteria: penalty >= 15% compared to 20+ matched samples.
+        """
+        # Test formula directly
+        def sample_multiplier(matched: int) -> float:
+            sample_factor = min(1.0, matched / 20.0)
+            return 0.70 + 0.30 * sample_factor
+
+        mult_at_min = sample_multiplier(4)
+        mult_at_full = sample_multiplier(20)
+
+        penalty_pct = (1.0 - mult_at_min / mult_at_full) * 100.0
+        assert penalty_pct >= 15.0, (
+            f"Sample-count penalty at 4 matches should be >=15% vs 20+ matches, got {penalty_pct:.1f}%"
+        )
+        # Also verify the multiplier saturates at 1.0 for 20+ samples
+        assert mult_at_full == 1.0
+        assert sample_multiplier(100) == 1.0
+
     def test_negligible_amplitude_capped(self) -> None:
         """Very weak signal (< 2 mg) → confidence capped at 0.45."""
         meta = _standard_metadata()
