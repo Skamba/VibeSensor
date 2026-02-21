@@ -104,6 +104,55 @@ def _speed_profile_from_points(
     return peak_speed_kmh, speed_window_kmh, strongest_speed_band
 
 
+def _phase_speed_breakdown(
+    samples: list[dict[str, Any]],
+    per_sample_phases: list,
+) -> list[dict[str, object]]:
+    """Group vibration statistics by driving phase (temporal context).
+
+    Unlike ``_speed_breakdown`` which bins by speed magnitude, this function
+    groups by the temporal driving phase (IDLE, ACCELERATION, CRUISE, etc.)
+    so callers can see how vibration differs across phases at the same speed.
+
+    Addresses issue #189: adds temporal phase context to speed breakdown.
+    """
+    from .phase_segmentation import DrivingPhase
+
+    grouped_amp: dict[str, list[float]] = defaultdict(list)
+    grouped_speeds: dict[str, list[float]] = defaultdict(list)
+    counts: dict[str, int] = defaultdict(int)
+
+    for sample, phase in zip(samples, per_sample_phases, strict=False):
+        phase_key = phase.value if isinstance(phase, DrivingPhase) else str(phase)
+        counts[phase_key] += 1
+        speed = _as_float(sample.get("speed_kmh"))
+        if speed is not None and speed > 0:
+            grouped_speeds[phase_key].append(speed)
+        amp = _primary_vibration_strength_db(sample)
+        if amp is not None:
+            grouped_amp[phase_key].append(amp)
+
+    # Output in a canonical phase order
+    phase_order = [p.value for p in DrivingPhase]
+    rows: list[dict[str, object]] = []
+    for phase_key in phase_order:
+        if phase_key not in counts:
+            continue
+        amp_vals = grouped_amp.get(phase_key, [])
+        speed_vals = grouped_speeds.get(phase_key, [])
+        rows.append(
+            {
+                "phase": phase_key,
+                "count": counts[phase_key],
+                "mean_speed_kmh": mean(speed_vals) if speed_vals else None,
+                "max_speed_kmh": max(speed_vals) if speed_vals else None,
+                "mean_vibration_strength_db": mean(amp_vals) if amp_vals else None,
+                "max_vibration_strength_db": max(amp_vals) if amp_vals else None,
+            }
+        )
+    return rows
+
+
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)

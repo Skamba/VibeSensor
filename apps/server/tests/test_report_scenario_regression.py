@@ -742,6 +742,67 @@ class TestReportMetadataCompleteness:
 # ---------------------------------------------------------------------------
 
 
+class TestPhaseSpeedBreakdown:
+    """_phase_speed_breakdown groups samples by driving phase, not speed magnitude.
+
+    Addresses issue #189: adds temporal phase context alongside speed-magnitude
+    breakdown so callers can compare vibration in cruise vs. acceleration at
+    the same physical speed.
+    """
+
+    def test_phase_speed_breakdown_groups_by_phase(self) -> None:
+        """Output must have one row per detected phase, keyed by phase name."""
+        from vibesensor.report.findings import _phase_speed_breakdown
+        from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
+
+        # Build a sequence: idle → cruise
+        samples = []
+        for i in range(5):
+            samples.append({"t_s": float(i), "speed_kmh": 0.5, "vibration_strength_db": 5.0})
+        for i in range(5, 20):
+            samples.append({"t_s": float(i), "speed_kmh": 60.0, "vibration_strength_db": 22.0})
+
+        per_sample_phases, _ = segment_run_phases(samples)
+        rows = _phase_speed_breakdown(samples, per_sample_phases)
+
+        phase_names = {row["phase"] for row in rows}
+        assert DrivingPhase.IDLE.value in phase_names
+        assert DrivingPhase.CRUISE.value in phase_names or DrivingPhase.ACCELERATION.value in phase_names
+
+    def test_phase_speed_breakdown_included_in_summary(self) -> None:
+        """summarize_run_data must include phase_speed_breakdown in output."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples(
+            [
+                (5, 0.0, 0.0),  # IDLE
+                (15, 10.0, 80.0),  # ACCELERATION → CRUISE
+            ]
+        )
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        psd = summary.get("phase_speed_breakdown")
+        assert psd is not None, "phase_speed_breakdown must be in summary"
+        assert isinstance(psd, list)
+        # At least one row must be present
+        assert len(psd) >= 1
+        # Every row must have 'phase' and count fields
+        for row in psd:
+            assert "phase" in row
+            assert "count" in row
+            assert row["count"] > 0
+
+    def test_phase_breakdown_rows_cover_all_samples(self) -> None:
+        """Sum of phase row counts must equal total samples processed."""
+        from vibesensor.report.findings import _phase_speed_breakdown
+        from vibesensor.report.phase_segmentation import segment_run_phases
+
+        samples = _build_phased_samples([(5, 0.0, 0.0), (10, 50.0, 80.0), (5, 0.0, 0.0)])
+        per_sample_phases, _ = segment_run_phases(samples)
+        rows = _phase_speed_breakdown(samples, per_sample_phases)
+
+        total = sum(int(row["count"]) for row in rows)
+        assert total == len(samples)
+
+
 class TestReferenceFindingDistinguishability:
     """Reference-missing findings must be distinguishable and must not inflate
     confidence statistics. (issue #187)"""
