@@ -294,6 +294,25 @@ def test_create_run_metadata_includes_firmware_version_when_provided() -> None:
     assert meta["firmware_version"] == "esp-fw-1.2.3"
 
 
+def test_create_run_metadata_includes_phase_metadata_defaults() -> None:
+    meta = create_run_metadata(
+        run_id="r1",
+        start_time_utc="2025-01-01T00:00:00Z",
+        sensor_model="ADXL345",
+        raw_sample_rate_hz=200,
+        feature_interval_s=0.5,
+        fft_window_size_samples=256,
+        fft_window_type="hann",
+        peak_picker_method="max_peak_amp_across_axes",
+        accel_scale_g_per_lsb=1.0 / 256.0,
+    )
+    phase_meta = meta.get("phase_metadata")
+    assert isinstance(phase_meta, dict)
+    assert phase_meta["version"] == "v1"
+    assert phase_meta["idle_speed_kmh_max"] == 3.0
+    assert phase_meta["labels"] == ["idle", "acceleration", "cruise", "deceleration", "coast_down"]
+
+
 def test_append_jsonl_records_preserves_unicode_text(tmp_path: Path) -> None:
     path = tmp_path / "unicode.jsonl"
     append_jsonl_records(path, [{"sensor_name": "Voorwiel links", "finding": "trilling én geluid"}])
