@@ -72,9 +72,6 @@ def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
 # ---------------------------------------------------------------------------
 
 
-TRANSIENT_FALLBACK_MIN_CONFIDENCE = 0.15
-
-
 def select_top_causes(
     findings: list[dict[str, object]],
     *,
@@ -88,27 +85,11 @@ def select_top_causes(
         for f in findings
         if isinstance(f, dict)
         and not str(f.get("finding_id", "")).startswith("REF_")
+        and str(f.get("severity") or "diagnostic").strip().lower() != "info"
         and float(f.get("confidence_0_to_1") or 0) >= ORDER_MIN_CONFIDENCE
     ]
     if not diag_findings:
-        transient_candidates = [
-            f
-            for f in findings
-            if isinstance(f, dict)
-            and not str(f.get("finding_id", "")).startswith("REF_")
-            and float(f.get("confidence_0_to_1") or 0.0) >= TRANSIENT_FALLBACK_MIN_CONFIDENCE
-            and (
-                str(f.get("suspected_source") or "").strip().lower() == "transient_impact"
-                or str(f.get("peak_classification") or "").strip().lower() == "transient"
-            )
-        ]
-        if not transient_candidates:
-            return []
-        fallback_top = dict(
-            max(transient_candidates, key=lambda f: float(f.get("confidence_0_to_1") or 0.0))
-        )
-        fallback_top["diagnostic_caveat"] = "transient_only"
-        diag_findings = [fallback_top]
+        return []
 
     # Group by suspected_source
     groups: dict[str, list[dict[str, object]]] = defaultdict(list)

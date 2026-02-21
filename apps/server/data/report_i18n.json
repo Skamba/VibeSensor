@@ -1079,6 +1079,10 @@
     "en": "Diagnostic Peaks",
     "nl": "Diagnostische pieken"
   },
+  "ADDITIONAL_OBSERVATIONS": {
+    "en": "Additional Observations",
+    "nl": "Aanvullende observaties"
+  },
   "SYSTEM": {
     "en": "System",
     "nl": "Systeem"

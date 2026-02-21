@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from vibesensor.report import build_findings_for_samples, summarize_log
+from vibesensor.report import findings as findings_module
 from vibesensor.report.findings import _speed_breakdown
 from vibesensor.runlog import (
     append_jsonl_records,
@@ -104,6 +105,58 @@ def test_build_findings_nl_language() -> None:
     assert isinstance(findings, list)
     # Verify the function accepts "nl" without error; the small dataset may not
     # produce actionable findings, so we only verify return type.
+
+
+def test_build_findings_orders_informational_transients_after_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _fake_order_findings(**_kwargs) -> list[dict[str, object]]:
+        return [
+            {
+                "finding_id": "F_PEAK",
+                "severity": "diagnostic",
+                "suspected_source": "wheel/tire",
+                "confidence_0_to_1": 0.30,
+            }
+        ]
+
+    def _fake_persistent_peaks(**_kwargs) -> list[dict[str, object]]:
+        return [
+            {
+                "finding_id": "F_PEAK",
+                "severity": "info",
+                "suspected_source": "transient_impact",
+                "peak_classification": "transient",
+                "confidence_0_to_1": 0.22,
+            }
+        ]
+
+    monkeypatch.setattr(findings_module, "_build_order_findings", _fake_order_findings)
+    monkeypatch.setattr(
+        findings_module,
+        "_build_persistent_peak_findings",
+        _fake_persistent_peaks,
+    )
+
+    findings = findings_module._build_findings(
+        metadata={"units": {"accel_x_g": "g"}},
+        samples=[],
+        speed_sufficient=True,
+        steady_speed=False,
+        speed_stddev_kmh=None,
+        speed_non_null_pct=100.0,
+        raw_sample_rate_hz=200.0,
+        lang="en",
+    )
+    non_ref_findings = [
+        f
+        for f in findings
+        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
+    ]
+
+    assert len(non_ref_findings) >= 2
+    assert str(non_ref_findings[0].get("severity") or "") != "info"
+    assert str(non_ref_findings[-1].get("severity") or "") == "info"
 
 
 def test_build_findings_detects_sparse_high_speed_only_fault() -> None:

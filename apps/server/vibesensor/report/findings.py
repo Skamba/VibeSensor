@@ -21,6 +21,7 @@ from .helpers import (
     ORDER_TOLERANCE_MIN_HZ,
     ORDER_TOLERANCE_REL,
     SPEED_COVERAGE_MIN_PCT,
+    _amplitude_weighted_speed_window,
     _corr_abs,
     _effective_engine_rpm,
     _location_label,
@@ -83,7 +84,7 @@ def _speed_profile_from_points(
     if high < low:
         low, high = high, low
     speed_window_kmh = (low, high)
-    low_speed, high_speed = _dominant_speed_bin_window(
+    low_speed, high_speed = _amplitude_weighted_speed_window(
         [speed_kmh for speed_kmh, _amp in valid],
         [amp for _speed_kmh, amp in valid],
     )
@@ -93,31 +94,6 @@ def _speed_profile_from_points(
         else None
     )
     return peak_speed_kmh, speed_window_kmh, strongest_speed_band
-
-
-def _dominant_speed_bin_window(
-    speeds: list[float],
-    amplitudes: list[float],
-) -> tuple[float | None, float | None]:
-    bin_weight: dict[str, float] = defaultdict(float)
-    for speed, amp in zip(speeds, amplitudes, strict=False):
-        speed_val = _as_float(speed)
-        amp_val = _as_float(amp)
-        if speed_val is None or speed_val <= 0 or amp_val is None or amp_val <= 0:
-            continue
-        speed_bin = _speed_bin_label(speed_val)
-        bin_weight[speed_bin] += amp_val
-
-    if not bin_weight:
-        return (None, None)
-
-    strongest_bin = max(
-        bin_weight.keys(),
-        key=lambda label: (bin_weight[label], _speed_bin_sort_key(label)),
-    )
-    head = strongest_bin.split(" ", 1)[0]
-    low_text, high_text = head.split("-", 1)
-    return (_as_float(low_text), _as_float(high_text))
 
 
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
