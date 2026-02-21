@@ -159,11 +159,11 @@ class MetricsLogger:
             }
 
     def start_logging(self) -> dict[str, str | bool | None]:
-        run_id_to_analyze: str | None = None
+        completed_run_id: str | None = None
         with self._lock:
             if self.enabled and self._run_id:
                 if self._history_run_created and self._written_sample_count > 0:
-                    run_id_to_analyze = self._run_id
+                    completed_run_id = self._run_id
                 self._finalize_run_locked()
             self.enabled = True
             self._start_new_session_locked()
@@ -171,8 +171,8 @@ class MetricsLogger:
             self._live_start_utc = self._run_start_utc or utc_now_iso()
             self._live_start_mono_s = self._run_start_mono_s or time.monotonic()
             result = self.status()
-        if run_id_to_analyze and self._history_db is not None:
-            self._schedule_post_analysis(run_id_to_analyze)
+        if completed_run_id and self._history_db is not None:
+            self._schedule_post_analysis(completed_run_id)
         return result
 
     def stop_logging(self) -> dict[str, str | bool | None]:

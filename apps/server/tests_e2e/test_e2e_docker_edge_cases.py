@@ -18,6 +18,8 @@ from .e2e_helpers import (
 )
 
 pytestmark = pytest.mark.e2e
+SHORT_RUN_DURATION_S = 0.8
+FORBIDDEN_PLACEHOLDERS = (" null ", " none ", " nan ", " undefined ", "{{", "}}")
 
 
 @pytest.fixture
@@ -59,6 +61,12 @@ def _cleanup_clients(base_url: str) -> None:
 
 def _wait_complete(base_url: str, run_id: str) -> dict:
     return wait_run_status(base_url, run_id, statuses=("complete", "error"), timeout_s=120.0)
+
+
+def _assert_no_placeholders(text: str) -> None:
+    padded = f" {text} "
+    for token in FORBIDDEN_PLACEHOLDERS:
+        assert token not in padded
 
 
 def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None:
@@ -526,15 +534,14 @@ def test_no_data_or_short_run_behavior_e2e(e2e_env: dict[str, str]) -> None:
 
     second = api_json(base, "/api/logging/start", method="POST")
     run_short = str(second["run_id"])
-    _simulate(e2e_env, duration=0.8)
+    _simulate(e2e_env, duration=SHORT_RUN_DURATION_S)
     api_json(base, "/api/logging/stop", method="POST")
 
-    visible = wait_for(
+    wait_for(
         lambda: run_short in history_run_ids(base),
         timeout_s=20,
         message=f"short run {run_short} did not appear",
     )
-    assert visible
     run = _wait_complete(base, run_short)
     assert run["status"] in {"complete", "error"}
     if run["status"] == "complete":
@@ -562,8 +569,7 @@ def test_reduced_sensor_count_run_still_reports(e2e_env: dict[str, str]) -> None
         pdf_resp = api_bytes(base, f"/api/history/{run_id}/report.pdf")
         text = pdf_text(pdf_resp.body)
         assert "diagnostic worksheet" in text
-        assert "{{" not in text
-        assert " none " not in f" {text} "
+        _assert_no_placeholders(text)
     finally:
         api_json(base, "/api/logging/stop", method="POST")
         _cleanup_run(base, run_id)
@@ -684,10 +690,7 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
             peak_hz = float(top_fft[0] if isinstance(top_fft, list) else top_fft.get("hz") or 0)
             assert any(token in text for token in (f"{peak_hz:.1f}", f"{peak_hz:.2f}"))
 
-        forbidden_placeholders = (" null ", " none ", " nan ", " undefined ", "{{", "}}")
-        pad = f" {text} "
-        for token in forbidden_placeholders:
-            assert token not in pad
+        _assert_no_placeholders(text)
     finally:
         api_json(base, "/api/logging/stop", method="POST")
         _cleanup_run(base, run_id)
