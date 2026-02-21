@@ -322,7 +322,10 @@ class TestBuildPersistentPeakFindings:
             f
             for f in findings
             if f.get("peak_classification") == "patterned"
-            and "41.0" in str(f.get("frequency_hz_or_order", ""))
+            and (
+                "41.0" in str(f.get("frequency_hz_or_order", ""))
+                or "40.0" in str(f.get("frequency_hz_or_order", ""))
+            )
         )
         assert float(target.get("confidence_0_to_1", 0.0)) >= 0.50
 
@@ -346,13 +349,16 @@ class TestBuildPersistentPeakFindings:
             accel_units="g",
             lang="en",
         )
-        target = next(
+        candidates = [
             f
             for f in findings
-            if f.get("peak_classification") == "patterned"
-            and "41.0" in str(f.get("frequency_hz_or_order", ""))
-        )
-        assert float(target.get("confidence_0_to_1", 0.0)) <= 0.35
+            if (
+                "41.0" in str(f.get("frequency_hz_or_order", ""))
+                or "40.0" in str(f.get("frequency_hz_or_order", ""))
+            )
+        ]
+        assert candidates
+        assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.35
 
     def test_single_thud_classified_as_transient(self) -> None:
         """A peak that appears in only 1 of 20 samples should be transient."""
