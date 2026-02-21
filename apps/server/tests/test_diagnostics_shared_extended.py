@@ -212,7 +212,7 @@ def test_severity_escalation_from_l1_to_l3() -> None:
     # Now push to L3
     for _ in range(3):
         out = severity_from_peak(
-            vibration_strength_db=23.0,
+            vibration_strength_db=27.0,
             sensor_count=1,
             prior_state=state,
         )
@@ -226,7 +226,7 @@ def test_severity_downgrade_with_decay() -> None:
     # Establish L3
     for _ in range(3):
         out = severity_from_peak(
-            vibration_strength_db=23.0,
+            vibration_strength_db=27.0,
             sensor_count=1,
             prior_state=state,
         )
@@ -283,21 +283,21 @@ def test_severity_same_rank_resets_counters() -> None:
 def test_severity_multi_sensor_bonus() -> None:
     """sensor_count >= 2 adds 3 dB bonus."""
     state = None
-    # At 8 dB base with single sensor → below L1 (10 dB)
+    # At 6 dB base with single sensor → below L1 (8 dB)
     for _ in range(3):
         out = severity_from_peak(
-            vibration_strength_db=8.0,
+            vibration_strength_db=6.0,
             sensor_count=1,
             prior_state=state,
         )
         state = dict(out.get("state") or {})
     assert out["key"] is None
 
-    # At 8 dB base with 2 sensors → 11 dB adjusted → above L1
+    # At 6 dB base with 2 sensors → 9 dB adjusted → above L1
     state = None
     for _ in range(3):
         out = severity_from_peak(
-            vibration_strength_db=8.0,
+            vibration_strength_db=6.0,
             sensor_count=2,
             prior_state=state,
         )

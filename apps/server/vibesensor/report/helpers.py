@@ -259,6 +259,23 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
 
 
 def _location_label(sample: dict[str, Any]) -> str:
+    """Return a stable English location label for the sample.
+
+    NOTE: This is used as a **grouping key** across the data pipeline, so it
+    must be language-invariant.  Translation to the report language happens at
+    render time in the PDF builder / template layer.
+    """
+    # Prefer structured location code (from SensorConfig) if available
+    from ..locations import label_for_code as _label_for_code  # local to avoid circular import
+
+    location_code = str(sample.get("location") or "").strip()
+    if location_code:
+        human = _label_for_code(location_code)
+        if human:
+            return human
+        # If code is not in our table but non-empty, use it directly
+        return location_code
+
     client_name_raw = str(sample.get("client_name") or "").strip()
     if client_name_raw:
         return client_name_raw

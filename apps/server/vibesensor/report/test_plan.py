@@ -6,9 +6,10 @@ from __future__ import annotations
 from collections import defaultdict
 from statistics import mean
 
+from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
-from .helpers import _speed_bin_label, _text
+from .helpers import _speed_bin_label
 from .order_analysis import _finding_actions_for_source
 
 
@@ -88,15 +89,13 @@ def _merge_test_plan(
             "action_id": "general_mechanical_inspection",
             "what": _tr(lang, "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
             "why": _tr(lang, "NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
-            "confirm": _text(
+            "confirm": _tr(
                 lang,
-                "A concrete mechanical issue is identified.",
-                "Een concrete mechanische afwijking wordt vastgesteld.",
+                "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED",
             ),
-            "falsify": _text(
+            "falsify": _tr(
                 lang,
-                "No abnormal play, wear, or looseness is detected.",
-                "Er wordt geen abnormale speling, slijtage of losheid gedetecteerd.",
+                "FALSIFY_NO_ABNORMAL_PLAY_WEAR_OR_LOOSENESS",
             ),
             "eta": "20-35 min",
         }
@@ -119,6 +118,7 @@ def _location_speedbin_summary(
     if not grouped:
         return "", None
 
+    per_bin_results: list[dict[str, object]] = []
     best: dict[str, object] | None = None
     for bin_label, per_loc in grouped.items():
         ranked = sorted(
@@ -137,30 +137,27 @@ def _location_speedbin_summary(
             "mean_amp": top_amp,
             "dominance_ratio": dominance,
             "location_count": len(ranked),
-            "weak_spatial_separation": dominance < 1.2,
+            "weak_spatial_separation": dominance < WEAK_SPATIAL_DOMINANCE_THRESHOLD,
         }
+        per_bin_results.append(candidate)
         if best is None or float(candidate["mean_amp"]) > float(best["mean_amp"]):
             best = candidate
 
     if best is None:
         return "", None
 
-    sentence = _text(
+    # Attach per-bin breakdown so callers can inspect per-speed-bin location
+    # rankings instead of only getting the global winner.
+    best["per_bin_results"] = per_bin_results
+
+    sentence = _tr(
         lang,
-        (
-            "Strongest at {location} in {speed_range} "
-            "(~{dominance:.2f}x vs next location in that speed bin{weak_note})."
-        ),
-        (
-            "Sterkst bij {location} in {speed_range} "
-            "(~{dominance:.2f}x t.o.v. volgende locatie in die snelheidsband{weak_note})."
-        ),
-    ).format(
+        "STRONGEST_AT_LOCATION_IN_SPEED_RANGE",
         location=best["location"],
         speed_range=best["speed_range"],
-        dominance=float(best["dominance_ratio"]),
+        dominance=f"{float(best['dominance_ratio']):.2f}",
         weak_note=(
-            _text(lang, ", weak spatial separation", ", zwakke ruimtelijke scheiding")
+            _tr(lang, "WEAK_SPATIAL_SEPARATION_NOTE")
             if bool(best.get("weak_spatial_separation"))
             else ""
         ),

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
+from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -26,14 +27,20 @@ from .helpers import (
     _format_duration,
     _load_run,
     _location_label,
+    _locations_connected_throughout_run,
     _mean_variance,
     _outlier_summary,
     _percent_missing,
     _primary_vibration_strength_db,
     _sensor_limit_g,
     _speed_stats,
-    _text,
     _validate_required_strength_metrics,
+)
+from .phase_segmentation import (
+    phase_summary as _phase_summary,
+)
+from .phase_segmentation import (
+    segment_run_phases as _segment_run_phases,
 )
 from .plot_data import _plot_data
 from .test_plan import _merge_test_plan
@@ -171,57 +178,63 @@ def _most_likely_origin_summary(
             "source": _tr(lang, "UNKNOWN"),
             "dominance_ratio": None,
             "weak_spatial_separation": True,
-            "explanation": _text(
-                lang,
-                "No ranked finding is available yet.",
-                "Nog geen gerangschikte bevinding beschikbaar.",
-            ),
+            "explanation": _tr(lang, "ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
     top = findings[0]
     location = str(top.get("strongest_location") or "").strip() or _tr(lang, "UNKNOWN")
     source = str(top.get("suspected_source") or "unknown")
+    _source_i18n_map = {
+        "wheel/tire": "SOURCE_WHEEL_TIRE",
+        "driveline": "SOURCE_DRIVELINE",
+        "engine": "SOURCE_ENGINE",
+    }
+    source_i18n_key = _source_i18n_map.get(source)
     source_human = (
-        "Wheel / Tire"
-        if source == "wheel/tire"
-        else "Driveline"
-        if source == "driveline"
-        else "Engine"
-        if source == "engine"
-        else "Unknown"
+        _tr(lang, source_i18n_key) if source_i18n_key else source.replace("_", " ").title()
     )
     dominance = _as_float(top.get("dominance_ratio"))
-    weak = bool(top.get("weak_spatial_separation")) or (dominance is not None and dominance < 1.2)
-    speed_band = str(
-        top.get("strongest_speed_band") or _text(lang, "unknown band", "onbekende band")
+    weak = bool(top.get("weak_spatial_separation")) or (
+        dominance is not None and dominance < WEAK_SPATIAL_DOMINANCE_THRESHOLD
     )
-    explanation = _text(
+
+    # Spatial disambiguation: check if second-ranked finding disagrees on
+    # location with similar confidence — strengthens the "weak" flag.
+    spatial_disagreement = False
+    if len(findings) >= 2:
+        second = findings[1]
+        second_loc = str(second.get("strongest_location") or "").strip()
+        second_conf = _as_float(second.get("confidence_0_to_1")) or 0.0
+        top_conf = _as_float(top.get("confidence_0_to_1")) or 0.0
+        if (
+            second_loc
+            and location
+            and second_loc != location
+            and top_conf > 0
+            and second_conf / top_conf >= 0.7  # within 30% confidence
+        ):
+            spatial_disagreement = True
+            weak = True
+
+    speed_band = str(top.get("strongest_speed_band") or _tr(lang, "UNKNOWN_SPEED_BAND"))
+    explanation = _tr(
         lang,
-        (
-            "Based on Finding 1 ({source}) matched samples in {speed_band}, strongest at {location}, "
-            "dominance {dominance}."
-        ),
-        (
-            "Gebaseerd op Bevinding 1 ({source}) met gematchte samples in {speed_band}, sterkst bij {location}, "
-            "dominantie {dominance}."
-        ),
-    ).format(
+        "ORIGIN_EXPLANATION_FINDING_1",
         source=source_human,
         speed_band=speed_band,
         location=location,
-        dominance=(f"{dominance:.2f}x" if dominance is not None else _text(lang, "n/a", "n.v.t.")),
+        dominance=(
+            f"{dominance:.2f}x" if dominance is not None else _tr(lang, "NOT_APPLICABLE_SHORT")
+        ),
     )
     if weak:
-        explanation += " " + _text(
-            lang,
-            "Weak spatial separation; inspect both top nearby components before replacing parts.",
-            "Zwakke ruimtelijke scheiding; controleer eerst beide dichtstbijzijnde componenten voordat je onderdelen vervangt.",
-        )
+        explanation += " " + _tr(lang, "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY")
     return {
         "location": location,
         "source": source,
         "source_human": source_human,
         "dominance_ratio": dominance,
         "weak_spatial_separation": weak,
+        "spatial_disagreement": spatial_disagreement,
         "speed_band": speed_band,
         "explanation": explanation,
     }
@@ -298,6 +311,10 @@ def summarize_run_data(
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
     )
+
+    # Phase segmentation
+    _per_sample_phases, phase_segments = _segment_run_phases(samples)
+    phase_info = _phase_summary(phase_segments)
 
     sensor_model = metadata.get("sensor_model")
     sensor_limit = _sensor_limit_g(sensor_model)
@@ -392,83 +409,81 @@ def summarize_run_data(
             )
         )
     )
+    steady_speed = bool(speed_stats.get("steady_speed"))
+    sensor_ids = {
+        str(s.get("client_id") or "") for s in samples if isinstance(s, dict) and s.get("client_id")
+    }
+    sensor_count_sufficient = len(sensor_ids) >= 3
     run_suitability = [
         {
-            "check": _text(language, "Speed variation", "Snelheidsvariatie"),
-            "state": ("pass" if not bool(speed_stats.get("steady_speed")) else "warn"),
-            "explanation": _text(
-                language,
-                "Wide enough speed sweep for order tracking."
-                if not bool(speed_stats.get("steady_speed"))
-                else "Speed sweep is narrow; repeat with +20 to +30 km/h span.",
-                "Snelheidssweep is breed genoeg voor orde-tracking."
-                if not bool(speed_stats.get("steady_speed"))
-                else "Snelheidssweep is smal; herhaal met +20 tot +30 km/u bereik.",
+            "check": _tr(language, "SUITABILITY_CHECK_SPEED_VARIATION"),
+            "state": "pass" if not steady_speed else "warn",
+            "explanation": (
+                _tr(language, "SUITABILITY_SPEED_VARIATION_PASS")
+                if not steady_speed
+                else _tr(language, "SUITABILITY_SPEED_VARIATION_WARN")
             ),
         },
         {
-            "check": _text(language, "Sensor coverage", "Sensordekking"),
-            "state": "pass"
-            if len(
-                {
-                    str(s.get("client_id") or "")
-                    for s in samples
-                    if isinstance(s, dict) and s.get("client_id")
-                }
-            )
-            >= 3
-            else "warn",
-            "explanation": _text(
-                language,
-                "Multiple sensor locations observed."
-                if len(
-                    {
-                        str(s.get("client_id") or "")
-                        for s in samples
-                        if isinstance(s, dict) and s.get("client_id")
-                    }
-                )
-                >= 3
-                else "Few active sensors; location ranking is weaker.",
-                "Meerdere sensorlocaties waargenomen."
-                if len(
-                    {
-                        str(s.get("client_id") or "")
-                        for s in samples
-                        if isinstance(s, dict) and s.get("client_id")
-                    }
-                )
-                >= 3
-                else "Weinig actieve sensoren; locatierangschikking is zwakker.",
+            "check": _tr(language, "SUITABILITY_CHECK_SENSOR_COVERAGE"),
+            "state": "pass" if sensor_count_sufficient else "warn",
+            "explanation": (
+                _tr(language, "SUITABILITY_SENSOR_COVERAGE_PASS")
+                if sensor_count_sufficient
+                else _tr(language, "SUITABILITY_SENSOR_COVERAGE_WARN")
             ),
         },
         {
-            "check": _text(language, "Reference completeness", "Referentiecompleetheid"),
+            "check": _tr(language, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS"),
             "state": "pass" if reference_complete else "warn",
-            "explanation": _text(
-                language,
-                "Required order references are present."
+            "explanation": (
+                _tr(language, "SUITABILITY_REFERENCE_COMPLETENESS_PASS")
                 if reference_complete
-                else "Some order references are missing or derived with uncertainty.",
-                "Vereiste ordesreferenties zijn aanwezig."
-                if reference_complete
-                else "Sommige ordesreferenties ontbreken of zijn onzeker afgeleid.",
+                else _tr(language, "SUITABILITY_REFERENCE_COMPLETENESS_WARN")
             ),
         },
         {
-            "check": _text(language, "Saturation and outliers", "Saturatie en uitschieters"),
+            "check": _tr(language, "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"),
             "state": "pass" if sat_count == 0 else "warn",
-            "explanation": _text(
-                language,
-                "No obvious saturation detected."
+            "explanation": (
+                _tr(language, "SUITABILITY_SATURATION_PASS")
                 if sat_count == 0
-                else f"{sat_count} potential saturation samples detected.",
-                "Geen duidelijke saturatie gedetecteerd."
-                if sat_count == 0
-                else f"{sat_count} mogelijke saturatiesamples gedetecteerd.",
+                else _tr(language, "SUITABILITY_SATURATION_WARN", sat_count=sat_count)
             ),
         },
     ]
+
+    # Aggregate dropped frames / queue overflow across all samples
+    all_dropped = [
+        _as_float(s.get("frames_dropped_total"))
+        for s in samples
+        if isinstance(s, dict) and _as_float(s.get("frames_dropped_total")) is not None
+    ]
+    all_overflow = [
+        _as_float(s.get("queue_overflow_drops"))
+        for s in samples
+        if isinstance(s, dict) and _as_float(s.get("queue_overflow_drops")) is not None
+    ]
+    total_dropped = int(max(all_dropped) - min(all_dropped)) if len(all_dropped) >= 2 else 0
+    total_overflow = int(max(all_overflow) - min(all_overflow)) if len(all_overflow) >= 2 else 0
+    frame_issues = total_dropped + total_overflow
+    run_suitability.append(
+        {
+            "check": _tr(language, "SUITABILITY_CHECK_FRAME_INTEGRITY"),
+            "state": "pass" if frame_issues == 0 else "warn",
+            "explanation": (
+                _tr(language, "SUITABILITY_FRAME_INTEGRITY_PASS")
+                if frame_issues == 0
+                else _tr(
+                    language,
+                    "SUITABILITY_FRAME_INTEGRITY_WARN",
+                    total_dropped=total_dropped,
+                    total_overflow=total_overflow,
+                )
+            ),
+        }
+    )
+
     top_causes = select_top_causes(findings)
 
     sensor_locations = sorted(
@@ -478,6 +493,9 @@ def summarize_run_data(
             if isinstance(sample, dict) and _location_label(sample)
         }
     )
+    # Only include locations that were connected throughout the run for
+    # intensity aggregation, so intermittent sensors don't skew results.
+    connected_locations = _locations_connected_throughout_run(samples)
     sensor_intensity_by_location = _sensor_intensity_by_location(
         samples,
         include_locations=set(sensor_locations),
@@ -510,7 +528,9 @@ def summarize_run_data(
         "most_likely_origin": most_likely_origin,
         "test_plan": test_plan,
         "speed_stats": speed_stats,
+        "phase_info": phase_info,
         "sensor_locations": sensor_locations,
+        "sensor_locations_connected_throughout": sorted(connected_locations),
         "sensor_count_used": len(sensor_locations),
         "sensor_intensity_by_location": sensor_intensity_by_location,
         "sensor_statistics_by_location": sensor_intensity_by_location,

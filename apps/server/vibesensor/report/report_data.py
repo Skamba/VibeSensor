@@ -7,6 +7,7 @@ the Canvas-based PDF renderer.
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -59,6 +60,10 @@ class NextStep:
     action: str = ""
     why: str | None = None
     rank: int = 999
+    speed_band: str | None = None
+    confirm: str | None = None
+    falsify: str | None = None
+    eta: str | None = None
 
 
 @dataclass
@@ -97,6 +102,11 @@ class ReportTemplateData:
     title: str = ""
     run_datetime: str | None = None
     run_id: str | None = None
+    duration_text: str | None = None
+    sample_count: int = 0
+    sensor_count: int = 0
+    sensor_locations: list[str] = field(default_factory=list)
+    sensor_model: str | None = None
     car: CarMeta = field(default_factory=CarMeta)
     observed: ObservedSignature = field(default_factory=ObservedSignature)
     system_cards: list[SystemFindingCard] = field(default_factory=list)
@@ -147,8 +157,17 @@ def _top_strength_db(summary: dict) -> float | None:
     return None
 
 
-def _peak_classification_text(value: object) -> str:
+def _peak_classification_text(value: object, tr: Callable[..., str] | None = None) -> str:
     normalized = str(value or "").strip().lower()
+    if tr is not None:
+        if normalized == "patterned":
+            return tr("CLASSIFICATION_PATTERNED")
+        if normalized == "persistent":
+            return tr("CLASSIFICATION_PERSISTENT")
+        if normalized == "transient":
+            return tr("CLASSIFICATION_TRANSIENT")
+        return tr("CLASSIFICATION_PERSISTENT")
+    # Fallback without translator (backward compat)
     if normalized == "patterned":
         return "patterned"
     if normalized == "persistent":
@@ -258,7 +277,17 @@ def map_summary(summary: dict) -> ReportTemplateData:
     for idx, step in enumerate(test_plan[:5], start=1):
         what = str(step.get("what") or "")
         why = str(step.get("why") or "")
-        next_steps.append(NextStep(action=what, why=why or None, rank=idx))
+        next_steps.append(
+            NextStep(
+                action=what,
+                why=why or None,
+                rank=idx,
+                speed_band=str(step.get("speed_band") or "") or None,
+                confirm=str(step.get("confirm") or "") or None,
+                falsify=str(step.get("falsify") or "") or None,
+                eta=str(step.get("eta") or "") or None,
+            )
+        )
 
     # -- Data trust --
     data_trust: list[DataTrustItem] = []
@@ -317,7 +346,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
             continue
         rank = str(int(_as_float(row.get("rank")) or 0))
         freq = f"{(_as_float(row.get('frequency_hz')) or 0.0):.1f}"
-        classification = _peak_classification_text(row.get("peak_classification"))
+        classification = _peak_classification_text(row.get("peak_classification"), tr=tr)
         order_label = str(row.get("order_label") or "").strip()
         order = order_label or classification
         amp = f"{(_as_float(row.get('p95_amp_g')) or 0.0):.4f}"
@@ -333,10 +362,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
         elif "driveshaft" in order_lower or "drive" in order_lower:
             system = tr("SOURCE_DRIVELINE")
         elif "transient" in order_lower:
-            system = "Transient impact"
+            system = tr("SOURCE_TRANSIENT_IMPACT")
         else:
             system = "\u2014"
-        relevance = f"{classification} \u00b7 {presence:.0%} presence \u00b7 score {score:.2f}"
+        relevance = f"{classification} \u00b7 {presence:.0%} {tr('PRESENCE')} \u00b7 {tr('SCORE')} {score:.2f}"
 
         peak_rows.append(
             PeakRow(
@@ -354,10 +383,24 @@ def map_summary(summary: dict) -> ReportTemplateData:
     git_sha = str(os.getenv("GIT_SHA", "")).strip()
     version_marker = f"v{__version__} ({git_sha[:8]})" if git_sha else f"v{__version__}"
 
+    # -- Metadata enrichment --
+    duration_text = str(summary.get("record_length") or "") or None
+    sample_count = int(_as_float(summary.get("rows")) or 0)
+    sensor_locations_list = summary.get("sensor_locations", [])
+    if not isinstance(sensor_locations_list, list):
+        sensor_locations_list = []
+    sensor_count_used = int(_as_float(summary.get("sensor_count_used")) or 0)
+    sensor_model_val = str(summary.get("sensor_model") or "").strip() or None
+
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=date_str,
         run_id=summary.get("run_id"),
+        duration_text=duration_text,
+        sample_count=sample_count,
+        sensor_count=sensor_count_used,
+        sensor_locations=[str(loc) for loc in sensor_locations_list],
+        sensor_model=sensor_model_val,
         car=CarMeta(name=car_name, car_type=car_type),
         observed=observed,
         system_cards=system_cards,
