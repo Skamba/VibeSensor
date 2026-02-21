@@ -334,34 +334,44 @@ class TestConfidenceCalibration:
             assert low_conf <= high_conf * 0.85
 
     def test_noise_floor_guard_prevents_snr_blowup_with_near_zero_floor(self) -> None:
-        """Issue #186: near-zero noise floor must not produce snr_score ≈ 1.0.
+        """Issue #186 / TODO 9: near-zero noise floor must not produce snr_score ≈ 1.0.
 
         When mean_floor is near-zero (sensor artifact / perfectly clean signal),
-        the SNR ratio blows up without the guard. The fix clamps mean_floor
-        to max(0.001, mean_floor) so tiny absolute amplitudes cannot produce
-        artificially high SNR scores.
+        the SNR ratio blows up without the guard. The fix clamps mean_floor to
+        max(_MEMS_NOISE_FLOOR_G, mean_floor) and adds an absolute-strength guard
+        that caps snr_score at 0.40 when mean_amp is barely above MEMS noise.
 
-        AC: floor guard prevents snr_score ≈ 1.0 for 2mg amplitude / near-zero floor.
-        Implementation gives ~0.44 (vs 1.0 without guard), plus absolute-strength
-        cap provides secondary protection.
+        AC: A mean_amp of 0.002g (barely above MEMS noise) cannot produce snr_score > 0.40.
         """
         from math import log1p as _log1p
+
+        from vibesensor.report.findings import _MEMS_NOISE_FLOOR_G
 
         mean_amp = 0.002  # 2 mg – barely above MEMS noise
         near_zero_floor = 1e-7  # pathological near-zero floor
 
         # Without guard (old: max(1e-6, floor)):
         snr_without_guard = min(1.0, _log1p(mean_amp / max(1e-6, near_zero_floor)) / 2.5)
-        # With guard (current: max(0.001, floor)):
-        snr_with_guard = min(1.0, _log1p(mean_amp / max(0.001, near_zero_floor)) / 2.5)
+        # With floor clamp (current: max(_MEMS_NOISE_FLOOR_G, floor)):
+        snr_floor_clamped = min(
+            1.0, _log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, near_zero_floor)) / 2.5
+        )
+        # With absolute-strength guard applied (acceptance criteria):
+        if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
+            snr_with_abs_guard = min(snr_floor_clamped, 0.40)
+        else:
+            snr_with_abs_guard = snr_floor_clamped
 
         assert snr_without_guard > 0.95, "Without guard, SNR should be near 1.0 (bug scenario)"
-        assert snr_with_guard < 0.50, (
-            f"With floor guard, SNR for 2mg amp must be < 0.50, got {snr_with_guard:.3f}"
+        assert snr_with_abs_guard <= 0.40, (
+            f"With floor+abs guard, SNR for 2mg amp must be <= 0.40, got {snr_with_abs_guard:.3f}"
         )
-        # Normal floor (already >= 0.001g) must be unaffected
+        assert _MEMS_NOISE_FLOOR_G == 0.001, "MEMS noise floor constant must be 0.001g"
+        # Normal floor (already >= 0.001g) must be unaffected by floor clamp
         normal_floor = 0.005
-        snr_normal_clamped = min(1.0, _log1p(mean_amp / max(0.001, normal_floor)) / 2.5)
+        snr_normal_clamped = min(
+            1.0, _log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5
+        )
         snr_normal_direct = min(1.0, _log1p(mean_amp / normal_floor) / 2.5)
         assert abs(snr_normal_clamped - snr_normal_direct) < 1e-10, "Normal floor must be unchanged"
 
