@@ -526,3 +526,33 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
     assert text_blob.count("Next steps") == 1
+
+
+def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_nl_header_metadata.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(10):
+        records.append(
+            {
+                **_sample(
+                    idx,
+                    speed_kmh=50.0 + idx,
+                    dominant_freq_hz=15.0,
+                    peak_amp_g=0.06 + (idx * 0.0007),
+                ),
+                "client_id": "client1234",
+            }
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, lang="nl")
+    pdf = build_report_pdf(summary)
+    reader = PdfReader(BytesIO(pdf))
+    text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
+
+    assert "Duur:" in text_blob
+    assert "Sensoren:" in text_blob
+    assert "Aantal samples:" in text_blob
+    assert "Bemonsteringsfrequentie (Hz):" in text_blob
+    assert " sensors" not in text_blob.lower()
