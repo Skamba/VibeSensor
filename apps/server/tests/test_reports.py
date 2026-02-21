@@ -10,7 +10,8 @@ from pypdf import PdfReader
 
 from vibesensor import __version__
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.reports import build_report_pdf, summarize_log
+from vibesensor.report import summarize_log
+from vibesensor.report.pdf_builder import build_report_pdf
 
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:

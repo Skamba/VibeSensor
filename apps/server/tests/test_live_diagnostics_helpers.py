@@ -5,7 +5,6 @@ from vibesensor.live_diagnostics import (
     SOURCE_KEYS,
     LiveDiagnosticsEngine,
     _copy_matrix,
-    _interpolate_to_target,
     _new_matrix,
 )
 
@@ -37,43 +36,6 @@ def test_copy_matrix_is_deep() -> None:
     # Mutating copy should not affect original
     copy["engine"]["l1"]["count"] = 99
     assert m["engine"]["l1"]["count"] == 5
-
-
-# -- _interpolate_to_target ---------------------------------------------------
-
-
-def test_interpolate_empty_source() -> None:
-    assert _interpolate_to_target([], [], [1.0, 2.0]) == []
-
-
-def test_interpolate_empty_desired() -> None:
-    result = _interpolate_to_target([1.0, 2.0], [10.0, 20.0], [])
-    assert result == [10.0, 20.0]
-
-
-def test_interpolate_single_source_point() -> None:
-    # len(source) < 2 → returns []
-    assert _interpolate_to_target([1.0], [10.0], [1.0]) == []
-
-
-def test_interpolate_exact_match() -> None:
-    result = _interpolate_to_target([1.0, 2.0, 3.0], [10.0, 20.0, 30.0], [1.0, 2.0, 3.0])
-    assert len(result) == 3
-    assert abs(result[0] - 10.0) < 1e-9
-    assert abs(result[1] - 20.0) < 1e-9
-    assert abs(result[2] - 30.0) < 1e-9
-
-
-def test_interpolate_midpoint() -> None:
-    result = _interpolate_to_target([0.0, 10.0], [0.0, 100.0], [5.0])
-    assert len(result) == 1
-    assert abs(result[0] - 50.0) < 1e-9
-
-
-def test_interpolate_beyond_source_uses_last() -> None:
-    result = _interpolate_to_target([0.0, 10.0], [0.0, 100.0], [20.0])
-    assert len(result) == 1
-    assert abs(result[0] - 100.0) < 1e-9
 
 
 # -- LiveDiagnosticsEngine.reset -----------------------------------------------

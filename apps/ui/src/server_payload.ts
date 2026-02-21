@@ -40,7 +40,6 @@ export type DiagnosticLevels = {
 export type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
 
 export type AdaptedPayload = {
-  ws_version: number | null;
   clients: ClientInfo[];
   speed_mps: number | null;
   diagnostics: {
@@ -74,7 +73,6 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
   }
 
   const adapted: AdaptedPayload = {
-    ws_version: typeof payload.ws_version === "number" ? payload.ws_version : null,
     clients: Array.isArray(payload.clients) ? (payload.clients as ClientInfo[]) : [],
     speed_mps: typeof payload.speed_mps === "number" ? payload.speed_mps : null,
     diagnostics: {

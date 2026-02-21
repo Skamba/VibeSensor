@@ -41,11 +41,15 @@ def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
     assert "compute_band_rms(" not in text
 
 
-def test_report_analysis_uses_shared_strength_math() -> None:
-    text = _read(Path(__file__).resolve().parents[1] / "vibesensor" / "report_analysis.py")
-    assert "Math.log10" not in text
-    assert "20.0 * log10(" not in text
-    assert "bucket_for_strength(" not in text
+def test_report_modules_use_shared_strength_math() -> None:
+    report_dir = Path(__file__).resolve().parents[1] / "vibesensor" / "report"
+    for py_file in sorted(report_dir.rglob("*.py")):
+        text = _read(py_file)
+        assert "Math.log10" not in text, f"Math.log10 found in {py_file.name}"
+        assert "20.0 * log10(" not in text, f"20.0 * log10() found in {py_file.name}"
+        assert "bucket_for_strength(" not in text, (
+            f"bucket_for_strength() call found in {py_file.name}"
+        )
 
 
 def test_client_assets_do_not_compute_strength_metrics() -> None:

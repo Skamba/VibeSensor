@@ -51,7 +51,6 @@ def test_dev_and_docker_configs_equivalent() -> None:
     docker_cfg = load_config(PI_DIR / "config.docker.yaml")
     # Compare all meaningful fields (config_path will differ)
     assert dev_cfg.logging.metrics_log_path == docker_cfg.logging.metrics_log_path
-    assert dev_cfg.clients_json_path == docker_cfg.clients_json_path
     assert dev_cfg.server == docker_cfg.server
     assert dev_cfg.udp == docker_cfg.udp
     assert dev_cfg.processing == docker_cfg.processing

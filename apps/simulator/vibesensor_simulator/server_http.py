@@ -20,7 +20,7 @@ def server_health_url(host: str, port: int) -> str:
     return f"http://{_normalize_http_host(host)}:{port}/api/clients"
 
 
-def _speed_override_url(host: str, port: int) -> str:
+def _speed_source_url(host: str, port: int) -> str:
     return f"http://{_normalize_http_host(host)}:{port}/api/simulator/speed-override"
 
 
@@ -36,9 +36,11 @@ def check_server_running(host: str, port: int, timeout_s: float = 1.0) -> bool:
 def set_server_speed_override_kmh(
     host: str, port: int, speed_kmh: float, timeout_s: float
 ) -> float | None:
-    payload = json.dumps({"speed_kmh": float(speed_kmh)}).encode("utf-8")
+    payload = json.dumps(
+        {"speedSource": "manual", "manualSpeedKph": float(speed_kmh)}
+    ).encode("utf-8")
     req = Request(
-        _speed_override_url(host, port),
+        _speed_source_url(host, port),
         data=payload,
         method="POST",
         headers={"Content-Type": "application/json"},
@@ -46,7 +48,7 @@ def set_server_speed_override_kmh(
     with urlopen(req, timeout=timeout_s) as resp:
         body = resp.read()
     parsed = json.loads(body.decode("utf-8")) if body else {}
-    value = parsed.get("speed_kmh")
+    value = parsed.get("manualSpeedKph")
     return float(value) if isinstance(value, (int, float)) else None
 
 

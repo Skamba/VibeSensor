@@ -70,7 +70,6 @@ run_as_root sed -i \
   -e 's#state_file: data/hotspot-self-heal-state.json#state_file: /var/lib/vibesensor/hotspot-self-heal-state.json#' \
   -e 's#metrics_log_path: data/metrics.jsonl#metrics_log_path: /var/log/vibesensor/metrics.jsonl#' \
   -e 's#history_db_path: data/history.db#history_db_path: /var/lib/vibesensor/history.db#' \
-  -e 's#clients_json_path: data/clients.json#clients_json_path: /var/lib/vibesensor/clients.json#' \
   /etc/vibesensor/config.yaml
 if [ ! -f /etc/vibesensor/wifi-secrets.env ]; then
   run_as_root cp "${PI_DIR}/wifi-secrets.example.env" /etc/vibesensor/wifi-secrets.env

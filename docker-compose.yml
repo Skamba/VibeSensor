@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: apps/server/Dockerfile
-    environment:
-      - VIBESENSOR_SERVE_STATIC=1
     network_mode: host
     volumes:
       - ./apps/server/data:/app/apps/server/data

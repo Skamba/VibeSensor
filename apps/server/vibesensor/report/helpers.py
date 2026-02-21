@@ -16,6 +16,7 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
+from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
@@ -33,12 +34,6 @@ ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
 CONSTANT_SPEED_STDDEV_KMH = 0.5
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
-
-
-def _normalize_lang(lang: object) -> str:
-    if isinstance(lang, str) and lang.strip().lower().startswith("nl"):
-        return "nl"
-    return "en"
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
@@ -78,7 +73,7 @@ def _required_text(value: object, consequence: str, lang: object = "en") -> str:
 
 
 def _text(lang: object, en_text: str, nl_text: str) -> str:
-    return nl_text if _normalize_lang(lang) == "nl" else en_text
+    return nl_text if normalize_lang(lang) == "nl" else en_text
 
 
 def _percent_missing(samples: list[dict[str, Any]], key: str) -> float:

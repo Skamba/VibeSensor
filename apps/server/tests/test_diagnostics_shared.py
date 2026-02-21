@@ -14,11 +14,8 @@ from vibesensor.diagnostics_shared import (
     vehicle_orders_hz,
 )
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
-from vibesensor.report_analysis import (
-    _sensor_intensity_by_location,
-    build_findings_for_samples,
-    summarize_log,
-)
+from vibesensor.report import build_findings_for_samples, summarize_log
+from vibesensor.report.findings import _sensor_intensity_by_location
 
 
 def test_tolerance_for_order_honors_floor_and_cap() -> None:

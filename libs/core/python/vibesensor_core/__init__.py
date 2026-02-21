@@ -25,10 +25,6 @@ from .vibration_strength import combined_spectrum_amp_g as combined_spectrum_amp
 from .vibration_strength import (
     compute_vibration_strength_db as compute_vibration_strength_db,
 )
-from .vibration_strength import percentile as percentile
-from .vibration_strength import (
-    vibration_strength_db_scalar as vibration_strength_db_scalar,
-)
 
 __all__ = [
     "StrengthBand",
@@ -46,12 +42,10 @@ __all__ = [
     "STRENGTH_EPSILON_FLOOR_RATIO",
     "_median",
     "_percentile",
-    "percentile",
     "combined_spectrum_amp_g",
     "_noise_floor_amp_p20_g",
     "_strength_floor_amp_g",
     "_peak_band_rms_amp_g",
     "_vibration_strength_db_scalar",
-    "vibration_strength_db_scalar",
     "compute_vibration_strength_db",
 ]

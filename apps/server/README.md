@@ -76,7 +76,7 @@ Configuration is loaded from YAML. See `config.example.yaml` for all options.
 | `processing` | `sample_rate_hz`, `fft_n`, `spectrum_max_hz`, `ui_push_hz` |
 | `logging` | `log_metrics`, `metrics_log_path`, `sensor_model` |
 | `storage` | `clients_json_path` |
-| `gps` | `gps_enabled`, `gps_speed_only` |
+| `gps` | `gps_enabled` |
 | `ap` | `ssid`, `psk`, `ip`, `channel`, `self_heal` |
 
 Development configs (`config.dev.yaml`, `config.docker.yaml`) override only

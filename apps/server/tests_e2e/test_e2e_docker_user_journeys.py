@@ -279,8 +279,8 @@ def test_e2e_docker_user_journeys() -> None:
             method="POST",
             body={"speedSource": "manual", "manualSpeedKph": 80},
         )
-        speed_now = _api_json(base_url, "/api/speed-override")
-        assert float(speed_now["speed_kmh"]) == pytest.approx(80.0)
+        speed_now = _api_json(base_url, "/api/settings/speed-source")
+        assert float(speed_now["manualSpeedKph"]) == pytest.approx(80.0)
 
         start_2 = _api_json(base_url, "/api/logging/start", method="POST")
         run_id_2 = str(start_2["run_id"])

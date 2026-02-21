@@ -21,7 +21,6 @@ from .domain_models import (
     _default_units,
 )
 
-# Re-export constants for backward compatibility
 __all__ = [
     "RUN_SCHEMA_VERSION",
     "RUN_METADATA_TYPE",
@@ -70,7 +69,6 @@ def parse_iso8601(value: object) -> datetime | None:
         return None
 
 
-# Delegate to domain_models but keep public names for backward compat.
 as_float_or_none = _as_float_or_none
 as_int_or_none = _as_int_or_none
 default_units = _default_units
@@ -118,8 +116,8 @@ def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> dict[
 def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     """Normalize a raw sample dict into canonical form.
 
-    Delegates to :class:`SensorFrame` for field parsing and backward-compat
-    rename (``strength_db`` -> ``vibration_strength_db``).  Extra keys present
+    Delegates to :class:`SensorFrame` for field parsing and renames
+    (``strength_db`` -> ``vibration_strength_db``).  Extra keys present
     in *record* but not part of the SensorFrame schema are preserved.
     """
     frame = SensorFrame.from_dict(record)

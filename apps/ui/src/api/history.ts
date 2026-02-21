@@ -20,9 +20,8 @@ export async function deleteHistoryRun(runId: string): Promise<void> {
 export async function getHistoryInsights(
   runId: string,
   lang: string,
-  includeSamples = false,
 ): Promise<unknown> {
   return apiJson(
-    `/api/history/${encodeURIComponent(runId)}/insights?lang=${encodeURIComponent(lang)}&include_samples=${includeSamples ? "1" : "0"}`,
+    `/api/history/${encodeURIComponent(runId)}/insights?lang=${encodeURIComponent(lang)}`,
   );
 }

@@ -110,29 +110,25 @@ def test_metrics_log_no_legacy_field_names() -> None:
 
 
 def test_as_float_single_source_of_truth() -> None:
-    """diagnostics_shared._as_float and report_analysis._as_float must be
-    the canonical as_float_or_none from runlog, not local re-definitions."""
+    """diagnostics_shared._as_float must be the canonical as_float_or_none
+    from runlog, not a local re-definition."""
     from vibesensor.diagnostics_shared import _as_float as diag_as_float
-    from vibesensor.report_analysis import _as_float as report_as_float
     from vibesensor.runlog import as_float_or_none
 
     assert diag_as_float is as_float_or_none, (
         "diagnostics_shared._as_float must be imported from runlog.as_float_or_none"
     )
-    assert report_as_float is as_float_or_none, (
-        "report_analysis._as_float must be imported from runlog.as_float_or_none"
-    )
 
 
 def test_percentile_single_source_of_truth() -> None:
-    """report_analysis._percentile must be imported from
-    analysis.vibration_strength, not re-defined locally."""
+    """report.helpers._percentile must be imported from
+    vibesensor_core.vibration_strength, not re-defined locally."""
     from vibesensor_core.vibration_strength import _percentile as canonical
 
-    from vibesensor.report_analysis import _percentile
+    from vibesensor.report.helpers import _percentile
 
     assert _percentile is canonical, (
-        "report_analysis._percentile must be imported from analysis.vibration_strength"
+        "report.helpers._percentile must be imported from vibesensor_core.vibration_strength"
     )
 
 
@@ -208,9 +204,16 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-    for fname in ("metrics_log.py", "report_analysis.py"):
-        source = (root / "vibesensor" / fname).read_text(encoding="utf-8")
-        assert "* 60.0" not in source, f"{fname} still contains inline engine RPM formula (* 60.0)"
+    files_to_check = [
+        root / "vibesensor" / "metrics_log.py",
+        root / "vibesensor" / "report" / "helpers.py",
+        root / "vibesensor" / "report" / "summary.py",
+    ]
+    for fpath in files_to_check:
+        source = fpath.read_text(encoding="utf-8")
+        assert "* 60.0" not in source, (
+            f"{fpath.name} still contains inline engine RPM formula (* 60.0)"
+        )
 
 
 def test_simulator_defaults_match_analysis_settings() -> None:

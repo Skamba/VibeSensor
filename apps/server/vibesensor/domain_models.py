@@ -461,7 +461,3 @@ class SensorFrame:
             frames_dropped_total=int(record.get("frames_dropped_total") or 0),
             queue_overflow_drops=int(record.get("queue_overflow_drops") or 0),
         )
-
-    def to_normalized_dict(self) -> dict[str, Any]:
-        """Emit a normalized dict – same shape as legacy ``normalize_sample_record``."""
-        return self.to_dict()

@@ -36,4 +36,3 @@ storage:
 
 gps:
   gps_enabled: false
-  gps_speed_only: true

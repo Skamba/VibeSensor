@@ -44,13 +44,11 @@ where = [
   "../../tools/config",
   "../../libs/core/python",
   "../../libs/shared/python",
-  "../../libs/adapters/python",
 ]
 include = [
   "vibesensor*",
   "vibesensor_core*",
   "vibesensor_shared*",
-  "vibesensor_adapters*",
   "vibesensor_simulator*",
   "vibesensor_tools_config*",
 ]
