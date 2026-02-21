@@ -294,7 +294,8 @@ def severity_from_peak(
     state.setdefault("consecutive_down", 0)
     corroboration = MULTI_SENSOR_CORROBORATION_DB if sensor_count >= 2 else 0.0
     adjusted_db = float(vibration_strength_db) + corroboration
-    candidate_bucket = bucket_for_strength(adjusted_db)
+    candidate_bucket_raw = bucket_for_strength(adjusted_db)
+    candidate_bucket = None if candidate_bucket_raw == "l0" else candidate_bucket_raw
     current_bucket = state.get("current_bucket")
 
     if candidate_bucket is None:
