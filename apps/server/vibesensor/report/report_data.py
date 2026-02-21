@@ -103,6 +103,10 @@ class ReportTemplateData:
     run_datetime: str | None = None
     run_id: str | None = None
     duration_text: str | None = None
+    start_time_utc: str | None = None
+    end_time_utc: str | None = None
+    sample_rate_hz: str | None = None
+    tire_spec_text: str | None = None
     sample_count: int = 0
     sensor_count: int = 0
     sensor_locations: list[str] = field(default_factory=list)
@@ -385,6 +389,25 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # -- Metadata enrichment --
     duration_text = str(summary.get("record_length") or "") or None
+    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
+    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
+    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
+    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
+
+    tire_width_mm = _as_float(meta.get("tire_width_mm"))
+    tire_aspect_pct = _as_float(meta.get("tire_aspect_pct"))
+    rim_in = _as_float(meta.get("rim_in"))
+    tire_spec_text: str | None = None
+    if (
+        tire_width_mm is not None
+        and tire_aspect_pct is not None
+        and rim_in is not None
+        and tire_width_mm > 0
+        and tire_aspect_pct > 0
+        and rim_in > 0
+    ):
+        tire_spec_text = f"{tire_width_mm:g}/{tire_aspect_pct:g}R{rim_in:g}"
+
     sample_count = int(_as_float(summary.get("rows")) or 0)
     sensor_locations_list = summary.get("sensor_locations", [])
     if not isinstance(sensor_locations_list, list):
@@ -397,6 +420,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
         run_datetime=date_str,
         run_id=summary.get("run_id"),
         duration_text=duration_text,
+        start_time_utc=start_time_utc,
+        end_time_utc=end_time_utc,
+        sample_rate_hz=sample_rate_hz,
+        tire_spec_text=tire_spec_text,
         sample_count=sample_count,
         sensor_count=sensor_count_used,
         sensor_locations=[str(loc) for loc in sensor_locations_list],

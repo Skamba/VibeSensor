@@ -233,7 +233,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     na = tr("UNKNOWN")
 
     # -- Header panel (title + date + car) --
-    hdr_h = 22 * mm
+    hdr_h = 30 * mm
     hdr_y = page_top - hdr_h
     _draw_panel(c, m, hdr_y, W, hdr_h, fill=SOFT_BG)
 
@@ -244,6 +244,8 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     meta_x = m + 4 * mm
     y1 = hdr_y + hdr_h - 12 * mm
     y2 = y1 - 4.5 * mm
+    y3 = y2 - 4.5 * mm
+    y4 = y3 - 4.5 * mm
 
     _draw_kv(c, meta_x, y1, tr("RUN_DATE"), _safe(data.run_datetime), label_w=22 * mm, fs=FS_BODY)
     if data.run_id:
@@ -251,8 +253,12 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     car_parts = [p for p in (_safe(data.car.name, ""), _safe(data.car.car_type, "")) if p]
     car_text = " \u2014 ".join(car_parts) if car_parts else na
     _draw_kv(c, meta_x, y2, tr("CAR_LABEL"), car_text, label_w=12 * mm, fs=FS_BODY)
+    if data.start_time_utc:
+        _draw_kv(c, meta_x, y3, tr("START_TIME_UTC"), data.start_time_utc, label_w=22 * mm, fs=FS_BODY)
+    if data.end_time_utc:
+        _draw_kv(c, meta_x, y4, tr("END_TIME_UTC"), data.end_time_utc, label_w=22 * mm, fs=FS_BODY)
 
-    # Duration / sensor count on the right side of y2 row
+    # Duration / sensor count on the right side, plus sensor/tire metadata
     meta_right = meta_x + 100 * mm
     extra_parts: list[str] = []
     if data.duration_text:
@@ -263,10 +269,16 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         extra_parts.append(", ".join(data.sensor_locations[:6]))
     if data.sample_count:
         extra_parts.append(f"{data.sample_count} {tr('SAMPLES').lower()}")
+    if data.sample_rate_hz:
+        extra_parts.append(f"{tr('RAW_SAMPLE_RATE_HZ_LABEL')}: {data.sample_rate_hz}")
     if extra_parts:
         c.setFillColor(_hex(MUTED_CLR))
         c.setFont(FONT, FS_BODY)
         c.drawString(meta_right, y2, " \u00b7 ".join(extra_parts))
+    if data.sensor_model:
+        _draw_kv(c, meta_right, y3, tr("SENSOR_MODEL"), data.sensor_model, label_w=24 * mm, fs=FS_BODY)
+    if data.tire_spec_text:
+        _draw_kv(c, meta_right, y4, tr("TIRE_SIZE"), data.tire_spec_text, label_w=14 * mm, fs=FS_BODY)
 
     y_cursor = hdr_y - GAP
 
