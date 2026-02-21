@@ -278,6 +278,17 @@ class TestTopPeaksTableRows:
         assert row["strength_floor_amp_g"] == 0.03
         assert row["strength_db"] == expected_db
 
+    def test_typical_speed_band_uses_amplitude_weighted_window(self) -> None:
+        samples = []
+        for i in range(20):
+            speed = 40.0 if i < 12 else 100.0
+            amp = 0.02 if i < 12 else 0.09
+            samples.append(_sample(float(i), speed, [{"hz": 33.0, "amp": amp}]))
+
+        rows = _top_peaks_table_rows(samples)
+        assert rows
+        assert rows[0]["typical_speed_band"] == "100-110 km/h"
+
 
 # ---------------------------------------------------------------------------
 # Persistent peak findings
@@ -535,6 +546,36 @@ class TestBuildPersistentPeakFindings:
         target = [f for f in findings if "25" in str(f.get("frequency_hz_or_order", ""))]
         assert target
         assert target[0]["peak_classification"] == "persistent"
+
+    def test_strongest_speed_band_uses_amplitude_weighted_window(self) -> None:
+        """Issue #149: strongest speed band should reflect where peak is strongest."""
+        samples: list[dict] = []
+        for idx, speed in enumerate(range(40, 121)):
+            amp = 0.08 if 70 <= speed <= 90 else 0.01
+            samples.append(
+                _sample(
+                    float(idx) * 0.5,
+                    float(speed),
+                    [{"hz": 43.0, "amp": amp}],
+                )
+            )
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        target = next(
+            (f for f in findings if "43" in str(f.get("frequency_hz_or_order", ""))),
+            None,
+        )
+
+        assert target is not None
+        speed_band = str(target.get("strongest_speed_band") or "")
+        assert speed_band
+        assert speed_band != "40-120 km/h"
+        assert speed_band in {"70-80 km/h", "80-90 km/h"}
 
 
 # ---------------------------------------------------------------------------

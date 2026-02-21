@@ -95,13 +95,20 @@ def _spectrogram_from_peaks(
             speed_values.append(speed)
         if not peaks:
             continue
+        floor_amp = _as_float(sample.get("strength_floor_amp_g"))
+        if floor_amp is None or floor_amp <= 0:
+            peak_amps = sorted(amp for _hz, amp in peaks if amp > 0)
+            if len(peak_amps) >= 3:
+                floor_amp = percentile(peak_amps, 0.20)
+            elif peak_amps:
+                floor_amp = peak_amps[0]
         for hz, amp in peaks:
             if hz <= 0 or amp <= 0:
                 continue
             if t_s is not None and t_s >= 0:
-                peak_rows.append((t_s, hz, amp))
+                peak_rows.append((t_s, hz, amp, floor_amp))
             elif speed is not None and speed > 0:
-                peak_rows.append((speed, hz, amp))
+                peak_rows.append((speed, hz, amp, floor_amp))
 
     use_time = bool(time_values)
     empty_result: dict[str, Any] = {
@@ -127,7 +134,7 @@ def _spectrogram_from_peaks(
         x_bin_width = max(5.0, (x_span / 30.0) if x_span > 0 else 5.0)
         x_label_key = "SPEED_KM_H"
 
-    peak_freqs = [hz for _x, hz, _amp in peak_rows]
+    peak_freqs = [hz for _x, hz, _amp, _floor in peak_rows]
     if not peak_freqs:
         empty_result.update(x_axis=x_axis, x_label_key=x_label_key)
         return empty_result
@@ -137,20 +144,20 @@ def _spectrogram_from_peaks(
     freq_bin_hz = max(2.0, freq_cap_hz / 45.0)
 
     # Collect amplitudes per (x_bin, y_bin) cell.
-    cell_by_bin: dict[tuple[float, float], list[float]] = {}
+    cell_by_bin: dict[tuple[float, float], list[tuple[float, float | None]]] = {}
     x_sample_counts: dict[float, int] = {}
     if aggregation == "persistence":
         for x_val in x_values:
             x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
             x_sample_counts[x_bin_low] = x_sample_counts.get(x_bin_low, 0) + 1
 
-    for x_val, hz, amp in peak_rows:
+    for x_val, hz, amp, floor_amp in peak_rows:
         if hz > freq_cap_hz:
             continue
         x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
         y_bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
         key = (x_bin_low, y_bin_low)
-        cell_by_bin.setdefault(key, []).append(amp)
+        cell_by_bin.setdefault(key, []).append((amp, floor_amp))
 
     x_bins = sorted({x for x, _y in cell_by_bin})
     y_bins = sorted({y for _x, y in cell_by_bin})
@@ -163,18 +170,35 @@ def _spectrogram_from_peaks(
     cells = [[0.0 for _ in x_bins] for _ in y_bins]
     max_amp = 0.0
 
-    for (x_key, y_key), amps in cell_by_bin.items():
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
+    min_presence_snr = 2.0
+
+    for (x_key, y_key), amp_floor_pairs in cell_by_bin.items():
         yi = y_index[y_key]
         xi = x_index[x_key]
         if aggregation == "persistence":
-            sorted_amps = sorted(amps)
-            if not sorted_amps:
+            if not amp_floor_pairs:
                 continue
-            p95_amp = percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
-            presence_ratio = len(sorted_amps) / max(1, x_sample_counts.get(x_key, 1))
+            effective_amps: list[float] = []
+            for amp, floor_amp in amp_floor_pairs:
+                local_floor = max(0.001, floor_amp if floor_amp is not None and floor_amp > 0 else baseline_floor)
+                snr = amp / local_floor
+                if snr < min_presence_snr:
+                    continue
+                snr_weight = min(1.0, snr / 5.0)
+                effective_amps.append(amp * snr_weight)
+            if not effective_amps:
+                continue
+            p95_amp = (
+                percentile(sorted(effective_amps), 0.95)
+                if len(effective_amps) >= 2
+                else effective_amps[-1]
+            )
+            presence_ratio = len(effective_amps) / max(1, x_sample_counts.get(x_key, 1))
             val = (presence_ratio**2) * p95_amp
         else:
-            val = max(amps)
+            val = max(amp for amp, _floor in amp_floor_pairs)
         cells[yi][xi] = val
         if val > max_amp:
             max_amp = val
@@ -231,6 +255,7 @@ def _top_peaks_table_rows(
                     "amps": [],
                     "floor_amps": [],
                     "speeds": [],
+                    "speed_points": [],
                 },
             )
             bucket["amps"].append(amp)
