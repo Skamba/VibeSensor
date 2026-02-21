@@ -230,6 +230,11 @@ _SECTION_HEADING_KEYS = [
     "DIAGNOSTIC_PEAKS",
 ]
 
+_PEAK_TABLE_COLUMN_KEYS = [
+    "PEAK_AMP_G",
+    "STRENGTH_DB",
+]
+
 
 def _extract_pdf_text(pdf_bytes: bytes) -> str:
     reader = PdfReader(BytesIO(pdf_bytes))
@@ -262,3 +267,17 @@ def test_pdf_nl_contains_dutch_headings(tmp_path: Path) -> None:
         if heading not in text:
             missing.append(f"{key} ({heading!r})")
     assert missing == [], f"Missing Dutch headings in PDF: {missing}"
+
+
+def test_pdf_peaks_table_includes_peak_amp_and_strength_columns(tmp_path: Path) -> None:
+    run_path = _make_run_jsonl(tmp_path)
+    summary = summarize_log(run_path, lang="en")
+    pdf = build_report_pdf(summary)
+    text = _extract_pdf_text(pdf)
+    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+    missing = []
+    for key in _PEAK_TABLE_COLUMN_KEYS:
+        label = i18n[key]["en"]
+        if label not in text:
+            missing.append(f"{key} ({label!r})")
+    assert missing == [], f"Missing peak table columns in PDF: {missing}"

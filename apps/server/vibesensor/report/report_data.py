@@ -94,6 +94,7 @@ class PeakRow:
     freq_hz: str
     order: str
     amp_g: str
+    strength_db: str
     speed_band: str
     relevance: str
 
@@ -396,6 +397,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         order_label = str(row.get("order_label") or "").strip()
         order = order_label or classification
         amp = f"{(_as_float(row.get('p95_amp_g')) or 0.0):.4f}"
+        strength_db_val = _as_float(row.get("strength_db"))
+        strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "—"
         speed = str(row.get("typical_speed_band") or "\u2014")
         presence = float(_as_float(row.get("presence_ratio")) or 0.0)
         score = float(_as_float(row.get("persistence_score")) or 0.0)
@@ -420,6 +423,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
                 freq_hz=freq,
                 order=order,
                 amp_g=amp,
+                strength_db=strength_db,
                 speed_band=speed,
                 relevance=relevance,
             )

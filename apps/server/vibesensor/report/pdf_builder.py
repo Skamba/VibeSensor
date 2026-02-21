@@ -714,12 +714,13 @@ def _draw_peaks_table(
 ) -> None:
     """Diagnostic-first peaks table."""
     col_defs = [
-        (tr("RANK"), 14 * mm),
-        (tr("SYSTEM"), 30 * mm),
-        (tr("FREQUENCY_HZ"), 22 * mm),
-        (tr("ORDER_LABEL"), 28 * mm),
-        (tr("AMP_G"), 20 * mm),
-        (tr("SPEED_BAND"), 28 * mm),
+        (tr("RANK"), 12 * mm),
+        (tr("SYSTEM"), 24 * mm),
+        (tr("FREQUENCY_HZ"), 18 * mm),
+        (tr("ORDER_LABEL"), 24 * mm),
+        (tr("PEAK_AMP_G"), 18 * mm),
+        (tr("STRENGTH_DB"), 16 * mm),
+        (tr("SPEED_BAND"), 22 * mm),
     ]
     used = sum(cw for _, cw in col_defs)
     notes_w = max(20 * mm, w - used)
@@ -765,6 +766,7 @@ def _draw_peaks_table(
             row.freq_hz,
             row.order,
             row.amp_g,
+            row.strength_db,
             row.speed_band,
             row.relevance,
         ]

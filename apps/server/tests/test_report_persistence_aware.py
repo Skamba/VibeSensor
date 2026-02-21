@@ -168,6 +168,30 @@ class TestAggregateFFTSpectrum:
         assert _aggregate_fft_spectrum([]) == []
         assert _aggregate_fft_spectrum_raw([]) == []
 
+    def test_persistence_spectrum_uses_run_noise_baseline(self) -> None:
+        low_noise_samples = [
+            _sample(
+                float(i),
+                80.0,
+                [{"hz": 30.0, "amp": 0.06}],
+                strength_floor_amp_g=0.01,
+            )
+            for i in range(20)
+        ]
+        high_noise_samples = [
+            _sample(
+                float(i),
+                80.0,
+                [{"hz": 30.0, "amp": 0.06}],
+                strength_floor_amp_g=0.05,
+            )
+            for i in range(20)
+        ]
+
+        low_noise_score = dict(_aggregate_fft_spectrum(low_noise_samples)).get(31.0, 0.0)
+        high_noise_score = dict(_aggregate_fft_spectrum(high_noise_samples)).get(31.0, 0.0)
+        assert low_noise_score > high_noise_score
+
 
 # ---------------------------------------------------------------------------
 # Peak table rows
@@ -416,6 +440,48 @@ class TestBuildPersistentPeakFindings:
             "Random one-off impacts at distinct frequencies should all be transient"
         )
 
+    def test_run_noise_baseline_lowers_confidence_for_borderline_peak(self) -> None:
+        low_noise_samples = [
+            _sample(
+                float(i) * 0.5,
+                80.0,
+                [{"hz": 30.0, "amp": 0.06}],
+                strength_floor_amp_g=0.01,
+            )
+            for i in range(20)
+        ]
+        high_noise_samples = [
+            _sample(
+                float(i) * 0.5,
+                80.0,
+                [{"hz": 30.0, "amp": 0.06}],
+                strength_floor_amp_g=0.05,
+            )
+            for i in range(20)
+        ]
+
+        findings_low = _build_persistent_peak_findings(
+            samples=low_noise_samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        findings_high = _build_persistent_peak_findings(
+            samples=high_noise_samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+
+        confidence_low = max(float(f.get("confidence_0_to_1") or 0.0) for f in findings_low)
+        confidence_high = max(float(f.get("confidence_0_to_1") or 0.0) for f in findings_high)
+        assert confidence_low > confidence_high
+
+        metrics = dict(findings_low[0].get("evidence_metrics") or {})
+        assert "run_noise_baseline_g" in metrics
+        assert "median_relative_to_run_noise" in metrics
+        assert "p95_relative_to_run_noise" in metrics
+
     def test_uniform_moderate_presence_peak_is_baseline_noise(self) -> None:
         """Issue #140: 25 Hz in ~30% of samples across all locations/speeds -> baseline noise."""
         locations = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
@@ -533,6 +599,39 @@ class TestSummarizeRunDataPersistence:
         assert "persistence_score" in row
         assert "burstiness" in row
         assert "peak_classification" in row
+
+    def test_summary_includes_run_noise_baseline(self) -> None:
+        metadata = _make_metadata()
+        samples = [
+            _sample(
+                float(i) * 0.5,
+                80.0,
+                [{"hz": 20.0, "amp": 0.04}],
+                strength_floor_amp_g=0.02,
+            )
+            for i in range(10)
+        ]
+        summary = summarize_run_data(metadata, samples, lang="en")
+        assert summary.get("run_noise_baseline_g") == 0.02
+
+    def test_peaks_table_has_run_noise_relative_metrics(self) -> None:
+        metadata = _make_metadata()
+        samples = [
+            _sample(
+                float(i) * 0.5,
+                80.0,
+                [{"hz": 20.0, "amp": 0.04}],
+                strength_floor_amp_g=0.02,
+            )
+            for i in range(10)
+        ]
+        summary = summarize_run_data(metadata, samples, lang="en")
+        peaks_table = summary.get("plots", {}).get("peaks_table", [])
+        assert len(peaks_table) >= 1
+        row = peaks_table[0]
+        assert "run_noise_baseline_g" in row
+        assert "median_vs_run_noise_ratio" in row
+        assert "p95_vs_run_noise_ratio" in row
 
     def test_plots_include_diagnostic_and_raw_spectrograms(self) -> None:
         metadata = _make_metadata()

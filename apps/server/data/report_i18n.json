@@ -1091,6 +1091,14 @@
     "en": "Amp (g)",
     "nl": "Amp (g)"
   },
+  "PEAK_AMP_G": {
+    "en": "Peak Amp (g)",
+    "nl": "Piekamp (g)"
+  },
+  "STRENGTH_DB": {
+    "en": "Strength (dB)",
+    "nl": "Sterkte (dB)"
+  },
   "NO_SYSTEMS_WITH_FINDINGS": {
     "en": "No systems showed significant vibration patterns in this run.",
     "nl": "Geen systemen toonden significante trillingspatronen in deze run."
