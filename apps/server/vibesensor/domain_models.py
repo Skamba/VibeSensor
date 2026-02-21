@@ -266,6 +266,17 @@ def _default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[
     }
 
 
+def _default_phase_metadata() -> dict[str, object]:
+    return {
+        "version": "v1",
+        "idle_speed_kmh_max": 3.0,
+        "acceleration_threshold_kmh_s": 1.5,
+        "deceleration_threshold_kmh_s": -1.5,
+        "coast_down_speed_kmh_max": 15.0,
+        "labels": ["idle", "acceleration", "cruise", "deceleration", "coast_down"],
+    }
+
+
 @dataclass(slots=True)
 class RunMetadata:
     record_type: str
@@ -284,6 +295,7 @@ class RunMetadata:
     units: dict[str, str]
     amplitude_definitions: dict[str, dict[str, str]]
     incomplete_for_order_analysis: bool
+    phase_metadata: dict[str, object]
 
     @classmethod
     def create(
@@ -320,6 +332,7 @@ class RunMetadata:
             units=_default_units(accel_units=accel_units),
             amplitude_definitions=_default_amplitude_definitions(accel_units=accel_units),
             incomplete_for_order_analysis=bool(incomplete_for_order_analysis),
+            phase_metadata=_default_phase_metadata(),
         )
 
     @classmethod
@@ -344,6 +357,11 @@ class RunMetadata:
             amplitude_definitions=data.get("amplitude_definitions")
             or _default_amplitude_definitions(accel_units=accel_units),
             incomplete_for_order_analysis=bool(data.get("incomplete_for_order_analysis", False)),
+            phase_metadata=(
+                dict(data.get("phase_metadata"))
+                if isinstance(data.get("phase_metadata"), dict)
+                else _default_phase_metadata()
+            ),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -364,6 +382,7 @@ class RunMetadata:
             "units": dict(self.units),
             "amplitude_definitions": {k: dict(v) for k, v in self.amplitude_definitions.items()},
             "incomplete_for_order_analysis": self.incomplete_for_order_analysis,
+            "phase_metadata": dict(self.phase_metadata),
         }
 
 
