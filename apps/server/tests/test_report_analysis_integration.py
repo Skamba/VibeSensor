@@ -266,6 +266,27 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
     assert focused.get("speed_range") == "100-110 km/h"
 
 
+def test_location_speedbin_summary_prefers_connected_throughout_locations() -> None:
+    from vibesensor.report.test_plan import _location_speedbin_summary
+
+    matches = [
+        {"speed_kmh": 85.0, "amp": 0.022, "location": "Front Left"},
+        {"speed_kmh": 86.0, "amp": 0.023, "location": "Front Left"},
+        {"speed_kmh": 85.0, "amp": 0.050, "location": "Rear Right"},
+        {"speed_kmh": 86.0, "amp": 0.048, "location": "Rear Right"},
+    ]
+
+    _, hotspot = _location_speedbin_summary(
+        matches,
+        lang="en",
+        connected_locations={"Front Left"},
+    )
+
+    assert hotspot is not None
+    assert hotspot.get("top_location") == "Front Left"
+    assert bool(hotspot.get("partial_coverage")) is False
+
+
 def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -294,7 +315,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
-        lambda matched_points, lang, relevant_speed_bins=None: (
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
             "strong location",
             {
                 "location": "Front Left",
@@ -315,7 +336,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
-        lambda matched_points, lang, relevant_speed_bins=None: (
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
             "ambiguous location",
             {
                 "location": "ambiguous location: Front Left / Front Right",
@@ -353,7 +374,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
 
     seen_relevant_speed_bins: list[str] = []
 
-    def _fake_location_summary(matches, lang, relevant_speed_bins=None):
+    def _fake_location_summary(matches, lang, relevant_speed_bins=None, connected_locations=None):
         if isinstance(relevant_speed_bins, list):
             seen_relevant_speed_bins.extend(str(item) for item in relevant_speed_bins if item)
         chosen_band = seen_relevant_speed_bins[0] if seen_relevant_speed_bins else "90-100 km/h"
@@ -396,6 +417,53 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
     assert seen_relevant_speed_bins, "Expected focused speed-bin filter to be passed"
     assert seen_relevant_speed_bins[0] in {"90-100 km/h", "100-110 km/h"}
     assert wheel_finding.get("strongest_location") == "Front Right"
+
+
+def test_build_findings_excludes_partial_coverage_sensor_from_strongest_location() -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+
+    samples: list[dict[str, object]] = []
+    for idx in range(20):
+        speed_kmh = 70.0 + idx
+        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+
+        full_sensor = {
+            **_make_sample(float(idx), speed_kmh, 0.02),
+            "client_name": "Front Left",
+            "strength_floor_amp_g": 0.002,
+            "top_peaks": [{"hz": wheel_hz, "amp": 0.02}],
+        }
+        samples.append(full_sensor)
+
+        if idx < 6:
+            partial_sensor = {
+                **_make_sample(float(idx), speed_kmh, 0.05),
+                "client_name": "Rear Right",
+                "strength_floor_amp_g": 0.002,
+                "top_peaks": [{"hz": wheel_hz, "amp": 0.05}],
+            }
+            samples.append(partial_sensor)
+
+    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    wheel_finding = next(
+        (f for f in findings if str(f.get("finding_key") or "") == "wheel_1x"),
+        None,
+    )
+
+    assert wheel_finding is not None
+    assert wheel_finding.get("strongest_location") == "Front Left"
+    hotspot = wheel_finding.get("location_hotspot")
+    assert isinstance(hotspot, dict)
+    assert bool(hotspot.get("partial_coverage")) is False
 
 
 # -- summarize_log -------------------------------------------------------------
