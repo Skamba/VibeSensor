@@ -26,7 +26,7 @@ from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 
 from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
-from .config import PI_DIR, AppConfig, load_config
+from .config import SERVER_DIR, AppConfig, load_config
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
 from .live_diagnostics import LiveDiagnosticsEngine
@@ -40,6 +40,16 @@ from .ws_hub import WebSocketHub
 
 LOGGER = logging.getLogger(__name__)
 BACKUP_SERVER_PORT = 8000
+
+# Processing-loop resilience constants
+MAX_CONSECUTIVE_FAILURES = 25
+"""After this many consecutive processing failures, enter fatal backoff."""
+
+FAILURE_BACKOFF_S = 30
+"""Seconds to sleep on fatal failure threshold before resetting."""
+
+STALE_DATA_AGE_S = 3.0
+"""Clients without fresh UDP data within this window are excluded from spectrum output."""
 
 
 @dataclass(slots=True)
@@ -83,7 +93,7 @@ class RuntimeState:
         client_ids = [c["id"] for c in clients]
         # Only include spectrum data for clients with recent UDP data
         # to prevent stale buffer data from driving diagnostics/events.
-        fresh_ids = self.processor.clients_with_recent_data(client_ids, max_age_s=3.0)
+        fresh_ids = self.processor.clients_with_recent_data(client_ids, max_age_s=STALE_DATA_AGE_S)
 
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
@@ -204,7 +214,9 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 # Only recompute metrics for clients that received new data
                 # since the last tick.  This prevents stale ring-buffer data
                 # from cycling through the pipeline indefinitely.
-                fresh_ids = runtime.processor.clients_with_recent_data(active_ids, max_age_s=3.0)
+                fresh_ids = runtime.processor.clients_with_recent_data(
+                    active_ids, max_age_s=STALE_DATA_AGE_S
+                )
                 sample_rates: dict[str, int] = {}
                 for client_id in fresh_ids:
                     record = runtime.registry.get(client_id)
@@ -251,11 +263,16 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             except Exception:
                 consecutive_failures += 1
                 runtime.processing_failure_count += 1
-                runtime.processing_state = "degraded" if consecutive_failures < 25 else "fatal"
+                is_fatal = consecutive_failures >= MAX_CONSECUTIVE_FAILURES
+                runtime.processing_state = "fatal" if is_fatal else "degraded"
                 LOGGER.warning("Processing loop tick failed; will retry.", exc_info=True)
-                if consecutive_failures >= 25:
-                    LOGGER.error("Processing loop hit 25 failures; backing off 30 s then resetting")
-                    await asyncio.sleep(30)
+                if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+                    LOGGER.error(
+                        "Processing loop hit %d failures; backing off %d s then resetting",
+                        MAX_CONSECUTIVE_FAILURES,
+                        FAILURE_BACKOFF_S,
+                    )
+                    await asyncio.sleep(FAILURE_BACKOFF_S)
                     consecutive_failures = 0
                     runtime.processing_state = "degraded"
             delay = (
@@ -318,12 +335,12 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app.state.runtime = runtime
     app.include_router(create_router(runtime))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
-        public_index = PI_DIR / "public" / "index.html"
+        public_index = SERVER_DIR / "public" / "index.html"
         if not public_index.exists():
             message = "UI not built. Run tools/sync_ui_to_pi_public.py or build the Docker image."
             LOGGER.error("%s Missing file: %s", message, public_index)
             raise RuntimeError(message)
-        app.mount("/", StaticFiles(directory=PI_DIR / "public", html=True), name="public")
+        app.mount("/", StaticFiles(directory=SERVER_DIR / "public", html=True), name="public")
 
     return app
 

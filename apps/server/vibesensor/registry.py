@@ -100,6 +100,11 @@ class ClientRegistry:
         except Exception:
             LOGGER.warning("Failed to delete client name from DB", exc_info=True)
 
+    @staticmethod
+    def _resolve_now(now: float | None) -> float:
+        """Return *now* if given, else ``time.time()``."""
+        return time.time() if now is None else now
+
     def _get_or_create(self, client_id: str) -> ClientRecord:
         normalized = _normalize_client_id(client_id)
         record = self._clients.get(normalized)
@@ -116,7 +121,7 @@ class ClientRegistry:
         now: float | None = None,
     ) -> None:
         with self._lock:
-            now_ts = time.time() if now is None else now
+            now_ts = self._resolve_now(now)
             client_id = client_id_hex(hello.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
@@ -141,7 +146,7 @@ class ClientRegistry:
         now: float | None = None,
     ) -> None:
         with self._lock:
-            now_ts = time.time() if now is None else now
+            now_ts = self._resolve_now(now)
             client_id = client_id_hex(data_msg.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
@@ -181,7 +186,7 @@ class ClientRegistry:
 
     def update_from_ack(self, ack: AckMessage, now: float | None = None) -> None:
         with self._lock:
-            now_ts = time.time() if now is None else now
+            now_ts = self._resolve_now(now)
             client_id = client_id_hex(ack.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
@@ -249,7 +254,7 @@ class ClientRegistry:
 
     def active_client_ids(self, now: float | None = None) -> list[str]:
         with self._lock:
-            now_ts = time.time() if now is None else now
+            now_ts = self._resolve_now(now)
             return [
                 record.client_id
                 for record in self._clients.values()
@@ -258,7 +263,7 @@ class ClientRegistry:
 
     def evict_stale(self, now: float | None = None) -> list[str]:
         with self._lock:
-            now_ts = time.time() if now is None else now
+            now_ts = self._resolve_now(now)
             stale_ids = [
                 client_id
                 for client_id, record in self._clients.items()
@@ -276,7 +281,7 @@ class ClientRegistry:
 
     def snapshot_for_api(self, now: float | None = None) -> list[dict[str, Any]]:
         with self._lock:
-            now_ts = time.time() if now is None else now
+            now_ts = self._resolve_now(now)
             rows: list[dict[str, Any]] = []
             all_client_ids = sorted(set(self._clients.keys()) | set(self._user_names.keys()))
             for client_id in all_client_ids:

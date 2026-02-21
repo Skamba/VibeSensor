@@ -20,6 +20,10 @@ HYSTERESIS_DB = 2.0
 PERSISTENCE_TICKS = 3
 DECAY_TICKS = 5
 
+# Pre-built lookup dicts for O(1) band access
+_BAND_BY_KEY: dict[str, StrengthBand] = {b["key"]: b for b in BANDS}
+_BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
+
 
 def bucket_for_strength(vibration_strength_db: float) -> str | None:
     selected: str | None = None
@@ -30,14 +34,8 @@ def bucket_for_strength(vibration_strength_db: float) -> str | None:
 
 
 def band_by_key(key: str) -> StrengthBand | None:
-    for band in BANDS:
-        if band["key"] == key:
-            return band
-    return None
+    return _BAND_BY_KEY.get(key)
 
 
 def band_rank(key: str) -> int:
-    for idx, band in enumerate(BANDS):
-        if band["key"] == key:
-            return idx
-    return -1
+    return _BAND_RANK.get(key, -1)

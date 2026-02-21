@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor_core.vibration_strength import _percentile
+from vibesensor_core.vibration_strength import percentile
 
 from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report.helpers import (
@@ -122,26 +122,26 @@ def test_mean_variance_empty() -> None:
     assert v is None
 
 
-# -- _percentile ---------------------------------------------------------------
+# -- percentile ---------------------------------------------------------------
 
 
 def test_percentile_median() -> None:
     sorted_vals = [1.0, 2.0, 3.0, 4.0, 5.0]
-    assert abs(_percentile(sorted_vals, 0.5) - 3.0) < 1e-9
+    assert abs(percentile(sorted_vals, 0.5) - 3.0) < 1e-9
 
 
 def test_percentile_empty_returns_zero() -> None:
-    assert _percentile([], 0.5) == 0.0
+    assert percentile([], 0.5) == 0.0
 
 
 def test_percentile_single_element() -> None:
-    assert _percentile([7.0], 0.5) == 7.0
+    assert percentile([7.0], 0.5) == 7.0
 
 
 def test_percentile_boundary_values() -> None:
     sorted_vals = [10.0, 20.0, 30.0]
-    assert abs(_percentile(sorted_vals, 0.0) - 10.0) < 1e-9
-    assert abs(_percentile(sorted_vals, 1.0) - 30.0) < 1e-9
+    assert abs(percentile(sorted_vals, 0.0) - 10.0) < 1e-9
+    assert abs(percentile(sorted_vals, 1.0) - 30.0) < 1e-9
 
 
 # -- _outlier_summary ----------------------------------------------------------

@@ -7,8 +7,10 @@ from typing import Any
 
 import yaml
 
-PI_DIR = Path(__file__).resolve().parents[1]
-REPO_DIR = PI_DIR.parents[1]
+SERVER_DIR = Path(__file__).resolve().parents[1]
+"""Root of the ``apps/server/`` package tree."""
+
+REPO_DIR = SERVER_DIR.parents[1]
 LOGGER = logging.getLogger(__name__)
 
 DEFAULT_CONFIG: dict[str, Any] = {
@@ -168,7 +170,7 @@ def _read_config_file(path: Path) -> dict[str, Any]:
 
 
 def load_config(config_path: Path | None = None) -> AppConfig:
-    path = config_path or (PI_DIR / "config.yaml")
+    path = config_path or (SERVER_DIR / "config.yaml")
     path = path.resolve()
     override = _read_config_file(path)
     merged = _deep_merge(DEFAULT_CONFIG, override)

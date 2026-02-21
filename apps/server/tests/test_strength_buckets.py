@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from vibesensor_core.vibration_strength import _vibration_strength_db_scalar
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.diagnostics_shared import severity_from_peak
 
@@ -39,7 +39,7 @@ def test_persistence_and_decay_behavior() -> None:
 
 
 def test_eps_behavior_floor_zero_is_finite() -> None:
-    db = _vibration_strength_db_scalar(
+    db = vibration_strength_db_scalar(
         peak_band_rms_amp_g=1e-6,
         floor_amp_g=0.0,
     )

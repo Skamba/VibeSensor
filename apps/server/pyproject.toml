@@ -73,5 +73,3 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
 "vibesensor/report/*.py" = ["E501"]
-"vibesensor/report_analysis.py" = ["E501"]
-"vibesensor/report_pdf.py" = ["E501"]

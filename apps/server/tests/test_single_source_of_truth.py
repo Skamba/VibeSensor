@@ -6,7 +6,7 @@ These tests prevent regression of the consolidation work by verifying:
 3. The legacy strength_scoring module is removed
 4. Metrics log records use canonical field names only
 5. as_float_or_none is the single canonical float converter
-6. _percentile is the single canonical percentile implementation
+6. percentile is the single canonical percentile implementation
 7. compute_vibration_strength_db output has no dead alias fields
 """
 
@@ -121,14 +121,14 @@ def test_as_float_single_source_of_truth() -> None:
 
 
 def test_percentile_single_source_of_truth() -> None:
-    """report.helpers._percentile must be imported from
+    """report.helpers.percentile must be imported from
     vibesensor_core.vibration_strength, not re-defined locally."""
-    from vibesensor_core.vibration_strength import _percentile as canonical
+    from vibesensor_core.vibration_strength import percentile as canonical
 
-    from vibesensor.report.helpers import _percentile
+    from vibesensor.report.helpers import percentile
 
-    assert _percentile is canonical, (
-        "report.helpers._percentile must be imported from vibesensor_core.vibration_strength"
+    assert percentile is canonical, (
+        "report.helpers.percentile must be imported from vibesensor_core.vibration_strength"
     )
 
 
