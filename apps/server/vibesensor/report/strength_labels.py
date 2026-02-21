@@ -49,12 +49,20 @@ def strength_label(db_value: float | None, *, lang: str = "en") -> tuple[str, st
     return (result[1], result[label_idx])
 
 
-def strength_text(db_value: float | None, *, lang: str = "en") -> str:
-    """Return a formatted strength string like ``'Moderate (22.0 dB)'``."""
+def strength_text(
+    db_value: float | None,
+    *,
+    lang: str = "en",
+    peak_amp_g: float | None = None,
+) -> str:
+    """Return a formatted strength string like ``'Moderate (22.0 dB) · 0.032 g peak'``."""
     _, label = strength_label(db_value, lang=lang)
     if db_value is None:
         return label
-    return f"{label} ({db_value:.1f} dB)"
+    text = f"{label} ({db_value:.1f} dB)"
+    if peak_amp_g is not None:
+        return f"{text} · {peak_amp_g:.3f} g peak"
+    return text
 
 
 # ---------------------------------------------------------------------------
