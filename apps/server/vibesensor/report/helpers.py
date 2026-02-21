@@ -16,7 +16,8 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from ..report_i18n import normalize_lang, tr as _tr
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
 
