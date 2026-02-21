@@ -266,6 +266,47 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
     assert focused.get("speed_range") == "100-110 km/h"
 
 
+def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() -> None:
+    from vibesensor.report.test_plan import _location_speedbin_summary
+
+    matches = [
+        {
+            "speed_kmh": 92.0,
+            "amp": 0.120,
+            "location": "Front Right",
+            "matched_hz": 33.0,
+            "rel_error": 0.40,
+        },
+        {
+            "speed_kmh": 92.0,
+            "amp": 0.055,
+            "location": "Front Left",
+            "matched_hz": 40.0,
+            "rel_error": 0.01,
+        },
+        {
+            "speed_kmh": 92.0,
+            "amp": 0.048,
+            "location": "Rear Left",
+            "matched_hz": 40.1,
+            "rel_error": 0.01,
+        },
+        {
+            "speed_kmh": 92.0,
+            "amp": 0.047,
+            "location": "Rear Right",
+            "matched_hz": 39.9,
+            "rel_error": 0.01,
+        },
+    ]
+
+    _, hotspot = _location_speedbin_summary(matches, lang="en")
+
+    assert hotspot is not None
+    assert hotspot.get("top_location") == "Front Left"
+    assert int(hotspot.get("corroborated_by_n_sensors") or 0) >= 3
+
+
 def test_location_speedbin_summary_prefers_connected_throughout_locations() -> None:
     from vibesensor.report.test_plan import _location_speedbin_summary
 
