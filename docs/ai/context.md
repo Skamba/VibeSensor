@@ -34,14 +34,14 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 
 ## Must-Not-Break Invariants
 - Canonical vibration severity metric is `vibration_strength_db`; do not replace with raw g-value proxies.
-- WS payload/UI contracts can change in fail-fast lab mode; update server, UI, and tests together when changing (`clients`, `diagnostics`, `spectra`, `selected`).
+- WS payload/UI contracts can change; update server, UI, and tests together when changing (`clients`, `diagnostics`, `spectra`, `selected`).
 - Hotspot startup must succeed offline (no runtime apt installs in hotspot script).
 - Pi image output must include `/opt/VibeSensor`, `vibesensor-hotspot.service`, and `/etc/vibesensor/config.yaml`.
 - CI verification suite is `make test-all` (full-suite harness in `tools/tests/run_full_suite.py`).
 
 ## Coding Conventions
 - Python style: Ruff-enforced, explicit signatures, small focused modules.
-- Tests: fast-focused pytest files under `apps/server/tests/` are preferred, but fail-fast lab work may use broader integration and breaking updates when that speeds feedback.
+- Tests: fast-focused pytest files under `apps/server/tests/` are preferred, but broader integration and breaking updates are allowed when that speeds feedback.
 - Frontend: TypeScript strict checks, no ad-hoc runtime contracts; use existing i18n keys.
 - Infra: prefer deterministic scripts, fail-fast assertions, low-noise logs.
 
@@ -50,4 +50,4 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 2. `docs/ai/map.md`
 3. `docs/ai/runbooks.md`
 4. `docs/ai/decisions.md`
-5. Target area files (start focused, then expand as needed for larger fail-fast lab changes)
+5. Target area files (start focused, then expand as needed for larger changes)

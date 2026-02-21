@@ -37,7 +37,7 @@ How to add a feature safely
 - If the change affects Docker, update `docker-compose.yml` or `apps/server/Dockerfile` and test locally with `docker compose up -d`.
 
 Guardrails for Copilot
-- Fail-fast lab mode: breaking changes and larger cross-cutting changes are allowed when they speed up learning. Backward compatibility is never a requirement; add/update tests to match new behavior and call out impact clearly.
+- Breaking changes and larger cross-cutting changes are allowed when they speed up learning. Backward compatibility is never a requirement; add/update tests to match new behavior and call out impact clearly.
 - For change verification, use the same suite as CI (`make test-all`).
 - Do not modify unrelated files or reformat the whole repo.
 - Default PR mode: check PR status checks and review feedback, fix all blocking issues, push updates, and continue monitoring until required checks are fully green.
