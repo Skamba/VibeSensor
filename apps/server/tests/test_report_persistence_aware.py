@@ -301,6 +301,31 @@ class TestTopPeaksTableRows:
         assert rows
         assert rows[0]["typical_speed_band"] == "100-110 km/h"
 
+    def test_typical_and_strongest_speed_bands_stay_consistent(self) -> None:
+        samples = []
+        for i in range(20):
+            speed = 40.0 if i < 12 else 100.0
+            amp = 0.02 if i < 12 else 0.09
+            samples.append(_sample(float(i), speed, [{"hz": 33.0, "amp": amp}]))
+
+        rows = _top_peaks_table_rows(samples)
+        assert rows
+        typical_speed_band = str(rows[0].get("typical_speed_band") or "")
+        assert typical_speed_band == "100-110 km/h"
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        target = next(
+            (f for f in findings if "33" in str(f.get("frequency_hz_or_order", ""))),
+            None,
+        )
+        assert target is not None
+        assert str(target.get("strongest_speed_band") or "") == typical_speed_band
+
 
 # ---------------------------------------------------------------------------
 # Persistent peak findings
