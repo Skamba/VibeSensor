@@ -5,10 +5,9 @@ Repository overview
 Common commands (exact as found in CI / repo files)
 - Install Python deps (dev):
   - python -m pip install -e "./apps/server[dev]"
-- Run normal test suite (default):
-  - vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
-  - vibesensor-ws-smoke --uri ws://127.0.0.1:8000/ws --min-clients 3 --timeout 35
-- Run extended test suite (on request only):
+- Run CI-aligned verification test suite:
+  - make test-all
+- Optional focused backend pytest run (for faster iteration, not a CI substitute):
   - python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
 - Lint / format checks (as used in CI):
   - ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
@@ -38,8 +37,8 @@ How to add a feature safely
 - If the change affects Docker, update `docker-compose.yml` or `apps/server/Dockerfile` and test locally with `docker compose up -d`.
 
 Guardrails for Copilot
-- Keep PRs small and self-contained. Add tests for behavior changes. Prefer backwards-compatible changes unless the task explicitly requests breaking changes.
-- For normal validation, run one simulator end-to-end smoke pass; run the full unit-heavy suite only when explicitly requested.
+- Breaking changes and larger cross-cutting changes are allowed when they speed up learning. Backward compatibility is never a requirement; add/update tests to match new behavior and call out impact clearly.
+- For change verification, use the same suite as CI (`make test-all`).
 - Do not modify unrelated files or reformat the whole repo.
 - Default PR mode: check PR status checks and review feedback, fix all blocking issues, push updates, and continue monitoring until required checks are fully green.
 

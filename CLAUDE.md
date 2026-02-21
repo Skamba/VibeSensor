@@ -1,6 +1,6 @@
 # CLAUDE quick guide
 
-Use `docs/ai/repo-map.md` first, then read only the minimal files needed.
+Use `docs/ai/repo-map.md` first, then read the files needed for the task (including larger cross-cutting changes when required).
 
 ## Core commands
 - Setup: `python -m pip install -e "./apps/server[dev]" && (cd apps/ui && npm ci)`
@@ -15,6 +15,7 @@ Use `docs/ai/repo-map.md` first, then read only the minimal files needed.
 - `libs/core` stays pure (no network/db/filesystem/framework imports).
 - `apps/server` composes adapters + core.
 - Prefer `apps/*`, `libs/*`, `infra/*` paths over legacy compatibility links.
+- Backward compatibility is never a requirement; breaking/larger changes are allowed when intentional.
 
 ## AI PR checklist — UI changes
 When opening a PR that touches `apps/ui/`:
