@@ -1159,6 +1159,22 @@
     "en": "Weak spatial separation; inspect both top nearby components before replacing parts.",
     "nl": "Zwakke ruimtelijke scheiding; controleer eerst beide dichtstbijzijnde componenten voordat je onderdelen vervangt."
   },
+  "ORIGIN_PHASE_ONSET_NOTE": {
+    "en": "Vibration onset consistent with {phase} phase.",
+    "nl": "Vibratie-aanvang consistent met {phase} fase."
+  },
+  "DRIVING_PHASE_ACCELERATION": {
+    "en": "acceleration",
+    "nl": "acceleratie"
+  },
+  "DRIVING_PHASE_DECELERATION": {
+    "en": "deceleration",
+    "nl": "deceleratie"
+  },
+  "DRIVING_PHASE_COAST_DOWN": {
+    "en": "coast-down",
+    "nl": "uitrollen"
+  },
   "SUITABILITY_CHECK_SPEED_VARIATION": {
     "en": "Speed variation",
     "nl": "Snelheidsvariatie"

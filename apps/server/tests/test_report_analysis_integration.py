@@ -272,6 +272,143 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
     assert confidence < 0.25
 
 
+def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """dominant_phase is populated when the majority of matched samples share a phase."""
+
+    class _Hypothesis:
+        key = "wheel_1x"
+        order = 1.0
+        order_label_base = "wheel order"
+        source = "wheel/tire"
+        suspected_source = "wheel/tire"
+
+        @staticmethod
+        def predicted_hz(
+            _sample: dict,
+            _metadata: dict,
+            _circumference: float | None,
+        ) -> tuple[float, str]:
+            return 1.0, "speed_kmh"
+
+    monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
+    monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda _points, **_kwargs: (
+            "",
+            {
+                "weak_spatial_separation": False,
+                "localization_confidence": 1.0,
+                "dominance_ratio": 2.0,
+            },
+        ),
+    )
+    monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
+
+    from vibesensor.report.phase_segmentation import DrivingPhase
+
+    # 20 samples all in acceleration phase, all matching at 1.0 Hz
+    n = 20
+    samples: list[dict] = [
+        {
+            "t_s": float(i),
+            "speed_kmh": 40.0 + float(i),
+            "strength_floor_amp_g": 0.001,
+            "top_peaks": [{"hz": 1.0, "amp": 0.05}],
+            "location": "front_left",
+        }
+        for i in range(n)
+    ]
+    per_sample_phases = [DrivingPhase.ACCELERATION] * n
+
+    findings = findings_module._build_order_findings(
+        metadata={"units": {"accel_x_g": "g"}},
+        samples=samples,
+        speed_sufficient=True,
+        steady_speed=False,
+        speed_stddev_kmh=12.0,
+        tire_circumference_m=2.036,
+        engine_ref_sufficient=True,
+        raw_sample_rate_hz=200.0,
+        accel_units="g",
+        connected_locations={"front_left"},
+        lang="en",
+        per_sample_phases=per_sample_phases,
+    )
+
+    assert len(findings) == 1
+    assert findings[0].get("dominant_phase") == "acceleration"
+
+
+def test_build_order_findings_dominant_phase_none_without_phases(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """dominant_phase is None when per_sample_phases is not provided."""
+
+    class _Hypothesis:
+        key = "wheel_1x"
+        order = 1.0
+        order_label_base = "wheel order"
+        source = "wheel/tire"
+        suspected_source = "wheel/tire"
+
+        @staticmethod
+        def predicted_hz(
+            _sample: dict,
+            _metadata: dict,
+            _circumference: float | None,
+        ) -> tuple[float, str]:
+            return 1.0, "speed_kmh"
+
+    monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
+    monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda _points, **_kwargs: (
+            "",
+            {
+                "weak_spatial_separation": False,
+                "localization_confidence": 1.0,
+                "dominance_ratio": 2.0,
+            },
+        ),
+    )
+    monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
+
+    n = 20
+    samples: list[dict] = [
+        {
+            "t_s": float(i),
+            "speed_kmh": 40.0 + float(i),
+            "strength_floor_amp_g": 0.001,
+            "top_peaks": [{"hz": 1.0, "amp": 0.05}],
+            "location": "front_left",
+        }
+        for i in range(n)
+    ]
+
+    findings = findings_module._build_order_findings(
+        metadata={"units": {"accel_x_g": "g"}},
+        samples=samples,
+        speed_sufficient=True,
+        steady_speed=False,
+        speed_stddev_kmh=12.0,
+        tire_circumference_m=2.036,
+        engine_ref_sufficient=True,
+        raw_sample_rate_hz=200.0,
+        accel_units="g",
+        connected_locations={"front_left"},
+        lang="en",
+    )
+
+    assert len(findings) == 1
+    assert findings[0].get("dominant_phase") is None
+
+
 def test_build_findings_order_exposes_structured_speed_profile() -> None:
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
