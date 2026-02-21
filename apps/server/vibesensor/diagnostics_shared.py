@@ -20,6 +20,8 @@ from .analysis_settings import (
 )
 from .runlog import as_float_or_none as _as_float
 
+DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
+
 
 def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dict[str, float]:
     out = dict(DEFAULT_ANALYSIS_SETTINGS)
