@@ -166,6 +166,21 @@ def test_select_top_causes_excludes_reference_findings() -> None:
     assert causes == []
 
 
+def test_select_top_causes_falls_back_to_transient_when_only_transient_exists() -> None:
+    findings = [
+        {
+            "finding_id": "F007",
+            "suspected_source": "transient_impact",
+            "peak_classification": "transient",
+            "confidence_0_to_1": 0.22,
+            "frequency_hz_or_order": "92.0 Hz",
+        }
+    ]
+    causes = select_top_causes(findings)
+    assert len(causes) == 1
+    assert causes[0]["source"] == "transient_impact"
+
+
 # -- confidence_label --------------------------------------------------------
 
 

@@ -340,3 +340,34 @@ def test_map_summary_no_top_causes() -> None:
     assert isinstance(data, ReportTemplateData)
     assert data.system_cards == []
     assert data.next_steps == []
+
+
+def test_map_summary_peak_rows_use_persistence_metrics() -> None:
+    summary: dict = {
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {
+            "peaks_table": [
+                {
+                    "rank": 1,
+                    "frequency_hz": 33.0,
+                    "order_label": "",
+                    "max_amp_g": 0.9,
+                    "p95_amp_g": 0.12,
+                    "presence_ratio": 0.85,
+                    "persistence_score": 0.0867,
+                    "peak_classification": "patterned",
+                    "typical_speed_band": "60-80 km/h",
+                }
+            ]
+        },
+    }
+    data = map_summary(summary)
+    assert data.peak_rows
+    row = data.peak_rows[0]
+    assert row.amp_g == "0.1200"
+    assert "patterned" in row.relevance
+    assert "85%" in row.relevance
