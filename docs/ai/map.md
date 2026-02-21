@@ -41,7 +41,7 @@
 - AI docs/runbooks: `docs/ai/*`.
 - Simulator-only enhancements: `apps/simulator/*`.
 
-## File Selection Heuristic (<=10 files)
+## File Selection Heuristic (start focused, expand when needed)
 1. Pick one hot spot + directly imported helpers.
 2. Add 1–2 nearest tests.
 3. Add any impacted config/unit file.

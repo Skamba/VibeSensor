@@ -23,3 +23,8 @@
 ## D5: Low-noise automation
 - Decision: AI tooling writes verbose logs to `artifacts/ai/logs/` and prints short summaries.
 - Rationale: reduce token usage and avoid noisy prompt context.
+
+## D6: Fail-fast lab change scope
+- Decision: breaking changes and larger cross-cutting changes are allowed for lab iterations.
+- Rationale: rapid learning is prioritized over strict backward compatibility during fail-fast experiments.
+- Implication: backward compatibility is never a requirement; document impact clearly and update validation/tests to match the new behavior.
