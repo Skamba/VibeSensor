@@ -70,6 +70,7 @@ class NextStep:
 class DataTrustItem:
     check: str
     state: str  # "pass" or "warn"
+    detail: str | None = None
 
 
 @dataclass
@@ -103,10 +104,15 @@ class ReportTemplateData:
     run_datetime: str | None = None
     run_id: str | None = None
     duration_text: str | None = None
+    start_time_utc: str | None = None
+    end_time_utc: str | None = None
+    sample_rate_hz: str | None = None
+    tire_spec_text: str | None = None
     sample_count: int = 0
     sensor_count: int = 0
     sensor_locations: list[str] = field(default_factory=list)
     sensor_model: str | None = None
+    firmware_version: str | None = None
     car: CarMeta = field(default_factory=CarMeta)
     observed: ObservedSignature = field(default_factory=ObservedSignature)
     system_cards: list[SystemFindingCard] = field(default_factory=list)
@@ -293,10 +299,14 @@ def map_summary(summary: dict) -> ReportTemplateData:
     data_trust: list[DataTrustItem] = []
     for item in summary.get("run_suitability", []):
         if isinstance(item, dict):
+            check_raw = str(item.get("check") or "")
+            check_text = tr(check_raw) if check_raw.startswith("SUITABILITY_CHECK_") else check_raw
+            detail = str(item.get("explanation") or "").strip() or None
             data_trust.append(
                 DataTrustItem(
-                    check=str(item.get("check") or ""),
+                    check=check_text,
                     state=str(item.get("state") or "warn"),
+                    detail=detail,
                 )
             )
 
@@ -385,22 +395,47 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # -- Metadata enrichment --
     duration_text = str(summary.get("record_length") or "") or None
+    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
+    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
+    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
+    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
+
+    tire_width_mm = _as_float(meta.get("tire_width_mm"))
+    tire_aspect_pct = _as_float(meta.get("tire_aspect_pct"))
+    rim_in = _as_float(meta.get("rim_in"))
+    tire_spec_text: str | None = None
+    if (
+        tire_width_mm is not None
+        and tire_aspect_pct is not None
+        and rim_in is not None
+        and tire_width_mm > 0
+        and tire_aspect_pct > 0
+        and rim_in > 0
+    ):
+        tire_spec_text = f"{tire_width_mm:g}/{tire_aspect_pct:g}R{rim_in:g}"
+
     sample_count = int(_as_float(summary.get("rows")) or 0)
     sensor_locations_list = summary.get("sensor_locations", [])
     if not isinstance(sensor_locations_list, list):
         sensor_locations_list = []
     sensor_count_used = int(_as_float(summary.get("sensor_count_used")) or 0)
     sensor_model_val = str(summary.get("sensor_model") or "").strip() or None
+    firmware_version_val = str(summary.get("firmware_version") or "").strip() or None
 
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=date_str,
         run_id=summary.get("run_id"),
         duration_text=duration_text,
+        start_time_utc=start_time_utc,
+        end_time_utc=end_time_utc,
+        sample_rate_hz=sample_rate_hz,
+        tire_spec_text=tire_spec_text,
         sample_count=sample_count,
         sensor_count=sensor_count_used,
         sensor_locations=[str(loc) for loc in sensor_locations_list],
         sensor_model=sensor_model_val,
+        firmware_version=firmware_version_val,
         car=CarMeta(name=car_name, car_type=car_type),
         observed=observed,
         system_cards=system_cards,

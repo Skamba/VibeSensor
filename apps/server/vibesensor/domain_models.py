@@ -274,6 +274,7 @@ class RunMetadata:
     start_time_utc: str
     end_time_utc: str | None
     sensor_model: str
+    firmware_version: str | None
     raw_sample_rate_hz: int | None
     feature_interval_s: float | None
     fft_window_size_samples: int | None
@@ -297,6 +298,7 @@ class RunMetadata:
         fft_window_type: str | None,
         peak_picker_method: str,
         accel_scale_g_per_lsb: float | None,
+        firmware_version: str | None = None,
         end_time_utc: str | None = None,
         incomplete_for_order_analysis: bool = False,
     ) -> RunMetadata:
@@ -308,6 +310,7 @@ class RunMetadata:
             start_time_utc=start_time_utc,
             end_time_utc=end_time_utc,
             sensor_model=sensor_model,
+            firmware_version=firmware_version,
             raw_sample_rate_hz=raw_sample_rate_hz,
             feature_interval_s=feature_interval_s,
             fft_window_size_samples=fft_window_size_samples,
@@ -330,6 +333,7 @@ class RunMetadata:
             start_time_utc=str(data.get("start_time_utc", "")),
             end_time_utc=data.get("end_time_utc"),
             sensor_model=str(data.get("sensor_model", "unknown")),
+            firmware_version=(str(data.get("firmware_version", "")).strip() or None),
             raw_sample_rate_hz=_as_int_or_none(data.get("raw_sample_rate_hz")),
             feature_interval_s=_as_float_or_none(data.get("feature_interval_s")),
             fft_window_size_samples=_as_int_or_none(data.get("fft_window_size_samples")),
@@ -350,6 +354,7 @@ class RunMetadata:
             "start_time_utc": self.start_time_utc,
             "end_time_utc": self.end_time_utc,
             "sensor_model": self.sensor_model,
+            "firmware_version": self.firmware_version,
             "raw_sample_rate_hz": self.raw_sample_rate_hz,
             "feature_interval_s": self.feature_interval_s,
             "fft_window_size_samples": self.fft_window_size_samples,
@@ -379,6 +384,7 @@ class SensorFrame:
     t_s: float | None
     client_id: str
     client_name: str
+    location: str
     sample_rate_hz: int | None
     speed_kmh: float | None
     gps_speed_kmh: float | None
@@ -407,6 +413,7 @@ class SensorFrame:
             "t_s": self.t_s,
             "client_id": self.client_id,
             "client_name": self.client_name,
+            "location": self.location,
             "sample_rate_hz": self.sample_rate_hz,
             "speed_kmh": self.speed_kmh,
             "gps_speed_kmh": self.gps_speed_kmh,
@@ -476,6 +483,7 @@ class SensorFrame:
             t_s=t_s,
             client_id=str(record.get("client_id", "")),
             client_name=str(record.get("client_name", "")),
+            location=str(record.get("location", "")),
             sample_rate_hz=sample_rate_hz,
             speed_kmh=speed_kmh,
             gps_speed_kmh=gps_speed_kmh,

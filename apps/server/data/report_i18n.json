@@ -599,6 +599,14 @@
     "en": "Sensor Model",
     "nl": "Sensormodel"
   },
+  "SENSORS_LABEL": {
+    "en": "Sensors",
+    "nl": "Sensoren"
+  },
+  "SAMPLE_COUNT_LABEL": {
+    "en": "Sample count",
+    "nl": "Aantal samples"
+  },
   "SENSOR_PLACEMENT_AND_HOTSPOTS": {
     "en": "Sensor placement and hotspots",
     "nl": "Sensorplaatsing en hotspots"
@@ -938,6 +946,10 @@
   "UNLABELED_SENSOR": {
     "en": "Unlabeled sensor",
     "nl": "Sensor zonder label"
+  },
+  "SENSOR_ID_SUFFIX": {
+    "en": "Sensor {sensor_id}",
+    "nl": "Sensor {sensor_id}"
   },
   "VALIDATE_GEARING_SLIP_ASSUMPTIONS_AGAINST_REAL_RPM_IF": {
     "en": "Validate gearing/slip assumptions against real RPM if available.",

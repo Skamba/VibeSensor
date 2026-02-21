@@ -18,6 +18,11 @@ Read order + canonical rules
 - Run server (local): `python -m vibesensor.app --config apps/server/config.dev.yaml`
 - UI dev/build: `cd apps/ui && npm run dev` / `cd apps/ui && npm run typecheck && npm run build`
 - Lint/test/format/smoke: `make lint` / `make test-all` / `make format` / `make smoke`
+- PR checks watcher: `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
+
+## PR monitoring rule
+- Run the PR watcher on every PR update; if it exits `RESULT=NON_GREEN`, fix and re-run.
+- Treat `RESULT=ALL_GREEN` as the CI readiness gate before merge.
 
 ## Compatibility nuance
 - Breaking changes are generally allowed.

@@ -187,6 +187,7 @@ def _most_likely_origin_summary(
         "wheel/tire": "SOURCE_WHEEL_TIRE",
         "driveline": "SOURCE_DRIVELINE",
         "engine": "SOURCE_ENGINE",
+        "unknown": "UNKNOWN",
     }
     source_i18n_key = _source_i18n_map.get(source)
     source_human = (
@@ -417,6 +418,7 @@ def summarize_run_data(
     run_suitability = [
         {
             "check": _tr(language, "SUITABILITY_CHECK_SPEED_VARIATION"),
+            "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
             "state": "pass" if not steady_speed else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_SPEED_VARIATION_PASS")
@@ -426,6 +428,7 @@ def summarize_run_data(
         },
         {
             "check": _tr(language, "SUITABILITY_CHECK_SENSOR_COVERAGE"),
+            "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
             "state": "pass" if sensor_count_sufficient else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_SENSOR_COVERAGE_PASS")
@@ -435,6 +438,7 @@ def summarize_run_data(
         },
         {
             "check": _tr(language, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS"),
+            "check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
             "state": "pass" if reference_complete else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_REFERENCE_COMPLETENESS_PASS")
@@ -444,6 +448,7 @@ def summarize_run_data(
         },
         {
             "check": _tr(language, "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"),
+            "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
             "state": "pass" if sat_count == 0 else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_SATURATION_PASS")
@@ -470,6 +475,7 @@ def summarize_run_data(
     run_suitability.append(
         {
             "check": _tr(language, "SUITABILITY_CHECK_FRAME_INTEGRITY"),
+            "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
             "state": "pass" if frame_issues == 0 else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_FRAME_INTEGRITY_PASS")
@@ -488,17 +494,18 @@ def summarize_run_data(
 
     sensor_locations = sorted(
         {
-            _location_label(sample)
+            _location_label(sample, lang=language)
             for sample in samples
-            if isinstance(sample, dict) and _location_label(sample)
+            if isinstance(sample, dict) and _location_label(sample, lang=language)
         }
     )
     # Only include locations that were connected throughout the run for
     # intensity aggregation, so intermittent sensors don't skew results.
-    connected_locations = _locations_connected_throughout_run(samples)
+    connected_locations = _locations_connected_throughout_run(samples, lang=language)
     sensor_intensity_by_location = _sensor_intensity_by_location(
         samples,
         include_locations=set(sensor_locations),
+        lang=language,
     )
 
     summary: dict[str, Any] = {
@@ -512,6 +519,7 @@ def summarize_run_data(
         "start_time_utc": metadata.get("start_time_utc"),
         "end_time_utc": metadata.get("end_time_utc"),
         "sensor_model": metadata.get("sensor_model"),
+        "firmware_version": metadata.get("firmware_version"),
         "raw_sample_rate_hz": raw_sample_rate_hz,
         "feature_interval_s": _as_float(metadata.get("feature_interval_s")),
         "fft_window_size_samples": metadata.get("fft_window_size_samples"),
