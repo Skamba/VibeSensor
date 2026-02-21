@@ -246,6 +246,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     y2 = y1 - 4.5 * mm
     y3 = y2 - 4.5 * mm
     y4 = y3 - 4.5 * mm
+    y5 = y4 - 4.5 * mm
 
     _draw_kv(c, meta_x, y1, tr("RUN_DATE"), _safe(data.run_datetime), label_w=22 * mm, fs=FS_BODY)
     if data.run_id:
@@ -277,8 +278,19 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         c.drawString(meta_right, y2, " \u00b7 ".join(extra_parts))
     if data.sensor_model:
         _draw_kv(c, meta_right, y3, tr("SENSOR_MODEL"), data.sensor_model, label_w=24 * mm, fs=FS_BODY)
+    if data.firmware_version:
+        firmware_label = "Firmwareversie" if data.lang == "nl" else "Firmware Version"
+        _draw_kv(
+            c,
+            meta_right,
+            y4,
+            firmware_label,
+            data.firmware_version,
+            label_w=24 * mm,
+            fs=FS_BODY,
+        )
     if data.tire_spec_text:
-        _draw_kv(c, meta_right, y4, tr("TIRE_SIZE"), data.tire_spec_text, label_w=14 * mm, fs=FS_BODY)
+        _draw_kv(c, meta_right, y5, tr("TIRE_SIZE"), data.tire_spec_text, label_w=14 * mm, fs=FS_BODY)
 
     y_cursor = hdr_y - GAP
 
