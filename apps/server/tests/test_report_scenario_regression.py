@@ -320,6 +320,29 @@ class TestConfidenceCalibration:
         if sweep_conf > 0 and steady_conf > 0:
             assert sweep_conf > steady_conf, f"Sweep {sweep_conf} should > steady {steady_conf}"
 
+    def test_steady_speed_confidence_ceiling(self) -> None:
+        """Constant speed findings should remain capped below high-certainty range."""
+        meta = _standard_metadata()
+        steady_samples = _build_speed_sweep_samples(
+            peak_amp=0.04,
+            vib_db=18.0,
+            speed_start_kmh=79.5,
+            speed_end_kmh=80.5,
+            n=24,
+        )
+        steady_summary = summarize_run_data(meta, steady_samples, include_samples=False)
+        max_non_ref_conf = max(
+            (
+                float(f.get("confidence_0_to_1") or 0.0)
+                for f in steady_summary.get("findings", [])
+                if not str(f.get("finding_id", "")).startswith("REF_")
+            ),
+            default=0.0,
+        )
+        assert max_non_ref_conf <= 0.65, (
+            f"Steady speed confidence must be <= 0.65, got {max_non_ref_conf}"
+        )
+
     def test_confidence_label_thresholds(self) -> None:
         """Verify confidence_label returns correct keys at boundaries."""
         key_h, tone_h, pct_h = confidence_label(0.75)
