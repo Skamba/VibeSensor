@@ -243,6 +243,61 @@ class TestBuildPersistentPeakFindings:
         assert len(persistent) >= 1
         assert len(transient) == 0
 
+    def test_localized_persistent_peak_confidence_is_high(self) -> None:
+        samples: list[dict] = []
+        for i in range(20):
+            peaks = [{"hz": 40.0, "amp": 0.06}] if i < 16 else []
+            samples.append(
+                _sample(
+                    float(i) * 0.5,
+                    80.0,
+                    peaks,
+                    client_name="Front Left",
+                )
+            )
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        target = next(
+            f
+            for f in findings
+            if f.get("peak_classification") == "patterned"
+            and "41.0" in str(f.get("frequency_hz_or_order", ""))
+        )
+        assert float(target.get("confidence_0_to_1", 0.0)) >= 0.50
+
+    def test_uniform_multi_sensor_peak_confidence_is_penalized(self) -> None:
+        locations = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
+        samples: list[dict] = []
+        for i in range(20):
+            peaks = [{"hz": 40.0, "amp": 0.06}] if i < 16 else []
+            samples.append(
+                _sample(
+                    float(i) * 0.5,
+                    80.0,
+                    peaks,
+                    client_name=locations[i % len(locations)],
+                )
+            )
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        target = next(
+            f
+            for f in findings
+            if f.get("peak_classification") == "patterned"
+            and "41.0" in str(f.get("frequency_hz_or_order", ""))
+        )
+        assert float(target.get("confidence_0_to_1", 0.0)) <= 0.35
+
     def test_single_thud_classified_as_transient(self) -> None:
         """A peak that appears in only 1 of 20 samples should be transient."""
         samples = []

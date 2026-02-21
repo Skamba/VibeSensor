@@ -563,6 +563,7 @@ def _build_persistent_peak_findings(
     bin_amps: dict[float, list[float]] = defaultdict(list)
     bin_floors: dict[float, list[float]] = defaultdict(list)
     bin_speeds: dict[float, list[float]] = defaultdict(list)
+    bin_location_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     n_samples = 0
 
     for sample in samples:
@@ -571,6 +572,7 @@ def _build_persistent_peak_findings(
         n_samples += 1
         speed = _as_float(sample.get("speed_kmh"))
         floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
+        location = _location_label(sample, lang=lang)
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
@@ -580,6 +582,8 @@ def _build_persistent_peak_findings(
             bin_floors[bin_center].append(max(0.0, floor_amp))
             if speed is not None and speed > 0:
                 bin_speeds[bin_center].append(speed)
+            if location:
+                bin_location_counts[bin_center][location] += 1
 
     if n_samples == 0:
         return []
@@ -605,6 +609,11 @@ def _build_persistent_peak_findings(
         peak_type = _classify_peak_type(presence_ratio, burstiness, snr=raw_snr)
 
         snr_score = min(1.0, log1p(p95_amp / max(0.001, mean_floor)) / 2.5)
+        location_counts = bin_location_counts.get(bin_center, {})
+        spatial_concentration = (
+            max(location_counts.values()) / count if location_counts and count > 0 else 1.0
+        )
+        spatial_penalty = (0.35 + 0.65 * spatial_concentration) if location_counts else 1.0
 
         # Confidence for persistent/patterned peaks (analogous to order confidence)
         if peak_type == "baseline_noise":
@@ -612,7 +621,7 @@ def _build_persistent_peak_findings(
         elif peak_type == "transient":
             confidence = max(0.05, min(0.22, 0.05 + 0.10 * presence_ratio + 0.07 * snr_score))
         else:
-            confidence = max(
+            base_confidence = max(
                 0.10,
                 min(
                     0.75,
@@ -622,6 +631,9 @@ def _build_persistent_peak_findings(
                     + 0.15 * min(1.0, 1.0 - burstiness / 10.0),
                 ),
             )
+            confidence = base_confidence * spatial_penalty
+            if location_counts and spatial_concentration <= 0.35:
+                confidence = min(confidence, 0.35)
 
         speeds = bin_speeds.get(bin_center, [])
         speed_band = "-"
@@ -669,6 +681,7 @@ def _build_persistent_peak_findings(
                 "mean_noise_floor": mean_floor,
                 "sample_count": count,
                 "total_samples": n_samples,
+                "spatial_concentration": spatial_concentration,
             },
             "strongest_speed_band": speed_band if speed_band != "-" else None,
         }
