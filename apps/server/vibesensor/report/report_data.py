@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from .. import __version__
-from ..report_i18n import normalize_lang, tr as _tr
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, strength_text
