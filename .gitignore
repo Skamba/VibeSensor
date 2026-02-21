@@ -61,6 +61,7 @@ firmware/esp/.pio/
 
 # Image build artifacts
 infra/pi-image/pi-gen/.cache/
+infra/pi-image/pi-gen/.pip-cache-stage/
 infra/pi-image/pi-gen/out/*
 !infra/pi-image/pi-gen/out/.gitkeep
 
