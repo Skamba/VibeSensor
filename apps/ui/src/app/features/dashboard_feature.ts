@@ -204,13 +204,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     return hasFresh;
   }
 
-  function yRangeFromBands(): [number, number] {
-    const bands = state.strengthBands;
-    if (!bands.length) return [0, 50];
-    const min = Math.max(0, Math.floor(Math.min(...bands.map((band) => band.min_db)) - 4));
-    const max = Math.ceil(Math.max(...bands.map((band) => band.min_db)) + 10);
-    return [min, max];
-  }
+  const fixedStrengthDbRange: [number, number] = [0, 60];
 
   function ensureStrengthChart(): void {
     if (!els.strengthChart || state.strengthPlot) return;
@@ -220,7 +214,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
         const ordered = [...state.strengthBands].sort((a, b) => a.min_db - b.min_db);
         for (let idx = 0; idx < ordered.length; idx++) {
           const band = ordered[idx];
-          const nextMin = idx + 1 < ordered.length ? ordered[idx + 1].min_db : yRangeFromBands()[1];
+          const nextMin = idx + 1 < ordered.length ? ordered[idx + 1].min_db : fixedStrengthDbRange[1];
           const y0 = u.valToPos(nextMin, "y", true);
           const y1 = u.valToPos(band.min_db, "y", true);
           ctx2.fillStyle = `hsla(${220 - idx * 35}, 70%, 55%, 0.08)`;
@@ -250,7 +244,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
         }
       },
     ] } };
-    state.strengthPlot = new uPlot({ title: "Strength over time", width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240, scales: { x: { time: false }, y: { range: yRangeFromBands() as uPlot.Range.MinMax } }, axes: [{ label: "s" }, { label: "Strength (dB over floor)" }], series: [{ label: "t" }, { label: "wheel", stroke: "#2563eb", width: 2 }, { label: "driveshaft", stroke: "#14b8a6", width: 2 }, { label: "engine", stroke: "#f59e0b", width: 2 }, { label: "other", stroke: "#8b5cf6", width: 2 }], plugins: [shadePlugin] }, [[], [], [], [], []], els.strengthChart);
+    state.strengthPlot = new uPlot({ title: "Strength over time", width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240, scales: { x: { time: false }, y: { range: fixedStrengthDbRange as uPlot.Range.MinMax } }, axes: [{ label: "s" }, { label: "Strength (dB over floor)" }], series: [{ label: "t" }, { label: "wheel", stroke: "#2563eb", width: 2 }, { label: "driveshaft", stroke: "#14b8a6", width: 2 }, { label: "engine", stroke: "#f59e0b", width: 2 }, { label: "other", stroke: "#8b5cf6", width: 2 }], plugins: [shadePlugin] }, [[], [], [], [], []], els.strengthChart);
     const resize = () => {
       if (!state.strengthPlot || !els.strengthChart) return;
       state.strengthPlot.setSize({ width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240 });
@@ -274,7 +268,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     }
     const t0 = state.strengthHistory.t[0] || now;
     const relT = state.strengthHistory.t.map((v) => v - t0);
-    state.strengthPlot.setScale("y", { min: yRangeFromBands()[0], max: yRangeFromBands()[1] });
+    state.strengthPlot.setScale("y", { min: fixedStrengthDbRange[0], max: fixedStrengthDbRange[1] });
     state.strengthPlot.setData([relT, state.strengthHistory.wheel, state.strengthHistory.driveshaft, state.strengthHistory.engine, state.strengthHistory.other]);
   }
 
