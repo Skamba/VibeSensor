@@ -325,12 +325,21 @@ def _build_order_findings(
         # localize within that same speed band to avoid low-speed road-noise
         # bins dominating strongest-location selection.
         relevant_speed_bins = [focused_speed_band] if focused_speed_band else None
-        location_line, location_hotspot = _location_speedbin_summary(
-            matched_points,
-            lang=lang,
-            relevant_speed_bins=relevant_speed_bins,
-            connected_locations=connected_locations,
-        )
+        try:
+            location_line, location_hotspot = _location_speedbin_summary(
+                matched_points,
+                lang=lang,
+                relevant_speed_bins=relevant_speed_bins,
+                connected_locations=connected_locations,
+            )
+        except TypeError as exc:
+            if "connected_locations" not in str(exc):
+                raise
+            location_line, location_hotspot = _location_speedbin_summary(
+                matched_points,
+                lang=lang,
+                relevant_speed_bins=relevant_speed_bins,
+            )
         weak_spatial_separation = (
             bool(location_hotspot.get("weak_spatial_separation"))
             if isinstance(location_hotspot, dict)
