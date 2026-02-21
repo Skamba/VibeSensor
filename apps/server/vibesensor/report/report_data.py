@@ -18,7 +18,7 @@ from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .pattern_parts import parts_for_pattern, why_parts_listed
-from .strength_labels import certainty_label, strength_text
+from .strength_labels import certainty_label, strength_label, strength_text
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -283,6 +283,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         weak_spatial=weak_spatial,
         sensor_count=sensor_count,
         has_reference_gaps=has_ref_gaps,
+        strength_band_key=strength_label(db_val)[0] if db_val is not None else None,
     )
 
     observed = ObservedSignature(
