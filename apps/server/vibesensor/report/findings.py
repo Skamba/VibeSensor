@@ -358,6 +358,7 @@ def _build_order_findings(
     accel_units: str,
     connected_locations: set[str],
     lang: object,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []
@@ -382,8 +383,11 @@ def _build_order_findings(
         ref_sources: set[str] = set()
         possible_by_speed_bin: dict[str, int] = defaultdict(int)
         matched_by_speed_bin: dict[str, int] = defaultdict(int)
+        possible_by_phase: dict[str, int] = defaultdict(int)
+        matched_by_phase: dict[str, int] = defaultdict(int)
+        has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
-        for sample in samples:
+        for sample_idx, sample in enumerate(samples):
             peaks = _sample_top_peaks(sample)
             if not peaks:
                 continue
@@ -404,6 +408,11 @@ def _build_order_findings(
             )
             if sample_speed_bin is not None:
                 possible_by_speed_bin[sample_speed_bin] += 1
+            if has_phases:
+                assert per_sample_phases is not None
+                ph = per_sample_phases[sample_idx]
+                phase_key = str(ph.value if hasattr(ph, "value") else ph)
+                possible_by_phase[phase_key] += 1
 
             tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL)
             best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
@@ -414,6 +423,8 @@ def _build_order_findings(
             matched += 1
             if sample_speed_bin is not None:
                 matched_by_speed_bin[sample_speed_bin] += 1
+            if has_phases:
+                matched_by_phase[phase_key] += 1
             rel_errors.append(delta_hz / max(1e-9, predicted_hz))
             matched_amp.append(best_amp)
             floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
@@ -460,6 +471,21 @@ def _build_order_findings(
                 effective_match_rate = focused_rate
         if effective_match_rate < min_match_rate:
             continue
+
+        # Per-phase confidence: compute match rate for each driving phase.
+        # Phases with sufficient matches act as independent evidence sources.
+        per_phase_confidence: dict[str, float] | None = None
+        phases_with_evidence = 0
+        if has_phases and possible_by_phase:
+            per_phase_confidence = {}
+            for ph_key, ph_possible in possible_by_phase.items():
+                ph_matched = matched_by_phase.get(ph_key, 0)
+                per_phase_confidence[ph_key] = ph_matched / max(1, ph_possible)
+                if (
+                    ph_matched >= ORDER_MIN_MATCH_POINTS
+                    and per_phase_confidence[ph_key] >= min_match_rate
+                ):
+                    phases_with_evidence += 1
 
         mean_amp = mean(matched_amp) if matched_amp else 0.0
         mean_floor = mean(matched_floor) if matched_floor else 0.0
@@ -554,6 +580,13 @@ def _build_order_findings(
             confidence *= 1.08
         elif corroborating_locations >= 2:
             confidence *= 1.04
+        # Bonus: multi-phase corroboration — order detected consistently across
+        # multiple driving phases (e.g., both CRUISE and ACCELERATION) indicates
+        # a genuine mechanical source rather than a phase-specific artefact.
+        if phases_with_evidence >= 3:
+            confidence *= 1.06
+        elif phases_with_evidence >= 2:
+            confidence *= 1.03
         confidence = max(0.08, min(0.97, confidence))
 
         ranking_score = (
@@ -651,6 +684,8 @@ def _build_order_findings(
                 "possible_samples": possible,
                 "matched_samples": matched,
                 "frequency_correlation": corr,
+                "per_phase_confidence": per_phase_confidence,
+                "phases_with_evidence": phases_with_evidence,
             },
             "next_sensor_move": str(actions[0].get("what") or "")
             or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),
@@ -1045,6 +1080,13 @@ def _build_findings(
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)
     analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+    # Derive phase labels aligned to analysis_samples for per-phase confidence.
+    if len(diagnostic_samples) >= 5:
+        analysis_phases = [
+            p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=False) if keep
+        ]
+    else:
+        analysis_phases = _per_sample_phases
 
     order_findings = _build_order_findings(
         metadata=metadata,
@@ -1058,6 +1100,7 @@ def _build_findings(
         accel_units=accel_units,
         connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
+        per_sample_phases=analysis_phases,
     )
     findings.extend(order_findings)
 
