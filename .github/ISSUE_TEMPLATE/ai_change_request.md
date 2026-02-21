@@ -22,7 +22,7 @@ assignees: []
 ```bash
 # example
 scripts/ai/task ai:check
-scripts/ai/task ai:test -- pi/tests/test_config.py -k my_case -q
+scripts/ai/task ai:test -- apps/server/tests/test_config.py -k my_case -q
 make test-all
 ```
 

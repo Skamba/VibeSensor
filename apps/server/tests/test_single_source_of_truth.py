@@ -1,13 +1,12 @@
 """Guardrail tests ensuring key definitions have a single source of truth.
 
 These tests prevent regression of the consolidation work by verifying:
-1. DEFAULT_DIAGNOSTIC_SETTINGS is the same object as DEFAULT_ANALYSIS_SETTINGS
-2. Spectrum payloads do not contain dead alias fields
-3. The legacy strength_scoring module is removed
-4. Metrics log records use canonical field names only
-5. as_float_or_none is the single canonical float converter
-6. _percentile is the single canonical percentile implementation
-7. compute_vibration_strength_db output has no dead alias fields
+1. Spectrum payloads do not contain dead alias fields
+2. The legacy strength_scoring module is removed
+3. Metrics log records use canonical field names only
+4. as_float_or_none is the single canonical float converter
+5. _percentile is the single canonical percentile implementation
+6. compute_vibration_strength_db output has no dead alias fields
 """
 
 from __future__ import annotations
@@ -18,19 +17,6 @@ from pathlib import Path
 import pytest
 
 from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
-from vibesensor.diagnostics_shared import DEFAULT_DIAGNOSTIC_SETTINGS
-
-
-def test_diagnostic_settings_is_analysis_settings() -> None:
-    """DEFAULT_DIAGNOSTIC_SETTINGS must be the same object as DEFAULT_ANALYSIS_SETTINGS."""
-    assert DEFAULT_DIAGNOSTIC_SETTINGS is DEFAULT_ANALYSIS_SETTINGS
-
-
-def test_analysis_settings_keys_match() -> None:
-    """Both default dicts have identical keys and values."""
-    assert set(DEFAULT_DIAGNOSTIC_SETTINGS.keys()) == set(DEFAULT_ANALYSIS_SETTINGS.keys())
-    for key in DEFAULT_ANALYSIS_SETTINGS:
-        assert DEFAULT_DIAGNOSTIC_SETTINGS[key] == DEFAULT_ANALYSIS_SETTINGS[key]
 
 
 def test_strength_scoring_module_removed() -> None:
@@ -89,9 +75,9 @@ def test_selected_payload_has_no_combined_alias() -> None:
 
 def test_metrics_log_no_legacy_field_names() -> None:
     """New metrics log records must not contain legacy field aliases."""
-    from vibesensor.runlog import default_units
+    from vibesensor.domain_models import _default_units
 
-    units = default_units()
+    units = _default_units()
     legacy_fields = {
         "accel_magnitude_rms_g",
         "accel_magnitude_p2p_g",
@@ -110,29 +96,25 @@ def test_metrics_log_no_legacy_field_names() -> None:
 
 
 def test_as_float_single_source_of_truth() -> None:
-    """diagnostics_shared._as_float and report_analysis._as_float must be
-    the canonical as_float_or_none from runlog, not local re-definitions."""
+    """diagnostics_shared._as_float must be the canonical as_float_or_none
+    from runlog, not a local re-definition."""
     from vibesensor.diagnostics_shared import _as_float as diag_as_float
-    from vibesensor.report_analysis import _as_float as report_as_float
     from vibesensor.runlog import as_float_or_none
 
     assert diag_as_float is as_float_or_none, (
         "diagnostics_shared._as_float must be imported from runlog.as_float_or_none"
     )
-    assert report_as_float is as_float_or_none, (
-        "report_analysis._as_float must be imported from runlog.as_float_or_none"
-    )
 
 
 def test_percentile_single_source_of_truth() -> None:
-    """report_analysis._percentile must be imported from
-    analysis.vibration_strength, not re-defined locally."""
+    """report.helpers._percentile must be imported from
+    vibesensor_core.vibration_strength, not re-defined locally."""
     from vibesensor_core.vibration_strength import _percentile as canonical
 
-    from vibesensor.report_analysis import _percentile
+    from vibesensor.report.helpers import _percentile
 
     assert _percentile is canonical, (
-        "report_analysis._percentile must be imported from analysis.vibration_strength"
+        "report.helpers._percentile must be imported from vibesensor_core.vibration_strength"
     )
 
 
@@ -208,9 +190,16 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[1]
-    for fname in ("metrics_log.py", "report_analysis.py"):
-        source = (root / "vibesensor" / fname).read_text(encoding="utf-8")
-        assert "* 60.0" not in source, f"{fname} still contains inline engine RPM formula (* 60.0)"
+    files_to_check = [
+        root / "vibesensor" / "metrics_log.py",
+        root / "vibesensor" / "report" / "helpers.py",
+        root / "vibesensor" / "report" / "summary.py",
+    ]
+    for fpath in files_to_check:
+        source = fpath.read_text(encoding="utf-8")
+        assert "* 60.0" not in source, (
+            f"{fpath.name} still contains inline engine RPM formula (* 60.0)"
+        )
 
 
 def test_simulator_defaults_match_analysis_settings() -> None:

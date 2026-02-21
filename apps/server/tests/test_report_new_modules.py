@@ -9,11 +9,15 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
+from vibesensor.report import summarize_log
 from vibesensor.report.pattern_parts import parts_for_pattern, why_parts_listed
-from vibesensor.report.pdf_builder import assert_aspect_preserved, fit_rect_preserve_aspect
+from vibesensor.report.pdf_builder import (
+    assert_aspect_preserved,
+    build_report_pdf,
+    fit_rect_preserve_aspect,
+)
 from vibesensor.report.report_data import ReportTemplateData, map_summary
 from vibesensor.report.strength_labels import certainty_label, strength_label, strength_text
-from vibesensor.reports import build_report_pdf, summarize_log
 
 # ---------------------------------------------------------------------------
 # strength_label / strength_text

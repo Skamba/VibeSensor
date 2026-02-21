@@ -4,11 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.report_analysis import (
-    _speed_breakdown,
-    build_findings_for_samples,
-    summarize_log,
-)
+from vibesensor.report import build_findings_for_samples, summarize_log
+from vibesensor.report.findings import _speed_breakdown
 from vibesensor.runlog import (
     append_jsonl_records,
     create_run_end_record,

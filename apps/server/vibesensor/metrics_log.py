@@ -56,7 +56,6 @@ class MetricsLogger:
         history_db: HistoryDB | None = None,
         persist_history_db: bool = True,
         language_provider: Callable[[], str] | None = None,
-        **_kwargs: object,
     ):
         self.enabled = bool(enabled)
         self.log_path = log_path

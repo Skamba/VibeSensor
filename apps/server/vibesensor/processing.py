@@ -591,13 +591,6 @@ class SignalProcessor:
             "z": block[2].tolist(),
         }
 
-    def client_data_age_s(self, client_id: str) -> float | None:
-        """Seconds since last ingest for *client_id*, or None if unknown."""
-        buf = self._buffers.get(client_id)
-        if buf is None or buf.last_ingest_mono_s <= 0:
-            return None
-        return time.monotonic() - buf.last_ingest_mono_s
-
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         """Return subset of *client_ids* that received data within *max_age_s*."""
         now = time.monotonic()

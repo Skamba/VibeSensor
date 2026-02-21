@@ -198,27 +198,23 @@ button:active,
   filter: brightness(0.96);
 }
 
-.btn--primary,
-button.primary {
+.btn--primary {
   background: var(--brand-500);
   border-color: var(--brand-600);
   color: var(--on-fill);
 }
-.btn--primary:hover,
-button.primary:hover {
+.btn--primary:hover {
   background: var(--brand-600);
   filter: none;
 }
 
-.btn--success,
-button.success {
+.btn--success {
   background: var(--success);
   border-color: var(--success-700);
   color: var(--on-fill);
 }
 
-.btn--danger,
-button.warn {
+.btn--danger {
   background: var(--danger);
   border-color: var(--danger-700);
   color: var(--on-fill);
@@ -242,7 +238,6 @@ input:focus-visible,
 }
 
 .pill,
-.badge,
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -256,11 +251,9 @@ input:focus-visible,
 
 .pill--muted { background: var(--pill-muted-bg); color: var(--pill-muted-text); }
 .pill--ok,
-.status-pill.online,
-.badge.on { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
+.status-pill.online { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
 .pill--bad,
-.status-pill.offline,
-.badge.off { background: var(--pill-bad-bg); color: var(--pill-bad-text); }
+.status-pill.offline { background: var(--pill-bad-bg); color: var(--pill-bad-text); }
 
 .view { display: none; margin-top: var(--space-4); }
 .view.active { display: block; }
@@ -427,7 +420,6 @@ input:focus-visible,
 }
 
 .logging-row,
-.live-speed-row,
 .live-speed-readout { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .logging-actions {
   display: grid;
@@ -439,22 +431,6 @@ input:focus-visible,
   width: 100%;
 }
 .live-speed-readout { margin-top: var(--space-3); }
-.live-speed-row {
-  margin-top: var(--space-3);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
-}
-.live-speed-row label {
-  grid-column: 1 / -1;
-  min-width: 0;
-}
-.live-speed-row input {
-  width: 9rem;
-}
-.live-speed-row .btn {
-  min-width: 9.5rem;
-}
 
 .speed {
   min-width: 210px;
@@ -558,7 +534,6 @@ input:focus-visible,
   transform: translate(-50%, -50%);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
-.mini-car-dot--muted { opacity: 0.45; }
 .history-preview-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .history-preview-table th,
 .history-preview-table td {
@@ -604,11 +579,9 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
 .vib-cell { cursor: help; font-weight: 700; }
 .numeric { text-align: right !important; font-variant-numeric: tabular-nums; }
 
-.controls,
 .log-actions,
 .settings-subgrid,
 .settings-groups { display: grid; gap: var(--space-3); }
-.controls,
 .log-actions { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .settings-layout { display: grid; gap: var(--space-4); }
 .settings-groups { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
@@ -634,9 +607,6 @@ td.vib-cell[data-severity="l1"] { background: rgba(37, 99, 235, 0.1); }
 .settings-tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
 .settings-tab-panel { display: none; }
 .settings-tab-panel.active { display: block; }
-.car-selector { display: flex; gap: var(--space-2); align-items: center; margin: var(--space-2) 0; flex-wrap: wrap; }
-.car-picker { flex: 1; min-width: 160px; }
-.car-identity { margin: var(--space-2) 0; }
 .speed-source-options { display: flex; gap: var(--space-3); margin: var(--space-2) 0; flex-wrap: wrap; }
 .radio-label { display: flex; align-items: center; gap: var(--space-1); cursor: pointer; }
 .manual-speed-row { display: flex; gap: var(--space-2); align-items: flex-end; margin: var(--space-2) 0; flex-wrap: wrap; }
@@ -717,14 +687,6 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
   .speed { min-width: 180px; }
   .logging-actions {
     grid-template-columns: 1fr;
-  }
-  .live-speed-row {
-    grid-template-columns: 1fr;
-  }
-  .live-speed-row input,
-  .live-speed-row .btn {
-    width: 100%;
-    min-width: 0;
   }
   .history-details-preview { grid-template-columns: 1fr; }
 }
@@ -852,7 +814,6 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
   }
 
   .pill,
-  .badge,
   .status-pill {
     height: 36px;
     font-size: 0.88rem;

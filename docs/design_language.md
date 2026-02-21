@@ -84,8 +84,6 @@ The generated PDF uses A4 portrait and is structured as a **diagnostic worksheet
 ### Primitives
 | Primitive | File | Purpose |
 |-----------|------|---------|
-| `make_card(story, title, body, tone)` | `apps/server/vibesensor/report/pdf_helpers.py` | MD3 card with tone-based bg/border (`success`, `warn`, `error`, `neutral`) |
-| `styled_table(data, col_widths, zebra)` | `apps/server/vibesensor/report/pdf_helpers.py` | Table with theme header and optional zebra-striped rows |
 | `parts_for_pattern(system, order)` | `apps/server/vibesensor/report/pattern_parts.py` | Centralized pattern-to-parts mapping |
 | `strength_text(db_value, lang)` | `apps/server/vibesensor/report/strength_labels.py` | Natural-language strength label with dB |
 | `certainty_label(conf, lang, …)` | `apps/server/vibesensor/report/strength_labels.py` | Certainty level + short reason from controlled phrases |

@@ -4,6 +4,7 @@ import type { AppState, ClientRow } from "../state/ui_app_state";
 import type { AdaptedPayload } from "../../server_payload";
 import { createEmptyMatrix, normalizeStrengthBands } from "../../diagnostics";
 import { sourceColumns } from "../../constants";
+import { normalizeUnit, heatColor } from "./heat_utils";
 
 export interface DashboardFeatureDeps {
   state: AppState;
@@ -25,22 +26,10 @@ export interface DashboardFeature {
   extractLiveLocationIntensity(): Record<string, number>;
   pushCarMapSample(byLocation: Record<string, number>): void;
   renderCarMap(): void;
-  resetLiveVibrationCounts(): void;
 }
 
 export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeature {
   const { state, els, t, fmt, carMapPositions, carMapWindowMs, metricField } = ctx;
-
-  function normalizeUnit(value: number, min: number, max: number): number {
-    if (!(typeof value === "number") || !Number.isFinite(value)) return 0;
-    if (!(typeof min === "number") || !(typeof max === "number") || max <= min) return 1;
-    return Math.max(0, Math.min(1, (value - min) / (max - min)));
-  }
-
-  function heatColor(norm: number): string {
-    const hue = Math.round(212 - (norm * 190));
-    return `hsl(${hue} 76% 48%)`;
-  }
 
   function pushCarMapSample(byLocation: Record<string, number>): void {
     const now = Date.now();
@@ -315,13 +304,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     pushStrengthSample(bySource);
   }
 
-  function resetLiveVibrationCounts(): void {
-    state.eventMatrix = createEmptyMatrix();
-    renderMatrix();
-  }
-
   return {
-    resetLiveVibrationCounts,
     renderVibrationLog,
     renderMatrix,
     applyServerDiagnostics,

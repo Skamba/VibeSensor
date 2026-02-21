@@ -40,7 +40,6 @@ from .ws_hub import WebSocketHub
 
 LOGGER = logging.getLogger(__name__)
 BACKUP_SERVER_PORT = 8000
-WS_PAYLOAD_VERSION = 1
 
 
 @dataclass(slots=True)
@@ -87,7 +86,6 @@ class RuntimeState:
         fresh_ids = self.processor.clients_with_recent_data(client_ids, max_age_s=3.0)
 
         payload: dict[str, Any] = {
-            "ws_version": WS_PAYLOAD_VERSION,
             "server_time": datetime.now(UTC).isoformat(),
             "speed_mps": self.gps_monitor.effective_speed_mps,
             "clients": clients,

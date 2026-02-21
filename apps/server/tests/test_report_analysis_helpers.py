@@ -1,17 +1,16 @@
 from __future__ import annotations
 
+from vibesensor_core.vibration_strength import _percentile
+
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.report_analysis import (
-    _as_float,
+from vibesensor.report.helpers import (
     _corr_abs,
     _effective_engine_rpm,
     _format_duration,
     _location_label,
     _mean_variance,
-    _normalize_lang,
     _outlier_summary,
     _percent_missing,
-    _percentile,
     _primary_vibration_strength_db,
     _sample_top_peaks,
     _sensor_limit_g,
@@ -19,24 +18,26 @@ from vibesensor.report_analysis import (
     _speed_bin_sort_key,
     _speed_stats,
     _text,
-    _wheel_hz,
 )
+from vibesensor.report.order_analysis import _wheel_hz
+from vibesensor.report_i18n import normalize_lang
+from vibesensor.runlog import as_float_or_none as _as_float
 
-# -- _normalize_lang -----------------------------------------------------------
+# -- normalize_lang -----------------------------------------------------------
 
 
 def test_normalize_lang_en_default() -> None:
-    assert _normalize_lang("en") == "en"
-    assert _normalize_lang("EN") == "en"
-    assert _normalize_lang("") == "en"
-    assert _normalize_lang(None) == "en"
-    assert _normalize_lang(42) == "en"
+    assert normalize_lang("en") == "en"
+    assert normalize_lang("EN") == "en"
+    assert normalize_lang("") == "en"
+    assert normalize_lang(None) == "en"
+    assert normalize_lang(42) == "en"
 
 
 def test_normalize_lang_nl() -> None:
-    assert _normalize_lang("nl") == "nl"
-    assert _normalize_lang("NL") == "nl"
-    assert _normalize_lang("nl-NL") == "nl"
+    assert normalize_lang("nl") == "nl"
+    assert normalize_lang("NL") == "nl"
+    assert normalize_lang("nl-NL") == "nl"
 
 
 # -- _as_float -----------------------------------------------------------------

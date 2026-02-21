@@ -25,18 +25,6 @@ export async function setSettingsSpeedUnit(speedUnit: string): Promise<{ speedUn
   });
 }
 
-export async function getSpeedOverride(): Promise<{ speed_kmh: number | null }> {
-  return apiJson("/api/speed-override");
-}
-
-export async function setSpeedOverride(speedKmh: number | null): Promise<{ speed_kmh: number | null }> {
-  return apiJson("/api/speed-override", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ speed_kmh: speedKmh }),
-  });
-}
-
 export async function getAnalysisSettings(): Promise<Record<string, number>> {
   return apiJson("/api/analysis-settings");
 }
@@ -56,14 +44,6 @@ export async function getSettingsCars(): Promise<CarsPayload> {
 export async function addSettingsCar(car: Record<string, unknown>): Promise<CarsPayload> {
   return apiJson("/api/settings/cars", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(car),
-  });
-}
-
-export async function updateSettingsCar(carId: string, car: Record<string, unknown>): Promise<CarsPayload> {
-  return apiJson(`/api/settings/cars/${encodeURIComponent(carId)}`, {
-    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(car),
   });
@@ -95,20 +75,4 @@ export async function updateSettingsSpeedSource(data: Record<string, unknown>): 
   });
 }
 
-export async function getSettingsSensors(): Promise<unknown> {
-  return apiJson("/api/settings/sensors");
-}
 
-export async function updateSettingsSensor(mac: string, data: Record<string, unknown>): Promise<unknown> {
-  return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-}
-
-export async function deleteSettingsSensor(mac: string): Promise<unknown> {
-  return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
-    method: "DELETE",
-  });
-}

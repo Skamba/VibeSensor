@@ -6,7 +6,7 @@ export type AdaptedSpectrum = {
   strength_metrics: Record<string, unknown>;
 };
 
-export type ClientInfo = {
+type ClientInfo = {
   client_id: string;
   name: string;
   last_seen_ms: number;
@@ -16,7 +16,7 @@ export type ClientInfo = {
   [key: string]: unknown;
 };
 
-export type DiagnosticEvent = {
+type DiagnosticEvent = {
   source: string;
   severity: string;
   client_id: string;
@@ -26,21 +26,20 @@ export type DiagnosticEvent = {
   [key: string]: unknown;
 };
 
-export type DiagnosticLevel = {
+type DiagnosticLevel = {
   current_db: number;
   band_key: string;
   [key: string]: unknown;
 };
 
-export type DiagnosticLevels = {
+type DiagnosticLevels = {
   by_source: Record<string, DiagnosticLevel>;
   by_sensor: Record<string, DiagnosticLevel>;
 };
 
-export type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
+type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
 
 export type AdaptedPayload = {
-  ws_version: number | null;
   clients: ClientInfo[];
   speed_mps: number | null;
   diagnostics: {
@@ -74,7 +73,6 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
   }
 
   const adapted: AdaptedPayload = {
-    ws_version: typeof payload.ws_version === "number" ? payload.ws_version : null,
     clients: Array.isArray(payload.clients) ? (payload.clients as ClientInfo[]) : [],
     speed_mps: typeof payload.speed_mps === "number" ? payload.speed_mps : null,
     diagnostics: {

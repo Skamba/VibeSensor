@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
 from math import sqrt
 from pathlib import Path
 from statistics import mean
@@ -16,7 +15,7 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from ..report_i18n import tr as _tr
+from ..report_i18n import normalize_lang
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
 
@@ -33,12 +32,6 @@ ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
 CONSTANT_SPEED_STDDEV_KMH = 0.5
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
-
-
-def _normalize_lang(lang: object) -> str:
-    if isinstance(lang, str) and lang.strip().lower().startswith("nl"):
-        return "nl"
-    return "en"
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
@@ -71,14 +64,8 @@ def _format_duration(seconds: float) -> str:
     return f"{minutes:02d}:{rem:04.1f}"
 
 
-def _required_text(value: object, consequence: str, lang: object = "en") -> str:
-    if value in (None, "", []):
-        return _tr(lang, "MISSING_CONSEQUENCE", consequence=consequence)
-    return str(value)
-
-
 def _text(lang: object, en_text: str, nl_text: str) -> str:
-    return nl_text if _normalize_lang(lang) == "nl" else en_text
+    return nl_text if normalize_lang(lang) == "nl" else en_text
 
 
 def _percent_missing(samples: list[dict[str, Any]], key: str) -> float:
@@ -271,47 +258,3 @@ def _location_label(sample: dict[str, Any]) -> str:
     if client_id_raw:
         return f"Sensor {client_id_raw[-4:]}"
     return "Unlabeled sensor"
-
-
-def _locations_connected_throughout_run(samples: list[dict[str, Any]]) -> set[str]:
-    by_location_times: dict[str, list[float]] = defaultdict(list)
-    all_times: list[float] = []
-
-    for sample in samples:
-        if not isinstance(sample, dict):
-            continue
-        location = _location_label(sample)
-        if not location:
-            continue
-        t_s = _as_float(sample.get("t_s"))
-        if t_s is None:
-            continue
-        by_location_times[location].append(t_s)
-        all_times.append(t_s)
-
-    if not by_location_times:
-        return set()
-    if not all_times:
-        return set(by_location_times.keys())
-
-    run_start = min(all_times)
-    run_end = max(all_times)
-    run_duration = max(0.0, run_end - run_start)
-    edge_tolerance_s = max(0.75, min(3.0, run_duration * 0.08))
-
-    counts_by_location = {location: len(times) for location, times in by_location_times.items()}
-    max_count = max(counts_by_location.values()) if counts_by_location else 0
-    min_required_count = int(max_count * 0.80) if max_count >= 5 else 1
-
-    connected: set[str] = set()
-    for location, times in by_location_times.items():
-        if not times:
-            continue
-        if len(times) < min_required_count:
-            continue
-        loc_start = min(times)
-        loc_end = max(times)
-        if loc_start <= (run_start + edge_tolerance_s) and loc_end >= (run_end - edge_tolerance_s):
-            connected.add(location)
-
-    return connected if connected else set(by_location_times.keys())

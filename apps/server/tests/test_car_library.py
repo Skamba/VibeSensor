@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from vibesensor.car_library import (
     CAR_LIBRARY,
-    find_model,
     get_brands,
     get_models_for_brand_type,
     get_types_for_brand,
@@ -37,18 +36,6 @@ def test_get_models_for_brand_type() -> None:
     for m in models:
         assert m["brand"] == "BMW"
         assert m["type"] == "Sedan"
-
-
-def test_find_model_existing() -> None:
-    models = get_models_for_brand_type("BMW", "Sedan")
-    first = models[0]
-    found = find_model("BMW", "Sedan", first["model"])
-    assert found is not None
-    assert found["model"] == first["model"]
-
-
-def test_find_model_missing() -> None:
-    assert find_model("BMW", "Sedan", "Nonexistent Model XYZ") is None
 
 
 def test_every_entry_has_required_fields() -> None:
