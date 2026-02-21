@@ -38,6 +38,38 @@ def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
     assert out["key"] is None
 
 
+def test_severity_frequency_hopping_does_not_promote_within_persistence_ticks() -> None:
+    state = None
+    out = None
+    for peak_hz in (25.0, 80.0, 25.0):
+        out = severity_from_peak(
+            vibration_strength_db=27.0,
+            sensor_count=1,
+            prior_state=state,
+            peak_hz=peak_hz,
+            persistence_freq_bin_hz=1.5,
+        )
+        state = dict((out or {}).get("state") or {})
+    assert out is not None
+    assert out["key"] is None
+
+
+def test_severity_stable_frequency_promotes_within_persistence_ticks() -> None:
+    state = None
+    out = None
+    for _ in range(3):
+        out = severity_from_peak(
+            vibration_strength_db=27.0,
+            sensor_count=1,
+            prior_state=state,
+            peak_hz=25.0,
+            persistence_freq_bin_hz=1.5,
+        )
+        state = dict((out or {}).get("state") or {})
+    assert out is not None
+    assert out["key"] == "l3"
+
+
 def test_live_matrix_seconds_accumulate_during_throttled_emission(monkeypatch) -> None:
     current_s = {"value": 10.0}
 
