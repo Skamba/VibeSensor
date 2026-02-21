@@ -135,6 +135,124 @@ def _spectrogram_from_peaks(samples: list[dict[str, Any]]) -> dict[str, Any]:
     freq_cap_hz = min(200.0, max(40.0, observed_max_hz))
     freq_bin_hz = max(2.0, freq_cap_hz / 45.0)
 
+    x_sample_counts: dict[float, int] = {}
+    for x_val in x_values:
+        x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
+        x_sample_counts[x_bin_low] = x_sample_counts.get(x_bin_low, 0) + 1
+
+    cell_by_bin: dict[tuple[float, float], list[float]] = {}
+    for x_val, hz, amp in peak_rows:
+        if hz > freq_cap_hz:
+            continue
+        x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
+        y_bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
+        key = (x_bin_low, y_bin_low)
+        cell_by_bin.setdefault(key, []).append(amp)
+
+    x_bins = sorted({x for x, _y in cell_by_bin})
+    y_bins = sorted({y for _x, y in cell_by_bin})
+    if not x_bins or not y_bins:
+        return {
+            "x_axis": x_axis,
+            "x_label_key": x_label_key,
+            "x_bins": [],
+            "y_bins": [],
+            "cells": [],
+            "max_amp": 0.0,
+        }
+
+    x_index = {value: idx for idx, value in enumerate(x_bins)}
+    y_index = {value: idx for idx, value in enumerate(y_bins)}
+    cells = [[0.0 for _ in x_bins] for _ in y_bins]
+    max_amp = 0.0
+    for (x_key, y_key), amps in cell_by_bin.items():
+        yi = y_index[y_key]
+        xi = x_index[x_key]
+        sorted_amps = sorted(amps)
+        if not sorted_amps:
+            continue
+        p95_amp = _percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
+        presence_ratio = len(sorted_amps) / max(1, x_sample_counts.get(x_key, 1))
+        diagnostic_val = (presence_ratio**2) * p95_amp
+        cells[yi][xi] = diagnostic_val
+        if diagnostic_val > max_amp:
+            max_amp = diagnostic_val
+
+    return {
+        "x_axis": x_axis,
+        "x_label_key": x_label_key,
+        "x_bin_width": x_bin_width,
+        "y_bin_width": freq_bin_hz,
+        "x_bins": [x + (x_bin_width / 2.0) for x in x_bins],
+        "y_bins": [y + (freq_bin_hz / 2.0) for y in y_bins],
+        "cells": cells,
+        "max_amp": max_amp,
+    }
+
+
+def _spectrogram_from_peaks_raw(samples: list[dict[str, Any]]) -> dict[str, Any]:
+    peak_rows: list[tuple[float, float, float]] = []
+    time_values: list[float] = []
+    speed_values: list[float] = []
+
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        t_s = _as_float(sample.get("t_s"))
+        speed = _as_float(sample.get("speed_kmh"))
+        peaks = _sample_top_peaks(sample)
+        if t_s is not None and t_s >= 0:
+            time_values.append(t_s)
+        if speed is not None and speed > 0:
+            speed_values.append(speed)
+        if not peaks:
+            continue
+        for hz, amp in peaks:
+            if hz <= 0 or amp <= 0:
+                continue
+            if t_s is not None and t_s >= 0:
+                peak_rows.append((t_s, hz, amp))
+            elif speed is not None and speed > 0:
+                peak_rows.append((speed, hz, amp))
+
+    use_time = bool(time_values)
+    if not use_time and not speed_values:
+        return {
+            "x_axis": "none",
+            "x_label_key": "TIME_S",
+            "x_bins": [],
+            "y_bins": [],
+            "cells": [],
+            "max_amp": 0.0,
+        }
+
+    x_axis = "time_s" if use_time else "speed_kmh"
+    x_values = time_values if use_time else speed_values
+    x_min = min(x_values)
+    x_max = max(x_values)
+    x_span = max(0.0, x_max - x_min)
+    if x_axis == "time_s":
+        x_bin_width = max(2.0, (x_span / 40.0) if x_span > 0 else 2.0)
+        x_label_key = "TIME_S"
+    else:
+        x_bin_width = max(5.0, (x_span / 30.0) if x_span > 0 else 5.0)
+        x_label_key = "SPEED_KM_H"
+
+    peak_freqs = [hz for _x, hz, _amp in peak_rows]
+    if not peak_freqs:
+        return {
+            "x_axis": x_axis,
+            "x_label_key": x_label_key,
+            "x_bins": [],
+            "y_bins": [],
+            "cells": [],
+            "max_amp": 0.0,
+        }
+
+    observed_max_hz = max(peak_freqs)
+    freq_cap_hz = min(200.0, max(40.0, observed_max_hz))
+    freq_bin_hz = max(2.0, freq_cap_hz / 45.0)
+
     cell_by_bin: dict[tuple[float, float], float] = {}
     for x_val, hz, amp in peak_rows:
         if hz > freq_cap_hz:
@@ -255,6 +373,21 @@ def _top_peaks_table_rows(
                 "presence_ratio": float(item.get("presence_ratio") or 0.0),
                 "burstiness": float(item.get("burstiness") or 0.0),
                 "persistence_score": float(item.get("persistence_score") or 0.0),
+                "peak_classification": (
+                    "transient"
+                    if (
+                        float(item.get("presence_ratio") or 0.0) < 0.15
+                        or float(item.get("burstiness") or 0.0) > 5.0
+                    )
+                    else (
+                        "patterned"
+                        if (
+                            float(item.get("presence_ratio") or 0.0) >= 0.40
+                            and float(item.get("burstiness") or 0.0) < 3.0
+                        )
+                        else "persistent"
+                    )
+                ),
                 "typical_speed_band": speed_band,
             }
         )
@@ -360,6 +493,7 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     fft_spectrum = _aggregate_fft_spectrum(samples)
     fft_spectrum_raw = _aggregate_fft_spectrum_raw(samples)
     peaks_spectrogram = _spectrogram_from_peaks(samples)
+    peaks_spectrogram_raw = _spectrogram_from_peaks_raw(samples)
     peaks_table = _top_peaks_table_rows(samples)
 
     return {
@@ -372,5 +506,6 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         "fft_spectrum": fft_spectrum,
         "fft_spectrum_raw": fft_spectrum_raw,
         "peaks_spectrogram": peaks_spectrogram,
+        "peaks_spectrogram_raw": peaks_spectrogram_raw,
         "peaks_table": peaks_table,
     }

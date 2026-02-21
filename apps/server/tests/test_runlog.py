@@ -144,6 +144,22 @@ def test_normalize_sample_record_limits_peaks_to_10() -> None:
     assert len(result["top_peaks"]) == 10
 
 
+def test_normalize_sample_record_preserves_optional_peak_metadata() -> None:
+    record = {
+        "top_peaks": [
+            {
+                "hz": 18.0,
+                "amp": 0.22,
+                "vibration_strength_db": 27.5,
+                "strength_bucket": "l4",
+            }
+        ]
+    }
+    result = normalize_sample_record(record)
+    assert result["top_peaks"][0]["vibration_strength_db"] == 27.5
+    assert result["top_peaks"][0]["strength_bucket"] == "l4"
+
+
 # -- append_jsonl_records / read_jsonl_run ------------------------------------
 
 

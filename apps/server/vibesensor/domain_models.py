@@ -358,7 +358,7 @@ class SensorFrame:
     accel_z_g: float | None
     dominant_freq_hz: float | None
     dominant_axis: str
-    top_peaks: list[dict[str, float]]
+    top_peaks: list[dict[str, object]]
     vibration_strength_db: float | None
     strength_bucket: str | None
     frames_dropped_total: int
@@ -416,7 +416,7 @@ class SensorFrame:
 
         # Normalize top_peaks
         top_peaks_raw = record.get("top_peaks")
-        normalized_peaks: list[dict[str, float]] = []
+        normalized_peaks: list[dict[str, object]] = []
         if isinstance(top_peaks_raw, list):
             for peak in top_peaks_raw[:10]:
                 if not isinstance(peak, dict):
@@ -425,7 +425,14 @@ class SensorFrame:
                 amp = _as_float_or_none(peak.get("amp"))
                 if hz is None or amp is None or hz <= 0:
                     continue
-                normalized_peaks.append({"hz": hz, "amp": amp})
+                normalized_peak: dict[str, object] = {"hz": hz, "amp": amp}
+                peak_db = _as_float_or_none(peak.get(METRIC_FIELDS["vibration_strength_db"]))
+                if peak_db is not None:
+                    normalized_peak[METRIC_FIELDS["vibration_strength_db"]] = peak_db
+                peak_bucket = peak.get(METRIC_FIELDS["strength_bucket"])
+                if peak_bucket not in (None, ""):
+                    normalized_peak[METRIC_FIELDS["strength_bucket"]] = str(peak_bucket)
+                normalized_peaks.append(normalized_peak)
 
         return cls(
             record_type=RUN_SAMPLE_TYPE,
