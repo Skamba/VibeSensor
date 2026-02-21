@@ -449,6 +449,27 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
                 "p95": percentile(vals, 0.95),
             }
 
+    # Build amp_vs_phase from phase_speed_breakdown (temporal phase context).
+    # Complements amp_vs_speed (magnitude bins) by grouping by driving phase
+    # instead of speed range, addressing issue #189.
+    amp_vs_phase: list[dict[str, object]] = []
+    for row in summary.get("phase_speed_breakdown", []):
+        if not isinstance(row, dict):
+            continue
+        phase = str(row.get("phase", ""))
+        mean_vib = _as_float(row.get("mean_vibration_strength_db"))
+        if not phase or mean_vib is None:
+            continue
+        amp_vs_phase.append(
+            {
+                "phase": phase,
+                "count": int(row.get("count") or 0),
+                "mean_vib_db": mean_vib,
+                "max_vib_db": _as_float(row.get("max_vibration_strength_db")),
+                "mean_speed_kmh": _as_float(row.get("mean_speed_kmh")),
+            }
+        )
+
     fft_spectrum = _aggregate_fft_spectrum(samples)
     fft_spectrum_raw = _aggregate_fft_spectrum_raw(samples)
     peaks_spectrogram = _spectrogram_from_peaks(samples)
@@ -464,6 +485,7 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         "vib_magnitude": vib_mag_points,
         "dominant_freq": dominant_freq_points,
         "amp_vs_speed": speed_amp_points,
+        "amp_vs_phase": amp_vs_phase,
         "matched_amp_vs_speed": matched_by_finding,
         "freq_vs_speed_by_finding": freq_vs_speed_by_finding,
         "steady_speed_distribution": steady_speed_distribution,

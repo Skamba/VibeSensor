@@ -979,6 +979,32 @@ class TestPhaseSpeedBreakdown:
         total = sum(int(row["count"]) for row in rows)
         assert total == len(samples)
 
+    def test_amp_vs_phase_in_plots(self) -> None:
+        """plots dict must include amp_vs_phase built from phase_speed_breakdown.
+
+        Ensures temporal phase context is available as plot-ready data, not only
+        as the raw phase_speed_breakdown table in the summary root.
+        Addresses issue #189.
+        """
+        meta = _standard_metadata()
+        samples = _build_phased_samples(
+            [
+                (5, 0.0, 0.0),  # IDLE
+                (15, 10.0, 80.0),  # ACCELERATION → CRUISE
+            ]
+        )
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        plots = summary.get("plots", {})
+        amp_vs_phase = plots.get("amp_vs_phase")
+        assert amp_vs_phase is not None, "amp_vs_phase must be in plots"
+        assert isinstance(amp_vs_phase, list)
+        assert len(amp_vs_phase) >= 1, "amp_vs_phase must have at least one phase row"
+        for row in amp_vs_phase:
+            assert "phase" in row, "each amp_vs_phase row must have a phase key"
+            assert "count" in row, "each amp_vs_phase row must have a count key"
+            assert "mean_vib_db" in row, "each amp_vs_phase row must have mean_vib_db"
+            assert row["count"] > 0, "count must be positive"
+
 
 class TestReferenceFindingDistinguishability:
     """Reference-missing findings must be distinguishable and must not inflate
