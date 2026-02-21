@@ -629,6 +629,21 @@ def _page2(  # noqa: C901
         c, m + 4 * mm, table_y + table_h - 10 * mm, W - 8 * mm, table_y + 3 * mm, data, tr
     )
 
+    transient_findings = [
+        finding
+        for finding in findings
+        if isinstance(finding, dict)
+        and str(finding.get("severity") or "").strip().lower() == "info"
+        and (
+            str(finding.get("suspected_source") or "").strip().lower() == "transient_impact"
+            or str(finding.get("peak_classification") or "").strip().lower() == "transient"
+        )
+    ]
+    if transient_findings:
+        obs_h = 24 * mm
+        obs_y = table_y - GAP - obs_h
+        _draw_additional_observations(c, m, obs_y, W, obs_h, transient_findings, tr)
+
 
 def _draw_pattern_evidence(
     c: Canvas,
@@ -773,6 +788,30 @@ def _draw_peaks_table(
         for val, (_, cw) in zip(vals, col_defs, strict=True):
             c.drawString(cx_off, y - 4.2 * mm, val)
             cx_off += cw
+
+
+def _draw_additional_observations(
+    c: Canvas,
+    x: float,
+    y: float,
+    w: float,
+    h: float,
+    transient_findings: list[dict[str, object]],
+    tr,
+) -> None:
+    _draw_panel(c, x, y, w, h, tr("ADDITIONAL_OBSERVATIONS"), fill=SOFT_BG)
+    c.setFillColor(_hex(MUTED_CLR))
+    c.setFont(FONT, 6.5)
+
+    y_cursor = y + h - 10 * mm
+    for finding in transient_findings[:3]:
+        order_label = str(finding.get("frequency_hz_or_order") or "").strip()
+        if not order_label:
+            order_label = tr("SOURCE_TRANSIENT_IMPACT")
+        confidence = float(finding.get("confidence_0_to_1") or 0.0)
+        line = f"• {order_label} ({confidence * 100.0:.0f}%)"
+        c.drawString(x + 4 * mm, y_cursor, line)
+        y_cursor -= 3.5 * mm
 
 
 # ---------------------------------------------------------------------------
