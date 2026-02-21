@@ -7,18 +7,26 @@ of phrases.
 
 from __future__ import annotations
 
+from vibesensor_core.strength_bands import BANDS
+
 # ---------------------------------------------------------------------------
 # Strength labels  (vibration_strength_db → natural-language band)
 # ---------------------------------------------------------------------------
 
-# Thresholds in dB for strength bands (ascending).
+_STRENGTH_LABELS_BY_BUCKET: dict[str, tuple[str, str, str]] = {
+    "l0": ("negligible", "Negligible", "Verwaarloosbaar"),
+    "l1": ("light", "Light", "Licht"),
+    "l2": ("moderate", "Moderate", "Matig"),
+    "l3": ("strong", "Strong", "Sterk"),
+    "l4": ("very_strong", "Very strong", "Zeer sterk"),
+    "l5": ("very_strong", "Very strong", "Zeer sterk"),
+}
+
+# Thresholds in dB for strength labels (ascending), derived from core bands.
 _STRENGTH_THRESHOLDS: list[tuple[float, str, str, str]] = [
-    # (min_db, band_key, en_label, nl_label)
-    (0.0, "negligible", "Negligible", "Verwaarloosbaar"),
-    (8.0, "light", "Light", "Licht"),
-    (16.0, "moderate", "Moderate", "Matig"),
-    (26.0, "strong", "Strong", "Sterk"),
-    (36.0, "very_strong", "Very strong", "Zeer sterk"),
+    # (min_db, label_key, en_label, nl_label)
+    (float(band["min_db"]), *_STRENGTH_LABELS_BY_BUCKET.get(str(band["key"]), _STRENGTH_LABELS_BY_BUCKET["l5"]))
+    for band in BANDS
 ]
 
 

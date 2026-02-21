@@ -9,6 +9,7 @@ class StrengthBand(TypedDict):
 
 
 BANDS: tuple[StrengthBand, ...] = (
+    {"key": "l0", "min_db": 0.0},
     {"key": "l1", "min_db": 8.0},
     {"key": "l2", "min_db": 16.0},
     {"key": "l3", "min_db": 26.0},
