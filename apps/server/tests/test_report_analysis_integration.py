@@ -266,6 +266,25 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
     assert focused.get("speed_range") == "100-110 km/h"
 
 
+def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outlier_bin() -> None:
+    from vibesensor.report.test_plan import _location_speedbin_summary
+
+    sparse_loud_bin = [
+        {"speed_kmh": 85.0, "amp": 0.120, "location": "Rear Left"},
+        {"speed_kmh": 86.0, "amp": 0.120, "location": "Rear Left"},
+    ]
+    dense_moderate_bin = [
+        {"speed_kmh": 95.0 + (0.1 * idx), "amp": 0.090, "location": "Front Left"}
+        for idx in range(20)
+    ]
+
+    _, hotspot = _location_speedbin_summary(sparse_loud_bin + dense_moderate_bin, lang="en")
+
+    assert hotspot is not None
+    assert hotspot.get("location") == "Front Left"
+    assert hotspot.get("speed_range") == "90-100 km/h"
+
+
 def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() -> None:
     from vibesensor.report.test_plan import _location_speedbin_summary
 
