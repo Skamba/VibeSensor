@@ -40,6 +40,7 @@ class ClientRecord:
     sample_rate_hz: int = 0
     frame_samples: int = 0
     last_seen: float = 0.0
+    location: str = ""
     data_addr: tuple[str, int] | None = None
     control_addr: tuple[str, int] | None = None
     frames_total: int = 0
@@ -226,6 +227,46 @@ class ClientRegistry:
             self._persist_name(record.client_id, clean)
             return record
 
+    def set_location(self, client_id: str, location: str) -> ClientRecord:
+        """Assign a location code (e.g. ``"front-left"``) to a sensor."""
+        clean = location.strip()
+        with self._lock:
+            record = self._get_or_create(client_id)
+            record.location = clean
+            return record
+
+    def validate_locations(self, now: float | None = None) -> list[str]:
+        """Return a list of warning strings for location-related issues.
+
+        Checks:
+        * Active sensors without an assigned location.
+        * Multiple active sensors sharing the same non-empty location.
+
+        Returns an empty list when all checks pass.
+        """
+        warnings: list[str] = []
+        with self._lock:
+            now_ts = self._resolve_now(now)
+            active = [
+                record
+                for record in self._clients.values()
+                if record.last_seen and (now_ts - record.last_seen) <= self._stale_ttl_seconds
+            ]
+            loc_to_ids: dict[str, list[str]] = {}
+            for record in active:
+                if not record.location:
+                    warnings.append(
+                        f"Sensor {record.name} ({record.client_id}) has no location assigned."
+                    )
+                else:
+                    loc_to_ids.setdefault(record.location, []).append(record.name)
+            for loc, names in loc_to_ids.items():
+                if len(names) > 1:
+                    warnings.append(
+                        f"Location '{loc}' assigned to multiple sensors: {', '.join(names)}."
+                    )
+        return warnings
+
     def remove_client(self, client_id: str) -> bool:
         try:
             normalized = _normalize_client_id(client_id)
@@ -293,6 +334,7 @@ class ClientRegistry:
                             "mac_address": client_id_mac(client_id),
                             "name": self._user_names.get(client_id, f"client-{client_id[-4:]}"),
                             "connected": False,
+                            "location": "",
                             "firmware_version": "",
                             "sample_rate_hz": 0,
                             "frame_samples": 0,
@@ -325,6 +367,7 @@ class ClientRegistry:
                         "mac_address": client_id_mac(record.client_id),
                         "name": record.name,
                         "connected": connected,
+                        "location": record.location,
                         "firmware_version": record.firmware_version,
                         "sample_rate_hz": record.sample_rate_hz,
                         "frame_samples": record.frame_samples,

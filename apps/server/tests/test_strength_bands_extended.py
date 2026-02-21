@@ -10,16 +10,16 @@ def test_bucket_below_threshold_returns_none() -> None:
 
 
 def test_bucket_l1_threshold() -> None:
-    assert bucket_for_strength(vibration_strength_db=10.0) == "l1"
+    assert bucket_for_strength(vibration_strength_db=8.0) == "l1"
 
 
 def test_bucket_l5_threshold() -> None:
-    assert bucket_for_strength(vibration_strength_db=34.0) == "l5"
+    assert bucket_for_strength(vibration_strength_db=46.0) == "l5"
 
 
 def test_bucket_returns_highest_matching() -> None:
     # Meets L1-L3 thresholds → returns L3
-    result = bucket_for_strength(vibration_strength_db=22.0)
+    result = bucket_for_strength(vibration_strength_db=26.0)
     assert result == "l3"
 
 
@@ -29,13 +29,13 @@ def test_bucket_returns_highest_matching() -> None:
 def test_band_by_key_valid() -> None:
     band = band_by_key("l1")
     assert band is not None
-    assert band["min_db"] == 10.0
+    assert band["min_db"] == 8.0
 
 
 def test_band_by_key_l5() -> None:
     band = band_by_key("l5")
     assert band is not None
-    assert band["min_db"] == 34.0
+    assert band["min_db"] == 46.0
 
 
 def test_band_by_key_unknown() -> None:

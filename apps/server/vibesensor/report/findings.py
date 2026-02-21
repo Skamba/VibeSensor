@@ -28,7 +28,6 @@ from .helpers import (
     _sample_top_peaks,
     _speed_bin_label,
     _speed_bin_sort_key,
-    _text,
     _tire_reference_from_metadata,
 )
 from .order_analysis import (
@@ -275,17 +274,53 @@ def _build_order_findings(
             corr = None
         corr_val = corr if corr is not None else 0.0
 
+        # Compute location hotspot BEFORE confidence so spatial info is available
+        location_line, location_hotspot = _location_speedbin_summary(matched_points, lang=lang)
+        weak_spatial_separation = (
+            bool(location_hotspot.get("weak_spatial_separation"))
+            if isinstance(location_hotspot, dict)
+            else True
+        )
+
+        # Count how many distinct locations independently detected this order
+        corroborating_locations = len(
+            {str(pt.get("location") or "") for pt in matched_points if pt.get("location")}
+        )
+
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
-        snr_score = min(1.0, log1p(mean_amp / max(1e-6, mean_floor)) / 2.5)
+        snr_score = min(1.0, log1p(mean_amp / max(0.001, mean_floor)) / 2.5)
+
+        # --- Confidence formula (calibrated) ---
+        # Base is intentionally low; weight must come from evidence.
         confidence = (
-            0.20
+            0.10
             + (0.35 * match_rate)
             + (0.20 * error_score)
             + (0.15 * corr_val)
-            + (0.10 * snr_score)
+            + (0.15 * snr_score)  # was 0.10 — SNR matters more
         )
-        if steady_speed:
-            confidence *= 0.88
+        # Penalty: negligible absolute signal strength
+        if mean_amp < 0.002:  # < 2 mg peak → likely noise
+            confidence = min(confidence, 0.45)
+        elif mean_amp < 0.005:  # < 5 mg → very weak
+            confidence *= 0.90
+        # Penalty: weak spatial separation
+        if weak_spatial_separation:
+            confidence *= 0.85
+        # Penalty: steady/constant speed reduces order-tracking value
+        if constant_speed:
+            confidence *= 0.75  # was 0.88 for steady; constant is stricter
+        elif steady_speed:
+            confidence *= 0.82  # was 0.88 — still significant
+        # Bonus: more matched samples → higher trust (diminishing returns)
+        sample_factor = min(1.0, matched / 30.0)  # saturates at 30 samples
+        confidence = confidence * (0.80 + 0.20 * sample_factor)
+        # Bonus: multi-sensor corroboration — multiple independent locations
+        # detecting the same order strengthens the finding.
+        if corroborating_locations >= 3:
+            confidence *= 1.08
+        elif corroborating_locations >= 2:
+            confidence *= 1.04
         confidence = max(0.08, min(0.97, confidence))
 
         ranking_score = (
@@ -294,21 +329,10 @@ def _build_order_findings(
             * max(0.0, (1.0 - min(1.0, mean_rel_err / 0.5)))
         )
 
-        location_line, location_hotspot = _location_speedbin_summary(matched_points, lang=lang)
         ref_text = ", ".join(sorted(ref_sources))
-        evidence = _text(
+        evidence = _tr(
             lang,
-            (
-                "{order_label} tracked over {matched}/{possible} samples "
-                "(match rate {match_rate:.0%}, mean relative error {mean_rel_err:.3f}, "
-                "reference {ref_text})."
-            ),
-            (
-                "{order_label} gevolgd over {matched}/{possible} samples "
-                "(trefferratio {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, "
-                "referentie {ref_text})."
-            ),
-        ).format(
+            "EVIDENCE_ORDER_TRACKED",
             order_label=_order_label(lang, hypothesis.order, hypothesis.order_label_base),
             matched=matched,
             possible=possible,
@@ -324,11 +348,6 @@ def _build_order_findings(
         )
         strongest_speed_band = (
             str(location_hotspot.get("speed_range")) if isinstance(location_hotspot, dict) else ""
-        )
-        weak_spatial_separation = (
-            bool(location_hotspot.get("weak_spatial_separation"))
-            if isinstance(location_hotspot, dict)
-            else True
         )
         actions = _finding_actions_for_source(
             lang,
@@ -355,11 +374,7 @@ def _build_order_findings(
                 "name": "strength_peak_band_rms_amp_g",
                 "value": mean_amp,
                 "units": accel_units,
-                "definition": _text(
-                    lang,
-                    "Mean matched peak amplitude from the combined FFT spectrum.",
-                    "Gemiddelde gematchte piekamplitude uit het gecombineerde FFT-spectrum.",
-                ),
+                "definition": _tr(lang, "METRIC_MEAN_MATCHED_PEAK_AMPLITUDE"),
             },
             "confidence_0_to_1": confidence,
             "quick_checks": quick_checks,
@@ -373,6 +388,7 @@ def _build_order_findings(
                 else None
             ),
             "weak_spatial_separation": weak_spatial_separation,
+            "corroborating_locations": corroborating_locations,
             "evidence_metrics": {
                 "match_rate": match_rate,
                 "mean_relative_error": mean_rel_err,
@@ -382,11 +398,8 @@ def _build_order_findings(
                 "matched_samples": matched,
                 "frequency_correlation": corr,
             },
-            "next_sensor_move": _text(
-                lang,
-                str(actions[0].get("what") or "Inspect the highest-ranked hotspot path first."),
-                str(actions[0].get("what") or "Controleer eerst het hoogste hotspot-pad."),
-            ),
+            "next_sensor_move": str(actions[0].get("what") or "")
+            or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),
             "actions": actions,
         }
         findings.append((ranking_score, finding))
@@ -402,18 +415,49 @@ def _build_order_findings(
 PERSISTENT_PEAK_MIN_PRESENCE = 0.15
 TRANSIENT_BURSTINESS_THRESHOLD = 5.0
 PERSISTENT_PEAK_MAX_FINDINGS = 3
+# Minimum SNR for a peak to be considered above baseline noise
+BASELINE_NOISE_SNR_THRESHOLD = 1.5
 
 
 def _classify_peak_type(
     presence_ratio: float,
     burstiness: float,
+    *,
+    snr: float | None = None,
+    spatial_uniformity: float | None = None,
 ) -> str:
-    """Classify a frequency peak as ``patterned``, ``persistent``, or ``transient``.
+    """Classify a frequency peak as ``patterned``, ``persistent``, ``transient``, or ``baseline_noise``.
 
     * **patterned**: high presence and low burstiness → likely a fault vibration.
     * **persistent**: moderate presence → unknown but repeated resonance.
     * **transient**: low presence or very high burstiness → one-off impact/thud.
+    * **baseline_noise**: low SNR → consistent with measurement noise floor.
+
+    Parameters
+    ----------
+    presence_ratio : float
+        Fraction of samples where this peak appears.
+    burstiness : float
+        Ratio of max to median amplitude.
+    snr : float | None
+        Signal-to-noise ratio (peak amp / noise floor). If below threshold,
+        peak is classified as baseline noise regardless of presence.
+    spatial_uniformity : float | None
+        Ratio of minimum to maximum amplitude across sensor locations.
+        High uniformity (>0.85) suggests environmental noise rather than
+        a localized source.
     """
+    # Baseline noise: appears everywhere at similar level, or very low SNR
+    if snr is not None and snr < BASELINE_NOISE_SNR_THRESHOLD:
+        return "baseline_noise"
+    if (
+        spatial_uniformity is not None
+        and spatial_uniformity > 0.85
+        and presence_ratio >= 0.60
+        and burstiness < 2.0
+    ):
+        return "baseline_noise"
+
     if presence_ratio < PERSISTENT_PEAK_MIN_PRESENCE:
         return "transient"
     if burstiness > TRANSIENT_BURSTINESS_THRESHOLD:
@@ -480,13 +524,16 @@ def _build_persistent_peak_findings(
         max_amp = sorted_amps[-1]
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
-        peak_type = _classify_peak_type(presence_ratio, burstiness)
-
         mean_floor = mean(bin_floors.get(bin_center, [0.0])) if bin_floors.get(bin_center) else 0.0
-        snr_score = min(1.0, log1p(p95_amp / max(1e-6, mean_floor)) / 2.5)
+        raw_snr = (p95_amp / max(0.001, mean_floor)) if mean_floor > 0.001 else None
+        peak_type = _classify_peak_type(presence_ratio, burstiness, snr=raw_snr)
+
+        snr_score = min(1.0, log1p(p95_amp / max(0.001, mean_floor)) / 2.5)
 
         # Confidence for persistent/patterned peaks (analogous to order confidence)
-        if peak_type == "transient":
+        if peak_type == "baseline_noise":
+            confidence = max(0.02, min(0.12, 0.02 + 0.05 * presence_ratio))
+        elif peak_type == "transient":
             confidence = max(0.05, min(0.22, 0.05 + 0.10 * presence_ratio + 0.07 * snr_score))
         else:
             confidence = max(
@@ -505,19 +552,9 @@ def _build_persistent_peak_findings(
         if speeds:
             speed_band = f"{min(speeds):.0f}-{max(speeds):.0f} km/h"
 
-        evidence = _text(
+        evidence = _tr(
             lang,
-            (
-                "{freq:.1f} Hz peak present in {pct:.0%} of samples "
-                "(p95 amplitude {p95:.4f} {units}, burstiness {burst:.1f}×, "
-                "classification: {cls})."
-            ),
-            (
-                "{freq:.1f} Hz piek aanwezig in {pct:.0%} van de samples "
-                "(p95 amplitude {p95:.4f} {units}, burstigheid {burst:.1f}×, "
-                "classificatie: {cls})."
-            ),
-        ).format(
+            "EVIDENCE_PEAK_PRESENT",
             freq=bin_center,
             pct=presence_ratio,
             p95=p95_amp,
@@ -529,20 +566,20 @@ def _build_persistent_peak_findings(
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
-            "suspected_source": "unknown_resonance"
-            if peak_type != "transient"
-            else "transient_impact",
+            "suspected_source": (
+                "baseline_noise"
+                if peak_type == "baseline_noise"
+                else "transient_impact"
+                if peak_type == "transient"
+                else "unknown_resonance"
+            ),
             "evidence_summary": evidence,
             "frequency_hz_or_order": f"{bin_center:.1f} Hz",
             "amplitude_metric": {
                 "name": "strength_p95_band_rms_amp_g",
                 "value": p95_amp,
                 "units": accel_units,
-                "definition": _text(
-                    lang,
-                    "p95 peak amplitude across matched samples.",
-                    "p95 piekamplitude over gematchte samples.",
-                ),
+                "definition": _tr(lang, "METRIC_P95_PEAK_AMPLITUDE"),
             },
             "confidence_0_to_1": confidence,
             "quick_checks": [],

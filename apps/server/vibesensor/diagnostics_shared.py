@@ -121,6 +121,8 @@ def _order_label_for_class_key(class_key: str) -> str | None:
         return "1x wheel order"
     if class_key == "wheel2":
         return "2x wheel order"
+    if class_key == "wheel2_eng1":
+        return "2x wheel / 1x engine order"
     if class_key == "shaft_eng1":
         return "1x driveshaft/engine order"
     if class_key == "shaft1":
@@ -135,6 +137,8 @@ def _order_label_for_class_key(class_key: str) -> str | None:
 def suspected_source_from_class_key(class_key: str) -> str:
     if class_key in {"wheel1", "wheel2"}:
         return "wheel/tire"
+    if class_key == "wheel2_eng1":
+        return "wheel/tire"  # default to wheel but ambiguous
     if class_key in {"shaft1", "shaft_eng1"}:
         return "driveline"
     if class_key in {"eng1", "eng2"}:
@@ -145,6 +149,8 @@ def suspected_source_from_class_key(class_key: str) -> str:
 
 
 def source_keys_from_class_key(class_key: str) -> tuple[str, ...]:
+    if class_key == "wheel2_eng1":
+        return ("wheel", "engine")
     if class_key == "shaft_eng1":
         return ("driveshaft", "engine")
     if class_key in {"eng1", "eng2"}:
@@ -193,9 +199,26 @@ def classify_peak_hz(
         candidates.extend(
             [
                 {"hz": wheel_hz, "tol": wheel_tol, "key": "wheel1"},
-                {"hz": wheel_hz * 2.0, "tol": wheel_tol, "key": "wheel2"},
             ]
         )
+        # Detect wheel_2x / engine_1x overlap: when 2×wheel_hz ≈ engine_hz,
+        # merge them into a combined class to avoid misattribution.
+        wheel_2x_hz = wheel_hz * 2.0
+        wheel2_eng1_overlap_tol = max(
+            0.03,
+            order_refs["wheel_uncertainty_pct"] + order_refs["engine_uncertainty_pct"],
+        )
+        if abs(wheel_2x_hz - engine_hz) / max(1e-6, engine_hz) < wheel2_eng1_overlap_tol:
+            candidates.append(
+                {
+                    "hz": wheel_2x_hz,
+                    "tol": max(wheel_tol, engine_tol),
+                    "key": "wheel2_eng1",
+                }
+            )
+        else:
+            candidates.append({"hz": wheel_2x_hz, "tol": wheel_tol, "key": "wheel2"})
+
         overlap_tol = max(
             0.03,
             order_refs["drive_uncertainty_pct"] + order_refs["engine_uncertainty_pct"],

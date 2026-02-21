@@ -66,6 +66,7 @@ class _RecentEvent:
     ts_ms: int
     sensor_id: str
     sensor_label: str
+    sensor_location: str
     peak_hz: float
     peak_amp: float
     vibration_strength_db: float
@@ -81,6 +82,7 @@ class _TrackerLevelState:
     last_peak_hz: float = 0.0
     last_class_key: str = "other"
     last_sensor_label: str = ""
+    last_sensor_location: str = ""
     last_emitted_ms: int = 0
     severity_state: dict[str, Any] | None = None
 
@@ -201,6 +203,7 @@ class LiveDiagnosticsEngine:
         bucket_key: str,
         strength_db: float,
         sensor_label: str,
+        sensor_location: str,
         class_key: str,
         peak_hz: float,
     ) -> None:
@@ -211,6 +214,7 @@ class LiveDiagnosticsEngine:
                     "bucket_key": bucket_key,
                     "strength_db": strength_db,
                     "sensor_label": sensor_label,
+                    "sensor_location": sensor_location,
                     "class_key": class_key,
                     "peak_hz": peak_hz,
                 }
@@ -314,6 +318,7 @@ class LiveDiagnosticsEngine:
             tracker.last_peak_hz = float(event.peak_hz)
             tracker.last_class_key = event.class_key
             tracker.last_sensor_label = event.sensor_label
+            tracker.last_sensor_location = event.sensor_location
             self._sensor_trackers[tracker_key] = tracker
 
             if tracker.current_bucket_key:
@@ -324,6 +329,7 @@ class LiveDiagnosticsEngine:
                     bucket_key=tracker.current_bucket_key,
                     strength_db=tracker.last_strength_db,
                     sensor_label=event.sensor_label,
+                    sensor_location=event.sensor_location,
                     class_key=event.class_key,
                     peak_hz=event.peak_hz,
                 )
@@ -390,6 +396,7 @@ class LiveDiagnosticsEngine:
                 bucket_key=tracker.current_bucket_key,
                 strength_db=tracker.last_strength_db,
                 sensor_label=tracker.last_sensor_label,
+                sensor_location=tracker.last_sensor_location,
                 class_key=class_key or tracker.last_class_key,
                 peak_hz=tracker.last_peak_hz,
             )
@@ -467,6 +474,7 @@ class LiveDiagnosticsEngine:
                         bucket_key=tracker.current_bucket_key,
                         strength_db=tracker.last_strength_db,
                         sensor_label=tracker.last_sensor_label,
+                        sensor_location=tracker.last_sensor_location,
                         class_key=class_key,
                         peak_hz=avg_hz,
                     )
@@ -528,6 +536,11 @@ class LiveDiagnosticsEngine:
             for client in clients
             if isinstance(client, dict)
         }
+        client_location_map = {
+            str(client.get("id")): str(client.get("location") or "")
+            for client in clients
+            if isinstance(client, dict)
+        }
         clients_payload = spectra.get("clients")
         if not isinstance(clients_payload, dict):
             return []
@@ -546,11 +559,12 @@ class LiveDiagnosticsEngine:
                 LOGGER.debug("Skipping client %s: missing top_peaks", client_id)
                 continue
             label = client_map.get(str(client_id), str(client_id))
-            entries.append((str(client_id), label, peaks_raw))
+            location = client_location_map.get(str(client_id), "")
+            entries.append((str(client_id), label, location, peaks_raw))
 
         now_ms = int(monotonic() * 1000.0)
         events: list[_RecentEvent] = []
-        for client_id, label, peaks_raw in entries:
+        for client_id, label, location, peaks_raw in entries:
             for peak in peaks_raw[:4]:
                 if not isinstance(peak, dict):
                     continue
@@ -571,6 +585,7 @@ class LiveDiagnosticsEngine:
                         ts_ms=now_ms,
                         sensor_id=client_id,
                         sensor_label=label,
+                        sensor_location=location,
                         peak_hz=peak_hz,
                         peak_amp=float(peak_amp),
                         vibration_strength_db=float(vibration_strength_db),
