@@ -1,5 +1,5 @@
 import { apiJson } from "./http";
-import type { CarsPayload, SpeedSourcePayload } from "./types";
+import type { CarsPayload, SpeedSourcePayload, SpeedSourceStatusPayload, UpdateStatusPayload } from "./types";
 
 export async function getSettingsLanguage(): Promise<{ language: string }> {
   return apiJson("/api/settings/language");
@@ -95,6 +95,10 @@ export async function updateSettingsSpeedSource(data: Record<string, unknown>): 
   });
 }
 
+export async function getSpeedSourceStatus(): Promise<SpeedSourceStatusPayload> {
+  return apiJson("/api/settings/speed-source/status");
+}
+
 export async function getSettingsSensors(): Promise<unknown> {
   return apiJson("/api/settings/sensors");
 }
@@ -110,5 +114,23 @@ export async function updateSettingsSensor(mac: string, data: Record<string, unk
 export async function deleteSettingsSensor(mac: string): Promise<unknown> {
   return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
     method: "DELETE",
+  });
+}
+
+export async function getUpdateStatus(): Promise<UpdateStatusPayload> {
+  return apiJson("/api/settings/update/status");
+}
+
+export async function startUpdate(ssid: string, password: string): Promise<{ status: string; ssid: string }> {
+  return apiJson("/api/settings/update/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ssid, password }),
+  });
+}
+
+export async function cancelUpdate(): Promise<{ cancelled: boolean }> {
+  return apiJson("/api/settings/update/cancel", {
+    method: "POST",
   });
 }

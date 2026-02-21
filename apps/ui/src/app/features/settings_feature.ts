@@ -1,11 +1,13 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState } from "../state/ui_app_state";
+import type { SpeedSourceStatusPayload } from "../../api/types";
 import {
   addSettingsCar,
   deleteSettingsCar,
   getAnalysisSettings,
   getSettingsCars,
   getSettingsSpeedSource,
+  getSpeedSourceStatus,
   setActiveSettingsCar,
   setAnalysisSettings,
   setSpeedOverride,
@@ -33,10 +35,16 @@ export interface SettingsFeature {
   saveSpeedSourceFromInputs(): void;
   bindSettingsTabs(): void;
   addCarFromWizard(name: string, carType: string, aspects: Record<string, number>): Promise<void>;
+  startGpsStatusPolling(): void;
+  stopGpsStatusPolling(): void;
 }
 
 export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature {
   const { state, els, t, escapeHtml, fmt } = ctx;
+
+  const GPS_POLL_FAST = 2_000;
+  const GPS_POLL_SLOW = 10_000;
+  let gpsPollTimer: ReturnType<typeof setTimeout> | null = null;
 
   function syncSettingsInputs(): void {
     if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(state.vehicleSettings.wheel_bandwidth_pct);
@@ -52,7 +60,15 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   async function syncSpeedSourceToServer(): Promise<void> {
     try {
-      await updateSettingsSpeedSource({ speedSource: state.speedSource, manualSpeedKph: state.manualSpeedKph });
+      const payload: Record<string, unknown> = {
+        speedSource: state.speedSource,
+        manualSpeedKph: state.manualSpeedKph,
+      };
+      const staleVal = Number(els.staleTimeoutInput?.value);
+      if (staleVal >= 3 && staleVal <= 120) payload.staleTimeoutS = staleVal;
+      const fallbackVal = els.fallbackModeSelect?.value;
+      if (fallbackVal) payload.fallbackMode = fallbackVal;
+      await updateSettingsSpeedSource(payload);
       if (state.speedSource === "manual" && state.manualSpeedKph != null) await setSpeedOverride(state.manualSpeedKph);
       else await setSpeedOverride(null);
     } catch (_err) { /* ignore */ }
@@ -64,6 +80,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       if (payload && typeof payload === "object") {
         if (typeof payload.speedSource === "string") state.speedSource = payload.speedSource;
         state.manualSpeedKph = typeof payload.manualSpeedKph === "number" ? payload.manualSpeedKph : null;
+        if (typeof payload.staleTimeoutS === "number" && els.staleTimeoutInput) {
+          els.staleTimeoutInput.value = String(payload.staleTimeoutS);
+        }
+        if (typeof payload.fallbackMode === "string" && els.fallbackModeSelect) {
+          els.fallbackModeSelect.value = payload.fallbackMode;
+        }
         syncSpeedSourceInputs();
         ctx.renderSpeedReadout();
       }
@@ -264,6 +286,66 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     } catch (_err) { /* ignore */ }
   }
 
+  // -- GPS status polling & rendering -----------------------------------------
+
+  function connectionStateLabel(cs: string): string {
+    const map: Record<string, string> = {
+      disabled: t("settings.speed.state_disabled"),
+      disconnected: t("settings.speed.state_disconnected"),
+      connected: t("settings.speed.state_connected"),
+      stale: t("settings.speed.state_stale"),
+    };
+    return map[cs] ?? cs;
+  }
+
+  function renderGpsStatus(status: SpeedSourceStatusPayload): void {
+    if (els.gpsStatusState) els.gpsStatusState.textContent = connectionStateLabel(status.connection_state);
+    if (els.gpsStatusDevice) els.gpsStatusDevice.textContent = status.device ?? "--";
+    if (els.gpsStatusLastUpdate) {
+      els.gpsStatusLastUpdate.textContent = status.last_update_age_s != null
+        ? t("settings.speed.last_update_value", { value: String(status.last_update_age_s) })
+        : t("settings.speed.last_update_never");
+    }
+    if (els.gpsStatusRawSpeed) {
+      els.gpsStatusRawSpeed.textContent = status.raw_speed_kmh != null ? `${fmt(status.raw_speed_kmh, 1)} km/h` : "--";
+    }
+    if (els.gpsStatusEffectiveSpeed) {
+      els.gpsStatusEffectiveSpeed.textContent = status.effective_speed_kmh != null ? `${fmt(status.effective_speed_kmh, 1)} km/h` : "--";
+    }
+    if (els.gpsStatusLastError) {
+      els.gpsStatusLastError.textContent = status.last_error ?? "--";
+    }
+    if (els.gpsStatusReconnect) {
+      els.gpsStatusReconnect.textContent = status.reconnect_delay_s != null ? `${fmt(status.reconnect_delay_s, 1)}s` : "--";
+    }
+    if (els.gpsStatusFallback) {
+      els.gpsStatusFallback.textContent = status.fallback_active ? t("settings.speed.fallback_yes") : t("settings.speed.fallback_no");
+    }
+  }
+
+  async function pollGpsStatus(): Promise<void> {
+    try {
+      const status = await getSpeedSourceStatus();
+      renderGpsStatus(status);
+      const interval = status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;
+      gpsPollTimer = setTimeout(() => void pollGpsStatus(), interval);
+    } catch {
+      gpsPollTimer = setTimeout(() => void pollGpsStatus(), GPS_POLL_SLOW);
+    }
+  }
+
+  function startGpsStatusPolling(): void {
+    if (gpsPollTimer !== null) return;
+    void pollGpsStatus();
+  }
+
+  function stopGpsStatusPolling(): void {
+    if (gpsPollTimer !== null) {
+      clearTimeout(gpsPollTimer);
+      gpsPollTimer = null;
+    }
+  }
+
   return {
     syncSettingsInputs,
     loadSpeedSourceFromServer,
@@ -275,5 +357,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     saveSpeedSourceFromInputs,
     bindSettingsTabs,
     addCarFromWizard,
+    startGpsStatusPolling,
+    stopGpsStatusPolling,
   };
 }

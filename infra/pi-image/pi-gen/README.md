@@ -10,6 +10,7 @@ with no manual setup.
 - Docker
 - git, rsync
 - ~20 minutes build time (depends on cache and network)
+- For best x86/WSL performance, keep the repo on the Linux filesystem (for example `/home/...`), not on a Windows-mounted path.
 
 ## Build
 
@@ -20,6 +21,22 @@ cd VibeSensor
 ```
 
 Output image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
+
+Useful build flags for faster x86 iteration:
+
+```bash
+# skip expensive post-build mount/chroot validation
+FAST=1 ./infra/pi-image/pi-gen/build.sh
+
+# or explicitly disable validation
+VALIDATE=0 ./infra/pi-image/pi-gen/build.sh
+
+# force UI rebuild (default is hash-based incremental)
+FORCE_UI_BUILD=1 ./infra/pi-image/pi-gen/build.sh
+
+# optional artifact copy destination (disabled by default)
+COPY_ARTIFACT_DIR=/tmp/pi-images ./infra/pi-image/pi-gen/build.sh
+```
 
 Default SSH credentials in generated images:
 - user: `pi`

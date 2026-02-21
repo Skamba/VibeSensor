@@ -74,11 +74,14 @@ def main() -> int:
     container_started = False
     try:
         _run(["python3", "tools/sync_ui_to_pi_public.py"])
-        _run(
-            ["npx", "playwright", "install", "chromium"],
-            env={**os.environ, "PLAYWRIGHT_SKIP_BROWSER_GC": "1"},
-            cwd=ROOT / "apps" / "ui",
-        )
+        playwright_marker = ROOT / "apps" / "ui" / ".playwright-chromium-installed"
+        if os.environ.get("FORCE_PLAYWRIGHT_INSTALL", "0") == "1" or not playwright_marker.exists():
+            _run(
+                ["npx", "playwright", "install", "chromium"],
+                env={**os.environ, "PLAYWRIGHT_SKIP_BROWSER_GC": "1"},
+                cwd=ROOT / "apps" / "ui",
+            )
+            playwright_marker.write_text("chromium\n", encoding="utf-8")
         _run(["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui")
         _run(
             ["python3", "-m", "pytest", "-q", "-m", "not selenium", "apps/server/tests"]

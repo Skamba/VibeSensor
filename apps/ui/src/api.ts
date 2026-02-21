@@ -14,6 +14,7 @@ export {
   setActiveSettingsCar,
   getSettingsSpeedSource,
   updateSettingsSpeedSource,
+  getSpeedSourceStatus,
 } from "./api/settings";
 export { getCarLibraryBrands, getCarLibraryTypes, getCarLibraryModels } from "./api/car_library";
 export {
@@ -25,3 +26,5 @@ export {
 } from "./api/history";
 export { getClientLocations, setClientLocation, identifyClient, removeClient } from "./api/clients";
 export { getLoggingStatus, startLoggingRun, stopLoggingRun } from "./api/logging";
+export { getUpdateStatus, startUpdate, cancelUpdate } from "./api/settings";
+export type { UpdateStatusPayload, UpdateIssue, SpeedSourceStatusPayload } from "./api/types";

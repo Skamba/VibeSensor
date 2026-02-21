@@ -26,6 +26,7 @@ RUN_SAMPLE_TYPE = "sample"
 RUN_END_TYPE = "run_end"
 
 VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "obd2", "manual")
+VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 
 DEFAULT_CAR_ASPECTS: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
 
@@ -54,6 +55,13 @@ def _parse_manual_speed(value: Any) -> float | None:
     if isinstance(value, (int, float)) and float(value) > 0:
         return float(value)
     return None
+
+
+def _parse_stale_timeout(value: Any) -> float:
+    """Return a stale-timeout value clamped to [3, 120], default 10."""
+    if isinstance(value, (int, float)):
+        return max(3.0, min(120.0, float(value)))
+    return 10.0
 
 
 def _sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
@@ -150,10 +158,18 @@ class SpeedSourceConfig:
     speed_source: str  # Literal values: "gps", "obd2", "manual"
     manual_speed_kph: float | None
     obd2_config: dict[str, Any]
+    stale_timeout_s: float
+    fallback_mode: str
 
     @classmethod
     def default(cls) -> SpeedSourceConfig:
-        return cls(speed_source="gps", manual_speed_kph=None, obd2_config={})
+        return cls(
+            speed_source="gps",
+            manual_speed_kph=None,
+            obd2_config={},
+            stale_timeout_s=10.0,
+            fallback_mode="manual",
+        )
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SpeedSourceConfig:
@@ -164,10 +180,20 @@ class SpeedSourceConfig:
         )
         obd2 = data.get("obd2Config") or data.get("obd2_config")
         obd2_config = obd2 if isinstance(obd2, dict) else {}
+        raw_timeout = data.get("staleTimeoutS") or data.get("stale_timeout_s")
+        stale_timeout_s = _parse_stale_timeout(raw_timeout)
+        raw_fallback = data.get("fallbackMode") or data.get("fallback_mode")
+        fallback_mode = (
+            str(raw_fallback)
+            if isinstance(raw_fallback, str) and raw_fallback in VALID_FALLBACK_MODES
+            else "manual"
+        )
         return cls(
             speed_source=speed_source,
             manual_speed_kph=manual_speed_kph,
             obd2_config=obd2_config,
+            stale_timeout_s=stale_timeout_s,
+            fallback_mode=fallback_mode,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -175,6 +201,8 @@ class SpeedSourceConfig:
             "speedSource": self.speed_source,
             "manualSpeedKph": self.manual_speed_kph,
             "obd2Config": dict(self.obd2_config),
+            "staleTimeoutS": self.stale_timeout_s,
+            "fallbackMode": self.fallback_mode,
         }
 
     def apply_update(self, data: dict[str, Any]) -> None:
@@ -190,6 +218,12 @@ class SpeedSourceConfig:
         obd2 = data.get("obd2Config")
         if isinstance(obd2, dict):
             self.obd2_config = obd2
+        raw_timeout = data.get("staleTimeoutS")
+        if raw_timeout is not None:
+            self.stale_timeout_s = _parse_stale_timeout(raw_timeout)
+        raw_fallback = data.get("fallbackMode")
+        if isinstance(raw_fallback, str) and raw_fallback in VALID_FALLBACK_MODES:
+            self.fallback_mode = raw_fallback
 
 
 # ---------------------------------------------------------------------------
