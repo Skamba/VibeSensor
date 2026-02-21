@@ -7,6 +7,7 @@ import pytest
 from vibesensor.report import build_findings_for_samples, summarize_log
 from vibesensor.report import findings as findings_module
 from vibesensor.report.findings import _speed_breakdown
+from vibesensor.report.plot_data import _top_peaks_table_rows
 from vibesensor.runlog import (
     append_jsonl_records,
     create_run_end_record,
@@ -314,6 +315,68 @@ def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> No
     assert low <= high
     assert low <= peak_speed <= (50.0 + 27.0)
     assert str(persistent.get("strongest_speed_band") or "").endswith("km/h")
+
+
+def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+
+    samples = []
+    for idx, speed_kmh in enumerate(range(40, 121)):
+        speed_val = float(speed_kmh)
+        wheel_hz = wheel_hz_from_speed_kmh(speed_val, 2.036) or 10.0
+        amp = 0.08 if 75 <= speed_kmh <= 90 else 0.01
+        samples.append(
+            {
+                **_make_sample(float(idx), speed_val, amp),
+                "strength_floor_amp_g": 0.003,
+                "top_peaks": [
+                    {"hz": wheel_hz, "amp": amp},
+                    {"hz": 43.0, "amp": amp},
+                ],
+            }
+        )
+
+    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+
+    wheel_finding = next(
+        (f for f in findings if str(f.get("finding_key") or "") == "wheel_1x"),
+        None,
+    )
+    persistent = next(
+        (f for f in findings if str(f.get("finding_key") or "").startswith("peak_")),
+        None,
+    )
+
+    assert wheel_finding is not None
+    assert persistent is not None
+
+    order_band = str(wheel_finding.get("strongest_speed_band") or "")
+    persistent_band = str(persistent.get("strongest_speed_band") or "")
+
+    rows = _top_peaks_table_rows(samples, top_n=6, freq_bin_hz=1.0)
+    target_row = min(rows, key=lambda row: abs(float(row.get("frequency_hz") or 0.0) - 43.0))
+    peak_table_band = str(target_row.get("typical_speed_band") or "")
+
+    assert order_band
+    assert persistent_band
+    assert peak_table_band and peak_table_band != "-"
+    assert order_band == persistent_band == peak_table_band
+
+    low_str, high_str = order_band.replace(" km/h", "").split("-", maxsplit=1)
+    low = float(low_str)
+    high = float(high_str)
+    assert 70.0 <= low <= 90.0
+    assert 80.0 <= high <= 100.0
+    assert (high - low) <= 20.0
 
 
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
