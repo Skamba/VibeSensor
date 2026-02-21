@@ -742,6 +742,67 @@ class TestReportMetadataCompleteness:
 # ---------------------------------------------------------------------------
 
 
+class TestSensorIntensityPhaseContext:
+    """_sensor_intensity_by_location should include per-phase intensity when
+    per_sample_phases is provided, giving phase context alongside aggregate stats.
+    Issue #192.
+    """
+
+    def test_phase_intensity_present_when_phases_provided(self) -> None:
+        """Each location row should have phase_intensity when per_sample_phases given."""
+        from vibesensor.report.findings import _sensor_intensity_by_location
+        from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
+
+        # Build samples with two distinct locations and phases
+        samples = []
+        # Location A: idle then cruise
+        for i in range(5):
+            samples.append({
+                "t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 4.0,
+                "location_key": "front-left",
+            })
+        for i in range(5, 15):
+            samples.append({
+                "t_s": float(i), "speed_kmh": 60.0, "vibration_strength_db": 22.0,
+                "location_key": "front-left",
+            })
+
+        per_sample_phases, _ = segment_run_phases(samples)
+        rows = _sensor_intensity_by_location(samples, per_sample_phases=per_sample_phases)
+
+        for row in rows:
+            pi = row.get("phase_intensity")
+            assert pi is not None, f"phase_intensity missing for location {row.get('location')}"
+            # At least one phase must have data
+            assert len(pi) >= 1
+            for phase_key, stats in pi.items():
+                assert "count" in stats
+                assert "mean_intensity_db" in stats
+
+    def test_phase_intensity_absent_without_phases(self) -> None:
+        """Without per_sample_phases, phase_intensity should be None."""
+        from vibesensor.report.findings import _sensor_intensity_by_location
+
+        samples = [
+            {"t_s": 0.0, "speed_kmh": 60.0, "vibration_strength_db": 22.0, "location_key": "fl"},
+        ]
+        rows = _sensor_intensity_by_location(samples)
+        for row in rows:
+            assert row.get("phase_intensity") is None
+
+    def test_summarize_run_data_includes_phase_intensity_in_location_rows(self) -> None:
+        """The full pipeline must include phase_intensity in sensor_intensity_by_location."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        locs = summary.get("sensor_intensity_by_location", [])
+        # If any locations are detected, they must have the phase_intensity key
+        for loc_row in locs:
+            assert "phase_intensity" in loc_row, (
+                f"phase_intensity key missing for location {loc_row.get('location')}"
+            )
+
+
 class TestOrderFindingsPhaseFiltering:
     """_build_order_findings and _build_persistent_peak_findings should exclude
     IDLE samples so stationary noise doesn't contaminate diagnostic evidence.

@@ -187,7 +187,15 @@ def _sensor_intensity_by_location(
     *,
     lang: object = "en",
     connected_locations: set[str] | None = None,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, float | str | int | bool]]:
+    """Compute per-location vibration intensity statistics.
+
+    When ``per_sample_phases`` is provided, also computes per-phase intensity
+    breakdown for each location so callers can see how vibration differs across
+    IDLE, ACCELERATION, CRUISE, etc. at each sensor position.
+    Addresses issue #192: aggregate entire run loses phase context.
+    """
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[float]] = defaultdict(list)
@@ -196,7 +204,11 @@ def _sensor_intensity_by_location(
         lambda: {f"l{idx}": 0 for idx in range(0, 6)}
     )
     strength_bucket_totals: dict[str, int] = defaultdict(int)
-    for sample in samples:
+    # Per-phase intensity: {location: {phase_key: [amp_values]}}
+    phase_amp: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
+
+    for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
             continue
         location = _location_label(sample, lang=lang)
@@ -208,6 +220,9 @@ def _sensor_intensity_by_location(
         amp = _primary_vibration_strength_db(sample)
         if amp is not None:
             grouped_amp[location].append(float(amp))
+            if has_phases and per_sample_phases is not None:
+                phase_key = str(per_sample_phases[i].value if hasattr(per_sample_phases[i], "value") else per_sample_phases[i])
+                phase_amp[location][phase_key].append(float(amp))
         dropped_total = _as_float(sample.get("frames_dropped_total"))
         if dropped_total is not None:
             dropped_totals[location].append(dropped_total)
@@ -258,6 +273,19 @@ def _sensor_intensity_by_location(
         partial_coverage = bool(
             connected_locations is not None and location not in connected_locations
         )
+        # Per-phase intensity summary for this location (issue #192)
+        location_phase_intensity: dict[str, object] | None = None
+        if has_phases:
+            loc_phases = phase_amp.get(location, {})
+            location_phase_intensity = {
+                phase_key: {
+                    "count": len(phase_vals),
+                    "mean_intensity_db": mean(phase_vals) if phase_vals else None,
+                    "max_intensity_db": max(phase_vals) if phase_vals else None,
+                }
+                for phase_key, phase_vals in loc_phases.items()
+                if phase_vals
+            }
         rows.append(
             {
                 "location": location,
@@ -273,6 +301,7 @@ def _sensor_intensity_by_location(
                 "dropped_frames_delta": dropped_delta,
                 "queue_overflow_drops_delta": overflow_delta,
                 "strength_bucket_distribution": bucket_distribution,
+                "phase_intensity": location_phase_intensity,
             }
         )
     rows.sort(
