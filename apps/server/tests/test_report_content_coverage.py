@@ -220,6 +220,70 @@ def test_select_top_causes_prefers_diagnostic_over_info() -> None:
     assert causes[0]["source"] == "wheel/tire"
 
 
+def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
+    """A finding with strong cruise-phase evidence should rank above one with
+    equal raw confidence but no cruise evidence."""
+    findings = [
+        {
+            "finding_id": "F_A",
+            "severity": "diagnostic",
+            "suspected_source": "driveline",
+            "confidence_0_to_1": 0.60,
+            "frequency_hz_or_order": "3x driveshaft",
+            # No phase evidence — neutral multiplier
+        },
+        {
+            "finding_id": "F_B",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "confidence_0_to_1": 0.60,
+            "frequency_hz_or_order": "1x wheel order",
+            # All matches were in cruise phase
+            "phase_evidence": {"cruise_fraction": 1.0, "phases_detected": ["cruise"]},
+        },
+    ]
+    causes = select_top_causes(findings)
+    # Both qualify; wheel/tire (cruise dominant) should come first
+    assert len(causes) == 2
+    assert causes[0]["source"] == "wheel/tire"
+    assert causes[1]["source"] == "driveline"
+
+
+def test_select_top_causes_phase_evidence_in_output() -> None:
+    """phase_evidence from the representative finding must be passed through."""
+    phase_ev = {"cruise_fraction": 0.85, "phases_detected": ["cruise", "acceleration"]}
+    findings = [
+        {
+            "finding_id": "F_C",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "confidence_0_to_1": 0.75,
+            "frequency_hz_or_order": "1x wheel order",
+            "phase_evidence": phase_ev,
+        }
+    ]
+    causes = select_top_causes(findings)
+    assert len(causes) == 1
+    assert causes[0]["phase_evidence"] == phase_ev
+
+
+def test_select_top_causes_no_phase_evidence_still_works() -> None:
+    """Findings without phase_evidence should still be ranked correctly."""
+    findings = [
+        {
+            "finding_id": "F_D",
+            "severity": "diagnostic",
+            "suspected_source": "engine",
+            "confidence_0_to_1": 0.55,
+            "frequency_hz_or_order": "2x engine order",
+        }
+    ]
+    causes = select_top_causes(findings)
+    assert len(causes) == 1
+    assert causes[0]["source"] == "engine"
+    assert causes[0]["phase_evidence"] is None
+
+
 # -- confidence_label --------------------------------------------------------
 
 

@@ -73,13 +73,35 @@ def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
 # ---------------------------------------------------------------------------
 
 
+def _phase_ranking_score(finding: dict[str, object]) -> float:
+    """Compute phase-adjusted ranking score for top-cause selection.
+
+    Boosts findings with strong CRUISE-phase evidence (steady driving provides
+    the most reliable vibration signature) by up to 15%.  Findings without
+    phase evidence receive a neutral multiplier (0.85) and are ranked purely
+    by confidence, preserving backward compatibility.
+    """
+    conf = finding.get("confidence_0_to_1")
+    confidence = float(conf if conf is not None else 0)
+    phase_ev = finding.get("phase_evidence")
+    cruise_fraction = (
+        float(phase_ev.get("cruise_fraction", 0.0)) if isinstance(phase_ev, dict) else 0.0
+    )
+    return confidence * (0.85 + 0.15 * cruise_fraction)
+
+
 def select_top_causes(
     findings: list[dict[str, object]],
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,
 ) -> list[dict[str, object]]:
-    """Group findings by suspected_source, keep best per group, apply drop-off."""
+    """Group findings by suspected_source, keep best per group, apply drop-off.
+
+    Ranking uses a phase-adjusted score that boosts findings whose evidence
+    comes predominantly from CRUISE phase (steady driving), where vibration
+    signatures are most diagnostically reliable.
+    """
     # Only consider non-reference findings that meet the hard confidence floor
     diag_findings = [
         f
@@ -98,12 +120,12 @@ def select_top_causes(
         src = str(f.get("suspected_source") or "unknown").strip().lower()
         groups[src].append(f)
 
-    # For each group, pick the highest-confidence finding as representative
+    # For each group, pick the highest-phase-adjusted-score finding as representative
     group_reps: list[dict[str, object]] = []
     for members in groups.values():
         members_sorted = sorted(
             members,
-            key=lambda m: float(m.get("confidence_0_to_1") or 0),
+            key=_phase_ranking_score,
             reverse=True,
         )
         representative = dict(members_sorted[0])
@@ -117,19 +139,16 @@ def select_top_causes(
         representative["grouped_count"] = len(members_sorted)
         group_reps.append(representative)
 
-    # Sort groups by best confidence descending
-    group_reps.sort(
-        key=lambda g: float(g.get("confidence_0_to_1") or 0),
-        reverse=True,
-    )
+    # Sort groups by phase-adjusted score descending
+    group_reps.sort(key=_phase_ranking_score, reverse=True)
 
-    # Apply drop-off rule: include causes within drop_off_points of the best
-    best_conf_pct = float(group_reps[0].get("confidence_0_to_1") or 0) * 100.0
-    threshold_pct = best_conf_pct - drop_off_points
+    # Apply drop-off rule using phase-adjusted scores
+    best_score_pct = _phase_ranking_score(group_reps[0]) * 100.0
+    threshold_pct = best_score_pct - drop_off_points
     selected: list[dict[str, object]] = []
     for rep in group_reps:
-        conf_pct = float(rep.get("confidence_0_to_1") or 0) * 100.0
-        if conf_pct >= threshold_pct or not selected:
+        score_pct = _phase_ranking_score(rep) * 100.0
+        if score_pct >= threshold_pct or not selected:
             selected.append(rep)
         if len(selected) >= max_causes:
             break
@@ -154,6 +173,7 @@ def select_top_causes(
                 "strongest_speed_band": rep.get("strongest_speed_band"),
                 "weak_spatial_separation": rep.get("weak_spatial_separation"),
                 "diagnostic_caveat": rep.get("diagnostic_caveat"),
+                "phase_evidence": rep.get("phase_evidence"),
             }
         )
     return result
