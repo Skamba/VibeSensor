@@ -85,6 +85,7 @@ def _order_hypotheses() -> list[_OrderHypothesis]:
         _OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1),
         _OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2),
         _OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1),
+        _OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2),
         _OrderHypothesis("engine_1x", "engine", "engine", 1),
         _OrderHypothesis("engine_2x", "engine", "engine", 2),
     ]

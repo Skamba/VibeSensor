@@ -145,6 +145,41 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
     assert strongest_speed_band in {"90-100 km/h", "100-110 km/h"}
 
 
+def test_build_findings_detects_driveline_2x_order() -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(24):
+        speed_kmh = 55.0 + (2.0 * idx)
+        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        samples.append(
+            {
+                **_make_sample(float(idx), speed_kmh, 0.04),
+                "strength_floor_amp_g": 0.002,
+                "top_peaks": [
+                    {"hz": wheel_hz * 3.08 * 2.0, "amp": 0.04},
+                ],
+            }
+        )
+
+    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    driveline_2x = next(
+        (f for f in findings if str(f.get("finding_key") or "") == "driveshaft_2x"),
+        None,
+    )
+
+    assert driveline_2x is not None
+    assert driveline_2x.get("suspected_source") == "driveline"
+    assert driveline_2x.get("frequency_hz_or_order") == "2x driveshaft order"
+
+
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
     from vibesensor.report.test_plan import _location_speedbin_summary
 
