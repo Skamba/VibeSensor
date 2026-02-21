@@ -72,6 +72,8 @@ class _FakeRegistry:
                     "strength_metrics": {
                         "vibration_strength_db": 22.0,
                         "strength_bucket": "l2",
+                        "peak_amp_g": 0.15,
+                        "noise_floor_amp_g": 0.003,
                         "top_peaks": [
                             {
                                 "hz": 15.0,
@@ -212,6 +214,8 @@ def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
     assert peaks[0]["amp"] == 0.12
     assert peaks[0]["vibration_strength_db"] == 22.0
     assert peaks[0]["strength_bucket"] == "l2"
+    assert rows[0]["strength_peak_amp_g"] == 0.15
+    assert rows[0]["strength_floor_amp_g"] == 0.003
 
 
 def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None:

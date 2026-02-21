@@ -401,6 +401,8 @@ class SensorFrame:
     top_peaks: list[dict[str, object]]
     vibration_strength_db: float | None
     strength_bucket: str | None
+    strength_peak_amp_g: float | None
+    strength_floor_amp_g: float | None
     frames_dropped_total: int
     queue_overflow_drops: int
 
@@ -430,6 +432,8 @@ class SensorFrame:
             "top_peaks": list(self.top_peaks),
             _VSD_KEY: self.vibration_strength_db,
             _BUCKET_KEY: self.strength_bucket,
+            "strength_peak_amp_g": self.strength_peak_amp_g,
+            "strength_floor_amp_g": self.strength_floor_amp_g,
             "frames_dropped_total": self.frames_dropped_total,
             "queue_overflow_drops": self.queue_overflow_drops,
         }
@@ -453,6 +457,8 @@ class SensorFrame:
         vibration_strength_db = _as_float_or_none(record.get(_VSD_KEY) or record.get("strength_db"))
         raw_bucket = record.get(_BUCKET_KEY)
         strength_bucket = str(raw_bucket) if raw_bucket not in (None, "") else None
+        strength_peak_amp_g = _as_float_or_none(record.get("strength_peak_amp_g"))
+        strength_floor_amp_g = _as_float_or_none(record.get("strength_floor_amp_g"))
         sample_rate_hz = _as_int_or_none(record.get("sample_rate_hz"))
 
         # Normalize top_peaks
@@ -500,6 +506,8 @@ class SensorFrame:
             top_peaks=normalized_peaks,
             vibration_strength_db=vibration_strength_db,
             strength_bucket=strength_bucket,
+            strength_peak_amp_g=strength_peak_amp_g,
+            strength_floor_amp_g=strength_floor_amp_g,
             frames_dropped_total=int(record.get("frames_dropped_total") or 0),
             queue_overflow_drops=int(record.get("queue_overflow_drops") or 0),
         )
