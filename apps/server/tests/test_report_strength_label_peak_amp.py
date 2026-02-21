@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import log10
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.report.pdf_builder import _strength_with_peak
 from vibesensor.report.report_data import map_summary
@@ -112,7 +112,7 @@ def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -
 def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> None:
     amp = 0.015
     floor = 0.005
-    expected_db = 20.0 * log10(amp / floor)
+    expected_db = vibration_strength_db_scalar(peak_band_rms_amp_g=amp, floor_amp_g=floor)
     summary: dict = {
         "top_causes": [
             {
