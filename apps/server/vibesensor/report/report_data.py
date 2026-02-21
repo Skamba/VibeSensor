@@ -36,6 +36,7 @@ class ObservedSignature:
     primary_system: str | None = None
     strongest_sensor_location: str | None = None
     speed_band: str | None = None
+    phase: str | None = None
     strength_label: str | None = None
     strength_peak_amp_g: float | None = None
     certainty_label: str | None = None
@@ -125,6 +126,7 @@ class ReportTemplateData:
     data_trust: list[DataTrustItem] = field(default_factory=list)
     pattern_evidence: PatternEvidence = field(default_factory=PatternEvidence)
     peak_rows: list[PeakRow] = field(default_factory=list)
+    phase_info: dict | None = None
     version_marker: str = ""
     lang: str = "en"
 
@@ -203,6 +205,26 @@ def _top_strength_values(summary: dict) -> tuple[float | None, float | None]:
     return (db_value, peak_amp_g)
 
 
+def _dominant_phase(phase_info: dict | None) -> str | None:
+    """Return the dominant non-idle driving phase from a phase_info summary dict."""
+    if not isinstance(phase_info, dict):
+        return None
+    counts = phase_info.get("phase_counts")
+    if not isinstance(counts, dict) or not counts:
+        return None
+    # Prefer the non-idle phase with the highest sample count.
+    _IDLE_KEY = "idle"
+    best_phase: str | None = None
+    best_count = 0
+    for phase_key, count in counts.items():
+        if phase_key == _IDLE_KEY:
+            continue
+        if isinstance(count, (int, float)) and count > best_count:
+            best_count = int(count)
+            best_phase = phase_key
+    return best_phase
+
+
 def _peak_classification_text(value: object, tr: Callable[..., str] | None = None) -> str:
     normalized = str(value or "").strip().lower()
     if tr is not None:
@@ -255,6 +277,11 @@ def map_summary(summary: dict) -> ReportTemplateData:
         origin = {}
     origin_location = str(origin.get("location") or "").strip()
 
+    # -- Phase info --
+    raw_phase_info = summary.get("phase_info")
+    phase_info = dict(raw_phase_info) if isinstance(raw_phase_info, dict) else None
+    dom_phase = _dominant_phase(phase_info)
+
     # -- Observed signature --
     if top_causes:
         tc = top_causes[0]
@@ -289,6 +316,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         primary_system=primary_system,
         strongest_sensor_location=primary_location,
         speed_band=primary_speed,
+        phase=dom_phase,
         strength_label=str_text,
         strength_peak_amp_g=peak_amp_g,
         certainty_label=cert_label_text,
@@ -491,6 +519,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         data_trust=data_trust,
         pattern_evidence=pattern_evidence,
         peak_rows=peak_rows,
+        phase_info=phase_info,
         version_marker=version_marker,
         lang=lang,
     )
