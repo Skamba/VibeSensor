@@ -1,5 +1,5 @@
 ---
-applyTo: "apps/server/vibesensor/report/**/*.py,apps/server/vibesensor/report_*.py,apps/server/vibesensor/report_pdf.py,apps/server/data/report_i18n.json"
+applyTo: "apps/server/vibesensor/report/**,apps/server/vibesensor/report_*.py,apps/server/data/report_i18n.json"
 ---
 Report generation and diagnostics
 - Shared workflow/validation rules live in `.github/instructions/general.instructions.md`; this file only captures report-specific deltas.
