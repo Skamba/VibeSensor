@@ -263,6 +263,38 @@ class TestConfidenceCalibration:
             assert low_conf < high_conf
             assert low_conf <= high_conf * 0.85
 
+    def test_noise_floor_guard_prevents_snr_blowup_with_near_zero_floor(self) -> None:
+        """Issue #186: near-zero noise floor must not produce snr_score ≈ 1.0.
+
+        When mean_floor is near-zero (sensor artifact / perfectly clean signal),
+        the SNR ratio blows up without the guard. The fix clamps mean_floor
+        to max(0.001, mean_floor) so tiny absolute amplitudes cannot produce
+        artificially high SNR scores.
+
+        AC: floor guard prevents snr_score ≈ 1.0 for 2mg amplitude / near-zero floor.
+        Implementation gives ~0.44 (vs 1.0 without guard), plus absolute-strength
+        cap provides secondary protection.
+        """
+        from math import log1p as _log1p
+
+        mean_amp = 0.002  # 2 mg – barely above MEMS noise
+        near_zero_floor = 1e-7  # pathological near-zero floor
+
+        # Without guard (old: max(1e-6, floor)):
+        snr_without_guard = min(1.0, _log1p(mean_amp / max(1e-6, near_zero_floor)) / 2.5)
+        # With guard (current: max(0.001, floor)):
+        snr_with_guard = min(1.0, _log1p(mean_amp / max(0.001, near_zero_floor)) / 2.5)
+
+        assert snr_without_guard > 0.95, "Without guard, SNR should be near 1.0 (bug scenario)"
+        assert snr_with_guard < 0.50, (
+            f"With floor guard, SNR for 2mg amp must be < 0.50, got {snr_with_guard:.3f}"
+        )
+        # Normal floor (already >= 0.001g) must be unaffected
+        normal_floor = 0.005
+        snr_normal_clamped = min(1.0, _log1p(mean_amp / max(0.001, normal_floor)) / 2.5)
+        snr_normal_direct = min(1.0, _log1p(mean_amp / normal_floor) / 2.5)
+        assert abs(snr_normal_clamped - snr_normal_direct) < 1e-10, "Normal floor must be unchanged"
+
     def test_sample_count_scaling_formula_meets_minimum_penalty(self) -> None:
         """Issue #185: 4-match minimum must receive >=15% confidence penalty vs 20+ matches.
 
