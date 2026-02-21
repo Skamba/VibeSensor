@@ -165,9 +165,7 @@ def _spectrogram_from_peaks(
             sorted_amps = sorted(amps)
             if not sorted_amps:
                 continue
-            p95_amp = (
-                percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
-            )
+            p95_amp = percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
             presence_ratio = len(sorted_amps) / max(1, x_sample_counts.get(x_key, 1))
             val = (presence_ratio**2) * p95_amp
         else:

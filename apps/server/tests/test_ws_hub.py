@@ -56,6 +56,7 @@ async def test_broadcast_calls_send_json() -> None:
     payload_builder.assert_called_once_with("client_a")
     ws.send_text.assert_awaited_once()
     import json
+
     sent_text = ws.send_text.call_args[0][0]
     assert json.loads(sent_text) == {"data": "test"}
 

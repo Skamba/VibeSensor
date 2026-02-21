@@ -539,9 +539,7 @@ class SignalProcessor:
         sm = fft_result["strength_metrics"]
 
         # Detrended std from the filtered block (approximate from axis amps)
-        detrended_std = [
-            float(np.std(fft_block[i] - np.mean(fft_block[i]))) for i in range(3)
-        ]
+        detrended_std = [float(np.std(fft_block[i] - np.mean(fft_block[i]))) for i in range(3)]
 
         # Top 10 bins by combined amplitude
         sorted_idx = np.argsort(combined_amp)[::-1]
