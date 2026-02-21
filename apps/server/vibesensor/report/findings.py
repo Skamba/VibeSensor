@@ -48,6 +48,10 @@ _NEGLIGIBLE_STRENGTH_MAX_DB = (
 _LIGHT_STRENGTH_MAX_DB = (
     float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
 )
+# Minimum realistic MEMS accelerometer noise floor (~0.001 g).
+# Used as the lower bound for SNR computations to prevent ratio blow-up
+# when the measured floor is near zero (sensor artifact / perfectly clean signal).
+_MEMS_NOISE_FLOOR_G = 0.001
 
 
 def _phase_to_str(phase: object) -> str | None:
@@ -525,7 +529,10 @@ def _build_order_findings(
         )
 
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
-        snr_score = min(1.0, log1p(mean_amp / max(0.001, mean_floor)) / 2.5)
+        snr_score = min(1.0, log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor)) / 2.5)
+        # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
+        if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
+            snr_score = min(snr_score, 0.40)
         absolute_strength_db = vibration_strength_db_scalar(
             peak_band_rms_amp_g=mean_amp,
             floor_amp_g=mean_floor,
@@ -570,7 +577,7 @@ def _build_order_findings(
 
         ranking_score = (
             effective_match_rate
-            * log1p(mean_amp / max(1e-6, mean_floor))
+            * log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor))
             * max(0.0, (1.0 - min(1.0, mean_rel_err / 0.5)))
         )
 
