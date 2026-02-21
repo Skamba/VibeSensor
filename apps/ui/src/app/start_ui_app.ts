@@ -33,6 +33,8 @@ export function startUiApp(): void {
     engine_bay: { top: 18, left: 50 }, front_subframe: { top: 30, left: 50 }, transmission: { top: 42, left: 50 }, driveshaft_tunnel: { top: 52, left: 50 },
     driver_seat: { top: 44, left: 35 }, front_passenger_seat: { top: 44, left: 65 }, rear_left_seat: { top: 60, left: 32 }, rear_center_seat: { top: 60, left: 50 }, rear_right_seat: { top: 60, left: 68 }, rear_subframe: { top: 72, left: 50 }, trunk: { top: 84, left: 50 },
   };
+  const SPECTRUM_DB_MIN = 0;
+  const SPECTRUM_DB_MAX = 60;
 
   function t(key: string, vars?: Record<string, any>): string { return I18N.get(state.lang, key, vars); }
   function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
@@ -188,6 +190,19 @@ export function startUiApp(): void {
       if (!blended.length) continue;
       entries.push({ id: client.id, label: client.name || client.id, color: colorForClient(i), values: blended });
     }
+    const positiveBins = entries.flatMap((entry) => entry.values.filter((v) => Number.isFinite(v) && v > 0));
+    const floorAmp = (() => {
+      if (!positiveBins.length) return 1e-9;
+      const sorted = [...positiveBins].sort((a, b) => a - b);
+      const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.1));
+      return Math.max(sorted[idx], 1e-9);
+    })();
+    const toDbOverFloor = (amp: number): number => {
+      const safeAmp = Number.isFinite(amp) && amp > 0 ? amp : floorAmp;
+      const db = 20 * Math.log10(safeAmp / floorAmp);
+      return Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
+    };
+    for (const entry of entries) entry.values = entry.values.map(toDbOverFloor);
     if (!state.spectrumPlot || state.spectrumPlot.getSeriesCount() !== entries.length + 1) recreateSpectrumPlot(entries);
     else state.spectrumPlot.ensurePlot(entries, { title: t("chart.spectrum_title"), axisHz: t("chart.axis.hz"), axisAmplitude: t("chart.axis.amplitude") }, [bandPlugin()]);
     state.spectrumPlot!.renderLegend(els.legend!, entries);
