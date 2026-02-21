@@ -135,7 +135,7 @@ def _sensor_intensity_by_location(
     dropped_totals: dict[str, list[float]] = defaultdict(list)
     overflow_totals: dict[str, list[float]] = defaultdict(list)
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
-        lambda: {f"l{idx}": 0 for idx in range(1, 6)}
+        lambda: {f"l{idx}": 0 for idx in range(0, 6)}
     )
     strength_bucket_totals: dict[str, int] = defaultdict(int)
     for sample in samples:
@@ -161,7 +161,9 @@ def _sensor_intensity_by_location(
         if vibration_strength_db is None:
             continue
         if bucket:
-            strength_bucket_counts[location][bucket] += 1
+            strength_bucket_counts[location][bucket] = (
+                strength_bucket_counts[location].get(bucket, 0) + 1
+            )
             strength_bucket_totals[location] += 1
 
     rows: list[dict[str, float | str | int | bool]] = []
@@ -179,7 +181,7 @@ def _sensor_intensity_by_location(
         overflow_delta = (
             int(max(overflow_vals) - min(overflow_vals)) if len(overflow_vals) >= 2 else 0
         )
-        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(1, 6)})
+        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(0, 6)})
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
         bucket_distribution: dict[str, float | int] = {
             "total": bucket_total,
