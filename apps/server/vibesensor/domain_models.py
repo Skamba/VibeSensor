@@ -25,7 +25,7 @@ RUN_METADATA_TYPE = "run_metadata"
 RUN_SAMPLE_TYPE = "sample"
 RUN_END_TYPE = "run_end"
 
-VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "obd2", "manual")
+VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "manual")
 
 DEFAULT_CAR_ASPECTS: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
 
@@ -147,34 +147,27 @@ class SensorConfig:
 
 @dataclass(slots=True)
 class SpeedSourceConfig:
-    speed_source: str  # Literal values: "gps", "obd2", "manual"
+    speed_source: str  # Literal values: "gps", "manual"
     manual_speed_kph: float | None
-    obd2_config: dict[str, Any]
 
     @classmethod
     def default(cls) -> SpeedSourceConfig:
-        return cls(speed_source="gps", manual_speed_kph=None, obd2_config={})
+        return cls(speed_source="gps", manual_speed_kph=None)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SpeedSourceConfig:
-        src = str(data.get("speedSource") or data.get("speed_source") or "gps")
+        src = str(data.get("speedSource") or "gps")
         speed_source = src if src in VALID_SPEED_SOURCES else "gps"
-        manual_speed_kph = _parse_manual_speed(
-            data.get("manualSpeedKph") or data.get("manual_speed_kph")
-        )
-        obd2 = data.get("obd2Config") or data.get("obd2_config")
-        obd2_config = obd2 if isinstance(obd2, dict) else {}
+        manual_speed_kph = _parse_manual_speed(data.get("manualSpeedKph"))
         return cls(
             speed_source=speed_source,
             manual_speed_kph=manual_speed_kph,
-            obd2_config=obd2_config,
         )
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "speedSource": self.speed_source,
             "manualSpeedKph": self.manual_speed_kph,
-            "obd2Config": dict(self.obd2_config),
         }
 
     def apply_update(self, data: dict[str, Any]) -> None:
@@ -187,9 +180,6 @@ class SpeedSourceConfig:
             self.manual_speed_kph = None
         else:
             self.manual_speed_kph = _parse_manual_speed(manual)
-        obd2 = data.get("obd2Config")
-        if isinstance(obd2, dict):
-            self.obd2_config = obd2
 
 
 # ---------------------------------------------------------------------------
@@ -461,7 +451,3 @@ class SensorFrame:
             frames_dropped_total=int(record.get("frames_dropped_total") or 0),
             queue_overflow_drops=int(record.get("queue_overflow_drops") or 0),
         )
-
-    def to_normalized_dict(self) -> dict[str, Any]:
-        """Emit a normalized dict – same shape as legacy ``normalize_sample_record``."""
-        return self.to_dict()

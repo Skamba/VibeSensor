@@ -10,7 +10,8 @@ from pypdf import PdfReader
 
 from vibesensor import __version__
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.reports import build_report_pdf, summarize_log
+from vibesensor.report import summarize_log
+from vibesensor.report.pdf_builder import build_report_pdf
 
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:
@@ -469,10 +470,8 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
 
 
 def test_report_pdf_footer_contains_version_marker(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path,
 ) -> None:
-    monkeypatch.setenv("GIT_SHA", "a1b2c3d4e5f6")
-
     run_path = tmp_path / "run_version_marker.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
     for idx in range(8):
@@ -489,7 +488,7 @@ def test_report_pdf_footer_contains_version_marker(
 
     summary = summarize_log(run_path)
     pdf = build_report_pdf(summary)
-    marker = f"v{__version__} (a1b2c3d4)"
+    marker = f"v{__version__}"
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
     meta = reader.metadata

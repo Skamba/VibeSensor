@@ -16,12 +16,8 @@ from .domain_models import (
     RunMetadata,
     SensorFrame,
     _as_float_or_none,
-    _as_int_or_none,
-    _default_amplitude_definitions,
-    _default_units,
 )
 
-# Re-export constants for backward compatibility
 __all__ = [
     "RUN_SCHEMA_VERSION",
     "RUN_METADATA_TYPE",
@@ -31,23 +27,12 @@ __all__ = [
     "utc_now_iso",
     "parse_iso8601",
     "as_float_or_none",
-    "as_int_or_none",
-    "default_units",
-    "default_amplitude_definitions",
     "create_run_metadata",
     "create_run_end_record",
     "normalize_sample_record",
     "append_jsonl_records",
     "read_jsonl_run",
 ]
-
-REQUIRED_SAMPLE_FIELDS = (
-    "t_s",
-    "speed_kmh",
-    "accel_x_g",
-    "accel_y_g",
-    "accel_z_g",
-)
 
 
 @dataclass(slots=True)
@@ -70,11 +55,7 @@ def parse_iso8601(value: object) -> datetime | None:
         return None
 
 
-# Delegate to domain_models but keep public names for backward compat.
 as_float_or_none = _as_float_or_none
-as_int_or_none = _as_int_or_none
-default_units = _default_units
-default_amplitude_definitions = _default_amplitude_definitions
 
 
 def create_run_metadata(
@@ -118,8 +99,8 @@ def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> dict[
 def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     """Normalize a raw sample dict into canonical form.
 
-    Delegates to :class:`SensorFrame` for field parsing and backward-compat
-    rename (``strength_db`` -> ``vibration_strength_db``).  Extra keys present
+    Delegates to :class:`SensorFrame` for field parsing and renames
+    (``strength_db`` -> ``vibration_strength_db``).  Extra keys present
     in *record* but not part of the SensorFrame schema are preserved.
     """
     frame = SensorFrame.from_dict(record)

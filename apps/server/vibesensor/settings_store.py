@@ -12,32 +12,11 @@ from .domain_models import (
     _sanitize_aspects,
     normalize_sensor_id,
 )
-from .domain_models import (
-    _parse_manual_speed as _parse_manual_speed,  # noqa: F401 — re-export for tests
-)
 
 if TYPE_CHECKING:
     from .history_db import HistoryDB
 
 LOGGER = logging.getLogger(__name__)
-
-# Re-export for backwards compatibility with tests that import these helpers.
-DEFAULT_CAR: dict[str, Any] = {
-    "id": "",
-    "name": "Default Car",
-    "type": "sedan",
-    "aspects": dict(DEFAULT_CAR_ASPECTS),
-}
-
-
-def _validate_car(car: dict[str, Any]) -> dict[str, Any]:
-    """Validate car dict – thin wrapper around CarConfig for backward compat."""
-    return CarConfig.from_dict(car).to_dict()
-
-
-def _validate_sensor(mac: str, raw: dict[str, Any]) -> dict[str, Any]:
-    """Validate sensor dict – thin wrapper around SensorConfig for backward compat."""
-    return SensorConfig.from_dict(mac, raw).to_dict()
 
 
 class SettingsStore:
@@ -47,13 +26,13 @@ class SettingsStore:
     When no *db* is provided the store operates in memory only (useful for tests).
     """
 
-    def __init__(self, db: HistoryDB | None = None, **_kwargs: Any) -> None:
+    def __init__(self, db: HistoryDB | None = None) -> None:
         from threading import RLock
 
         self._lock = RLock()
         self._db = db
 
-        default_car = CarConfig.from_dict({"id": _new_car_id(), **DEFAULT_CAR})
+        default_car = CarConfig.default()
         self._cars: list[CarConfig] = [default_car]
         self._active_car_id: str = default_car.id
         self._speed_cfg = SpeedSourceConfig.default()
@@ -78,7 +57,7 @@ class SettingsStore:
             if isinstance(raw_cars, list) and raw_cars:
                 self._cars = [CarConfig.from_dict(c) for c in raw_cars if isinstance(c, dict)]
             if not self._cars:
-                default_car = CarConfig.from_dict({"id": _new_car_id(), **DEFAULT_CAR})
+                default_car = CarConfig.default()
                 self._cars = [default_car]
 
             active_id = str(raw.get("activeCarId") or "")
@@ -90,7 +69,6 @@ class SettingsStore:
                 {
                     "speedSource": raw.get("speedSource"),
                     "manualSpeedKph": raw.get("manualSpeedKph"),
-                    "obd2Config": raw.get("obd2Config"),
                 }
             )
             language = str(raw.get("language") or "en").strip().lower()
@@ -225,16 +203,6 @@ class SettingsStore:
             self._persist()
             return self._speed_cfg.to_dict()
 
-    @property
-    def speed_source(self) -> str:
-        with self._lock:
-            return self._speed_cfg.speed_source
-
-    @property
-    def manual_speed_kph(self) -> float | None:
-        with self._lock:
-            return self._speed_cfg.manual_speed_kph
-
     # -- sensors ---------------------------------------------------------------
 
     def get_sensors(self) -> dict[str, dict[str, Any]]:
@@ -263,31 +231,6 @@ class SettingsStore:
             if removed:
                 self._persist()
             return removed
-
-    def sensor_name(self, mac: str) -> str:
-        """Return the user-set sensor name, or the MAC itself."""
-        sensor_id = normalize_sensor_id(mac)
-        with self._lock:
-            entry = self._sensors.get(sensor_id)
-            return entry.name if entry else sensor_id
-
-    def sensor_location(self, mac: str) -> str:
-        """Return the sensor's assigned location code, or empty string."""
-        sensor_id = normalize_sensor_id(mac)
-        with self._lock:
-            entry = self._sensors.get(sensor_id)
-            return entry.location if entry else ""
-
-    def ensure_sensor(self, mac: str) -> dict[str, Any]:
-        """Create a sensor entry with defaults if it doesn't exist."""
-        sensor_id = normalize_sensor_id(mac)
-        with self._lock:
-            if sensor_id not in self._sensors:
-                self._sensors[sensor_id] = SensorConfig(
-                    sensor_id=sensor_id, name=sensor_id, location=""
-                )
-                self._persist()
-            return self._sensors[sensor_id].to_dict()
 
     @property
     def language(self) -> str:

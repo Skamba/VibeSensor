@@ -1,32 +1,7 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
-import vibesensor_adapters
-import vibesensor_core
-import vibesensor_shared
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
-from vibesensor_shared.contracts import METRIC_FIELDS, validate_ingestion_payload
-
-
-def test_lib_packages_import_smoke() -> None:
-    assert vibesensor_core is not None
-    assert vibesensor_shared is not None
-    assert vibesensor_adapters is not None
-
-
-def test_ingestion_payload_fixture_validates() -> None:
-    fixture_path = (
-        Path(__file__).resolve().parents[3]
-        / "libs"
-        / "shared"
-        / "fixtures"
-        / "ingestion_payload.sample.json"
-    )
-    payload = json.loads(fixture_path.read_text(encoding="utf-8"))
-    ok, message = validate_ingestion_payload(payload)
-    assert ok, message
+from vibesensor_shared.contracts import METRIC_FIELDS
 
 
 def test_core_processing_produces_canonical_metric_fields() -> None:

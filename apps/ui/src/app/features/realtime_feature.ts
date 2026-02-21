@@ -37,9 +37,6 @@ export interface RealtimeFeature {
   startLogging(): Promise<void>;
   stopLogging(): Promise<void>;
   refreshLocationOptions(): Promise<void>;
-  setClientLocation(clientId: string, locationCode: string): Promise<void>;
-  identifyClient(clientId: string): Promise<void>;
-  removeClient(clientId: string): Promise<void>;
 }
 
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
@@ -58,7 +55,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function locationCodeForClient(client: ClientRow): string {
-    const explicitCode = String(client?.location_code || client?.locationCode || "").trim();
+    const explicitCode = String(client?.location_code || "").trim();
     if (explicitCode && state.locationCodes.includes(explicitCode)) return explicitCode;
     const name = String(client?.name || "").trim();
     if (!name) return "";
@@ -289,8 +286,5 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     startLogging,
     stopLogging,
     refreshLocationOptions,
-    setClientLocation,
-    identifyClient,
-    removeClient,
   };
 }

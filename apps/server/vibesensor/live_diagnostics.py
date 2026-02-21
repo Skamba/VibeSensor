@@ -47,36 +47,6 @@ def _copy_matrix(
     }
 
 
-def _interpolate_to_target(
-    source_freq: list[float], source_vals: list[float], desired_freq: list[float]
-) -> list[float]:
-    if not source_freq or not source_vals:
-        return []
-    if not desired_freq:
-        return source_vals[:]
-    if len(source_freq) != len(source_vals) or len(source_freq) < 2:
-        return []
-
-    out: list[float] = []
-    j = 0
-    for freq in desired_freq:
-        while j + 1 < len(source_freq) and source_freq[j + 1] < freq:
-            j += 1
-        if j + 1 >= len(source_freq):
-            out.append(source_vals[-1])
-            continue
-        f0 = source_freq[j]
-        f1 = source_freq[j + 1]
-        v0 = source_vals[j]
-        v1 = source_vals[j + 1]
-        if f1 <= f0:
-            out.append(v0)
-            continue
-        ratio = (freq - f0) / (f1 - f0)
-        out.append(v0 + ((v1 - v0) * ratio))
-    return out
-
-
 def _combine_amplitude_strength_db(values_db: list[float]) -> float:
     if not values_db:
         return SILENCE_DB

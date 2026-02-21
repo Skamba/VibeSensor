@@ -40,22 +40,6 @@ REPORT_COLORS = {
     "table_zebra_bg": "#fafafc",
 }
 
-REPORT_SPACING = {"xs": 4, "sm": 8, "md": 12, "lg": 18}
-REPORT_RADIUS = {"sm": 6, "md": 10}
-
-# Card layout constants (points).
-CARD_PADDING = 10
-CARD_RADIUS = 8
-
-# Shared plot accents (aligned with apps/ui/src/theme.ts palette intent).
-REPORT_PLOT_COLORS = {
-    "vibration": "#7c3aed",
-    "dominant_freq": "#d946ef",
-    "amplitude_speed": "#e07020",
-    "matched_series": ["#7c3aed", "#0f9d58", "#d946ef", "#e07020"],
-    "predicted_curve": "#52555e",
-}
-
 FINDING_SOURCE_COLORS = {
     "wheel/tire": "#0f9d58",
     "driveline": "#7c3aed",

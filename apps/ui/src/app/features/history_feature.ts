@@ -7,6 +7,7 @@ import {
   historyExportUrl,
   historyReportPdfUrl,
 } from "../../api";
+import { normalizeUnit, heatColor } from "./heat_utils";
 
 export interface HistoryFeatureDeps {
   state: AppState;
@@ -75,17 +76,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     if (raw.includes("driver") && raw.includes("seat")) return "driver seat";
     if (raw.includes("trunk")) return "trunk";
     return raw;
-  }
-
-  function normalizeUnit(value: number, min: number, max: number): number {
-    if (!(typeof value === "number") || !Number.isFinite(value)) return 0;
-    if (!(typeof min === "number") || !(typeof max === "number") || max <= min) return 1;
-    return Math.max(0, Math.min(1, (value - min) / (max - min)));
-  }
-
-  function heatColor(norm: number): string {
-    const hue = Math.round(212 - (norm * 190));
-    return `hsl(${hue} 76% 48%)`;
   }
 
   function metricFromLocationStat(row: Record<string, any>): number | null {
@@ -285,7 +275,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.previewError = "";
     renderHistoryTable();
     try {
-      detail.preview = await getHistoryInsights(runId, state.lang, false) as Record<string, any>;
+      detail.preview = await getHistoryInsights(runId, state.lang) as Record<string, any>;
     } catch (err) {
       detail.previewError = err?.message || t("report.unable_load_insights");
     } finally {
@@ -302,7 +292,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.insightsError = "";
     renderHistoryTable();
     try {
-      detail.insights = await getHistoryInsights(runId, state.lang, false) as Record<string, any>;
+      detail.insights = await getHistoryInsights(runId, state.lang) as Record<string, any>;
     } catch (err) {
       detail.insightsError = err?.message || t("report.unable_load_insights");
     } finally {

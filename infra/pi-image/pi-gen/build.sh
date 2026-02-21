@@ -147,7 +147,6 @@ sed -i \
   -e 's#state_file: data/hotspot-self-heal-state.json#state_file: /var/lib/vibesensor/hotspot-self-heal-state.json#' \
   -e 's#metrics_log_path: data/metrics.jsonl#metrics_log_path: /var/log/vibesensor/metrics.jsonl#' \
   -e 's#history_db_path: data/history.db#history_db_path: /var/lib/vibesensor/history.db#' \
-  -e 's#clients_json_path: data/clients.json#clients_json_path: /var/lib/vibesensor/clients.json#' \
   "${ROOTFS_DIR}/etc/vibesensor/config.yaml"
 
 if [ ! -f "${ROOTFS_DIR}/etc/vibesensor/wifi-secrets.env" ]; then
@@ -453,7 +452,6 @@ mods = [
     "vibesensor",
     "vibesensor_core",
     "vibesensor_shared",
-    "vibesensor_adapters",
 ]
 for mod in mods:
     importlib.import_module(mod)

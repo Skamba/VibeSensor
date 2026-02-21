@@ -5,11 +5,11 @@ setup:
 	cd apps/ui && npm ci
 
 format:
-	ruff format apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
+	ruff format apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
 
 lint:
-	ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
-	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
+	ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
+	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
 
 test:
 	python3 -m pytest -q -m "not selenium" apps/server/tests

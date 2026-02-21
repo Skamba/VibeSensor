@@ -275,10 +275,6 @@
     "en": "missing",
     "nl": "ontbreekt"
   },
-  "MISSING_CONSEQUENCE": {
-    "en": "missing ({consequence})",
-    "nl": "ontbreekt ({consequence})"
-  },
   "MISSING_DURATION_UNAVAILABLE": {
     "en": "missing (duration unavailable)",
     "nl": "ontbreekt (duur niet beschikbaar)"

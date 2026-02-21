@@ -1,7 +1,3 @@
-import { chartSeriesPalette } from "./theme";
-
-export const palette = chartSeriesPalette;
-
 export const defaultLocationCodes = [
   "front_left_wheel",
   "front_right_wheel",

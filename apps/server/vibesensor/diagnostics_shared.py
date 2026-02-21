@@ -20,17 +20,12 @@ from .analysis_settings import (
 )
 from .runlog import as_float_or_none as _as_float
 
-# Single source of truth: reuse the canonical defaults from analysis_settings.
-DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
-
-ORDER_CLASS_KEYS = {"wheel1", "wheel2", "shaft_eng1", "shaft1", "eng1", "eng2"}
-
 
 def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dict[str, float]:
-    out = dict(DEFAULT_DIAGNOSTIC_SETTINGS)
+    out = dict(DEFAULT_ANALYSIS_SETTINGS)
     if not overrides:
         return out
-    for key in DEFAULT_DIAGNOSTIC_SETTINGS:
+    for key in DEFAULT_ANALYSIS_SETTINGS:
         parsed = _as_float(overrides.get(key))
         if parsed is not None:
             out[key] = parsed

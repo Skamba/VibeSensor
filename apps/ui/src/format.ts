@@ -3,13 +3,6 @@ export function fmt(n: number, digits = 2): string {
   return n.toFixed(digits);
 }
 
-export function fmtBytes(bytes: number): string {
-  if (!(typeof bytes === "number") || bytes < 0) return "--";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export function fmtTs(iso: string): string {
   if (!iso) return "--";
   const d = new Date(iso);
