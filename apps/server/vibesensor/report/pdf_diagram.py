@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from ..report_analysis import _as_float
 from ..report_theme import (
     HEAT_HIGH,
     HEAT_LOW,
     HEAT_MID,
     REPORT_COLORS,
 )
+from ..runlog import as_float_or_none as _as_float
 from .pdf_helpers import _canonical_location, _source_color, color_blend
 
 if TYPE_CHECKING:

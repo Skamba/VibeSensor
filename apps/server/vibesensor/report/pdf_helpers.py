@@ -7,7 +7,6 @@ from statistics import mean
 from typing import TYPE_CHECKING, Any
 from xml.sax.saxutils import escape
 
-from ..report_analysis import _as_float, _required_text, confidence_label
 from ..report_i18n import variants as _tr_variants
 from ..report_theme import (
     CARD_PADDING,
@@ -15,6 +14,9 @@ from ..report_theme import (
     FINDING_SOURCE_COLORS,
     REPORT_COLORS,
 )
+from ..runlog import as_float_or_none as _as_float
+from .helpers import _required_text
+from .summary import confidence_label
 
 if TYPE_CHECKING:
     from collections.abc import Callable
