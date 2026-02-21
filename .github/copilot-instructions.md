@@ -20,8 +20,12 @@ Common commands
 - `make lint`
 - `make test-all`
 - `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`
+- `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`
 - `docker compose build --pull && docker compose up -d`
+
+PR monitoring rule
+- On every PR update, run the watcher command above; if it exits `RESULT=NON_GREEN`, fix and re-run. Merge only after `RESULT=ALL_GREEN`.
 
 No-cheating + compatibility
 - Keep code in proper code files (not hidden in docs/json/txt wrappers).
