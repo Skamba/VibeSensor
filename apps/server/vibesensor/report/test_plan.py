@@ -122,6 +122,7 @@ def _location_speedbin_summary(
     matches: list[dict[str, object]],
     lang: object,
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
+    connected_locations: set[str] | None = None,
 ) -> tuple[str, dict[str, object] | None]:
     """Return strongest location summary, optionally restricted to specific speed bins.
 
@@ -209,37 +210,51 @@ def _location_speedbin_summary(
         )
         if not ranked:
             continue
-        top_loc, top_amp = ranked[0]
+
+        eligible_ranked = (
+            [item for item in ranked if item[0] in connected_locations]
+            if connected_locations is not None
+            else ranked
+        )
+        ranked_for_winner = eligible_ranked if eligible_ranked else ranked
+
+        top_loc, top_amp = ranked_for_winner[0]
         top_count = int(per_loc_sample_counts.get(top_loc, 0))
-        second_loc = ranked[1][0] if len(ranked) > 1 else top_loc
-        second_count = int(per_loc_sample_counts.get(second_loc, 0)) if len(ranked) > 1 else top_count
-        second_amp = ranked[1][1] if len(ranked) > 1 else top_amp
+        second_loc = ranked_for_winner[1][0] if len(ranked_for_winner) > 1 else top_loc
+        second_count = (
+            int(per_loc_sample_counts.get(second_loc, 0)) if len(ranked_for_winner) > 1 else top_count
+        )
+        second_amp = ranked_for_winner[1][1] if len(ranked_for_winner) > 1 else top_amp
         dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
         total_samples = sum(per_loc_sample_counts.values())
-        ambiguous = len(ranked) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
+        ambiguous = len(ranked_for_winner) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
         display_location = f"ambiguous location: {top_loc} / {second_loc}" if ambiguous else top_loc
+        partial_coverage = bool(
+            connected_locations is not None and top_loc not in connected_locations
+        )
         top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
         candidate = {
             "speed_range": bin_label,
             "location": display_location,
             "mean_amp": top_amp,
             "dominance_ratio": dominance,
-            "location_count": len(ranked),
+            "location_count": len(ranked_for_winner),
             "top_location": top_loc,
-            "second_location": second_loc if len(ranked) > 1 else None,
+            "second_location": second_loc if len(ranked_for_winner) > 1 else None,
             "top_location_samples": top_count,
             "second_location_samples": second_count,
             "corroborated_by_n_sensors": top_corroborated_by_n_sensors,
             "total_samples": total_samples,
             "ambiguous_location": ambiguous,
             "ambiguous_locations": [top_loc, second_loc] if ambiguous else [],
+            "partial_coverage": partial_coverage,
             "localization_confidence": _localization_confidence(
                 dominance_ratio=dominance,
-                location_count=len(ranked),
+                location_count=len(ranked_for_winner),
                 total_samples=total_samples,
             ),
             "weak_spatial_separation": dominance
-            < weak_spatial_dominance_threshold(len(ranked)),
+            < weak_spatial_dominance_threshold(len(ranked_for_winner)),
         }
         per_bin_results.append(candidate)
         if best is None or float(candidate["mean_amp"]) > float(best["mean_amp"]):

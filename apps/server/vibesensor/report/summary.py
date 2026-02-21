@@ -537,13 +537,14 @@ def summarize_run_data(
             if isinstance(sample, dict) and _location_label(sample, lang=language)
         }
     )
-    # Only include locations that were connected throughout the run for
-    # intensity aggregation, so intermittent sensors don't skew results.
+    # Mark and de-prioritize sensors not connected throughout the run,
+    # so intermittent sensors don't skew strongest-location ranking.
     connected_locations = _locations_connected_throughout_run(samples, lang=language)
     sensor_intensity_by_location = _sensor_intensity_by_location(
         samples,
         include_locations=set(sensor_locations),
         lang=language,
+        connected_locations=connected_locations,
     )
 
     summary: dict[str, Any] = {
