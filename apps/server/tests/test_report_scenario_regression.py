@@ -19,6 +19,7 @@ from vibesensor.report.phase_segmentation import (
     phase_summary,
     segment_run_phases,
 )
+from vibesensor.report.strength_labels import certainty_label
 from vibesensor.report.summary import (
     confidence_label,
     summarize_run_data,
@@ -653,3 +654,44 @@ class TestPhaseInfoInSummary:
         assert phase_info is not None
         assert "total_samples" in phase_info
         assert phase_info["total_samples"] == 20
+
+
+# ---------------------------------------------------------------------------
+# 11. Certainty label signal-quality guard (issue #184)
+# ---------------------------------------------------------------------------
+
+
+class TestCertaintyLabelSignalQualityGuard:
+    """certainty_label must never return 'high' when strength is negligible.
+
+    Acceptance criteria (issue #184): no combination of parameters can produce
+    a 'High' label with a negligible strength band.
+    """
+
+    def test_negligible_strength_caps_high_certainty_to_medium(self) -> None:
+        """High confidence + negligible strength → medium label, not high."""
+        level, label, _, _ = certainty_label(0.90, lang="en", strength_band_key="negligible")
+        assert level == "medium", f"Expected 'medium' for negligible strength, got '{level}'"
+        assert label == "Medium"
+
+    def test_negligible_strength_does_not_affect_medium_confidence(self) -> None:
+        """Medium confidence + negligible strength stays as medium (no over-cap)."""
+        level, label, _, _ = certainty_label(0.55, lang="en", strength_band_key="negligible")
+        assert level == "medium"
+
+    def test_negligible_strength_does_not_affect_low_confidence(self) -> None:
+        """Low confidence + negligible strength stays as low."""
+        level, label, _, _ = certainty_label(0.30, lang="en", strength_band_key="negligible")
+        assert level == "low"
+
+    def test_non_negligible_strength_allows_high_confidence(self) -> None:
+        """High confidence + non-negligible strength → high label as expected."""
+        for band in ("light", "moderate", "strong", "very_strong", None):
+            level, _, _, _ = certainty_label(0.80, lang="en", strength_band_key=band)
+            assert level == "high", f"Expected 'high' for strength_band_key={band!r}, got '{level}'"
+
+    def test_negligible_guard_applies_in_nl_too(self) -> None:
+        """Guard applies regardless of language."""
+        level, label, _, _ = certainty_label(0.80, lang="nl", strength_band_key="negligible")
+        assert level == "medium"
+        assert label == "Gemiddeld"
