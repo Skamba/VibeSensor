@@ -270,6 +270,33 @@ class TestPhaseSegmentation:
         assert info["has_acceleration"]
         assert info["total_samples"] == len(samples)
 
+    def test_empty_samples_returns_empty(self) -> None:
+        """segment_run_phases with no samples must return empty lists."""
+        per_sample, segments = segment_run_phases([])
+        assert per_sample == []
+        assert segments == []
+
+    def test_none_speed_treated_as_idle(self) -> None:
+        """Samples with speed_kmh=None must be classified as IDLE."""
+        samples = [
+            {"t_s": 0.0, "speed_kmh": None},
+            {"t_s": 1.0, "speed_kmh": None},
+        ]
+        per_sample, _segments = segment_run_phases(samples)
+        assert all(p == DrivingPhase.IDLE for p in per_sample)
+
+    def test_diagnostic_mask_exclude_coast_down(self) -> None:
+        """When exclude_coast_down=True, COAST_DOWN samples must also be masked out."""
+        phases = [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE]
+        mask = diagnostic_sample_mask(phases, exclude_coast_down=True)
+        assert mask == [False, False, True]
+
+    def test_diagnostic_mask_coast_down_included_by_default(self) -> None:
+        """By default, COAST_DOWN samples are included (only IDLE is excluded)."""
+        phases = [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE]
+        mask = diagnostic_sample_mask(phases)
+        assert mask == [False, True, True]
+
 
 # ---------------------------------------------------------------------------
 # 2. Confidence calibration tests
