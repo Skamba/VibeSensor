@@ -272,6 +272,37 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
     return out
 
 
+def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
+    """Estimate run-level noise baseline as median of per-sample floor estimates.
+
+    Per-sample floor uses ``strength_floor_amp_g`` when available; otherwise it
+    falls back to P20 of that sample's top-peak amplitudes.
+    """
+    floors: list[float] = []
+    for sample in samples:
+        if not isinstance(sample, dict):
+            continue
+        floor_amp = _as_float(sample.get("strength_floor_amp_g"))
+        if floor_amp is not None and floor_amp > 0:
+            floors.append(float(floor_amp))
+            continue
+        peak_amps = [amp for _hz, amp in _sample_top_peaks(sample) if amp > 0]
+        if len(peak_amps) < 3:
+            continue
+        peak_amps_sorted = sorted(peak_amps)
+        floor_from_peaks = (
+            percentile(peak_amps_sorted, 0.20)
+            if len(peak_amps_sorted) >= 2
+            else peak_amps_sorted[0]
+        )
+        if floor_from_peaks > 0:
+            floors.append(float(floor_from_peaks))
+    if not floors:
+        return None
+    floors_sorted = sorted(floors)
+    return percentile(floors_sorted, 0.50) if len(floors_sorted) >= 2 else floors_sorted[0]
+
+
 def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
     """Return a stable English location label for the sample.
 

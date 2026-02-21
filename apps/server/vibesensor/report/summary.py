@@ -31,6 +31,7 @@ from .helpers import (
     _outlier_summary,
     _percent_missing,
     _primary_vibration_strength_db,
+    _run_noise_baseline_g,
     _sensor_limit_g,
     _speed_stats,
     _validate_required_strength_metrics,
@@ -353,6 +354,7 @@ def summarize_run_data(
         if speed is not None and speed > 0
     ]
     speed_stats = _speed_stats(speed_values)
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
     speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
     speed_sufficient = (
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
@@ -576,6 +578,7 @@ def summarize_run_data(
         "metadata": metadata,
         "warnings": [],
         "speed_breakdown": speed_breakdown,
+        "run_noise_baseline_g": run_noise_baseline_g,
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
         "top_causes": top_causes,
