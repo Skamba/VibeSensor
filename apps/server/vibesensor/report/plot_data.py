@@ -16,6 +16,7 @@ from .helpers import (
     _run_noise_baseline_g,
     _sample_top_peaks,
 )
+from .phase_segmentation import segment_run_phases as _segment_run_phases
 
 
 def _aggregate_fft_spectrum(
@@ -451,6 +452,16 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     peaks_spectrogram_raw = _spectrogram_from_peaks_raw(samples)
     peaks_table = _top_peaks_table_rows(samples)
 
+    _, phase_segments = _segment_run_phases(samples)
+    phase_boundaries: list[dict[str, Any]] = [
+        {
+            "t_s": seg.start_t_s,
+            "end_t_s": seg.end_t_s,
+            "phase": seg.phase.value,
+        }
+        for seg in phase_segments
+    ]
+
     return {
         "vib_magnitude": vib_mag_points,
         "dominant_freq": dominant_freq_points,
@@ -463,4 +474,5 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         "peaks_spectrogram": peaks_spectrogram,
         "peaks_spectrogram_raw": peaks_spectrogram_raw,
         "peaks_table": peaks_table,
+        "phase_boundaries": phase_boundaries,
     }
