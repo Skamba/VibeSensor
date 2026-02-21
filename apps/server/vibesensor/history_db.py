@@ -23,7 +23,8 @@ LOGGER = logging.getLogger(__name__)
 
 # -- Schema -------------------------------------------------------------------
 
-_SCHEMA_VERSION = 3
+_SCHEMA_VERSION = 4
+ANALYSIS_SCHEMA_VERSION = 1
 
 _SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -32,15 +33,18 @@ CREATE TABLE IF NOT EXISTS schema_meta (
 );
 
 CREATE TABLE IF NOT EXISTS runs (
-    run_id         TEXT PRIMARY KEY,
-    status         TEXT NOT NULL DEFAULT 'recording',
-    start_time_utc TEXT NOT NULL,
-    end_time_utc   TEXT,
-    metadata_json  TEXT NOT NULL,
-    analysis_json  TEXT,
-    error_message  TEXT,
-    sample_count   INTEGER NOT NULL DEFAULT 0,
-    created_at     TEXT NOT NULL
+    run_id                  TEXT PRIMARY KEY,
+    status                  TEXT NOT NULL DEFAULT 'recording',
+    start_time_utc          TEXT NOT NULL,
+    end_time_utc            TEXT,
+    metadata_json           TEXT NOT NULL,
+    analysis_json           TEXT,
+    error_message           TEXT,
+    sample_count            INTEGER NOT NULL DEFAULT 0,
+    created_at              TEXT NOT NULL,
+    analysis_version        INTEGER,
+    analysis_started_at     TEXT,
+    analysis_completed_at   TEXT
 );
 
 CREATE TABLE IF NOT EXISTS samples (
@@ -118,6 +122,8 @@ class HistoryDB:
                     self._migrate_v1_to_v2()
                 if version < 3:
                     self._migrate_v2_to_v3()
+                if version < 4:
+                    self._migrate_v3_to_v4()
                 cur.execute(
                     "UPDATE schema_meta SET value = ? WHERE key = ?",
                     (str(_SCHEMA_VERSION), "version"),
@@ -157,6 +163,25 @@ CREATE TABLE IF NOT EXISTS client_names (
     updated_at  TEXT NOT NULL
 );
 """
+            )
+
+    def _migrate_v3_to_v4(self) -> None:
+        """Add analysis versioning and timestamp columns to runs table."""
+        with self._lock:
+            cursor = self._conn.execute("PRAGMA table_info(runs)")
+            columns = {row[1] for row in cursor.fetchall()}
+            for col, typedef in (
+                ("analysis_version", "INTEGER"),
+                ("analysis_started_at", "TEXT"),
+                ("analysis_completed_at", "TEXT"),
+            ):
+                if col not in columns:
+                    self._conn.execute(f"ALTER TABLE runs ADD COLUMN {col} {typedef}")
+            # Back-fill analysis_version for existing complete runs
+            self._conn.execute(
+                "UPDATE runs SET analysis_version = 1 "
+                "WHERE status = 'complete' AND analysis_json IS NOT NULL "
+                "AND analysis_version IS NULL"
             )
 
     # -- write ----------------------------------------------------------------
@@ -203,24 +228,35 @@ CREATE TABLE IF NOT EXISTS client_names (
             )
 
     def finalize_run(self, run_id: str, end_time_utc: str) -> None:
+        now = datetime.now(UTC).isoformat()
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'analyzing', end_time_utc = ? WHERE run_id = ?",
-                (end_time_utc, run_id),
+                "UPDATE runs SET status = 'analyzing', end_time_utc = ?, "
+                "analysis_started_at = ? WHERE run_id = ?",
+                (end_time_utc, now, run_id),
             )
 
     def store_analysis(self, run_id: str, analysis: dict[str, Any]) -> None:
+        now = datetime.now(UTC).isoformat()
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'complete', analysis_json = ? WHERE run_id = ?",
-                (json.dumps(analysis, ensure_ascii=False, default=str), run_id),
+                "UPDATE runs SET status = 'complete', analysis_json = ?, "
+                "analysis_version = ?, analysis_completed_at = ? WHERE run_id = ?",
+                (
+                    json.dumps(analysis, ensure_ascii=False, default=str),
+                    ANALYSIS_SCHEMA_VERSION,
+                    now,
+                    run_id,
+                ),
             )
 
     def store_analysis_error(self, run_id: str, error: str) -> None:
+        now = datetime.now(UTC).isoformat()
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ? WHERE run_id = ?",
-                (error, run_id),
+                "UPDATE runs SET status = 'error', error_message = ?, "
+                "analysis_completed_at = ? WHERE run_id = ?",
+                (error, now, run_id),
             )
 
     # -- read -----------------------------------------------------------------
@@ -229,13 +265,13 @@ CREATE TABLE IF NOT EXISTS client_names (
         with self._cursor() as cur:
             cur.execute(
                 "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                "r.created_at, r.error_message, r.sample_count "
+                "r.created_at, r.error_message, r.sample_count, r.analysis_version "
                 "FROM runs r ORDER BY r.created_at DESC"
             )
             rows = cur.fetchall()
         result: list[dict[str, Any]] = []
         for row in rows:
-            run_id, status, start, end, created, error, sample_count = row
+            run_id, status, start, end, created, error, sample_count, analysis_ver = row
             entry: dict[str, Any] = {
                 "run_id": run_id,
                 "status": status,
@@ -246,6 +282,8 @@ CREATE TABLE IF NOT EXISTS client_names (
             }
             if error:
                 entry["error_message"] = error
+            if analysis_ver is not None:
+                entry["analysis_version"] = analysis_ver
             result.append(entry)
         return result
 
@@ -253,14 +291,27 @@ CREATE TABLE IF NOT EXISTS client_names (
         with self._cursor() as cur:
             cur.execute(
                 "SELECT run_id, status, start_time_utc, end_time_utc, "
-                "metadata_json, analysis_json, error_message, created_at "
+                "metadata_json, analysis_json, error_message, created_at, "
+                "analysis_version, analysis_started_at, analysis_completed_at "
                 "FROM runs WHERE run_id = ?",
                 (run_id,),
             )
             row = cur.fetchone()
         if row is None:
             return None
-        rid, status, start, end, meta_json, analysis_json, error, created = row
+        (
+            rid,
+            status,
+            start,
+            end,
+            meta_json,
+            analysis_json,
+            error,
+            created,
+            analysis_ver,
+            analysis_started,
+            analysis_completed,
+        ) = row
         entry: dict[str, Any] = {
             "run_id": rid,
             "status": status,
@@ -273,6 +324,12 @@ CREATE TABLE IF NOT EXISTS client_names (
             entry["analysis"] = json.loads(analysis_json)
         if error:
             entry["error_message"] = error
+        if analysis_ver is not None:
+            entry["analysis_version"] = analysis_ver
+        if analysis_started:
+            entry["analysis_started_at"] = analysis_started
+        if analysis_completed:
+            entry["analysis_completed_at"] = analysis_completed
         return entry
 
     def get_run_samples(self, run_id: str) -> list[dict[str, Any]]:

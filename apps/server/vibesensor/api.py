@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import json
@@ -15,7 +16,8 @@ from pydantic import BaseModel, Field
 from .constants import MPS_TO_KMH
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
-from .reports import build_report_pdf, summarize_run_data
+from .report.pdf_builder import build_report_pdf
+from .report.summary import summarize_run_data
 
 if TYPE_CHECKING:
     from .app import RuntimeState
@@ -402,34 +404,39 @@ def create_router(state: RuntimeState) -> APIRouter:
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
         if lang is not None:
-            from .runlog import normalize_sample_record
 
-            normalized_iter = (
-                normalize_sample_record(sample)
-                for batch in state.history_db.iter_run_samples(run_id)
-                for sample in batch
-            )
-            samples, total_samples, stride = _bounded_sample(
-                normalized_iter,
-                max_items=_MAX_REPORT_SAMPLES,
-            )
-            metadata = run.get("metadata", {})
-            try:
-                analysis = summarize_run_data(
+            def _recompute() -> dict:
+                from .runlog import normalize_sample_record
+
+                normalized_iter = (
+                    normalize_sample_record(sample)
+                    for batch in state.history_db.iter_run_samples(run_id)
+                    for sample in batch
+                )
+                samples, total_samples, stride = _bounded_sample(
+                    normalized_iter,
+                    max_items=_MAX_REPORT_SAMPLES,
+                )
+                metadata = run.get("metadata", {})
+                result = summarize_run_data(
                     metadata,
                     samples,
                     lang=lang,
                     file_name=run_id,
                     include_samples=False,
                 )
+                if stride > 1 and isinstance(result, dict):
+                    result["sampling"] = {
+                        "total_samples": total_samples,
+                        "analyzed_samples": len(samples),
+                        "method": f"stride_{stride}",
+                    }
+                return result
+
+            try:
+                analysis = await asyncio.to_thread(_recompute)
             except ValueError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
-            if stride > 1 and isinstance(analysis, dict):
-                analysis["sampling"] = {
-                    "total_samples": total_samples,
-                    "analyzed_samples": len(samples),
-                    "method": f"stride_{stride}",
-                }
         return analysis
 
     @router.delete("/api/history/{run_id}")
@@ -457,27 +464,40 @@ def create_router(state: RuntimeState) -> APIRouter:
         metadata = run.get("metadata", {})
         if not isinstance(metadata, dict):
             metadata = {}
-        samples, total_samples, stride = _bounded_sample(
-            _iter_normalized_samples(run_id, batch_size=2048),
-            max_items=_MAX_REPORT_SAMPLES,
-        )
-        try:
-            report_model = summarize_run_data(
-                metadata,
-                samples,
-                lang=_analysis_language(run, lang),
-                file_name=run_id,
-                include_samples=True,
+        requested_lang = _analysis_language(run, lang)
+
+        def _build_pdf() -> tuple[bytes, int, int, int]:
+            from .report.plot_data import _plot_data
+
+            samples, total_samples, stride = _bounded_sample(
+                _iter_normalized_samples(run_id, batch_size=2048),
+                max_items=_MAX_REPORT_SAMPLES,
             )
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
-        pdf = build_report_pdf(report_model)
+            persisted_lang = str(analysis.get("lang") or "en")
+            if persisted_lang == requested_lang:
+                # Reuse persisted analysis; only recompute plot data from samples
+                report_model = dict(analysis)
+                report_model["samples"] = samples
+                report_model["plots"] = _plot_data(report_model)
+            else:
+                # Language differs from persisted analysis – full recompute needed
+                report_model = summarize_run_data(
+                    metadata,
+                    samples,
+                    lang=requested_lang,
+                    file_name=run_id,
+                    include_samples=True,
+                )
+            pdf = build_report_pdf(report_model)
+            return pdf, total_samples, len(samples), stride
+
+        pdf, total_samples, analyzed, stride = await asyncio.to_thread(_build_pdf)
         if stride > 1:
             LOGGER.info(
                 "PDF report sample downsampling applied for run %s: total=%d analyzed=%d stride=%d",
                 run_id,
                 total_samples,
-                len(samples),
+                analyzed,
                 stride,
             )
         return Response(
@@ -491,36 +511,43 @@ def create_router(state: RuntimeState) -> APIRouter:
         run = state.history_db.get_run(run_id)
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found")
-        fieldnames: list[str] = []
-        fieldname_set: set[str] = set()
-        sample_rows: list[dict] = []
-        for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
-            for sample in batch:
-                sample_rows.append(sample)
-                for key in sample:
-                    if key not in fieldname_set:
-                        fieldname_set.add(key)
-                        fieldnames.append(key)
 
-        csv_buffer = io.StringIO(newline="")
-        if fieldnames:
-            writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(sample_rows)
+        def _build_zip() -> bytes:
+            fieldnames: list[str] = []
+            fieldname_set: set[str] = set()
+            # First pass: collect all unique field names and count samples
+            sample_count = 0
+            for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+                for sample in batch:
+                    sample_count += 1
+                    for key in sample:
+                        if key not in fieldname_set:
+                            fieldname_set.add(key)
+                            fieldnames.append(key)
 
-        run_details = dict(run)
-        run_details["sample_count"] = len(sample_rows)
+            # Second pass: write CSV rows batch by batch with known field names
+            csv_buffer = io.StringIO(newline="")
+            if fieldnames:
+                writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+                writer.writeheader()
+                for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+                    writer.writerows(batch)
 
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
-            archive.writestr(
-                f"{run_id}.json",
-                json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
-            )
-            archive.writestr(f"{run_id}_raw.csv", csv_buffer.getvalue())
+            run_details = dict(run)
+            run_details["sample_count"] = sample_count
 
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+                archive.writestr(
+                    f"{run_id}.json",
+                    json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
+                )
+                archive.writestr(f"{run_id}_raw.csv", csv_buffer.getvalue())
+            return zip_buffer.getvalue()
+
+        content = await asyncio.to_thread(_build_zip)
         return Response(
-            content=zip_buffer.getvalue(),
+            content=content,
             media_type="application/zip",
             headers={"Content-Disposition": f'attachment; filename="{run_id}.zip"'},
         )
