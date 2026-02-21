@@ -356,7 +356,8 @@ class TestConfidenceCalibration:
 
         penalty_pct = (1.0 - mult_at_min / mult_at_full) * 100.0
         assert penalty_pct >= 15.0, (
-            f"Sample-count penalty at 4 matches should be >=15% vs 20+ matches, got {penalty_pct:.1f}%"
+            f"Sample-count penalty at 4 matches should be >=15% vs 20+ matches,"
+            f" got {penalty_pct:.1f}%"
         )
         # Also verify the multiplier saturates at 1.0 for 20+ samples
         assert mult_at_full == 1.0
@@ -751,7 +752,7 @@ class TestSensorIntensityPhaseContext:
     def test_phase_intensity_present_when_phases_provided(self) -> None:
         """Each location row should have phase_intensity when per_sample_phases given."""
         from vibesensor.report.findings import _sensor_intensity_by_location
-        from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
+        from vibesensor.report.phase_segmentation import segment_run_phases
 
         # Build samples with two distinct locations and phases
         samples = []
@@ -775,7 +776,7 @@ class TestSensorIntensityPhaseContext:
             assert pi is not None, f"phase_intensity missing for location {row.get('location')}"
             # At least one phase must have data
             assert len(pi) >= 1
-            for phase_key, stats in pi.items():
+            for _phase_key, stats in pi.items():
                 assert "count" in stats
                 assert "mean_intensity_db" in stats
 
@@ -817,7 +818,6 @@ class TestOrderFindingsPhaseFiltering:
         to full sample set applies. With a mix, IDLE should be excluded.
         """
         from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
-        from vibesensor.report.findings import _build_findings
 
         # Build 5 idle + 15 cruise samples
         idle = [
@@ -899,7 +899,10 @@ class TestPhaseSpeedBreakdown:
 
         phase_names = {row["phase"] for row in rows}
         assert DrivingPhase.IDLE.value in phase_names
-        assert DrivingPhase.CRUISE.value in phase_names or DrivingPhase.ACCELERATION.value in phase_names
+        assert (
+            DrivingPhase.CRUISE.value in phase_names
+            or DrivingPhase.ACCELERATION.value in phase_names
+        )
 
     def test_phase_speed_breakdown_included_in_summary(self) -> None:
         """summarize_run_data must include phase_speed_breakdown in output."""
