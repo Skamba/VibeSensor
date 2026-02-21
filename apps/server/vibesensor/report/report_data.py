@@ -141,8 +141,9 @@ def _human_source(source: object, *, tr) -> str:  # type: ignore[type-arg]
     return mapping.get(raw, raw.replace("_", " ").title() if raw else tr("UNKNOWN"))
 
 
-def _top_strength_db(summary: dict) -> float | None:
-    """Best vibration_strength_db from top cause or sensor intensity."""
+def _top_strength_values(summary: dict) -> tuple[float | None, float | None]:
+    """Return best ``(vibration_strength_db, peak_amp_g)`` for observed strength text."""
+    peak_amp_g: float | None = None
     for cause in summary.get("top_causes", []):
         if not isinstance(cause, dict):
             continue
@@ -154,13 +155,19 @@ def _top_strength_db(summary: dict) -> float | None:
                 if isinstance(amp, dict):
                     v = _as_float(amp.get("value"))
                     if v is not None:
-                        return v
+                        peak_amp_g = v
+                        break
+        if peak_amp_g is not None:
+            break
+
+    db_value: float | None = None
     for row in summary.get("sensor_intensity_by_location", []):
         if isinstance(row, dict):
             v = _as_float(row.get("p95_intensity_db"))
             if v is not None:
-                return v
-    return None
+                db_value = v
+                break
+    return (db_value, peak_amp_g)
 
 
 def _peak_classification_text(value: object, tr: Callable[..., str] | None = None) -> str:
@@ -224,8 +231,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         primary_speed = tr("UNKNOWN")
         conf = 0.0
 
-    db_val = _top_strength_db(summary)
-    str_text = strength_text(db_val, lang=lang)
+    db_val, peak_amp_g = _top_strength_values(summary)
+    str_text = strength_text(db_val, lang=lang, peak_amp_g=peak_amp_g)
 
     steady = bool(speed_stats.get("steady_speed"))
     weak_spatial = bool(top_causes[0].get("weak_spatial_separation") if top_causes else False)
