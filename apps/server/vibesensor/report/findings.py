@@ -740,12 +740,19 @@ def _build_persistent_peak_findings(
     accel_units: str,
     lang: object,
     freq_bin_hz: float = 2.0,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     """Build findings for non-order persistent frequency peaks.
 
     Uses the same confidence-style scoring as order findings (presence_ratio,
     error/SNR) so the report is consistent.  Peaks already claimed by order
     findings are excluded.  Transient peaks are returned separately.
+
+    When ``per_sample_phases`` is provided, each finding includes a
+    ``phase_presence`` dict showing the per-phase presence ratio for that
+    frequency bin so callers can see which driving phases the peak is observed
+    in (IDLE, ACCELERATION, CRUISE, DECELERATION, COAST_DOWN).
+    Addresses TODO 4: ``_build_persistent_peak_findings()`` has no phase awareness.
     """
     if freq_bin_hz <= 0:
         freq_bin_hz = 2.0
@@ -756,11 +763,13 @@ def _build_persistent_peak_findings(
     bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
     bin_location_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    bin_phase_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
     total_locations: set[str] = set()
     n_samples = 0
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
-    for sample in samples:
+    for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
             continue
         n_samples += 1
@@ -772,6 +781,13 @@ def _build_persistent_peak_findings(
         location = _location_label(sample, lang=lang)
         if location:
             total_locations.add(location)
+        phase_key: str | None = None
+        if has_phases and per_sample_phases is not None:
+            phase_key = str(
+                per_sample_phases[i].value
+                if hasattr(per_sample_phases[i], "value")
+                else per_sample_phases[i]
+            )
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
@@ -786,6 +802,8 @@ def _build_persistent_peak_findings(
                 bin_location_counts[bin_center][location] += 1
             if sample_speed_bin is not None:
                 bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
+            if phase_key is not None:
+                bin_phase_counts[bin_center][phase_key] += 1
 
     if n_samples == 0:
         return []
@@ -887,6 +905,19 @@ def _build_persistent_peak_findings(
             cls=peak_type,
         )
 
+        # Per-phase presence ratios for this frequency bin (issue TODO-4).
+        # Values are the fraction of peak occurrences observed in each phase,
+        # so they sum to 1.0 and clearly show which phase dominates this peak.
+        phase_presence: dict[str, float] | None = None
+        if has_phases:
+            phase_counts_for_bin = bin_phase_counts.get(bin_center, {})
+            if phase_counts_for_bin:
+                total_phase_hits = sum(phase_counts_for_bin.values())
+                phase_presence = {
+                    pk: pcount / max(1, total_phase_hits)
+                    for pk, pcount in phase_counts_for_bin.items()
+                }
+
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
@@ -928,6 +959,7 @@ def _build_persistent_peak_findings(
             "peak_speed_kmh": peak_speed_kmh,
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "strongest_speed_band": speed_band if speed_band != "-" else None,
+            "phase_presence": phase_presence,
         }
 
         ranking_score = (presence_ratio**2) * p95_amp
@@ -1044,7 +1076,14 @@ def _build_findings(
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)
-    analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+    if len(diagnostic_samples) >= 5:
+        analysis_samples = diagnostic_samples
+        analysis_phases = [
+            p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=False) if keep
+        ]
+    else:
+        analysis_samples = samples
+        analysis_phases = _per_sample_phases
 
     order_findings = _build_order_findings(
         metadata=metadata,
@@ -1078,6 +1117,7 @@ def _build_findings(
             order_finding_freqs=order_freqs,
             accel_units=accel_units,
             lang=lang,
+            per_sample_phases=analysis_phases,  # phase-aware; TODO-4
         )
     )
 
