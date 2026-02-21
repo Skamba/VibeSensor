@@ -40,14 +40,6 @@ __all__ = [
     "read_jsonl_run",
 ]
 
-REQUIRED_SAMPLE_FIELDS = (
-    "t_s",
-    "speed_kmh",
-    "accel_x_g",
-    "accel_y_g",
-    "accel_z_g",
-)
-
 
 @dataclass(slots=True)
 class RunData:

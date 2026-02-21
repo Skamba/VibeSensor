@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -59,15 +60,16 @@ class WebSocketHub:
         conns = await self._snapshot()
         if not conns:
             return
-        payload_cache: dict[str | None, dict] = {}
+        payload_cache: dict[str | None, str] = {}
 
         async def _send(conn: WSConnection) -> WebSocket | None:
             try:
                 if conn.selected_client_id not in payload_cache:
-                    payload_cache[conn.selected_client_id] = payload_builder(
-                        conn.selected_client_id
+                    payload_cache[conn.selected_client_id] = json.dumps(
+                        payload_builder(conn.selected_client_id),
+                        separators=(",", ":"),
                     )
-                payload = payload_cache[conn.selected_client_id]
+                payload_text = payload_cache[conn.selected_client_id]
             except Exception:
                 now = asyncio.get_running_loop().time()
                 if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:
@@ -79,7 +81,7 @@ class WebSocketHub:
                 return None
             try:
                 await asyncio.wait_for(
-                    conn.websocket.send_json(payload),
+                    conn.websocket.send_text(payload_text),
                     timeout=self._send_timeout_s,
                 )
                 return None

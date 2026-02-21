@@ -97,10 +97,6 @@ class HealthState:
         )
 
 
-def _run_ok(runner: CommandRunner, argv: list[str], timeout_s: int = 10) -> bool:
-    return runner.run(argv, timeout_s=timeout_s).returncode == 0
-
-
 def _find_port53_conflict(runner: CommandRunner) -> str | None:
     ss = runner.run(["ss", "-ltnup", "sport", "=", ":53"], timeout_s=5)
     if ss.returncode != 0:

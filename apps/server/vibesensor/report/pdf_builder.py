@@ -48,7 +48,6 @@ MUTED_CLR = REPORT_COLORS["text_muted"]
 LINE_CLR = REPORT_COLORS["border"]
 PANEL_BG = "#ffffff"
 SOFT_BG = REPORT_COLORS["surface"]
-ACCENT = REPORT_COLORS["primary"]
 WARN_CLR = REPORT_COLORS["warning"]
 
 FONT = "Helvetica"

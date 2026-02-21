@@ -2,7 +2,7 @@
 
 # Re-export the public API from the new sub-package.
 # Names that tests also pull from here (originally imported at top of file).
-from vibesensor_core.vibration_strength import _percentile  # noqa: F401
+from vibesensor_core.vibration_strength import percentile  # noqa: F401
 
 from .report.findings import (  # noqa: F401
     _build_findings,
