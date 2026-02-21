@@ -80,7 +80,21 @@ def select_top_causes(
         and float(f.get("confidence_0_to_1") or 0) >= ORDER_MIN_CONFIDENCE
     ]
     if not diag_findings:
-        return []
+        transient_candidates = [
+            f
+            for f in findings
+            if isinstance(f, dict)
+            and not str(f.get("finding_id", "")).startswith("REF_")
+            and (
+                str(f.get("suspected_source") or "").strip().lower() == "transient_impact"
+                or str(f.get("peak_classification") or "").strip().lower() == "transient"
+            )
+        ]
+        if not transient_candidates:
+            return []
+        diag_findings = [
+            max(transient_candidates, key=lambda f: float(f.get("confidence_0_to_1") or 0.0))
+        ]
 
     # Group by suspected_source
     groups: dict[str, list[dict[str, object]]] = defaultdict(list)

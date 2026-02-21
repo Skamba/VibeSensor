@@ -14,6 +14,8 @@ from vibesensor.report.findings import (
 from vibesensor.report.plot_data import (
     _aggregate_fft_spectrum,
     _aggregate_fft_spectrum_raw,
+    _spectrogram_from_peaks,
+    _spectrogram_from_peaks_raw,
     _top_peaks_table_rows,
 )
 from vibesensor.report.summary import (
@@ -192,6 +194,7 @@ class TestTopPeaksTableRows:
         assert "p95_amp_g" in row
         assert "burstiness" in row
         assert "persistence_score" in row
+        assert "peak_classification" in row
         assert row["presence_ratio"] == 1.0  # Present in all 5 samples
 
     def test_single_sample_still_works(self) -> None:
@@ -394,6 +397,35 @@ class TestSummarizeRunDataPersistence:
         assert "presence_ratio" in row
         assert "persistence_score" in row
         assert "burstiness" in row
+        assert "peak_classification" in row
+
+    def test_plots_include_diagnostic_and_raw_spectrograms(self) -> None:
+        metadata = _make_metadata()
+        samples = []
+        for i in range(20):
+            peaks = [{"hz": 25.0, "amp": 0.05}]
+            if i == 10:
+                peaks.append({"hz": 80.0, "amp": 1.2})
+            samples.append(_sample(float(i), 80.0, peaks))
+        summary = summarize_run_data(metadata, samples, lang="en")
+        plots = summary.get("plots", {})
+        assert "peaks_spectrogram" in plots
+        assert "peaks_spectrogram_raw" in plots
+
+
+class TestSpectrogramPersistence:
+    def test_diagnostic_spectrogram_downweights_one_off_thud(self) -> None:
+        samples = []
+        for i in range(20):
+            peaks = [{"hz": 30.0, "amp": 0.06}]
+            if i == 7:
+                peaks.append({"hz": 70.0, "amp": 1.0})
+            samples.append(_sample(float(i), 90.0, peaks))
+
+        diagnostic = _spectrogram_from_peaks(samples)
+        raw = _spectrogram_from_peaks_raw(samples)
+
+        assert diagnostic["max_amp"] < raw["max_amp"]
 
 
 # ---------------------------------------------------------------------------

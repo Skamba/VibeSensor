@@ -202,6 +202,12 @@ def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows[0]["client_id"] == "active"
     assert rows[0]["client_name"] == "front-left wheel"
+    peaks = rows[0]["top_peaks"]
+    assert isinstance(peaks, list) and peaks
+    assert peaks[0]["hz"] == 15.0
+    assert peaks[0]["amp"] == 0.12
+    assert peaks[0]["vibration_strength_db"] == 22.0
+    assert peaks[0]["strength_bucket"] == "l2"
 
 
 def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None:

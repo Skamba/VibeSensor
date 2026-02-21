@@ -357,7 +357,7 @@ class MetricsLogger:
                 if strength_metrics.get(METRIC_FIELDS["strength_bucket"]) not in (None, "")
                 else None
             )
-            top_peaks: list[dict[str, float]] = []
+            top_peaks: list[dict[str, object]] = []
             if isinstance(top_peaks_raw, list):
                 for peak in top_peaks_raw[:5]:
                     if not isinstance(peak, dict):
@@ -374,7 +374,18 @@ class MetricsLogger:
                         and not math.isinf(amp)
                         and hz > 0
                     ):
-                        top_peaks.append({"hz": hz, "amp": amp})
+                        peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
+                        peak_db = self._safe_metric(
+                            {"combined": peak},
+                            "combined",
+                            METRIC_FIELDS["vibration_strength_db"],
+                        )
+                        if peak_db is not None:
+                            peak_payload[METRIC_FIELDS["vibration_strength_db"]] = peak_db
+                        peak_bucket = peak.get(METRIC_FIELDS["strength_bucket"])
+                        if peak_bucket not in (None, ""):
+                            peak_payload[METRIC_FIELDS["strength_bucket"]] = str(peak_bucket)
+                        top_peaks.append(peak_payload)
 
             sample_rate_hz = (
                 self.processor.latest_sample_rate_hz(record.client_id)
