@@ -70,6 +70,7 @@ class NextStep:
 class DataTrustItem:
     check: str
     state: str  # "pass" or "warn"
+    detail: str | None = None
 
 
 @dataclass
@@ -297,10 +298,12 @@ def map_summary(summary: dict) -> ReportTemplateData:
     data_trust: list[DataTrustItem] = []
     for item in summary.get("run_suitability", []):
         if isinstance(item, dict):
+            detail = str(item.get("explanation") or "").strip() or None
             data_trust.append(
                 DataTrustItem(
                     check=str(item.get("check") or ""),
                     state=str(item.get("state") or "warn"),
+                    detail=detail,
                 )
             )
 
