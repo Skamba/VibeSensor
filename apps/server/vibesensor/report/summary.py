@@ -417,7 +417,8 @@ def summarize_run_data(
     sensor_count_sufficient = len(sensor_ids) >= 3
     run_suitability = [
         {
-            "check": "SUITABILITY_CHECK_SPEED_VARIATION",
+            "check": _tr(language, "SUITABILITY_CHECK_SPEED_VARIATION"),
+            "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
             "state": "pass" if not steady_speed else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_SPEED_VARIATION_PASS")
@@ -426,7 +427,8 @@ def summarize_run_data(
             ),
         },
         {
-            "check": "SUITABILITY_CHECK_SENSOR_COVERAGE",
+            "check": _tr(language, "SUITABILITY_CHECK_SENSOR_COVERAGE"),
+            "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
             "state": "pass" if sensor_count_sufficient else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_SENSOR_COVERAGE_PASS")
@@ -435,7 +437,8 @@ def summarize_run_data(
             ),
         },
         {
-            "check": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
+            "check": _tr(language, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS"),
+            "check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
             "state": "pass" if reference_complete else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_REFERENCE_COMPLETENESS_PASS")
@@ -444,7 +447,8 @@ def summarize_run_data(
             ),
         },
         {
-            "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+            "check": _tr(language, "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"),
+            "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
             "state": "pass" if sat_count == 0 else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_SATURATION_PASS")
@@ -470,7 +474,8 @@ def summarize_run_data(
     frame_issues = total_dropped + total_overflow
     run_suitability.append(
         {
-            "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
+            "check": _tr(language, "SUITABILITY_CHECK_FRAME_INTEGRITY"),
+            "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
             "state": "pass" if frame_issues == 0 else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_FRAME_INTEGRITY_PASS")
