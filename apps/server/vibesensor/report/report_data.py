@@ -112,6 +112,7 @@ class ReportTemplateData:
     sensor_count: int = 0
     sensor_locations: list[str] = field(default_factory=list)
     sensor_model: str | None = None
+    firmware_version: str | None = None
     car: CarMeta = field(default_factory=CarMeta)
     observed: ObservedSignature = field(default_factory=ObservedSignature)
     system_cards: list[SystemFindingCard] = field(default_factory=list)
@@ -434,6 +435,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         sensor_count=sensor_count_used,
         sensor_locations=[str(loc) for loc in sensor_locations_list],
         sensor_model=sensor_model_val,
+        firmware_version=firmware_version_val,
         car=CarMeta(name=car_name, car_type=car_type),
         observed=observed,
         system_cards=system_cards,

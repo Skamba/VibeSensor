@@ -514,6 +514,7 @@ def summarize_run_data(
         "start_time_utc": metadata.get("start_time_utc"),
         "end_time_utc": metadata.get("end_time_utc"),
         "sensor_model": metadata.get("sensor_model"),
+        "firmware_version": metadata.get("firmware_version"),
         "raw_sample_rate_hz": raw_sample_rate_hz,
         "feature_interval_s": _as_float(metadata.get("feature_interval_s")),
         "fft_window_size_samples": metadata.get("fft_window_size_samples"),
