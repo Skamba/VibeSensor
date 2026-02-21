@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from math import sqrt
 from pathlib import Path
+from statistics import median as _median
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
@@ -45,6 +46,7 @@ from .phase_segmentation import (
     segment_run_phases as _segment_run_phases,
 )
 from .plot_data import _plot_data
+from .strength_labels import strength_label as _strength_label
 from .test_plan import _merge_test_plan
 
 # ---------------------------------------------------------------------------
@@ -52,20 +54,35 @@ from .test_plan import _merge_test_plan
 # ---------------------------------------------------------------------------
 
 
-def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
+def confidence_label(
+    conf_0_to_1: float,
+    *,
+    strength_band_key: str | None = None,
+) -> tuple[str, str, str]:
     """Return (label_key, tone, pct_text) for a 0-1 confidence value.
 
     * label_key: i18n key  – CONFIDENCE_HIGH / CONFIDENCE_MEDIUM / CONFIDENCE_LOW
     * tone: card/pill tone  – 'success' / 'warn' / 'neutral'
     * pct_text: e.g. '82%'
+
+    Parameters
+    ----------
+    strength_band_key:
+        Optional vibration-strength band key.  When set to ``"negligible"``,
+        high confidence is capped to medium as a defensive label guard —
+        mirrors the guard in :func:`certainty_label`.
     """
     pct = max(0.0, min(100.0, conf_0_to_1 * 100.0))
     pct_text = f"{pct:.0f}%"
     if conf_0_to_1 >= 0.70:
-        return "CONFIDENCE_HIGH", "success", pct_text
-    if conf_0_to_1 >= 0.40:
-        return "CONFIDENCE_MEDIUM", "warn", pct_text
-    return "CONFIDENCE_LOW", "neutral", pct_text
+        label_key, tone = "CONFIDENCE_HIGH", "success"
+    elif conf_0_to_1 >= 0.40:
+        label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+    else:
+        label_key, tone = "CONFIDENCE_LOW", "neutral"
+    if (strength_band_key or "").strip().lower() == "negligible" and label_key == "CONFIDENCE_HIGH":
+        label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+    return label_key, tone, pct_text
 
 
 # ---------------------------------------------------------------------------
@@ -78,6 +95,7 @@ def select_top_causes(
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,
+    strength_band_key: str | None = None,
 ) -> list[dict[str, object]]:
     """Group findings by suspected_source, keep best per group, apply drop-off."""
     # Only consider non-reference findings that meet the hard confidence floor
@@ -137,7 +155,10 @@ def select_top_causes(
     # Build output in the format expected by the PDF
     result: list[dict[str, object]] = []
     for rep in selected:
-        label_key, tone, pct_text = confidence_label(float(rep.get("confidence_0_to_1") or 0))
+        label_key, tone, pct_text = confidence_label(
+            float(rep.get("confidence_0_to_1") or 0),
+            strength_band_key=strength_band_key,
+        )
         result.append(
             {
                 "finding_id": rep.get("finding_id"),
@@ -523,7 +544,11 @@ def summarize_run_data(
         }
     )
 
-    top_causes = select_top_causes(findings)
+    # Derive overall run strength band for confidence-label guard
+    _median_db = _median(amp_metric_values) if amp_metric_values else None
+    _overall_band_key = _strength_label(_median_db)[0] if _median_db is not None else None
+
+    top_causes = select_top_causes(findings, strength_band_key=_overall_band_key)
 
     sensor_locations = sorted(
         {
