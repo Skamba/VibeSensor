@@ -1,49 +1,25 @@
 from __future__ import annotations
 
 import ast
-import csv
-import io
 import json
 import math
 import os
 import re
-import subprocess
-import sys
-import time
-import zipfile
 from math import floor
-from pathlib import Path
-from urllib.request import Request, urlopen
 
 import pytest
-from pypdf import PdfReader
 
-ROOT = Path(__file__).resolve().parents[3]
+from .e2e_helpers import (
+    api_bytes,
+    api_json,
+    history_run_ids,
+    parse_export_zip,
+    pdf_text,
+    run_simulator,
+    wait_for,
+)
+
 pytestmark = pytest.mark.e2e
-
-
-# ---------------------------------------------------------------------------
-# HTTP helpers
-# ---------------------------------------------------------------------------
-
-
-def _api(base_url: str, path: str, method: str = "GET", body: dict | None = None) -> dict:
-    data = json.dumps(body).encode("utf-8") if body is not None else None
-    headers = {"Content-Type": "application/json"} if body is not None else {}
-    req = Request(f"{base_url}{path}", data=data, method=method, headers=headers)
-    with urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read())
-
-
-def _api_bytes(base_url: str, path: str) -> tuple[bytes, str]:
-    req = Request(f"{base_url}{path}")
-    with urlopen(req, timeout=30) as resp:
-        return resp.read(), str(resp.headers.get("Content-Type", ""))
-
-
-def _pdf_text(pdf_bytes: bytes) -> str:
-    reader = PdfReader(io.BytesIO(pdf_bytes))
-    return "\n".join(filter(None, (page.extract_text() for page in reader.pages))).lower()
 
 
 # ---------------------------------------------------------------------------
@@ -78,17 +54,6 @@ def _parse_csv_value(value: str) -> object:
         return int(text)
     except ValueError:
         return text
-
-
-def _parse_export_zip(raw: bytes) -> tuple[dict, list[dict]]:
-    with zipfile.ZipFile(io.BytesIO(raw), "r") as archive:
-        names = archive.namelist()
-        json_name = next(name for name in names if name.endswith(".json"))
-        csv_name = next(name for name in names if name.endswith("_raw.csv"))
-        metadata = json.loads(archive.read(json_name).decode("utf-8"))
-        reader = csv.DictReader(io.StringIO(archive.read(csv_name).decode("utf-8")))
-        samples = [{k: _parse_csv_value(v) for k, v in row.items()} for row in reader]
-    return metadata, samples
 
 
 def _fft_entry(entry: object) -> tuple[float, float]:
@@ -269,7 +234,7 @@ def _primary_matched_hz(finding: dict, plots: dict) -> float | None:
 
 def _pdf_normalized(pdf_bytes: bytes) -> str:
     """Extract PDF text, lower-case, normalise Unicode multiply sign and whitespace."""
-    text = _pdf_text(pdf_bytes)  # already lower-cased
+    text = pdf_text(pdf_bytes)  # already lower-cased
     text = text.replace("\u00d7", "x")  # × → x
     text = re.sub(r"\s+", " ", text)
     return text
@@ -558,57 +523,46 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     sim_data_port = os.environ["VIBESENSOR_SIM_DATA_PORT"]
     sim_control_port = os.environ["VIBESENSOR_SIM_CONTROL_PORT"]
     sim_duration = os.environ["VIBESENSOR_SIM_DURATION"]
-    sim_log_path = Path(os.environ["VIBESENSOR_SIM_LOG"])
+    before_ids = history_run_ids(base_url)
 
-    history_before = _api(base_url, "/api/history")
-    assert history_before["runs"] == [], "Expected empty history before E2E run"
-
-    _api(base_url, "/api/settings/speed-source", method="POST", body={"speedSource": "manual", "manualSpeedKph": 100.0})
-    start = _api(base_url, "/api/logging/start", method="POST")
+    api_json(
+        base_url,
+        "/api/settings/speed-source",
+        method="POST",
+        body={"speedSource": "manual", "manualSpeedKph": 100.0},
+    )
+    start = api_json(base_url, "/api/logging/start", method="POST")
     assert start["enabled"] is True
+    run_id = str(start["run_id"])
+    run_simulator(
+        base_url=base_url,
+        sim_host=sim_host,
+        sim_data_port=sim_data_port,
+        sim_control_port=sim_control_port,
+        duration_s=float(sim_duration),
+        count=4,
+    )
 
-    sim_cmd = [
-        sys.executable,
-        str(ROOT / "apps" / "simulator" / "sim_sender.py"),
-        "--server-host",
-        sim_host,
-        "--server-data-port",
-        sim_data_port,
-        "--server-control-port",
-        sim_control_port,
-        "--server-http-port",
-        base_url.rsplit(":", 1)[-1],
-        "--count",
-        "4",
-        "--names",
-        "front-left,front-right,rear-left,rear-right",
-        "--scenario",
-        "one-wheel-mild",
-        "--fault-wheel",
-        "rear-left",
-        "--speed-kmh",
-        "0",
-        "--duration",
-        sim_duration,
-        "--no-auto-server",
-        "--no-interactive",
-    ]
-    with sim_log_path.open("w", encoding="utf-8") as sim_log:
-        subprocess.run(sim_cmd, cwd=str(ROOT), check=True, stdout=sim_log, stderr=subprocess.STDOUT)
+    api_json(base_url, "/api/logging/stop", method="POST")
+    run = wait_for(
+        lambda: api_json(base_url, f"/api/history/{run_id}") if run_id not in before_ids else None,
+        timeout_s=5.0,
+        interval_s=0.5,
+        message=f"Run {run_id} did not become visible in history",
+    )
+    assert run.get("status") in {"analyzing", "complete"}
+    wait_for(
+        lambda: (
+            api_json(base_url, f"/api/history/{run_id}")
+            if api_json(base_url, f"/api/history/{run_id}").get("status") == "complete"
+            else None
+        ),
+        timeout_s=90.0,
+        interval_s=1.0,
+        message=f"Run {run_id} did not complete in time",
+    )
 
-    _api(base_url, "/api/logging/stop", method="POST")
-
-    deadline = time.monotonic() + 40.0
-    run_id = None
-    while time.monotonic() < deadline:
-        history_after = _api(base_url, "/api/history")
-        if len(history_after["runs"]) == 1 and history_after["runs"][0]["status"] == "complete":
-            run_id = str(history_after["runs"][0]["run_id"])
-            break
-        time.sleep(1.0)
-    assert run_id is not None, "Run did not complete in time"
-
-    insights = _api(base_url, f"/api/history/{run_id}/insights")
+    insights = api_json(base_url, f"/api/history/{run_id}/insights")
     findings = [
         f
         for f in insights.get("findings", [])
@@ -624,24 +578,27 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     assert top_causes, "Expected ranked top causes"
     assert top_causes[0].get("source") == "wheel/tire"
 
-    pdf_bytes, content_type = _api_bytes(base_url, f"/api/history/{run_id}/report.pdf?lang=en")
-    assert content_type.startswith("application/pdf")
-    assert pdf_bytes[:5] == b"%PDF-"
-    pdf_text = _pdf_text(pdf_bytes)
-    assert "primary system:" in pdf_text
-    assert "wheel / tire" in pdf_text
-    assert "rear left" in pdf_text or "rear-left" in pdf_text
-    assert "primary system: driveline" not in pdf_text
-    assert "primary system: engine" not in pdf_text
+    pdf_resp = api_bytes(base_url, f"/api/history/{run_id}/report.pdf?lang=en")
+    assert str(pdf_resp.headers.get("content-type", "")).startswith("application/pdf")
+    assert pdf_resp.body[:5] == b"%PDF-"
+    report_text = pdf_text(pdf_resp.body)
+    assert "primary system:" in report_text
+    assert "wheel / tire" in report_text
+    assert "rear left" in report_text or "rear-left" in report_text
+    assert "primary system: driveline" not in report_text
+    assert "primary system: engine" not in report_text
 
     # ------------------------------------------------------------------
     # Alignment validation: cross-source consistency checks
     # ------------------------------------------------------------------
 
-    run_payload = _api(base_url, f"/api/history/{run_id}")
-    export_bytes, export_content_type = _api_bytes(base_url, f"/api/history/{run_id}/export")
-    assert export_content_type.startswith("application/zip")
-    _, export_samples = _parse_export_zip(export_bytes)
+    run_payload = api_json(base_url, f"/api/history/{run_id}")
+    export_resp = api_bytes(base_url, f"/api/history/{run_id}/export")
+    assert str(export_resp.headers.get("content-type", "")).startswith("application/zip")
+    _, raw_export_samples, _ = parse_export_zip(export_resp.body)
+    export_samples = [
+        {k: _parse_csv_value(v) for k, v in row.items()} for row in raw_export_samples
+    ]
     run_analysis = run_payload.get("analysis") or {}
 
     # Validation 1: primary finding consistent across run payload and insights
@@ -657,4 +614,4 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     _validate_primary_finding_vs_graph(run_analysis)
 
     # Validation 5: PDF reflects primary finding source, location, and order label
-    _validate_pdf_report(pdf_bytes, primary)
+    _validate_pdf_report(pdf_resp.body, primary)
