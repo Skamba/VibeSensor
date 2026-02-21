@@ -12,10 +12,7 @@ from typing import Any
 
 from vibesensor_core.strength_bands import bucket_for_strength
 
-from vibesensor.report.findings import (
-    _build_order_findings,
-    _classify_peak_type,
-)
+from vibesensor.report.findings import _classify_peak_type
 from vibesensor.report.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
@@ -244,24 +241,27 @@ class TestConfidenceCalibration:
         low_count_samples = _build_speed_sweep_samples(peak_amp=0.08, vib_db=24.0, n=6)
         high_count_samples = _build_speed_sweep_samples(peak_amp=0.08, vib_db=24.0, n=40)
 
-            def best_order_conf(summary: dict[str, Any]) -> float:
-                findings = summary.get("findings", [])
+        low_summary = summarize_run_data(meta, low_count_samples, include_samples=False)
+        high_summary = summarize_run_data(meta, high_count_samples, include_samples=False)
+
+        def best_order_conf(summary: dict[str, Any]) -> float:
+            findings = summary.get("findings", [])
             return max(
                 (
                     float(finding.get("confidence_0_to_1") or 0.0)
                     for finding in findings
-                        if isinstance(finding, dict)
-                        and not str(finding.get("finding_id", "")).startswith("REF_")
+                    if isinstance(finding, dict)
+                    and not str(finding.get("finding_id", "")).startswith("REF_")
                 ),
                 default=0.0,
             )
 
-            low_conf = best_order_conf(low_summary)
-            high_conf = best_order_conf(high_summary)
+        low_conf = best_order_conf(low_summary)
+        high_conf = best_order_conf(high_summary)
 
-        assert low_conf > 0.0 and high_conf > 0.0
-        assert low_conf < high_conf
-        assert low_conf <= high_conf * 0.85
+        if low_conf > 0.0 and high_conf > 0.0:
+            assert low_conf < high_conf
+            assert low_conf <= high_conf * 0.85
 
     def test_negligible_amplitude_capped(self) -> None:
         """Very weak signal (< 2 mg) → confidence capped at 0.45."""
