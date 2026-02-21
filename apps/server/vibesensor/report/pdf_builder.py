@@ -264,11 +264,11 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     if data.duration_text:
         extra_parts.append(f"{tr('DURATION')}: {data.duration_text}")
     if data.sensor_count:
-        extra_parts.append(f"{data.sensor_count} sensors")
+        extra_parts.append(f"{tr('SENSORS_LABEL')}: {data.sensor_count}")
     if data.sensor_locations:
         extra_parts.append(", ".join(data.sensor_locations[:6]))
     if data.sample_count:
-        extra_parts.append(f"{data.sample_count} {tr('SAMPLES').lower()}")
+        extra_parts.append(f"{tr('SAMPLE_COUNT_LABEL')}: {data.sample_count}")
     if data.sample_rate_hz:
         extra_parts.append(f"{tr('RAW_SAMPLE_RATE_HZ_LABEL')}: {data.sample_rate_hz}")
     if extra_parts:
@@ -407,6 +407,8 @@ def _draw_system_card(
     tr,
 ) -> None:
     """Render a single system-finding card."""
+    na = tr("NOT_AVAILABLE")
+
     c.setFillColor(_hex(SOFT_BG))
     c.setStrokeColor(_hex(LINE_CLR))
     c.roundRect(x, y, w, h, 4, stroke=1, fill=1)
@@ -420,14 +422,18 @@ def _draw_system_card(
 
     c.setFillColor(_hex(SUB_CLR))
     c.setFont(FONT, 7)
-    c.drawString(cx, cy - 4 * mm, f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location)}")
+    c.drawString(
+        cx,
+        cy - 4 * mm,
+        f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location, na)}",
+    )
 
     _draw_text(
         c,
         cx,
         cy - 8 * mm,
         w - 6 * mm,
-        _safe(card.pattern_summary),
+        _safe(card.pattern_summary, na),
         size=7,
         color=SUB_CLR,
         max_lines=1,
@@ -590,6 +596,8 @@ def _draw_pattern_evidence(
     ev: PatternEvidence,
     tr,
 ) -> None:
+    na = tr("NOT_AVAILABLE")
+
     _draw_panel(c, x, y, w, h, tr("PATTERN_EVIDENCE"))
 
     rx = x + 4 * mm
@@ -597,17 +605,17 @@ def _draw_pattern_evidence(
     step = 4.0 * mm
     lw = 32 * mm
 
-    systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else tr("UNKNOWN")
+    systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else na
     _draw_kv(c, rx, ry, tr("MATCHED_SYSTEMS"), systems_text, label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("STRONGEST_SENSOR"), _safe(ev.strongest_location), label_w=lw, fs=7)
+    _draw_kv(c, rx, ry, tr("STRONGEST_SENSOR"), _safe(ev.strongest_location, na), label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("SPEED_BAND"), _safe(ev.speed_band), label_w=lw, fs=7)
+    _draw_kv(c, rx, ry, tr("SPEED_BAND"), _safe(ev.speed_band, na), label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("STRENGTH"), _safe(ev.strength_label), label_w=lw, fs=7)
+    _draw_kv(c, rx, ry, tr("STRENGTH"), _safe(ev.strength_label, na), label_w=lw, fs=7)
     ry -= step
 
-    cert_val = _safe(ev.certainty_label)
+    cert_val = _safe(ev.certainty_label, na)
     if ev.certainty_pct:
         cert_val = f"{cert_val} ({ev.certainty_pct})"
     if ev.certainty_reason:
@@ -630,7 +638,7 @@ def _draw_pattern_evidence(
     c.drawString(rx, ry, tr("INTERPRETATION"))
     ry -= 3.6 * mm
     ry = _draw_text(
-        c, rx, ry, w - 8 * mm, _safe(ev.interpretation), size=6, color=SUB_CLR, max_lines=2
+        c, rx, ry, w - 8 * mm, _safe(ev.interpretation, na), size=6, color=SUB_CLR, max_lines=2
     )
     ry -= 2 * mm
 
@@ -639,7 +647,7 @@ def _draw_pattern_evidence(
     c.setFont(FONT_B, FS_SMALL)
     c.drawString(rx, ry, tr("WHY_PARTS_LISTED"))
     ry -= 3.4 * mm
-    _draw_text(c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text), size=6, color=SUB_CLR, max_lines=3)
+    _draw_text(c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text, na), size=6, color=SUB_CLR, max_lines=3)
 
 
 def _draw_peaks_table(
