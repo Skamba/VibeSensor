@@ -170,8 +170,8 @@ class LiveDiagnosticsEngine:
             return current_bucket
         return None
 
-    @staticmethod
     def _apply_severity_to_tracker(
+        self,
         tracker: _TrackerLevelState,
         vibration_strength_db: float,
         sensor_count: int,
@@ -186,6 +186,8 @@ class LiveDiagnosticsEngine:
             vibration_strength_db=vibration_strength_db,
             sensor_count=sensor_count,
             prior_state=tracker.severity_state,
+            peak_hz=tracker.last_peak_hz if tracker.last_peak_hz > 0 else None,
+            persistence_freq_bin_hz=self._multi_freq_bin_hz,
         )
         tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
         tracker.current_bucket_key = (
@@ -366,6 +368,7 @@ class LiveDiagnosticsEngine:
 
         for tracker_key, event in latest_by_tracker.items():
             tracker = self._sensor_trackers.get(tracker_key) or _TrackerLevelState()
+            tracker.last_peak_hz = float(event.peak_hz)
             previous_bucket = self._apply_severity_to_tracker(
                 tracker,
                 vibration_strength_db=event.vibration_strength_db,
@@ -373,7 +376,6 @@ class LiveDiagnosticsEngine:
             )
             tracker.last_band_rms_g = float(event.peak_amp)
             tracker.last_update_ms = now_ms
-            tracker.last_peak_hz = float(event.peak_hz)
             tracker.last_class_key = event.class_key
             tracker.last_sensor_label = event.sensor_label
             tracker.last_sensor_location = event.sensor_location
@@ -426,6 +428,7 @@ class LiveDiagnosticsEngine:
                         "sensor_labels": [event.sensor_label],
                         "peak_hz": event.peak_hz,
                         "peak_amp": event.peak_amp,
+                        "peak_amp_g": event.peak_amp,
                         "severity_key": tracker.current_bucket_key,
                         "vibration_strength_db": tracker.last_strength_db,
                     }
@@ -522,6 +525,7 @@ class LiveDiagnosticsEngine:
                 tracker = self._combined_trackers.get(combined_key) or _TrackerLevelState(
                     last_class_key=class_key
                 )
+                tracker.last_peak_hz = avg_hz
                 previous_bucket = self._apply_severity_to_tracker(
                     tracker,
                     vibration_strength_db=avg_strength,
@@ -529,7 +533,6 @@ class LiveDiagnosticsEngine:
                 )
                 tracker.last_band_rms_g = avg_amp
                 tracker.last_update_ms = now_ms
-                tracker.last_peak_hz = avg_hz
                 tracker.last_class_key = class_key
                 tracker.last_sensor_label = (
                     f"combined({', '.join(item.last_sensor_label for item in group)})"
@@ -573,6 +576,7 @@ class LiveDiagnosticsEngine:
                             "sensor_labels": [item.last_sensor_label for item in group],
                             "peak_hz": avg_hz,
                             "peak_amp": avg_amp,
+                            "peak_amp_g": avg_amp,
                             "severity_key": tracker.current_bucket_key,
                             "vibration_strength_db": tracker.last_strength_db,
                         }
