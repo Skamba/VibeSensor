@@ -12,6 +12,7 @@ export interface SpectrumText {
 }
 
 export class SpectrumChart {
+  private static readonly FIXED_Y_RANGE: [number, number] = [0, 60];
   private plot: uPlot | null = null;
   private readonly hostEl: HTMLElement;
   private readonly measureEl: HTMLElement;
@@ -47,12 +48,7 @@ export class SpectrumChart {
         scales: {
           x: { time: false },
           y: {
-            range: (_self, _min, max) => {
-              if (!max || max <= 0) return [0, 0.1];
-              // Round up to 2 significant figures for a clean axis
-              const magnitude = Math.pow(10, Math.floor(Math.log10(max * 1.1)));
-              return [0, Math.ceil((max * 1.1) / magnitude) * magnitude];
-            },
+            range: SpectrumChart.FIXED_Y_RANGE as uPlot.Range.MinMax,
           },
         },
         axes: [
