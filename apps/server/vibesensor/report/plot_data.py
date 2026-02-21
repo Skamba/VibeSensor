@@ -9,6 +9,7 @@ from typing import Any, Literal
 from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
 
 from ..runlog import as_float_or_none as _as_float
+from .findings import _classify_peak_type
 from .helpers import (
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
@@ -300,20 +301,10 @@ def _top_peaks_table_rows(
                 "presence_ratio": float(item.get("presence_ratio") or 0.0),
                 "burstiness": float(item.get("burstiness") or 0.0),
                 "persistence_score": float(item.get("persistence_score") or 0.0),
-                "peak_classification": (
-                    "transient"
-                    if (
-                        float(item.get("presence_ratio") or 0.0) < 0.15
-                        or float(item.get("burstiness") or 0.0) > 5.0
-                    )
-                    else (
-                        "patterned"
-                        if (
-                            float(item.get("presence_ratio") or 0.0) >= 0.40
-                            and float(item.get("burstiness") or 0.0) < 3.0
-                        )
-                        else "persistent"
-                    )
+                "peak_classification": _classify_peak_type(
+                    presence_ratio=float(item.get("presence_ratio") or 0.0),
+                    burstiness=float(item.get("burstiness") or 0.0),
+                    snr=_as_float(item.get("p95_vs_run_noise_ratio")),
                 ),
                 "typical_speed_band": speed_band,
             }
