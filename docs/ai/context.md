@@ -37,7 +37,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - WS payload fields must remain backward compatible for UI (`clients`, `diagnostics`, `spectra`, `selected`).
 - Hotspot startup must succeed offline (no runtime apt installs in hotspot script).
 - Pi image output must include `/opt/VibeSensor`, `vibesensor-hotspot.service`, and `/etc/vibesensor/config.yaml`.
-- CI default test mode is simulator E2E smoke; extended pytest suite is opt-in.
+- CI verification suite is `make test-all` (full-suite harness in `tools/tests/run_full_suite.py`).
 
 ## Coding Conventions
 - Python style: Ruff-enforced, explicit signatures, small focused modules.

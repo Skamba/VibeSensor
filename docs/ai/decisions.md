@@ -11,9 +11,9 @@
 - Implication: avoid introducing threshold checks against raw g-values.
 
 ## D3: Default CI validation mode
-- Decision: default suite is simulator E2E smoke + WS smoke.
-- Rationale: lower runtime, catches integration regressions early.
-- Implication: extended unit-heavy pytest runs are opt-in for deep investigations.
+- Decision: use the GitHub CI verification suite (`make test-all`) for change verification.
+- Rationale: keeps local/AI validation aligned with required CI gates and avoids mismatch-driven regressions.
+- Implication: optional focused pytest/smoke loops may be used during iteration, but final verification should use `make test-all`.
 
 ## D4: Deterministic image outputs
 - Decision: custom pi-gen stage must export uniquely suffixed artifact and self-validate rootfs contents.

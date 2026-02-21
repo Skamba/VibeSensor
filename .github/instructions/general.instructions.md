@@ -11,7 +11,7 @@ Validation (always required)
   5. Confirm the web UI (`http://127.0.0.1:8000`) displays live data correctly while the simulator runs.
   6. After the simulator stops, verify the UI stops showing new vibration events and the car map stops animating (no stale-data artifacts).
   7. Check container logs (`docker compose logs --tail 50`) if anything looks wrong.
-- Normal test suite (default): run one simulator end-to-end smoke pass (use `vibesensor-sim` and `vibesensor-ws-smoke`).
-- Extended test suite (on request only): `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.
+- Test suite for change verification (match GitHub CI): `make test-all`.
+- Optional focused backend pytest run (for faster iteration, not a CI substitute): `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.
 - Run lint (`ruff check`) before pushing changes.
 - Never skip Docker validation even if unit tests pass — integration issues often only surface at runtime.
