@@ -8,11 +8,9 @@ from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
 from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
-from .helpers import (
-    _effective_engine_rpm,
-    _text,
-)
+from .helpers import _effective_engine_rpm
 
 
 def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> float | None:
@@ -95,18 +93,18 @@ def _order_hypotheses() -> list[_OrderHypothesis]:
 def _wheel_focus_from_location(lang: object, location: str) -> str:
     token = location.strip().lower()
     if "front-left wheel" in token:
-        return _text(lang, "front-left wheel", "linkervoorwiel")
+        return _tr(lang, "WHEEL_FOCUS_FRONT_LEFT")
     if "front-right wheel" in token:
-        return _text(lang, "front-right wheel", "rechtervoorwiel")
+        return _tr(lang, "WHEEL_FOCUS_FRONT_RIGHT")
     if "rear-left wheel" in token:
-        return _text(lang, "rear-left wheel", "linkerachterwiel")
+        return _tr(lang, "WHEEL_FOCUS_REAR_LEFT")
     if "rear-right wheel" in token:
-        return _text(lang, "rear-right wheel", "rechterachterwiel")
+        return _tr(lang, "WHEEL_FOCUS_REAR_RIGHT")
     if "rear" in token or "trunk" in token:
-        return _text(lang, "rear wheels", "achterwielen")
+        return _tr(lang, "WHEEL_FOCUS_REAR")
     if "front" in token or "engine" in token:
-        return _text(lang, "front wheels", "voorwielen")
-    return _text(lang, "all wheels", "alle wielen")
+        return _tr(lang, "WHEEL_FOCUS_FRONT")
+    return _tr(lang, "WHEEL_FOCUS_ALL")
 
 
 def _finding_actions_for_source(
@@ -119,137 +117,60 @@ def _finding_actions_for_source(
 ) -> list[dict[str, str]]:
     location = strongest_location.strip()
     speed_band = strongest_speed_band.strip()
-    speed_hint = (
-        _text(
-            lang,
-            f" with focus around {speed_band}",
-            f" met focus rond {speed_band}",
-        )
-        if speed_band
-        else ""
-    )
+    speed_hint = _tr(lang, "SPEED_HINT_FOCUS", speed_band=speed_band) if speed_band else ""
     if source == "wheel/tire":
         wheel_focus = _wheel_focus_from_location(lang, location)
         location_hint = (
-            _text(
-                lang,
-                f"Near the strongest location ({location}),",
-                f"Nabij de sterkste locatie ({location}),",
-            )
+            _tr(lang, "LOCATION_HINT_NEAR", location=location)
             if location
-            else _text(lang, "At the wheel/tire corners,", "Bij de wiel/band-hoeken,")
+            else _tr(lang, "LOCATION_HINT_AT_WHEEL_CORNERS")
         )
         return [
             {
                 "action_id": "wheel_balance_and_runout",
-                "what": _text(
+                "what": _tr(
                     lang,
-                    f"Inspect and balance {wheel_focus}; measure radial/lateral runout on the wheel and tire{speed_hint}.",
-                    f"Controleer en balanceer {wheel_focus}; meet radiale/laterale slingering op wiel en band{speed_hint}.",
+                    "ACTION_WHEEL_BALANCE_WHAT",
+                    wheel_focus=wheel_focus,
+                    speed_hint=speed_hint,
                 ),
-                "why": _text(
-                    lang,
-                    f"{location_hint} wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
-                    f"{location_hint} wielorde-signaturen komen meestal door onbalans, slingering of banddeformatie.",
-                ),
-                "confirm": _text(
-                    lang,
-                    "A clear imbalance or runout is found and corrected, with vibration complaint reduced.",
-                    "Er wordt duidelijke onbalans of slingering gevonden en gecorrigeerd, waarna de trillingsklacht afneemt.",
-                ),
-                "falsify": _text(
-                    lang,
-                    "Balance and runout are within spec on all checked wheels/tires and complaint remains unchanged.",
-                    "Balans en slingering zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft gelijk.",
-                ),
+                "why": _tr(lang, "ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
+                "confirm": _tr(lang, "ACTION_WHEEL_BALANCE_CONFIRM"),
+                "falsify": _tr(lang, "ACTION_WHEEL_BALANCE_FALSIFY"),
                 "eta": "20-45 min",
             },
             {
                 "action_id": "wheel_tire_condition",
-                "what": _text(
-                    lang,
-                    f"Inspect {wheel_focus} for tire defects: flat spots, belt shift, uneven wear, pressure mismatch.",
-                    f"Controleer {wheel_focus} op banddefecten: vlakke plekken, gordelverschuiving, ongelijk slijtagebeeld, drukverschillen.",
-                ),
-                "why": _text(
-                    lang,
-                    "Tire structural issues often create strong 1x/2x wheel-order vibration.",
-                    "Structurele bandproblemen veroorzaken vaak sterke 1x/2x wielorde-trillingen.",
-                ),
-                "confirm": _text(
-                    lang,
-                    "Visible/measureable tire defect aligns with complaint speed band.",
-                    "Zichtbaar/meetbaar banddefect sluit aan op de klachten-snelheidsband.",
-                ),
-                "falsify": _text(
-                    lang,
-                    "No tire condition anomaly is found on inspected wheels.",
-                    "Er wordt geen bandtoestandsafwijking gevonden op de gecontroleerde wielen.",
-                ),
+                "what": _tr(lang, "ACTION_TIRE_CONDITION_WHAT", wheel_focus=wheel_focus),
+                "why": _tr(lang, "ACTION_TIRE_CONDITION_WHY"),
+                "confirm": _tr(lang, "ACTION_TIRE_CONDITION_CONFIRM"),
+                "falsify": _tr(lang, "ACTION_TIRE_CONDITION_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
     if source == "driveline":
         driveline_focus = (
-            _text(
-                lang,
-                f"near {location}",
-                f"nabij {location}",
-            )
+            _tr(lang, "LOCATION_HINT_NEAR_SHORT", location=location)
             if location
-            else _text(
-                lang,
-                "along the tunnel/rear driveline path",
-                "langs de tunnel/achterste aandrijflijn",
-            )
+            else _tr(lang, "LOCATION_HINT_ALONG_DRIVELINE")
         )
         return [
             {
                 "action_id": "driveline_inspection",
-                "what": _text(
-                    lang,
-                    f"Inspect propshaft runout/balance, center support bearing, CV/guibo joints {driveline_focus}.",
-                    f"Controleer cardanas slingering/balans, middenlager, homokineten/hardy-schijf {driveline_focus}.",
+                "what": _tr(
+                    lang, "ACTION_DRIVELINE_INSPECTION_WHAT", driveline_focus=driveline_focus
                 ),
-                "why": _text(
-                    lang,
-                    "Driveline-order vibration is commonly caused by shaft imbalance, joint wear, or support bearing issues.",
-                    "Aandrijflijnorde-trillingen komen vaak door onbalans van de as, slijtage van koppelingen of problemen met het middenlager.",
-                ),
-                "confirm": _text(
-                    lang,
-                    "Mechanical defect or out-of-spec runout/play is found in driveline components.",
-                    "Mechanisch defect of buiten-specificatie slingering/speling wordt gevonden in aandrijflijncomponenten.",
-                ),
-                "falsify": _text(
-                    lang,
-                    "No driveline play/runout/balance issue is found.",
-                    "Er wordt geen aandrijflijn-issue in speling/slingering/balans gevonden.",
-                ),
+                "why": _tr(lang, "ACTION_DRIVELINE_INSPECTION_WHY"),
+                "confirm": _tr(lang, "ACTION_DRIVELINE_INSPECTION_CONFIRM"),
+                "falsify": _tr(lang, "ACTION_DRIVELINE_INSPECTION_FALSIFY"),
                 "eta": "20-35 min",
             },
             {
                 "action_id": "driveline_mounts_and_fasteners",
-                "what": _text(
-                    lang,
-                    "Check driveline mounts and fastening torque (diff mounts, shaft couplings, carrier brackets).",
-                    "Controleer aandrijflijnsteunen en aanhaalmomenten (diff-steunen, askoppelingen, draagbeugels).",
-                ),
-                "why": _text(
-                    lang,
-                    "Loose or degraded mounts can amplify normal order content into cabin vibration.",
-                    "Losse of versleten steunen kunnen normale orde-inhoud versterken tot voelbare trillingen in de auto.",
-                ),
-                "confirm": _text(
-                    lang,
-                    "Loose mount/fastener or cracked rubber support is found.",
-                    "Losse bevestiging of gescheurde rubbersteun wordt gevonden.",
-                ),
-                "falsify": _text(
-                    lang,
-                    "All inspected mounts and fasteners are within condition/torque spec.",
-                    "Alle gecontroleerde steunen en bevestigingen zijn binnen conditie-/koppelspecificatie.",
-                ),
+                "what": _tr(lang, "ACTION_DRIVELINE_MOUNTS_WHAT"),
+                "why": _tr(lang, "ACTION_DRIVELINE_MOUNTS_WHY"),
+                "confirm": _tr(lang, "ACTION_DRIVELINE_MOUNTS_CONFIRM"),
+                "falsify": _tr(lang, "ACTION_DRIVELINE_MOUNTS_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
@@ -257,83 +178,31 @@ def _finding_actions_for_source(
         return [
             {
                 "action_id": "engine_mounts_and_accessories",
-                "what": _text(
-                    lang,
-                    "Inspect engine mounts and accessory drive (idler, tensioner, pulleys) for play or resonance.",
-                    "Controleer motorsteunen en hulpaandrijving (spanrol, geleiderol, poelies) op speling of resonantie.",
-                ),
-                "why": _text(
-                    lang,
-                    "Engine-order vibration often transfers through weakened mounts or accessory imbalance.",
-                    "Motororde-trillingen worden vaak doorgegeven via verzwakte steunen of onbalans in hulpaandrijving.",
-                ),
-                "confirm": _text(
-                    lang,
-                    "A worn mount or accessory imbalance is identified.",
-                    "Een versleten steun of onbalans in hulpaandrijving wordt vastgesteld.",
-                ),
-                "falsify": _text(
-                    lang,
-                    "Mounts and accessory drive are within acceptable condition.",
-                    "Steunen en hulpaandrijving zijn binnen acceptabele conditie.",
-                ),
+                "what": _tr(lang, "ACTION_ENGINE_MOUNTS_WHAT"),
+                "why": _tr(lang, "ACTION_ENGINE_MOUNTS_WHY"),
+                "confirm": _tr(lang, "ACTION_ENGINE_MOUNTS_CONFIRM"),
+                "falsify": _tr(lang, "ACTION_ENGINE_MOUNTS_FALSIFY"),
                 "eta": "15-30 min",
             },
             {
                 "action_id": "engine_combustion_quality",
-                "what": _text(
-                    lang,
-                    "Check misfire counters and fuel/ignition adaptation for cylinders contributing to roughness.",
-                    "Controleer misfire-tellers en brandstof/ontsteking-adaptaties op cilinders die ruwloop veroorzaken.",
-                ),
-                "why": _text(
-                    lang,
-                    "Combustion imbalance can create engine-order vibration without obvious mechanical noise.",
-                    "Verbrandingsonbalans kan motororde-trillingen geven zonder duidelijk mechanisch geluid.",
-                ),
-                "confirm": _text(
-                    lang,
-                    "Cylinder-specific deviation aligns with the vibration complaint.",
-                    "Cilinderspecifieke afwijking sluit aan op de trillingsklacht.",
-                ),
-                "falsify": _text(
-                    lang,
-                    "Combustion quality indicators are stable and balanced.",
-                    "Verbrandingskwaliteits-indicatoren zijn stabiel en gebalanceerd.",
-                ),
+                "what": _tr(lang, "ACTION_ENGINE_COMBUSTION_WHAT"),
+                "why": _tr(lang, "ACTION_ENGINE_COMBUSTION_WHY"),
+                "confirm": _tr(lang, "ACTION_ENGINE_COMBUSTION_CONFIRM"),
+                "falsify": _tr(lang, "ACTION_ENGINE_COMBUSTION_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
-    fallback_why = _text(
-        lang,
-        "Use direct mechanical checks first because source classification is not specific enough yet.",
-        "Gebruik eerst directe mechanische controles omdat de bronclassificatie nog niet specifiek genoeg is.",
-    )
+    fallback_why = _tr(lang, "ACTION_GENERAL_FALLBACK_WHY")
     if weak_spatial_separation:
-        fallback_why = _text(
-            lang,
-            "Spatial separation is weak, so prioritize broad underbody and mount checks before part replacement.",
-            "Ruimtelijke scheiding is zwak, dus prioriteer brede onderstel- en steuncontroles vóór onderdeelvervanging.",
-        )
+        fallback_why = _tr(lang, "ACTION_GENERAL_WEAK_SPATIAL_WHY")
     return [
         {
             "action_id": "general_mechanical_inspection",
-            "what": _text(
-                lang,
-                "Inspect wheel bearings, suspension bushings, subframe mounts, and loose fasteners in the hotspot area.",
-                "Controleer wiellagers, ophangrubbers, subframe-steunen en losse bevestigingen in de hotspot-zone.",
-            ),
+            "what": _tr(lang, "ACTION_GENERAL_INSPECTION_WHAT"),
             "why": fallback_why,
-            "confirm": _text(
-                lang,
-                "A clear mechanical issue is found at or near the hotspot.",
-                "Een duidelijke mechanische afwijking wordt bij of nabij de hotspot gevonden.",
-            ),
-            "falsify": _text(
-                lang,
-                "No abnormal wear, play, or looseness is found.",
-                "Er wordt geen abnormale slijtage, speling of losheid gevonden.",
-            ),
+            "confirm": _tr(lang, "ACTION_GENERAL_INSPECTION_CONFIRM"),
+            "falsify": _tr(lang, "ACTION_GENERAL_INSPECTION_FALSIFY"),
             "eta": "20-35 min",
         }
     ]

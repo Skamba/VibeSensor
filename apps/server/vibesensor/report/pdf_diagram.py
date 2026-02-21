@@ -142,7 +142,7 @@ def car_location_diagram(
         String(
             cx - 16,
             y0 + car_h + 16,
-            text_fn("FRONT", "VOOR"),
+            tr("DIAGRAM_LABEL_FRONT"),
             fontName="Helvetica-Bold",
             fontSize=8,
             fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
@@ -152,7 +152,7 @@ def car_location_diagram(
         String(
             cx - 14,
             y0 - 16,
-            text_fn("REAR", "ACHTER"),
+            tr("DIAGRAM_LABEL_REAR"),
             fontName="Helvetica-Bold",
             fontSize=8,
             fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),

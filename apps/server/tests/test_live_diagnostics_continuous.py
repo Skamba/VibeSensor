@@ -16,7 +16,7 @@ def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
     state = None
     out = None
     for _ in range(3):
-        out = severity_from_peak(vibration_strength_db=23.0, sensor_count=1, prior_state=state)
+        out = severity_from_peak(vibration_strength_db=27.0, sensor_count=1, prior_state=state)
         state = dict((out or {}).get("state") or {})
     assert out is not None
     assert out["key"] == "l3"
@@ -266,6 +266,7 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
             ts_ms=250000,
             sensor_id="s1",
             sensor_label="front-left",
+            sensor_location="front-left",
             peak_hz=31.0,
             peak_amp=0.1,
             vibration_strength_db=10.0,
@@ -275,6 +276,7 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
             ts_ms=250000,
             sensor_id="s2",
             sensor_label="front-right",
+            sensor_location="front-right",
             peak_hz=31.2,
             peak_amp=0.2,
             vibration_strength_db=20.0,

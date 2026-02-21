@@ -25,3 +25,11 @@ KMH_TO_MPS: Final[float] = 1.0 / MPS_TO_KMH
 # ---------------------------------------------------------------------------
 SILENCE_DB: Final[float] = -120.0
 """dB value representing silence / no meaningful vibration signal."""
+
+# ---------------------------------------------------------------------------
+# Spatial analysis
+# ---------------------------------------------------------------------------
+WEAK_SPATIAL_DOMINANCE_THRESHOLD: Final[float] = 1.2
+"""Dominance ratio below which spatial separation between locations is
+considered weak (i.e., the strongest location is less than 1.2x the
+next-strongest, so the confidence in location attribution is low)."""

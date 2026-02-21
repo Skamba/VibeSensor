@@ -9,11 +9,11 @@ class StrengthBand(TypedDict):
 
 
 BANDS: tuple[StrengthBand, ...] = (
-    {"key": "l1", "min_db": 10.0},
+    {"key": "l1", "min_db": 8.0},
     {"key": "l2", "min_db": 16.0},
-    {"key": "l3", "min_db": 22.0},
-    {"key": "l4", "min_db": 28.0},
-    {"key": "l5", "min_db": 34.0},
+    {"key": "l3", "min_db": 26.0},
+    {"key": "l4", "min_db": 36.0},
+    {"key": "l5", "min_db": 46.0},
 )
 
 HYSTERESIS_DB = 2.0
