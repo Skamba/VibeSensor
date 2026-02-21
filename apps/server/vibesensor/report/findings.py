@@ -38,6 +38,7 @@ from .order_analysis import (
     _order_hypotheses,
     _order_label,
 )
+from .phase_segmentation import diagnostic_sample_mask, segment_run_phases
 from .strength_labels import _STRENGTH_THRESHOLDS
 from .test_plan import _location_speedbin_summary
 
@@ -1002,9 +1003,19 @@ def _build_findings(
             )
         )
 
+    # Phase-filter: exclude IDLE samples from order and persistent-peak analysis.
+    # IDLE samples (engine-off / stationary) add broadband noise that dilutes
+    # order-tracking evidence and inflates persistent-peak presence ratios.
+    # Issues #190 and #191.
+    _per_sample_phases, _ = segment_run_phases(samples)
+    _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
+    diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
+    # Fall back to all samples if phase filtering removes too many (< 5 remaining)
+    analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+
     order_findings = _build_order_findings(
         metadata=metadata,
-        samples=samples,
+        samples=analysis_samples,
         speed_sufficient=speed_sufficient,
         steady_speed=steady_speed,
         speed_stddev_kmh=speed_stddev_kmh,
@@ -1012,7 +1023,7 @@ def _build_findings(
         engine_ref_sufficient=engine_ref_sufficient,
         raw_sample_rate_hz=raw_sample_rate_hz,
         accel_units=accel_units,
-        connected_locations=_locations_connected_throughout_run(samples, lang=lang),
+        connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
     )
     findings.extend(order_findings)
@@ -1030,7 +1041,7 @@ def _build_findings(
 
     findings.extend(
         _build_persistent_peak_findings(
-            samples=samples,
+            samples=analysis_samples,  # IDLE-filtered; issue #191
             order_finding_freqs=order_freqs,
             accel_units=accel_units,
             lang=lang,
