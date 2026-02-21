@@ -225,6 +225,40 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
     assert pdf.startswith(b"%PDF")
 
 
+def test_run_suitability_warns_for_degraded_scenario(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_degraded_suitability.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(15):
+        sample = _sample(
+            idx,
+            speed_kmh=None,
+            dominant_freq_hz=14.0,
+            peak_amp_g=0.08,
+        )
+        sample["client_id"] = "solo-1"
+        sample["client_name"] = "front-left wheel"
+        sample["frames_dropped_total"] = idx * 2
+        sample["queue_overflow_drops"] = idx
+        if idx in {0, 5, 10}:
+            sample["accel_x_g"] = 15.9
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    suitability_by_key = {
+        str(item.get("check_key")): item
+        for item in summary["run_suitability"]
+        if isinstance(item, dict)
+    }
+
+    assert suitability_by_key["SUITABILITY_CHECK_SPEED_VARIATION"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_SENSOR_COVERAGE"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_REFERENCE_COMPLETENESS"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"]["state"] == "warn"
+    assert suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]["state"] == "warn"
+
+
 def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     run_path = tmp_path / "run_missing_sample_rate.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=None)]
