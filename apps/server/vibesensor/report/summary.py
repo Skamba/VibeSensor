@@ -187,6 +187,7 @@ def _most_likely_origin_summary(
         "wheel/tire": "SOURCE_WHEEL_TIRE",
         "driveline": "SOURCE_DRIVELINE",
         "engine": "SOURCE_ENGINE",
+        "unknown": "UNKNOWN",
     }
     source_i18n_key = _source_i18n_map.get(source)
     source_human = (
@@ -488,17 +489,18 @@ def summarize_run_data(
 
     sensor_locations = sorted(
         {
-            _location_label(sample)
+            _location_label(sample, lang=language)
             for sample in samples
-            if isinstance(sample, dict) and _location_label(sample)
+            if isinstance(sample, dict) and _location_label(sample, lang=language)
         }
     )
     # Only include locations that were connected throughout the run for
     # intensity aggregation, so intermittent sensors don't skew results.
-    connected_locations = _locations_connected_throughout_run(samples)
+    connected_locations = _locations_connected_throughout_run(samples, lang=language)
     sensor_intensity_by_location = _sensor_intensity_by_location(
         samples,
         include_locations=set(sensor_locations),
+        lang=language,
     )
 
     summary: dict[str, Any] = {

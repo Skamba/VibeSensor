@@ -939,6 +939,10 @@
     "en": "Unlabeled sensor",
     "nl": "Sensor zonder label"
   },
+  "SENSOR_ID_SUFFIX": {
+    "en": "Sensor {sensor_id}",
+    "nl": "Sensor {sensor_id}"
+  },
   "VALIDATE_GEARING_SLIP_ASSUMPTIONS_AGAINST_REAL_RPM_IF": {
     "en": "Validate gearing/slip assumptions against real RPM if available.",
     "nl": "Valideer aannames over versnelling/slip met echt toerental indien beschikbaar."
