@@ -299,11 +299,11 @@ class TestConfidenceCalibration:
 class TestStrengthBandsAlignment:
     """Ensure strength_bands.py and strength_labels.py agree on thresholds."""
 
-    def test_negligible_returns_none(self) -> None:
-        """dB values 0–7.9 should return None bucket (negligible)."""
-        assert bucket_for_strength(0.0) is None
-        assert bucket_for_strength(5.0) is None
-        assert bucket_for_strength(7.9) is None
+    def test_negligible_returns_l0(self) -> None:
+        """dB values 0–7.9 should return l0 bucket (negligible)."""
+        assert bucket_for_strength(0.0) == "l0"
+        assert bucket_for_strength(5.0) == "l0"
+        assert bucket_for_strength(7.9) == "l0"
 
     def test_l1_starts_at_8(self) -> None:
         assert bucket_for_strength(8.0) == "l1"
