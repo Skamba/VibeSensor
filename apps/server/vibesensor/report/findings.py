@@ -24,6 +24,7 @@ from .helpers import (
     _corr_abs,
     _effective_engine_rpm,
     _location_label,
+    _locations_connected_throughout_run,
     _primary_vibration_strength_db,
     _sample_top_peaks,
     _speed_bin_label,
@@ -70,7 +71,8 @@ def _sensor_intensity_by_location(
     include_locations: set[str] | None = None,
     *,
     lang: object = "en",
-) -> list[dict[str, float | str | int]]:
+    connected_locations: set[str] | None = None,
+) -> list[dict[str, float | str | int | bool]]:
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[float]] = defaultdict(list)
@@ -105,10 +107,11 @@ def _sensor_intensity_by_location(
             strength_bucket_counts[location][bucket] += 1
             strength_bucket_totals[location] += 1
 
-    rows: list[dict[str, float | str | int]] = []
+    rows: list[dict[str, float | str | int | bool]] = []
     target_locations = set(sample_counts.keys())
     if include_locations is not None:
         target_locations |= set(include_locations)
+    max_sample_count = max((sample_counts.get(location, 0) for location in target_locations), default=0)
 
     for location in sorted(target_locations):
         values = grouped_amp.get(location, [])
@@ -131,11 +134,17 @@ def _sensor_intensity_by_location(
                 (bucket_counts[key] / bucket_total * 100.0) if bucket_total > 0 else 0.0
             )
         sample_count = int(sample_counts.get(location, 0))
+        sample_coverage_ratio = (
+            (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
+        )
+        sample_coverage_warning = max_sample_count >= 5 and sample_coverage_ratio <= 0.20
         rows.append(
             {
                 "location": location,
                 "samples": sample_count,
                 "sample_count": sample_count,
+                "sample_coverage_ratio": sample_coverage_ratio,
+                "sample_coverage_warning": sample_coverage_warning,
                 "mean_intensity_db": mean(values) if values else None,
                 "p50_intensity_db": percentile(values_sorted, 0.50) if values else None,
                 "p95_intensity_db": percentile(values_sorted, 0.95) if values else None,
@@ -147,6 +156,7 @@ def _sensor_intensity_by_location(
         )
     rows.sort(
         key=lambda row: (
+            1 if not bool(row.get("sample_coverage_warning")) else 0,
             float(row.get("p95_intensity_db") or 0.0),
             float(row.get("max_intensity_db") or 0.0),
         ),
@@ -190,6 +200,7 @@ def _build_order_findings(
     engine_ref_sufficient: bool,
     raw_sample_rate_hz: float | None,
     accel_units: str,
+    connected_locations: set[str],
     lang: object,
 ) -> list[dict[str, object]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
@@ -259,6 +270,7 @@ def _build_order_findings(
                     "speed_kmh": _as_float(sample.get("speed_kmh")),
                     "predicted_hz": predicted_hz,
                     "matched_hz": best_hz,
+                    "rel_error": delta_hz / max(1e-9, predicted_hz),
                     "amp": best_amp,
                     "location": _location_label(sample, lang=lang),
                 }
@@ -303,8 +315,16 @@ def _build_order_findings(
             corr = None
         corr_val = corr if corr is not None else 0.0
 
-        # Compute location hotspot BEFORE confidence so spatial info is available
-        location_line, location_hotspot = _location_speedbin_summary(matched_points, lang=lang)
+        # Compute location hotspot BEFORE confidence so spatial info is available.
+        # When order evidence is accepted via focused high-speed coverage,
+        # localize within that same speed band to avoid low-speed road-noise
+        # bins dominating strongest-location selection.
+        relevant_speed_bins = [focused_speed_band] if focused_speed_band else None
+        location_line, location_hotspot = _location_speedbin_summary(
+            matched_points,
+            lang=lang,
+            relevant_speed_bins=relevant_speed_bins,
+        )
         weak_spatial_separation = (
             bool(location_hotspot.get("weak_spatial_separation"))
             if isinstance(location_hotspot, dict)
@@ -754,6 +774,7 @@ def _build_findings(
         engine_ref_sufficient=engine_ref_sufficient,
         raw_sample_rate_hz=raw_sample_rate_hz,
         accel_units=accel_units,
+        connected_locations=_locations_connected_throughout_run(samples, lang=lang),
         lang=lang,
     )
     findings.extend(order_findings)

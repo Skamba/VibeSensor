@@ -421,6 +421,51 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
 
 
+def test_sensor_location_stats_warn_on_sparse_sensor_keeps_ranking_stable(
+    tmp_path: Path,
+) -> None:
+    run_path = tmp_path / "run_location_stats_sparse_sensor.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+
+    for idx in range(50):
+        full_sensor = _sample(
+            idx,
+            speed_kmh=60.0 + idx,
+            dominant_freq_hz=20.0,
+            peak_amp_g=0.08,
+        )
+        full_sensor["client_id"] = "full-1"
+        full_sensor["client_name"] = "front-left wheel"
+        full_sensor["vibration_strength_db"] = 22.0
+        records.append(full_sensor)
+
+        if idx < 10:
+            sparse_sensor = _sample(
+                idx,
+                speed_kmh=60.0 + idx,
+                dominant_freq_hz=19.0,
+                peak_amp_g=0.09,
+            )
+            sparse_sensor["client_id"] = "sparse-2"
+            sparse_sensor["client_name"] = "front-right wheel"
+            sparse_sensor["vibration_strength_db"] = 40.0
+            records.append(sparse_sensor)
+
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    rows = summary["sensor_intensity_by_location"]
+    assert len(rows) == 2
+    assert rows[0]["location"] == "front-left wheel"
+    assert bool(rows[0]["sample_coverage_warning"]) is False
+
+    sparse_row = next(row for row in rows if row["location"] == "front-right wheel")
+    assert sparse_row["sample_count"] == 10
+    assert sparse_row["sample_coverage_ratio"] == pytest.approx(0.2, rel=1e-6)
+    assert bool(sparse_row["sample_coverage_warning"]) is True
+
+
 def test_sensor_location_stats_stay_stable_when_client_name_changes(tmp_path: Path) -> None:
     run_path = tmp_path / "run_location_stats_stable_location_code.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
