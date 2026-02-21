@@ -418,6 +418,43 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
 
 
+def test_sensor_location_stats_stay_stable_when_client_name_changes(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_location_stats_stable_location_code.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+
+    first_sample = _sample(
+        0,
+        speed_kmh=60.0,
+        dominant_freq_hz=20.0,
+        peak_amp_g=0.09,
+    )
+    first_sample["client_id"] = "sensor-1"
+    first_sample["client_name"] = "Front Left"
+    first_sample["location"] = "front_left_wheel"
+    records.append(first_sample)
+
+    renamed_sample = _sample(
+        1,
+        speed_kmh=61.0,
+        dominant_freq_hz=20.0,
+        peak_amp_g=0.091,
+    )
+    renamed_sample["client_id"] = "sensor-1"
+    renamed_sample["client_name"] = "Front-Left Renamed"
+    renamed_sample["location"] = "front_left_wheel"
+    records.append(renamed_sample)
+
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    assert summary["sensor_locations"] == ["Front Left Wheel"]
+    rows = summary["sensor_intensity_by_location"]
+    assert len(rows) == 1
+    assert rows[0]["location"] == "Front Left Wheel"
+    assert rows[0]["sample_count"] == 2
+
+
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
     run_path = tmp_path / "run_a4_portrait.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]

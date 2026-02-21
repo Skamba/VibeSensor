@@ -54,6 +54,7 @@ class _FakeRecord:
     name: str
     sample_rate_hz: int
     latest_metrics: dict
+    location: str = ""
     frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
@@ -65,6 +66,7 @@ class _FakeRegistry:
             "active": _FakeRecord(
                 client_id="active",
                 name="front-left wheel",
+                location="front_left_wheel",
                 sample_rate_hz=800,
                 latest_metrics={
                     "strength_metrics": {
@@ -91,6 +93,7 @@ class _FakeRegistry:
             "stale": _FakeRecord(
                 client_id="stale",
                 name="rear-right wheel",
+                location="rear_right_wheel",
                 sample_rate_hz=800,
                 latest_metrics={
                     "strength_metrics": {
@@ -202,6 +205,7 @@ def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
     assert len(rows) == 1
     assert rows[0]["client_id"] == "active"
     assert rows[0]["client_name"] == "front-left wheel"
+    assert rows[0]["location"] == "front_left_wheel"
     peaks = rows[0]["top_peaks"]
     assert isinstance(peaks, list) and peaks
     assert peaks[0]["hz"] == 15.0
