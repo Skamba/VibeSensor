@@ -21,7 +21,11 @@ Validation
 - Lint: `make lint`
 - CI-aligned tests: `make test-all`
 - Optional fast backend tests: `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`
+- PR checks watcher (every PR): `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
 - Backend/frontend changes require Docker validation (`docker compose build --pull`, `docker compose up -d`, simulator run, UI stale-data check).
+
+PR gate
+- Use the watcher for every PR update; on `RESULT=NON_GREEN` fix immediately and re-run. Merge only after `RESULT=ALL_GREEN`.
 
 Run server
 - Local: `python -m vibesensor.app --config apps/server/config.dev.yaml`

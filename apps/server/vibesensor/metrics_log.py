@@ -221,6 +221,7 @@ class MetricsLogger:
             run_id=run_id,
             start_time_utc=start_time_utc,
             sensor_model=self.sensor_model,
+            firmware_version=self._firmware_version_for_run(),
             raw_sample_rate_hz=raw_sample_rate_hz,
             feature_interval_s=feature_interval_s,
             fft_window_size_samples=self.fft_window_size_samples
@@ -257,6 +258,21 @@ class MetricsLogger:
         if self._language_provider is not None:
             metadata["language"] = str(self._language_provider()).strip().lower() or "en"
         return metadata
+
+    def _firmware_version_for_run(self) -> str | None:
+        versions: set[str] = set()
+        for client_id in self.registry.active_client_ids():
+            record = self.registry.get(client_id)
+            if record is None:
+                continue
+            firmware_version = str(getattr(record, "firmware_version", "") or "").strip()
+            if firmware_version:
+                versions.add(firmware_version)
+        if not versions:
+            return None
+        if len(versions) == 1:
+            return next(iter(versions))
+        return ", ".join(sorted(versions))
 
     @staticmethod
     def _safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
@@ -405,6 +421,7 @@ class MetricsLogger:
                 t_s=t_s,
                 client_id=client_id,
                 client_name=record.name,
+                location=str(getattr(record, "location", "") or ""),
                 sample_rate_hz=int(sample_rate_hz) if sample_rate_hz else None,
                 speed_kmh=speed_kmh,
                 gps_speed_kmh=gps_speed_kmh,

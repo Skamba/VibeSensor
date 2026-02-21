@@ -233,7 +233,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     na = tr("UNKNOWN")
 
     # -- Header panel (title + date + car) --
-    hdr_h = 22 * mm
+    hdr_h = 30 * mm
     hdr_y = page_top - hdr_h
     _draw_panel(c, m, hdr_y, W, hdr_h, fill=SOFT_BG)
 
@@ -244,6 +244,9 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     meta_x = m + 4 * mm
     y1 = hdr_y + hdr_h - 12 * mm
     y2 = y1 - 4.5 * mm
+    y3 = y2 - 4.5 * mm
+    y4 = y3 - 4.5 * mm
+    y5 = y4 - 4.5 * mm
 
     _draw_kv(c, meta_x, y1, tr("RUN_DATE"), _safe(data.run_datetime), label_w=22 * mm, fs=FS_BODY)
     if data.run_id:
@@ -251,22 +254,49 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     car_parts = [p for p in (_safe(data.car.name, ""), _safe(data.car.car_type, "")) if p]
     car_text = " \u2014 ".join(car_parts) if car_parts else na
     _draw_kv(c, meta_x, y2, tr("CAR_LABEL"), car_text, label_w=12 * mm, fs=FS_BODY)
+    if data.start_time_utc:
+        _draw_kv(
+            c, meta_x, y3, tr("START_TIME_UTC"), data.start_time_utc, label_w=22 * mm, fs=FS_BODY
+        )
+    if data.end_time_utc:
+        _draw_kv(c, meta_x, y4, tr("END_TIME_UTC"), data.end_time_utc, label_w=22 * mm, fs=FS_BODY)
 
-    # Duration / sensor count on the right side of y2 row
+    # Duration / sensor count on the right side, plus sensor/tire metadata
     meta_right = meta_x + 100 * mm
     extra_parts: list[str] = []
     if data.duration_text:
         extra_parts.append(f"{tr('DURATION')}: {data.duration_text}")
     if data.sensor_count:
-        extra_parts.append(f"{data.sensor_count} sensors")
+        extra_parts.append(f"{tr('SENSORS_LABEL')}: {data.sensor_count}")
     if data.sensor_locations:
         extra_parts.append(", ".join(data.sensor_locations[:6]))
     if data.sample_count:
-        extra_parts.append(f"{data.sample_count} {tr('SAMPLES').lower()}")
+        extra_parts.append(f"{tr('SAMPLE_COUNT_LABEL')}: {data.sample_count}")
+    if data.sample_rate_hz:
+        extra_parts.append(f"{tr('RAW_SAMPLE_RATE_HZ_LABEL')}: {data.sample_rate_hz}")
     if extra_parts:
         c.setFillColor(_hex(MUTED_CLR))
         c.setFont(FONT, FS_BODY)
         c.drawString(meta_right, y2, " \u00b7 ".join(extra_parts))
+    if data.sensor_model:
+        _draw_kv(
+            c, meta_right, y3, tr("SENSOR_MODEL"), data.sensor_model, label_w=24 * mm, fs=FS_BODY
+        )
+    if data.firmware_version:
+        firmware_label = "Firmwareversie" if data.lang == "nl" else "Firmware Version"
+        _draw_kv(
+            c,
+            meta_right,
+            y4,
+            firmware_label,
+            data.firmware_version,
+            label_w=24 * mm,
+            fs=FS_BODY,
+        )
+    if data.tire_spec_text:
+        _draw_kv(
+            c, meta_right, y5, tr("TIRE_SIZE"), data.tire_spec_text, label_w=14 * mm, fs=FS_BODY
+        )
 
     y_cursor = hdr_y - GAP
 
@@ -365,12 +395,15 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         for item in data.data_trust[:6]:
             icon = "\u2713" if item.state == "pass" else "\u26a0"
             state_lbl = tr("PASS") if item.state == "pass" else tr("WARN_SHORT")
+            value = f"{icon} {state_lbl}"
+            if item.state != "pass" and item.detail:
+                value = f"{icon} {item.detail}"
             _draw_kv(
                 c,
                 tx,
                 ty,
                 item.check,
-                f"{icon} {state_lbl}",
+                value,
                 label_w=DATA_TRUST_LABEL_W,
                 fs=FS_SMALL,
             )
@@ -392,6 +425,8 @@ def _draw_system_card(
     tr,
 ) -> None:
     """Render a single system-finding card."""
+    na = tr("NOT_AVAILABLE")
+
     c.setFillColor(_hex(SOFT_BG))
     c.setStrokeColor(_hex(LINE_CLR))
     c.roundRect(x, y, w, h, 4, stroke=1, fill=1)
@@ -405,14 +440,18 @@ def _draw_system_card(
 
     c.setFillColor(_hex(SUB_CLR))
     c.setFont(FONT, 7)
-    c.drawString(cx, cy - 4 * mm, f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location)}")
+    c.drawString(
+        cx,
+        cy - 4 * mm,
+        f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location, na)}",
+    )
 
     _draw_text(
         c,
         cx,
         cy - 8 * mm,
         w - 6 * mm,
-        _safe(card.pattern_summary),
+        _safe(card.pattern_summary, na),
         size=7,
         color=SUB_CLR,
         max_lines=1,
@@ -575,6 +614,8 @@ def _draw_pattern_evidence(
     ev: PatternEvidence,
     tr,
 ) -> None:
+    na = tr("NOT_AVAILABLE")
+
     _draw_panel(c, x, y, w, h, tr("PATTERN_EVIDENCE"))
 
     rx = x + 4 * mm
@@ -582,17 +623,17 @@ def _draw_pattern_evidence(
     step = 4.0 * mm
     lw = 32 * mm
 
-    systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else tr("UNKNOWN")
+    systems_text = ", ".join(ev.matched_systems) if ev.matched_systems else na
     _draw_kv(c, rx, ry, tr("MATCHED_SYSTEMS"), systems_text, label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("STRONGEST_SENSOR"), _safe(ev.strongest_location), label_w=lw, fs=7)
+    _draw_kv(c, rx, ry, tr("STRONGEST_SENSOR"), _safe(ev.strongest_location, na), label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("SPEED_BAND"), _safe(ev.speed_band), label_w=lw, fs=7)
+    _draw_kv(c, rx, ry, tr("SPEED_BAND"), _safe(ev.speed_band, na), label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("STRENGTH"), _safe(ev.strength_label), label_w=lw, fs=7)
+    _draw_kv(c, rx, ry, tr("STRENGTH"), _safe(ev.strength_label, na), label_w=lw, fs=7)
     ry -= step
 
-    cert_val = _safe(ev.certainty_label)
+    cert_val = _safe(ev.certainty_label, na)
     if ev.certainty_pct:
         cert_val = f"{cert_val} ({ev.certainty_pct})"
     if ev.certainty_reason:
@@ -615,7 +656,7 @@ def _draw_pattern_evidence(
     c.drawString(rx, ry, tr("INTERPRETATION"))
     ry -= 3.6 * mm
     ry = _draw_text(
-        c, rx, ry, w - 8 * mm, _safe(ev.interpretation), size=6, color=SUB_CLR, max_lines=2
+        c, rx, ry, w - 8 * mm, _safe(ev.interpretation, na), size=6, color=SUB_CLR, max_lines=2
     )
     ry -= 2 * mm
 
@@ -624,7 +665,9 @@ def _draw_pattern_evidence(
     c.setFont(FONT_B, FS_SMALL)
     c.drawString(rx, ry, tr("WHY_PARTS_LISTED"))
     ry -= 3.4 * mm
-    _draw_text(c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text), size=6, color=SUB_CLR, max_lines=3)
+    _draw_text(
+        c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text, na), size=6, color=SUB_CLR, max_lines=3
+    )
 
 
 def _draw_peaks_table(

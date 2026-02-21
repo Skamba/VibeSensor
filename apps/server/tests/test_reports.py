@@ -39,6 +39,7 @@ def _run_metadata(
     *,
     run_id: str,
     raw_sample_rate_hz: int | None,
+    firmware_version: str | None = None,
     tire_circumference_m: float | None = None,
     tire_width_mm: float | None = None,
     tire_aspect_pct: float | None = None,
@@ -89,6 +90,8 @@ def _run_metadata(
         metadata["final_drive_ratio"] = final_drive_ratio
     if current_gear_ratio is not None:
         metadata["current_gear_ratio"] = current_gear_ratio
+    if firmware_version:
+        metadata["firmware_version"] = firmware_version
     return metadata
 
 
@@ -418,6 +421,43 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
 
 
+def test_sensor_location_stats_stay_stable_when_client_name_changes(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_location_stats_stable_location_code.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+
+    first_sample = _sample(
+        0,
+        speed_kmh=60.0,
+        dominant_freq_hz=20.0,
+        peak_amp_g=0.09,
+    )
+    first_sample["client_id"] = "sensor-1"
+    first_sample["client_name"] = "Front Left"
+    first_sample["location"] = "front_left_wheel"
+    records.append(first_sample)
+
+    renamed_sample = _sample(
+        1,
+        speed_kmh=61.0,
+        dominant_freq_hz=20.0,
+        peak_amp_g=0.091,
+    )
+    renamed_sample["client_id"] = "sensor-1"
+    renamed_sample["client_name"] = "Front-Left Renamed"
+    renamed_sample["location"] = "front_left_wheel"
+    records.append(renamed_sample)
+
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    assert summary["sensor_locations"] == ["Front Left Wheel"]
+    rows = summary["sensor_intensity_by_location"]
+    assert len(rows) == 1
+    assert rows[0]["location"] == "Front Left Wheel"
+    assert rows[0]["sample_count"] == 2
+
+
 def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
     run_path = tmp_path / "run_a4_portrait.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
@@ -526,3 +566,60 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
     assert text_blob.count("Next steps") == 1
+
+
+def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_nl_header_metadata.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(10):
+        records.append(
+            {
+                **_sample(
+                    idx,
+                    speed_kmh=50.0 + idx,
+                    dominant_freq_hz=15.0,
+                    peak_amp_g=0.06 + (idx * 0.0007),
+                ),
+                "client_id": "client1234",
+            }
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, lang="nl")
+    pdf = build_report_pdf(summary)
+    reader = PdfReader(BytesIO(pdf))
+    text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
+
+    assert "Duur:" in text_blob
+    assert "Sensoren:" in text_blob
+    assert "Aantal samples:" in text_blob
+    assert "Bemonsteringsfrequentie (Hz):" in text_blob
+    assert " sensors" not in text_blob.lower()
+
+
+def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_with_firmware.jsonl"
+    records: list[dict] = [
+        _run_metadata(run_id="run-01", raw_sample_rate_hz=800, firmware_version="esp-fw-1.2.3")
+    ]
+    for idx in range(10):
+        records.append(
+            _sample(
+                idx,
+                speed_kmh=50.0 + idx,
+                dominant_freq_hz=15.0,
+                peak_amp_g=0.06 + (idx * 0.0007),
+            )
+        )
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    assert summary.get("firmware_version") == "esp-fw-1.2.3"
+
+    pdf = build_report_pdf(summary)
+    reader = PdfReader(BytesIO(pdf))
+    text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
+    assert "Firmware Version" in text_blob
+    assert "esp-fw-1.2.3" in text_blob

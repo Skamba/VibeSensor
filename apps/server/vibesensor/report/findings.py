@@ -68,6 +68,8 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
 def _sensor_intensity_by_location(
     samples: list[dict[str, Any]],
     include_locations: set[str] | None = None,
+    *,
+    lang: object = "en",
 ) -> list[dict[str, float | str | int]]:
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
@@ -80,7 +82,7 @@ def _sensor_intensity_by_location(
     for sample in samples:
         if not isinstance(sample, dict):
             continue
-        location = _location_label(sample)
+        location = _location_label(sample, lang=lang)
         if not location:
             continue
         if include_locations is not None and location not in include_locations:
@@ -211,6 +213,8 @@ def _build_order_findings(
         measured_vals: list[float] = []
         matched_points: list[dict[str, object]] = []
         ref_sources: set[str] = set()
+        possible_by_speed_bin: dict[str, int] = defaultdict(int)
+        matched_by_speed_bin: dict[str, int] = defaultdict(int)
 
         for sample in samples:
             peaks = _sample_top_peaks(sample)
@@ -225,6 +229,14 @@ def _build_order_findings(
                 continue
             possible += 1
             ref_sources.add(ref_source)
+            sample_speed = _as_float(sample.get("speed_kmh"))
+            sample_speed_bin = (
+                _speed_bin_label(sample_speed)
+                if sample_speed is not None and sample_speed > 0
+                else None
+            )
+            if sample_speed_bin is not None:
+                possible_by_speed_bin[sample_speed_bin] += 1
 
             tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL)
             best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
@@ -233,6 +245,8 @@ def _build_order_findings(
                 continue
 
             matched += 1
+            if sample_speed_bin is not None:
+                matched_by_speed_bin[sample_speed_bin] += 1
             rel_errors.append(delta_hz / max(1e-9, predicted_hz))
             matched_amp.append(best_amp)
             floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
@@ -246,7 +260,7 @@ def _build_order_findings(
                     "predicted_hz": predicted_hz,
                     "matched_hz": best_hz,
                     "amp": best_amp,
-                    "location": _location_label(sample),
+                    "location": _location_label(sample, lang=lang),
                 }
             )
 
@@ -261,7 +275,22 @@ def _build_order_findings(
             speed_stddev_kmh is not None and speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
         )
         min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
-        if match_rate < min_match_rate:
+        effective_match_rate = match_rate
+        focused_speed_band: str | None = None
+        if match_rate < min_match_rate and possible_by_speed_bin:
+            highest_speed_bin = max(possible_by_speed_bin.keys(), key=_speed_bin_sort_key)
+            focused_possible = int(possible_by_speed_bin.get(highest_speed_bin, 0))
+            focused_matched = int(matched_by_speed_bin.get(highest_speed_bin, 0))
+            focused_rate = focused_matched / max(1, focused_possible)
+            min_focused_possible = max(ORDER_MIN_MATCH_POINTS, ORDER_MIN_COVERAGE_POINTS // 2)
+            if (
+                focused_possible >= min_focused_possible
+                and focused_matched >= ORDER_MIN_MATCH_POINTS
+                and focused_rate >= min_match_rate
+            ):
+                focused_speed_band = highest_speed_bin
+                effective_match_rate = focused_rate
+        if effective_match_rate < min_match_rate:
             continue
 
         mean_amp = mean(matched_amp) if matched_amp else 0.0
@@ -281,6 +310,11 @@ def _build_order_findings(
             if isinstance(location_hotspot, dict)
             else True
         )
+        localization_confidence = (
+            float(location_hotspot.get("localization_confidence"))
+            if isinstance(location_hotspot, dict)
+            else 0.05
+        )
 
         # Count how many distinct locations independently detected this order
         corroborating_locations = len(
@@ -294,7 +328,7 @@ def _build_order_findings(
         # Base is intentionally low; weight must come from evidence.
         confidence = (
             0.10
-            + (0.35 * match_rate)
+            + (0.35 * effective_match_rate)
             + (0.20 * error_score)
             + (0.15 * corr_val)
             + (0.15 * snr_score)  # was 0.10 — SNR matters more
@@ -304,6 +338,8 @@ def _build_order_findings(
             confidence = min(confidence, 0.45)
         elif mean_amp < 0.005:  # < 5 mg → very weak
             confidence *= 0.90
+        # Penalty: location ambiguity / weak localization confidence
+        confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
         # Penalty: weak spatial separation
         if weak_spatial_separation:
             confidence *= 0.85
@@ -324,7 +360,7 @@ def _build_order_findings(
         confidence = max(0.08, min(0.97, confidence))
 
         ranking_score = (
-            match_rate
+            effective_match_rate
             * log1p(mean_amp / max(1e-6, mean_floor))
             * max(0.0, (1.0 - min(1.0, mean_rel_err / 0.5)))
         )
@@ -336,7 +372,7 @@ def _build_order_findings(
             order_label=_order_label(lang, hypothesis.order, hypothesis.order_label_base),
             matched=matched,
             possible=possible,
-            match_rate=match_rate,
+            match_rate=effective_match_rate,
             mean_rel_err=mean_rel_err,
             ref_text=ref_text,
         )
@@ -349,6 +385,8 @@ def _build_order_findings(
         strongest_speed_band = (
             str(location_hotspot.get("speed_range")) if isinstance(location_hotspot, dict) else ""
         )
+        if focused_speed_band and not strongest_speed_band:
+            strongest_speed_band = focused_speed_band
         actions = _finding_actions_for_source(
             lang,
             hypothesis.suspected_source,
@@ -387,10 +425,13 @@ def _build_order_findings(
                 if isinstance(location_hotspot, dict)
                 else None
             ),
+            "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,
             "corroborating_locations": corroborating_locations,
             "evidence_metrics": {
-                "match_rate": match_rate,
+                "match_rate": effective_match_rate,
+                "global_match_rate": match_rate,
+                "focused_speed_band": focused_speed_band,
                 "mean_relative_error": mean_rel_err,
                 "mean_matched_amplitude": mean_amp,
                 "mean_noise_floor": mean_floor,

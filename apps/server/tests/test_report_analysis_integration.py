@@ -106,6 +106,170 @@ def test_build_findings_nl_language() -> None:
     # produce actionable findings, so we only verify return type.
 
 
+def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(30):
+        speed_kmh = 40.0 + (2.0 * idx)
+        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        high_speed_band = speed_kmh >= 90.0
+        samples.append(
+            {
+                **_make_sample(float(idx), speed_kmh, 0.03 if high_speed_band else 0.01),
+                "strength_floor_amp_g": 0.003,
+                "top_peaks": [
+                    {"hz": wheel_hz, "amp": 0.03}
+                    if high_speed_band
+                    else {"hz": wheel_hz + 7.0, "amp": 0.01}
+                ],
+            }
+        )
+
+    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    wheel_finding = next(
+        (f for f in findings if str(f.get("finding_key") or "") == "wheel_1x"),
+        None,
+    )
+
+    assert wheel_finding is not None
+    strongest_speed_band = str(wheel_finding.get("strongest_speed_band") or "")
+    assert strongest_speed_band in {"90-100 km/h", "100-110 km/h"}
+
+
+def test_build_findings_detects_driveline_2x_order() -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(24):
+        speed_kmh = 55.0 + (2.0 * idx)
+        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        samples.append(
+            {
+                **_make_sample(float(idx), speed_kmh, 0.04),
+                "strength_floor_amp_g": 0.002,
+                "top_peaks": [
+                    {"hz": wheel_hz * 3.08 * 2.0, "amp": 0.04},
+                ],
+            }
+        )
+
+    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    driveline_2x = next(
+        (f for f in findings if str(f.get("finding_key") or "") == "driveshaft_2x"),
+        None,
+    )
+
+    assert driveline_2x is not None
+    assert driveline_2x.get("suspected_source") == "driveline"
+    assert driveline_2x.get("frequency_hz_or_order") == "2x driveshaft order"
+
+
+def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
+    from vibesensor.report.test_plan import _location_speedbin_summary
+
+    matches = [
+        {"speed_kmh": 85.0, "amp": 0.0110, "location": "Rear Right"},
+        {"speed_kmh": 85.0, "amp": 0.0102, "location": "Rear Left"},
+        {"speed_kmh": 86.0, "amp": 0.0112, "location": "Rear Right"},
+        {"speed_kmh": 86.0, "amp": 0.0103, "location": "Rear Left"},
+    ]
+
+    sentence, hotspot = _location_speedbin_summary(matches, lang="en")
+
+    assert hotspot is not None
+    assert bool(hotspot.get("ambiguous_location"))
+    assert hotspot.get("location") == "ambiguous location: Rear Right / Rear Left"
+    assert hotspot.get("ambiguous_locations") == ["Rear Right", "Rear Left"]
+    assert float(hotspot.get("localization_confidence") or 0.0) < 0.4
+    assert "ambiguous location" in sentence
+
+
+def test_build_findings_penalizes_low_localization_confidence(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+    from vibesensor.report import findings as findings_module
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(24):
+        speed = 70.0 + idx
+        wheel_hz = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
+        samples.append(
+            {
+                **_make_sample(float(idx), speed, 0.03),
+                "top_peaks": [{"hz": wheel_hz, "amp": 0.03}],
+            }
+        )
+
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda matched_points, lang: (
+            "strong location",
+            {
+                "location": "Front Left",
+                "speed_range": "70-80 km/h",
+                "dominance_ratio": 2.0,
+                "weak_spatial_separation": False,
+                "localization_confidence": 1.0,
+            },
+        ),
+    )
+    high_conf_findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    high_conf = max(
+        float(f.get("confidence_0_to_1") or 0.0)
+        for f in high_conf_findings
+        if not str(f.get("finding_id") or "").startswith("REF_")
+    )
+
+    monkeypatch.setattr(
+        findings_module,
+        "_location_speedbin_summary",
+        lambda matched_points, lang: (
+            "ambiguous location",
+            {
+                "location": "ambiguous location: Front Left / Front Right",
+                "speed_range": "70-80 km/h",
+                "dominance_ratio": 1.05,
+                "weak_spatial_separation": False,
+                "localization_confidence": 0.1,
+            },
+        ),
+    )
+    low_conf_findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    low_conf = max(
+        float(f.get("confidence_0_to_1") or 0.0)
+        for f in low_conf_findings
+        if not str(f.get("finding_id") or "").startswith("REF_")
+    )
+
+    assert low_conf < high_conf
+
+
 # -- summarize_log -------------------------------------------------------------
 
 

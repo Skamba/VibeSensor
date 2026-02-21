@@ -78,6 +78,7 @@ def create_run_metadata(
     fft_window_type: str | None,
     peak_picker_method: str,
     accel_scale_g_per_lsb: float | None,
+    firmware_version: str | None = None,
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
 ) -> dict[str, Any]:
@@ -85,6 +86,7 @@ def create_run_metadata(
         run_id=run_id,
         start_time_utc=start_time_utc,
         sensor_model=sensor_model,
+        firmware_version=firmware_version,
         raw_sample_rate_hz=raw_sample_rate_hz,
         feature_interval_s=feature_interval_s,
         fft_window_size_samples=fft_window_size_samples,

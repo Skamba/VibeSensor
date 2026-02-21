@@ -34,6 +34,7 @@ If key references are missing, set:
 Optional but recommended:
 
 - `tire_circumference_m` (required for wheel-order labeling)
+- `firmware_version` (ESP firmware version string captured from connected sensors)
 
 ### `sample` (per timestamp)
 

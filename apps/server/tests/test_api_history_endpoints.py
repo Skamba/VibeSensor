@@ -197,6 +197,10 @@ async def test_history_insights_respects_lang_query() -> None:
     assert en["lang"] == "en"
     assert nl["lang"] == "nl"
     assert en["most_likely_origin"] != nl["most_likely_origin"]
+    checks_en = {str(item.get("check")) for item in en.get("run_suitability", [])}
+    checks_nl = {str(item.get("check")) for item in nl.get("run_suitability", [])}
+    assert "Speed variation" in checks_en
+    assert "Snelheidsvariatie" in checks_nl
 
 
 @pytest.mark.asyncio

@@ -26,6 +26,9 @@ Canonical agent workflow (shared source of truth)
 
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
+- For every PR, use `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor` as the default monitor.
+- Treat watcher exit `RESULT=NON_GREEN` as fail-fast: inspect the latest failing run immediately, implement the minimal fix, push, and restart the watcher.
+- Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.
 - Test suite for CI alignment: `make test-all`.
 - Optional focused backend pytest: `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.

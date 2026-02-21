@@ -271,6 +271,15 @@ def test_location_label_unlabeled() -> None:
     assert _location_label({}) == "Unlabeled sensor"
 
 
+def test_location_label_unlabeled_nl() -> None:
+    assert _location_label({}, lang="nl") == "Sensor zonder label"
+
+
+def test_location_label_with_client_id_only_nl() -> None:
+    result = _location_label({"client_id": "AB:CD:EF:12:34:56"}, lang="nl")
+    assert result == "Sensor 4:56"
+
+
 # -- _wheel_hz -----------------------------------------------------------------
 
 
