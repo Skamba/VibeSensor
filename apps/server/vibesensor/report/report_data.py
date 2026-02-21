@@ -419,6 +419,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         sensor_locations_list = []
     sensor_count_used = int(_as_float(summary.get("sensor_count_used")) or 0)
     sensor_model_val = str(summary.get("sensor_model") or "").strip() or None
+    firmware_version_val = str(summary.get("firmware_version") or "").strip() or None
 
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
