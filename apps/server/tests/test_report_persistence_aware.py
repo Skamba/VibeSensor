@@ -288,7 +288,7 @@ class TestTopPeaksTableRows:
 
         rows = _top_peaks_table_rows(samples, top_n=1, freq_bin_hz=1.0)
         assert rows
-        assert rows[0]["typical_speed_band"] == "50-100 km/h"
+        assert rows[0]["typical_speed_band"] == "80-90 km/h"
 
     def test_typical_speed_band_uses_amplitude_weighted_window(self) -> None:
         samples = []
@@ -451,25 +451,6 @@ class TestBuildPersistentPeakFindings:
                 peaks.append({"hz": impact_hz, "amp": 0.8})
             samples.append(_sample(float(i) * 0.5, 80.0, peaks))
 
-    def test_persistent_peak_speed_band_uses_amplitude_weighting(self) -> None:
-        speeds = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0]
-        amps = [0.001, 0.002, 0.010, 0.080, 0.090, 0.080, 0.010, 0.001]
-        samples = [
-            _sample(float(idx), speed_kmh, [{"hz": 30.0, "amp": amp}])
-            for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
-        ]
-
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        finding = next(
-            f for f in findings if str(f.get("frequency_hz_or_order") or "").startswith("31.0")
-        )
-        assert finding.get("strongest_speed_band") in {"70-80 km/h", "80-90 km/h"}
-
         findings = _build_persistent_peak_findings(
             samples=samples,
             order_finding_freqs=set(),
@@ -487,6 +468,25 @@ class TestBuildPersistentPeakFindings:
         assert len(impact_findings) == 0, (
             "Random one-off impacts at distinct frequencies should all be transient"
         )
+
+    def test_persistent_peak_speed_band_uses_amplitude_weighting(self) -> None:
+        speeds = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0]
+        amps = [0.001, 0.002, 0.010, 0.080, 0.090, 0.080, 0.010, 0.001]
+        samples = [
+            _sample(float(idx), speed_kmh, [{"hz": 30.0, "amp": amp}])
+            for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
+        ]
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        finding = next(
+            f for f in findings if str(f.get("frequency_hz_or_order") or "").startswith("31.0")
+        )
+        assert finding.get("strongest_speed_band") == "80-90 km/h"
 
     def test_run_noise_baseline_lowers_confidence_for_borderline_peak(self) -> None:
         low_noise_samples = [
