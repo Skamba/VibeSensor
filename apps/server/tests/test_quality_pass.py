@@ -248,6 +248,6 @@ CREATE TABLE samples (
     db._conn.execute("SELECT * FROM settings_kv LIMIT 1")
     db._conn.execute("SELECT * FROM client_names LIMIT 1")
 
-    # Confirm version is now 3
+    # Confirm version is now 4 (migrated through v3 and v4)
     cur = db._conn.execute("SELECT value FROM schema_meta WHERE key = 'version'")
-    assert cur.fetchone()[0] == "3"
+    assert cur.fetchone()[0] == "4"
