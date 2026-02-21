@@ -26,6 +26,7 @@ from .helpers import (
     _location_label,
     _locations_connected_throughout_run,
     _primary_vibration_strength_db,
+    _run_noise_baseline_g,
     _sample_top_peaks,
     _speed_bin_label,
     _speed_bin_sort_key,
@@ -501,6 +502,7 @@ def _classify_peak_type(
     *,
     snr: float | None = None,
     spatial_uniformity: float | None = None,
+    speed_uniformity: float | None = None,
 ) -> str:
     """Classify a frequency peak as ``patterned``, ``persistent``, ``transient``, or ``baseline_noise``.
 
@@ -519,9 +521,11 @@ def _classify_peak_type(
         Signal-to-noise ratio (peak amp / noise floor). If below threshold,
         peak is classified as baseline noise regardless of presence.
     spatial_uniformity : float | None
-        Ratio of minimum to maximum amplitude across sensor locations.
-        High uniformity (>0.85) suggests environmental noise rather than
-        a localized source.
+        Fraction of distinct run locations where this peak appears.
+        High values suggest environmental noise rather than a localized source.
+    speed_uniformity : float | None
+        Standard deviation of per-speed-bin hit rates for this peak.
+        Lower values indicate uniform presence across speed bins.
     """
     # Baseline noise: appears everywhere at similar level, or very low SNR
     if snr is not None and snr < BASELINE_NOISE_SNR_THRESHOLD:
@@ -531,6 +535,15 @@ def _classify_peak_type(
         and spatial_uniformity > 0.85
         and presence_ratio >= 0.60
         and burstiness < 2.0
+    ):
+        return "baseline_noise"
+    if (
+        spatial_uniformity is not None
+        and speed_uniformity is not None
+        and spatial_uniformity >= 0.80
+        and speed_uniformity <= 0.10
+        and 0.20 <= presence_ratio <= 0.40
+        and 3.0 <= burstiness <= 5.0
     ):
         return "baseline_noise"
 
@@ -564,6 +577,9 @@ def _build_persistent_peak_findings(
     bin_floors: dict[float, list[float]] = defaultdict(list)
     bin_speeds: dict[float, list[float]] = defaultdict(list)
     bin_location_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    total_speed_bin_counts: dict[str, int] = defaultdict(int)
+    total_locations: set[str] = set()
     n_samples = 0
 
     for sample in samples:
@@ -571,8 +587,13 @@ def _build_persistent_peak_findings(
             continue
         n_samples += 1
         speed = _as_float(sample.get("speed_kmh"))
+        sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
+        if sample_speed_bin is not None:
+            total_speed_bin_counts[sample_speed_bin] += 1
         floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
         location = _location_label(sample, lang=lang)
+        if location:
+            total_locations.add(location)
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
@@ -584,9 +605,12 @@ def _build_persistent_peak_findings(
                 bin_speeds[bin_center].append(speed)
             if location:
                 bin_location_counts[bin_center][location] += 1
+            if sample_speed_bin is not None:
+                bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
 
     if n_samples == 0:
         return []
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
 
     persistent_findings: list[tuple[float, dict[str, object]]] = []
     transient_findings: list[tuple[float, dict[str, object]]] = []
@@ -605,10 +629,37 @@ def _build_persistent_peak_findings(
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
         mean_floor = mean(bin_floors.get(bin_center, [0.0])) if bin_floors.get(bin_center) else 0.0
-        raw_snr = (p95_amp / max(0.001, mean_floor)) if mean_floor > 0.001 else None
-        peak_type = _classify_peak_type(presence_ratio, burstiness, snr=raw_snr)
+        effective_floor = max(0.001, run_noise_baseline_g or mean_floor or 0.0)
+        raw_snr = p95_amp / effective_floor
+        spatial_uniformity: float | None = None
+        if len(total_locations) >= 2:
+            spatial_uniformity = len(bin_location_counts.get(bin_center, {})) / len(total_locations)
 
-        snr_score = min(1.0, log1p(p95_amp / max(0.001, mean_floor)) / 2.5)
+        speed_uniformity: float | None = None
+        if len(total_speed_bin_counts) >= 2:
+            hit_rates: list[float] = []
+            per_bin_hits = bin_speed_bin_counts.get(bin_center, {})
+            for speed_bin, total_count in total_speed_bin_counts.items():
+                if total_count <= 0:
+                    continue
+                hit_rates.append(float(per_bin_hits.get(speed_bin, 0)) / float(total_count))
+            if hit_rates:
+                hit_rate_mean = mean(hit_rates)
+                speed_uniformity = (
+                    mean([(rate - hit_rate_mean) ** 2 for rate in hit_rates]) ** 0.5
+                    if len(hit_rates) > 1
+                    else 0.0
+                )
+
+        peak_type = _classify_peak_type(
+            presence_ratio,
+            burstiness,
+            snr=raw_snr,
+            spatial_uniformity=spatial_uniformity,
+            speed_uniformity=speed_uniformity,
+        )
+
+        snr_score = min(1.0, log1p(raw_snr) / 2.5)
         location_counts = bin_location_counts.get(bin_center, {})
         spatial_concentration = (
             max(location_counts.values()) / count if location_counts and count > 0 else 1.0
@@ -679,9 +730,14 @@ def _build_persistent_peak_findings(
                 "max_amplitude": max_amp,
                 "burstiness": burstiness,
                 "mean_noise_floor": mean_floor,
+                "run_noise_baseline_g": run_noise_baseline_g,
+                "median_relative_to_run_noise": median_amp / effective_floor,
+                "p95_relative_to_run_noise": p95_amp / effective_floor,
                 "sample_count": count,
                 "total_samples": n_samples,
                 "spatial_concentration": spatial_concentration,
+                "spatial_uniformity": spatial_uniformity,
+                "speed_uniformity": speed_uniformity,
             },
             "strongest_speed_band": speed_band if speed_band != "-" else None,
         }
