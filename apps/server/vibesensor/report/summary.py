@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
-from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -35,6 +34,7 @@ from .helpers import (
     _sensor_limit_g,
     _speed_stats,
     _validate_required_strength_metrics,
+    weak_spatial_dominance_threshold,
 )
 from .phase_segmentation import (
     phase_summary as _phase_summary,
@@ -175,13 +175,29 @@ def _most_likely_origin_summary(
     if not findings:
         return {
             "location": _tr(lang, "UNKNOWN"),
+            "alternative_locations": [],
             "source": _tr(lang, "UNKNOWN"),
             "dominance_ratio": None,
             "weak_spatial_separation": True,
             "explanation": _tr(lang, "ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
     top = findings[0]
-    location = str(top.get("strongest_location") or "").strip() or _tr(lang, "UNKNOWN")
+    primary_location = str(top.get("strongest_location") or "").strip() or _tr(lang, "UNKNOWN")
+    alternative_locations: list[str] = []
+    hotspot = top.get("location_hotspot")
+    if isinstance(hotspot, dict):
+        for candidate in hotspot.get("ambiguous_locations", []):
+            loc = str(candidate or "").strip()
+            if loc and loc != primary_location and loc not in alternative_locations:
+                alternative_locations.append(loc)
+        second_location = str(hotspot.get("second_location") or "").strip()
+        if (
+            second_location
+            and second_location != primary_location
+            and second_location not in alternative_locations
+        ):
+            alternative_locations.append(second_location)
+
     source = str(top.get("suspected_source") or "unknown")
     _source_i18n_map = {
         "wheel/tire": "SOURCE_WHEEL_TIRE",
@@ -194,8 +210,16 @@ def _most_likely_origin_summary(
         _tr(lang, source_i18n_key) if source_i18n_key else source.replace("_", " ").title()
     )
     dominance = _as_float(top.get("dominance_ratio"))
+    location_hotspot = top.get("location_hotspot")
+    location_count = _as_float(top.get("location_count"))
+    if location_count is None and isinstance(location_hotspot, dict):
+        location_count = _as_float(location_hotspot.get("location_count"))
+    adaptive_weak_spatial_threshold = weak_spatial_dominance_threshold(
+        int(location_count) if location_count else None
+    )
     weak = bool(top.get("weak_spatial_separation")) or (
-        dominance is not None and dominance < WEAK_SPATIAL_DOMINANCE_THRESHOLD
+        dominance is not None
+        and dominance < adaptive_weak_spatial_threshold
     )
 
     # Spatial disambiguation: check if second-ranked finding disagrees on
@@ -208,13 +232,26 @@ def _most_likely_origin_summary(
         top_conf = _as_float(top.get("confidence_0_to_1")) or 0.0
         if (
             second_loc
-            and location
-            and second_loc != location
+            and primary_location
+            and second_loc != primary_location
             and top_conf > 0
             and second_conf / top_conf >= 0.7  # within 30% confidence
         ):
             spatial_disagreement = True
             weak = True
+            if second_loc not in alternative_locations:
+                alternative_locations.append(second_loc)
+
+    location = primary_location
+    if weak and dominance is not None and dominance < adaptive_weak_spatial_threshold:
+        display_locations = [primary_location, *alternative_locations]
+        location = " / ".join(
+            [
+                candidate
+                for idx, candidate in enumerate(display_locations)
+                if candidate and candidate not in display_locations[:idx]
+            ]
+        )
 
     speed_band = str(top.get("strongest_speed_band") or _tr(lang, "UNKNOWN_SPEED_BAND"))
     explanation = _tr(
@@ -231,6 +268,7 @@ def _most_likely_origin_summary(
         explanation += " " + _tr(lang, "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY")
     return {
         "location": location,
+        "alternative_locations": alternative_locations,
         "source": source,
         "source_human": source_human,
         "dominance_ratio": dominance,

@@ -16,6 +16,7 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
+from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
@@ -34,6 +35,19 @@ ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
 CONSTANT_SPEED_STDDEV_KMH = 0.5
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
+
+
+def weak_spatial_dominance_threshold(location_count: int | None) -> float:
+    """Return adaptive dominance threshold for weak spatial separation.
+
+    Baseline is the historical 1.2 ratio for two locations. For larger sensor
+    sets, we require stronger separation (+10% per additional location) because
+    chance ties become more likely as the number of compared locations grows.
+    """
+    if location_count is None:
+        return WEAK_SPATIAL_DOMINANCE_THRESHOLD
+    n_locations = max(2, int(location_count))
+    return WEAK_SPATIAL_DOMINANCE_THRESHOLD * (1.0 + (0.1 * (n_locations - 2)))
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
