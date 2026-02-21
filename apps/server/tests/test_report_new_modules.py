@@ -422,6 +422,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
                     "order_label": "",
                     "max_amp_g": 0.9,
                     "p95_amp_g": 0.12,
+                    "strength_db": 18.4,
                     "presence_ratio": 0.85,
                     "persistence_score": 0.0867,
                     "peak_classification": "patterned",
@@ -434,6 +435,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     assert data.peak_rows
     row = data.peak_rows[0]
     assert row.amp_g == "0.1200"
+    assert row.strength_db == "18.4"
     assert "patterned" in row.relevance
     assert "85%" in row.relevance
 

@@ -6,11 +6,12 @@ from __future__ import annotations
 from math import floor
 from typing import Any, Literal
 
-from vibesensor_core.vibration_strength import percentile
+from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
 
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     _primary_vibration_strength_db,
+    _run_noise_baseline_g,
     _sample_top_peaks,
 )
 
@@ -42,6 +43,8 @@ def _aggregate_fft_spectrum(
             bin_amps.setdefault(bin_center, []).append(amp)
     if not bin_amps:
         return []
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
     result: dict[float, float] = {}
     for bin_center, amps in bin_amps.items():
         if aggregation == "max":
@@ -50,7 +53,7 @@ def _aggregate_fft_spectrum(
             presence_ratio = len(amps) / max(1, n_samples)
             sorted_amps = sorted(amps)
             p95 = percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
-            result[bin_center] = (presence_ratio**2) * p95
+            result[bin_center] = (presence_ratio**2) * (p95 / baseline_floor)
     return sorted(result.items(), key=lambda item: item[0])
 
 
@@ -208,6 +211,8 @@ def _top_peaks_table_rows(
         freq_bin_hz = 1.0
 
     n_samples = 0
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
     for sample in samples:
         if not isinstance(sample, dict):
             continue
@@ -222,24 +227,47 @@ def _top_peaks_table_rows(
                 {
                     "frequency_hz": freq_key,
                     "amps": [],
+                    "floor_amps": [],
                     "speeds": [],
                 },
             )
             bucket["amps"].append(amp)
+            floor_amp = _as_float(sample.get("strength_floor_amp_g"))
+            if floor_amp is not None and floor_amp >= 0:
+                bucket["floor_amps"].append(floor_amp)
             if speed is not None and speed > 0:
                 bucket["speeds"].append(speed)
 
     for bucket in grouped.values():
         amps = sorted(bucket["amps"])
+        floor_amps = sorted(float(v) for v in bucket.get("floor_amps", []))
         count = len(amps)
         presence_ratio = count / max(1, n_samples)
         median_amp = percentile(amps, 0.50) if count >= 2 else (amps[0] if amps else 0.0)
         p95_amp = percentile(amps, 0.95) if count >= 2 else (amps[-1] if amps else 0.0)
         max_amp = amps[-1] if amps else 0.0
+        floor_amp = (
+            percentile(floor_amps, 0.50)
+            if len(floor_amps) >= 2
+            else (floor_amps[0] if floor_amps else None)
+        )
+        strength_db = (
+            vibration_strength_db_scalar(
+                peak_band_rms_amp_g=p95_amp,
+                floor_amp_g=floor_amp,
+            )
+            if floor_amp is not None
+            else None
+        )
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
         bucket["max_amp_g"] = max_amp
         bucket["median_amp_g"] = median_amp
         bucket["p95_amp_g"] = p95_amp
+        bucket["run_noise_baseline_g"] = run_noise_baseline_g
+        bucket["median_vs_run_noise_ratio"] = median_amp / baseline_floor
+        bucket["p95_vs_run_noise_ratio"] = p95_amp / baseline_floor
+        bucket["strength_floor_amp_g"] = floor_amp
+        bucket["strength_db"] = strength_db
         bucket["presence_ratio"] = presence_ratio
         bucket["burstiness"] = burstiness
         bucket["persistence_score"] = (presence_ratio**2) * p95_amp
@@ -264,6 +292,11 @@ def _top_peaks_table_rows(
                 "max_amp_g": float(item.get("max_amp_g") or 0.0),
                 "median_amp_g": float(item.get("median_amp_g") or 0.0),
                 "p95_amp_g": float(item.get("p95_amp_g") or 0.0),
+                "run_noise_baseline_g": _as_float(item.get("run_noise_baseline_g")),
+                "median_vs_run_noise_ratio": float(item.get("median_vs_run_noise_ratio") or 0.0),
+                "p95_vs_run_noise_ratio": float(item.get("p95_vs_run_noise_ratio") or 0.0),
+                "strength_floor_amp_g": _as_float(item.get("strength_floor_amp_g")),
+                "strength_db": _as_float(item.get("strength_db")),
                 "presence_ratio": float(item.get("presence_ratio") or 0.0),
                 "burstiness": float(item.get("burstiness") or 0.0),
                 "persistence_score": float(item.get("persistence_score") or 0.0),
