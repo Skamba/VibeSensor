@@ -466,6 +466,8 @@ class MetricsLogger:
                 LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
 
     def _schedule_post_analysis(self, run_id: str) -> None:
+        LOGGER.info("Analysis queued for run %s", run_id)
+
         def _target() -> None:
             try:
                 self._run_post_analysis(run_id)
@@ -473,7 +475,7 @@ class MetricsLogger:
                 with self._lock:
                     self._analysis_threads = [t for t in self._analysis_threads if t.is_alive()]
 
-        thread = Thread(target=_target, name=f"metrics-post-analysis-{run_id[:8]}", daemon=True)
+        thread = Thread(target=_target, name=f"metrics-post-analysis-{run_id[:8]}", daemon=False)
         with self._lock:
             self._analysis_threads = [t for t in self._analysis_threads if t.is_alive()]
             self._analysis_threads.append(thread)
@@ -496,8 +498,10 @@ class MetricsLogger:
         """Run thorough post-run analysis and store results in history DB."""
         if self._history_db is None:
             return
+        analysis_start = time.monotonic()
+        LOGGER.info("Analysis started for run %s", run_id)
         try:
-            from .report_analysis import summarize_run_data
+            from .report.summary import summarize_run_data
             from .runlog import normalize_sample_record
 
             metadata = self._history_db.get_run_metadata(run_id)
@@ -530,9 +534,22 @@ class MetricsLogger:
                 "sampling_method": "full" if stride == 1 else f"stride_{stride}",
             }
             self._history_db.store_analysis(run_id, summary)
-            LOGGER.info("Post-run analysis complete for run %s (%d samples)", run_id, len(samples))
+            duration_s = time.monotonic() - analysis_start
+            LOGGER.info(
+                "Analysis completed for run %s: %d samples in %.2fs",
+                run_id,
+                len(samples),
+                duration_s,
+            )
         except Exception as exc:
-            LOGGER.warning("Post-run analysis failed for run %s: %s", run_id, exc, exc_info=True)
+            duration_s = time.monotonic() - analysis_start
+            LOGGER.warning(
+                "Analysis failed for run %s after %.2fs: %s",
+                run_id,
+                duration_s,
+                exc,
+                exc_info=True,
+            )
             try:
                 self._history_db.store_analysis_error(run_id, str(exc))
             except Exception:
