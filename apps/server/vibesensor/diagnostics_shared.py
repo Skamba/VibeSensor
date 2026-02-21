@@ -302,19 +302,16 @@ def severity_from_peak(
     current_bucket = state.get("current_bucket")
     peak_hz_value = _as_float(peak_hz)
     freq_bin_hz = _as_float(persistence_freq_bin_hz)
-    freq_guard_enabled = (
-        peak_hz_value is not None and freq_bin_hz is not None and freq_bin_hz > 0
-    )
+    freq_guard_enabled = peak_hz_value is not None and freq_bin_hz is not None and freq_bin_hz > 0
 
     def _advance_pending(candidate: str) -> None:
         pending = state.get("pending_bucket")
         if pending == candidate:
             if freq_guard_enabled:
                 last_confirmed_hz = _as_float(state.get("last_confirmed_hz"))
-                if (
-                    last_confirmed_hz is not None
-                    and abs(float(peak_hz_value) - last_confirmed_hz) > float(freq_bin_hz)
-                ):
+                if last_confirmed_hz is not None and abs(
+                    float(peak_hz_value) - last_confirmed_hz
+                ) > float(freq_bin_hz):
                     state["consecutive_up"] = 1
                     state["last_confirmed_hz"] = peak_hz_value
                     return

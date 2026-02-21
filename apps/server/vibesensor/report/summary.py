@@ -207,8 +207,7 @@ def _most_likely_origin_summary(
         int(location_count) if location_count else None
     )
     weak = bool(top.get("weak_spatial_separation")) or (
-        dominance is not None
-        and dominance < adaptive_weak_spatial_threshold
+        dominance is not None and dominance < adaptive_weak_spatial_threshold
     )
 
     # Spatial disambiguation: check if second-ranked finding disagrees on

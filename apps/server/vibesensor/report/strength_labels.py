@@ -25,7 +25,10 @@ _STRENGTH_LABELS_BY_BUCKET: dict[str, tuple[str, str, str]] = {
 # Thresholds in dB for strength labels (ascending), derived from core bands.
 _STRENGTH_THRESHOLDS: list[tuple[float, str, str, str]] = [
     # (min_db, label_key, en_label, nl_label)
-    (float(band["min_db"]), *_STRENGTH_LABELS_BY_BUCKET.get(str(band["key"]), _STRENGTH_LABELS_BY_BUCKET["l5"]))
+    (
+        float(band["min_db"]),
+        *_STRENGTH_LABELS_BY_BUCKET.get(str(band["key"]), _STRENGTH_LABELS_BY_BUCKET["l5"]),
+    )
     for band in BANDS
 ]
 

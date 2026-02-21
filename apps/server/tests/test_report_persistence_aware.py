@@ -588,7 +588,9 @@ class TestBuildPersistentPeakFindings:
                     if rep == 0:
                         amp = 0.20 if (speed, location) == (35.0, "Front Left") else 0.05
                         peaks.append({"hz": 25.0, "amp": amp})
-                    samples.append(_sample(float(len(samples)) * 0.5, speed, peaks, client_name=location))
+                    samples.append(
+                        _sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
+                    )
 
         findings = _build_persistent_peak_findings(
             samples=samples,
@@ -612,7 +614,9 @@ class TestBuildPersistentPeakFindings:
                     if location == "Front Left":
                         amp = 0.20 if (speed, rep) == (35.0, 0) else 0.05
                         peaks.append({"hz": 25.0, "amp": amp})
-                    samples.append(_sample(float(len(samples)) * 0.5, speed, peaks, client_name=location))
+                    samples.append(
+                        _sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
+                    )
 
         findings = _build_persistent_peak_findings(
             samples=samples,

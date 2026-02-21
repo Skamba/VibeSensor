@@ -179,7 +179,9 @@ def _sensor_intensity_by_location(
     target_locations = set(sample_counts.keys())
     if include_locations is not None:
         target_locations |= set(include_locations)
-    max_sample_count = max((sample_counts.get(location, 0) for location in target_locations), default=0)
+    max_sample_count = max(
+        (sample_counts.get(location, 0) for location in target_locations), default=0
+    )
 
     for location in sorted(target_locations):
         values = grouped_amp.get(location, [])
@@ -202,9 +204,7 @@ def _sensor_intensity_by_location(
                 (bucket_counts[key] / bucket_total * 100.0) if bucket_total > 0 else 0.0
             )
         sample_count = int(sample_counts.get(location, 0))
-        sample_coverage_ratio = (
-            (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
-        )
+        sample_coverage_ratio = (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
         sample_coverage_warning = max_sample_count >= 5 and sample_coverage_ratio <= 0.20
         partial_coverage = bool(
             connected_locations is not None and location not in connected_locations
@@ -1004,7 +1004,9 @@ def _build_findings(
         for item in non_reference_findings
         if str(item.get("severity") or "").strip().lower() != "info"
     ]
-    diagnostic_findings.sort(key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True)
+    diagnostic_findings.sort(
+        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
+    )
     informational_findings.sort(
         key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
     )
