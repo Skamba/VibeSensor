@@ -426,6 +426,39 @@ if [ -z "${FINAL_ARTIFACT}" ]; then
   exit 1
 fi
 
+BUILD_GIT_SHA="$(git -C "${REPO_ROOT}" rev-parse --short=12 HEAD)"
+BUILD_GIT_BRANCH="$(git -C "${REPO_ROOT}" rev-parse --abbrev-ref HEAD)"
+BUILD_TIME_UTC="$(date -u +%Y%m%dT%H%M%SZ)"
+FINAL_EXT="${FINAL_ARTIFACT##*.}"
+FINAL_BASENAME="$(basename "${FINAL_ARTIFACT}")"
+LATEST_ARTIFACT="${OUT_DIR}/latest${IMG_SUFFIX}.${FINAL_EXT}"
+VERSIONED_ARTIFACT="${OUT_DIR}/${FINAL_BASENAME%.*}-g${BUILD_GIT_SHA}.${FINAL_EXT}"
+VERSION_INFO_FILE="${OUT_DIR}/latest${IMG_SUFFIX}.version.txt"
+FINAL_ARTIFACT_SHA256="${FINAL_ARTIFACT}.sha256"
+
+prune_old_artifacts() {
+  local base_dir="$1"
+  local keep_file="$2"
+  local keep_latest="$3"
+  local keep_versioned="$4"
+  local keep_version_info="$5"
+  local keep_sha256="$6"
+  local path=""
+
+  while IFS= read -r path; do
+    case "${path}" in
+      "${keep_file}"|"${keep_latest}"|"${keep_versioned}"|"${keep_version_info}"|"${keep_sha256}")
+        continue
+        ;;
+    esac
+    rm -f "${path}"
+  done < <(
+    find "${base_dir}" -maxdepth 1 -type f \
+      \( -name "*${IMG_SUFFIX}*.img" -o -name "*${IMG_SUFFIX}*.img.xz" -o -name "*${IMG_SUFFIX}*.zip" -o -name "*${IMG_SUFFIX}*.sha256" -o -name "latest${IMG_SUFFIX}.version.txt" \) \
+      | sort
+  )
+}
+
 INSPECT_DIR="${OUT_DIR}/inspect"
 mkdir -p "${INSPECT_DIR}"
 INSPECT_IMG="${FINAL_ARTIFACT}"
@@ -748,11 +781,43 @@ if [ -n "${COPY_ARTIFACT_DIR}" ]; then
   fi
 fi
 
+cp -f "${FINAL_ARTIFACT}" "${LATEST_ARTIFACT}"
+cp -f "${FINAL_ARTIFACT}" "${VERSIONED_ARTIFACT}"
+
+cat >"${VERSION_INFO_FILE}" <<EOF
+vibesensor_image_version=${BUILD_TIME_UTC}-g${BUILD_GIT_SHA}
+git_sha=${BUILD_GIT_SHA}
+git_branch=${BUILD_GIT_BRANCH}
+source_artifact=$(basename "${FINAL_ARTIFACT}")
+latest_artifact=$(basename "${LATEST_ARTIFACT}")
+versioned_artifact=$(basename "${VERSIONED_ARTIFACT}")
+EOF
+
+prune_old_artifacts \
+  "${OUT_DIR}" \
+  "${FINAL_ARTIFACT}" \
+  "${LATEST_ARTIFACT}" \
+  "${VERSIONED_ARTIFACT}" \
+  "${VERSION_INFO_FILE}" \
+  "${FINAL_ARTIFACT_SHA256}"
+
+if [ -n "${COPY_ARTIFACT_DIR}" ]; then
+  cp -f "${LATEST_ARTIFACT}" "${COPY_ARTIFACT_DIR}/"
+  cp -f "${VERSIONED_ARTIFACT}" "${COPY_ARTIFACT_DIR}/"
+  cp -f "${VERSION_INFO_FILE}" "${COPY_ARTIFACT_DIR}/"
+fi
+
 echo "Image artifacts available in: ${OUT_DIR}"
 echo "Final artifact: ${FINAL_ARTIFACT}"
+echo "Latest artifact alias: ${LATEST_ARTIFACT}"
+echo "Versioned artifact: ${VERSIONED_ARTIFACT}"
+echo "Version info: ${VERSION_INFO_FILE}"
 if [ -f "${INSPECT_IMG}" ]; then
   echo "Inspection image: ${INSPECT_IMG}"
 fi
 if [ -n "${COPY_ARTIFACT_DIR}" ]; then
   echo "Copied artifact to: ${COPY_ARTIFACT_DIR}/$(basename "${FINAL_ARTIFACT}")"
+  echo "Copied latest alias to: ${COPY_ARTIFACT_DIR}/$(basename "${LATEST_ARTIFACT}")"
+  echo "Copied versioned artifact to: ${COPY_ARTIFACT_DIR}/$(basename "${VERSIONED_ARTIFACT}")"
+  echo "Copied version info to: ${COPY_ARTIFACT_DIR}/$(basename "${VERSION_INFO_FILE}")"
 fi
