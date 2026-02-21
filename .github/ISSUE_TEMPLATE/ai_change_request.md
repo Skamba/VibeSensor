@@ -1,6 +1,6 @@
 ---
 name: AI change request
-about: AI request format for fail-fast implementation
+about: AI request format for repository-default implementation
 title: "[AI] <short goal>"
 labels: ["ai-request"]
 assignees: []
@@ -10,7 +10,7 @@ assignees: []
 <!-- One paragraph -->
 
 ## Constraints
-<!-- Non-negotiables, UX/performance/safety/scope limits. In fail-fast lab mode, backward compatibility is optional and never required. -->
+<!-- Non-negotiables, UX/performance/safety/scope limits. Backward compatibility is optional and never required. -->
 
 ## Affected Area
 <!-- Pick from docs/ai/map.md -->

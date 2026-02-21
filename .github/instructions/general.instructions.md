@@ -13,6 +13,6 @@ Validation (always required)
   7. Check container logs (`docker compose logs --tail 50`) if anything looks wrong.
 - Test suite for change verification (match GitHub CI): `make test-all`.
 - Optional focused backend pytest run (for faster iteration, not a CI substitute): `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.
-- Backward compatibility is never a requirement in fail-fast lab mode; breaking changes are allowed when intentional.
+- Backward compatibility is never a requirement; breaking changes are allowed when intentional.
 - Run lint (`ruff check`) before pushing changes.
 - Never skip Docker validation even if unit tests pass — integration issues often only surface at runtime.
