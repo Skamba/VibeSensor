@@ -306,6 +306,34 @@ class UpdateManager:
             self._status.log_tail = self._status.log_tail[-100:]
         LOGGER.info("update: %s", sanitized)
 
+    def _redacted_args_for_log(self, args: list[str]) -> list[str]:
+        """Return command args with sensitive values replaced by *** for safe logging."""
+        redacted: list[str] = []
+        hide_next = False
+        sensitive_keys = {
+            "password",
+            "psk",
+            "secret",
+            "key",
+            "802-11-wireless-security.psk",
+        }
+        for raw_arg in args:
+            arg = str(raw_arg)
+            lowered = arg.lower()
+            if hide_next:
+                redacted.append("***")
+                hide_next = False
+                continue
+            if lowered in sensitive_keys:
+                redacted.append(arg)
+                hide_next = True
+                continue
+            if any(secret and arg == secret for secret in self._redact_secrets):
+                redacted.append("***")
+                continue
+            redacted.append(arg)
+        return redacted
+
     def _add_issue(self, phase: str, message: str, detail: str = "") -> None:
         self._status.issues.append(
             UpdateIssue(
@@ -326,7 +354,7 @@ class UpdateManager:
     ) -> tuple[int, str, str]:
         if sudo:
             args = [*_sudo_prefix(), *args]
-        self._log(f"[{phase}] $ {' '.join(args)}")
+        self._log(f"[{phase}] $ {' '.join(self._redacted_args_for_log(args))}")
         rc, stdout, stderr = await self._runner.run(args, timeout=timeout, env=env)
         if stdout.strip():
             self._log(f"[{phase}] stdout: {_sanitize_log_line(stdout.strip()[:500])}")
