@@ -38,7 +38,7 @@ from .order_analysis import (
     _order_hypotheses,
     _order_label,
 )
-from .phase_segmentation import diagnostic_sample_mask, segment_run_phases
+from .phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
 from .strength_labels import _STRENGTH_THRESHOLDS
 from .test_plan import _location_speedbin_summary
 
@@ -48,6 +48,13 @@ _NEGLIGIBLE_STRENGTH_MAX_DB = (
 _LIGHT_STRENGTH_MAX_DB = (
     float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
 )
+
+
+def _phase_to_str(phase: object) -> str | None:
+    """Return the string value for a phase object (DrivingPhase or str)."""
+    if phase is None:
+        return None
+    return phase.value if hasattr(phase, "value") else str(phase)
 
 
 def _weighted_percentile(
@@ -358,6 +365,7 @@ def _build_order_findings(
     accel_units: str,
     connected_locations: set[str],
     lang: object,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []
@@ -383,7 +391,7 @@ def _build_order_findings(
         possible_by_speed_bin: dict[str, int] = defaultdict(int)
         matched_by_speed_bin: dict[str, int] = defaultdict(int)
 
-        for sample in samples:
+        for i, sample in enumerate(samples):
             peaks = _sample_top_peaks(sample)
             if not peaks:
                 continue
@@ -420,6 +428,9 @@ def _build_order_findings(
             matched_floor.append(max(0.0, floor_amp))
             predicted_vals.append(predicted_hz)
             measured_vals.append(best_hz)
+            sample_phase: str | None = None
+            if per_sample_phases is not None and i < len(per_sample_phases):
+                sample_phase = _phase_to_str(per_sample_phases[i])
             matched_points.append(
                 {
                     "t_s": _as_float(sample.get("t_s")),
@@ -429,6 +440,7 @@ def _build_order_findings(
                     "rel_error": delta_hz / max(1e-9, predicted_hz),
                     "amp": best_amp,
                     "location": _location_label(sample, lang=lang),
+                    "phase": sample_phase,
                 }
             )
 
@@ -610,6 +622,18 @@ def _build_order_findings(
             if str(action.get("what") or "").strip()
         ][:3]
 
+        # Compute phase evidence: how much of the matched evidence came from CRUISE phase.
+        # CRUISE (steady driving) provides the most reliable diagnostic signal.
+        _cruise_phase_val = DrivingPhase.CRUISE.value
+        matched_phase_strs = [
+            str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")
+        ]
+        _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_phase_val)
+        phase_evidence: dict[str, object] = {
+            "cruise_fraction": _cruise_matched / len(matched_points) if matched_points else 0.0,
+            "phases_detected": sorted(set(matched_phase_strs)),
+        }
+
         finding = {
             "finding_id": "F_ORDER",
             "finding_key": hypothesis.key,
@@ -640,6 +664,7 @@ def _build_order_findings(
             "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,
             "corroborating_locations": corroborating_locations,
+            "phase_evidence": phase_evidence,
             "evidence_metrics": {
                 "match_rate": effective_match_rate,
                 "global_match_rate": match_rate,
@@ -740,6 +765,7 @@ def _build_persistent_peak_findings(
     accel_units: str,
     lang: object,
     freq_bin_hz: float = 2.0,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     """Build findings for non-order persistent frequency peaks.
 
@@ -756,11 +782,12 @@ def _build_persistent_peak_findings(
     bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
     bin_location_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    bin_phase_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
     total_locations: set[str] = set()
     n_samples = 0
 
-    for sample in samples:
+    for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
             continue
         n_samples += 1
@@ -772,6 +799,9 @@ def _build_persistent_peak_findings(
         location = _location_label(sample, lang=lang)
         if location:
             total_locations.add(location)
+        sample_phase: str | None = None
+        if per_sample_phases is not None and i < len(per_sample_phases):
+            sample_phase = _phase_to_str(per_sample_phases[i])
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
@@ -786,6 +816,8 @@ def _build_persistent_peak_findings(
                 bin_location_counts[bin_center][location] += 1
             if sample_speed_bin is not None:
                 bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
+            if sample_phase is not None:
+                bin_phase_counts[bin_center][sample_phase] += 1
 
     if n_samples == 0:
         return []
@@ -887,6 +919,16 @@ def _build_persistent_peak_findings(
             cls=peak_type,
         )
 
+        # Compute phase evidence for this frequency bin.
+        _cruise_phase_val = DrivingPhase.CRUISE.value
+        phases_in_bin = bin_phase_counts.get(bin_center, {})
+        _total_phase_hits = sum(phases_in_bin.values())
+        _cruise_hits = phases_in_bin.get(_cruise_phase_val, 0)
+        peak_phase_evidence: dict[str, object] = {
+            "cruise_fraction": _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0,
+            "phases_detected": sorted(k for k, v in phases_in_bin.items() if v > 0),
+        }
+
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
@@ -909,6 +951,7 @@ def _build_persistent_peak_findings(
             "confidence_0_to_1": confidence,
             "quick_checks": [],
             "peak_classification": peak_type,
+            "phase_evidence": peak_phase_evidence,
             "evidence_metrics": {
                 "presence_ratio": presence_ratio,
                 "median_amplitude": median_amp,
@@ -1045,6 +1088,13 @@ def _build_findings(
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)
     analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+    # Compute per-sample phases aligned with analysis_samples for phase-evidence tracking.
+    if analysis_samples is diagnostic_samples:
+        analysis_phases: list = [
+            p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=False) if keep
+        ]
+    else:
+        analysis_phases = list(_per_sample_phases)
 
     order_findings = _build_order_findings(
         metadata=metadata,
@@ -1058,6 +1108,7 @@ def _build_findings(
         accel_units=accel_units,
         connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
+        per_sample_phases=analysis_phases,
     )
     findings.extend(order_findings)
 
@@ -1078,6 +1129,7 @@ def _build_findings(
             order_finding_freqs=order_freqs,
             accel_units=accel_units,
             lang=lang,
+            per_sample_phases=analysis_phases,
         )
     )
 
