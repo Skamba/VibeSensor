@@ -459,11 +459,13 @@ def test_sensor_location_stats_warn_on_sparse_sensor_keeps_ranking_stable(
     assert len(rows) == 2
     assert rows[0]["location"] == "front-left wheel"
     assert bool(rows[0]["sample_coverage_warning"]) is False
+    assert bool(rows[0]["partial_coverage"]) is False
 
     sparse_row = next(row for row in rows if row["location"] == "front-right wheel")
     assert sparse_row["sample_count"] == 10
     assert sparse_row["sample_coverage_ratio"] == pytest.approx(0.2, rel=1e-6)
     assert bool(sparse_row["sample_coverage_warning"]) is True
+    assert bool(sparse_row["partial_coverage"]) is True
 
 
 def test_sensor_location_stats_stay_stable_when_client_name_changes(tmp_path: Path) -> None:

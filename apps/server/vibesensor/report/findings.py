@@ -138,9 +138,13 @@ def _sensor_intensity_by_location(
             (sample_count / max_sample_count) if max_sample_count > 0 else 1.0
         )
         sample_coverage_warning = max_sample_count >= 5 and sample_coverage_ratio <= 0.20
+        partial_coverage = bool(
+            connected_locations is not None and location not in connected_locations
+        )
         rows.append(
             {
                 "location": location,
+                "partial_coverage": partial_coverage,
                 "samples": sample_count,
                 "sample_count": sample_count,
                 "sample_coverage_ratio": sample_coverage_ratio,
@@ -156,6 +160,7 @@ def _sensor_intensity_by_location(
         )
     rows.sort(
         key=lambda row: (
+            1 if not bool(row.get("partial_coverage")) else 0,
             1 if not bool(row.get("sample_coverage_warning")) else 0,
             float(row.get("p95_intensity_db") or 0.0),
             float(row.get("max_intensity_db") or 0.0),
@@ -324,6 +329,7 @@ def _build_order_findings(
             matched_points,
             lang=lang,
             relevant_speed_bins=relevant_speed_bins,
+            connected_locations=connected_locations,
         )
         weak_spatial_separation = (
             bool(location_hotspot.get("weak_spatial_separation"))
