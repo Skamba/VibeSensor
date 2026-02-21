@@ -63,6 +63,9 @@ def test_engine_snapshot_has_expected_keys() -> None:
     assert "events" in snap
     assert "strength_bands" in snap
     assert "levels" in snap
+    assert "by_source" in snap["levels"]
+    assert "by_sensor" in snap["levels"]
+    assert "by_location" in snap["levels"]
     assert "findings" in snap
     assert "top_finding" in snap
 

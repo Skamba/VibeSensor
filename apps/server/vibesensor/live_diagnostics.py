@@ -99,6 +99,7 @@ class LiveDiagnosticsEngine:
         self._latest_findings: list[dict[str, Any]] = []
         self._active_levels_by_source: dict[str, dict[str, Any]] = {}
         self._active_levels_by_sensor: dict[str, dict[str, Any]] = {}
+        self._active_levels_by_location: dict[str, dict[str, Any]] = {}
         self._last_update_ts_ms: int | None = None
         self._last_error: str | None = None
 
@@ -110,6 +111,7 @@ class LiveDiagnosticsEngine:
         self._latest_findings = []
         self._active_levels_by_source = {}
         self._active_levels_by_sensor = {}
+        self._active_levels_by_location = {}
         self._last_update_ts_ms = None
         self._last_error = None
 
@@ -219,6 +221,58 @@ class LiveDiagnosticsEngine:
                     "peak_hz": peak_hz,
                 }
 
+    @staticmethod
+    def _location_key(sensor_location: str) -> str | None:
+        key = str(sensor_location or "").strip()
+        return key or None
+
+    def _build_active_levels_by_location(
+        self,
+        *,
+        candidates_by_location: dict[str, list[dict[str, Any]]],
+    ) -> dict[str, dict[str, Any]]:
+        by_location: dict[str, dict[str, Any]] = {}
+        for location_key, candidates in candidates_by_location.items():
+            if not candidates:
+                continue
+            dominant = max(candidates, key=lambda row: float(row.get("strength_db", SILENCE_DB)))
+            dominant_bin = (
+                str(dominant.get("class_key") or ""),
+                str(dominant.get("bucket_key") or ""),
+                int(round(float(dominant.get("peak_hz") or 0.0) / self._multi_freq_bin_hz)),
+            )
+            agreeing_ids = {
+                str(row.get("sensor_id") or "")
+                for row in candidates
+                if (
+                    str(row.get("class_key") or ""),
+                    str(row.get("bucket_key") or ""),
+                    int(round(float(row.get("peak_hz") or 0.0) / self._multi_freq_bin_hz)),
+                )
+                == dominant_bin
+                and str(row.get("sensor_id") or "")
+            }
+            agreement_count = len(agreeing_ids)
+            confidence = 1.0 + max(0, agreement_count - 1)
+            by_location[location_key] = {
+                "bucket_key": str(dominant.get("bucket_key") or ""),
+                "strength_db": float(dominant.get("strength_db", SILENCE_DB)),
+                "sensor_label": str(dominant.get("sensor_label") or ""),
+                "sensor_location": location_key,
+                "class_key": str(dominant.get("class_key") or ""),
+                "peak_hz": float(dominant.get("peak_hz") or 0.0),
+                "confidence": float(confidence),
+                "agreement_count": agreement_count,
+                "sensor_count": len(
+                    {
+                        str(row.get("sensor_id") or "")
+                        for row in candidates
+                        if str(row.get("sensor_id") or "")
+                    }
+                ),
+            }
+        return by_location
+
     def snapshot(self) -> dict[str, Any]:
         top_finding: dict[str, Any] | None = None
         for finding in self._latest_findings:
@@ -239,6 +293,9 @@ class LiveDiagnosticsEngine:
                 },
                 "by_sensor": {
                     key: dict(value) for key, value in self._active_levels_by_sensor.items()
+                },
+                "by_location": {
+                    key: dict(value) for key, value in self._active_levels_by_location.items()
                 },
             },
             "findings": list(self._latest_findings),
@@ -298,6 +355,7 @@ class LiveDiagnosticsEngine:
         emitted_events: list[dict[str, Any]] = []
         active_by_source: dict[str, dict[str, Any]] = {}
         active_by_sensor: dict[str, dict[str, Any]] = {}
+        location_candidates: dict[str, list[dict[str, Any]]] = {}
 
         latest_by_tracker: dict[str, _RecentEvent] = {}
         for event in sensor_events:
@@ -410,6 +468,18 @@ class LiveDiagnosticsEngine:
                     "class_key": class_key or tracker.last_class_key,
                     "peak_hz": tracker.last_peak_hz,
                 }
+            location_key = self._location_key(tracker.last_sensor_location)
+            if location_key:
+                location_candidates.setdefault(location_key, []).append(
+                    {
+                        "sensor_id": sensor_id,
+                        "sensor_label": tracker.last_sensor_label,
+                        "bucket_key": tracker.current_bucket_key,
+                        "strength_db": tracker.last_strength_db,
+                        "class_key": class_key or tracker.last_class_key,
+                        "peak_hz": tracker.last_peak_hz,
+                    }
+                )
 
         # Build combined groups from fresh per-sensor continuous tracker state.
         fresh_sensor_trackers: list[_TrackerLevelState] = []
@@ -520,6 +590,9 @@ class LiveDiagnosticsEngine:
 
         self._active_levels_by_source = active_by_source
         self._active_levels_by_sensor = active_by_sensor
+        self._active_levels_by_location = self._build_active_levels_by_location(
+            candidates_by_location=location_candidates
+        )
         self._latest_events = emitted_events
         return self.snapshot()
 
