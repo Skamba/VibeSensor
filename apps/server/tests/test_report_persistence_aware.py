@@ -278,6 +278,18 @@ class TestTopPeaksTableRows:
         assert row["strength_floor_amp_g"] == 0.03
         assert row["strength_db"] == expected_db
 
+    def test_typical_speed_band_uses_amplitude_weighting(self) -> None:
+        speeds = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0]
+        amps = [0.001, 0.002, 0.010, 0.080, 0.090, 0.080, 0.010, 0.001]
+        samples = [
+            _sample(float(idx), speed_kmh, [{"hz": 30.0, "amp": amp}])
+            for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
+        ]
+
+        rows = _top_peaks_table_rows(samples, top_n=1, freq_bin_hz=1.0)
+        assert rows
+        assert rows[0]["typical_speed_band"] == "50-100 km/h"
+
     def test_typical_speed_band_uses_amplitude_weighted_window(self) -> None:
         samples = []
         for i in range(20):
@@ -438,6 +450,25 @@ class TestBuildPersistentPeakFindings:
                 impact_hz = 50.0 + i * 5.0  # Different frequency each time
                 peaks.append({"hz": impact_hz, "amp": 0.8})
             samples.append(_sample(float(i) * 0.5, 80.0, peaks))
+
+    def test_persistent_peak_speed_band_uses_amplitude_weighting(self) -> None:
+        speeds = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0]
+        amps = [0.001, 0.002, 0.010, 0.080, 0.090, 0.080, 0.010, 0.001]
+        samples = [
+            _sample(float(idx), speed_kmh, [{"hz": 30.0, "amp": amp}])
+            for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
+        ]
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        finding = next(
+            f for f in findings if str(f.get("frequency_hz_or_order") or "").startswith("31.0")
+        )
+        assert finding.get("strongest_speed_band") in {"70-80 km/h", "80-90 km/h"}
 
         findings = _build_persistent_peak_findings(
             samples=samples,
