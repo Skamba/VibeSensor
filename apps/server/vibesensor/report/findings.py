@@ -283,6 +283,11 @@ def _build_order_findings(
             if isinstance(location_hotspot, dict)
             else True
         )
+        localization_confidence = (
+            float(location_hotspot.get("localization_confidence"))
+            if isinstance(location_hotspot, dict)
+            else 0.05
+        )
 
         # Count how many distinct locations independently detected this order
         corroborating_locations = len(
@@ -306,6 +311,8 @@ def _build_order_findings(
             confidence = min(confidence, 0.45)
         elif mean_amp < 0.005:  # < 5 mg → very weak
             confidence *= 0.90
+        # Penalty: location ambiguity / weak localization confidence
+        confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
         # Penalty: weak spatial separation
         if weak_spatial_separation:
             confidence *= 0.85
@@ -389,6 +396,7 @@ def _build_order_findings(
                 if isinstance(location_hotspot, dict)
                 else None
             ),
+            "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,
             "corroborating_locations": corroborating_locations,
             "evidence_metrics": {
