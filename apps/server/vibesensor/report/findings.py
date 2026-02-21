@@ -239,6 +239,7 @@ def _reference_missing_finding(
 ) -> dict[str, object]:
     return {
         "finding_id": finding_id,
+        "finding_type": "reference",
         "suspected_source": suspected_source,
         "evidence_summary": evidence_summary,
         "frequency_hz_or_order": _tr(lang, "REFERENCE_MISSING"),
@@ -404,6 +405,11 @@ def _build_order_findings(
             if isinstance(location_hotspot, dict)
             else True
         )
+        dominance_ratio = (
+            _as_float(location_hotspot.get("dominance_ratio"))
+            if isinstance(location_hotspot, dict)
+            else None
+        )
         localization_confidence = (
             float(location_hotspot.get("localization_confidence"))
             if isinstance(location_hotspot, dict)
@@ -436,7 +442,7 @@ def _build_order_findings(
         confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
         # Penalty: weak spatial separation
         if weak_spatial_separation:
-            confidence *= 0.85
+            confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
         # Penalty: steady/constant speed reduces order-tracking value
         if constant_speed:
             confidence *= 0.75  # was 0.88 for steady; constant is stricter

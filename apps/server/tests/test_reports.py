@@ -212,6 +212,11 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
     assert summary["speed_breakdown"] == []
     assert any(f.get("finding_id") == "REF_SPEED" for f in summary["findings"])
     assert all(
+        f.get("finding_type") == "reference"
+        for f in summary["findings"]
+        if str(f.get("finding_id", "")).startswith("REF_")
+    )
+    assert all(
         "wheel order" not in str(f.get("frequency_hz_or_order", "")).lower()
         for f in summary["findings"]
     )
