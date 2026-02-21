@@ -35,6 +35,7 @@ class ObservedSignature:
     strongest_sensor_location: str | None = None
     speed_band: str | None = None
     strength_label: str | None = None
+    strength_peak_amp_g: float | None = None
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
@@ -79,6 +80,7 @@ class PatternEvidence:
     strongest_location: str | None = None
     speed_band: str | None = None
     strength_label: str | None = None
+    strength_peak_amp_g: float | None = None
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
@@ -284,6 +286,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         strongest_sensor_location=primary_location,
         speed_band=primary_speed,
         strength_label=str_text,
+        strength_peak_amp_g=peak_amp_g,
         certainty_label=cert_label_text,
         certainty_pct=cert_pct,
         certainty_reason=cert_reason,
@@ -377,6 +380,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         strongest_location=pe_loc,
         speed_band=pe_speed,
         strength_label=str_text,
+        strength_peak_amp_g=peak_amp_g,
         certainty_label=cert_label_text,
         certainty_pct=cert_pct,
         certainty_reason=cert_reason,
