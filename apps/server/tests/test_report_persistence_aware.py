@@ -7,6 +7,8 @@ above one-off transient spikes, and that findings are classified appropriately.
 
 from __future__ import annotations
 
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
+
 from vibesensor.report.findings import (
     _build_persistent_peak_findings,
     _classify_peak_type,
@@ -59,9 +61,10 @@ def _sample(
     vibration_strength_db: float = 20.0,
     strength_bucket: str = "l2",
     client_name: str = "Front Left",
+    strength_floor_amp_g: float | None = None,
 ) -> dict:
     dominant = peaks[0] if peaks else {"hz": 10.0, "amp": 0.01}
-    return {
+    sample = {
         "record_type": "sample",
         "t_s": t_s,
         "speed_kmh": speed_kmh,
@@ -82,6 +85,9 @@ def _sample(
         ],
         "client_name": client_name,
     }
+    if strength_floor_amp_g is not None:
+        sample["strength_floor_amp_g"] = strength_floor_amp_g
+    return sample
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +227,32 @@ class TestTopPeaksTableRows:
         assert freq_ranks.get(25.0, 999) < freq_ranks.get(60.0, 999), (
             "Sustained 25 Hz should rank above damped ringdown at 60 Hz"
         )
+
+    def test_strength_db_uses_recorded_floor_and_p95_amp(self) -> None:
+        samples = [
+            _sample(
+                0.0,
+                80.0,
+                [{"hz": 30.0, "amp": 0.10}],
+                strength_floor_amp_g=0.02,
+            ),
+            _sample(
+                0.5,
+                82.0,
+                [{"hz": 30.0, "amp": 0.20}],
+                strength_floor_amp_g=0.04,
+            ),
+        ]
+
+        rows = _top_peaks_table_rows(samples)
+        assert rows
+        row = rows[0]
+        expected_db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=row["p95_amp_g"],
+            floor_amp_g=0.03,
+        )
+        assert row["strength_floor_amp_g"] == 0.03
+        assert row["strength_db"] == expected_db
 
 
 # ---------------------------------------------------------------------------
@@ -383,6 +415,54 @@ class TestBuildPersistentPeakFindings:
         assert len(impact_findings) == 0, (
             "Random one-off impacts at distinct frequencies should all be transient"
         )
+
+    def test_uniform_moderate_presence_peak_is_baseline_noise(self) -> None:
+        """Issue #140: 25 Hz in ~30% of samples across all locations/speeds -> baseline noise."""
+        locations = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
+        speeds = [35.0, 55.0, 75.0, 95.0]
+        samples = []
+        for speed in speeds:
+            for location in locations:
+                for rep in range(3):
+                    peaks = [{"hz": 10.0, "amp": 0.01}]
+                    if rep == 0:
+                        amp = 0.20 if (speed, location) == (35.0, "Front Left") else 0.05
+                        peaks.append({"hz": 25.0, "amp": amp})
+                    samples.append(_sample(float(len(samples)) * 0.5, speed, peaks, client_name=location))
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        target = [f for f in findings if "25" in str(f.get("frequency_hz_or_order", ""))]
+        assert target
+        assert target[0]["peak_classification"] == "baseline_noise"
+
+    def test_localized_moderate_presence_peak_remains_persistent(self) -> None:
+        """Issue #140: same ~30% 25 Hz peak at one location should stay persistent."""
+        locations = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
+        speeds = [35.0, 55.0, 75.0, 95.0]
+        samples = []
+        for speed in speeds:
+            for location in locations:
+                for rep in range(3):
+                    peaks = [{"hz": 10.0, "amp": 0.01}]
+                    if location == "Front Left":
+                        amp = 0.20 if (speed, rep) == (35.0, 0) else 0.05
+                        peaks.append({"hz": 25.0, "amp": amp})
+                    samples.append(_sample(float(len(samples)) * 0.5, speed, peaks, client_name=location))
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        target = [f for f in findings if "25" in str(f.get("frequency_hz_or_order", ""))]
+        assert target
+        assert target[0]["peak_classification"] == "persistent"
 
 
 # ---------------------------------------------------------------------------
