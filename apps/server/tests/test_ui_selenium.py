@@ -78,6 +78,7 @@ def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
             "metrics_log_path": str(tmp_dir / "metrics.jsonl"),
             "metrics_log_hz": 4,
         },
+        "storage": {"clients_json_path": str(persist_path)},
         "gps": {"gps_enabled": False},
     }
     config_path.write_text(yaml.safe_dump(cfg, sort_keys=False), encoding="utf-8")

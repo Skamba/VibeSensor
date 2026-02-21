@@ -62,6 +62,7 @@ export interface ClientRow {
   connected: boolean;
   mac_address: string;
   location_code: string;
+  locationCode: string;
   last_seen_age_ms: number;
   dropped_frames: number;
   frames_total: number;

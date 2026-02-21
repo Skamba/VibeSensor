@@ -49,6 +49,9 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "sensor_model": "ADXL345",
         "persist_history_db": True,
     },
+    "storage": {
+        "clients_json_path": "data/clients.json",
+    },
     "gps": {"gps_enabled": False},
 }
 
@@ -149,6 +152,7 @@ class AppConfig:
     processing: ProcessingConfig
     logging: LoggingConfig
     gps: GPSConfig
+    clients_json_path: Path
     config_path: Path
     repo_dir: Path = REPO_DIR
 
@@ -269,11 +273,21 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         gps=GPSConfig(
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
         ),
+        clients_json_path=_resolve_config_path(
+            str(
+                merged.get(
+                    "storage",
+                    {},
+                ).get("clients_json_path", str(DEFAULT_CONFIG["storage"]["clients_json_path"]))
+            ),
+            path,
+        ),
         config_path=path,
     )
     LOGGER.info(
-        "Loaded config=%s metrics_log_path=%s",
+        "Loaded config=%s metrics_log_path=%s clients_json_path=%s",
         app_config.config_path,
         app_config.logging.metrics_log_path,
+        app_config.clients_json_path,
     )
     return app_config
