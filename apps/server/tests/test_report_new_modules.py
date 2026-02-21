@@ -111,6 +111,12 @@ def test_certainty_weak_spatial_reason() -> None:
     assert "spatial" in reason.lower()
 
 
+def test_certainty_negligible_strength_caps_high_label() -> None:
+    level, label, _, _ = certainty_label(0.80, lang="en", strength_band_key="negligible")
+    assert level == "medium"
+    assert label == "Medium"
+
+
 # ---------------------------------------------------------------------------
 # parts_for_pattern
 # ---------------------------------------------------------------------------
