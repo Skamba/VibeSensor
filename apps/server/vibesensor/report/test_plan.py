@@ -255,7 +255,9 @@ def _location_speedbin_summary(
         top_count = int(per_loc_sample_counts.get(top_loc, 0))
         second_loc = ranked_for_winner[1][0] if len(ranked_for_winner) > 1 else top_loc
         second_count = (
-            int(per_loc_sample_counts.get(second_loc, 0)) if len(ranked_for_winner) > 1 else top_count
+            int(per_loc_sample_counts.get(second_loc, 0))
+            if len(ranked_for_winner) > 1
+            else top_count
         )
         second_amp = ranked_for_winner[1][1] if len(ranked_for_winner) > 1 else top_amp
         dominance = (top_amp / second_amp) if second_amp > 0 else 1.0

@@ -183,7 +183,9 @@ def _spectrogram_from_peaks(
                 continue
             effective_amps: list[float] = []
             for amp, floor_amp in amp_floor_pairs:
-                local_floor = max(0.001, floor_amp if floor_amp is not None and floor_amp > 0 else baseline_floor)
+                local_floor = max(
+                    0.001, floor_amp if floor_amp is not None and floor_amp > 0 else baseline_floor
+                )
                 snr = amp / local_floor
                 if snr < min_presence_snr:
                     continue
@@ -310,9 +312,7 @@ def _top_peaks_table_rows(
     rows: list[dict[str, Any]] = []
     for idx, item in enumerate(ordered, start=1):
         speeds = [float(v) for v in item.get("speeds", []) if isinstance(v, (int, float))]
-        speed_amps = [
-            float(v) for v in item.get("speed_amps", []) if isinstance(v, (int, float))
-        ]
+        speed_amps = [float(v) for v in item.get("speed_amps", []) if isinstance(v, (int, float))]
         low_speed, high_speed = _amplitude_weighted_speed_window(speeds, speed_amps)
         speed_band = (
             f"{low_speed:.0f}-{high_speed:.0f} km/h"
