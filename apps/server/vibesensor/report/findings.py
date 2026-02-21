@@ -21,6 +21,7 @@ from .helpers import (
     ORDER_TOLERANCE_MIN_HZ,
     ORDER_TOLERANCE_REL,
     SPEED_COVERAGE_MIN_PCT,
+    _amplitude_weighted_speed_window,
     _corr_abs,
     _effective_engine_rpm,
     _location_label,
@@ -38,6 +39,56 @@ from .order_analysis import (
     _order_label,
 )
 from .test_plan import _location_speedbin_summary
+
+
+def _weighted_percentile(
+    pairs: list[tuple[float, float]],
+    q: float,
+) -> float | None:
+    if not pairs:
+        return None
+    q_clamped = max(0.0, min(1.0, q))
+    filtered = [(value, weight) for value, weight in pairs if weight > 0]
+    if not filtered:
+        return None
+    ordered = sorted(filtered, key=lambda item: item[0])
+    total_weight = sum(weight for _, weight in ordered)
+    if total_weight <= 0:
+        return None
+    threshold = q_clamped * total_weight
+    cumulative = 0.0
+    for value, weight in ordered:
+        cumulative += weight
+        if cumulative >= threshold:
+            return value
+    return ordered[-1][0]
+
+
+def _speed_profile_from_points(
+    points: list[tuple[float, float]],
+    *,
+    allowed_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
+) -> tuple[float | None, tuple[float, float] | None, str | None]:
+    valid = [(speed, amp) for speed, amp in points if speed > 0 and amp > 0]
+    if not valid:
+        return None, None, None
+
+    peak_speed_kmh = max(valid, key=lambda item: item[1])[0]
+    low = _weighted_percentile(valid, 0.10)
+    high = _weighted_percentile(valid, 0.90)
+    if low is None or high is None:
+        return peak_speed_kmh, None, None
+    if high < low:
+        low, high = high, low
+    speed_window_kmh = (low, high)
+    strongest_speed_band = _amplitude_weighted_speed_window(
+        [
+            {"speed_kmh": speed_kmh, "amp": amp}
+            for speed_kmh, amp in valid
+        ],
+        allowed_speed_bins=allowed_speed_bins,
+    )
+    return peak_speed_kmh, speed_window_kmh, strongest_speed_band
 
 
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
@@ -65,6 +116,54 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
             }
         )
     return rows
+
+
+def _amplitude_weighted_speed_band(speed_amp_pairs: list[tuple[float, float]]) -> str | None:
+    valid_pairs = [
+        (float(speed), float(amp))
+        for speed, amp in speed_amp_pairs
+        if float(speed) > 0 and float(amp) > 0
+    ]
+    if not valid_pairs:
+        return None
+
+    valid_pairs.sort(key=lambda item: item[0])
+    if len(valid_pairs) == 1:
+        speed = valid_pairs[0][0]
+        return f"{speed:.0f}-{speed:.0f} km/h"
+
+    amps_sorted = sorted(amp for _speed, amp in valid_pairs)
+    strong_threshold = (
+        percentile(amps_sorted, 0.75) if len(amps_sorted) >= 4 else percentile(amps_sorted, 0.50)
+    )
+    strong_speeds = [speed for speed, amp in valid_pairs if amp >= strong_threshold]
+    if len(strong_speeds) >= 2:
+        return f"{min(strong_speeds):.0f}-{max(strong_speeds):.0f} km/h"
+
+    total_weight = sum(amp for _speed, amp in valid_pairs)
+    if total_weight <= 1e-9:
+        speeds = [speed for speed, _amp in valid_pairs]
+        return f"{min(speeds):.0f}-{max(speeds):.0f} km/h"
+
+    lower_target = total_weight * 0.20
+    upper_target = total_weight * 0.80
+    cumulative = 0.0
+    lower_speed = valid_pairs[0][0]
+    upper_speed = valid_pairs[-1][0]
+    lower_set = False
+
+    for speed, amp in valid_pairs:
+        cumulative += amp
+        if not lower_set and cumulative >= lower_target:
+            lower_speed = speed
+            lower_set = True
+        if cumulative >= upper_target:
+            upper_speed = speed
+            break
+
+    if upper_speed < lower_speed:
+        lower_speed, upper_speed = upper_speed, lower_speed
+    return f"{lower_speed:.0f}-{upper_speed:.0f} km/h"
 
 
 def _sensor_intensity_by_location(
@@ -418,9 +517,22 @@ def _build_order_findings(
         strongest_location = (
             str(location_hotspot.get("location")) if isinstance(location_hotspot, dict) else ""
         )
-        strongest_speed_band = (
+        hotspot_speed_band = (
             str(location_hotspot.get("speed_range")) if isinstance(location_hotspot, dict) else ""
         )
+        speed_points: list[tuple[float, float]] = []
+        for point in matched_points:
+            point_speed = _as_float(point.get("speed_kmh"))
+            point_amp = _as_float(point.get("amp"))
+            if point_speed is None or point_amp is None:
+                continue
+            speed_points.append((point_speed, point_amp))
+        peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
+            speed_points,
+            allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
+        )
+        if not strongest_speed_band:
+            strongest_speed_band = hotspot_speed_band
         if focused_speed_band and not strongest_speed_band:
             strongest_speed_band = focused_speed_band
         actions = _finding_actions_for_source(
@@ -456,6 +568,8 @@ def _build_order_findings(
             "location_hotspot": location_hotspot,
             "strongest_location": strongest_location or None,
             "strongest_speed_band": strongest_speed_band or None,
+            "peak_speed_kmh": peak_speed_kmh,
+            "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "dominance_ratio": (
                 float(location_hotspot.get("dominance_ratio"))
                 if isinstance(location_hotspot, dict)
@@ -576,6 +690,7 @@ def _build_persistent_peak_findings(
     bin_amps: dict[float, list[float]] = defaultdict(list)
     bin_floors: dict[float, list[float]] = defaultdict(list)
     bin_speeds: dict[float, list[float]] = defaultdict(list)
+    bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
     bin_location_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
@@ -603,6 +718,7 @@ def _build_persistent_peak_findings(
             bin_floors[bin_center].append(max(0.0, floor_amp))
             if speed is not None and speed > 0:
                 bin_speeds[bin_center].append(speed)
+                bin_speed_amp_pairs[bin_center].append((speed, amp))
             if location:
                 bin_location_counts[bin_center][location] += 1
             if sample_speed_bin is not None:
@@ -687,9 +803,16 @@ def _build_persistent_peak_findings(
                 confidence = min(confidence, 0.35)
 
         speeds = bin_speeds.get(bin_center, [])
-        speed_band = "-"
-        if speeds:
-            speed_band = f"{min(speeds):.0f}-{max(speeds):.0f} km/h"
+        speed_band = _amplitude_weighted_speed_band(bin_speed_amp_pairs.get(bin_center, [])) or "-"
+        if speed_band == "-":
+            speeds = bin_speeds.get(bin_center, [])
+            if speeds:
+                speed_band = f"{min(speeds):.0f}-{max(speeds):.0f} km/h"
+        peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(
+            bin_speed_amp_pairs.get(bin_center, [])
+        )
+        if derived_speed_band:
+            speed_band = derived_speed_band
 
         evidence = _tr(
             lang,
@@ -705,6 +828,7 @@ def _build_persistent_peak_findings(
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
+            "severity": "info" if peak_type == "transient" else "diagnostic",
             "suspected_source": (
                 "baseline_noise"
                 if peak_type == "baseline_noise"
@@ -739,6 +863,8 @@ def _build_persistent_peak_findings(
                 "spatial_uniformity": spatial_uniformity,
                 "speed_uniformity": speed_uniformity,
             },
+            "peak_speed_kmh": peak_speed_kmh,
+            "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "strongest_speed_band": speed_band if speed_band != "-" else None,
         }
 
@@ -883,7 +1009,27 @@ def _build_findings(
         )
     )
 
-    findings.sort(key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True)
+    reference_findings = [
+        item for item in findings if str(item.get("finding_id", "")).startswith("REF_")
+    ]
+    non_reference_findings = [
+        item for item in findings if not str(item.get("finding_id", "")).startswith("REF_")
+    ]
+    informational_findings = [
+        item
+        for item in non_reference_findings
+        if str(item.get("severity") or "").strip().lower() == "info"
+    ]
+    diagnostic_findings = [
+        item
+        for item in non_reference_findings
+        if str(item.get("severity") or "").strip().lower() != "info"
+    ]
+    diagnostic_findings.sort(key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True)
+    informational_findings.sort(
+        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
+    )
+    findings = reference_findings + diagnostic_findings + informational_findings
     for idx, finding in enumerate(findings, start=1):
         fid = str(finding.get("finding_id", "")).strip()
         if not fid.startswith("REF_"):

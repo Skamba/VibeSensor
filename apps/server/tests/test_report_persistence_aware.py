@@ -667,6 +667,35 @@ class TestSpectrogramPersistence:
 
         assert diagnostic["max_amp"] < raw["max_amp"]
 
+    def test_diagnostic_spectrogram_suppresses_broadband_near_floor(self) -> None:
+        samples = [
+            _sample(
+                float(i),
+                90.0,
+                [{"hz": 30.0, "amp": 0.05}],
+                strength_floor_amp_g=0.01,
+            )
+            for i in range(20)
+        ]
+        broadband_peaks = [
+            {"hz": float(hz), "amp": 0.055} for hz in (10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+        ]
+        samples.append(
+            _sample(
+                21.0,
+                90.0,
+                broadband_peaks,
+                strength_floor_amp_g=0.05,
+            )
+        )
+
+        diagnostic = _spectrogram_from_peaks(samples)
+
+        assert diagnostic["cells"]
+        noisy_col = len(diagnostic["x_bins"]) - 1
+        noisy_col_values = [row[noisy_col] for row in diagnostic["cells"]]
+        assert max(noisy_col_values) == 0.0
+
 
 # ---------------------------------------------------------------------------
 # Backward compatibility

@@ -75,10 +75,11 @@ def _spectrogram_from_peaks(
     """Build a 2-D spectrogram grid from per-sample peak lists.
 
     *aggregation* controls cell values:
-    - ``"persistence"`` – ``(presence_ratio²) × p95_amp`` (default, diagnostic view).
+    - ``"persistence"`` – ``(presence_ratio²) × p95_amp`` where each observation
+      is SNR-gated/weighted against its sample noise floor (default, diagnostic view).
     - ``"max"``         – simple ``max(amplitude)`` per cell (raw/debug view).
     """
-    peak_rows: list[tuple[float, float, float]] = []
+    peak_rows: list[tuple[float, float, float, float | None]] = []
     time_values: list[float] = []
     speed_values: list[float] = []
 
