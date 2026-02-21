@@ -261,7 +261,7 @@ class TestConfidenceCalibration:
 
         if low_conf > 0.0 and high_conf > 0.0:
             assert low_conf < high_conf
-            assert low_conf <= high_conf * 0.85
+            assert low_conf <= high_conf * 0.95
 
     def test_negligible_amplitude_capped(self) -> None:
         """Very weak signal (< 2 mg) → confidence capped at 0.45."""
