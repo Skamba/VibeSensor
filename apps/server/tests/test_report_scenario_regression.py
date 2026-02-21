@@ -699,6 +699,69 @@ class TestReportMetadataCompleteness:
 # ---------------------------------------------------------------------------
 
 
+class TestReferenceFindingDistinguishability:
+    """Reference-missing findings must be distinguishable and must not inflate
+    confidence statistics. (issue #187)"""
+
+    def test_reference_finding_has_finding_type_field(self) -> None:
+        """_reference_missing_finding must include finding_type='reference'."""
+        from vibesensor.report.findings import _reference_missing_finding
+
+        ref = _reference_missing_finding(
+            finding_id="REF_SPEED",
+            suspected_source="unknown",
+            evidence_summary="Speed data missing",
+            quick_checks=["Check GPS"],
+        )
+        assert ref.get("finding_type") == "reference", (
+            f"Expected finding_type='reference', got {ref.get('finding_type')!r}"
+        )
+
+    def test_reference_findings_excluded_from_top_causes(self) -> None:
+        """select_top_causes must not include REF_ findings in output."""
+        from vibesensor.report.findings import _reference_missing_finding
+
+        ref = _reference_missing_finding(
+            finding_id="REF_SPEED",
+            suspected_source="unknown",
+            evidence_summary="Speed data missing",
+            quick_checks=[],
+        )
+        # Mix a reference finding with a high-confidence diagnostic finding
+        findings = [
+            ref,
+            {
+                "finding_id": "F001",
+                "confidence_0_to_1": 0.80,
+                "suspected_source": "wheel/tire",
+                "severity": "diagnostic",
+            },
+        ]
+        from vibesensor.report.summary import select_top_causes
+
+        top = select_top_causes(findings)
+        for cause in top:
+            fid = str(cause.get("finding_id") or "")
+            assert not fid.startswith("REF_"), (
+                f"Reference finding {fid!r} must not appear in top_causes"
+            )
+
+    def test_all_ref_variants_have_reference_type(self) -> None:
+        """All four REF_ finding IDs must carry finding_type='reference'."""
+        from vibesensor.report.findings import _reference_missing_finding
+
+        for fid in ("REF_SPEED", "REF_WHEEL", "REF_ENGINE", "REF_SAMPLE_RATE"):
+            ref = _reference_missing_finding(
+                finding_id=fid,
+                suspected_source="unknown",
+                evidence_summary="missing",
+                quick_checks=[],
+            )
+            assert ref.get("finding_type") == "reference", (
+                f"{fid}: expected finding_type='reference', got {ref.get('finding_type')!r}"
+            )
+
+
 class TestPhaseInfoInSummary:
     """summarize_run_data should include phase_info in its output."""
 
