@@ -2,50 +2,28 @@ Repository overview
 - VibeSensor: Python-based data-collection and analysis backend (located in `apps/server/`), a small web UI (`apps/ui/`) built with Node, and device/firmware helpers under `firmware/esp/` and `hardware/`.
 - Key runtime artifacts: Docker Compose stack at `docker-compose.yml` and `apps/server/` Python package (`apps/server/pyproject.toml`). PDF report generation lives in `apps/server/vibesensor/report_pdf.py`.
 
-Common commands (exact as found in CI / repo files)
-- Install Python deps (dev):
-  - python -m pip install -e "./apps/server[dev]"
-- Run CI-aligned verification test suite:
-  - make test-all
-- Optional focused backend pytest run (for faster iteration, not a CI substitute):
-  - python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
-- Lint / format checks (as used in CI):
-  - ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
-  - ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python libs/adapters/python
-- Web UI:
-  - cd apps/ui && npm ci
-  - cd apps/ui && npm run build
-  - cd apps/ui && npm run typecheck
-- Docker (local dev / CI):
-  - docker compose build --pull
-  - docker compose up -d
+Canonical instruction sources
+- Read `docs/ai/repo-map.md` first.
+- Shared workflow/validation guardrails live in `.github/instructions/general.instructions.md`.
+- Area-specific deltas live in `.github/instructions/{backend,frontend,tests,infra,docs,report}.instructions.md`.
 
-Repo conventions
-- Backend code: placed under `apps/server/vibesensor/`. Keep files/modules short where practical, but avoid splitting that harms human maintainability; prefer explicit function signatures.
-- Tests live under `apps/server/tests/` and use pytest. Selenium-marked tests are slow/optional and excluded in CI with `-m "not selenium"`.
-- Strings that appear in generated reports are internationalised via `apps/server/data/report_i18n.json` and loaded by `apps/server/vibesensor/report_i18n.py`.
+Execution model
+- For medium/large tasks, start with an explicit checklist plan whose item titles include problem + fix + user impact.
+- Iterate until complete: `plan → verify existing behavior → root cause → blast radius scan → implement minimal change → targeted tests → broader relevant tests → re-plan`.
+- Prefer extending/hardening existing logic over parallel implementations.
+- Continue autonomously on clearly adjacent in-scope issues.
+- Stop only when all plan items are validated complete, no similar in-scope issues remain, a real blocker exists, or time budget is reached.
+- Long deep runs are allowed and preferred for deeper tasks; 45–60 minutes is acceptable for medium/large work.
 
-Configuration and secrets
-- Config files: `apps/server/config.example.yaml`, `apps/server/config.dev.yaml`, and `apps/server/config.yaml` live under `apps/server/`.
-- CI installs the dev package using `python -m pip install -e "./apps/server[dev]"`; follow that pattern for local dev.
-- Do NOT add secrets to the repo. Keep WiFi or device secrets out of `apps/server/config.yaml`; sample secrets live in `apps/server/wifi-secrets.example.env`.
+Common commands
+- `python -m pip install -e "./apps/server[dev]"`
+- `make lint`
+- `make test-all`
+- `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`
+- `cd apps/ui && npm ci && npm run typecheck && npm run build`
+- `docker compose build --pull && docker compose up -d`
 
-How to add a feature safely
-- Add code under `apps/server/vibesensor/` for backend changes; add small, focused tests in `apps/server/tests/` that are fast.
-- Update or add i18n keys in `apps/server/data/report_i18n.json` when changing report text.
-- For UI changes, modify `apps/ui/` and update the `apps/ui` build scripts; ensure `npm run build` succeeds.
-- If the change affects Docker, update `docker-compose.yml` or `apps/server/Dockerfile` and test locally with `docker compose up -d`.
-
-Guardrails for Copilot
-- Breaking changes and larger cross-cutting changes are allowed when they speed up learning. Backward compatibility is never a requirement; add/update tests to match new behavior and call out impact clearly.
-- For change verification, use the same suite as CI (`make test-all`).
-- Do not modify unrelated files or reformat the whole repo.
-- Default PR mode: check PR status checks and review feedback, fix all blocking issues, push updates, and continue monitoring until required checks are fully green.
-
-End-to-end validation via Docker
-- After making backend or frontend changes, always rebuild and test using the Docker container:
-  - `docker compose build --pull`
-  - `docker compose up -d`
-- Verify the running container by checking `docker compose ps` and confirming the service is healthy.
-- Use the simulator (`vibesensor-sim --count 5 --duration 10 --no-interactive`) to send test data and confirm the UI updates correctly.
-- After the simulator finishes, verify the UI stops showing new detections and the car map stops animating (no stale-data artifacts).
+No-cheating + compatibility
+- Keep code in proper code files (not hidden in docs/json/txt wrappers).
+- Move newly introduced large inline data to suitable data files (`.json`, `.yaml`, etc.) when appropriate.
+- Breaking changes are generally allowed, but preserve parsing compatibility for old recorded runs/report data unless explicitly waived.

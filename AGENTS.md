@@ -1,48 +1,36 @@
 Agent operating guide (short)
 
+Read order + canonical rules
+- Read `docs/ai/repo-map.md` first.
+- Treat `.github/instructions/general.instructions.md` as the canonical shared workflow/validation source.
+- Use `.github/instructions/*.md` files for area-specific deltas only.
+
+Execution loop (medium/large tasks)
+- Start with an explicit checklist plan (descriptive titles: problem + fix + user impact).
+- Iterate until done: `plan → verify existing behavior → root cause → blast radius scan → implement → targeted tests → broader relevant tests → re-plan`.
+- Prefer extending existing logic over parallel implementations.
+- Continue autonomously on clearly adjacent in-scope issues.
+- Stop only when: all items are validated complete, no similar in-scope issues remain, a real blocker exists, or time budget is reached.
+- Long deep runs are allowed; 45–60 minutes is acceptable for medium/large tasks when needed.
+
 Setup
 - Python: `python -m pip install -e "./apps/server[dev]"`
 - UI: `cd apps/ui && npm ci`
 
+Validation
+- Lint: `make lint`
+- CI-aligned tests: `make test-all`
+- Optional fast backend tests: `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`
+- Backend/frontend changes require Docker validation (`docker compose build --pull`, `docker compose up -d`, simulator run, UI stale-data check).
+
 Run server
 - Local: `python -m vibesensor.app --config apps/server/config.dev.yaml`
-- On Pi (service install): `sudo ./apps/server/scripts/install_pi.sh`
-- Hotspot repair: `sudo ./apps/server/scripts/hotspot_nmcli.sh`
 
-Build Pi image
-- Canonical: `./infra/pi-image/pi-gen/build.sh`
-- Legacy alias remains: `./image/pi-gen/build.sh`
+No-cheating + noise control
+- Keep code in real code files (not hidden in docs/json/txt wrappers).
+- Move newly introduced large inline data to data files (`.json`/`.yaml`) where appropriate.
+- Avoid scanning generated/cache/vendor paths unless debugging (`artifacts/`, `.cache/`, `node_modules/`, `dist/`).
 
-Firmware (ESP)
-- Build/flash: `cd firmware/esp && pio run -t upload`
-- Serial monitor: `cd firmware/esp && pio device monitor`
-
-UI
-- Dev: `cd apps/ui && npm run dev`
-- Build: `cd apps/ui && npm run typecheck && npm run build`
-
-Deterministic commands
-- Format: `make format`
-- Lint: `make lint`
-- Test: `make test`
-- Smoke: `make smoke`
-- File-length advisory: `make loc`
-- Docs lint: `make docs-lint`
-
-Architecture map
-- `apps/server`: FastAPI/runtime composition and orchestration
-- `apps/ui`: dashboard client
-- `apps/simulator`: runnable ingest/websocket simulators
-- `firmware/esp`: ESP32 firmware
-- `libs/core`: pure vibration/domain logic (no IO/framework)
-- `libs/adapters`: path/discovery and integration glue
-- `libs/shared`: canonical contracts/schemas/constants used by server and UI
-- `infra/pi-image`: pi-gen image build
-- Docker entrypoint: `docker-compose.yml` (root canonical); Dockerfile lives at `apps/server/Dockerfile`
-
-Invariants
-- Canonical vibration severity metric is `vibration_strength_db`.
-- Strength bucket assignment must use `bucket_for_strength` logic.
-- Shared contracts under `libs/shared/contracts` are source of truth.
-- Keep files short where practical, as long as this does not reduce human maintainability.
-- Avoid reading or indexing build outputs/caches (`artifacts/`, `.cache/`, `node_modules/`, `dist/`) unless debugging packaging.
+Compatibility nuance
+- Breaking changes are generally allowed.
+- Exception: preserve parsing compatibility for old recorded runs/report data unless explicitly waived by the task.

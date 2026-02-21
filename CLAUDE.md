@@ -1,44 +1,30 @@
 # CLAUDE quick guide
 
-Use `docs/ai/repo-map.md` first, then read the files needed for the task (including larger cross-cutting changes when required).
+Read order + canonical rules
+- Read `docs/ai/repo-map.md` first.
+- Treat `.github/instructions/general.instructions.md` as canonical shared workflow/validation guidance.
+- Apply `.github/instructions/*.md` files only as area-specific deltas.
+
+## Execution loop (medium/large tasks)
+- Start with a checklist plan whose item titles include problem + fix + user impact.
+- Iterate: `plan → verify existing behavior → root cause → blast radius scan → implement minimal change → targeted tests → broader relevant tests → re-plan`.
+- Prefer extending existing logic over parallel implementations.
+- Continue autonomously on adjacent in-scope issues.
+- Stop only when all items are validated complete, no similar in-scope issues remain, a real blocker exists, or time budget is reached.
+- Long deep runs are allowed/preferred for deeper tasks; 45–60 minutes is acceptable.
 
 ## Core commands
 - Setup: `python -m pip install -e "./apps/server[dev]" && (cd apps/ui && npm ci)`
 - Run server (local): `python -m vibesensor.app --config apps/server/config.dev.yaml`
-- Build Pi image: `./infra/pi-image/pi-gen/build.sh`
-- Firmware build/flash: `cd firmware/esp && pio run -t upload`
 - UI dev/build: `cd apps/ui && npm run dev` / `cd apps/ui && npm run typecheck && npm run build`
-- Lint/test/format/smoke: `make lint` / `make test` / `make format` / `make smoke`
+- Lint/test/format/smoke: `make lint` / `make test-all` / `make format` / `make smoke`
 
-## Invariants
-- Shared contracts in `libs/shared/contracts` are canonical.
-- `libs/core` stays pure (no network/db/filesystem/framework imports).
-- `apps/server` composes adapters + core.
-- Prefer `apps/*`, `libs/*`, `infra/*` paths over legacy compatibility links.
-- Backward compatibility is never a requirement; breaking/larger changes are allowed when intentional.
-
-## AI PR checklist — UI changes
-When opening a PR that touches `apps/ui/`:
-1. Build: `cd apps/ui && npm run build`
-2. Take a screenshot and verify graph data (fails non-zero if chart is empty):
-   ```
-   cd apps/ui && npm run screenshot -- /tmp/vibesensor-pr-screenshot.png
-   ```
-3. Commit the screenshot to the branch so it travels with the PR:
-   ```
-   cp /tmp/vibesensor-pr-screenshot.png docs/screenshots/latest-live-view.png
-   git add docs/screenshots/latest-live-view.png
-   git commit -m "chore: update UI screenshot"
-   git push -u origin <branch>
-   ```
-4. Reference it in the PR body (replace BRANCH with the actual branch name):
-   ```
-   ![Live view screenshot](https://raw.githubusercontent.com/Skamba/VibeSensor/<BRANCH>/docs/screenshots/latest-live-view.png)
-   ```
-5. Regenerate snapshots if chart or layout changed: `cd apps/ui && npm run snapshot:update`
+## Compatibility nuance
+- Breaking changes are generally allowed.
+- Exception: preserve parsing compatibility for old recorded runs/report data unless explicitly waived.
 
 ## Noise control
-Avoid scanning these unless explicitly needed:
+Avoid scanning these unless explicitly needed, and avoid huge command output unless necessary:
 - `artifacts/`
 - `infra/pi-image/pi-gen/.cache/`
 - `apps/ui/node_modules/`
