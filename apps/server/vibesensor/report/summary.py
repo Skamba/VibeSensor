@@ -288,6 +288,7 @@ def build_findings_for_samples(
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
     )
     raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
+    per_sample_phases, _ = _segment_run_phases(rows)
     return _build_findings(
         metadata=dict(metadata),
         samples=rows,
@@ -297,6 +298,7 @@ def build_findings_for_samples(
         speed_non_null_pct=speed_non_null_pct,
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,
+        per_sample_phases=per_sample_phases,
     )
 
 
@@ -420,6 +422,7 @@ def summarize_run_data(
         speed_non_null_pct=speed_non_null_pct,
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,
+        per_sample_phases=_per_sample_phases,
     )
     most_likely_origin = _most_likely_origin_summary(findings, language)
     test_plan = _merge_test_plan(findings, language)
@@ -566,6 +569,19 @@ def summarize_run_data(
         "warnings": [],
         "speed_breakdown": speed_breakdown,
         "phase_speed_breakdown": phase_speed_breakdown,
+        "phase_segments": [
+            {
+                "phase": seg.phase.value,
+                "start_idx": seg.start_idx,
+                "end_idx": seg.end_idx,
+                "start_t_s": seg.start_t_s,
+                "end_t_s": seg.end_t_s,
+                "speed_min_kmh": seg.speed_min_kmh,
+                "speed_max_kmh": seg.speed_max_kmh,
+                "sample_count": seg.sample_count,
+            }
+            for seg in phase_segments
+        ],
         "run_noise_baseline_g": run_noise_baseline_g,
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
