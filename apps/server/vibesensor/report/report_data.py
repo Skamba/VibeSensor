@@ -11,6 +11,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
+
 from .. import __version__
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
@@ -145,8 +147,6 @@ def _human_source(source: object, *, tr) -> str:  # type: ignore[type-arg]
 
 
 def _finding_strength_values(finding: dict) -> tuple[float | None, float | None]:
-    from math import log10
-
     amp_metric = finding.get("amplitude_metric")
     peak_amp_g = _as_float(amp_metric.get("value")) if isinstance(amp_metric, dict) else None
 
@@ -162,8 +162,12 @@ def _finding_strength_values(finding: dict) -> tuple[float | None, float | None]
     if isinstance(evidence_metrics, dict):
         noise_floor = _as_float(evidence_metrics.get("mean_noise_floor"))
         if peak_amp_g is not None and noise_floor is not None and noise_floor > 0:
-            ratio = (peak_amp_g + 1e-12) / (noise_floor + 1e-12)
-            return (20.0 * log10(max(ratio, 1e-12)), peak_amp_g)
+            return (
+                vibration_strength_db_scalar(
+                    peak_band_rms_amp_g=peak_amp_g, floor_amp_g=noise_floor
+                ),
+                peak_amp_g,
+            )
 
     return (None, peak_amp_g)
 
