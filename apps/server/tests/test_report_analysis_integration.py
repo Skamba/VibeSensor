@@ -142,7 +142,53 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
 
     assert wheel_finding is not None
     strongest_speed_band = str(wheel_finding.get("strongest_speed_band") or "")
-    assert strongest_speed_band in {"90-100 km/h", "100-110 km/h"}
+    assert strongest_speed_band.endswith("km/h")
+    low_str, high_str = strongest_speed_band.replace(" km/h", "").split("-", maxsplit=1)
+    assert float(low_str) >= 90.0
+    assert float(high_str) >= float(low_str)
+
+
+def test_build_findings_order_exposes_structured_speed_profile() -> None:
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(24):
+        speed_kmh = 60.0 + float(idx)
+        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        amp = 0.01 + (0.0008 * idx)
+        samples.append(
+            {
+                **_make_sample(float(idx), speed_kmh, amp),
+                "strength_floor_amp_g": 0.002,
+                "top_peaks": [{"hz": wheel_hz, "amp": amp}],
+            }
+        )
+
+    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    wheel_finding = next(
+        (f for f in findings if str(f.get("finding_key") or "") == "wheel_1x"),
+        None,
+    )
+    assert wheel_finding is not None
+
+    peak_speed = wheel_finding.get("peak_speed_kmh")
+    speed_window = wheel_finding.get("speed_window_kmh")
+    assert isinstance(peak_speed, float)
+    assert isinstance(speed_window, list)
+    assert len(speed_window) == 2
+    low = float(speed_window[0])
+    high = float(speed_window[1])
+    assert low <= high
+    assert low <= peak_speed <= (60.0 + 23.0)
+    assert str(wheel_finding.get("strongest_speed_band") or "").endswith("km/h")
 
 
 def test_build_findings_detects_driveline_2x_order() -> None:
@@ -178,6 +224,43 @@ def test_build_findings_detects_driveline_2x_order() -> None:
     assert driveline_2x is not None
     assert driveline_2x.get("suspected_source") == "driveline"
     assert driveline_2x.get("frequency_hz_or_order") == "2x driveshaft order"
+
+
+def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> None:
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(28):
+        speed_kmh = 50.0 + float(idx)
+        amp = 0.012 + (0.010 * (1.0 - abs(speed_kmh - 68.0) / 20.0))
+        samples.append(
+            {
+                **_make_sample(float(idx), speed_kmh, amp),
+                "strength_floor_amp_g": 0.002,
+                "top_peaks": [{"hz": 73.0, "amp": max(0.004, amp)}],
+            }
+        )
+
+    findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    persistent = next(
+        (f for f in findings if str(f.get("finding_key") or "").startswith("peak_")),
+        None,
+    )
+    assert persistent is not None
+
+    peak_speed = persistent.get("peak_speed_kmh")
+    speed_window = persistent.get("speed_window_kmh")
+    assert isinstance(peak_speed, float)
+    assert isinstance(speed_window, list)
+    assert len(speed_window) == 2
+    low = float(speed_window[0])
+    high = float(speed_window[1])
+    assert low <= high
+    assert low <= peak_speed <= (50.0 + 27.0)
+    assert str(persistent.get("strongest_speed_band") or "").endswith("km/h")
 
 
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
@@ -263,7 +346,38 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
     assert focused is not None
     assert unconstrained.get("location") == "Rear Left"
     assert focused.get("location") == "Front Right"
-    assert focused.get("speed_range") == "100-110 km/h"
+    focused_range = str(focused.get("speed_range") or "")
+    low_text, high_text = focused_range.replace(" km/h", "").split("-", maxsplit=1)
+    assert float(low_text) >= 100.0
+    assert float(high_text) <= 110.0
+
+
+def test_location_speedbin_summary_reports_weighted_boundary_straddling_window() -> None:
+    from vibesensor.report.test_plan import _location_speedbin_summary
+
+    matches = [
+        {"speed_kmh": 74.0, "amp": 0.005, "location": "Front Left"},
+        {"speed_kmh": 75.0, "amp": 0.005, "location": "Front Left"},
+        {"speed_kmh": 76.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 77.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 78.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 79.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 80.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 81.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 82.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 83.0, "amp": 0.030, "location": "Front Left"},
+        {"speed_kmh": 84.0, "amp": 0.005, "location": "Front Left"},
+    ]
+
+    _, hotspot = _location_speedbin_summary(matches, lang="en")
+
+    assert hotspot is not None
+    speed_range = str(hotspot.get("speed_range") or "")
+    low_text, high_text = speed_range.replace(" km/h", "").split("-", maxsplit=1)
+    low, high = float(low_text), float(high_text)
+    assert 75.0 <= low <= 77.0
+    assert 83.0 <= high <= 85.0
+    assert speed_range not in {"70-80 km/h", "80-90 km/h"}
 
 
 def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outlier_bin() -> None:
@@ -282,7 +396,10 @@ def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outl
 
     assert hotspot is not None
     assert hotspot.get("location") == "Front Left"
-    assert hotspot.get("speed_range") == "90-100 km/h"
+    speed_range = str(hotspot.get("speed_range") or "")
+    low_text, high_text = speed_range.replace(" km/h", "").split("-", maxsplit=1)
+    low, high = float(low_text), float(high_text)
+    assert 95.0 <= low <= high <= 97.0
 
 
 def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() -> None:
