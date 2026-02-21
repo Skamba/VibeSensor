@@ -461,8 +461,10 @@ def _build_order_findings(
         elif steady_speed:
             confidence *= 0.82  # was 0.88 — still significant
         # Bonus: more matched samples → higher trust (diminishing returns)
-        sample_factor = min(1.0, matched / 30.0)  # saturates at 30 samples
-        confidence = confidence * (0.80 + 0.20 * sample_factor)
+        # Keep a meaningful penalty near the minimum 4-match threshold while
+        # saturating confidence support once evidence reaches ~20 matches.
+        sample_factor = min(1.0, matched / 20.0)  # saturates at 20 samples
+        confidence = confidence * (0.70 + 0.30 * sample_factor)
         # Bonus: multi-sensor corroboration — multiple independent locations
         # detecting the same order strengthens the finding.
         if corroborating_locations >= 3:
