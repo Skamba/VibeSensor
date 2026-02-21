@@ -154,6 +154,7 @@ def certainty_label(
     weak_spatial: bool = False,
     sensor_count: int = 2,
     has_reference_gaps: bool = False,
+    strength_band_key: str | None = None,
 ) -> tuple[str, str, str, str]:
     """Return (level_key, human_label, pct_text, reason) for a confidence value.
 
@@ -165,6 +166,9 @@ def certainty_label(
         ``"en"`` or ``"nl"``.
     steady_speed / weak_spatial / sensor_count / has_reference_gaps:
         Context flags used to select the most appropriate reason phrase.
+    strength_band_key:
+        Optional vibration-strength band key. When set to ``"negligible"``,
+        high certainty is capped to medium as a defensive label guard.
 
     Returns
     -------
@@ -181,6 +185,9 @@ def certainty_label(
         level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
     else:
         level_key, label_en, label_nl = "low", "Low", "Laag"
+    normalized_strength_band = (strength_band_key or "").strip().lower()
+    if normalized_strength_band == "negligible" and level_key == "high":
+        level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
 
     label = label_nl if lang == "nl" else label_en
     reason_key = _select_reason_key(
