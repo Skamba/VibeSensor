@@ -81,6 +81,20 @@ def _safe(v: str | None, fallback: str = "—") -> str:
     return str(v).strip() if v and str(v).strip() else fallback
 
 
+def _strength_with_peak(
+    strength_label: str | None,
+    peak_amp_g: float | None,
+    *,
+    fallback: str,
+) -> str:
+    base = _safe(strength_label, fallback)
+    if peak_amp_g is None:
+        return base
+    if "g peak" in base.lower():
+        return base
+    return f"{base} · {peak_amp_g:.3f} g peak"
+
+
 def _draw_panel(
     c: Canvas,
     x: float,
@@ -324,7 +338,18 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     oy -= step
     _draw_kv(c, ox, oy, tr("SPEED_BAND"), _safe(data.observed.speed_band, na), label_w=lw)
     oy -= step
-    _draw_kv(c, ox, oy, tr("STRENGTH"), _safe(data.observed.strength_label, na), label_w=lw)
+    _draw_kv(
+        c,
+        ox,
+        oy,
+        tr("STRENGTH"),
+        _strength_with_peak(
+            data.observed.strength_label,
+            data.observed.strength_peak_amp_g,
+            fallback=na,
+        ),
+        label_w=lw,
+    )
     oy -= step
 
     cert_val = _safe(data.observed.certainty_label, na)
@@ -630,7 +655,15 @@ def _draw_pattern_evidence(
     ry -= step
     _draw_kv(c, rx, ry, tr("SPEED_BAND"), _safe(ev.speed_band, na), label_w=lw, fs=7)
     ry -= step
-    _draw_kv(c, rx, ry, tr("STRENGTH"), _safe(ev.strength_label, na), label_w=lw, fs=7)
+    _draw_kv(
+        c,
+        rx,
+        ry,
+        tr("STRENGTH"),
+        _strength_with_peak(ev.strength_label, ev.strength_peak_amp_g, fallback=na),
+        label_w=lw,
+        fs=7,
+    )
     ry -= step
 
     cert_val = _safe(ev.certainty_label, na)
