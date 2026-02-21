@@ -380,7 +380,7 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(
     assert row["queue_overflow_drops_delta"] == 3
     strength = row["strength_bucket_distribution"]
     assert strength["total"] > 0
-    assert set(strength["counts"].keys()) == {"l1", "l2", "l3", "l4", "l5"}
+    assert set(strength["counts"].keys()) == {"l0", "l1", "l2", "l3", "l4", "l5"}
     pct_sum = sum(strength[f"percent_time_l{idx}"] for idx in range(1, 6))
     assert pct_sum == pytest.approx(100.0, rel=1e-6)
 
