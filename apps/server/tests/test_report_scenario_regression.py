@@ -275,6 +275,36 @@ class TestConfidenceCalibration:
             conf = float(finding.get("confidence_0_to_1") or 0)
             assert conf <= 0.46, f"Negligible amp finding {fid} has conf {conf} > 0.45"
 
+    def test_negligible_strength_db_capped_for_multi_sensor_match(self) -> None:
+        """Negligible strength band (<8 dB) must stay at low confidence."""
+        meta = _standard_metadata()
+        locations = ["Front Left Wheel", "Rear Right Wheel", "Front Right Wheel"]
+        samples = _build_speed_sweep_samples(peak_amp=0.02, vib_db=18.0, n=60)
+        for idx, sample in enumerate(samples):
+            sample["strength_floor_amp_g"] = 0.008
+            sample["client_name"] = locations[idx % len(locations)]
+
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        findings = [
+            finding
+            for finding in summary.get("findings", [])
+            if isinstance(finding, dict)
+            and str(finding.get("finding_id", "")).startswith("F")
+            and not str(finding.get("finding_id", "")).startswith("REF_")
+        ]
+        assert findings
+        for finding in findings:
+            evidence_metrics = finding.get("evidence_metrics")
+            if not isinstance(evidence_metrics, dict):
+                continue
+            strength_db = float(evidence_metrics.get("vibration_strength_db") or 0.0)
+            if strength_db < 8.0:
+                conf = float(finding.get("confidence_0_to_1") or 0.0)
+                assert conf <= 0.45, (
+                    f"Negligible strength finding {finding.get('finding_id')} "
+                    f"has conf {conf} at {strength_db:.2f} dB"
+                )
+
     def test_strong_match_high_confidence(self) -> None:
         """Strong wheel-1x match with wide speed sweep → high confidence."""
         meta = _standard_metadata()

@@ -39,7 +39,15 @@ from .order_analysis import (
     _order_hypotheses,
     _order_label,
 )
+from .strength_labels import _STRENGTH_THRESHOLDS
 from .test_plan import _location_speedbin_summary
+
+_NEGLIGIBLE_STRENGTH_MAX_DB = (
+    float(_STRENGTH_THRESHOLDS[1][0]) if len(_STRENGTH_THRESHOLDS) > 1 else 8.0
+)
+_LIGHT_STRENGTH_MAX_DB = (
+    float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
+)
 
 
 def _weighted_percentile(
@@ -424,6 +432,10 @@ def _build_order_findings(
 
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
         snr_score = min(1.0, log1p(mean_amp / max(0.001, mean_floor)) / 2.5)
+        absolute_strength_db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=mean_amp,
+            floor_amp_g=mean_floor,
+        )
 
         # --- Confidence formula (calibrated) ---
         # Base is intentionally low; weight must come from evidence.
@@ -434,11 +446,11 @@ def _build_order_findings(
             + (0.15 * corr_val)
             + (0.15 * snr_score)  # was 0.10 — SNR matters more
         )
-        # Penalty: negligible absolute signal strength
-        if mean_amp < 0.002:  # < 2 mg peak → likely noise
+        # Penalty: negligible/light absolute signal strength (shared dB bands).
+        if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
             confidence = min(confidence, 0.45)
-        elif mean_amp < 0.005:  # < 5 mg → very weak
-            confidence *= 0.90
+        elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
+            confidence *= 0.80
         # Penalty: location ambiguity / weak localization confidence
         confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
         # Penalty: weak spatial separation
@@ -551,6 +563,7 @@ def _build_order_findings(
                 "mean_relative_error": mean_rel_err,
                 "mean_matched_amplitude": mean_amp,
                 "mean_noise_floor": mean_floor,
+                "vibration_strength_db": absolute_strength_db,
                 "possible_samples": possible,
                 "matched_samples": matched,
                 "frequency_correlation": corr,
