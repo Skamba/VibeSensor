@@ -23,6 +23,15 @@ def _amp_heat_color(norm: float) -> str:
     return color_blend(HEAT_MID, HEAT_HIGH, (norm - 0.5) * 2.0)
 
 
+def _format_g(value: float) -> str:
+    """Format a g-force value with sensible precision (no noisy 4-decimal tails)."""
+    if value >= 1.0:
+        return f"{value:.2f} g"
+    if value >= 0.01:
+        return f"{value:.3f} g"
+    return f"{value:.4f} g"
+
+
 def car_location_diagram(
     top_findings: list[dict[str, object]],
     summary: dict[str, object],
@@ -47,7 +56,7 @@ def car_location_diagram(
     car_h = max(162.0, drawing_h - 88.0)
     car_w = car_h / length_width_ratio
     x0 = (d_width - car_w) / 2.0
-    y0 = 32.0
+    y0 = 48.0
 
     # Aspect-ratio preservation assertion: the rendered car rectangle must
     # match the source BMW body ratio within 2 % tolerance.
@@ -205,18 +214,6 @@ def car_location_diagram(
         if loc:
             highlight[loc] = _source_color(finding.get("source") or finding.get("suspected_source"))
 
-    # Title
-    drawing.add(
-        String(
-            4,
-            drawing_h - 14,
-            tr("EVIDENCE_AND_HOTSPOTS"),
-            fontName="Helvetica-Bold",
-            fontSize=9,
-            fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
-        )
-    )
-
     single_sensor = len(amp_by_location) <= 1 and (min_amp is None or min_amp == max_amp)
 
     for name, (px, py) in location_points.items():
@@ -261,8 +258,8 @@ def car_location_diagram(
             )
         )
 
-    # Heat legend with numeric endpoints
-    legend_y = 18
+    # -- Heat-map legend with numeric endpoints --
+    legend_y = 30
     legend_x = 8
     for i in range(0, 11):
         step = i / 10.0
@@ -302,7 +299,7 @@ def car_location_diagram(
             String(
                 legend_x,
                 legend_y + 10,
-                f"{min_amp:.4f} g",
+                _format_g(min_amp),
                 fontName="Helvetica",
                 fontSize=6,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
@@ -312,7 +309,7 @@ def car_location_diagram(
             String(
                 legend_x + 70,
                 legend_y + 10,
-                f"{max_amp:.4f} g",
+                _format_g(max_amp),
                 fontName="Helvetica",
                 fontSize=6,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
@@ -322,11 +319,58 @@ def car_location_diagram(
         drawing.add(
             String(
                 legend_x,
-                legend_y - 20,
+                legend_y - 16,
                 tr("ONE_SENSOR_NOTE"),
                 fontName="Helvetica",
                 fontSize=6,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
             )
         )
+
+    # -- Source highlight legend (explains stroke colours on the circles) --
+    from ..report_theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
+
+    src_legend_items = [
+        ("Wheel / Tire", FINDING_SOURCE_COLORS["wheel/tire"]),
+        ("Driveline", FINDING_SOURCE_COLORS["driveline"]),
+        ("Engine", FINDING_SOURCE_COLORS["engine"]),
+    ]
+    src_legend_x = legend_x + 120
+    src_legend_y = legend_y + 10
+    drawing.add(
+        String(
+            src_legend_x,
+            src_legend_y + 10,
+            tr("SOURCE_LEGEND_TITLE")
+            if tr("SOURCE_LEGEND_TITLE") != "SOURCE_LEGEND_TITLE"
+            else "Finding source:",
+            fontName="Helvetica-Bold",
+            fontSize=6,
+            fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
+        )
+    )
+    for i, (label, color_hex) in enumerate(src_legend_items):
+        lx = src_legend_x + (i * 52)
+        # Color swatch
+        drawing.add(
+            Circle(
+                lx + 4,
+                src_legend_y,
+                3,
+                fillColor=colors.HexColor(color_hex),
+                strokeColor=colors.HexColor(color_hex),
+                strokeWidth=0.8,
+            )
+        )
+        drawing.add(
+            String(
+                lx + 10,
+                src_legend_y - 2,
+                label,
+                fontName="Helvetica",
+                fontSize=5.5,
+                fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
+            )
+        )
+
     return drawing
