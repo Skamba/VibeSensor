@@ -53,6 +53,24 @@ _LIGHT_STRENGTH_MAX_DB = (
 # when the measured floor is near zero (sensor artifact / perfectly clean signal).
 _MEMS_NOISE_FLOOR_G = 0.001
 
+# ── Diffuse excitation detection constants ──────────────────────────────
+# If one sensor's amplitude is more than this ratio above the weakest,
+# the vibration is localized (not diffuse), even if match rates are uniform.
+_DIFFUSE_AMPLITUDE_DOMINANCE_RATIO = 2.0
+# Maximum allowable range (max−min) of per-sensor match rates before the
+# excitation is considered non-uniform.  15 percentage-points.
+_DIFFUSE_MATCH_RATE_RANGE_THRESHOLD = 0.15
+# Minimum mean per-sensor match rate below which diffuse detection is moot.
+_DIFFUSE_MIN_MEAN_RATE = 0.15
+# Diffuse penalty: base factor, per-sensor decrement, and floor.
+_DIFFUSE_PENALTY_BASE = 0.85
+_DIFFUSE_PENALTY_PER_SENSOR = 0.04
+_DIFFUSE_PENALTY_FLOOR = 0.65
+# Sensor-coverage confidence scaling: confidence multipliers for sparse
+# sensor layouts where localization evidence is inherently limited.
+_SINGLE_SENSOR_CONFIDENCE_SCALE = 0.85
+_DUAL_SENSOR_CONFIDENCE_SCALE = 0.92
+
 
 def _phase_to_str(phase: object) -> str | None:
     """Return the string value for a phase object (DrivingPhase or str)."""
@@ -731,15 +749,21 @@ def _build_order_findings(
                 if loc_mean_amps and len(loc_mean_amps) >= 2:
                     _max_amp_loc = max(loc_mean_amps.values())
                     _min_amp_loc = min(loc_mean_amps.values())
-                    if _min_amp_loc > 0 and _max_amp_loc / _min_amp_loc > 2.0:
+                    if (
+                        _min_amp_loc > 0
+                        and _max_amp_loc / _min_amp_loc > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO
+                    ):
                         _amp_uniform = False  # One sensor is dominant
-                # All sensors within 15pp of each other AND similar amps → diffuse
-                if _rate_range < 0.15 and _mean_rate > 0.15 and _amp_uniform:
+                if (
+                    _rate_range < _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD
+                    and _mean_rate > _DIFFUSE_MIN_MEAN_RATE
+                    and _amp_uniform
+                ):
                     _diffuse_excitation = True
-                    # Moderate penalty: flag the finding as diffuse but don't
-                    # aggressively suppress it — the weak_spatial_separation
-                    # penalty already handles the spatial ambiguity.
-                    _diffuse_penalty = max(0.65, 0.85 - 0.04 * len(loc_rates))
+                    _diffuse_penalty = max(
+                        _DIFFUSE_PENALTY_FLOOR,
+                        _DIFFUSE_PENALTY_BASE - _DIFFUSE_PENALTY_PER_SENSOR * len(loc_rates),
+                    )
                     confidence *= _diffuse_penalty
 
         # ── Sensor-coverage-aware confidence scaling (1-12 sensors) ─────
@@ -747,9 +771,9 @@ def _build_order_findings(
         # With many sensors (8-12), we have stronger spatial evidence.
         n_connected = len(connected_locations)
         if n_connected <= 1:
-            confidence *= 0.85  # single sensor – limited spatial info
+            confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
         elif n_connected == 2:
-            confidence *= 0.92  # minimal spatial coverage
+            confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
 
         confidence = max(0.08, min(0.97, confidence))
 
