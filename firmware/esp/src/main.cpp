@@ -16,7 +16,7 @@ constexpr char kClientName[] = "vibe-node";
 constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
 
 #ifndef VIBESENSOR_SAMPLE_RATE_HZ
-#define VIBESENSOR_SAMPLE_RATE_HZ 800
+#define VIBESENSOR_SAMPLE_RATE_HZ 400
 #endif
 #ifndef VIBESENSOR_FRAME_SAMPLES
 #define VIBESENSOR_FRAME_SAMPLES 200
@@ -73,6 +73,9 @@ constexpr uint32_t kDataRetransmitIntervalMs = 120;
 #define VIBESENSOR_WIFI_SCAN_INTERVAL_MS 20000
 #endif
 constexpr uint32_t kWifiScanIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_SCAN_INTERVAL_MS);
+#ifndef VIBESENSOR_ENABLE_SYNTH_FALLBACK
+#define VIBESENSOR_ENABLE_SYNTH_FALLBACK 0
+#endif
 
 static_assert(VIBESENSOR_SAMPLE_RATE_HZ > 0, "VIBESENSOR_SAMPLE_RATE_HZ must be > 0");
 static_assert(VIBESENSOR_FRAME_SAMPLES > 0, "VIBESENSOR_FRAME_SAMPLES must be > 0");
@@ -145,6 +148,10 @@ uint32_t g_last_wifi_scan_ms = 0;
 uint8_t g_target_bssid[6] = {};
 bool g_has_target_bssid = false;
 int32_t g_target_channel = 0;
+bool g_has_last_real_sample = false;
+int16_t g_last_real_x = 0;
+int16_t g_last_real_y = 0;
+int16_t g_last_real_z = 0;
 
 bool refresh_target_ap() {
   int found = WiFi.scanNetworks(false, true);
@@ -300,8 +307,27 @@ void sample_once() {
   int16_t y = 0;
   int16_t z = 0;
 
-  if (!next_sensor_sample(&x, &y, &z)) {
+  if (next_sensor_sample(&x, &y, &z)) {
+    g_has_last_real_sample = true;
+    g_last_real_x = x;
+    g_last_real_y = y;
+    g_last_real_z = z;
+  } else {
+#if VIBESENSOR_ENABLE_SYNTH_FALLBACK
     synth_sample(&x, &y, &z);
+#else
+    // Never inject synthetic vibration in production.
+    // If FIFO is momentarily empty, hold last real sample to avoid fake spectral peaks.
+    if (g_has_last_real_sample) {
+      x = g_last_real_x;
+      y = g_last_real_y;
+      z = g_last_real_z;
+    } else {
+      x = 0;
+      y = 0;
+      z = 0;
+    }
+#endif
   }
 
   if (g_build_count == 0) {
