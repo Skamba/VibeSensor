@@ -86,7 +86,7 @@ async def test_run_can_be_cancelled_while_gps_stream_hangs() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
 
     async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await asyncio.sleep(10.0)
+        await asyncio.sleep(0.5)
         writer.close()
         await writer.wait_closed()
 

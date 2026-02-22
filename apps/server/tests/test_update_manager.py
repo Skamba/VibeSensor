@@ -206,10 +206,11 @@ class TestUpdateManager:
     async def test_concurrent_start_rejection(self) -> None:
         runner = FakeRunner()
         original_run = runner.run
+        _hang = asyncio.Event()
 
         async def slow_run(args, *, timeout=30, env=None):
             if "fetch" in " ".join(args):
-                await asyncio.sleep(100)
+                await _hang.wait()  # block until cancelled
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
 
@@ -239,10 +240,11 @@ class TestUpdateManager:
     async def test_cancel_returns_true_when_running(self) -> None:
         runner = FakeRunner()
         original_run = runner.run
+        _hang = asyncio.Event()
 
         async def slow_run(args, *, timeout=30, env=None):
             if "fetch" in " ".join(args):
-                await asyncio.sleep(100)
+                await _hang.wait()  # block until cancelled
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
 
