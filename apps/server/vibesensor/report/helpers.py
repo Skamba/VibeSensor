@@ -74,7 +74,7 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
 
 
 def _format_duration(seconds: float) -> str:
-    total = max(0.0, float(seconds))
+    total = max(0.0, round(float(seconds), 1))
     minutes = int(total // 60)
     rem = total - (minutes * 60)
     return f"{minutes:02d}:{rem:04.1f}"

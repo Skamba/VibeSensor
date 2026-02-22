@@ -77,6 +77,12 @@ def test_format_duration_fractional() -> None:
     assert result == "01:05.3"
 
 
+def test_format_duration_rounding_at_60s_boundary() -> None:
+    """Rounding 59.96 to 1 decimal gives 60.0 → should show 01:00.0, not 00:60.0."""
+    assert _format_duration(59.96) == "01:00.0"
+    assert _format_duration(119.96) == "02:00.0"
+
+
 # -- _text (bilingual helper) -------------------------------------------------
 
 
