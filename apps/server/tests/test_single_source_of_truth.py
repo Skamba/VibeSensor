@@ -16,6 +16,7 @@ import importlib
 from pathlib import Path
 
 import pytest
+import yaml
 
 from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
 from vibesensor.diagnostics_shared import DEFAULT_DIAGNOSTIC_SETTINGS
@@ -447,6 +448,19 @@ def test_esp_ports_match_python_defaults() -> None:
     assert esp_ctrl_port == py_ctrl_port, (
         f"ESP control port {esp_ctrl_port} != Python default {py_ctrl_port}"
     )
+
+
+def test_config_example_matches_documented_defaults() -> None:
+    """config.example.yaml must be derived from canonical runtime defaults."""
+    root = Path(__file__).resolve().parents[3]
+    config_example = root / "apps" / "server" / "config.example.yaml"
+
+    observed = yaml.safe_load(config_example.read_text(encoding="utf-8"))
+
+    from vibesensor.config import documented_default_config
+
+    expected = documented_default_config()
+    assert observed == expected
 
 
 def test_server_dockerfile_is_real_build_recipe() -> None:
