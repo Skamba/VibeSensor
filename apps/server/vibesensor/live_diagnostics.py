@@ -652,8 +652,7 @@ class LiveDiagnosticsEngine:
                 if transition_bucket:
                     source_keys = source_keys_from_class_key(class_key)
                     self._update_matrix_many(
-                        now_ms,
-                        source_keys, transition_bucket, tracker.last_sensor_label
+                        now_ms, source_keys, transition_bucket, tracker.last_sensor_label
                     )
 
                 if self._should_emit_event(
