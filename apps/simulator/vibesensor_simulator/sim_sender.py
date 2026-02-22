@@ -504,7 +504,9 @@ def parse_args() -> argparse.Namespace:
         "--server-data-port", type=int, default=int(NETWORK_PORTS["server_udp_data"])
     )
     parser.add_argument(
-        "--server-control-port", type=int, default=int(NETWORK_PORTS["server_udp_control"])
+        "--server-control-port",
+        type=int,
+        default=int(NETWORK_PORTS["server_udp_control"]),
     )
     parser.add_argument("--count", type=int, default=5)
     parser.add_argument(

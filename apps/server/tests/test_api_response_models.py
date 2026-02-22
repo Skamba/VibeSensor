@@ -14,9 +14,9 @@ def _openapi_schema() -> dict:
 
 
 def _response_schema(openapi: dict, path: str, method: str = "get") -> dict:
-    return openapi["paths"][path][method]["responses"]["200"]["content"][
-        "application/json"
-    ]["schema"]
+    return openapi["paths"][path][method]["responses"]["200"]["content"]["application/json"][
+        "schema"
+    ]
 
 
 def test_openapi_uses_typed_response_models_for_core_settings_routes() -> None:

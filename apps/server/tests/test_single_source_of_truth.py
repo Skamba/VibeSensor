@@ -461,9 +461,9 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     assert sim_args.server_data_port == expected_data
     assert sim_args.server_control_port == expected_control
 
-    contracts_h = (
-        root / "firmware" / "esp" / "include" / "vibesensor_contracts.h"
-    ).read_text(encoding="utf-8")
+    contracts_h = (root / "firmware" / "esp" / "include" / "vibesensor_contracts.h").read_text(
+        encoding="utf-8"
+    )
 
     def _macro(name: str) -> int:
         match = re.search(rf"#define\s+{name}\s+(\d+)", contracts_h)

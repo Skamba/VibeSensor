@@ -638,9 +638,7 @@ def test_analysis_snapshot_reads_tail_without_full_iteration(tmp_path: Path) -> 
         fft_window_size_samples=1024,
     )
 
-    logger._live_samples = _ReverseOnlySamples(
-        [{"idx": idx} for idx in range(10)]
-    )  # type: ignore[assignment]
+    logger._live_samples = _ReverseOnlySamples([{"idx": idx} for idx in range(10)])  # type: ignore[assignment]
 
     _, samples = logger.analysis_snapshot(max_rows=3)
 

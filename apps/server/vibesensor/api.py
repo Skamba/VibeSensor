@@ -647,27 +647,17 @@ def create_router(state: RuntimeState) -> APIRouter:
             )
 
         def _build_pdf() -> tuple[bytes, int, int, int]:
-            from .report.plot_data import _plot_data
-
             samples, total_samples, stride = _bounded_sample(
                 _iter_normalized_samples(run_id, batch_size=2048),
                 max_items=_MAX_REPORT_SAMPLES,
             )
-            persisted_lang = str(analysis.get("lang") or "en")
-            if persisted_lang == requested_lang:
-                # Reuse persisted analysis; only recompute plot data from samples
-                report_model = dict(analysis)
-                report_model["samples"] = samples
-                report_model["plots"] = _plot_data(report_model)
-            else:
-                # Language differs from persisted analysis – full recompute needed
-                report_model = summarize_run_data(
-                    metadata,
-                    samples,
-                    lang=requested_lang,
-                    file_name=run_id,
-                    include_samples=True,
-                )
+            report_model = summarize_run_data(
+                metadata,
+                samples,
+                lang=requested_lang,
+                file_name=run_id,
+                include_samples=True,
+            )
             pdf = build_report_pdf(report_model)
             return pdf, total_samples, len(samples), stride
 
