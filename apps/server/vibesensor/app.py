@@ -50,7 +50,7 @@ MAX_CONSECUTIVE_FAILURES = 25
 FAILURE_BACKOFF_S = 30
 """Seconds to sleep on fatal failure threshold before resetting."""
 
-STALE_DATA_AGE_S = 3.0
+STALE_DATA_AGE_S = 2.0
 """Clients without fresh UDP data within this window are excluded from spectrum output."""
 
 

@@ -197,7 +197,7 @@
   "tooltip.by_sensor_scope": "By sensor scope:",
   "chart.spectrum_title": "Multi-Sensor Blended Spectrum",
   "chart.axis.hz": "Hz",
-  "chart.axis.amplitude": "Strength (dB over floor)",
+  "chart.axis.amplitude": "Strength (dB re 0.1 mg)",
   "bands.wheel_1x": "Wheel 1x",
   "bands.wheel_2x": "Wheel 2x",
   "bands.driveshaft_engine_1x": "Driveshaft+Engine 1x",
