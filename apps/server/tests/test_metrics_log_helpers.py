@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -458,6 +459,53 @@ def test_post_analysis_failure_sets_persistent_error_status(
     run = history_db.get_run(run_id)
     assert run is not None
     assert "analysis exploded" in str(run.get("error_message", ""))
+
+
+def test_post_analysis_burst_uses_single_daemon_worker(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=object(),
+    )
+
+    active = 0
+    max_active = 0
+    seen: list[str] = []
+    state_lock = threading.Lock()
+
+    def _slow_post_analysis(run_id: str) -> None:
+        nonlocal active, max_active
+        with state_lock:
+            active += 1
+            max_active = max(max_active, active)
+        time.sleep(0.03)
+        seen.append(run_id)
+        with state_lock:
+            active -= 1
+
+    monkeypatch.setattr(logger, "_run_post_analysis", _slow_post_analysis)
+
+    for idx in range(12):
+        logger._schedule_post_analysis(f"run-{idx}")
+
+    logger.wait_for_post_analysis(timeout_s=3.0)
+
+    assert max_active == 1
+    assert len(seen) == 12
+    with logger._lock:
+        worker = logger._analysis_thread
+    assert worker is not None
+    assert worker.daemon is True
 
 
 def test_analysis_snapshot_isolated_per_logging_run(tmp_path: Path) -> None:
