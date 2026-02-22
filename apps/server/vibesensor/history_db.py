@@ -88,12 +88,13 @@ class HistoryDB:
         self._conn.close()
 
     @contextmanager
-    def _cursor(self):
+    def _cursor(self, *, commit: bool = True):
         with self._lock:
             cur = self._conn.cursor()
             try:
                 yield cur
-                self._conn.commit()
+                if commit:
+                    self._conn.commit()
             except Exception:
                 self._conn.rollback()
                 raise
@@ -262,7 +263,7 @@ CREATE TABLE IF NOT EXISTS client_names (
     # -- read -----------------------------------------------------------------
 
     def list_runs(self) -> list[dict[str, Any]]:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
                 "r.created_at, r.error_message, r.sample_count, r.analysis_version "
@@ -288,7 +289,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         return result
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id, status, start_time_utc, end_time_utc, "
                 "metadata_json, analysis_json, error_message, created_at, "
@@ -346,7 +347,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         size = max(1, int(batch_size))
         last_id: int | None = None
         if offset > 0:
-            with self._cursor() as cur:
+            with self._cursor(commit=False) as cur:
                 cur.execute(
                     "SELECT id FROM samples WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
                     (run_id, max(0, int(offset)) - 1),
@@ -357,7 +358,7 @@ CREATE TABLE IF NOT EXISTS client_names (
                 else:
                     return
         while True:
-            with self._cursor() as cur:
+            with self._cursor(commit=False) as cur:
                 if last_id is None:
                     cur.execute(
                         "SELECT id, sample_json FROM samples WHERE run_id = ? ORDER BY id LIMIT ?",
@@ -376,7 +377,7 @@ CREATE TABLE IF NOT EXISTS client_names (
             yield [json.loads(row[1]) for row in batch_rows]
 
     def get_run_metadata(self, run_id: str) -> dict[str, Any] | None:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute("SELECT metadata_json FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
         if row is None:
@@ -384,7 +385,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         return json.loads(row[0]) if row[0] else None
 
     def get_run_analysis(self, run_id: str) -> dict[str, Any] | None:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT analysis_json FROM runs WHERE run_id = ? AND status = 'complete'",
                 (run_id,),
@@ -395,7 +396,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         return json.loads(row[0]) if row[0] else None
 
     def get_run_status(self, run_id: str) -> str | None:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
         return row[0] if row else None
@@ -406,7 +407,7 @@ CREATE TABLE IF NOT EXISTS client_names (
             return cur.rowcount > 0
 
     def get_active_run_id(self) -> str | None:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id FROM runs WHERE status = 'recording' "
                 "ORDER BY created_at DESC LIMIT 1"
@@ -426,7 +427,7 @@ CREATE TABLE IF NOT EXISTS client_names (
     # -- settings KV ----------------------------------------------------------
 
     def get_setting(self, key: str) -> Any | None:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute("SELECT value_json FROM settings_kv WHERE key = ?", (key,))
             row = cur.fetchone()
         if row is None:
@@ -452,7 +453,7 @@ CREATE TABLE IF NOT EXISTS client_names (
     # -- client names ---------------------------------------------------------
 
     def list_client_names(self) -> dict[str, str]:
-        with self._cursor() as cur:
+        with self._cursor(commit=False) as cur:
             cur.execute("SELECT client_id, name FROM client_names")
             rows = cur.fetchall()
         return {row[0]: row[1] for row in rows}

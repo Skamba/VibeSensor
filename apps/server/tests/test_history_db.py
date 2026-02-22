@@ -215,3 +215,41 @@ def test_settings_kv_roundtrip(tmp_path: Path) -> None:
     # Overwrite existing key
     db.set_setting("name", "Updated")
     assert db.get_setting("name") == "Updated"
+
+
+def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-ro", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-ro", [{"i": 1}, {"i": 2}])
+    db.set_setting("mode", {"enabled": True})
+    db.upsert_client_name("client-1", "Alice")
+
+    class _ConnProxy:
+        def __init__(self, conn):
+            self._conn = conn
+            self.commit_calls = 0
+
+        def __getattr__(self, name: str):
+            return getattr(self._conn, name)
+
+        def commit(self):
+            self.commit_calls += 1
+            return self._conn.commit()
+
+    proxy = _ConnProxy(db._conn)
+    db._conn = proxy  # type: ignore[assignment]
+
+    _ = db.get_run("run-ro")
+    _ = db.list_runs()
+    _ = list(db.iter_run_samples("run-ro", batch_size=1))
+    _ = db.get_run_metadata("run-ro")
+    _ = db.get_run_analysis("run-ro")
+    _ = db.get_run_status("run-ro")
+    _ = db.get_active_run_id()
+    _ = db.get_setting("mode")
+    _ = db.list_client_names()
+
+    assert proxy.commit_calls == 0
+
+    db.set_setting("mode", {"enabled": False})
+    assert proxy.commit_calls == 1
