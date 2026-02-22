@@ -599,19 +599,27 @@ def summarize_run_data(
         },
     ]
 
-    # Aggregate dropped frames / queue overflow across all samples
-    all_dropped = [
-        _as_float(s.get("frames_dropped_total"))
-        for s in samples
-        if isinstance(s, dict) and _as_float(s.get("frames_dropped_total")) is not None
-    ]
-    all_overflow = [
-        _as_float(s.get("queue_overflow_drops"))
-        for s in samples
-        if isinstance(s, dict) and _as_float(s.get("queue_overflow_drops")) is not None
-    ]
-    total_dropped = int(max(all_dropped) - min(all_dropped)) if len(all_dropped) >= 2 else 0
-    total_overflow = int(max(all_overflow) - min(all_overflow)) if len(all_overflow) >= 2 else 0
+    # Aggregate dropped frames / queue overflow across all samples.
+    # Compute per-sensor deltas (max - min per client) to avoid mixing
+    # cumulative counters from different sensors.
+    _per_client_dropped: dict[str, list[float]] = defaultdict(list)
+    _per_client_overflow: dict[str, list[float]] = defaultdict(list)
+    for s in samples:
+        if not isinstance(s, dict):
+            continue
+        cid = str(s.get("client_id") or "")
+        d = _as_float(s.get("frames_dropped_total"))
+        if d is not None:
+            _per_client_dropped[cid].append(d)
+        o = _as_float(s.get("queue_overflow_drops"))
+        if o is not None:
+            _per_client_overflow[cid].append(o)
+    total_dropped = sum(
+        int(max(vals) - min(vals)) for vals in _per_client_dropped.values() if len(vals) >= 2
+    )
+    total_overflow = sum(
+        int(max(vals) - min(vals)) for vals in _per_client_overflow.values() if len(vals) >= 2
+    )
     frame_issues = total_dropped + total_overflow
     run_suitability.append(
         {
