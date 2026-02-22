@@ -33,6 +33,9 @@ UPDATE_TIMEOUT_S = 300
 GIT_OP_TIMEOUT_S = 120
 """Per-git-operation timeout."""
 
+REBUILD_OP_TIMEOUT_S = 300
+"""Per-rebuild-operation timeout."""
+
 NMCLI_TIMEOUT_S = 30
 """Per-nmcli-operation timeout."""
 
@@ -469,7 +472,7 @@ class UpdateManager:
         self._log(f"Starting update with SSID: {ssid}")
 
         # Check required tools
-        for tool in ("nmcli", "git"):
+        for tool in ("nmcli", "git", "python3", "npm"):
             if not shutil.which(tool):
                 self._add_issue("validating", f"Required tool not found: {tool}")
                 self._status.state = UpdateState.failed
@@ -669,6 +672,19 @@ class UpdateManager:
             return
 
         self._log("Git update completed successfully")
+        rebuild_cmd = ["python3", str(repo / "tools" / "sync_ui_to_pi_public.py")]
+        rc, _, stderr = await self._run_cmd(
+            rebuild_cmd,
+            phase="updating",
+            timeout=REBUILD_OP_TIMEOUT_S,
+            sudo=True,
+        )
+        if rc != 0:
+            self._add_issue("updating", f"Rebuild/sync failed (exit {rc})", stderr)
+            self._status.state = UpdateState.failed
+            return
+        self._log("Rebuild/sync completed successfully")
+
         runtime_details = self._collect_runtime_details()
         self._status.runtime = runtime_details
         if not runtime_details.get("assets_verified", False):
