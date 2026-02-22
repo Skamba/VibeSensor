@@ -329,6 +329,7 @@ chmod +x "${STAGE_STEP_DIR}/00-run.sh"
 sed -i "s/__SERVER_DEPS_HASH__/${SERVER_DEPS_HASH}/g" "${STAGE_STEP_DIR}/00-run.sh"
 
 cat >"${STAGE_STEP_DIR}/00-packages" <<'EOF'
+git
 network-manager
 dnsmasq
 rfkill

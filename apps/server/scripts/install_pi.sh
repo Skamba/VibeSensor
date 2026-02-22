@@ -35,6 +35,7 @@ fi
 
 run_as_root apt-get update
 run_as_root apt-get install -y \
+  git \
   python3 \
   python3-venv \
   python3-pip \
