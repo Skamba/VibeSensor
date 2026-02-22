@@ -305,6 +305,33 @@ def test_confidence_label_boundaries(value: float, expected_key: str, expected_t
     assert pct_text == f"{value * 100:.0f}%"
 
 
+def test_confidence_label_negligible_strength_caps_high_to_medium() -> None:
+    """High confidence + negligible strength → CONFIDENCE_MEDIUM, not CONFIDENCE_HIGH."""
+    label_key, tone, _ = confidence_label(0.80, strength_band_key="negligible")
+    assert label_key == "CONFIDENCE_MEDIUM"
+    assert tone == "warn"
+
+
+def test_confidence_label_negligible_does_not_affect_medium() -> None:
+    """Medium confidence + negligible strength stays medium (no over-cap)."""
+    label_key, _, _ = confidence_label(0.55, strength_band_key="negligible")
+    assert label_key == "CONFIDENCE_MEDIUM"
+
+
+def test_confidence_label_negligible_does_not_affect_low() -> None:
+    """Low confidence + negligible strength stays low."""
+    label_key, _, _ = confidence_label(0.20, strength_band_key="negligible")
+    assert label_key == "CONFIDENCE_LOW"
+
+
+def test_confidence_label_non_negligible_allows_high() -> None:
+    """Non-negligible (or absent) strength_band_key must not prevent CONFIDENCE_HIGH."""
+    for band in ("light", "moderate", "strong", "very_strong", None):
+        label_key, tone, _ = confidence_label(0.80, strength_band_key=band)
+        assert label_key == "CONFIDENCE_HIGH", f"Unexpected cap for strength_band_key={band!r}"
+        assert tone == "success"
+
+
 # -- PDF section heading coverage --------------------------------------------
 
 _SECTION_HEADING_KEYS = [
