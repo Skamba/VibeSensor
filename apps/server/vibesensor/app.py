@@ -27,6 +27,7 @@ from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
 from .config import SERVER_DIR, AppConfig, load_config
+from .diagnostics_shared import vehicle_orders_hz
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
 from .live_diagnostics import LiveDiagnosticsEngine
@@ -79,6 +80,51 @@ class RuntimeState:
     cached_analysis_metadata: dict[str, object] | None = None
     cached_analysis_samples: list[dict[str, object]] = field(default_factory=list)
 
+    def _rotational_basis_speed_source(self) -> str:
+        speed_source = self.settings_store.get_speed_source()
+        selected_source = str(speed_source.get("speedSource") or "gps").lower()
+        if selected_source == "manual":
+            return "manual"
+        if selected_source == "obd2":
+            return "obd2"
+        if self.gps_monitor.fallback_active:
+            return "fallback_manual"
+        if self.gps_monitor.gps_enabled:
+            return "gps"
+        return "unknown"
+
+    def _build_rotational_speeds_payload(
+        self,
+        *,
+        speed_mps: float | None,
+        analysis_settings: dict[str, Any],
+    ) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "basis_speed_source": self._rotational_basis_speed_source(),
+            "wheel": {"rpm": None, "mode": "calculated", "reason": None},
+            "driveshaft": {"rpm": None, "mode": "calculated", "reason": None},
+            "engine": {"rpm": None, "mode": "calculated", "reason": None},
+        }
+        if speed_mps is None or speed_mps <= 0:
+            reason = "speed_unavailable"
+            out["wheel"]["reason"] = reason
+            out["driveshaft"]["reason"] = reason
+            out["engine"]["reason"] = reason
+            return out
+
+        orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
+        if orders_hz is None:
+            reason = "invalid_vehicle_settings"
+            out["wheel"]["reason"] = reason
+            out["driveshaft"]["reason"] = reason
+            out["engine"]["reason"] = reason
+            return out
+
+        out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * 60.0
+        out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * 60.0
+        out["engine"]["rpm"] = float(orders_hz["engine_hz"]) * 60.0
+        return out
+
     def on_ws_broadcast_tick(self) -> None:
         self.ws_tick += 1
         heavy_every = max(
@@ -99,13 +145,18 @@ class RuntimeState:
         # to prevent stale buffer data from driving diagnostics/events.
         fresh_ids = self.processor.clients_with_recent_data(client_ids, max_age_s=STALE_DATA_AGE_S)
 
+        speed_mps = self.gps_monitor.effective_speed_mps
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
-            "speed_mps": self.gps_monitor.effective_speed_mps,
+            "speed_mps": speed_mps,
             "clients": clients,
             "selected_client_id": active,
         }
         analysis_settings_snapshot = self.analysis_settings.snapshot()
+        payload["rotational_speeds"] = self._build_rotational_speeds_payload(
+            speed_mps=speed_mps,
+            analysis_settings=analysis_settings_snapshot,
+        )
         if self.ws_include_heavy or self.cached_analysis_metadata is None:
             analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
             self.cached_analysis_metadata = analysis_metadata
@@ -120,7 +171,7 @@ class RuntimeState:
             else:
                 payload["selected"] = {}
             payload["diagnostics"] = self.live_diagnostics.update(
-                speed_mps=self.gps_monitor.effective_speed_mps,
+                speed_mps=speed_mps,
                 clients=clients,
                 spectra=payload.get("spectra"),
                 settings=analysis_settings_snapshot,
@@ -130,7 +181,7 @@ class RuntimeState:
             )
         else:
             payload["diagnostics"] = self.live_diagnostics.update(
-                speed_mps=self.gps_monitor.effective_speed_mps,
+                speed_mps=speed_mps,
                 clients=clients,
                 spectra=None,
                 settings=analysis_settings_snapshot,
