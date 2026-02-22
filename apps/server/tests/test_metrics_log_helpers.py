@@ -647,6 +647,64 @@ def test_analysis_snapshot_reads_tail_without_full_iteration(tmp_path: Path) -> 
     assert [sample["idx"] for sample in samples] == [7, 8, 9]
 
 
+def test_live_samples_are_pruned_to_recent_window(tmp_path: Path) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    with logger._lock:
+        logger._live_samples.extend(
+            [
+                {"t_s": 0.1, "sample_id": "old"},
+                {"t_s": 1.0, "sample_id": "edge"},
+                {"t_s": 1.7, "sample_id": "recent-a"},
+                {"t_s": 2.9, "sample_id": "recent-b"},
+            ]
+        )
+        logger._prune_live_samples_locked(3.0)
+
+    assert [row["sample_id"] for row in logger._live_samples] == [
+        "edge",
+        "recent-a",
+        "recent-b",
+    ]
+
+
+def test_live_samples_prune_drops_malformed_rows(tmp_path: Path) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    with logger._lock:
+        logger._live_samples.extend(
+            [
+                {"sample_id": "broken"},
+                {"t_s": 2.2, "sample_id": "valid"},
+            ]
+        )
+        logger._prune_live_samples_locked(2.2)
+
+    assert [row["sample_id"] for row in logger._live_samples] == ["valid"]
+
+
 def test_post_analysis_uses_run_language_from_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

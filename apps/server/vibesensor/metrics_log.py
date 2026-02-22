@@ -35,6 +35,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
+_LIVE_SAMPLE_WINDOW_S = 2.0
 
 
 class MetricsLogger:
@@ -90,6 +91,7 @@ class MetricsLogger:
         self._live_start_utc = utc_now_iso()
         self._live_start_mono_s = time.monotonic()
         self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
+        self._live_sample_window_s = float(_LIVE_SAMPLE_WINDOW_S)
         self._analysis_thread: Thread | None = None
         self._analysis_queue: deque[str] = deque()
         self._analysis_enqueued_run_ids: set[str] = set()
@@ -357,7 +359,7 @@ class MetricsLogger:
         active_client_ids = sorted(
             set(
                 self.processor.clients_with_recent_data(
-                    self.registry.active_client_ids(), max_age_s=3.0
+                    self.registry.active_client_ids(), max_age_s=_LIVE_SAMPLE_WINDOW_S
                 )
             )
         )
@@ -508,6 +510,20 @@ class MetricsLogger:
             return False
         return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
 
+    def _prune_live_samples_locked(self, live_t_s: float) -> None:
+        """Keep only the rolling live window used by the dashboard."""
+        cutoff = float(live_t_s) - max(0.0, self._live_sample_window_s)
+        while self._live_samples:
+            oldest = self._live_samples[0]
+            ts = oldest.get("t_s")
+            if not isinstance(ts, (int, float)):
+                # Defensive: drop malformed rows so stale entries cannot linger.
+                self._live_samples.popleft()
+                continue
+            if float(ts) >= cutoff:
+                break
+            self._live_samples.popleft()
+
     def _finalize_run_locked(self) -> None:
         if not self._run_id:
             return
@@ -648,9 +664,10 @@ class MetricsLogger:
                     t_s=live_t_s,
                     timestamp_utc=timestamp_utc,
                 )
-                if live_rows:
-                    with self._lock:
+                with self._lock:
+                    if live_rows:
                         self._live_samples.extend(live_rows)
+                    self._prune_live_samples_locked(live_t_s)
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
                     run_id, start_time_utc, start_mono_s = snapshot
