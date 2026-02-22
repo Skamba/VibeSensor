@@ -6,6 +6,7 @@ import io
 import json
 import logging
 import zipfile
+from collections import OrderedDict
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 _MAX_REPORT_SAMPLES = 12_000
+_REPORT_PDF_CACHE_MAX_ENTRIES = 16
 
 
 def _bounded_sample(
@@ -301,6 +303,39 @@ def _sync_speed_source_to_gps(state: RuntimeState) -> None:
 
 def create_router(state: RuntimeState) -> APIRouter:
     router = APIRouter()
+    report_pdf_cache: OrderedDict[tuple[object, ...], bytes] = OrderedDict()
+    report_pdf_locks: dict[tuple[object, ...], asyncio.Lock] = {}
+
+    def _metadata_cache_token(metadata: object) -> str:
+        if not isinstance(metadata, dict):
+            return "{}"
+        return json.dumps(metadata, sort_keys=True, default=str, ensure_ascii=False)
+
+    def _report_pdf_cache_key(
+        run: dict[str, Any], run_id: str, requested_lang: str
+    ) -> tuple[object, ...]:
+        return (
+            run_id,
+            requested_lang,
+            run.get("analysis_version"),
+            run.get("analysis_completed_at"),
+            run.get("sample_count"),
+            _metadata_cache_token(run.get("metadata", {})),
+        )
+
+    def _cache_get(cache_key: tuple[object, ...]) -> bytes | None:
+        cached_pdf = report_pdf_cache.get(cache_key)
+        if cached_pdf is None:
+            return None
+        report_pdf_cache.move_to_end(cache_key)
+        return cached_pdf
+
+    def _cache_put(cache_key: tuple[object, ...], pdf: bytes) -> None:
+        report_pdf_cache[cache_key] = pdf
+        report_pdf_cache.move_to_end(cache_key)
+        while len(report_pdf_cache) > _REPORT_PDF_CACHE_MAX_ENTRIES:
+            evicted_key, _ = report_pdf_cache.popitem(last=False)
+            report_pdf_locks.pop(evicted_key, None)
 
     def _analysis_language(run: dict, requested: str | None) -> str:
         if isinstance(requested, str) and requested.strip():
@@ -602,6 +637,14 @@ def create_router(state: RuntimeState) -> APIRouter:
         if not isinstance(metadata, dict):
             metadata = {}
         requested_lang = _analysis_language(run, lang)
+        cache_key = _report_pdf_cache_key(run, run_id, requested_lang)
+        cached_pdf = _cache_get(cache_key)
+        if cached_pdf is not None:
+            return Response(
+                content=cached_pdf,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+            )
 
         def _build_pdf() -> tuple[bytes, int, int, int]:
             from .report.plot_data import _plot_data
@@ -628,7 +671,17 @@ def create_router(state: RuntimeState) -> APIRouter:
             pdf = build_report_pdf(report_model)
             return pdf, total_samples, len(samples), stride
 
-        pdf, total_samples, analyzed, stride = await asyncio.to_thread(_build_pdf)
+        build_lock = report_pdf_locks.setdefault(cache_key, asyncio.Lock())
+        async with build_lock:
+            cached_pdf = _cache_get(cache_key)
+            if cached_pdf is not None:
+                return Response(
+                    content=cached_pdf,
+                    media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+                )
+            pdf, total_samples, analyzed, stride = await asyncio.to_thread(_build_pdf)
+            _cache_put(cache_key, pdf)
         if stride > 1:
             LOGGER.info(
                 "PDF report sample downsampling applied for run %s: total=%d analyzed=%d stride=%d",
