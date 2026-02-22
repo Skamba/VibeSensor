@@ -15,26 +15,73 @@ namespace {
 constexpr char kClientName[] = "vibe-node";
 constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
 
-constexpr uint16_t kSampleRateHz = 800;
-constexpr uint16_t kFrameSamples = 200;
-constexpr uint16_t kServerDataPort = 9000;
-constexpr uint16_t kServerControlPort = 9001;
-constexpr uint16_t kControlPortBase = 9010;
+#ifndef VIBESENSOR_SAMPLE_RATE_HZ
+#define VIBESENSOR_SAMPLE_RATE_HZ 800
+#endif
+#ifndef VIBESENSOR_FRAME_SAMPLES
+#define VIBESENSOR_FRAME_SAMPLES 200
+#endif
+#ifndef VIBESENSOR_SERVER_DATA_PORT
+#define VIBESENSOR_SERVER_DATA_PORT VS_SERVER_UDP_DATA_PORT
+#endif
+#ifndef VIBESENSOR_SERVER_CONTROL_PORT
+#define VIBESENSOR_SERVER_CONTROL_PORT VS_SERVER_UDP_CONTROL_PORT
+#endif
+#ifndef VIBESENSOR_CONTROL_PORT_BASE
+#define VIBESENSOR_CONTROL_PORT_BASE VS_FIRMWARE_CONTROL_PORT_BASE
+#endif
+
+constexpr uint16_t kSampleRateHz = static_cast<uint16_t>(VIBESENSOR_SAMPLE_RATE_HZ);
+constexpr uint16_t kFrameSamples = static_cast<uint16_t>(VIBESENSOR_FRAME_SAMPLES);
+constexpr uint16_t kServerDataPort = static_cast<uint16_t>(VIBESENSOR_SERVER_DATA_PORT);
+constexpr uint16_t kServerControlPort = static_cast<uint16_t>(VIBESENSOR_SERVER_CONTROL_PORT);
+constexpr uint16_t kControlPortBase = static_cast<uint16_t>(VIBESENSOR_CONTROL_PORT_BASE);
 // Use a larger queue target and allocate from heap at runtime to avoid
 // static DRAM linker limits while still maximizing buffering when RAM allows.
-constexpr size_t kFrameQueueLenTarget = 128;
-constexpr size_t kFrameQueueLenMin = 16;
+#ifndef VIBESENSOR_FRAME_QUEUE_LEN_TARGET
+#define VIBESENSOR_FRAME_QUEUE_LEN_TARGET 128
+#endif
+#ifndef VIBESENSOR_FRAME_QUEUE_LEN_MIN
+#define VIBESENSOR_FRAME_QUEUE_LEN_MIN 16
+#endif
+constexpr size_t kFrameQueueLenTarget = static_cast<size_t>(VIBESENSOR_FRAME_QUEUE_LEN_TARGET);
+constexpr size_t kFrameQueueLenMin = static_cast<size_t>(VIBESENSOR_FRAME_QUEUE_LEN_MIN);
 constexpr size_t kMaxDatagramBytes = 1500;
 constexpr uint32_t kHelloIntervalMs = 2000;
-constexpr uint32_t kWifiConnectTimeoutMs = 15000;
-constexpr uint32_t kWifiRetryBackoffMs = 2000;
-constexpr uint32_t kWifiRetryIntervalMs = 4000;
-constexpr uint8_t kWifiInitialConnectAttempts = 3;
+#ifndef VIBESENSOR_WIFI_CONNECT_TIMEOUT_MS
+#define VIBESENSOR_WIFI_CONNECT_TIMEOUT_MS 15000
+#endif
+#ifndef VIBESENSOR_WIFI_RETRY_BACKOFF_MS
+#define VIBESENSOR_WIFI_RETRY_BACKOFF_MS 2000
+#endif
+#ifndef VIBESENSOR_WIFI_RETRY_INTERVAL_MS
+#define VIBESENSOR_WIFI_RETRY_INTERVAL_MS 4000
+#endif
+#ifndef VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS
+#define VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS 3
+#endif
+constexpr uint32_t kWifiConnectTimeoutMs = static_cast<uint32_t>(VIBESENSOR_WIFI_CONNECT_TIMEOUT_MS);
+constexpr uint32_t kWifiRetryBackoffMs = static_cast<uint32_t>(VIBESENSOR_WIFI_RETRY_BACKOFF_MS);
+constexpr uint32_t kWifiRetryIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_RETRY_INTERVAL_MS);
+constexpr uint8_t kWifiInitialConnectAttempts =
+  static_cast<uint8_t>(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS);
 constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 constexpr size_t kSensorReadBatchSamples = 8;
 constexpr size_t kMaxTxFramesPerLoop = 2;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
-constexpr uint32_t kWifiScanIntervalMs = 20000;
+#ifndef VIBESENSOR_WIFI_SCAN_INTERVAL_MS
+#define VIBESENSOR_WIFI_SCAN_INTERVAL_MS 20000
+#endif
+constexpr uint32_t kWifiScanIntervalMs = static_cast<uint32_t>(VIBESENSOR_WIFI_SCAN_INTERVAL_MS);
+
+static_assert(VIBESENSOR_SAMPLE_RATE_HZ > 0, "VIBESENSOR_SAMPLE_RATE_HZ must be > 0");
+static_assert(VIBESENSOR_FRAME_SAMPLES > 0, "VIBESENSOR_FRAME_SAMPLES must be > 0");
+static_assert(VIBESENSOR_FRAME_QUEUE_LEN_MIN > 0,
+        "VIBESENSOR_FRAME_QUEUE_LEN_MIN must be > 0");
+static_assert(VIBESENSOR_FRAME_QUEUE_LEN_TARGET >= VIBESENSOR_FRAME_QUEUE_LEN_MIN,
+        "VIBESENSOR_FRAME_QUEUE_LEN_TARGET must be >= VIBESENSOR_FRAME_QUEUE_LEN_MIN");
+static_assert(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS > 0,
+        "VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS must be > 0");
 
 // Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
 constexpr int kI2cSdaPin = 26;
@@ -68,7 +115,7 @@ WiFiUDP g_control_udp;
 Adafruit_NeoPixel g_led_strip(kLedPixels, LED_BUILTIN, NEO_GRB + NEO_KHZ800);
 
 uint8_t g_client_id[6] = {};
-uint16_t g_control_port = 9010;
+uint16_t g_control_port = kControlPortBase;
 
 DataFrame* g_queue = nullptr;
 size_t g_queue_capacity = 0;
