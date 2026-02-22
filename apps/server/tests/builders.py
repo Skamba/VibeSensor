@@ -435,6 +435,347 @@ def make_ramp_samples(
     return samples
 
 
+def make_dropout_samples(
+    *,
+    base_samples: list[dict[str, Any]],
+    dropout_sensor: str,
+    dropout_start_t: float,
+    dropout_end_t: float,
+) -> list[dict[str, Any]]:
+    """Simulate sensor dropout by removing samples from *dropout_sensor* in a time window."""
+    return [
+        s
+        for s in base_samples
+        if not (s["client_name"] == dropout_sensor and dropout_start_t <= s["t_s"] < dropout_end_t)
+    ]
+
+
+def make_out_of_order_samples(
+    *,
+    base_samples: list[dict[str, Any]],
+    swap_indices: list[tuple[int, int]] | None = None,
+) -> list[dict[str, Any]]:
+    """Return samples with some timestamps out-of-order.
+
+    If *swap_indices* is None, swaps a few deterministic pairs.
+    """
+    result = list(base_samples)
+    if swap_indices is None:
+        # Default: swap 3 deterministic pairs
+        n = len(result)
+        swap_indices = [(i, i + 1) for i in range(2, min(n - 1, 12), 4)]
+    for a, b in swap_indices:
+        if a < len(result) and b < len(result):
+            result[a], result[b] = result[b], result[a]
+    return result
+
+
+def make_clock_skew_samples(
+    *,
+    base_samples: list[dict[str, Any]],
+    skew_sensor: str,
+    skew_offset_s: float = 0.3,
+) -> list[dict[str, Any]]:
+    """Apply a fixed clock offset to one sensor's timestamps."""
+    result: list[dict[str, Any]] = []
+    for s in base_samples:
+        if s["client_name"] == skew_sensor:
+            s = {**s, "t_s": s["t_s"] + skew_offset_s}
+        result.append(s)
+    return result
+
+
+def make_speed_jitter_samples(
+    *,
+    sensors: list[str],
+    base_speed_kmh: float = 80.0,
+    jitter_amplitude: float = 8.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    noise_amp: float = 0.004,
+    vib_db: float = 10.0,
+) -> list[dict[str, Any]]:
+    """Generate samples with speed jitter (fluctuating GPS speed)."""
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        # Deterministic jitter
+        jitter = jitter_amplitude * ((_stable_hash(f"jitter-{i}") % 200) / 100.0 - 1.0)
+        speed = max(5.0, base_speed_kmh + jitter)
+        for sensor in sensors:
+            offset = _stable_hash(sensor) % 20
+            peaks = [
+                {"hz": 15.0 + offset, "amp": noise_amp},
+                {"hz": 34.0, "amp": noise_amp * 0.7},
+            ]
+            samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=speed,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=vib_db,
+                    strength_floor_amp_g=noise_amp,
+                )
+            )
+    return samples
+
+
+def make_gain_mismatch_samples(
+    *,
+    fault_sensor: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp: float = 0.06,
+    noise_amp: float = 0.004,
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+    gain_factor: float = 1.5,
+) -> list[dict[str, Any]]:
+    """Generate fault samples with gain mismatch on the fault sensor.
+
+    The fault sensor's amplitudes are scaled by *gain_factor* to simulate
+    a sensor with different sensitivity/gain calibration.
+    """
+    base = make_fault_samples(
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp=fault_amp,
+        noise_amp=noise_amp,
+        fault_vib_db=fault_vib_db,
+        noise_vib_db=noise_vib_db,
+    )
+    result: list[dict[str, Any]] = []
+    for s in base:
+        if s["client_name"] == fault_sensor:
+            s = {**s}
+            s["top_peaks"] = [
+                {"hz": p["hz"], "amp": p["amp"] * gain_factor} for p in s["top_peaks"]
+            ]
+            s["vibration_strength_db"] = s["vibration_strength_db"] + 3.0  # ~double power
+        result.append(s)
+    return result
+
+
+def make_clipped_samples(
+    *,
+    base_samples: list[dict[str, Any]],
+    clip_sensor: str,
+    clip_amp: float = 0.10,
+) -> list[dict[str, Any]]:
+    """Clip peak amplitudes on one sensor (simulates ADC saturation)."""
+    result: list[dict[str, Any]] = []
+    for s in base_samples:
+        if s["client_name"] == clip_sensor:
+            s = {**s}
+            s["top_peaks"] = [
+                {"hz": p["hz"], "amp": min(p["amp"], clip_amp)} for p in s["top_peaks"]
+            ]
+        result.append(s)
+    return result
+
+
+def make_engine_order_samples(
+    *,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    engine_amp: float = 0.05,
+    engine_vib_db: float = 24.0,
+    noise_amp: float = 0.004,
+) -> list[dict[str, Any]]:
+    """Generate engine-order harmonics on all sensors (engine vibration).
+
+    Produces 1x, 2x, and 0.5x engine order frequencies.
+    """
+    ehz = engine_hz(speed_kmh)
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            jitter = (_stable_hash(sensor + str(i)) % 10) * 0.001
+            peaks = [
+                {"hz": ehz, "amp": engine_amp + jitter},
+                {"hz": ehz * 2, "amp": (engine_amp + jitter) * 0.5},
+                {"hz": ehz * 0.5, "amp": (engine_amp + jitter) * 0.3},
+                {"hz": 200.0, "amp": noise_amp},
+            ]
+            samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=speed_kmh,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=engine_vib_db,
+                    strength_floor_amp_g=noise_amp,
+                    engine_rpm=ehz * 60.0,
+                )
+            )
+    return samples
+
+
+def make_dual_fault_samples(
+    *,
+    fault_sensor_1: str,
+    fault_sensor_2: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp_1: float = 0.06,
+    fault_amp_2: float = 0.04,
+    fault_vib_db_1: float = 26.0,
+    fault_vib_db_2: float = 22.0,
+    noise_amp: float = 0.004,
+    noise_vib_db: float = 8.0,
+) -> list[dict[str, Any]]:
+    """Generate samples with faults on TWO different sensors simultaneously."""
+    samples: list[dict[str, Any]] = []
+    whz = wheel_hz(speed_kmh)
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            if sensor == fault_sensor_1:
+                peaks: list[dict[str, float]] = [
+                    {"hz": whz, "amp": fault_amp_1},
+                    {"hz": whz * 2, "amp": fault_amp_1 * 0.4},
+                    {"hz": 142.5, "amp": noise_amp},
+                ]
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=fault_vib_db_1,
+                        strength_floor_amp_g=noise_amp,
+                    )
+                )
+            elif sensor == fault_sensor_2:
+                peaks = [
+                    {"hz": whz, "amp": fault_amp_2},
+                    {"hz": whz * 2, "amp": fault_amp_2 * 0.35},
+                    {"hz": 87.3, "amp": noise_amp},
+                ]
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=fault_vib_db_2,
+                        strength_floor_amp_g=noise_amp,
+                    )
+                )
+            else:
+                peaks = [
+                    {"hz": 142.5, "amp": noise_amp},
+                    {"hz": 87.3, "amp": noise_amp * 0.8},
+                ]
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=noise_vib_db,
+                        strength_floor_amp_g=noise_amp,
+                    )
+                )
+    return samples
+
+
+def make_road_phase_samples(
+    *,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    smooth_n: int = 15,
+    rough_n: int = 10,
+    pothole_n: int = 3,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    smooth_amp: float = 0.003,
+    rough_amp: float = 0.02,
+    pothole_amp: float = 0.15,
+) -> list[dict[str, Any]]:
+    """Generate samples with road surface phase changes: smooth → rough → pothole burst."""
+    samples: list[dict[str, Any]] = []
+    t = start_t_s
+
+    # Smooth phase
+    for _i in range(smooth_n):
+        for sensor in sensors:
+            peaks = [
+                {"hz": 20.0 + (_stable_hash(sensor) % 10), "amp": smooth_amp},
+                {"hz": 50.0, "amp": smooth_amp * 0.5},
+            ]
+            samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=speed_kmh,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=8.0,
+                    strength_floor_amp_g=smooth_amp,
+                )
+            )
+        t += dt_s
+
+    # Rough phase
+    for i in range(rough_n):
+        for sensor in sensors:
+            jitter = (_stable_hash(sensor + str(i)) % 10) * 0.002
+            peaks = [
+                {"hz": 30.0, "amp": rough_amp + jitter},
+                {"hz": 60.0, "amp": (rough_amp + jitter) * 0.7},
+                {"hz": 90.0, "amp": (rough_amp + jitter) * 0.4},
+            ]
+            samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=speed_kmh,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=18.0,
+                    strength_floor_amp_g=rough_amp,
+                )
+            )
+        t += dt_s
+
+    # Pothole burst
+    for _i in range(pothole_n):
+        for sensor in sensors:
+            peaks = [
+                {"hz": 15.0, "amp": pothole_amp},
+                {"hz": 40.0, "amp": pothole_amp * 0.8},
+                {"hz": 80.0, "amp": pothole_amp * 0.4},
+            ]
+            samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=speed_kmh,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=35.0,
+                    strength_floor_amp_g=0.003,
+                )
+            )
+        t += dt_s
+
+    return samples
+
+
 def make_speed_sweep_fault_samples(
     *,
     fault_sensor: str,
@@ -604,3 +945,143 @@ def assert_strongest_location(summary: dict[str, Any], expected_sensor: str, msg
     assert loc == expected_sensor.lower(), (
         f"Expected strongest_location='{expected_sensor}', got '{loc}'. {msg}"
     )
+
+
+# ---------------------------------------------------------------------------
+# Strict and tolerant no-fault helpers
+# ---------------------------------------------------------------------------
+
+
+def assert_strict_no_fault(summary: dict[str, Any], msg: str = "") -> None:
+    """Assert clean baseline: no causes at all, or all confidence < 0.10.
+
+    Use for known-clean scenarios (pure noise, idle-only, etc.).
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        conf = float(c.get("confidence", 0))
+        src = _cause_source(c)
+        assert conf < 0.10, f"Strict no-fault violated: {src} conf={conf:.3f}. {msg}"
+
+
+def assert_tolerant_no_fault(summary: dict[str, Any], msg: str = "") -> None:
+    """Assert ambiguous/diffuse/transient-heavy case: no HIGH-confidence wheel fault.
+
+    Allows low-confidence findings (< 0.50) since diffuse noise or transients
+    can produce incidental matches.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        if "wheel" in src and conf >= 0.50:
+            loc = c.get("strongest_location") or ""
+            raise AssertionError(
+                f"Tolerant no-fault violated: {src} @ {loc} conf={conf:.2f}. {msg}"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Speed band and warnings assertion helpers
+# ---------------------------------------------------------------------------
+
+
+def assert_speed_band_present(summary: dict[str, Any], msg: str = "") -> None:
+    """Assert the top cause has a strongest_speed_band field."""
+    top = extract_top(summary)
+    assert top is not None, f"No top cause found. {msg}"
+    band = top.get("strongest_speed_band")
+    assert band is not None and band != "", f"Missing strongest_speed_band in top cause. {msg}"
+
+
+def assert_has_warnings(summary: dict[str, Any], msg: str = "") -> None:
+    """Assert the summary has a 'warnings' field (may be empty list)."""
+    assert "warnings" in summary, f"Missing 'warnings' field. {msg}"
+    assert isinstance(summary["warnings"], list), f"'warnings' is not a list. {msg}"
+
+
+def assert_confidence_label_valid(summary: dict[str, Any], msg: str = "") -> None:
+    """Assert the top cause has a valid confidence label key and tone."""
+    top = extract_top(summary)
+    assert top is not None, f"No top cause found. {msg}"
+    label = top.get("confidence_label_key")
+    assert label in ("CONFIDENCE_HIGH", "CONFIDENCE_MEDIUM", "CONFIDENCE_LOW"), (
+        f"Bad confidence_label_key: {label}. {msg}"
+    )
+    tone = top.get("confidence_tone")
+    assert tone in ("success", "warn", "neutral"), f"Bad confidence_tone: {tone}. {msg}"
+
+
+# ---------------------------------------------------------------------------
+# Pairwise monotonic check
+# ---------------------------------------------------------------------------
+
+
+def assert_pairwise_monotonic(
+    values: list[float],
+    *,
+    tolerance: float = 0.05,
+    labels: list[str] | None = None,
+    msg: str = "",
+) -> None:
+    """Assert pairwise non-decreasing trend (with tolerance for small regressions).
+
+    Each adjacent pair must satisfy: values[i+1] >= values[i] - tolerance.
+    """
+    for i in range(len(values) - 1):
+        a, b = values[i], values[i + 1]
+        a_label = labels[i] if labels else str(i)
+        b_label = labels[i + 1] if labels else str(i + 1)
+        assert b >= a - tolerance, (
+            f"Pairwise monotonic violated at [{a_label}]→[{b_label}]: "
+            f"{a:.4f} → {b:.4f} (tolerance={tolerance}). {msg}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Composite diagnosis contract assertion
+# ---------------------------------------------------------------------------
+
+
+def assert_diagnosis_contract(
+    summary: dict[str, Any],
+    *,
+    expected_source: str | None = None,
+    expected_sensor: str | None = None,
+    expected_corner: str | None = None,
+    min_confidence: float = 0.15,
+    max_confidence: float = 1.0,
+    msg: str = "",
+) -> None:
+    """Composite assertion validating the normalized diagnosis contract.
+
+    Checks: source classification, inferred location, confidence range,
+    confidence label, speed band, and warnings presence.
+    """
+    top = extract_top(summary)
+    assert top is not None, f"No top cause found. {msg}"
+
+    # Source classification
+    if expected_source:
+        src = _cause_source(top)
+        assert expected_source.lower() in src, (
+            f"Expected source '{expected_source}' in '{src}'. {msg}"
+        )
+
+    # Location
+    if expected_sensor:
+        assert_strongest_location(summary, expected_sensor, msg=msg)
+    if expected_corner:
+        assert_corner_detected(summary, expected_corner, msg=msg)
+
+    # Confidence range
+    assert_confidence_between(summary, min_confidence, max_confidence, msg=msg)
+
+    # Confidence label and tone
+    assert_confidence_label_valid(summary, msg=msg)
+
+    # Speed band
+    assert_speed_band_present(summary, msg=msg)
+
+    # Warnings list
+    assert_has_warnings(summary, msg=msg)
