@@ -396,6 +396,11 @@ def _build_order_findings(
         matched_by_speed_bin: dict[str, int] = defaultdict(int)
         possible_by_phase: dict[str, int] = defaultdict(int)
         matched_by_phase: dict[str, int] = defaultdict(int)
+        # Per-location tracking: multi-sensor runs dilute the global match rate
+        # because only the fault sensor matches.  Track per-location stats so we
+        # can recognise a single-sensor signal even when the global rate is low.
+        possible_by_location: dict[str, int] = defaultdict(int)
+        matched_by_location: dict[str, int] = defaultdict(int)
         has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
         for sample_idx, sample in enumerate(samples):
@@ -411,6 +416,9 @@ def _build_order_findings(
                 continue
             possible += 1
             ref_sources.add(ref_source)
+            sample_location = _location_label(sample, lang=lang)
+            if sample_location:
+                possible_by_location[sample_location] += 1
             sample_speed = _as_float(sample.get("speed_kmh"))
             sample_speed_bin = (
                 _speed_bin_label(sample_speed)
@@ -432,6 +440,8 @@ def _build_order_findings(
                 continue
 
             matched += 1
+            if sample_location:
+                matched_by_location[sample_location] += 1
             if sample_speed_bin is not None:
                 matched_by_speed_bin[sample_speed_bin] += 1
             if has_phases:
@@ -484,6 +494,27 @@ def _build_order_findings(
             ):
                 focused_speed_band = highest_speed_bin
                 effective_match_rate = focused_rate
+        # ── Per-location match-rate rescue ──────────────────────────────
+        # In multi-sensor setups the global match rate is diluted because
+        # only the fault sensor matches the order.  E.g. 1 of 4 sensors
+        # matching = 25% global rate, even though the fault-sensor rate is
+        # 100%.  When a single location independently exceeds the threshold,
+        # accept that as the effective match rate.
+        per_location_dominant: bool = False
+        if effective_match_rate < min_match_rate and possible_by_location:
+            best_loc_rate = 0.0
+            for loc, loc_possible in possible_by_location.items():
+                loc_matched = matched_by_location.get(loc, 0)
+                if (
+                    loc_possible >= ORDER_MIN_COVERAGE_POINTS
+                    and loc_matched >= ORDER_MIN_MATCH_POINTS
+                ):
+                    loc_rate = loc_matched / max(1, loc_possible)
+                    if loc_rate > best_loc_rate:
+                        best_loc_rate = loc_rate
+            if best_loc_rate >= min_match_rate:
+                effective_match_rate = best_loc_rate
+                per_location_dominant = True
         if effective_match_rate < min_match_rate:
             continue
 
@@ -547,6 +578,37 @@ def _build_order_findings(
             if isinstance(location_hotspot, dict)
             else 0.05
         )
+
+        # ── Single-sensor dominance override ────────────────────────────
+        # When matched points cluster at one location but multiple sensors
+        # were connected, the standard localization_confidence formula
+        # computes dominance_ratio = 1.0 (no second sensor to compare).
+        # That gives localization_confidence ≈ 0.05, wrongly penalising a
+        # finding that is actually well-localised.
+        # Fix: absence of matches from other connected sensors IS strong
+        # spatial evidence.
+        unique_match_locations = {
+            str(pt.get("location") or "") for pt in matched_points if pt.get("location")
+        }
+        if (
+            per_location_dominant
+            and len(unique_match_locations) == 1
+            and len(connected_locations) >= 2
+        ):
+            # Strong localization: 1 of N sensors matched.
+            localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
+            weak_spatial_separation = False
+        elif (
+            len(unique_match_locations) == 1
+            and len(connected_locations) >= 2
+            and matched >= ORDER_MIN_MATCH_POINTS
+        ):
+            # Weaker case: global rate passed but all matches still from one sensor.
+            localization_confidence = max(
+                localization_confidence,
+                min(1.0, 0.40 + 0.10 * (len(connected_locations) - 1)),
+            )
+            weak_spatial_separation = False
 
         # Count how many distinct locations independently detected this order
         corroborating_locations = len(
