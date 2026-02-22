@@ -52,6 +52,10 @@ class Profile:
     bump_strength: tuple[float, float, float]
     modulation_hz: float
     modulation_depth: float
+    # When set, tone frequencies are order-based and were defined at this speed.
+    # At runtime ``make_frame()`` scales them by ``current_speed / reference_speed``.
+    # ``None`` means tone frequencies are absolute (e.g. engine_idle, rough_road).
+    reference_speed_kmh: float | None = None
 
 
 PROFILE_LIBRARY: dict[str, Profile] = {
@@ -96,6 +100,7 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         bump_strength=(30.0, 24.0, 45.0),
         modulation_hz=0.22,
         modulation_depth=0.12,
+        reference_speed_kmh=DEFAULT_SPEED_KMH,
     ),
     "wheel_mild_imbalance": Profile(
         name="wheel_mild_imbalance",
@@ -110,6 +115,7 @@ PROFILE_LIBRARY: dict[str, Profile] = {
         bump_strength=(10.0, 8.0, 14.0),
         modulation_hz=0.18,
         modulation_depth=0.08,
+        reference_speed_kmh=DEFAULT_SPEED_KMH,
     ),
     "rear_body": Profile(
         name="rear_body",
