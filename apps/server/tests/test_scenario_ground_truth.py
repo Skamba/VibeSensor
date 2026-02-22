@@ -416,7 +416,7 @@ class TestScenario01IdleToOnsetFR:
     def test_confidence_reasonable(self, summary: dict) -> None:
         """Confidence should be moderate-to-high for a clear 40s fault."""
         top = _get_top_cause(summary)
-        _assert_confidence_range(top, 0.30, 1.0)
+        _assert_confidence_range(top, 0.40, 0.85)
 
     def test_wheel_signatures_present(self, summary: dict) -> None:
         top = _get_top_cause(summary)
@@ -424,6 +424,23 @@ class TestScenario01IdleToOnsetFR:
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
+
+    def test_contract_validation(self, summary: dict) -> None:
+        """Full contract validation via shared helpers."""
+        from conftest import assert_summary_sections, assert_top_cause_contract
+
+        assert_summary_sections(summary, expected_lang="en", min_top_causes=1)
+        top = _get_top_cause(summary)
+        assert_top_cause_contract(
+            top,
+            expected_source="wheel",
+            expected_location="front-right",
+            expected_speed_band_range=(90.0, 110.0),
+            confidence_range=(0.40, 0.85),
+            expect_no_weak_spatial=True,
+            expect_wheel_signatures=True,
+            expect_not_engine=True,
+        )
 
 
 # ===========================================================================
@@ -502,7 +519,7 @@ class TestScenario02StopGoRL:
 
     def test_confidence_reasonable(self, summary: dict) -> None:
         top = _get_top_cause(summary)
-        _assert_confidence_range(top, 0.25, 1.0)
+        _assert_confidence_range(top, 0.30, 0.80)
 
     def test_wheel_signatures_present(self, summary: dict) -> None:
         top = _get_top_cause(summary)
@@ -510,6 +527,22 @@ class TestScenario02StopGoRL:
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
+
+    def test_contract_validation(self, summary: dict) -> None:
+        """Full contract validation via shared helpers."""
+        from conftest import assert_summary_sections, assert_top_cause_contract
+
+        assert_summary_sections(summary, expected_lang="nl", min_top_causes=1)
+        top = _get_top_cause(summary)
+        assert_top_cause_contract(
+            top,
+            expected_source="wheel",
+            expected_location="rear-left",
+            expected_speed_band_range=(40.0, 70.0),
+            confidence_range=(0.30, 0.80),
+            expect_wheel_signatures=True,
+            expect_not_engine=True,
+        )
 
 
 # ===========================================================================
@@ -578,7 +611,7 @@ class TestScenario03HighwayRR:
 
     def test_confidence_reasonable(self, summary: dict) -> None:
         top = _get_top_cause(summary)
-        _assert_confidence_range(top, 0.25, 1.0)
+        _assert_confidence_range(top, 0.40, 0.85)
 
     def test_wheel_signatures_present(self, summary: dict) -> None:
         top = _get_top_cause(summary)
@@ -586,6 +619,27 @@ class TestScenario03HighwayRR:
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
+
+    def test_no_weak_spatial_separation(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_no_weak_spatial_separation(top)
+
+    def test_contract_validation(self, summary: dict) -> None:
+        """Full contract validation via shared helpers."""
+        from conftest import assert_summary_sections, assert_top_cause_contract
+
+        assert_summary_sections(summary, expected_lang="en", min_top_causes=1)
+        top = _get_top_cause(summary)
+        assert_top_cause_contract(
+            top,
+            expected_source="wheel",
+            expected_location="rear-right",
+            expected_speed_band_range=(110.0, 130.0),
+            confidence_range=(0.40, 0.85),
+            expect_no_weak_spatial=True,
+            expect_wheel_signatures=True,
+            expect_not_engine=True,
+        )
 
 
 # ===========================================================================
@@ -690,7 +744,7 @@ class TestScenario04CoastdownFL:
     def test_confidence_reasonable(self, summary: dict) -> None:
         """Coast-down with 60s total fault evidence should have decent confidence."""
         top = _get_top_cause(summary)
-        _assert_confidence_range(top, 0.30, 1.0)
+        _assert_confidence_range(top, 0.35, 0.85)
 
     def test_wheel_signatures_present(self, summary: dict) -> None:
         top = _get_top_cause(summary)
@@ -698,6 +752,26 @@ class TestScenario04CoastdownFL:
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
+
+    def test_no_weak_spatial_separation(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_no_weak_spatial_separation(top)
+
+    def test_contract_validation(self, summary: dict) -> None:
+        """Full contract validation via shared helpers."""
+        from conftest import assert_summary_sections, assert_top_cause_contract
+
+        assert_summary_sections(summary, expected_lang="nl", min_top_causes=1)
+        top = _get_top_cause(summary)
+        assert_top_cause_contract(
+            top,
+            expected_source="wheel",
+            expected_location="front-left",
+            expected_speed_band_range=(40.0, 100.0),
+            confidence_range=(0.35, 0.85),
+            expect_wheel_signatures=True,
+            expect_not_engine=True,
+        )
 
 
 # ===========================================================================
@@ -786,7 +860,7 @@ class TestScenario05NoiseThenFL:
     def test_confidence_reasonable(self, summary: dict) -> None:
         """Despite earlier noise, 40s clear fault should produce reasonable confidence."""
         top = _get_top_cause(summary)
-        _assert_confidence_range(top, 0.25, 1.0)
+        _assert_confidence_range(top, 0.30, 0.85)
 
     def test_wheel_signatures_present(self, summary: dict) -> None:
         top = _get_top_cause(summary)
@@ -794,6 +868,26 @@ class TestScenario05NoiseThenFL:
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
+
+    def test_no_weak_spatial_separation(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_no_weak_spatial_separation(top)
+
+    def test_contract_validation(self, summary: dict) -> None:
+        """Full contract validation via shared helpers."""
+        from conftest import assert_summary_sections, assert_top_cause_contract
+
+        assert_summary_sections(summary, expected_lang="en", min_top_causes=1)
+        top = _get_top_cause(summary)
+        assert_top_cause_contract(
+            top,
+            expected_source="wheel",
+            expected_location="front-left",
+            expected_speed_band_range=(90.0, 110.0),
+            confidence_range=(0.30, 0.85),
+            expect_wheel_signatures=True,
+            expect_not_engine=True,
+        )
 
 
 # ===========================================================================
@@ -1180,8 +1274,13 @@ class TestConfidenceGuardrails:
             short_summary.get("top_causes", [{}])[0] if short_summary.get("top_causes") else {}
         )
         long_top = long_summary.get("top_causes", [{}])[0] if long_summary.get("top_causes") else {}
+        # Guard: both must produce real results (prevent trivially passing 0.0 >= 0.0)
+        assert long_summary.get("top_causes"), "Long sustained fault must produce top_causes"
         short_conf = short_top.get("confidence", 0.0)
         long_conf = long_top.get("confidence", 0.0)
+        assert long_conf > 0.0, (
+            f"Long sustained fault must have non-zero confidence, got {long_conf}"
+        )
         # Both should produce results, but long should have higher confidence
         assert long_conf >= short_conf, (
             f"Long sustained fault ({long_conf:.2f}) should have ≥ confidence "

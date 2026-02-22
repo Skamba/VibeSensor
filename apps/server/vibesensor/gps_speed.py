@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
 import time
 from typing import Any
 
@@ -180,7 +181,7 @@ class GPSSpeedMonitor:
                                 self.device_info = f"gpsd {rev}"
                         continue
                     speed = payload.get("speed")
-                    if isinstance(speed, (int, float)):
+                    if isinstance(speed, (int, float)) and math.isfinite(speed) and speed >= 0:
                         self.speed_mps = float(speed)
                         self.last_update_ts = time.monotonic()
                         self.fallback_active = False
