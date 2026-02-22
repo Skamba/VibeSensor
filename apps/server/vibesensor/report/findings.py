@@ -813,6 +813,12 @@ def _build_persistent_peak_findings(
     Uses the same confidence-style scoring as order findings (presence_ratio,
     error/SNR) so the report is consistent.  Peaks already claimed by order
     findings are excluded.  Transient peaks are returned separately.
+
+    When ``per_sample_phases`` is provided, each finding includes a
+    ``phase_presence`` dict showing the per-phase presence ratio for that
+    frequency bin so callers can see which driving phases the peak is observed
+    in (IDLE, ACCELERATION, CRUISE, DECELERATION, COAST_DOWN).
+    Addresses TODO 4: ``_build_persistent_peak_findings()`` has no phase awareness.
     """
     if freq_bin_hz <= 0:
         freq_bin_hz = 2.0
@@ -827,6 +833,7 @@ def _build_persistent_peak_findings(
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
     total_locations: set[str] = set()
     n_samples = 0
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
     for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
@@ -969,6 +976,13 @@ def _build_persistent_peak_findings(
             "cruise_fraction": _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0,
             "phases_detected": sorted(k for k, v in phases_in_bin.items() if v > 0),
         }
+        phase_presence: dict[str, float] | None = None
+        if has_phases and _total_phase_hits > 0:
+            phase_presence = {
+                phase_key: phase_hits / _total_phase_hits
+                for phase_key, phase_hits in phases_in_bin.items()
+                if phase_hits > 0
+            }
 
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
@@ -1012,6 +1026,7 @@ def _build_persistent_peak_findings(
             "peak_speed_kmh": peak_speed_kmh,
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "strongest_speed_band": speed_band if speed_band != "-" else None,
+            "phase_presence": phase_presence,
         }
 
         ranking_score = (presence_ratio**2) * p95_amp
