@@ -162,6 +162,37 @@ def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
     assert registry.get("aabbccddeeff") is None
 
 
+def test_registry_staleness_uses_monotonic_clock_when_now_not_provided(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db, stale_ttl_seconds=10.0)
+    now = {"wall": 1_000.0, "mono": 100.0}
+
+    monkeypatch.setattr("vibesensor.registry.time.time", lambda: now["wall"])
+    monkeypatch.setattr("vibesensor.registry.time.monotonic", lambda: now["mono"])
+
+    hello = HelloMessage(
+        client_id=bytes.fromhex("001122334455"),
+        control_port=9010,
+        sample_rate_hz=800,
+        name="sensor",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010))
+
+    now["wall"] = 50_000.0
+    now["mono"] = 105.0
+
+    assert registry.active_client_ids() == ["001122334455"]
+    row = registry.snapshot_for_api()[0]
+    assert row["connected"] is True
+
+    now["mono"] = 120.1
+    assert registry.active_client_ids() == []
+
+
 def test_registry_remove_client_clears_persisted_entry(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
