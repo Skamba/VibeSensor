@@ -72,6 +72,7 @@ artifacts/build_artifacts/*
 # AI workflow artifacts
 artifacts/ai/*
 !artifacts/ai/.gitkeep
+_codeql_detected_source_root
 
 # Frontend build/runtime artifacts
 apps/ui/node_modules/
