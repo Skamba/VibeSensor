@@ -409,27 +409,32 @@ class SignalProcessor:
         }
 
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
-        shared_freq: list[float] | None = None
+        shared_freq: np.ndarray | None = None
         clients: dict[str, dict[str, list[float]]] = {}
         mismatch_ids: list[str] = []
         for client_id in client_ids:
             buf = self._buffers.get(client_id)
             if buf is None or not buf.latest_spectrum:
                 continue
-            client_freq = buf.latest_spectrum["x"]["freq"].tolist()
+            client_freq = buf.latest_spectrum["x"]["freq"]
+            if not isinstance(client_freq, np.ndarray):
+                client_freq = np.array(client_freq, dtype=np.float32)
             if shared_freq is None:
                 shared_freq = client_freq
             elif len(client_freq) != len(shared_freq) or not np.allclose(
-                np.asarray(client_freq, dtype=np.float32),
-                np.asarray(shared_freq, dtype=np.float32),
+                client_freq,
+                shared_freq,
                 rtol=0.0,
                 atol=1e-6,
             ):
                 mismatch_ids.append(client_id)
             client_payload = self.spectrum_payload(client_id)
-            client_payload["freq"] = client_freq
+            client_payload["freq"] = client_freq.tolist()
             clients[client_id] = client_payload
-        payload: dict[str, Any] = {"freq": shared_freq or [], "clients": clients}
+        payload: dict[str, Any] = {
+            "freq": shared_freq.tolist() if shared_freq is not None else [],
+            "clients": clients,
+        }
         if mismatch_ids:
             payload["warning"] = {
                 "code": "frequency_bin_mismatch",
