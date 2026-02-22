@@ -13,6 +13,7 @@ from vibesensor.metrics_log import MetricsLogger
 # -- MetricsLogger._safe_metric ------------------------------------------------
 
 
+@pytest.mark.smoke
 def test_safe_metric_valid() -> None:
     metrics = {"x": {"rms": 0.05, "p2p": 0.12}}
     result = MetricsLogger._safe_metric(metrics, "x", "rms")
@@ -505,7 +506,7 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger._append_records(run_id, start_time_utc, start_mono)
 
     def _slow_summary(*args, **kwargs):
-        time.sleep(0.35)
+        time.sleep(0.20)
         return {"summary": "ok"}
 
     monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _slow_summary)
@@ -513,8 +514,9 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger.stop_logging()
     elapsed = time.monotonic() - started
 
-    assert elapsed < 1.0
-    assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
+    # stop_logging() must return quickly; the 0.20s summary runs in a worker thread
+    assert elapsed < 0.20, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.20s)"
+    assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=5.0)
 
 
 def test_post_analysis_failure_sets_persistent_error_status(
@@ -710,6 +712,10 @@ def test_db_persists_when_jsonl_disabled(tmp_path: Path) -> None:
 def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    # Reduce the cap so we only need ~250 iterations instead of 13 000 (28 s → <1 s).
+    cap = 200
+    monkeypatch.setattr("vibesensor.metrics_log._MAX_POST_ANALYSIS_SAMPLES", cap)
+
     history_db = HistoryDB(tmp_path / "history.db")
     logger = MetricsLogger(
         enabled=False,
@@ -728,7 +734,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id, start_time_utc, start_mono = snapshot
-    for _ in range(13_000):
+    for _ in range(cap + 50):
         logger._append_records(run_id, start_time_utc, start_mono)
 
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
@@ -739,5 +745,5 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
     stored = history_db.get_run_analysis(run_id)
     assert stored is not None
-    assert stored["row_count"] <= 12_000
+    assert stored["row_count"] <= cap
     assert stored["analysis_metadata"]["total_sample_count"] >= stored["row_count"]

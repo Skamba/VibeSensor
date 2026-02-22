@@ -22,7 +22,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 def _sanitize_name(name: str) -> str:
-    clean = name.strip()
+    # Strip control characters (U+0000–U+001F, U+007F) except common whitespace
+    clean = "".join(c for c in name if ord(c) >= 0x20 and ord(c) != 0x7F)
+    clean = clean.strip()
     if not clean:
         return ""
     return clean.encode("utf-8", errors="ignore")[:32].decode("utf-8", errors="ignore")

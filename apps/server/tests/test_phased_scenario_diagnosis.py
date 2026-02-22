@@ -310,7 +310,14 @@ class TestScenario1IdleToSpeedUp:
         top = _extract_top_finding(summary)
         assert top is not None
         speed_band = str(top.get("strongest_speed_band") or "")
-        assert "100" in speed_band or "90" in speed_band, (
+        # Parse numerically rather than fragile 'in' check
+        parts = speed_band.replace("km/h", "").strip().split("-")
+        try:
+            band_low = float(parts[0].strip())
+            band_high = float(parts[-1].strip()) if len(parts) > 1 else band_low
+        except (ValueError, IndexError):
+            band_low = band_high = 0
+        assert band_low >= 80.0 and band_high <= 130.0, (
             f"Scenario 1: Speed band should cover ~100 km/h, got '{speed_band}'"
         )
 
@@ -546,7 +553,14 @@ class TestScenario3HighwayRearRight:
         top = _extract_top_finding(summary)
         assert top is not None
         speed_band = str(top.get("strongest_speed_band") or "")
-        assert "120" in speed_band or "110" in speed_band, (
+        # Parse numerically rather than fragile 'in' check
+        parts = speed_band.replace("km/h", "").strip().split("-")
+        try:
+            band_low = float(parts[0].strip())
+            band_high = float(parts[-1].strip()) if len(parts) > 1 else band_low
+        except (ValueError, IndexError):
+            band_low = band_high = 0
+        assert band_low >= 100.0 and band_high <= 140.0, (
             f"Scenario 3: Speed band should cover ~120 km/h, got '{speed_band}'"
         )
 
@@ -834,12 +848,10 @@ class TestConfidenceWithSpatialAmbiguity:
                 )
         summary = summarize_run_data(meta, samples, include_samples=False)
         top = _extract_top_finding(summary)
-        if top is not None:
-            conf = float(top.get("confidence_0_to_1") or 0)
-            # With all sensors showing equal amplitude, spatial confidence should be weak
-            assert conf < 0.70, (
-                f"Equal-amplitude all sensors should have conf < 0.70, got {conf:.2f}"
-            )
+        assert top is not None, "Equal-amplitude all-sensor scenario must produce a finding"
+        conf = float(top.get("confidence_0_to_1") or 0)
+        # With all sensors showing equal amplitude, spatial confidence should be weak
+        assert conf < 0.70, f"Equal-amplitude all sensors should have conf < 0.70, got {conf:.2f}"
 
     def test_single_sensor_dominant_higher_confidence(self) -> None:
         """One dominant sensor with 10x amplitude should get higher confidence."""

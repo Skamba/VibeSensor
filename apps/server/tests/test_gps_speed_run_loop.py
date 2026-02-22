@@ -38,7 +38,7 @@ async def test_run_parses_tpv_and_updates_speed() -> None:
         writer.write(_tpv_line(25.5))
         await writer.drain()
         # Keep connection open briefly so the client can read
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.2)
         writer.close()
         await writer.wait_closed()
 
@@ -70,7 +70,7 @@ async def test_run_ignores_non_tpv_messages() -> None:
         writer.write(_non_tpv_line())
         writer.write(_tpv_line(12.3))
         await writer.drain()
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.2)
         writer.close()
         await writer.wait_closed()
 
@@ -197,7 +197,7 @@ async def test_run_ignores_malformed_json() -> None:
         writer.write(b"NOT VALID JSON\n")
         writer.write(_tpv_line(7.77))
         await writer.drain()
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.2)
         writer.close()
         await writer.wait_closed()
 
