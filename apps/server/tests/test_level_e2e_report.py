@@ -330,6 +330,7 @@ class TestPdfReportValidation:
 
     def test_pdf_is_generated(self) -> None:
         """PDF bytes are non-empty and start with the PDF magic number."""
+        # A valid 2-page report PDF is typically 10K+; 1000 is a safe floor
         assert len(self.pdf_bytes) > 1000, f"PDF too small: {len(self.pdf_bytes)} bytes"
         assert self.pdf_bytes[:5] == b"%PDF-", "Not a valid PDF"
 
@@ -377,7 +378,8 @@ class TestPdfReportValidation:
         # Top cause source should appear in PDF text
         if self.top:
             src = (self.top.get("source") or "").lower()
-            # At least part of the source label should appear
+            # At least part of the source label should appear;
+            # skip short tokens (e.g. single-char splits) as they cause false matches
             for token in src.split("/"):
                 if token and len(token) > 2:
                     assert token in self.pdf_text, f"Source token '{token}' not found in PDF text"
