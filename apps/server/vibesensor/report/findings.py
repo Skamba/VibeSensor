@@ -583,6 +583,7 @@ def _build_order_findings(
                 lang=lang,
                 relevant_speed_bins=relevant_speed_bins,
                 connected_locations=connected_locations,
+                suspected_source=hypothesis.suspected_source,
             )
         except TypeError as exc:
             if "connected_locations" not in str(exc):
@@ -696,6 +697,42 @@ def _build_order_findings(
             confidence *= 1.06
         elif phases_with_evidence >= 2:
             confidence *= 1.03
+
+        # ── Diffuse excitation detection ────────────────────────────────
+        # When multiple connected sensors all match the order at similar
+        # rates, vibration is likely diffuse road/environment excitation
+        # rather than a localized mechanical fault.  Penalize confidence
+        # to prevent converting global road noise into a corner-specific
+        # wheel diagnosis.
+        _diffuse_excitation = False
+        if len(connected_locations) >= 2 and possible_by_location:
+            loc_rates = []
+            for loc in connected_locations:
+                loc_p = possible_by_location.get(loc, 0)
+                loc_m = matched_by_location.get(loc, 0)
+                if loc_p >= max(3, ORDER_MIN_MATCH_POINTS):
+                    loc_rates.append(loc_m / max(1, loc_p))
+            if len(loc_rates) >= 2:
+                _rate_range = max(loc_rates) - min(loc_rates)
+                _mean_rate = mean(loc_rates)
+                # All sensors within 15pp of each other → diffuse
+                if _rate_range < 0.15 and _mean_rate > 0.15:
+                    _diffuse_excitation = True
+                    # Moderate penalty: flag the finding as diffuse but don't
+                    # aggressively suppress it — the weak_spatial_separation
+                    # penalty already handles the spatial ambiguity.
+                    _diffuse_penalty = max(0.65, 0.85 - 0.04 * len(loc_rates))
+                    confidence *= _diffuse_penalty
+
+        # ── Sensor-coverage-aware confidence scaling (1-12 sensors) ─────
+        # With very few sensors (1-2), localization is inherently uncertain.
+        # With many sensors (8-12), we have stronger spatial evidence.
+        n_connected = len(connected_locations)
+        if n_connected <= 1:
+            confidence *= 0.85  # single sensor – limited spatial info
+        elif n_connected == 2:
+            confidence *= 0.92  # minimal spatial coverage
+
         confidence = max(0.08, min(0.97, confidence))
 
         ranking_score = (
@@ -824,6 +861,7 @@ def _build_order_findings(
             "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,
             "corroborating_locations": corroborating_locations,
+            "diffuse_excitation": _diffuse_excitation,
             "phase_evidence": phase_evidence,
             "evidence_metrics": {
                 "match_rate": effective_match_rate,
@@ -838,6 +876,7 @@ def _build_order_findings(
                 "frequency_correlation": corr,
                 "per_phase_confidence": per_phase_confidence,
                 "phases_with_evidence": phases_with_evidence,
+                "diffuse_excitation": _diffuse_excitation,
             },
             "next_sensor_move": str(actions[0].get("what") or "")
             or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),

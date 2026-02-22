@@ -8,6 +8,7 @@ from math import ceil, floor, log1p, pow
 from statistics import mean
 
 from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
+from ..locations import is_wheel_location
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _speed_bin_label, weak_spatial_dominance_threshold
@@ -155,6 +156,7 @@ def _location_speedbin_summary(
     lang: object,
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
     connected_locations: set[str] | None = None,
+    suspected_source: str | None = None,
 ) -> tuple[str, dict[str, object] | None]:
     """Return strongest location summary, optionally restricted to specific speed bins.
 
@@ -162,6 +164,11 @@ def _location_speedbin_summary(
     from samples that fall inside those speed-bin labels (for example
     ``{"90-100 km/h"}``). This allows order findings to localize the strongest
     sensor in the same speed range where the order is most relevant.
+
+    When ``suspected_source`` is ``"wheel/tire"``, eligible wheel/corner
+    locations are preferred as fault sources.  Non-wheel sensors may appear
+    as transfer-path evidence but will not be selected as the strongest
+    location unless no wheel sensors are present.
     """
     allowed_bins = {
         str(bin_label).strip()
@@ -250,6 +257,16 @@ def _location_speedbin_summary(
             else ranked
         )
         ranked_for_winner = eligible_ranked if eligible_ranked else ranked
+
+        # Source-aware localization: for wheel/tire diagnoses prefer wheel
+        # sensors as the fault source.  Non-wheel sensors (cabin, chassis)
+        # may carry transfer-path energy but should not be reported as the
+        # fault origin when wheel sensors are available.
+        _prefer_wheel = (suspected_source or "").strip().lower() == "wheel/tire"
+        if _prefer_wheel:
+            wheel_ranked = [item for item in ranked_for_winner if is_wheel_location(item[0])]
+            if wheel_ranked:
+                ranked_for_winner = wheel_ranked
 
         top_loc, top_amp = ranked_for_winner[0]
         top_count = int(per_loc_sample_counts.get(top_loc, 0))

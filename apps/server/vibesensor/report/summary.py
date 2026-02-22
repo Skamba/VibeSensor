@@ -194,6 +194,7 @@ def select_top_causes(
                 "dominance_ratio": rep.get("dominance_ratio"),
                 "strongest_speed_band": rep.get("strongest_speed_band"),
                 "weak_spatial_separation": rep.get("weak_spatial_separation"),
+                "diffuse_excitation": rep.get("diffuse_excitation", False),
                 "diagnostic_caveat": rep.get("diagnostic_caveat"),
                 "phase_evidence": rep.get("phase_evidence"),
             }
@@ -318,6 +319,56 @@ def _most_likely_origin_summary(
         "dominant_phase": dominant_phase or None,
         "explanation": explanation,
     }
+
+
+def _build_phase_timeline(
+    phase_segments: list,
+    findings: list[dict[str, object]],
+    lang: object,
+) -> list[dict[str, object]]:
+    """Build a simple timeline summary: what changed when.
+
+    Returns a list of timeline entries with phase, time window, speed range,
+    and whether fault evidence was detected in that segment.
+    """
+    if not phase_segments:
+        return []
+
+    # Determine which phases have strong finding evidence
+    finding_phases: set[str] = set()
+    for f in findings:
+        if not isinstance(f, dict):
+            continue
+        if str(f.get("finding_id", "")).startswith("REF_"):
+            continue
+        conf = float(f.get("confidence_0_to_1") or 0)
+        if conf < ORDER_MIN_CONFIDENCE:
+            continue
+        phase_ev = f.get("phase_evidence")
+        if isinstance(phase_ev, dict):
+            for p in phase_ev.get("phases_detected", []):
+                finding_phases.add(str(p))
+
+    entries: list[dict[str, object]] = []
+    for seg in phase_segments:
+        phase_val = seg.phase.value if hasattr(seg, "phase") else str(seg.get("phase", ""))
+        start_t = seg.start_t_s if hasattr(seg, "start_t_s") else float(seg.get("start_t_s", 0))
+        end_t = seg.end_t_s if hasattr(seg, "end_t_s") else float(seg.get("end_t_s", 0))
+        speed_min = seg.speed_min_kmh if hasattr(seg, "speed_min_kmh") else seg.get("speed_min_kmh")
+        speed_max = seg.speed_max_kmh if hasattr(seg, "speed_max_kmh") else seg.get("speed_max_kmh")
+        has_fault_evidence = phase_val in finding_phases
+
+        entries.append(
+            {
+                "phase": phase_val,
+                "start_t_s": start_t,
+                "end_t_s": end_t,
+                "speed_min_kmh": speed_min,
+                "speed_max_kmh": speed_max,
+                "has_fault_evidence": has_fault_evidence,
+            }
+        )
+    return entries
 
 
 def build_findings_for_samples(
@@ -479,6 +530,7 @@ def summarize_run_data(
     )
     most_likely_origin = _most_likely_origin_summary(findings, language)
     test_plan = _merge_test_plan(findings, language)
+    phase_timeline = _build_phase_timeline(phase_segments, findings, language)
 
     metadata_dict = metadata if isinstance(metadata, dict) else {}
     reference_complete = bool(
@@ -645,6 +697,7 @@ def summarize_run_data(
         "top_causes": top_causes,
         "most_likely_origin": most_likely_origin,
         "test_plan": test_plan,
+        "phase_timeline": phase_timeline,
         "speed_stats": speed_stats,
         "speed_stats_by_phase": speed_stats_by_phase,
         "phase_info": phase_info,
