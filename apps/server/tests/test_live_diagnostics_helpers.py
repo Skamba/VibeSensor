@@ -162,3 +162,104 @@ def test_findings_language_is_forwarded(monkeypatch) -> None:
         language="nl",
     )
     assert seen["lang"] == "nl"
+
+
+# -- LiveDiagnosticsEngine driving phase tracking --------------------------------
+
+
+def test_snapshot_includes_driving_phase_key() -> None:
+    engine = LiveDiagnosticsEngine()
+    snap = engine.snapshot()
+    assert "driving_phase" in snap
+
+
+def test_initial_driving_phase_is_idle() -> None:
+    engine = LiveDiagnosticsEngine()
+    snap = engine.snapshot()
+    assert snap["driving_phase"] == "idle"
+
+
+def test_driving_phase_idle_when_speed_zero(monkeypatch) -> None:
+    t = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    engine = LiveDiagnosticsEngine()
+    for i in range(3):
+        t["value"] = float(i)
+        engine.update(speed_mps=0.0, clients=[], spectra=None, settings={})
+    snap = engine.snapshot()
+    assert snap["driving_phase"] == "idle"
+
+
+def test_driving_phase_idle_when_speed_none(monkeypatch) -> None:
+    t = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    engine = LiveDiagnosticsEngine()
+    for i in range(3):
+        t["value"] = float(i)
+        engine.update(speed_mps=None, clients=[], spectra=None, settings={})
+    snap = engine.snapshot()
+    assert snap["driving_phase"] == "idle"
+
+
+def test_driving_phase_cruise_at_constant_speed(monkeypatch) -> None:
+    t = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    engine = LiveDiagnosticsEngine()
+    # Constant 50 km/h → cruise
+    speed_mps = 50.0 / 3.6
+    for i in range(5):
+        t["value"] = float(i)
+        engine.update(speed_mps=speed_mps, clients=[], spectra=None, settings={})
+    snap = engine.snapshot()
+    assert snap["driving_phase"] == "cruise"
+
+
+def test_driving_phase_acceleration_detected(monkeypatch) -> None:
+    t = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    engine = LiveDiagnosticsEngine()
+    # Speed ramps from 30 → 60 km/h over 5 seconds = +6 km/h/s, well above 1.5 threshold
+    speeds_kmh = [30.0, 36.0, 42.0, 48.0, 54.0, 60.0]
+    for i, s in enumerate(speeds_kmh):
+        t["value"] = float(i)
+        engine.update(speed_mps=s / 3.6, clients=[], spectra=None, settings={})
+    snap = engine.snapshot()
+    assert snap["driving_phase"] == "acceleration"
+
+
+def test_driving_phase_deceleration_detected(monkeypatch) -> None:
+    t = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    engine = LiveDiagnosticsEngine()
+    # Speed drops from 80 → 50 km/h over 5 seconds = -6 km/h/s, well below -1.5 threshold
+    speeds_kmh = [80.0, 74.0, 68.0, 62.0, 56.0, 50.0]
+    for i, s in enumerate(speeds_kmh):
+        t["value"] = float(i)
+        engine.update(speed_mps=s / 3.6, clients=[], spectra=None, settings={})
+    snap = engine.snapshot()
+    assert snap["driving_phase"] == "deceleration"
+
+
+def test_driving_phase_reset_clears_to_idle(monkeypatch) -> None:
+    t = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    engine = LiveDiagnosticsEngine()
+    speed_mps = 50.0 / 3.6
+    for i in range(5):
+        t["value"] = float(i)
+        engine.update(speed_mps=speed_mps, clients=[], spectra=None, settings={})
+    assert engine.snapshot()["driving_phase"] == "cruise"
+    engine.reset()
+    assert engine.snapshot()["driving_phase"] == "idle"
+
+
+def test_driving_phase_tracked_on_spectra_none_path(monkeypatch) -> None:
+    """Phase update must occur even on the light-tick spectra=None path."""
+    t = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    engine = LiveDiagnosticsEngine()
+    speed_mps = 50.0 / 3.6
+    for i in range(5):
+        t["value"] = float(i)
+        snap = engine.update(speed_mps=speed_mps, clients=[], spectra=None, settings={})
+    assert snap["driving_phase"] == "cruise"
