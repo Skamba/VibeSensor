@@ -61,6 +61,8 @@ class SimClient:
     scene_mode: str = "all"
     common_event_gain: float = 0.0
     paused: bool = False
+    # Current simulated speed – used to scale order-based profile tones.
+    current_speed_kmh: float = DEFAULT_SPEED_KMH
     send_period_scale: float = 1.0
     send_jitter_s: float = 0.0
     start_offset_s: float = 0.0
@@ -124,14 +126,30 @@ class SimClient:
         )
         signal = np.zeros((self.frame_samples, 3), dtype=np.float32)
 
+        # Compute speed-scaling ratio for order-based profiles.
+        # Tones in wheel_imbalance / wheel_mild_imbalance were defined at the
+        # reference speed; scale them proportionally to the current speed.
+        speed_ratio = 1.0
+        if profile.reference_speed_kmh and profile.reference_speed_kmh > 0:
+            speed_ratio = max(0.0, self.current_speed_kmh) / profile.reference_speed_kmh
+
         for freq_hz, amps_xyz in profile.tones:
-            omega_t = 2.0 * np.pi * freq_hz * t
+            effective_hz = freq_hz * speed_ratio
+            if effective_hz <= 0:
+                continue
+            omega_t = 2.0 * np.pi * effective_hz * t
             signal[:, 0] += amps_xyz[0] * np.sin(omega_t + self.phase_offsets[0])
             signal[:, 1] += amps_xyz[1] * np.sin(omega_t + self.phase_offsets[1])
             signal[:, 2] += amps_xyz[2] * np.sin(omega_t + self.phase_offsets[2])
 
         if self.common_event_gain > 0:
-            # Exact orders for defaults: 285/30R21, 3.15 FD, 1.0 gear, 100 km/h.
+            # Common order tones shared by all sensors.
+            # Scale by current speed vs DEFAULT_SPEED_KMH reference.
+            common_speed_ratio = (
+                max(0.0, self.current_speed_kmh) / DEFAULT_SPEED_KMH
+                if DEFAULT_SPEED_KMH > 0
+                else 1.0
+            )
             common_tones = (
                 (DEFAULT_ORDER_HZ["wheel_1x"], (70.0, 58.0, 82.0)),
                 (DEFAULT_ORDER_HZ["wheel_2x"], (46.0, 38.0, 54.0)),
@@ -139,7 +157,10 @@ class SimClient:
                 (DEFAULT_ORDER_HZ["engine_2x"], (64.0, 52.0, 78.0)),
             )
             for freq_hz, amps_xyz in common_tones:
-                omega_t = 2.0 * np.pi * freq_hz * t
+                effective_hz = freq_hz * common_speed_ratio
+                if effective_hz <= 0:
+                    continue
+                omega_t = 2.0 * np.pi * effective_hz * t
                 signal[:, 0] += self.common_event_gain * amps_xyz[0] * np.sin(omega_t)
                 signal[:, 1] += (
                     self.common_event_gain * amps_xyz[1] * np.sin(omega_t + 0.2)
@@ -443,6 +464,9 @@ async def async_main(args: argparse.Namespace) -> None:
             args.server_check_timeout,
         )
         shown_speed = applied_speed if applied_speed is not None else override_speed_kmh
+        # Propagate speed to all clients so order-based profiles scale tones.
+        for client in clients:
+            client.current_speed_kmh = override_speed_kmh
         print(f"Applied server speed override: {shown_speed:.1f} km/h")
 
     interactive = args.interactive or (
