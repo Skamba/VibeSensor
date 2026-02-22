@@ -25,7 +25,6 @@ from builders import (
     make_noise_samples,
     make_ramp_samples,
     run_analysis,
-    top_confidence,
 )
 
 # ---------------------------------------------------------------------------

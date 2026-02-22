@@ -27,7 +27,6 @@ from builders import (
     make_ramp_samples,
     make_transient_samples,
     run_analysis,
-    top_confidence,
     wheel_hz,
 )
 

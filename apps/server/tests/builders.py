@@ -505,7 +505,9 @@ def top_corner_label(summary: dict[str, Any]) -> str | None:
     top = extract_top(summary)
     if not top:
         return None
-    return top.get("strongest_location") or top.get("location_hotspot") or top.get("suspected_source")
+    return (
+        top.get("strongest_location") or top.get("location_hotspot") or top.get("suspected_source")
+    )
 
 
 def top_confidence(summary: dict[str, Any]) -> float:
@@ -588,17 +590,13 @@ def assert_source_is(summary: dict[str, Any], expected: str, msg: str = "") -> N
     assert expected.lower() in src, f"Expected '{expected}' in source, got '{src}'. {msg}"
 
 
-def assert_confidence_between(
-    summary: dict[str, Any], lo: float, hi: float, msg: str = ""
-) -> None:
+def assert_confidence_between(summary: dict[str, Any], lo: float, hi: float, msg: str = "") -> None:
     """Assert top cause confidence is within [lo, hi]."""
     conf = top_confidence(summary)
     assert lo <= conf <= hi, f"Confidence {conf:.3f} not in [{lo}, {hi}]. {msg}"
 
 
-def assert_strongest_location(
-    summary: dict[str, Any], expected_sensor: str, msg: str = ""
-) -> None:
+def assert_strongest_location(summary: dict[str, Any], expected_sensor: str, msg: str = "") -> None:
     """Assert the top cause's strongest_location matches *expected_sensor*."""
     top = extract_top(summary)
     assert top is not None, f"No top cause found. {msg}"
