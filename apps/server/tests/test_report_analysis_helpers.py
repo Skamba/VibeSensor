@@ -113,14 +113,32 @@ def test_mean_variance_basic() -> None:
     assert m is not None
     assert abs(m - 4.0) < 1e-9
     assert v is not None
-    # var = ((2-4)^2 + (4-4)^2 + (6-4)^2) / 3 = 8/3
-    assert abs(v - 8.0 / 3.0) < 1e-9
+    # sample var = ((2-4)^2 + (4-4)^2 + (6-4)^2) / (3-1) = 8/2 = 4.0
+    assert abs(v - 4.0) < 1e-9
 
 
 def test_mean_variance_empty() -> None:
     m, v = _mean_variance([])
     assert m is None
     assert v is None
+
+
+def test_mean_variance_single_value() -> None:
+    m, v = _mean_variance([42.0])
+    assert m is not None
+    assert abs(m - 42.0) < 1e-9
+    assert v is not None
+    assert abs(v - 0.0) < 1e-9  # single value → zero variance
+
+
+def test_mean_variance_two_values_sample_variance() -> None:
+    """Two values: sample variance (N-1) differs from population variance (N)."""
+    m, v = _mean_variance([100.0, 102.0])
+    assert m is not None
+    assert abs(m - 101.0) < 1e-9
+    assert v is not None
+    # sample var = ((100-101)^2 + (102-101)^2) / (2-1) = 2.0
+    assert abs(v - 2.0) < 1e-9
 
 
 # -- percentile ---------------------------------------------------------------
