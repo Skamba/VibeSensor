@@ -6,6 +6,7 @@ import math
 import time
 from collections import deque
 from collections.abc import Callable
+from itertools import islice
 from pathlib import Path
 from threading import RLock, Thread
 from typing import TYPE_CHECKING
@@ -205,9 +206,11 @@ class MetricsLogger:
             start_time_utc = self._run_start_utc or self._live_start_utc
             metadata = self._run_metadata_record(run_id=run_id, start_time_utc=start_time_utc)
             metadata["end_time_utc"] = utc_now_iso()
-            samples = list(self._live_samples)
-            if max_rows > 0 and len(samples) > max_rows:
-                samples = samples[-max_rows:]
+            if max_rows <= 0:
+                samples = list(self._live_samples)
+            else:
+                samples = list(islice(reversed(self._live_samples), max_rows))
+                samples.reverse()
             return metadata, samples
 
     def _run_metadata_record(self, run_id: str, start_time_utc: str) -> dict[str, object]:
