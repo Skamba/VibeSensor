@@ -56,7 +56,7 @@ def car_location_diagram(
     car_h = max(162.0, drawing_h - 88.0)
     car_w = car_h / length_width_ratio
     x0 = (d_width - car_w) / 2.0
-    y0 = 48.0
+    y0 = 54.0
 
     # Aspect-ratio preservation assertion: the rendered car rectangle must
     # match the source BMW body ratio within 2 % tolerance.
@@ -195,14 +195,15 @@ def car_location_diagram(
             )
             if loc and p95_g is not None and p95_g > 0:
                 amp_by_location[loc] = p95_g
-    if not amp_by_location:
-        for row in location_rows:
-            if not isinstance(row, dict):
-                continue
-            loc = _canonical_location(row.get("location"))
-            mean_g = _as_float(row.get("mean_g"))
-            if loc and mean_g is not None and mean_g > 0:
-                amp_by_location[loc] = mean_g
+    # Also check location_rows for any locations not already covered
+    # (sensor_intensity_by_location may only have partial data)
+    for row in location_rows:
+        if not isinstance(row, dict):
+            continue
+        loc = _canonical_location(row.get("location"))
+        mean_g = _as_float(row.get("mean_g"))
+        if loc and loc not in amp_by_location and mean_g is not None and mean_g > 0:
+            amp_by_location[loc] = mean_g
     min_amp = min(amp_by_location.values()) if amp_by_location else None
     max_amp = max(amp_by_location.values()) if amp_by_location else None
 
@@ -259,7 +260,7 @@ def car_location_diagram(
         )
 
     # -- Heat-map legend with numeric endpoints --
-    legend_y = 30
+    legend_y = 36
     legend_x = 8
     for i in range(0, 11):
         step = i / 10.0
@@ -328,6 +329,7 @@ def car_location_diagram(
         )
 
     # -- Source highlight legend (explains stroke colours on the circles) --
+    # Placed below the heat-map legend so it fits within the narrow Drawing.
     from ..report_theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
 
     src_legend_items = [
@@ -335,12 +337,14 @@ def car_location_diagram(
         ("Driveline", FINDING_SOURCE_COLORS["driveline"]),
         ("Engine", FINDING_SOURCE_COLORS["engine"]),
     ]
-    src_legend_x = legend_x + 120
-    src_legend_y = legend_y + 10
+    src_legend_x = legend_x
+    # Stack below heat legend: title row, then swatches row
+    src_title_y = legend_y - 22
+    src_swatch_y = src_title_y - 9
     drawing.add(
         String(
             src_legend_x,
-            src_legend_y + 10,
+            src_title_y,
             tr("SOURCE_LEGEND_TITLE")
             if tr("SOURCE_LEGEND_TITLE") != "SOURCE_LEGEND_TITLE"
             else "Finding source:",
@@ -349,13 +353,14 @@ def car_location_diagram(
             fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
         )
     )
+    swatch_spacing = min(42, max(30, (d_width - 2 * legend_x) / len(src_legend_items)))
     for i, (label, color_hex) in enumerate(src_legend_items):
-        lx = src_legend_x + (i * 52)
+        lx = src_legend_x + (i * swatch_spacing)
         # Color swatch
         drawing.add(
             Circle(
                 lx + 4,
-                src_legend_y,
+                src_swatch_y,
                 3,
                 fillColor=colors.HexColor(color_hex),
                 strokeColor=colors.HexColor(color_hex),
@@ -365,7 +370,7 @@ def car_location_diagram(
         drawing.add(
             String(
                 lx + 10,
-                src_legend_y - 2,
+                src_swatch_y - 2,
                 label,
                 fontName="Helvetica",
                 fontSize=5.5,

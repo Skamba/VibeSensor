@@ -368,6 +368,14 @@ export function startUiApp(): void {
   updateFeature.bindUpdateHandlers();
   if (els.saveAnalysisBtn) els.saveAnalysisBtn.addEventListener("click", vehicleFeature.saveAnalysisFromInputs);
   if (els.saveSpeedSourceBtn) els.saveSpeedSourceBtn.addEventListener("click", vehicleFeature.saveSpeedSourceFromInputs);
+  if (els.headerManualSpeedSaveBtn) {
+    els.headerManualSpeedSaveBtn.addEventListener("click", vehicleFeature.saveHeaderManualSpeedFromInput);
+  }
+  if (els.headerManualSpeedInput) {
+    els.headerManualSpeedInput.addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter") vehicleFeature.saveHeaderManualSpeedFromInput();
+    });
+  }
   if (els.startLoggingBtn) els.startLoggingBtn.addEventListener("click", sensorsFeature.startLogging);
   if (els.stopLoggingBtn) els.stopLoggingBtn.addEventListener("click", sensorsFeature.stopLogging);
   if (els.refreshHistoryBtn) els.refreshHistoryBtn.addEventListener("click", historyFeature.refreshHistory);
