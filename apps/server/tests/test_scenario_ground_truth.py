@@ -1144,9 +1144,9 @@ class TestConfidenceGuardrails:
         # produce very low-confidence guarded results.
         if top_causes:
             top = top_causes[0]
-            assert top.get("weak_spatial_separation", False) or top.get("diffuse_excitation", False), (
-                "Expected weak spatial separation or diffuse excitation flag"
-            )
+            assert top.get("weak_spatial_separation", False) or top.get(
+                "diffuse_excitation", False
+            ), "Expected weak spatial separation or diffuse excitation flag"
             assert float(top.get("confidence", 0)) < 0.50, (
                 "Expected low confidence for equal-amplitude scenario"
             )

@@ -62,11 +62,31 @@ def is_wheel_location(label_or_code: str) -> bool:
     """
     if not label_or_code:
         return False
-    normalised = label_or_code.strip().lower().replace("_", " ")
+    normalised = label_or_code.strip().lower().replace("_", " ").replace("-", " ")
+    # Reject labels containing seat/cabin/passenger identifiers
+    _non_wheel_tokens = (
+        "seat",
+        "passenger",
+        "cabin",
+        "trunk",
+        "engine",
+        "subframe",
+        "transmission",
+        "driveshaft",
+        "tunnel",
+    )
+    for exclude in _non_wheel_tokens:
+        if exclude in normalised:
+            return False
     if label_or_code.strip().lower().replace(" ", "_") in WHEEL_LOCATION_CODES:
         return True
     for token in _WHEEL_LABEL_TOKENS:
-        if token in normalised:
+        token_norm = token.replace("-", " ")
+        if (
+            token_norm == normalised
+            or normalised.startswith(token_norm + " ")
+            or normalised == token_norm + " wheel"
+        ):
             return True
     # Also match labels that end in "wheel" and start with a direction
     if "wheel" in normalised and any(
