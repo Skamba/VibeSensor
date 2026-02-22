@@ -280,14 +280,14 @@ def _ensure_ap_connection(ap: APConfig, runner: CommandRunner, channel: int | No
     if modified.returncode != 0:
         return False
 
-    up = runner.run(["nmcli", "connection", "up", ap.con_name, "--wait", "12"], timeout_s=15)
+    up = runner.run(["nmcli", "--wait", "12", "connection", "up", ap.con_name], timeout_s=15)
     return up.returncode == 0
 
 
 def _bounce_connection(ap: APConfig, runner: CommandRunner) -> None:
     runner.run(["nmcli", "connection", "down", ap.con_name], timeout_s=8)
     runner.run(["ip", "link", "set", ap.ifname, "up"], timeout_s=5)
-    runner.run(["nmcli", "connection", "up", ap.con_name, "--wait", "10"], timeout_s=12)
+    runner.run(["nmcli", "--wait", "10", "connection", "up", ap.con_name], timeout_s=12)
 
 
 def _recreate_connection(ap: APConfig, runner: CommandRunner) -> bool:
@@ -507,7 +507,7 @@ def run_self_heal_once(
         _ensure_ap_connection(ap, runner)
         if state_store.allow("restart_networkmanager", self_heal.min_restart_interval_seconds):
             runner.run(["systemctl", "restart", "NetworkManager"], timeout_s=15)
-            runner.run(["nmcli", "connection", "up", ap.con_name, "--wait", "12"], timeout_s=15)
+            runner.run(["nmcli", "--wait", "12", "connection", "up", ap.con_name], timeout_s=15)
             actions.append(
                 HealAction(
                     name="dhcp_repair",

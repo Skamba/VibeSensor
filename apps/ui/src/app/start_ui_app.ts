@@ -53,7 +53,12 @@ export function startUiApp(): void {
     const unitLabel = selectedSpeedUnitLabel();
     if (typeof state.speedMps === "number") {
       const value = speedValueInSelectedUnit(state.speedMps);
-      const isOverride = state.speedSource === "manual" && typeof state.manualSpeedKph === "number" && state.manualSpeedKph > 0;
+      const isManualSource = state.speedSource === "manual"
+        && typeof state.manualSpeedKph === "number"
+        && state.manualSpeedKph > 0;
+      const isFallbackOverride = state.gpsFallbackActive
+        || latestRotationalSpeeds?.basis_speed_source === "fallback_manual";
+      const isOverride = isManualSource || isFallbackOverride;
       els.speed.textContent = t(isOverride ? "speed.override" : "speed.gps", { value: fmt(value!, 1), unit: unitLabel });
       return;
     }
