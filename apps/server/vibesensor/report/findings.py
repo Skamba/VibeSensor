@@ -351,7 +351,7 @@ def _reference_missing_finding(
             "units": "n/a",
             "definition": _tr(lang, "REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED"),
         },
-        "confidence_0_to_1": 1.0,
+        "confidence_0_to_1": None,
         "quick_checks": quick_checks[:3],
     }
 

@@ -1068,6 +1068,21 @@ class TestReferenceFindingDistinguishability:
                 f"{fid}: expected finding_type='reference', got {ref.get('finding_type')!r}"
             )
 
+    def test_reference_finding_confidence_is_none(self) -> None:
+        """Reference findings must have confidence_0_to_1=None to avoid inflating statistics."""
+        from vibesensor.report.findings import _reference_missing_finding
+
+        ref = _reference_missing_finding(
+            finding_id="REF_SPEED",
+            suspected_source="unknown",
+            evidence_summary="Speed data missing",
+            quick_checks=[],
+        )
+        assert "confidence_0_to_1" in ref, "confidence_0_to_1 key must be present"
+        assert ref["confidence_0_to_1"] is None, (
+            f"Expected confidence_0_to_1=None, got {ref['confidence_0_to_1']!r}"
+        )
+
 
 class TestPhaseInfoInSummary:
     """summarize_run_data should compute and propagate phase segments.
