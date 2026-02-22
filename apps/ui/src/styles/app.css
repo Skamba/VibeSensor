@@ -468,6 +468,54 @@ input:focus-visible,
   font-variant-numeric: tabular-nums;
 }
 
+.rotational-speeds {
+  margin-top: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.rotational-speeds__title {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.rotational-speed-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rotational-speed-row__label {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.rotational-speed-row__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rotational-speed-row__mode {
+  height: 24px;
+  font-size: 0.72rem;
+  padding: 0 var(--space-2);
+  white-space: nowrap;
+}
+
+.rotational-speeds__basis,
+.rotational-speeds__reason {
+  margin-top: var(--space-1);
+}
+
 .log-box { max-height: 230px; overflow: auto; font-size: 0.9rem; line-height: 1.35; }
 .log-row { padding: var(--space-2) 0; border-bottom: 1px solid var(--border); }
 .log-time { color: var(--muted); font-size: 0.78rem; }

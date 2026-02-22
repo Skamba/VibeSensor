@@ -32,11 +32,19 @@ class _StubProcessor:
 
 class _StubGPS:
     effective_speed_mps: float | None = 12.5
+    gps_enabled: bool = True
+    fallback_active: bool = False
 
 
 class _StubAnalysisSettings:
     def snapshot(self) -> dict[str, float]:
-        return {"tire_width_mm": 285.0}
+        return {
+            "tire_width_mm": 285.0,
+            "tire_aspect_pct": 30.0,
+            "rim_in": 21.0,
+            "final_drive_ratio": 3.08,
+            "current_gear_ratio": 0.64,
+        }
 
 
 class _StubMetricsLogger:
@@ -57,6 +65,9 @@ class _StubDiagnostics:
 
 class _StubSettingsStore:
     language: str = "en"
+
+    def get_speed_source(self) -> dict[str, Any]:
+        return {"speedSource": "gps", "fallbackMode": "manual"}
 
 
 @dataclass(slots=True)
@@ -130,7 +141,7 @@ def test_build_ws_payload_returns_required_keys() -> None:
     payload = state.build_ws_payload(selected_client="aaa")
 
     # Always-present keys
-    for key in ("server_time", "speed_mps", "clients", "selected_client_id"):
+    for key in ("server_time", "speed_mps", "clients", "selected_client_id", "rotational_speeds"):
         assert key in payload, f"missing key: {key}"
 
     # Heavy-tick keys
@@ -140,6 +151,13 @@ def test_build_ws_payload_returns_required_keys() -> None:
     assert payload["speed_mps"] == 12.5
     assert payload["selected_client_id"] == "aaa"
     assert len(payload["clients"]) == 2
+    rotational = payload["rotational_speeds"]
+    assert rotational["basis_speed_source"] == "gps"
+    for key in ("wheel", "driveshaft", "engine"):
+        assert rotational[key]["mode"] == "calculated"
+        assert rotational[key]["reason"] is None
+        assert isinstance(rotational[key]["rpm"], float)
+        assert rotational[key]["rpm"] > 0
 
 
 def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
@@ -206,3 +224,19 @@ def test_on_ws_broadcast_tick_toggles_heavy() -> None:
 
     # Ticks 1..10: heavy at tick 5 and 10 (tick % 5 == 0)
     assert results == [False, False, False, False, True, False, False, False, False, True]
+
+
+def test_build_ws_payload_rotational_speeds_include_reason_when_speed_unavailable() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
+    gps = state.gps_monitor
+    assert isinstance(gps, _StubGPS)
+    gps.effective_speed_mps = None
+
+    payload = state.build_ws_payload(selected_client="aaa")
+    rotational = payload["rotational_speeds"]
+
+    assert rotational["basis_speed_source"] == "gps"
+    for key in ("wheel", "driveshaft", "engine"):
+        assert rotational[key]["rpm"] is None
+        assert rotational[key]["mode"] == "calculated"
+        assert rotational[key]["reason"] == "speed_unavailable"

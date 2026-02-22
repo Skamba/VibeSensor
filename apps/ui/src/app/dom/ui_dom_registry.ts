@@ -4,6 +4,14 @@ export interface UiDomElements {
   languageSelect: HTMLSelectElement | null;
   speedUnitSelect: HTMLSelectElement | null;
   speed: HTMLElement | null;
+  rotationalBasisSource: HTMLElement | null;
+  rotationalReason: HTMLElement | null;
+  rotationalWheelValue: HTMLElement | null;
+  rotationalWheelMode: HTMLElement | null;
+  rotationalDriveshaftValue: HTMLElement | null;
+  rotationalDriveshaftMode: HTMLElement | null;
+  rotationalEngineValue: HTMLElement | null;
+  rotationalEngineMode: HTMLElement | null;
   loggingStatus: HTMLElement | null;
   currentLogFile: HTMLElement | null;
   startLoggingBtn: HTMLButtonElement | null;
@@ -90,6 +98,14 @@ export function createUiDomRegistry(): UiDomElements {
     languageSelect: selectEl("languageSelect"),
     speedUnitSelect: selectEl("speedUnitSelect"),
     speed: el("speed"),
+    rotationalBasisSource: el("rotationalBasisSource"),
+    rotationalReason: el("rotationalReason"),
+    rotationalWheelValue: el("rotationalWheelValue"),
+    rotationalWheelMode: el("rotationalWheelMode"),
+    rotationalDriveshaftValue: el("rotationalDriveshaftValue"),
+    rotationalDriveshaftMode: el("rotationalDriveshaftMode"),
+    rotationalEngineValue: el("rotationalEngineValue"),
+    rotationalEngineMode: el("rotationalEngineMode"),
     loggingStatus: el("loggingStatus"),
     currentLogFile: el("currentLogFile"),
     startLoggingBtn: btnEl("startLoggingBtn"),
