@@ -17,7 +17,11 @@ def median(values: list[float]) -> float:
     if not values:
         return 0.0
     ordered = sorted(values)
-    return float(ordered[len(ordered) // 2])
+    n = len(ordered)
+    mid = n // 2
+    if n % 2 == 0:
+        return float(ordered[mid - 1] + ordered[mid]) / 2.0
+    return float(ordered[mid])
 
 
 def percentile(sorted_values: list[float], q: float) -> float:
