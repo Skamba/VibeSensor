@@ -297,6 +297,15 @@ def _most_likely_origin_summary(
     )
     if weak:
         explanation += " " + _tr(lang, "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY")
+    dominant_phase = str(top.get("dominant_phase") or "").strip()
+    _phase_i18n_map = {
+        "acceleration": "DRIVING_PHASE_ACCELERATION",
+        "deceleration": "DRIVING_PHASE_DECELERATION",
+        "coast_down": "DRIVING_PHASE_COAST_DOWN",
+    }
+    if dominant_phase and dominant_phase in _phase_i18n_map:
+        phase_human = _tr(lang, _phase_i18n_map[dominant_phase])
+        explanation += " " + _tr(lang, "ORIGIN_PHASE_ONSET_NOTE", phase=phase_human)
     return {
         "location": location,
         "alternative_locations": alternative_locations,
@@ -306,6 +315,7 @@ def _most_likely_origin_summary(
         "weak_spatial_separation": weak,
         "spatial_disagreement": spatial_disagreement,
         "speed_band": speed_band,
+        "dominant_phase": dominant_phase or None,
         "explanation": explanation,
     }
 
