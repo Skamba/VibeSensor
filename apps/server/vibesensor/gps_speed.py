@@ -20,6 +20,8 @@ _GPS_RECONNECT_DELAY_S: float = 2.0
 _GPS_CONNECT_TIMEOUT_S: float = 3.0
 _GPS_READ_TIMEOUT_S: float = 3.0
 _GPS_RECONNECT_MAX_DELAY_S: float = 15.0
+_GPS_MAX_EPH_M: float = 40.0
+_GPS_MAX_EPS_MPS: float = 1.5
 
 # Fallback defaults
 DEFAULT_STALE_TIMEOUT_S: float = 10.0
@@ -117,6 +119,22 @@ class GPSSpeedMonitor:
         if fallback_mode is not None and fallback_mode in VALID_FALLBACK_MODES:
             self.fallback_mode = fallback_mode
 
+    @staticmethod
+    def _has_good_3d_fix(payload: dict[str, Any]) -> bool:
+        mode = payload.get("mode")
+        if not isinstance(mode, int) or mode < 3:
+            return False
+
+        eph = payload.get("eph")
+        if isinstance(eph, (int, float)) and math.isfinite(eph) and eph > _GPS_MAX_EPH_M:
+            return False
+
+        eps = payload.get("eps")
+        if isinstance(eps, (int, float)) and math.isfinite(eps) and eps > _GPS_MAX_EPS_MPS:
+            return False
+
+        return True
+
     def status_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable status snapshot for the API."""
         now = time.monotonic()
@@ -194,11 +212,21 @@ class GPSSpeedMonitor:
                             if isinstance(rev, str):
                                 self.device_info = f"gpsd {rev}"
                         continue
+                    has_3d_fix = self._has_good_3d_fix(payload)
                     speed = payload.get("speed")
-                    if isinstance(speed, (int, float)) and math.isfinite(speed) and speed >= 0:
+                    if (
+                        has_3d_fix
+                        and isinstance(speed, (int, float))
+                        and math.isfinite(speed)
+                        and speed >= 0
+                    ):
                         self.speed_mps = float(speed)
                         self.last_update_ts = time.monotonic()
                         self.fallback_active = False
+                    else:
+                        # Discard speed when fix quality is below 3D.
+                        self.speed_mps = None
+                        self.last_update_ts = None
                     # Extract device from TPV
                     device = payload.get("device")
                     if isinstance(device, str) and device:
