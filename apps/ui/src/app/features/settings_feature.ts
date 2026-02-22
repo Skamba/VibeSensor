@@ -312,7 +312,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     if (els.gpsStatusDevice) els.gpsStatusDevice.textContent = status.device ?? "--";
     if (els.gpsStatusLastUpdate) {
       els.gpsStatusLastUpdate.textContent = status.last_update_age_s != null
-        ? t("settings.speed.last_update_value", { value: String(status.last_update_age_s) })
+          ? t("settings.speed.last_update_value", { value: status.last_update_age_s })
         : t("settings.speed.last_update_never");
     }
     if (els.gpsStatusRawSpeed) {

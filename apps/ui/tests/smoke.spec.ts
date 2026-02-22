@@ -164,7 +164,7 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
           gps_enabled: true,
           connection_state: "connected",
           device: "gps0",
-          last_update_age_s: 0.5,
+          last_update_age_s: 0.333,
           raw_speed_kmh: 36,
           effective_speed_kmh: 18,
           last_error: null,
@@ -205,4 +205,5 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
 
   await expect(page.locator("#gpsStatusRawSpeed")).toHaveText("10.0 m/s");
   await expect(page.locator("#gpsStatusEffectiveSpeed")).toHaveText("5.0 m/s");
+  await expect(page.locator("#gpsStatusLastUpdate")).toHaveText("0.333s ago");
 });
