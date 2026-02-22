@@ -17,6 +17,7 @@ from vibesensor.report.helpers import (
     _speed_bin_label,
     _speed_bin_sort_key,
     _speed_stats,
+    _speed_stats_by_phase,
     _text,
 )
 from vibesensor.report.order_analysis import _wheel_hz
@@ -204,7 +205,71 @@ def test_speed_stats_not_steady() -> None:
     assert result["steady_speed"] is False
 
 
-# -- _sensor_limit_g -----------------------------------------------------------
+# -- _speed_stats_by_phase -----------------------------------------------------
+
+
+def test_speed_stats_by_phase_empty() -> None:
+    result = _speed_stats_by_phase([], [])
+    assert result == {}
+
+
+def test_speed_stats_by_phase_single_phase() -> None:
+    samples = [
+        {"speed_kmh": 60.0},
+        {"speed_kmh": 61.0},
+        {"speed_kmh": 60.5},
+    ]
+    phases = ["cruise", "cruise", "cruise"]
+    result = _speed_stats_by_phase(samples, phases)
+    assert "cruise" in result
+    assert result["cruise"]["sample_count"] == 3
+    assert result["cruise"]["min_kmh"] == 60.0
+    assert result["cruise"]["max_kmh"] == 61.0
+
+
+def test_speed_stats_by_phase_multiple_phases() -> None:
+    samples = [
+        {"speed_kmh": 1.0},
+        {"speed_kmh": 1.0},
+        {"speed_kmh": 60.0},
+        {"speed_kmh": 61.0},
+        {"speed_kmh": 62.0},
+    ]
+    phases = ["idle", "idle", "cruise", "cruise", "cruise"]
+    result = _speed_stats_by_phase(samples, phases)
+    assert set(result.keys()) == {"idle", "cruise"}
+    assert result["idle"]["sample_count"] == 2
+    assert result["cruise"]["sample_count"] == 3
+    assert result["cruise"]["min_kmh"] == 60.0
+
+
+def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
+    """Speed values of 0 or None should not contribute to per-phase speed stats."""
+    samples = [
+        {"speed_kmh": 0.0},
+        {"speed_kmh": None},
+        {"speed_kmh": 50.0},
+    ]
+    phases = ["idle", "idle", "cruise"]
+    result = _speed_stats_by_phase(samples, phases)
+    # idle has 2 samples but none with speed > 0
+    assert result["idle"]["sample_count"] == 2
+    assert result["idle"]["min_kmh"] is None
+    # cruise has valid speed
+    assert result["cruise"]["min_kmh"] == 50.0
+
+
+def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
+    from vibesensor.report.phase_segmentation import segment_run_phases
+
+    samples = [
+        {"t_s": float(i), "speed_kmh": 0.5 if i < 5 else 60.0, "vibration_strength_db": 10.0}
+        for i in range(10)
+    ]
+    per_sample_phases, _ = segment_run_phases(samples)
+    result = _speed_stats_by_phase(samples, per_sample_phases)
+    total = sum(v["sample_count"] for v in result.values())
+    assert total == len(samples)
 
 
 def test_sensor_limit_adxl345() -> None:
