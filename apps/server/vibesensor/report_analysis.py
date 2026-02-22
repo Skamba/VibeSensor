@@ -43,6 +43,7 @@ from .report.helpers import (  # noqa: F401
     _speed_bin_label,
     _speed_bin_sort_key,
     _speed_stats,
+    _speed_stats_by_phase,
     _text,
     _tire_reference_from_metadata,
     _validate_required_strength_metrics,
