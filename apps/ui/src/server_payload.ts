@@ -39,9 +39,23 @@ export type DiagnosticLevels = {
 
 export type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
 
+export type RotationalSpeedValue = {
+  rpm: number | null;
+  mode: string | null;
+  reason: string | null;
+};
+
+export type RotationalSpeeds = {
+  basis_speed_source: string | null;
+  wheel: RotationalSpeedValue;
+  driveshaft: RotationalSpeedValue;
+  engine: RotationalSpeedValue;
+};
+
 export type AdaptedPayload = {
   clients: ClientInfo[];
   speed_mps: number | null;
+  rotational_speeds: RotationalSpeeds | null;
   diagnostics: {
     strength_bands: StrengthBand[];
     matrix: Record<string, Record<string, MatrixCell>> | null;
@@ -55,6 +69,18 @@ export type AdaptedPayload = {
 
 function asNumberArray(value: unknown): number[] {
   return Array.isArray(value) ? value.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+}
+
+function adaptRotationalSpeedValue(value: unknown): RotationalSpeedValue {
+  if (!value || typeof value !== "object") {
+    return { rpm: null, mode: null, reason: null };
+  }
+  const obj = value as Record<string, unknown>;
+  return {
+    rpm: typeof obj.rpm === "number" && Number.isFinite(obj.rpm) ? obj.rpm : null,
+    mode: typeof obj.mode === "string" ? obj.mode : null,
+    reason: typeof obj.reason === "string" ? obj.reason : null,
+  };
 }
 
 export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPayload {
@@ -75,6 +101,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
   const adapted: AdaptedPayload = {
     clients: Array.isArray(payload.clients) ? (payload.clients as ClientInfo[]) : [],
     speed_mps: typeof payload.speed_mps === "number" ? payload.speed_mps : null,
+    rotational_speeds: null,
     diagnostics: {
       strength_bands: strengthBands,
       matrix:
@@ -89,6 +116,16 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
     },
     spectra: null,
   };
+
+  if (payload.rotational_speeds && typeof payload.rotational_speeds === "object") {
+    const rotational = payload.rotational_speeds as Record<string, unknown>;
+    adapted.rotational_speeds = {
+      basis_speed_source: typeof rotational.basis_speed_source === "string" ? rotational.basis_speed_source : null,
+      wheel: adaptRotationalSpeedValue(rotational.wheel),
+      driveshaft: adaptRotationalSpeedValue(rotational.driveshaft),
+      engine: adaptRotationalSpeedValue(rotational.engine),
+    };
+  }
 
   if (payload.spectra && typeof payload.spectra === "object") {
     const spectraObj = payload.spectra as Record<string, unknown>;

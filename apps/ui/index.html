@@ -100,6 +100,26 @@
                   <option value="mps" data-i18n="speed.unit.mps">m/s</option>
                 </select>
               </div>
+              <div class="rotational-speeds" aria-live="polite">
+                <div class="rotational-speeds__title" data-i18n="dashboard.rotational.title">Rotational Speeds</div>
+                <div class="rotational-speed-row">
+                  <span class="rotational-speed-row__label" data-i18n="dashboard.rotational.wheel">Wheels</span>
+                  <span id="rotationalWheelValue" class="rotational-speed-row__value">--</span>
+                  <span id="rotationalWheelMode" class="pill pill--muted rotational-speed-row__mode">Calculated</span>
+                </div>
+                <div class="rotational-speed-row">
+                  <span class="rotational-speed-row__label" data-i18n="dashboard.rotational.driveshaft">Driveshaft</span>
+                  <span id="rotationalDriveshaftValue" class="rotational-speed-row__value">--</span>
+                  <span id="rotationalDriveshaftMode" class="pill pill--muted rotational-speed-row__mode">Calculated</span>
+                </div>
+                <div class="rotational-speed-row">
+                  <span class="rotational-speed-row__label" data-i18n="dashboard.rotational.engine">Engine</span>
+                  <span id="rotationalEngineValue" class="rotational-speed-row__value">--</span>
+                  <span id="rotationalEngineMode" class="pill pill--muted rotational-speed-row__mode">Calculated</span>
+                </div>
+                <div id="rotationalBasisSource" class="rotational-speeds__basis mini-label">Basis speed source: --</div>
+                <div id="rotationalReason" class="rotational-speeds__reason mini-label" hidden></div>
+              </div>
               <div id="currentLogFile" class="card__subtle">Current file: --</div>
             </div>
 
