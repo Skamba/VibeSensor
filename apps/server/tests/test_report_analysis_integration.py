@@ -815,7 +815,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
-        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kwargs: (
             "strong location",
             {
                 "location": "Front Left",
@@ -836,7 +836,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
-        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kwargs: (
             "ambiguous location",
             {
                 "location": "ambiguous location: Front Left / Front Right",
@@ -892,7 +892,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
-        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kwargs: (
             "strong location",
             {
                 "location": "Front Left",
@@ -910,7 +910,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
-        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kwargs: (
             "weak location",
             {
                 "location": "Front Left",
@@ -926,7 +926,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
-        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None: (
+        lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kwargs: (
             "near tie location",
             {
                 "location": "ambiguous location: Front Left / Front Right",
@@ -963,7 +963,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
 
     seen_relevant_speed_bins: list[str] = []
 
-    def _fake_location_summary(matches, lang, relevant_speed_bins=None, connected_locations=None):
+    def _fake_location_summary(matches, lang, relevant_speed_bins=None, connected_locations=None, **_kwargs):
         if isinstance(relevant_speed_bins, list):
             seen_relevant_speed_bins.extend(str(item) for item in relevant_speed_bins if item)
         chosen_band = seen_relevant_speed_bins[0] if seen_relevant_speed_bins else "90-100 km/h"
