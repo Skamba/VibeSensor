@@ -17,6 +17,9 @@ specific vibration scenarios.
   - sometimes all sensors active together
 - Optional interactive CLI to modify profiles/amplitude/noise live
 
+Authoritative protocol and network-port contract: `docs/protocol.md`
+(generated from code + shared contracts).
+
 ## Run
 
 ```bash

@@ -367,6 +367,20 @@ def test_protocol_docs_byte_sizes_match() -> None:
         )
 
 
+def test_protocol_docs_match_generated_contract_reference() -> None:
+    """docs/protocol.md must match the generated authoritative contract doc."""
+    from vibesensor.contract_reference_doc import render_contract_reference_markdown
+
+    root = Path(__file__).resolve().parents[3]
+    doc_path = root / "docs" / "protocol.md"
+    observed = doc_path.read_text(encoding="utf-8")
+    expected = render_contract_reference_markdown()
+    assert observed == expected, (
+        "docs/protocol.md is out of date. "
+        "Run: python3 tools/config/generate_contract_reference_doc.py"
+    )
+
+
 def test_sanitize_settings_is_single_source() -> None:
     """settings_store._sanitize_aspects must use the canonical sanitize_settings."""
     import inspect
