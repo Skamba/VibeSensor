@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Integration test – ingestion + analysis (multi-sensor + transient).
+"""Analysis-contract test – direct-injection validation of the full pipeline.
 
 This test exercises the full analysis pipeline end-to-end with a realistic
 multi-sensor scenario including transient events.  It validates:
@@ -9,9 +9,9 @@ multi-sensor scenario including transient events.  It validates:
 - Report fields (findings, speed breakdown, confidence, origin)
 - Data quality assessment
 
-It uses direct data injection (not the simulator) to remain deterministic
-and CI-friendly, but constructs a complete realistic driving scenario that
-mirrors what the simulator would produce.
+NOTE: This is NOT a true integration/E2E test (it uses direct data injection,
+not the simulator or server). It is an analysis-pipeline contract test.
+For true simulator→ingestion→analysis E2E, see test_level_sim_ingestion.py.
 """
 
 from __future__ import annotations

@@ -21,9 +21,10 @@ from builders import (
     SPEED_LOW,
     SPEED_MID,
     SPEED_VERY_HIGH,
-    assert_confidence_between,
-    assert_no_wheel_fault,
+    assert_confidence_label_valid,
+    assert_diagnosis_contract,
     assert_strongest_location,
+    assert_tolerant_no_fault,
     assert_wheel_source,
     extract_top,
     make_diffuse_samples,
@@ -81,9 +82,13 @@ def test_4sensor_fault_with_transient(corner: str, speed: float) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"Lost 4sensor fault+transient {corner}@{speed}"
-    assert_wheel_source(summary, msg=f"4s+t {corner}@{speed}")
-    assert_strongest_location(summary, sensor, msg=f"4s+t {corner}@{speed}")
-    assert_confidence_between(summary, 0.15, 1.0, msg=f"4s+t {corner}@{speed}")
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.15,
+        msg=f"4s+t {corner}@{speed}",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -146,12 +151,7 @@ def test_4sensor_transient_only_no_fault(speed: float) -> None:
         )
     )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    if top:
-        src = (top.get("source") or top.get("suspected_source") or "").lower()
-        conf = float(top.get("confidence", 0))
-        if "wheel" in src:
-            assert conf < 0.5, f"4sensor transient-only → wheel conf={conf}@{speed}"
+    assert_tolerant_no_fault(summary, msg=f"4sensor transient-only@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -190,6 +190,7 @@ def test_8sensor_fault_with_transient(corner: str) -> None:
     assert top is not None, f"Lost 8sensor fault+transient {corner}"
     assert_wheel_source(summary, msg=f"8s+t {corner}")
     assert_strongest_location(summary, sensor, msg=f"8s+t {corner}")
+    assert_confidence_label_valid(summary, msg=f"8s+t {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +299,7 @@ def test_4sensor_diffuse_transient_no_fault(speed: float) -> None:
         )
     )
     summary = run_analysis(samples)
-    assert_no_wheel_fault(summary, msg=f"4s-diffuse+transient@{speed}")
+    assert_tolerant_no_fault(summary, msg=f"4s-diffuse+transient@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -492,12 +493,7 @@ def test_12sensor_transient_only_no_fault(speed: float) -> None:
         )
     )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    if top:
-        src = (top.get("source") or top.get("suspected_source") or "").lower()
-        conf = float(top.get("confidence", 0))
-        if "wheel" in src:
-            assert conf < 0.5, f"12sensor transient-only → wheel conf={conf}@{speed}"
+    assert_tolerant_no_fault(summary, msg=f"12sensor transient-only@{speed}")
 
 
 # ---------------------------------------------------------------------------

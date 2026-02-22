@@ -19,7 +19,9 @@ from builders import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
-    assert_no_wheel_fault,
+    assert_confidence_label_valid,
+    assert_has_warnings,
+    assert_tolerant_no_fault,
     extract_top,
     make_fault_samples,
     make_idle_samples,
@@ -72,6 +74,8 @@ def test_fault_with_transient_preserves_diagnosis(corner: str, speed: float) -> 
     top = extract_top(summary)
     assert top is not None, f"Lost diagnosis for {corner}@{speed} with transient"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@{speed} w/transient")
+    assert_confidence_label_valid(summary, msg=f"{corner}@{speed} w/transient")
+    assert_has_warnings(summary, msg=f"{corner}@{speed} w/transient")
 
 
 # ---------------------------------------------------------------------------
@@ -99,13 +103,7 @@ def test_transient_only_no_persistent_fault(speed: float) -> None:
     )
     summary = run_analysis(samples)
     # Should not produce a high-confidence wheel fault
-    top = extract_top(summary)
-    if top:
-        src = (top.get("source") or top.get("suspected_source") or "").lower()
-        conf = float(top.get("confidence", 0))
-        # If it's a wheel diagnosis, confidence should be very low
-        if "wheel" in src:
-            assert conf < 0.5, f"Transient-only produced wheel conf={conf} at speed={speed}"
+    assert_tolerant_no_fault(summary, msg=f"transient-only@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -133,12 +131,7 @@ def test_multiple_transients_no_false_fault(corner: str) -> None:
             )
         )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    if top:
-        conf = float(top.get("confidence", 0))
-        src = (top.get("source") or top.get("suspected_source") or "").lower()
-        if "wheel" in src:
-            assert conf < 0.5, f"Multiple transients → wheel conf={conf} for {corner}"
+    assert_tolerant_no_fault(summary, msg=f"multi-transient {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +178,7 @@ def test_transient_amplitude_deweighting(corner: str, label: str, amp: float, vd
     top = extract_top(summary)
     assert top is not None, f"Lost fault with {label} spike on {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} spike={label}")
+    assert_confidence_label_valid(summary, msg=f"{corner} spike={label}")
 
 
 # ---------------------------------------------------------------------------
@@ -226,6 +220,7 @@ def test_phased_onset_with_transient(corner: str) -> None:
     top = extract_top(summary)
     assert top is not None, f"Phased+transient lost {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"phased+transient {corner}")
+    assert_confidence_label_valid(summary, msg=f"phased+transient {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -253,12 +248,7 @@ def test_transient_frequency_variation(freq: float) -> None:
         )
     )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    if top:
-        conf = float(top.get("confidence", 0))
-        src = (top.get("source") or top.get("suspected_source") or "").lower()
-        if "wheel" in src:
-            assert conf < 0.5, f"Transient@{freq}Hz → wheel conf={conf}"
+    assert_tolerant_no_fault(summary, msg=f"transient@{freq}Hz")
 
 
 # ---------------------------------------------------------------------------
@@ -283,12 +273,7 @@ def test_long_transient_burst(corner: str) -> None:
         )
     )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    if top:
-        conf = float(top.get("confidence", 0))
-        src = (top.get("source") or top.get("suspected_source") or "").lower()
-        if "wheel" in src:
-            assert conf < 0.5, f"Long transient → wheel conf={conf} for {corner}"
+    assert_tolerant_no_fault(summary, msg=f"long-transient {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -316,12 +301,7 @@ def test_transient_at_wheel_freq_no_false_positive(corner: str) -> None:
         )
     )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    if top:
-        conf = float(top.get("confidence", 0))
-        src = (top.get("source") or top.get("suspected_source") or "").lower()
-        if "wheel" in src:
-            assert conf < 0.5, f"Transient@wheel_hz → wheel conf={conf} for {corner}"
+    assert_tolerant_no_fault(summary, msg=f"transient@wheel_hz {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -348,7 +328,7 @@ def test_diffuse_plus_transient_no_fault(speed: float) -> None:
         )
     )
     summary = run_analysis(samples)
-    assert_no_wheel_fault(summary, msg=f"diffuse+transient@{speed}")
+    assert_tolerant_no_fault(summary, msg=f"diffuse+transient@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -386,6 +366,7 @@ def test_fault_plus_transient_very_high_speed(corner: str) -> None:
     top = extract_top(summary)
     assert top is not None, f"Lost fault at 120 + transient for {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120+transient")
+    assert_confidence_label_valid(summary, msg=f"{corner}@120+transient")
 
 
 # ---------------------------------------------------------------------------
@@ -426,3 +407,4 @@ def test_transient_duration_variation(corner: str, n_spike: int) -> None:
     top = extract_top(summary)
     assert top is not None, f"Lost fault with {n_spike}-sample transient {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} spike_n={n_spike}")
+    assert_confidence_label_valid(summary, msg=f"{corner} spike_n={n_spike}")

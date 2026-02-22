@@ -383,3 +383,87 @@ class TestPdfReportValidation:
             for token in src.split("/"):
                 if token and len(token) > 2:
                     assert token in self.pdf_text, f"Source token '{token}' not found in PDF text"
+
+
+# ---------------------------------------------------------------------------
+# Test 3 – EN/NL parity: same scenario, both languages
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.long_sim
+class TestPdfLanguageParity:
+    """Validate that EN and NL PDFs for the same scenario are structurally equivalent."""
+
+    @pytest.fixture(autouse=True)
+    def _run_both_languages(self) -> None:
+        meta_en, samples = _build_20s_scenario()
+        meta_nl, _ = _build_20s_scenario()
+        meta_nl["language"] = "nl"
+
+        self.summary_en = run_analysis(samples, metadata=meta_en)
+        self.summary_nl = run_analysis(samples, metadata=meta_nl)
+        self.pdf_en = build_report_pdf(self.summary_en)
+        self.pdf_nl = build_report_pdf(self.summary_nl)
+
+    @staticmethod
+    def _extract_text(pdf_bytes: bytes) -> str:
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        return "\n".join(filter(None, (page.extract_text() for page in reader.pages))).lower()
+
+    def test_both_pdfs_are_valid(self) -> None:
+        """Both EN and NL PDFs are generated and valid."""
+        for label, pdf in [("EN", self.pdf_en), ("NL", self.pdf_nl)]:
+            assert len(pdf) > 1000, f"{label} PDF too small: {len(pdf)} bytes"
+            assert pdf[:5] == b"%PDF-", f"{label} is not a valid PDF"
+
+    def test_same_page_count(self) -> None:
+        """EN and NL PDFs should have the same number of pages."""
+        en_pages = len(PdfReader(io.BytesIO(self.pdf_en)).pages)
+        nl_pages = len(PdfReader(io.BytesIO(self.pdf_nl)).pages)
+        assert en_pages == nl_pages, f"Page count mismatch: EN={en_pages}, NL={nl_pages}"
+
+    def test_same_top_cause_count(self) -> None:
+        """Same number of top causes in EN and NL summaries."""
+        en_n = len(self.summary_en.get("top_causes") or [])
+        nl_n = len(self.summary_nl.get("top_causes") or [])
+        assert en_n == nl_n, f"Top cause count mismatch: EN={en_n}, NL={nl_n}"
+
+    def test_same_findings_count(self) -> None:
+        """Same number of findings in EN and NL summaries."""
+        en_n = len(self.summary_en.get("findings") or [])
+        nl_n = len(self.summary_nl.get("findings") or [])
+        assert en_n == nl_n, f"Findings count mismatch: EN={en_n}, NL={nl_n}"
+
+    def test_same_confidence_values(self) -> None:
+        """EN and NL summaries should have identical confidence values."""
+        en_conf = top_confidence(self.summary_en)
+        nl_conf = top_confidence(self.summary_nl)
+        assert abs(en_conf - nl_conf) < 0.01, (
+            f"Confidence mismatch: EN={en_conf:.4f}, NL={nl_conf:.4f}"
+        )
+
+    def test_same_source_classification(self) -> None:
+        """EN and NL summaries should have the same source classification."""
+        en_top = extract_top(self.summary_en)
+        nl_top = extract_top(self.summary_nl)
+        assert en_top is not None and nl_top is not None
+        en_src = en_top.get("source", "")
+        nl_src = nl_top.get("source", "")
+        assert en_src == nl_src, f"Source mismatch: EN='{en_src}', NL='{nl_src}'"
+
+    def test_same_location(self) -> None:
+        """EN and NL summaries should have the same strongest_location."""
+        en_top = extract_top(self.summary_en)
+        nl_top = extract_top(self.summary_nl)
+        assert en_top is not None and nl_top is not None
+        en_loc = en_top.get("strongest_location", "")
+        nl_loc = nl_top.get("strongest_location", "")
+        assert en_loc == nl_loc, f"Location mismatch: EN='{en_loc}', NL='{nl_loc}'"
+
+    def test_nl_pdf_has_dutch_content(self) -> None:
+        """NL PDF should contain Dutch-language content (not just English)."""
+        nl_text = self._extract_text(self.pdf_nl)
+        # Common Dutch terms that should appear in a diagnostic report
+        dutch_markers = ["diagnos", "voertuig", "wiel", "band", "snelheid", "sensor"]
+        found = sum(1 for m in dutch_markers if m in nl_text)
+        assert found >= 2, f"NL PDF lacks Dutch content (found {found}/6 markers)"
