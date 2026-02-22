@@ -63,6 +63,8 @@ def _mock_which(name: str) -> str | None:
 def _seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True) -> None:
     (repo / "apps" / "ui" / "src").mkdir(parents=True, exist_ok=True)
     (repo / "apps" / "server" / "public").mkdir(parents=True, exist_ok=True)
+    (repo / "tools").mkdir(parents=True, exist_ok=True)
+    (repo / "tools" / "sync_ui_to_pi_public.py").write_text("#!/usr/bin/env python3\n")
     (repo / "apps" / "ui" / "src" / "main.ts").write_text("console.log('ui')\n")
     (repo / "apps" / "ui" / "package.json").write_text('{"name":"ui"}\n')
     (repo / "apps" / "ui" / "package-lock.json").write_text('{"name":"ui","lockfileVersion":3}\n')
@@ -549,7 +551,7 @@ class TestUpdateManagerAsync:
     async def test_rebuild_failure_fails_update(self, tmp_path) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
-        runner.set_response("tools/sync_ui_to_pi_public.py", 1, "", "npm: command not found")
+        runner.set_response("python3", 1, "", "npm: command not found")
 
         repo = tmp_path / "repo"
         repo.mkdir()
