@@ -15,11 +15,14 @@ from .diagnostics_shared import (
     severity_from_peak,
     source_keys_from_class_key,
 )
+from .report.phase_segmentation import DrivingPhase, _classify_sample_phase
 from .report.summary import build_findings_for_samples
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
 LOGGER = logging.getLogger(__name__)
+
+_PHASE_HISTORY_MAX = 5
 
 
 def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
@@ -102,6 +105,8 @@ class LiveDiagnosticsEngine:
         self._active_levels_by_location: dict[str, dict[str, Any]] = {}
         self._last_update_ts_ms: int | None = None
         self._last_error: str | None = None
+        self._phase_speed_history: list[tuple[float, float | None]] = []
+        self._current_phase: str = DrivingPhase.IDLE.value
 
     def reset(self) -> None:
         self._matrix = _new_matrix()
@@ -114,6 +119,8 @@ class LiveDiagnosticsEngine:
         self._active_levels_by_location = {}
         self._last_update_ts_ms = None
         self._last_error = None
+        self._phase_speed_history = []
+        self._current_phase = DrivingPhase.IDLE.value
 
     def _update_matrix(self, source_key: str, severity_key: str, contributor_label: str) -> None:
         if source_key not in self._matrix:
@@ -275,6 +282,22 @@ class LiveDiagnosticsEngine:
             }
         return by_location
 
+    def _update_driving_phase(self, speed_mps: float | None, now_s: float) -> None:
+        """Classify the current driving phase from a rolling speed window."""
+        speed_kmh: float | None = speed_mps * 3.6 if speed_mps is not None else None
+        self._phase_speed_history.append((now_s, speed_kmh))
+        if len(self._phase_speed_history) > _PHASE_HISTORY_MAX:
+            self._phase_speed_history = self._phase_speed_history[-_PHASE_HISTORY_MAX:]
+        deriv: float | None = None
+        valid = [(t, s) for t, s in self._phase_speed_history if s is not None]
+        if len(valid) >= 2:
+            t0, s0 = valid[0]
+            t1, s1 = valid[-1]
+            dt = t1 - t0
+            if dt >= 0.1:
+                deriv = (s1 - s0) / dt
+        self._current_phase = _classify_sample_phase(speed_kmh, deriv).value
+
     def snapshot(self) -> dict[str, Any]:
         top_finding: dict[str, Any] | None = None
         for finding in self._latest_findings:
@@ -302,6 +325,7 @@ class LiveDiagnosticsEngine:
             },
             "findings": list(self._latest_findings),
             "top_finding": top_finding,
+            "driving_phase": self._current_phase,
             "error": self._last_error,
         }
 
@@ -327,11 +351,13 @@ class LiveDiagnosticsEngine:
                 LOGGER.warning("Live diagnostics findings unavailable: %s", exc)
                 self._latest_findings = []
 
+        now_ms = int(monotonic() * 1000.0)
+        self._update_driving_phase(speed_mps, now_ms / 1000.0)
+
         if spectra is None:
             self._last_error = None
             return self.snapshot()
 
-        now_ms = int(monotonic() * 1000.0)
         dt_seconds = 0.0
         if self._last_update_ts_ms is not None:
             dt_seconds = max(0.0, min(1.0, (now_ms - self._last_update_ts_ms) / 1000.0))
