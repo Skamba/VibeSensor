@@ -10,6 +10,20 @@
       <header class="site-header">
         <div class="topbar">
           <h1 class="title" data-i18n="title.main">VibeSensor</h1>
+          <div class="topbar-telemetry">
+            <div id="speed" class="speed" aria-live="polite">Speed --</div>
+            <label class="mini-label" for="speedUnitSelect" data-i18n="speed.unit">Unit</label>
+            <select id="speedUnitSelect" class="unit-picker" aria-label="Speed unit">
+              <option value="kmh" data-i18n="speed.unit.kmh">km/h</option>
+              <option value="mps" data-i18n="speed.unit.mps">m/s</option>
+            </select>
+            <div id="headerManualOverrideGroup" class="header-override-group" hidden>
+              <label class="mini-label" for="headerManualSpeedInput" data-i18n="settings.speed.manual_label">Manual Speed (km/h)</label>
+              <input id="headerManualSpeedInput" type="number" step="0.1" min="0" />
+              <button id="headerManualSpeedSaveBtn" class="btn btn--primary btn--small" data-i18n="settings.speed.save">Save Speed Source</button>
+            </div>
+            <div id="headerGpsStatus" class="pill pill--muted" aria-live="polite">GPS --</div>
+          </div>
           <div class="topbar-actions">
             <select id="languageSelect" class="lang-picker" aria-label="Language">
               <option value="en">🇺🇸 English</option>
@@ -91,14 +105,6 @@
               <div class="logging-actions">
                 <button id="startLoggingBtn" class="btn" data-i18n="dashboard.start_recording">Start Recording</button>
                 <button id="stopLoggingBtn" class="btn" data-i18n="dashboard.stop_recording">Stop Recording</button>
-              </div>
-              <div class="live-speed-readout">
-                <div id="speed" class="speed" aria-live="polite">Speed --</div>
-                <label class="mini-label" for="speedUnitSelect" data-i18n="speed.unit">Unit</label>
-                <select id="speedUnitSelect" class="unit-picker" aria-label="Speed unit">
-                  <option value="kmh" data-i18n="speed.unit.kmh">km/h</option>
-                  <option value="mps" data-i18n="speed.unit.mps">m/s</option>
-                </select>
               </div>
               <div class="rotational-speeds" aria-live="polite">
                 <div class="rotational-speeds__title" data-i18n="dashboard.rotational.title">Rotational Speeds</div>

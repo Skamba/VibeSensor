@@ -33,6 +33,7 @@ export interface SettingsFeature {
   syncActiveCarToInputs(): void;
   saveAnalysisFromInputs(): void;
   saveSpeedSourceFromInputs(): void;
+  saveHeaderManualSpeedFromInput(): void;
   bindSettingsTabs(): void;
   addCarFromWizard(name: string, carType: string, aspects: Record<string, number>): Promise<void>;
   startGpsStatusPolling(): void;
@@ -95,6 +96,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     const radios = document.querySelectorAll<HTMLInputElement>('input[name="speedSourceRadio"]');
     radios.forEach((r) => { r.checked = r.value === state.speedSource; });
     if (els.manualSpeedInput) els.manualSpeedInput.value = state.manualSpeedKph != null ? String(state.manualSpeedKph) : "";
+    if (els.headerManualSpeedInput) {
+      els.headerManualSpeedInput.value = state.manualSpeedKph != null ? String(state.manualSpeedKph) : "";
+    }
+    if (els.headerManualOverrideGroup) {
+      els.headerManualOverrideGroup.hidden = state.speedSource !== "manual";
+    }
   }
 
   async function syncAnalysisSettingsToServer(): Promise<void> {
@@ -241,6 +248,15 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     ctx.renderSpeedReadout();
   }
 
+  function saveHeaderManualSpeedFromInput(): void {
+    const manual = Number(els.headerManualSpeedInput?.value);
+    state.speedSource = "manual";
+    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 ? manual : null;
+    syncSpeedSourceInputs();
+    void syncSpeedSourceToServer();
+    ctx.renderSpeedReadout();
+  }
+
   function setActiveSettingsTab(tabId: string): void {
     els.settingsTabs.forEach((tab) => {
       const isActive = tab.getAttribute("data-settings-tab") === tabId;
@@ -307,6 +323,16 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
+    if (els.headerGpsStatus) {
+      const stateLabel = connectionStateLabel(status.connection_state);
+      const speed = speedKmhInSelectedUnit(status.effective_speed_kmh);
+      const speedText = speed != null ? ` ${fmt(speed, 1)} ${selectedSpeedUnitLabel()}` : "";
+      els.headerGpsStatus.textContent = `GPS ${stateLabel}${speedText}`;
+      const variant = status.connection_state === "connected"
+        ? "ok"
+        : (status.connection_state === "stale" ? "warn" : "muted");
+      els.headerGpsStatus.className = `pill pill--${variant}`;
+    }
     if (els.gpsStatusState) els.gpsStatusState.textContent = connectionStateLabel(status.connection_state);
     if (els.gpsStatusDevice) els.gpsStatusDevice.textContent = status.device ?? "--";
     if (els.gpsStatusLastUpdate) {
@@ -383,6 +409,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     syncActiveCarToInputs,
     saveAnalysisFromInputs,
     saveSpeedSourceFromInputs,
+    saveHeaderManualSpeedFromInput,
     bindSettingsTabs,
     addCarFromWizard,
     startGpsStatusPolling,

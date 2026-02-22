@@ -4,6 +4,10 @@ export interface UiDomElements {
   languageSelect: HTMLSelectElement | null;
   speedUnitSelect: HTMLSelectElement | null;
   speed: HTMLElement | null;
+  headerGpsStatus: HTMLElement | null;
+  headerManualOverrideGroup: HTMLElement | null;
+  headerManualSpeedInput: HTMLInputElement | null;
+  headerManualSpeedSaveBtn: HTMLButtonElement | null;
   rotationalBasisSource: HTMLElement | null;
   rotationalReason: HTMLElement | null;
   rotationalWheelValue: HTMLElement | null;
@@ -98,6 +102,10 @@ export function createUiDomRegistry(): UiDomElements {
     languageSelect: selectEl("languageSelect"),
     speedUnitSelect: selectEl("speedUnitSelect"),
     speed: el("speed"),
+    headerGpsStatus: el("headerGpsStatus"),
+    headerManualOverrideGroup: el("headerManualOverrideGroup"),
+    headerManualSpeedInput: inputEl("headerManualSpeedInput"),
+    headerManualSpeedSaveBtn: btnEl("headerManualSpeedSaveBtn"),
     rotationalBasisSource: el("rotationalBasisSource"),
     rotationalReason: el("rotationalReason"),
     rotationalWheelValue: el("rotationalWheelValue"),
