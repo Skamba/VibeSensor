@@ -37,6 +37,7 @@ export function startUiApp(): void {
   };
   const SPECTRUM_DB_MIN = 0;
   const SPECTRUM_DB_MAX = 60;
+  const SPECTRUM_MIN_FLOOR_AMP_G = 1e-6;
 
   function t(key: string, vars?: Record<string, any>): string { return I18N.get(state.lang, key, vars); }
   function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
@@ -230,7 +231,7 @@ export function startUiApp(): void {
 
   function renderSpectrum(): void {
     const fallbackFreq: number[] = [];
-    const entries: { id: string; label: string; color: string; values: number[] }[] = [];
+    const entries: { id: string; label: string; color: string; values: number[]; floorAmp?: number }[] = [];
     let targetFreq: number[] = [];
     const interpolateToTarget = (sourceFreq: number[], sourceVals: number[], desiredFreq: number[]): number[] => {
       if (!Array.isArray(sourceFreq) || !Array.isArray(sourceVals)) return [];
@@ -255,15 +256,34 @@ export function startUiApp(): void {
       if (!targetFreq.length) targetFreq = freqSlice;
       else if (freqSlice.length !== targetFreq.length || freqSlice.some((v, idx) => Math.abs(v - targetFreq[idx]) > 1e-6)) blended = interpolateToTarget(freqSlice, blended, targetFreq);
       if (!blended.length) continue;
-      entries.push({ id: client.id, label: client.name || client.id, color: colorForClient(i), values: blended });
+      const strength = (s.strength_metrics || {}) as Record<string, unknown>;
+      const floorCandidateRaw = typeof strength.noise_floor_amp_g === "number"
+        ? strength.noise_floor_amp_g
+        : strength.strength_floor_amp_g;
+      const floorCandidate = typeof floorCandidateRaw === "number" && Number.isFinite(floorCandidateRaw) && floorCandidateRaw > 0
+        ? floorCandidateRaw
+        : undefined;
+      entries.push({ id: client.id, label: client.name || client.id, color: colorForClient(i), values: blended, floorAmp: floorCandidate });
     }
     const positiveBins = entries.flatMap((entry) => entry.values.filter((v) => Number.isFinite(v) && v > 0));
-    const floorAmp = (() => {
-      if (!positiveBins.length) return 1e-9;
+    const floorFromBins = (() => {
+      if (!positiveBins.length) return SPECTRUM_MIN_FLOOR_AMP_G;
       const sorted = [...positiveBins].sort((a, b) => a - b);
       const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.1));
-      return Math.max(sorted[idx], 1e-9);
+      return Math.max(sorted[idx], SPECTRUM_MIN_FLOOR_AMP_G);
     })();
+    const floorCandidates = entries
+      .map((entry) => entry.floorAmp)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v) && v > 0)
+      .sort((a, b) => a - b);
+    const floorFromMetrics = floorCandidates.length
+      ? floorCandidates[Math.floor(floorCandidates.length / 2)]
+      : null;
+    const floorAmp = Math.max(
+      SPECTRUM_MIN_FLOOR_AMP_G,
+      floorFromBins,
+      floorFromMetrics ?? 0,
+    );
     const toDbOverFloor = (amp: number): number => {
       const safeAmp = Number.isFinite(amp) && amp > 0 ? amp : floorAmp;
       const db = 20 * (Math.log10(safeAmp) - Math.log10(floorAmp));

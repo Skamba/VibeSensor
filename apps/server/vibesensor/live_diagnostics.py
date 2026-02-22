@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
 from dataclasses import dataclass
 from time import monotonic
 from typing import Any
@@ -23,6 +24,7 @@ SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
 LOGGER = logging.getLogger(__name__)
 
 _PHASE_HISTORY_MAX = 5
+_MATRIX_WINDOW_MS = 2000
 
 
 def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
@@ -90,9 +92,27 @@ class _TrackerLevelState:
     severity_state: dict[str, Any] | None = None
 
 
+@dataclass(slots=True)
+class _MatrixCountEvent:
+    ts_ms: int
+    source_key: str
+    severity_key: str
+    contributor_label: str
+
+
+@dataclass(slots=True)
+class _MatrixSecondsEvent:
+    ts_ms: int
+    source_key: str
+    severity_key: str
+    dt_seconds: float
+
+
 class LiveDiagnosticsEngine:
     def __init__(self) -> None:
         self._matrix = _new_matrix()
+        self._matrix_count_events: deque[_MatrixCountEvent] = deque()
+        self._matrix_seconds_events: deque[_MatrixSecondsEvent] = deque()
         self._sensor_trackers: dict[str, _TrackerLevelState] = {}
         self._combined_trackers: dict[str, _TrackerLevelState] = {}
         self._multi_sync_window_ms = 800
@@ -110,6 +130,8 @@ class LiveDiagnosticsEngine:
 
     def reset(self) -> None:
         self._matrix = _new_matrix()
+        self._matrix_count_events.clear()
+        self._matrix_seconds_events.clear()
         self._sensor_trackers = {}
         self._combined_trackers = {}
         self._latest_events = []
@@ -122,33 +144,74 @@ class LiveDiagnosticsEngine:
         self._phase_speed_history = []
         self._current_phase = DrivingPhase.IDLE.value
 
-    def _update_matrix(self, source_key: str, severity_key: str, contributor_label: str) -> None:
-        if source_key not in self._matrix:
+    def _record_matrix_count(
+        self,
+        now_ms: int,
+        source_key: str,
+        severity_key: str,
+        contributor_label: str,
+    ) -> None:
+        if source_key not in SOURCE_KEYS or severity_key not in SEVERITY_KEYS:
             return
-        cell = self._matrix[source_key].get(severity_key)
-        if cell is None:
-            return
-        cell["count"] = int(cell["count"]) + 1
-        contributors = cell["contributors"]
-        contributors[contributor_label] = int(contributors.get(contributor_label, 0)) + 1
+        self._matrix_count_events.append(
+            _MatrixCountEvent(
+                ts_ms=now_ms,
+                source_key=source_key,
+                severity_key=severity_key,
+                contributor_label=contributor_label,
+            )
+        )
 
-    def _accumulate_matrix_seconds(self, dt_seconds: float) -> None:
+    def _accumulate_matrix_seconds(self, now_ms: int, dt_seconds: float) -> None:
         if dt_seconds <= 0:
             return
         for source_key, level in self._active_levels_by_source.items():
             bucket = str(level.get("bucket_key") or "")
-            if not bucket:
+            if source_key not in SOURCE_KEYS or bucket not in SEVERITY_KEYS:
                 continue
-            cell = self._matrix.get(source_key, {}).get(bucket)
-            if cell is None:
-                continue
-            cell["seconds"] = float(cell.get("seconds", 0.0)) + dt_seconds
+            self._matrix_seconds_events.append(
+                _MatrixSecondsEvent(
+                    ts_ms=now_ms,
+                    source_key=source_key,
+                    severity_key=bucket,
+                    dt_seconds=float(dt_seconds),
+                )
+            )
+
+    def _prune_matrix_windows(self, now_ms: int) -> None:
+        cutoff_ms = now_ms - _MATRIX_WINDOW_MS
+        while self._matrix_count_events and self._matrix_count_events[0].ts_ms < cutoff_ms:
+            self._matrix_count_events.popleft()
+        while self._matrix_seconds_events and self._matrix_seconds_events[0].ts_ms < cutoff_ms:
+            self._matrix_seconds_events.popleft()
+
+    def _rebuild_matrix(self, now_ms: int) -> None:
+        self._prune_matrix_windows(now_ms)
+        matrix = _new_matrix()
+
+        for event in self._matrix_count_events:
+            cell = matrix[event.source_key][event.severity_key]
+            cell["count"] = int(cell.get("count", 0)) + 1
+            contributors = cell["contributors"]
+            contributors[event.contributor_label] = (
+                int(contributors.get(event.contributor_label, 0)) + 1
+            )
+
+        for event in self._matrix_seconds_events:
+            cell = matrix[event.source_key][event.severity_key]
+            cell["seconds"] = float(cell.get("seconds", 0.0)) + float(event.dt_seconds)
+
+        self._matrix = matrix
 
     def _update_matrix_many(
-        self, source_keys: tuple[str, ...], severity_key: str, contributor_label: str
+        self,
+        now_ms: int,
+        source_keys: tuple[str, ...],
+        severity_key: str,
+        contributor_label: str,
     ) -> None:
         for source_key in source_keys:
-            self._update_matrix(source_key, severity_key, contributor_label)
+            self._record_matrix_count(now_ms, source_key, severity_key, contributor_label)
 
     def _should_emit_event(
         self,
@@ -362,7 +425,7 @@ class LiveDiagnosticsEngine:
         if self._last_update_ts_ms is not None:
             dt_seconds = max(0.0, min(1.0, (now_ms - self._last_update_ts_ms) / 1000.0))
         self._last_update_ts_ms = now_ms
-        self._accumulate_matrix_seconds(dt_seconds)
+        self._accumulate_matrix_seconds(now_ms, dt_seconds)
 
         try:
             sensor_events = self._detect_sensor_events(
@@ -435,7 +498,12 @@ class LiveDiagnosticsEngine:
             )
             if transition_bucket:
                 source_keys = source_keys_from_class_key(event.class_key)
-                self._update_matrix_many(source_keys, transition_bucket, event.sensor_label)
+                self._update_matrix_many(
+                    now_ms,
+                    source_keys,
+                    transition_bucket,
+                    event.sensor_label,
+                )
 
             if self._should_emit_event(
                 tracker=tracker,
@@ -584,6 +652,7 @@ class LiveDiagnosticsEngine:
                 if transition_bucket:
                     source_keys = source_keys_from_class_key(class_key)
                     self._update_matrix_many(
+                        now_ms,
                         source_keys, transition_bucket, tracker.last_sensor_label
                     )
 
@@ -623,6 +692,7 @@ class LiveDiagnosticsEngine:
         self._active_levels_by_location = self._build_active_levels_by_location(
             candidates_by_location=location_candidates
         )
+        self._rebuild_matrix(now_ms)
         self._latest_events = emitted_events
         return self.snapshot()
 
