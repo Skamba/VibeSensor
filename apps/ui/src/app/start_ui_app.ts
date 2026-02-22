@@ -263,7 +263,7 @@ export function startUiApp(): void {
       const safeAmp = Number.isFinite(amp) && amp > 0
         ? Math.max(amp, SPECTRUM_MIN_RENDER_AMP_G)
         : SPECTRUM_MIN_RENDER_AMP_G;
-      const db = 20 * Math.log10(safeAmp / SPECTRUM_DB_REFERENCE_AMP_G);
+      const db = 20 * (Math.log10(safeAmp) - Math.log10(SPECTRUM_DB_REFERENCE_AMP_G));
       return Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
     };
     for (const entry of entries) entry.values = entry.values.map(toDbAbsolute);
