@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import UTC, datetime
 from math import sqrt
 from pathlib import Path
+from statistics import median as _median
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
@@ -35,6 +36,7 @@ from .helpers import (
     _run_noise_baseline_g,
     _sensor_limit_g,
     _speed_stats,
+    _speed_stats_by_phase,
     _validate_required_strength_metrics,
     weak_spatial_dominance_threshold,
 )
@@ -45,6 +47,7 @@ from .phase_segmentation import (
     segment_run_phases as _segment_run_phases,
 )
 from .plot_data import _plot_data
+from .strength_labels import strength_label as _strength_label
 from .test_plan import _merge_test_plan
 
 # ---------------------------------------------------------------------------
@@ -52,20 +55,35 @@ from .test_plan import _merge_test_plan
 # ---------------------------------------------------------------------------
 
 
-def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
+def confidence_label(
+    conf_0_to_1: float,
+    *,
+    strength_band_key: str | None = None,
+) -> tuple[str, str, str]:
     """Return (label_key, tone, pct_text) for a 0-1 confidence value.
 
     * label_key: i18n key  – CONFIDENCE_HIGH / CONFIDENCE_MEDIUM / CONFIDENCE_LOW
     * tone: card/pill tone  – 'success' / 'warn' / 'neutral'
     * pct_text: e.g. '82%'
+
+    Parameters
+    ----------
+    strength_band_key:
+        Optional vibration-strength band key.  When set to ``"negligible"``,
+        high confidence is capped to medium as a defensive label guard —
+        mirrors the guard in :func:`certainty_label`.
     """
     pct = max(0.0, min(100.0, conf_0_to_1 * 100.0))
     pct_text = f"{pct:.0f}%"
     if conf_0_to_1 >= 0.70:
-        return "CONFIDENCE_HIGH", "success", pct_text
-    if conf_0_to_1 >= 0.40:
-        return "CONFIDENCE_MEDIUM", "warn", pct_text
-    return "CONFIDENCE_LOW", "neutral", pct_text
+        label_key, tone = "CONFIDENCE_HIGH", "success"
+    elif conf_0_to_1 >= 0.40:
+        label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+    else:
+        label_key, tone = "CONFIDENCE_LOW", "neutral"
+    if (strength_band_key or "").strip().lower() == "negligible" and label_key == "CONFIDENCE_HIGH":
+        label_key, tone = "CONFIDENCE_MEDIUM", "warn"
+    return label_key, tone, pct_text
 
 
 # ---------------------------------------------------------------------------
@@ -73,13 +91,36 @@ def confidence_label(conf_0_to_1: float) -> tuple[str, str, str]:
 # ---------------------------------------------------------------------------
 
 
+def _phase_ranking_score(finding: dict[str, object]) -> float:
+    """Compute phase-adjusted ranking score for top-cause selection.
+
+    Boosts findings with strong CRUISE-phase evidence (steady driving provides
+    the most reliable vibration signature) by up to 15%.  Findings without
+    phase evidence receive a neutral multiplier (0.85) and are ranked purely
+    by confidence, preserving backward compatibility.
+    """
+    conf = finding.get("confidence_0_to_1")
+    confidence = float(conf if conf is not None else 0)
+    phase_ev = finding.get("phase_evidence")
+    cruise_fraction = (
+        float(phase_ev.get("cruise_fraction", 0.0)) if isinstance(phase_ev, dict) else 0.0
+    )
+    return confidence * (0.85 + 0.15 * cruise_fraction)
+
+
 def select_top_causes(
     findings: list[dict[str, object]],
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,
+    strength_band_key: str | None = None,
 ) -> list[dict[str, object]]:
-    """Group findings by suspected_source, keep best per group, apply drop-off."""
+    """Group findings by suspected_source, keep best per group, apply drop-off.
+
+    Ranking uses a phase-adjusted score that boosts findings whose evidence
+    comes predominantly from CRUISE phase (steady driving), where vibration
+    signatures are most diagnostically reliable.
+    """
     # Only consider non-reference findings that meet the hard confidence floor
     diag_findings = [
         f
@@ -98,12 +139,12 @@ def select_top_causes(
         src = str(f.get("suspected_source") or "unknown").strip().lower()
         groups[src].append(f)
 
-    # For each group, pick the highest-confidence finding as representative
+    # For each group, pick the highest-phase-adjusted-score finding as representative
     group_reps: list[dict[str, object]] = []
     for members in groups.values():
         members_sorted = sorted(
             members,
-            key=lambda m: float(m.get("confidence_0_to_1") or 0),
+            key=_phase_ranking_score,
             reverse=True,
         )
         representative = dict(members_sorted[0])
@@ -117,19 +158,16 @@ def select_top_causes(
         representative["grouped_count"] = len(members_sorted)
         group_reps.append(representative)
 
-    # Sort groups by best confidence descending
-    group_reps.sort(
-        key=lambda g: float(g.get("confidence_0_to_1") or 0),
-        reverse=True,
-    )
+    # Sort groups by phase-adjusted score descending
+    group_reps.sort(key=_phase_ranking_score, reverse=True)
 
-    # Apply drop-off rule: include causes within drop_off_points of the best
-    best_conf_pct = float(group_reps[0].get("confidence_0_to_1") or 0) * 100.0
-    threshold_pct = best_conf_pct - drop_off_points
+    # Apply drop-off rule using phase-adjusted scores
+    best_score_pct = _phase_ranking_score(group_reps[0]) * 100.0
+    threshold_pct = best_score_pct - drop_off_points
     selected: list[dict[str, object]] = []
     for rep in group_reps:
-        conf_pct = float(rep.get("confidence_0_to_1") or 0) * 100.0
-        if conf_pct >= threshold_pct or not selected:
+        score_pct = _phase_ranking_score(rep) * 100.0
+        if score_pct >= threshold_pct or not selected:
             selected.append(rep)
         if len(selected) >= max_causes:
             break
@@ -137,7 +175,10 @@ def select_top_causes(
     # Build output in the format expected by the PDF
     result: list[dict[str, object]] = []
     for rep in selected:
-        label_key, tone, pct_text = confidence_label(float(rep.get("confidence_0_to_1") or 0))
+        label_key, tone, pct_text = confidence_label(
+            float(rep.get("confidence_0_to_1") or 0),
+            strength_band_key=strength_band_key,
+        )
         result.append(
             {
                 "finding_id": rep.get("finding_id"),
@@ -154,6 +195,7 @@ def select_top_causes(
                 "strongest_speed_band": rep.get("strongest_speed_band"),
                 "weak_spatial_separation": rep.get("weak_spatial_separation"),
                 "diagnostic_caveat": rep.get("diagnostic_caveat"),
+                "phase_evidence": rep.get("phase_evidence"),
             }
         )
     return result
@@ -288,7 +330,7 @@ def build_findings_for_samples(
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
     )
     raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
-    per_sample_phases, _ = _segment_run_phases(rows)
+    _per_sample_phases, _ = _segment_run_phases(rows)
     return _build_findings(
         metadata=dict(metadata),
         samples=rows,
@@ -298,7 +340,7 @@ def build_findings_for_samples(
         speed_non_null_pct=speed_non_null_pct,
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,
-        per_sample_phases=per_sample_phases,
+        per_sample_phases=_per_sample_phases,
     )
 
 
@@ -346,6 +388,7 @@ def summarize_run_data(
     # Phase segmentation
     _per_sample_phases, phase_segments = _segment_run_phases(samples)
     phase_info = _phase_summary(phase_segments)
+    speed_stats_by_phase = _speed_stats_by_phase(samples, _per_sample_phases)
 
     sensor_model = metadata.get("sensor_model")
     sensor_limit = _sensor_limit_g(sensor_model)
@@ -526,7 +569,11 @@ def summarize_run_data(
         }
     )
 
-    top_causes = select_top_causes(findings)
+    # Derive overall run strength band for confidence-label guard
+    _median_db = _median(amp_metric_values) if amp_metric_values else None
+    _overall_band_key = _strength_label(_median_db)[0] if _median_db is not None else None
+
+    top_causes = select_top_causes(findings, strength_band_key=_overall_band_key)
 
     sensor_locations = sorted(
         {
@@ -589,6 +636,7 @@ def summarize_run_data(
         "most_likely_origin": most_likely_origin,
         "test_plan": test_plan,
         "speed_stats": speed_stats,
+        "speed_stats_by_phase": speed_stats_by_phase,
         "phase_info": phase_info,
         "sensor_locations": sensor_locations,
         "sensor_locations_connected_throughout": sorted(connected_locations),
