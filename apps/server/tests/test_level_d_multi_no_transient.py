@@ -22,7 +22,6 @@ from builders import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
-    assert_corner_detected,
     assert_no_wheel_fault,
     assert_strongest_location,
     assert_wheel_source,
@@ -226,9 +225,7 @@ def test_sensor_count_monotonic() -> None:
         summary = run_analysis(samples)
         confs.append(top_confidence(summary))
     # More sensors should maintain or improve confidence
-    assert confs[-1] >= confs[0] - 0.05, (
-        f"Sensor-count monotonicity violated: {confs}"
-    )
+    assert confs[-1] >= confs[0] - 0.05, f"Sensor-count monotonicity violated: {confs}"
 
 
 # ---------------------------------------------------------------------------
@@ -251,9 +248,7 @@ def test_4sensor_amplitude_monotonic() -> None:
         summary = run_analysis(samples)
         confs.append(top_confidence(summary))
     # Highest amplitude should produce at least as much confidence as lowest
-    assert confs[-1] >= confs[0] - 0.05, (
-        f"Amplitude monotonicity violated: {confs}"
-    )
+    assert confs[-1] >= confs[0] - 0.05, f"Amplitude monotonicity violated: {confs}"
 
 
 # ---------------------------------------------------------------------------
