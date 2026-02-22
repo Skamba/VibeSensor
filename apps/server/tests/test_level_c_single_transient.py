@@ -99,7 +99,7 @@ def test_transient_only_no_persistent_fault(speed: float) -> None:
     # Should not produce a high-confidence wheel fault
     top = extract_top(summary)
     if top:
-        src = (top.get("suspected_source") or "").lower()
+        src = (top.get("source") or top.get("suspected_source") or "").lower()
         conf = float(top.get("confidence", 0))
         # If it's a wheel diagnosis, confidence should be very low
         if "wheel" in src:
@@ -134,7 +134,7 @@ def test_multiple_transients_no_false_fault(corner: str) -> None:
     top = extract_top(summary)
     if top:
         conf = float(top.get("confidence", 0))
-        src = (top.get("suspected_source") or "").lower()
+        src = (top.get("source") or top.get("suspected_source") or "").lower()
         if "wheel" in src:
             assert conf < 0.5, f"Multiple transients → wheel conf={conf} for {corner}"
 
@@ -252,7 +252,7 @@ def test_transient_frequency_variation(freq: float) -> None:
     top = extract_top(summary)
     if top:
         conf = float(top.get("confidence", 0))
-        src = (top.get("suspected_source") or "").lower()
+        src = (top.get("source") or top.get("suspected_source") or "").lower()
         if "wheel" in src:
             assert conf < 0.5, f"Transient@{freq}Hz → wheel conf={conf}"
 
@@ -282,7 +282,7 @@ def test_long_transient_burst(corner: str) -> None:
     top = extract_top(summary)
     if top:
         conf = float(top.get("confidence", 0))
-        src = (top.get("suspected_source") or "").lower()
+        src = (top.get("source") or top.get("suspected_source") or "").lower()
         if "wheel" in src:
             assert conf < 0.5, f"Long transient → wheel conf={conf} for {corner}"
 
@@ -315,7 +315,7 @@ def test_transient_at_wheel_freq_no_false_positive(corner: str) -> None:
     top = extract_top(summary)
     if top:
         conf = float(top.get("confidence", 0))
-        src = (top.get("suspected_source") or "").lower()
+        src = (top.get("source") or top.get("suspected_source") or "").lower()
         if "wheel" in src:
             assert conf < 0.5, f"Transient@wheel_hz → wheel conf={conf} for {corner}"
 
