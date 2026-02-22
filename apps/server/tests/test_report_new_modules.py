@@ -468,8 +468,6 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     assert origin["dominant_phase"] is None
     assert "onset" not in origin["explanation"].lower()
 
-
-
     summary: dict = {
         "lang": "en",
         "top_causes": [
