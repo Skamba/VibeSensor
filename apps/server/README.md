@@ -55,7 +55,7 @@ cd apps/server
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-python -m vibesensor.app --config config.dev.yaml
+vibesensor-server --config config.dev.yaml
 ```
 
 ### Docker

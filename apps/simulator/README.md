@@ -4,7 +4,7 @@ Spawns fake ESP32 sensor clients for testing VibeSensor without physical
 hardware. Useful for local development, CI smoke tests, and reproducing
 specific vibration scenarios.
 
-`sim_sender.py` sends:
+The simulator (`vibesensor-sim`) sends:
 
 - HELLO packets every 2 seconds
 - DATA frames at 800 Hz sample rate (200 samples per UDP frame)
