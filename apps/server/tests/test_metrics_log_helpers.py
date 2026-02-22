@@ -179,6 +179,23 @@ class _FakeHistoryDB:
         self.finalize_calls.append(run_id)
 
 
+class _FailingCreateRunHistoryDB(_FakeHistoryDB):
+    def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
+        raise RuntimeError("create_run boom")
+
+
+class _FailingAppendOnceHistoryDB(_FakeHistoryDB):
+    def __init__(self) -> None:
+        super().__init__()
+        self._append_failures_remaining = 1
+
+    def append_samples(self, run_id: str, samples: list[dict]) -> None:
+        if self._append_failures_remaining > 0:
+            self._append_failures_remaining -= 1
+            raise RuntimeError("append boom")
+        super().append_samples(run_id, samples)
+
+
 class _ReverseOnlySamples:
     def __init__(self, samples: list[dict[str, object]]) -> None:
         self._samples = samples
@@ -371,6 +388,66 @@ def test_history_run_created_on_first_sample_append(tmp_path: Path) -> None:
     assert timed_out is False
     assert history_db.create_calls == [(run_id, start_time_utc)]
     assert history_db.append_calls == [(run_id, 1)]
+
+
+def test_append_records_surfaces_create_run_failure_in_status(tmp_path: Path) -> None:
+    history_db = _FailingCreateRunHistoryDB()
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    run_id, start_time_utc, start_mono = snapshot
+
+    logger._append_records(run_id, start_time_utc, start_mono)
+    status = logger.status()
+
+    assert status["write_error"] is not None
+    assert "history create_run failed" in str(status["write_error"])
+    assert "create_run boom" in str(status["write_error"])
+
+
+def test_append_records_clears_write_error_after_successful_retry(tmp_path: Path) -> None:
+    history_db = _FailingAppendOnceHistoryDB()
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    run_id, start_time_utc, start_mono = snapshot
+
+    logger._append_records(run_id, start_time_utc, start_mono)
+    failed_status = logger.status()
+    assert failed_status["write_error"] is not None
+    assert "history append_samples failed" in str(failed_status["write_error"])
+
+    logger._append_records(run_id, start_time_utc, start_mono)
+    recovered_status = logger.status()
+    assert recovered_status["write_error"] is None
 
 
 def test_append_records_reports_timeout_when_no_data_for_threshold(tmp_path: Path) -> None:
