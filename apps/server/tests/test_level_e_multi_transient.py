@@ -140,7 +140,7 @@ def test_4sensor_transient_only_no_fault(speed: float) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     if top:
-        src = (top.get("suspected_source") or "").lower()
+        src = (top.get("source") or top.get("suspected_source") or "").lower()
         conf = float(top.get("confidence", 0))
         if "wheel" in src:
             assert conf < 0.5, f"4sensor transient-only → wheel conf={conf}@{speed}"

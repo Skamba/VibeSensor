@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Level 7 – Ingestion + analysis integration test (multi-sensor + transient).
+"""Integration test – ingestion + analysis (multi-sensor + transient).
 
 This test exercises the full analysis pipeline end-to-end with a realistic
 multi-sensor scenario including transient events.  It validates:

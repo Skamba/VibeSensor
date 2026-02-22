@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Level 6 – Lightweight UI mock test.
+"""UI mock test – lightweight deterministic validation.
 
 Mocks a stable analysis response and verifies that the API response
 model carries the expected fields: source, corner, confidence, speed band,
