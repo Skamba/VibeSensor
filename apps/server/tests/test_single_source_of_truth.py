@@ -421,33 +421,44 @@ def test_validation_sets_cover_all_settings_keys() -> None:
     assert not overlap, f"Keys in both validation sets: {overlap}"
 
 
-def test_esp_ports_match_python_defaults() -> None:
-    """ESP server port constants must match Python DEFAULT_CONFIG."""
+def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Network port defaults must come from shared contracts across runtime layers."""
     import re
+    import sys
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[3]
-    main_cpp = (root / "firmware" / "esp" / "src" / "main.cpp").read_text(encoding="utf-8")
-
-    m_data = re.search(r"kServerDataPort\s*=\s*(\d+)", main_cpp)
-    m_ctrl = re.search(r"kServerControlPort\s*=\s*(\d+)", main_cpp)
-    assert m_data and m_ctrl, "ESP port constants not found in main.cpp"
-    esp_data_port = int(m_data.group(1))
-    esp_ctrl_port = int(m_ctrl.group(1))
+    from vibesensor_shared.contracts import NETWORK_PORTS
+    from vibesensor_simulator.sim_sender import parse_args
 
     from vibesensor.config import DEFAULT_CONFIG
 
-    py_data = DEFAULT_CONFIG["udp"]["data_listen"]
-    py_ctrl = DEFAULT_CONFIG["udp"]["control_listen"]
-    py_data_port = int(str(py_data).rsplit(":", 1)[-1])
-    py_ctrl_port = int(str(py_ctrl).rsplit(":", 1)[-1])
+    root = Path(__file__).resolve().parents[3]
+    expected_data = int(NETWORK_PORTS["server_udp_data"])
+    expected_control = int(NETWORK_PORTS["server_udp_control"])
+    expected_fw_base = int(NETWORK_PORTS["firmware_control_port_base"])
 
-    assert esp_data_port == py_data_port, (
-        f"ESP data port {esp_data_port} != Python default {py_data_port}"
-    )
-    assert esp_ctrl_port == py_ctrl_port, (
-        f"ESP control port {esp_ctrl_port} != Python default {py_ctrl_port}"
-    )
+    py_data = int(str(DEFAULT_CONFIG["udp"]["data_listen"]).rsplit(":", 1)[-1])
+    py_ctrl = int(str(DEFAULT_CONFIG["udp"]["control_listen"]).rsplit(":", 1)[-1])
+    assert py_data == expected_data
+    assert py_ctrl == expected_control
+
+    monkeypatch.setattr(sys, "argv", ["vibesensor-sim"])
+    sim_args = parse_args()
+    assert sim_args.server_data_port == expected_data
+    assert sim_args.server_control_port == expected_control
+
+    contracts_h = (
+        root / "firmware" / "esp" / "include" / "vibesensor_contracts.h"
+    ).read_text(encoding="utf-8")
+
+    def _macro(name: str) -> int:
+        match = re.search(rf"#define\s+{name}\s+(\d+)", contracts_h)
+        assert match, f"Missing macro {name} in vibesensor_contracts.h"
+        return int(match.group(1))
+
+    assert _macro("VS_SERVER_UDP_DATA_PORT") == expected_data
+    assert _macro("VS_SERVER_UDP_CONTROL_PORT") == expected_control
+    assert _macro("VS_FIRMWARE_CONTROL_PORT_BASE") == expected_fw_base
 
 
 def test_config_example_matches_documented_defaults() -> None:

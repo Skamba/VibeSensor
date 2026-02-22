@@ -7,12 +7,16 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from vibesensor_shared.contracts import NETWORK_PORTS
 
 SERVER_DIR = Path(__file__).resolve().parents[1]
 """Root of the ``apps/server/`` package tree."""
 
 REPO_DIR = SERVER_DIR.parents[1]
 LOGGER = logging.getLogger(__name__)
+
+DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
+DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "ap": {
@@ -33,8 +37,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "server": {"host": "0.0.0.0", "port": 80},
     "udp": {
-        "data_listen": "0.0.0.0:9000",
-        "control_listen": "0.0.0.0:9001",
+        "data_listen": f"0.0.0.0:{DEFAULT_UDP_DATA_PORT}",
+        "control_listen": f"0.0.0.0:{DEFAULT_UDP_CONTROL_PORT}",
         "data_queue_maxsize": 1024,
     },
     "processing": {
