@@ -17,7 +17,11 @@ from builders import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
+    assert_confidence_label_valid,
+    assert_has_warnings,
     assert_no_wheel_fault,
+    assert_strict_no_fault,
+    assert_tolerant_no_fault,
     extract_top,
     make_diffuse_samples,
     make_fault_samples,
@@ -52,6 +56,8 @@ def test_single_sensor_fault_corner_speed(corner: str, speed: float) -> None:
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner}@{speed}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@{speed}")
+    assert_confidence_label_valid(summary, msg=f"{corner}@{speed}")
+    assert_has_warnings(summary, msg=f"{corner}@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +71,7 @@ def test_single_sensor_no_fault_baseline(speed: float) -> None:
     samples = make_noise_samples(sensors=[SENSOR_FL], speed_kmh=speed, n_samples=40)
     summary = run_analysis(samples)
     assert_no_wheel_fault(summary, msg=f"speed={speed}")
+    assert_has_warnings(summary, msg=f"no-fault@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -148,7 +155,7 @@ def test_single_sensor_diffuse_no_fault(speed: float) -> None:
     """Diffuse broadband excitation on one sensor should not be a wheel fault."""
     samples = make_diffuse_samples(sensors=[SENSOR_FL], speed_kmh=speed, n_samples=40)
     summary = run_analysis(samples)
-    assert_no_wheel_fault(summary, msg=f"diffuse@{speed}")
+    assert_tolerant_no_fault(summary, msg=f"diffuse@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +179,7 @@ def test_single_sensor_very_high_speed(corner: str) -> None:
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner}@120"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120")
+    assert_confidence_label_valid(summary, msg=f"{corner}@120")
 
 
 # ---------------------------------------------------------------------------
@@ -183,7 +191,7 @@ def test_single_sensor_idle_only_no_fault() -> None:
     """Pure idle data should produce no wheel fault."""
     samples = make_idle_samples(sensors=[SENSOR_FL], n_samples=50)
     summary = run_analysis(samples)
-    assert_no_wheel_fault(summary, msg="idle-only")
+    assert_strict_no_fault(summary, msg="idle-only")
 
 
 # ---------------------------------------------------------------------------
@@ -195,7 +203,7 @@ def test_single_sensor_ramp_only_no_fault() -> None:
     """Speed ramp with no fault content should produce no wheel fault."""
     samples = make_ramp_samples(sensors=[SENSOR_FL], speed_start=20, speed_end=100, n_samples=50)
     summary = run_analysis(samples)
-    assert_no_wheel_fault(summary, msg="ramp-only")
+    assert_strict_no_fault(summary, msg="ramp-only")
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +229,7 @@ def test_single_sensor_harmonics_1x_2x_3x(corner: str) -> None:
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner} with 1x+2x+3x"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} 1x+2x+3x")
+    assert_confidence_label_valid(summary, msg=f"{corner} 1x+2x+3x")
 
 
 # ---------------------------------------------------------------------------
