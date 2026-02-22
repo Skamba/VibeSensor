@@ -229,7 +229,8 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     # Sync initial settings into analysis store and GPS monitor
     analysis_settings.update(settings_store.active_car_aspects())
     ss = settings_store.get_speed_source()
-    if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
+    gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
+    if ss["manualSpeedKph"] is not None:
         gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
     gps_monitor.set_fallback_settings(
         stale_timeout_s=ss.get("staleTimeoutS"),

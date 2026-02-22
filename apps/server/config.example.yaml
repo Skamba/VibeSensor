@@ -50,4 +50,4 @@ storage:
   clients_json_path: data/clients.json
 
 gps:
-  gps_enabled: false
+  gps_enabled: true

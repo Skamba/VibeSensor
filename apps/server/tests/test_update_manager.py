@@ -400,7 +400,7 @@ class TestUpdateManagerAsync:
         """When git pull fails, hotspot is still restored."""
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
-        runner.set_response("pull --ff-only", 1, "", "fatal: unable to access")
+        runner.set_response("reset --hard", 1, "", "fatal: unable to access")
 
         repo = tmp_path / "repo"
         repo.mkdir()

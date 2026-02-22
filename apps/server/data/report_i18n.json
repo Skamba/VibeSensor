@@ -179,6 +179,10 @@
     "en": "More vibration",
     "nl": "Meeste trilling"
   },
+  "SOURCE_LEGEND_TITLE": {
+    "en": "Finding source:",
+    "nl": "Bevindingsbron:"
+  },
   "HOLD_ENGINE_AT_THE_SAME_RPM_IN_NEUTRAL": {
     "en": "Hold engine at the same RPM in neutral and verify the signature.",
     "nl": "Houd de motor op hetzelfde toerental in neutraal en controleer de signatuur."

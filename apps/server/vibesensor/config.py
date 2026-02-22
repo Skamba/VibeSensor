@@ -63,7 +63,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "storage": {
         "clients_json_path": "data/clients.json",
     },
-    "gps": {"gps_enabled": False},
+    "gps": {"gps_enabled": True},
 }
 
 
