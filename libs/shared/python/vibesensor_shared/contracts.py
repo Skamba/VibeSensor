@@ -27,3 +27,4 @@ def _load_json(name: str) -> dict[str, Any]:
 
 METRIC_FIELDS: dict[str, str] = _load_json("metrics_fields.json")
 REPORT_FIELDS: dict[str, str] = _load_json("report_fields.json")
+NETWORK_PORTS: dict[str, int] = _load_json("network_ports.json")

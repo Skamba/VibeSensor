@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from vibesensor_shared.contracts import NETWORK_PORTS
 
 from vibesensor.protocol import (
     CMD_IDENTIFY,
@@ -499,8 +500,14 @@ async def async_main(args: argparse.Namespace) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="VibeSensor UDP simulator")
     parser.add_argument("--server-host", default="127.0.0.1")
-    parser.add_argument("--server-data-port", type=int, default=9000)
-    parser.add_argument("--server-control-port", type=int, default=9001)
+    parser.add_argument(
+        "--server-data-port", type=int, default=int(NETWORK_PORTS["server_udp_data"])
+    )
+    parser.add_argument(
+        "--server-control-port",
+        type=int,
+        default=int(NETWORK_PORTS["server_udp_control"]),
+    )
     parser.add_argument("--count", type=int, default=5)
     parser.add_argument(
         "--names", default="front-left,front-right,rear-left,rear-right,trunk"

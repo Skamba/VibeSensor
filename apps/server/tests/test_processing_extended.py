@@ -157,6 +157,27 @@ def test_multi_spectrum_payload_returns_per_client_freq_on_mismatch() -> None:
     assert "c2" in result["warning"]["client_ids"]
 
 
+def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
+    samples = np.random.randn(300, 3).astype(np.float32) * 0.01
+
+    proc.ingest("c1", samples, sample_rate_hz=200)
+    proc.ingest("c2", samples, sample_rate_hz=200)
+    proc.compute_metrics("c1", sample_rate_hz=200)
+    proc.compute_metrics("c2", sample_rate_hz=200)
+
+    def _fail_asarray(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("np.asarray should not be used in multi_spectrum_payload")
+
+    monkeypatch.setattr("vibesensor.processing.np.asarray", _fail_asarray)
+
+    result = proc.multi_spectrum_payload(["c1", "c2"])
+    assert sorted(result["clients"]) == ["c1", "c2"]
+    assert result["freq"]
+
+
 # -- selected_payload ----------------------------------------------------------
 
 

@@ -6,6 +6,7 @@ import math
 import time
 from collections import deque
 from collections.abc import Callable
+from itertools import islice
 from pathlib import Path
 from threading import RLock, Thread
 from typing import TYPE_CHECKING
@@ -89,7 +90,10 @@ class MetricsLogger:
         self._live_start_utc = utc_now_iso()
         self._live_start_mono_s = time.monotonic()
         self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
-        self._analysis_threads: list[Thread] = []
+        self._analysis_thread: Thread | None = None
+        self._analysis_queue: deque[str] = deque()
+        self._analysis_enqueued_run_ids: set[str] = set()
+        self._analysis_active_run_id: str | None = None
         if self.enabled:
             self._start_new_session_locked()
 
@@ -102,6 +106,14 @@ class MetricsLogger:
         self._written_sample_count = 0
         self._last_data_progress_mono_s = self._run_start_mono_s
         self._last_active_frames_total = self._active_frames_total()
+
+    def _set_last_write_error(self, message: str) -> None:
+        with self._lock:
+            self._last_write_error = message
+
+    def _clear_last_write_error(self) -> None:
+        with self._lock:
+            self._last_write_error = None
 
     def _active_frames_total(self) -> int:
         active_ids = self.registry.active_client_ids()
@@ -130,7 +142,9 @@ class MetricsLogger:
         try:
             self._history_db.create_run(run_id, start_time_utc, metadata)
             self._history_run_created = True
-        except Exception:
+            self._clear_last_write_error()
+        except Exception as exc:
+            self._set_last_write_error(f"history create_run failed: {exc}")
             LOGGER.warning("Failed to create history run in DB", exc_info=True)
 
     def _session_snapshot(self) -> tuple[str, str, float] | None:
@@ -155,7 +169,11 @@ class MetricsLogger:
                 "current_file": None,
                 "run_id": self._run_id,
                 "write_error": self._last_write_error,
-                "analysis_in_progress": any(thread.is_alive() for thread in self._analysis_threads),
+                "analysis_in_progress": bool(
+                    self._analysis_active_run_id
+                    or self._analysis_queue
+                    or (self._analysis_thread and self._analysis_thread.is_alive())
+                ),
             }
 
     def start_logging(self) -> dict[str, str | bool | None]:
@@ -205,9 +223,11 @@ class MetricsLogger:
             start_time_utc = self._run_start_utc or self._live_start_utc
             metadata = self._run_metadata_record(run_id=run_id, start_time_utc=start_time_utc)
             metadata["end_time_utc"] = utc_now_iso()
-            samples = list(self._live_samples)
-            if max_rows > 0 and len(samples) > max_rows:
-                samples = samples[-max_rows:]
+            if max_rows <= 0:
+                samples = list(self._live_samples)
+            else:
+                samples = list(islice(reversed(self._live_samples), max_rows))
+                samples.reverse()
             return metadata, samples
 
     def _run_metadata_record(self, run_id: str, start_time_utc: str) -> dict[str, object]:
@@ -477,7 +497,9 @@ class MetricsLogger:
                     try:
                         self._history_db.append_samples(run_id, rows)
                         self._written_sample_count += len(rows)
-                    except Exception:
+                        self._clear_last_write_error()
+                    except Exception as exc:
+                        self._set_last_write_error(f"history append_samples failed: {exc}")
                         LOGGER.warning("Failed to append samples to history DB", exc_info=True)
             else:
                 self._written_sample_count += len(rows)
@@ -495,37 +517,60 @@ class MetricsLogger:
         if self._history_db is not None:
             try:
                 self._history_db.finalize_run(self._run_id, end_utc)
-            except Exception:
+                self._clear_last_write_error()
+            except Exception as exc:
+                self._set_last_write_error(f"history finalize_run failed: {exc}")
                 LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
 
     def _schedule_post_analysis(self, run_id: str) -> None:
         LOGGER.info("Analysis queued for run %s", run_id)
+        with self._lock:
+            if run_id in self._analysis_enqueued_run_ids or run_id == self._analysis_active_run_id:
+                return
+            self._analysis_queue.append(run_id)
+            self._analysis_enqueued_run_ids.add(run_id)
+            worker = self._analysis_thread
+            if worker is None or not worker.is_alive():
+                worker = Thread(
+                    target=self._analysis_worker_loop,
+                    name="metrics-post-analysis-worker",
+                    daemon=True,
+                )
+                self._analysis_thread = worker
+                worker.start()
 
-        def _target() -> None:
+    def _analysis_worker_loop(self) -> None:
+        while True:
+            with self._lock:
+                if not self._analysis_queue:
+                    self._analysis_active_run_id = None
+                    return
+                run_id = self._analysis_queue.popleft()
+                self._analysis_active_run_id = run_id
             try:
                 self._run_post_analysis(run_id)
             finally:
                 with self._lock:
-                    self._analysis_threads = [t for t in self._analysis_threads if t.is_alive()]
-
-        thread = Thread(target=_target, name=f"metrics-post-analysis-{run_id[:8]}", daemon=False)
-        with self._lock:
-            self._analysis_threads = [t for t in self._analysis_threads if t.is_alive()]
-            self._analysis_threads.append(thread)
-        thread.start()
+                    self._analysis_enqueued_run_ids.discard(run_id)
+                    self._analysis_active_run_id = None
 
     def wait_for_post_analysis(self, timeout_s: float = 5.0) -> None:
         deadline = time.monotonic() + max(0.0, timeout_s)
         while True:
             with self._lock:
-                active = [t for t in self._analysis_threads if t.is_alive()]
-                self._analysis_threads = active
-            if not active:
+                worker = self._analysis_thread
+                queued = bool(self._analysis_queue)
+                active_run = self._analysis_active_run_id is not None
+                worker_alive = bool(worker and worker.is_alive())
+            if not queued and not active_run and not worker_alive:
                 return
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 return
-            active[0].join(timeout=min(0.2, remaining))
+            if worker is not None and worker_alive:
+                worker.join(timeout=min(0.2, remaining))
+            else:
+                time.sleep(min(0.05, remaining))
 
     def _run_post_analysis(self, run_id: str) -> None:
         """Run thorough post-run analysis and store results in history DB."""
@@ -576,6 +621,7 @@ class MetricsLogger:
             )
         except Exception as exc:
             duration_s = time.monotonic() - analysis_start
+            self._set_last_write_error(f"post-analysis failed for run {run_id}: {exc}")
             LOGGER.warning(
                 "Analysis failed for run %s after %.2fs: %s",
                 run_id,
@@ -585,7 +631,10 @@ class MetricsLogger:
             )
             try:
                 self._history_db.store_analysis_error(run_id, str(exc))
-            except Exception:
+            except Exception as store_exc:
+                self._set_last_write_error(
+                    f"history store_analysis_error failed for run {run_id}: {store_exc}"
+                )
                 LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
 
     async def run(self) -> None:
@@ -617,7 +666,8 @@ class MetricsLogger:
                             self._no_data_timeout_s,
                         )
                         self.stop_logging()
-            except Exception:
+            except Exception as exc:
+                self._set_last_write_error(f"metrics logger tick failed: {exc}")
                 LOGGER.warning(
                     "Metrics logger tick failed; will retry next interval.",
                     exc_info=True,

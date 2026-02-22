@@ -16,6 +16,9 @@ and generates PDF diagnostic reports.
                                                          └──► live_diagnostics.py (events)
 ```
 
+Authoritative protocol/ports/payload field contract: `docs/protocol.md`
+(generated from code + shared contracts).
+
 Key modules in `vibesensor/`:
 
 | Module | Purpose |
@@ -78,6 +81,8 @@ Configuration is loaded from YAML. See `config.example.yaml` for all options.
 | `storage` | `clients_json_path` |
 | `gps` | `gps_enabled` |
 | `ap` | `ssid`, `psk`, `ip`, `channel`, `self_heal` |
+
+For canonical network ports and wire-level message constants, use `docs/protocol.md`.
 
 Development configs (`config.dev.yaml`, `config.docker.yaml`) override only
 paths — all other values use built-in defaults.

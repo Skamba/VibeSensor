@@ -27,7 +27,12 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
       body: JSON.stringify({ enabled: false, current_file: null }),
     });
   });
-  await page.route("**/api/history", async (route) => {
+  await page.route("**/api/history**", async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (!pathname.startsWith("/api/history") || pathname.includes("/report.pdf")) {
+      await route.fallback();
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -120,3 +125,190 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect(page.locator("#loggingStatus")).toHaveText("Stopped");
   await expect.poll(() => stopCalls).toBe(1);
 });
+
+test("gps status uses selected speed unit in settings panel", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/settings/language") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ language: "en" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-unit") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ speedUnit: "mps" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-source/status") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          gps_enabled: true,
+          connection_state: "connected",
+          device: "gps0",
+          last_update_age_s: 0.333,
+          raw_speed_kmh: 36,
+          effective_speed_kmh: 18,
+          last_error: null,
+          reconnect_delay_s: 1,
+          fallback_active: false,
+          stale_timeout_s: 5,
+          fallback_mode: "hold",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+
+  await expect(page.locator("#gpsStatusRawSpeed")).toHaveText("10.0 m/s");
+  await expect(page.locator("#gpsStatusEffectiveSpeed")).toHaveText("5.0 m/s");
+  await expect(page.locator("#gpsStatusLastUpdate")).toHaveText("0.3s ago");
+});
+
+  test("history PDF download revokes object URL with safe delay", async ({ page }) => {
+    let reportPdfCalls = 0;
+
+    await page.route("**/api/logging/status", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ enabled: false, current_file: null }),
+      });
+    });
+    await page.route("**/api/history", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+        }),
+      });
+    });
+    await page.route("**/api/history/**/report.pdf**", async (route) => {
+      reportPdfCalls += 1;
+      await route.fulfill({
+        status: 200,
+        headers: {
+          "content-type": "application/pdf",
+          "content-disposition": "attachment; filename=\"run-001_report.pdf\"",
+        },
+        body: "PDF",
+      });
+    });
+    await page.route("**/api/client-locations", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
+    });
+    await page.route("**/api/settings/**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+    });
+    await page.route("**/api/car-library/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ brands: [], types: [], models: [] }),
+      });
+    });
+
+    await page.addInitScript(() => {
+      const globalState = window as typeof window & {
+        __revokeCallCount?: number;
+      };
+      globalState.__revokeCallCount = 0;
+
+      URL.createObjectURL = (() => "blob:history-download-test") as typeof URL.createObjectURL;
+      URL.revokeObjectURL = ((_: string) => {
+        globalState.__revokeCallCount = (globalState.__revokeCallCount ?? 0) + 1;
+      }) as typeof URL.revokeObjectURL;
+
+      class FakeWebSocket {
+        static OPEN = 1;
+        readyState = 1;
+        onopen: ((event: Event) => void) | null = null;
+        onmessage: ((event: MessageEvent<string>) => void) | null = null;
+        onclose: ((event: CloseEvent) => void) | null = null;
+        onerror: ((event: Event) => void) | null = null;
+        constructor() {
+          queueMicrotask(() => this.onopen?.(new Event("open")));
+        }
+        send() {}
+        close() {
+          this.readyState = 3;
+          this.onclose?.(new CloseEvent("close"));
+        }
+      }
+      window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    });
+
+    await page.goto("/");
+    await page.locator("#tab-history").click();
+    await expect(page.locator("#historyTableBody")).toContainText("run-001");
+    await page.locator('[data-run-action="download-pdf"][data-run="run-001"]').click();
+
+    await expect.poll(() => reportPdfCalls).toBe(1);
+    await page.waitForTimeout(200);
+    await expect(page.evaluate(() => {
+      const globalState = window as typeof window & { __revokeCallCount?: number };
+      return globalState.__revokeCallCount ?? 0;
+    })).resolves.toBe(0);
+    await page.waitForTimeout(1000);
+    await expect(page.evaluate(() => {
+      const globalState = window as typeof window & { __revokeCallCount?: number };
+      return globalState.__revokeCallCount ?? 0;
+    })).resolves.toBe(1);
+  });
