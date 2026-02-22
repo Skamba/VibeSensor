@@ -735,6 +735,8 @@ class UpdateManager:
         assets_verified = (
             bool(ui_source_hash)
             and bool(public_assets_hash)
+            and bool(public_build_source_hash)
+            and bool(public_build_assets_hash)
             and ui_source_hash == public_build_source_hash
             and public_assets_hash == public_build_assets_hash
         )
@@ -765,8 +767,10 @@ class UpdateManager:
                         "ui_source_hash": details["ui_source_hash"],
                         "public_assets_hash": details["public_assets_hash"],
                         "git_commit": details["commit"],
-                    }
-                ),
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
                 encoding="utf-8",
             )
             self._log("Generated runtime UI build metadata for update verification")
