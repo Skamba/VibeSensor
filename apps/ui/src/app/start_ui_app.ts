@@ -37,7 +37,8 @@ export function startUiApp(): void {
   };
   const SPECTRUM_DB_MIN = 0;
   const SPECTRUM_DB_MAX = 60;
-  const SPECTRUM_MIN_FLOOR_AMP_G = 1e-6;
+  const SPECTRUM_DB_REFERENCE_AMP_G = 1e-4;
+  const SPECTRUM_MIN_RENDER_AMP_G = 1e-6;
 
   function t(key: string, vars?: Record<string, any>): string { return I18N.get(state.lang, key, vars); }
   function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
@@ -231,7 +232,7 @@ export function startUiApp(): void {
 
   function renderSpectrum(): void {
     const fallbackFreq: number[] = [];
-    const entries: { id: string; label: string; color: string; values: number[]; floorAmp?: number }[] = [];
+    const entries: { id: string; label: string; color: string; values: number[] }[] = [];
     let targetFreq: number[] = [];
     const interpolateToTarget = (sourceFreq: number[], sourceVals: number[], desiredFreq: number[]): number[] => {
       if (!Array.isArray(sourceFreq) || !Array.isArray(sourceVals)) return [];
@@ -256,40 +257,16 @@ export function startUiApp(): void {
       if (!targetFreq.length) targetFreq = freqSlice;
       else if (freqSlice.length !== targetFreq.length || freqSlice.some((v, idx) => Math.abs(v - targetFreq[idx]) > 1e-6)) blended = interpolateToTarget(freqSlice, blended, targetFreq);
       if (!blended.length) continue;
-      const strength = (s.strength_metrics || {}) as Record<string, unknown>;
-      const floorCandidateRaw = typeof strength.noise_floor_amp_g === "number"
-        ? strength.noise_floor_amp_g
-        : strength.strength_floor_amp_g;
-      const floorCandidate = typeof floorCandidateRaw === "number" && Number.isFinite(floorCandidateRaw) && floorCandidateRaw > 0
-        ? floorCandidateRaw
-        : undefined;
-      entries.push({ id: client.id, label: client.name || client.id, color: colorForClient(i), values: blended, floorAmp: floorCandidate });
+      entries.push({ id: client.id, label: client.name || client.id, color: colorForClient(i), values: blended });
     }
-    const positiveBins = entries.flatMap((entry) => entry.values.filter((v) => Number.isFinite(v) && v > 0));
-    const floorFromBins = (() => {
-      if (!positiveBins.length) return SPECTRUM_MIN_FLOOR_AMP_G;
-      const sorted = [...positiveBins].sort((a, b) => a - b);
-      const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.1));
-      return Math.max(sorted[idx], SPECTRUM_MIN_FLOOR_AMP_G);
-    })();
-    const floorCandidates = entries
-      .map((entry) => entry.floorAmp)
-      .filter((v): v is number => typeof v === "number" && Number.isFinite(v) && v > 0)
-      .sort((a, b) => a - b);
-    const floorFromMetrics = floorCandidates.length
-      ? floorCandidates[Math.floor(floorCandidates.length / 2)]
-      : null;
-    const floorAmp = Math.max(
-      SPECTRUM_MIN_FLOOR_AMP_G,
-      floorFromBins,
-      floorFromMetrics ?? 0,
-    );
-    const toDbOverFloor = (amp: number): number => {
-      const safeAmp = Number.isFinite(amp) && amp > 0 ? amp : floorAmp;
-      const db = 20 * (Math.log10(safeAmp) - Math.log10(floorAmp));
+    const toDbAbsolute = (amp: number): number => {
+      const safeAmp = Number.isFinite(amp) && amp > 0
+        ? Math.max(amp, SPECTRUM_MIN_RENDER_AMP_G)
+        : SPECTRUM_MIN_RENDER_AMP_G;
+      const db = 20 * Math.log10(safeAmp / SPECTRUM_DB_REFERENCE_AMP_G);
       return Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
     };
-    for (const entry of entries) entry.values = entry.values.map(toDbOverFloor);
+    for (const entry of entries) entry.values = entry.values.map(toDbAbsolute);
     if (!state.spectrumPlot || state.spectrumPlot.getSeriesCount() !== entries.length + 1) recreateSpectrumPlot(entries);
     else state.spectrumPlot.ensurePlot(entries, { title: t("chart.spectrum_title"), axisHz: t("chart.axis.hz"), axisAmplitude: t("chart.axis.amplitude") }, [bandPlugin()]);
     state.spectrumPlot!.renderLegend(els.legend!, entries);
