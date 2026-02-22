@@ -13,6 +13,9 @@ accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 - ADXL345 I2C driver at 800 Hz with error-checked initialisation
 - Synthetic waveform fallback when the sensor is absent or I2C fails
 
+Authoritative protocol and port contract: `docs/protocol.md`
+(generated from code + shared contracts).
+
 ## Project Structure
 
 ```
@@ -56,6 +59,8 @@ Default network target already matches the Pi hotspot configuration:
 - Server IP `10.4.0.1`
 - UDP ports `9000/9001`
 
+For canonical message IDs/packet sizes and port values, use `docs/protocol.md`.
+
 Optional override via local file (recommended for non-default networks):
 
 1. Copy `include/vibesensor_network.local.example.h` to `include/vibesensor_network.local.h`
@@ -67,7 +72,36 @@ Optional override via local file (recommended for non-default networks):
 
 `include/vibesensor_network.local.h` is gitignored; do not commit secrets.
 
-Other firmware settings (client name / I2C) remain in `src/main.cpp`:
+Runtime-critical firmware parameters can be overridden without editing source by
+adding build flags in `platformio.ini` (`build_flags`).
+
+Supported override macros:
+
+- `VIBESENSOR_SAMPLE_RATE_HZ`
+- `VIBESENSOR_FRAME_SAMPLES`
+- `VIBESENSOR_SERVER_DATA_PORT`
+- `VIBESENSOR_SERVER_CONTROL_PORT`
+- `VIBESENSOR_CONTROL_PORT_BASE`
+- `VIBESENSOR_FRAME_QUEUE_LEN_TARGET`
+- `VIBESENSOR_FRAME_QUEUE_LEN_MIN`
+- `VIBESENSOR_WIFI_CONNECT_TIMEOUT_MS`
+- `VIBESENSOR_WIFI_RETRY_BACKOFF_MS`
+- `VIBESENSOR_WIFI_RETRY_INTERVAL_MS`
+- `VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS`
+- `VIBESENSOR_WIFI_SCAN_INTERVAL_MS`
+
+Example:
+
+```ini
+build_flags =
+  -D CORE_DEBUG_LEVEL=0
+  -D VIBESENSOR_ATOM_ESP32_PICO=1
+  -D VIBESENSOR_SAMPLE_RATE_HZ=1000
+  -D VIBESENSOR_FRAME_SAMPLES=250
+  -D VIBESENSOR_WIFI_RETRY_INTERVAL_MS=2500
+```
+
+Settings that still remain in `src/main.cpp`:
 
 - `kClientName`
 - I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)

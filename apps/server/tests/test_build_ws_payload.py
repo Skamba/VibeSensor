@@ -40,8 +40,14 @@ class _StubAnalysisSettings:
 
 
 class _StubMetricsLogger:
+    def __init__(self) -> None:
+        self.analysis_snapshot_calls = 0
+
     def analysis_snapshot(self) -> tuple[dict[str, object], list[dict[str, object]]]:
-        return {"run_id": "live"}, []
+        self.analysis_snapshot_calls += 1
+        return {"run_id": f"live-{self.analysis_snapshot_calls}"}, [
+            {"call": self.analysis_snapshot_calls}
+        ]
 
 
 class _StubDiagnostics:
@@ -161,6 +167,30 @@ def test_build_ws_payload_no_clients() -> None:
     assert payload["selected_client_id"] is None
     # selected should be empty dict when active is None
     assert payload["selected"] == {}
+
+
+def test_build_ws_payload_light_tick_reuses_cached_analysis_snapshot() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
+
+    state.build_ws_payload(selected_client="aaa")
+    metrics_logger = state.metrics_logger
+    assert isinstance(metrics_logger, _StubMetricsLogger)
+    assert metrics_logger.analysis_snapshot_calls == 1
+
+    state.ws_include_heavy = False
+    state.build_ws_payload(selected_client="aaa")
+
+    assert metrics_logger.analysis_snapshot_calls == 1
+
+
+def test_build_ws_payload_light_tick_without_cache_still_collects_snapshot() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
+
+    state.build_ws_payload(selected_client="aaa")
+    metrics_logger = state.metrics_logger
+
+    assert isinstance(metrics_logger, _StubMetricsLogger)
+    assert metrics_logger.analysis_snapshot_calls == 1
 
 
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:

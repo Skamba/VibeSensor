@@ -267,8 +267,25 @@ def map_summary(summary: dict) -> ReportTemplateData:
     date_str = str(report_date)[:19].replace("T", " ")
 
     # -- Top causes and findings --
-    top_causes = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
     findings = [f for f in summary.get("findings", []) if isinstance(f, dict)]
+    findings_non_ref = [
+        f for f in findings if not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
+    ]
+    top_causes_all = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
+    top_causes_non_ref = [
+        c
+        for c in top_causes_all
+        if not str(c.get("finding_id") or "").strip().upper().startswith("REF_")
+    ]
+    top_causes_actionable = [
+        c
+        for c in top_causes_non_ref
+        if str(c.get("source") or c.get("suspected_source") or "").strip().lower()
+        not in {"unknown_resonance", "unknown"}
+        or str(c.get("strongest_location") or "").strip().lower()
+        not in {"", "unknown", "not available", "n/a"}
+    ]
+    top_causes = top_causes_actionable or findings_non_ref or top_causes_non_ref or top_causes_all
     speed_stats = (
         summary.get("speed_stats", {}) if isinstance(summary.get("speed_stats"), dict) else {}
     )
@@ -283,11 +300,17 @@ def map_summary(summary: dict) -> ReportTemplateData:
     dom_phase = _dominant_phase(phase_info)
 
     # -- Observed signature --
-    if top_causes:
-        tc = top_causes[0]
+    primary_candidates = top_causes or findings_non_ref
+    if primary_candidates:
+        tc = primary_candidates[0]
         primary_system = _human_source(tc.get("source") or tc.get("suspected_source"), tr=tr)
         primary_location = origin_location or str(tc.get("strongest_location") or tr("UNKNOWN"))
-        primary_speed = str(tc.get("strongest_speed_band") or tr("UNKNOWN"))
+        primary_speed = str(
+            tc.get("strongest_speed_band")
+            or tc.get("speed_band")
+            or tc.get("dominant_speed_band")
+            or tr("UNKNOWN")
+        )
         conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
     else:
         primary_system = tr("UNKNOWN")
@@ -327,7 +350,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # -- System cards --
     system_cards: list[SystemFindingCard] = []
-    for cause in top_causes[:3]:
+    card_sources = top_causes or findings_non_ref or findings
+    for cause in card_sources[:3]:
         src = cause.get("source") or cause.get("suspected_source") or "unknown"
         src_human = _human_source(src, tr=tr)
         location = str(cause.get("strongest_location") or tr("UNKNOWN"))

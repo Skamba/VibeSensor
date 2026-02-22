@@ -76,6 +76,8 @@ class RuntimeState:
     processing_failure_count: int = 0
     ws_tick: int = 0
     ws_include_heavy: bool = True
+    cached_analysis_metadata: dict[str, object] | None = None
+    cached_analysis_samples: list[dict[str, object]] = field(default_factory=list)
 
     def on_ws_broadcast_tick(self) -> None:
         self.ws_tick += 1
@@ -104,7 +106,13 @@ class RuntimeState:
             "selected_client_id": active,
         }
         analysis_settings_snapshot = self.analysis_settings.snapshot()
-        analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
+        if self.ws_include_heavy or self.cached_analysis_metadata is None:
+            analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
+            self.cached_analysis_metadata = analysis_metadata
+            self.cached_analysis_samples = analysis_samples
+        else:
+            analysis_metadata = self.cached_analysis_metadata
+            analysis_samples = self.cached_analysis_samples
         if self.ws_include_heavy:
             payload["spectra"] = self.processor.multi_spectrum_payload(fresh_ids)
             if active is not None and active in fresh_ids:
@@ -296,6 +304,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             port=config.udp.data_port,
             registry=runtime.registry,
             processor=runtime.processor,
+            queue_maxsize=config.udp.data_queue_maxsize,
         )
         await runtime.control_plane.start()
         runtime.tasks = [

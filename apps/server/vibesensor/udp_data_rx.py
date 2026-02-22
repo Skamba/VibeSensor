@@ -10,6 +10,8 @@ from .registry import ClientRegistry
 
 LOGGER = logging.getLogger(__name__)
 
+_QUEUE_DROP_LOG_INTERVAL_S: float = 10.0
+
 
 class DataDatagramProtocol(asyncio.DatagramProtocol):
     def __init__(
@@ -17,6 +19,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         registry: ClientRegistry,
         processor: SignalProcessor,
         queue_maxsize: int = 1024,
+        queue_drop_log_interval_s: float = _QUEUE_DROP_LOG_INTERVAL_S,
     ):
         self.registry = registry
         self.processor = processor
@@ -24,6 +27,9 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         self._queue: asyncio.Queue[tuple[bytes, tuple[str, int]]] = asyncio.Queue(
             maxsize=max(1, queue_maxsize)
         )
+        self._queue_drop_log_interval_s = max(0.0, float(queue_drop_log_interval_s))
+        self._last_queue_drop_log_ts = 0.0
+        self._suppressed_queue_drop_warnings = 0
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
         self.transport = transport  # type: ignore[assignment]
@@ -34,13 +40,31 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         if data[0] != MSG_DATA:
             return
         try:
-            self._queue.put_nowait((bytes(data), addr))
+            self._queue.put_nowait((data, addr))
         except asyncio.QueueFull:
             client_id = extract_client_id_hex(data)
             self.registry.note_server_queue_drop(client_id)
-            LOGGER.warning(
-                "UDP ingest queue full; dropping packet from %s (client=%s)", addr, client_id
-            )
+            now = time.monotonic()
+            if (now - self._last_queue_drop_log_ts) >= self._queue_drop_log_interval_s:
+                suppressed = self._suppressed_queue_drop_warnings
+                self._suppressed_queue_drop_warnings = 0
+                self._last_queue_drop_log_ts = now
+                if suppressed > 0:
+                    LOGGER.warning(
+                        "UDP ingest queue full; dropping packet from %s (client=%s); "
+                        "suppressed %d additional drop warnings",
+                        addr,
+                        client_id,
+                        suppressed,
+                    )
+                else:
+                    LOGGER.warning(
+                        "UDP ingest queue full; dropping packet from %s (client=%s)",
+                        addr,
+                        client_id,
+                    )
+            else:
+                self._suppressed_queue_drop_warnings += 1
             return
 
     async def process_queue(self) -> None:
@@ -81,9 +105,14 @@ async def start_udp_data_receiver(
     port: int,
     registry: ClientRegistry,
     processor: SignalProcessor,
+    queue_maxsize: int = 1024,
 ) -> tuple[asyncio.DatagramTransport, asyncio.Task[None]]:
     loop = asyncio.get_running_loop()
-    protocol = DataDatagramProtocol(registry=registry, processor=processor)
+    protocol = DataDatagramProtocol(
+        registry=registry,
+        processor=processor,
+        queue_maxsize=queue_maxsize,
+    )
     transport, _ = await loop.create_datagram_endpoint(
         lambda: protocol,
         local_addr=(host, port),

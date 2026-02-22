@@ -6,12 +6,13 @@ import io
 import json
 import logging
 import zipfile
+from collections import OrderedDict
 from collections.abc import Iterator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 _MAX_REPORT_SAMPLES = 12_000
+_REPORT_PDF_CACHE_MAX_ENTRIES = 16
 
 
 def _bounded_sample(
@@ -110,6 +112,169 @@ class SensorRequest(BaseModel):
     location: str | None = None
 
 
+class HealthResponse(BaseModel):
+    status: str
+    processing_state: str
+    processing_failures: int
+
+
+class CarResponse(BaseModel):
+    id: str
+    name: str
+    type: str
+    aspects: dict[str, float]
+
+
+class CarsResponse(BaseModel):
+    cars: list[CarResponse]
+    activeCarId: str
+
+
+class SpeedSourceResponse(BaseModel):
+    speedSource: str
+    manualSpeedKph: float | None = None
+    obd2Config: dict[str, Any] = Field(default_factory=dict)
+    staleTimeoutS: float
+    fallbackMode: str
+
+
+class SpeedSourceStatusResponse(BaseModel):
+    gps_enabled: bool
+    connection_state: str
+    device: str | None = None
+    last_update_age_s: float | None = None
+    raw_speed_kmh: float | None = None
+    effective_speed_kmh: float | None = None
+    last_error: str | None = None
+    reconnect_delay_s: float | None = None
+    fallback_active: bool
+    stale_timeout_s: float
+    fallback_mode: str
+
+
+class SensorConfigResponse(BaseModel):
+    name: str
+    location: str
+
+
+class SensorsResponse(BaseModel):
+    sensorsByMac: dict[str, SensorConfigResponse]
+
+
+class LanguageResponse(BaseModel):
+    language: str
+
+
+class SpeedUnitResponse(BaseModel):
+    speedUnit: str
+
+
+class ClientsResponse(BaseModel):
+    clients: list[dict[str, Any]]
+
+
+class LocationOptionResponse(BaseModel):
+    code: str
+    label: str
+
+
+class ClientLocationsResponse(BaseModel):
+    locations: list[LocationOptionResponse]
+
+
+class AnalysisSettingsResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
+class IdentifyResponse(BaseModel):
+    status: str
+    cmd_seq: int | None = None
+
+
+class SetClientLocationResponse(BaseModel):
+    id: str
+    mac_address: str
+    location_code: str
+    name: str
+
+
+class RemoveClientResponse(BaseModel):
+    id: str
+    status: str
+
+
+class LoggingStatusResponse(BaseModel):
+    enabled: bool
+    current_file: str | None = None
+    run_id: str | None = None
+    write_error: str | None = None
+    analysis_in_progress: bool
+
+
+class HistoryListResponse(BaseModel):
+    runs: list[dict[str, Any]]
+
+
+class HistoryRunResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    run_id: str
+    status: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    analysis: dict[str, Any] | None = None
+
+
+class HistoryInsightsResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    run_id: str | None = None
+    status: str | None = None
+
+
+class DeleteHistoryRunResponse(BaseModel):
+    run_id: str
+    status: str
+
+
+class UpdateIssueResponse(BaseModel):
+    phase: str
+    message: str
+    detail: str
+
+
+class UpdateStatusResponse(BaseModel):
+    state: str
+    phase: str
+    started_at: float | None = None
+    finished_at: float | None = None
+    last_success_at: float | None = None
+    ssid: str
+    issues: list[UpdateIssueResponse]
+    log_tail: list[str]
+    exit_code: int | None = None
+
+
+class UpdateStartResponse(BaseModel):
+    status: str
+    ssid: str
+
+
+class UpdateCancelResponse(BaseModel):
+    cancelled: bool
+
+
+class CarLibraryBrandsResponse(BaseModel):
+    brands: list[str]
+
+
+class CarLibraryTypesResponse(BaseModel):
+    types: list[str]
+
+
+class CarLibraryModelsResponse(BaseModel):
+    models: list[str]
+
+
 def _normalize_client_id_or_400(client_id: str) -> str:
     try:
         return parse_client_id(client_id).hex()
@@ -138,6 +303,39 @@ def _sync_speed_source_to_gps(state: RuntimeState) -> None:
 
 def create_router(state: RuntimeState) -> APIRouter:
     router = APIRouter()
+    report_pdf_cache: OrderedDict[tuple[object, ...], bytes] = OrderedDict()
+    report_pdf_locks: dict[tuple[object, ...], asyncio.Lock] = {}
+
+    def _metadata_cache_token(metadata: object) -> str:
+        if not isinstance(metadata, dict):
+            return "{}"
+        return json.dumps(metadata, sort_keys=True, default=str, ensure_ascii=False)
+
+    def _report_pdf_cache_key(
+        run: dict[str, Any], run_id: str, requested_lang: str
+    ) -> tuple[object, ...]:
+        return (
+            run_id,
+            requested_lang,
+            run.get("analysis_version"),
+            run.get("analysis_completed_at"),
+            run.get("sample_count"),
+            _metadata_cache_token(run.get("metadata", {})),
+        )
+
+    def _cache_get(cache_key: tuple[object, ...]) -> bytes | None:
+        cached_pdf = report_pdf_cache.get(cache_key)
+        if cached_pdf is None:
+            return None
+        report_pdf_cache.move_to_end(cache_key)
+        return cached_pdf
+
+    def _cache_put(cache_key: tuple[object, ...], pdf: bytes) -> None:
+        report_pdf_cache[cache_key] = pdf
+        report_pdf_cache.move_to_end(cache_key)
+        while len(report_pdf_cache) > _REPORT_PDF_CACHE_MAX_ENTRIES:
+            evicted_key, _ = report_pdf_cache.popitem(last=False)
+            report_pdf_locks.pop(evicted_key, None)
 
     def _analysis_language(run: dict, requested: str | None) -> str:
         if isinstance(requested, str) and requested.strip():
@@ -156,8 +354,8 @@ def create_router(state: RuntimeState) -> APIRouter:
             for sample in batch:
                 yield normalize_sample_record(sample)
 
-    @router.get("/api/health")
-    async def health() -> dict:
+    @router.get("/api/health", response_model=HealthResponse)
+    async def health() -> HealthResponse:
         return {
             "status": "ok",
             "processing_state": state.processing_state,
@@ -166,18 +364,18 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     # -- new settings endpoints (3-tab model) ----------------------------------
 
-    @router.get("/api/settings/cars")
-    async def get_cars() -> dict:
+    @router.get("/api/settings/cars", response_model=CarsResponse)
+    async def get_cars() -> CarsResponse:
         return state.settings_store.get_cars()
 
-    @router.post("/api/settings/cars")
-    async def add_car(req: CarUpsertRequest) -> dict:
+    @router.post("/api/settings/cars", response_model=CarsResponse)
+    async def add_car(req: CarUpsertRequest) -> CarsResponse:
         result = state.settings_store.add_car(req.model_dump(exclude_none=True))
         _sync_active_car_to_analysis(state)
         return result
 
-    @router.put("/api/settings/cars/{car_id}")
-    async def update_car(car_id: str, req: CarUpsertRequest) -> dict:
+    @router.put("/api/settings/cars/{car_id}", response_model=CarsResponse)
+    async def update_car(car_id: str, req: CarUpsertRequest) -> CarsResponse:
         try:
             result = state.settings_store.update_car(car_id, req.model_dump(exclude_none=True))
         except ValueError as exc:
@@ -185,8 +383,8 @@ def create_router(state: RuntimeState) -> APIRouter:
         _sync_active_car_to_analysis(state)
         return result
 
-    @router.delete("/api/settings/cars/{car_id}")
-    async def delete_car(car_id: str) -> dict:
+    @router.delete("/api/settings/cars/{car_id}", response_model=CarsResponse)
+    async def delete_car(car_id: str) -> CarsResponse:
         try:
             result = state.settings_store.delete_car(car_id)
         except ValueError as exc:
@@ -194,8 +392,8 @@ def create_router(state: RuntimeState) -> APIRouter:
         _sync_active_car_to_analysis(state)
         return result
 
-    @router.post("/api/settings/cars/active")
-    async def set_active_car(req: ActiveCarRequest) -> dict:
+    @router.post("/api/settings/cars/active", response_model=CarsResponse)
+    async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
         car_id = req.carId
         try:
             result = state.settings_store.set_active_car(car_id)
@@ -204,34 +402,34 @@ def create_router(state: RuntimeState) -> APIRouter:
         _sync_active_car_to_analysis(state)
         return result
 
-    @router.get("/api/settings/speed-source")
-    async def get_speed_source() -> dict:
+    @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
+    async def get_speed_source() -> SpeedSourceResponse:
         return state.settings_store.get_speed_source()
 
-    @router.post("/api/settings/speed-source")
-    async def update_speed_source(req: SpeedSourceRequest) -> dict:
+    @router.post("/api/settings/speed-source", response_model=SpeedSourceResponse)
+    async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
         result = state.settings_store.update_speed_source(req.model_dump(exclude_none=True))
         _sync_speed_source_to_gps(state)
         return result
 
-    @router.get("/api/settings/speed-source/status")
-    async def get_speed_source_status() -> dict:
+    @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
+    async def get_speed_source_status() -> SpeedSourceStatusResponse:
         return state.gps_monitor.status_dict()
 
-    @router.get("/api/settings/sensors")
-    async def get_sensors() -> dict:
+    @router.get("/api/settings/sensors", response_model=SensorsResponse)
+    async def get_sensors() -> SensorsResponse:
         return {"sensorsByMac": state.settings_store.get_sensors()}
 
-    @router.post("/api/settings/sensors/{mac}")
-    async def update_sensor(mac: str, req: SensorRequest) -> dict:
+    @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)
+    async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:
         try:
             state.settings_store.set_sensor(mac, req.model_dump(exclude_none=True))
             return {"sensorsByMac": state.settings_store.get_sensors()}
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    @router.delete("/api/settings/sensors/{mac}")
-    async def delete_sensor(mac: str) -> dict:
+    @router.delete("/api/settings/sensors/{mac}", response_model=SensorsResponse)
+    async def delete_sensor(mac: str) -> SensorsResponse:
         try:
             removed = state.settings_store.remove_sensor(mac)
         except ValueError as exc:
@@ -240,24 +438,24 @@ def create_router(state: RuntimeState) -> APIRouter:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
         return {"sensorsByMac": state.settings_store.get_sensors()}
 
-    @router.get("/api/settings/language")
-    async def get_language() -> dict:
+    @router.get("/api/settings/language", response_model=LanguageResponse)
+    async def get_language() -> LanguageResponse:
         return {"language": state.settings_store.language}
 
-    @router.post("/api/settings/language")
-    async def set_language(req: LanguageRequest) -> dict:
+    @router.post("/api/settings/language", response_model=LanguageResponse)
+    async def set_language(req: LanguageRequest) -> LanguageResponse:
         try:
             language = state.settings_store.set_language(req.language)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"language": language}
 
-    @router.get("/api/settings/speed-unit")
-    async def get_speed_unit() -> dict:
+    @router.get("/api/settings/speed-unit", response_model=SpeedUnitResponse)
+    async def get_speed_unit() -> SpeedUnitResponse:
         return {"speedUnit": state.settings_store.speed_unit}
 
-    @router.post("/api/settings/speed-unit")
-    async def set_speed_unit(req: SpeedUnitRequest) -> dict:
+    @router.post("/api/settings/speed-unit", response_model=SpeedUnitResponse)
+    async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
         try:
             unit = state.settings_store.set_speed_unit(req.speedUnit)
         except ValueError as exc:
@@ -266,39 +464,45 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     # -- client & location endpoints -------------------------------------------
 
-    @router.get("/api/clients")
-    async def get_clients() -> dict:
+    @router.get("/api/clients", response_model=ClientsResponse)
+    async def get_clients() -> ClientsResponse:
         return {"clients": state.registry.snapshot_for_api()}
 
-    @router.get("/api/client-locations")
-    async def get_client_locations() -> dict:
+    @router.get("/api/client-locations", response_model=ClientLocationsResponse)
+    async def get_client_locations() -> ClientLocationsResponse:
         return {"locations": all_locations()}
 
-    @router.post("/api/simulator/speed-override")
-    async def set_simulator_speed_override(req: SpeedSourceRequest) -> dict:
+    @router.post("/api/simulator/speed-override", response_model=SpeedSourceResponse)
+    async def set_simulator_speed_override(req: SpeedSourceRequest) -> SpeedSourceResponse:
         return await update_speed_source(req)
 
-    @router.get("/api/analysis-settings")
-    async def get_analysis_settings() -> dict:
+    @router.get("/api/analysis-settings", response_model=AnalysisSettingsResponse)
+    async def get_analysis_settings() -> AnalysisSettingsResponse:
         return state.analysis_settings.snapshot()
 
-    @router.post("/api/analysis-settings")
-    async def set_analysis_settings(req: AnalysisSettingsRequest) -> dict:
+    @router.post("/api/analysis-settings", response_model=AnalysisSettingsResponse)
+    async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
         changes = req.model_dump(exclude_none=True)
         if changes:
             state.settings_store.update_active_car_aspects(changes)
             _sync_active_car_to_analysis(state)
         return state.analysis_settings.snapshot()
 
-    @router.post("/api/clients/{client_id}/identify")
-    async def identify_client(client_id: str, req: IdentifyRequest) -> dict:
+    @router.post("/api/clients/{client_id}/identify", response_model=IdentifyResponse)
+    async def identify_client(client_id: str, req: IdentifyRequest) -> IdentifyResponse:
         ok, cmd_seq = state.control_plane.send_identify(client_id, req.duration_ms)
         if not ok:
             raise HTTPException(status_code=404, detail="Client missing or no control address")
         return {"status": "sent", "cmd_seq": cmd_seq}
 
-    @router.post("/api/clients/{client_id}/location")
-    async def set_client_location(client_id: str, req: SetLocationRequest) -> dict:
+    @router.post(
+        "/api/clients/{client_id}/location",
+        response_model=SetClientLocationResponse,
+    )
+    async def set_client_location(
+        client_id: str,
+        req: SetLocationRequest,
+    ) -> SetClientLocationResponse:
         normalized_client_id = _normalize_client_id_or_400(client_id)
         if state.registry.get(normalized_client_id) is None:
             raise HTTPException(status_code=404, detail="Unknown client_id")
@@ -324,43 +528,43 @@ def create_router(state: RuntimeState) -> APIRouter:
             "name": updated.name,
         }
 
-    @router.delete("/api/clients/{client_id}")
-    async def remove_client(client_id: str) -> dict:
+    @router.delete("/api/clients/{client_id}", response_model=RemoveClientResponse)
+    async def remove_client(client_id: str) -> RemoveClientResponse:
         normalized_client_id = _normalize_client_id_or_400(client_id)
         removed = state.registry.remove_client(normalized_client_id)
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown client_id")
         return {"id": normalized_client_id, "status": "removed"}
 
-    @router.get("/api/logging/status")
-    async def get_logging_status() -> dict:
+    @router.get("/api/logging/status", response_model=LoggingStatusResponse)
+    async def get_logging_status() -> LoggingStatusResponse:
         return state.metrics_logger.status()
 
-    @router.post("/api/logging/start")
-    async def start_logging() -> dict:
+    @router.post("/api/logging/start", response_model=LoggingStatusResponse)
+    async def start_logging() -> LoggingStatusResponse:
         state.live_diagnostics.reset()
         return state.metrics_logger.start_logging()
 
-    @router.post("/api/logging/stop")
-    async def stop_logging() -> dict:
+    @router.post("/api/logging/stop", response_model=LoggingStatusResponse)
+    async def stop_logging() -> LoggingStatusResponse:
         return state.metrics_logger.stop_logging()
 
-    @router.get("/api/history")
-    async def get_history() -> dict:
+    @router.get("/api/history", response_model=HistoryListResponse)
+    async def get_history() -> HistoryListResponse:
         return {"runs": state.history_db.list_runs()}
 
-    @router.get("/api/history/{run_id}")
-    async def get_history_run(run_id: str) -> dict:
+    @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)
+    async def get_history_run(run_id: str) -> HistoryRunResponse:
         run = state.history_db.get_run(run_id)
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found")
         return run
 
-    @router.get("/api/history/{run_id}/insights")
+    @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
         lang: str | None = Query(default=None),
-    ) -> dict:
+    ) -> HistoryInsightsResponse:
         run = state.history_db.get_run(run_id)
         if run is None:
             raise HTTPException(status_code=404, detail="Run not found")
@@ -407,8 +611,8 @@ def create_router(state: RuntimeState) -> APIRouter:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
         return analysis
 
-    @router.delete("/api/history/{run_id}")
-    async def delete_history_run(run_id: str) -> dict:
+    @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
+    async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
         active_run_id = state.history_db.get_active_run_id()
         if active_run_id == run_id:
             raise HTTPException(
@@ -433,33 +637,41 @@ def create_router(state: RuntimeState) -> APIRouter:
         if not isinstance(metadata, dict):
             metadata = {}
         requested_lang = _analysis_language(run, lang)
+        cache_key = _report_pdf_cache_key(run, run_id, requested_lang)
+        cached_pdf = _cache_get(cache_key)
+        if cached_pdf is not None:
+            return Response(
+                content=cached_pdf,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+            )
 
         def _build_pdf() -> tuple[bytes, int, int, int]:
-            from .report.plot_data import _plot_data
-
             samples, total_samples, stride = _bounded_sample(
                 _iter_normalized_samples(run_id, batch_size=2048),
                 max_items=_MAX_REPORT_SAMPLES,
             )
-            persisted_lang = str(analysis.get("lang") or "en")
-            if persisted_lang == requested_lang:
-                # Reuse persisted analysis; only recompute plot data from samples
-                report_model = dict(analysis)
-                report_model["samples"] = samples
-                report_model["plots"] = _plot_data(report_model)
-            else:
-                # Language differs from persisted analysis – full recompute needed
-                report_model = summarize_run_data(
-                    metadata,
-                    samples,
-                    lang=requested_lang,
-                    file_name=run_id,
-                    include_samples=True,
-                )
+            report_model = summarize_run_data(
+                metadata,
+                samples,
+                lang=requested_lang,
+                file_name=run_id,
+                include_samples=True,
+            )
             pdf = build_report_pdf(report_model)
             return pdf, total_samples, len(samples), stride
 
-        pdf, total_samples, analyzed, stride = await asyncio.to_thread(_build_pdf)
+        build_lock = report_pdf_locks.setdefault(cache_key, asyncio.Lock())
+        async with build_lock:
+            cached_pdf = _cache_get(cache_key)
+            if cached_pdf is not None:
+                return Response(
+                    content=cached_pdf,
+                    media_type="application/pdf",
+                    headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+                )
+            pdf, total_samples, analyzed, stride = await asyncio.to_thread(_build_pdf)
+            _cache_put(cache_key, pdf)
         if stride > 1:
             LOGGER.info(
                 "PDF report sample downsampling applied for run %s: total=%d analyzed=%d stride=%d",
@@ -555,12 +767,12 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     # -- system update endpoints -----------------------------------------------
 
-    @router.get("/api/settings/update/status")
-    async def get_update_status() -> dict:
+    @router.get("/api/settings/update/status", response_model=UpdateStatusResponse)
+    async def get_update_status() -> UpdateStatusResponse:
         return state.update_manager.status.to_dict()
 
-    @router.post("/api/settings/update/start")
-    async def start_update(req: UpdateStartRequest) -> dict:
+    @router.post("/api/settings/update/start", response_model=UpdateStartResponse)
+    async def start_update(req: UpdateStartRequest) -> UpdateStartResponse:
         try:
             state.update_manager.start(req.ssid, req.password)
         except ValueError as exc:
@@ -569,27 +781,27 @@ def create_router(state: RuntimeState) -> APIRouter:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {"status": "started", "ssid": req.ssid}
 
-    @router.post("/api/settings/update/cancel")
-    async def cancel_update() -> dict:
+    @router.post("/api/settings/update/cancel", response_model=UpdateCancelResponse)
+    async def cancel_update() -> UpdateCancelResponse:
         cancelled = state.update_manager.cancel()
         return {"cancelled": cancelled}
 
-    @router.get("/api/car-library/brands")
-    async def get_car_library_brands() -> dict:
+    @router.get("/api/car-library/brands", response_model=CarLibraryBrandsResponse)
+    async def get_car_library_brands() -> CarLibraryBrandsResponse:
         from .car_library import get_brands
 
         return {"brands": get_brands()}
 
-    @router.get("/api/car-library/types")
-    async def get_car_library_types(brand: str = Query(...)) -> dict:
+    @router.get("/api/car-library/types", response_model=CarLibraryTypesResponse)
+    async def get_car_library_types(brand: str = Query(...)) -> CarLibraryTypesResponse:
         from .car_library import get_types_for_brand
 
         return {"types": get_types_for_brand(brand)}
 
-    @router.get("/api/car-library/models")
+    @router.get("/api/car-library/models", response_model=CarLibraryModelsResponse)
     async def get_car_library_models(
         brand: str = Query(...), car_type: str = Query(..., alias="type")
-    ) -> dict:
+    ) -> CarLibraryModelsResponse:
         from .car_library import get_models_for_brand_type
 
         return {"models": get_models_for_brand_type(brand, car_type)}

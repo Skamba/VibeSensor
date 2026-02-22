@@ -840,13 +840,35 @@ def _build_canvas_pdf(summary: dict) -> bytes:
 
     # Compute location hotspot rows for the car diagram
     findings = summary.get("findings", [])
+    actionable_findings = [
+        f
+        for f in findings
+        if isinstance(f, dict)
+        and not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
+    ]
     location_rows, _, _, _ = location_hotspots(
         summary.get("samples", []),
         findings,
         tr=tr_fn,
         text_fn=text_fn,
     )
-    top_causes = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
+    top_causes_all = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
+    top_causes_non_ref = [
+        c
+        for c in top_causes_all
+        if not str(c.get("finding_id") or "").strip().upper().startswith("REF_")
+    ]
+    top_causes_actionable = [
+        c
+        for c in top_causes_non_ref
+        if str(c.get("source") or c.get("suspected_source") or "").strip().lower()
+        not in {"unknown_resonance", "unknown"}
+        or str(c.get("strongest_location") or "").strip().lower()
+        not in {"", "unknown", "not available", "n/a"}
+    ]
+    top_causes = (
+        top_causes_actionable or actionable_findings or top_causes_non_ref or top_causes_all
+    )
 
     buf = BytesIO()
     c = Canvas(buf, pagesize=PAGE_SIZE, pageCompression=0)

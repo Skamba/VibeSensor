@@ -1,5 +1,5 @@
 # VibeSensor configuration file.
-# All values shown below match the built-in defaults (see config.py DEFAULT_CONFIG).
+# All values shown below match built-in defaults from vibesensor.config.documented_default_config().
 # Copy to config.yaml and modify only the fields you need to override.
 
 ap:
@@ -24,6 +24,7 @@ server:
 udp:
   data_listen: 0.0.0.0:9000
   control_listen: 0.0.0.0:9001
+  data_queue_maxsize: 1024
 
 processing:
   sample_rate_hz: 800
@@ -35,14 +36,15 @@ processing:
   fft_n: 2048
   spectrum_max_hz: 200
   client_ttl_seconds: 120
+  accel_scale_g_per_lsb: null
 
 logging:
   log_metrics: true
   metrics_log_path: data/metrics.jsonl
-  persist_history_db: true
-  history_db_path: data/history.db
   metrics_log_hz: 4
   sensor_model: ADXL345
+  persist_history_db: true
+  history_db_path: data/history.db
 
 storage:
   clients_json_path: data/clients.json

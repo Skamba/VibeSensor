@@ -6,6 +6,7 @@ import json
 import zipfile
 from dataclasses import dataclass, field
 from typing import Any
+from unittest.mock import patch
 
 import pytest
 from fastapi import FastAPI, WebSocketDisconnect
@@ -46,16 +47,24 @@ class _FakeHistoryDB:
     metadata: dict[str, Any]
     samples: list[dict[str, Any]]
     analysis: dict[str, Any]
+    analysis_version: int | None = 1
+    analysis_completed_at: str | None = "2026-01-01T00:01:00Z"
 
     def get_run(self, run_id: str) -> dict[str, Any] | None:
         if run_id != "run-1":
             return None
-        return {
+        result = {
             "run_id": run_id,
             "status": "complete",
             "metadata": self.metadata,
             "analysis": self.analysis,
         }
+        if self.analysis_version is not None:
+            result["analysis_version"] = self.analysis_version
+        if self.analysis_completed_at is not None:
+            result["analysis_completed_at"] = self.analysis_completed_at
+        result["sample_count"] = len(self.samples)
+        return result
 
     def iter_run_samples(self, run_id: str, batch_size: int = 1000):
         if run_id != "run-1":
@@ -212,6 +221,70 @@ async def test_report_pdf_respects_lang_query() -> None:
     assert en.body.startswith(b"%PDF")
     assert nl.body.startswith(b"%PDF")
     assert en.body != nl.body
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_version() -> None:
+    router, _ = _make_router_and_state(language="en")
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    call_count = 0
+
+    def _fake_pdf(_summary: dict[str, Any]) -> bytes:
+        nonlocal call_count
+        call_count += 1
+        return b"%PDF-cached"
+
+    with patch("vibesensor.api.build_report_pdf", side_effect=_fake_pdf):
+        first = await endpoint("run-1", "en")
+        second = await endpoint("run-1", "en")
+
+    assert call_count == 1
+    assert first.body == second.body == b"%PDF-cached"
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> None:
+    metadata = {
+        "run_id": "run-1",
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "end_time_utc": "2026-01-01T00:00:20Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "en",
+    }
+    samples = [_sample(i) for i in range(20)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+
+    @dataclass
+    class _VersionFlipDB(_FakeHistoryDB):
+        versions: list[int] = field(default_factory=lambda: [1, 2])
+        _idx: int = 0
+
+        def get_run(self, run_id: str) -> dict[str, Any] | None:
+            result = super().get_run(run_id)
+            if result is None:
+                return None
+            version = self.versions[min(self._idx, len(self.versions) - 1)]
+            self._idx += 1
+            result["analysis_version"] = version
+            return result
+
+    state = _FakeState(_VersionFlipDB(metadata, samples, analysis), _FakeWsHub())
+    router = create_router(state)
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    call_count = 0
+
+    def _fake_pdf(_summary: dict[str, Any]) -> bytes:
+        nonlocal call_count
+        call_count += 1
+        return b"%PDF-versioned"
+
+    with patch("vibesensor.api.build_report_pdf", side_effect=_fake_pdf):
+        await endpoint("run-1", "en")
+        await endpoint("run-1", "en")
+
+    assert call_count == 2
 
 
 @pytest.mark.asyncio

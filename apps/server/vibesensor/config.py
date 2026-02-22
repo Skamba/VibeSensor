@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import yaml
+from vibesensor_shared.contracts import NETWORK_PORTS
 
 SERVER_DIR = Path(__file__).resolve().parents[1]
 """Root of the ``apps/server/`` package tree."""
 
 REPO_DIR = SERVER_DIR.parents[1]
 LOGGER = logging.getLogger(__name__)
+
+DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
+DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "ap": {
@@ -31,7 +36,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
         },
     },
     "server": {"host": "0.0.0.0", "port": 80},
-    "udp": {"data_listen": "0.0.0.0:9000", "control_listen": "0.0.0.0:9001"},
+    "udp": {
+        "data_listen": f"0.0.0.0:{DEFAULT_UDP_DATA_PORT}",
+        "control_listen": f"0.0.0.0:{DEFAULT_UDP_CONTROL_PORT}",
+        "data_queue_maxsize": 1024,
+    },
     "processing": {
         "sample_rate_hz": 800,
         "waveform_seconds": 8,
@@ -56,6 +65,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "gps": {"gps_enabled": False},
 }
+
+
+def documented_default_config() -> dict[str, Any]:
+    """Return runtime defaults in the shape documented by config.example.yaml."""
+    defaults = deepcopy(DEFAULT_CONFIG)
+    metrics_log_path = Path(str(defaults["logging"]["metrics_log_path"]))
+    defaults["logging"]["history_db_path"] = str(metrics_log_path.parent / "history.db")
+    return defaults
 
 
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -115,6 +132,7 @@ class UDPConfig:
     data_port: int
     control_host: str
     control_port: int
+    data_queue_maxsize: int
 
 
 @dataclass(slots=True)
@@ -239,6 +257,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             data_port=data_port,
             control_host=control_host,
             control_port=control_port,
+            data_queue_maxsize=max(1, int(merged["udp"].get("data_queue_maxsize", 1024))),
         ),
         processing=ProcessingConfig(
             sample_rate_hz=int(merged["processing"]["sample_rate_hz"]),

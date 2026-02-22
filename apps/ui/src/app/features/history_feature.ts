@@ -30,6 +30,7 @@ export interface HistoryFeature {
 
 export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   const { state, els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
+  const DOWNLOAD_REVOKE_DELAY_MS = 1000;
 
   function ensureRunDetail(runId: string) {
     if (!state.runDetailsById[runId]) {
@@ -329,7 +330,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), DOWNLOAD_REVOKE_DELAY_MS);
   }
 
   async function downloadReportPdfForRun(runId: string): Promise<void> {
