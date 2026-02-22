@@ -18,6 +18,7 @@ from builders import (
     SPEED_LOW,
     SPEED_MID,
     SPEED_VERY_HIGH,
+    assert_confidence_between,
     assert_no_wheel_fault,
     extract_top,
     make_fault_samples,
@@ -26,6 +27,7 @@ from builders import (
     make_ramp_samples,
     make_transient_samples,
     run_analysis,
+    top_confidence,
     wheel_hz,
 )
 
@@ -70,6 +72,7 @@ def test_fault_with_transient_preserves_diagnosis(corner: str, speed: float) -> 
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"Lost diagnosis for {corner}@{speed} with transient"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@{speed} w/transient")
 
 
 # ---------------------------------------------------------------------------
@@ -182,6 +185,7 @@ def test_transient_amplitude_deweighting(corner: str, label: str, amp: float, vd
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"Lost fault with {label} spike on {corner}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} spike={label}")
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +226,7 @@ def test_phased_onset_with_transient(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"Phased+transient lost {corner}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"phased+transient {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -381,6 +386,7 @@ def test_fault_plus_transient_very_high_speed(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"Lost fault at 120 + transient for {corner}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120+transient")
 
 
 # ---------------------------------------------------------------------------
@@ -420,3 +426,4 @@ def test_transient_duration_variation(corner: str, n_spike: int) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"Lost fault with {n_spike}-sample transient {corner}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} spike_n={n_spike}")

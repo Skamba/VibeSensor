@@ -22,6 +22,7 @@ Public API
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 
 from vibesensor_core.strength_bands import bucket_for_strength
@@ -86,6 +87,16 @@ SPEED_LOW = 30.0  # km/h
 SPEED_MID = 60.0
 SPEED_HIGH = 100.0
 SPEED_VERY_HIGH = 120.0
+
+
+# ---------------------------------------------------------------------------
+# Stable deterministic hash (replaces Python hash() which varies per process)
+# ---------------------------------------------------------------------------
+
+
+def _stable_hash(s: str) -> int:
+    """Return a stable positive integer derived from *s* (deterministic across runs)."""
+    return int(hashlib.md5(s.encode()).hexdigest(), 16)
 
 
 # ---------------------------------------------------------------------------
@@ -198,7 +209,7 @@ def make_noise_samples(
         t = start_t_s + i * dt_s
         for sensor in sensors:
             # Deterministic but varied noise peaks per sensor
-            offset = abs(hash(sensor)) % 20
+            offset = _stable_hash(sensor) % 20
             peaks = [
                 {"hz": 15.0 + offset, "amp": noise_amp},
                 {"hz": 34.0, "amp": noise_amp * 0.7},
@@ -340,8 +351,8 @@ def make_diffuse_samples(
     for i in range(n_samples):
         t = start_t_s + i * dt_s
         for sensor in sensors:
-            # Small per-sensor jitter for realism
-            jitter = (abs(hash(sensor + str(i))) % 10) * 0.001
+            # Small per-sensor jitter for realism (stable across runs)
+            jitter = (_stable_hash(sensor + str(i)) % 10) * 0.001
             peaks = [
                 {"hz": freq_hz, "amp": amp + jitter},
                 {"hz": freq_hz * 2.0, "amp": (amp + jitter) * 0.3},
@@ -373,7 +384,7 @@ def make_idle_samples(
         t = start_t_s + i * dt_s
         for sensor in sensors:
             peaks = [
-                {"hz": 12.5 + (abs(hash(sensor)) % 10), "amp": noise_amp},
+                {"hz": 12.5 + (_stable_hash(sensor) % 10), "amp": noise_amp},
                 {"hz": 25.0, "amp": noise_amp * 0.5},
             ]
             samples.append(
@@ -408,7 +419,7 @@ def make_ramp_samples(
         speed = speed_start + (speed_end - speed_start) * ratio
         for sensor in sensors:
             peaks = [
-                {"hz": 15.0 + (abs(hash(sensor)) % 20), "amp": noise_amp},
+                {"hz": 15.0 + (_stable_hash(sensor) % 20), "amp": noise_amp},
                 {"hz": 60.0, "amp": noise_amp * 0.6},
             ]
             samples.append(
@@ -494,7 +505,7 @@ def top_corner_label(summary: dict[str, Any]) -> str | None:
     top = extract_top(summary)
     if not top:
         return None
-    return top.get("location_hotspot") or top.get("suspected_source")
+    return top.get("strongest_location") or top.get("location_hotspot") or top.get("suspected_source")
 
 
 def top_confidence(summary: dict[str, Any]) -> float:
@@ -552,5 +563,46 @@ def assert_no_wheel_fault(summary: dict[str, Any], msg: str = "") -> None:
         src = _cause_source(c)
         conf = float(c.get("confidence", 0))
         if conf >= 0.40 and "wheel" in src:
-            loc = c.get("location_hotspot", "")
+            loc = c.get("strongest_location") or c.get("location_hotspot", "")
             raise AssertionError(f"Unexpected wheel fault: {src} @ {loc} conf={conf:.2f}. {msg}")
+
+
+# ---------------------------------------------------------------------------
+# Additional assertion helpers
+# ---------------------------------------------------------------------------
+
+
+def assert_wheel_source(summary: dict[str, Any], msg: str = "") -> None:
+    """Assert the top cause identifies a wheel/tire source."""
+    top = extract_top(summary)
+    assert top is not None, f"No top cause found. {msg}"
+    src = _cause_source(top)
+    assert "wheel" in src or "tire" in src, f"Expected wheel/tire source, got '{src}'. {msg}"
+
+
+def assert_source_is(summary: dict[str, Any], expected: str, msg: str = "") -> None:
+    """Assert the top cause's source contains *expected* (case-insensitive)."""
+    top = extract_top(summary)
+    assert top is not None, f"No top cause found. {msg}"
+    src = _cause_source(top)
+    assert expected.lower() in src, f"Expected '{expected}' in source, got '{src}'. {msg}"
+
+
+def assert_confidence_between(
+    summary: dict[str, Any], lo: float, hi: float, msg: str = ""
+) -> None:
+    """Assert top cause confidence is within [lo, hi]."""
+    conf = top_confidence(summary)
+    assert lo <= conf <= hi, f"Confidence {conf:.3f} not in [{lo}, {hi}]. {msg}"
+
+
+def assert_strongest_location(
+    summary: dict[str, Any], expected_sensor: str, msg: str = ""
+) -> None:
+    """Assert the top cause's strongest_location matches *expected_sensor*."""
+    top = extract_top(summary)
+    assert top is not None, f"No top cause found. {msg}"
+    loc = (top.get("strongest_location") or "").lower()
+    assert loc == expected_sensor.lower(), (
+        f"Expected strongest_location='{expected_sensor}', got '{loc}'. {msg}"
+    )

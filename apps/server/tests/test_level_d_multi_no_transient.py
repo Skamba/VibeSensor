@@ -21,7 +21,11 @@ from builders import (
     SPEED_LOW,
     SPEED_MID,
     SPEED_VERY_HIGH,
+    assert_confidence_between,
+    assert_corner_detected,
     assert_no_wheel_fault,
+    assert_strongest_location,
+    assert_wheel_source,
     extract_top,
     make_diffuse_samples,
     make_fault_samples,
@@ -29,6 +33,7 @@ from builders import (
     make_noise_samples,
     make_ramp_samples,
     run_analysis,
+    top_confidence,
 )
 
 # ---------------------------------------------------------------------------
@@ -67,7 +72,9 @@ def test_4sensor_fault_corner_speed(corner: str, speed: float) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for 4-sensor {corner}@{speed}"
-    assert float(top.get("confidence", 0)) > 0.1, f"Low conf 4-sensor {corner}@{speed}"
+    assert_wheel_source(summary, msg=f"4s {corner}@{speed}")
+    assert_strongest_location(summary, sensor, msg=f"4s {corner}@{speed}")
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"4s {corner}@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +119,8 @@ def test_2sensor_localization(sensors: list[str], fault_corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for 2-sensor {fault_corner}"
+    assert_wheel_source(summary, msg=f"2s {fault_corner}")
+    assert_strongest_location(summary, fault_sensor, msg=f"2s {fault_corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -134,12 +143,8 @@ def test_8sensor_fault_localization(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for 8-sensor {corner}"
-    # Non-wheel sensor should NOT be the top source
-    loc = (top.get("location_hotspot") or "").lower()
-    for nw in ["engine", "driveshaft", "transmission", "trunk", "seat", "subframe"]:
-        assert nw not in loc or float(top.get("confidence", 0)) < 0.3, (
-            f"Non-wheel '{loc}' incorrectly selected as fault source for {corner}"
-        )
+    assert_wheel_source(summary, msg=f"8s {corner}")
+    assert_strongest_location(summary, sensor, msg=f"8s {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -162,6 +167,8 @@ def test_12sensor_fault_localization(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for 12-sensor {corner}"
+    assert_wheel_source(summary, msg=f"12s {corner}")
+    assert_strongest_location(summary, sensor, msg=f"12s {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -200,8 +207,53 @@ def test_confidence_scales_with_sensor_count(sensors: list[str], label: str) -> 
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for {label}"
-    conf = float(top.get("confidence", 0))
-    assert conf > 0.05, f"Confidence too low for {label}: {conf}"
+    assert_wheel_source(summary, msg=label)
+    assert_confidence_between(summary, 0.10, 1.0, msg=label)
+
+
+def test_sensor_count_monotonic() -> None:
+    """Confidence for wheel/tire should not decrease as sensors are added."""
+    confs: list[float] = []
+    for sensors in [_2_SENSORS_FL_RR, _4_SENSORS, _8_SENSORS]:
+        samples = make_fault_samples(
+            fault_sensor=SENSOR_FL,
+            sensors=sensors,
+            speed_kmh=SPEED_HIGH,
+            n_samples=35,
+            fault_amp=0.07,
+            fault_vib_db=28.0,
+        )
+        summary = run_analysis(samples)
+        confs.append(top_confidence(summary))
+    # More sensors should maintain or improve confidence
+    assert confs[-1] >= confs[0] - 0.05, (
+        f"Sensor-count monotonicity violated: {confs}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# D.7b – Amplitude monotonic with 4 sensors (1 case)
+# ---------------------------------------------------------------------------
+
+
+def test_4sensor_amplitude_monotonic() -> None:
+    """Wheel/tire confidence should increase with fault amplitude on 4 sensors."""
+    confs: list[float] = []
+    for amp, vdb in [(0.03, 18.0), (0.06, 26.0), (0.12, 34.0)]:
+        samples = make_fault_samples(
+            fault_sensor=SENSOR_FL,
+            sensors=_4_SENSORS,
+            speed_kmh=SPEED_MID,
+            n_samples=40,
+            fault_amp=amp,
+            fault_vib_db=vdb,
+        )
+        summary = run_analysis(samples)
+        confs.append(top_confidence(summary))
+    # Highest amplitude should produce at least as much confidence as lowest
+    assert confs[-1] >= confs[0] - 0.05, (
+        f"Amplitude monotonicity violated: {confs}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -225,6 +277,8 @@ def test_4sensor_transfer_path(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for transfer-path {corner}"
+    assert_wheel_source(summary, msg=f"transfer {corner}")
+    assert_strongest_location(summary, sensor, msg=f"transfer {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -257,6 +311,8 @@ def test_4sensor_phased_onset(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"Phased 4sensor lost {corner}"
+    assert_wheel_source(summary, msg=f"phased 4s {corner}")
+    assert_strongest_location(summary, sensor, msg=f"phased 4s {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -322,6 +378,8 @@ def test_4sensor_speed_sweep(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for 4sensor sweep {corner}"
+    assert_wheel_source(summary, msg=f"sweep 4s {corner}")
+    assert_strongest_location(summary, CORNER_SENSORS[corner], msg=f"sweep 4s {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -370,3 +428,5 @@ def test_4sensor_very_high_speed(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for 4sensor {corner}@120"
+    assert_wheel_source(summary, msg=f"4s {corner}@120")
+    assert_strongest_location(summary, sensor, msg=f"4s {corner}@120")

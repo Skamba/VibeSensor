@@ -16,6 +16,7 @@ from builders import (
     SPEED_LOW,
     SPEED_MID,
     SPEED_VERY_HIGH,
+    assert_confidence_between,
     assert_no_wheel_fault,
     extract_top,
     make_diffuse_samples,
@@ -24,6 +25,7 @@ from builders import (
     make_noise_samples,
     make_ramp_samples,
     run_analysis,
+    top_confidence,
 )
 
 # ---------------------------------------------------------------------------
@@ -50,7 +52,7 @@ def test_single_sensor_fault_corner_speed(corner: str, speed: float) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner}@{speed}"
-    assert float(top.get("confidence", 0)) > 0.1, f"Low confidence for {corner}@{speed}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@{speed}")
 
 
 # ---------------------------------------------------------------------------
@@ -101,6 +103,7 @@ def test_single_sensor_amplitude_scaling(
         pass
     else:
         assert top is not None, f"No finding for {corner} at amp={amp_label}"
+        assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} amp={amp_label}")
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +136,7 @@ def test_single_sensor_phased_onset(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for phased {corner}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"phased {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +172,7 @@ def test_single_sensor_very_high_speed(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner}@120"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120")
 
 
 # ---------------------------------------------------------------------------
@@ -216,6 +221,7 @@ def test_single_sensor_harmonics_1x_2x_3x(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner} with 1x+2x+3x"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} 1x+2x+3x")
 
 
 # ---------------------------------------------------------------------------
@@ -239,6 +245,7 @@ def test_single_sensor_long_steady(corner: str, n_samples: int) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for long {corner}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"long {corner} n={n_samples}")
 
 
 # ---------------------------------------------------------------------------
@@ -290,6 +297,7 @@ def test_single_sensor_speed_sweep_fault(corner: str) -> None:
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for speed-sweep {corner}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"sweep {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -314,3 +322,4 @@ def test_single_sensor_noise_floor_variation(corner: str, noise_amp: float) -> N
     summary = run_analysis(samples)
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner} noise={noise_amp}"
+    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} noise={noise_amp}")
