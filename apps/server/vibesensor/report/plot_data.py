@@ -16,6 +16,7 @@ from .helpers import (
     _run_noise_baseline_g,
     _sample_top_peaks,
 )
+from .phase_segmentation import segment_run_phases as _segment_run_phases
 
 
 def _aggregate_fft_spectrum(
@@ -349,20 +350,23 @@ def _top_peaks_table_rows(
 def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     samples: list[dict[str, Any]] = summary.get("samples", [])
     raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
-    vib_mag_points: list[tuple[float, float]] = []
+    vib_mag_points: list[tuple[float, float, str]] = []  # (t_s, vib_db, phase_label)
     dominant_freq_points: list[tuple[float, float]] = []
     speed_amp_points: list[tuple[float, float]] = []
     matched_by_finding: list[dict[str, object]] = []
     freq_vs_speed_by_finding: list[dict[str, object]] = []
     steady_speed_distribution: dict[str, float] | None = None
 
-    for sample in samples:
+    per_sample_phases, phase_segs = _segment_run_phases(samples)
+
+    for i, sample in enumerate(samples):
         t_s = _as_float(sample.get("t_s"))
         if t_s is None:
             continue
+        phase_label: str = per_sample_phases[i].value if i < len(per_sample_phases) else "unknown"
         vib = _primary_vibration_strength_db(sample)
         if vib is not None:
-            vib_mag_points.append((t_s, vib))
+            vib_mag_points.append((t_s, vib, phase_label))
         if raw_sample_rate_hz and raw_sample_rate_hz > 0:
             dominant_hz = _as_float(sample.get("dominant_freq_hz"))
             if dominant_hz is not None and dominant_hz > 0:
@@ -436,7 +440,7 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
 
     speed_stats = summary.get("speed_stats", {})
     if isinstance(speed_stats, dict) and bool(speed_stats.get("steady_speed")) and vib_mag_points:
-        vals = sorted(v for _t, v in vib_mag_points if v >= 0)
+        vals = sorted(v for _t, v, _phase in vib_mag_points if v >= 0)
         if vals:
             steady_speed_distribution = {
                 "p10": percentile(vals, 0.10),
@@ -445,16 +449,43 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
                 "p95": percentile(vals, 0.95),
             }
 
+    # Build amp_vs_phase from phase_speed_breakdown (temporal phase context).
+    # Complements amp_vs_speed (magnitude bins) by grouping by driving phase
+    # instead of speed range, addressing issue #189.
+    amp_vs_phase: list[dict[str, object]] = []
+    for row in summary.get("phase_speed_breakdown", []):
+        if not isinstance(row, dict):
+            continue
+        phase = str(row.get("phase", ""))
+        mean_vib = _as_float(row.get("mean_vibration_strength_db"))
+        if not phase or mean_vib is None:
+            continue
+        amp_vs_phase.append(
+            {
+                "phase": phase,
+                "count": int(row.get("count") or 0),
+                "mean_vib_db": mean_vib,
+                "max_vib_db": _as_float(row.get("max_vibration_strength_db")),
+                "mean_speed_kmh": _as_float(row.get("mean_speed_kmh")),
+            }
+        )
+
     fft_spectrum = _aggregate_fft_spectrum(samples)
     fft_spectrum_raw = _aggregate_fft_spectrum_raw(samples)
     peaks_spectrogram = _spectrogram_from_peaks(samples)
     peaks_spectrogram_raw = _spectrogram_from_peaks_raw(samples)
     peaks_table = _top_peaks_table_rows(samples)
 
+    phase_segments_out = [
+        {"phase": seg.phase.value, "start_t_s": seg.start_t_s, "end_t_s": seg.end_t_s}
+        for seg in phase_segs
+    ]
+
     return {
         "vib_magnitude": vib_mag_points,
         "dominant_freq": dominant_freq_points,
         "amp_vs_speed": speed_amp_points,
+        "amp_vs_phase": amp_vs_phase,
         "matched_amp_vs_speed": matched_by_finding,
         "freq_vs_speed_by_finding": freq_vs_speed_by_finding,
         "steady_speed_distribution": steady_speed_distribution,
@@ -463,4 +494,5 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         "peaks_spectrogram": peaks_spectrogram,
         "peaks_spectrogram_raw": peaks_spectrogram_raw,
         "peaks_table": peaks_table,
+        "phase_segments": phase_segments_out,
     }

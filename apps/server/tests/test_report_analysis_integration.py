@@ -1171,3 +1171,86 @@ def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
         # per_phase_confidence may be None if all samples are one phase, but key must exist
         assert "per_phase_confidence" in em
         assert "phases_with_evidence" in em
+def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
+    """_build_findings must accept pre-computed per_sample_phases and use them.
+
+    This ensures phase data flows from the caller (summarize_run_data) downstream
+    into the findings engine without redundant recomputation (TODO 7 fix).
+    """
+    from unittest.mock import patch
+
+    from vibesensor.report.phase_segmentation import segment_run_phases
+
+    samples = [_make_sample(float(i) * 0.5, 60.0, 0.02) for i in range(20)]
+    pre_computed_phases, _ = segment_run_phases(samples)
+
+    recompute_calls: list[int] = []
+
+    original_segment_run_phases = segment_run_phases
+
+    def _patched_segment_run_phases(s):
+        recompute_calls.append(1)
+        return original_segment_run_phases(s)
+
+    with patch(
+        "vibesensor.report.findings.segment_run_phases",
+        side_effect=_patched_segment_run_phases,
+    ):
+        findings_module._build_findings(
+            metadata={"units": {"accel_x_g": "g"}},
+            samples=samples,
+            speed_sufficient=True,
+            steady_speed=False,
+            speed_stddev_kmh=None,
+            speed_non_null_pct=100.0,
+            raw_sample_rate_hz=200.0,
+            lang="en",
+            per_sample_phases=pre_computed_phases,
+        )
+
+    # When per_sample_phases is provided, segment_run_phases must NOT be called
+    assert recompute_calls == [], (
+        "_build_findings should not recompute phases when per_sample_phases is provided"
+    )
+
+
+def test_summarize_run_data_passes_phases_to_build_findings() -> None:
+    """summarize_run_data must pass pre-computed per_sample_phases to _build_findings.
+
+    Validates that phases computed during phase segmentation flow into the
+    findings engine without redundant recomputation (TODO 7 fix).
+    """
+    from unittest.mock import patch
+
+    from vibesensor.report.summary import summarize_run_data
+
+    metadata = _make_metadata()
+    samples = [
+        {
+            "t_s": float(i) * 0.5,
+            "speed_kmh": 0.0 if i < 5 else 60.0,
+            "accel_x_g": 0.01,
+            "accel_y_g": 0.01,
+            "accel_z_g": 0.01,
+            "vibration_strength_db": 15.0,
+            "strength_bucket": "l1",
+        }
+        for i in range(20)
+    ]
+
+    recompute_calls: list[int] = []
+    from vibesensor.report.phase_segmentation import segment_run_phases as original_srp
+
+    def _patched_srp(s):
+        recompute_calls.append(1)
+        return original_srp(s)
+
+    with patch("vibesensor.report.findings.segment_run_phases", side_effect=_patched_srp):
+        summary = summarize_run_data(metadata, samples, include_samples=False)
+
+    assert "findings" in summary
+    # Phase segmentation should not be re-run inside _build_findings because
+    # summarize_run_data already computed and passed the phases down.
+    assert recompute_calls == [], (
+        "summarize_run_data should pass per_sample_phases so _build_findings does not recompute"
+    )
