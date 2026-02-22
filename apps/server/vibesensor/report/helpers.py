@@ -197,6 +197,32 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
     }
 
 
+def _speed_stats_by_phase(
+    samples: list[dict[str, Any]],
+    per_sample_phases: list[Any],
+) -> dict[str, dict[str, Any]]:
+    """Compute speed statistics broken down by driving phase.
+
+    Returns a dict mapping each phase label (string) to the same structure as
+    ``_speed_stats()`` extended with a ``sample_count`` key for the total
+    number of samples assigned to that phase (regardless of speed availability).
+    """
+    phase_speeds: dict[str, list[float]] = defaultdict(list)
+    phase_sample_counts: dict[str, int] = defaultdict(int)
+    for sample, phase in zip(samples, per_sample_phases, strict=True):
+        phase_key = str(phase)
+        phase_sample_counts[phase_key] += 1
+        speed = _as_float(sample.get("speed_kmh"))
+        if speed is not None and speed > 0:
+            phase_speeds[phase_key].append(speed)
+    result: dict[str, dict[str, Any]] = {}
+    for phase_key in phase_sample_counts:
+        stats: dict[str, Any] = dict(_speed_stats(phase_speeds.get(phase_key, [])))
+        stats["sample_count"] = phase_sample_counts[phase_key]
+        result[phase_key] = stats
+    return result
+
+
 def _sensor_limit_g(sensor_model: object) -> float | None:
     if not isinstance(sensor_model, str):
         return None
