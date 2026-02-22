@@ -8,6 +8,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
+
 
 def _run(command: list[str], cwd: Path) -> None:
     subprocess.run(command, cwd=cwd, check=True)
@@ -73,7 +75,7 @@ def main() -> None:
         ui_dir,
         ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
     )
-    public_assets_hash = _hash_tree(public_dir, ignore_names={".vibesensor-ui-build.json"})
+    public_assets_hash = _hash_tree(public_dir, ignore_names={UI_BUILD_METADATA_FILE})
     git_commit = (
         subprocess.run(
             ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
@@ -84,7 +86,7 @@ def main() -> None:
         if (repo_root / ".git").exists()
         else ""
     )
-    (public_dir / ".vibesensor-ui-build.json").write_text(
+    (public_dir / UI_BUILD_METADATA_FILE).write_text(
         json.dumps(
             {
                 "ui_source_hash": ui_source_hash,
