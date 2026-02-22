@@ -25,6 +25,7 @@ from vibesensor.protocol import (
 from .commands import (
     apply_command,
     apply_one_wheel_mild_scenario,
+    apply_road_fixed_scenario,
     choose_default_profile,
 )
 from .profiles import (
@@ -454,6 +455,8 @@ async def async_main(args: argparse.Namespace) -> None:
 
     if args.scenario == "one-wheel-mild":
         apply_one_wheel_mild_scenario(clients, args.fault_wheel)
+    elif args.scenario == "road-fixed":
+        apply_road_fixed_scenario(clients)
 
     override_speed_kmh = max(0.0, float(args.speed_kmh))
     if override_speed_kmh > 0.0:
@@ -496,7 +499,7 @@ async def async_main(args: argparse.Namespace) -> None:
             tasks.append(
                 asyncio.create_task(run_client(client, args.hello_interval, stop_event))
             )
-        if args.scenario == "road":
+        if args.scenario == "road" and not args.no_road_scene:
             tasks.append(asyncio.create_task(road_scene_loop(clients, stop_event)))
         else:
             print(
@@ -551,9 +554,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--scenario",
-        choices=("road", "one-wheel-mild"),
+        choices=("road", "one-wheel-mild", "road-fixed"),
         default="road",
-        help="Simulation scenario: random road scene or deterministic mild single-wheel fault",
+        help="Simulation scenario: random road scene, deterministic mild single-wheel fault, or fixed road baseline (no randomization)",
     )
     parser.add_argument(
         "--fault-wheel",
@@ -565,6 +568,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--no-interactive", action="store_true", help="Disable interactive command mode"
+    )
+    parser.add_argument(
+        "--no-road-scene",
+        action="store_true",
+        help="Disable the road-scene randomization loop (for scripted/deterministic runs)",
     )
     parser.add_argument(
         "--no-auto-server",
