@@ -65,7 +65,7 @@ def test_variants_returns_both_languages() -> None:
     assert en_text != nl_text
 
 
-def test_selected_dutch_phrasings_are_natural_and_consistent() -> None:
+def test_dutch_translation_corrections() -> None:
     assert report_i18n.tr("nl", "HEAT_LEGEND_MORE") == "Meer trilling"
     assert report_i18n.tr("nl", "RUN_TRIAGE") == "Run triage"
     assert (
