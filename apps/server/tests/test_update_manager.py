@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import time
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -52,10 +54,30 @@ class FakeRunner(CommandRunner):
 
 
 def _mock_which(name: str) -> str | None:
-    """Pretend nmcli and git exist."""
-    if name in ("nmcli", "git"):
+    """Pretend required update tools exist."""
+    if name in ("nmcli", "git", "python3", "npm"):
         return f"/usr/bin/{name}"
     return None
+
+
+def _seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True) -> None:
+    (repo / "apps" / "ui" / "src").mkdir(parents=True, exist_ok=True)
+    (repo / "apps" / "server" / "public").mkdir(parents=True, exist_ok=True)
+    (repo / "tools").mkdir(parents=True, exist_ok=True)
+    (repo / "tools" / "sync_ui_to_pi_public.py").write_text("#!/usr/bin/env python3\n")
+    (repo / "apps" / "ui" / "src" / "main.ts").write_text("console.log('ui')\n")
+    (repo / "apps" / "ui" / "package.json").write_text('{"name":"ui"}\n')
+    (repo / "apps" / "ui" / "package-lock.json").write_text('{"name":"ui","lockfileVersion":3}\n')
+    (repo / "apps" / "server" / "public" / "index.html").write_text("<html>ok</html>\n")
+    details = mgr._collect_runtime_details()
+    metadata = {
+        "ui_source_hash": details["ui_source_hash"] if valid else "stale-source-hash",
+        "public_assets_hash": details["public_assets_hash"],
+        "git_commit": "deadbeef",
+    }
+    (repo / "apps" / "server" / "public" / ".vibesensor-ui-build.json").write_text(
+        json.dumps(metadata), encoding="utf-8"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +98,7 @@ class TestUpdateJobStatus:
         assert d["issues"] == []
         assert d["log_tail"] == []
         assert d["exit_code"] is None
+        assert d["runtime"] == {}
 
     def test_status_with_issues(self) -> None:
         status = UpdateJobStatus(
@@ -328,6 +351,7 @@ class TestUpdateManagerAsync:
             git_remote="https://example.com/repo.git",
             git_branch="main",
         )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
 
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", "pass123")
@@ -339,6 +363,8 @@ class TestUpdateManagerAsync:
         assert mgr.status.finished_at is not None
         assert mgr.status.last_success_at is not None
         assert mgr.status.exit_code == 0
+        assert mgr.status.runtime.get("assets_verified") is True
+        assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         """When sudo is unavailable, update fails with clear issue."""
@@ -440,6 +466,7 @@ class TestUpdateManagerAsync:
             git_remote="https://example.com/repo.git",
             git_branch="main",
         )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
 
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", secret)
@@ -454,6 +481,31 @@ class TestUpdateManagerAsync:
         for issue in mgr.status.issues:
             assert secret not in issue.message
             assert secret not in issue.detail
+
+    async def test_stale_public_assets_fail_update(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=False)
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("TestNet", "pass123")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        assert mgr.status.runtime.get("assets_verified") is False
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "stale" in issues_text or "missing" in issues_text
 
     async def test_timeout_handling(self, tmp_path) -> None:
         """When update times out, it fails and restores hotspot."""
@@ -496,6 +548,31 @@ class TestUpdateManagerAsync:
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
         assert "timeout" in issues_text or "timed out" in issues_text
 
+    async def test_rebuild_failure_fails_update(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3", 1, "", "npm: command not found")
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "rebuild/sync failed" in issues_text
+
     async def test_missing_tools_fails_gracefully(self, tmp_path) -> None:
         """When nmcli is not found, update fails with clear issue."""
         runner = FakeRunner()
@@ -519,6 +596,28 @@ class TestUpdateManagerAsync:
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
         assert "nmcli" in issues_text
+
+    async def test_missing_npm_fails_gracefully(self, tmp_path) -> None:
+        runner = FakeRunner()
+
+        def no_npm(name: str) -> str | None:
+            if name == "npm":
+                return None
+            return f"/usr/bin/{name}"
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(runner=runner, repo_path=str(repo))
+
+        with patch("shutil.which", no_npm):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message for i in mgr.status.issues).lower()
+        assert "npm" in issues_text
 
 
 # ---------------------------------------------------------------------------

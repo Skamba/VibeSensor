@@ -102,6 +102,22 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       html += `<span>${escapeHtml(formatTimestamp(status.last_success_at))}</span>`;
       html += `</div>`;
     }
+    if (status.runtime?.commit) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_commit"))}</span>`;
+      html += `<span>${escapeHtml(status.runtime.commit.slice(0, 12))}</span>`;
+      html += `</div>`;
+    }
+    if (status.runtime?.public_assets_hash) {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets"))}</span>`;
+      html += `<span>${escapeHtml(status.runtime.public_assets_hash.slice(0, 12))}</span>`;
+      html += `</div>`;
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets_check"))}</span>`;
+      html += `<span>${escapeHtml(t(status.runtime.assets_verified ? "settings.update.runtime_assets_ok" : "settings.update.runtime_assets_bad"))}</span>`;
+      html += `</div>`;
+    }
 
     html += `</div>`;
 

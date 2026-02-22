@@ -8,6 +8,7 @@ set -euo pipefail
 ALLOWED_CMDS=(
   "nmcli"
   "git"
+  "python3"
   "timeout"
   "rfkill"
 )
