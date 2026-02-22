@@ -19,6 +19,7 @@ Test 2 – 20-second simulator-style run with PDF report generation
 from __future__ import annotations
 
 import io
+from copy import deepcopy
 from typing import Any
 
 import pytest
@@ -383,6 +384,64 @@ class TestPdfReportValidation:
             for token in src.split("/"):
                 if token and len(token) > 2:
                     assert token in self.pdf_text, f"Source token '{token}' not found in PDF text"
+
+    def test_pdf_legend_uses_db_for_intensity(self) -> None:
+        """Heat-map legend numeric endpoints must keep dB units (not g)."""
+        summary = deepcopy(self.summary)
+        rows = summary.get("sensor_intensity_by_location") or []
+        assert isinstance(rows, list) and rows, "Scenario should provide intensity rows"
+        rows[0]["p95_intensity_db"] = 21.5
+        rows[0]["mean_intensity_db"] = 19.0
+        if len(rows) > 1 and isinstance(rows[1], dict):
+            rows[1]["p95_intensity_db"] = 37.2
+            rows[1]["mean_intensity_db"] = 35.0
+
+        pdf_text = self._extract_text(build_report_pdf(summary))
+        assert "21.5 db" in pdf_text or "37.2 db" in pdf_text
+        assert "21.5 g" not in pdf_text
+        assert "37.2 g" not in pdf_text
+
+    def test_pdf_keeps_long_next_steps_without_ellipsis(self) -> None:
+        """Critical next-steps content should remain readable when long."""
+        summary = deepcopy(self.summary)
+        summary["test_plan"] = [
+            {
+                "what": "Inspect front-left corner under load with road-force balancing and vibration capture.",
+                "why": (
+                    "Correlate wheel-order persistence across speed bins and verify repeatability "
+                    f"for critical action token STEPEND{i:02d}"
+                ),
+                "speed_band": "70-90 km/h",
+                "confirm": "Amplitude drops after intervention",
+                "falsify": "Signature remains unchanged after intervention",
+                "eta": "30 min",
+            }
+            for i in range(1, 9)
+        ]
+        pdf_bytes = build_report_pdf(summary)
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        pdf_text = self._extract_text(pdf_bytes)
+
+        assert len(reader.pages) >= 2
+        assert "…" not in pdf_text
+        for i in range(1, 9):
+            assert f"stepend{i:02d}" in pdf_text
+
+    def test_pdf_preserves_long_header_metadata_text(self) -> None:
+        """Long metadata values should wrap without losing critical tail content."""
+        summary = deepcopy(self.summary)
+        summary["run_id"] = (
+            "run-"
+            "very-long-identifier-with-extra-context-for-layout-validation-"
+            "tailtoken-runid-12345"
+        )
+        summary["sensor_model"] = (
+            "ADXL345 laboratory validation model with extended calibration metadata "
+            "tailtoken-sensormodel-98765"
+        )
+        pdf_text = self._extract_text(build_report_pdf(summary))
+        assert "tailtoken-runid-12345" in pdf_text
+        assert "tailtoken" in pdf_text and "sensormodel-98765" in pdf_text
 
 
 # ---------------------------------------------------------------------------

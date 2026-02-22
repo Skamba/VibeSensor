@@ -23,13 +23,9 @@ def _amp_heat_color(norm: float) -> str:
     return color_blend(HEAT_MID, HEAT_HIGH, (norm - 0.5) * 2.0)
 
 
-def _format_g(value: float) -> str:
-    """Format a g-force value with sensible precision (no noisy 4-decimal tails)."""
-    if value >= 1.0:
-        return f"{value:.2f} g"
-    if value >= 0.01:
-        return f"{value:.3f} g"
-    return f"{value:.4f} g"
+def _format_db(value: float) -> str:
+    """Format an intensity value in decibels."""
+    return f"{value:.1f} dB"
 
 
 def car_location_diagram(
@@ -190,11 +186,11 @@ def car_location_diagram(
             if not isinstance(row, dict):
                 continue
             loc = _canonical_location(row.get("location"))
-            p95_g = _as_float(row.get("p95_intensity_db")) or _as_float(
+            p95_db = _as_float(row.get("p95_intensity_db")) or _as_float(
                 row.get("mean_intensity_db")
             )
-            if loc and p95_g is not None and p95_g > 0:
-                amp_by_location[loc] = p95_g
+            if loc and p95_db is not None and p95_db > 0:
+                amp_by_location[loc] = p95_db
     # Also check location_rows for any locations not already covered
     # (sensor_intensity_by_location may only have partial data)
     for row in location_rows:
@@ -300,7 +296,7 @@ def car_location_diagram(
             String(
                 legend_x,
                 legend_y + 10,
-                _format_g(min_amp),
+                _format_db(min_amp),
                 fontName="Helvetica",
                 fontSize=6,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
@@ -310,7 +306,7 @@ def car_location_diagram(
             String(
                 legend_x + 70,
                 legend_y + 10,
-                _format_g(max_amp),
+                _format_db(max_amp),
                 fontName="Helvetica",
                 fontSize=6,
                 fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
