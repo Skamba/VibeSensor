@@ -40,6 +40,7 @@ class ClientRecord:
     sample_rate_hz: int = 0
     frame_samples: int = 0
     last_seen: float = 0.0
+    last_seen_mono: float = 0.0
     location: str = ""
     data_addr: tuple[str, int] | None = None
     control_addr: tuple[str, int] | None = None
@@ -102,9 +103,14 @@ class ClientRegistry:
             LOGGER.warning("Failed to delete client name from DB", exc_info=True)
 
     @staticmethod
-    def _resolve_now(now: float | None) -> float:
-        """Return *now* if given, else ``time.time()``."""
+    def _resolve_now_wall(now: float | None) -> float:
+        """Return wall-clock ``now`` if provided, else ``time.time()``."""
         return time.time() if now is None else now
+
+    @staticmethod
+    def _resolve_now_mono(now: float | None) -> float:
+        """Return monotonic ``now`` if wall time is not injected."""
+        return time.monotonic() if now is None else now
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
         normalized = _normalize_client_id(client_id)
@@ -122,10 +128,12 @@ class ClientRegistry:
         now: float | None = None,
     ) -> None:
         with self._lock:
-            now_ts = self._resolve_now(now)
+            now_ts = self._resolve_now_wall(now)
+            now_mono = self._resolve_now_mono(now)
             client_id = client_id_hex(hello.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
+            record.last_seen_mono = now_mono
             hello_port = int(hello.control_port)
             record.control_addr = (addr[0], hello_port if hello_port > 0 else addr[1])
             record.sample_rate_hz = hello.sample_rate_hz
@@ -147,10 +155,12 @@ class ClientRegistry:
         now: float | None = None,
     ) -> None:
         with self._lock:
-            now_ts = self._resolve_now(now)
+            now_ts = self._resolve_now_wall(now)
+            now_mono = self._resolve_now_mono(now)
             client_id = client_id_hex(data_msg.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
+            record.last_seen_mono = now_mono
             record.data_addr = (addr[0], addr[1])
             record.frames_total += 1
             if (
@@ -187,10 +197,12 @@ class ClientRegistry:
 
     def update_from_ack(self, ack: AckMessage, now: float | None = None) -> None:
         with self._lock:
-            now_ts = self._resolve_now(now)
+            now_ts = self._resolve_now_wall(now)
+            now_mono = self._resolve_now_mono(now)
             client_id = client_id_hex(ack.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
+            record.last_seen_mono = now_mono
             record.last_ack_cmd_seq = ack.cmd_seq
             record.last_ack_status = ack.status
 
@@ -246,11 +258,12 @@ class ClientRegistry:
         """
         warnings: list[str] = []
         with self._lock:
-            now_ts = self._resolve_now(now)
+            now_mono = self._resolve_now_mono(now)
             active = [
                 record
                 for record in self._clients.values()
-                if record.last_seen and (now_ts - record.last_seen) <= self._stale_ttl_seconds
+                if record.last_seen_mono
+                and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
             ]
             loc_to_ids: dict[str, list[str]] = {}
             for record in active:
@@ -295,20 +308,22 @@ class ClientRegistry:
 
     def active_client_ids(self, now: float | None = None) -> list[str]:
         with self._lock:
-            now_ts = self._resolve_now(now)
+            now_mono = self._resolve_now_mono(now)
             return [
                 record.client_id
                 for record in self._clients.values()
-                if record.last_seen and (now_ts - record.last_seen) <= self._stale_ttl_seconds
+                if record.last_seen_mono
+                and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
             ]
 
     def evict_stale(self, now: float | None = None) -> list[str]:
         with self._lock:
-            now_ts = self._resolve_now(now)
+            now_mono = self._resolve_now_mono(now)
             stale_ids = [
                 client_id
                 for client_id, record in self._clients.items()
-                if record.last_seen and (now_ts - record.last_seen) > self._stale_ttl_seconds
+                if record.last_seen_mono
+                and (now_mono - record.last_seen_mono) > self._stale_ttl_seconds
             ]
             for client_id in stale_ids:
                 self._clients.pop(client_id, None)
@@ -322,7 +337,8 @@ class ClientRegistry:
 
     def snapshot_for_api(self, now: float | None = None) -> list[dict[str, Any]]:
         with self._lock:
-            now_ts = self._resolve_now(now)
+            now_ts = self._resolve_now_wall(now)
+            now_mono = self._resolve_now_mono(now)
             rows: list[dict[str, Any]] = []
             all_client_ids = sorted(set(self._clients.keys()) | set(self._user_names.keys()))
             for client_id in all_client_ids:
@@ -359,7 +375,8 @@ class ClientRegistry:
                     int(max(0.0, now_ts - record.last_seen) * 1000) if record.last_seen else None
                 )
                 connected = bool(
-                    record.last_seen and (now_ts - record.last_seen) <= self._stale_ttl_seconds
+                    record.last_seen_mono
+                    and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
                 )
                 rows.append(
                     {
