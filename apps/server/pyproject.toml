@@ -55,7 +55,7 @@ include = [
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-pythonpath = ["."]
+pythonpath = [".", "tests"]
 testpaths = ["tests"]
 markers = [
     "selenium: browser-based UI tests",
