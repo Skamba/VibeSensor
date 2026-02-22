@@ -19,6 +19,7 @@ from builders import (
     SENSOR_RR,
     SPEED_HIGH,
     SPEED_MID,
+    _stable_hash,
     assert_confidence_between,
     assert_diagnosis_contract,
     assert_pairwise_monotonic,
@@ -104,11 +105,9 @@ def test_fault_with_speed_jitter(corner: str) -> None:
         fault_vib_db=28.0,
     )
     # Add speed jitter: perturb the speed of each sample
-    import hashlib
-
     jittered: list[dict] = []
     for i, s in enumerate(fault):
-        h = int(hashlib.md5(f"jitter-{i}".encode()).hexdigest(), 16)
+        h = _stable_hash(f"jitter-{i}")
         jitter = 8.0 * ((h % 200) / 100.0 - 1.0)
         s = {**s, "speed_kmh": max(5.0, s["speed_kmh"] + jitter)}
         jittered.append(s)
