@@ -70,3 +70,14 @@ def test_dev_and_docker_override_server_port_to_8000() -> None:
     docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
     assert dev_cfg.server.port == 8000
     assert docker_cfg.server.port == 8000
+
+
+def test_udp_data_queue_maxsize_override_and_clamp(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"udp": {"data_queue_maxsize": 4096}})
+    cfg = load_config(config_path)
+    assert cfg.udp.data_queue_maxsize == 4096
+
+    _write_config(config_path, {"udp": {"data_queue_maxsize": 0}})
+    cfg = load_config(config_path)
+    assert cfg.udp.data_queue_maxsize == 1
