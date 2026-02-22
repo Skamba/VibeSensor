@@ -178,6 +178,20 @@ class _FakeHistoryDB:
         self.finalize_calls.append(run_id)
 
 
+class _ReverseOnlySamples:
+    def __init__(self, samples: list[dict[str, object]]) -> None:
+        self._samples = samples
+
+    def __len__(self) -> int:
+        return len(self._samples)
+
+    def __iter__(self):
+        raise AssertionError("analysis_snapshot should not iterate all live samples")
+
+    def __reversed__(self):
+        return reversed(self._samples)
+
+
 def _wait_until(predicate, timeout_s: float = 2.0, step_s: float = 0.02) -> bool:
     from conftest import wait_until
 
@@ -483,6 +497,29 @@ def test_analysis_snapshot_isolated_per_logging_run(tmp_path: Path) -> None:
 
     assert metadata["run_id"] != "live"
     assert all(sample.get("run_marker") != "run1" for sample in samples)
+
+
+def test_analysis_snapshot_reads_tail_without_full_iteration(tmp_path: Path) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    logger._live_samples = _ReverseOnlySamples(
+        [{"idx": idx} for idx in range(10)]
+    )  # type: ignore[assignment]
+
+    _, samples = logger.analysis_snapshot(max_rows=3)
+
+    assert [sample["idx"] for sample in samples] == [7, 8, 9]
 
 
 def test_post_analysis_uses_run_language_from_metadata(
