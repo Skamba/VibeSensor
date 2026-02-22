@@ -259,6 +259,41 @@ def test_run_suitability_warns_for_degraded_scenario(tmp_path: Path) -> None:
     assert suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]["state"] == "warn"
 
 
+def test_frame_drop_per_sensor_delta_avoids_cross_sensor_overcount(tmp_path: Path) -> None:
+    """Frame drops must be computed per-sensor (max-min per client_id), not globally."""
+    run_path = tmp_path / "run_multi_sensor_drops.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    # Sensor A: starts at 100 (from before run), gains 5 during run
+    # Sensor B: starts at 0, gains 1 during run
+    for idx in range(10):
+        sample_a = _sample(idx, speed_kmh=80.0, dominant_freq_hz=14.0, peak_amp_g=0.05)
+        sample_a["client_id"] = "sensor-a"
+        sample_a["client_name"] = "front-left"
+        sample_a["frames_dropped_total"] = 100 + (idx // 2)
+        sample_a["queue_overflow_drops"] = 0
+        records.append(sample_a)
+
+        sample_b = _sample(idx, speed_kmh=80.0, dominant_freq_hz=14.0, peak_amp_g=0.05)
+        sample_b["client_id"] = "sensor-b"
+        sample_b["client_name"] = "front-right"
+        sample_b["frames_dropped_total"] = 0 + (1 if idx >= 8 else 0)
+        sample_b["queue_overflow_drops"] = 0
+        records.append(sample_b)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    suitability_by_key = {
+        str(item.get("check_key")): item
+        for item in summary["run_suitability"]
+        if isinstance(item, dict)
+    }
+    fi = suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]
+    # Sensor A delta: 104-100 = 4, Sensor B delta: 1-0 = 1, total = 5
+    # Should NOT be 104 (which was the old global max-min: 104 - 0)
+    assert fi["state"] == "warn"
+
+
 def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     run_path = tmp_path / "run_missing_sample_rate.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=None)]
