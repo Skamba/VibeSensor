@@ -157,7 +157,6 @@ EOF
 chmod +x "${STAGE_DIR}/prerun.sh"
 
 rsync -a --delete \
-  --exclude ".git/" \
   --exclude ".venv/" \
   --exclude ".pytest_cache/" \
   --exclude ".ruff_cache/" \

@@ -34,6 +34,11 @@ class GPSSpeedMonitor:
         self.gps_enabled = gps_enabled
         self.speed_mps: float | None = None
         self.override_speed_mps: float | None = None
+        # None keeps legacy behavior (override has top priority) for backwards
+        # compatibility in isolated monitor usage/tests.
+        # True means manual is the selected primary source.
+        # False means GPS is primary and manual is fallback-only.
+        self.manual_source_selected: bool | None = None
 
         # --- status tracking ---
         self.connection_state: str = "disabled" if not gps_enabled else "disconnected"
@@ -49,8 +54,14 @@ class GPSSpeedMonitor:
 
     @property
     def effective_speed_mps(self) -> float | None:
-        if isinstance(self.override_speed_mps, (int, float)):
-            return float(self.override_speed_mps)
+        if self.manual_source_selected is None:
+            if isinstance(self.override_speed_mps, (int, float)):
+                return float(self.override_speed_mps)
+        elif self.manual_source_selected is True:
+            self.fallback_active = False
+            if isinstance(self.override_speed_mps, (int, float)):
+                return float(self.override_speed_mps)
+            return None
         # Check if GPS is fresh
         if isinstance(self.speed_mps, (int, float)):
             if self._is_gps_stale():
@@ -88,6 +99,9 @@ class GPSSpeedMonitor:
             return None
         self.override_speed_mps = speed_val * KMH_TO_MPS
         return speed_val
+
+    def set_manual_source_selected(self, selected: bool) -> None:
+        self.manual_source_selected = bool(selected)
 
     def set_fallback_settings(
         self,

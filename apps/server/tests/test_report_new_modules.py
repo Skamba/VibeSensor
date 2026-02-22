@@ -625,8 +625,12 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     }
 
     pdf = build_report_pdf(summary)
-    assert b"5 potential saturation samples detected." in pdf
-    assert b"3 dropped frames, 2 queue overflows detected." in pdf
+    # Detail text wraps across lines in the Data Trust panel, so check key
+    # fragments rather than the exact full string.
+    assert b"5 potential saturation" in pdf
+    assert b"samples detected." in pdf
+    assert b"3 dropped frames" in pdf
+    assert b"queue overflows" in pdf
 
 
 # ---------------------------------------------------------------------------

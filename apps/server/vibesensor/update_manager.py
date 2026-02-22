@@ -577,7 +577,7 @@ class UpdateManager:
 
         # Bring up the uplink
         rc, _, stderr = await self._run_cmd(
-            ["nmcli", "connection", "up", UPLINK_CONNECTION_NAME, "--wait", "15"],
+            ["nmcli", "--wait", "15", "connection", "up", UPLINK_CONNECTION_NAME],
             phase="connecting_wifi",
             sudo=True,
             timeout=30,
@@ -610,8 +610,19 @@ class UpdateManager:
         for git_args, desc in [
             ([*git_base, "remote", "set-url", "origin", self._git_remote], "set remote"),
             ([*git_base, "fetch", "--depth", "1", "origin", self._git_branch], "fetch"),
-            ([*git_base, "checkout", self._git_branch], "checkout"),
-            ([*git_base, "pull", "--ff-only", "origin", self._git_branch], "pull"),
+            (
+                [
+                    *git_base,
+                    "checkout",
+                    "-f",
+                    "-B",
+                    self._git_branch,
+                    f"origin/{self._git_branch}",
+                ],
+                "checkout",
+            ),
+            ([*git_base, "reset", "--hard", f"origin/{self._git_branch}"], "reset"),
+            ([*git_base, "clean", "-fd"], "clean"),
         ]:
             if self._cancel_event.is_set():
                 return

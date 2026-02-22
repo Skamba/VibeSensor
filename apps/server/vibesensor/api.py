@@ -291,7 +291,8 @@ def _sync_active_car_to_analysis(state: RuntimeState) -> None:
 def _sync_speed_source_to_gps(state: RuntimeState) -> None:
     """Push speed-source settings into GPSSpeedMonitor."""
     ss = state.settings_store.get_speed_source()
-    if ss["speedSource"] == "manual" and ss["manualSpeedKph"] is not None:
+    state.gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
+    if ss["manualSpeedKph"] is not None:
         state.gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
     else:
         state.gps_monitor.set_speed_override_kmh(None)

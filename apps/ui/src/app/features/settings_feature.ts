@@ -69,8 +69,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       const fallbackVal = els.fallbackModeSelect?.value;
       if (fallbackVal) payload.fallbackMode = fallbackVal;
       await updateSettingsSpeedSource(payload);
-      if (state.speedSource === "manual" && state.manualSpeedKph != null) await setSpeedOverride(state.manualSpeedKph);
-      else await setSpeedOverride(null);
+      await setSpeedOverride(state.manualSpeedKph ?? null);
     } catch (_err) { /* ignore */ }
   }
 
@@ -237,7 +236,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     radios.forEach((r) => { if (r.checked) src = r.value; });
     const manual = Number(els.manualSpeedInput?.value);
     state.speedSource = src;
-    state.manualSpeedKph = (src === "manual" && manual > 0) ? manual : null;
+    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 ? manual : null;
     void syncSpeedSourceToServer();
     ctx.renderSpeedReadout();
   }
@@ -344,7 +343,18 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   async function pollGpsStatus(): Promise<void> {
     try {
       const status = await getSpeedSourceStatus();
+      state.gpsFallbackActive = status.fallback_active
+        || (
+          state.speedSource !== "manual"
+          && typeof state.manualSpeedKph === "number"
+          && state.manualSpeedKph > 0
+          && status.connection_state !== "connected"
+        );
+      if (typeof status.effective_speed_kmh === "number" && Number.isFinite(status.effective_speed_kmh)) {
+        state.speedMps = status.effective_speed_kmh / 3.6;
+      }
       renderGpsStatus(status);
+      ctx.renderSpeedReadout();
       const interval = status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;
       gpsPollTimer = setTimeout(() => void pollGpsStatus(), interval);
     } catch {

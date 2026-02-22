@@ -318,7 +318,7 @@ def test_ensure_ap_connection_open_mode_recreates_without_security_keys(tmp_path
                 ap.ssid,
             ): [_ok("")],
             _nmcli_modify_cmd(ap): [_ok("")],
-            ("nmcli", "connection", "up", ap.con_name, "--wait", "12"): [_ok("")],
+            ("nmcli", "--wait", "12", "connection", "up", ap.con_name): [_ok("")],
         }
     )
 
@@ -342,7 +342,7 @@ def test_run_self_heal_port53_conflict_opt_in_gating(tmp_path: Path) -> None:
     ]
     responses[("systemctl", "restart", "NetworkManager")] = [_ok(""), _ok("")]
     responses[_nmcli_modify_cmd(ap)] = [_ok("")]
-    responses[("nmcli", "connection", "up", ap.con_name, "--wait", "12")] = [_ok(""), _ok("")]
+    responses[("nmcli", "--wait", "12", "connection", "up", ap.con_name)] = [_ok(""), _ok("")]
     runner = _FakeRunner(responses)
 
     result = run_self_heal_once(
@@ -372,7 +372,7 @@ def test_run_self_heal_port53_conflict_allows_resolved_fix_when_opted_in(tmp_pat
     responses[_resolved_stub_write_cmd()] = [_ok("")]
     responses[("systemctl", "restart", "NetworkManager")] = [_ok("")]
     responses[_nmcli_modify_cmd(ap)] = [_ok("")]
-    responses[("nmcli", "connection", "up", ap.con_name, "--wait", "12")] = [_ok(""), _ok("")]
+    responses[("nmcli", "--wait", "12", "connection", "up", ap.con_name)] = [_ok(""), _ok("")]
     runner = _FakeRunner(responses)
 
     result = run_self_heal_once(

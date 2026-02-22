@@ -96,6 +96,7 @@ export interface AppState {
   activeCarId: string | null;
   speedSource: string;
   manualSpeedKph: number | null;
+  gpsFallbackActive: boolean;
   chartBands: ChartBand[];
   vibrationMessages: VibrationMessage[];
   strengthBands: StrengthBand[];
@@ -160,6 +161,7 @@ export function createAppState(): AppState {
     activeCarId: null,
     speedSource: "gps",
     manualSpeedKph: null,
+    gpsFallbackActive: false,
     chartBands: [],
     vibrationMessages: [],
     strengthBands: [],
