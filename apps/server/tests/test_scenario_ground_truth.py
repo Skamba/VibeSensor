@@ -1,24 +1,24 @@
 # ruff: noqa: E501
-"""Ground-truth scenario regression tests matching the 5 attached PDF scenarios.
+"""Ground-truth scenario regression tests matching the 5 user-specified scenarios.
 
 Each scenario class synthesises JSONL-style samples that mimic what the
-sim_sender would produce for the phase-by-phase commands in scenario_index.txt,
-then asserts the diagnosis pipeline reproduces the expected PDF output:
+sim_sender would produce for the exact phase-by-phase commands given:
 
-  01_idle_to_100_fr_en  – Idle → onset at 100 km/h, fault=front-right, lang=en
-  02_stop_go_rl_nl      – Stop-go intermittent, fault=rear-left, lang=nl
-  03_high_speed_rr_en   – Highway steady 120 km/h, fault=rear-right, lang=en
-  04_coastdown_fl_nl    – Coast-down from 100→30 km/h, fault=front-left (mild), lang=nl
-  05_noise_then_fl_en   – Road noise then fault at 80 km/h, fault=front-left, lang=en
+  01_idle_to_100_fr_en  – 45s idle, 20s ramp 20→100, 40s fault FR@100; lang=en
+  02_stop_go_rl_nl      – 20s idle, 20s road@30, 20s fault RL@50, 15s roll@10, 25s fault RL@60; lang=nl
+  03_high_speed_rr_en   – 20s road@60, 20s road@90, 40s fault RR@120, 20s road@100; lang=en
+  04_coastdown_fl_nl    – 20s road@110, 20s mild FL@90, 20s strong FL@70, 20s mild FL@50, 20s road@30; lang=nl
+  05_noise_then_fl_en   – 40s road@80, 20s rough@80, 40s fault FL@100, 15s road@60; lang=en
 
 Root causes addressed:
-  1. Speed-band dilution from ramp/idle phases → added phase-aware weighting
-  2. Simulator road-scene non-determinism → new ``road-fixed`` scenario
+  1. Speed-band dilution from ramp/idle/baseline phases → phase-aware weighting
+  2. Simulator road-scene non-determinism → ``road-fixed`` scenario
   3. Language correctness → explicit ``lang=`` parameter enforcement
   4. Multi-sensor localization dilution → per-location match-rate rescue
+  5. Confidence calibration → no overconfident wrong results
 
-Unit tests for simulator determinism, language precedence, and speed-band
-selection in mixed-phase runs are at the bottom of this file.
+Unit tests for simulator determinism, language precedence, speed-band
+selection in mixed-phase runs, and confidence guardrails are at the bottom.
 """
 
 from __future__ import annotations
@@ -262,65 +262,6 @@ def _fault_phase(
     return samples
 
 
-def _coast_down_fault_phase(
-    *,
-    speed_start: float,
-    speed_end: float,
-    duration_s: float,
-    fault_sensor: str,
-    sensors: list[str],
-    start_t_s: float = 0.0,
-    dt_s: float = 1.0,
-    fault_amp: float = 0.05,
-    noise_amp: float = 0.004,
-    fault_vib_db: float = 24.0,
-    noise_vib_db: float = 8.0,
-) -> list[dict[str, Any]]:
-    """Generate coast-down phase with gradual speed decrease and fault on one sensor."""
-    samples: list[dict[str, Any]] = []
-    n = max(1, int(duration_s / dt_s))
-    for i in range(n):
-        t = start_t_s + i * dt_s
-        ratio = i / max(1, n - 1)
-        speed = speed_start + (speed_end - speed_start) * ratio
-        if speed < 3.0:
-            speed = 3.0  # Avoid idle classification
-        whz = _wheel_hz(speed)
-        for sensor in sensors:
-            if sensor == fault_sensor:
-                peaks = [
-                    {"hz": whz, "amp": fault_amp},
-                    {"hz": whz * 2, "amp": fault_amp * 0.35},
-                    {"hz": 142.5, "amp": noise_amp},
-                ]
-                samples.append(
-                    _make_sample(
-                        t_s=t,
-                        speed_kmh=speed,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=fault_vib_db,
-                        strength_floor_amp_g=noise_amp,
-                    )
-                )
-            else:
-                other_peaks = [
-                    {"hz": 142.5, "amp": noise_amp},
-                    {"hz": 87.3, "amp": noise_amp * 0.8},
-                ]
-                samples.append(
-                    _make_sample(
-                        t_s=t,
-                        speed_kmh=speed,
-                        client_name=sensor,
-                        top_peaks=other_peaks,
-                        vibration_strength_db=noise_vib_db,
-                        strength_floor_amp_g=noise_amp,
-                    )
-                )
-    return samples
-
-
 # ---------------------------------------------------------------------------
 # Assertion helpers
 # ---------------------------------------------------------------------------
@@ -367,20 +308,55 @@ def _assert_speed_band_contains(top_cause: dict, min_kmh: float, max_kmh: float)
     )
 
 
+def _assert_confidence_range(top_cause: dict, min_conf: float, max_conf: float = 1.0) -> None:
+    """Assert confidence falls within an expected range."""
+    conf = top_cause.get("confidence", 0.0)
+    assert isinstance(conf, (int, float)), f"Confidence not numeric: {conf!r}"
+    assert min_conf <= conf <= max_conf, (
+        f"Confidence {conf:.2f} not in [{min_conf:.2f}, {max_conf:.2f}]"
+    )
+
+
+def _assert_no_weak_spatial_separation(top_cause: dict) -> None:
+    """Assert the localization is strong (not ambiguous between corners)."""
+    assert not top_cause.get("weak_spatial_separation", True), (
+        "Expected strong spatial separation but got weak"
+    )
+
+
 def _assert_has_sections(summary: dict, sections: list[str]) -> None:
     """Assert required report sections exist in summary."""
     for section in sections:
         assert section in summary, f"Missing required section: {section!r}"
 
 
+def _assert_wheel_signatures(top_cause: dict) -> None:
+    """Assert wheel order signatures are observed (1x and/or 2x).
+
+    Handles both English ("wheel order") and Dutch ("wielorde") labels.
+    """
+    sigs = top_cause.get("signatures_observed", [])
+    sig_text = " ".join(str(s).lower() for s in sigs)
+    assert "wheel" in sig_text or "wiel" in sig_text, (
+        f"Expected wheel/wiel signatures, got {sigs!r}"
+    )
+
+
+def _assert_not_engine(top_cause: dict) -> None:
+    """Assert the source is NOT engine/driveline."""
+    source = str(top_cause.get("source", "")).lower()
+    assert "engine" not in source, f"Source should not be engine, got {source!r}"
+    assert "driveline" not in source, f"Source should not be driveline, got {source!r}"
+
+
 # ===========================================================================
 # Scenario 1: Idle → onset at 100 km/h, fault=front-right, lang=en
-# Source: 01_idle_to_100_fr_en.pdf
+# Phases: 45s idle @0 → 20s ramp 20→100 → 40s fault FR @100
 # ===========================================================================
 
 
 class TestScenario01IdleToOnsetFR:
-    """Idle baseline → speed ramp → fault at 100 km/h on front-right."""
+    """Idle baseline → 20s acceleration ramp → 40s fault at 100 km/h on front-right."""
 
     @pytest.fixture()
     def summary(self) -> dict:
@@ -388,11 +364,11 @@ class TestScenario01IdleToOnsetFR:
         samples: list[dict[str, Any]] = []
         t = 0.0
 
-        # Phase A: idle (45s at 0 km/h)
+        # Phase A: 45s idle @0 km/h
         samples.extend(_idle_phase(duration_s=45.0, sensors=sensors, start_t_s=t))
         t += 45.0
 
-        # Phase B1-B5: speed ramp 20→100 km/h (4s each step)
+        # Phase B: 20s acceleration ramp 20→40→60→80→100 (5 steps × 4s each)
         samples.extend(
             _ramp_phase(
                 speed_start=20.0,
@@ -405,7 +381,7 @@ class TestScenario01IdleToOnsetFR:
         )
         t += 20.0
 
-        # Phase C: fault at 100 km/h for 40s on front-right
+        # Phase C: 40s mild wheel fault on front-right @100 km/h
         samples.extend(
             _fault_phase(
                 speed_kmh=100.0,
@@ -425,14 +401,26 @@ class TestScenario01IdleToOnsetFR:
     def test_primary_system_is_wheel(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_primary_system(top, "wheel")
+        _assert_not_engine(top)
 
     def test_strongest_sensor_is_front_right(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_strongest_sensor(top, "front-right")
+        _assert_no_weak_spatial_separation(top)
 
     def test_speed_band_covers_100(self, summary: dict) -> None:
+        """Dominant speed band should be around 100 km/h (the fault phase speed)."""
         top = _get_top_cause(summary)
         _assert_speed_band_contains(top, 90.0, 110.0)
+
+    def test_confidence_reasonable(self, summary: dict) -> None:
+        """Confidence should be moderate-to-high for a clear 40s fault."""
+        top = _get_top_cause(summary)
+        _assert_confidence_range(top, 0.30, 1.0)
+
+    def test_wheel_signatures_present(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_wheel_signatures(top)
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
@@ -440,7 +428,7 @@ class TestScenario01IdleToOnsetFR:
 
 # ===========================================================================
 # Scenario 2: Stop-go intermittent, fault=rear-left, lang=nl
-# Source: 02_stop_go_rl_nl.pdf
+# Phases: 20s idle → 20s road@30 → 20s fault RL@50 → 15s roll@10 → 25s fault RL@60
 # ===========================================================================
 
 
@@ -453,17 +441,17 @@ class TestScenario02StopGoRL:
         samples: list[dict[str, Any]] = []
         t = 0.0
 
-        # Phase A: idle 20s
+        # Phase A: 20s idle @0
         samples.extend(_idle_phase(duration_s=20.0, sensors=sensors, start_t_s=t))
         t += 20.0
 
-        # Phase B: road noise at 30 km/h for 20s
+        # Phase B: 20s road baseline @30 km/h
         samples.extend(
             _road_noise_phase(speed_kmh=30.0, duration_s=20.0, sensors=sensors, start_t_s=t)
         )
         t += 20.0
 
-        # Phase C: fault at 50 km/h for 20s on rear-left
+        # Phase C: 20s mild wheel fault on rear-left @50 km/h
         samples.extend(
             _fault_phase(
                 speed_kmh=50.0,
@@ -475,13 +463,13 @@ class TestScenario02StopGoRL:
         )
         t += 20.0
 
-        # Phase D: slow roll at 10 km/h for 15s (no fault)
+        # Phase D: 15s slow roll / road noise @10 km/h (no fault)
         samples.extend(
             _road_noise_phase(speed_kmh=10.0, duration_s=15.0, sensors=sensors, start_t_s=t)
         )
         t += 15.0
 
-        # Phase E: fault at 60 km/h for 25s on rear-left
+        # Phase E: 25s mild wheel fault on rear-left @60 km/h
         samples.extend(
             _fault_phase(
                 speed_kmh=60.0,
@@ -501,28 +489,37 @@ class TestScenario02StopGoRL:
     def test_primary_system_is_wheel(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_primary_system(top, "wheel")
+        _assert_not_engine(top)
 
     def test_strongest_sensor_is_rear_left(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_strongest_sensor(top, "rear-left")
 
     def test_speed_band_covers_fault_speeds(self, summary: dict) -> None:
-        """The dominant speed band should be in the 50-60 km/h fault region."""
+        """The dominant speed band should be in the 50-70 km/h fault region."""
         top = _get_top_cause(summary)
         _assert_speed_band_contains(top, 40.0, 70.0)
+
+    def test_confidence_reasonable(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_confidence_range(top, 0.25, 1.0)
+
+    def test_wheel_signatures_present(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_wheel_signatures(top)
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
 
 
 # ===========================================================================
-# Scenario 3: Highway steady 120 km/h, fault=rear-right, lang=en
-# Source: 03_high_speed_rr_en.pdf
+# Scenario 3: High-speed only fault, fault=rear-right, lang=en
+# Phases: 20s road@60 → 20s road@90 → 40s fault RR@120 → 20s road@100
 # ===========================================================================
 
 
 class TestScenario03HighwayRR:
-    """Sustained highway fault at 120 km/h on rear-right."""
+    """Road baselines at 60 and 90, then 40s fault at 120, then road baseline at 100."""
 
     @pytest.fixture()
     def summary(self) -> dict:
@@ -530,30 +527,33 @@ class TestScenario03HighwayRR:
         samples: list[dict[str, Any]] = []
         t = 0.0
 
-        # Phase A: ramp up 0→120 km/h over 20s
+        # Phase A: 20s road baseline @60 km/h
         samples.extend(
-            _ramp_phase(
-                speed_start=20.0,
-                speed_end=120.0,
-                n_steps=6,
-                step_duration_s=3.0,
+            _road_noise_phase(speed_kmh=60.0, duration_s=20.0, sensors=sensors, start_t_s=t)
+        )
+        t += 20.0
+
+        # Phase B: 20s road baseline @90 km/h
+        samples.extend(
+            _road_noise_phase(speed_kmh=90.0, duration_s=20.0, sensors=sensors, start_t_s=t)
+        )
+        t += 20.0
+
+        # Phase C: 40s mild wheel fault on rear-right @120 km/h
+        samples.extend(
+            _fault_phase(
+                speed_kmh=120.0,
+                duration_s=40.0,
+                fault_sensor="rear-right",
                 sensors=sensors,
                 start_t_s=t,
             )
         )
-        t += 18.0
+        t += 40.0
 
-        # Phase B: cruise + fault at 120 km/h for 60s
+        # Phase D: 20s road baseline @100 km/h (cooldown, no fault)
         samples.extend(
-            _fault_phase(
-                speed_kmh=120.0,
-                duration_s=60.0,
-                fault_sensor="rear-right",
-                sensors=sensors,
-                start_t_s=t,
-                fault_amp=0.07,
-                fault_vib_db=28.0,
-            )
+            _road_noise_phase(speed_kmh=100.0, duration_s=20.0, sensors=sensors, start_t_s=t)
         )
 
         metadata = _standard_metadata(language="en")
@@ -565,27 +565,37 @@ class TestScenario03HighwayRR:
     def test_primary_system_is_wheel(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_primary_system(top, "wheel")
+        _assert_not_engine(top)
 
     def test_strongest_sensor_is_rear_right(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_strongest_sensor(top, "rear-right")
 
     def test_speed_band_covers_120(self, summary: dict) -> None:
+        """Speed band should be around 120 km/h (the only fault phase)."""
         top = _get_top_cause(summary)
         _assert_speed_band_contains(top, 110.0, 130.0)
+
+    def test_confidence_reasonable(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_confidence_range(top, 0.25, 1.0)
+
+    def test_wheel_signatures_present(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_wheel_signatures(top)
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
 
 
 # ===========================================================================
-# Scenario 4: Coast-down from 100→30, fault=front-left (mild), lang=nl
-# Source: 04_coastdown_fl_nl.pdf
+# Scenario 4: Coast-down resonance, fault=front-left, lang=nl
+# Phases: 20s road@110 → 20s mild FL@90 → 20s stronger FL@70 → 20s mild FL@50 → 20s road@30
 # ===========================================================================
 
 
 class TestScenario04CoastdownFL:
-    """Coast-down with mild front-left fault showing predominantly at 30-40 km/h."""
+    """Coast-down with variable-strength front-left fault across 90/70/50 km/h."""
 
     @pytest.fixture()
     def summary(self) -> dict:
@@ -593,22 +603,22 @@ class TestScenario04CoastdownFL:
         samples: list[dict[str, Any]] = []
         t = 0.0
 
-        # Phase A: brief cruise at 100 km/h for 15s (no fault yet)
+        # Phase A: 20s road baseline @110 km/h (no fault)
         samples.extend(
             _road_noise_phase(
-                speed_kmh=100.0,
-                duration_s=15.0,
+                speed_kmh=110.0,
+                duration_s=20.0,
                 sensors=sensors,
                 start_t_s=t,
                 road_vib_db=12.0,
             )
         )
-        t += 15.0
+        t += 20.0
 
-        # Phase B: cruise with fault at 100 km/h for 20s
+        # Phase B: 20s mild wheel fault on front-left @90 km/h
         samples.extend(
             _fault_phase(
-                speed_kmh=100.0,
+                speed_kmh=90.0,
                 duration_s=20.0,
                 fault_sensor="front-left",
                 sensors=sensors,
@@ -619,17 +629,41 @@ class TestScenario04CoastdownFL:
         )
         t += 20.0
 
-        # Phase C: coast-down with fault, 100→30 km/h over 30s
+        # Phase C: 20s stronger wheel fault on front-left @70 km/h
         samples.extend(
-            _coast_down_fault_phase(
-                speed_start=100.0,
-                speed_end=30.0,
-                duration_s=30.0,
+            _fault_phase(
+                speed_kmh=70.0,
+                duration_s=20.0,
                 fault_sensor="front-left",
                 sensors=sensors,
                 start_t_s=t,
-                fault_amp=0.05,
-                fault_vib_db=24.0,
+                fault_amp=0.07,
+                fault_vib_db=28.0,
+            )
+        )
+        t += 20.0
+
+        # Phase D: 20s mild wheel fault on front-left @50 km/h
+        samples.extend(
+            _fault_phase(
+                speed_kmh=50.0,
+                duration_s=20.0,
+                fault_sensor="front-left",
+                sensors=sensors,
+                start_t_s=t,
+                fault_amp=0.045,
+                fault_vib_db=22.0,
+            )
+        )
+        t += 20.0
+
+        # Phase E: 20s road baseline @30 km/h (no fault)
+        samples.extend(
+            _road_noise_phase(
+                speed_kmh=30.0,
+                duration_s=20.0,
+                sensors=sensors,
+                start_t_s=t,
             )
         )
 
@@ -642,32 +676,38 @@ class TestScenario04CoastdownFL:
     def test_primary_system_is_wheel(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_primary_system(top, "wheel")
+        _assert_not_engine(top)
 
     def test_strongest_sensor_is_front_left(self, summary: dict) -> None:
         top = _get_top_cause(summary)
-        # Must mention front-left (possibly alongside others)
-        location = str(top.get("strongest_location", "")).lower()
-        assert "front" in location, (
-            f"Expected strongest_location containing 'front', got {location!r}"
-        )
+        _assert_strongest_sensor(top, "front-left")
 
-    def test_speed_band_reasonable(self, summary: dict) -> None:
-        """Coastdown scenario: speed band should be in the cruise/upper range (30-110)."""
+    def test_speed_band_in_fault_range(self, summary: dict) -> None:
+        """Speed band should be within the 50-90 km/h fault region (strongest at 70)."""
         top = _get_top_cause(summary)
-        _assert_speed_band_contains(top, 25.0, 110.0)
+        _assert_speed_band_contains(top, 40.0, 100.0)
+
+    def test_confidence_reasonable(self, summary: dict) -> None:
+        """Coast-down with 60s total fault evidence should have decent confidence."""
+        top = _get_top_cause(summary)
+        _assert_confidence_range(top, 0.30, 1.0)
+
+    def test_wheel_signatures_present(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_wheel_signatures(top)
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
 
 
 # ===========================================================================
-# Scenario 5: Road noise then fault at 80 km/h, fault=front-left, lang=en
-# Source: 05_noise_then_fl_en.pdf
+# Scenario 5: Noise then clear confirmation, fault=front-left, lang=en
+# Phases: 40s road@80 → 20s rough@80 → 40s fault FL@100 → 15s road@60
 # ===========================================================================
 
 
 class TestScenario05NoiseThenFL:
-    """Road noise baseline then onset of front-left fault at 80 km/h."""
+    """Road noise baseline then onset of front-left fault at 100 km/h."""
 
     @pytest.fixture()
     def summary(self) -> dict:
@@ -675,28 +715,51 @@ class TestScenario05NoiseThenFL:
         samples: list[dict[str, Any]] = []
         t = 0.0
 
-        # Phase A: road noise at 80 km/h for 30s (no fault)
+        # Phase A: 40s mixed road/noise baseline @80 km/h (no fault)
         samples.extend(
             _road_noise_phase(
                 speed_kmh=80.0,
-                duration_s=30.0,
+                duration_s=40.0,
                 sensors=sensors,
                 start_t_s=t,
-                road_vib_db=12.0,
+                noise_amp=0.005,
+                road_vib_db=14.0,
             )
         )
-        t += 30.0
+        t += 40.0
 
-        # Phase B: fault at 80 km/h for 40s on front-left
+        # Phase B: 20s rough/noisy road segment @80 km/h (higher noise, no fault)
+        samples.extend(
+            _road_noise_phase(
+                speed_kmh=80.0,
+                duration_s=20.0,
+                sensors=sensors,
+                start_t_s=t,
+                noise_amp=0.008,
+                road_vib_db=18.0,
+            )
+        )
+        t += 20.0
+
+        # Phase C: 40s mild wheel fault on front-left @100 km/h
         samples.extend(
             _fault_phase(
-                speed_kmh=80.0,
+                speed_kmh=100.0,
                 duration_s=40.0,
                 fault_sensor="front-left",
                 sensors=sensors,
                 start_t_s=t,
-                fault_amp=0.058,
-                fault_vib_db=28.0,
+            )
+        )
+        t += 40.0
+
+        # Phase D: 15s road baseline @60 km/h (cooldown, no fault)
+        samples.extend(
+            _road_noise_phase(
+                speed_kmh=60.0,
+                duration_s=15.0,
+                sensors=sensors,
+                start_t_s=t,
             )
         )
 
@@ -709,18 +772,25 @@ class TestScenario05NoiseThenFL:
     def test_primary_system_is_wheel(self, summary: dict) -> None:
         top = _get_top_cause(summary)
         _assert_primary_system(top, "wheel")
+        _assert_not_engine(top)
 
     def test_strongest_sensor_is_front_left(self, summary: dict) -> None:
         top = _get_top_cause(summary)
-        # Accept front-left or front-right (PDF shows front-right in some outputs)
-        location = str(top.get("strongest_location", "")).lower()
-        assert "front" in location, (
-            f"Expected strongest_location containing 'front', got {location!r}"
-        )
+        _assert_strongest_sensor(top, "front-left")
 
-    def test_speed_band_covers_80(self, summary: dict) -> None:
+    def test_speed_band_covers_100(self, summary: dict) -> None:
+        """Fault emerges at 100 km/h — speed band should cover that range."""
         top = _get_top_cause(summary)
-        _assert_speed_band_contains(top, 70.0, 90.0)
+        _assert_speed_band_contains(top, 90.0, 110.0)
+
+    def test_confidence_reasonable(self, summary: dict) -> None:
+        """Despite earlier noise, 40s clear fault should produce reasonable confidence."""
+        top = _get_top_cause(summary)
+        _assert_confidence_range(top, 0.25, 1.0)
+
+    def test_wheel_signatures_present(self, summary: dict) -> None:
+        top = _get_top_cause(summary)
+        _assert_wheel_signatures(top)
 
     def test_has_required_sections(self, summary: dict) -> None:
         _assert_has_sections(summary, ["top_causes", "findings", "lang"])
@@ -779,7 +849,6 @@ class TestSimulatorDeterminism:
         clients = [FakeClient(n) for n in _ALL_SENSORS]
         apply_road_fixed_scenario(clients)
 
-        # All clients should have identical gain settings
         gains = [(c.scene_gain, c.scene_noise_gain, c.amp_scale, c.noise_scale) for c in clients]
         assert all(g == gains[0] for g in gains), "Not all clients received identical gains"
 
@@ -846,7 +915,6 @@ class TestLanguageSelectionPrecedence:
             sensors=_ALL_SENSORS,
             start_t_s=0.0,
         )
-        # Pass lang=None to trigger metadata fallback
         summary = summarize_run_data(metadata, samples, lang="nl", file_name="test")
         assert summary.get("lang") == "nl"
 
@@ -875,7 +943,6 @@ class TestLanguageSelectionPrecedence:
             start_t_s=0.0,
         )
         summary = summarize_run_data(metadata, samples, lang="nl", file_name="test")
-        # Check that Dutch was actually used (not English)
         assert summary.get("lang") == "nl"
 
 
@@ -897,7 +964,7 @@ class TestSpeedBandMixedPhase:
         samples.extend(_idle_phase(duration_s=5.0, sensors=sensors, start_t_s=t))
         t += 5.0
 
-        # Ramp 20→100 km/h (brief, 4 steps x 2s)
+        # Ramp 20→100 km/h (brief, 4 steps × 2s)
         samples.extend(
             _ramp_phase(
                 speed_start=20.0,
@@ -1018,3 +1085,96 @@ class TestSpeedBandMixedPhase:
         summary = summarize_run_data(metadata, samples, lang="en", file_name="accel_weight_test")
         top = _get_top_cause(summary)
         _assert_speed_band_contains(top, 90.0, 110.0)
+
+
+# ===========================================================================
+# Unit tests: confidence guardrails for ambiguous localization
+# ===========================================================================
+
+
+class TestConfidenceGuardrails:
+    """Verify confidence calibration: correct results get reasonable confidence,
+    ambiguous cases get lower confidence (no overconfident wrong results)."""
+
+    def test_clear_single_sensor_fault_has_reasonable_confidence(self) -> None:
+        """40s clear fault on one sensor → confidence ≥ 0.30."""
+        sensors = _ALL_SENSORS
+        samples = _fault_phase(
+            speed_kmh=80.0,
+            duration_s=40.0,
+            fault_sensor="rear-right",
+            sensors=sensors,
+            start_t_s=0.0,
+            fault_amp=0.06,
+        )
+        metadata = _standard_metadata()
+        summary = summarize_run_data(metadata, samples, lang="en", file_name="conf_clear")
+        top = _get_top_cause(summary)
+        _assert_confidence_range(top, 0.30)
+        _assert_strongest_sensor(top, "rear-right")
+
+    def test_all_sensors_equal_amplitude_lower_confidence(self) -> None:
+        """When all 4 sensors have equal fault amplitude, spatial localization is weak."""
+        sensors = _ALL_SENSORS
+        samples: list[dict[str, Any]] = []
+        for i in range(30):
+            for s in sensors:
+                whz = _wheel_hz(80.0)
+                peaks = [
+                    {"hz": whz, "amp": 0.06},
+                    {"hz": whz * 2, "amp": 0.024},
+                ]
+                samples.append(
+                    _make_sample(
+                        t_s=float(i),
+                        speed_kmh=80.0,
+                        client_name=s,
+                        top_peaks=peaks,
+                        vibration_strength_db=26.0,
+                        strength_floor_amp_g=0.004,
+                    )
+                )
+        metadata = _standard_metadata()
+        summary = summarize_run_data(metadata, samples, lang="en", file_name="conf_equal")
+        top = _get_top_cause(summary)
+        # With equal signals, spatial separation should be flagged as weak
+        assert top.get("weak_spatial_separation", False), (
+            "Expected weak spatial separation with equal amplitude on all sensors"
+        )
+
+    def test_short_intermittent_fault_lower_than_long_sustained(self) -> None:
+        """Short intermittent fault should produce lower confidence than long sustained."""
+        sensors = _ALL_SENSORS
+        # Short: 8s fault at 80 km/h
+        short_samples = _fault_phase(
+            speed_kmh=80.0,
+            duration_s=8.0,
+            fault_sensor="front-left",
+            sensors=sensors,
+            start_t_s=0.0,
+        )
+        short_summary = summarize_run_data(
+            _standard_metadata(), short_samples, lang="en", file_name="conf_short"
+        )
+        # Long: 40s fault at 80 km/h
+        long_samples = _fault_phase(
+            speed_kmh=80.0,
+            duration_s=40.0,
+            fault_sensor="front-left",
+            sensors=sensors,
+            start_t_s=0.0,
+        )
+        long_summary = summarize_run_data(
+            _standard_metadata(), long_samples, lang="en", file_name="conf_long"
+        )
+        short_top = (
+            short_summary.get("top_causes", [{}])[0] if short_summary.get("top_causes") else {}
+        )
+        long_top = long_summary.get("top_causes", [{}])[0] if long_summary.get("top_causes") else {}
+        short_conf = short_top.get("confidence", 0.0)
+        long_conf = long_top.get("confidence", 0.0)
+        # Both should produce results, but long should have higher confidence
+        assert long_conf >= short_conf, (
+            f"Long sustained fault ({long_conf:.2f}) should have ≥ confidence "
+            f"than short ({short_conf:.2f})"
+        )
