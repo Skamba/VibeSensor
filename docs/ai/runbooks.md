@@ -8,9 +8,9 @@ cd apps/ui && npm ci
 
 ## Run backend + simulator
 ```bash
-python -m vibesensor.app --config apps/server/config.dev.yaml
+vibesensor-server --config apps/server/config.dev.yaml
 # in another shell
-python apps/simulator/sim_sender.py --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
+vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
 ```
 
 ## Fast check (quiet)

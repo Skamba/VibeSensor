@@ -97,7 +97,7 @@ In another terminal, start the simulator:
 
 ```bash
 pip install -e "./apps/server[dev]"
-python apps/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
+vibesensor-sim --count 5 --server-host 127.0.0.1
 ```
 
 Open http://localhost:8000.
@@ -107,13 +107,13 @@ Open http://localhost:8000.
 ```bash
 pip install -e "./apps/server[dev]"
 python tools/sync_ui_to_pi_public.py
-python -m vibesensor.app --config apps/server/config.dev.yaml
+vibesensor-server --config apps/server/config.dev.yaml
 ```
 
 In another terminal:
 
 ```bash
-python apps/simulator/sim_sender.py --count 5 --server-host 127.0.0.1
+vibesensor-sim --count 5 --server-host 127.0.0.1
 ```
 
 Open http://localhost:8000.
