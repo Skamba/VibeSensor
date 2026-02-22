@@ -38,7 +38,7 @@ from .order_analysis import (
     _order_hypotheses,
     _order_label,
 )
-from .phase_segmentation import diagnostic_sample_mask, segment_run_phases
+from .phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
 from .strength_labels import _STRENGTH_THRESHOLDS
 from .test_plan import _location_speedbin_summary
 
@@ -48,6 +48,17 @@ _NEGLIGIBLE_STRENGTH_MAX_DB = (
 _LIGHT_STRENGTH_MAX_DB = (
     float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
 )
+# Minimum realistic MEMS accelerometer noise floor (~0.001 g).
+# Used as the lower bound for SNR computations to prevent ratio blow-up
+# when the measured floor is near zero (sensor artifact / perfectly clean signal).
+_MEMS_NOISE_FLOOR_G = 0.001
+
+
+def _phase_to_str(phase: object) -> str | None:
+    """Return the string value for a phase object (DrivingPhase or str)."""
+    if phase is None:
+        return None
+    return phase.value if hasattr(phase, "value") else str(phase)
 
 
 def _weighted_percentile(
@@ -340,7 +351,7 @@ def _reference_missing_finding(
             "units": "n/a",
             "definition": _tr(lang, "REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED"),
         },
-        "confidence_0_to_1": 1.0,
+        "confidence_0_to_1": None,
         "quick_checks": quick_checks[:3],
     }
 
@@ -358,6 +369,7 @@ def _build_order_findings(
     accel_units: str,
     connected_locations: set[str],
     lang: object,
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []
@@ -382,8 +394,11 @@ def _build_order_findings(
         ref_sources: set[str] = set()
         possible_by_speed_bin: dict[str, int] = defaultdict(int)
         matched_by_speed_bin: dict[str, int] = defaultdict(int)
+        possible_by_phase: dict[str, int] = defaultdict(int)
+        matched_by_phase: dict[str, int] = defaultdict(int)
+        has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
-        for sample in samples:
+        for sample_idx, sample in enumerate(samples):
             peaks = _sample_top_peaks(sample)
             if not peaks:
                 continue
@@ -404,6 +419,11 @@ def _build_order_findings(
             )
             if sample_speed_bin is not None:
                 possible_by_speed_bin[sample_speed_bin] += 1
+            if has_phases:
+                assert per_sample_phases is not None
+                ph = per_sample_phases[sample_idx]
+                phase_key = str(ph.value if hasattr(ph, "value") else ph)
+                possible_by_phase[phase_key] += 1
 
             tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL)
             best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
@@ -414,12 +434,17 @@ def _build_order_findings(
             matched += 1
             if sample_speed_bin is not None:
                 matched_by_speed_bin[sample_speed_bin] += 1
+            if has_phases:
+                matched_by_phase[phase_key] += 1
             rel_errors.append(delta_hz / max(1e-9, predicted_hz))
             matched_amp.append(best_amp)
             floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
             matched_floor.append(max(0.0, floor_amp))
             predicted_vals.append(predicted_hz)
             measured_vals.append(best_hz)
+            sample_phase: str | None = None
+            if per_sample_phases is not None and sample_idx < len(per_sample_phases):
+                sample_phase = _phase_to_str(per_sample_phases[sample_idx])
             matched_points.append(
                 {
                     "t_s": _as_float(sample.get("t_s")),
@@ -429,6 +454,7 @@ def _build_order_findings(
                     "rel_error": delta_hz / max(1e-9, predicted_hz),
                     "amp": best_amp,
                     "location": _location_label(sample, lang=lang),
+                    "phase": sample_phase,
                 }
             )
 
@@ -460,6 +486,21 @@ def _build_order_findings(
                 effective_match_rate = focused_rate
         if effective_match_rate < min_match_rate:
             continue
+
+        # Per-phase confidence: compute match rate for each driving phase.
+        # Phases with sufficient matches act as independent evidence sources.
+        per_phase_confidence: dict[str, float] | None = None
+        phases_with_evidence = 0
+        if has_phases and possible_by_phase:
+            per_phase_confidence = {}
+            for ph_key, ph_possible in possible_by_phase.items():
+                ph_matched = matched_by_phase.get(ph_key, 0)
+                per_phase_confidence[ph_key] = ph_matched / max(1, ph_possible)
+                if (
+                    ph_matched >= ORDER_MIN_MATCH_POINTS
+                    and per_phase_confidence[ph_key] >= min_match_rate
+                ):
+                    phases_with_evidence += 1
 
         mean_amp = mean(matched_amp) if matched_amp else 0.0
         mean_floor = mean(matched_floor) if matched_floor else 0.0
@@ -513,7 +554,10 @@ def _build_order_findings(
         )
 
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
-        snr_score = min(1.0, log1p(mean_amp / max(0.001, mean_floor)) / 2.5)
+        snr_score = min(1.0, log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor)) / 2.5)
+        # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
+        if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
+            snr_score = min(snr_score, 0.40)
         absolute_strength_db = vibration_strength_db_scalar(
             peak_band_rms_amp_g=mean_amp,
             floor_amp_g=mean_floor,
@@ -554,11 +598,18 @@ def _build_order_findings(
             confidence *= 1.08
         elif corroborating_locations >= 2:
             confidence *= 1.04
+        # Bonus: multi-phase corroboration — order detected consistently across
+        # multiple driving phases (e.g., both CRUISE and ACCELERATION) indicates
+        # a genuine mechanical source rather than a phase-specific artefact.
+        if phases_with_evidence >= 3:
+            confidence *= 1.06
+        elif phases_with_evidence >= 2:
+            confidence *= 1.03
         confidence = max(0.08, min(0.97, confidence))
 
         ranking_score = (
             effective_match_rate
-            * log1p(mean_amp / max(1e-6, mean_floor))
+            * log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor))
             * max(0.0, (1.0 - min(1.0, mean_rel_err / 0.5)))
         )
 
@@ -610,6 +661,18 @@ def _build_order_findings(
             if str(action.get("what") or "").strip()
         ][:3]
 
+        # Compute phase evidence: how much of the matched evidence came from CRUISE phase.
+        # CRUISE (steady driving) provides the most reliable diagnostic signal.
+        _cruise_phase_val = DrivingPhase.CRUISE.value
+        matched_phase_strs = [
+            str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")
+        ]
+        _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_phase_val)
+        phase_evidence: dict[str, object] = {
+            "cruise_fraction": _cruise_matched / len(matched_points) if matched_points else 0.0,
+            "phases_detected": sorted(set(matched_phase_strs)),
+        }
+
         finding = {
             "finding_id": "F_ORDER",
             "finding_key": hypothesis.key,
@@ -640,6 +703,7 @@ def _build_order_findings(
             "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,
             "corroborating_locations": corroborating_locations,
+            "phase_evidence": phase_evidence,
             "evidence_metrics": {
                 "match_rate": effective_match_rate,
                 "global_match_rate": match_rate,
@@ -651,6 +715,8 @@ def _build_order_findings(
                 "possible_samples": possible,
                 "matched_samples": matched,
                 "frequency_correlation": corr,
+                "per_phase_confidence": per_phase_confidence,
+                "phases_with_evidence": phases_with_evidence,
             },
             "next_sensor_move": str(actions[0].get("what") or "")
             or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),
@@ -781,13 +847,9 @@ def _build_persistent_peak_findings(
         location = _location_label(sample, lang=lang)
         if location:
             total_locations.add(location)
-        phase_key: str | None = None
-        if has_phases and per_sample_phases is not None:
-            phase_key = str(
-                per_sample_phases[i].value
-                if hasattr(per_sample_phases[i], "value")
-                else per_sample_phases[i]
-            )
+        sample_phase: str | None = None
+        if per_sample_phases is not None and i < len(per_sample_phases):
+            sample_phase = _phase_to_str(per_sample_phases[i])
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
@@ -802,8 +864,8 @@ def _build_persistent_peak_findings(
                 bin_location_counts[bin_center][location] += 1
             if sample_speed_bin is not None:
                 bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
-            if phase_key is not None:
-                bin_phase_counts[bin_center][phase_key] += 1
+            if sample_phase is not None:
+                bin_phase_counts[bin_center][sample_phase] += 1
 
     if n_samples == 0:
         return []
@@ -905,18 +967,22 @@ def _build_persistent_peak_findings(
             cls=peak_type,
         )
 
-        # Per-phase presence ratios for this frequency bin (issue TODO-4).
-        # Values are the fraction of peak occurrences observed in each phase,
-        # so they sum to 1.0 and clearly show which phase dominates this peak.
+        # Compute phase evidence for this frequency bin.
+        _cruise_phase_val = DrivingPhase.CRUISE.value
+        phases_in_bin = bin_phase_counts.get(bin_center, {})
+        _total_phase_hits = sum(phases_in_bin.values())
+        _cruise_hits = phases_in_bin.get(_cruise_phase_val, 0)
+        peak_phase_evidence: dict[str, object] = {
+            "cruise_fraction": _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0,
+            "phases_detected": sorted(k for k, v in phases_in_bin.items() if v > 0),
+        }
         phase_presence: dict[str, float] | None = None
-        if has_phases:
-            phase_counts_for_bin = bin_phase_counts.get(bin_center, {})
-            if phase_counts_for_bin:
-                total_phase_hits = sum(phase_counts_for_bin.values())
-                phase_presence = {
-                    pk: pcount / max(1, total_phase_hits)
-                    for pk, pcount in phase_counts_for_bin.items()
-                }
+        if has_phases and _total_phase_hits > 0:
+            phase_presence = {
+                phase_key: phase_hits / _total_phase_hits
+                for phase_key, phase_hits in phases_in_bin.items()
+                if phase_hits > 0
+            }
 
         finding: dict[str, object] = {
             "finding_id": "F_PEAK",
@@ -940,6 +1006,7 @@ def _build_persistent_peak_findings(
             "confidence_0_to_1": confidence,
             "quick_checks": [],
             "peak_classification": peak_type,
+            "phase_evidence": peak_phase_evidence,
             "evidence_metrics": {
                 "presence_ratio": presence_ratio,
                 "median_amplitude": median_amp,
@@ -990,6 +1057,7 @@ def _build_findings(
     speed_non_null_pct: float,
     raw_sample_rate_hz: float | None,
     lang: object = "en",
+    per_sample_phases: list | None = None,
 ) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
@@ -1072,18 +1140,22 @@ def _build_findings(
     # IDLE samples (engine-off / stationary) add broadband noise that dilutes
     # order-tracking evidence and inflates persistent-peak presence ratios.
     # Issues #190 and #191.
-    _per_sample_phases, _ = segment_run_phases(samples)
+    # Use caller-supplied phases when available to avoid redundant recomputation.
+    if per_sample_phases is not None and len(per_sample_phases) == len(samples):
+        _per_sample_phases = per_sample_phases
+    else:
+        _per_sample_phases, _ = segment_run_phases(samples)
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)
-    if len(diagnostic_samples) >= 5:
-        analysis_samples = diagnostic_samples
-        analysis_phases = [
+    analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+    # Compute per-sample phases aligned with analysis_samples for phase-evidence tracking.
+    if analysis_samples is diagnostic_samples:
+        analysis_phases: list = [
             p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=False) if keep
         ]
     else:
-        analysis_samples = samples
-        analysis_phases = _per_sample_phases
+        analysis_phases = list(_per_sample_phases)
 
     order_findings = _build_order_findings(
         metadata=metadata,
@@ -1097,6 +1169,7 @@ def _build_findings(
         accel_units=accel_units,
         connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
+        per_sample_phases=analysis_phases,
     )
     findings.extend(order_findings)
 
@@ -1117,7 +1190,7 @@ def _build_findings(
             order_finding_freqs=order_freqs,
             accel_units=accel_units,
             lang=lang,
-            per_sample_phases=analysis_phases,  # phase-aware; TODO-4
+            per_sample_phases=analysis_phases,
         )
     )
 
