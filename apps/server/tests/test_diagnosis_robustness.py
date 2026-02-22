@@ -688,17 +688,23 @@ class TestGpsSpeedValidation:
         """Build a gpsd TPV JSON line with the given *speed* value."""
         import json as _json
 
-        return _json.dumps(
-            {"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "speed": speed_value}
-        ).encode() + b"\n"
+        return (
+            _json.dumps(
+                {"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "speed": speed_value}
+            ).encode()
+            + b"\n"
+        )
 
     @staticmethod
     def _valid_tpv_line(speed: float = 25.5) -> bytes:
         import json as _json
 
-        return _json.dumps(
-            {"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "speed": speed}
-        ).encode() + b"\n"
+        return (
+            _json.dumps(
+                {"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "speed": speed}
+            ).encode()
+            + b"\n"
+        )
 
     def test_nan_speed_rejected_by_product_code(self) -> None:
         """GPSSpeedMonitor.run() must reject NaN speed from gpsd TPV."""
