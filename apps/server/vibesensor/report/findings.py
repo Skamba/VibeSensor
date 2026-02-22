@@ -88,11 +88,32 @@ def _speed_profile_from_points(
     points: list[tuple[float, float]],
     *,
     allowed_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
+    phase_weights: list[float] | None = None,
 ) -> tuple[float | None, tuple[float, float] | None, str | None]:
     valid = [(speed, amp) for speed, amp in points if speed > 0 and amp > 0]
     if allowed_speed_bins:
         allowed = set(allowed_speed_bins)
-        valid = [(speed, amp) for speed, amp in valid if _speed_bin_label(speed) in allowed]
+        if phase_weights is not None:
+            # Keep phase_weights aligned after filtering
+            indexed = [
+                (speed, amp, pw)
+                for (speed, amp), pw in zip(points, phase_weights, strict=False)
+                if speed > 0 and amp > 0 and _speed_bin_label(speed) in allowed
+            ]
+            valid = [(s, a) for s, a, _pw in indexed]
+            phase_weights = [pw for _s, _a, pw in indexed]
+        else:
+            valid = [(speed, amp) for speed, amp in valid if _speed_bin_label(speed) in allowed]
+    elif phase_weights is not None:
+        # Keep phase_weights aligned after filtering
+        indexed = [
+            (speed, amp, pw)
+            for (speed, amp), pw in zip(points, phase_weights, strict=False)
+            if speed > 0 and amp > 0
+        ]
+        valid = [(s, a) for s, a, _pw in indexed]
+        phase_weights = [pw for _s, _a, pw in indexed]
+
     if not valid:
         return None, None, None
 
@@ -104,9 +125,17 @@ def _speed_profile_from_points(
     if high < low:
         low, high = high, low
     speed_window_kmh = (low, high)
+
+    # Apply phase weights: multiply amplitude by phase weight so CRUISE
+    # samples contribute more and ACCELERATION/ramp samples contribute less
+    # to speed-band selection.
+    effective_amps = [amp for _speed, amp in valid]
+    if phase_weights is not None and len(phase_weights) == len(valid):
+        effective_amps = [amp * pw for amp, pw in zip(effective_amps, phase_weights, strict=True)]
+
     low_speed, high_speed = _amplitude_weighted_speed_window(
         [speed_kmh for speed_kmh, _amp in valid],
-        [amp for _speed_kmh, amp in valid],
+        effective_amps,
     )
     strongest_speed_band = (
         f"{low_speed:.0f}-{high_speed:.0f} km/h"
@@ -696,15 +725,30 @@ def _build_order_findings(
             str(location_hotspot.get("speed_range")) if isinstance(location_hotspot, dict) else ""
         )
         speed_points: list[tuple[float, float]] = []
+        speed_phase_weights: list[float] = []
+        _cruise_val = DrivingPhase.CRUISE.value
+        _accel_val = DrivingPhase.ACCELERATION.value
+        _decel_val = DrivingPhase.DECELERATION.value
+        _coast_val = DrivingPhase.COAST_DOWN.value
         for point in matched_points:
             point_speed = _as_float(point.get("speed_kmh"))
             point_amp = _as_float(point.get("amp"))
             if point_speed is None or point_amp is None:
                 continue
             speed_points.append((point_speed, point_amp))
+            # Phase-aware weight: CRUISE samples are most diagnostic (3x),
+            # transient phases (ACCELERATION/DECELERATION) are down-weighted (0.3x).
+            ph = str(point.get("phase") or "")
+            if ph == _cruise_val:
+                speed_phase_weights.append(3.0)
+            elif ph in (_accel_val, _decel_val, _coast_val):
+                speed_phase_weights.append(0.3)
+            else:
+                speed_phase_weights.append(1.0)
         peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
             speed_points,
             allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
+            phase_weights=speed_phase_weights if speed_phase_weights else None,
         )
         if not strongest_speed_band:
             strongest_speed_band = hotspot_speed_band

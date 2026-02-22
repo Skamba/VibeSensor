@@ -31,6 +31,24 @@ def apply_one_wheel_mild_scenario(clients: list[Any], fault_wheel: str) -> None:
             client.noise_scale = 0.85
 
 
+def apply_road_fixed_scenario(clients: list[Any]) -> None:
+    """Apply a deterministic baseline road scene for scripted scenarios.
+
+    Unlike the ``road`` scenario, this does NOT start a background randomizer
+    loop.  All clients receive identical, stable gains that produce a mild
+    road-noise baseline without stochastic scene transitions.  This makes
+    scripted multi-phase runs fully reproducible.
+    """
+    for client in clients:
+        client.profile_name = "rough_road"
+        client.scene_mode = "road-fixed"
+        client.scene_gain = 0.12
+        client.scene_noise_gain = 0.85
+        client.common_event_gain = 0.0
+        client.amp_scale = 0.15
+        client.noise_scale = 0.80
+
+
 def find_targets(clients: list[Any], token: str) -> list[Any]:
     target = token.strip().lower()
     if target == "all":
