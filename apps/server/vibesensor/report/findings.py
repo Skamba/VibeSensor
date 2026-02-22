@@ -672,6 +672,20 @@ def _build_order_findings(
             "cruise_fraction": _cruise_matched / len(matched_points) if matched_points else 0.0,
             "phases_detected": sorted(set(matched_phase_strs)),
         }
+        # Dominant non-cruise onset phase helps explain whether issue appears on transitions.
+        _phase_onset_relevant = {
+            DrivingPhase.ACCELERATION.value,
+            DrivingPhase.DECELERATION.value,
+            DrivingPhase.COAST_DOWN.value,
+        }
+        dominant_phase: str | None = None
+        onset_phase_labels = [p for p in matched_phase_strs if p in _phase_onset_relevant]
+        if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
+            from collections import Counter as _Counter
+
+            top_phase, top_count = _Counter(onset_phase_labels).most_common(1)[0]
+            if top_count / len(matched_points) >= 0.50:
+                dominant_phase = top_phase
 
         finding = {
             "finding_id": "F_ORDER",
@@ -693,6 +707,7 @@ def _build_order_findings(
             "location_hotspot": location_hotspot,
             "strongest_location": strongest_location or None,
             "strongest_speed_band": strongest_speed_band or None,
+            "dominant_phase": dominant_phase,
             "peak_speed_kmh": peak_speed_kmh,
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "dominance_ratio": (
