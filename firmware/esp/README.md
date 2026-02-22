@@ -13,6 +13,9 @@ accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 - ADXL345 I2C driver at 800 Hz with error-checked initialisation
 - Synthetic waveform fallback when the sensor is absent or I2C fails
 
+Authoritative protocol and port contract: `docs/protocol.md`
+(generated from code + shared contracts).
+
 ## Project Structure
 
 ```
@@ -55,6 +58,8 @@ Default network target already matches the Pi hotspot configuration:
 - PSK empty (open test AP)
 - Server IP `10.4.0.1`
 - UDP ports `9000/9001`
+
+For canonical message IDs/packet sizes and port values, use `docs/protocol.md`.
 
 Optional override via local file (recommended for non-default networks):
 

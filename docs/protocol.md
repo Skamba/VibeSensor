@@ -1,69 +1,52 @@
-# VibeSensor Wire Protocol (v1)
+# Authoritative Protocol & Ports Contract
 
-All multi-byte numeric fields use little-endian encoding.
+This document is generated from code and shared contract files.
 
-## Message types
+- Regenerate with: `python3 tools/config/generate_contract_reference_doc.py`
+- Source of truth:
+  - `apps/server/vibesensor/protocol.py`
+  - `apps/server/vibesensor/config.py`
+  - `libs/shared/contracts/metrics_fields.json`
+  - `libs/shared/contracts/report_fields.json`
 
-- `1`: HELLO
-- `2`: DATA
-- `3`: CMD
-- `4`: ACK
-- `5`: DATA_ACK
+## Network contract
 
-## Field layout
+- HTTP API/UI server port: `80`
+- UDP data ingest port: `9000`
+- UDP control/identify port: `9001`
 
-- `client_id`: 6 bytes (MAC-derived)
-- HELLO fixed bytes (without name/fw payload bytes): `20`
+## Wire protocol version and message types
+
+- Version: `1`
+- HELLO: `1`
+- DATA: `2`
+- CMD: `3`
+- ACK: `4`
+- DATA_ACK: `5`
+- CMD identify id: `1`
+
+## Wire packet byte sizes
+
+- HELLO fixed bytes (without variable name/fw bytes): `20`
 - DATA header bytes (without sample payload): `22`
 - CMD header bytes: `13`
 - CMD identify bytes: `15`
 - ACK bytes: `13`
 - DATA_ACK bytes: `12`
 
-## HELLO (`type=1`)
+## Shared metric payload fields
 
-- `u8 type`
-- `u8 version`
-- `u8[6] client_id`
-- `u16 control_port`
-- `u16 sample_rate_hz`
-- `u16 frame_samples`
-- `u8 name_len`
-- `u8[name_len] name_utf8`
-- `u8 fw_len`
-- `u8[fw_len] firmware_utf8`
-- `u32 queue_overflow_drops`
+- `vibration_strength_db`
+- `strength_bucket`
 
-## DATA (`type=2`)
+## Shared report summary fields
 
-- `u8 type`
-- `u8 version`
-- `u8[6] client_id`
-- `u32 seq`
-- `u64 t0_us`
-- `u16 sample_count`
-- `i16[sample_count*3] xyz_interleaved`
-
-## CMD (`type=3`)
-
-- `u8 type`
-- `u8 version`
-- `u8[6] client_id`
-- `u8 cmd_id`
-- `u32 cmd_seq`
-- params by `cmd_id` (`identify`: `u16 duration_ms`)
-
-## ACK (`type=4`)
-
-- `u8 type`
-- `u8 version`
-- `u8[6] client_id`
-- `u32 cmd_seq`
-- `u8 status`
-
-## DATA_ACK (`type=5`)
-
-- `u8 type`
-- `u8 version`
-- `u8[6] client_id`
-- `u32 last_seq_received`
+- `run_id`
+- `timestamp_utc`
+- `client_id`
+- `client_name`
+- `speed_kmh`
+- `dominant_freq_hz`
+- `vibration_strength_db`
+- `strength_bucket`
+- `top_peaks`
