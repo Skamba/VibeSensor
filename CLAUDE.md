@@ -15,7 +15,7 @@ Read order + canonical rules
 
 ## Core commands
 - Setup: `python -m pip install -e "./apps/server[dev]" && (cd apps/ui && npm ci)`
-- Run server (local): `python -m vibesensor.app --config apps/server/config.dev.yaml`
+- Run server (local): `vibesensor-server --config apps/server/config.dev.yaml`
 - UI dev/build: `cd apps/ui && npm run dev` / `cd apps/ui && npm run typecheck && npm run build`
 - Lint/test/format/smoke: `make lint` / `make test-all` / `make format` / `make smoke`
 - PR checks watcher: `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
