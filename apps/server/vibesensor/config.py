@@ -32,7 +32,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
         },
     },
     "server": {"host": "0.0.0.0", "port": 80},
-    "udp": {"data_listen": "0.0.0.0:9000", "control_listen": "0.0.0.0:9001"},
+    "udp": {
+        "data_listen": "0.0.0.0:9000",
+        "control_listen": "0.0.0.0:9001",
+        "data_queue_maxsize": 1024,
+    },
     "processing": {
         "sample_rate_hz": 800,
         "waveform_seconds": 8,
@@ -124,6 +128,7 @@ class UDPConfig:
     data_port: int
     control_host: str
     control_port: int
+    data_queue_maxsize: int
 
 
 @dataclass(slots=True)
@@ -248,6 +253,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             data_port=data_port,
             control_host=control_host,
             control_port=control_port,
+            data_queue_maxsize=max(1, int(merged["udp"].get("data_queue_maxsize", 1024))),
         ),
         processing=ProcessingConfig(
             sample_rate_hz=int(merged["processing"]["sample_rate_hz"]),

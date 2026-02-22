@@ -304,6 +304,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             port=config.udp.data_port,
             registry=runtime.registry,
             processor=runtime.processor,
+            queue_maxsize=config.udp.data_queue_maxsize,
         )
         await runtime.control_plane.start()
         runtime.tasks = [

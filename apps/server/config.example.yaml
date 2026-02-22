@@ -24,6 +24,7 @@ server:
 udp:
   data_listen: 0.0.0.0:9000
   control_listen: 0.0.0.0:9001
+  data_queue_maxsize: 1024
 
 processing:
   sample_rate_hz: 800
