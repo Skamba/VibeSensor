@@ -223,10 +223,6 @@ class GPSSpeedMonitor:
                         self.speed_mps = float(speed)
                         self.last_update_ts = time.monotonic()
                         self.fallback_active = False
-                    else:
-                        # Discard speed when fix quality is below 3D.
-                        self.speed_mps = None
-                        self.last_update_ts = None
                     # Extract device from TPV
                     device = payload.get("device")
                     if isinstance(device, str) and device:
