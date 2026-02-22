@@ -672,7 +672,16 @@ class UpdateManager:
             return
 
         self._log("Git update completed successfully")
-        rebuild_cmd = ["python3", str(repo / "tools" / "sync_ui_to_pi_public.py")]
+        sync_script = repo / "tools" / "sync_ui_to_pi_public.py"
+        if not sync_script.is_file():
+            self._add_issue(
+                "updating",
+                f"Required rebuild script not found: {sync_script}",
+                str(sync_script),
+            )
+            self._status.state = UpdateState.failed
+            return
+        rebuild_cmd = ["python3", str(sync_script)]
         rc, _, stderr = await self._run_cmd(
             rebuild_cmd,
             phase="updating",
