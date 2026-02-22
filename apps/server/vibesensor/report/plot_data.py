@@ -480,6 +480,10 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         {"phase": seg.phase.value, "start_t_s": seg.start_t_s, "end_t_s": seg.end_t_s}
         for seg in phase_segs
     ]
+    phase_boundaries: list[dict[str, Any]] = [
+        {"phase": seg.phase.value, "t_s": seg.start_t_s, "end_t_s": seg.end_t_s}
+        for seg in phase_segs
+    ]
 
     return {
         "vib_magnitude": vib_mag_points,
@@ -495,4 +499,5 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         "peaks_spectrogram_raw": peaks_spectrogram_raw,
         "peaks_table": peaks_table,
         "phase_segments": phase_segments_out,
+        "phase_boundaries": phase_boundaries,
     }

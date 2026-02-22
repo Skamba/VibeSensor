@@ -775,6 +775,32 @@ class TestSummarizeRunDataPersistence:
         assert "peaks_spectrogram" in plots
         assert "peaks_spectrogram_raw" in plots
 
+    def test_plots_include_phase_boundaries(self) -> None:
+        """plots dict should contain phase_boundaries with t_s, end_t_s, and phase keys."""
+        metadata = _make_metadata()
+        # Idle samples (speed=0) then accelerating then cruising
+        samples = (
+            [_sample(float(i), 0.0, [{"hz": 20.0, "amp": 0.02}]) for i in range(5)]
+            + [
+                _sample(float(i + 5), float(i + 5) * 10, [{"hz": 20.0, "amp": 0.04}])
+                for i in range(5)
+            ]
+            + [_sample(float(i + 10), 80.0, [{"hz": 20.0, "amp": 0.05}]) for i in range(10)]
+        )
+        summary = summarize_run_data(metadata, samples, lang="en")
+        plots = summary.get("plots", {})
+        assert "phase_boundaries" in plots
+        boundaries = plots["phase_boundaries"]
+        assert isinstance(boundaries, list)
+        assert len(boundaries) >= 1
+        for entry in boundaries:
+            assert "t_s" in entry
+            assert "end_t_s" in entry
+            assert "phase" in entry
+            assert isinstance(entry["t_s"], float)
+            assert isinstance(entry["end_t_s"], float)
+            assert isinstance(entry["phase"], str)
+
 
 class TestSpectrogramPersistence:
     def test_diagnostic_spectrogram_downweights_one_off_thud(self) -> None:
