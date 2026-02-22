@@ -16,7 +16,6 @@ import math
 from typing import Any
 
 import pytest
-
 from conftest import assert_summary_sections
 from vibesensor_core.strength_bands import bucket_for_strength
 
