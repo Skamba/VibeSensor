@@ -14,7 +14,13 @@ from vibesensor.gps_speed import GPSSpeedMonitor
 # ---------------------------------------------------------------------------
 
 
-def _tpv_line(speed: float, *, mode: int = 3, eph: float | None = None, eps: float | None = None) -> bytes:
+def _tpv_line(
+    speed: float,
+    *,
+    mode: int = 3,
+    eph: float | None = None,
+    eps: float | None = None,
+) -> bytes:
     payload: dict[str, float | int | str] = {"class": "TPV", "speed": speed, "mode": mode}
     if eph is not None:
         payload["eph"] = eph
