@@ -542,3 +542,110 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     pdf = build_report_pdf(summary)
     assert b"5 potential saturation samples detected." in pdf
     assert b"3 dropped frames, 2 queue overflows detected." in pdf
+
+
+# ---------------------------------------------------------------------------
+# Phase fields: ObservedSignature.phase and ReportTemplateData.phase_info
+# ---------------------------------------------------------------------------
+
+
+def test_map_summary_phase_fields_populated_from_phase_info() -> None:
+    """map_summary populates observed.phase and phase_info from summary phase_info."""
+    summary: dict = {
+        "lang": "en",
+        "top_causes": [
+            {
+                "source": "wheel/tire",
+                "strongest_location": "Rear Left",
+                "strongest_speed_band": "70-80 km/h",
+                "confidence": 0.75,
+                "signatures_observed": ["1x wheel order"],
+            }
+        ],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+        "phase_info": {
+            "phase_counts": {"idle": 5, "cruise": 30, "acceleration": 10},
+            "phase_pcts": {"idle": 11.1, "cruise": 66.7, "acceleration": 22.2},
+            "total_samples": 45,
+            "segment_count": 3,
+            "has_cruise": True,
+            "has_acceleration": True,
+            "cruise_pct": 66.7,
+            "idle_pct": 11.1,
+        },
+    }
+    data = map_summary(summary)
+
+    # observed.phase should be the dominant non-idle phase (cruise with 30 samples)
+    assert data.observed.phase == "cruise"
+    # phase_info should be forwarded onto the template data
+    assert isinstance(data.phase_info, dict)
+    assert data.phase_info["has_cruise"] is True
+    assert data.phase_info["cruise_pct"] == pytest.approx(66.7)
+
+
+def test_map_summary_phase_fields_none_when_no_phase_info() -> None:
+    """map_summary sets phase fields to None when phase_info is absent."""
+    summary: dict = {
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+
+    assert data.observed.phase is None
+    assert data.phase_info is None
+
+
+def test_map_summary_dominant_phase_excludes_idle() -> None:
+    """dominant phase selection skips idle even if it has more samples."""
+    summary: dict = {
+        "lang": "en",
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+        "phase_info": {
+            "phase_counts": {"idle": 100, "acceleration": 20, "cruise": 15},
+            "phase_pcts": {"idle": 74.1, "acceleration": 14.8, "cruise": 11.1},
+            "total_samples": 135,
+            "segment_count": 4,
+            "has_cruise": True,
+            "has_acceleration": True,
+            "cruise_pct": 11.1,
+            "idle_pct": 74.1,
+        },
+    }
+    data = map_summary(summary)
+
+    # idle (100) must be skipped; acceleration (20) wins over cruise (15)
+    assert data.observed.phase == "acceleration"
+
+
+def test_observed_signature_has_phase_field() -> None:
+    """ObservedSignature dataclass exposes a phase field defaulting to None."""
+    from vibesensor.report.report_data import ObservedSignature
+
+    sig = ObservedSignature()
+    assert sig.phase is None
+
+    sig2 = ObservedSignature(phase="cruise")
+    assert sig2.phase == "cruise"
+
+
+def test_report_template_data_has_phase_info_field() -> None:
+    """ReportTemplateData dataclass exposes a phase_info field defaulting to None."""
+    data = ReportTemplateData()
+    assert data.phase_info is None
+
+    data2 = ReportTemplateData(phase_info={"cruise_pct": 80.0})
+    assert data2.phase_info == {"cruise_pct": 80.0}

@@ -220,6 +220,70 @@ def test_select_top_causes_prefers_diagnostic_over_info() -> None:
     assert causes[0]["source"] == "wheel/tire"
 
 
+def test_select_top_causes_prefers_cruise_phase_evidence() -> None:
+    """A finding with strong cruise-phase evidence should rank above one with
+    equal raw confidence but no cruise evidence."""
+    findings = [
+        {
+            "finding_id": "F_A",
+            "severity": "diagnostic",
+            "suspected_source": "driveline",
+            "confidence_0_to_1": 0.60,
+            "frequency_hz_or_order": "3x driveshaft",
+            # No phase evidence — neutral multiplier
+        },
+        {
+            "finding_id": "F_B",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "confidence_0_to_1": 0.60,
+            "frequency_hz_or_order": "1x wheel order",
+            # All matches were in cruise phase
+            "phase_evidence": {"cruise_fraction": 1.0, "phases_detected": ["cruise"]},
+        },
+    ]
+    causes = select_top_causes(findings)
+    # Both qualify; wheel/tire (cruise dominant) should come first
+    assert len(causes) == 2
+    assert causes[0]["source"] == "wheel/tire"
+    assert causes[1]["source"] == "driveline"
+
+
+def test_select_top_causes_phase_evidence_in_output() -> None:
+    """phase_evidence from the representative finding must be passed through."""
+    phase_ev = {"cruise_fraction": 0.85, "phases_detected": ["cruise", "acceleration"]}
+    findings = [
+        {
+            "finding_id": "F_C",
+            "severity": "diagnostic",
+            "suspected_source": "wheel/tire",
+            "confidence_0_to_1": 0.75,
+            "frequency_hz_or_order": "1x wheel order",
+            "phase_evidence": phase_ev,
+        }
+    ]
+    causes = select_top_causes(findings)
+    assert len(causes) == 1
+    assert causes[0]["phase_evidence"] == phase_ev
+
+
+def test_select_top_causes_no_phase_evidence_still_works() -> None:
+    """Findings without phase_evidence should still be ranked correctly."""
+    findings = [
+        {
+            "finding_id": "F_D",
+            "severity": "diagnostic",
+            "suspected_source": "engine",
+            "confidence_0_to_1": 0.55,
+            "frequency_hz_or_order": "2x engine order",
+        }
+    ]
+    causes = select_top_causes(findings)
+    assert len(causes) == 1
+    assert causes[0]["source"] == "engine"
+    assert causes[0]["phase_evidence"] is None
+
+
 # -- confidence_label --------------------------------------------------------
 
 
@@ -239,6 +303,33 @@ def test_confidence_label_boundaries(value: float, expected_key: str, expected_t
     assert label_key == expected_key
     assert tone == expected_tone
     assert pct_text == f"{value * 100:.0f}%"
+
+
+def test_confidence_label_negligible_strength_caps_high_to_medium() -> None:
+    """High confidence + negligible strength → CONFIDENCE_MEDIUM, not CONFIDENCE_HIGH."""
+    label_key, tone, _ = confidence_label(0.80, strength_band_key="negligible")
+    assert label_key == "CONFIDENCE_MEDIUM"
+    assert tone == "warn"
+
+
+def test_confidence_label_negligible_does_not_affect_medium() -> None:
+    """Medium confidence + negligible strength stays medium (no over-cap)."""
+    label_key, _, _ = confidence_label(0.55, strength_band_key="negligible")
+    assert label_key == "CONFIDENCE_MEDIUM"
+
+
+def test_confidence_label_negligible_does_not_affect_low() -> None:
+    """Low confidence + negligible strength stays low."""
+    label_key, _, _ = confidence_label(0.20, strength_band_key="negligible")
+    assert label_key == "CONFIDENCE_LOW"
+
+
+def test_confidence_label_non_negligible_allows_high() -> None:
+    """Non-negligible (or absent) strength_band_key must not prevent CONFIDENCE_HIGH."""
+    for band in ("light", "moderate", "strong", "very_strong", None):
+        label_key, tone, _ = confidence_label(0.80, strength_band_key=band)
+        assert label_key == "CONFIDENCE_HIGH", f"Unexpected cap for strength_band_key={band!r}"
+        assert tone == "success"
 
 
 # -- PDF section heading coverage --------------------------------------------

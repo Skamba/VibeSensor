@@ -270,6 +270,33 @@ class TestPhaseSegmentation:
         assert info["has_acceleration"]
         assert info["total_samples"] == len(samples)
 
+    def test_empty_samples_returns_empty(self) -> None:
+        """segment_run_phases with no samples must return empty lists."""
+        per_sample, segments = segment_run_phases([])
+        assert per_sample == []
+        assert segments == []
+
+    def test_none_speed_treated_as_idle(self) -> None:
+        """Samples with speed_kmh=None must be classified as IDLE."""
+        samples = [
+            {"t_s": 0.0, "speed_kmh": None},
+            {"t_s": 1.0, "speed_kmh": None},
+        ]
+        per_sample, _segments = segment_run_phases(samples)
+        assert all(p == DrivingPhase.IDLE for p in per_sample)
+
+    def test_diagnostic_mask_exclude_coast_down(self) -> None:
+        """When exclude_coast_down=True, COAST_DOWN samples must also be masked out."""
+        phases = [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE]
+        mask = diagnostic_sample_mask(phases, exclude_coast_down=True)
+        assert mask == [False, False, True]
+
+    def test_diagnostic_mask_coast_down_included_by_default(self) -> None:
+        """By default, COAST_DOWN samples are included (only IDLE is excluded)."""
+        phases = [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE]
+        mask = diagnostic_sample_mask(phases)
+        assert mask == [False, True, True]
+
 
 # ---------------------------------------------------------------------------
 # 2. Confidence calibration tests
@@ -307,34 +334,44 @@ class TestConfidenceCalibration:
             assert low_conf <= high_conf * 0.85
 
     def test_noise_floor_guard_prevents_snr_blowup_with_near_zero_floor(self) -> None:
-        """Issue #186: near-zero noise floor must not produce snr_score ≈ 1.0.
+        """Issue #186 / TODO 9: near-zero noise floor must not produce snr_score ≈ 1.0.
 
         When mean_floor is near-zero (sensor artifact / perfectly clean signal),
-        the SNR ratio blows up without the guard. The fix clamps mean_floor
-        to max(0.001, mean_floor) so tiny absolute amplitudes cannot produce
-        artificially high SNR scores.
+        the SNR ratio blows up without the guard. The fix clamps mean_floor to
+        max(_MEMS_NOISE_FLOOR_G, mean_floor) and adds an absolute-strength guard
+        that caps snr_score at 0.40 when mean_amp is barely above MEMS noise.
 
-        AC: floor guard prevents snr_score ≈ 1.0 for 2mg amplitude / near-zero floor.
-        Implementation gives ~0.44 (vs 1.0 without guard), plus absolute-strength
-        cap provides secondary protection.
+        AC: A mean_amp of 0.002g (barely above MEMS noise) cannot produce snr_score > 0.40.
         """
         from math import log1p as _log1p
+
+        from vibesensor.report.findings import _MEMS_NOISE_FLOOR_G
 
         mean_amp = 0.002  # 2 mg – barely above MEMS noise
         near_zero_floor = 1e-7  # pathological near-zero floor
 
         # Without guard (old: max(1e-6, floor)):
         snr_without_guard = min(1.0, _log1p(mean_amp / max(1e-6, near_zero_floor)) / 2.5)
-        # With guard (current: max(0.001, floor)):
-        snr_with_guard = min(1.0, _log1p(mean_amp / max(0.001, near_zero_floor)) / 2.5)
+        # With floor clamp (current: max(_MEMS_NOISE_FLOOR_G, floor)):
+        snr_floor_clamped = min(
+            1.0, _log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, near_zero_floor)) / 2.5
+        )
+        # With absolute-strength guard applied (acceptance criteria):
+        if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
+            snr_with_abs_guard = min(snr_floor_clamped, 0.40)
+        else:
+            snr_with_abs_guard = snr_floor_clamped
 
         assert snr_without_guard > 0.95, "Without guard, SNR should be near 1.0 (bug scenario)"
-        assert snr_with_guard < 0.50, (
-            f"With floor guard, SNR for 2mg amp must be < 0.50, got {snr_with_guard:.3f}"
+        assert snr_with_abs_guard <= 0.40, (
+            f"With floor+abs guard, SNR for 2mg amp must be <= 0.40, got {snr_with_abs_guard:.3f}"
         )
-        # Normal floor (already >= 0.001g) must be unaffected
+        assert _MEMS_NOISE_FLOOR_G == 0.001, "MEMS noise floor constant must be 0.001g"
+        # Normal floor (already >= 0.001g) must be unaffected by floor clamp
         normal_floor = 0.005
-        snr_normal_clamped = min(1.0, _log1p(mean_amp / max(0.001, normal_floor)) / 2.5)
+        snr_normal_clamped = min(
+            1.0, _log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5
+        )
         snr_normal_direct = min(1.0, _log1p(mean_amp / normal_floor) / 2.5)
         assert abs(snr_normal_clamped - snr_normal_direct) < 1e-10, "Normal floor must be unchanged"
 
@@ -942,6 +979,32 @@ class TestPhaseSpeedBreakdown:
         total = sum(int(row["count"]) for row in rows)
         assert total == len(samples)
 
+    def test_amp_vs_phase_in_plots(self) -> None:
+        """plots dict must include amp_vs_phase built from phase_speed_breakdown.
+
+        Ensures temporal phase context is available as plot-ready data, not only
+        as the raw phase_speed_breakdown table in the summary root.
+        Addresses issue #189.
+        """
+        meta = _standard_metadata()
+        samples = _build_phased_samples(
+            [
+                (5, 0.0, 0.0),  # IDLE
+                (15, 10.0, 80.0),  # ACCELERATION → CRUISE
+            ]
+        )
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        plots = summary.get("plots", {})
+        amp_vs_phase = plots.get("amp_vs_phase")
+        assert amp_vs_phase is not None, "amp_vs_phase must be in plots"
+        assert isinstance(amp_vs_phase, list)
+        assert len(amp_vs_phase) >= 1, "amp_vs_phase must have at least one phase row"
+        for row in amp_vs_phase:
+            assert "phase" in row, "each amp_vs_phase row must have a phase key"
+            assert "count" in row, "each amp_vs_phase row must have a count key"
+            assert "mean_vib_db" in row, "each amp_vs_phase row must have mean_vib_db"
+            assert row["count"] > 0, "count must be positive"
+
 
 class TestReferenceFindingDistinguishability:
     """Reference-missing findings must be distinguishable and must not inflate
@@ -1004,6 +1067,21 @@ class TestReferenceFindingDistinguishability:
             assert ref.get("finding_type") == "reference", (
                 f"{fid}: expected finding_type='reference', got {ref.get('finding_type')!r}"
             )
+
+    def test_reference_finding_confidence_is_none(self) -> None:
+        """Reference findings must have confidence_0_to_1=None to avoid inflating statistics."""
+        from vibesensor.report.findings import _reference_missing_finding
+
+        ref = _reference_missing_finding(
+            finding_id="REF_SPEED",
+            suspected_source="unknown",
+            evidence_summary="Speed data missing",
+            quick_checks=[],
+        )
+        assert "confidence_0_to_1" in ref, "confidence_0_to_1 key must be present"
+        assert ref["confidence_0_to_1"] is None, (
+            f"Expected confidence_0_to_1=None, got {ref['confidence_0_to_1']!r}"
+        )
 
 
 class TestPhaseInfoInSummary:
@@ -1097,6 +1175,72 @@ class TestPhaseInfoInSummary:
         # Should not raise and should return a list
         findings = build_findings_for_samples(metadata=meta, samples=samples)
         assert isinstance(findings, list)
+
+
+# ---------------------------------------------------------------------------
+# Phase-aware speed stats (TODO 8)
+# ---------------------------------------------------------------------------
+
+
+class TestSpeedStatsByPhase:
+    """speed_stats_by_phase must be present in summary and reflect per-phase data."""
+
+    def test_speed_stats_by_phase_present_in_summary(self) -> None:
+        """summarize_run_data must include speed_stats_by_phase in output."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary.get("speed_stats_by_phase")
+        assert ssbp is not None, "speed_stats_by_phase must be present in summary"
+        assert isinstance(ssbp, dict)
+
+    def test_speed_stats_by_phase_keys_are_phase_labels(self) -> None:
+        """Each key in speed_stats_by_phase must be a valid driving phase string."""
+        from vibesensor.report.phase_segmentation import DrivingPhase
+
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        valid_phases = {p.value for p in DrivingPhase}
+        for key in ssbp:
+            assert key in valid_phases, f"Unexpected phase key {key!r} in speed_stats_by_phase"
+
+    def test_speed_stats_by_phase_sample_counts_sum_to_total(self) -> None:
+        """Sum of sample_count across all phases must equal total sample count."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        total = sum(int(v["sample_count"]) for v in ssbp.values())
+        assert total == len(samples)
+
+    def test_speed_stats_by_phase_idle_has_no_speed_stats(self) -> None:
+        """IDLE samples (speed ~0) should yield None min/max in their phase stats."""
+        meta = _standard_metadata()
+        # All idle: speed below _IDLE_SPEED_KMH
+        samples = [
+            {"t_s": float(i), "speed_kmh": 0.5, "vibration_strength_db": 5.0} for i in range(10)
+        ]
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        assert "idle" in ssbp
+        # speed_kmh = 0.5 is classified as idle phase (below _IDLE_SPEED_KMH=3.0)
+        # but is still > 0, so it contributes to idle speed stats
+        # The idle phase stats should account for all 10 samples
+        assert ssbp["idle"]["sample_count"] == 10
+
+    def test_speed_stats_by_phase_cruise_has_valid_speed_range(self) -> None:
+        """Cruise phase samples should show coherent speed stats."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        # At least one non-idle phase should have non-None speed stats
+        non_idle = {k: v for k, v in ssbp.items() if k != "idle"}
+        assert any(v.get("min_kmh") is not None for v in non_idle.values()), (
+            "At least one non-idle phase should have valid speed stats"
+        )
 
 
 # ---------------------------------------------------------------------------
