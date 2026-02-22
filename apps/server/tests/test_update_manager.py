@@ -54,8 +54,8 @@ class FakeRunner(CommandRunner):
 
 
 def _mock_which(name: str) -> str | None:
-    """Pretend nmcli and git exist."""
-    if name in ("nmcli", "git"):
+    """Pretend required update tools exist."""
+    if name in ("nmcli", "git", "python3", "npm"):
         return f"/usr/bin/{name}"
     return None
 
@@ -362,6 +362,7 @@ class TestUpdateManagerAsync:
         assert mgr.status.last_success_at is not None
         assert mgr.status.exit_code == 0
         assert mgr.status.runtime.get("assets_verified") is True
+        assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         """When sudo is unavailable, update fails with clear issue."""
@@ -545,6 +546,31 @@ class TestUpdateManagerAsync:
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
         assert "timeout" in issues_text or "timed out" in issues_text
 
+    async def test_rebuild_failure_fails_update(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+        runner.set_response("tools/sync_ui_to_pi_public.py", 1, "", "npm: command not found")
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "rebuild/sync failed" in issues_text
+
     async def test_missing_tools_fails_gracefully(self, tmp_path) -> None:
         """When nmcli is not found, update fails with clear issue."""
         runner = FakeRunner()
@@ -568,6 +594,28 @@ class TestUpdateManagerAsync:
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
         assert "nmcli" in issues_text
+
+    async def test_missing_npm_fails_gracefully(self, tmp_path) -> None:
+        runner = FakeRunner()
+
+        def no_npm(name: str) -> str | None:
+            if name == "npm":
+                return None
+            return f"/usr/bin/{name}"
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(runner=runner, repo_path=str(repo))
+
+        with patch("shutil.which", no_npm):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message for i in mgr.status.issues).lower()
+        assert "npm" in issues_text
 
 
 # ---------------------------------------------------------------------------
