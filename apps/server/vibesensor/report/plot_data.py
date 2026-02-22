@@ -499,5 +499,5 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
         "peaks_spectrogram_raw": peaks_spectrogram_raw,
         "peaks_table": peaks_table,
         "phase_segments": phase_segments_out,
-    "phase_boundaries": phase_boundaries,
+        "phase_boundaries": phase_boundaries,
     }
