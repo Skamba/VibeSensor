@@ -1171,6 +1171,8 @@ def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
         # per_phase_confidence may be None if all samples are one phase, but key must exist
         assert "per_phase_confidence" in em
         assert "phases_with_evidence" in em
+
+
 def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
     """_build_findings must accept pre-computed per_sample_phases and use them.
 
