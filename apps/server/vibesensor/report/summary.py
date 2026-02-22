@@ -616,6 +616,19 @@ def summarize_run_data(
         "warnings": [],
         "speed_breakdown": speed_breakdown,
         "phase_speed_breakdown": phase_speed_breakdown,
+        "phase_segments": [
+            {
+                "phase": seg.phase.value,
+                "start_idx": seg.start_idx,
+                "end_idx": seg.end_idx,
+                "start_t_s": seg.start_t_s,
+                "end_t_s": seg.end_t_s,
+                "speed_min_kmh": seg.speed_min_kmh,
+                "speed_max_kmh": seg.speed_max_kmh,
+                "sample_count": seg.sample_count,
+            }
+            for seg in phase_segments
+        ],
         "run_noise_baseline_g": run_noise_baseline_g,
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
