@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import asyncio
 import enum
+import hashlib
+import json
 import logging
 import os
 import shutil
+import subprocess
 import tempfile
 import time
 from dataclasses import dataclass, field
@@ -30,6 +33,9 @@ UPDATE_TIMEOUT_S = 300
 GIT_OP_TIMEOUT_S = 120
 """Per-git-operation timeout."""
 
+REBUILD_OP_TIMEOUT_S = 300
+"""Per-rebuild-operation timeout."""
+
 NMCLI_TIMEOUT_S = 30
 """Per-nmcli-operation timeout."""
 
@@ -40,6 +46,8 @@ DEFAULT_GIT_BRANCH = "main"
 
 HOTSPOT_RESTORE_RETRIES = 3
 HOTSPOT_RESTORE_DELAY_S = 2
+
+UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 
 
 # ---------------------------------------------------------------------------
@@ -82,6 +90,7 @@ class UpdateJobStatus:
     issues: list[UpdateIssue] = field(default_factory=list)
     log_tail: list[str] = field(default_factory=list)
     exit_code: int | None = None
+    runtime: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -96,7 +105,23 @@ class UpdateJobStatus:
             ],
             "log_tail": self.log_tail[-50:],
             "exit_code": self.exit_code,
+            "runtime": self.runtime,
         }
+
+
+def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
+    if not root.exists():
+        return ""
+    hasher = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        relative = path.relative_to(root)
+        if any(part in ignore_names for part in relative.parts):
+            continue
+        hasher.update(str(relative.as_posix()).encode("utf-8"))
+        hasher.update(b"\0")
+        hasher.update(path.read_bytes())
+        hasher.update(b"\0")
+    return hasher.hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -250,6 +275,7 @@ class UpdateManager:
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
         self._redact_secrets: set[str] = set()
+        self._status.runtime = self._collect_runtime_details()
 
     # -- public API ----------------------------------------------------------
 
@@ -269,12 +295,14 @@ class UpdateManager:
 
         # Reset
         self._cancel_event.clear()
+        previous_runtime = dict(self._status.runtime)
         self._status = UpdateJobStatus(
             state=UpdateState.running,
             phase=UpdatePhase.validating,
             started_at=time.time(),
             ssid=ssid,
             last_success_at=self._status.last_success_at,
+            runtime=previous_runtime,
         )
         # Track password for log redaction, launch background task
         self._redact_secrets = {password} if password else set()
@@ -429,6 +457,7 @@ class UpdateManager:
                 self._status.phase = UpdatePhase.done
             # Clear secrets from memory
             self._redact_secrets.clear()
+            self._status.runtime = self._collect_runtime_details()
 
             # Parse diagnostics
             try:
@@ -443,7 +472,7 @@ class UpdateManager:
         self._log(f"Starting update with SSID: {ssid}")
 
         # Check required tools
-        for tool in ("nmcli", "git"):
+        for tool in ("nmcli", "git", "python3", "npm"):
             if not shutil.which(tool):
                 self._add_issue("validating", f"Required tool not found: {tool}")
                 self._status.state = UpdateState.failed
@@ -604,6 +633,7 @@ class UpdateManager:
             )
             self._status.state = UpdateState.failed
             return
+        self._bootstrap_runtime_metadata_if_missing()
 
         git_ok = True
         git_base = ["git", "-C", self._repo_path]
@@ -642,6 +672,38 @@ class UpdateManager:
             return
 
         self._log("Git update completed successfully")
+        sync_script = repo / "tools" / "sync_ui_to_pi_public.py"
+        if not sync_script.is_file():
+            self._add_issue(
+                "updating",
+                f"Required rebuild script not found: {sync_script}",
+                str(sync_script),
+            )
+            self._status.state = UpdateState.failed
+            return
+        rebuild_cmd = ["python3", str(sync_script)]
+        rc, _, stderr = await self._run_cmd(
+            rebuild_cmd,
+            phase="updating",
+            timeout=REBUILD_OP_TIMEOUT_S,
+            sudo=True,
+        )
+        if rc != 0:
+            self._add_issue("updating", f"Rebuild/sync failed (exit {rc})", stderr)
+            self._status.state = UpdateState.failed
+            return
+        self._log("Rebuild/sync completed successfully")
+
+        runtime_details = self._collect_runtime_details()
+        self._status.runtime = runtime_details
+        if not runtime_details.get("assets_verified", False):
+            self._add_issue(
+                "updating",
+                "Deploy artifacts are stale or missing",
+                "UI source hash does not match apps/server/public build metadata",
+            )
+            self._status.state = UpdateState.failed
+            return
 
         if self._cancel_event.is_set():
             return
@@ -658,3 +720,84 @@ class UpdateManager:
         self._status.last_success_at = time.time()
         self._status.exit_code = 0
         self._log("Update completed successfully")
+
+    def _collect_runtime_details(self) -> dict[str, Any]:
+        repo = Path(self._repo_path)
+        ui_root = repo / "apps" / "ui"
+        public_root = repo / "apps" / "server" / "public"
+        metadata_path = public_root / UI_BUILD_METADATA_FILE
+
+        commit = ""
+        if (repo / ".git").exists():
+            try:
+                proc = subprocess.run(
+                    ["git", "-C", str(repo), "rev-parse", "HEAD"],
+                    check=False,
+                    capture_output=True,
+                    text=True,
+                )
+                if proc.returncode == 0:
+                    commit = proc.stdout.strip()
+            except OSError:
+                pass
+
+        ui_source_hash = _hash_tree(
+            ui_root,
+            ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
+        )
+        public_assets_hash = _hash_tree(public_root, ignore_names={UI_BUILD_METADATA_FILE})
+
+        metadata: dict[str, Any] = {}
+        if metadata_path.is_file():
+            try:
+                metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                metadata = {}
+
+        public_build_source_hash = str(metadata.get("ui_source_hash") or "")
+        public_build_assets_hash = str(metadata.get("public_assets_hash") or "")
+        public_build_commit = str(metadata.get("git_commit") or "")
+        assets_verified = (
+            bool(ui_source_hash)
+            and bool(public_assets_hash)
+            and bool(public_build_source_hash)
+            and bool(public_build_assets_hash)
+            and ui_source_hash == public_build_source_hash
+            and public_assets_hash == public_build_assets_hash
+        )
+
+        return {
+            "commit": commit,
+            "ui_source_hash": ui_source_hash,
+            "public_assets_hash": public_assets_hash,
+            "public_build_source_hash": public_build_source_hash,
+            "public_build_commit": public_build_commit,
+            "assets_verified": assets_verified,
+        }
+
+    def _bootstrap_runtime_metadata_if_missing(self) -> None:
+        metadata_path = (
+            Path(self._repo_path) / "apps" / "server" / "public" / UI_BUILD_METADATA_FILE
+        )
+        if metadata_path.exists():
+            return
+        details = self._collect_runtime_details()
+        if not details.get("ui_source_hash") or not details.get("public_assets_hash"):
+            return
+        metadata_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            metadata_path.write_text(
+                json.dumps(
+                    {
+                        "ui_source_hash": details["ui_source_hash"],
+                        "public_assets_hash": details["public_assets_hash"],
+                        "git_commit": details["commit"],
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self._log("Generated runtime UI build metadata for update verification")
+        except OSError as exc:
+            self._log(f"Failed to write runtime metadata: {exc}")

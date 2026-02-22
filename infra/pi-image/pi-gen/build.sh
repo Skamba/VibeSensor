@@ -329,6 +329,8 @@ sed -i "s/__SERVER_DEPS_HASH__/${SERVER_DEPS_HASH}/g" "${STAGE_STEP_DIR}/00-run.
 
 cat >"${STAGE_STEP_DIR}/00-packages" <<'EOF'
 git
+nodejs
+npm
 network-manager
 dnsmasq
 rfkill
@@ -562,6 +564,8 @@ if [ "${VALIDATE}" = "1" ]; then
   IW_PATH="$(assert_rootfs_binary iw)"
   DNSMASQ_PATH="$(assert_rootfs_binary dnsmasq)"
   GPSD_PATH="$(assert_rootfs_binary gpsd)"
+  NODE_PATH="$(assert_rootfs_binary node)"
+  NPM_PATH="$(assert_rootfs_binary npm)"
 
   if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"
@@ -714,8 +718,8 @@ PY
   echo "=== Validation: /opt/VibeSensor exists ==="
   ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
 
-  echo "=== Validation: nmcli + rfkill + iw + dnsmasq binaries ==="
-  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}"
+  echo "=== Validation: nmcli + rfkill + iw + dnsmasq + node + npm binaries ==="
+  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}" "${ROOT_MNT}${NODE_PATH}" "${ROOT_MNT}${NPM_PATH}"
 
   echo "=== Validation: vibesensor systemd units ==="
   ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
