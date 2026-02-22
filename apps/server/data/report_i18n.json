@@ -45,7 +45,7 @@
   },
   "COVERAGE_RISES_ABOVE_THRESHOLD_AND_WHEEL_ORDER_CHECKS": {
     "en": "Coverage rises above threshold and wheel-order checks become available.",
-    "nl": "Dekking stijgt boven de drempel en wielorde-controles worden beschikbaar."
+    "nl": "Dekking stijgt boven de drempel en wielorde-controles komen beschikbaar."
   },
   "CROSS_CHECK_WITH_A_SECOND_SENSOR_LOCATION_TO": {
     "en": "Cross-check with a second sensor location to confirm spatial consistency.",
@@ -101,7 +101,7 @@
   },
   "ENGINE_ORDER_CHECKS_BECOME_AVAILABLE_WITH_ADEQUATE_RPM": {
     "en": "Engine-order checks become available with adequate RPM coverage.",
-    "nl": "Motororde-controles worden beschikbaar bij voldoende toerentaldekking."
+    "nl": "Motororde-controles komen beschikbaar bij voldoende toerentaldekking."
   },
   "ENGINE_ORDER_REFERENCE_IS_DERIVED_FROM_VEHICLE_SPEED": {
     "en": "Engine-order reference is derived from vehicle speed, tire size, and drivetrain ratios.",
@@ -177,7 +177,7 @@
   },
   "HEAT_LEGEND_MORE": {
     "en": "More vibration",
-    "nl": "Meeste trilling"
+    "nl": "Meer trilling"
   },
   "SOURCE_LEGEND_TITLE": {
     "en": "Finding source:",
@@ -493,7 +493,7 @@
   },
   "RUN_TRIAGE": {
     "en": "Run Triage",
-    "nl": "Metrun-overzicht"
+    "nl": "Run triage"
   },
   "SAMPLES": {
     "en": "Samples",
