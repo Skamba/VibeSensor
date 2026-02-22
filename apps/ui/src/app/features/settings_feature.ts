@@ -298,6 +298,15 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     return map[cs] ?? cs;
   }
 
+  function speedKmhInSelectedUnit(speedKmh: number | null): number | null {
+    if (typeof speedKmh !== "number" || !Number.isFinite(speedKmh)) return null;
+    return state.speedUnit === "mps" ? speedKmh / 3.6 : speedKmh;
+  }
+
+  function selectedSpeedUnitLabel(): string {
+    return state.speedUnit === "mps" ? t("speed.unit.mps") : t("speed.unit.kmh");
+  }
+
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
     if (els.gpsStatusState) els.gpsStatusState.textContent = connectionStateLabel(status.connection_state);
     if (els.gpsStatusDevice) els.gpsStatusDevice.textContent = status.device ?? "--";
@@ -307,10 +316,14 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         : t("settings.speed.last_update_never");
     }
     if (els.gpsStatusRawSpeed) {
-      els.gpsStatusRawSpeed.textContent = status.raw_speed_kmh != null ? `${fmt(status.raw_speed_kmh, 1)} km/h` : "--";
+      const rawSpeed = speedKmhInSelectedUnit(status.raw_speed_kmh);
+      els.gpsStatusRawSpeed.textContent = rawSpeed != null ? `${fmt(rawSpeed, 1)} ${selectedSpeedUnitLabel()}` : "--";
     }
     if (els.gpsStatusEffectiveSpeed) {
-      els.gpsStatusEffectiveSpeed.textContent = status.effective_speed_kmh != null ? `${fmt(status.effective_speed_kmh, 1)} km/h` : "--";
+      const effectiveSpeed = speedKmhInSelectedUnit(status.effective_speed_kmh);
+      els.gpsStatusEffectiveSpeed.textContent = effectiveSpeed != null
+        ? `${fmt(effectiveSpeed, 1)} ${selectedSpeedUnitLabel()}`
+        : "--";
     }
     if (els.gpsStatusLastError) {
       els.gpsStatusLastError.textContent = status.last_error ?? "--";
