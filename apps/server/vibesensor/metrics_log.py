@@ -107,6 +107,14 @@ class MetricsLogger:
         self._last_data_progress_mono_s = self._run_start_mono_s
         self._last_active_frames_total = self._active_frames_total()
 
+    def _set_last_write_error(self, message: str) -> None:
+        with self._lock:
+            self._last_write_error = message
+
+    def _clear_last_write_error(self) -> None:
+        with self._lock:
+            self._last_write_error = None
+
     def _active_frames_total(self) -> int:
         active_ids = self.registry.active_client_ids()
         total = 0
@@ -134,7 +142,9 @@ class MetricsLogger:
         try:
             self._history_db.create_run(run_id, start_time_utc, metadata)
             self._history_run_created = True
-        except Exception:
+            self._clear_last_write_error()
+        except Exception as exc:
+            self._set_last_write_error(f"history create_run failed: {exc}")
             LOGGER.warning("Failed to create history run in DB", exc_info=True)
 
     def _session_snapshot(self) -> tuple[str, str, float] | None:
@@ -487,7 +497,9 @@ class MetricsLogger:
                     try:
                         self._history_db.append_samples(run_id, rows)
                         self._written_sample_count += len(rows)
-                    except Exception:
+                        self._clear_last_write_error()
+                    except Exception as exc:
+                        self._set_last_write_error(f"history append_samples failed: {exc}")
                         LOGGER.warning("Failed to append samples to history DB", exc_info=True)
             else:
                 self._written_sample_count += len(rows)
@@ -505,7 +517,9 @@ class MetricsLogger:
         if self._history_db is not None:
             try:
                 self._history_db.finalize_run(self._run_id, end_utc)
-            except Exception:
+                self._clear_last_write_error()
+            except Exception as exc:
+                self._set_last_write_error(f"history finalize_run failed: {exc}")
                 LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
 
     def _schedule_post_analysis(self, run_id: str) -> None:
@@ -607,6 +621,7 @@ class MetricsLogger:
             )
         except Exception as exc:
             duration_s = time.monotonic() - analysis_start
+            self._set_last_write_error(f"post-analysis failed for run {run_id}: {exc}")
             LOGGER.warning(
                 "Analysis failed for run %s after %.2fs: %s",
                 run_id,
@@ -616,7 +631,10 @@ class MetricsLogger:
             )
             try:
                 self._history_db.store_analysis_error(run_id, str(exc))
-            except Exception:
+            except Exception as store_exc:
+                self._set_last_write_error(
+                    f"history store_analysis_error failed for run {run_id}: {store_exc}"
+                )
                 LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
 
     async def run(self) -> None:
@@ -648,7 +666,8 @@ class MetricsLogger:
                             self._no_data_timeout_s,
                         )
                         self.stop_logging()
-            except Exception:
+            except Exception as exc:
+                self._set_last_write_error(f"metrics logger tick failed: {exc}")
                 LOGGER.warning(
                     "Metrics logger tick failed; will retry next interval.",
                     exc_info=True,
