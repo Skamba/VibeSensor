@@ -8,6 +8,7 @@ import { escapeHtml, fmt, fmtTs, formatInt } from "../format";
 import { combinedRelativeUncertainty, parseTireSpec, tireDiameterMeters, toleranceForOrder } from "../vehicle_math";
 import { adaptServerPayload } from "../server_payload";
 import type { AdaptedSpectrum } from "../server_payload";
+import type { RotationalSpeeds } from "../server_payload";
 import { WsClient } from "../ws";
 import { METRIC_FIELDS } from "../generated/shared_contracts";
 import { runDemoMode } from "../features/demo/runDemoMode";
@@ -57,6 +58,64 @@ export function startUiApp(): void {
       return;
     }
     els.speed.textContent = t("speed.none", { unit: unitLabel });
+  }
+
+  let latestRotationalSpeeds: RotationalSpeeds | null = null;
+
+  function rotationalSourceLabel(source: string | null): string {
+    if (source === "manual") return t("dashboard.rotational.source.manual");
+    if (source === "gps") return t("dashboard.rotational.source.gps");
+    if (source === "obd2") return t("dashboard.rotational.source.obd2");
+    if (source === "fallback_manual") return t("dashboard.rotational.source.fallback_manual");
+    return t("dashboard.rotational.source.unknown");
+  }
+
+  function rotationalReasonText(reason: string | null): string {
+    if (reason === "speed_unavailable") return t("dashboard.rotational.reason.speed_unavailable");
+    if (reason === "invalid_vehicle_settings") return t("dashboard.rotational.reason.invalid_vehicle_settings");
+    return t("dashboard.rotational.reason.not_available");
+  }
+
+  function rotationalModeText(mode: string | null): string {
+    if (mode === "measured") return t("dashboard.rotational.mode.measured");
+    if (mode === "calculated") return t("dashboard.rotational.mode.calculated");
+    return t("dashboard.rotational.mode.unavailable");
+  }
+
+  function renderRotationalSpeeds(): void {
+    if (!els.rotationalBasisSource) return;
+    const rotational = latestRotationalSpeeds;
+    const source = rotationalSourceLabel(rotational?.basis_speed_source ?? null);
+    els.rotationalBasisSource.textContent = t("dashboard.rotational.basis_source", { source });
+
+    const rows = [
+      { valueEl: els.rotationalWheelValue, modeEl: els.rotationalWheelMode, value: rotational?.wheel ?? null },
+      { valueEl: els.rotationalDriveshaftValue, modeEl: els.rotationalDriveshaftMode, value: rotational?.driveshaft ?? null },
+      { valueEl: els.rotationalEngineValue, modeEl: els.rotationalEngineMode, value: rotational?.engine ?? null },
+    ];
+
+    let displayReason: string | null = null;
+    for (const row of rows) {
+      if (!row.valueEl || !row.modeEl) continue;
+      const rpm = row.value?.rpm;
+      row.valueEl.textContent = typeof rpm === "number" && Number.isFinite(rpm)
+        ? t("dashboard.rotational.rpm", { value: fmt(rpm, 0) })
+        : "--";
+      row.modeEl.textContent = rotationalModeText(row.value?.mode ?? null);
+      row.modeEl.className = "pill pill--muted rotational-speed-row__mode";
+      if (!displayReason && !(typeof rpm === "number" && Number.isFinite(rpm)) && row.value?.reason) {
+        displayReason = row.value.reason;
+      }
+    }
+
+    if (!els.rotationalReason) return;
+    if (displayReason) {
+      els.rotationalReason.hidden = false;
+      els.rotationalReason.textContent = rotationalReasonText(displayReason);
+      return;
+    }
+    els.rotationalReason.hidden = true;
+    els.rotationalReason.textContent = "";
   }
 
   function renderWsState(): void {
@@ -110,6 +169,7 @@ export function startUiApp(): void {
     state.sensorsSettingsSignature = "";
     sensorsFeature.maybeRenderSensorsSettingsList(true);
     renderSpeedReadout();
+    renderRotationalSpeeds();
     sensorsFeature.renderLoggingStatus();
     historyFeature.renderHistoryTable();
     diagnosticsFeature.renderVibrationLog();
@@ -253,10 +313,12 @@ export function startUiApp(): void {
     sensorsFeature.renderLoggingStatus();
     if (prevSelected !== state.selectedClientId) sendSelection();
     state.speedMps = adapted.speed_mps;
+    latestRotationalSpeeds = adapted.rotational_speeds;
     if (adapted.spectra) state.hasSpectrumData = Object.values(adapted.spectra.clients).some((clientSpec: AdaptedSpectrum) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
     const hasFreshFrames = diagnosticsFeature.hasFreshSensorFrames(state.clients);
     diagnosticsFeature.applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
+    renderRotationalSpeeds();
     const liveIntensity = diagnosticsFeature.extractLiveLocationIntensity();
     if (Object.keys(liveIntensity).length) diagnosticsFeature.pushCarMapSample(liveIntensity);
     diagnosticsFeature.renderCarMap();
@@ -326,7 +388,7 @@ export function startUiApp(): void {
   }
   if (els.speedUnitSelect) {
     els.speedUnitSelect.value = state.speedUnit;
-    els.speedUnitSelect.addEventListener("change", () => { saveSpeedUnit(els.speedUnitSelect!.value); renderSpeedReadout(); });
+    els.speedUnitSelect.addEventListener("change", () => { saveSpeedUnit(els.speedUnitSelect!.value); renderSpeedReadout(); renderRotationalSpeeds(); });
   }
 
   vehicleFeature.syncSettingsInputs();
@@ -338,7 +400,7 @@ export function startUiApp(): void {
     } catch (_e) { /* ignore */ }
     try {
       const unitRes = await getSettingsSpeedUnit();
-      if (unitRes?.speedUnit) { state.speedUnit = normalizeSpeedUnit(unitRes.speedUnit); if (els.speedUnitSelect) els.speedUnitSelect.value = state.speedUnit; renderSpeedReadout(); }
+      if (unitRes?.speedUnit) { state.speedUnit = normalizeSpeedUnit(unitRes.speedUnit); if (els.speedUnitSelect) els.speedUnitSelect.value = state.speedUnit; renderSpeedReadout(); renderRotationalSpeeds(); }
     } catch (_e) { /* ignore */ }
   })();
   applyLanguage(false);
