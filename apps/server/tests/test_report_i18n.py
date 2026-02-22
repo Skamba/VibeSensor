@@ -63,3 +63,16 @@ def test_variants_returns_both_languages() -> None:
     assert isinstance(en_text, str) and en_text.strip()
     assert isinstance(nl_text, str) and nl_text.strip()
     assert en_text != nl_text
+
+
+def test_selected_dutch_phrasings_are_natural_and_consistent() -> None:
+    assert report_i18n.tr("nl", "HEAT_LEGEND_MORE") == "Meer trilling"
+    assert report_i18n.tr("nl", "RUN_TRIAGE") == "Run triage"
+    assert (
+        report_i18n.tr("nl", "COVERAGE_RISES_ABOVE_THRESHOLD_AND_WHEEL_ORDER_CHECKS")
+        == "Dekking stijgt boven de drempel en wielorde-controles komen beschikbaar."
+    )
+    assert (
+        report_i18n.tr("nl", "ENGINE_ORDER_CHECKS_BECOME_AVAILABLE_WITH_ADEQUATE_RPM")
+        == "Motororde-controles komen beschikbaar bij voldoende toerentaldekking."
+    )
