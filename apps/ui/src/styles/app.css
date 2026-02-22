@@ -117,6 +117,23 @@ body {
   gap: var(--space-2);
 }
 
+.topbar-telemetry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.header-override-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.header-override-group input {
+  width: 110px;
+}
+
 select,
 input,
 button,
@@ -258,6 +275,7 @@ input:focus-visible,
 .pill--ok,
 .status-pill.online,
 .badge.on { background: var(--pill-ok-bg); color: var(--pill-ok-text); }
+.pill--warn { background: #fff3cd; color: #8a6d1d; }
 .pill--bad,
 .status-pill.offline,
 .badge.off { background: var(--pill-bad-bg); color: var(--pill-bad-text); }
