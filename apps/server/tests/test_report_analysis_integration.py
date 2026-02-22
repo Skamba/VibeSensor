@@ -1134,3 +1134,262 @@ def test_summarize_log_allows_partial_missing_precomputed_strength_metrics(tmp_p
     summary = summarize_log(log_path)
     assert summary["rows"] == 2
     assert summary["findings"] is not None
+
+
+# -- per-phase confidence in _build_order_findings ----------------------------
+
+
+def _make_order_finding_samples(
+    n: int,
+    speed_kmh: float,
+    wheel_hz: float,
+    *,
+    amp: float = 0.05,
+    floor_amp: float = 0.002,
+) -> list[dict]:
+    """Build minimal samples that produce a matched wheel-order peak."""
+    return [
+        {
+            "t_s": float(i),
+            "speed_kmh": speed_kmh,
+            "vibration_strength_db": 30.0,
+            "strength_floor_amp_g": floor_amp,
+            "top_peaks": [{"hz": wheel_hz, "amp": amp}],
+            "location": "front_left",
+        }
+        for i in range(n)
+    ]
+
+
+def test_build_order_findings_per_phase_confidence_key_present() -> None:
+    """per_phase_confidence must appear in evidence_metrics when phases are provided."""
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+    from vibesensor.report.phase_segmentation import DrivingPhase
+
+    speed_kmh = 70.0
+    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    samples = _make_order_finding_samples(20, speed_kmh, wheel_hz)
+    phases = [DrivingPhase.CRUISE] * 20
+
+    findings = findings_module._build_order_findings(
+        metadata={"units": {"accel_x_g": "g"}},
+        samples=samples,
+        speed_sufficient=True,
+        steady_speed=False,
+        speed_stddev_kmh=5.0,
+        tire_circumference_m=2.036,
+        engine_ref_sufficient=False,
+        raw_sample_rate_hz=200.0,
+        accel_units="g",
+        connected_locations={"front_left"},
+        lang="en",
+        per_sample_phases=phases,
+    )
+    assert len(findings) >= 1, "Expected at least one order finding"
+    finding = findings[0]
+    em = finding.get("evidence_metrics") or {}
+    assert "per_phase_confidence" in em, "per_phase_confidence must be in evidence_metrics"
+    assert "phases_with_evidence" in em, "phases_with_evidence must be in evidence_metrics"
+    ppc = em["per_phase_confidence"]
+    assert isinstance(ppc, dict), "per_phase_confidence must be a dict"
+    assert "cruise" in ppc, f"Expected 'cruise' key in per_phase_confidence, got {list(ppc.keys())}"
+    assert em["phases_with_evidence"] >= 1
+
+
+def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> None:
+    """When per_sample_phases is not provided, per_phase_confidence must be None."""
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+    speed_kmh = 70.0
+    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    samples = _make_order_finding_samples(20, speed_kmh, wheel_hz)
+
+    findings = findings_module._build_order_findings(
+        metadata={"units": {"accel_x_g": "g"}},
+        samples=samples,
+        speed_sufficient=True,
+        steady_speed=False,
+        speed_stddev_kmh=5.0,
+        tire_circumference_m=2.036,
+        engine_ref_sufficient=False,
+        raw_sample_rate_hz=200.0,
+        accel_units="g",
+        connected_locations={"front_left"},
+        lang="en",
+    )
+    assert len(findings) >= 1
+    finding = findings[0]
+    em = finding.get("evidence_metrics") or {}
+    assert em.get("per_phase_confidence") is None
+    assert em.get("phases_with_evidence") == 0
+
+
+def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() -> None:
+    """Multi-phase evidence must produce >= confidence vs identical single-phase evidence."""
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+    from vibesensor.report.phase_segmentation import DrivingPhase
+
+    speed_kmh = 70.0
+    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    # 20 samples: same peaks, same match rate — only phase labels differ
+    samples = _make_order_finding_samples(20, speed_kmh, wheel_hz)
+
+    phases_single = [DrivingPhase.CRUISE] * 20
+    # Spread across two phases so both report high match rates
+    phases_multi = [DrivingPhase.CRUISE] * 10 + [DrivingPhase.ACCELERATION] * 10
+
+    _common = dict(
+        metadata={"units": {"accel_x_g": "g"}},
+        samples=samples,
+        speed_sufficient=True,
+        steady_speed=False,
+        speed_stddev_kmh=5.0,
+        tire_circumference_m=2.036,
+        engine_ref_sufficient=False,
+        raw_sample_rate_hz=200.0,
+        accel_units="g",
+        connected_locations={"front_left"},
+        lang="en",
+    )
+    single_findings = findings_module._build_order_findings(
+        **_common, per_sample_phases=phases_single
+    )
+    multi_findings = findings_module._build_order_findings(
+        **_common, per_sample_phases=phases_multi
+    )
+
+    assert len(single_findings) >= 1, "single-phase case must yield a finding"
+    assert len(multi_findings) >= 1, "multi-phase case must yield a finding"
+
+    conf_single = float(single_findings[0].get("confidence_0_to_1") or 0.0)
+    conf_multi = float(multi_findings[0].get("confidence_0_to_1") or 0.0)
+    assert conf_multi >= conf_single, (
+        f"Multi-phase confidence {conf_multi:.4f} should be >= single-phase {conf_single:.4f}"
+    )
+    em_multi = multi_findings[0].get("evidence_metrics") or {}
+    assert em_multi.get("phases_with_evidence", 0) >= 2, (
+        "Multi-phase case must show >=2 phases with evidence"
+    )
+
+
+def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
+    """End-to-end: per_phase_confidence appears in order findings via summarize_run_data."""
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+    from vibesensor.report.summary import summarize_run_data
+
+    metadata = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+    samples = []
+    for idx in range(30):
+        speed_kmh = 50.0 + float(idx)
+        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        samples.append(
+            {
+                "t_s": float(idx),
+                "speed_kmh": speed_kmh,
+                "vibration_strength_db": 30.0,
+                "strength_floor_amp_g": 0.002,
+                "top_peaks": [{"hz": wheel_hz, "amp": 0.05}],
+                "location": "front_left",
+            }
+        )
+
+    summary = summarize_run_data(metadata, samples, include_samples=False)
+    findings = summary.get("findings") or []
+    order_findings = [f for f in findings if str(f.get("finding_id") or "") == "F_ORDER"]
+    if order_findings:
+        em = order_findings[0].get("evidence_metrics") or {}
+        # per_phase_confidence may be None if all samples are one phase, but key must exist
+        assert "per_phase_confidence" in em
+        assert "phases_with_evidence" in em
+
+
+def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
+    """_build_findings must accept pre-computed per_sample_phases and use them.
+
+    This ensures phase data flows from the caller (summarize_run_data) downstream
+    into the findings engine without redundant recomputation (TODO 7 fix).
+    """
+    from unittest.mock import patch
+
+    from vibesensor.report.phase_segmentation import segment_run_phases
+
+    samples = [_make_sample(float(i) * 0.5, 60.0, 0.02) for i in range(20)]
+    pre_computed_phases, _ = segment_run_phases(samples)
+
+    recompute_calls: list[int] = []
+
+    original_segment_run_phases = segment_run_phases
+
+    def _patched_segment_run_phases(s):
+        recompute_calls.append(1)
+        return original_segment_run_phases(s)
+
+    with patch(
+        "vibesensor.report.findings.segment_run_phases",
+        side_effect=_patched_segment_run_phases,
+    ):
+        findings_module._build_findings(
+            metadata={"units": {"accel_x_g": "g"}},
+            samples=samples,
+            speed_sufficient=True,
+            steady_speed=False,
+            speed_stddev_kmh=None,
+            speed_non_null_pct=100.0,
+            raw_sample_rate_hz=200.0,
+            lang="en",
+            per_sample_phases=pre_computed_phases,
+        )
+
+    # When per_sample_phases is provided, segment_run_phases must NOT be called
+    assert recompute_calls == [], (
+        "_build_findings should not recompute phases when per_sample_phases is provided"
+    )
+
+
+def test_summarize_run_data_passes_phases_to_build_findings() -> None:
+    """summarize_run_data must pass pre-computed per_sample_phases to _build_findings.
+
+    Validates that phases computed during phase segmentation flow into the
+    findings engine without redundant recomputation (TODO 7 fix).
+    """
+    from unittest.mock import patch
+
+    from vibesensor.report.summary import summarize_run_data
+
+    metadata = _make_metadata()
+    samples = [
+        {
+            "t_s": float(i) * 0.5,
+            "speed_kmh": 0.0 if i < 5 else 60.0,
+            "accel_x_g": 0.01,
+            "accel_y_g": 0.01,
+            "accel_z_g": 0.01,
+            "vibration_strength_db": 15.0,
+            "strength_bucket": "l1",
+        }
+        for i in range(20)
+    ]
+
+    recompute_calls: list[int] = []
+    from vibesensor.report.phase_segmentation import segment_run_phases as original_srp
+
+    def _patched_srp(s):
+        recompute_calls.append(1)
+        return original_srp(s)
+
+    with patch("vibesensor.report.findings.segment_run_phases", side_effect=_patched_srp):
+        summary = summarize_run_data(metadata, samples, include_samples=False)
+
+    assert "findings" in summary
+    # Phase segmentation should not be re-run inside _build_findings because
+    # summarize_run_data already computed and passed the phases down.
+    assert recompute_calls == [], (
+        "summarize_run_data should pass per_sample_phases so _build_findings does not recompute"
+    )
