@@ -53,6 +53,24 @@ _LIGHT_STRENGTH_MAX_DB = (
 # when the measured floor is near zero (sensor artifact / perfectly clean signal).
 _MEMS_NOISE_FLOOR_G = 0.001
 
+# ── Diffuse excitation detection constants ──────────────────────────────
+# If one sensor's amplitude is more than this ratio above the weakest,
+# the vibration is localized (not diffuse), even if match rates are uniform.
+_DIFFUSE_AMPLITUDE_DOMINANCE_RATIO = 2.0
+# Maximum allowable range (max−min) of per-sensor match rates before the
+# excitation is considered non-uniform.  15 percentage-points.
+_DIFFUSE_MATCH_RATE_RANGE_THRESHOLD = 0.15
+# Minimum mean per-sensor match rate below which diffuse detection is moot.
+_DIFFUSE_MIN_MEAN_RATE = 0.15
+# Diffuse penalty: base factor, per-sensor decrement, and floor.
+_DIFFUSE_PENALTY_BASE = 0.85
+_DIFFUSE_PENALTY_PER_SENSOR = 0.04
+_DIFFUSE_PENALTY_FLOOR = 0.65
+# Sensor-coverage confidence scaling: confidence multipliers for sparse
+# sensor layouts where localization evidence is inherently limited.
+_SINGLE_SENSOR_CONFIDENCE_SCALE = 0.85
+_DUAL_SENSOR_CONFIDENCE_SCALE = 0.92
+
 
 def _phase_to_str(phase: object) -> str | None:
     """Return the string value for a phase object (DrivingPhase or str)."""
@@ -583,6 +601,7 @@ def _build_order_findings(
                 lang=lang,
                 relevant_speed_bins=relevant_speed_bins,
                 connected_locations=connected_locations,
+                suspected_source=hypothesis.suspected_source,
             )
         except TypeError as exc:
             if "connected_locations" not in str(exc):
@@ -696,6 +715,66 @@ def _build_order_findings(
             confidence *= 1.06
         elif phases_with_evidence >= 2:
             confidence *= 1.03
+
+        # ── Diffuse excitation detection ────────────────────────────────
+        # When multiple connected sensors all match the order at similar
+        # rates AND similar amplitudes, vibration is likely diffuse
+        # road/environment excitation rather than a localized fault.
+        # If one sensor has significantly higher amplitude, it's a localized
+        # fault that may also weakly appear on other sensors (transfer path).
+        _diffuse_excitation = False
+        if len(connected_locations) >= 2 and possible_by_location:
+            loc_rates = []
+            loc_mean_amps: dict[str, float] = {}
+            for loc in connected_locations:
+                loc_p = possible_by_location.get(loc, 0)
+                loc_m = matched_by_location.get(loc, 0)
+                if loc_p >= max(3, ORDER_MIN_MATCH_POINTS):
+                    loc_rates.append(loc_m / max(1, loc_p))
+                    # Compute mean matched amplitude for this location
+                    loc_amps = [
+                        _as_float(pt.get("amp")) or 0.0
+                        for pt in matched_points
+                        if str(pt.get("location") or "").strip() == loc
+                        and (_as_float(pt.get("amp")) or 0.0) > 0
+                    ]
+                    if loc_amps:
+                        loc_mean_amps[loc] = mean(loc_amps)
+            if len(loc_rates) >= 2:
+                _rate_range = max(loc_rates) - min(loc_rates)
+                _mean_rate = mean(loc_rates)
+                # Check amplitude uniformity: if one sensor is dominant,
+                # this is a localized fault, not diffuse excitation.
+                _amp_uniform = True
+                if loc_mean_amps and len(loc_mean_amps) >= 2:
+                    _max_amp_loc = max(loc_mean_amps.values())
+                    _min_amp_loc = min(loc_mean_amps.values())
+                    if (
+                        _min_amp_loc > 0
+                        and _max_amp_loc / _min_amp_loc > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO
+                    ):
+                        _amp_uniform = False  # One sensor is dominant
+                if (
+                    _rate_range < _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD
+                    and _mean_rate > _DIFFUSE_MIN_MEAN_RATE
+                    and _amp_uniform
+                ):
+                    _diffuse_excitation = True
+                    _diffuse_penalty = max(
+                        _DIFFUSE_PENALTY_FLOOR,
+                        _DIFFUSE_PENALTY_BASE - _DIFFUSE_PENALTY_PER_SENSOR * len(loc_rates),
+                    )
+                    confidence *= _diffuse_penalty
+
+        # ── Sensor-coverage-aware confidence scaling (1-12 sensors) ─────
+        # With very few sensors (1-2), localization is inherently uncertain.
+        # With many sensors (8-12), we have stronger spatial evidence.
+        n_connected = len(connected_locations)
+        if n_connected <= 1:
+            confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
+        elif n_connected == 2:
+            confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
+
         confidence = max(0.08, min(0.97, confidence))
 
         ranking_score = (
@@ -824,6 +903,7 @@ def _build_order_findings(
             "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,
             "corroborating_locations": corroborating_locations,
+            "diffuse_excitation": _diffuse_excitation,
             "phase_evidence": phase_evidence,
             "evidence_metrics": {
                 "match_rate": effective_match_rate,
@@ -838,6 +918,7 @@ def _build_order_findings(
                 "frequency_correlation": corr,
                 "per_phase_confidence": per_phase_confidence,
                 "phases_with_evidence": phases_with_evidence,
+                "diffuse_excitation": _diffuse_excitation,
             },
             "next_sensor_move": str(actions[0].get("what") or "")
             or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),

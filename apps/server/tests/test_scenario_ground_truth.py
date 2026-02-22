@@ -1114,7 +1114,9 @@ class TestConfidenceGuardrails:
         _assert_strongest_sensor(top, "rear-right")
 
     def test_all_sensors_equal_amplitude_lower_confidence(self) -> None:
-        """When all 4 sensors have equal fault amplitude, spatial localization is weak."""
+        """When all 4 sensors have equal fault amplitude, the system should either
+        suppress the finding as diffuse excitation or flag it with very low confidence
+        and weak spatial separation."""
         sensors = _ALL_SENSORS
         samples: list[dict[str, Any]] = []
         for i in range(30):
@@ -1136,11 +1138,18 @@ class TestConfidenceGuardrails:
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="conf_equal")
-        top = _get_top_cause(summary)
-        # With equal signals, spatial separation should be flagged as weak
-        assert top.get("weak_spatial_separation", False), (
-            "Expected weak spatial separation with equal amplitude on all sensors"
-        )
+        top_causes = summary.get("top_causes", [])
+        # With equal amplitude on all sensors at constant speed, the system
+        # should either suppress findings entirely (diffuse excitation) or
+        # produce very low-confidence guarded results.
+        if top_causes:
+            top = top_causes[0]
+            assert top.get("weak_spatial_separation", False) or top.get(
+                "diffuse_excitation", False
+            ), "Expected weak spatial separation or diffuse excitation flag"
+            assert float(top.get("confidence", 0)) < 0.50, (
+                "Expected low confidence for equal-amplitude scenario"
+            )
 
     def test_short_intermittent_fault_lower_than_long_sustained(self) -> None:
         """Short intermittent fault should produce lower confidence than long sustained."""
