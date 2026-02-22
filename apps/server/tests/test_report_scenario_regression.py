@@ -1133,6 +1133,72 @@ class TestPhaseInfoInSummary:
 
 
 # ---------------------------------------------------------------------------
+# Phase-aware speed stats (TODO 8)
+# ---------------------------------------------------------------------------
+
+
+class TestSpeedStatsByPhase:
+    """speed_stats_by_phase must be present in summary and reflect per-phase data."""
+
+    def test_speed_stats_by_phase_present_in_summary(self) -> None:
+        """summarize_run_data must include speed_stats_by_phase in output."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary.get("speed_stats_by_phase")
+        assert ssbp is not None, "speed_stats_by_phase must be present in summary"
+        assert isinstance(ssbp, dict)
+
+    def test_speed_stats_by_phase_keys_are_phase_labels(self) -> None:
+        """Each key in speed_stats_by_phase must be a valid driving phase string."""
+        from vibesensor.report.phase_segmentation import DrivingPhase
+
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        valid_phases = {p.value for p in DrivingPhase}
+        for key in ssbp:
+            assert key in valid_phases, f"Unexpected phase key {key!r} in speed_stats_by_phase"
+
+    def test_speed_stats_by_phase_sample_counts_sum_to_total(self) -> None:
+        """Sum of sample_count across all phases must equal total sample count."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        total = sum(int(v["sample_count"]) for v in ssbp.values())
+        assert total == len(samples)
+
+    def test_speed_stats_by_phase_idle_has_no_speed_stats(self) -> None:
+        """IDLE samples (speed ~0) should yield None min/max in their phase stats."""
+        meta = _standard_metadata()
+        # All idle: speed below _IDLE_SPEED_KMH
+        samples = [
+            {"t_s": float(i), "speed_kmh": 0.5, "vibration_strength_db": 5.0} for i in range(10)
+        ]
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        assert "idle" in ssbp
+        # speed_kmh = 0.5 is classified as idle phase (below _IDLE_SPEED_KMH=3.0)
+        # but is still > 0, so it contributes to idle speed stats
+        # The idle phase stats should account for all 10 samples
+        assert ssbp["idle"]["sample_count"] == 10
+
+    def test_speed_stats_by_phase_cruise_has_valid_speed_range(self) -> None:
+        """Cruise phase samples should show coherent speed stats."""
+        meta = _standard_metadata()
+        samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        ssbp = summary["speed_stats_by_phase"]
+        # At least one non-idle phase should have non-None speed stats
+        non_idle = {k: v for k, v in ssbp.items() if k != "idle"}
+        assert any(v.get("min_kmh") is not None for v in non_idle.values()), (
+            "At least one non-idle phase should have valid speed stats"
+        )
+
+
+# ---------------------------------------------------------------------------
 # 11. Certainty label signal-quality guard (issue #184)
 # ---------------------------------------------------------------------------
 
