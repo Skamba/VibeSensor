@@ -13,6 +13,7 @@ from vibesensor.report.findings import (
     _build_persistent_peak_findings,
     _classify_peak_type,
 )
+from vibesensor.report.phase_segmentation import DrivingPhase
 from vibesensor.report.plot_data import (
     _aggregate_fft_spectrum,
     _aggregate_fft_spectrum_raw,
@@ -774,6 +775,32 @@ class TestSummarizeRunDataPersistence:
         assert "peaks_spectrogram" in plots
         assert "peaks_spectrogram_raw" in plots
 
+    def test_plots_include_phase_boundaries(self) -> None:
+        """plots dict should contain phase_boundaries with t_s, end_t_s, and phase keys."""
+        metadata = _make_metadata()
+        # Idle samples (speed=0) then accelerating then cruising
+        samples = (
+            [_sample(float(i), 0.0, [{"hz": 20.0, "amp": 0.02}]) for i in range(5)]
+            + [
+                _sample(float(i + 5), float(i + 5) * 10, [{"hz": 20.0, "amp": 0.04}])
+                for i in range(5)
+            ]
+            + [_sample(float(i + 10), 80.0, [{"hz": 20.0, "amp": 0.05}]) for i in range(10)]
+        )
+        summary = summarize_run_data(metadata, samples, lang="en")
+        plots = summary.get("plots", {})
+        assert "phase_boundaries" in plots
+        boundaries = plots["phase_boundaries"]
+        assert isinstance(boundaries, list)
+        assert len(boundaries) >= 1
+        for entry in boundaries:
+            assert "t_s" in entry
+            assert "end_t_s" in entry
+            assert "phase" in entry
+            assert isinstance(entry["t_s"], float)
+            assert isinstance(entry["end_t_s"], float)
+            assert isinstance(entry["phase"], str)
+
 
 class TestSpectrogramPersistence:
     def test_diagnostic_spectrogram_downweights_one_off_thud(self) -> None:
@@ -863,3 +890,181 @@ class TestBackwardCompatibility:
         samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 15.0, "amp": 0.02}]) for i in range(15)]
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
         assert isinstance(findings, list)
+
+
+# ---------------------------------------------------------------------------
+# Phase-aware persistent peak findings (TODO-4)
+# ---------------------------------------------------------------------------
+
+
+class TestPersistentPeakFindingsPhaseAwareness:
+    """Tests that _build_persistent_peak_findings produces correct phase_presence output."""
+
+    def test_phase_presence_is_none_without_phases(self) -> None:
+        """Without per_sample_phases the phase_presence field should be None."""
+        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+        )
+        assert findings
+        for f in findings:
+            assert f.get("phase_presence") is None
+
+    def test_phase_presence_populated_when_phases_provided(self) -> None:
+        """With per_sample_phases, phase_presence should be a dict with presence ratios."""
+        samples = [_sample(float(i) * 0.5, 60.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
+        per_sample_phases = [DrivingPhase.CRUISE] * 20
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+            per_sample_phases=per_sample_phases,
+        )
+        # bin_center for 40 Hz with freq_bin_hz=2.0 → 41.0 Hz
+        peak_findings = [f for f in findings if "41" in str(f.get("frequency_hz_or_order", ""))]
+        assert peak_findings, "Expected at least one finding near 40 Hz (bin_center 41.0)"
+        f = peak_findings[0]
+        phase_presence = f.get("phase_presence")
+        assert isinstance(phase_presence, dict), (
+            "phase_presence should be a dict when phases provided"
+        )
+        assert "cruise" in phase_presence, f"Expected 'cruise' key in {phase_presence}"
+        assert phase_presence["cruise"] > 0.0
+
+    def test_phase_presence_reflects_dominant_phase(self) -> None:
+        """phase_presence ratios should reflect which phase the peak occurs in most."""
+        samples: list[dict] = []
+        # 12 ACCELERATION samples with the peak, 8 CRUISE samples without
+        for i in range(12):
+            samples.append(_sample(float(i) * 0.5, 60.0, [{"hz": 50.0, "amp": 0.07}]))
+        for i in range(8):
+            samples.append(_sample(float(12 + i) * 0.5, 60.0, [{"hz": 10.0, "amp": 0.02}]))
+        per_sample_phases = [DrivingPhase.ACCELERATION] * 12 + [DrivingPhase.CRUISE] * 8
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+            per_sample_phases=per_sample_phases,
+        )
+        # bin_center for 50 Hz with freq_bin_hz=2.0 → 51.0 Hz
+        peak_finding = next(
+            (f for f in findings if "51" in str(f.get("frequency_hz_or_order", ""))),
+            None,
+        )
+        assert peak_finding is not None, (
+            f"Expected finding near 51.0 Hz; got: {[f.get('frequency_hz_or_order') for f in findings]}"
+        )
+        phase_presence = peak_finding.get("phase_presence")
+        assert isinstance(phase_presence, dict)
+        # Should show the 50 Hz peak as primarily present in ACCELERATION
+        assert "acceleration" in phase_presence
+        accel_presence = phase_presence["acceleration"]
+        cruise_presence = phase_presence.get("cruise", 0.0)
+        assert accel_presence > cruise_presence, (
+            f"acceleration presence ({accel_presence}) should exceed cruise ({cruise_presence})"
+        )
+
+    def test_phase_presence_multiple_phases(self) -> None:
+        """When a peak is observed in multiple phases, all phases appear in phase_presence."""
+        samples: list[dict] = []
+        phases: list[DrivingPhase] = []
+        # 8 CRUISE + 6 ACCELERATION + 6 DECELERATION, all with the same peak
+        for i in range(8):
+            samples.append(_sample(float(i) * 0.5, 70.0, [{"hz": 35.0, "amp": 0.05}]))
+            phases.append(DrivingPhase.CRUISE)
+        for i in range(6):
+            samples.append(_sample(float(8 + i) * 0.5, 70.0, [{"hz": 35.0, "amp": 0.05}]))
+            phases.append(DrivingPhase.ACCELERATION)
+        for i in range(6):
+            samples.append(_sample(float(14 + i) * 0.5, 70.0, [{"hz": 35.0, "amp": 0.05}]))
+            phases.append(DrivingPhase.DECELERATION)
+
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+            per_sample_phases=phases,
+        )
+        # bin_center for 35 Hz with freq_bin_hz=2.0 → floor(35/2)*2 + 1 = 34 + 1 = 35.0 Hz
+        peak_finding = next(
+            (f for f in findings if "35.0" in str(f.get("frequency_hz_or_order", ""))),
+            None,
+        )
+        assert peak_finding is not None, (
+            f"Expected finding at 35.0 Hz; got: {[f.get('frequency_hz_or_order') for f in findings]}"
+        )
+        phase_presence = peak_finding.get("phase_presence")
+        assert isinstance(phase_presence, dict)
+        assert "cruise" in phase_presence
+        assert "acceleration" in phase_presence
+        assert "deceleration" in phase_presence
+
+    def test_phase_presence_values_are_ratios_between_0_and_1(self) -> None:
+        """All phase_presence values must be in [0, 1]."""
+        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
+        per_sample_phases = (
+            [DrivingPhase.ACCELERATION] * 5
+            + [DrivingPhase.CRUISE] * 10
+            + [DrivingPhase.DECELERATION] * 5
+        )
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+            per_sample_phases=per_sample_phases,
+        )
+        for f in findings:
+            phase_presence = f.get("phase_presence")
+            if phase_presence is not None:
+                for phase_key, ratio in phase_presence.items():
+                    assert 0.0 <= float(ratio) <= 1.0, (
+                        f"phase_presence[{phase_key!r}] = {ratio} is outside [0, 1]"
+                    )
+                # Values are fractions of peak occurrences per phase, so they sum to ~1.0
+                assert abs(sum(float(v) for v in phase_presence.values()) - 1.0) < 1e-9, (
+                    "phase_presence values should sum to 1.0"
+                )
+
+    def test_phase_presence_via_build_findings_integration(self) -> None:
+        """build_findings_for_samples should produce findings with phase_presence populated."""
+        metadata = _make_metadata()
+        # All CRUISE samples (speed=80 km/h, no acceleration) → segments → cruise phases
+        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(25)]
+        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+        # bin_center for 40 Hz with freq_bin_hz=2.0 → 41.0 Hz
+        peak_findings = [f for f in findings if "41" in str(f.get("frequency_hz_or_order", ""))]
+        assert peak_findings, (
+            "Expected at least one finding near 41.0 Hz (bin-center of 40 Hz input)"
+        )
+        f = peak_findings[0]
+        phase_presence = f.get("phase_presence")
+        assert isinstance(phase_presence, dict), (
+            "phase_presence should be populated by build_findings_for_samples"
+        )
+        assert phase_presence, "phase_presence dict should be non-empty"
+
+    def test_phase_presence_ignored_when_length_mismatch(self) -> None:
+        """If per_sample_phases has wrong length, phase_presence should be None (graceful fallback)."""
+        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(10)]
+        # Pass phases with wrong length
+        per_sample_phases = [DrivingPhase.CRUISE] * 5  # too short
+        findings = _build_persistent_peak_findings(
+            samples=samples,
+            order_finding_freqs=set(),
+            accel_units="g",
+            lang="en",
+            per_sample_phases=per_sample_phases,
+        )
+        assert findings
+        for f in findings:
+            assert f.get("phase_presence") is None, (
+                "phase_presence should be None when per_sample_phases length does not match samples"
+            )
