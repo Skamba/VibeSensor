@@ -700,23 +700,41 @@ def _build_order_findings(
 
         # ── Diffuse excitation detection ────────────────────────────────
         # When multiple connected sensors all match the order at similar
-        # rates, vibration is likely diffuse road/environment excitation
-        # rather than a localized mechanical fault.  Penalize confidence
-        # to prevent converting global road noise into a corner-specific
-        # wheel diagnosis.
+        # rates AND similar amplitudes, vibration is likely diffuse
+        # road/environment excitation rather than a localized fault.
+        # If one sensor has significantly higher amplitude, it's a localized
+        # fault that may also weakly appear on other sensors (transfer path).
         _diffuse_excitation = False
         if len(connected_locations) >= 2 and possible_by_location:
             loc_rates = []
+            loc_mean_amps: dict[str, float] = {}
             for loc in connected_locations:
                 loc_p = possible_by_location.get(loc, 0)
                 loc_m = matched_by_location.get(loc, 0)
                 if loc_p >= max(3, ORDER_MIN_MATCH_POINTS):
                     loc_rates.append(loc_m / max(1, loc_p))
+                    # Compute mean matched amplitude for this location
+                    loc_amps = [
+                        _as_float(pt.get("amp")) or 0.0
+                        for pt in matched_points
+                        if str(pt.get("location") or "").strip() == loc
+                        and (_as_float(pt.get("amp")) or 0.0) > 0
+                    ]
+                    if loc_amps:
+                        loc_mean_amps[loc] = mean(loc_amps)
             if len(loc_rates) >= 2:
                 _rate_range = max(loc_rates) - min(loc_rates)
                 _mean_rate = mean(loc_rates)
-                # All sensors within 15pp of each other → diffuse
-                if _rate_range < 0.15 and _mean_rate > 0.15:
+                # Check amplitude uniformity: if one sensor is dominant,
+                # this is a localized fault, not diffuse excitation.
+                _amp_uniform = True
+                if loc_mean_amps and len(loc_mean_amps) >= 2:
+                    _max_amp_loc = max(loc_mean_amps.values())
+                    _min_amp_loc = min(loc_mean_amps.values())
+                    if _min_amp_loc > 0 and _max_amp_loc / _min_amp_loc > 2.0:
+                        _amp_uniform = False  # One sensor is dominant
+                # All sensors within 15pp of each other AND similar amps → diffuse
+                if _rate_range < 0.15 and _mean_rate > 0.15 and _amp_uniform:
                     _diffuse_excitation = True
                     # Moderate penalty: flag the finding as diffuse but don't
                     # aggressively suppress it — the weak_spatial_separation
