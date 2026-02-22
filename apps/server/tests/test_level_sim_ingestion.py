@@ -72,7 +72,7 @@ def _wait_for_analysis(run_id: str, *, timeout_s: float = 90.0) -> dict:
 
 
 def _server_is_reachable() -> bool:
-    """Check if the server is reachable."""
+    """Check if the VibeSensor server is reachable via /api/health."""
     try:
         _api_json("/api/health", timeout=3)
         return True

@@ -560,7 +560,7 @@ def make_gain_mismatch_samples(
             s["top_peaks"] = [
                 {"hz": p["hz"], "amp": p["amp"] * gain_factor} for p in s["top_peaks"]
             ]
-            s["vibration_strength_db"] = s["vibration_strength_db"] + 3.0  # ~double power
+            s["vibration_strength_db"] = s["vibration_strength_db"] + 3.0  # +3 dB ≈ 2× power
         result.append(s)
     return result
 
