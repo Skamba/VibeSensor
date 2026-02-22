@@ -22,7 +22,9 @@ from builders import (
     SPEED_MID,
     SPEED_VERY_HIGH,
     assert_confidence_between,
+    assert_diagnosis_contract,
     assert_no_wheel_fault,
+    assert_pairwise_monotonic,
     assert_strongest_location,
     assert_wheel_source,
     extract_top,
@@ -69,11 +71,13 @@ def test_4sensor_fault_corner_speed(corner: str, speed: float) -> None:
         noise_vib_db=8.0,
     )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    assert top is not None, f"No finding for 4-sensor {corner}@{speed}"
-    assert_wheel_source(summary, msg=f"4s {corner}@{speed}")
-    assert_strongest_location(summary, sensor, msg=f"4s {corner}@{speed}")
-    assert_confidence_between(summary, 0.15, 1.0, msg=f"4s {corner}@{speed}")
+    assert_diagnosis_contract(
+        summary,
+        expected_source="wheel",
+        expected_sensor=sensor,
+        min_confidence=0.15,
+        msg=f"4s {corner}@{speed}",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -211,9 +215,10 @@ def test_confidence_scales_with_sensor_count(sensors: list[str], label: str) -> 
 
 
 def test_sensor_count_monotonic() -> None:
-    """Confidence for wheel/tire should not decrease as sensors are added."""
+    """Confidence for wheel/tire should not decrease as sensors are added (pairwise)."""
     confs: list[float] = []
-    for sensors in [_2_SENSORS_FL_RR, _4_SENSORS, _8_SENSORS]:
+    labels: list[str] = []
+    for sensors, label in [(_2_SENSORS_FL_RR, "2s"), (_4_SENSORS, "4s"), (_8_SENSORS, "8s")]:
         samples = make_fault_samples(
             fault_sensor=SENSOR_FL,
             sensors=sensors,
@@ -224,8 +229,8 @@ def test_sensor_count_monotonic() -> None:
         )
         summary = run_analysis(samples)
         confs.append(top_confidence(summary))
-    # More sensors should maintain or improve confidence
-    assert confs[-1] >= confs[0] - 0.05, f"Sensor-count monotonicity violated: {confs}"
+        labels.append(label)
+    assert_pairwise_monotonic(confs, tolerance=0.05, labels=labels, msg="sensor-count")
 
 
 # ---------------------------------------------------------------------------
@@ -234,8 +239,9 @@ def test_sensor_count_monotonic() -> None:
 
 
 def test_4sensor_amplitude_monotonic() -> None:
-    """Wheel/tire confidence should increase with fault amplitude on 4 sensors."""
+    """Wheel/tire confidence should increase pairwise with fault amplitude on 4 sensors."""
     confs: list[float] = []
+    labels: list[str] = []
     for amp, vdb in [(0.03, 18.0), (0.06, 26.0), (0.12, 34.0)]:
         samples = make_fault_samples(
             fault_sensor=SENSOR_FL,
@@ -247,8 +253,8 @@ def test_4sensor_amplitude_monotonic() -> None:
         )
         summary = run_analysis(samples)
         confs.append(top_confidence(summary))
-    # Highest amplitude should produce at least as much confidence as lowest
-    assert confs[-1] >= confs[0] - 0.05, f"Amplitude monotonicity violated: {confs}"
+        labels.append(f"amp={amp}")
+    assert_pairwise_monotonic(confs, tolerance=0.05, labels=labels, msg="amplitude")
 
 
 # ---------------------------------------------------------------------------
@@ -316,7 +322,7 @@ def test_4sensor_phased_onset(corner: str) -> None:
 
 
 def test_8sensor_no_fault_baseline() -> None:
-    """8 sensors, all noise → no fault."""
+    """8 sensors, all noise → no wheel fault."""
     samples = make_noise_samples(sensors=_8_SENSORS, speed_kmh=SPEED_MID, n_samples=40)
     summary = run_analysis(samples)
     assert_no_wheel_fault(summary, msg="8sensor-no-fault")
@@ -328,7 +334,7 @@ def test_8sensor_no_fault_baseline() -> None:
 
 
 def test_12sensor_no_fault_baseline() -> None:
-    """12 sensors, all noise → no fault."""
+    """12 sensors, all noise → no wheel fault."""
     samples = make_noise_samples(sensors=_12_SENSORS, speed_kmh=SPEED_MID, n_samples=40)
     summary = run_analysis(samples)
     assert_no_wheel_fault(summary, msg="12sensor-no-fault")
