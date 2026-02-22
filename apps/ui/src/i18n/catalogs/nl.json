@@ -247,6 +247,11 @@
   "settings.update.log": "Log",
   "settings.update.no_issues": "Geen problemen.",
   "settings.update.ssid_label": "Netwerk",
+  "settings.update.runtime_commit": "Geïnstalleerde commit",
+  "settings.update.runtime_assets": "Hash van geïnstalleerde assets",
+  "settings.update.runtime_assets_check": "Asset-verificatie",
+  "settings.update.runtime_assets_ok": "OK",
+  "settings.update.runtime_assets_bad": "Mismatch",
   "settings.update.already_running": "Er loopt al een update.",
   "settings.update.start_failed": "Starten van update mislukt.",
   "settings.update.reconnect_note": "Let op: De pagina kan loskoppelen terwijl de hotspot uit is. De verbinding wordt automatisch hersteld."

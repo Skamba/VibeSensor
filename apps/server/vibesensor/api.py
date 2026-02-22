@@ -252,6 +252,7 @@ class UpdateStatusResponse(BaseModel):
     issues: list[UpdateIssueResponse]
     log_tail: list[str]
     exit_code: int | None = None
+    runtime: dict[str, Any] = Field(default_factory=dict)
 
 
 class UpdateStartResponse(BaseModel):
