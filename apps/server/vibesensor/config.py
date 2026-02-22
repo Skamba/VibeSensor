@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -56,6 +57,14 @@ DEFAULT_CONFIG: dict[str, Any] = {
     },
     "gps": {"gps_enabled": False},
 }
+
+
+def documented_default_config() -> dict[str, Any]:
+    """Return runtime defaults in the shape documented by config.example.yaml."""
+    defaults = deepcopy(DEFAULT_CONFIG)
+    metrics_log_path = Path(str(defaults["logging"]["metrics_log_path"]))
+    defaults["logging"]["history_db_path"] = str(metrics_log_path.parent / "history.db")
+    return defaults
 
 
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
