@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from ..report_theme import (
+from ..runlog import as_float_or_none as _as_float
+from .pdf_helpers import _canonical_location, _source_color, color_blend
+from .theme import (
     HEAT_HIGH,
     HEAT_LOW,
     HEAT_MID,
     REPORT_COLORS,
 )
-from ..runlog import as_float_or_none as _as_float
-from .pdf_helpers import _canonical_location, _source_color, color_blend
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -331,7 +331,7 @@ def car_location_diagram(
 
     # -- Source highlight legend (explains stroke colours on the circles) --
     # Placed below the heat-map legend so it fits within the narrow Drawing.
-    from ..report_theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
+    from .theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
 
     src_legend_items = [
         ("Wheel / Tire", FINDING_SOURCE_COLORS["wheel/tire"]),
