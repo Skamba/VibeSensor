@@ -75,26 +75,42 @@ def _make_engine_plus_wheel_samples(
             ]
             if sensor == fault_sensor:
                 # Wheel fault + engine on this sensor
-                peaks = [
-                    {"hz": whz, "amp": wheel_amp},
-                    {"hz": whz * 2, "amp": wheel_amp * 0.4},
-                ] + engine_peaks + [{"hz": 142.5, "amp": 0.004}]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed_kmh, client_name=sensor,
-                    top_peaks=peaks, vibration_strength_db=wheel_vib_db,
-                    strength_floor_amp_g=0.004, engine_rpm=ehz * 60.0,
-                ))
+                peaks = (
+                    [
+                        {"hz": whz, "amp": wheel_amp},
+                        {"hz": whz * 2, "amp": wheel_amp * 0.4},
+                    ]
+                    + engine_peaks
+                    + [{"hz": 142.5, "amp": 0.004}]
+                )
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=wheel_vib_db,
+                        strength_floor_amp_g=0.004,
+                        engine_rpm=ehz * 60.0,
+                    )
+                )
             else:
                 # Engine only + noise
                 peaks = engine_peaks + [
                     {"hz": 142.5, "amp": 0.004},
                     {"hz": 87.3, "amp": 0.003},
                 ]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed_kmh, client_name=sensor,
-                    top_peaks=peaks, vibration_strength_db=noise_vib_db,
-                    strength_floor_amp_g=0.004, engine_rpm=ehz * 60.0,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=noise_vib_db,
+                        strength_floor_amp_g=0.004,
+                        engine_rpm=ehz * 60.0,
+                    )
+                )
     return samples
 
 
@@ -122,25 +138,39 @@ def _make_driveshaft_plus_wheel_samples(
                 {"hz": dshaft_hz * 2, "amp": driveshaft_amp * 0.4},
             ]
             if sensor == fault_sensor:
-                peaks = [
-                    {"hz": whz, "amp": wheel_amp},
-                    {"hz": whz * 2, "amp": wheel_amp * 0.4},
-                ] + dshaft_peaks + [{"hz": 142.5, "amp": 0.004}]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed_kmh, client_name=sensor,
-                    top_peaks=peaks, vibration_strength_db=wheel_vib_db,
-                    strength_floor_amp_g=0.004,
-                ))
+                peaks = (
+                    [
+                        {"hz": whz, "amp": wheel_amp},
+                        {"hz": whz * 2, "amp": wheel_amp * 0.4},
+                    ]
+                    + dshaft_peaks
+                    + [{"hz": 142.5, "amp": 0.004}]
+                )
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=wheel_vib_db,
+                        strength_floor_amp_g=0.004,
+                    )
+                )
             else:
                 peaks = dshaft_peaks + [
                     {"hz": 142.5, "amp": 0.004},
                     {"hz": 87.3, "amp": 0.003},
                 ]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed_kmh, client_name=sensor,
-                    top_peaks=peaks, vibration_strength_db=noise_vib_db,
-                    strength_floor_amp_g=0.004,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=noise_vib_db,
+                        strength_floor_amp_g=0.004,
+                    )
+                )
     return samples
 
 
@@ -150,9 +180,7 @@ def _make_driveshaft_plus_wheel_samples(
 # ===================================================================
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-def test_engine_plus_wheel_detects_wheel(
-    corner: str, speed: float
-) -> None:
+def test_engine_plus_wheel_detects_wheel(corner: str, speed: float) -> None:
     """When both engine and wheel are present, wheel (localized) should be top finding."""
     sensor = CORNER_SENSORS[corner]
     samples = _make_engine_plus_wheel_samples(
@@ -175,9 +203,9 @@ def test_engine_plus_wheel_detects_wheel(
 # 4 corners × 3 engine strengths = 12 cases
 # ===================================================================
 _ENGINE_STRENGTHS = [
-    ("weak_engine", 0.015),    # engine much weaker than wheel
+    ("weak_engine", 0.015),  # engine much weaker than wheel
     ("matched_engine", 0.05),  # engine similar to wheel
-    ("strong_engine", 0.08),   # engine stronger than wheel
+    ("strong_engine", 0.08),  # engine stronger than wheel
 ]
 
 
@@ -187,9 +215,7 @@ _ENGINE_STRENGTHS = [
     _ENGINE_STRENGTHS,
     ids=[e[0] for e in _ENGINE_STRENGTHS],
 )
-def test_engine_alias_suppression(
-    corner: str, eng_name: str, engine_amp: float
-) -> None:
+def test_engine_alias_suppression(corner: str, eng_name: str, engine_amp: float) -> None:
     """Engine alias suppression should prevent engine from dominating when wheel is present."""
     sensor = CORNER_SENSORS[corner]
     samples = _make_engine_plus_wheel_samples(
@@ -211,9 +237,7 @@ def test_engine_alias_suppression(
 # ===================================================================
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID], ids=["low", "mid"])
-def test_driveshaft_plus_wheel_overlap(
-    corner: str, speed: float
-) -> None:
+def test_driveshaft_plus_wheel_overlap(corner: str, speed: float) -> None:
     """Driveshaft + wheel should not crash; wheel should still be detectable."""
     sensor = CORNER_SENSORS[corner]
     samples = _make_driveshaft_plus_wheel_samples(
@@ -232,9 +256,7 @@ def test_driveshaft_plus_wheel_overlap(
 # ===================================================================
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_MID, SPEED_HIGH], ids=["mid", "high"])
-def test_three_systems_simultaneous(
-    corner: str, speed: float
-) -> None:
+def test_three_systems_simultaneous(corner: str, speed: float) -> None:
     """Pipeline should handle wheel + engine + driveshaft-like signals without crash."""
     sensor = CORNER_SENSORS[corner]
     whz = wheel_hz(speed)
@@ -255,18 +277,30 @@ def test_three_systems_simultaneous(
                     {"hz": whz, "amp": 0.06},
                     {"hz": whz * 2, "amp": 0.024},
                 ] + base_peaks
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed, client_name=s,
-                    top_peaks=peaks, vibration_strength_db=26.0,
-                    strength_floor_amp_g=0.004, engine_rpm=ehz * 60.0,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed,
+                        client_name=s,
+                        top_peaks=peaks,
+                        vibration_strength_db=26.0,
+                        strength_floor_amp_g=0.004,
+                        engine_rpm=ehz * 60.0,
+                    )
+                )
             else:
                 peaks = base_peaks + [{"hz": 142.5, "amp": 0.004}]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed, client_name=s,
-                    top_peaks=peaks, vibration_strength_db=10.0,
-                    strength_floor_amp_g=0.004, engine_rpm=ehz * 60.0,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed,
+                        client_name=s,
+                        top_peaks=peaks,
+                        vibration_strength_db=10.0,
+                        strength_floor_amp_g=0.004,
+                        engine_rpm=ehz * 60.0,
+                    )
+                )
 
     summary = run_analysis(samples)
     assert isinstance(summary, dict)
@@ -341,8 +375,7 @@ def test_engine_plus_single_sensor_wheel(
     summary = run_analysis(samples)
     conf = top_confidence(summary)
     assert conf > 0.0, (
-        f"Single-sensor wheel+engine at {corner} ({strength_name}) "
-        f"should produce a finding"
+        f"Single-sensor wheel+engine at {corner} ({strength_name}) should produce a finding"
     )
 
 
@@ -352,9 +385,7 @@ def test_engine_plus_single_sensor_wheel(
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_profile_engine_plus_wheel(
-    profile: dict[str, Any], corner: str
-) -> None:
+def test_profile_engine_plus_wheel(profile: dict[str, Any], corner: str) -> None:
     """Profile-aware engine+wheel should not crash and should produce findings."""
     sensor = CORNER_SENSORS[corner]
     whz = profile_wheel_hz(profile, SPEED_MID)
@@ -373,30 +404,38 @@ def test_profile_engine_plus_wheel(
                     {"hz": whz, "amp": 0.06},
                     {"hz": whz * 2, "amp": 0.024},
                 ] + engine_peaks
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=SPEED_MID, client_name=s,
-                    top_peaks=peaks, vibration_strength_db=26.0,
-                    strength_floor_amp_g=0.004, engine_rpm=ehz * 60.0,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=SPEED_MID,
+                        client_name=s,
+                        top_peaks=peaks,
+                        vibration_strength_db=26.0,
+                        strength_floor_amp_g=0.004,
+                        engine_rpm=ehz * 60.0,
+                    )
+                )
             else:
                 peaks = engine_peaks + [{"hz": 142.5, "amp": 0.004}]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=SPEED_MID, client_name=s,
-                    top_peaks=peaks, vibration_strength_db=8.0,
-                    strength_floor_amp_g=0.004, engine_rpm=ehz * 60.0,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=SPEED_MID,
+                        client_name=s,
+                        top_peaks=peaks,
+                        vibration_strength_db=8.0,
+                        strength_floor_amp_g=0.004,
+                        engine_rpm=ehz * 60.0,
+                    )
+                )
 
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
     assert isinstance(summary, dict)
     assert "top_causes" in summary
     conf = top_confidence(summary)
-    assert conf > 0.0, (
-        f"Profile {profile['name']} engine+wheel at {corner} produced no findings"
-    )
+    assert conf > 0.0, f"Profile {profile['name']} engine+wheel at {corner} produced no findings"
     # Validate confidence label if above floor
     top = extract_top(summary)
     if top and float(top.get("confidence", 0)) > 0.25:
-        assert_confidence_label_valid(
-            summary, msg=f"profile={profile['name']} {corner}"
-        )
+        assert_confidence_label_valid(summary, msg=f"profile={profile['name']} {corner}")

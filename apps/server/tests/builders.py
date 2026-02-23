@@ -991,7 +991,14 @@ def make_profile_dual_fault_samples(
                     {"hz": 142.5, "amp": noise_amp},
                 ]
                 samples.append(
-                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=fault_vib_db_1, strength_floor_amp_g=noise_amp)
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=fault_vib_db_1,
+                        strength_floor_amp_g=noise_amp,
+                    )
                 )
             elif sensor == fault_sensor_2:
                 peaks = [
@@ -1000,12 +1007,26 @@ def make_profile_dual_fault_samples(
                     {"hz": 87.3, "amp": noise_amp},
                 ]
                 samples.append(
-                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=fault_vib_db_2, strength_floor_amp_g=noise_amp)
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=fault_vib_db_2,
+                        strength_floor_amp_g=noise_amp,
+                    )
                 )
             else:
                 peaks = [{"hz": 142.5, "amp": noise_amp}, {"hz": 87.3, "amp": noise_amp * 0.8}]
                 samples.append(
-                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=noise_vib_db, strength_floor_amp_g=noise_amp)
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=noise_vib_db,
+                        strength_floor_amp_g=noise_amp,
+                    )
                 )
     return samples
 
@@ -1037,7 +1058,15 @@ def make_profile_engine_order_samples(
                 {"hz": 200.0, "amp": noise_amp},
             ]
             samples.append(
-                make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=engine_vib_db, strength_floor_amp_g=noise_amp, engine_rpm=ehz * 60.0)
+                make_sample(
+                    t_s=t,
+                    speed_kmh=speed_kmh,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=engine_vib_db,
+                    strength_floor_amp_g=noise_amp,
+                    engine_rpm=ehz * 60.0,
+                )
             )
     return samples
 
@@ -1116,7 +1145,9 @@ def make_profile_gain_mismatch_samples(
     for s in base:
         if s["client_name"] == fault_sensor:
             s = {**s}
-            s["top_peaks"] = [{"hz": p["hz"], "amp": p["amp"] * gain_factor} for p in s["top_peaks"]]
+            s["top_peaks"] = [
+                {"hz": p["hz"], "amp": p["amp"] * gain_factor} for p in s["top_peaks"]
+            ]
             s["vibration_strength_db"] = s["vibration_strength_db"] + 3.0
         result.append(s)
     return result
