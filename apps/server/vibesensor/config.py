@@ -148,6 +148,55 @@ class ProcessingConfig:
     client_ttl_seconds: int
     accel_scale_g_per_lsb: float | None
 
+    def __post_init__(self) -> None:
+        _cfg_logger = logging.getLogger(__name__)
+        # --- positive-integer guards ------------------------------------------------
+        _POS_FIELDS: dict[str, int] = {
+            "sample_rate_hz": 1,
+            "waveform_seconds": 1,
+            "waveform_display_hz": 1,
+            "ui_push_hz": 1,
+            "ui_heavy_push_hz": 1,
+            "fft_update_hz": 1,
+            "spectrum_max_hz": 1,
+            "client_ttl_seconds": 1,
+        }
+        for field_name, minimum in _POS_FIELDS.items():
+            val = getattr(self, field_name)
+            if val < minimum:
+                clamped = minimum
+                _cfg_logger.warning(
+                    "processing.%s=%s is below minimum %s — clamped to %s",
+                    field_name, val, minimum, clamped,
+                )
+                object.__setattr__(self, field_name, clamped)
+
+        # --- fft_n must be >= 16 and a power of 2 ----------------------------------
+        if self.fft_n < 16:
+            _cfg_logger.warning(
+                "processing.fft_n=%s is below minimum 16 — clamped to 16",
+                self.fft_n,
+            )
+            object.__setattr__(self, "fft_n", 16)
+        elif self.fft_n & (self.fft_n - 1) != 0:
+            # Round up to next power of 2
+            next_pow2 = 1 << (self.fft_n - 1).bit_length()
+            _cfg_logger.warning(
+                "processing.fft_n=%s is not a power of 2 — rounded up to %s",
+                self.fft_n, next_pow2,
+            )
+            object.__setattr__(self, "fft_n", next_pow2)
+
+        # --- spectrum_max_hz must be below Nyquist (sample_rate_hz / 2) -------------
+        nyquist = self.sample_rate_hz // 2
+        if nyquist > 0 and self.spectrum_max_hz >= nyquist:
+            clamped = nyquist - 1 if nyquist > 1 else 1
+            _cfg_logger.warning(
+                "processing.spectrum_max_hz=%s >= Nyquist (%s) — clamped to %s",
+                self.spectrum_max_hz, nyquist, clamped,
+            )
+            object.__setattr__(self, "spectrum_max_hz", clamped)
+
 
 @dataclass(slots=True)
 class LoggingConfig:
@@ -270,7 +319,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
             client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
             accel_scale_g_per_lsb=accel_scale,
-        ),
+        ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields
         logging=LoggingConfig(
             log_metrics=log_metrics,
             metrics_log_path=metrics_log_path,
