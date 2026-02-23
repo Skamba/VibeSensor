@@ -137,17 +137,28 @@ def location_hotspots(
             if amp is not None and amp > 0:
                 amp_by_location[location].append(amp)
 
+    amp_unit = "g" if matched_points else "db"
     hotspot_rows: list[dict[str, object]] = []
     for location, amps in amp_by_location.items():
-        hotspot_rows.append(
-            {
-                "location": location,
-                "count": len(amps),
-                "peak_g": max(amps),
-                "mean_g": mean(amps),
-            }
-        )
-    hotspot_rows.sort(key=lambda row: (float(row["peak_g"]), float(row["mean_g"])), reverse=True)
+        peak_val = max(amps)
+        mean_val = mean(amps)
+        row: dict[str, object] = {
+            "location": location,
+            "count": len(amps),
+            "unit": amp_unit,
+            "peak_value": peak_val,
+            "mean_value": mean_val,
+        }
+        if amp_unit == "g":
+            row["peak_g"] = peak_val
+            row["mean_g"] = mean_val
+        else:
+            row["peak_db"] = peak_val
+            row["mean_db"] = mean_val
+        hotspot_rows.append(row)
+    hotspot_rows.sort(
+        key=lambda row: (float(row["peak_value"]), float(row["mean_value"])), reverse=True
+    )
     if not hotspot_rows:
         return (
             [],
@@ -160,9 +171,11 @@ def location_hotspots(
     monitored_count = len(all_locations)
     strongest = hotspot_rows[0]
     strongest_loc = str(strongest["location"])
-    strongest_peak = float(strongest["peak_g"])
+    strongest_peak = float(strongest["peak_value"])
     summary_text = tr(
-        "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF",
+        "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB"
+        if amp_unit == "db"
+        else "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF",
         active_count=active_count,
         monitored_count=monitored_count,
         strongest_loc=strongest_loc,
@@ -185,7 +198,7 @@ def location_hotspots(
         and "wheel" in strongest_loc.lower()
     ):
         if len(hotspot_rows) >= 2:
-            second_peak = float(hotspot_rows[1]["peak_g"])
+            second_peak = float(hotspot_rows[1]["peak_value"])
             if second_peak > 0 and (strongest_peak / second_peak) >= 1.15:
                 summary_text += tr(
                     "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST",

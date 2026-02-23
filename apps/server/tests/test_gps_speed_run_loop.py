@@ -103,7 +103,9 @@ async def test_run_ignores_non_tpv_messages() -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_reconnects_on_connection_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+async def test_run_reconnects_on_connection_failure(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
     """run() retries after ConnectionRefusedError instead of crashing."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
     attempt_count = 0
@@ -117,15 +119,41 @@ async def test_run_reconnects_on_connection_failure(monkeypatch: pytest.MonkeyPa
     # Shrink reconnect delay so the test doesn't wait long
     monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_DELAY_S", 0.05)
     monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_MAX_DELAY_S", 0.1)
+    caplog.set_level("WARNING")
 
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=9999))
     await asyncio.sleep(0.3)
 
     assert attempt_count >= 2, f"Expected at least 2 attempts, got {attempt_count}"
     assert monitor.speed_mps is None
+    assert "GPS connection lost, retrying" in caplog.text
 
     task.cancel()
     await asyncio.gather(task, return_exceptions=True)
+
+
+@pytest.mark.asyncio
+async def test_run_does_not_swallow_processing_programming_errors() -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+    monitor._has_good_3d_fix = lambda payload: (_ for _ in ()).throw(RuntimeError("bug"))  # type: ignore[method-assign]
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await reader.readline()
+        writer.write(_tpv_line(12.3))
+        await writer.drain()
+        await asyncio.sleep(0.1)
+        writer.close()
+        await writer.wait_closed()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+
+    with pytest.raises(RuntimeError, match="bug"):
+        await asyncio.wait_for(task, timeout=1.0)
+
+    server.close()
+    await server.wait_closed()
 
 
 @pytest.mark.asyncio

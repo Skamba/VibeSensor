@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from math import pi
+from math import inf, nan, pi
 
 from vibesensor.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     AnalysisSettingsStore,
     tire_circumference_m_from_spec,
+    wheel_hz_from_speed_mps,
 )
 
 # -- tire_circumference_m_from_spec -------------------------------------------
@@ -30,6 +31,16 @@ def test_tire_circumference_returns_none_for_zero_or_negative() -> None:
     assert tire_circumference_m_from_spec(285.0, 0, 21.0) is None
     assert tire_circumference_m_from_spec(285.0, 30.0, 0) is None
     assert tire_circumference_m_from_spec(-1, 30.0, 21.0) is None
+
+
+def test_tire_circumference_returns_none_for_non_finite_values() -> None:
+    assert tire_circumference_m_from_spec(nan, 30.0, 21.0) is None
+    assert tire_circumference_m_from_spec(285.0, inf, 21.0) is None
+
+
+def test_wheel_hz_from_speed_mps_returns_none_for_non_finite_values() -> None:
+    assert wheel_hz_from_speed_mps(nan, 2.0) is None
+    assert wheel_hz_from_speed_mps(20.0, inf) is None
 
 
 # -- AnalysisSettingsStore._sanitize ------------------------------------------
@@ -64,6 +75,13 @@ def test_sanitize_converts_to_float() -> None:
     store = AnalysisSettingsStore()
     result = store._sanitize({"tire_width_mm": 285})
     assert isinstance(result["tire_width_mm"], float)
+
+
+def test_sanitize_rejects_non_finite_values() -> None:
+    store = AnalysisSettingsStore()
+    result = store._sanitize({"tire_width_mm": nan, "rim_in": inf})
+    assert "tire_width_mm" not in result
+    assert "rim_in" not in result
 
 
 # -- AnalysisSettingsStore snapshot / update ----------------------------------

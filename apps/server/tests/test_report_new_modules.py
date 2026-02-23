@@ -531,6 +531,36 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     assert "85%" in row.relevance
 
 
+def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
+    summary: dict = {
+        "lang": "en",
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {
+            "peaks_table": [
+                {
+                    "rank": 1,
+                    "frequency_hz": 18.0,
+                    "order_label": "",
+                    "max_amp_g": 0.01,
+                    "p95_amp_g": 0.009,
+                    "strength_db": 2.1,
+                    "presence_ratio": 0.1,
+                    "persistence_score": 0.001,
+                    "peak_classification": "baseline_noise",
+                    "typical_speed_band": "any",
+                }
+            ]
+        },
+    }
+    data = map_summary(summary)
+    assert data.peak_rows
+    assert "noise floor" in data.peak_rows[0].relevance
+
+
 def test_map_summary_data_trust_keeps_warning_detail() -> None:
     summary: dict = {
         "lang": "nl",
@@ -599,6 +629,51 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
 
     assert data_en.data_trust[0].check == "Speed variation"
     assert data_nl.data_trust[0].check == "Snelheidsvariatie"
+
+
+def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
+    summary: dict = {
+        "lang": "en",
+        "sensor_count_used": 4,
+        "top_causes": [
+            {
+                "source": "wheel/tire",
+                "strongest_location": "Front Left",
+                "strongest_speed_band": "60-80 km/h",
+                "confidence": 0.82,
+            }
+        ],
+        "findings": [{"finding_id": "REF_ENGINE"}],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert data.observed.certainty_reason
+    assert "Missing reference data" not in data.observed.certainty_reason
+
+
+def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
+    summary: dict = {
+        "lang": "en",
+        "sensor_count_used": 4,
+        "top_causes": [
+            {
+                "source": "engine",
+                "strongest_location": "Engine Bay",
+                "strongest_speed_band": "60-80 km/h",
+                "confidence": 0.82,
+            }
+        ],
+        "findings": [{"finding_id": "REF_ENGINE"}],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert data.observed.certainty_reason == "Missing reference data limits pattern matching"
 
 
 def test_build_report_pdf_renders_data_trust_warning_detail() -> None:

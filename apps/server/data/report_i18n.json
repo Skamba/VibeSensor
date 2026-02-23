@@ -983,6 +983,10 @@
     "en": "Vibration signature was detected at {active_count} of {monitored_count} monitored locations. Highest peak was at {strongest_loc} ({strongest_peak:.4f} g).",
     "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} bewaakte locaties. Hoogste piek was bij {strongest_loc} ({strongest_peak:.4f} g)."
   },
+  "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB": {
+    "en": "Vibration signature was detected at {active_count} of {monitored_count} monitored locations. Highest intensity was at {strongest_loc} ({strongest_peak:.1f} dB).",
+    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} bewaakte locaties. Hoogste intensiteit was bij {strongest_loc} ({strongest_peak:.1f} dB)."
+  },
   "WHEEL_ORDER_LABELS_BECOME_AVAILABLE_ONCE_TIRE_REFERENCE": {
     "en": "Wheel-order labels become available once tire reference is present.",
     "nl": "Wielorde-labels worden beschikbaar zodra een bandreferentie aanwezig is."
@@ -1274,6 +1278,10 @@
   "CLASSIFICATION_TRANSIENT": {
     "en": "transient impact",
     "nl": "voorbijgaande impact"
+  },
+  "CLASSIFICATION_BASELINE_NOISE": {
+    "en": "noise floor",
+    "nl": "ruisvloer"
   },
   "WHEEL_FOCUS_FRONT_LEFT": {
     "en": "front-left wheel",

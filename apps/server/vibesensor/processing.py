@@ -9,6 +9,8 @@ from typing import Any
 
 import numpy as np
 from vibesensor_core.vibration_strength import (
+    PEAK_THRESHOLD_FLOOR_RATIO,
+    STRENGTH_EPSILON_MIN_G,
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
     noise_floor_amp_p20_g,
@@ -207,6 +209,14 @@ class SignalProcessor:
             combined_spectrum_amp_g=sorted(float(v) for v in finite if v >= 0.0)
         )
 
+    @staticmethod
+    def _float_list(values: np.ndarray | list[float]) -> list[float]:
+        if isinstance(values, np.ndarray):
+            return [float(v) for v in values.ravel()]
+        if isinstance(values, list):
+            return [float(v) for v in values]
+        return [float(v) for v in values]
+
     @classmethod
     def _top_peaks(
         cls,
@@ -214,21 +224,21 @@ class SignalProcessor:
         amps: np.ndarray,
         *,
         top_n: int = 5,
-        floor_ratio: float = 3.0,
+        floor_ratio: float = PEAK_THRESHOLD_FLOOR_RATIO,
         smoothing_bins: int = 5,
     ) -> list[dict[str, float]]:
         if freqs.size == 0 or amps.size == 0:
             return []
         smoothed = cls._smooth_spectrum(amps, bins=smoothing_bins)
         floor_amp = cls._noise_floor(smoothed)
-        threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + 1e-9)
+        threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + STRENGTH_EPSILON_MIN_G)
 
         peak_idx: list[int] = []
         for idx in range(1, smoothed.size - 1):
             amp = float(smoothed[idx])
             if amp < threshold:
                 continue
-            if amp >= float(smoothed[idx - 1]) and amp > float(smoothed[idx + 1]):
+            if amp > float(smoothed[idx - 1]) and amp >= float(smoothed[idx + 1]):
                 peak_idx.append(idx)
 
         if not peak_idx:
@@ -376,7 +386,6 @@ class SignalProcessor:
                 freq_slice,
                 amp_for_peaks,
                 top_n=3,
-                floor_ratio=2.5,
                 smoothing_bins=3,
             )
             spectrum_by_axis[axis] = {
@@ -397,8 +406,8 @@ class SignalProcessor:
                 dtype=np.float32,
             )
             strength_metrics = compute_vibration_strength_db(
-                freq_hz=freq_slice.tolist(),
-                combined_spectrum_amp_g_values=combined_amp.tolist(),
+                freq_hz=self._float_list(freq_slice),
+                combined_spectrum_amp_g_values=self._float_list(combined_amp),
                 peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
                 peak_separation_hz=PEAK_SEPARATION_HZ,
                 top_n=5,
@@ -439,11 +448,15 @@ class SignalProcessor:
                 "strength_metrics": {},
             }
         return {
-            "x": buf.latest_spectrum["x"]["amp"].tolist(),
-            "y": buf.latest_spectrum["y"]["amp"].tolist(),
-            "z": buf.latest_spectrum["z"]["amp"].tolist(),
+            "x": self._float_list(buf.latest_spectrum["x"]["amp"]),
+            "y": self._float_list(buf.latest_spectrum["y"]["amp"]),
+            "z": self._float_list(buf.latest_spectrum["z"]["amp"]),
             "combined_spectrum_amp_g": (
-                buf.latest_spectrum.get("combined", {}).get("amp", np.array([])).tolist()
+                self._float_list(
+                    buf.latest_spectrum.get("combined", {}).get(
+                        "amp", np.array([], dtype=np.float32)
+                    )
+                )
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
@@ -470,10 +483,10 @@ class SignalProcessor:
             ):
                 mismatch_ids.append(client_id)
             client_payload = self.spectrum_payload(client_id)
-            client_payload["freq"] = client_freq.tolist()
+            client_payload["freq"] = self._float_list(client_freq)
             clients[client_id] = client_payload
         payload: dict[str, Any] = {
-            "freq": shared_freq.tolist() if shared_freq is not None else [],
+            "freq": self._float_list(shared_freq) if shared_freq is not None else [],
             "clients": clients,
         }
         if mismatch_ids:
@@ -509,19 +522,21 @@ class SignalProcessor:
         points = decimated.shape[1]
         x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
 
-        waveform = {"t": x.tolist()}
+        waveform = {"t": self._float_list(x)}
         for axis_idx, axis in enumerate(AXES):
-            waveform[axis] = decimated[axis_idx].astype(np.float32).tolist()
+            waveform[axis] = self._float_list(decimated[axis_idx])
 
         spectrum: dict[str, Any] = {}
         if buf.latest_spectrum:
             freq = buf.latest_spectrum["x"]["freq"]
-            spectrum["freq"] = freq.tolist()
+            spectrum["freq"] = self._float_list(freq)
             for axis in AXES:
-                spectrum[axis] = buf.latest_spectrum[axis]["amp"].tolist()
+                spectrum[axis] = self._float_list(buf.latest_spectrum[axis]["amp"])
             combined = buf.latest_spectrum.get("combined")
             spectrum["combined_spectrum_amp_g"] = (
-                combined["amp"].tolist() if isinstance(combined, dict) and "amp" in combined else []
+                self._float_list(combined["amp"])
+                if isinstance(combined, dict) and "amp" in combined
+                else []
             )
             spectrum["strength_metrics"] = dict(buf.latest_strength_metrics)
         else:
@@ -640,9 +655,9 @@ class SignalProcessor:
             "client_id": client_id,
             "sample_rate_hz": sr,
             "n_samples": n,
-            "x": block[0].tolist(),
-            "y": block[1].tolist(),
-            "z": block[2].tolist(),
+            "x": self._float_list(block[0]),
+            "y": self._float_list(block[1]),
+            "z": self._float_list(block[2]),
         }
 
     @_synchronized

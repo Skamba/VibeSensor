@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 from vibesensor.processing import SignalProcessor
 
@@ -321,6 +322,22 @@ def test_top_peaks_with_data() -> None:
     peaks = SignalProcessor._top_peaks(freqs, amps, top_n=3, smoothing_bins=3)
     assert len(peaks) >= 1
     assert peaks[0]["amp"] > 0
+
+
+def test_top_peaks_dominant_frequency_aligns_with_strength_metrics() -> None:
+    freqs = np.linspace(0, 100, 128, dtype=np.float32)
+    amps = np.zeros(128, dtype=np.float32)
+    amps[35] = 2.0
+    amps[74] = 1.6
+    peaks = SignalProcessor._top_peaks(freqs, amps, top_n=1, smoothing_bins=1)
+    strength = compute_vibration_strength_db(
+        freq_hz=freqs.tolist(),
+        combined_spectrum_amp_g_values=amps.tolist(),
+        top_n=1,
+    )
+    assert peaks
+    assert strength["top_peaks"]
+    assert peaks[0]["hz"] == pytest.approx(float(strength["top_peaks"][0]["hz"]))
 
 
 # -- compute_all ---------------------------------------------------------------
