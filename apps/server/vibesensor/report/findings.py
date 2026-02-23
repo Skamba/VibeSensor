@@ -1048,6 +1048,7 @@ def _build_persistent_peak_findings(
     lang: object,
     freq_bin_hz: float = 2.0,
     per_sample_phases: list | None = None,
+    run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, object]]:
     """Build findings for non-order persistent frequency peaks.
 
@@ -1110,7 +1111,8 @@ def _build_persistent_peak_findings(
 
     if n_samples == 0:
         return []
-    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    if run_noise_baseline_g is None:
+        run_noise_baseline_g = _run_noise_baseline_g(samples)
 
     persistent_findings: list[tuple[float, dict[str, object]]] = []
     transient_findings: list[tuple[float, dict[str, object]]] = []
@@ -1299,6 +1301,7 @@ def _build_findings(
     raw_sample_rate_hz: float | None,
     lang: object = "en",
     per_sample_phases: list | None = None,
+    run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
@@ -1432,6 +1435,7 @@ def _build_findings(
             accel_units=accel_units,
             lang=lang,
             per_sample_phases=analysis_phases,
+            run_noise_baseline_g=(run_noise_baseline_g if analysis_samples is samples else None),
         )
     )
 
