@@ -241,6 +241,16 @@ class ClientRegistry:
             self._persist_name(record.client_id, clean)
             return record
 
+    def clear_name(self, client_id: str) -> ClientRecord:
+        """Remove the user-assigned name and revert to the default."""
+        with self._lock:
+            record = self._get_or_create(client_id)
+            default = f"client-{record.client_id[-4:]}"
+            record.name = default
+            self._user_names.pop(record.client_id, None)
+            self._delete_persisted_name(record.client_id)
+            return record
+
     def set_location(self, client_id: str, location: str) -> ClientRecord:
         """Assign a location code (e.g. ``"front-left"``) to a sensor."""
         clean = location.strip()

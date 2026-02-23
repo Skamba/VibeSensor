@@ -234,7 +234,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
-    if (!clientId || !locationCode) return;
+    if (!clientId) return;
     const existing = state.clients.find((c) => c.id === clientId);
     if (existing && locationCodeForClient(existing) === locationCode) return;
     try {
@@ -243,10 +243,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       window.alert(err?.message || t("actions.set_location_failed"));
       return;
     }
-    const selected = state.locationOptions.find((loc) => loc.code === locationCode);
-    if (selected) {
-      const client = state.clients.find((c) => c.id === clientId);
-      if (client) client.name = selected.label;
+    const client = state.clients.find((c) => c.id === clientId);
+    if (client) {
+      const selected = state.locationOptions.find((loc) => loc.code === locationCode);
+      client.name = selected ? selected.label : "";
+      client.location_code = locationCode;
       maybeRenderSensorsSettingsList();
     }
   }
