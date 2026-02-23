@@ -27,14 +27,19 @@ export type DiagnosticEvent = {
 };
 
 export type DiagnosticLevel = {
-  current_db: number;
-  band_key: string;
+  strength_db: number;
+  bucket_key: string;
+  sensor_label?: string;
+  sensor_location?: string;
+  class_key?: string;
+  peak_hz?: number;
   [key: string]: unknown;
 };
 
 export type DiagnosticLevels = {
   by_source: Record<string, DiagnosticLevel>;
   by_sensor: Record<string, DiagnosticLevel>;
+  by_location: Record<string, DiagnosticLevel>;
 };
 
 export type MatrixCell = { count: number; seconds: number; contributors: Record<string, number> };
@@ -112,7 +117,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
       levels:
         diagnostics.levels && typeof diagnostics.levels === "object"
           ? (diagnostics.levels as DiagnosticLevels)
-          : { by_source: {}, by_sensor: {} },
+          : { by_source: {}, by_sensor: {}, by_location: {} },
     },
     spectra: null,
   };
