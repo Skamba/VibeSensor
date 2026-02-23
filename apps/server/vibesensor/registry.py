@@ -155,7 +155,12 @@ class ClientRegistry:
         data_msg: DataMessage,
         addr: tuple[str, int],
         now: float | None = None,
-    ) -> None:
+    ) -> bool:
+        """Update bookkeeping from a DATA message.
+
+        Returns ``True`` when a sensor reset was detected (sequence-number
+        wraparound), so that calling code can flush downstream buffers.
+        """
         with self._lock:
             now_ts = self._resolve_now_wall(now)
             now_mono = self._resolve_now_mono(now)
@@ -165,6 +170,7 @@ class ClientRegistry:
             record.last_seen_mono = now_mono
             record.data_addr = (addr[0], addr[1])
             record.frames_total += 1
+            reset_detected = False
             if (
                 record.sample_rate_hz > 0
                 and data_msg.sample_count > 0
@@ -188,6 +194,7 @@ class ClientRegistry:
                     record.last_t0_us = None
                     record.timing_jitter_us_ema = 0.0
                     record.timing_drift_us_total = 0.0
+                    reset_detected = True
                 else:
                     expected = (record.last_seq + 1) & 0xFFFFFFFF
                     if data_msg.seq != expected:
@@ -196,6 +203,7 @@ class ClientRegistry:
                             record.frames_dropped += gap
             record.last_seq = data_msg.seq
             record.last_t0_us = data_msg.t0_us
+            return reset_detected
 
     def update_from_ack(self, ack: AckMessage, now: float | None = None) -> None:
         with self._lock:
