@@ -411,6 +411,10 @@ def _compute_effective_match_rate(
     possible_by_location: dict[str, int],
     matched_by_location: dict[str, int],
 ) -> tuple[float, str | None, bool]:
+    """Rescue a below-threshold match rate via focused speed-band or per-location evidence.
+
+    Returns (effective_match_rate, focused_speed_band, per_location_dominant).
+    """
     effective_match_rate = match_rate
     focused_speed_band: str | None = None
     if match_rate < min_match_rate and possible_by_speed_bin:
@@ -447,6 +451,10 @@ def _detect_diffuse_excitation(
     matched_by_location: dict[str, int],
     matched_points: list[dict[str, object]],
 ) -> tuple[bool, float]:
+    """Detect diffuse (non-localized) excitation across multiple sensors.
+
+    Returns (is_diffuse, penalty_factor) where penalty_factor is 1.0 if not diffuse.
+    """
     if len(connected_locations) < 2 or not possible_by_location:
         return False, 1.0
     loc_rates: list[float] = []
@@ -506,6 +514,7 @@ def _compute_order_confidence(
     diffuse_penalty: float,
     n_connected_locations: int,
 ) -> float:
+    """Compute calibrated confidence for an order-tracking finding (clamped 0.08–0.97)."""
     confidence = (
         0.10
         + (0.35 * effective_match_rate)
@@ -546,6 +555,10 @@ def _compute_order_confidence(
 def _suppress_engine_aliases(
     findings: list[tuple[float, dict[str, object]]],
 ) -> list[dict[str, object]]:
+    """Suppress engine findings that are likely harmonic aliases of wheel findings.
+
+    Sorts by ranking score, filters below minimum confidence, and returns the top 3.
+    """
     _HARMONIC_ALIAS_RATIO = 1.15
     _ENGINE_ALIAS_SUPPRESSION = 0.60
     _best_wheel_conf = max(
