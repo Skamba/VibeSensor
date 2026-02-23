@@ -224,9 +224,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function refreshLocationOptions(): Promise<void> {
     try {
-      const payload = await getClientLocations() as Record<string, any>;
+      const payload = await getClientLocations();
       const codes = Array.isArray(payload.locations)
-        ? payload.locations.map((row: Record<string, any>) => row?.code).filter((code): code is string => typeof code === "string")
+        ? payload.locations.map((row) => row.code).filter((code): code is string => typeof code === "string")
         : [];
       state.locationCodes = codes.length ? codes : defaultLocationCodes.slice();
       state.locationOptions = buildLocationOptions(state.locationCodes);
