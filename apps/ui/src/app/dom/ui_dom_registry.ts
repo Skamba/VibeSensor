@@ -78,6 +78,9 @@ export interface UiDomElements {
   staleTimeoutInput: HTMLInputElement | null;
   fallbackModeSelect: HTMLSelectElement | null;
   connectionBanner: HTMLElement | null;
+  rotationalAssumptions: HTMLElement | null;
+  rotationalAssumptionsBody: HTMLElement | null;
+  strengthAutoScaleToggle: HTMLInputElement | null;
 }
 
 function inputEl(id: string): HTMLInputElement | null {
@@ -177,5 +180,8 @@ export function createUiDomRegistry(): UiDomElements {
     staleTimeoutInput: inputEl("staleTimeoutInput"),
     connectionBanner: el("connectionBanner"),
     fallbackModeSelect: selectEl("fallbackModeSelect"),
+    rotationalAssumptions: el("rotationalAssumptions"),
+    rotationalAssumptionsBody: el("rotationalAssumptionsBody"),
+    strengthAutoScaleToggle: inputEl("strengthAutoScaleToggle"),
   };
 }
