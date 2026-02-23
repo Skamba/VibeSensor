@@ -476,7 +476,10 @@ class SensorFrame:
         gear = _as_float_or_none(record.get("gear"))
         dominant_freq_hz = _as_float_or_none(record.get(REPORT_FIELDS["dominant_freq_hz"]))
         # Backward-compat: old runs wrote "strength_db"; new runs write "vibration_strength_db".
-        vibration_strength_db = _as_float_or_none(record.get(_VSD_KEY) or record.get("strength_db"))
+        raw_vsd = record.get(_VSD_KEY)
+        if raw_vsd is None:
+            raw_vsd = record.get("strength_db")
+        vibration_strength_db = _as_float_or_none(raw_vsd)
         raw_bucket = record.get(_BUCKET_KEY)
         strength_bucket = str(raw_bucket) if raw_bucket not in (None, "") else None
         strength_peak_amp_g = _as_float_or_none(record.get("strength_peak_amp_g"))
