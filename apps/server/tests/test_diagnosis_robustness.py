@@ -98,13 +98,16 @@ def _make_sample(
 class TestDualFaultTwoCorners:
     """Level C: two simultaneous faults on different corners.
 
-    The current pipeline collapses same-frequency peaks in the findings engine,
-    so the *findings* may attribute all peaks to the strongest corner.  The
-    *sensor_intensity_by_location* ranking must still surface both corners."""
+    Both injected fault corners must appear in findings/top_causes.
+    The sensor_intensity_by_location ranking must also surface both corners."""
 
+    @pytest.mark.xfail(
+        reason="Pipeline collapses same-order dual faults into single finding (GH-292)",
+        strict=True,
+    )
     def test_dual_fault_front_right_and_rear_left(self) -> None:
-        """Simultaneous FR + RL faults: at least one fault corner in findings,
-        both in intensity ranking."""
+        """Simultaneous FR + RL faults: both fault corners must appear in
+        findings/top_causes and in the intensity ranking."""
         samples: list[dict[str, Any]] = []
         whz = _wheel_hz(80.0)
         for i in range(40):
@@ -163,11 +166,11 @@ class TestDualFaultTwoCorners:
             if loc:
                 locations_in_findings.add(loc)
 
-        # At minimum the system must detect one of the fault corners in findings
+        # Both injected fault corners must appear in findings/top_causes
         fault_corners = {"front-right", "rear-left"}
         detected = locations_in_findings & fault_corners
-        assert len(detected) >= 1, (
-            f"Dual-fault: expected at least one fault corner detected, got locations: {locations_in_findings}"
+        assert len(detected) >= 2, (
+            f"Dual-fault: expected BOTH fault corners detected, got {detected} from locations: {locations_in_findings}"
         )
 
         # The sensor intensity ranking MUST surface both fault corners in the
