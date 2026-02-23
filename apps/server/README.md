@@ -74,7 +74,7 @@ Configuration is loaded from YAML. See `config.example.yaml` for all options.
 
 | Section | Key fields |
 |---------|------------|
-| `server` | `host`, `port` (default 0.0.0.0:8000) |
+| `server` | `host`, `port` (default `0.0.0.0:80`; `config.dev.yaml`/`config.docker.yaml` set `8000`) |
 | `udp` | `data_listen` (9000), `control_listen` (9001) |
 | `processing` | `sample_rate_hz`, `fft_n`, `spectrum_max_hz`, `ui_push_hz` |
 | `logging` | `log_metrics`, `metrics_log_path`, `sensor_model` |
@@ -84,8 +84,8 @@ Configuration is loaded from YAML. See `config.example.yaml` for all options.
 
 For canonical network ports and wire-level message constants, use `docs/protocol.md`.
 
-Development configs (`config.dev.yaml`, `config.docker.yaml`) override only
-paths — all other values use built-in defaults.
+Development configs (`config.dev.yaml`, `config.docker.yaml`) override local
+paths and HTTP port (`8000`) for desktop workflows.
 
 Default runtime files (when using built-in defaults or `config.example.yaml`):
 - `logging.metrics_log_path` → `apps/server/data/metrics.jsonl` (optional, disabled by default)
@@ -114,7 +114,7 @@ apps/server/
 │   ├── vibesensor-hotspot.service
 │   ├── vibesensor-hotspot-self-heal.service
 │   └── vibesensor-hotspot-self-heal.timer
-├── tests/                   pytest suite (391+ tests)
+├── tests/                   pytest suite
 └── vibesensor/              Application package
 ```
 
