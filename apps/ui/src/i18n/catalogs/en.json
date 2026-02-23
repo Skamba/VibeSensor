@@ -34,7 +34,7 @@
   "dashboard.rotational.assumptions.gear_ratio": "Gear ratio",
   "dashboard.rotational.assumptions.order_bands": "Order bands",
   "dashboard.time_window_60s": "(last 60 s)",
-  "dashboard.time_window_2s": "(last 2 s window)",
+  "dashboard.time_window_2s": "(last 5 min window)",
   "chart.auto_scale": "Auto scale",
   "history.refresh": "Refresh History",
   "history.table.file": "Run",
