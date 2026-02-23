@@ -355,6 +355,8 @@ def _top_peaks_table_rows(
         bucket["presence_ratio"] = presence_ratio
         bucket["burstiness"] = burstiness
         bucket["persistence_score"] = (presence_ratio**2) * p95_amp
+        bucket["spatial_uniformity"] = spatial_uniformity
+        bucket["speed_uniformity"] = speed_uniformity
 
     ordered = sorted(
         grouped.values(),
@@ -392,8 +394,8 @@ def _top_peaks_table_rows(
                     presence_ratio=float(item.get("presence_ratio") or 0.0),
                     burstiness=float(item.get("burstiness") or 0.0),
                     snr=_as_float(item.get("p95_vs_run_noise_ratio")),
-                    spatial_uniformity=spatial_uniformity,
-                    speed_uniformity=speed_uniformity,
+                    spatial_uniformity=_as_float(item.get("spatial_uniformity")),
+                    speed_uniformity=_as_float(item.get("speed_uniformity")),
                 ),
                 "typical_speed_band": speed_band,
             }

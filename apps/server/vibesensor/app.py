@@ -79,6 +79,7 @@ class RuntimeState:
     ws_include_heavy: bool = True
     cached_analysis_metadata: dict[str, object] | None = None
     cached_analysis_samples: list[dict[str, object]] = field(default_factory=list)
+    cached_analysis_tick: int = -1
     cached_diagnostics: dict[str, object] | None = None
     cached_diagnostics_tick: int = -1
     cached_diagnostics_heavy: bool = True
@@ -177,17 +178,25 @@ class RuntimeState:
             analysis_settings=analysis_settings_snapshot,
             resolution_source=resolution.source,
         )
-        if self.ws_include_heavy or self.cached_analysis_metadata is None:
+        if self.ws_include_heavy:
+            if self.cached_analysis_tick != self.ws_tick or self.cached_analysis_metadata is None:
+                analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
+                self.cached_analysis_metadata = analysis_metadata
+                self.cached_analysis_samples = analysis_samples
+                self.cached_analysis_tick = self.ws_tick
+            else:
+                analysis_metadata = self.cached_analysis_metadata
+                analysis_samples = self.cached_analysis_samples
+        elif self.cached_analysis_metadata is None:
             analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
             self.cached_analysis_metadata = analysis_metadata
             self.cached_analysis_samples = analysis_samples
+            self.cached_analysis_tick = self.ws_tick
         else:
             analysis_metadata = self.cached_analysis_metadata
             analysis_samples = self.cached_analysis_samples
         if self.ws_include_heavy:
             payload["spectra"] = self.processor.multi_spectrum_payload(fresh_ids)
-        else:
-            pass
         if (
             self.cached_diagnostics is not None
             and self.cached_diagnostics_tick == self.ws_tick
