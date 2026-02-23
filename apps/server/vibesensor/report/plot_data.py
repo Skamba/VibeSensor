@@ -3,16 +3,19 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from math import floor
+from statistics import mean
 from typing import Any, Literal
 
 from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
 
 from ..runlog import as_float_or_none as _as_float
-from .findings import _classify_peak_type
+from .findings import _classify_peak_type, _speed_bin_label
 from .helpers import (
     _amplitude_weighted_speed_window,
     _estimate_strength_floor_amp_g,
+    _location_label,
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
     _sample_top_peaks,
@@ -251,6 +254,8 @@ def _top_peaks_table_rows(
     rank above one-off transient spikes.
     """
     grouped: dict[float, dict[str, Any]] = {}
+    total_locations: set[str] = set()
+    total_speed_bin_counts: dict[str, int] = defaultdict(int)
     if freq_bin_hz <= 0:
         freq_bin_hz = 1.0
 
@@ -263,6 +268,12 @@ def _top_peaks_table_rows(
             continue
         n_samples += 1
         speed = _as_float(sample.get("speed_kmh"))
+        sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
+        if sample_speed_bin is not None:
+            total_speed_bin_counts[sample_speed_bin] += 1
+        location = _location_label(sample)
+        if location:
+            total_locations.add(location)
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
@@ -275,6 +286,8 @@ def _top_peaks_table_rows(
                     "floor_amps": [],
                     "speeds": [],
                     "speed_amps": [],
+                    "location_counts": {},
+                    "speed_bin_counts": {},
                 },
             )
             bucket["amps"].append(amp)
@@ -284,6 +297,12 @@ def _top_peaks_table_rows(
             if speed is not None and speed > 0:
                 bucket["speeds"].append(speed)
                 bucket["speed_amps"].append(amp)
+            if location:
+                counts = bucket["location_counts"]
+                counts[location] = int(counts.get(location, 0)) + 1
+            if sample_speed_bin is not None:
+                speed_counts = bucket["speed_bin_counts"]
+                speed_counts[sample_speed_bin] = int(speed_counts.get(sample_speed_bin, 0)) + 1
 
     for bucket in grouped.values():
         amps = sorted(bucket["amps"])
@@ -307,6 +326,24 @@ def _top_peaks_table_rows(
             else None
         )
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
+        spatial_uniformity: float | None = None
+        if len(total_locations) >= 2:
+            spatial_uniformity = len(bucket.get("location_counts", {})) / len(total_locations)
+        speed_uniformity: float | None = None
+        if len(total_speed_bin_counts) >= 2:
+            hit_rates: list[float] = []
+            per_bin_hits = bucket.get("speed_bin_counts", {})
+            for speed_bin, total_count in total_speed_bin_counts.items():
+                if total_count <= 0:
+                    continue
+                hit_rates.append(float(per_bin_hits.get(speed_bin, 0)) / float(total_count))
+            if hit_rates:
+                hit_rate_mean = mean(hit_rates)
+                speed_uniformity = (
+                    mean([(rate - hit_rate_mean) ** 2 for rate in hit_rates]) ** 0.5
+                    if len(hit_rates) > 1
+                    else 0.0
+                )
         bucket["max_amp_g"] = max_amp
         bucket["median_amp_g"] = median_amp
         bucket["p95_amp_g"] = p95_amp
@@ -355,6 +392,8 @@ def _top_peaks_table_rows(
                     presence_ratio=float(item.get("presence_ratio") or 0.0),
                     burstiness=float(item.get("burstiness") or 0.0),
                     snr=_as_float(item.get("p95_vs_run_noise_ratio")),
+                    spatial_uniformity=spatial_uniformity,
+                    speed_uniformity=speed_uniformity,
                 ),
                 "typical_speed_band": speed_band,
             }

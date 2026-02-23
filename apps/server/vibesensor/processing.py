@@ -20,6 +20,7 @@ from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
 AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
+MAX_CLIENT_SAMPLE_RATE_HZ = 4096
 
 
 def _synchronized(method):
@@ -166,7 +167,15 @@ class SignalProcessor:
             )
             return
         if sample_rate_hz is not None and sample_rate_hz > 0:
-            buf.sample_rate_hz = int(sample_rate_hz)
+            requested_rate = int(sample_rate_hz)
+            clamped_rate = max(1, min(MAX_CLIENT_SAMPLE_RATE_HZ, requested_rate))
+            if clamped_rate != requested_rate:
+                LOGGER.warning(
+                    "Clamped client sample_rate_hz from %d to %d to bound buffer growth",
+                    requested_rate,
+                    clamped_rate,
+                )
+            buf.sample_rate_hz = clamped_rate
             self._resize_buffer(buf, buf.sample_rate_hz * self.waveform_seconds)
         buf.last_ingest_mono_s = time.monotonic()
 
