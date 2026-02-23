@@ -3,13 +3,29 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import shutil
 import subprocess
 from pathlib import Path
 
+UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
+
 
 def _run(command: list[str], cwd: Path) -> None:
     subprocess.run(command, cwd=cwd, check=True)
+
+
+def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
+    hasher = hashlib.sha256()
+    for path in sorted(p for p in root.rglob("*") if p.is_file()):
+        relative = path.relative_to(root)
+        if any(part in ignore_names for part in relative.parts):
+            continue
+        hasher.update(str(relative.as_posix()).encode("utf-8"))
+        hasher.update(b"\0")
+        hasher.update(path.read_bytes())
+        hasher.update(b"\0")
+    return hasher.hexdigest()
 
 
 def main() -> None:
@@ -55,6 +71,33 @@ def main() -> None:
     shutil.rmtree(public_dir, ignore_errors=True)
     public_dir.mkdir(parents=True, exist_ok=True)
     shutil.copytree(dist_dir, public_dir, dirs_exist_ok=True)
+    ui_source_hash = _hash_tree(
+        ui_dir,
+        ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
+    )
+    public_assets_hash = _hash_tree(public_dir, ignore_names={UI_BUILD_METADATA_FILE})
+    git_commit = (
+        subprocess.run(
+            ["git", "-C", str(repo_root), "rev-parse", "HEAD"],
+            check=False,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if (repo_root / ".git").exists()
+        else ""
+    )
+    (public_dir / UI_BUILD_METADATA_FILE).write_text(
+        json.dumps(
+            {
+                "ui_source_hash": ui_source_hash,
+                "public_assets_hash": public_assets_hash,
+                "git_commit": git_commit,
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     print(f"Synced {dist_dir} -> {public_dir}")
 
 

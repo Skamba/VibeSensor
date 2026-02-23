@@ -28,7 +28,7 @@ PR gate
 - Use the watcher for every PR update; on `RESULT=NON_GREEN` fix immediately and re-run. Merge only after `RESULT=ALL_GREEN`.
 
 Run server
-- Local: `python -m vibesensor.app --config apps/server/config.dev.yaml`
+- Local: `vibesensor-server --config apps/server/config.dev.yaml`
 
 No-cheating + noise control
 - Keep code in real code files (not hidden in docs/json/txt wrappers).

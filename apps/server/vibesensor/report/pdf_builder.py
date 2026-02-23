@@ -155,9 +155,6 @@ def _draw_text(
     lines = _wrap_lines(text, w, size)
     if max_lines is not None and len(lines) > max_lines:
         lines = lines[:max_lines]
-        if lines:
-            last = lines[-1]
-            lines[-1] = (last[: len(last) - 3] + "\u2026") if len(last) > 3 else "\u2026"
     c.setFillColor(_hex(color))
     c.setFont(font, size)
     y = y_top
@@ -261,7 +258,7 @@ def assert_aspect_preserved(
 # ---------------------------------------------------------------------------
 
 
-def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
+def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
     """Render the full page-1 worksheet layout."""
     m = MARGIN
     W = PAGE_W - 2 * m
@@ -314,80 +311,110 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     # Right column metadata — stacked vertically, never on one cramped line
     meta_right = meta_x + 95 * mm
     right_lbl_w = 27 * mm
+    right_val_w = W - (meta_right - m) - 8 * mm - right_lbl_w
     y_right = hdr_y + hdr_h - 12 * mm
     if data.run_id:
-        _draw_kv(c, meta_right, y_right, tr("RUN_ID"), data.run_id, label_w=16 * mm, fs=FS_BODY)
-        y_right -= meta_step
-    if data.duration_text:
-        _draw_kv(
-            c,
-            meta_right,
-            y_right,
-            tr("DURATION"),
-            data.duration_text,
-            label_w=right_lbl_w,
-            fs=FS_BODY,
+        y_right = (
+            _draw_kv(
+                c,
+                meta_right,
+                y_right,
+                tr("RUN_ID"),
+                data.run_id,
+                label_w=right_lbl_w,
+                fs=FS_BODY,
+                value_w=right_val_w,
+            )
+            - 1.0 * mm
         )
-        y_right -= meta_step
+    if data.duration_text:
+        y_right = (
+            _draw_kv(
+                c,
+                meta_right,
+                y_right,
+                tr("DURATION"),
+                data.duration_text,
+                label_w=right_lbl_w,
+                fs=FS_BODY,
+                value_w=right_val_w,
+            )
+            - 1.0 * mm
+        )
     if data.sensor_count:
         sensor_info = str(data.sensor_count)
         if data.sensor_locations:
             sensor_info += f" ({', '.join(data.sensor_locations[:4])})"
-        _draw_kv(
-            c,
-            meta_right,
-            y_right,
-            tr("SENSORS_LABEL"),
-            sensor_info,
-            label_w=right_lbl_w,
-            fs=FS_BODY,
+        y_right = (
+            _draw_kv(
+                c,
+                meta_right,
+                y_right,
+                tr("SENSORS_LABEL"),
+                sensor_info,
+                label_w=right_lbl_w,
+                fs=FS_BODY,
+                value_w=right_val_w,
+            )
+            - 1.0 * mm
         )
-        y_right -= meta_step
     if data.sensor_model:
-        _draw_kv(
-            c,
-            meta_right,
-            y_right,
-            tr("SENSOR_MODEL"),
-            data.sensor_model,
-            label_w=right_lbl_w,
-            fs=FS_BODY,
+        y_right = (
+            _draw_kv(
+                c,
+                meta_right,
+                y_right,
+                tr("SENSOR_MODEL"),
+                data.sensor_model,
+                label_w=right_lbl_w,
+                fs=FS_BODY,
+                value_w=right_val_w,
+            )
+            - 1.0 * mm
         )
-        y_right -= meta_step
     if data.firmware_version:
         firmware_label = "Firmwareversie" if data.lang == "nl" else "Firmware Version"
-        _draw_kv(
-            c,
-            meta_right,
-            y_right,
-            firmware_label,
-            data.firmware_version,
-            label_w=right_lbl_w,
-            fs=FS_BODY,
+        y_right = (
+            _draw_kv(
+                c,
+                meta_right,
+                y_right,
+                firmware_label,
+                data.firmware_version,
+                label_w=right_lbl_w,
+                fs=FS_BODY,
+                value_w=right_val_w,
+            )
+            - 1.0 * mm
         )
-        y_right -= meta_step
     if data.sample_count:
-        _draw_kv(
-            c,
-            meta_right,
-            y_right,
-            tr("SAMPLE_COUNT_LABEL"),
-            str(data.sample_count),
-            label_w=right_lbl_w,
-            fs=FS_BODY,
+        y_right = (
+            _draw_kv(
+                c,
+                meta_right,
+                y_right,
+                tr("SAMPLE_COUNT_LABEL"),
+                str(data.sample_count),
+                label_w=right_lbl_w,
+                fs=FS_BODY,
+                value_w=right_val_w,
+            )
+            - 1.0 * mm
         )
-        y_right -= meta_step
     if data.sample_rate_hz:
-        _draw_kv(
-            c,
-            meta_right,
-            y_right,
-            tr("RAW_SAMPLE_RATE_HZ_LABEL"),
-            data.sample_rate_hz,
-            label_w=right_lbl_w,
-            fs=FS_BODY,
+        y_right = (
+            _draw_kv(
+                c,
+                meta_right,
+                y_right,
+                tr("RAW_SAMPLE_RATE_HZ_LABEL"),
+                data.sample_rate_hz,
+                label_w=right_lbl_w,
+                fs=FS_BODY,
+                value_w=right_val_w,
+            )
+            - 1.0 * mm
         )
-        y_right -= meta_step
     if data.tire_spec_text:
         _draw_kv(
             c,
@@ -397,6 +424,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
             data.tire_spec_text,
             label_w=right_lbl_w,
             fs=FS_BODY,
+            value_w=right_val_w,
         )
 
     y_cursor = hdr_y - GAP
@@ -495,7 +523,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
     # Use remaining vertical space for next_steps and data_trust
     footer_reserve = 8 * mm
     available_h = y_cursor - m - footer_reserve
-    next_h = max(44 * mm, min(available_h, 52 * mm))
+    next_h = max(44 * mm, available_h)
     next_y = y_cursor - next_h
     trust_w = W * DATA_TRUST_WIDTH_RATIO
     next_w = W - trust_w - GAP
@@ -508,8 +536,12 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         c.setFillColor(_hex(SUB_CLR))
         c.setFont(FONT, FS_BODY)
         c.drawString(nx, ny, tr("NO_NEXT_STEPS"))
+        remaining_next_steps: list[NextStep] = []
     else:
-        _draw_next_steps_table(c, nx, ny, next_w - 8 * mm, next_y + 3 * mm, data.next_steps)
+        drawn_steps = _draw_next_steps_table(
+            c, nx, ny, next_w - 8 * mm, next_y + 3 * mm, data.next_steps
+        )
+        remaining_next_steps = data.next_steps[drawn_steps:]
 
     # Data Trust (right-bottom)
     trust_x = m + next_w + GAP
@@ -539,6 +571,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> None:  # noqa: C901
         c.setFillColor(_hex(SUB_CLR))
         c.setFont(FONT, FS_SMALL)
         c.drawString(tx, ty, na)
+    return remaining_next_steps
 
 
 def _draw_system_card(
@@ -607,7 +640,7 @@ def _draw_next_steps_table(
     w: float,
     y_bottom: float,
     steps: list[NextStep],
-) -> None:
+) -> int:
     """Draw ordered next-steps rows with multi-line wrapping."""
     col1_w = 12 * mm
     text_w = w - col1_w - 4
@@ -616,7 +649,8 @@ def _draw_next_steps_table(
     leading = fs + 2
 
     y = y_top
-    for idx, step in enumerate(steps[:5], start=1):
+    drawn = 0
+    for idx, step in enumerate(steps, start=1):
         action_text = step.action
         if step.why:
             action_text += f" \u2014 {step.why}"
@@ -647,9 +681,10 @@ def _draw_next_steps_table(
             font=FONT,
             size=fs,
             color=TEXT_CLR,
-            max_lines=3,
         )
         y -= row_h
+        drawn += 1
+    return drawn
 
 
 # ---------------------------------------------------------------------------
@@ -670,6 +705,7 @@ def _page2(  # noqa: C901
     top_causes: list,
     tr_fn,
     text_fn,
+    next_steps_continued: list[NextStep] | None = None,
 ) -> None:
     """Render page-2: car visual + pattern evidence + peaks table."""
     m = MARGIN
@@ -755,6 +791,23 @@ def _page2(  # noqa: C901
         obs_h = 24 * mm
         obs_y = table_y - GAP - obs_h
         _draw_additional_observations(c, m, obs_y, W, obs_h, transient_findings, tr)
+    else:
+        obs_y = table_y
+
+    if next_steps_continued:
+        cont_top = obs_y - GAP
+        cont_bottom = m + 8 * mm
+        if cont_top - cont_bottom > 16 * mm:
+            cont_h = cont_top - cont_bottom
+            _draw_panel(c, m, cont_bottom, W, cont_h, tr("NEXT_STEPS"))
+            _draw_next_steps_table(
+                c,
+                m + 4 * mm,
+                cont_bottom + cont_h - 11 * mm,
+                W - 8 * mm,
+                cont_bottom + 3 * mm,
+                next_steps_continued,
+            )
 
 
 def _draw_pattern_evidence(
@@ -1000,7 +1053,7 @@ def _build_canvas_pdf(summary: dict) -> bytes:
     c = Canvas(buf, pagesize=PAGE_SIZE, pageCompression=0)
 
     # Page 1
-    _page1(c, data)
+    remaining_next_steps = _page1(c, data)
     _draw_footer(c, 1, 2, data.version_marker)
     c.showPage()
 
@@ -1013,6 +1066,7 @@ def _build_canvas_pdf(summary: dict) -> bytes:
         top_causes=top_causes,
         tr_fn=tr_fn,
         text_fn=text_fn,
+        next_steps_continued=remaining_next_steps,
     )
     _draw_footer(c, 2, 2, data.version_marker)
     c.showPage()

@@ -234,6 +234,13 @@ export function startUiApp(): void {
     const fallbackFreq: number[] = [];
     const entries: { id: string; label: string; color: string; values: number[] }[] = [];
     let targetFreq: number[] = [];
+    let latestFrameTotal: number | null = null;
+    for (const client of state.clients) {
+      if (!client?.connected) continue;
+      const framesTotal = Number(client.frames_total);
+      if (!Number.isFinite(framesTotal)) continue;
+      latestFrameTotal = latestFrameTotal === null ? framesTotal : Math.max(latestFrameTotal, framesTotal);
+    }
     const interpolateToTarget = (sourceFreq: number[], sourceVals: number[], desiredFreq: number[]): number[] => {
       if (!Array.isArray(sourceFreq) || !Array.isArray(sourceVals)) return [];
       if (!Array.isArray(desiredFreq) || !desiredFreq.length) return sourceVals.slice();
@@ -248,6 +255,9 @@ export function startUiApp(): void {
       return out;
     };
     for (const [i, client] of state.clients.entries()) {
+      const framesTotal = Number(client.frames_total);
+      if (!Number.isFinite(framesTotal)) continue;
+      if (latestFrameTotal !== null && framesTotal < latestFrameTotal) continue;
       const s = state.spectra.clients?.[client.id];
       if (!s || !Array.isArray(s.combined)) continue;
       const clientFreq = Array.isArray(s.freq) && s.freq.length ? s.freq : fallbackFreq;

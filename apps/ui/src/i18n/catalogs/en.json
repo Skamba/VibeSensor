@@ -247,6 +247,11 @@
   "settings.update.log": "Log",
   "settings.update.no_issues": "No issues.",
   "settings.update.ssid_label": "Network",
+  "settings.update.runtime_commit": "Installed commit",
+  "settings.update.runtime_assets": "Installed assets hash",
+  "settings.update.runtime_assets_check": "Asset verification",
+  "settings.update.runtime_assets_ok": "OK",
+  "settings.update.runtime_assets_bad": "Mismatch",
   "settings.update.already_running": "An update is already in progress.",
   "settings.update.start_failed": "Failed to start update.",
   "settings.update.reconnect_note": "Note: The page may disconnect while the hotspot is down. It will reconnect automatically."

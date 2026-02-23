@@ -60,10 +60,10 @@ class GPSSpeedMonitor:
             if isinstance(self.override_speed_mps, (int, float)):
                 return float(self.override_speed_mps)
         elif self.manual_source_selected is True:
-            self.fallback_active = False
             if isinstance(self.override_speed_mps, (int, float)):
+                self.fallback_active = False
                 return float(self.override_speed_mps)
-            return None
+            # Manual selected but no override set → fall through to GPS
         # Check if GPS is fresh
         if isinstance(self.speed_mps, (int, float)):
             if self._is_gps_stale():
