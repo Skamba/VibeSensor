@@ -521,6 +521,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                 )
 
         updated = state.registry.set_name(normalized_client_id, label)
+        state.registry.set_location(normalized_client_id, req.location_code)
         mac = client_id_mac(updated.client_id)
         state.settings_store.set_sensor(mac, {"location": req.location_code})
         return {

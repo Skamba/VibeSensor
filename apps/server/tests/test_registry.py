@@ -273,3 +273,41 @@ def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
     timing = registry.snapshot_for_api(now=3.0)[0]["timing_health"]
     assert timing["last_t0_us"] == 1_105_000
     assert isinstance(timing["jitter_us_ema"], float)
+
+
+def test_set_location_populates_client_record(tmp_path: Path) -> None:
+    """set_location must write to ClientRecord so snapshot_for_api returns it."""
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+    client_id = bytes.fromhex("aabbccddeeff")
+
+    hello = HelloMessage(
+        client_id=client_id,
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node-1",
+        firmware_version="fw",
+    )
+    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
+
+    hex_id = "aabbccddeeff"
+    # Before assignment: location should be empty
+    row_before = registry.snapshot_for_api(now=1.0)[0]
+    assert row_before["location"] == ""
+
+    # Assign location
+    record = registry.set_location(hex_id, "front_left_wheel")
+    assert record.location == "front_left_wheel"
+
+    # After assignment: snapshot must expose the location
+    row_after = registry.snapshot_for_api(now=2.0)[0]
+    assert row_after["location"] == "front_left_wheel"
+
+
+def test_set_location_trims_whitespace(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+    hex_id = "001122334455"
+    registry.set_location(hex_id, "  rear_axle  ")
+    row = registry.snapshot_for_api(now=1.0)[0]
+    assert row["location"] == "rear_axle"
