@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
-from vibesensor.processing import SignalProcessor
+from vibesensor.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
@@ -74,6 +74,14 @@ def test_ingest_with_sample_rate() -> None:
     samples = np.array([[1.0, 2.0, 3.0]], dtype=np.float32)
     proc.ingest("client1", samples, sample_rate_hz=400)
     assert proc.latest_sample_rate_hz("client1") == 400
+
+
+def test_ingest_clamps_excessive_sample_rate() -> None:
+    proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
+    samples = np.random.randn(10, 3).astype(np.float32) * 0.01
+    proc.ingest("client1", samples, sample_rate_hz=250_000)
+    assert proc.latest_sample_rate_hz("client1") == MAX_CLIENT_SAMPLE_RATE_HZ
+    assert proc._buffers["client1"].capacity == MAX_CLIENT_SAMPLE_RATE_HZ * 2
 
 
 # -- latest_sample_xyz ---------------------------------------------------------
