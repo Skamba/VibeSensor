@@ -29,6 +29,13 @@ from .api_models import (  # noqa: F401 – re-exported for backward compat
     ClientLocationsResponse,
     ClientsResponse,
     DeleteHistoryRunResponse,
+    EspFlashCancelResponse,
+    EspFlashHistoryResponse,
+    EspFlashLogsResponse,
+    EspFlashPortsResponse,
+    EspFlashStartRequest,
+    EspFlashStartResponse,
+    EspFlashStatusResponse,
     HealthResponse,
     HistoryInsightsResponse,
     HistoryListResponse,
@@ -617,6 +624,35 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def cancel_update() -> UpdateCancelResponse:
         cancelled = state.update_manager.cancel()
         return {"cancelled": cancelled}
+
+    @router.get("/api/settings/esp-flash/ports", response_model=EspFlashPortsResponse)
+    async def list_esp_flash_ports() -> EspFlashPortsResponse:
+        ports = await state.esp_flash_manager.list_ports()
+        return {"ports": ports}
+
+    @router.post("/api/settings/esp-flash/start", response_model=EspFlashStartResponse)
+    async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
+        try:
+            job_id = state.esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        return {"status": "started", "job_id": job_id}
+
+    @router.get("/api/settings/esp-flash/status", response_model=EspFlashStatusResponse)
+    async def get_esp_flash_status() -> EspFlashStatusResponse:
+        return state.esp_flash_manager.status.to_dict()
+
+    @router.get("/api/settings/esp-flash/logs", response_model=EspFlashLogsResponse)
+    async def get_esp_flash_logs(after: int = Query(default=0, ge=0)) -> EspFlashLogsResponse:
+        return state.esp_flash_manager.logs_since(after)
+
+    @router.post("/api/settings/esp-flash/cancel", response_model=EspFlashCancelResponse)
+    async def cancel_esp_flash() -> EspFlashCancelResponse:
+        return {"cancelled": state.esp_flash_manager.cancel()}
+
+    @router.get("/api/settings/esp-flash/history", response_model=EspFlashHistoryResponse)
+    async def get_esp_flash_history() -> EspFlashHistoryResponse:
+        return {"attempts": state.esp_flash_manager.history()}
 
     @router.get("/api/car-library/brands", response_model=CarLibraryBrandsResponse)
     async def get_car_library_brands() -> CarLibraryBrandsResponse:

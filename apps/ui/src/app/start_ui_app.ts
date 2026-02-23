@@ -22,6 +22,7 @@ import { createRealtimeFeature } from "./features/realtime_feature";
 import { createSettingsFeature } from "./features/settings_feature";
 import { createCarsFeature } from "./features/cars_feature";
 import { createDashboardFeature } from "./features/dashboard_feature";
+import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createUpdateFeature } from "./features/update_feature";
 import type { AppState, ChartBand, ClientRow } from "./state/ui_app_state";
 import type { UiDomElements } from "./dom/ui_dom_registry";
@@ -211,6 +212,7 @@ export function startUiApp(): void {
   const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout });
   const wizardFeature = createCarsFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
   const updateFeature = createUpdateFeature({ els, t, escapeHtml });
+  const espFlashFeature = createEspFlashFeature({ els, t, escapeHtml });
 
   function applyLanguage(forceReloadInsights = false): void {
     document.documentElement.lang = state.lang;
@@ -455,6 +457,7 @@ export function startUiApp(): void {
   vehicleFeature.bindSettingsTabs();
   wizardFeature.bindWizardHandlers();
   updateFeature.bindUpdateHandlers();
+  espFlashFeature.bindHandlers();
   if (els.saveAnalysisBtn) els.saveAnalysisBtn.addEventListener("click", vehicleFeature.saveAnalysisFromInputs);
   if (els.saveSpeedSourceBtn) els.saveSpeedSourceBtn.addEventListener("click", vehicleFeature.saveSpeedSourceFromInputs);
   if (els.headerManualSpeedSaveBtn) {
@@ -520,6 +523,7 @@ export function startUiApp(): void {
   void sensorsFeature.refreshLoggingStatus();
   void historyFeature.refreshHistory();
   updateFeature.startPolling();
+  espFlashFeature.startPolling();
   vehicleFeature.startGpsStatusPolling();
 
   const isDemoMode = new URLSearchParams(window.location.search).has("demo");
