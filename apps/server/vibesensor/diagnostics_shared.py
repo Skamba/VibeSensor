@@ -18,6 +18,7 @@ from .analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_mps,
 )
+from .constants import FREQUENCY_EPSILON_HZ, HARMONIC_2X, MIN_OVERLAP_TOLERANCE
 from .runlog import as_float_or_none as _as_float
 
 # Road-surface resonance frequency range (Hz)
@@ -212,12 +213,13 @@ def classify_peak_hz(
         )
         # Detect wheel_2x / engine_1x overlap: when 2×wheel_hz ≈ engine_hz,
         # merge them into a combined class to avoid misattribution.
-        wheel_2x_hz = wheel_hz * 2.0
+        wheel_2x_hz = wheel_hz * HARMONIC_2X
         wheel2_eng1_overlap_tol = max(
-            0.03,
+            MIN_OVERLAP_TOLERANCE,
             order_refs["wheel_uncertainty_pct"] + order_refs["engine_uncertainty_pct"],
         )
-        if abs(wheel_2x_hz - engine_hz) / max(1e-6, engine_hz) < wheel2_eng1_overlap_tol:
+        rel_diff = abs(wheel_2x_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz)
+        if rel_diff < wheel2_eng1_overlap_tol:
             candidates.append(
                 {
                     "hz": wheel_2x_hz,
@@ -229,10 +231,10 @@ def classify_peak_hz(
             candidates.append({"hz": wheel_2x_hz, "tol": wheel_tol, "key": "wheel2"})
 
         overlap_tol = max(
-            0.03,
+            MIN_OVERLAP_TOLERANCE,
             order_refs["drive_uncertainty_pct"] + order_refs["engine_uncertainty_pct"],
         )
-        if abs(drive_hz - engine_hz) / max(1e-6, engine_hz) < overlap_tol:
+        if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
             candidates.append(
                 {
                     "hz": drive_hz,
@@ -247,7 +249,7 @@ def classify_peak_hz(
                     {"hz": engine_hz, "tol": engine_tol, "key": "eng1"},
                 ]
             )
-        candidates.append({"hz": engine_hz * 2.0, "tol": engine_tol, "key": "eng2"})
+        candidates.append({"hz": engine_hz * HARMONIC_2X, "tol": engine_tol, "key": "eng2"})
 
     best: dict[str, float | str] | None = None
     best_err = float("inf")

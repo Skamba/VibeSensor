@@ -27,6 +27,12 @@ from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
 from .config import SERVER_DIR, AppConfig, load_config
+from .constants import (
+    FREQUENCY_EPSILON_HZ,
+    HARMONIC_2X,
+    MIN_OVERLAP_TOLERANCE,
+    SECONDS_PER_MINUTE,
+)
 from .diagnostics_shared import build_diagnostic_settings, tolerance_for_order, vehicle_orders_hz
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
@@ -140,9 +146,9 @@ class RuntimeState:
             out["engine"]["reason"] = reason
             return out
 
-        out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * 60.0
-        out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * 60.0
-        out["engine"]["rpm"] = float(orders_hz["engine_hz"]) * 60.0
+        out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
+        out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
+        out["engine"]["rpm"] = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE
 
         # Provide pre-computed order bands so the frontend does not need to
         # duplicate the tolerance/overlap math.
@@ -173,13 +179,13 @@ class RuntimeState:
         )
         bands: list[dict[str, Any]] = [
             {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
-            {"key": "wheel_2x", "center_hz": wheel_hz * 2.0, "tolerance": wheel_tol},
+            {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
         ]
         overlap_tol = max(
-            0.03,
+            MIN_OVERLAP_TOLERANCE,
             orders_hz["drive_uncertainty_pct"] + orders_hz["engine_uncertainty_pct"],
         )
-        if abs(drive_hz - engine_hz) / max(1e-6, engine_hz) < overlap_tol:
+        if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
             bands.append(
                 {
                     "key": "driveshaft_engine_1x",
@@ -190,7 +196,9 @@ class RuntimeState:
         else:
             bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
             bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
-        bands.append({"key": "engine_2x", "center_hz": engine_hz * 2.0, "tolerance": engine_tol})
+        bands.append(
+            {"key": "engine_2x", "center_hz": engine_hz * HARMONIC_2X, "tolerance": engine_tol}
+        )
         out["order_bands"] = bands
         return out
 
