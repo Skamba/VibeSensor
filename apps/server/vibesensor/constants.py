@@ -33,3 +33,19 @@ WEAK_SPATIAL_DOMINANCE_THRESHOLD: Final[float] = 1.2
 """Dominance ratio below which spatial separation between locations is
 considered weak (i.e., the strongest location is less than 1.2x the
 next-strongest, so the confidence in location attribution is low)."""
+
+# ---------------------------------------------------------------------------
+# Rotational-order analysis
+# ---------------------------------------------------------------------------
+SECONDS_PER_MINUTE: Final[float] = 60.0
+"""Hz-to-RPM conversion factor (RPM = Hz × 60)."""
+
+HARMONIC_2X: Final[float] = 2.0
+"""Multiplier for the second harmonic of a fundamental frequency."""
+
+MIN_OVERLAP_TOLERANCE: Final[float] = 0.03
+"""Minimum relative tolerance used when checking whether two rotational
+orders (e.g. driveshaft 1× and engine 1×) overlap in frequency."""
+
+FREQUENCY_EPSILON_HZ: Final[float] = 1e-6
+"""Tiny guard value to prevent division-by-zero in frequency ratios."""
