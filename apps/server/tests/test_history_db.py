@@ -166,6 +166,15 @@ def test_run_status_transitions(tmp_path: Path) -> None:
     assert db.get_run_status("run-err") == "error"
 
 
+def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-meta", "2026-01-01T00:00:00Z", {"tire_width_mm": 245.0})
+    assert db.update_run_metadata("run-meta", {"tire_width_mm": 285.0}) is True
+    run = db.get_run("run-meta")
+    assert run is not None
+    assert run["metadata"]["tire_width_mm"] == 285.0
+
+
 def test_append_empty_samples_is_noop(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-empty", "2026-01-01T00:00:00Z", {"source": "test"})

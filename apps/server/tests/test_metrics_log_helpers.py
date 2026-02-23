@@ -164,11 +164,26 @@ class _FakeAnalysisSettings:
         }
 
 
+class _MutableFakeAnalysisSettings(_FakeAnalysisSettings):
+    def __init__(self) -> None:
+        self.values = {
+            "tire_width_mm": 285.0,
+            "tire_aspect_pct": 30.0,
+            "rim_in": 21.0,
+            "final_drive_ratio": 3.08,
+            "current_gear_ratio": 0.64,
+        }
+
+    def snapshot(self) -> dict[str, float]:
+        return dict(self.values)
+
+
 class _FakeHistoryDB:
     def __init__(self) -> None:
         self.create_calls: list[tuple[str, str]] = []
         self.append_calls: list[tuple[str, int]] = []
         self.finalize_calls: list[str] = []
+        self.updated_metadata: list[tuple[str, dict[str, float]]] = []
 
     def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
         self.create_calls.append((run_id, start_time_utc))
@@ -178,6 +193,10 @@ class _FakeHistoryDB:
 
     def finalize_run(self, run_id: str, end_time_utc: str) -> None:
         self.finalize_calls.append(run_id)
+
+    def update_run_metadata(self, run_id: str, metadata: dict) -> bool:
+        self.updated_metadata.append((run_id, metadata))
+        return True
 
 
 class _FailingCreateRunHistoryDB(_FakeHistoryDB):
@@ -389,6 +408,38 @@ def test_history_run_created_on_first_sample_append(tmp_path: Path) -> None:
     assert timed_out is False
     assert history_db.create_calls == [(run_id, start_time_utc)]
     assert history_db.append_calls == [(run_id, 1)]
+
+
+def test_finalize_refreshes_run_metadata_from_latest_settings(tmp_path: Path) -> None:
+    history_db = _FakeHistoryDB()
+    settings = _MutableFakeAnalysisSettings()
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=settings,
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=history_db,
+    )
+
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    run_id, start_time_utc, start_mono = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono)
+
+    settings.values["tire_width_mm"] = 315.0
+    logger.stop_logging()
+
+    assert history_db.updated_metadata
+    updated_run_id, metadata = history_db.updated_metadata[-1]
+    assert updated_run_id == run_id
+    assert metadata["tire_width_mm"] == 315.0
 
 
 def test_append_records_surfaces_create_run_failure_in_status(tmp_path: Path) -> None:

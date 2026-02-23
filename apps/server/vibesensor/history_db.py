@@ -252,6 +252,14 @@ CREATE TABLE IF NOT EXISTS client_names (
                 (end_time_utc, now, run_id),
             )
 
+    def update_run_metadata(self, run_id: str, metadata: dict[str, Any]) -> bool:
+        with self._cursor() as cur:
+            cur.execute(
+                "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
+                (json.dumps(metadata, ensure_ascii=False), run_id),
+            )
+            return cur.rowcount > 0
+
     def store_analysis(self, run_id: str, analysis: dict[str, Any]) -> None:
         now = datetime.now(UTC).isoformat()
         with self._cursor() as cur:
