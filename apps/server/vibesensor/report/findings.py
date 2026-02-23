@@ -421,6 +421,10 @@ def _build_order_findings(
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []
 
+    # Pre-compute peaks for every sample once so that the inner hypothesis
+    # loop does not redundantly call _sample_top_peaks() for each hypothesis.
+    cached_peaks: list[list[tuple[float, float]]] = [_sample_top_peaks(s) for s in samples]
+
     findings: list[tuple[float, dict[str, object]]] = []
     for hypothesis in _order_hypotheses():
         if hypothesis.key.startswith(("wheel_", "driveshaft_")) and (
@@ -451,7 +455,7 @@ def _build_order_findings(
         has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
         for sample_idx, sample in enumerate(samples):
-            peaks = _sample_top_peaks(sample)
+            peaks = cached_peaks[sample_idx]
             if not peaks:
                 continue
             predicted_hz, ref_source = hypothesis.predicted_hz(

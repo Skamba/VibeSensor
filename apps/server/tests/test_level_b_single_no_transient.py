@@ -34,7 +34,6 @@ from builders import (
     make_profile_speed_sweep_fault_samples,
     make_ramp_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
 )
 
@@ -49,7 +48,9 @@ _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_single_sensor_fault_corner_speed(corner: str, speed: float, profile: dict[str, Any]) -> None:
+def test_single_sensor_fault_corner_speed(
+    corner: str, speed: float, profile: dict[str, Any]
+) -> None:
     """Wheel fault on single sensor at each corner × speed band."""
     sensor = CORNER_SENSORS[corner]
     samples = make_profile_fault_samples(
@@ -342,7 +343,9 @@ def test_single_sensor_speed_sweep_fault(corner: str, profile: dict[str, Any]) -
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize("noise_amp", [0.001, 0.008], ids=["low_noise", "high_noise"])
-def test_single_sensor_noise_floor_variation(corner: str, noise_amp: float, profile: dict[str, Any]) -> None:
+def test_single_sensor_noise_floor_variation(
+    corner: str, noise_amp: float, profile: dict[str, Any]
+) -> None:
     """Fault detection at different noise floor levels."""
     sensor = CORNER_SENSORS[corner]
     samples = make_profile_fault_samples(

@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
 _LIVE_SAMPLE_WINDOW_S = 2.0
+_MAX_HISTORY_CREATE_RETRIES = 5
 
 
 class MetricsLogger:
@@ -84,6 +85,7 @@ class MetricsLogger:
         self._persist_history_db = bool(persist_history_db)
         self._language_provider = language_provider
         self._history_run_created = False
+        self._history_create_fail_count = 0
         self._written_sample_count = 0
         self._no_data_timeout_s = 3.0
         self._last_data_progress_mono_s: float | None = None
@@ -105,6 +107,7 @@ class MetricsLogger:
         self._run_start_mono_s = time.monotonic()
         self._last_write_error = None
         self._history_run_created = False
+        self._history_create_fail_count = 0
         self._written_sample_count = 0
         self._last_data_progress_mono_s = self._run_start_mono_s
         self._last_active_frames_total = self._active_frames_total()
@@ -140,14 +143,37 @@ class MetricsLogger:
     def _ensure_history_run_created(self, run_id: str, start_time_utc: str) -> None:
         if self._history_db is None or self._history_run_created:
             return
+        if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+            return
         metadata = self._run_metadata_record(run_id, start_time_utc)
         try:
             self._history_db.create_run(run_id, start_time_utc, metadata)
             self._history_run_created = True
+            self._history_create_fail_count = 0
             self._clear_last_write_error()
         except Exception as exc:
-            self._set_last_write_error(f"history create_run failed: {exc}")
-            LOGGER.warning("Failed to create history run in DB", exc_info=True)
+            self._history_create_fail_count += 1
+            msg = (
+                f"history create_run failed"
+                f" (attempt {self._history_create_fail_count}"
+                f"/{_MAX_HISTORY_CREATE_RETRIES}): {exc}"
+            )
+            self._set_last_write_error(msg)
+            if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+                LOGGER.error(
+                    "Persistent DB failure: giving up after %d attempts for run %s — "
+                    "all subsequent samples will be dropped. Error: %s",
+                    self._history_create_fail_count,
+                    run_id,
+                    exc,
+                    exc_info=True,
+                )
+            else:
+                LOGGER.warning(
+                    "Failed to create history run in DB (attempt %d)",
+                    self._history_create_fail_count,
+                    exc_info=True,
+                )
 
     def _session_snapshot(self) -> tuple[str, str, float] | None:
         with self._lock:
@@ -208,6 +234,7 @@ class MetricsLogger:
             self._run_start_mono_s = None
             self._last_write_error = None
             self._history_run_created = False
+            self._history_create_fail_count = 0
             self._written_sample_count = 0
             self._last_data_progress_mono_s = None
             self._last_active_frames_total = 0
@@ -485,12 +512,24 @@ class MetricsLogger:
 
         return records
 
-    def _append_records(self, run_id: str, start_time_utc: str, run_start_mono_s: float) -> bool:
+    def _append_records(
+        self,
+        run_id: str,
+        start_time_utc: str,
+        run_start_mono_s: float,
+        *,
+        prebuilt_rows: list[dict[str, object]] | None = None,
+    ) -> bool:
         now_mono_s = time.monotonic()
         self._refresh_data_progress_marker(now_mono_s)
         t_s = max(0.0, now_mono_s - run_start_mono_s)
         timestamp_utc = utc_now_iso()
-        rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
+        if prebuilt_rows is not None:
+            # Re-stamp t_s and timestamp_utc for the recording time-base;
+            # avoids a second expensive _build_sample_records() call.
+            rows = [{**row, "t_s": t_s, "timestamp_utc": timestamp_utc} for row in prebuilt_rows]
+        else:
+            rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
         if rows:
             self._last_data_progress_mono_s = now_mono_s
             if self._history_db is not None and self._persist_history_db:
@@ -503,6 +542,15 @@ class MetricsLogger:
                     except Exception as exc:
                         self._set_last_write_error(f"history append_samples failed: {exc}")
                         LOGGER.warning("Failed to append samples to history DB", exc_info=True)
+                else:
+                    LOGGER.warning(
+                        "Dropping %d sample(s) for run %s: "
+                        "history run not created (fail count %d/%d)",
+                        len(rows),
+                        run_id,
+                        self._history_create_fail_count,
+                        _MAX_HISTORY_CREATE_RETRIES,
+                    )
             else:
                 self._written_sample_count += len(rows)
 
@@ -570,7 +618,13 @@ class MetricsLogger:
                     self._analysis_enqueued_run_ids.discard(run_id)
                     self._analysis_active_run_id = None
 
-    def wait_for_post_analysis(self, timeout_s: float = 5.0) -> None:
+    def wait_for_post_analysis(self, timeout_s: float = 30.0) -> bool:
+        """Block until post-analysis finishes or *timeout_s* elapses.
+
+        Returns ``True`` when all queued analysis work completed within the
+        deadline, ``False`` if the timeout was reached while work was still
+        in progress.
+        """
         deadline = time.monotonic() + max(0.0, timeout_s)
         while True:
             with self._lock:
@@ -579,10 +633,18 @@ class MetricsLogger:
                 active_run = self._analysis_active_run_id is not None
                 worker_alive = bool(worker and worker.is_alive())
             if not queued and not active_run and not worker_alive:
-                return
+                return True
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                return
+                LOGGER.warning(
+                    "wait_for_post_analysis timed out after %.1fs "
+                    "(queued=%s, active=%s, worker_alive=%s)",
+                    timeout_s,
+                    queued,
+                    active_run,
+                    worker_alive,
+                )
+                return False
             if worker is not None and worker_alive:
                 worker.join(timeout=min(0.2, remaining))
             else:
@@ -675,6 +737,7 @@ class MetricsLogger:
                         run_id,
                         start_time_utc,
                         start_mono_s,
+                        prebuilt_rows=live_rows,
                     )
                     if no_data_timeout:
                         LOGGER.info(

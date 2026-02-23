@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pydantic import ValidationError
+
 from vibesensor.locations import LOCATION_OPTIONS, all_locations, label_for_code
 
 
@@ -17,3 +19,28 @@ def test_location_lookup_roundtrip() -> None:
     assert options
     for row in options:
         assert label_for_code(row["code"]) == row["label"]
+
+
+class TestSetLocationRequestAcceptsEmptyCode:
+    """Verify that SetLocationRequest allows empty location_code for clearing."""
+
+    def test_empty_string_accepted(self) -> None:
+        from vibesensor.api import SetLocationRequest
+
+        req = SetLocationRequest(location_code="")
+        assert req.location_code == ""
+
+    def test_valid_code_accepted(self) -> None:
+        from vibesensor.api import SetLocationRequest
+
+        req = SetLocationRequest(location_code="front_left_wheel")
+        assert req.location_code == "front_left_wheel"
+
+    def test_too_long_rejected(self) -> None:
+        from vibesensor.api import SetLocationRequest
+
+        try:
+            SetLocationRequest(location_code="x" * 65)
+            raise AssertionError("Should have raised ValidationError")
+        except ValidationError:
+            pass

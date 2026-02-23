@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -20,6 +21,8 @@ from .domain_models import (
     _default_amplitude_definitions,
     _default_units,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "RUN_SCHEMA_VERSION",
@@ -148,12 +151,23 @@ def read_jsonl_run(path: Path) -> RunData:
     metadata: dict[str, Any] | None = None
     end_record: dict[str, Any] | None = None
     samples: list[dict[str, Any]] = []
+    skipped = 0
     with path.open("r", encoding="utf-8") as f:
-        for line in f:
+        for line_no, line in enumerate(f, start=1):
             text = line.strip()
             if not text:
                 continue
-            payload = json.loads(text)
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError as exc:
+                LOGGER.warning(
+                    "Skipping corrupt JSONL line %d in %s: %s",
+                    line_no,
+                    path,
+                    exc,
+                )
+                skipped += 1
+                continue
             if not isinstance(payload, dict):
                 continue
             record_type = str(payload.get("record_type", ""))
@@ -164,6 +178,8 @@ def read_jsonl_run(path: Path) -> RunData:
             elif record_type == RUN_END_TYPE:
                 end_record = payload
 
+    if skipped:
+        LOGGER.warning("Skipped %d corrupt line(s) while reading %s", skipped, path)
     if metadata is None:
         raise ValueError(f"Run metadata missing in {path}")
     if end_record and not metadata.get("end_time_utc"):

@@ -89,7 +89,7 @@ export interface AppState {
   deleteAllRunsInFlight: boolean;
   expandedRunId: string | null;
   runDetailsById: Record<string, RunDetail>;
-  loggingStatus: { enabled: boolean; current_file: string | null };
+  loggingStatus: { enabled: boolean; current_file: string | null; write_error: string | null };
   locationOptions: LocationOption[];
   vehicleSettings: VehicleSettings;
   cars: Record<string, any>[];
@@ -139,7 +139,7 @@ export function createAppState(): AppState {
     deleteAllRunsInFlight: false,
     expandedRunId: null,
     runDetailsById: {},
-    loggingStatus: { enabled: false, current_file: null },
+    loggingStatus: { enabled: false, current_file: null, write_error: null },
     locationOptions: [],
     vehicleSettings: {
       tire_width_mm: 285,

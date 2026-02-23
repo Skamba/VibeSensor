@@ -392,6 +392,7 @@ async def hello_loop(
                 control_port=sim.control_port,
                 sample_rate_hz=sim.sample_rate_hz,
                 name=sim.name,
+                frame_samples=sim.frame_samples,
                 firmware_version="sim-0.2",
             )
             sim.control_transport.sendto(

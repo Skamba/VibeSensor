@@ -280,6 +280,48 @@ input:focus-visible,
 .status-pill.offline,
 .badge.off { background: var(--pill-bad-bg); color: var(--pill-bad-text); }
 
+/* Connection status banner */
+.connection-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid transparent;
+}
+
+.connection-banner[hidden] { display: none; }
+
+.connection-banner--warn {
+  background: #fff3cd;
+  color: #8a6d1d;
+  border-bottom-color: #ffe69c;
+}
+
+.connection-banner--bad {
+  background: var(--pill-bad-bg);
+  color: var(--pill-bad-text);
+  border-bottom-color: #f0c4c4;
+}
+
+.connection-banner--muted {
+  background: var(--pill-muted-bg);
+  color: var(--pill-muted-text);
+  border-bottom-color: var(--border);
+}
+
+.connection-banner::before {
+  content: '⚠';
+  font-size: 1rem;
+}
+
+/* Dim dashboard content when connection is degraded */
+.wrap--stale .view { opacity: 0.55; pointer-events: auto; transition: opacity 0.3s ease; }
+.wrap .view { transition: opacity 0.3s ease; }
+
 .view { display: none; margin-top: var(--space-4); }
 .view.active { display: block; }
 

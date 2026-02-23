@@ -57,7 +57,7 @@ class IdentifyRequest(BaseModel):
 
 
 class SetLocationRequest(BaseModel):
-    location_code: str = Field(min_length=1, max_length=64)
+    location_code: str = Field(min_length=0, max_length=64)
 
 
 class AnalysisSettingsRequest(BaseModel):
@@ -272,8 +272,35 @@ class CarLibraryTypesResponse(BaseModel):
     types: list[str]
 
 
+class CarLibraryGearboxEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: str
+    final_drive_ratio: float
+    top_gear_ratio: float
+
+
+class CarLibraryTireOptionEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: str
+    tire_width_mm: float
+    tire_aspect_pct: float
+    rim_in: float
+
+
+class CarLibraryModelEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    brand: str
+    type: str
+    model: str
+    gearboxes: list[CarLibraryGearboxEntry]
+    tire_options: list[CarLibraryTireOptionEntry]
+    tire_width_mm: float
+    tire_aspect_pct: float
+    rim_in: float
+
+
 class CarLibraryModelsResponse(BaseModel):
-    models: list[str]
+    models: list[CarLibraryModelEntry]
 
 
 def _normalize_client_id_or_400(client_id: str) -> str:
@@ -509,24 +536,32 @@ def create_router(state: RuntimeState) -> APIRouter:
         if state.registry.get(normalized_client_id) is None:
             raise HTTPException(status_code=404, detail="Unknown client_id")
 
-        label = label_for_code(req.location_code)
-        if label is None:
-            raise HTTPException(status_code=400, detail="Unknown location_code")
+        code = req.location_code.strip()
 
-        for row in state.registry.snapshot_for_api():
-            if row["id"] != normalized_client_id and row["name"] == label:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Location already assigned to client {row['id']}",
-                )
+        if code:
+            label = label_for_code(code)
+            if label is None:
+                raise HTTPException(status_code=400, detail="Unknown location_code")
 
-        updated = state.registry.set_name(normalized_client_id, label)
+            for row in state.registry.snapshot_for_api():
+                if row["id"] != normalized_client_id and row["name"] == label:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Location already assigned to client {row['id']}",
+                    )
+
+            updated = state.registry.set_name(normalized_client_id, label)
+        else:
+            # Empty location_code → clear the assignment
+            updated = state.registry.clear_name(normalized_client_id)
+
+        state.registry.set_location(normalized_client_id, req.location_code)
         mac = client_id_mac(updated.client_id)
-        state.settings_store.set_sensor(mac, {"location": req.location_code})
+        state.settings_store.set_sensor(mac, {"location": code})
         return {
             "id": updated.client_id,
             "mac_address": mac,
-            "location_code": req.location_code,
+            "location_code": code,
             "name": updated.name,
         }
 
@@ -697,26 +732,25 @@ def create_router(state: RuntimeState) -> APIRouter:
         def _build_zip() -> bytes:
             fieldnames: list[str] = []
             fieldname_set: set[str] = set()
-            # First pass: collect all unique field names and count samples
-            sample_count = 0
+            # Single pass: collect field names and buffer all samples
+            all_samples: list[dict[str, Any]] = []
             for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
                 for sample in batch:
-                    sample_count += 1
                     for key in sample:
                         if key not in fieldname_set:
                             fieldname_set.add(key)
                             fieldnames.append(key)
+                all_samples.extend(batch)
 
-            # Second pass: write CSV rows batch by batch with known field names
+            # Write CSV from buffered samples
             csv_buffer = io.StringIO(newline="")
             if fieldnames:
                 writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
                 writer.writeheader()
-                for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
-                    writer.writerows(batch)
+                writer.writerows(all_samples)
 
             run_details = dict(run)
-            run_details["sample_count"] = sample_count
+            run_details["sample_count"] = len(all_samples)
 
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
