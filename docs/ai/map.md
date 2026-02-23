@@ -8,7 +8,7 @@
 - `apps/server/vibesensor/live_diagnostics.py` - event detection engine logic.
 - `apps/server/vibesensor/config.py` - config defaults, schema mapping, typed dataclasses.
 - `apps/server/vibesensor/history_db.py` - persisted run DB interfaces.
-- `apps/server/vibesensor/report_pdf.py` - report generation pipeline.
+- `apps/server/vibesensor/report/pdf_builder.py` - report generation pipeline.
 - `apps/server/vibesensor/report_i18n.py` - translatable report string keys.
 - `apps/server/vibesensor/registry.py` - client liveness and metadata registry.
 - `apps/server/vibesensor/ws_hub.py` - websocket client fanout and broadcast.
