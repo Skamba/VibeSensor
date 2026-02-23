@@ -77,6 +77,7 @@ export interface UiDomElements {
   gpsFallbackPanel: HTMLElement | null;
   staleTimeoutInput: HTMLInputElement | null;
   fallbackModeSelect: HTMLSelectElement | null;
+  connectionBanner: HTMLElement | null;
 }
 
 function inputEl(id: string): HTMLInputElement | null {
@@ -174,6 +175,7 @@ export function createUiDomRegistry(): UiDomElements {
     gpsStatusFallback: el("gpsStatusFallback"),
     gpsFallbackPanel: el("gpsFallbackPanel"),
     staleTimeoutInput: inputEl("staleTimeoutInput"),
+    connectionBanner: el("connectionBanner"),
     fallbackModeSelect: selectEl("fallbackModeSelect"),
   };
 }
