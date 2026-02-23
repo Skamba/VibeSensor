@@ -277,3 +277,28 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
 
     db.set_setting("mode", {"enabled": False})
     assert proxy.commit_calls == 1
+
+
+def test_create_run_sanitizes_non_finite_metadata(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-nan", "2026-01-01T00:00:00Z", {"tire_circumference_m": float("nan")})
+    run = db.get_run("run-nan")
+    assert run is not None
+    assert run["metadata"]["tire_circumference_m"] is None
+
+
+def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-corrupt", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-corrupt", [{"i": 1}, {"i": 2}])
+    with db._cursor() as cur:
+        cur.execute(
+            "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
+            ("run-corrupt", "{bad"),
+        )
+    db.append_samples("run-corrupt", [{"i": 3}])
+
+    rows = [
+        sample for batch in db.iter_run_samples("run-corrupt", batch_size=2) for sample in batch
+    ]
+    assert [row["i"] for row in rows] == [1, 2, 3]

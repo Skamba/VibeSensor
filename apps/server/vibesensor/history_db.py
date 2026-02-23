@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -116,6 +117,32 @@ class HistoryDB:
             finally:
                 cur.close()
 
+    @staticmethod
+    def _sanitize_for_json(value: Any) -> Any:
+        if isinstance(value, float):
+            return value if math.isfinite(value) else None
+        if isinstance(value, dict):
+            return {k: HistoryDB._sanitize_for_json(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [HistoryDB._sanitize_for_json(v) for v in value]
+        if isinstance(value, tuple):
+            return [HistoryDB._sanitize_for_json(v) for v in value]
+        return value
+
+    @classmethod
+    def _safe_json_dumps(cls, value: Any) -> str:
+        return json.dumps(cls._sanitize_for_json(value), ensure_ascii=False, allow_nan=False)
+
+    @staticmethod
+    def _safe_json_loads(value: str | None, *, context: str) -> Any | None:
+        if not value:
+            return None
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            LOGGER.warning("Skipping invalid JSON payload while reading %s", context, exc_info=True)
+            return None
+
     def _ensure_schema(self) -> None:
         with self._cursor() as cur:
             cur.executescript(_SCHEMA_SQL)
@@ -217,7 +244,7 @@ CREATE TABLE IF NOT EXISTS client_names (
             cur.execute(
                 "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at) "
                 "VALUES (?, 'recording', ?, ?, ?)",
-                (run_id, start_time_utc, json.dumps(metadata, ensure_ascii=False), now),
+                (run_id, start_time_utc, self._safe_json_dumps(metadata), now),
             )
 
     def append_samples(
@@ -228,7 +255,7 @@ CREATE TABLE IF NOT EXISTS client_names (
 
         def _to_json(item: dict[str, Any] | SensorFrame) -> str:
             d = item.to_dict() if isinstance(item, SensorFrame) else item
-            return json.dumps(d, ensure_ascii=False)
+            return self._safe_json_dumps(d)
 
         chunk_size = 256
         with self._cursor() as cur:
@@ -256,7 +283,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
-                (json.dumps(metadata, ensure_ascii=False), run_id),
+                (self._safe_json_dumps(metadata), run_id),
             )
             return cur.rowcount > 0
 
@@ -267,7 +294,7 @@ CREATE TABLE IF NOT EXISTS client_names (
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
                 "analysis_version = ?, analysis_completed_at = ? WHERE run_id = ?",
                 (
-                    json.dumps(analysis, ensure_ascii=False, default=str),
+                    self._safe_json_dumps(analysis),
                     ANALYSIS_SCHEMA_VERSION,
                     now,
                     run_id,
@@ -342,12 +369,14 @@ CREATE TABLE IF NOT EXISTS client_names (
             "status": status,
             "start_time_utc": start,
             "end_time_utc": end,
-            "metadata": json.loads(meta_json) if meta_json else {},
+            "metadata": self._safe_json_loads(meta_json, context=f"run {run_id} metadata") or {},
             "created_at": created,
             "sample_count": sample_count,
         }
         if analysis_json:
-            entry["analysis"] = json.loads(analysis_json)
+            parsed_analysis = self._safe_json_loads(analysis_json, context=f"run {run_id} analysis")
+            if parsed_analysis is not None:
+                entry["analysis"] = parsed_analysis
         if error:
             entry["error_message"] = error
         if analysis_ver is not None:
@@ -397,7 +426,13 @@ CREATE TABLE IF NOT EXISTS client_names (
             if not batch_rows:
                 return
             last_id = batch_rows[-1][0]
-            yield [json.loads(row[1]) for row in batch_rows]
+            parsed_batch: list[dict[str, Any]] = []
+            for sample_id, sample_json in batch_rows:
+                parsed = self._safe_json_loads(sample_json, context=f"sample {sample_id}")
+                if isinstance(parsed, dict):
+                    parsed_batch.append(parsed)
+            if parsed_batch:
+                yield parsed_batch
 
     def get_run_metadata(self, run_id: str) -> dict[str, Any] | None:
         with self._cursor(commit=False) as cur:
@@ -405,7 +440,8 @@ CREATE TABLE IF NOT EXISTS client_names (
             row = cur.fetchone()
         if row is None:
             return None
-        return json.loads(row[0]) if row[0] else None
+        parsed = self._safe_json_loads(row[0], context=f"run {run_id} metadata")
+        return parsed if isinstance(parsed, dict) else None
 
     def get_run_analysis(self, run_id: str) -> dict[str, Any] | None:
         with self._cursor(commit=False) as cur:
@@ -416,7 +452,8 @@ CREATE TABLE IF NOT EXISTS client_names (
             row = cur.fetchone()
         if row is None:
             return None
-        return json.loads(row[0]) if row[0] else None
+        parsed = self._safe_json_loads(row[0], context=f"run {run_id} analysis")
+        return parsed if isinstance(parsed, dict) else None
 
     def get_run_status(self, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:
@@ -455,7 +492,7 @@ CREATE TABLE IF NOT EXISTS client_names (
             row = cur.fetchone()
         if row is None:
             return None
-        return json.loads(row[0])
+        return self._safe_json_loads(row[0], context=f"setting {key}")
 
     def set_setting(self, key: str, value: Any) -> None:
         now = datetime.now(UTC).isoformat()
@@ -464,7 +501,7 @@ CREATE TABLE IF NOT EXISTS client_names (
                 "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, "
                 "updated_at = excluded.updated_at",
-                (key, json.dumps(value, ensure_ascii=False), now),
+                (key, self._safe_json_dumps(value), now),
             )
 
     def get_settings_snapshot(self) -> dict[str, Any] | None:

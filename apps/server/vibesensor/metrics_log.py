@@ -764,7 +764,8 @@ class MetricsLogger:
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
                     run_id, start_time_utc, start_mono_s = snapshot
-                    no_data_timeout = self._append_records(
+                    no_data_timeout = await asyncio.to_thread(
+                        self._append_records,
                         run_id,
                         start_time_utc,
                         start_mono_s,
