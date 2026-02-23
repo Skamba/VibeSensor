@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -30,10 +34,30 @@ class _StubProcessor:
         return {"client_id": client_id, "waveform": {}, "spectrum": {}}
 
 
+class _SpeedResolution:
+    """Minimal stand-in for gps_speed.SpeedResolution NamedTuple."""
+
+    def __init__(
+        self,
+        speed_mps: float | None = 12.5,
+        fallback_active: bool = False,
+        source: str = "gps",
+    ):
+        self.speed_mps = speed_mps
+        self.fallback_active = fallback_active
+        self.source = source
+
+
 class _StubGPS:
     effective_speed_mps: float | None = 12.5
     gps_enabled: bool = True
     fallback_active: bool = False
+
+    def resolve_speed(self) -> _SpeedResolution:
+        return _SpeedResolution(self.effective_speed_mps, self.fallback_active, "gps")
+
+    def update_speed_state(self) -> None:
+        pass
 
 
 class _StubAnalysisSettings:

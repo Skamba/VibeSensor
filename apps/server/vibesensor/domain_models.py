@@ -51,9 +51,11 @@ def _as_int_or_none(value: object) -> int | None:
 
 
 def _parse_manual_speed(value: Any) -> float | None:
-    """Return a positive float speed or None."""
-    if isinstance(value, (int, float)) and float(value) > 0:
-        return float(value)
+    """Return a positive, finite float speed (≤500 km/h) or None."""
+    if isinstance(value, (int, float)):
+        f = float(value)
+        if math.isfinite(f) and 0 < f <= 500:
+            return f
     return None
 
 
@@ -210,11 +212,12 @@ class SpeedSourceConfig:
         src = data.get("speedSource")
         if isinstance(src, str) and src in VALID_SPEED_SOURCES:
             self.speed_source = src
-        manual = data.get("manualSpeedKph")
-        if manual is None:
-            self.manual_speed_kph = None
-        else:
-            self.manual_speed_kph = _parse_manual_speed(manual)
+        if "manualSpeedKph" in data:
+            manual = data["manualSpeedKph"]
+            if manual is None:
+                self.manual_speed_kph = None
+            else:
+                self.manual_speed_kph = _parse_manual_speed(manual)
         obd2 = data.get("obd2Config")
         if isinstance(obd2, dict):
             self.obd2_config = obd2
@@ -473,7 +476,10 @@ class SensorFrame:
         gear = _as_float_or_none(record.get("gear"))
         dominant_freq_hz = _as_float_or_none(record.get(REPORT_FIELDS["dominant_freq_hz"]))
         # Backward-compat: old runs wrote "strength_db"; new runs write "vibration_strength_db".
-        vibration_strength_db = _as_float_or_none(record.get(_VSD_KEY) or record.get("strength_db"))
+        raw_vsd = record.get(_VSD_KEY)
+        if raw_vsd is None:
+            raw_vsd = record.get("strength_db")
+        vibration_strength_db = _as_float_or_none(raw_vsd)
         raw_bucket = record.get(_BUCKET_KEY)
         strength_bucket = str(raw_bucket) if raw_bucket not in (None, "") else None
         strength_peak_amp_g = _as_float_or_none(record.get("strength_peak_amp_g"))

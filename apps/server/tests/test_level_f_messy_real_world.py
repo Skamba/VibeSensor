@@ -38,12 +38,10 @@ from builders import (
     make_profile_engine_order_samples,
     make_profile_fault_samples,
     make_profile_gain_mismatch_samples,
-    make_profile_speed_sweep_fault_samples,
     make_road_phase_samples,
     make_speed_jitter_samples,
     make_transient_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
     top_confidence,
 )
@@ -225,8 +223,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any
 def test_dual_fault_detection(pair: tuple[str, str], primary: str, profile: dict[str, Any]) -> None:
     """Two sensors have wheel faults simultaneously (primary is stronger).
 
-    The analysis should detect at least the primary fault and report
-    multiple causes.
+    The analysis must detect both faults and report multiple causes.
     """
     samples = make_profile_dual_fault_samples(
         profile=profile,
@@ -247,7 +244,7 @@ def test_dual_fault_detection(pair: tuple[str, str], primary: str, profile: dict
     assert_strongest_location(summary, primary, msg=f"dual-fault primary={primary}")
     # There should be multiple findings
     findings = summary.get("findings") or []
-    assert len(findings) >= 1, f"Expected multiple findings for dual fault, got {len(findings)}"
+    assert len(findings) >= 2, f"Expected multiple findings for dual fault, got {len(findings)}"
 
 
 # ---------------------------------------------------------------------------

@@ -130,6 +130,33 @@ export function startUiApp(): void {
     const keyByState: Record<string, string> = { connecting: "ws.connecting", connected: "ws.connected", reconnecting: "ws.reconnecting", stale: "ws.stale", no_data: "ws.no_data" };
     const variantByState: Record<string, string> = { connecting: "muted", connected: "ok", reconnecting: "warn", stale: "bad", no_data: "muted" };
     setPillState(els.linkState, variantByState[state.wsState] || "muted", t(keyByState[state.wsState] || "ws.connecting"));
+
+    // Connection status banner
+    const banner = els.connectionBanner;
+    if (banner) {
+      const bannerCfg: Record<string, { key: string; cls: string }> = {
+        reconnecting: { key: "ws.banner.reconnecting", cls: "connection-banner--bad" },
+        stale: { key: "ws.banner.stale", cls: "connection-banner--warn" },
+        connecting: { key: "ws.banner.connecting", cls: "connection-banner--muted" },
+      };
+      const cfg = bannerCfg[state.wsState];
+      if (cfg) {
+        banner.hidden = false;
+        banner.textContent = t(cfg.key);
+        banner.className = `connection-banner ${cfg.cls}`;
+      } else {
+        banner.hidden = true;
+        banner.textContent = "";
+        banner.className = "connection-banner";
+      }
+    }
+
+    // Dim dashboard content when data may be stale or connection is lost
+    const wrap = document.querySelector(".wrap");
+    if (wrap) {
+      const degraded = state.wsState === "reconnecting" || state.wsState === "stale";
+      wrap.classList.toggle("wrap--stale", degraded);
+    }
   }
 
   function updateSpectrumOverlay(): void {

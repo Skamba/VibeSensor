@@ -51,9 +51,7 @@ _CORNERS = ["FL", "FR", "RL", "RR"]
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_strong_single_sensor_reaches_high_confidence(
-    profile: dict[str, Any], corner: str
-) -> None:
+def test_strong_single_sensor_reaches_high_confidence(profile: dict[str, Any], corner: str) -> None:
     """A strong single-sensor constant-speed fault should reach ≥0.60 confidence."""
     sensor = CORNER_SENSORS[corner]
     samples = make_profile_fault_samples(
@@ -99,8 +97,7 @@ def test_strong_4sensor_fault_reaches_medium_confidence(
     summary = run_analysis(samples, metadata=meta)
     conf = top_confidence(summary)
     assert conf >= 0.40, (
-        f"Strong fault at {corner}/{speed} ({profile['name']}) "
-        f"gave conf={conf:.3f}, expected ≥0.40"
+        f"Strong fault at {corner}/{speed} ({profile['name']}) gave conf={conf:.3f}, expected ≥0.40"
     )
     assert_confidence_label_valid(summary)
 
@@ -111,9 +108,7 @@ def test_strong_4sensor_fault_reaches_medium_confidence(
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_negligible_strength_caps_to_medium(
-    profile: dict[str, Any], corner: str
-) -> None:
+def test_negligible_strength_caps_to_medium(profile: dict[str, Any], corner: str) -> None:
     """Fault with negligible vibration strength should cap confidence label to MEDIUM."""
     sensor = CORNER_SENSORS[corner]
     samples = make_profile_fault_samples(
@@ -132,8 +127,7 @@ def test_negligible_strength_caps_to_medium(
     if top is not None and float(top.get("confidence", 0)) > 0.25:
         label = top.get("confidence_label_key", "")
         assert label != "CONFIDENCE_HIGH", (
-            f"Negligible strength ({corner}, {profile['name']}) "
-            f"should cap to MEDIUM, got {label}"
+            f"Negligible strength ({corner}, {profile['name']}) should cap to MEDIUM, got {label}"
         )
 
 
@@ -173,9 +167,7 @@ def test_very_weak_fault_below_nofault_threshold(
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_MID, SPEED_HIGH], ids=["mid", "high"])
-def test_spatial_separation_effect(
-    profile: dict[str, Any], corner: str, speed: float
-) -> None:
+def test_spatial_separation_effect(profile: dict[str, Any], corner: str, speed: float) -> None:
     """4-sensor fault on 1 sensor gets spatial penalty vs single-sensor case."""
     sensor = CORNER_SENSORS[corner]
     meta = profile_metadata(profile)
@@ -319,9 +311,7 @@ def test_noise_only_no_spurious_fault(
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-def test_diffuse_at_wheel_freq_not_localized(
-    profile: dict[str, Any], speed: float
-) -> None:
+def test_diffuse_at_wheel_freq_not_localized(profile: dict[str, Any], speed: float) -> None:
     """Diffuse vibration matching wheel frequency should NOT produce localized fault."""
     whz = profile_wheel_hz(profile, speed)
     samples = make_diffuse_samples(

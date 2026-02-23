@@ -91,7 +91,9 @@ _SPEED_IDS = ["low", "mid", "high"]
     ids=lambda x: x if isinstance(x, str) else "",
 )
 @pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
-def test_no_fault_noise_baseline(profile: dict[str, Any], config_name: str, sensors: list[str], speed: float) -> None:
+def test_no_fault_noise_baseline(
+    profile: dict[str, Any], config_name: str, sensors: list[str], speed: float
+) -> None:
     """Pure road noise across sensor counts → no persistent fault.
 
     3 speeds × 4 configs = 12 scenarios
@@ -108,7 +110,9 @@ def test_no_fault_noise_baseline(profile: dict[str, Any], config_name: str, sens
     list(_SENSOR_CONFIGS.items()),
     ids=lambda x: x if isinstance(x, str) else "",
 )
-def test_no_fault_idle_baseline(profile: dict[str, Any], config_name: str, sensors: list[str]) -> None:
+def test_no_fault_idle_baseline(
+    profile: dict[str, Any], config_name: str, sensors: list[str]
+) -> None:
     """Idle (speed=0) across sensor counts → strict no fault.
 
     4 scenarios
@@ -124,7 +128,9 @@ def test_no_fault_idle_baseline(profile: dict[str, Any], config_name: str, senso
     list(_SENSOR_CONFIGS.items()),
     ids=lambda x: x if isinstance(x, str) else "",
 )
-def test_no_fault_ramp_baseline(profile: dict[str, Any], config_name: str, sensors: list[str]) -> None:
+def test_no_fault_ramp_baseline(
+    profile: dict[str, Any], config_name: str, sensors: list[str]
+) -> None:
     """Speed ramp (20→100 km/h) with no fault → no persistent fault.
 
     4 scenarios
@@ -287,7 +293,9 @@ def test_diffuse_excitation_not_localized(profile: dict[str, Any], speed: float)
     ],
     ids=["8-sensor", "12-sensor"],
 )
-def test_diffuse_excitation_many_sensors(profile: dict[str, Any], config_name: str, sensors: list[str]) -> None:
+def test_diffuse_excitation_many_sensors(
+    profile: dict[str, Any], config_name: str, sensors: list[str]
+) -> None:
     """Uniform vibration on 8/12 sensors → must not localize to a single wheel.
 
     2 scenarios
@@ -387,7 +395,9 @@ def test_fault_late_onset_clean_early_phase(profile: dict[str, Any], corner: str
     ],
     ids=["barely-above-noise", "weak", "marginal"],
 )
-def test_weak_fault_stays_guarded(profile: dict[str, Any], amp: float, vib_db: float, label: str) -> None:
+def test_weak_fault_stays_guarded(
+    profile: dict[str, Any], amp: float, vib_db: float, label: str
+) -> None:
     """Very weak wheel-order signal on noise → confidence must stay below 0.50.
 
     3 scenarios
@@ -530,7 +540,9 @@ def test_engine_vibration_not_reported_as_wheel(profile: dict[str, Any]) -> None
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_wheel_fault_with_engine_noise_no_engine_overreport(profile: dict[str, Any], corner: str) -> None:
+def test_wheel_fault_with_engine_noise_no_engine_overreport(
+    profile: dict[str, Any], corner: str
+) -> None:
     """Wheel fault + low-level engine noise → engine must not appear above 0.55 confidence.
 
     4 scenarios

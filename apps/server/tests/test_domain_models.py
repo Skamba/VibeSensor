@@ -192,6 +192,31 @@ class TestSpeedSourceConfig:
         assert ssc.speed_source == "manual"
         assert ssc.manual_speed_kph == 50.0
 
+    def test_apply_update_partial_preserves_manual_speed(self) -> None:
+        """Partial update without manualSpeedKph must NOT reset the value."""
+        ssc = SpeedSourceConfig.default()
+        ssc.apply_update({"speedSource": "manual", "manualSpeedKph": 80.0})
+        assert ssc.manual_speed_kph == 80.0
+        # Partial update that omits manualSpeedKph entirely
+        ssc.apply_update({"staleTimeoutS": 5})
+        assert ssc.manual_speed_kph == 80.0, "manual_speed_kph was reset by partial update"
+
+    def test_apply_update_explicit_manual_speed_change(self) -> None:
+        """Explicitly sending manualSpeedKph updates the value."""
+        ssc = SpeedSourceConfig.default()
+        ssc.apply_update({"manualSpeedKph": 80.0})
+        assert ssc.manual_speed_kph == 80.0
+        ssc.apply_update({"manualSpeedKph": 100.0})
+        assert ssc.manual_speed_kph == 100.0
+
+    def test_apply_update_explicit_null_clears_manual_speed(self) -> None:
+        """Explicitly sending manualSpeedKph=None clears the value."""
+        ssc = SpeedSourceConfig.default()
+        ssc.apply_update({"manualSpeedKph": 80.0})
+        assert ssc.manual_speed_kph == 80.0
+        ssc.apply_update({"manualSpeedKph": None})
+        assert ssc.manual_speed_kph is None
+
 
 # ---------------------------------------------------------------------------
 # RunMetadata
@@ -305,6 +330,25 @@ class TestSensorFrame:
         record["strength_db"] = 15.0
         sf = SensorFrame.from_dict(record)
         assert sf.vibration_strength_db == 15.0
+
+    def test_vibration_strength_db_zero_preserved(self) -> None:
+        """0.0 is a valid measurement (signal at noise floor) and must not become None."""
+        sf = SensorFrame.from_dict(self._minimal_record(vibration_strength_db=0.0))
+        assert sf.vibration_strength_db == 0.0
+
+    def test_vibration_strength_db_zero_prefers_canonical_over_legacy(self) -> None:
+        """When canonical key is 0.0 and legacy key exists, canonical 0.0 wins."""
+        record = self._minimal_record(vibration_strength_db=0.0)
+        record["strength_db"] = 5.0
+        sf = SensorFrame.from_dict(record)
+        assert sf.vibration_strength_db == 0.0
+
+    def test_vibration_strength_db_zero_roundtrip(self) -> None:
+        """0.0 must survive from_dict → to_dict → from_dict."""
+        sf = SensorFrame.from_dict(self._minimal_record(vibration_strength_db=0.0))
+        d = sf.to_dict()
+        sf2 = SensorFrame.from_dict(d)
+        assert sf2.vibration_strength_db == 0.0
 
     def test_top_peaks_normalized(self) -> None:
         """Invalid peaks (hz<=0, None amp) are filtered out."""

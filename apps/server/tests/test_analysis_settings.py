@@ -109,3 +109,50 @@ def test_sanitize_keeps_normal_values_unchanged() -> None:
     out = store._sanitize({"wheel_bandwidth_pct": 6.0, "speed_uncertainty_pct": 0.6})
     assert out["wheel_bandwidth_pct"] == 6.0
     assert out["speed_uncertainty_pct"] == 0.6
+
+
+# -- Tire/rim upper-bound clamping (#288) ------------------------------------
+
+
+def test_sanitize_clamps_tire_width_to_upper_bound() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"tire_width_mm": 999999.0})
+    assert out["tire_width_mm"] == 500.0
+
+
+def test_sanitize_clamps_tire_width_to_lower_bound() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"tire_width_mm": 50.0})
+    assert out["tire_width_mm"] == 100.0
+
+
+def test_sanitize_clamps_tire_aspect_to_upper_bound() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"tire_aspect_pct": 200.0})
+    assert out["tire_aspect_pct"] == 90.0
+
+
+def test_sanitize_clamps_tire_aspect_to_lower_bound() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"tire_aspect_pct": 5.0})
+    assert out["tire_aspect_pct"] == 10.0
+
+
+def test_sanitize_clamps_rim_to_upper_bound() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"rim_in": 1000.0})
+    assert out["rim_in"] == 30.0
+
+
+def test_sanitize_clamps_rim_to_lower_bound() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"rim_in": 5.0})
+    assert out["rim_in"] == 10.0
+
+
+def test_sanitize_keeps_valid_tire_params_unchanged() -> None:
+    store = AnalysisSettingsStore()
+    out = store._sanitize({"tire_width_mm": 225.0, "tire_aspect_pct": 45.0, "rim_in": 18.0})
+    assert out["tire_width_mm"] == 225.0
+    assert out["tire_aspect_pct"] == 45.0
+    assert out["rim_in"] == 18.0

@@ -8,6 +8,7 @@ from vibesensor.domain_models import CarConfig, SensorConfig, _parse_manual_spee
 from vibesensor.history_db import HistoryDB
 from vibesensor.settings_store import (
     DEFAULT_CAR_ASPECTS,
+    PersistenceError,
     SettingsStore,
     _sanitize_aspects,
 )
@@ -300,3 +301,72 @@ def test_store_snapshot_with_empty_cars_falls_back(tmp_path: Path) -> None:
     # Should fall back to one default car
     assert len(snap["cars"]) >= 1
     assert snap["activeCarId"] == snap["cars"][0]["id"]
+
+
+# -- persistence error propagation (GH-289) -----------------------------------
+
+
+def test_persist_failure_raises_persistence_error(tmp_path: Path) -> None:
+    """When the DB write fails, _persist must raise PersistenceError, not swallow it."""
+    db = HistoryDB(tmp_path / "history.db")
+    store = SettingsStore(db=db)
+
+    # Sabotage the DB so set_settings_snapshot raises
+    original = db.set_settings_snapshot
+
+    def _boom(payload: object) -> None:
+        raise OSError("disk full")
+
+    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+
+    with pytest.raises(PersistenceError, match="Failed to persist"):
+        store.add_car({"name": "Will Fail"})
+
+    # Restore and verify the in-memory change is there but not persisted
+    db.set_settings_snapshot = original  # type: ignore[assignment]
+    store2 = SettingsStore(db=db)
+    assert len(store2.get_cars()["cars"]) == 1  # only default car persisted
+
+
+def test_persist_failure_propagates_on_speed_source_update(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    store = SettingsStore(db=db)
+
+    def _boom(payload: object) -> None:
+        raise RuntimeError("I/O error")
+
+    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+
+    with pytest.raises(PersistenceError):
+        store.update_speed_source({"speedSource": "manual", "manualSpeedKph": 80})
+
+
+def test_persist_failure_propagates_on_set_language(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    store = SettingsStore(db=db)
+
+    def _boom(payload: object) -> None:
+        raise RuntimeError("I/O error")
+
+    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+
+    with pytest.raises(PersistenceError):
+        store.set_language("nl")
+
+
+def test_persist_failure_logs_error(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    """The error must be logged at ERROR level for operator visibility."""
+    db = HistoryDB(tmp_path / "history.db")
+    store = SettingsStore(db=db)
+
+    def _boom(payload: object) -> None:
+        raise OSError("disk full")
+
+    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+
+    with pytest.raises(PersistenceError):
+        store.set_speed_unit("mps")
+
+    assert any(
+        "Failed to persist" in rec.message and rec.levelname == "ERROR" for rec in caplog.records
+    )

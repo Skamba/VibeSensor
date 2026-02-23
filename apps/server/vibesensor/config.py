@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import logging
 from copy import deepcopy
 from dataclasses import dataclass
@@ -17,6 +18,8 @@ LOGGER = logging.getLogger(__name__)
 
 DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
 DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
+
+VALID_24GHZ_CHANNELS: set[int] = set(range(1, 15))  # 1-14
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "ap": {
@@ -59,6 +62,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "metrics_log_hz": 4,
         "sensor_model": "ADXL345",
         "persist_history_db": True,
+        "shutdown_analysis_timeout_s": 30,
     },
     "storage": {
         "clients_json_path": "data/clients.json",
@@ -148,6 +152,61 @@ class ProcessingConfig:
     client_ttl_seconds: int
     accel_scale_g_per_lsb: float | None
 
+    def __post_init__(self) -> None:
+        _cfg_logger = logging.getLogger(__name__)
+        # --- positive-integer guards ------------------------------------------------
+        _POS_FIELDS: dict[str, int] = {
+            "sample_rate_hz": 1,
+            "waveform_seconds": 1,
+            "waveform_display_hz": 1,
+            "ui_push_hz": 1,
+            "ui_heavy_push_hz": 1,
+            "fft_update_hz": 1,
+            "spectrum_max_hz": 1,
+            "client_ttl_seconds": 1,
+        }
+        for field_name, minimum in _POS_FIELDS.items():
+            val = getattr(self, field_name)
+            if val < minimum:
+                clamped = minimum
+                _cfg_logger.warning(
+                    "processing.%s=%s is below minimum %s — clamped to %s",
+                    field_name,
+                    val,
+                    minimum,
+                    clamped,
+                )
+                object.__setattr__(self, field_name, clamped)
+
+        # --- fft_n must be >= 16 and a power of 2 ----------------------------------
+        if self.fft_n < 16:
+            _cfg_logger.warning(
+                "processing.fft_n=%s is below minimum 16 — clamped to 16",
+                self.fft_n,
+            )
+            object.__setattr__(self, "fft_n", 16)
+        elif self.fft_n & (self.fft_n - 1) != 0:
+            # Round up to next power of 2
+            next_pow2 = 1 << (self.fft_n - 1).bit_length()
+            _cfg_logger.warning(
+                "processing.fft_n=%s is not a power of 2 — rounded up to %s",
+                self.fft_n,
+                next_pow2,
+            )
+            object.__setattr__(self, "fft_n", next_pow2)
+
+        # --- spectrum_max_hz must be below Nyquist (sample_rate_hz / 2) -------------
+        nyquist = self.sample_rate_hz // 2
+        if nyquist > 0 and self.spectrum_max_hz >= nyquist:
+            clamped = nyquist - 1 if nyquist > 1 else 1
+            _cfg_logger.warning(
+                "processing.spectrum_max_hz=%s >= Nyquist (%s) — clamped to %s",
+                self.spectrum_max_hz,
+                nyquist,
+                clamped,
+            )
+            object.__setattr__(self, "spectrum_max_hz", clamped)
+
 
 @dataclass(slots=True)
 class LoggingConfig:
@@ -157,6 +216,7 @@ class LoggingConfig:
     sensor_model: str
     history_db_path: Path
     persist_history_db: bool
+    shutdown_analysis_timeout_s: float
 
 
 @dataclass(slots=True)
@@ -211,12 +271,26 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     if accel_scale is not None and accel_scale <= 0:
         accel_scale = None
 
+    ap_channel = int(merged["ap"]["channel"])
+    if ap_channel not in VALID_24GHZ_CHANNELS:
+        raise ValueError(f"ap.channel must be 1-14 for 2.4 GHz, got {ap_channel}")
+
+    server_port = int(merged["server"]["port"])
+    if not 1 <= server_port <= 65535:
+        raise ValueError(f"server.port must be 1-65535, got {server_port}")
+
+    ap_ip_raw = str(merged["ap"]["ip"])
+    try:
+        ipaddress.IPv4Interface(ap_ip_raw)
+    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
+        raise ValueError(f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}") from None
+
     app_config = AppConfig(
         ap=APConfig(
             ssid=str(merged["ap"]["ssid"]),
             psk=str(merged["ap"]["psk"]),
             ip=str(merged["ap"]["ip"]),
-            channel=int(merged["ap"]["channel"]),
+            channel=ap_channel,
             ifname=str(merged["ap"]["ifname"]),
             con_name=str(merged["ap"]["con_name"]),
             self_heal=APSelfHealConfig(
@@ -250,7 +324,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         server=ServerConfig(
             host=str(merged["server"]["host"]),
-            port=int(merged["server"]["port"]),
+            port=server_port,
         ),
         udp=UDPConfig(
             data_host=data_host,
@@ -270,7 +344,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
             client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
             accel_scale_g_per_lsb=accel_scale,
-        ),
+        ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields
         logging=LoggingConfig(
             log_metrics=log_metrics,
             metrics_log_path=metrics_log_path,
@@ -288,6 +362,12 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             persist_history_db=bool(
                 merged["logging"].get(
                     "persist_history_db", DEFAULT_CONFIG["logging"]["persist_history_db"]
+                )
+            ),
+            shutdown_analysis_timeout_s=float(
+                merged["logging"].get(
+                    "shutdown_analysis_timeout_s",
+                    DEFAULT_CONFIG["logging"]["shutdown_analysis_timeout_s"],
                 )
             ),
         ),

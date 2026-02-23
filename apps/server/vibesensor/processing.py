@@ -9,6 +9,7 @@ import numpy as np
 from vibesensor_core.vibration_strength import (
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
+    noise_floor_amp_p20_g,
 )
 
 from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
@@ -73,6 +74,25 @@ class SignalProcessor:
         filtered = block.copy()
         filtered[:, 1:-1] = np.median(stacked, axis=0)
         return filtered
+
+    def flush_client_buffer(self, client_id: str) -> None:
+        """Reset the buffer for *client_id*, discarding all stored samples.
+
+        After a sensor reset (sequence-number wraparound, new HELLO with
+        different firmware, etc.) the circular buffer likely contains samples
+        from a different time-base.  Flushing ensures the next FFT window
+        is built entirely from post-reset data.
+        """
+        buf = self._buffers.get(client_id)
+        if buf is None:
+            return
+        buf.data[:] = 0.0
+        buf.write_idx = 0
+        buf.count = 0
+        buf.latest_metrics = {}
+        buf.latest_spectrum = {}
+        buf.latest_strength_metrics = {}
+        LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
 
     def _get_or_create(self, client_id: str) -> ClientBuffer:
         buf = self._buffers.get(client_id)
@@ -162,13 +182,16 @@ class SignalProcessor:
 
     @staticmethod
     def _noise_floor(amps: np.ndarray) -> float:
+        """P20 noise floor delegating to the canonical core-lib implementation."""
         if amps.size == 0:
             return 0.0
         band = amps[1:] if amps.size > 1 else amps
         finite = band[np.isfinite(band)]
         if finite.size == 0:
             return 0.0
-        return float(np.percentile(finite, 20.0))
+        return noise_floor_amp_p20_g(
+            combined_spectrum_amp_g=sorted(float(v) for v in finite if v >= 0.0)
+        )
 
     @classmethod
     def _top_peaks(

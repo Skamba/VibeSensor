@@ -178,10 +178,14 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function renderLoggingStatus(): void {
-    const status = state.loggingStatus || { enabled: false, current_file: null };
+    const status = state.loggingStatus || { enabled: false, current_file: null, write_error: null };
     const on = Boolean(status.enabled);
     const hasActiveClients = state.clients.some((client) => Boolean(client?.connected));
-    setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
+    if (status.write_error) {
+      setPillState(els.loggingStatus, "bad", status.write_error);
+    } else {
+      setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
+    }
     if (els.currentLogFile) els.currentLogFile.textContent = t("status.current_file", { value: status.current_file || "--" });
     if (els.startLoggingBtn) els.startLoggingBtn.disabled = !hasActiveClients;
     if (els.stopLoggingBtn) els.stopLoggingBtn.disabled = !hasActiveClients;
@@ -234,7 +238,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   async function setClientLocation(clientId: string, locationCode: string): Promise<void> {
-    if (!clientId || !locationCode) return;
+    if (!clientId) return;
     const existing = state.clients.find((c) => c.id === clientId);
     if (existing && locationCodeForClient(existing) === locationCode) return;
     try {
@@ -243,10 +247,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       window.alert(err?.message || t("actions.set_location_failed"));
       return;
     }
-    const selected = state.locationOptions.find((loc) => loc.code === locationCode);
-    if (selected) {
-      const client = state.clients.find((c) => c.id === clientId);
-      if (client) client.name = selected.label;
+    const client = state.clients.find((c) => c.id === clientId);
+    if (client) {
+      const selected = state.locationOptions.find((loc) => loc.code === locationCode);
+      client.name = selected ? selected.label : "";
+      client.location_code = locationCode;
       maybeRenderSensorsSettingsList();
     }
   }
