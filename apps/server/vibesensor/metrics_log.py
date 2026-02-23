@@ -340,9 +340,14 @@ class MetricsLogger:
             return None
         return out
 
-    def _build_sample_records(
-        self, *, run_id: str, t_s: float, timestamp_utc: str
-    ) -> list[dict[str, object]]:
+    def _resolve_speed_context(
+        self,
+    ) -> tuple[float | None, float | None, str, float | None, float | None, float | None]:
+        """Resolve current speed/vehicle state into sample-record values.
+
+        Returns (speed_kmh, gps_speed_kmh, speed_source,
+                 engine_rpm_estimated, final_drive_ratio, gear_ratio).
+        """
         settings = self.analysis_settings.snapshot()
         tire_circumference_m = tire_circumference_m_from_spec(
             settings.get("tire_width_mm"),
@@ -381,6 +386,123 @@ class MetricsLogger:
             if whz is not None:
                 engine_rpm_estimated = engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)
 
+        return (
+            speed_kmh,
+            gps_speed_kmh,
+            speed_source,
+            engine_rpm_estimated,
+            final_drive_ratio,
+            gear_ratio,
+        )
+
+    @staticmethod
+    def _extract_strength_data(
+        metrics: dict[str, object],
+    ) -> tuple[
+        dict[str, object],
+        float | None,
+        str | None,
+        float | None,
+        float | None,
+        list[dict[str, object]],
+    ]:
+        """Extract strength metrics and top peaks from client metrics.
+
+        Returns (strength_metrics, vibration_strength_db, strength_bucket,
+                 strength_peak_amp_g, strength_floor_amp_g, top_peaks).
+        """
+        strength_metrics: dict[str, object] = {}
+        root_strength_metrics = metrics.get("strength_metrics")
+        if isinstance(root_strength_metrics, dict):
+            strength_metrics = root_strength_metrics
+        elif isinstance(metrics.get("combined"), dict):
+            nested_strength_metrics = metrics.get("combined", {}).get("strength_metrics")
+            if isinstance(nested_strength_metrics, dict):
+                strength_metrics = nested_strength_metrics
+
+        vibration_strength_db = MetricsLogger._safe_metric(
+            {"combined": strength_metrics}, "combined", METRIC_FIELDS["vibration_strength_db"]
+        )
+        strength_bucket = (
+            str(strength_metrics.get(METRIC_FIELDS["strength_bucket"]))
+            if strength_metrics.get(METRIC_FIELDS["strength_bucket"]) not in (None, "")
+            else None
+        )
+        strength_peak_amp_g = MetricsLogger._safe_metric(
+            {"combined": strength_metrics},
+            "combined",
+            "peak_amp_g",
+        )
+        strength_floor_amp_g = MetricsLogger._safe_metric(
+            {"combined": strength_metrics},
+            "combined",
+            "noise_floor_amp_g",
+        )
+
+        top_peaks_raw = strength_metrics.get("top_peaks")
+        top_peaks: list[dict[str, object]] = []
+        if isinstance(top_peaks_raw, list):
+            for peak in top_peaks_raw[:5]:
+                if not isinstance(peak, dict):
+                    continue
+                try:
+                    hz = float(peak.get("hz"))
+                    amp = float(peak.get("amp"))
+                except (TypeError, ValueError):
+                    continue
+                if (
+                    not math.isnan(hz)
+                    and not math.isnan(amp)
+                    and not math.isinf(hz)
+                    and not math.isinf(amp)
+                    and hz > 0
+                ):
+                    peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
+                    peak_db = MetricsLogger._safe_metric(
+                        {"combined": peak},
+                        "combined",
+                        METRIC_FIELDS["vibration_strength_db"],
+                    )
+                    if peak_db is not None:
+                        peak_payload[METRIC_FIELDS["vibration_strength_db"]] = peak_db
+                    peak_bucket = peak.get(METRIC_FIELDS["strength_bucket"])
+                    if peak_bucket not in (None, ""):
+                        peak_payload[METRIC_FIELDS["strength_bucket"]] = str(peak_bucket)
+                    top_peaks.append(peak_payload)
+
+        return (
+            strength_metrics,
+            vibration_strength_db,
+            strength_bucket,
+            strength_peak_amp_g,
+            strength_floor_amp_g,
+            top_peaks,
+        )
+
+    @staticmethod
+    def _dominant_hz_from_strength(
+        strength_metrics: dict[str, object],
+    ) -> float | None:
+        """Return the frequency of the strongest peak, or None."""
+        top_peaks_raw = strength_metrics.get("top_peaks")
+        if isinstance(top_peaks_raw, list) and top_peaks_raw:
+            first_peak = top_peaks_raw[0]
+            if isinstance(first_peak, dict):
+                return MetricsLogger._safe_metric({"combined": first_peak}, "combined", "hz")
+        return None
+
+    def _build_sample_records(
+        self, *, run_id: str, t_s: float, timestamp_utc: str
+    ) -> list[dict[str, object]]:
+        (
+            speed_kmh,
+            gps_speed_kmh,
+            speed_source,
+            engine_rpm_estimated,
+            final_drive_ratio,
+            gear_ratio,
+        ) = self._resolve_speed_context()
+
         records: list[dict[str, object]] = []
         # Only include clients that received data recently to avoid
         # recording stale buffered data with fresh timestamps.
@@ -404,68 +526,15 @@ class MetricsLogger:
             accel_y_g = latest_xyz[1] if latest_xyz else None
             accel_z_g = latest_xyz[2] if latest_xyz else None
 
-            strength_metrics: dict[str, object] = {}
-            root_strength_metrics = metrics.get("strength_metrics")
-            if isinstance(root_strength_metrics, dict):
-                strength_metrics = root_strength_metrics
-            elif isinstance(metrics.get("combined"), dict):
-                nested_strength_metrics = metrics.get("combined", {}).get("strength_metrics")
-                if isinstance(nested_strength_metrics, dict):
-                    strength_metrics = nested_strength_metrics
-            top_peaks_raw = strength_metrics.get("top_peaks")
-            dominant_hz = None
-            dominant_axis = "combined"
-            if isinstance(top_peaks_raw, list) and top_peaks_raw:
-                first_peak = top_peaks_raw[0]
-                if isinstance(first_peak, dict):
-                    dominant_hz = self._safe_metric({"combined": first_peak}, "combined", "hz")
-            vibration_strength_db = self._safe_metric(
-                {"combined": strength_metrics}, "combined", METRIC_FIELDS["vibration_strength_db"]
-            )
-            strength_bucket = (
-                str(strength_metrics.get(METRIC_FIELDS["strength_bucket"]))
-                if strength_metrics.get(METRIC_FIELDS["strength_bucket"]) not in (None, "")
-                else None
-            )
-            strength_peak_amp_g = self._safe_metric(
-                {"combined": strength_metrics},
-                "combined",
-                "peak_amp_g",
-            )
-            strength_floor_amp_g = self._safe_metric(
-                {"combined": strength_metrics},
-                "combined",
-                "noise_floor_amp_g",
-            )
-            top_peaks: list[dict[str, object]] = []
-            if isinstance(top_peaks_raw, list):
-                for peak in top_peaks_raw[:5]:
-                    if not isinstance(peak, dict):
-                        continue
-                    try:
-                        hz = float(peak.get("hz"))
-                        amp = float(peak.get("amp"))
-                    except (TypeError, ValueError):
-                        continue
-                    if (
-                        not math.isnan(hz)
-                        and not math.isnan(amp)
-                        and not math.isinf(hz)
-                        and not math.isinf(amp)
-                        and hz > 0
-                    ):
-                        peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
-                        peak_db = self._safe_metric(
-                            {"combined": peak},
-                            "combined",
-                            METRIC_FIELDS["vibration_strength_db"],
-                        )
-                        if peak_db is not None:
-                            peak_payload[METRIC_FIELDS["vibration_strength_db"]] = peak_db
-                        peak_bucket = peak.get(METRIC_FIELDS["strength_bucket"])
-                        if peak_bucket not in (None, ""):
-                            peak_payload[METRIC_FIELDS["strength_bucket"]] = str(peak_bucket)
-                        top_peaks.append(peak_payload)
+            (
+                strength_metrics,
+                vibration_strength_db,
+                strength_bucket,
+                strength_peak_amp_g,
+                strength_floor_amp_g,
+                top_peaks,
+            ) = self._extract_strength_data(metrics)
+            dominant_hz = self._dominant_hz_from_strength(strength_metrics)
 
             sample_rate_hz = (
                 self.processor.latest_sample_rate_hz(record.client_id)
@@ -500,7 +569,7 @@ class MetricsLogger:
                 accel_y_g=accel_y_g,
                 accel_z_g=accel_z_g,
                 dominant_freq_hz=dominant_hz,
-                dominant_axis=dominant_axis,
+                dominant_axis="combined",
                 top_peaks=top_peaks,
                 vibration_strength_db=vibration_strength_db,
                 strength_bucket=strength_bucket,
