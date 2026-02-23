@@ -51,6 +51,77 @@ from .strength_labels import strength_label as _strength_label
 from .test_plan import _merge_test_plan
 
 # ---------------------------------------------------------------------------
+# Peak-table order-label annotation
+# ---------------------------------------------------------------------------
+
+
+def _annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
+    """Back-fill ``order_label`` on peaks-table rows from order findings.
+
+    The peaks table is built independently of findings, so order_label is
+    always empty.  This post-processing step matches each order finding's
+    median matched frequency to the closest peak row (within a tolerance)
+    and copies the order label (e.g. "1x wheel order") into the peak row.
+    """
+    plots = summary.get("plots")
+    if not isinstance(plots, dict):
+        return
+    peaks_table: list[dict[str, Any]] = plots.get("peaks_table", [])
+    findings: list[dict[str, Any]] = summary.get("findings", [])
+    if not peaks_table or not findings:
+        return
+
+    # Collect (median_matched_hz, order_label) from F_ORDER findings.
+    order_annotations: list[tuple[float, str]] = []
+    for f in findings:
+        if f.get("finding_id") != "F_ORDER":
+            continue
+        label = str(f.get("frequency_hz_or_order") or "").strip()
+        if not label:
+            continue
+        matched_pts = f.get("matched_points")
+        if not isinstance(matched_pts, list) or not matched_pts:
+            continue
+        matched_freqs = [
+            float(pt["matched_hz"])
+            for pt in matched_pts
+            if isinstance(pt, dict) and pt.get("matched_hz") is not None
+        ]
+        if not matched_freqs:
+            continue
+        matched_freqs.sort()
+        n = len(matched_freqs)
+        median_hz = (
+            matched_freqs[n // 2]
+            if n % 2 == 1
+            else (matched_freqs[n // 2 - 1] + matched_freqs[n // 2]) / 2.0
+        )
+        order_annotations.append((median_hz, label))
+
+    if not order_annotations:
+        return
+
+    # For each order annotation, find the closest peak row within tolerance.
+    # Use 2 Hz tolerance (generous enough for freq_bin_hz=1.0 default).
+    tolerance_hz = 2.0
+    used_rows: set[int] = set()
+    for median_hz, label in order_annotations:
+        best_idx: int | None = None
+        best_dist = tolerance_hz + 1.0
+        for idx, row in enumerate(peaks_table):
+            if idx in used_rows:
+                continue
+            freq = float(row.get("frequency_hz") or 0.0)
+            dist = abs(freq - median_hz)
+            if dist < best_dist:
+                best_dist = dist
+                best_idx = idx
+        if best_idx is not None and best_dist <= tolerance_hz:
+            peaks_table[best_idx]["order_label"] = label
+            used_rows.add(best_idx)
+
+
+# ---------------------------------------------------------------------------
 # Confidence label helper
 # ---------------------------------------------------------------------------
 
@@ -749,6 +820,7 @@ def summarize_run_data(
         },
     }
     summary["plots"] = _plot_data(summary)
+    _annotate_peaks_with_order_labels(summary)
     if not include_samples:
         summary.pop("samples", None)
     return summary
