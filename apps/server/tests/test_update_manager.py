@@ -365,11 +365,12 @@ class TestUpdateManagerAsync:
         assert mgr.status.exit_code == 0
         assert mgr.status.runtime.get("assets_verified") is True
         assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
-        git_calls = [
-            c[0] for c in runner.calls if len(c[0]) >= 3 and c[0][0] == "git" and c[0][1] == "-C"
+        sudo_git_calls = [
+            c[0]
+            for c in runner.calls
+            if len(c[0]) >= 4 and c[0][0] == "sudo" and c[0][2] == "git" and c[0][3] == "-C"
         ]
-        assert git_calls, "Expected git calls during update"
-        assert all(c[0] != "sudo" for c in git_calls), "Git update must run as service user"
+        assert sudo_git_calls, "Expected updater to run git via sudo wrapper"
         uplink_connect_calls = [
             c[0] for c in runner.calls if "device wifi connect TestNet" in " ".join(c[0])
         ]
@@ -431,6 +432,51 @@ class TestUpdateManagerAsync:
         ]
         assert len(restore_calls) > 0
 
+    async def test_wifi_ssid_not_found_retries_then_succeeds(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        original_run = runner.run
+        connect_calls = {"count": 0}
+
+        async def run_with_retry(args, *, timeout=30, env=None):
+            joined = " ".join(args)
+            if "device wifi connect TestNet" in joined:
+                connect_calls["count"] += 1
+                if connect_calls["count"] == 1:
+                    return (10, "", "Error: No network with SSID 'TestNet' found.\n")
+            return await original_run(args, timeout=timeout, env=env)
+
+        runner.run = run_with_retry  # type: ignore[assignment]
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("TestNet", "pass123")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.success
+        assert connect_calls["count"] >= 2
+        rescan_calls = [
+            c
+            for c in runner.calls
+            if len(c[0]) >= 6
+            and c[0][0] == "sudo"
+            and "dev wifi list" in " ".join(c[0])
+            and "--rescan yes" in " ".join(c[0])
+        ]
+        assert rescan_calls, "Expected updater to rescan Wi-Fi after SSID-not-found"
+
     async def test_secure_ssid_requires_password(self, tmp_path) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
@@ -484,6 +530,52 @@ class TestUpdateManagerAsync:
             c for c in runner.calls if "VibeSensor-AP" in " ".join(c[0]) and "up" in " ".join(c[0])
         ]
         assert len(restore_calls) > 0
+
+    async def test_git_dubious_ownership_avoided_by_sudo_git(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        original_run = runner.run
+        remote_set_url_calls = {"count": 0}
+
+        async def run_with_dubious_once(args, *, timeout=30, env=None):
+            joined = " ".join(args)
+            # Simulate dubious-ownership only for non-sudo git invocations.
+            if (
+                len(args) >= 4
+                and args[0] == "git"
+                and args[1] == "-C"
+                and "remote set-url origin" in joined
+            ):
+                remote_set_url_calls["count"] += 1
+                return (
+                    128,
+                    "",
+                    "fatal: detected dubious ownership in repository at '/opt/VibeSensor'",
+                )
+            return await original_run(args, timeout=timeout, env=env)
+
+        runner.run = run_with_dubious_once  # type: ignore[assignment]
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.success
+        assert remote_set_url_calls["count"] == 0, "Expected no non-sudo git invocations"
 
     async def test_password_never_in_logs(self, tmp_path) -> None:
         """Password must never appear in status log_tail or issues."""
