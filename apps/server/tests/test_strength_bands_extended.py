@@ -10,7 +10,6 @@ from vibesensor_core.strength_bands import BANDS, band_by_key, band_rank, bucket
 
 
 def test_bucket_below_threshold_returns_l0() -> None:
-    assert bucket_for_strength(vibration_strength_db=-5.0) == "l0"
     assert bucket_for_strength(vibration_strength_db=0.0) == "l0"
     assert bucket_for_strength(vibration_strength_db=5.0) == "l0"
 

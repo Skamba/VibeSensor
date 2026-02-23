@@ -620,6 +620,11 @@ def _build_order_findings(
             if isinstance(location_hotspot, dict)
             else True
         )
+        dominance_ratio = (
+            _as_float(location_hotspot.get("dominance_ratio"))
+            if isinstance(location_hotspot, dict)
+            else None
+        )
         localization_confidence = (
             float(location_hotspot.get("localization_confidence"))
             if isinstance(location_hotspot, dict)
@@ -687,7 +692,10 @@ def _build_order_findings(
         elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
             confidence *= 0.80
         # Penalty: location ambiguity / weak localization confidence
-        confidence *= 0.60 + (0.40 * max(0.0, min(1.0, localization_confidence)))
+        confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
+        # Penalty: weak spatial separation
+        if weak_spatial_separation:
+            confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
         # Penalty: steady/constant speed reduces order-tracking value
         if constant_speed:
             confidence *= 0.75  # was 0.88 for steady; constant is stricter
@@ -1415,14 +1423,11 @@ def _build_findings(
     for of in order_findings:
         pts = of.get("matched_points")
         if isinstance(pts, list):
-            matched_hz_vals: list[float] = []
             for pt in pts:
                 if isinstance(pt, dict):
                     mhz = _as_float(pt.get("matched_hz"))
                     if mhz is not None and mhz > 0:
-                        matched_hz_vals.append(mhz)
-            if matched_hz_vals:
-                order_freqs.add(percentile(sorted(matched_hz_vals), 0.50))
+                        order_freqs.add(mhz)
 
     findings.extend(
         _build_persistent_peak_findings(
