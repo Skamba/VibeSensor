@@ -796,7 +796,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
         logger._append_records(run_id, start_time_utc, start_mono)
 
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
-        return {"row_count": len(samples)}
+        return {"row_count": len(samples), "run_suitability": []}
 
     monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _summary)
     logger.stop_logging()
@@ -805,3 +805,6 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     assert stored is not None
     assert stored["row_count"] <= cap
     assert stored["analysis_metadata"]["total_sample_count"] >= stored["row_count"]
+    assert stored["analysis_metadata"]["sampling_method"].startswith("stride_")
+    suitability_checks = {str(item.get("check_key")) for item in stored.get("run_suitability", [])}
+    assert "SUITABILITY_CHECK_ANALYSIS_SAMPLING" in suitability_checks
