@@ -423,9 +423,7 @@ def _build_order_findings(
 
     # Pre-compute peaks for every sample once so that the inner hypothesis
     # loop does not redundantly call _sample_top_peaks() for each hypothesis.
-    cached_peaks: list[list[tuple[float, float]]] = [
-        _sample_top_peaks(s) for s in samples
-    ]
+    cached_peaks: list[list[tuple[float, float]]] = [_sample_top_peaks(s) for s in samples]
 
     findings: list[tuple[float, dict[str, object]]] = []
     for hypothesis in _order_hypotheses():

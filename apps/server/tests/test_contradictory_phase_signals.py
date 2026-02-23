@@ -73,9 +73,7 @@ _CORNER_PAIRS = [
     ids=[f"{a}_{b}" for a, b in _CORNER_PAIRS],
 )
 @pytest.mark.parametrize("speed", [SPEED_MID, SPEED_HIGH], ids=["mid", "high"])
-def test_different_corners_across_phases(
-    corner_a: str, corner_b: str, speed: float
-) -> None:
+def test_different_corners_across_phases(corner_a: str, corner_b: str, speed: float) -> None:
     """Fault on corner_a in phase 1, corner_b in phase 2: pipeline should handle gracefully."""
     sensor_a = CORNER_SENSORS[corner_a]
     sensor_b = CORNER_SENSORS[corner_b]
@@ -128,9 +126,7 @@ _IDLE_DURATIONS = [
     _IDLE_DURATIONS,
     ids=[d[0] for d in _IDLE_DURATIONS],
 )
-def test_engine_idle_then_wheel_cruise(
-    corner: str, idle_name: str, idle_n: int
-) -> None:
+def test_engine_idle_then_wheel_cruise(corner: str, idle_name: str, idle_n: int) -> None:
     """Engine on idle then wheel fault on cruise: wheel should be detected."""
     sensor = CORNER_SENSORS[corner]
 
@@ -143,11 +139,16 @@ def test_engine_idle_then_wheel_cruise(
                 {"hz": _IDLE_ENGINE_HZ, "amp": 0.03},
                 {"hz": _IDLE_ENGINE_HZ * 2, "amp": 0.015},
             ]
-            idle_samples.append(make_sample(
-                t_s=t, speed_kmh=0.0, client_name=s,
-                top_peaks=peaks, vibration_strength_db=18.0,
-                strength_floor_amp_g=0.003,
-            ))
+            idle_samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=0.0,
+                    client_name=s,
+                    top_peaks=peaks,
+                    vibration_strength_db=18.0,
+                    strength_floor_amp_g=0.003,
+                )
+            )
 
     # Phase 2: cruise with wheel fault
     cruise_start = float(idle_n)
@@ -175,9 +176,9 @@ def test_engine_idle_then_wheel_cruise(
 # 4 corners × 3 transient positions = 12 cases
 # ===================================================================
 _TRANSIENT_POSITIONS = [
-    ("transient_before", 0.0, 10.0),   # transient, then persistent
-    ("transient_after", 25.0, 0.0),    # persistent, then transient
-    ("transient_middle", 12.0, 0.0),   # persistent, transient in middle, persistent again
+    ("transient_before", 0.0, 10.0),  # transient, then persistent
+    ("transient_after", 25.0, 0.0),  # persistent, then transient
+    ("transient_middle", 12.0, 0.0),  # persistent, transient in middle, persistent again
 ]
 
 
@@ -219,9 +220,7 @@ def test_transient_plus_persistent(
     samples.sort(key=lambda s: s["t_s"])
     summary = run_analysis(samples)
     conf = top_confidence(summary)
-    assert conf > 0.0, (
-        f"Transient + persistent at {corner} ({pos_name}) should detect the fault"
-    )
+    assert conf > 0.0, f"Transient + persistent at {corner} ({pos_name}) should detect the fault"
 
 
 # ===================================================================
@@ -241,9 +240,7 @@ _SPLIT_RATIOS = [
     _SPLIT_RATIOS,
     ids=[s[0] for s in _SPLIT_RATIOS],
 )
-def test_fault_then_noise(
-    corner: str, split_name: str, fault_n: int, noise_n: int
-) -> None:
+def test_fault_then_noise(corner: str, split_name: str, fault_n: int, noise_n: int) -> None:
     """Fault in first portion, noise in rest: fault should still be detected."""
     sensor = CORNER_SENSORS[corner]
 
@@ -266,9 +263,7 @@ def test_fault_then_noise(
     samples = fault_phase + noise_phase
     summary = run_analysis(samples)
     conf = top_confidence(summary)
-    assert conf > 0.0, (
-        f"Fault→noise at {corner} ({split_name}) should still detect the fault"
-    )
+    assert conf > 0.0, f"Fault→noise at {corner} ({split_name}) should still detect the fault"
 
 
 # ===================================================================
@@ -282,9 +277,7 @@ def test_fault_then_noise(
     _CORNER_PAIRS,
     ids=[f"{a}_{b}" for a, b in _CORNER_PAIRS],
 )
-def test_equal_strength_two_corners(
-    corner_a: str, corner_b: str
-) -> None:
+def test_equal_strength_two_corners(corner_a: str, corner_b: str) -> None:
     """Equal-strength faults at two corners: pipeline should not crash and should find something."""
     sensor_a = CORNER_SENSORS[corner_a]
     sensor_b = CORNER_SENSORS[corner_b]
@@ -300,27 +293,34 @@ def test_equal_strength_two_corners(
                     {"hz": whz * 2, "amp": 0.024},
                     {"hz": 142.5, "amp": 0.004},
                 ]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=SPEED_MID, client_name=s,
-                    top_peaks=peaks, vibration_strength_db=26.0,
-                    strength_floor_amp_g=0.004,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=SPEED_MID,
+                        client_name=s,
+                        top_peaks=peaks,
+                        vibration_strength_db=26.0,
+                        strength_floor_amp_g=0.004,
+                    )
+                )
             else:
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=SPEED_MID, client_name=s,
-                    top_peaks=[{"hz": 142.5, "amp": 0.004}],
-                    vibration_strength_db=8.0,
-                    strength_floor_amp_g=0.004,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=SPEED_MID,
+                        client_name=s,
+                        top_peaks=[{"hz": 142.5, "amp": 0.004}],
+                        vibration_strength_db=8.0,
+                        strength_floor_amp_g=0.004,
+                    )
+                )
 
     summary = run_analysis(samples)
     assert isinstance(summary, dict)
     assert "top_causes" in summary
     # Should produce at least one finding (may report ambiguity)
     conf = top_confidence(summary)
-    assert conf > 0.0, (
-        f"Equal-strength {corner_a}+{corner_b} should produce a finding"
-    )
+    assert conf > 0.0, f"Equal-strength {corner_a}+{corner_b} should produce a finding"
 
 
 # ===================================================================
@@ -425,6 +425,4 @@ def test_speed_change_between_phases(
     samples = phase1 + phase2
     summary = run_analysis(samples)
     conf = top_confidence(summary)
-    assert conf > 0.0, (
-        f"Speed change {combo_name} at {corner} should still detect the fault"
-    )
+    assert conf > 0.0, f"Speed change {combo_name} at {corner} should still detect the fault"

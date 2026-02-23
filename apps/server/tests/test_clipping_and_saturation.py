@@ -80,10 +80,10 @@ def _make_clipped_fault(
 # 4 corners × 4 clip levels = 16 cases
 # ===================================================================
 _CLIP_LEVELS = [
-    ("no_clip", 1.0),        # effectively unclipped (amp < 1.0)
-    ("mild_clip", 0.05),     # only the strongest peak is slightly cut
-    ("moderate_clip", 0.03), # significant clipping
-    ("severe_clip", 0.01),   # everything capped to near-noise floor
+    ("no_clip", 1.0),  # effectively unclipped (amp < 1.0)
+    ("mild_clip", 0.05),  # only the strongest peak is slightly cut
+    ("moderate_clip", 0.03),  # significant clipping
+    ("severe_clip", 0.01),  # everything capped to near-noise floor
 ]
 
 
@@ -93,9 +93,7 @@ _CLIP_LEVELS = [
     _CLIP_LEVELS,
     ids=[c[0] for c in _CLIP_LEVELS],
 )
-def test_clipping_level_effect_on_confidence(
-    corner: str, clip_name: str, clip_amp: float
-) -> None:
+def test_clipping_level_effect_on_confidence(corner: str, clip_name: str, clip_amp: float) -> None:
     """Tighter clipping should degrade confidence; pipeline must not crash."""
     sensor = CORNER_SENSORS[corner]
     samples = _make_clipped_fault(
@@ -112,8 +110,7 @@ def test_clipping_level_effect_on_confidence(
     if clip_amp <= 0.01:
         conf = top_confidence(summary)
         assert conf < 0.90, (
-            f"Severe clip at {corner} produced conf={conf:.3f}; "
-            "expected degradation below 0.90"
+            f"Severe clip at {corner} produced conf={conf:.3f}; expected degradation below 0.90"
         )
 
 
@@ -125,9 +122,7 @@ def test_clipping_level_effect_on_confidence(
 # ===================================================================
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-def test_clipped_fault_sensor_still_produces_finding(
-    corner: str, speed: float
-) -> None:
+def test_clipped_fault_sensor_still_produces_finding(corner: str, speed: float) -> None:
     """A moderately clipped fault sensor should still produce a finding."""
     sensor = CORNER_SENSORS[corner]
     samples = _make_clipped_fault(
@@ -140,9 +135,7 @@ def test_clipped_fault_sensor_still_produces_finding(
     )
     summary = run_analysis(samples)
     conf = top_confidence(summary)
-    assert conf > 0.0, (
-        f"Clipped fault at {corner}/{speed} km/h should still be detected"
-    )
+    assert conf > 0.0, f"Clipped fault at {corner}/{speed} km/h should still be detected"
 
 
 # ===================================================================
@@ -154,11 +147,11 @@ def test_clipped_fault_sensor_still_produces_finding(
 _DIFFUSE_CLIP_LEVELS = [0.08, 0.05, 0.03, 0.01]
 
 
-@pytest.mark.parametrize("clip_amp", _DIFFUSE_CLIP_LEVELS, ids=["clip08", "clip05", "clip03", "clip01"])
+@pytest.mark.parametrize(
+    "clip_amp", _DIFFUSE_CLIP_LEVELS, ids=["clip08", "clip05", "clip03", "clip01"]
+)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-def test_diffuse_clipping_no_localized_fault(
-    clip_amp: float, speed: float
-) -> None:
+def test_diffuse_clipping_no_localized_fault(clip_amp: float, speed: float) -> None:
     """Equal clipping on all sensors should not produce a localized wheel fault."""
     # Build noise on all sensors (no real fault)
     base = make_noise_samples(
@@ -196,9 +189,7 @@ _EXTREME_CONFIGS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("cfg_name,sensor_fn", _EXTREME_CONFIGS, ids=["single", "quad"])
-def test_extreme_clipping_no_crash(
-    corner: str, cfg_name: str, sensor_fn: Any
-) -> None:
+def test_extreme_clipping_no_crash(corner: str, cfg_name: str, sensor_fn: Any) -> None:
     """Clipping every peak to near-zero should not crash or produce NaN."""
     sensor = CORNER_SENSORS[corner]
     sensors = sensor_fn(corner)
@@ -213,6 +204,7 @@ def test_extreme_clipping_no_crash(
     for tc in summary.get("top_causes", []):
         conf = float(tc.get("confidence", 0))
         import math
+
         assert not math.isnan(conf), "NaN confidence from extreme clipping"
 
 
@@ -234,9 +226,7 @@ _SPEED_VARIANTS = [
     ids=[v[0] for v in _SPEED_VARIANTS],
 )
 @pytest.mark.parametrize("clip_amp", [0.04, 0.02], ids=["clip04", "clip02"])
-def test_clipping_with_speed_variants(
-    speed_name: str, speed_fn: Any, clip_amp: float
-) -> None:
+def test_clipping_with_speed_variants(speed_name: str, speed_fn: Any, clip_amp: float) -> None:
     """Clipping combined with various speed patterns should not crash."""
     from builders import make_sample, wheel_hz
 
@@ -252,21 +242,32 @@ def test_clipping_with_speed_variants(
                     {"hz": whz * 2, "amp": 0.024},
                     {"hz": 142.5, "amp": 0.004},
                 ]
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed, client_name=sensor,
-                    top_peaks=peaks, vibration_strength_db=26.0,
-                    strength_floor_amp_g=0.004,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=26.0,
+                        strength_floor_amp_g=0.004,
+                    )
+                )
             else:
-                samples.append(make_sample(
-                    t_s=t, speed_kmh=speed, client_name=sensor,
-                    top_peaks=[{"hz": 142.5, "amp": 0.004}],
-                    vibration_strength_db=8.0,
-                    strength_floor_amp_g=0.004,
-                ))
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed,
+                        client_name=sensor,
+                        top_peaks=[{"hz": 142.5, "amp": 0.004}],
+                        vibration_strength_db=8.0,
+                        strength_floor_amp_g=0.004,
+                    )
+                )
 
     clipped = make_clipped_samples(
-        base_samples=samples, clip_sensor=SENSOR_FL, clip_amp=clip_amp,
+        base_samples=samples,
+        clip_sensor=SENSOR_FL,
+        clip_amp=clip_amp,
     )
     summary = run_analysis(clipped)
     assert isinstance(summary, dict)
@@ -294,7 +295,9 @@ def test_profile_clipped_fault_no_crash(
         n_samples=30,
     )
     clipped = make_clipped_samples(
-        base_samples=base, clip_sensor=sensor, clip_amp=clip_amp,
+        base_samples=base,
+        clip_sensor=sensor,
+        clip_amp=clip_amp,
     )
     meta = profile_metadata(profile)
     summary = run_analysis(clipped, metadata=meta)
@@ -303,4 +306,6 @@ def test_profile_clipped_fault_no_crash(
     # Must produce valid confidence label if there is a finding
     top = extract_top(summary)
     if top and float(top.get("confidence", 0)) > 0.25:
-        assert_confidence_label_valid(summary, msg=f"profile={profile['name']} {corner} clip={clip_amp}")
+        assert_confidence_label_valid(
+            summary, msg=f"profile={profile['name']} {corner} clip={clip_amp}"
+        )

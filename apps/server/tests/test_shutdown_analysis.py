@@ -15,6 +15,7 @@ from vibesensor.metrics_log import MetricsLogger
 # Minimal fakes (same style as test_metrics_log_helpers.py)
 # ---------------------------------------------------------------------------
 
+
 class _FakeRecord:
     client_id: str = "c1"
     name: str = "test"
@@ -76,6 +77,7 @@ def _make_logger(tmp_path: Path, history_db=None) -> MetricsLogger:
 # wait_for_post_analysis return value tests
 # ---------------------------------------------------------------------------
 
+
 def test_wait_returns_true_when_no_work(tmp_path: Path) -> None:
     """No queued analysis → should return True immediately."""
     logger = _make_logger(tmp_path)
@@ -122,10 +124,9 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
 # Shutdown ordering: DB must not close before analysis finishes
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.asyncio
-async def test_shutdown_waits_for_analysis_before_db_close(
-    tmp_path: Path, monkeypatch
-) -> None:
+async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monkeypatch) -> None:
     """Integration: stop_runtime waits for analysis, then closes DB — not before."""
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text(
@@ -185,6 +186,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(
 # ---------------------------------------------------------------------------
 # Config: shutdown_analysis_timeout_s
 # ---------------------------------------------------------------------------
+
 
 def test_config_shutdown_analysis_timeout_default(tmp_path: Path) -> None:
     """Default shutdown_analysis_timeout_s should be 30."""

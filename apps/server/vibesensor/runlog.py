@@ -179,9 +179,7 @@ def read_jsonl_run(path: Path) -> RunData:
                 end_record = payload
 
     if skipped:
-        LOGGER.warning(
-            "Skipped %d corrupt line(s) while reading %s", skipped, path
-        )
+        LOGGER.warning("Skipped %d corrupt line(s) while reading %s", skipped, path)
     if metadata is None:
         raise ValueError(f"Run metadata missing in {path}")
     if end_record and not metadata.get("end_time_utc"):

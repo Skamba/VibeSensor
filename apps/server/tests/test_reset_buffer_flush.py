@@ -110,13 +110,11 @@ def test_no_pre_reset_samples_contaminate_post_reset_fft() -> None:
     post_metrics = proc.compute_metrics("c1", sample_rate_hz=800)
     post_peaks = post_metrics.get("x", {}).get("peaks", [])
     # Should see 120 Hz, NOT 50 Hz residual
-    assert any(
-        abs(p["hz"] - 120.0) < 2.0 for p in post_peaks
-    ), "Post-reset should detect 120 Hz"
+    assert any(abs(p["hz"] - 120.0) < 2.0 for p in post_peaks), "Post-reset should detect 120 Hz"
     # No residual 50 Hz peak
-    assert not any(
-        abs(p["hz"] - 50.0) < 2.0 for p in post_peaks
-    ), "50 Hz should be gone after flush"
+    assert not any(abs(p["hz"] - 50.0) < 2.0 for p in post_peaks), (
+        "50 Hz should be gone after flush"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -143,20 +141,28 @@ def test_registry_update_from_data_returns_true_on_reset(tmp_path) -> None:
     # First data message — no reset
     result1 = registry.update_from_data(
         DataMessage(
-            client_id=client_id, seq=5000, t0_us=1_000_000,
-            sample_count=200, samples=samples,
+            client_id=client_id,
+            seq=5000,
+            t0_us=1_000_000,
+            sample_count=200,
+            samples=samples,
         ),
-        ("10.4.0.2", 50000), now=2.0,
+        ("10.4.0.2", 50000),
+        now=2.0,
     )
     assert result1 is False
 
     # Second data message with large backward seq jump — reset
     result2 = registry.update_from_data(
         DataMessage(
-            client_id=client_id, seq=10, t0_us=1_250_000,
-            sample_count=200, samples=samples,
+            client_id=client_id,
+            seq=10,
+            t0_us=1_250_000,
+            sample_count=200,
+            samples=samples,
         ),
-        ("10.4.0.2", 50000), now=3.0,
+        ("10.4.0.2", 50000),
+        now=3.0,
     )
     assert result2 is True
 
@@ -168,21 +174,24 @@ def test_registry_update_from_data_returns_false_on_normal_seq(tmp_path) -> None
     registry = ClientRegistry(db=db)
     client_id = bytes.fromhex("aabbccddeeff")
     hello = HelloMessage(
-        client_id=client_id, control_port=9010, sample_rate_hz=800,
-        name="node", firmware_version="fw",
+        client_id=client_id,
+        control_port=9010,
+        sample_rate_hz=800,
+        name="node",
+        firmware_version="fw",
     )
     registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
     samples = np.zeros((200, 3), dtype=np.int16)
 
     r1 = registry.update_from_data(
-        DataMessage(client_id=client_id, seq=100, t0_us=100_000,
-                    sample_count=200, samples=samples),
-        ("10.4.0.2", 50000), now=2.0,
+        DataMessage(client_id=client_id, seq=100, t0_us=100_000, sample_count=200, samples=samples),
+        ("10.4.0.2", 50000),
+        now=2.0,
     )
     r2 = registry.update_from_data(
-        DataMessage(client_id=client_id, seq=101, t0_us=200_000,
-                    sample_count=200, samples=samples),
-        ("10.4.0.2", 50000), now=3.0,
+        DataMessage(client_id=client_id, seq=101, t0_us=200_000, sample_count=200, samples=samples),
+        ("10.4.0.2", 50000),
+        now=3.0,
     )
     assert r1 is False
     assert r2 is False

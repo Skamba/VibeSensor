@@ -171,7 +171,10 @@ class ProcessingConfig:
                 clamped = minimum
                 _cfg_logger.warning(
                     "processing.%s=%s is below minimum %s — clamped to %s",
-                    field_name, val, minimum, clamped,
+                    field_name,
+                    val,
+                    minimum,
+                    clamped,
                 )
                 object.__setattr__(self, field_name, clamped)
 
@@ -187,7 +190,8 @@ class ProcessingConfig:
             next_pow2 = 1 << (self.fft_n - 1).bit_length()
             _cfg_logger.warning(
                 "processing.fft_n=%s is not a power of 2 — rounded up to %s",
-                self.fft_n, next_pow2,
+                self.fft_n,
+                next_pow2,
             )
             object.__setattr__(self, "fft_n", next_pow2)
 
@@ -197,7 +201,9 @@ class ProcessingConfig:
             clamped = nyquist - 1 if nyquist > 1 else 1
             _cfg_logger.warning(
                 "processing.spectrum_max_hz=%s >= Nyquist (%s) — clamped to %s",
-                self.spectrum_max_hz, nyquist, clamped,
+                self.spectrum_max_hz,
+                nyquist,
+                clamped,
             )
             object.__setattr__(self, "spectrum_max_hz", clamped)
 
@@ -267,23 +273,17 @@ def load_config(config_path: Path | None = None) -> AppConfig:
 
     ap_channel = int(merged["ap"]["channel"])
     if ap_channel not in VALID_24GHZ_CHANNELS:
-        raise ValueError(
-            f"ap.channel must be 1-14 for 2.4 GHz, got {ap_channel}"
-        )
+        raise ValueError(f"ap.channel must be 1-14 for 2.4 GHz, got {ap_channel}")
 
     server_port = int(merged["server"]["port"])
     if not 1 <= server_port <= 65535:
-        raise ValueError(
-            f"server.port must be 1-65535, got {server_port}"
-        )
+        raise ValueError(f"server.port must be 1-65535, got {server_port}")
 
     ap_ip_raw = str(merged["ap"]["ip"])
     try:
         ipaddress.IPv4Interface(ap_ip_raw)
     except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
-        raise ValueError(
-            f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}"
-        ) from None
+        raise ValueError(f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}") from None
 
     app_config = AppConfig(
         ap=APConfig(

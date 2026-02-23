@@ -144,18 +144,15 @@ class TestSegmentRunPhases:
             assert phases[i] != DrivingPhase.IDLE, (
                 f"Sample {i} should not be IDLE during GPS dropout"
             )
-            assert phases[i] == DrivingPhase.CRUISE, (
-                f"Sample {i} should be CRUISE (interpolated)"
-            )
+            assert phases[i] == DrivingPhase.CRUISE, f"Sample {i} should be CRUISE (interpolated)"
         # No IDLE segments at all
         assert all(seg.phase != DrivingPhase.IDLE for seg in segments)
 
     def test_gps_dropout_at_run_start_with_cruise_after(self) -> None:
         """GPS dropout at run start followed by cruise → interpolated to neighbour phase."""
-        samples = (
-            [{"speed_kmh": None, "t_s": float(i)} for i in range(3)]
-            + [{"speed_kmh": 80.0, "t_s": float(i)} for i in range(3, 10)]
-        )
+        samples = [{"speed_kmh": None, "t_s": float(i)} for i in range(3)] + [
+            {"speed_kmh": 80.0, "t_s": float(i)} for i in range(3, 10)
+        ]
         phases, _ = segment_run_phases(samples)
         # Leading unknown-speed samples should be assigned the neighbouring CRUISE phase
         for i in range(3):
@@ -163,10 +160,9 @@ class TestSegmentRunPhases:
 
     def test_gps_dropout_at_run_end_with_cruise_before(self) -> None:
         """GPS dropout at run end preceded by cruise → interpolated to neighbour phase."""
-        samples = (
-            [{"speed_kmh": 80.0, "t_s": float(i)} for i in range(7)]
-            + [{"speed_kmh": None, "t_s": float(i)} for i in range(7, 10)]
-        )
+        samples = [{"speed_kmh": 80.0, "t_s": float(i)} for i in range(7)] + [
+            {"speed_kmh": None, "t_s": float(i)} for i in range(7, 10)
+        ]
         phases, _ = segment_run_phases(samples)
         # Trailing unknown-speed samples should keep the moving phase
         for i in range(7, 10):
