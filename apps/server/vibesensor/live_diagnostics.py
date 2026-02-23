@@ -9,7 +9,7 @@ from typing import Any
 from vibesensor_core.strength_bands import BANDS, band_rank
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
-from .constants import SILENCE_DB
+from .constants import MPS_TO_KMH, SILENCE_DB
 from .diagnostics_shared import (
     build_diagnostic_settings,
     classify_peak_hz,
@@ -351,7 +351,7 @@ class LiveDiagnosticsEngine:
 
     def _update_driving_phase(self, speed_mps: float | None, now_s: float) -> None:
         """Classify the current driving phase from a rolling speed window."""
-        speed_kmh: float | None = speed_mps * 3.6 if speed_mps is not None else None
+        speed_kmh: float | None = speed_mps * MPS_TO_KMH if speed_mps is not None else None
         self._phase_speed_history.append((now_s, speed_kmh))
         if len(self._phase_speed_history) > _PHASE_HISTORY_MAX:
             self._phase_speed_history = self._phase_speed_history[-_PHASE_HISTORY_MAX:]
@@ -491,16 +491,14 @@ class LiveDiagnosticsEngine:
                     class_key=event.class_key,
                     peak_hz=event.peak_hz,
                 )
-                sensor_existing = active_by_sensor.get(event.sensor_id)
-                if sensor_existing is None or tracker.last_strength_db > float(
-                    sensor_existing.get("strength_db", -1e9)
-                ):
-                    active_by_sensor[event.sensor_id] = {
-                        "bucket_key": tracker.current_bucket_key,
-                        "strength_db": tracker.last_strength_db,
-                        "class_key": event.class_key,
-                        "peak_hz": event.peak_hz,
-                    }
+                self._update_sensor_active_level(
+                    active_by_sensor,
+                    event.sensor_id,
+                    bucket_key=tracker.current_bucket_key,
+                    strength_db=tracker.last_strength_db,
+                    class_key=event.class_key,
+                    peak_hz=event.peak_hz,
+                )
 
             transition_bucket = self._matrix_transition_bucket(
                 previous_bucket, tracker.current_bucket_key
@@ -567,16 +565,14 @@ class LiveDiagnosticsEngine:
                 class_key=class_key or tracker.last_class_key,
                 peak_hz=tracker.last_peak_hz,
             )
-            sensor_existing = active_by_sensor.get(sensor_id)
-            if sensor_existing is None or tracker.last_strength_db > float(
-                sensor_existing.get("strength_db", -1e9)
-            ):
-                active_by_sensor[sensor_id] = {
-                    "bucket_key": tracker.current_bucket_key,
-                    "strength_db": tracker.last_strength_db,
-                    "class_key": class_key or tracker.last_class_key,
-                    "peak_hz": tracker.last_peak_hz,
-                }
+            self._update_sensor_active_level(
+                active_by_sensor,
+                sensor_id,
+                bucket_key=tracker.current_bucket_key,
+                strength_db=tracker.last_strength_db,
+                class_key=class_key or tracker.last_class_key,
+                peak_hz=tracker.last_peak_hz,
+            )
             location_key = self._location_key(tracker.last_sensor_location)
             if location_key:
                 location_candidates.setdefault(location_key, []).append(
@@ -590,7 +586,63 @@ class LiveDiagnosticsEngine:
                     }
                 )
 
-        # Build combined groups from fresh per-sensor continuous tracker state.
+        seen_combined_keys = self._process_combined_groups(
+            now_ms=now_ms,
+            active_by_source=active_by_source,
+            emitted_events=emitted_events,
+        )
+
+        for combined_key, tracker in list(self._combined_trackers.items()):
+            if combined_key in seen_combined_keys:
+                continue
+            self._apply_severity_to_tracker(
+                tracker,
+                vibration_strength_db=SILENCE_DB,
+                sensor_count=2,
+                fallback_db=SILENCE_DB,
+            )
+
+        self._active_levels_by_source = active_by_source
+        self._active_levels_by_sensor = active_by_sensor
+        self._active_levels_by_location = self._build_active_levels_by_location(
+            candidates_by_location=location_candidates
+        )
+        self._rebuild_matrix(now_ms)
+        self._latest_events = emitted_events
+        self._diagnostics_sequence += 1
+        return self.snapshot()
+
+    @staticmethod
+    def _update_sensor_active_level(
+        active_by_sensor: dict[str, dict[str, Any]],
+        sensor_id: str,
+        *,
+        bucket_key: str,
+        strength_db: float,
+        class_key: str,
+        peak_hz: float,
+    ) -> None:
+        """Keep only the strongest active level per sensor."""
+        existing = active_by_sensor.get(sensor_id)
+        if existing is None or strength_db > float(existing.get("strength_db", -1e9)):
+            active_by_sensor[sensor_id] = {
+                "bucket_key": bucket_key,
+                "strength_db": strength_db,
+                "class_key": class_key,
+                "peak_hz": peak_hz,
+            }
+
+    def _process_combined_groups(
+        self,
+        *,
+        now_ms: int,
+        active_by_source: dict[str, dict[str, Any]],
+        emitted_events: list[dict[str, Any]],
+    ) -> set[str]:
+        """Build and process multi-sensor combined groups.
+
+        Returns the set of combined tracker keys that were active this tick.
+        """
         fresh_sensor_trackers: list[_TrackerLevelState] = []
         for tracker in self._sensor_trackers.values():
             if tracker.current_bucket_key is None:
@@ -691,25 +743,7 @@ class LiveDiagnosticsEngine:
                         }
                     )
 
-        for combined_key, tracker in list(self._combined_trackers.items()):
-            if combined_key in seen_combined_keys:
-                continue
-            self._apply_severity_to_tracker(
-                tracker,
-                vibration_strength_db=SILENCE_DB,
-                sensor_count=2,
-                fallback_db=SILENCE_DB,
-            )
-
-        self._active_levels_by_source = active_by_source
-        self._active_levels_by_sensor = active_by_sensor
-        self._active_levels_by_location = self._build_active_levels_by_location(
-            candidates_by_location=location_candidates
-        )
-        self._rebuild_matrix(now_ms)
-        self._latest_events = emitted_events
-        self._diagnostics_sequence += 1
-        return self.snapshot()
+        return seen_combined_keys
 
     def _detect_sensor_events(
         self,
