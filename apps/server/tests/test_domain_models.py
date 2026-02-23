@@ -306,6 +306,25 @@ class TestSensorFrame:
         sf = SensorFrame.from_dict(record)
         assert sf.vibration_strength_db == 15.0
 
+    def test_vibration_strength_db_zero_preserved(self) -> None:
+        """0.0 is a valid measurement (signal at noise floor) and must not become None."""
+        sf = SensorFrame.from_dict(self._minimal_record(vibration_strength_db=0.0))
+        assert sf.vibration_strength_db == 0.0
+
+    def test_vibration_strength_db_zero_prefers_canonical_over_legacy(self) -> None:
+        """When canonical key is 0.0 and legacy key exists, canonical 0.0 wins."""
+        record = self._minimal_record(vibration_strength_db=0.0)
+        record["strength_db"] = 5.0
+        sf = SensorFrame.from_dict(record)
+        assert sf.vibration_strength_db == 0.0
+
+    def test_vibration_strength_db_zero_roundtrip(self) -> None:
+        """0.0 must survive from_dict → to_dict → from_dict."""
+        sf = SensorFrame.from_dict(self._minimal_record(vibration_strength_db=0.0))
+        d = sf.to_dict()
+        sf2 = SensorFrame.from_dict(d)
+        assert sf2.vibration_strength_db == 0.0
+
     def test_top_peaks_normalized(self) -> None:
         """Invalid peaks (hz<=0, None amp) are filtered out."""
         record = self._minimal_record(
