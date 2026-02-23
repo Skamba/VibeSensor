@@ -171,8 +171,6 @@ disconnect → start hotspot. If SSID not found, start hotspot directly.
 |--------|----------|-------------|
 | GET | `/api/analysis-settings` | Current analysis parameters |
 | POST | `/api/analysis-settings` | Update analysis parameters |
-| GET | `/api/speed-override` | Current speed override |
-| POST | `/api/speed-override` | Set manual speed |
 
 ### History & Reports
 

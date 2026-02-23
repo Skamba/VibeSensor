@@ -24,6 +24,7 @@ def _aggregate_fft_spectrum(
     *,
     freq_bin_hz: float = 2.0,
     aggregation: str = "persistence",
+    run_noise_baseline_g: float | None = None,
 ) -> list[tuple[float, float]]:
     """Return aggregated FFT spectrum.
 
@@ -46,7 +47,8 @@ def _aggregate_fft_spectrum(
             bin_amps.setdefault(bin_center, []).append(amp)
     if not bin_amps:
         return []
-    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    if run_noise_baseline_g is None:
+        run_noise_baseline_g = _run_noise_baseline_g(samples)
     baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
     result: dict[float, float] = {}
     for bin_center, amps in bin_amps.items():
@@ -64,15 +66,22 @@ def _aggregate_fft_spectrum_raw(
     samples: list[dict[str, Any]],
     *,
     freq_bin_hz: float = 2.0,
+    run_noise_baseline_g: float | None = None,
 ) -> list[tuple[float, float]]:
     """Return max-amplitude FFT spectrum (raw/debug view)."""
-    return _aggregate_fft_spectrum(samples, freq_bin_hz=freq_bin_hz, aggregation="max")
+    return _aggregate_fft_spectrum(
+        samples,
+        freq_bin_hz=freq_bin_hz,
+        aggregation="max",
+        run_noise_baseline_g=run_noise_baseline_g,
+    )
 
 
 def _spectrogram_from_peaks(
     samples: list[dict[str, Any]],
     *,
     aggregation: Literal["persistence", "max"] = "persistence",
+    run_noise_baseline_g: float | None = None,
 ) -> dict[str, Any]:
     """Build a 2-D spectrogram grid from per-sample peak lists.
 
@@ -172,7 +181,8 @@ def _spectrogram_from_peaks(
     cells = [[0.0 for _ in x_bins] for _ in y_bins]
     max_amp = 0.0
 
-    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    if run_noise_baseline_g is None:
+        run_noise_baseline_g = _run_noise_baseline_g(samples)
     baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
     min_presence_snr = 2.0
 
@@ -219,9 +229,17 @@ def _spectrogram_from_peaks(
     }
 
 
-def _spectrogram_from_peaks_raw(samples: list[dict[str, Any]]) -> dict[str, Any]:
+def _spectrogram_from_peaks_raw(
+    samples: list[dict[str, Any]],
+    *,
+    run_noise_baseline_g: float | None = None,
+) -> dict[str, Any]:
     """Max-amplitude spectrogram (raw/debug view)."""
-    return _spectrogram_from_peaks(samples, aggregation="max")
+    return _spectrogram_from_peaks(
+        samples,
+        aggregation="max",
+        run_noise_baseline_g=run_noise_baseline_g,
+    )
 
 
 def _top_peaks_table_rows(
@@ -229,6 +247,7 @@ def _top_peaks_table_rows(
     *,
     top_n: int = 12,
     freq_bin_hz: float = 1.0,
+    run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, Any]]:
     """Build ranked peak table using persistence-weighted scoring.
 
@@ -241,7 +260,8 @@ def _top_peaks_table_rows(
         freq_bin_hz = 1.0
 
     n_samples = 0
-    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    if run_noise_baseline_g is None:
+        run_noise_baseline_g = _run_noise_baseline_g(samples)
     baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
     for sample in samples:
         if not isinstance(sample, dict):
@@ -347,7 +367,13 @@ def _top_peaks_table_rows(
     return rows
 
 
-def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
+def _plot_data(
+    summary: dict[str, Any],
+    *,
+    run_noise_baseline_g: float | None = None,
+    per_sample_phases: list | None = None,
+    phase_segments: list | None = None,
+) -> dict[str, Any]:
     samples: list[dict[str, Any]] = summary.get("samples", [])
     raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
     vib_mag_points: list[tuple[float, float, str]] = []  # (t_s, vib_db, phase_label)
@@ -357,7 +383,13 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
     freq_vs_speed_by_finding: list[dict[str, object]] = []
     steady_speed_distribution: dict[str, float] | None = None
 
-    per_sample_phases, phase_segs = _segment_run_phases(samples)
+    if per_sample_phases is not None and phase_segments is not None:
+        phase_segs = phase_segments
+    else:
+        per_sample_phases, phase_segs = _segment_run_phases(samples)
+
+    if run_noise_baseline_g is None:
+        run_noise_baseline_g = _run_noise_baseline_g(samples)
 
     for i, sample in enumerate(samples):
         t_s = _as_float(sample.get("t_s"))
@@ -470,11 +502,23 @@ def _plot_data(summary: dict[str, Any]) -> dict[str, Any]:
             }
         )
 
-    fft_spectrum = _aggregate_fft_spectrum(samples)
-    fft_spectrum_raw = _aggregate_fft_spectrum_raw(samples)
-    peaks_spectrogram = _spectrogram_from_peaks(samples)
-    peaks_spectrogram_raw = _spectrogram_from_peaks_raw(samples)
-    peaks_table = _top_peaks_table_rows(samples)
+    fft_spectrum = _aggregate_fft_spectrum(samples, run_noise_baseline_g=run_noise_baseline_g)
+    fft_spectrum_raw = _aggregate_fft_spectrum_raw(
+        samples,
+        run_noise_baseline_g=run_noise_baseline_g,
+    )
+    peaks_spectrogram = _spectrogram_from_peaks(
+        samples,
+        run_noise_baseline_g=run_noise_baseline_g,
+    )
+    peaks_spectrogram_raw = _spectrogram_from_peaks_raw(
+        samples,
+        run_noise_baseline_g=run_noise_baseline_g,
+    )
+    peaks_table = _top_peaks_table_rows(
+        samples,
+        run_noise_baseline_g=run_noise_baseline_g,
+    )
 
     phase_segments_out = [
         {"phase": seg.phase.value, "start_t_s": seg.start_t_s, "end_t_s": seg.end_t_s}

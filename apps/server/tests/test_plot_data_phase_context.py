@@ -7,7 +7,10 @@ Fix: each point in vib_magnitude is now a 3-tuple (t_s, vib_db, phase_label), an
 
 from __future__ import annotations
 
-from vibesensor.report.phase_segmentation import DrivingPhase
+import pytest
+
+import vibesensor.report.plot_data as plot_data_module
+from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.report.plot_data import _plot_data
 
 
@@ -138,3 +141,34 @@ class TestPhaseSegmentsOutput:
     def test_empty_samples_yields_empty_vib_magnitude(self) -> None:
         plots = _plot_data(_make_summary([]))
         assert plots["vib_magnitude"] == []
+
+
+def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.MonkeyPatch) -> None:
+    samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
+    per_sample_phases, phase_segments = segment_run_phases(samples)
+
+    segment_calls = 0
+    noise_calls = 0
+
+    def _count_segment_calls(rows: list[dict]) -> tuple[list, list]:  # pragma: no cover - defensive
+        nonlocal segment_calls
+        segment_calls += 1
+        return segment_run_phases(rows)
+
+    def _count_noise_calls(_rows: list[dict]) -> float:  # pragma: no cover - defensive
+        nonlocal noise_calls
+        noise_calls += 1
+        return 0.02
+
+    monkeypatch.setattr(plot_data_module, "_segment_run_phases", _count_segment_calls)
+    monkeypatch.setattr(plot_data_module, "_run_noise_baseline_g", _count_noise_calls)
+
+    _plot_data(
+        _make_summary(samples),
+        run_noise_baseline_g=0.02,
+        per_sample_phases=per_sample_phases,
+        phase_segments=phase_segments,
+    )
+
+    assert segment_calls == 0
+    assert noise_calls == 0

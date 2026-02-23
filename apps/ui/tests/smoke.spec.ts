@@ -221,6 +221,428 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
   await expect(page.locator("#gpsStatusLastUpdate")).toHaveText("0.3s ago");
 });
 
+test("gps status polling does not override websocket speed readout", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/settings/language") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ language: "en" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-unit") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ speedUnit: "kmh" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-source/status") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          gps_enabled: true,
+          connection_state: "connected",
+          device: "gps0",
+          last_update_age_s: 0.1,
+          raw_speed_kmh: 18,
+          effective_speed_kmh: 18,
+          last_error: null,
+          reconnect_delay_s: 1,
+          fallback_active: false,
+          stale_timeout_s: 5,
+          fallback_mode: "hold",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    const payload = {
+      server_time: new Date().toISOString(),
+      speed_mps: 20,
+      clients: [],
+      diagnostics: { strength_bands: [{ key: "wheel", label: "Wheel", color: "#2f80ed" }], events: [] },
+      spectra: { clients: {} },
+    };
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+        queueMicrotask(() =>
+          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
+        );
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#speed")).toContainText("72.0 km/h");
+  await page.waitForTimeout(500);
+  await expect(page.locator("#speed")).toContainText("72.0 km/h");
+});
+
+test("strength chart labels update when switching language", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    if (path === "/api/settings/language" && method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ language: "en" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/language" && method === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ language: "nl" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-unit") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ speedUnit: "kmh" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-source/status") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          gps_enabled: true,
+          connection_state: "connected",
+          device: "gps0",
+          last_update_age_s: 0.1,
+          raw_speed_kmh: 72,
+          effective_speed_kmh: 72,
+          last_error: null,
+          reconnect_delay_s: 1,
+          fallback_active: false,
+          stale_timeout_s: 5,
+          fallback_mode: "hold",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    const payload = {
+      server_time: new Date().toISOString(),
+      speed_mps: 20,
+      clients: [{ id: "c1", name: "Front Left", connected: true, frames_total: 100, dropped_frames: 0 }],
+      diagnostics: {
+        strength_bands: [{ key: "l1", min_db: 8 }],
+        events: [],
+        levels: {
+          by_source: {
+            wheel: { strength_db: 12 },
+            driveshaft: { strength_db: 9 },
+            engine: { strength_db: 6 },
+            other: { strength_db: 3 },
+          },
+        },
+      },
+      spectra: { clients: {} },
+    };
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+        queueMicrotask(() =>
+          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
+        );
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#strengthChart .u-title")).toHaveText("Strength over time");
+  await page.locator("#languageSelect").selectOption("nl");
+  await expect(page.locator("#strengthChart .u-title")).toHaveText("Sterkte over tijd");
+});
+
+test("manual speed save uses settings endpoint only (no legacy speed-override call)", async ({ page }) => {
+  let speedSourcePostCalls = 0;
+  let speedOverrideCalls = 0;
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    if (path === "/api/settings/speed-source" && method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5, fallbackMode: "hold" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-source" && method === "POST") {
+      speedSourcePostCalls += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(route.request().postDataJSON()),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+  await page.route("**/api/speed-override", async (route) => {
+    speedOverrideCalls += 1;
+    await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ detail: "missing" }) });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await page.locator('input[name="speedSourceRadio"][value="manual"]').check();
+  await page.locator("#manualSpeedInput").fill("45");
+  await page.locator("#saveSpeedSourceBtn").click();
+
+  await expect.poll(() => speedSourcePostCalls).toBe(1);
+  await expect.poll(() => speedOverrideCalls).toBe(0);
+});
+
+test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
+  let persistedAnalysisSettings: Record<string, number> = {};
+  let analysisPostCalls = 0;
+
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+  await page.route("**/api/analysis-settings", async (route) => {
+    const method = route.request().method();
+    if (method === "POST") {
+      analysisPostCalls += 1;
+      persistedAnalysisSettings = route.request().postDataJSON() as Record<string, number>;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(persistedAnalysisSettings),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(persistedAnalysisSettings),
+    });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+
+  await page.locator("#wheelBandwidthInput").fill("7.5");
+  await page.locator("#driveshaftBandwidthInput").fill("8.5");
+  await page.locator("#engineBandwidthInput").fill("9.5");
+  await page.locator("#speedUncertaintyInput").fill("3");
+  await page.locator("#tireDiameterUncertaintyInput").fill("4");
+  await page.locator("#finalDriveUncertaintyInput").fill("2");
+  await page.locator("#gearUncertaintyInput").fill("5");
+  await page.locator("#minAbsBandHzInput").fill("0.7");
+  await page.locator("#maxBandHalfWidthInput").fill("12");
+  await page.locator("#saveAnalysisBtn").click();
+
+  await expect.poll(() => analysisPostCalls).toBe(1);
+  expect(persistedAnalysisSettings).toMatchObject({
+    wheel_bandwidth_pct: 7.5,
+    driveshaft_bandwidth_pct: 8.5,
+    engine_bandwidth_pct: 9.5,
+    speed_uncertainty_pct: 3,
+    tire_diameter_uncertainty_pct: 4,
+    final_drive_uncertainty_pct: 2,
+    gear_uncertainty_pct: 5,
+    min_abs_band_hz: 0.7,
+    max_band_half_width_pct: 12,
+  });
+
+  await page.reload();
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+
+  await expect(page.locator("#wheelBandwidthInput")).toHaveValue("7.5");
+  await expect(page.locator("#driveshaftBandwidthInput")).toHaveValue("8.5");
+  await expect(page.locator("#engineBandwidthInput")).toHaveValue("9.5");
+  await expect(page.locator("#speedUncertaintyInput")).toHaveValue("3");
+  await expect(page.locator("#tireDiameterUncertaintyInput")).toHaveValue("4");
+  await expect(page.locator("#finalDriveUncertaintyInput")).toHaveValue("2");
+  await expect(page.locator("#gearUncertaintyInput")).toHaveValue("5");
+  await expect(page.locator("#minAbsBandHzInput")).toHaveValue("0.7");
+  await expect(page.locator("#maxBandHalfWidthInput")).toHaveValue("12");
+});
+
   test("history PDF download revokes object URL with safe delay", async ({ page }) => {
     let reportPdfCalls = 0;
 

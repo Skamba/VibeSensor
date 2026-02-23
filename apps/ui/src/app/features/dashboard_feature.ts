@@ -27,6 +27,7 @@ export interface DashboardFeature {
   pushCarMapSample(byLocation: Record<string, number>): void;
   renderCarMap(): void;
   resetLiveVibrationCounts(): void;
+  recreateStrengthChart(): void;
 }
 
 export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeature {
@@ -241,7 +242,12 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
           if (els.strengthTooltip) els.strengthTooltip.style.display = "none";
           return;
         }
-        const labels = ["wheel", "driveshaft", "engine", "other"];
+        const labels = [
+          t("matrix.source.wheel"),
+          t("matrix.source.driveshaft"),
+          t("matrix.source.engine"),
+          t("matrix.source.other"),
+        ];
         const lines = labels.map((label, i) => `${label}: ${fmt((u.data[i + 1]?.[idx]) || 0, 1)} dB`);
         if (els.strengthTooltip) {
           els.strengthTooltip.textContent = lines.join("\n");
@@ -249,7 +255,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
         }
       },
     ] } };
-    state.strengthPlot = new uPlot({ title: "Strength over time", width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240, scales: { x: { time: false }, y: { range: fixedStrengthDbRange as uPlot.Range.MinMax } }, axes: [{ label: "s" }, { label: "Strength (dB over floor)" }], series: [{ label: "t" }, { label: "wheel", stroke: "#2563eb", width: 2 }, { label: "driveshaft", stroke: "#14b8a6", width: 2 }, { label: "engine", stroke: "#f59e0b", width: 2 }, { label: "other", stroke: "#8b5cf6", width: 2 }], plugins: [shadePlugin] }, [[], [], [], [], []], els.strengthChart);
+    state.strengthPlot = new uPlot({ title: t("chart.strength.title"), width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240, scales: { x: { time: false }, y: { range: fixedStrengthDbRange as uPlot.Range.MinMax } }, axes: [{ label: t("chart.axis.seconds") }, { label: t("chart.axis.strength_over_floor_db") }], series: [{ label: t("chart.axis.seconds") }, { label: t("matrix.source.wheel"), stroke: "#2563eb", width: 2 }, { label: t("matrix.source.driveshaft"), stroke: "#14b8a6", width: 2 }, { label: t("matrix.source.engine"), stroke: "#f59e0b", width: 2 }, { label: t("matrix.source.other"), stroke: "#8b5cf6", width: 2 }], plugins: [shadePlugin] }, [[], [], [], [], []], els.strengthChart);
     const resize = () => {
       if (!state.strengthPlot || !els.strengthChart) return;
       state.strengthPlot.setSize({ width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240 });
@@ -311,6 +317,14 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     renderMatrix();
   }
 
+  function recreateStrengthChart(): void {
+    if (state.strengthPlot) {
+      state.strengthPlot.destroy();
+      state.strengthPlot = null;
+    }
+    ensureStrengthChart();
+  }
+
   return {
     resetLiveVibrationCounts,
     renderVibrationLog,
@@ -320,5 +334,6 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     extractLiveLocationIntensity,
     pushCarMapSample,
     renderCarMap,
+    recreateStrengthChart,
   };
 }
