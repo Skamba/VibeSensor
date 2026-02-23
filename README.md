@@ -33,7 +33,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 
 **Developer Experience**
 - Hardware simulator for full-stack testing without physical sensors
-- 391+ pytest tests with CI integration
+- Extensive pytest suite with CI integration
 - Playwright visual regression tests across 4 viewports
 - Ruff linting and TypeScript type checking enforced in CI
 - Custom binary UDP protocol with sequence-based loss detection
@@ -49,7 +49,7 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
                                                │  + report gen    │
                                                └────────┬─────────┘
                                                         │
-        ┌───────────┐    HTTP 8000 + WebSocket  ────────┘
+        ┌───────────┐    HTTP (default 80; dev 8000) + WebSocket  ────────┘
         │  Phone /  │◄──────────────────────────────────
         │  Tablet   │   (live spectrum, controls, PDF)
         └───────────┘
@@ -154,7 +154,7 @@ See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for detai
 ### Verification
 
 Connect a phone to the `VibeSensor` Wi-Fi (PSK: `vibesensor123`) and open
-http://10.4.0.1:8000. Sensor nodes should appear within seconds.
+http://10.4.0.1. Sensor nodes should appear within seconds.
 
 > Default AP credentials are for prototype use only. Change SSID/PSK before
 > real-world deployment.
@@ -236,9 +236,9 @@ run log format and [examples/](examples/) for sample data.
 ## Troubleshooting
 
 - **Phone says "No internet"** — expected for offline AP; stay connected and
-  open http://10.4.0.1:8000
+  open http://10.4.0.1
 - **No clients visible** — verify ESP joined SSID, Pi UDP ports 9000/9001 open,
-  server bound on 0.0.0.0:8000
+  server bound on 0.0.0.0:80 (or 8000 in dev)
 - **High dropped frames** — reduce Wi-Fi contention, keep ESP close to Pi,
   check AP channel
 - **Hotspot has no DHCP leases** — rerun `apps/server/scripts/hotspot_nmcli.sh`
