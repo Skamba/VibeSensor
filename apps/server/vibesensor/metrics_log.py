@@ -485,12 +485,29 @@ class MetricsLogger:
 
         return records
 
-    def _append_records(self, run_id: str, start_time_utc: str, run_start_mono_s: float) -> bool:
+    def _append_records(
+        self,
+        run_id: str,
+        start_time_utc: str,
+        run_start_mono_s: float,
+        *,
+        prebuilt_rows: list[dict[str, object]] | None = None,
+    ) -> bool:
         now_mono_s = time.monotonic()
         self._refresh_data_progress_marker(now_mono_s)
         t_s = max(0.0, now_mono_s - run_start_mono_s)
         timestamp_utc = utc_now_iso()
-        rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
+        if prebuilt_rows is not None:
+            # Re-stamp t_s and timestamp_utc for the recording time-base;
+            # avoids a second expensive _build_sample_records() call.
+            rows = [
+                {**row, "t_s": t_s, "timestamp_utc": timestamp_utc}
+                for row in prebuilt_rows
+            ]
+        else:
+            rows = self._build_sample_records(
+                run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc
+            )
         if rows:
             self._last_data_progress_mono_s = now_mono_s
             if self._history_db is not None and self._persist_history_db:
@@ -675,6 +692,7 @@ class MetricsLogger:
                         run_id,
                         start_time_utc,
                         start_mono_s,
+                        prebuilt_rows=live_rows,
                     )
                     if no_data_timeout:
                         LOGGER.info(
