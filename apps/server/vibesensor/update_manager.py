@@ -595,26 +595,57 @@ class UpdateManager:
             return
 
         if password:
-            rc, _, stderr = await self._run_cmd(
-                [
-                    "nmcli",
-                    "--wait",
-                    str(UPLINK_CONNECT_WAIT_S),
-                    "device",
-                    "wifi",
-                    "connect",
-                    ssid,
-                    "password",
-                    password,
-                    "ifname",
-                    self._wifi_ifname,
-                    "name",
-                    UPLINK_CONNECTION_NAME,
-                ],
-                phase="connecting_wifi",
-                sudo=True,
-                timeout=float(UPLINK_CONNECT_WAIT_S + 10),
-            )
+            connect_cmd = [
+                "nmcli",
+                "--wait",
+                str(UPLINK_CONNECT_WAIT_S),
+                "device",
+                "wifi",
+                "connect",
+                ssid,
+                "password",
+                password,
+                "ifname",
+                self._wifi_ifname,
+                "name",
+                UPLINK_CONNECTION_NAME,
+            ]
+            rc = 1
+            stderr = ""
+            for attempt in range(1, 4):
+                rc, _, stderr = await self._run_cmd(
+                    connect_cmd,
+                    phase="connecting_wifi",
+                    sudo=True,
+                    timeout=float(UPLINK_CONNECT_WAIT_S + 10),
+                )
+                if rc == 0:
+                    break
+                if "No network with SSID" not in (stderr or ""):
+                    break
+                self._log(
+                    f"SSID '{ssid}' not found on connect attempt {attempt}; "
+                    "rescanning and retrying"
+                )
+                await self._run_cmd(
+                    [
+                        "nmcli",
+                        "-t",
+                        "-f",
+                        "SSID,SIGNAL,CHAN,FREQ",
+                        "dev",
+                        "wifi",
+                        "list",
+                        "ifname",
+                        self._wifi_ifname,
+                        "--rescan",
+                        "yes",
+                    ],
+                    phase="connecting_wifi",
+                    timeout=NMCLI_TIMEOUT_S,
+                    sudo=True,
+                )
+                await asyncio.sleep(2.0)
             if rc == 0:
                 await self._run_cmd(
                     [

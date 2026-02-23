@@ -431,6 +431,51 @@ class TestUpdateManagerAsync:
         ]
         assert len(restore_calls) > 0
 
+    async def test_wifi_ssid_not_found_retries_then_succeeds(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        original_run = runner.run
+        connect_calls = {"count": 0}
+
+        async def run_with_retry(args, *, timeout=30, env=None):
+            joined = " ".join(args)
+            if "device wifi connect TestNet" in joined:
+                connect_calls["count"] += 1
+                if connect_calls["count"] == 1:
+                    return (10, "", "Error: No network with SSID 'TestNet' found.\n")
+            return await original_run(args, timeout=timeout, env=env)
+
+        runner.run = run_with_retry  # type: ignore[assignment]
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("TestNet", "pass123")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.success
+        assert connect_calls["count"] >= 2
+        rescan_calls = [
+            c
+            for c in runner.calls
+            if len(c[0]) >= 6
+            and c[0][0] == "sudo"
+            and "dev wifi list" in " ".join(c[0])
+            and "--rescan yes" in " ".join(c[0])
+        ]
+        assert rescan_calls, "Expected updater to rescan Wi-Fi after SSID-not-found"
+
     async def test_secure_ssid_requires_password(self, tmp_path) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
