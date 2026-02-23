@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ipaddress
 import logging
 from copy import deepcopy
 from dataclasses import dataclass
@@ -268,6 +269,20 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             f"ap.channel must be 1-14 for 2.4 GHz, got {ap_channel}"
         )
 
+    server_port = int(merged["server"]["port"])
+    if not 1 <= server_port <= 65535:
+        raise ValueError(
+            f"server.port must be 1-65535, got {server_port}"
+        )
+
+    ap_ip_raw = str(merged["ap"]["ip"])
+    try:
+        ipaddress.IPv4Interface(ap_ip_raw)
+    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
+        raise ValueError(
+            f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}"
+        )
+
     app_config = AppConfig(
         ap=APConfig(
             ssid=str(merged["ap"]["ssid"]),
@@ -307,7 +322,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         server=ServerConfig(
             host=str(merged["server"]["host"]),
-            port=int(merged["server"]["port"]),
+            port=server_port,
         ),
         udp=UDPConfig(
             data_host=data_host,

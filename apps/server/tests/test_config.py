@@ -100,3 +100,47 @@ def test_ap_channel_invalid_values_rejected(tmp_path: Path, channel: int) -> Non
     _write_config(config_path, {"ap": {"channel": channel}})
     with pytest.raises(ValueError, match="ap.channel must be 1-14"):
         load_config(config_path)
+
+
+# --- server.port validation ---
+
+
+@pytest.mark.parametrize("port", [1, 80, 443, 8000, 8080, 65535])
+def test_server_port_valid_values_accepted(tmp_path: Path, port: int) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"server": {"port": port}})
+    cfg = load_config(config_path)
+    assert cfg.server.port == port
+
+
+@pytest.mark.parametrize("port", [0, -1, 65536, 100000])
+def test_server_port_invalid_values_rejected(tmp_path: Path, port: int) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"server": {"port": port}})
+    with pytest.raises(ValueError, match="server.port must be 1-65535"):
+        load_config(config_path)
+
+
+# --- ap.ip validation ---
+
+
+@pytest.mark.parametrize(
+    "ip",
+    ["10.4.0.1/24", "192.168.1.1/24", "10.0.0.1", "172.16.0.1/16"],
+)
+def test_ap_ip_valid_values_accepted(tmp_path: Path, ip: str) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"ap": {"ip": ip}})
+    cfg = load_config(config_path)
+    assert cfg.ap.ip == ip
+
+
+@pytest.mark.parametrize(
+    "ip",
+    ["not-an-ip", "999.999.999.999", "10.4.0.1/99", "", "abc/24"],
+)
+def test_ap_ip_invalid_values_rejected(tmp_path: Path, ip: str) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"ap": {"ip": ip}})
+    with pytest.raises(ValueError, match="ap.ip must be a valid IPv4 address or CIDR"):
+        load_config(config_path)
