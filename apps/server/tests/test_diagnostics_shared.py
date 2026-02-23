@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from math import inf, nan
 from pathlib import Path
 
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
@@ -57,6 +58,12 @@ def test_classify_peak_matches_engine_order() -> None:
         settings=settings,
     )
     assert cls["key"] in {"eng1", "shaft_eng1"}
+
+
+def test_vehicle_orders_hz_returns_none_for_non_finite_inputs() -> None:
+    settings = build_diagnostic_settings({})
+    assert vehicle_orders_hz(speed_mps=nan, settings=settings) is None
+    assert vehicle_orders_hz(speed_mps=inf, settings=settings) is None
 
 
 def test_severity_from_peak_thresholds() -> None:

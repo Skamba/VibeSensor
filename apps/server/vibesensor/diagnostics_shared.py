@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from math import sqrt
+from math import isfinite, sqrt
 from typing import Any
 
 from vibesensor_core.strength_bands import (
@@ -71,7 +71,7 @@ def vehicle_orders_hz(
     speed_mps: float | None,
     settings: Mapping[str, Any],
 ) -> dict[str, float] | None:
-    if speed_mps is None or speed_mps <= 0:
+    if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
         return None
     spec_settings = build_diagnostic_settings(settings)
     circumference = tire_circumference_m_from_spec(
@@ -83,7 +83,14 @@ def vehicle_orders_hz(
         return None
     final_drive_ratio = _as_float(spec_settings.get("final_drive_ratio"))
     gear_ratio = _as_float(spec_settings.get("current_gear_ratio"))
-    if final_drive_ratio is None or final_drive_ratio <= 0 or gear_ratio is None or gear_ratio <= 0:
+    if (
+        final_drive_ratio is None
+        or not isfinite(final_drive_ratio)
+        or final_drive_ratio <= 0
+        or gear_ratio is None
+        or not isfinite(gear_ratio)
+        or gear_ratio <= 0
+    ):
         return None
 
     whz = wheel_hz_from_speed_mps(speed_mps, circumference)
@@ -92,6 +99,8 @@ def vehicle_orders_hz(
     wheel_hz = whz
     drive_hz = wheel_hz * final_drive_ratio
     engine_hz = drive_hz * gear_ratio
+    if not all(isfinite(v) and v > 0 for v in (wheel_hz, drive_hz, engine_hz)):
+        return None
     speed_uncertainty_pct = max(0.0, spec_settings["speed_uncertainty_pct"]) / 100.0
     tire_uncertainty_pct = max(0.0, spec_settings["tire_diameter_uncertainty_pct"]) / 100.0
     final_drive_uncertainty_pct = max(0.0, spec_settings["final_drive_uncertainty_pct"]) / 100.0
