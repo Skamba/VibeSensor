@@ -9,9 +9,13 @@ All tests use direct injection for speed and determinism.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from builders import (
     ALL_WHEEL_SENSORS,
+    CAR_PROFILE_IDS,
+    CAR_PROFILES,
     CORNER_SENSORS,
     SENSOR_FL,
     SENSOR_FR,
@@ -29,14 +33,17 @@ from builders import (
     extract_top,
     make_clock_skew_samples,
     make_dropout_samples,
-    make_dual_fault_samples,
-    make_engine_order_samples,
-    make_fault_samples,
-    make_gain_mismatch_samples,
     make_out_of_order_samples,
+    make_profile_dual_fault_samples,
+    make_profile_engine_order_samples,
+    make_profile_fault_samples,
+    make_profile_gain_mismatch_samples,
+    make_profile_speed_sweep_fault_samples,
     make_road_phase_samples,
     make_speed_jitter_samples,
     make_transient_samples,
+    profile_metadata,
+    profile_wheel_hz,
     run_analysis,
     top_confidence,
 )
@@ -50,8 +57,9 @@ _CORNERS = ["FL", "FR", "RL", "RR"]
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_fault_with_sensor_dropout(corner: str) -> None:
+def test_fault_with_sensor_dropout(corner: str, profile: dict[str, Any]) -> None:
     """Persistent fault on one corner, with dropout on a *different* sensor mid-run.
 
     The dropout sensor goes offline for 10 seconds. The fault should still
@@ -59,7 +67,8 @@ def test_fault_with_sensor_dropout(corner: str) -> None:
     """
     fault_sensor = CORNER_SENSORS[corner]
     dropout_sensor = SENSOR_RR if corner != "RR" else SENSOR_FL
-    base = make_fault_samples(
+    base = make_profile_fault_samples(
+        profile=profile,
         fault_sensor=fault_sensor,
         sensors=_4S,
         speed_kmh=SPEED_HIGH,
@@ -73,7 +82,7 @@ def test_fault_with_sensor_dropout(corner: str) -> None:
         dropout_start_t=15.0,
         dropout_end_t=25.0,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_diagnosis_contract(
         summary,
         expected_source="wheel",
@@ -88,15 +97,17 @@ def test_fault_with_sensor_dropout(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_fault_with_speed_jitter(corner: str) -> None:
+def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
     """Persistent fault with GPS speed jitter (±8 km/h fluctuation).
 
     Despite fluctuating speed readings, the wheel fault should still be detected.
     """
     fault_sensor = CORNER_SENSORS[corner]
     # Create fault samples, then inject speed jitter
-    fault = make_fault_samples(
+    fault = make_profile_fault_samples(
+        profile=profile,
         fault_sensor=fault_sensor,
         sensors=_4S,
         speed_kmh=80.0,
@@ -112,7 +123,7 @@ def test_fault_with_speed_jitter(corner: str) -> None:
         s = {**s, "speed_kmh": max(5.0, s["speed_kmh"] + jitter)}
         jittered.append(s)
 
-    summary = run_analysis(jittered)
+    summary = run_analysis(jittered, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for fault+jitter {corner}"
     assert_wheel_source(summary, msg=f"fault+jitter {corner}")
@@ -124,8 +135,9 @@ def test_fault_with_speed_jitter(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [SPEED_MID, SPEED_HIGH], ids=["mid", "high"])
-def test_diffuse_noise_with_pothole_transients(speed: float) -> None:
+def test_diffuse_noise_with_pothole_transients(speed: float, profile: dict[str, Any]) -> None:
     """Diffuse road noise + pothole-style transient bursts on all sensors.
 
     Should NOT produce a localized wheel fault—road surface is the cause.
@@ -147,7 +159,7 @@ def test_diffuse_noise_with_pothole_transients(speed: float) -> None:
                 spike_freq_hz=20.0,
             )
         )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"diffuse+pothole@{speed}")
 
 
@@ -156,8 +168,9 @@ def test_diffuse_noise_with_pothole_transients(speed: float) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [60.0, 100.0], ids=["60kmh", "100kmh"])
-def test_overlapping_engine_wheel_harmonics(speed: float) -> None:
+def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any]) -> None:
     """Engine-order + wheel-order fault present simultaneously.
 
     At certain speeds engine harmonics can overlap wheel harmonics.
@@ -166,7 +179,8 @@ def test_overlapping_engine_wheel_harmonics(speed: float) -> None:
     samples: list[dict] = []
     # Engine excitation on all sensors
     samples.extend(
-        make_engine_order_samples(
+        make_profile_engine_order_samples(
+            profile=profile,
             sensors=_4S,
             speed_kmh=speed,
             n_samples=15,
@@ -176,7 +190,8 @@ def test_overlapping_engine_wheel_harmonics(speed: float) -> None:
     )
     # Wheel fault on FL
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=SENSOR_FL,
             sensors=_4S,
             speed_kmh=speed,
@@ -186,7 +201,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float) -> None:
             fault_vib_db=28.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for engine+wheel@{speed}"
     # We expect a finding; the fault sensor should be FL
@@ -198,6 +213,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
     "pair,primary",
     [
@@ -206,13 +222,14 @@ def test_overlapping_engine_wheel_harmonics(speed: float) -> None:
     ],
     ids=["FL_RR", "FR_RL"],
 )
-def test_dual_fault_detection(pair: tuple[str, str], primary: str) -> None:
+def test_dual_fault_detection(pair: tuple[str, str], primary: str, profile: dict[str, Any]) -> None:
     """Two sensors have wheel faults simultaneously (primary is stronger).
 
     The analysis should detect at least the primary fault and report
     multiple causes.
     """
-    samples = make_dual_fault_samples(
+    samples = make_profile_dual_fault_samples(
+        profile=profile,
         fault_sensor_1=pair[0],
         fault_sensor_2=pair[1],
         sensors=_4S,
@@ -223,7 +240,7 @@ def test_dual_fault_detection(pair: tuple[str, str], primary: str) -> None:
         fault_vib_db_1=28.0,
         fault_vib_db_2=22.0,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for dual-fault {pair}"
     # The stronger fault should be the primary diagnosis
@@ -238,7 +255,8 @@ def test_dual_fault_detection(pair: tuple[str, str], primary: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_road_phase_smooth_rough_pothole() -> None:
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+def test_road_phase_smooth_rough_pothole(profile: dict[str, Any]) -> None:
     """Smooth → rough → pothole road surface with no real fault.
 
     Should NOT produce a high-confidence wheel fault.
@@ -250,7 +268,7 @@ def test_road_phase_smooth_rough_pothole() -> None:
         rough_n=15,
         pothole_n=4,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg="road-phases")
 
 
@@ -259,11 +277,13 @@ def test_road_phase_smooth_rough_pothole() -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
-def test_fault_with_out_of_order_timestamps(corner: str) -> None:
+def test_fault_with_out_of_order_timestamps(corner: str, profile: dict[str, Any]) -> None:
     """Fault data with some out-of-order timestamps (simulating network reordering)."""
     fault_sensor = CORNER_SENSORS[corner]
-    base = make_fault_samples(
+    base = make_profile_fault_samples(
+        profile=profile,
         fault_sensor=fault_sensor,
         sensors=_4S,
         speed_kmh=SPEED_MID,
@@ -272,7 +292,7 @@ def test_fault_with_out_of_order_timestamps(corner: str) -> None:
         fault_vib_db=28.0,
     )
     samples = make_out_of_order_samples(base_samples=base)
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for ooo-timestamps {corner}"
     assert_wheel_source(summary, msg=f"ooo {corner}")
@@ -284,12 +304,14 @@ def test_fault_with_out_of_order_timestamps(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FR", "RL"])
-def test_fault_with_clock_skew(corner: str) -> None:
+def test_fault_with_clock_skew(corner: str, profile: dict[str, Any]) -> None:
     """Fault with a 0.3s clock skew on one non-fault sensor."""
     fault_sensor = CORNER_SENSORS[corner]
     skew_sensor = SENSOR_RR if corner != "RR" else SENSOR_FL
-    base = make_fault_samples(
+    base = make_profile_fault_samples(
+        profile=profile,
         fault_sensor=fault_sensor,
         sensors=_4S,
         speed_kmh=SPEED_HIGH,
@@ -302,7 +324,7 @@ def test_fault_with_clock_skew(corner: str) -> None:
         skew_sensor=skew_sensor,
         skew_offset_s=0.3,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for clock-skew {corner}"
     assert_wheel_source(summary, msg=f"skew {corner}")
@@ -314,11 +336,13 @@ def test_fault_with_clock_skew(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RL"])
-def test_fault_with_gain_mismatch(corner: str) -> None:
+def test_fault_with_gain_mismatch(corner: str, profile: dict[str, Any]) -> None:
     """Fault sensor has 1.5x gain (different sensitivity). Fault should still be localized."""
     fault_sensor = CORNER_SENSORS[corner]
-    samples = make_gain_mismatch_samples(
+    samples = make_profile_gain_mismatch_samples(
+        profile=profile,
         fault_sensor=fault_sensor,
         sensors=_4S,
         speed_kmh=SPEED_MID,
@@ -327,7 +351,7 @@ def test_fault_with_gain_mismatch(corner: str) -> None:
         fault_vib_db=26.0,
         gain_factor=1.5,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for gain-mismatch {corner}"
     assert_wheel_source(summary, msg=f"gain {corner}")
@@ -339,13 +363,15 @@ def test_fault_with_gain_mismatch(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_pairwise_monotonic_amplitude_4sensor() -> None:
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+def test_pairwise_monotonic_amplitude_4sensor(profile: dict[str, Any]) -> None:
     """Confidence should increase (pairwise) with fault amplitude on 4 sensors."""
     amps = [(0.02, 16.0), (0.04, 20.0), (0.06, 26.0), (0.09, 30.0), (0.12, 34.0)]
     confs: list[float] = []
     labels: list[str] = []
     for amp, vdb in amps:
-        samples = make_fault_samples(
+        samples = make_profile_fault_samples(
+            profile=profile,
             fault_sensor=SENSOR_FL,
             sensors=_4S,
             speed_kmh=SPEED_MID,
@@ -353,7 +379,7 @@ def test_pairwise_monotonic_amplitude_4sensor() -> None:
             fault_amp=amp,
             fault_vib_db=vdb,
         )
-        summary = run_analysis(samples)
+        summary = run_analysis(samples, metadata=profile_metadata(profile))
         confs.append(top_confidence(summary))
         labels.append(f"amp={amp}")
     # Check pairwise monotonic (allowing 0.05 tolerance)
@@ -365,14 +391,16 @@ def test_pairwise_monotonic_amplitude_4sensor() -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
-def test_fault_with_self_dropout(corner: str) -> None:
+def test_fault_with_self_dropout(corner: str, profile: dict[str, Any]) -> None:
     """Fault sensor itself drops out mid-run but has enough data before/after.
 
     Should still detect the fault with reduced confidence.
     """
     fault_sensor = CORNER_SENSORS[corner]
-    base = make_fault_samples(
+    base = make_profile_fault_samples(
+        profile=profile,
         fault_sensor=fault_sensor,
         sensors=_4S,
         speed_kmh=SPEED_HIGH,
@@ -386,7 +414,7 @@ def test_fault_with_self_dropout(corner: str) -> None:
         dropout_start_t=20.0,
         dropout_end_t=30.0,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for self-dropout {corner}"
     # Confidence may be lower due to missing data, but fault should be detected
@@ -398,16 +426,18 @@ def test_fault_with_self_dropout(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_engine_only_no_wheel_fault() -> None:
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+def test_engine_only_no_wheel_fault(profile: dict[str, Any]) -> None:
     """Pure engine-order excitation on all sensors should NOT be a wheel fault."""
-    samples = make_engine_order_samples(
+    samples = make_profile_engine_order_samples(
+        profile=profile,
         sensors=_4S,
         speed_kmh=SPEED_MID,
         n_samples=40,
         engine_amp=0.04,
         engine_vib_db=22.0,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg="engine-only")
 
 
@@ -416,7 +446,8 @@ def test_engine_only_no_wheel_fault() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_speed_jitter_baseline_no_fault() -> None:
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+def test_speed_jitter_baseline_no_fault(profile: dict[str, Any]) -> None:
     """Speed jitter with clean noise → no false fault."""
     samples = make_speed_jitter_samples(
         sensors=_4S,
@@ -424,5 +455,5 @@ def test_speed_jitter_baseline_no_fault() -> None:
         jitter_amplitude=10.0,
         n_samples=40,
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg="speed-jitter-baseline")
