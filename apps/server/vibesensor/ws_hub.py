@@ -41,6 +41,7 @@ def sanitize_for_json(obj: Any) -> Any:
     cleaned = _walk(obj)
     return cleaned, found_non_finite
 
+
 # Timing constants for WebSocket broadcast
 _SEND_TIMEOUT_S: float = 0.5
 """Per-connection send timeout; connections exceeding this are dropped."""
@@ -160,11 +161,7 @@ class WebSocketHub:
                 await self.remove(ws)
         if failed_client_ids:
             # Count how many connections were affected by build failures.
-            affected = sum(
-                1
-                for c in conns
-                if c.selected_client_id in failed_client_ids
-            )
+            affected = sum(1 for c in conns if c.selected_client_id in failed_client_ids)
             LOGGER.error(
                 "Payload build failed for %d client id(s) (%s); "
                 "%d connection(s) received error payloads.",

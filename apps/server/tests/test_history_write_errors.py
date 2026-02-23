@@ -40,11 +40,14 @@ class _FakeRegistry:
                     "strength_metrics": {
                         "vibration_strength_db": 22.0,
                         "strength_bucket": "l2",
-                        "top_peaks": [{
-                            "hz": 15.0, "amp": 0.12,
-                            "vibration_strength_db": 22.0,
-                            "strength_bucket": "l2",
-                        }],
+                        "top_peaks": [
+                            {
+                                "hz": 15.0,
+                                "amp": 0.12,
+                                "vibration_strength_db": 22.0,
+                                "strength_bucket": "l2",
+                            }
+                        ],
                         "combined_spectrum_amp_g": [],
                     },
                     "combined": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
@@ -236,8 +239,7 @@ class TestDroppedSamplesLogged:
             logger._append_records(run_id, start_utc, start_mono)
             # Verify warning about dropped samples was logged
             warning_calls = [
-                call for call in mock_logger.warning.call_args_list
-                if "Dropping" in str(call)
+                call for call in mock_logger.warning.call_args_list if "Dropping" in str(call)
             ]
             assert len(warning_calls) > 0, "Expected warning about dropped samples"
         # append_samples should NOT have been called since run was never created

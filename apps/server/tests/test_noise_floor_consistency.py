@@ -16,6 +16,7 @@ from vibesensor.processing import SignalProcessor
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _core_noise_floor_from_array(arr: np.ndarray) -> float:
     """Replicate the band/finite filtering that _noise_floor does, then call
     the core lib — used as the expected-value oracle."""
@@ -47,14 +48,13 @@ def test_live_matches_core_random(n: int) -> None:
     live = SignalProcessor._noise_floor(amps)
     expected = _core_noise_floor_from_array(amps)
 
-    assert live == pytest.approx(expected, abs=1e-9), (
-        f"n={n}: live={live}, core={expected}"
-    )
+    assert live == pytest.approx(expected, abs=1e-9), f"n={n}: live={live}, core={expected}"
 
 
 # ---------------------------------------------------------------------------
 # Edge cases
 # ---------------------------------------------------------------------------
+
 
 def test_consistency_empty() -> None:
     arr = np.array([], dtype=np.float32)

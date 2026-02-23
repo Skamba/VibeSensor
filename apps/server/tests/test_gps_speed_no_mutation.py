@@ -28,10 +28,7 @@ class TestResolveSpeedPure:
     @staticmethod
     def _snapshot(m: GPSSpeedMonitor) -> dict:
         """Capture all mutable public attributes."""
-        return {
-            k: copy.deepcopy(v)
-            for k, v in m.__dict__.items()
-        }
+        return {k: copy.deepcopy(v) for k, v in m.__dict__.items()}
 
     def test_fresh_gps_no_mutation(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)

@@ -527,14 +527,9 @@ class MetricsLogger:
         if prebuilt_rows is not None:
             # Re-stamp t_s and timestamp_utc for the recording time-base;
             # avoids a second expensive _build_sample_records() call.
-            rows = [
-                {**row, "t_s": t_s, "timestamp_utc": timestamp_utc}
-                for row in prebuilt_rows
-            ]
+            rows = [{**row, "t_s": t_s, "timestamp_utc": timestamp_utc} for row in prebuilt_rows]
         else:
-            rows = self._build_sample_records(
-                run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc
-            )
+            rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
         if rows:
             self._last_data_progress_mono_s = now_mono_s
             if self._history_db is not None and self._persist_history_db:

@@ -368,6 +368,5 @@ def test_persist_failure_logs_error(tmp_path: Path, caplog: pytest.LogCaptureFix
         store.set_speed_unit("mps")
 
     assert any(
-        "Failed to persist" in rec.message and rec.levelname == "ERROR"
-        for rec in caplog.records
+        "Failed to persist" in rec.message and rec.levelname == "ERROR" for rec in caplog.records
     )

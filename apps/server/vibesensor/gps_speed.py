@@ -17,6 +17,7 @@ class SpeedResolution(NamedTuple):
     fallback_active: bool
     source: str  # "manual", "gps", "fallback_manual", "none"
 
+
 LOGGER = logging.getLogger(__name__)
 
 _GPS_DISABLED_POLL_S: float = 5.0
@@ -200,9 +201,7 @@ class GPSSpeedMonitor:
             "effective_speed_kmh": effective_speed_kmh,
             "last_error": self.last_error,
             "reconnect_delay_s": (
-                round(self.current_reconnect_delay, 1)
-                if conn_state == "disconnected"
-                else None
+                round(self.current_reconnect_delay, 1) if conn_state == "disconnected" else None
             ),
             "fallback_active": resolution.fallback_active,
             "stale_timeout_s": self.stale_timeout_s,

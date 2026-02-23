@@ -135,12 +135,14 @@ def _classify_sample_phase(
 # SPEED_UNKNOWN interpolation
 # ---------------------------------------------------------------------------
 
-_MOVING_PHASES = frozenset({
-    DrivingPhase.ACCELERATION,
-    DrivingPhase.CRUISE,
-    DrivingPhase.DECELERATION,
-    DrivingPhase.COAST_DOWN,
-})
+_MOVING_PHASES = frozenset(
+    {
+        DrivingPhase.ACCELERATION,
+        DrivingPhase.CRUISE,
+        DrivingPhase.DECELERATION,
+        DrivingPhase.COAST_DOWN,
+    }
+)
 
 
 def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
