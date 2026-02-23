@@ -16,7 +16,7 @@ constexpr char kClientName[] = "vibe-node";
 constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
 
 #ifndef VIBESENSOR_SAMPLE_RATE_HZ
-#define VIBESENSOR_SAMPLE_RATE_HZ 400
+#define VIBESENSOR_SAMPLE_RATE_HZ 800
 #endif
 #ifndef VIBESENSOR_FRAME_SAMPLES
 #define VIBESENSOR_FRAME_SAMPLES 200

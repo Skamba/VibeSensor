@@ -1,7 +1,7 @@
 # ESP32 Firmware
 
 PlatformIO firmware for M5Stack ATOM Lite (ESP32-PICO) that reads an ADXL345
-accelerometer at 400 Hz and streams samples to the Pi server over UDP.
+accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 
 ## Features
 
@@ -10,7 +10,7 @@ accelerometer at 400 Hz and streams samples to the Pi server over UDP.
 - Buffered frame queue to reduce sample loss during short Wi-Fi stalls
 - UDP command listener for identify blink with ACK response
 - Identify command triggers RGB LED wave animation on ATOM LEDs
-- ADXL345 I2C driver at 400 Hz with error-checked initialisation
+- ADXL345 I2C driver at 800 Hz with error-checked initialisation
 - No synthetic vibration injection in production builds
 
 Authoritative protocol and port contract: `docs/protocol.md`
