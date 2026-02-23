@@ -6,10 +6,10 @@ from collections import defaultdict
 from statistics import mean
 from typing import TYPE_CHECKING
 
-from ..report_theme import (
+from ..runlog import as_float_or_none as _as_float
+from .theme import (
     FINDING_SOURCE_COLORS,
 )
-from ..runlog import as_float_or_none as _as_float
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -21,7 +21,6 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
 from ..report_i18n import tr as _tr
-from ..report_theme import REPORT_COLORS
 from .pdf_diagram import car_location_diagram
 from .pdf_helpers import location_hotspots
 from .report_data import (
@@ -31,6 +30,7 @@ from .report_data import (
     SystemFindingCard,
     map_summary,
 )
+from .theme import REPORT_COLORS
 
 LOGGER = logging.getLogger(__name__)
 
