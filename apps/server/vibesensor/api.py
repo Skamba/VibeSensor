@@ -655,6 +655,10 @@ def create_router(state: RuntimeState) -> APIRouter:
             raise HTTPException(
                 status_code=409, detail="Cannot delete the active run; stop recording first"
             )
+        if state.history_db.get_run_status(run_id) == "analyzing":
+            raise HTTPException(
+                status_code=409, detail="Cannot delete run while analysis is in progress"
+            )
         deleted = state.history_db.delete_run(run_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Run not found")

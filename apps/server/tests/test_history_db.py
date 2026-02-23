@@ -77,6 +77,21 @@ def test_iter_run_samples_batches(tmp_path: Path) -> None:
     assert [len(batch) for batch in batches] == [4, 4, 3]
 
 
+def test_read_transaction_blocks_concurrent_delete_during_iteration(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-tx", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-tx", [{"i": i} for i in range(10)])
+    seen: list[int] = []
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with db.read_transaction():
+            delete_future = pool.submit(db.delete_run, "run-tx")
+            for batch in db.iter_run_samples("run-tx", batch_size=3):
+                seen.extend(int(row["i"]) for row in batch)
+            assert not delete_future.done()
+        assert delete_future.result(timeout=2.0) is True
+    assert seen == list(range(10))
+
+
 def test_list_runs_uses_incremental_sample_count(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-4", "2026-01-01T00:00:00Z", {"source": "test"})
@@ -149,6 +164,15 @@ def test_run_status_transitions(tmp_path: Path) -> None:
     db.finalize_run("run-err", "2026-01-01T00:10:00Z")
     db.store_analysis_error("run-err", "something went wrong")
     assert db.get_run_status("run-err") == "error"
+
+
+def test_update_run_metadata_overwrites_stored_metadata(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-meta", "2026-01-01T00:00:00Z", {"tire_width_mm": 245.0})
+    assert db.update_run_metadata("run-meta", {"tire_width_mm": 285.0}) is True
+    run = db.get_run("run-meta")
+    assert run is not None
+    assert run["metadata"]["tire_width_mm"] == 285.0
 
 
 def test_append_empty_samples_is_noop(tmp_path: Path) -> None:
@@ -253,3 +277,28 @@ def test_read_only_operations_do_not_commit(tmp_path: Path) -> None:
 
     db.set_setting("mode", {"enabled": False})
     assert proxy.commit_calls == 1
+
+
+def test_create_run_sanitizes_non_finite_metadata(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-nan", "2026-01-01T00:00:00Z", {"tire_circumference_m": float("nan")})
+    run = db.get_run("run-nan")
+    assert run is not None
+    assert run["metadata"]["tire_circumference_m"] is None
+
+
+def test_iter_run_samples_skips_corrupt_rows_and_continues(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-corrupt", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-corrupt", [{"i": 1}, {"i": 2}])
+    with db._cursor() as cur:
+        cur.execute(
+            "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
+            ("run-corrupt", "{bad"),
+        )
+    db.append_samples("run-corrupt", [{"i": 3}])
+
+    rows = [
+        sample for batch in db.iter_run_samples("run-corrupt", batch_size=2) for sample in batch
+    ]
+    assert [row["i"] for row in rows] == [1, 2, 3]

@@ -6,6 +6,7 @@ import math
 import time
 from collections import deque
 from collections.abc import Callable
+from contextlib import nullcontext
 from itertools import islice
 from pathlib import Path
 from threading import RLock, Thread
@@ -580,6 +581,11 @@ class MetricsLogger:
         end_utc = utc_now_iso()
         if self._history_db is not None:
             try:
+                update_metadata = getattr(self._history_db, "update_run_metadata", None)
+                if callable(update_metadata):
+                    start_time_utc = self._run_start_utc or end_utc
+                    latest_metadata = self._run_metadata_record(self._run_id, start_time_utc)
+                    update_metadata(self._run_id, latest_metadata)
                 self._history_db.finalize_run(self._run_id, end_utc)
                 self._clear_last_write_error()
             except Exception as exc:
@@ -668,15 +674,18 @@ class MetricsLogger:
             samples: list[dict[str, object]] = []
             total_sample_count = 0
             stride = 1
-            for batch in self._history_db.iter_run_samples(run_id, batch_size=1024):
-                for sample in batch:
-                    total_sample_count += 1
-                    if (total_sample_count - 1) % stride != 0:
-                        continue
-                    samples.append(normalize_sample_record(sample))
-                    if len(samples) > _MAX_POST_ANALYSIS_SAMPLES:
-                        samples = samples[::2]
-                        stride *= 2
+            read_tx = getattr(self._history_db, "read_transaction", None)
+            tx_ctx = read_tx() if callable(read_tx) else nullcontext()
+            with tx_ctx:
+                for batch in self._history_db.iter_run_samples(run_id, batch_size=1024):
+                    for sample in batch:
+                        total_sample_count += 1
+                        if (total_sample_count - 1) % stride != 0:
+                            continue
+                        samples.append(normalize_sample_record(sample))
+                        if len(samples) > _MAX_POST_ANALYSIS_SAMPLES:
+                            samples = samples[::2]
+                            stride *= 2
             if not samples:
                 LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
                 self._history_db.store_analysis_error(run_id, "No samples collected during run")
@@ -755,7 +764,8 @@ class MetricsLogger:
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
                     run_id, start_time_utc, start_mono_s = snapshot
-                    no_data_timeout = self._append_records(
+                    no_data_timeout = await asyncio.to_thread(
+                        self._append_records,
                         run_id,
                         start_time_utc,
                         start_mono_s,
