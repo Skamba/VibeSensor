@@ -1392,7 +1392,8 @@ def _build_findings(
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)
-    analysis_samples = diagnostic_samples if len(diagnostic_samples) >= 5 else samples
+    use_filtered_samples = len(diagnostic_samples) >= 5
+    analysis_samples = diagnostic_samples if use_filtered_samples else samples
     # Compute per-sample phases aligned with analysis_samples for phase-evidence tracking.
     if analysis_samples is diagnostic_samples:
         analysis_phases: list = [
@@ -1435,7 +1436,7 @@ def _build_findings(
             accel_units=accel_units,
             lang=lang,
             per_sample_phases=analysis_phases,
-            run_noise_baseline_g=(run_noise_baseline_g if analysis_samples is samples else None),
+            run_noise_baseline_g=(run_noise_baseline_g if not use_filtered_samples else None),
         )
     )
 
