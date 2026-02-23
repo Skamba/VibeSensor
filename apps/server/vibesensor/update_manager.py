@@ -624,8 +624,7 @@ class UpdateManager:
                 if "No network with SSID" not in (stderr or ""):
                     break
                 self._log(
-                    f"SSID '{ssid}' not found on connect attempt {attempt}; "
-                    "rescanning and retrying"
+                    f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying"
                 )
                 await self._run_cmd(
                     [

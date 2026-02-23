@@ -368,10 +368,7 @@ class TestUpdateManagerAsync:
         sudo_git_calls = [
             c[0]
             for c in runner.calls
-            if len(c[0]) >= 4
-            and c[0][0] == "sudo"
-            and c[0][2] == "git"
-            and c[0][3] == "-C"
+            if len(c[0]) >= 4 and c[0][0] == "sudo" and c[0][2] == "git" and c[0][3] == "-C"
         ]
         assert sudo_git_calls, "Expected updater to run git via sudo wrapper"
         uplink_connect_calls = [
