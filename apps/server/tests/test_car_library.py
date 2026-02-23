@@ -119,3 +119,24 @@ def test_tire_option_name_format() -> None:
     for entry in CAR_LIBRARY:
         for opt in entry["tire_options"]:
             assert re.search(r'\d+"$', opt["name"]), f"Bad name format: {opt['name']}"
+
+
+def test_car_library_models_response_accepts_actual_data() -> None:
+    """CarLibraryModelsResponse must accept the dicts returned by get_models_for_brand_type (GH-307)."""
+    from vibesensor.api import CarLibraryModelsResponse
+
+    models = get_models_for_brand_type("BMW", "Sedan")
+    assert len(models) > 0
+
+    # This must not raise a Pydantic ValidationError
+    resp = CarLibraryModelsResponse(models=models)
+    assert len(resp.models) == len(models)
+    for m in resp.models:
+        assert m.brand == "BMW"
+        assert m.type == "Sedan"
+        assert isinstance(m.model, str)
+        assert len(m.gearboxes) > 0
+        assert len(m.tire_options) > 0
+        assert m.tire_width_mm > 0
+        assert m.tire_aspect_pct > 0
+        assert m.rim_in > 0
