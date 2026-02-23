@@ -42,6 +42,9 @@ class ClientBuffer:
     latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
     latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
     last_ingest_mono_s: float = 0.0
+    # Generation counters: ingest_generation increments on new samples,
+    # compute_generation marks which ingest generation metrics reflect, and
+    # spectrum_generation marks spectrum snapshot updates for payload caching.
     ingest_generation: int = 0
     compute_generation: int = -1
     compute_sample_rate_hz: int = 0
@@ -299,6 +302,8 @@ class SignalProcessor:
         if sample_rate_hz is not None and sample_rate_hz > 0:
             buf.sample_rate_hz = int(sample_rate_hz)
         sr = buf.sample_rate_hz or self.sample_rate_hz
+        # Fast-path: no new ingested samples at this sample-rate, so keep the
+        # previously computed metrics/spectrum snapshot for payload reuse.
         if buf.compute_generation == buf.ingest_generation and buf.compute_sample_rate_hz == sr:
             return buf.latest_metrics
 

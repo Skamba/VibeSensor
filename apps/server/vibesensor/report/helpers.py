@@ -331,7 +331,8 @@ def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
 
     Policy: accept strictly positive ``strength_floor_amp_g``; otherwise
     fall back to P20 of strictly positive top-peak amplitudes when at least
-    three peaks are available.
+    three peaks are available (keeps floor estimation aligned with existing
+    run-baseline guards and avoids unstable sparse-peak fallbacks).
     """
     floor_amp = _as_float(sample.get("strength_floor_amp_g"))
     if floor_amp is not None and floor_amp > 0:
@@ -339,7 +340,7 @@ def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
     peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
     if len(peak_amps) < 3:
         return None
-    floor_from_peaks = percentile(peak_amps, 0.20) if len(peak_amps) >= 2 else peak_amps[0]
+    floor_from_peaks = percentile(peak_amps, 0.20)
     return float(floor_from_peaks) if floor_from_peaks > 0 else None
 
 
