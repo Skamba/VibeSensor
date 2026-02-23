@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import threading
 import time
 from dataclasses import dataclass
@@ -859,3 +860,41 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     assert stored["analysis_metadata"]["sampling_method"].startswith("stride_")
     suitability_checks = {str(item.get("check_key")) for item in stored.get("run_suitability", [])}
     assert "SUITABILITY_CHECK_ANALYSIS_SAMPLING" in suitability_checks
+
+
+@pytest.mark.asyncio
+async def test_run_offloads_append_records_with_to_thread(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_FakeRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+        history_db=_FakeHistoryDB(),
+    )
+    logger.start_logging()
+    captured: dict[str, object] = {}
+
+    async def _fake_to_thread(func, *args, **kwargs):  # type: ignore[no-untyped-def]
+        captured["func"] = func
+        captured["args"] = args
+        captured["kwargs"] = kwargs
+        return False
+
+    async def _cancel_sleep(_interval: float) -> None:
+        raise asyncio.CancelledError()
+
+    monkeypatch.setattr("vibesensor.metrics_log.asyncio.to_thread", _fake_to_thread)
+    monkeypatch.setattr("vibesensor.metrics_log.asyncio.sleep", _cancel_sleep)
+
+    with pytest.raises(asyncio.CancelledError):
+        await logger.run()
+
+    assert captured.get("func") == logger._append_records
