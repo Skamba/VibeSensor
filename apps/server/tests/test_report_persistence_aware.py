@@ -22,6 +22,7 @@ from vibesensor.report.plot_data import (
     _top_peaks_table_rows,
 )
 from vibesensor.report.summary import (
+    _annotate_peaks_with_order_labels,
     build_findings_for_samples,
     summarize_run_data,
 )
@@ -1068,3 +1069,133 @@ class TestPersistentPeakFindingsPhaseAwareness:
             assert f.get("phase_presence") is None, (
                 "phase_presence should be None when per_sample_phases length does not match samples"
             )
+
+
+# ---------------------------------------------------------------------------
+# _annotate_peaks_with_order_labels
+# ---------------------------------------------------------------------------
+
+
+class TestAnnotatePeaksWithOrderLabels:
+    """Tests for the post-processing step that back-fills order labels onto peaks."""
+
+    def test_order_label_populated_from_finding(self) -> None:
+        """Peak row near the finding's median matched_hz gets the order label."""
+        summary: dict = {
+            "findings": [
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "1x wheel order",
+                    "matched_points": [
+                        {"matched_hz": 10.8},
+                        {"matched_hz": 11.0},
+                        {"matched_hz": 11.2},
+                    ],
+                },
+            ],
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 11.0, "order_label": ""},
+                    {"frequency_hz": 25.0, "order_label": ""},
+                ],
+            },
+        }
+        _annotate_peaks_with_order_labels(summary)
+        assert summary["plots"]["peaks_table"][0]["order_label"] == "1x wheel order"
+        assert summary["plots"]["peaks_table"][1]["order_label"] == ""
+
+    def test_no_annotation_when_frequency_too_far(self) -> None:
+        """Peak rows outside tolerance are not annotated."""
+        summary: dict = {
+            "findings": [
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "1x wheel order",
+                    "matched_points": [{"matched_hz": 50.0}],
+                },
+            ],
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 11.0, "order_label": ""},
+                ],
+            },
+        }
+        _annotate_peaks_with_order_labels(summary)
+        assert summary["plots"]["peaks_table"][0]["order_label"] == ""
+
+    def test_no_crash_when_no_findings(self) -> None:
+        """Gracefully handles missing/empty findings."""
+        summary: dict = {
+            "findings": [],
+            "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}]},
+        }
+        _annotate_peaks_with_order_labels(summary)
+        assert summary["plots"]["peaks_table"][0]["order_label"] == ""
+
+    def test_no_crash_when_no_plots(self) -> None:
+        """Gracefully handles missing plots."""
+        summary: dict = {"findings": []}
+        _annotate_peaks_with_order_labels(summary)  # should not raise
+
+    def test_f_peak_findings_ignored(self) -> None:
+        """Non-order findings (F_PEAK) do not annotate peaks."""
+        summary: dict = {
+            "findings": [
+                {
+                    "finding_id": "F_PEAK",
+                    "frequency_hz_or_order": "41.0 Hz",
+                    "matched_points": [{"matched_hz": 41.0}],
+                },
+            ],
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 41.0, "order_label": ""},
+                ],
+            },
+        }
+        _annotate_peaks_with_order_labels(summary)
+        assert summary["plots"]["peaks_table"][0]["order_label"] == ""
+
+    def test_multiple_order_findings_annotate_different_peaks(self) -> None:
+        """Two order findings annotate two different peak rows."""
+        summary: dict = {
+            "findings": [
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "1x wheel order",
+                    "matched_points": [{"matched_hz": 11.0}],
+                },
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "2x engine order",
+                    "matched_points": [{"matched_hz": 25.0}],
+                },
+            ],
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 11.0, "order_label": ""},
+                    {"frequency_hz": 25.0, "order_label": ""},
+                    {"frequency_hz": 60.0, "order_label": ""},
+                ],
+            },
+        }
+        _annotate_peaks_with_order_labels(summary)
+        assert summary["plots"]["peaks_table"][0]["order_label"] == "1x wheel order"
+        assert summary["plots"]["peaks_table"][1]["order_label"] == "2x engine order"
+        assert summary["plots"]["peaks_table"][2]["order_label"] == ""
+
+    def test_fallback_still_works_in_report_data(self) -> None:
+        """Peaks without order_label still fall back to classification in report_data mapping."""
+        summary: dict = {
+            "findings": [],
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 11.0, "order_label": "", "peak_classification": "patterned"},
+                ],
+            },
+        }
+        _annotate_peaks_with_order_labels(summary)
+        row = summary["plots"]["peaks_table"][0]
+        order_label = str(row.get("order_label") or "").strip()
+        # Empty order_label means report_data.py will use classification as fallback
+        assert order_label == ""
