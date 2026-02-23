@@ -245,6 +245,19 @@ def _peak_classification_text(value: object, tr: Callable[..., str] | None = Non
     return "persistent"
 
 
+def _has_relevant_reference_gap(findings: list[dict], primary_source: object) -> bool:
+    src = str(primary_source or "").strip().lower()
+    for finding in findings:
+        fid = str(finding.get("finding_id") or "").strip().upper()
+        if fid in {"REF_SPEED", "REF_SAMPLE_RATE"}:
+            return True
+        if fid == "REF_WHEEL" and src in {"wheel/tire", "driveline"}:
+            return True
+        if fid == "REF_ENGINE" and src == "engine":
+            return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Summary → template data mapper
 # ---------------------------------------------------------------------------
@@ -303,7 +316,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
     primary_candidates = top_causes or findings_non_ref
     if primary_candidates:
         tc = primary_candidates[0]
-        primary_system = _human_source(tc.get("source") or tc.get("suspected_source"), tr=tr)
+        primary_source = tc.get("source") or tc.get("suspected_source")
+        primary_system = _human_source(primary_source, tr=tr)
         primary_location = origin_location or str(tc.get("strongest_location") or tr("UNKNOWN"))
         primary_speed = str(
             tc.get("strongest_speed_band")
@@ -313,6 +327,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         )
         conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
     else:
+        primary_source = None
         primary_system = tr("UNKNOWN")
         primary_location = origin_location or tr("UNKNOWN")
         primary_speed = tr("UNKNOWN")
@@ -324,7 +339,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     steady = bool(speed_stats.get("steady_speed"))
     weak_spatial = bool(top_causes[0].get("weak_spatial_separation") if top_causes else False)
     sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
-    has_ref_gaps = any(str(f.get("finding_id", "")).startswith("REF_") for f in findings)
+    has_ref_gaps = _has_relevant_reference_gap(findings, primary_source)
 
     cert_key, cert_label_text, cert_pct, cert_reason = certainty_label(
         conf,
