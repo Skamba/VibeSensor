@@ -1085,3 +1085,104 @@ def assert_diagnosis_contract(
 
     # Warnings list
     assert_has_warnings(summary, msg=msg)
+
+
+# ---------------------------------------------------------------------------
+# Forbidden / allowed system assertion helpers (for negative testing)
+# ---------------------------------------------------------------------------
+
+
+def assert_forbidden_systems(
+    summary: dict[str, Any],
+    forbidden: list[str],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert that none of the *forbidden* source keywords appear at or above threshold.
+
+    Each entry in *forbidden* is matched case-insensitively against the source
+    field of every top-cause.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        for keyword in forbidden:
+            if keyword.lower() in src and conf >= confidence_threshold:
+                loc = c.get("strongest_location") or ""
+                raise AssertionError(
+                    f"Forbidden system '{keyword}' found: {src} @ {loc} "
+                    f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
+                )
+
+
+def assert_only_allowed_systems(
+    summary: dict[str, Any],
+    allowed: list[str],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert that ONLY sources matching *allowed* keywords appear at or above threshold.
+
+    Any source at/above threshold that does not match any allowed keyword triggers
+    a failure.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        if conf < confidence_threshold:
+            continue
+        if not any(kw.lower() in src for kw in allowed):
+            loc = c.get("strongest_location") or ""
+            raise AssertionError(
+                f"Unexpected system '{src}' @ {loc} conf={conf:.3f} "
+                f"(allowed={allowed}, threshold={confidence_threshold}). {msg}"
+            )
+
+
+def assert_no_persistent_fault(
+    summary: dict[str, Any],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert no source is diagnosed as a persistent fault above threshold.
+
+    Use for transient-only and no-fault scenarios.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        if conf >= confidence_threshold:
+            loc = c.get("strongest_location") or ""
+            raise AssertionError(
+                f"Unexpected persistent fault: {src} @ {loc} "
+                f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
+            )
+
+
+def assert_no_localized_wheel(
+    summary: dict[str, Any],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert no wheel/tire source is localized to a specific corner above threshold.
+
+    Use for diffuse excitation scenarios where wheel-localization would be a
+    false positive.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        if "wheel" in src and conf >= confidence_threshold:
+            loc = c.get("strongest_location") or ""
+            if loc:  # has a location → localized → false positive
+                raise AssertionError(
+                    f"Wheel/tire falsely localized to '{loc}' conf={conf:.3f}. {msg}"
+                )
