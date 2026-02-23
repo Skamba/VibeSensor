@@ -385,9 +385,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
           && state.manualSpeedKph > 0
           && status.connection_state !== "connected"
         );
-      if (typeof status.effective_speed_kmh === "number" && Number.isFinite(status.effective_speed_kmh)) {
-        state.speedMps = status.effective_speed_kmh / 3.6;
-      }
       renderGpsStatus(status);
       ctx.renderSpeedReadout();
       const interval = status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;
