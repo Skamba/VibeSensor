@@ -210,11 +210,12 @@ class SpeedSourceConfig:
         src = data.get("speedSource")
         if isinstance(src, str) and src in VALID_SPEED_SOURCES:
             self.speed_source = src
-        manual = data.get("manualSpeedKph")
-        if manual is None:
-            self.manual_speed_kph = None
-        else:
-            self.manual_speed_kph = _parse_manual_speed(manual)
+        if "manualSpeedKph" in data:
+            manual = data["manualSpeedKph"]
+            if manual is None:
+                self.manual_speed_kph = None
+            else:
+                self.manual_speed_kph = _parse_manual_speed(manual)
         obd2 = data.get("obd2Config")
         if isinstance(obd2, dict):
             self.obd2_config = obd2

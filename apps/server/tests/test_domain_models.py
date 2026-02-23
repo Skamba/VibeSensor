@@ -192,6 +192,31 @@ class TestSpeedSourceConfig:
         assert ssc.speed_source == "manual"
         assert ssc.manual_speed_kph == 50.0
 
+    def test_apply_update_partial_preserves_manual_speed(self) -> None:
+        """Partial update without manualSpeedKph must NOT reset the value."""
+        ssc = SpeedSourceConfig.default()
+        ssc.apply_update({"speedSource": "manual", "manualSpeedKph": 80.0})
+        assert ssc.manual_speed_kph == 80.0
+        # Partial update that omits manualSpeedKph entirely
+        ssc.apply_update({"staleTimeoutS": 5})
+        assert ssc.manual_speed_kph == 80.0, "manual_speed_kph was reset by partial update"
+
+    def test_apply_update_explicit_manual_speed_change(self) -> None:
+        """Explicitly sending manualSpeedKph updates the value."""
+        ssc = SpeedSourceConfig.default()
+        ssc.apply_update({"manualSpeedKph": 80.0})
+        assert ssc.manual_speed_kph == 80.0
+        ssc.apply_update({"manualSpeedKph": 100.0})
+        assert ssc.manual_speed_kph == 100.0
+
+    def test_apply_update_explicit_null_clears_manual_speed(self) -> None:
+        """Explicitly sending manualSpeedKph=None clears the value."""
+        ssc = SpeedSourceConfig.default()
+        ssc.apply_update({"manualSpeedKph": 80.0})
+        assert ssc.manual_speed_kph == 80.0
+        ssc.apply_update({"manualSpeedKph": None})
+        assert ssc.manual_speed_kph is None
+
 
 # ---------------------------------------------------------------------------
 # RunMetadata
