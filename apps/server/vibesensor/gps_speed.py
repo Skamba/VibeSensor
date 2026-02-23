@@ -267,12 +267,12 @@ class GPSSpeedMonitor:
                     writer_closed = True
                 self.speed_mps = None
                 raise
-            except Exception as exc:
+            except (OSError, TimeoutError, ConnectionError) as exc:
                 self.speed_mps = None
                 self.connection_state = "disconnected"
                 self.last_error = str(exc) or type(exc).__name__
                 self.current_reconnect_delay = reconnect_delay
-                LOGGER.debug("GPS connection lost, retrying in %gs", reconnect_delay)
+                LOGGER.warning("GPS connection lost, retrying in %gs", reconnect_delay)
                 await asyncio.sleep(reconnect_delay)
                 reconnect_delay = min(_GPS_RECONNECT_MAX_DELAY_S, reconnect_delay * 2.0)
             finally:
