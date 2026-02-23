@@ -12,6 +12,7 @@ from ..runlog import as_float_or_none as _as_float
 from .findings import _classify_peak_type
 from .helpers import (
     _amplitude_weighted_speed_window,
+    _estimate_strength_floor_amp_g,
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
     _sample_top_peaks,
@@ -106,13 +107,7 @@ def _spectrogram_from_peaks(
             speed_values.append(speed)
         if not peaks:
             continue
-        floor_amp = _as_float(sample.get("strength_floor_amp_g"))
-        if floor_amp is None or floor_amp <= 0:
-            peak_amps = sorted(amp for _hz, amp in peaks if amp > 0)
-            if len(peak_amps) >= 3:
-                floor_amp = percentile(peak_amps, 0.20)
-            elif peak_amps:
-                floor_amp = peak_amps[0]
+        floor_amp = _estimate_strength_floor_amp_g(sample)
         for hz, amp in peaks:
             if hz <= 0 or amp <= 0:
                 continue
@@ -283,8 +278,8 @@ def _top_peaks_table_rows(
                 },
             )
             bucket["amps"].append(amp)
-            floor_amp = _as_float(sample.get("strength_floor_amp_g"))
-            if floor_amp is not None and floor_amp >= 0:
+            floor_amp = _estimate_strength_floor_amp_g(sample)
+            if floor_amp is not None:
                 bucket["floor_amps"].append(floor_amp)
             if speed is not None and speed > 0:
                 bucket["speeds"].append(speed)
