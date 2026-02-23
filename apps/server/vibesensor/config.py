@@ -18,6 +18,8 @@ LOGGER = logging.getLogger(__name__)
 DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
 DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
 
+VALID_24GHZ_CHANNELS: set[int] = set(range(1, 15))  # 1-14
+
 DEFAULT_CONFIG: dict[str, Any] = {
     "ap": {
         "ssid": "VibeSensor",
@@ -211,12 +213,18 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     if accel_scale is not None and accel_scale <= 0:
         accel_scale = None
 
+    ap_channel = int(merged["ap"]["channel"])
+    if ap_channel not in VALID_24GHZ_CHANNELS:
+        raise ValueError(
+            f"ap.channel must be 1-14 for 2.4 GHz, got {ap_channel}"
+        )
+
     app_config = AppConfig(
         ap=APConfig(
             ssid=str(merged["ap"]["ssid"]),
             psk=str(merged["ap"]["psk"]),
             ip=str(merged["ap"]["ip"]),
-            channel=int(merged["ap"]["channel"]),
+            channel=ap_channel,
             ifname=str(merged["ap"]["ifname"]),
             con_name=str(merged["ap"]["con_name"]),
             self_heal=APSelfHealConfig(
