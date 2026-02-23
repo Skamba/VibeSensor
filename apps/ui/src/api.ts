@@ -14,6 +14,12 @@ export {
   getSettingsSpeedSource,
   updateSettingsSpeedSource,
   getSpeedSourceStatus,
+  getEspFlashPorts,
+  startEspFlash,
+  getEspFlashStatus,
+  getEspFlashLogs,
+  cancelEspFlash,
+  getEspFlashHistory,
 } from "./api/settings";
 export { getCarLibraryBrands, getCarLibraryTypes, getCarLibraryModels } from "./api/car_library";
 export {
@@ -26,4 +32,10 @@ export {
 export { getClientLocations, setClientLocation, identifyClient, removeClient } from "./api/clients";
 export { getLoggingStatus, startLoggingRun, stopLoggingRun } from "./api/logging";
 export { getUpdateStatus, startUpdate, cancelUpdate } from "./api/settings";
-export type { UpdateStatusPayload, UpdateIssue, SpeedSourceStatusPayload } from "./api/types";
+export type {
+  UpdateStatusPayload,
+  UpdateIssue,
+  SpeedSourceStatusPayload,
+  EspFlashStatusPayload,
+  EspSerialPortPayload,
+} from "./api/types";

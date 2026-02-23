@@ -218,6 +218,9 @@
           <button type="button" class="settings-tab" data-settings-tab="updateTab" role="tab" aria-controls="updateTab" aria-selected="false" tabindex="-1">
             <span data-i18n="settings.tab.update">Update</span>
           </button>
+          <button type="button" class="settings-tab" data-settings-tab="espFlashTab" role="tab" aria-controls="espFlashTab" aria-selected="false" tabindex="-1">
+            <span data-i18n="settings.tab.esp_flash">ESP Flash</span>
+          </button>
         </nav>
 
         <!-- Car Tab -->
@@ -456,6 +459,32 @@
 
             <div id="updateStatusPanel" style="margin-top:1.5rem;">
               <!-- Rendered dynamically by update_feature.ts -->
+            </div>
+          </div>
+        </div>
+
+        <div id="espFlashTab" class="settings-tab-panel" role="tabpanel" hidden>
+          <div class="panel card">
+            <strong data-i18n="settings.esp_flash.title">ESP Flash</strong>
+            <div class="subtle" data-i18n="settings.esp_flash.hint">Flash ESP firmware from local source on this Pi.</div>
+            <div class="manual-speed-row" style="margin-top:0.75rem;">
+              <label for="espFlashPortSelect" data-i18n="settings.esp_flash.port">Serial Port</label>
+              <select id="espFlashPortSelect">
+                <option value="__auto__" data-i18n="settings.esp_flash.auto_detect">Auto-detect</option>
+              </select>
+              <button type="button" id="espFlashRefreshPortsBtn" class="btn btn--muted" data-i18n="settings.esp_flash.refresh_ports">Refresh</button>
+            </div>
+            <div style="margin-top:1rem;display:flex;gap:0.5rem;">
+              <button type="button" id="espFlashStartBtn" class="btn btn--success" data-i18n="settings.esp_flash.start">Flash latest</button>
+              <button type="button" id="espFlashCancelBtn" class="btn btn--danger" data-i18n="settings.esp_flash.cancel" disabled>Cancel</button>
+            </div>
+            <div style="margin-top:1rem;">
+              <span id="espFlashStatusBanner" class="pill pill--muted" data-i18n="settings.esp_flash.state.idle">Idle</span>
+            </div>
+            <pre id="espFlashLogPanel" class="log-pre" style="margin-top:1rem;max-height:16rem;overflow:auto;"></pre>
+            <div style="margin-top:1rem;">
+              <strong data-i18n="settings.esp_flash.history">Recent attempts</strong>
+              <div id="espFlashHistoryPanel" class="subtle" style="margin-top:0.5rem;"></div>
             </div>
           </div>
         </div>
