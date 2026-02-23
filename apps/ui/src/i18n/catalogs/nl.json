@@ -34,7 +34,7 @@
   "dashboard.rotational.assumptions.gear_ratio": "Versnellingsverhouding",
   "dashboard.rotational.assumptions.order_bands": "Ordebanden",
   "dashboard.time_window_60s": "(laatste 60 s)",
-  "dashboard.time_window_2s": "(laatste 2 s venster)",
+  "dashboard.time_window_2s": "(laatste 5 min venster)",
   "chart.auto_scale": "Auto schaal",
   "history.refresh": "Geschiedenis verversen",
   "history.table.file": "Meetrun",

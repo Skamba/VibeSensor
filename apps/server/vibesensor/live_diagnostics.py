@@ -24,7 +24,7 @@ SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
 LOGGER = logging.getLogger(__name__)
 
 _PHASE_HISTORY_MAX = 5
-_MATRIX_WINDOW_MS = 2000
+_MATRIX_WINDOW_MS = 5 * 60 * 1000
 
 
 def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
@@ -500,24 +500,27 @@ class LiveDiagnosticsEngine:
                     peak_hz=event.peak_hz,
                 )
 
-            transition_bucket = self._matrix_transition_bucket(
-                previous_bucket, tracker.current_bucket_key
-            )
-            if transition_bucket:
-                source_keys = source_keys_from_class_key(event.class_key)
-                self._update_matrix_many(
-                    now_ms,
-                    source_keys,
-                    transition_bucket,
-                    event.sensor_label,
-                )
-
-            if self._should_emit_event(
+            should_emit = self._should_emit_event(
                 tracker=tracker,
                 previous_bucket=previous_bucket,
                 current_bucket=tracker.current_bucket_key,
                 now_ms=now_ms,
-            ):
+            )
+            matrix_bucket = self._matrix_transition_bucket(
+                previous_bucket, tracker.current_bucket_key
+            )
+            if should_emit and tracker.current_bucket_key:
+                matrix_bucket = tracker.current_bucket_key
+            if matrix_bucket:
+                source_keys = source_keys_from_class_key(event.class_key)
+                self._update_matrix_many(
+                    now_ms,
+                    source_keys,
+                    matrix_bucket,
+                    event.sensor_label,
+                )
+
+            if should_emit:
                 tracker.last_emitted_ms = now_ms
                 event_id = self._next_event_id
                 self._next_event_id += 1
@@ -722,21 +725,24 @@ class LiveDiagnosticsEngine:
                         peak_hz=avg_hz,
                     )
 
-                transition_bucket = self._matrix_transition_bucket(
-                    previous_bucket, tracker.current_bucket_key
-                )
-                if transition_bucket:
-                    source_keys = source_keys_from_class_key(class_key)
-                    self._update_matrix_many(
-                        now_ms, source_keys, transition_bucket, tracker.last_sensor_label
-                    )
-
-                if self._should_emit_event(
+                should_emit = self._should_emit_event(
                     tracker=tracker,
                     previous_bucket=previous_bucket,
                     current_bucket=tracker.current_bucket_key,
                     now_ms=now_ms,
-                ):
+                )
+                matrix_bucket = self._matrix_transition_bucket(
+                    previous_bucket, tracker.current_bucket_key
+                )
+                if should_emit and tracker.current_bucket_key:
+                    matrix_bucket = tracker.current_bucket_key
+                if matrix_bucket:
+                    source_keys = source_keys_from_class_key(class_key)
+                    self._update_matrix_many(
+                        now_ms, source_keys, matrix_bucket, tracker.last_sensor_label
+                    )
+
+                if should_emit:
                     tracker.last_emitted_ms = now_ms
                     event_id = self._next_event_id
                     self._next_event_id += 1
