@@ -51,9 +51,11 @@ def _as_int_or_none(value: object) -> int | None:
 
 
 def _parse_manual_speed(value: Any) -> float | None:
-    """Return a positive float speed or None."""
-    if isinstance(value, (int, float)) and float(value) > 0:
-        return float(value)
+    """Return a positive, finite float speed (≤500 km/h) or None."""
+    if isinstance(value, (int, float)):
+        f = float(value)
+        if math.isfinite(f) and 0 < f <= 500:
+            return f
     return None
 
 
