@@ -75,6 +75,25 @@ class SignalProcessor:
         filtered[:, 1:-1] = np.median(stacked, axis=0)
         return filtered
 
+    def flush_client_buffer(self, client_id: str) -> None:
+        """Reset the buffer for *client_id*, discarding all stored samples.
+
+        After a sensor reset (sequence-number wraparound, new HELLO with
+        different firmware, etc.) the circular buffer likely contains samples
+        from a different time-base.  Flushing ensures the next FFT window
+        is built entirely from post-reset data.
+        """
+        buf = self._buffers.get(client_id)
+        if buf is None:
+            return
+        buf.data[:] = 0.0
+        buf.write_idx = 0
+        buf.count = 0
+        buf.latest_metrics = {}
+        buf.latest_spectrum = {}
+        buf.latest_strength_metrics = {}
+        LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
+
     def _get_or_create(self, client_id: str) -> ClientBuffer:
         buf = self._buffers.get(client_id)
         if buf is None:

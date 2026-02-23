@@ -87,7 +87,13 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         try:
             now_ts = time.time()
             client_id = msg.client_id.hex()
-            self.registry.update_from_data(msg, addr, now_ts)
+            reset_detected = self.registry.update_from_data(msg, addr, now_ts)
+            if reset_detected:
+                LOGGER.warning(
+                    "Sensor reset detected for %s — flushing FFT buffer",
+                    client_id,
+                )
+                self.processor.flush_client_buffer(client_id)
             record = self.registry.get(client_id)
             sample_rate_hz = record.sample_rate_hz if record is not None else None
             self.processor.ingest(client_id, msg.samples, sample_rate_hz=sample_rate_hz)
