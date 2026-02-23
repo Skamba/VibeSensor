@@ -24,10 +24,18 @@ def test_median_odd_count() -> None:
     assert median([3.0, 1.0, 2.0]) == 2.0
 
 
-def test_median_even_count_uses_lower_middle() -> None:
-    # Implementation picks index len//2 for even-length lists (not average).
+def test_median_even_count_uses_true_median() -> None:
+    # For even-length lists, median is the average of the two middle elements.
     result = median([1.0, 2.0, 3.0, 4.0])
-    assert result == 3.0  # sorted[4//2] == sorted[2]
+    assert result == 2.5  # (sorted[1] + sorted[2]) / 2
+
+
+def test_median_two_elements() -> None:
+    assert median([1.0, 3.0]) == 2.0
+
+
+def test_median_even_unsorted() -> None:
+    assert median([4.0, 1.0, 3.0, 2.0]) == 2.5
 
 
 # -- strength_floor_amp_g ----------------------------------------------------
@@ -59,8 +67,8 @@ def test_floor_rms_excludes_peak_region() -> None:
         min_hz=0,
         max_hz=100,
     )
-    # Remaining values: [0.1, 0.2, 0.3, 0.4] → median = sorted[2] = 0.3
-    assert abs(result - 0.3) < 1e-9
+    # Remaining values: [0.1, 0.2, 0.3, 0.4] → median = (0.2+0.3)/2 = 0.25
+    assert abs(result - 0.25) < 1e-9
 
 
 def test_floor_rms_respects_min_max_hz() -> None:
