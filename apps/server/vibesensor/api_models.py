@@ -69,6 +69,11 @@ class UpdateStartRequest(BaseModel):
     password: str = Field(default="", max_length=128)
 
 
+class EspFlashStartRequest(BaseModel):
+    port: str | None = None
+    auto_detect: bool = True
+
+
 class SensorRequest(BaseModel):
     name: str | None = None
     location: str | None = None
@@ -229,6 +234,62 @@ class UpdateStartResponse(BaseModel):
 
 class UpdateCancelResponse(BaseModel):
     cancelled: bool
+
+
+class EspSerialPortResponse(BaseModel):
+    port: str
+    description: str
+    vid: int | None = None
+    pid: int | None = None
+    serial_number: str | None = None
+
+
+class EspFlashPortsResponse(BaseModel):
+    ports: list[EspSerialPortResponse]
+
+
+class EspFlashStatusResponse(BaseModel):
+    state: str
+    phase: str
+    job_id: int | None = None
+    selected_port: str | None = None
+    auto_detect: bool
+    started_at: float | None = None
+    finished_at: float | None = None
+    last_success_at: float | None = None
+    exit_code: int | None = None
+    error: str | None = None
+    log_count: int
+
+
+class EspFlashStartResponse(BaseModel):
+    status: str
+    job_id: int
+
+
+class EspFlashCancelResponse(BaseModel):
+    cancelled: bool
+
+
+class EspFlashLogsResponse(BaseModel):
+    from_index: int
+    next_index: int
+    lines: list[str]
+
+
+class EspFlashHistoryEntryResponse(BaseModel):
+    job_id: int
+    state: str
+    selected_port: str | None = None
+    auto_detect: bool
+    started_at: float
+    finished_at: float | None = None
+    exit_code: int | None = None
+    error: str | None = None
+
+
+class EspFlashHistoryResponse(BaseModel):
+    attempts: list[EspFlashHistoryEntryResponse]
 
 
 class CarLibraryBrandsResponse(BaseModel):

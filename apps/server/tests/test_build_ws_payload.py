@@ -150,6 +150,7 @@ def _make_state(
         settings_store=_StubSettingsStore(),  # type: ignore[arg-type]
         history_db=_SENTINEL,  # type: ignore[arg-type]
         update_manager=_SENTINEL,  # type: ignore[arg-type]
+        esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
         ws_include_heavy=ws_include_heavy,
     )
 

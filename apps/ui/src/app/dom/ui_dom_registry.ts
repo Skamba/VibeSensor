@@ -65,6 +65,13 @@ export interface UiDomElements {
   updateStartBtn: HTMLButtonElement | null;
   updateCancelBtn: HTMLButtonElement | null;
   updateStatusPanel: HTMLElement | null;
+  espFlashPortSelect: HTMLSelectElement | null;
+  espFlashRefreshPortsBtn: HTMLButtonElement | null;
+  espFlashStartBtn: HTMLButtonElement | null;
+  espFlashCancelBtn: HTMLButtonElement | null;
+  espFlashStatusBanner: HTMLElement | null;
+  espFlashLogPanel: HTMLElement | null;
+  espFlashHistoryPanel: HTMLElement | null;
   gpsStatusPanel: HTMLElement | null;
   gpsStatusState: HTMLElement | null;
   gpsStatusDevice: HTMLElement | null;
@@ -167,6 +174,13 @@ export function createUiDomRegistry(): UiDomElements {
     updateStartBtn: btnEl("updateStartBtn"),
     updateCancelBtn: btnEl("updateCancelBtn"),
     updateStatusPanel: el("updateStatusPanel"),
+    espFlashPortSelect: selectEl("espFlashPortSelect"),
+    espFlashRefreshPortsBtn: btnEl("espFlashRefreshPortsBtn"),
+    espFlashStartBtn: btnEl("espFlashStartBtn"),
+    espFlashCancelBtn: btnEl("espFlashCancelBtn"),
+    espFlashStatusBanner: el("espFlashStatusBanner"),
+    espFlashLogPanel: el("espFlashLogPanel"),
+    espFlashHistoryPanel: el("espFlashHistoryPanel"),
     gpsStatusPanel: el("gpsStatusPanel"),
     gpsStatusState: el("gpsStatusState"),
     gpsStatusDevice: el("gpsStatusDevice"),

@@ -34,6 +34,7 @@ from .constants import (
     SECONDS_PER_MINUTE,
 )
 from .diagnostics_shared import build_diagnostic_settings, tolerance_for_order, vehicle_orders_hz
+from .esp_flash_manager import EspFlashManager
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
 from .live_diagnostics import LiveDiagnosticsEngine
@@ -129,6 +130,7 @@ class RuntimeState:
     settings_store: SettingsStore
     history_db: HistoryDB
     update_manager: UpdateManager
+    esp_flash_manager: EspFlashManager
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     data_consumer_task: asyncio.Task | None = None
@@ -369,6 +371,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     )
     live_diagnostics = LiveDiagnosticsEngine()
     update_manager = UpdateManager()
+    esp_flash_manager = EspFlashManager()
 
     runtime = RuntimeState(
         config=config,
@@ -383,6 +386,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         settings_store=settings_store,
         history_db=history_db,
         update_manager=update_manager,
+        esp_flash_manager=esp_flash_manager,
     )
 
     async def processing_loop() -> None:
