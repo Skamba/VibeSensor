@@ -197,9 +197,16 @@ def car_location_diagram(
         if not isinstance(row, dict):
             continue
         loc = _canonical_location(row.get("location"))
-        mean_g = _as_float(row.get("mean_g"))
-        if loc and loc not in amp_by_location and mean_g is not None and mean_g > 0:
-            amp_by_location[loc] = mean_g
+        unit = str(row.get("unit") or "").strip().lower()
+        mean_val = _as_float(row.get("mean_value"))
+        if mean_val is None:
+            mean_val = (
+                _as_float(row.get("mean_db"))
+                if unit == "db"
+                else _as_float(row.get("mean_g"))
+            )
+        if loc and loc not in amp_by_location and mean_val is not None and mean_val > 0:
+            amp_by_location[loc] = mean_val
     min_amp = min(amp_by_location.values()) if amp_by_location else None
     max_amp = max(amp_by_location.values()) if amp_by_location else None
 
