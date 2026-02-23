@@ -383,6 +383,13 @@ def create_router(state: RuntimeState) -> APIRouter:
             for sample in batch:
                 yield normalize_sample_record(sample)
 
+    def _require_run(run_id: str) -> dict[str, Any]:
+        """Fetch a history run or raise 404."""
+        run = state.history_db.get_run(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        return run
+
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
         return {
@@ -445,15 +452,18 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
         return state.gps_monitor.status_dict()
 
+    def _sensors_response() -> SensorsResponse:
+        return {"sensorsByMac": state.settings_store.get_sensors()}
+
     @router.get("/api/settings/sensors", response_model=SensorsResponse)
     async def get_sensors() -> SensorsResponse:
-        return {"sensorsByMac": state.settings_store.get_sensors()}
+        return _sensors_response()
 
     @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:
         try:
             state.settings_store.set_sensor(mac, req.model_dump(exclude_none=True))
-            return {"sensorsByMac": state.settings_store.get_sensors()}
+            return _sensors_response()
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -465,7 +475,7 @@ def create_router(state: RuntimeState) -> APIRouter:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
-        return {"sensorsByMac": state.settings_store.get_sensors()}
+        return _sensors_response()
 
     @router.get("/api/settings/language", response_model=LanguageResponse)
     async def get_language() -> LanguageResponse:
@@ -592,19 +602,14 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)
     async def get_history_run(run_id: str) -> HistoryRunResponse:
-        run = state.history_db.get_run(run_id)
-        if run is None:
-            raise HTTPException(status_code=404, detail="Run not found")
-        return run
+        return _require_run(run_id)
 
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
         lang: str | None = Query(default=None),
     ) -> HistoryInsightsResponse:
-        run = state.history_db.get_run(run_id)
-        if run is None:
-            raise HTTPException(status_code=404, detail="Run not found")
+        run = _require_run(run_id)
         if run["status"] == "analyzing":
             return {"run_id": run_id, "status": "analyzing"}
         if run["status"] == "error":
@@ -668,9 +673,7 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def download_history_report_pdf(
         run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
-        run = state.history_db.get_run(run_id)
-        if run is None:
-            raise HTTPException(status_code=404, detail="Run not found")
+        run = _require_run(run_id)
         analysis = run.get("analysis")
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
@@ -729,9 +732,7 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/history/{run_id}/export")
     async def export_history_run(run_id: str) -> Response:
-        run = state.history_db.get_run(run_id)
-        if run is None:
-            raise HTTPException(status_code=404, detail="Run not found")
+        run = _require_run(run_id)
 
         def _build_zip() -> bytes:
             fieldnames: list[str] = []
