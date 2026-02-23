@@ -55,6 +55,13 @@ export type RotationalSpeeds = {
   wheel: RotationalSpeedValue;
   driveshaft: RotationalSpeedValue;
   engine: RotationalSpeedValue;
+  order_bands: OrderBand[] | null;
+};
+
+export type OrderBand = {
+  key: string;
+  center_hz: number;
+  tolerance: number;
 };
 
 export type AdaptedPayload = {
@@ -62,6 +69,7 @@ export type AdaptedPayload = {
   speed_mps: number | null;
   rotational_speeds: RotationalSpeeds | null;
   diagnostics: {
+    diagnostics_sequence: number;
     strength_bands: StrengthBand[];
     matrix: Record<string, Record<string, MatrixCell>> | null;
     events: DiagnosticEvent[];
@@ -108,6 +116,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
     speed_mps: typeof payload.speed_mps === "number" ? payload.speed_mps : null,
     rotational_speeds: null,
     diagnostics: {
+      diagnostics_sequence: typeof diagnostics.diagnostics_sequence === "number" ? diagnostics.diagnostics_sequence : -1,
       strength_bands: strengthBands,
       matrix:
         diagnostics.matrix && typeof diagnostics.matrix === "object"
@@ -124,11 +133,18 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
 
   if (payload.rotational_speeds && typeof payload.rotational_speeds === "object") {
     const rotational = payload.rotational_speeds as Record<string, unknown>;
+    let orderBands: OrderBand[] | null = null;
+    if (Array.isArray(rotational.order_bands)) {
+      orderBands = (rotational.order_bands as Record<string, unknown>[])
+        .filter((b) => b && typeof b === "object" && typeof b.key === "string" && typeof b.center_hz === "number" && typeof b.tolerance === "number")
+        .map((b) => ({ key: String(b.key), center_hz: Number(b.center_hz), tolerance: Number(b.tolerance) }));
+    }
     adapted.rotational_speeds = {
       basis_speed_source: typeof rotational.basis_speed_source === "string" ? rotational.basis_speed_source : null,
       wheel: adaptRotationalSpeedValue(rotational.wheel),
       driveshaft: adaptRotationalSpeedValue(rotational.driveshaft),
       engine: adaptRotationalSpeedValue(rotational.engine),
+      order_bands: orderBands,
     };
   }
 

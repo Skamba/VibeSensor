@@ -27,7 +27,7 @@ from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
 from .config import SERVER_DIR, AppConfig, load_config
-from .diagnostics_shared import vehicle_orders_hz
+from .diagnostics_shared import build_diagnostic_settings, tolerance_for_order, vehicle_orders_hz
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
 from .live_diagnostics import LiveDiagnosticsEngine
@@ -123,6 +123,7 @@ class RuntimeState:
             "wheel": {"rpm": None, "mode": "calculated", "reason": None},
             "driveshaft": {"rpm": None, "mode": "calculated", "reason": None},
             "engine": {"rpm": None, "mode": "calculated", "reason": None},
+            "order_bands": None,
         }
         if speed_mps is None or speed_mps <= 0:
             reason = "speed_unavailable"
@@ -142,6 +143,55 @@ class RuntimeState:
         out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * 60.0
         out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * 60.0
         out["engine"]["rpm"] = float(orders_hz["engine_hz"]) * 60.0
+
+        # Provide pre-computed order bands so the frontend does not need to
+        # duplicate the tolerance/overlap math.
+        resolved = build_diagnostic_settings(analysis_settings)
+        wheel_hz = float(orders_hz["wheel_hz"])
+        drive_hz = float(orders_hz["drive_hz"])
+        engine_hz = float(orders_hz["engine_hz"])
+        wheel_tol = tolerance_for_order(
+            resolved["wheel_bandwidth_pct"],
+            wheel_hz,
+            orders_hz["wheel_uncertainty_pct"],
+            min_abs_band_hz=resolved["min_abs_band_hz"],
+            max_band_half_width_pct=resolved["max_band_half_width_pct"],
+        )
+        drive_tol = tolerance_for_order(
+            resolved["driveshaft_bandwidth_pct"],
+            drive_hz,
+            orders_hz["drive_uncertainty_pct"],
+            min_abs_band_hz=resolved["min_abs_band_hz"],
+            max_band_half_width_pct=resolved["max_band_half_width_pct"],
+        )
+        engine_tol = tolerance_for_order(
+            resolved["engine_bandwidth_pct"],
+            engine_hz,
+            orders_hz["engine_uncertainty_pct"],
+            min_abs_band_hz=resolved["min_abs_band_hz"],
+            max_band_half_width_pct=resolved["max_band_half_width_pct"],
+        )
+        bands: list[dict[str, Any]] = [
+            {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
+            {"key": "wheel_2x", "center_hz": wheel_hz * 2.0, "tolerance": wheel_tol},
+        ]
+        overlap_tol = max(
+            0.03,
+            orders_hz["drive_uncertainty_pct"] + orders_hz["engine_uncertainty_pct"],
+        )
+        if abs(drive_hz - engine_hz) / max(1e-6, engine_hz) < overlap_tol:
+            bands.append(
+                {
+                    "key": "driveshaft_engine_1x",
+                    "center_hz": drive_hz,
+                    "tolerance": max(drive_tol, engine_tol),
+                }
+            )
+        else:
+            bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
+            bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
+        bands.append({"key": "engine_2x", "center_hz": engine_hz * 2.0, "tolerance": engine_tol})
+        out["order_bands"] = bands
         return out
 
     def on_ws_broadcast_tick(self) -> None:

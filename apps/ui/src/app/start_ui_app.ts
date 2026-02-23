@@ -119,10 +119,31 @@ export function startUiApp(): void {
     if (displayReason) {
       els.rotationalReason.hidden = false;
       els.rotationalReason.textContent = rotationalReasonText(displayReason);
-      return;
+    } else {
+      els.rotationalReason.hidden = true;
+      els.rotationalReason.textContent = "";
     }
-    els.rotationalReason.hidden = true;
-    els.rotationalReason.textContent = "";
+
+    // Assumptions panel: show speed source, tire spec, gear ratios, calculated Hz
+    if (els.rotationalAssumptionsBody) {
+      const vs = state.vehicleSettings;
+      const speedVal = effectiveSpeedMps();
+      const speedText = speedVal != null ? `${fmt(speedVal * 3.6, 1)} km/h` : "--";
+      const circumference = parseTireSpec({ widthMm: vs.tire_width_mm, aspect: vs.tire_aspect_pct, rimIn: vs.rim_in });
+      const circumText = circumference ? `${fmt(Math.PI * tireDiameterMeters(circumference) * 1000, 0)} mm` : "--";
+      const bands = rotational?.order_bands;
+      const bandText = Array.isArray(bands) && bands.length
+        ? bands.map((b) => `${b.key}: ${fmt(b.center_hz, 1)} Hz ±${fmt(b.tolerance * 100, 1)}%`).join(", ")
+        : "--";
+      els.rotationalAssumptionsBody.innerHTML = [
+        `<div>${escapeHtml(t("dashboard.rotational.assumptions.speed_source"))}: ${escapeHtml(source)}</div>`,
+        `<div>${escapeHtml(t("dashboard.rotational.assumptions.effective_speed"))}: ${escapeHtml(speedText)}</div>`,
+        `<div>${escapeHtml(t("dashboard.rotational.assumptions.tire_circumference"))}: ${escapeHtml(circumText)}</div>`,
+        `<div>${escapeHtml(t("dashboard.rotational.assumptions.final_drive"))}: ${escapeHtml(String(vs.final_drive_ratio))}</div>`,
+        `<div>${escapeHtml(t("dashboard.rotational.assumptions.gear_ratio"))}: ${escapeHtml(String(vs.current_gear_ratio))}</div>`,
+        `<div>${escapeHtml(t("dashboard.rotational.assumptions.order_bands"))}: ${escapeHtml(bandText)}</div>`,
+      ].join("");
+    }
   }
 
   function renderWsState(): void {
@@ -233,7 +254,44 @@ export function startUiApp(): void {
     return { wheelHz, driveHz, engineHz, wheelUncertaintyPct, driveUncertaintyPct, engineUncertaintyPct };
   }
 
+  const bandKeyColors: Record<string, string> = {
+    wheel_1x: orderBandFills.wheel1,
+    wheel_2x: orderBandFills.wheel2,
+    driveshaft_1x: orderBandFills.driveshaft1,
+    engine_1x: orderBandFills.engine1,
+    engine_2x: orderBandFills.engine2,
+    driveshaft_engine_1x: orderBandFills.driveshaftEngine1,
+  };
+
+  const bandKeyLabels: Record<string, string> = {
+    wheel_1x: "bands.wheel_1x",
+    wheel_2x: "bands.wheel_2x",
+    driveshaft_1x: "bands.driveshaft_1x",
+    engine_1x: "bands.engine_1x",
+    engine_2x: "bands.engine_2x",
+    driveshaft_engine_1x: "bands.driveshaft_engine_1x",
+  };
+
+  function calculateBandsFromBackend(): ChartBand[] | null {
+    const bands = latestRotationalSpeeds?.order_bands;
+    if (!Array.isArray(bands) || !bands.length) return null;
+    const out: ChartBand[] = [];
+    for (const band of bands) {
+      const center = Number(band.center_hz);
+      const tol = Number(band.tolerance);
+      if (!Number.isFinite(center) || center <= 0 || !Number.isFinite(tol)) continue;
+      const color = bandKeyColors[band.key] || orderBandFills.wheel1;
+      const labelKey = bandKeyLabels[band.key] || band.key;
+      out.push({ label: t(labelKey), min_hz: Math.max(0, center * (1 - tol)), max_hz: center * (1 + tol), color });
+    }
+    return out.length ? out : null;
+  }
+
   function calculateBands(): ChartBand[] {
+    // Prefer backend-computed bands (single source of truth)
+    const backendBands = calculateBandsFromBackend();
+    if (backendBands) return backendBands;
+    // Fallback to local calculation when backend bands are not available
     const orders = vehicleOrdersHz();
     if (!orders) return [];
     const mk = (label: string, center: number, spread: number, color: string): ChartBand => ({ label, min_hz: Math.max(0, center * (1 - spread)), max_hz: center * (1 + spread), color });
@@ -359,7 +417,12 @@ export function startUiApp(): void {
     diagnosticsFeature.applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
     renderRotationalSpeeds();
-    const liveIntensity = diagnosticsFeature.extractLiveLocationIntensity();
+    // Prefer confirmed location intensity from backend diagnostics (by_location);
+    // fall back to raw spectrum-derived intensity when by_location is empty.
+    const confirmedIntensity = diagnosticsFeature.extractConfirmedLocationIntensity();
+    const liveIntensity = Object.keys(confirmedIntensity).length
+      ? confirmedIntensity
+      : diagnosticsFeature.extractLiveLocationIntensity();
     if (Object.keys(liveIntensity).length) diagnosticsFeature.pushCarMapSample(liveIntensity);
     diagnosticsFeature.renderCarMap();
     if (adapted.spectra) renderSpectrum(); else updateSpectrumOverlay();
@@ -413,6 +476,12 @@ export function startUiApp(): void {
   }
   if (els.startLoggingBtn) els.startLoggingBtn.addEventListener("click", sensorsFeature.startLogging);
   if (els.stopLoggingBtn) els.stopLoggingBtn.addEventListener("click", sensorsFeature.stopLogging);
+  if (els.strengthAutoScaleToggle) {
+    els.strengthAutoScaleToggle.checked = state.strengthChartAutoScale;
+    els.strengthAutoScaleToggle.addEventListener("change", () => {
+      state.strengthChartAutoScale = els.strengthAutoScaleToggle!.checked;
+    });
+  }
   if (els.refreshHistoryBtn) els.refreshHistoryBtn.addEventListener("click", historyFeature.refreshHistory);
   if (els.deleteAllRunsBtn) els.deleteAllRunsBtn.addEventListener("click", () => void historyFeature.deleteAllRuns());
   if (els.historyTableBody) els.historyTableBody.addEventListener("click", (ev) => {

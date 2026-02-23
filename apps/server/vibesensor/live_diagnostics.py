@@ -127,6 +127,8 @@ class LiveDiagnosticsEngine:
         self._last_error: str | None = None
         self._phase_speed_history: list[tuple[float, float | None]] = []
         self._current_phase: str = DrivingPhase.IDLE.value
+        self._diagnostics_sequence: int = 0
+        self._next_event_id: int = 0
 
     def reset(self) -> None:
         self._matrix = _new_matrix()
@@ -143,6 +145,8 @@ class LiveDiagnosticsEngine:
         self._last_error = None
         self._phase_speed_history = []
         self._current_phase = DrivingPhase.IDLE.value
+        self._diagnostics_sequence = 0
+        self._next_event_id = 0
 
     def _record_matrix_count(
         self,
@@ -372,6 +376,7 @@ class LiveDiagnosticsEngine:
         if top_finding is None and self._latest_findings:
             top_finding = self._latest_findings[0]
         return {
+            "diagnostics_sequence": self._diagnostics_sequence,
             "matrix": _copy_matrix(self._matrix),
             "events": list(self._latest_events),
             "strength_bands": list(BANDS),
@@ -417,15 +422,19 @@ class LiveDiagnosticsEngine:
         now_ms = int(monotonic() * 1000.0)
         self._update_driving_phase(speed_mps, now_ms / 1000.0)
 
-        if spectra is None:
-            self._last_error = None
-            return self.snapshot()
-
+        # Accumulate matrix dwell-seconds on *every* tick (including light
+        # ticks where spectra is None) so that dwell time stays accurate
+        # regardless of the heavy/light WS cadence.
         dt_seconds = 0.0
         if self._last_update_ts_ms is not None:
             dt_seconds = max(0.0, min(1.0, (now_ms - self._last_update_ts_ms) / 1000.0))
         self._last_update_ts_ms = now_ms
         self._accumulate_matrix_seconds(now_ms, dt_seconds)
+        self._rebuild_matrix(now_ms)
+
+        if spectra is None:
+            self._last_error = None
+            return self.snapshot()
 
         try:
             sensor_events = self._detect_sensor_events(
@@ -512,8 +521,11 @@ class LiveDiagnosticsEngine:
                 now_ms=now_ms,
             ):
                 tracker.last_emitted_ms = now_ms
+                event_id = self._next_event_id
+                self._next_event_id += 1
                 emitted_events.append(
                     {
+                        "event_id": event_id,
                         "kind": "single",
                         "class_key": event.class_key,
                         "sensor_count": 1,
@@ -662,8 +674,11 @@ class LiveDiagnosticsEngine:
                     now_ms=now_ms,
                 ):
                     tracker.last_emitted_ms = now_ms
+                    event_id = self._next_event_id
+                    self._next_event_id += 1
                     emitted_events.append(
                         {
+                            "event_id": event_id,
                             "kind": "multi",
                             "class_key": class_key,
                             "sensor_count": len(group),
@@ -693,6 +708,7 @@ class LiveDiagnosticsEngine:
         )
         self._rebuild_matrix(now_ms)
         self._latest_events = emitted_events
+        self._diagnostics_sequence += 1
         return self.snapshot()
 
     def _detect_sensor_events(
