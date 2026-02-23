@@ -113,11 +113,15 @@ async def test_broadcast_survives_payload_builder_exception() -> None:
     def failing_builder(client_id):
         raise RuntimeError("Payload build error")
 
-    # Should not raise; the exception is caught inside _send
+    # Should not raise; the exception is caught inside _build_payload
     await hub.broadcast(failing_builder)
     # Connection should NOT be removed (builder failed, not send)
     conns = await hub._snapshot()
     assert len(conns) == 1
+    # Connection should receive the error payload instead of nothing
+    ws.send_text.assert_awaited_once()
+    sent = json.loads(ws.send_text.call_args[0][0])
+    assert sent == {"error": "payload_build_failed"}
 
 
 @pytest.mark.asyncio
@@ -134,6 +138,121 @@ async def test_broadcast_builds_payload_once_per_unique_selection() -> None:
     await hub.broadcast(payload_builder)
 
     assert payload_builder.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_payload_error_does_not_block_other_clients() -> None:
+    """A payload build failure for one client_id must not prevent other clients
+    from receiving their data."""
+    hub = WebSocketHub()
+    good_ws = _make_ws()
+    bad_ws = _make_ws()
+    await hub.add(good_ws, "good_client")
+    await hub.add(bad_ws, "bad_client")
+
+    def selective_builder(client_id):
+        if client_id == "bad_client":
+            raise ValueError("cannot build for bad_client")
+        return {"status": "ok", "client": client_id}
+
+    await hub.broadcast(selective_builder)
+
+    # good_ws received normal payload
+    good_ws.send_text.assert_awaited_once()
+    good_sent = json.loads(good_ws.send_text.call_args[0][0])
+    assert good_sent == {"status": "ok", "client": "good_client"}
+
+    # bad_ws received error payload (not silently skipped)
+    bad_ws.send_text.assert_awaited_once()
+    bad_sent = json.loads(bad_ws.send_text.call_args[0][0])
+    assert bad_sent == {"error": "payload_build_failed"}
+
+    # Both connections are still alive
+    conns = await hub._snapshot()
+    assert len(conns) == 2
+
+
+@pytest.mark.asyncio
+async def test_payload_error_logged_at_error_level(caplog) -> None:
+    """Payload build failures must be logged at ERROR level with client id."""
+    hub = WebSocketHub()
+    ws = _make_ws()
+    await hub.add(ws, "sensor_42")
+
+    import logging
+
+    with caplog.at_level(logging.ERROR, logger="vibesensor.ws_hub"):
+        await hub.broadcast(lambda _cid: (_ for _ in ()).throw(RuntimeError("boom")))
+
+    error_records = [r for r in caplog.records if r.levelno >= logging.ERROR]
+    assert len(error_records) >= 1
+    # Per-client error log should mention the client id
+    assert any("sensor_42" in r.message for r in error_records)
+    # Summary log should mention connection count
+    assert any("1 connection(s)" in r.message for r in error_records)
+
+
+@pytest.mark.asyncio
+async def test_payload_error_affected_count_logged(caplog) -> None:
+    """When multiple connections share a failing client_id the summary log
+    reports the total affected count."""
+    hub = WebSocketHub()
+    ws1 = _make_ws()
+    ws2 = _make_ws()
+    ws3 = _make_ws()
+    await hub.add(ws1, "bad")
+    await hub.add(ws2, "bad")
+    await hub.add(ws3, "good")
+
+    def builder(cid):
+        if cid == "bad":
+            raise RuntimeError("nope")
+        return {"ok": True}
+
+    import logging
+
+    with caplog.at_level(logging.ERROR, logger="vibesensor.ws_hub"):
+        await hub.broadcast(builder)
+
+    # ws3 (good) got normal payload
+    good_sent = json.loads(ws3.send_text.call_args[0][0])
+    assert good_sent == {"ok": True}
+
+    # Both bad connections got error payload
+    for ws in (ws1, ws2):
+        sent = json.loads(ws.send_text.call_args[0][0])
+        assert sent == {"error": "payload_build_failed"}
+
+    # Summary log mentions 2 affected connections
+    assert any("2 connection(s)" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_error_payload_is_cached_per_client_id() -> None:
+    """The error payload should be cached so payload_builder is called only
+    once per unique client_id, even on failure."""
+    hub = WebSocketHub()
+    ws1 = _make_ws()
+    ws2 = _make_ws()
+    await hub.add(ws1, "fail_client")
+    await hub.add(ws2, "fail_client")
+
+    call_count = 0
+
+    def counting_builder(cid):
+        nonlocal call_count
+        call_count += 1
+        raise RuntimeError("always fails")
+
+    await hub.broadcast(counting_builder)
+
+    # Builder should only be called once (cached error payload for second conn)
+    assert call_count == 1
+    # Both connections still received the error payload
+    for ws in (ws1, ws2):
+        ws.send_text.assert_awaited_once()
+        sent = json.loads(ws.send_text.call_args[0][0])
+        assert sent == {"error": "payload_build_failed"}
 
 
 # ── sanitize_for_json unit tests ─────────────────────────────────────────────
