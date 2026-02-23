@@ -393,6 +393,7 @@ def make_profile_fault_samples(
     fault_vib_db: float = 26.0,
     noise_vib_db: float = 8.0,
     add_wheel_2x: bool = True,
+    transfer_fraction: float = 0.0,
 ) -> list[dict[str, Any]]:
     """Generate wheel-order fault samples using a specific car profile's wheel Hz.
 
@@ -420,15 +421,21 @@ def make_profile_fault_samples(
                     )
                 )
             else:
+                other_peaks: list[dict[str, float]] = [
+                    {"hz": 142.5, "amp": noise_amp},
+                    {"hz": 87.3, "amp": noise_amp * 0.8},
+                ]
+                if transfer_fraction > 0:
+                    other_peaks.insert(
+                        0,
+                        {"hz": whz, "amp": fault_amp * transfer_fraction},
+                    )
                 samples.append(
                     make_sample(
                         t_s=t,
                         speed_kmh=speed_kmh,
                         client_name=sensor,
-                        top_peaks=[
-                            {"hz": 142.5, "amp": noise_amp},
-                            {"hz": 87.3, "amp": noise_amp * 0.8},
-                        ],
+                        top_peaks=other_peaks,
                         vibration_strength_db=noise_vib_db,
                         strength_floor_amp_g=noise_amp,
                     )

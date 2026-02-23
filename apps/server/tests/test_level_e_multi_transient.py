@@ -8,9 +8,13 @@ fault preservation under spatial noise, and confidence calibration.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 from builders import (
     ALL_WHEEL_SENSORS,
+    CAR_PROFILE_IDS,
+    CAR_PROFILES,
     CORNER_SENSORS,
     NON_WHEEL_SENSORS,
     SENSOR_FL,
@@ -28,11 +32,14 @@ from builders import (
     assert_wheel_source,
     extract_top,
     make_diffuse_samples,
-    make_fault_samples,
     make_idle_samples,
     make_noise_samples,
+    make_profile_fault_samples,
+    make_profile_speed_sweep_fault_samples,
     make_ramp_samples,
     make_transient_samples,
+    profile_metadata,
+    profile_wheel_hz,
     run_analysis,
 )
 
@@ -51,14 +58,16 @@ _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_4sensor_fault_with_transient(corner: str, speed: float) -> None:
+def test_4sensor_fault_with_transient(corner: str, speed: float, profile: dict[str, Any]) -> None:
     """4 sensors, fault at corner + transient → fault preserved."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_4S,
             speed_kmh=speed,
@@ -79,7 +88,7 @@ def test_4sensor_fault_with_transient(corner: str, speed: float) -> None:
             spike_vib_db=36.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Lost 4sensor fault+transient {corner}@{speed}"
     assert_diagnosis_contract(
@@ -96,14 +105,16 @@ def test_4sensor_fault_with_transient(corner: str, speed: float) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_4sensor_transient_on_other_sensor(corner: str) -> None:
+def test_4sensor_transient_on_other_sensor(corner: str, profile: dict[str, Any]) -> None:
     """Transient on a different sensor from the fault → fault still detected."""
     sensor = CORNER_SENSORS[corner]
     other = SENSOR_RR if corner != "RR" else SENSOR_FL
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_4S,
             speed_kmh=SPEED_MID,
@@ -123,7 +134,7 @@ def test_4sensor_transient_on_other_sensor(corner: str) -> None:
             spike_vib_db=38.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Lost fault when transient on other sensor {corner}"
     assert_wheel_source(summary, msg=f"4s other-t {corner}")
@@ -135,8 +146,9 @@ def test_4sensor_transient_on_other_sensor(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_4sensor_transient_only_no_fault(speed: float) -> None:
+def test_4sensor_transient_only_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """4 sensors, road noise + transient → no persistent wheel fault."""
     samples: list[dict] = []
     samples.extend(make_noise_samples(sensors=_4S, speed_kmh=speed, n_samples=35))
@@ -150,7 +162,7 @@ def test_4sensor_transient_only_no_fault(speed: float) -> None:
             spike_vib_db=35.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"4sensor transient-only@{speed}")
 
 
@@ -159,13 +171,15 @@ def test_4sensor_transient_only_no_fault(speed: float) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_8sensor_fault_with_transient(corner: str) -> None:
+def test_8sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> None:
     """8 sensors, fault at one corner + transient → correct detection."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_8S,
             speed_kmh=SPEED_HIGH,
@@ -185,7 +199,7 @@ def test_8sensor_fault_with_transient(corner: str) -> None:
             spike_vib_db=38.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Lost 8sensor fault+transient {corner}"
     assert_wheel_source(summary, msg=f"8s+t {corner}")
@@ -198,13 +212,15 @@ def test_8sensor_fault_with_transient(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_12sensor_fault_with_transient(corner: str) -> None:
+def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> None:
     """12 sensors, fault at one corner + transient → correct detection."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_12S,
             speed_kmh=SPEED_HIGH,
@@ -224,7 +240,7 @@ def test_12sensor_fault_with_transient(corner: str) -> None:
             spike_vib_db=36.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Lost 12sensor fault+transient {corner}"
     assert_wheel_source(summary, msg=f"12s+t {corner}")
@@ -236,6 +252,7 @@ def test_12sensor_fault_with_transient(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
     "sensors,fault_corner",
     [
@@ -246,12 +263,13 @@ def test_12sensor_fault_with_transient(corner: str) -> None:
     ],
     ids=["FL_2s", "RR_2s", "FR_2s", "RL_2s"],
 )
-def test_2sensor_fault_with_transient(sensors: list[str], fault_corner: str) -> None:
+def test_2sensor_fault_with_transient(sensors: list[str], fault_corner: str, profile: dict[str, Any]) -> None:
     """2-sensor pair, fault + transient → fault still detected."""
     fault_sensor = CORNER_SENSORS[fault_corner]
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=fault_sensor,
             sensors=sensors,
             speed_kmh=SPEED_MID,
@@ -271,7 +289,7 @@ def test_2sensor_fault_with_transient(sensors: list[str], fault_corner: str) -> 
             spike_vib_db=36.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Lost 2sensor fault+transient {fault_corner}"
     assert_wheel_source(summary, msg=f"2s+t {fault_corner}")
@@ -283,8 +301,9 @@ def test_2sensor_fault_with_transient(sensors: list[str], fault_corner: str) -> 
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_4sensor_diffuse_transient_no_fault(speed: float) -> None:
+def test_4sensor_diffuse_transient_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """Diffuse excitation + transient on 4 sensors → no wheel fault."""
     samples: list[dict] = []
     samples.extend(make_diffuse_samples(sensors=_4S, speed_kmh=speed, n_samples=35))
@@ -298,7 +317,7 @@ def test_4sensor_diffuse_transient_no_fault(speed: float) -> None:
             spike_vib_db=35.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"4s-diffuse+transient@{speed}")
 
 
@@ -307,14 +326,16 @@ def test_4sensor_diffuse_transient_no_fault(speed: float) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_4sensor_multi_transient_preserves_fault(corner: str) -> None:
+def test_4sensor_multi_transient_preserves_fault(corner: str, profile: dict[str, Any]) -> None:
     """Fault + transients on TWO sensors → fault still detected."""
     sensor = CORNER_SENSORS[corner]
     other = SENSOR_RR if corner != "RR" else SENSOR_FL
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_4S,
             speed_kmh=SPEED_MID,
@@ -346,7 +367,7 @@ def test_4sensor_multi_transient_preserves_fault(corner: str) -> None:
             spike_vib_db=33.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Multi-transient lost fault {corner}"
     assert_wheel_source(summary, msg=f"multi-t {corner}")
@@ -358,8 +379,9 @@ def test_4sensor_multi_transient_preserves_fault(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
-def test_4sensor_phased_onset_with_transient(corner: str) -> None:
+def test_4sensor_phased_onset_with_transient(corner: str, profile: dict[str, Any]) -> None:
     """Idle → ramp → fault + transient on 4 sensors."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
@@ -368,7 +390,8 @@ def test_4sensor_phased_onset_with_transient(corner: str) -> None:
         make_ramp_samples(sensors=_4S, speed_start=20, speed_end=80, n_samples=10, start_t_s=6)
     )
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_4S,
             speed_kmh=80.0,
@@ -388,7 +411,7 @@ def test_4sensor_phased_onset_with_transient(corner: str) -> None:
             spike_vib_db=36.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Phased+transient lost {corner}"
     assert_wheel_source(summary, msg=f"phased+t {corner}")
@@ -400,13 +423,15 @@ def test_4sensor_phased_onset_with_transient(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_4sensor_transfer_with_transient(corner: str) -> None:
+def test_4sensor_transfer_with_transient(corner: str, profile: dict[str, Any]) -> None:
     """Fault with 20% leak + transient → correct source still identified."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_4S,
             speed_kmh=SPEED_MID,
@@ -427,7 +452,7 @@ def test_4sensor_transfer_with_transient(corner: str) -> None:
             spike_vib_db=35.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Transfer+transient lost {corner}"
     assert_wheel_source(summary, msg=f"xfer+t {corner}")
@@ -439,13 +464,15 @@ def test_4sensor_transfer_with_transient(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FR", "RL"])
-def test_8sensor_vhigh_speed_transient(corner: str) -> None:
+def test_8sensor_vhigh_speed_transient(corner: str, profile: dict[str, Any]) -> None:
     """8 sensors at 120 km/h with fault + transient."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
     samples.extend(
-        make_fault_samples(
+        make_profile_fault_samples(
+            profile=profile,
             fault_sensor=sensor,
             sensors=_8S,
             speed_kmh=SPEED_VERY_HIGH,
@@ -465,7 +492,7 @@ def test_8sensor_vhigh_speed_transient(corner: str) -> None:
             spike_vib_db=38.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"8sensor vhigh+transient lost {corner}"
     assert_wheel_source(summary, msg=f"8s vhigh+t {corner}")
@@ -477,8 +504,9 @@ def test_8sensor_vhigh_speed_transient(corner: str) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_HIGH], ids=["low", "high"])
-def test_12sensor_transient_only_no_fault(speed: float) -> None:
+def test_12sensor_transient_only_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """12 sensors, road noise + transient → no persistent wheel fault."""
     samples: list[dict] = []
     samples.extend(make_noise_samples(sensors=_12S, speed_kmh=speed, n_samples=35))
@@ -492,7 +520,7 @@ def test_12sensor_transient_only_no_fault(speed: float) -> None:
             spike_vib_db=35.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert_tolerant_no_fault(summary, msg=f"12sensor transient-only@{speed}")
 
 
@@ -501,13 +529,13 @@ def test_12sensor_transient_only_no_fault(speed: float) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RL"])
-def test_4sensor_speed_sweep_with_transient(corner: str) -> None:
+def test_4sensor_speed_sweep_with_transient(corner: str, profile: dict[str, Any]) -> None:
     """Speed sweep fault + transient on 4 sensors → detected."""
-    from builders import make_speed_sweep_fault_samples
-
     sensor = CORNER_SENSORS[corner]
-    samples = make_speed_sweep_fault_samples(
+    samples = make_profile_speed_sweep_fault_samples(
+        profile=profile,
         fault_sensor=sensor,
         sensors=_4S,
         speed_start=40,
@@ -525,7 +553,7 @@ def test_4sensor_speed_sweep_with_transient(corner: str) -> None:
             spike_vib_db=36.0,
         )
     )
-    summary = run_analysis(samples)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Speed sweep+transient lost {corner}"
     assert_wheel_source(summary, msg=f"sweep+t {corner}")
