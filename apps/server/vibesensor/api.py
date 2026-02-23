@@ -732,26 +732,25 @@ def create_router(state: RuntimeState) -> APIRouter:
         def _build_zip() -> bytes:
             fieldnames: list[str] = []
             fieldname_set: set[str] = set()
-            # First pass: collect all unique field names and count samples
-            sample_count = 0
+            # Single pass: collect field names and buffer all samples
+            all_samples: list[dict[str, Any]] = []
             for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
                 for sample in batch:
-                    sample_count += 1
                     for key in sample:
                         if key not in fieldname_set:
                             fieldname_set.add(key)
                             fieldnames.append(key)
+                all_samples.extend(batch)
 
-            # Second pass: write CSV rows batch by batch with known field names
+            # Write CSV from buffered samples
             csv_buffer = io.StringIO(newline="")
             if fieldnames:
                 writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
                 writer.writeheader()
-                for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
-                    writer.writerows(batch)
+                writer.writerows(all_samples)
 
             run_details = dict(run)
-            run_details["sample_count"] = sample_count
+            run_details["sample_count"] = len(all_samples)
 
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
