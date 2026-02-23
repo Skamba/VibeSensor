@@ -611,7 +611,13 @@ class MetricsLogger:
                     self._analysis_enqueued_run_ids.discard(run_id)
                     self._analysis_active_run_id = None
 
-    def wait_for_post_analysis(self, timeout_s: float = 5.0) -> None:
+    def wait_for_post_analysis(self, timeout_s: float = 30.0) -> bool:
+        """Block until post-analysis finishes or *timeout_s* elapses.
+
+        Returns ``True`` when all queued analysis work completed within the
+        deadline, ``False`` if the timeout was reached while work was still
+        in progress.
+        """
         deadline = time.monotonic() + max(0.0, timeout_s)
         while True:
             with self._lock:
@@ -620,10 +626,18 @@ class MetricsLogger:
                 active_run = self._analysis_active_run_id is not None
                 worker_alive = bool(worker and worker.is_alive())
             if not queued and not active_run and not worker_alive:
-                return
+                return True
             remaining = deadline - time.monotonic()
             if remaining <= 0:
-                return
+                LOGGER.warning(
+                    "wait_for_post_analysis timed out after %.1fs "
+                    "(queued=%s, active=%s, worker_alive=%s)",
+                    timeout_s,
+                    queued,
+                    active_run,
+                    worker_alive,
+                )
+                return False
             if worker is not None and worker_alive:
                 worker.join(timeout=min(0.2, remaining))
             else:
