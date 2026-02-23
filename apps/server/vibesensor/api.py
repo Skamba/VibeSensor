@@ -272,8 +272,35 @@ class CarLibraryTypesResponse(BaseModel):
     types: list[str]
 
 
+class CarLibraryGearboxEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: str
+    final_drive_ratio: float
+    top_gear_ratio: float
+
+
+class CarLibraryTireOptionEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: str
+    tire_width_mm: float
+    tire_aspect_pct: float
+    rim_in: float
+
+
+class CarLibraryModelEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    brand: str
+    type: str
+    model: str
+    gearboxes: list[CarLibraryGearboxEntry]
+    tire_options: list[CarLibraryTireOptionEntry]
+    tire_width_mm: float
+    tire_aspect_pct: float
+    rim_in: float
+
+
 class CarLibraryModelsResponse(BaseModel):
-    models: list[str]
+    models: list[CarLibraryModelEntry]
 
 
 def _normalize_client_id_or_400(client_id: str) -> str:
