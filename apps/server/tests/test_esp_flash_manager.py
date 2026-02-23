@@ -59,7 +59,15 @@ async def test_port_discovery_returns_metadata(tmp_path) -> None:
     mgr = EspFlashManager(
         runner=_FakeRunner(),
         port_provider=_FakePorts(
-            [SerialPortInfo(port="/dev/ttyUSB0", description="USB UART", vid=6790, pid=29987, serial_number="abc")]
+            [
+                SerialPortInfo(
+                    port="/dev/ttyUSB0",
+                    description="USB UART",
+                    vid=6790,
+                    pid=29987,
+                    serial_number="abc",
+                )
+            ]
         ),
         repo_path=str(_make_repo(tmp_path)),
     )
