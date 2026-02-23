@@ -61,6 +61,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "metrics_log_hz": 4,
         "sensor_model": "ADXL345",
         "persist_history_db": True,
+        "shutdown_analysis_timeout_s": 30,
     },
     "storage": {
         "clients_json_path": "data/clients.json",
@@ -208,6 +209,7 @@ class LoggingConfig:
     sensor_model: str
     history_db_path: Path
     persist_history_db: bool
+    shutdown_analysis_timeout_s: float
 
 
 @dataclass(slots=True)
@@ -345,6 +347,12 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             persist_history_db=bool(
                 merged["logging"].get(
                     "persist_history_db", DEFAULT_CONFIG["logging"]["persist_history_db"]
+                )
+            ),
+            shutdown_analysis_timeout_s=float(
+                merged["logging"].get(
+                    "shutdown_analysis_timeout_s",
+                    DEFAULT_CONFIG["logging"]["shutdown_analysis_timeout_s"],
                 )
             ),
         ),

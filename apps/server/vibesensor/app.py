@@ -397,7 +397,16 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         runtime.tasks.clear()
 
         runtime.metrics_logger.stop_logging()
-        await asyncio.to_thread(runtime.metrics_logger.wait_for_post_analysis, 2.0)
+        analysis_timeout_s = config.logging.shutdown_analysis_timeout_s
+        finished = await asyncio.to_thread(
+            runtime.metrics_logger.wait_for_post_analysis, analysis_timeout_s
+        )
+        if not finished:
+            LOGGER.warning(
+                "Post-analysis did not finish within %.1fs on shutdown; "
+                "results for the last run may be lost.",
+                analysis_timeout_s,
+            )
 
         runtime.control_plane.close()
         if runtime.data_transport is not None:
