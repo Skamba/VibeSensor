@@ -83,7 +83,11 @@ class _StubMetricsLogger:
 
 
 class _StubDiagnostics:
+    def __init__(self) -> None:
+        self.update_calls = 0
+
     def update(self, **kwargs: Any) -> dict[str, Any]:
+        self.update_calls += 1
         return {"matrix": {}, "findings": []}
 
 
@@ -233,6 +237,18 @@ def test_build_ws_payload_light_tick_without_cache_still_collects_snapshot() -> 
 
     assert isinstance(metrics_logger, _StubMetricsLogger)
     assert metrics_logger.analysis_snapshot_calls == 1
+
+
+def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
+    diagnostics = state.live_diagnostics
+    assert isinstance(diagnostics, _StubDiagnostics)
+
+    state.ws_tick = 77
+    state.build_ws_payload(selected_client="aaa")
+    state.build_ws_payload(selected_client="bbb")
+
+    assert diagnostics.update_calls == 1
 
 
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:
