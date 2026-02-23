@@ -323,6 +323,128 @@ test("gps status polling does not override websocket speed readout", async ({ pa
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
 });
 
+test("strength chart labels update when switching language", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    if (path === "/api/settings/language" && method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ language: "en" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/language" && method === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ language: "nl" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-unit") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ speedUnit: "kmh" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-source/status") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          gps_enabled: true,
+          connection_state: "connected",
+          device: "gps0",
+          last_update_age_s: 0.1,
+          raw_speed_kmh: 72,
+          effective_speed_kmh: 72,
+          last_error: null,
+          reconnect_delay_s: 1,
+          fallback_active: false,
+          stale_timeout_s: 5,
+          fallback_mode: "hold",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    const payload = {
+      server_time: new Date().toISOString(),
+      speed_mps: 20,
+      clients: [{ id: "c1", name: "Front Left", connected: true, frames_total: 100, dropped_frames: 0 }],
+      diagnostics: {
+        strength_bands: [{ key: "l1", min_db: 8 }],
+        events: [],
+        levels: {
+          by_source: {
+            wheel: { strength_db: 12 },
+            driveshaft: { strength_db: 9 },
+            engine: { strength_db: 6 },
+            other: { strength_db: 3 },
+          },
+        },
+      },
+      spectra: { clients: {} },
+    };
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+        queueMicrotask(() =>
+          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
+        );
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#strengthChart .u-title")).toHaveText("Strength over time");
+  await page.locator("#languageSelect").selectOption("nl");
+  await expect(page.locator("#strengthChart .u-title")).toHaveText("Sterkte over tijd");
+});
+
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
   let persistedAnalysisSettings: Record<string, number> = {};
   let analysisPostCalls = 0;
