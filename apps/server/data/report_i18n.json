@@ -1279,6 +1279,10 @@
     "en": "transient impact",
     "nl": "voorbijgaande impact"
   },
+  "CLASSIFICATION_BASELINE_NOISE": {
+    "en": "noise floor",
+    "nl": "ruisvloer"
+  },
   "WHEEL_FOCUS_FRONT_LEFT": {
     "en": "front-left wheel",
     "nl": "linkervoorwiel"
