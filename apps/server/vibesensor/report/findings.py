@@ -926,6 +926,33 @@ def _build_order_findings(
         }
         findings.append((ranking_score, finding))
 
+    # ── Cross-hypothesis suppression ────────────────────────────────
+    # When engine RPM is inferred from speed + gear ratios, engine
+    # harmonics are mathematically related to wheel-order harmonics.
+    # If a wheel/tire finding has clearly higher confidence than an
+    # engine finding, the engine confidence is reduced to avoid
+    # false-positive engine reports from wheel-only evidence.
+    _best_wheel_conf = max(
+        (
+            float(f.get("confidence_0_to_1", 0))
+            for _, f in findings
+            if str(f.get("suspected_source") or "").strip().lower() == "wheel/tire"
+        ),
+        default=0.0,
+    )
+    if _best_wheel_conf > 0:
+        for i, (rs, f) in enumerate(findings):
+            src = str(f.get("suspected_source") or "").strip().lower()
+            if src == "engine":
+                eng_conf = float(f.get("confidence_0_to_1", 0))
+                # If engine confidence is within 85% of best wheel conf,
+                # the engine signal is likely a harmonic alias of the
+                # wheel evidence.  Suppress by reducing confidence.
+                if eng_conf <= _best_wheel_conf * 1.15:
+                    suppressed = eng_conf * 0.60
+                    f["confidence_0_to_1"] = suppressed
+                    findings[i] = (rs * 0.60, f)
+
     findings.sort(key=lambda item: item[0], reverse=True)
     return [
         item[1]
