@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass, field
+from functools import wraps
+from threading import RLock
 from typing import Any
 
 import numpy as np
@@ -16,6 +18,15 @@ from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
 AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
+
+
+def _synchronized(method):
+    @wraps(method)
+    def _wrapped(self: SignalProcessor, *args, **kwargs):
+        with self._lock:
+            return method(self, *args, **kwargs)
+
+    return _wrapped
 
 
 @dataclass(slots=True)
@@ -59,6 +70,7 @@ class SignalProcessor:
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._fft_cache_maxsize = 64
         self._spike_filter_enabled = True
+        self._lock = RLock()
 
     @staticmethod
     def _medfilt3(block: np.ndarray) -> np.ndarray:
@@ -75,6 +87,7 @@ class SignalProcessor:
         filtered[:, 1:-1] = np.median(stacked, axis=0)
         return filtered
 
+    @_synchronized
     def flush_client_buffer(self, client_id: str) -> None:
         """Reset the buffer for *client_id*, discarding all stored samples.
 
@@ -115,6 +128,7 @@ class SignalProcessor:
         buf.write_idx = latest.shape[1] % new_capacity
         buf.count = min(latest.shape[1], new_capacity)
 
+    @_synchronized
     def ingest(
         self,
         client_id: str,
@@ -252,6 +266,7 @@ class SignalProcessor:
             del self._fft_cache[oldest]
         return freq_slice, valid_idx
 
+    @_synchronized
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
         if buf is None or buf.count == 0:
@@ -400,6 +415,7 @@ class SignalProcessor:
             "axis_peaks": axis_peaks,
         }
 
+    @_synchronized
     def compute_all(
         self,
         client_ids: list[str],
@@ -411,6 +427,7 @@ class SignalProcessor:
             for client_id in client_ids
         }
 
+    @_synchronized
     def spectrum_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
         if buf is None or not buf.latest_spectrum:
@@ -431,6 +448,7 @@ class SignalProcessor:
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
 
+    @_synchronized
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
         shared_freq: np.ndarray | None = None
         clients: dict[str, dict[str, list[float]]] = {}
@@ -467,6 +485,7 @@ class SignalProcessor:
             payload["freq"] = []
         return payload
 
+    @_synchronized
     def selected_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
         if buf is None or buf.count == 0:
@@ -523,6 +542,7 @@ class SignalProcessor:
             "metrics": buf.latest_metrics,
         }
 
+    @_synchronized
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
         buf = self._buffers.get(client_id)
         if buf is None or buf.count == 0:
@@ -534,6 +554,7 @@ class SignalProcessor:
             float(buf.data[2, idx]),
         )
 
+    @_synchronized
     def latest_sample_rate_hz(self, client_id: str) -> int | None:
         buf = self._buffers.get(client_id)
         if buf is None:
@@ -541,6 +562,7 @@ class SignalProcessor:
         rate = int(buf.sample_rate_hz or 0)
         return rate if rate > 0 else None
 
+    @_synchronized
     def debug_spectrum(self, client_id: str) -> dict[str, Any]:
         """Return detailed spectrum debug info for independent verification."""
         buf = self._buffers.get(client_id)
@@ -605,6 +627,7 @@ class SignalProcessor:
             "strength_peaks": list(sm.get("top_peaks", [])),
         }
 
+    @_synchronized
     def raw_samples(self, client_id: str, n_samples: int = 2048) -> dict[str, Any]:
         """Return raw time-domain samples (in g) for independent analysis."""
         buf = self._buffers.get(client_id)
@@ -622,6 +645,7 @@ class SignalProcessor:
             "z": block[2].tolist(),
         }
 
+    @_synchronized
     def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         """Return subset of *client_ids* that received data within *max_age_s*."""
         now = time.monotonic()
@@ -634,6 +658,7 @@ class SignalProcessor:
                 result.append(cid)
         return result
 
+    @_synchronized
     def evict_clients(self, keep_client_ids: set[str]) -> None:
         stale_ids = [
             client_id for client_id in self._buffers.keys() if client_id not in keep_client_ids
