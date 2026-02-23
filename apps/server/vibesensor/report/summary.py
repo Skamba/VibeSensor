@@ -819,7 +819,12 @@ def summarize_run_data(
             },
         },
     }
-    summary["plots"] = _plot_data(summary)
+    summary["plots"] = _plot_data(
+        summary,
+        run_noise_baseline_g=run_noise_baseline_g,
+        per_sample_phases=_per_sample_phases,
+        phase_segments=phase_segments,
+    )
     _annotate_peaks_with_order_labels(summary)
     if not include_samples:
         summary.pop("samples", None)

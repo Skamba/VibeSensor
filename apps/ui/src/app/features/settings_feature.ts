@@ -10,7 +10,6 @@ import {
   getSpeedSourceStatus,
   setActiveSettingsCar,
   setAnalysisSettings,
-  setSpeedOverride,
   updateSettingsSpeedSource,
 } from "../../api";
 
@@ -70,7 +69,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       const fallbackVal = els.fallbackModeSelect?.value;
       if (fallbackVal) payload.fallbackMode = fallbackVal;
       await updateSettingsSpeedSource(payload);
-      await setSpeedOverride(state.manualSpeedKph ?? null);
     } catch (_err) { /* ignore */ }
   }
 
@@ -111,6 +109,15 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       rim_in: state.vehicleSettings.rim_in,
       final_drive_ratio: state.vehicleSettings.final_drive_ratio,
       current_gear_ratio: state.vehicleSettings.current_gear_ratio,
+      wheel_bandwidth_pct: state.vehicleSettings.wheel_bandwidth_pct,
+      driveshaft_bandwidth_pct: state.vehicleSettings.driveshaft_bandwidth_pct,
+      engine_bandwidth_pct: state.vehicleSettings.engine_bandwidth_pct,
+      speed_uncertainty_pct: state.vehicleSettings.speed_uncertainty_pct,
+      tire_diameter_uncertainty_pct: state.vehicleSettings.tire_diameter_uncertainty_pct,
+      final_drive_uncertainty_pct: state.vehicleSettings.final_drive_uncertainty_pct,
+      gear_uncertainty_pct: state.vehicleSettings.gear_uncertainty_pct,
+      min_abs_band_hz: state.vehicleSettings.min_abs_band_hz,
+      max_band_half_width_pct: state.vehicleSettings.max_band_half_width_pct,
     };
     try {
       await setAnalysisSettings(payload);
@@ -376,9 +383,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
           && state.manualSpeedKph > 0
           && status.connection_state !== "connected"
         );
-      if (typeof status.effective_speed_kmh === "number" && Number.isFinite(status.effective_speed_kmh)) {
-        state.speedMps = status.effective_speed_kmh / 3.6;
-      }
       renderGpsStatus(status);
       ctx.renderSpeedReadout();
       const interval = status.connection_state === "connected" ? GPS_POLL_FAST : GPS_POLL_SLOW;

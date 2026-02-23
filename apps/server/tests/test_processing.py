@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from math import pi, sqrt
+from threading import Event, Thread
 
 import numpy as np
 
@@ -79,3 +80,29 @@ def test_clients_with_recent_data_filters_stale() -> None:
 
     result = processor.clients_with_recent_data(["c1", "c2", "c3"], max_age_s=3.0)
     assert result == ["c1"]
+
+
+def test_ingest_waits_while_processor_lock_is_held() -> None:
+    processor = SignalProcessor(
+        sample_rate_hz=800,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=1024,
+        spectrum_max_hz=200,
+    )
+    samples = np.zeros((10, 3), dtype=np.float32)
+    done = Event()
+
+    def _ingest() -> None:
+        processor.ingest("c-lock", samples, sample_rate_hz=800)
+        done.set()
+
+    processor._lock.acquire()
+    worker = Thread(target=_ingest)
+    worker.start()
+    try:
+        assert not done.wait(timeout=0.05)
+    finally:
+        processor._lock.release()
+    worker.join(timeout=1.0)
+    assert done.is_set()

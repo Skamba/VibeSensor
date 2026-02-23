@@ -208,6 +208,7 @@ export function startUiApp(): void {
     historyFeature.renderHistoryTable();
     diagnosticsFeature.renderVibrationLog();
     diagnosticsFeature.renderMatrix();
+    diagnosticsFeature.recreateStrengthChart();
     renderWsState();
     if (state.spectrumPlot) { state.spectrumPlot.destroy(); state.spectrumPlot = null; renderSpectrum(); }
     if (forceReloadInsights) historyFeature.reloadExpandedRunOnLanguageChange();
