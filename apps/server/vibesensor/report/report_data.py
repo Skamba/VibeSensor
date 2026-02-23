@@ -234,6 +234,8 @@ def _peak_classification_text(value: object, tr: Callable[..., str] | None = Non
             return tr("CLASSIFICATION_PERSISTENT")
         if normalized == "transient":
             return tr("CLASSIFICATION_TRANSIENT")
+        if normalized == "baseline_noise":
+            return tr("CLASSIFICATION_BASELINE_NOISE")
         return tr("CLASSIFICATION_PERSISTENT")
     # Fallback without translator (backward compat)
     if normalized == "patterned":
@@ -242,6 +244,8 @@ def _peak_classification_text(value: object, tr: Callable[..., str] | None = Non
         return "persistent"
     if normalized == "transient":
         return "transient impact"
+    if normalized == "baseline_noise":
+        return "noise floor"
     return "persistent"
 
 

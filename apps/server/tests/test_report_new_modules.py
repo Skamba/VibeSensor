@@ -531,6 +531,36 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     assert "85%" in row.relevance
 
 
+def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
+    summary: dict = {
+        "lang": "en",
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {
+            "peaks_table": [
+                {
+                    "rank": 1,
+                    "frequency_hz": 18.0,
+                    "order_label": "",
+                    "max_amp_g": 0.01,
+                    "p95_amp_g": 0.009,
+                    "strength_db": 2.1,
+                    "presence_ratio": 0.1,
+                    "persistence_score": 0.001,
+                    "peak_classification": "baseline_noise",
+                    "typical_speed_band": "any",
+                }
+            ]
+        },
+    }
+    data = map_summary(summary)
+    assert data.peak_rows
+    assert "noise floor" in data.peak_rows[0].relevance
+
+
 def test_map_summary_data_trust_keeps_warning_detail() -> None:
     summary: dict = {
         "lang": "nl",
