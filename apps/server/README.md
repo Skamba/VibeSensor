@@ -25,6 +25,7 @@ Key modules in `vibesensor/`:
 |--------|---------|
 | `app.py` | FastAPI application entry point and lifecycle |
 | `api.py` | HTTP + WebSocket endpoint definitions |
+| `api_models.py` | Pydantic request/response models for the HTTP API |
 | `protocol.py` | UDP wire protocol parser (HELLO, DATA, CMD, ACK) |
 | `processing.py` | FFT, waveform, RMS/P2P, peak detection, spike filtering |
 | `metrics_log.py` | Run recording to JSONL with auto-start/stop on silence |
@@ -33,8 +34,7 @@ Key modules in `vibesensor/`:
 | `ws_hub.py` | WebSocket connection management and broadcast |
 | `udp_data_rx.py` | UDP data listener (port 9000) |
 | `udp_control_tx.py` | UDP control sender (port 9001, identify command) |
-| `report_pdf.py` | PDF report generation (A4 landscape, workshop handout format) |
-| `report_analysis.py` | Post-run analysis engine (findings, order matching) |
+| `report/` | Report analysis sub-package (findings, order matching, PDF generation) |
 | `report_i18n.py` | Internationalization strings (EN, NL) |
 | `config.py` | YAML configuration loader with defaults |
 | `registry.py` | Connected client registry |
