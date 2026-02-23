@@ -60,6 +60,61 @@ STALE_DATA_AGE_S = 2.0
 """Clients without fresh UDP data within this window are excluded from spectrum output."""
 
 
+def _build_order_bands(
+    orders_hz: dict[str, Any],
+    analysis_settings: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Pre-compute order tolerance bands so the frontend doesn't duplicate this math."""
+    resolved = build_diagnostic_settings(analysis_settings)
+    wheel_hz = float(orders_hz["wheel_hz"])
+    drive_hz = float(orders_hz["drive_hz"])
+    engine_hz = float(orders_hz["engine_hz"])
+    wheel_tol = tolerance_for_order(
+        resolved["wheel_bandwidth_pct"],
+        wheel_hz,
+        orders_hz["wheel_uncertainty_pct"],
+        min_abs_band_hz=resolved["min_abs_band_hz"],
+        max_band_half_width_pct=resolved["max_band_half_width_pct"],
+    )
+    drive_tol = tolerance_for_order(
+        resolved["driveshaft_bandwidth_pct"],
+        drive_hz,
+        orders_hz["drive_uncertainty_pct"],
+        min_abs_band_hz=resolved["min_abs_band_hz"],
+        max_band_half_width_pct=resolved["max_band_half_width_pct"],
+    )
+    engine_tol = tolerance_for_order(
+        resolved["engine_bandwidth_pct"],
+        engine_hz,
+        orders_hz["engine_uncertainty_pct"],
+        min_abs_band_hz=resolved["min_abs_band_hz"],
+        max_band_half_width_pct=resolved["max_band_half_width_pct"],
+    )
+    bands: list[dict[str, Any]] = [
+        {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
+        {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
+    ]
+    overlap_tol = max(
+        MIN_OVERLAP_TOLERANCE,
+        orders_hz["drive_uncertainty_pct"] + orders_hz["engine_uncertainty_pct"],
+    )
+    if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
+        bands.append(
+            {
+                "key": "driveshaft_engine_1x",
+                "center_hz": drive_hz,
+                "tolerance": max(drive_tol, engine_tol),
+            }
+        )
+    else:
+        bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
+        bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
+    bands.append(
+        {"key": "engine_2x", "center_hz": engine_hz * HARMONIC_2X, "tolerance": engine_tol}
+    )
+    return bands
+
+
 @dataclass(slots=True)
 class RuntimeState:
     config: AppConfig
@@ -150,56 +205,7 @@ class RuntimeState:
         out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
         out["engine"]["rpm"] = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE
 
-        # Provide pre-computed order bands so the frontend does not need to
-        # duplicate the tolerance/overlap math.
-        resolved = build_diagnostic_settings(analysis_settings)
-        wheel_hz = float(orders_hz["wheel_hz"])
-        drive_hz = float(orders_hz["drive_hz"])
-        engine_hz = float(orders_hz["engine_hz"])
-        wheel_tol = tolerance_for_order(
-            resolved["wheel_bandwidth_pct"],
-            wheel_hz,
-            orders_hz["wheel_uncertainty_pct"],
-            min_abs_band_hz=resolved["min_abs_band_hz"],
-            max_band_half_width_pct=resolved["max_band_half_width_pct"],
-        )
-        drive_tol = tolerance_for_order(
-            resolved["driveshaft_bandwidth_pct"],
-            drive_hz,
-            orders_hz["drive_uncertainty_pct"],
-            min_abs_band_hz=resolved["min_abs_band_hz"],
-            max_band_half_width_pct=resolved["max_band_half_width_pct"],
-        )
-        engine_tol = tolerance_for_order(
-            resolved["engine_bandwidth_pct"],
-            engine_hz,
-            orders_hz["engine_uncertainty_pct"],
-            min_abs_band_hz=resolved["min_abs_band_hz"],
-            max_band_half_width_pct=resolved["max_band_half_width_pct"],
-        )
-        bands: list[dict[str, Any]] = [
-            {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
-            {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
-        ]
-        overlap_tol = max(
-            MIN_OVERLAP_TOLERANCE,
-            orders_hz["drive_uncertainty_pct"] + orders_hz["engine_uncertainty_pct"],
-        )
-        if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
-            bands.append(
-                {
-                    "key": "driveshaft_engine_1x",
-                    "center_hz": drive_hz,
-                    "tolerance": max(drive_tol, engine_tol),
-                }
-            )
-        else:
-            bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
-            bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
-        bands.append(
-            {"key": "engine_2x", "center_hz": engine_hz * HARMONIC_2X, "tolerance": engine_tol}
-        )
-        out["order_bands"] = bands
+        out["order_bands"] = _build_order_bands(orders_hz, analysis_settings)
         return out
 
     def on_ws_broadcast_tick(self) -> None:
@@ -211,6 +217,55 @@ class RuntimeState:
             ),
         )
         self.ws_include_heavy = (self.ws_tick % heavy_every) == 0
+
+    def _refresh_analysis_cache(self) -> tuple[dict[str, object], list[dict[str, object]]]:
+        """Return (metadata, samples), refreshing only when the cache is stale.
+
+        On heavy ticks the cache is always refreshed.  On light ticks the
+        existing cache is reused if it was populated at least once.
+        """
+        need_refresh = (
+            self.ws_include_heavy
+            and (self.cached_analysis_tick != self.ws_tick or self.cached_analysis_metadata is None)
+        ) or self.cached_analysis_metadata is None
+        if need_refresh:
+            metadata, samples = self.metrics_logger.analysis_snapshot()
+            self.cached_analysis_metadata = metadata
+            self.cached_analysis_samples = samples
+            self.cached_analysis_tick = self.ws_tick
+        return self.cached_analysis_metadata, self.cached_analysis_samples  # type: ignore[return-value]
+
+    def _refresh_diagnostics_cache(
+        self,
+        *,
+        speed_mps: float | None,
+        clients: list[dict[str, Any]],
+        spectra: dict[str, Any] | None,
+        settings: dict[str, Any],
+        analysis_metadata: dict[str, object],
+        analysis_samples: list[dict[str, object]],
+    ) -> dict[str, object]:
+        """Return diagnostics payload, refreshing only when the cache is stale."""
+        cache_valid = (
+            self.cached_diagnostics is not None
+            and self.cached_diagnostics_tick == self.ws_tick
+            and self.cached_diagnostics_heavy == self.ws_include_heavy
+        )
+        if cache_valid:
+            return self.cached_diagnostics  # type: ignore[return-value]
+        diagnostics = self.live_diagnostics.update(
+            speed_mps=speed_mps,
+            clients=clients,
+            spectra=spectra,
+            settings=settings,
+            finding_metadata=analysis_metadata,
+            finding_samples=analysis_samples,
+            language=self.settings_store.language,
+        )
+        self.cached_diagnostics = diagnostics
+        self.cached_diagnostics_tick = self.ws_tick
+        self.cached_diagnostics_heavy = self.ws_include_heavy
+        return diagnostics
 
     def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
         clients = self.registry.snapshot_for_api()
@@ -236,44 +291,17 @@ class RuntimeState:
             analysis_settings=analysis_settings_snapshot,
             resolution_source=resolution.source,
         )
-        if self.ws_include_heavy:
-            if self.cached_analysis_tick != self.ws_tick or self.cached_analysis_metadata is None:
-                analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
-                self.cached_analysis_metadata = analysis_metadata
-                self.cached_analysis_samples = analysis_samples
-                self.cached_analysis_tick = self.ws_tick
-            else:
-                analysis_metadata = self.cached_analysis_metadata
-                analysis_samples = self.cached_analysis_samples
-        elif self.cached_analysis_metadata is None:
-            analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
-            self.cached_analysis_metadata = analysis_metadata
-            self.cached_analysis_samples = analysis_samples
-            self.cached_analysis_tick = self.ws_tick
-        else:
-            analysis_metadata = self.cached_analysis_metadata
-            analysis_samples = self.cached_analysis_samples
+        analysis_metadata, analysis_samples = self._refresh_analysis_cache()
         if self.ws_include_heavy:
             payload["spectra"] = self.processor.multi_spectrum_payload(fresh_ids)
-        if (
-            self.cached_diagnostics is not None
-            and self.cached_diagnostics_tick == self.ws_tick
-            and self.cached_diagnostics_heavy == self.ws_include_heavy
-        ):
-            payload["diagnostics"] = self.cached_diagnostics
-        else:
-            payload["diagnostics"] = self.live_diagnostics.update(
-                speed_mps=speed_mps,
-                clients=clients,
-                spectra=payload.get("spectra") if self.ws_include_heavy else None,
-                settings=analysis_settings_snapshot,
-                finding_metadata=analysis_metadata,
-                finding_samples=analysis_samples,
-                language=self.settings_store.language,
-            )
-            self.cached_diagnostics = payload["diagnostics"]
-            self.cached_diagnostics_tick = self.ws_tick
-            self.cached_diagnostics_heavy = self.ws_include_heavy
+        payload["diagnostics"] = self._refresh_diagnostics_cache(
+            speed_mps=speed_mps,
+            clients=clients,
+            spectra=payload.get("spectra") if self.ws_include_heavy else None,
+            settings=analysis_settings_snapshot,
+            analysis_metadata=analysis_metadata,
+            analysis_samples=analysis_samples,
+        )
         return payload
 
 
