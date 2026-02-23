@@ -10,7 +10,6 @@ import {
   getSpeedSourceStatus,
   setActiveSettingsCar,
   setAnalysisSettings,
-  setSpeedOverride,
   updateSettingsSpeedSource,
 } from "../../api";
 
@@ -70,7 +69,6 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       const fallbackVal = els.fallbackModeSelect?.value;
       if (fallbackVal) payload.fallbackMode = fallbackVal;
       await updateSettingsSpeedSource(payload);
-      await setSpeedOverride(state.manualSpeedKph ?? null);
     } catch (_err) { /* ignore */ }
   }
 
