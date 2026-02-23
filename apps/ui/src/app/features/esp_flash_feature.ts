@@ -1,5 +1,5 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { EspFlashStatusPayload } from "../../api/types";
+import type { EspFlashHistoryAttemptPayload, EspFlashStatusPayload } from "../../api/types";
 import {
   cancelEspFlash,
   getEspFlashHistory,
@@ -81,7 +81,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       els.espFlashHistoryPanel.innerHTML = `<div class="subtle">${escapeHtml(t("settings.esp_flash.no_history"))}</div>`;
       return;
     }
-    const rows = attempts.map((attempt: any) => {
+    const rows = attempts.map((attempt: EspFlashHistoryAttemptPayload) => {
       const state =
         typeof attempt?.state === "string" && attempt.state
           ? attempt.state

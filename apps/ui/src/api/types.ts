@@ -112,3 +112,14 @@ export type EspFlashStatusPayload = {
   error: string | null;
   log_count: number;
 };
+
+export type EspFlashHistoryAttemptPayload = {
+  job_id: number;
+  state: "idle" | "running" | "success" | "failed" | "cancelled";
+  selected_port: string | null;
+  auto_detect: boolean;
+  started_at: number;
+  finished_at: number | null;
+  exit_code: number | null;
+  error: string | null;
+};

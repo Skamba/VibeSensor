@@ -1,6 +1,7 @@
 import { apiJson } from "./http";
 import type {
   CarsPayload,
+  EspFlashHistoryAttemptPayload,
   EspFlashStatusPayload,
   EspSerialPortPayload,
   SpeedSourcePayload,
@@ -156,6 +157,6 @@ export async function cancelEspFlash(): Promise<{ cancelled: boolean }> {
   });
 }
 
-export async function getEspFlashHistory(): Promise<{ attempts: Array<Record<string, unknown>> }> {
+export async function getEspFlashHistory(): Promise<{ attempts: EspFlashHistoryAttemptPayload[] }> {
   return apiJson("/api/settings/esp-flash/history");
 }
