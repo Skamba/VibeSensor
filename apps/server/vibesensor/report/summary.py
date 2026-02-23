@@ -476,21 +476,12 @@ def build_findings_for_samples(
     )
 
 
-def summarize_run_data(
+def _compute_run_timing(
     metadata: dict[str, Any],
     samples: list[dict[str, Any]],
-    lang: str | None = None,
-    file_name: str = "run",
-    include_samples: bool = True,
-) -> dict[str, object]:
-    """Analyse pre-loaded run data and return the full summary dict.
-
-    This is the single computation path used by both the History UI and the
-    PDF report — callers must never re-derive metrics independently.
-    """
-    language = normalize_lang(lang)
-    _validate_required_strength_metrics(samples)
-
+    file_name: str,
+) -> tuple[str, datetime | None, datetime | None, float]:
+    """Extract run_id, start/end timestamps and duration from metadata+samples."""
     run_id = str(metadata.get("run_id") or f"run-{file_name}")
     start_ts = parse_iso8601(metadata.get("start_time_utc"))
     end_ts = parse_iso8601(metadata.get("end_time_utc"))
@@ -505,24 +496,14 @@ def summarize_run_data(
     elif samples:
         duration_s = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
 
-    speed_values = [
-        speed
-        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
-        if speed is not None and speed > 0
-    ]
-    speed_stats = _speed_stats(speed_values)
-    run_noise_baseline_g = _run_noise_baseline_g(samples)
-    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
-    speed_sufficient = (
-        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
-    )
+    return run_id, start_ts, end_ts, duration_s
 
-    # Phase segmentation
-    _per_sample_phases, phase_segments = _segment_run_phases(samples)
-    phase_info = _phase_summary(phase_segments)
-    speed_stats_by_phase = _speed_stats_by_phase(samples, _per_sample_phases)
 
-    sensor_model = metadata.get("sensor_model")
+def _compute_accel_statistics(
+    samples: list[dict[str, Any]],
+    sensor_model: object,
+) -> dict[str, Any]:
+    """Compute per-axis accel lists, magnitude, amplitude metric, saturation and mean/variance."""
     sensor_limit = _sensor_limit_g(sensor_model)
     accel_x_vals = [
         value
@@ -575,60 +556,34 @@ def summarize_run_data(
     y_mean, y_var = _mean_variance(accel_y_vals)
     z_mean, z_var = _mean_variance(accel_z_vals)
 
-    raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
-    speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
-    speed_breakdown_skipped_reason = None
-    if not speed_sufficient:
-        speed_breakdown_skipped_reason = _tr(
-            language, "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
-        )
-
-    # Phase-grouped speed breakdown: groups by temporal driving phase rather
-    # than speed magnitude, giving context for how vibration varies per phase.
-    # (issue #189)
-    phase_speed_breakdown = _phase_speed_breakdown(samples, _per_sample_phases)
-
-    findings = _build_findings(
-        metadata=metadata,
-        samples=samples,
-        speed_sufficient=speed_sufficient,
-        steady_speed=bool(speed_stats.get("steady_speed")),
-        speed_stddev_kmh=_as_float(speed_stats.get("stddev_kmh")),
-        speed_non_null_pct=speed_non_null_pct,
-        raw_sample_rate_hz=raw_sample_rate_hz,
-        lang=language,
-        per_sample_phases=_per_sample_phases,
-        run_noise_baseline_g=run_noise_baseline_g,
-    )
-    most_likely_origin = _most_likely_origin_summary(findings, language)
-    test_plan = _merge_test_plan(findings, language)
-    phase_timeline = _build_phase_timeline(phase_segments, findings, language)
-
-    metadata_dict = metadata if isinstance(metadata, dict) else {}
-    reference_complete = bool(
-        _as_float(metadata_dict.get("raw_sample_rate_hz"))
-        and (
-            _as_float(metadata_dict.get("tire_circumference_m"))
-            or tire_circumference_m_from_spec(
-                _as_float(metadata_dict.get("tire_width_mm")),
-                _as_float(metadata_dict.get("tire_aspect_pct")),
-                _as_float(metadata_dict.get("rim_in")),
-            )
-        )
-        and (
-            _as_float(metadata_dict.get("engine_rpm"))
-            or (
-                _as_float(metadata_dict.get("final_drive_ratio"))
-                and _as_float(metadata_dict.get("current_gear_ratio"))
-            )
-        )
-    )
-    steady_speed = bool(speed_stats.get("steady_speed"))
-    sensor_ids = {
-        str(s.get("client_id") or "") for s in samples if isinstance(s, dict) and s.get("client_id")
+    return {
+        "accel_x_vals": accel_x_vals,
+        "accel_y_vals": accel_y_vals,
+        "accel_z_vals": accel_z_vals,
+        "accel_mag_vals": accel_mag_vals,
+        "amp_metric_values": amp_metric_values,
+        "sat_count": sat_count,
+        "sensor_limit": sensor_limit,
+        "x_mean": x_mean,
+        "x_var": x_var,
+        "y_mean": y_mean,
+        "y_var": y_var,
+        "z_mean": z_mean,
+        "z_var": z_var,
     }
+
+
+def _build_run_suitability_checks(
+    language: str,
+    steady_speed: bool,
+    sensor_ids: set[str],
+    reference_complete: bool,
+    sat_count: int,
+    samples: list[dict[str, Any]],
+) -> list[dict[str, object]]:
+    """Construct the run-suitability checklist (speed, sensors, reference, saturation, frames)."""
     sensor_count_sufficient = len(sensor_ids) >= 3
-    run_suitability = [
+    run_suitability: list[dict[str, object]] = [
         {
             "check": _tr(language, "SUITABILITY_CHECK_SPEED_VARIATION"),
             "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
@@ -710,8 +665,113 @@ def summarize_run_data(
             ),
         }
     )
+    return run_suitability
+
+
+def summarize_run_data(
+    metadata: dict[str, Any],
+    samples: list[dict[str, Any]],
+    lang: str | None = None,
+    file_name: str = "run",
+    include_samples: bool = True,
+) -> dict[str, object]:
+    """Analyse pre-loaded run data and return the full summary dict.
+
+    This is the single computation path used by both the History UI and the
+    PDF report — callers must never re-derive metrics independently.
+    """
+    language = normalize_lang(lang)
+    _validate_required_strength_metrics(samples)
+
+    # --- Timing ---
+    run_id, start_ts, end_ts, duration_s = _compute_run_timing(metadata, samples, file_name)
+
+    # --- Speed statistics ---
+    speed_values = [
+        speed
+        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
+        if speed is not None and speed > 0
+    ]
+    speed_stats = _speed_stats(speed_values)
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
+    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
+    speed_sufficient = (
+        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
+    )
+
+    # --- Phase segmentation ---
+    _per_sample_phases, phase_segments = _segment_run_phases(samples)
+    phase_info = _phase_summary(phase_segments)
+    speed_stats_by_phase = _speed_stats_by_phase(samples, _per_sample_phases)
+
+    # --- Acceleration statistics ---
+    accel_stats = _compute_accel_statistics(samples, metadata.get("sensor_model"))
+
+    raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
+    speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
+    speed_breakdown_skipped_reason = None
+    if not speed_sufficient:
+        speed_breakdown_skipped_reason = _tr(
+            language, "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
+        )
+
+    # Phase-grouped speed breakdown (issue #189)
+    phase_speed_breakdown = _phase_speed_breakdown(samples, _per_sample_phases)
+
+    # --- Findings ---
+    findings = _build_findings(
+        metadata=metadata,
+        samples=samples,
+        speed_sufficient=speed_sufficient,
+        steady_speed=bool(speed_stats.get("steady_speed")),
+        speed_stddev_kmh=_as_float(speed_stats.get("stddev_kmh")),
+        speed_non_null_pct=speed_non_null_pct,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        lang=language,
+        per_sample_phases=_per_sample_phases,
+        run_noise_baseline_g=run_noise_baseline_g,
+    )
+    most_likely_origin = _most_likely_origin_summary(findings, language)
+    test_plan = _merge_test_plan(findings, language)
+    phase_timeline = _build_phase_timeline(phase_segments, findings, language)
+
+    # --- Reference completeness ---
+    metadata_dict = metadata if isinstance(metadata, dict) else {}
+    reference_complete = bool(
+        _as_float(metadata_dict.get("raw_sample_rate_hz"))
+        and (
+            _as_float(metadata_dict.get("tire_circumference_m"))
+            or tire_circumference_m_from_spec(
+                _as_float(metadata_dict.get("tire_width_mm")),
+                _as_float(metadata_dict.get("tire_aspect_pct")),
+                _as_float(metadata_dict.get("rim_in")),
+            )
+        )
+        and (
+            _as_float(metadata_dict.get("engine_rpm"))
+            or (
+                _as_float(metadata_dict.get("final_drive_ratio"))
+                and _as_float(metadata_dict.get("current_gear_ratio"))
+            )
+        )
+    )
+
+    # --- Run suitability checks ---
+    steady_speed = bool(speed_stats.get("steady_speed"))
+    sensor_ids = {
+        str(s.get("client_id") or "") for s in samples if isinstance(s, dict) and s.get("client_id")
+    }
+    run_suitability = _build_run_suitability_checks(
+        language=language,
+        steady_speed=steady_speed,
+        sensor_ids=sensor_ids,
+        reference_complete=reference_complete,
+        sat_count=accel_stats["sat_count"],
+        samples=samples,
+    )
 
     # Derive overall run strength band for confidence-label guard
+    amp_metric_values = accel_stats["amp_metric_values"]
     _median_db = _median(amp_metric_values) if amp_metric_values else None
     _overall_band_key = _strength_label(_median_db)[0] if _median_db is not None else None
 
@@ -805,17 +865,17 @@ def summarize_run_data(
                 "count_non_null": len(speed_values),
             },
             "accel_sanity": {
-                "x_mean_g": x_mean,
-                "x_variance_g2": x_var,
-                "y_mean_g": y_mean,
-                "y_variance_g2": y_var,
-                "z_mean_g": z_mean,
-                "z_variance_g2": z_var,
-                "sensor_limit_g": sensor_limit,
-                "saturation_count": sat_count,
+                "x_mean_g": accel_stats["x_mean"],
+                "x_variance_g2": accel_stats["x_var"],
+                "y_mean_g": accel_stats["y_mean"],
+                "y_variance_g2": accel_stats["y_var"],
+                "z_mean_g": accel_stats["z_mean"],
+                "z_variance_g2": accel_stats["z_var"],
+                "sensor_limit_g": accel_stats["sensor_limit"],
+                "saturation_count": accel_stats["sat_count"],
             },
             "outliers": {
-                "accel_magnitude_g": _outlier_summary(accel_mag_vals),
+                "accel_magnitude_g": _outlier_summary(accel_stats["accel_mag_vals"]),
                 "amplitude_metric": _outlier_summary(amp_metric_values),
             },
         },
