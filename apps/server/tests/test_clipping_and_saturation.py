@@ -48,6 +48,9 @@ from builders import (
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 
+# Fallback frequency used when speed is zero/negative and wheel Hz cannot be computed
+_FALLBACK_WHEEL_HZ = 20.0
+
 
 def _make_clipped_fault(
     *,
@@ -243,7 +246,7 @@ def test_clipping_with_speed_variants(
         speed = speed_fn(i)
         for sensor in ALL_WHEEL_SENSORS:
             if sensor == SENSOR_FL and speed > 0:
-                whz = wheel_hz(speed) if speed > 0 else 20.0
+                whz = wheel_hz(speed) if speed > 0 else _FALLBACK_WHEEL_HZ
                 peaks = [
                     {"hz": whz, "amp": 0.06},
                     {"hz": whz * 2, "amp": 0.024},

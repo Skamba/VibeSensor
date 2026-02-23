@@ -48,6 +48,9 @@ from builders import (
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 
+# Typical engine idle frequency (~800 RPM ≈ 13.3 Hz at 1x order)
+_IDLE_ENGINE_HZ = 13.3
+
 _CORNER_PAIRS = [
     ("FL", "FR"),
     ("FL", "RL"),
@@ -131,15 +134,14 @@ def test_engine_idle_then_wheel_cruise(
     """Engine on idle then wheel fault on cruise: wheel should be detected."""
     sensor = CORNER_SENSORS[corner]
 
-    # Phase 1: idle with engine vibration (typical idle ~800 RPM ≈ 13.3 Hz)
-    idle_engine_hz = 13.3
+    # Phase 1: idle with engine vibration
     idle_samples: list[dict[str, Any]] = []
     for i in range(idle_n):
         t = float(i)
         for s in ALL_WHEEL_SENSORS:
             peaks = [
-                {"hz": idle_engine_hz, "amp": 0.03},
-                {"hz": idle_engine_hz * 2, "amp": 0.015},
+                {"hz": _IDLE_ENGINE_HZ, "amp": 0.03},
+                {"hz": _IDLE_ENGINE_HZ * 2, "amp": 0.015},
             ]
             idle_samples.append(make_sample(
                 t_s=t, speed_kmh=0.0, client_name=s,
