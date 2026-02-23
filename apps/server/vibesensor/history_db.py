@@ -101,6 +101,21 @@ class HistoryDB:
             finally:
                 cur.close()
 
+    @contextmanager
+    def read_transaction(self):
+        """Hold a single read transaction across multi-step read operations."""
+        with self._lock:
+            cur = self._conn.cursor()
+            try:
+                cur.execute("BEGIN")
+                yield
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+            finally:
+                cur.close()
+
     def _ensure_schema(self) -> None:
         with self._cursor() as cur:
             cur.executescript(_SCHEMA_SQL)
