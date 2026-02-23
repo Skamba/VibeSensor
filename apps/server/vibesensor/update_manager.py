@@ -15,7 +15,6 @@ import logging
 import os
 import shutil
 import subprocess
-import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -40,6 +39,7 @@ NMCLI_TIMEOUT_S = 30
 """Per-nmcli-operation timeout."""
 
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
+UPLINK_CONNECT_WAIT_S = 30
 
 DEFAULT_GIT_REMOTE = "https://github.com/Skamba/VibeSensor.git"
 DEFAULT_GIT_BRANCH = "main"
@@ -371,6 +371,24 @@ class UpdateManager:
             )
         )
 
+    @staticmethod
+    def _ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
+        modes: set[str] = set()
+        target = ssid.strip()
+        if not target:
+            return modes
+        for line in scan_output.splitlines():
+            raw = line.strip()
+            if not raw or ":" not in raw:
+                continue
+            candidate_ssid, security = raw.split(":", 1)
+            if candidate_ssid.strip() != target:
+                continue
+            sec = security.strip()
+            if sec and sec != "--":
+                modes.add(sec)
+        return modes
+
     async def _run_cmd(
         self,
         args: list[str],
@@ -514,6 +532,36 @@ class UpdateManager:
         self._status.phase = UpdatePhase.connecting_wifi
         self._log(f"Connecting to Wi-Fi network: {ssid}")
 
+        if not password:
+            rc, stdout, _ = await self._run_cmd(
+                [
+                    "nmcli",
+                    "-t",
+                    "-f",
+                    "SSID,SECURITY",
+                    "dev",
+                    "wifi",
+                    "list",
+                    "ifname",
+                    self._wifi_ifname,
+                    "--rescan",
+                    "yes",
+                ],
+                phase="connecting_wifi",
+                timeout=NMCLI_TIMEOUT_S,
+                sudo=True,
+            )
+            if rc == 0:
+                security_modes = self._ssid_security_modes(stdout, ssid)
+                if security_modes:
+                    self._add_issue(
+                        "connecting_wifi",
+                        "Wi-Fi password required for secured network",
+                        f"SSID '{ssid}' advertises security: {', '.join(sorted(security_modes))}",
+                    )
+                    self._status.state = UpdateState.failed
+                    return
+
         # Clean up any previous uplink
         await self._run_cmd(
             ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
@@ -546,29 +594,36 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
 
-        # Write credentials to a temporary file (never log them)
-        cred_file = None
-        try:
-            if password:
-                cred_file = tempfile.NamedTemporaryFile(
-                    mode="w", prefix="vs_uplink_", suffix=".tmp", delete=False
-                )
-                cred_file.write(password)
-                cred_file.close()
-                os.chmod(cred_file.name, 0o600)
-
-                rc, _, stderr = await self._run_cmd(
+        if password:
+            rc, _, stderr = await self._run_cmd(
+                [
+                    "nmcli",
+                    "--wait",
+                    str(UPLINK_CONNECT_WAIT_S),
+                    "device",
+                    "wifi",
+                    "connect",
+                    ssid,
+                    "password",
+                    password,
+                    "ifname",
+                    self._wifi_ifname,
+                    "name",
+                    UPLINK_CONNECTION_NAME,
+                ],
+                phase="connecting_wifi",
+                sudo=True,
+                timeout=float(UPLINK_CONNECT_WAIT_S + 10),
+            )
+            if rc == 0:
+                await self._run_cmd(
                     [
                         "nmcli",
                         "connection",
                         "modify",
                         UPLINK_CONNECTION_NAME,
-                        "802-11-wireless-security.key-mgmt",
-                        "wpa-psk",
-                        "802-11-wireless-security.psk-flags",
-                        "0",
-                        "802-11-wireless-security.psk",
-                        password,
+                        "autoconnect",
+                        "no",
                         "ipv4.method",
                         "auto",
                         "ipv6.method",
@@ -577,44 +632,46 @@ class UpdateManager:
                     phase="connecting_wifi",
                     sudo=True,
                 )
-            else:
-                rc, _, stderr = await self._run_cmd(
-                    [
-                        "nmcli",
-                        "connection",
-                        "modify",
-                        UPLINK_CONNECTION_NAME,
-                        "ipv4.method",
-                        "auto",
-                        "ipv6.method",
-                        "ignore",
-                    ],
-                    phase="connecting_wifi",
-                    sudo=True,
-                )
+        else:
+            rc, _, stderr = await self._run_cmd(
+                [
+                    "nmcli",
+                    "connection",
+                    "modify",
+                    UPLINK_CONNECTION_NAME,
+                    "ipv4.method",
+                    "auto",
+                    "ipv6.method",
+                    "ignore",
+                ],
+                phase="connecting_wifi",
+                sudo=True,
+            )
 
-            if rc != 0:
-                self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
-                self._status.state = UpdateState.failed
-                return
-        finally:
-            if cred_file and os.path.exists(cred_file.name):
-                try:
-                    os.unlink(cred_file.name)
-                except OSError:
-                    pass
-
-        # Bring up the uplink
-        rc, _, stderr = await self._run_cmd(
-            ["nmcli", "--wait", "15", "connection", "up", UPLINK_CONNECTION_NAME],
-            phase="connecting_wifi",
-            sudo=True,
-            timeout=30,
-        )
         if rc != 0:
-            self._add_issue("connecting_wifi", f"Failed to connect to Wi-Fi '{ssid}'", stderr)
+            self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
             self._status.state = UpdateState.failed
             return
+
+        if not password:
+            # Open-network flow uses explicit connection activation after profile setup.
+            rc, _, stderr = await self._run_cmd(
+                [
+                    "nmcli",
+                    "--wait",
+                    str(UPLINK_CONNECT_WAIT_S),
+                    "connection",
+                    "up",
+                    UPLINK_CONNECTION_NAME,
+                ],
+                phase="connecting_wifi",
+                sudo=True,
+                timeout=float(UPLINK_CONNECT_WAIT_S + 10),
+            )
+            if rc != 0:
+                self._add_issue("connecting_wifi", f"Failed to connect to Wi-Fi '{ssid}'", stderr)
+                self._status.state = UpdateState.failed
+                return
 
         self._log("Wi-Fi connected successfully")
 
@@ -660,7 +717,7 @@ class UpdateManager:
                 git_args,
                 phase="updating",
                 timeout=GIT_OP_TIMEOUT_S,
-                sudo=True,
+                sudo=False,
             )
             if rc != 0:
                 self._add_issue("updating", f"Git {desc} failed (exit {rc})", stderr)
@@ -686,7 +743,7 @@ class UpdateManager:
             rebuild_cmd,
             phase="updating",
             timeout=REBUILD_OP_TIMEOUT_S,
-            sudo=True,
+            sudo=False,
         )
         if rc != 0:
             self._add_issue("updating", f"Rebuild/sync failed (exit {rc})", stderr)

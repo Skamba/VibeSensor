@@ -41,3 +41,6 @@ def test_smoke_install_pi_installs_rebuild_toolchain() -> None:
     text = script.read_text(encoding="utf-8")
     assert "nodejs" in text, "Pi install script must install nodejs for on-device rebuilds"
     assert "npm" in text, "Pi install script must install npm for on-device rebuilds"
+    assert 'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"' in text, (
+        "Pi install script must ensure repo ownership for update writes"
+    )
