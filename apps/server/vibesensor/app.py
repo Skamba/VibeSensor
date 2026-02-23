@@ -186,10 +186,6 @@ class RuntimeState:
             analysis_samples = self.cached_analysis_samples
         if self.ws_include_heavy:
             payload["spectra"] = self.processor.multi_spectrum_payload(fresh_ids)
-            if active is not None and active in fresh_ids:
-                payload["selected"] = self.processor.selected_payload(active)
-            else:
-                payload["selected"] = {}
         else:
             pass
         if (

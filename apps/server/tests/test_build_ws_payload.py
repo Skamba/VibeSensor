@@ -173,7 +173,7 @@ def test_build_ws_payload_returns_required_keys() -> None:
         assert key in payload, f"missing key: {key}"
 
     # Heavy-tick keys
-    for key in ("spectra", "selected", "diagnostics"):
+    for key in ("spectra", "diagnostics"):
         assert key in payload, f"missing heavy key: {key}"
 
     assert payload["speed_mps"] == 12.5
@@ -193,7 +193,6 @@ def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
     payload = state.build_ws_payload(selected_client="aaa")
 
     assert "spectra" not in payload
-    assert "selected" not in payload
     # diagnostics is always present
     assert "diagnostics" in payload
 
@@ -211,8 +210,6 @@ def test_build_ws_payload_no_clients() -> None:
 
     assert payload["clients"] == []
     assert payload["selected_client_id"] is None
-    # selected should be empty dict when active is None
-    assert payload["selected"] == {}
 
 
 def test_build_ws_payload_light_tick_reuses_cached_analysis_snapshot() -> None:
