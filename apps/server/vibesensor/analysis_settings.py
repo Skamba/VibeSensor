@@ -44,6 +44,9 @@ _BOUNDS: dict[str, tuple[float, float]] = {
     "current_gear_ratio": (0.1, 20.0),
     "min_abs_band_hz": (0.0, 500.0),
     "max_band_half_width_pct": (0.1, 100.0),
+    "tire_width_mm": (100.0, 500.0),
+    "tire_aspect_pct": (10.0, 90.0),
+    "rim_in": (10.0, 30.0),
 }
 
 
