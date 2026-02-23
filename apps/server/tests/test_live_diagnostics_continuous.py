@@ -256,9 +256,7 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
 
     # Collect any non-zero seconds from before
     total_seconds_before = sum(
-        cell["seconds"]
-        for cols in matrix_before.values()
-        for cell in cols.values()
+        cell["seconds"] for cols in matrix_before.values() for cell in cols.values()
     )
 
     # Light tick should preserve matrix structure and continue accumulating dwell seconds
@@ -278,9 +276,7 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
 
     # Dwell seconds should be >= before (they accumulate on light ticks now)
     total_seconds_after = sum(
-        cell["seconds"]
-        for cols in matrix_after.values()
-        for cell in cols.values()
+        cell["seconds"] for cols in matrix_after.values() for cell in cols.values()
     )
     assert total_seconds_after >= total_seconds_before, (
         "Matrix dwell seconds should not decrease on light tick"

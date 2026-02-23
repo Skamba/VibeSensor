@@ -305,7 +305,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     } else {
       state.strengthPlot.setScale("y", { min: fixedStrengthDbRange[0], max: fixedStrengthDbRange[1] });
     }
-    state.strengthPlot.setData([relT, state.strengthHistory.wheel as any, state.strengthHistory.driveshaft as any, state.strengthHistory.engine as any, state.strengthHistory.other as any]);
+    state.strengthPlot.setData([relT, state.strengthHistory.wheel, state.strengthHistory.driveshaft, state.strengthHistory.engine, state.strengthHistory.other]);
   }
 
   function applyServerDiagnostics(diagnostics: AdaptedPayload["diagnostics"], hasFreshFrames = false): void {
