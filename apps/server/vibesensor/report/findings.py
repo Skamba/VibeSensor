@@ -10,7 +10,6 @@ from typing import Any
 
 from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
 
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
@@ -33,6 +32,7 @@ from .helpers import (
     _speed_bin_sort_key,
     _tire_reference_from_metadata,
 )
+from .i18n import tr as _tr
 from .order_analysis import (
     _finding_actions_for_source,
     _order_hypotheses,
