@@ -118,8 +118,10 @@ def test_single_sensor_amplitude_scaling(
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     if amp_label == "low":
-        # Low amplitude may or may not produce a finding
-        pass
+        assert_tolerant_no_fault(
+            summary,
+            msg=f"Low amplitude should not produce a confident wheel fault at {corner}",
+        )
     else:
         assert top is not None, f"No finding for {corner} at amp={amp_label}"
         assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} amp={amp_label}")
@@ -303,11 +305,17 @@ def test_single_sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None
         noise_vib_db=10.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
+    assert isinstance(summary, dict), f"Expected summary dict for weak {corner}"
+    assert summary, f"Expected non-empty summary for weak {corner}"
     top = extract_top(summary)
     if top:
         # If detected, confidence should be modest
         conf = float(top.get("confidence", 0))
         assert conf < 0.90, f"Unexpectedly high confidence {conf} for weak {corner}"
+    else:
+        assert_tolerant_no_fault(
+            summary, msg=f"Weak {corner} should not produce high-confidence wheel fault"
+        )
 
 
 # ---------------------------------------------------------------------------

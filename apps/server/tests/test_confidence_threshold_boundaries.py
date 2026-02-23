@@ -124,7 +124,10 @@ def test_negligible_strength_caps_to_medium(profile: dict[str, Any], corner: str
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
     top = extract_top(summary)
-    if top is not None and float(top.get("confidence", 0)) > 0.25:
+    assert top is not None, (
+        f"Expected a finding for negligible-strength case at {corner} ({profile['name']})"
+    )
+    if float(top.get("confidence", 0)) > 0.25:
         label = top.get("confidence_label_key", "")
         assert label != "CONFIDENCE_HIGH", (
             f"Negligible strength ({corner}, {profile['name']}) should cap to MEDIUM, got {label}"
@@ -249,8 +252,14 @@ def test_confidence_label_transition(
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
     top = extract_top(summary)
+    assert top is not None or tier_name == "sub_floor", (
+        f"Expected finding for tier={tier_name} at {corner} ({profile['name']})"
+    )
     if top is None:
-        return  # very weak tier may produce no causes – acceptable
+        assert tier_name == "sub_floor", (
+            f"Only sub_floor tier may have no finding; got none for {tier_name}"
+        )
+        return
 
     conf = float(top.get("confidence", 0))
     label = top.get("confidence_label_key", "")
