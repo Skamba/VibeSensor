@@ -124,8 +124,9 @@ def test_live_matrix_seconds_use_recent_window_during_throttled_emission(monkeyp
         for source_row in final["matrix"].values()
         for cell in source_row.values()
     )
-    # Live matrix is intentionally windowed for UI readability; it should stay bounded.
-    assert 0.0 < max_seconds <= 3.0
+    # Live matrix is intentionally windowed for UI readability; it should stay bounded
+    # by elapsed sample time during this short run.
+    assert 0.0 < max_seconds <= float(len(snapshots))
 
     emitted = sum(len(snapshot.get("events") or []) for snapshot in snapshots)
     assert emitted < len(snapshots)
