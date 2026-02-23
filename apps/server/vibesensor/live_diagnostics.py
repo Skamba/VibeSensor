@@ -538,9 +538,41 @@ class LiveDiagnosticsEngine:
                     }
                 )
 
-        seen_tracker_keys = set(latest_by_tracker)
+        self._decay_unseen_sensor_trackers(set(latest_by_tracker))
+        self._collect_active_levels_from_trackers(
+            active_by_source, active_by_sensor, location_candidates
+        )
+
+        seen_combined_keys = self._process_combined_groups(
+            now_ms=now_ms,
+            active_by_source=active_by_source,
+            emitted_events=emitted_events,
+        )
+
+        for combined_key, tracker in list(self._combined_trackers.items()):
+            if combined_key in seen_combined_keys:
+                continue
+            self._apply_severity_to_tracker(
+                tracker,
+                vibration_strength_db=SILENCE_DB,
+                sensor_count=2,
+                fallback_db=SILENCE_DB,
+            )
+
+        self._active_levels_by_source = active_by_source
+        self._active_levels_by_sensor = active_by_sensor
+        self._active_levels_by_location = self._build_active_levels_by_location(
+            candidates_by_location=location_candidates
+        )
+        self._rebuild_matrix(now_ms)
+        self._latest_events = emitted_events
+        self._diagnostics_sequence += 1
+        return self.snapshot()
+
+    def _decay_unseen_sensor_trackers(self, seen_keys: set[str]) -> None:
+        """Apply silence decay to sensor trackers not seen in the current tick."""
         for tracker_key, tracker in list(self._sensor_trackers.items()):
-            if tracker_key in seen_tracker_keys:
+            if tracker_key in seen_keys:
                 continue
             self._apply_severity_to_tracker(
                 tracker,
@@ -549,7 +581,13 @@ class LiveDiagnosticsEngine:
                 fallback_db=SILENCE_DB,
             )
 
-        # Source/sensor active levels come from continuous tracker state (not emitted events).
+    def _collect_active_levels_from_trackers(
+        self,
+        active_by_source: dict[str, dict[str, Any]],
+        active_by_sensor: dict[str, dict[str, Any]],
+        location_candidates: dict[str, list[dict[str, Any]]],
+    ) -> None:
+        """Rebuild source/sensor/location active levels from all tracker state."""
         for tracker_key, tracker in self._sensor_trackers.items():
             if tracker.current_bucket_key is None:
                 continue
@@ -585,32 +623,6 @@ class LiveDiagnosticsEngine:
                         "peak_hz": tracker.last_peak_hz,
                     }
                 )
-
-        seen_combined_keys = self._process_combined_groups(
-            now_ms=now_ms,
-            active_by_source=active_by_source,
-            emitted_events=emitted_events,
-        )
-
-        for combined_key, tracker in list(self._combined_trackers.items()):
-            if combined_key in seen_combined_keys:
-                continue
-            self._apply_severity_to_tracker(
-                tracker,
-                vibration_strength_db=SILENCE_DB,
-                sensor_count=2,
-                fallback_db=SILENCE_DB,
-            )
-
-        self._active_levels_by_source = active_by_source
-        self._active_levels_by_sensor = active_by_sensor
-        self._active_levels_by_location = self._build_active_levels_by_location(
-            candidates_by_location=location_candidates
-        )
-        self._rebuild_matrix(now_ms)
-        self._latest_events = emitted_events
-        self._diagnostics_sequence += 1
-        return self.snapshot()
 
     @staticmethod
     def _update_sensor_active_level(
