@@ -80,17 +80,29 @@ class RuntimeState:
     cached_analysis_metadata: dict[str, object] | None = None
     cached_analysis_samples: list[dict[str, object]] = field(default_factory=list)
 
-    def _rotational_basis_speed_source(self) -> str:
+    def _rotational_basis_speed_source(
+        self,
+        *,
+        resolution_source: str | None = None,
+    ) -> str:
         speed_source = self.settings_store.get_speed_source()
         selected_source = str(speed_source.get("speedSource") or "gps").lower()
         if selected_source == "manual":
             return "manual"
         if selected_source == "obd2":
             return "obd2"
-        if self.gps_monitor.fallback_active:
-            return "fallback_manual"
-        if self.gps_monitor.gps_enabled:
-            return "gps"
+        # Use the pre-resolved source when available for snapshot consistency.
+        if resolution_source is not None:
+            if resolution_source == "fallback_manual":
+                return "fallback_manual"
+            if self.gps_monitor.gps_enabled:
+                return "gps"
+        else:
+            # Fallback for callers that don't pass a resolution.
+            if self.gps_monitor.fallback_active:
+                return "fallback_manual"
+            if self.gps_monitor.gps_enabled:
+                return "gps"
         return "unknown"
 
     def _build_rotational_speeds_payload(
@@ -98,9 +110,12 @@ class RuntimeState:
         *,
         speed_mps: float | None,
         analysis_settings: dict[str, Any],
+        resolution_source: str | None = None,
     ) -> dict[str, Any]:
         out: dict[str, Any] = {
-            "basis_speed_source": self._rotational_basis_speed_source(),
+            "basis_speed_source": self._rotational_basis_speed_source(
+                resolution_source=resolution_source,
+            ),
             "wheel": {"rpm": None, "mode": "calculated", "reason": None},
             "driveshaft": {"rpm": None, "mode": "calculated", "reason": None},
             "engine": {"rpm": None, "mode": "calculated", "reason": None},
@@ -145,7 +160,8 @@ class RuntimeState:
         # to prevent stale buffer data from driving diagnostics/events.
         fresh_ids = self.processor.clients_with_recent_data(client_ids, max_age_s=STALE_DATA_AGE_S)
 
-        speed_mps = self.gps_monitor.effective_speed_mps
+        resolution = self.gps_monitor.resolve_speed()
+        speed_mps = resolution.speed_mps
         payload: dict[str, Any] = {
             "server_time": datetime.now(UTC).isoformat(),
             "speed_mps": speed_mps,
@@ -156,6 +172,7 @@ class RuntimeState:
         payload["rotational_speeds"] = self._build_rotational_speeds_payload(
             speed_mps=speed_mps,
             analysis_settings=analysis_settings_snapshot,
+            resolution_source=resolution.source,
         )
         if self.ws_include_heavy or self.cached_analysis_metadata is None:
             analysis_metadata, analysis_samples = self.metrics_logger.analysis_snapshot()
