@@ -431,10 +431,7 @@ def _compute_effective_match_rate(
         best_loc_rate = 0.0
         for loc, loc_possible in possible_by_location.items():
             loc_matched = matched_by_location.get(loc, 0)
-            if (
-                loc_possible >= ORDER_MIN_COVERAGE_POINTS
-                and loc_matched >= ORDER_MIN_MATCH_POINTS
-            ):
+            if loc_possible >= ORDER_MIN_COVERAGE_POINTS and loc_matched >= ORDER_MIN_MATCH_POINTS:
                 loc_rate = loc_matched / max(1, loc_possible)
                 if loc_rate > best_loc_rate:
                     best_loc_rate = loc_rate
@@ -475,10 +472,7 @@ def _detect_diffuse_excitation(
     if loc_mean_amps and len(loc_mean_amps) >= 2:
         _max_amp_loc = max(loc_mean_amps.values())
         _min_amp_loc = min(loc_mean_amps.values())
-        if (
-            _min_amp_loc > 0
-            and _max_amp_loc / _min_amp_loc > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO
-        ):
+        if _min_amp_loc > 0 and _max_amp_loc / _min_amp_loc > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO:
             _amp_uniform = False
     if (
         _rate_range < _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD
@@ -706,10 +700,15 @@ def _build_order_findings(
             speed_stddev_kmh is not None and speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
         )
         min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
-        effective_match_rate, focused_speed_band, per_location_dominant = _compute_effective_match_rate(
-            match_rate, min_match_rate,
-            possible_by_speed_bin, matched_by_speed_bin,
-            possible_by_location, matched_by_location,
+        effective_match_rate, focused_speed_band, per_location_dominant = (
+            _compute_effective_match_rate(
+                match_rate,
+                min_match_rate,
+                possible_by_speed_bin,
+                matched_by_speed_bin,
+                possible_by_location,
+                matched_by_location,
+            )
         )
         if effective_match_rate < min_match_rate:
             continue
@@ -823,7 +822,10 @@ def _build_order_findings(
         )
 
         _diffuse_excitation, _diffuse_penalty = _detect_diffuse_excitation(
-            connected_locations, possible_by_location, matched_by_location, matched_points,
+            connected_locations,
+            possible_by_location,
+            matched_by_location,
+            matched_points,
         )
 
         confidence = _compute_order_confidence(
