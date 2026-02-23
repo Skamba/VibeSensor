@@ -6,6 +6,7 @@ import math
 import time
 from collections import deque
 from collections.abc import Callable
+from contextlib import nullcontext
 from itertools import islice
 from pathlib import Path
 from threading import RLock, Thread
@@ -668,15 +669,18 @@ class MetricsLogger:
             samples: list[dict[str, object]] = []
             total_sample_count = 0
             stride = 1
-            for batch in self._history_db.iter_run_samples(run_id, batch_size=1024):
-                for sample in batch:
-                    total_sample_count += 1
-                    if (total_sample_count - 1) % stride != 0:
-                        continue
-                    samples.append(normalize_sample_record(sample))
-                    if len(samples) > _MAX_POST_ANALYSIS_SAMPLES:
-                        samples = samples[::2]
-                        stride *= 2
+            read_tx = getattr(self._history_db, "read_transaction", None)
+            tx_ctx = read_tx() if callable(read_tx) else nullcontext()
+            with tx_ctx:
+                for batch in self._history_db.iter_run_samples(run_id, batch_size=1024):
+                    for sample in batch:
+                        total_sample_count += 1
+                        if (total_sample_count - 1) % stride != 0:
+                            continue
+                        samples.append(normalize_sample_record(sample))
+                        if len(samples) > _MAX_POST_ANALYSIS_SAMPLES:
+                            samples = samples[::2]
+                            stride *= 2
             if not samples:
                 LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
                 self._history_db.store_analysis_error(run_id, "No samples collected during run")

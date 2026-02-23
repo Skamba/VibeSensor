@@ -77,6 +77,21 @@ def test_iter_run_samples_batches(tmp_path: Path) -> None:
     assert [len(batch) for batch in batches] == [4, 4, 3]
 
 
+def test_read_transaction_blocks_concurrent_delete_during_iteration(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-tx", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-tx", [{"i": i} for i in range(10)])
+    seen: list[int] = []
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        with db.read_transaction():
+            delete_future = pool.submit(db.delete_run, "run-tx")
+            for batch in db.iter_run_samples("run-tx", batch_size=3):
+                seen.extend(int(row["i"]) for row in batch)
+            assert not delete_future.done()
+        assert delete_future.result(timeout=2.0) is True
+    assert seen == list(range(10))
+
+
 def test_list_runs_uses_incremental_sample_count(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.create_run("run-4", "2026-01-01T00:00:00Z", {"source": "test"})
