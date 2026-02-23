@@ -12,8 +12,50 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
-from pydantic import BaseModel, ConfigDict, Field
 
+from .api_models import (  # noqa: F401 – re-exported for backward compat
+    ActiveCarRequest,
+    AnalysisSettingsRequest,
+    AnalysisSettingsResponse,
+    CarLibraryBrandsResponse,
+    CarLibraryGearboxEntry,
+    CarLibraryModelEntry,
+    CarLibraryModelsResponse,
+    CarLibraryTireOptionEntry,
+    CarLibraryTypesResponse,
+    CarResponse,
+    CarsResponse,
+    CarUpsertRequest,
+    ClientLocationsResponse,
+    ClientsResponse,
+    DeleteHistoryRunResponse,
+    HealthResponse,
+    HistoryInsightsResponse,
+    HistoryListResponse,
+    HistoryRunResponse,
+    IdentifyRequest,
+    IdentifyResponse,
+    LanguageRequest,
+    LanguageResponse,
+    LocationOptionResponse,
+    LoggingStatusResponse,
+    RemoveClientResponse,
+    SensorConfigResponse,
+    SensorRequest,
+    SensorsResponse,
+    SetClientLocationResponse,
+    SetLocationRequest,
+    SpeedSourceRequest,
+    SpeedSourceResponse,
+    SpeedSourceStatusResponse,
+    SpeedUnitRequest,
+    SpeedUnitResponse,
+    UpdateCancelResponse,
+    UpdateIssueResponse,
+    UpdateStartRequest,
+    UpdateStartResponse,
+    UpdateStatusResponse,
+)
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
@@ -50,257 +92,6 @@ def _bounded_sample(
             kept = kept[::2]
             stride *= 2
     return kept, total, stride
-
-
-class IdentifyRequest(BaseModel):
-    duration_ms: int = Field(default=1500, ge=100, le=60_000)
-
-
-class SetLocationRequest(BaseModel):
-    location_code: str = Field(min_length=0, max_length=64)
-
-
-class AnalysisSettingsRequest(BaseModel):
-    tire_width_mm: float | None = Field(default=None, gt=0)
-    tire_aspect_pct: float | None = Field(default=None, gt=0)
-    rim_in: float | None = Field(default=None, gt=0)
-    final_drive_ratio: float | None = Field(default=None, gt=0)
-    current_gear_ratio: float | None = Field(default=None, gt=0)
-    wheel_bandwidth_pct: float | None = Field(default=None, gt=0)
-    driveshaft_bandwidth_pct: float | None = Field(default=None, gt=0)
-    engine_bandwidth_pct: float | None = Field(default=None, gt=0)
-    speed_uncertainty_pct: float | None = Field(default=None, ge=0)
-    tire_diameter_uncertainty_pct: float | None = Field(default=None, ge=0)
-    final_drive_uncertainty_pct: float | None = Field(default=None, ge=0)
-    gear_uncertainty_pct: float | None = Field(default=None, ge=0)
-    min_abs_band_hz: float | None = Field(default=None, ge=0)
-    max_band_half_width_pct: float | None = Field(default=None, gt=0)
-
-
-class LanguageRequest(BaseModel):
-    language: str = Field(pattern="^(en|nl)$")
-
-
-class SpeedUnitRequest(BaseModel):
-    speedUnit: str = Field(pattern="^(kmh|mps)$")
-
-
-class CarUpsertRequest(BaseModel):
-    name: str | None = None
-    type: str | None = None
-    aspects: dict[str, float] | None = None
-
-
-class ActiveCarRequest(BaseModel):
-    carId: str = Field(min_length=1)
-
-
-class SpeedSourceRequest(BaseModel):
-    speedSource: str | None = None
-    manualSpeedKph: float | None = None
-    staleTimeoutS: float | None = None
-    fallbackMode: str | None = None
-
-
-class UpdateStartRequest(BaseModel):
-    ssid: str = Field(min_length=1, max_length=64)
-    password: str = Field(default="", max_length=128)
-
-
-class SensorRequest(BaseModel):
-    name: str | None = None
-    location: str | None = None
-
-
-class HealthResponse(BaseModel):
-    status: str
-    processing_state: str
-    processing_failures: int
-
-
-class CarResponse(BaseModel):
-    id: str
-    name: str
-    type: str
-    aspects: dict[str, float]
-
-
-class CarsResponse(BaseModel):
-    cars: list[CarResponse]
-    activeCarId: str
-
-
-class SpeedSourceResponse(BaseModel):
-    speedSource: str
-    manualSpeedKph: float | None = None
-    obd2Config: dict[str, Any] = Field(default_factory=dict)
-    staleTimeoutS: float
-    fallbackMode: str
-
-
-class SpeedSourceStatusResponse(BaseModel):
-    gps_enabled: bool
-    connection_state: str
-    device: str | None = None
-    last_update_age_s: float | None = None
-    raw_speed_kmh: float | None = None
-    effective_speed_kmh: float | None = None
-    last_error: str | None = None
-    reconnect_delay_s: float | None = None
-    fallback_active: bool
-    stale_timeout_s: float
-    fallback_mode: str
-
-
-class SensorConfigResponse(BaseModel):
-    name: str
-    location: str
-
-
-class SensorsResponse(BaseModel):
-    sensorsByMac: dict[str, SensorConfigResponse]
-
-
-class LanguageResponse(BaseModel):
-    language: str
-
-
-class SpeedUnitResponse(BaseModel):
-    speedUnit: str
-
-
-class ClientsResponse(BaseModel):
-    clients: list[dict[str, Any]]
-
-
-class LocationOptionResponse(BaseModel):
-    code: str
-    label: str
-
-
-class ClientLocationsResponse(BaseModel):
-    locations: list[LocationOptionResponse]
-
-
-class AnalysisSettingsResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-
-class IdentifyResponse(BaseModel):
-    status: str
-    cmd_seq: int | None = None
-
-
-class SetClientLocationResponse(BaseModel):
-    id: str
-    mac_address: str
-    location_code: str
-    name: str
-
-
-class RemoveClientResponse(BaseModel):
-    id: str
-    status: str
-
-
-class LoggingStatusResponse(BaseModel):
-    enabled: bool
-    current_file: str | None = None
-    run_id: str | None = None
-    write_error: str | None = None
-    analysis_in_progress: bool
-
-
-class HistoryListResponse(BaseModel):
-    runs: list[dict[str, Any]]
-
-
-class HistoryRunResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    run_id: str
-    status: str
-    metadata: dict[str, Any] = Field(default_factory=dict)
-    analysis: dict[str, Any] | None = None
-
-
-class HistoryInsightsResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    run_id: str | None = None
-    status: str | None = None
-
-
-class DeleteHistoryRunResponse(BaseModel):
-    run_id: str
-    status: str
-
-
-class UpdateIssueResponse(BaseModel):
-    phase: str
-    message: str
-    detail: str
-
-
-class UpdateStatusResponse(BaseModel):
-    state: str
-    phase: str
-    started_at: float | None = None
-    finished_at: float | None = None
-    last_success_at: float | None = None
-    ssid: str
-    issues: list[UpdateIssueResponse]
-    log_tail: list[str]
-    exit_code: int | None = None
-    runtime: dict[str, Any] = Field(default_factory=dict)
-
-
-class UpdateStartResponse(BaseModel):
-    status: str
-    ssid: str
-
-
-class UpdateCancelResponse(BaseModel):
-    cancelled: bool
-
-
-class CarLibraryBrandsResponse(BaseModel):
-    brands: list[str]
-
-
-class CarLibraryTypesResponse(BaseModel):
-    types: list[str]
-
-
-class CarLibraryGearboxEntry(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    name: str
-    final_drive_ratio: float
-    top_gear_ratio: float
-
-
-class CarLibraryTireOptionEntry(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    name: str
-    tire_width_mm: float
-    tire_aspect_pct: float
-    rim_in: float
-
-
-class CarLibraryModelEntry(BaseModel):
-    model_config = ConfigDict(extra="allow")
-    brand: str
-    type: str
-    model: str
-    gearboxes: list[CarLibraryGearboxEntry]
-    tire_options: list[CarLibraryTireOptionEntry]
-    tire_width_mm: float
-    tire_aspect_pct: float
-    rim_in: float
-
-
-class CarLibraryModelsResponse(BaseModel):
-    models: list[CarLibraryModelEntry]
 
 
 def _normalize_client_id_or_400(client_id: str) -> str:

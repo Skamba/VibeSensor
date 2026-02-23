@@ -17,10 +17,10 @@ from ..analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
 from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
+from .i18n import normalize_lang
+from .i18n import tr as _tr
 
 SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0

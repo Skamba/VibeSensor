@@ -14,9 +14,9 @@ from datetime import UTC, datetime
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from .. import __version__
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
+from .i18n import normalize_lang
+from .i18n import tr as _tr
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, strength_label, strength_text
 
