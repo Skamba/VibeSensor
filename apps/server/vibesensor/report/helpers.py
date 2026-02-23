@@ -326,6 +326,24 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
     return out
 
 
+def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
+    """Estimate per-sample floor amplitude.
+
+    Policy: accept strictly positive ``strength_floor_amp_g``; otherwise
+    fall back to P20 of strictly positive top-peak amplitudes when at least
+    three peaks are available (keeps floor estimation aligned with existing
+    run-baseline guards and avoids unstable sparse-peak fallbacks).
+    """
+    floor_amp = _as_float(sample.get("strength_floor_amp_g"))
+    if floor_amp is not None and floor_amp > 0:
+        return float(floor_amp)
+    peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
+    if len(peak_amps) < 3:
+        return None
+    floor_from_peaks = percentile(peak_amps, 0.20)
+    return float(floor_from_peaks) if floor_from_peaks > 0 else None
+
+
 def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
     """Estimate run-level noise baseline as median of per-sample floor estimates.
 
@@ -336,21 +354,9 @@ def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
     for sample in samples:
         if not isinstance(sample, dict):
             continue
-        floor_amp = _as_float(sample.get("strength_floor_amp_g"))
-        if floor_amp is not None and floor_amp > 0:
-            floors.append(float(floor_amp))
-            continue
-        peak_amps = [amp for _hz, amp in _sample_top_peaks(sample) if amp > 0]
-        if len(peak_amps) < 3:
-            continue
-        peak_amps_sorted = sorted(peak_amps)
-        floor_from_peaks = (
-            percentile(peak_amps_sorted, 0.20)
-            if len(peak_amps_sorted) >= 2
-            else peak_amps_sorted[0]
-        )
-        if floor_from_peaks > 0:
-            floors.append(float(floor_from_peaks))
+        floor_amp = _estimate_strength_floor_amp_g(sample)
+        if floor_amp is not None:
+            floors.append(floor_amp)
     if not floors:
         return None
     floors_sorted = sorted(floors)

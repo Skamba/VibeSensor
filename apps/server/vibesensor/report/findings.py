@@ -674,7 +674,7 @@ def _build_order_findings(
             snr_score = min(snr_score, 0.40)
         absolute_strength_db = vibration_strength_db_scalar(
             peak_band_rms_amp_g=mean_amp,
-            floor_amp_g=mean_floor,
+            floor_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
         )
 
         # --- Confidence formula (calibrated) ---

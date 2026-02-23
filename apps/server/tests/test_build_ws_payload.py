@@ -83,7 +83,11 @@ class _StubMetricsLogger:
 
 
 class _StubDiagnostics:
+    def __init__(self) -> None:
+        self.update_calls = 0
+
     def update(self, **kwargs: Any) -> dict[str, Any]:
+        self.update_calls += 1
         return {"matrix": {}, "findings": []}
 
 
@@ -169,7 +173,7 @@ def test_build_ws_payload_returns_required_keys() -> None:
         assert key in payload, f"missing key: {key}"
 
     # Heavy-tick keys
-    for key in ("spectra", "selected", "diagnostics"):
+    for key in ("spectra", "diagnostics"):
         assert key in payload, f"missing heavy key: {key}"
 
     assert payload["speed_mps"] == 12.5
@@ -189,7 +193,6 @@ def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
     payload = state.build_ws_payload(selected_client="aaa")
 
     assert "spectra" not in payload
-    assert "selected" not in payload
     # diagnostics is always present
     assert "diagnostics" in payload
 
@@ -207,8 +210,6 @@ def test_build_ws_payload_no_clients() -> None:
 
     assert payload["clients"] == []
     assert payload["selected_client_id"] is None
-    # selected should be empty dict when active is None
-    assert payload["selected"] == {}
 
 
 def test_build_ws_payload_light_tick_reuses_cached_analysis_snapshot() -> None:
@@ -232,6 +233,21 @@ def test_build_ws_payload_light_tick_without_cache_still_collects_snapshot() -> 
     metrics_logger = state.metrics_logger
 
     assert isinstance(metrics_logger, _StubMetricsLogger)
+    assert metrics_logger.analysis_snapshot_calls == 1
+
+
+def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:
+    state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
+    diagnostics = state.live_diagnostics
+    metrics_logger = state.metrics_logger
+    assert isinstance(diagnostics, _StubDiagnostics)
+    assert isinstance(metrics_logger, _StubMetricsLogger)
+
+    state.ws_tick = 77
+    state.build_ws_payload(selected_client="aaa")
+    state.build_ws_payload(selected_client="bbb")
+
+    assert diagnostics.update_calls == 1
     assert metrics_logger.analysis_snapshot_calls == 1
 
 

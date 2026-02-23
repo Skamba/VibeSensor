@@ -20,6 +20,7 @@ from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
 AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
+MAX_CLIENT_SAMPLE_RATE_HZ = 4096
 
 
 def _synchronized(method):
@@ -42,6 +43,17 @@ class ClientBuffer:
     latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
     latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
     last_ingest_mono_s: float = 0.0
+    # Generation counters: ingest_generation increments on new samples,
+    # compute_generation marks which ingest generation metrics reflect, and
+    # spectrum_generation marks spectrum snapshot updates for payload caching.
+    ingest_generation: int = 0
+    compute_generation: int = -1
+    compute_sample_rate_hz: int = 0
+    spectrum_generation: int = 0
+    cached_spectrum_payload: dict[str, Any] | None = None
+    cached_spectrum_payload_generation: int = -1
+    cached_selected_payload: dict[str, Any] | None = None
+    cached_selected_payload_key: tuple[int, int, int] | None = None
 
 
 class SignalProcessor:
@@ -107,6 +119,10 @@ class SignalProcessor:
         buf.latest_metrics = {}
         buf.latest_spectrum = {}
         buf.latest_strength_metrics = {}
+        buf.cached_spectrum_payload = None
+        buf.cached_spectrum_payload_generation = -1
+        buf.cached_selected_payload = None
+        buf.cached_selected_payload_key = None
         LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
 
     def _get_or_create(self, client_id: str) -> ClientBuffer:
@@ -151,7 +167,15 @@ class SignalProcessor:
             )
             return
         if sample_rate_hz is not None and sample_rate_hz > 0:
-            buf.sample_rate_hz = int(sample_rate_hz)
+            requested_rate = int(sample_rate_hz)
+            clamped_rate = max(1, min(MAX_CLIENT_SAMPLE_RATE_HZ, requested_rate))
+            if clamped_rate != requested_rate:
+                LOGGER.warning(
+                    "Clamped client sample_rate_hz from %d to %d to bound buffer growth",
+                    requested_rate,
+                    clamped_rate,
+                )
+            buf.sample_rate_hz = clamped_rate
             self._resize_buffer(buf, buf.sample_rate_hz * self.waveform_seconds)
         buf.last_ingest_mono_s = time.monotonic()
 
@@ -171,6 +195,9 @@ class SignalProcessor:
 
         buf.write_idx = end % capacity
         buf.count = min(capacity, buf.count + n)
+        buf.ingest_generation += 1
+        buf.cached_selected_payload = None
+        buf.cached_selected_payload_key = None
 
     def _latest(self, buf: ClientBuffer, n: int) -> np.ndarray:
         if n <= 0 or buf.count == 0:
@@ -284,6 +311,10 @@ class SignalProcessor:
         if sample_rate_hz is not None and sample_rate_hz > 0:
             buf.sample_rate_hz = int(sample_rate_hz)
         sr = buf.sample_rate_hz or self.sample_rate_hz
+        # Fast-path: no new ingested samples at this sample-rate, so keep the
+        # previously computed metrics/spectrum snapshot for payload reuse.
+        if buf.compute_generation == buf.ingest_generation and buf.compute_sample_rate_hz == sr:
+            return buf.latest_metrics
 
         desired_samples = int(max(1.0, float(sr) * float(self.waveform_seconds)))
         n_time = min(buf.count, buf.capacity, max(1, desired_samples))
@@ -344,11 +375,19 @@ class SignalProcessor:
             else:
                 buf.latest_strength_metrics = {}
             buf.latest_spectrum = spectrum_by_axis
+            buf.spectrum_generation += 1
         else:
             buf.latest_spectrum = {}
             buf.latest_strength_metrics = {}
+            buf.spectrum_generation += 1
 
         buf.latest_metrics = metrics
+        buf.compute_generation = buf.ingest_generation
+        buf.compute_sample_rate_hz = sr
+        buf.cached_spectrum_payload = None
+        buf.cached_spectrum_payload_generation = -1
+        buf.cached_selected_payload = None
+        buf.cached_selected_payload_key = None
         return metrics
 
     def _compute_fft_spectrum(
@@ -447,7 +486,12 @@ class SignalProcessor:
                 "combined_spectrum_amp_g": [],
                 "strength_metrics": {},
             }
-        return {
+        if (
+            buf.cached_spectrum_payload is not None
+            and buf.cached_spectrum_payload_generation == buf.spectrum_generation
+        ):
+            return buf.cached_spectrum_payload
+        payload = {
             "x": self._float_list(buf.latest_spectrum["x"]["amp"]),
             "y": self._float_list(buf.latest_spectrum["y"]["amp"]),
             "z": self._float_list(buf.latest_spectrum["z"]["amp"]),
@@ -460,6 +504,9 @@ class SignalProcessor:
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
+        buf.cached_spectrum_payload = payload
+        buf.cached_spectrum_payload_generation = buf.spectrum_generation
+        return payload
 
     @_synchronized
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
@@ -511,6 +558,12 @@ class SignalProcessor:
             }
 
         sr = buf.sample_rate_hz or self.sample_rate_hz
+        selected_cache_key = (buf.ingest_generation, buf.spectrum_generation, sr)
+        if (
+            buf.cached_selected_payload is not None
+            and buf.cached_selected_payload_key == selected_cache_key
+        ):
+            return buf.cached_selected_payload
         window_samples = min(
             buf.count,
             buf.capacity,
@@ -549,13 +602,16 @@ class SignalProcessor:
                 "strength_metrics": {},
             }
 
-        return {
+        payload = {
             "client_id": client_id,
             "sample_rate_hz": sr,
             "waveform": waveform,
             "spectrum": spectrum,
             "metrics": buf.latest_metrics,
         }
+        buf.cached_selected_payload = payload
+        buf.cached_selected_payload_key = selected_cache_key
+        return payload
 
     @_synchronized
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:

@@ -604,6 +604,13 @@ class TestBuildPersistentPeakFindings:
         assert target
         assert target[0]["peak_classification"] == "baseline_noise"
 
+        rows = _top_peaks_table_rows(samples, top_n=12, freq_bin_hz=1.0)
+        row_25 = next(
+            (row for row in rows if abs(float(row.get("frequency_hz", 0.0)) - 25.0) <= 0.5), None
+        )
+        assert row_25 is not None
+        assert row_25["peak_classification"] == "baseline_noise"
+
     def test_localized_moderate_presence_peak_remains_persistent(self) -> None:
         """Issue #140: same ~30% 25 Hz peak at one location should stay persistent."""
         locations = ["Front Left", "Front Right", "Rear Left", "Rear Right"]
