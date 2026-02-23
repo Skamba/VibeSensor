@@ -169,7 +169,10 @@ rsync -a --delete \
   --exclude "apps/ui/dist/" \
   --exclude "apps/ui/test-results/" \
   --exclude "apps/ui/playwright-report/" \
-  --exclude "apps/server/data/" \
+  --include "apps/server/data/" \
+  --include "apps/server/data/car_library.json" \
+  --include "apps/server/data/report_i18n.json" \
+  --exclude "apps/server/data/*" \
   --exclude "infra/pi-image/pi-gen/.cache/" \
   --exclude "infra/pi-image/pi-gen/out/" \
   "${REPO_ROOT}/" "${STAGE_REPO_DIR}/"
@@ -579,6 +582,16 @@ if [ "${VALIDATE}" = "1" ]; then
 
   if [ ! -d "${ROOT_MNT}/etc/vibesensor" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/vibesensor"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/data/report_i18n.json" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/data/report_i18n.json"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/data/car_library.json" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/opt/VibeSensor/apps/server/data/car_library.json"
     exit 1
   fi
 
