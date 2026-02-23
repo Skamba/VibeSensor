@@ -178,10 +178,14 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function renderLoggingStatus(): void {
-    const status = state.loggingStatus || { enabled: false, current_file: null };
+    const status = state.loggingStatus || { enabled: false, current_file: null, write_error: null };
     const on = Boolean(status.enabled);
     const hasActiveClients = state.clients.some((client) => Boolean(client?.connected));
-    setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
+    if (status.write_error) {
+      setPillState(els.loggingStatus, "bad", status.write_error);
+    } else {
+      setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
+    }
     if (els.currentLogFile) els.currentLogFile.textContent = t("status.current_file", { value: status.current_file || "--" });
     if (els.startLoggingBtn) els.startLoggingBtn.disabled = !hasActiveClients;
     if (els.stopLoggingBtn) els.stopLoggingBtn.disabled = !hasActiveClients;

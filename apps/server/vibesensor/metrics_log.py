@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 _MAX_POST_ANALYSIS_SAMPLES = 12_000
 _LIVE_SAMPLE_WINDOW_S = 2.0
+_MAX_HISTORY_CREATE_RETRIES = 5
 
 
 class MetricsLogger:
@@ -84,6 +85,7 @@ class MetricsLogger:
         self._persist_history_db = bool(persist_history_db)
         self._language_provider = language_provider
         self._history_run_created = False
+        self._history_create_fail_count = 0
         self._written_sample_count = 0
         self._no_data_timeout_s = 3.0
         self._last_data_progress_mono_s: float | None = None
@@ -105,6 +107,7 @@ class MetricsLogger:
         self._run_start_mono_s = time.monotonic()
         self._last_write_error = None
         self._history_run_created = False
+        self._history_create_fail_count = 0
         self._written_sample_count = 0
         self._last_data_progress_mono_s = self._run_start_mono_s
         self._last_active_frames_total = self._active_frames_total()
@@ -140,14 +143,29 @@ class MetricsLogger:
     def _ensure_history_run_created(self, run_id: str, start_time_utc: str) -> None:
         if self._history_db is None or self._history_run_created:
             return
+        if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+            return
         metadata = self._run_metadata_record(run_id, start_time_utc)
         try:
             self._history_db.create_run(run_id, start_time_utc, metadata)
             self._history_run_created = True
+            self._history_create_fail_count = 0
             self._clear_last_write_error()
         except Exception as exc:
-            self._set_last_write_error(f"history create_run failed: {exc}")
-            LOGGER.warning("Failed to create history run in DB", exc_info=True)
+            self._history_create_fail_count += 1
+            msg = f"history create_run failed (attempt {self._history_create_fail_count}/{_MAX_HISTORY_CREATE_RETRIES}): {exc}"
+            self._set_last_write_error(msg)
+            if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+                LOGGER.error(
+                    "Persistent DB failure: giving up after %d attempts for run %s — "
+                    "all subsequent samples will be dropped. Error: %s",
+                    self._history_create_fail_count,
+                    run_id,
+                    exc,
+                    exc_info=True,
+                )
+            else:
+                LOGGER.warning("Failed to create history run in DB (attempt %d)", self._history_create_fail_count, exc_info=True)
 
     def _session_snapshot(self) -> tuple[str, str, float] | None:
         with self._lock:
@@ -208,6 +226,7 @@ class MetricsLogger:
             self._run_start_mono_s = None
             self._last_write_error = None
             self._history_run_created = False
+            self._history_create_fail_count = 0
             self._written_sample_count = 0
             self._last_data_progress_mono_s = None
             self._last_active_frames_total = 0
@@ -503,6 +522,11 @@ class MetricsLogger:
                     except Exception as exc:
                         self._set_last_write_error(f"history append_samples failed: {exc}")
                         LOGGER.warning("Failed to append samples to history DB", exc_info=True)
+                else:
+                    LOGGER.warning(
+                        "Dropping %d sample(s) for run %s: history run not created (fail count %d/%d)",
+                        len(rows), run_id, self._history_create_fail_count, _MAX_HISTORY_CREATE_RETRIES,
+                    )
             else:
                 self._written_sample_count += len(rows)
 
