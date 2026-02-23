@@ -60,6 +60,7 @@ run_as_root install -d -m 0755 /var/lib/vibesensor
 run_as_root install -d -m 0755 /var/log/vibesensor
 run_as_root install -d -m 0755 /var/log/wifi
 run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/log/vibesensor
+run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"
 run_as_root tee /etc/tmpfiles.d/vibesensor-wifi.conf >/dev/null <<'EOF'
 d /var/log/wifi 0755 root root -
 EOF
