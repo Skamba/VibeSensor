@@ -16,6 +16,7 @@ Execution loop (medium/large tasks)
 Setup
 - Python: `python -m pip install -e "./apps/server[dev]"`
 - UI: `cd apps/ui && npm ci`
+- Pi hotspot SSH (default image): host `10.4.0.1`, user `pi`, password `vibesensor`
 
 Validation
 - Lint: `make lint`

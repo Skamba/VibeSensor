@@ -365,6 +365,15 @@ class TestUpdateManagerAsync:
         assert mgr.status.exit_code == 0
         assert mgr.status.runtime.get("assets_verified") is True
         assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
+        git_calls = [
+            c[0] for c in runner.calls if len(c[0]) >= 3 and c[0][0] == "git" and c[0][1] == "-C"
+        ]
+        assert git_calls, "Expected git calls during update"
+        assert all(c[0] != "sudo" for c in git_calls), "Git update must run as service user"
+        uplink_connect_calls = [
+            c[0] for c in runner.calls if "device wifi connect TestNet" in " ".join(c[0])
+        ]
+        assert uplink_connect_calls, "Expected secure uplink wifi connect call"
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         """When sudo is unavailable, update fails with clear issue."""
@@ -421,6 +430,32 @@ class TestUpdateManagerAsync:
             c for c in runner.calls if "VibeSensor-AP" in " ".join(c[0]) and "up" in " ".join(c[0])
         ]
         assert len(restore_calls) > 0
+
+    async def test_secure_ssid_requires_password(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+        runner.set_response("dev wifi list", 0, "Pim:WPA2\n")
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("Pim", "")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "password required" in issues_text
+        assert not any("connection up VibeSensor-Uplink" in " ".join(c[0]) for c in runner.calls)
 
     async def test_git_failure_still_restores_hotspot(self, tmp_path) -> None:
         """When git pull fails, hotspot is still restored."""
