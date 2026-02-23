@@ -25,18 +25,6 @@ export async function setSettingsSpeedUnit(speedUnit: string): Promise<{ speedUn
   });
 }
 
-export async function getSpeedOverride(): Promise<{ speed_kmh: number | null }> {
-  return apiJson("/api/speed-override");
-}
-
-export async function setSpeedOverride(speedKmh: number | null): Promise<{ speed_kmh: number | null }> {
-  return apiJson("/api/speed-override", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ speed_kmh: speedKmh }),
-  });
-}
-
 export async function getAnalysisSettings(): Promise<Record<string, number>> {
   return apiJson("/api/analysis-settings");
 }

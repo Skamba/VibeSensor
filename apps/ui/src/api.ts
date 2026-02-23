@@ -4,7 +4,6 @@ export type {
   CarLibraryTireOption,
 } from "./api/types";
 export {
-  setSpeedOverride,
   getAnalysisSettings,
   setAnalysisSettings,
   getSettingsCars,

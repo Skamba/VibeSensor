@@ -445,6 +445,91 @@ test("strength chart labels update when switching language", async ({ page }) =>
   await expect(page.locator("#strengthChart .u-title")).toHaveText("Sterkte over tijd");
 });
 
+test("manual speed save uses settings endpoint only (no legacy speed-override call)", async ({ page }) => {
+  let speedSourcePostCalls = 0;
+  let speedOverrideCalls = 0;
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    if (path === "/api/settings/speed-source" && method === "GET") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5, fallbackMode: "hold" }),
+      });
+      return;
+    }
+    if (path === "/api/settings/speed-source" && method === "POST") {
+      speedSourcePostCalls += 1;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(route.request().postDataJSON()),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+  await page.route("**/api/speed-override", async (route) => {
+    speedOverrideCalls += 1;
+    await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ detail: "missing" }) });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="speedSourceTab"]').click();
+  await page.locator('input[name="speedSourceRadio"][value="manual"]').check();
+  await page.locator("#manualSpeedInput").fill("45");
+  await page.locator("#saveSpeedSourceBtn").click();
+
+  await expect.poll(() => speedSourcePostCalls).toBe(1);
+  await expect.poll(() => speedOverrideCalls).toBe(0);
+});
+
 test("analysis bandwidth and uncertainty settings persist through API round-trip", async ({ page }) => {
   let persistedAnalysisSettings: Record<string, number> = {};
   let analysisPostCalls = 0;
