@@ -207,7 +207,7 @@ def test_spatial_separation_effect(profile: dict[str, Any], corner: str, speed: 
     assert conf_4 > 0.25, (
         f"4-sensor should produce a finding at {corner}/{speed} ({profile['name']})"
     )
-    assert abs(conf_1 - conf_4) > 0.01 or (conf_1 > 0 and conf_4 > 0), (
+    assert abs(conf_1 - conf_4) > 0.01, (
         f"Confidence should differ between 1-sensor and 4-sensor "
         f"at {corner}/{speed} ({profile['name']})"
     )
