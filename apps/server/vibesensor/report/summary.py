@@ -598,6 +598,7 @@ def summarize_run_data(
         raw_sample_rate_hz=raw_sample_rate_hz,
         lang=language,
         per_sample_phases=_per_sample_phases,
+        run_noise_baseline_g=run_noise_baseline_g,
     )
     most_likely_origin = _most_likely_origin_summary(findings, language)
     test_plan = _merge_test_plan(findings, language)

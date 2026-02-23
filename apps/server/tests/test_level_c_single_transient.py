@@ -82,7 +82,7 @@ def test_fault_with_transient_preserves_diagnosis(
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Lost diagnosis for {corner}@{speed} with transient"
-    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@{speed} w/transient")
+    assert_confidence_between(summary, 0.30, 1.0, msg=f"{corner}@{speed} w/transient")
     assert_confidence_label_valid(summary, msg=f"{corner}@{speed} w/transient")
     assert_has_warnings(summary, msg=f"{corner}@{speed} w/transient")
 
