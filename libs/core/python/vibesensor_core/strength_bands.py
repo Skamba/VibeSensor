@@ -27,8 +27,6 @@ _BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
 
 
 def bucket_for_strength(vibration_strength_db: float) -> str | None:
-    if vibration_strength_db < BANDS[0]["min_db"]:
-        return BANDS[0]["key"]
     selected: str | None = None
     for band in BANDS:
         if vibration_strength_db >= band["min_db"]:
