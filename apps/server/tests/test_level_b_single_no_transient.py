@@ -34,7 +34,6 @@ from builders import (
     make_profile_speed_sweep_fault_samples,
     make_ramp_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
 )
 

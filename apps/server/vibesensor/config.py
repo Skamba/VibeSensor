@@ -283,7 +283,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
         raise ValueError(
             f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}"
-        )
+        ) from None
 
     app_config = AppConfig(
         ap=APConfig(

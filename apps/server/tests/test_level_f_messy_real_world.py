@@ -38,12 +38,10 @@ from builders import (
     make_profile_engine_order_samples,
     make_profile_fault_samples,
     make_profile_gain_mismatch_samples,
-    make_profile_speed_sweep_fault_samples,
     make_road_phase_samples,
     make_speed_jitter_samples,
     make_transient_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
     top_confidence,
 )

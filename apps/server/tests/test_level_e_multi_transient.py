@@ -39,7 +39,6 @@ from builders import (
     make_ramp_samples,
     make_transient_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
 )
 

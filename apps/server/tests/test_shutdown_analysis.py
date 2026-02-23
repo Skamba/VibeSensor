@@ -11,7 +11,6 @@ import yaml
 
 from vibesensor.metrics_log import MetricsLogger
 
-
 # ---------------------------------------------------------------------------
 # Minimal fakes (same style as test_metrics_log_helpers.py)
 # ---------------------------------------------------------------------------

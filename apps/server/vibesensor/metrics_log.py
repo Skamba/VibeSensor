@@ -153,7 +153,11 @@ class MetricsLogger:
             self._clear_last_write_error()
         except Exception as exc:
             self._history_create_fail_count += 1
-            msg = f"history create_run failed (attempt {self._history_create_fail_count}/{_MAX_HISTORY_CREATE_RETRIES}): {exc}"
+            msg = (
+                f"history create_run failed"
+                f" (attempt {self._history_create_fail_count}"
+                f"/{_MAX_HISTORY_CREATE_RETRIES}): {exc}"
+            )
             self._set_last_write_error(msg)
             if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
                 LOGGER.error(
@@ -165,7 +169,11 @@ class MetricsLogger:
                     exc_info=True,
                 )
             else:
-                LOGGER.warning("Failed to create history run in DB (attempt %d)", self._history_create_fail_count, exc_info=True)
+                LOGGER.warning(
+                    "Failed to create history run in DB (attempt %d)",
+                    self._history_create_fail_count,
+                    exc_info=True,
+                )
 
     def _session_snapshot(self) -> tuple[str, str, float] | None:
         with self._lock:
@@ -541,8 +549,12 @@ class MetricsLogger:
                         LOGGER.warning("Failed to append samples to history DB", exc_info=True)
                 else:
                     LOGGER.warning(
-                        "Dropping %d sample(s) for run %s: history run not created (fail count %d/%d)",
-                        len(rows), run_id, self._history_create_fail_count, _MAX_HISTORY_CREATE_RETRIES,
+                        "Dropping %d sample(s) for run %s: "
+                        "history run not created (fail count %d/%d)",
+                        len(rows),
+                        run_id,
+                        self._history_create_fail_count,
+                        _MAX_HISTORY_CREATE_RETRIES,
                     )
             else:
                 self._written_sample_count += len(rows)

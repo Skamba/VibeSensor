@@ -14,7 +14,6 @@ from vibesensor.protocol import DataMessage, pack_data
 from vibesensor.registry import ClientRegistry, HelloMessage
 from vibesensor.udp_data_rx import DataDatagramProtocol
 
-
 # ---------------------------------------------------------------------------
 # Unit: SignalProcessor.flush_client_buffer
 # ---------------------------------------------------------------------------
@@ -76,7 +75,7 @@ def test_fft_waits_for_new_samples_after_flush() -> None:
     # Ingest fewer than fft_n samples
     partial = np.random.randn(fft_n // 2, 3).astype(np.float32)
     proc.ingest("c1", partial, sample_rate_hz=800)
-    metrics_after = proc.compute_metrics("c1", sample_rate_hz=800)
+    proc.compute_metrics("c1", sample_rate_hz=800)
     buf = proc._buffers["c1"]
     assert buf.count == fft_n // 2
     # Should NOT have spectrum peaks because count < fft_n
@@ -91,7 +90,8 @@ def test_no_pre_reset_samples_contaminate_post_reset_fft() -> None:
     # Ingest a strong 50 Hz signal (pre-reset)
     t = np.arange(fft_n, dtype=np.float64) / 800
     signal_50hz = (0.5 * np.sin(2 * np.pi * 50 * t)).astype(np.float32)
-    pre_reset = np.stack([signal_50hz, np.zeros(fft_n, dtype=np.float32), np.zeros(fft_n, dtype=np.float32)], axis=1)
+    zeros = np.zeros(fft_n, dtype=np.float32)
+    pre_reset = np.stack([signal_50hz, zeros, zeros], axis=1)
     proc.ingest("c1", pre_reset, sample_rate_hz=800)
 
     pre_metrics = proc.compute_metrics("c1", sample_rate_hz=800)
@@ -103,15 +103,20 @@ def test_no_pre_reset_samples_contaminate_post_reset_fft() -> None:
 
     # Ingest a pure 120 Hz signal (post-reset) — completely different
     signal_120hz = (0.5 * np.sin(2 * np.pi * 120 * t)).astype(np.float32)
-    post_reset = np.stack([signal_120hz, np.zeros(fft_n, dtype=np.float32), np.zeros(fft_n, dtype=np.float32)], axis=1)
+    zeros = np.zeros(fft_n, dtype=np.float32)
+    post_reset = np.stack([signal_120hz, zeros, zeros], axis=1)
     proc.ingest("c1", post_reset, sample_rate_hz=800)
 
     post_metrics = proc.compute_metrics("c1", sample_rate_hz=800)
     post_peaks = post_metrics.get("x", {}).get("peaks", [])
     # Should see 120 Hz, NOT 50 Hz residual
-    assert any(abs(p["hz"] - 120.0) < 2.0 for p in post_peaks), "Post-reset should detect 120 Hz"
+    assert any(
+        abs(p["hz"] - 120.0) < 2.0 for p in post_peaks
+    ), "Post-reset should detect 120 Hz"
     # No residual 50 Hz peak
-    assert not any(abs(p["hz"] - 50.0) < 2.0 for p in post_peaks), "50 Hz should be gone after flush"
+    assert not any(
+        abs(p["hz"] - 50.0) < 2.0 for p in post_peaks
+    ), "50 Hz should be gone after flush"
 
 
 # ---------------------------------------------------------------------------
