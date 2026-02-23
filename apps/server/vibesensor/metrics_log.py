@@ -689,6 +689,28 @@ class MetricsLogger:
                 "total_sample_count": total_sample_count,
                 "sampling_method": "full" if stride == 1 else f"stride_{stride}",
             }
+            if stride > 1:
+                if language == "nl":
+                    check = "Analysebemonstering"
+                    explanation = (
+                        f"Lange run geanalyseerd met stride {stride}. "
+                        "Korte, intermitterende events "
+                        "kunnen ondervertegenwoordigd zijn."
+                    )
+                else:
+                    check = "Analysis sampling"
+                    explanation = (
+                        f"Long run analyzed with stride {stride}. Brief intermittent events may be "
+                        "underrepresented."
+                    )
+                summary.setdefault("run_suitability", []).append(
+                    {
+                        "check": check,
+                        "check_key": "SUITABILITY_CHECK_ANALYSIS_SAMPLING",
+                        "state": "warn",
+                        "explanation": explanation,
+                    }
+                )
             self._history_db.store_analysis(run_id, summary)
             duration_s = time.monotonic() - analysis_start
             LOGGER.info(
