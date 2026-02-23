@@ -403,6 +403,189 @@ def _reference_missing_finding(
     }
 
 
+def _compute_effective_match_rate(
+    match_rate: float,
+    min_match_rate: float,
+    possible_by_speed_bin: dict[str, int],
+    matched_by_speed_bin: dict[str, int],
+    possible_by_location: dict[str, int],
+    matched_by_location: dict[str, int],
+) -> tuple[float, str | None, bool]:
+    """Rescue a below-threshold match rate via focused speed-band or per-location evidence.
+
+    Returns (effective_match_rate, focused_speed_band, per_location_dominant).
+    """
+    effective_match_rate = match_rate
+    focused_speed_band: str | None = None
+    if match_rate < min_match_rate and possible_by_speed_bin:
+        highest_speed_bin = max(possible_by_speed_bin.keys(), key=_speed_bin_sort_key)
+        focused_possible = int(possible_by_speed_bin.get(highest_speed_bin, 0))
+        focused_matched = int(matched_by_speed_bin.get(highest_speed_bin, 0))
+        focused_rate = focused_matched / max(1, focused_possible)
+        min_focused_possible = max(ORDER_MIN_MATCH_POINTS, ORDER_MIN_COVERAGE_POINTS // 2)
+        if (
+            focused_possible >= min_focused_possible
+            and focused_matched >= ORDER_MIN_MATCH_POINTS
+            and focused_rate >= min_match_rate
+        ):
+            focused_speed_band = highest_speed_bin
+            effective_match_rate = focused_rate
+    per_location_dominant: bool = False
+    if effective_match_rate < min_match_rate and possible_by_location:
+        best_loc_rate = 0.0
+        for loc, loc_possible in possible_by_location.items():
+            loc_matched = matched_by_location.get(loc, 0)
+            if loc_possible >= ORDER_MIN_COVERAGE_POINTS and loc_matched >= ORDER_MIN_MATCH_POINTS:
+                loc_rate = loc_matched / max(1, loc_possible)
+                if loc_rate > best_loc_rate:
+                    best_loc_rate = loc_rate
+        if best_loc_rate >= min_match_rate:
+            effective_match_rate = best_loc_rate
+            per_location_dominant = True
+    return effective_match_rate, focused_speed_band, per_location_dominant
+
+
+def _detect_diffuse_excitation(
+    connected_locations: set[str],
+    possible_by_location: dict[str, int],
+    matched_by_location: dict[str, int],
+    matched_points: list[dict[str, object]],
+) -> tuple[bool, float]:
+    """Detect diffuse (non-localized) excitation across multiple sensors.
+
+    Returns (is_diffuse, penalty_factor) where penalty_factor is 1.0 if not diffuse.
+    """
+    if len(connected_locations) < 2 or not possible_by_location:
+        return False, 1.0
+    loc_rates: list[float] = []
+    loc_mean_amps: dict[str, float] = {}
+    for loc in connected_locations:
+        loc_p = possible_by_location.get(loc, 0)
+        loc_m = matched_by_location.get(loc, 0)
+        if loc_p >= max(3, ORDER_MIN_MATCH_POINTS):
+            loc_rates.append(loc_m / max(1, loc_p))
+            loc_amps = [
+                _as_float(pt.get("amp")) or 0.0
+                for pt in matched_points
+                if str(pt.get("location") or "").strip() == loc
+                and (_as_float(pt.get("amp")) or 0.0) > 0
+            ]
+            if loc_amps:
+                loc_mean_amps[loc] = mean(loc_amps)
+    if len(loc_rates) < 2:
+        return False, 1.0
+    _rate_range = max(loc_rates) - min(loc_rates)
+    _mean_rate = mean(loc_rates)
+    _amp_uniform = True
+    if loc_mean_amps and len(loc_mean_amps) >= 2:
+        _max_amp_loc = max(loc_mean_amps.values())
+        _min_amp_loc = min(loc_mean_amps.values())
+        if _min_amp_loc > 0 and _max_amp_loc / _min_amp_loc > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO:
+            _amp_uniform = False
+    if (
+        _rate_range < _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD
+        and _mean_rate > _DIFFUSE_MIN_MEAN_RATE
+        and _amp_uniform
+    ):
+        penalty = max(
+            _DIFFUSE_PENALTY_FLOOR,
+            _DIFFUSE_PENALTY_BASE - _DIFFUSE_PENALTY_PER_SENSOR * len(loc_rates),
+        )
+        return True, penalty
+    return False, 1.0
+
+
+def _compute_order_confidence(
+    *,
+    effective_match_rate: float,
+    error_score: float,
+    corr_val: float,
+    snr_score: float,
+    absolute_strength_db: float,
+    localization_confidence: float,
+    weak_spatial_separation: bool,
+    dominance_ratio: float | None,
+    constant_speed: bool,
+    steady_speed: bool,
+    matched: int,
+    corroborating_locations: int,
+    phases_with_evidence: int,
+    is_diffuse_excitation: bool,
+    diffuse_penalty: float,
+    n_connected_locations: int,
+) -> float:
+    """Compute calibrated confidence for an order-tracking finding (clamped 0.08–0.97)."""
+    confidence = (
+        0.10
+        + (0.35 * effective_match_rate)
+        + (0.20 * error_score)
+        + (0.15 * corr_val)
+        + (0.15 * snr_score)
+    )
+    if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
+        confidence = min(confidence, 0.45)
+    elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
+        confidence *= 0.80
+    confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
+    if weak_spatial_separation:
+        confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
+    if constant_speed:
+        confidence *= 0.75
+    elif steady_speed:
+        confidence *= 0.82
+    sample_factor = min(1.0, matched / 20.0)
+    confidence = confidence * (0.70 + 0.30 * sample_factor)
+    if corroborating_locations >= 3:
+        confidence *= 1.08
+    elif corroborating_locations >= 2:
+        confidence *= 1.04
+    if phases_with_evidence >= 3:
+        confidence *= 1.06
+    elif phases_with_evidence >= 2:
+        confidence *= 1.03
+    if is_diffuse_excitation:
+        confidence *= diffuse_penalty
+    if n_connected_locations <= 1:
+        confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
+    elif n_connected_locations == 2:
+        confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
+    return max(0.08, min(0.97, confidence))
+
+
+def _suppress_engine_aliases(
+    findings: list[tuple[float, dict[str, object]]],
+) -> list[dict[str, object]]:
+    """Suppress engine findings that are likely harmonic aliases of wheel findings.
+
+    Sorts by ranking score, filters below minimum confidence, and returns the top 3.
+    """
+    _HARMONIC_ALIAS_RATIO = 1.15
+    _ENGINE_ALIAS_SUPPRESSION = 0.60
+    _best_wheel_conf = max(
+        (
+            float(f.get("confidence_0_to_1", 0))
+            for _, f in findings
+            if str(f.get("suspected_source") or "").strip().lower() == "wheel/tire"
+        ),
+        default=0.0,
+    )
+    if _best_wheel_conf > 0:
+        for i, (rs, f) in enumerate(findings):
+            src = str(f.get("suspected_source") or "").strip().lower()
+            if src == "engine":
+                eng_conf = float(f.get("confidence_0_to_1", 0))
+                if eng_conf <= _best_wheel_conf * _HARMONIC_ALIAS_RATIO:
+                    suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
+                    f["confidence_0_to_1"] = suppressed
+                    findings[i] = (rs * _ENGINE_ALIAS_SUPPRESSION, f)
+    findings.sort(key=lambda item: item[0], reverse=True)
+    return [
+        item[1]
+        for item in findings[:3]
+        if float(item[1].get("confidence_0_to_1", 0)) >= ORDER_MIN_CONFIDENCE
+    ]
+
+
 def _build_order_findings(
     *,
     metadata: dict[str, Any],
@@ -530,42 +713,16 @@ def _build_order_findings(
             speed_stddev_kmh is not None and speed_stddev_kmh < CONSTANT_SPEED_STDDEV_KMH
         )
         min_match_rate = ORDER_CONSTANT_SPEED_MIN_MATCH_RATE if constant_speed else 0.25
-        effective_match_rate = match_rate
-        focused_speed_band: str | None = None
-        if match_rate < min_match_rate and possible_by_speed_bin:
-            highest_speed_bin = max(possible_by_speed_bin.keys(), key=_speed_bin_sort_key)
-            focused_possible = int(possible_by_speed_bin.get(highest_speed_bin, 0))
-            focused_matched = int(matched_by_speed_bin.get(highest_speed_bin, 0))
-            focused_rate = focused_matched / max(1, focused_possible)
-            min_focused_possible = max(ORDER_MIN_MATCH_POINTS, ORDER_MIN_COVERAGE_POINTS // 2)
-            if (
-                focused_possible >= min_focused_possible
-                and focused_matched >= ORDER_MIN_MATCH_POINTS
-                and focused_rate >= min_match_rate
-            ):
-                focused_speed_band = highest_speed_bin
-                effective_match_rate = focused_rate
-        # ── Per-location match-rate rescue ──────────────────────────────
-        # In multi-sensor setups the global match rate is diluted because
-        # only the fault sensor matches the order.  E.g. 1 of 4 sensors
-        # matching = 25% global rate, even though the fault-sensor rate is
-        # 100%.  When a single location independently exceeds the threshold,
-        # accept that as the effective match rate.
-        per_location_dominant: bool = False
-        if effective_match_rate < min_match_rate and possible_by_location:
-            best_loc_rate = 0.0
-            for loc, loc_possible in possible_by_location.items():
-                loc_matched = matched_by_location.get(loc, 0)
-                if (
-                    loc_possible >= ORDER_MIN_COVERAGE_POINTS
-                    and loc_matched >= ORDER_MIN_MATCH_POINTS
-                ):
-                    loc_rate = loc_matched / max(1, loc_possible)
-                    if loc_rate > best_loc_rate:
-                        best_loc_rate = loc_rate
-            if best_loc_rate >= min_match_rate:
-                effective_match_rate = best_loc_rate
-                per_location_dominant = True
+        effective_match_rate, focused_speed_band, per_location_dominant = (
+            _compute_effective_match_rate(
+                match_rate,
+                min_match_rate,
+                possible_by_speed_bin,
+                matched_by_speed_bin,
+                possible_by_location,
+                matched_by_location,
+            )
+        )
         if effective_match_rate < min_match_rate:
             continue
 
@@ -677,109 +834,31 @@ def _build_order_findings(
             floor_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
         )
 
-        # --- Confidence formula (calibrated) ---
-        # Base is intentionally low; weight must come from evidence.
-        confidence = (
-            0.10
-            + (0.35 * effective_match_rate)
-            + (0.20 * error_score)
-            + (0.15 * corr_val)
-            + (0.15 * snr_score)  # was 0.10 — SNR matters more
+        _diffuse_excitation, _diffuse_penalty = _detect_diffuse_excitation(
+            connected_locations,
+            possible_by_location,
+            matched_by_location,
+            matched_points,
         )
-        # Penalty: negligible/light absolute signal strength (shared dB bands).
-        if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
-            confidence = min(confidence, 0.45)
-        elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
-            confidence *= 0.80
-        # Penalty: location ambiguity / weak localization confidence
-        confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
-        # Penalty: weak spatial separation
-        if weak_spatial_separation:
-            confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
-        # Penalty: steady/constant speed reduces order-tracking value
-        if constant_speed:
-            confidence *= 0.75  # was 0.88 for steady; constant is stricter
-        elif steady_speed:
-            confidence *= 0.82  # was 0.88 — still significant
-        # Bonus: more matched samples → higher trust (diminishing returns)
-        # Keep a meaningful penalty near the minimum 4-match threshold while
-        # saturating confidence support once evidence reaches ~20 matches.
-        sample_factor = min(1.0, matched / 20.0)  # saturates at 20 samples
-        confidence = confidence * (0.70 + 0.30 * sample_factor)
-        # Bonus: multi-sensor corroboration — multiple independent locations
-        # detecting the same order strengthens the finding.
-        if corroborating_locations >= 3:
-            confidence *= 1.08
-        elif corroborating_locations >= 2:
-            confidence *= 1.04
-        # Bonus: multi-phase corroboration — order detected consistently across
-        # multiple driving phases (e.g., both CRUISE and ACCELERATION) indicates
-        # a genuine mechanical source rather than a phase-specific artefact.
-        if phases_with_evidence >= 3:
-            confidence *= 1.06
-        elif phases_with_evidence >= 2:
-            confidence *= 1.03
 
-        # ── Diffuse excitation detection ────────────────────────────────
-        # When multiple connected sensors all match the order at similar
-        # rates AND similar amplitudes, vibration is likely diffuse
-        # road/environment excitation rather than a localized fault.
-        # If one sensor has significantly higher amplitude, it's a localized
-        # fault that may also weakly appear on other sensors (transfer path).
-        _diffuse_excitation = False
-        if len(connected_locations) >= 2 and possible_by_location:
-            loc_rates = []
-            loc_mean_amps: dict[str, float] = {}
-            for loc in connected_locations:
-                loc_p = possible_by_location.get(loc, 0)
-                loc_m = matched_by_location.get(loc, 0)
-                if loc_p >= max(3, ORDER_MIN_MATCH_POINTS):
-                    loc_rates.append(loc_m / max(1, loc_p))
-                    # Compute mean matched amplitude for this location
-                    loc_amps = [
-                        _as_float(pt.get("amp")) or 0.0
-                        for pt in matched_points
-                        if str(pt.get("location") or "").strip() == loc
-                        and (_as_float(pt.get("amp")) or 0.0) > 0
-                    ]
-                    if loc_amps:
-                        loc_mean_amps[loc] = mean(loc_amps)
-            if len(loc_rates) >= 2:
-                _rate_range = max(loc_rates) - min(loc_rates)
-                _mean_rate = mean(loc_rates)
-                # Check amplitude uniformity: if one sensor is dominant,
-                # this is a localized fault, not diffuse excitation.
-                _amp_uniform = True
-                if loc_mean_amps and len(loc_mean_amps) >= 2:
-                    _max_amp_loc = max(loc_mean_amps.values())
-                    _min_amp_loc = min(loc_mean_amps.values())
-                    if (
-                        _min_amp_loc > 0
-                        and _max_amp_loc / _min_amp_loc > _DIFFUSE_AMPLITUDE_DOMINANCE_RATIO
-                    ):
-                        _amp_uniform = False  # One sensor is dominant
-                if (
-                    _rate_range < _DIFFUSE_MATCH_RATE_RANGE_THRESHOLD
-                    and _mean_rate > _DIFFUSE_MIN_MEAN_RATE
-                    and _amp_uniform
-                ):
-                    _diffuse_excitation = True
-                    _diffuse_penalty = max(
-                        _DIFFUSE_PENALTY_FLOOR,
-                        _DIFFUSE_PENALTY_BASE - _DIFFUSE_PENALTY_PER_SENSOR * len(loc_rates),
-                    )
-                    confidence *= _diffuse_penalty
-
-        # ── Sensor-coverage-aware confidence scaling (1-12 sensors) ─────
-        # With very few sensors (1-2), localization is inherently uncertain.
-        # With many sensors (8-12), we have stronger spatial evidence.
-        n_connected = len(connected_locations)
-        if n_connected <= 1:
-            confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
-        elif n_connected == 2:
-            confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-
-        confidence = max(0.08, min(0.97, confidence))
+        confidence = _compute_order_confidence(
+            effective_match_rate=effective_match_rate,
+            error_score=error_score,
+            corr_val=corr_val,
+            snr_score=snr_score,
+            absolute_strength_db=absolute_strength_db,
+            localization_confidence=localization_confidence,
+            weak_spatial_separation=weak_spatial_separation,
+            dominance_ratio=dominance_ratio,
+            constant_speed=constant_speed,
+            steady_speed=steady_speed,
+            matched=matched,
+            corroborating_locations=corroborating_locations,
+            phases_with_evidence=phases_with_evidence,
+            is_diffuse_excitation=_diffuse_excitation,
+            diffuse_penalty=_diffuse_penalty,
+            n_connected_locations=len(connected_locations),
+        )
 
         ranking_score = (
             effective_match_rate
@@ -930,47 +1009,7 @@ def _build_order_findings(
         }
         findings.append((ranking_score, finding))
 
-    # ── Cross-hypothesis suppression ────────────────────────────────
-    # When engine RPM is inferred from speed + gear ratios, engine
-    # harmonics are mathematically related to wheel-order harmonics.
-    # If a wheel/tire finding has clearly higher confidence than an
-    # engine finding, the engine confidence is reduced to avoid
-    # false-positive engine reports from wheel-only evidence.
-    #
-    # HARMONIC_ALIAS_RATIO: engine conf must be within this ratio of
-    #   the best wheel conf to be considered a potential alias (1.15 =
-    #   engine may be up to 15% *above* wheel and still be an alias,
-    #   since small scoring noise can push it slightly higher).
-    # ENGINE_ALIAS_SUPPRESSION: multiplicative penalty applied to both
-    #   confidence and ranking score (0.60 = 40% reduction) — enough
-    #   to push the aliased engine finding below the wheel finding
-    #   without completely eliminating it.
-    _HARMONIC_ALIAS_RATIO = 1.15
-    _ENGINE_ALIAS_SUPPRESSION = 0.60
-    _best_wheel_conf = max(
-        (
-            float(f.get("confidence_0_to_1", 0))
-            for _, f in findings
-            if str(f.get("suspected_source") or "").strip().lower() == "wheel/tire"
-        ),
-        default=0.0,
-    )
-    if _best_wheel_conf > 0:
-        for i, (rs, f) in enumerate(findings):
-            src = str(f.get("suspected_source") or "").strip().lower()
-            if src == "engine":
-                eng_conf = float(f.get("confidence_0_to_1", 0))
-                if eng_conf <= _best_wheel_conf * _HARMONIC_ALIAS_RATIO:
-                    suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
-                    f["confidence_0_to_1"] = suppressed
-                    findings[i] = (rs * _ENGINE_ALIAS_SUPPRESSION, f)
-
-    findings.sort(key=lambda item: item[0], reverse=True)
-    return [
-        item[1]
-        for item in findings[:3]
-        if float(item[1].get("confidence_0_to_1", 0)) >= ORDER_MIN_CONFIDENCE
-    ]
+    return _suppress_engine_aliases(findings)
 
 
 PERSISTENT_PEAK_MIN_PRESENCE = 0.15
