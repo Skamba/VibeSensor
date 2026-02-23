@@ -3,12 +3,43 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import math
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from fastapi import WebSocket
 
 LOGGER = logging.getLogger(__name__)
+
+
+def sanitize_for_json(obj: Any) -> Any:
+    """Recursively replace non-finite floats (NaN, Inf, -Inf) with ``None``.
+
+    This ensures the resulting structure can be serialised with
+    ``json.dumps(allow_nan=False)`` and produces RFC-8259 compliant JSON that
+    any standard ``JSON.parse()`` implementation can consume.
+
+    Returns the sanitised object and a boolean flag indicating whether any
+    non-finite value was encountered.
+    """
+    found_non_finite = False
+
+    def _walk(v: Any) -> Any:
+        nonlocal found_non_finite
+        if isinstance(v, float):
+            if math.isfinite(v):
+                return v
+            found_non_finite = True
+            return None
+        if isinstance(v, dict):
+            return {k: _walk(val) for k, val in v.items()}
+        if isinstance(v, (list, tuple)):
+            return [_walk(item) for item in v]
+        return v
+
+    cleaned = _walk(obj)
+    return cleaned, found_non_finite
 
 # Timing constants for WebSocket broadcast
 _SEND_TIMEOUT_S: float = 0.5
@@ -65,9 +96,18 @@ class WebSocketHub:
         async def _send(conn: WSConnection) -> WebSocket | None:
             try:
                 if conn.selected_client_id not in payload_cache:
+                    raw_payload = payload_builder(conn.selected_client_id)
+                    cleaned, had_non_finite = sanitize_for_json(raw_payload)
+                    if had_non_finite:
+                        LOGGER.warning(
+                            "WebSocket payload for client %r contained NaN/Inf "
+                            "values; replaced with null.",
+                            conn.selected_client_id,
+                        )
                     payload_cache[conn.selected_client_id] = json.dumps(
-                        payload_builder(conn.selected_client_id),
+                        cleaned,
                         separators=(",", ":"),
+                        allow_nan=False,
                     )
                 payload_text = payload_cache[conn.selected_client_id]
             except Exception:
