@@ -1,5 +1,13 @@
 import { apiJson } from "./http";
-import type { CarsPayload, SpeedSourcePayload, SpeedSourceStatusPayload, UpdateStatusPayload } from "./types";
+import type {
+  CarsPayload,
+  EspFlashHistoryAttemptPayload,
+  EspFlashStatusPayload,
+  EspSerialPortPayload,
+  SpeedSourcePayload,
+  SpeedSourceStatusPayload,
+  UpdateStatusPayload,
+} from "./types";
 
 export async function getSettingsLanguage(): Promise<{ language: string }> {
   return apiJson("/api/settings/language");
@@ -121,4 +129,34 @@ export async function cancelUpdate(): Promise<{ cancelled: boolean }> {
   return apiJson("/api/settings/update/cancel", {
     method: "POST",
   });
+}
+
+export async function getEspFlashPorts(): Promise<{ ports: EspSerialPortPayload[] }> {
+  return apiJson("/api/settings/esp-flash/ports");
+}
+
+export async function startEspFlash(port: string | null, auto_detect: boolean): Promise<{ status: string; job_id: number }> {
+  return apiJson("/api/settings/esp-flash/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ port, auto_detect }),
+  });
+}
+
+export async function getEspFlashStatus(): Promise<EspFlashStatusPayload> {
+  return apiJson("/api/settings/esp-flash/status");
+}
+
+export async function getEspFlashLogs(after: number): Promise<{ from_index: number; next_index: number; lines: string[] }> {
+  return apiJson(`/api/settings/esp-flash/logs?after=${encodeURIComponent(String(after))}`);
+}
+
+export async function cancelEspFlash(): Promise<{ cancelled: boolean }> {
+  return apiJson("/api/settings/esp-flash/cancel", {
+    method: "POST",
+  });
+}
+
+export async function getEspFlashHistory(): Promise<{ attempts: EspFlashHistoryAttemptPayload[] }> {
+  return apiJson("/api/settings/esp-flash/history");
 }

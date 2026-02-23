@@ -90,3 +90,36 @@ export type UpdateStatusPayload = {
     assets_verified: boolean;
   };
 };
+
+export type EspSerialPortPayload = {
+  port: string;
+  description: string;
+  vid: number | null;
+  pid: number | null;
+  serial_number: string | null;
+};
+
+export type EspFlashStatusPayload = {
+  state: "idle" | "running" | "success" | "failed" | "cancelled";
+  phase: string;
+  job_id: number | null;
+  selected_port: string | null;
+  auto_detect: boolean;
+  started_at: number | null;
+  finished_at: number | null;
+  last_success_at: number | null;
+  exit_code: number | null;
+  error: string | null;
+  log_count: number;
+};
+
+export type EspFlashHistoryAttemptPayload = {
+  job_id: number;
+  state: "idle" | "running" | "success" | "failed" | "cancelled";
+  selected_port: string | null;
+  auto_detect: boolean;
+  started_at: number;
+  finished_at: number | null;
+  exit_code: number | null;
+  error: string | null;
+};
