@@ -141,8 +141,12 @@ class TestSegmentRunPhases:
         assert len(phases) == 20
         # All dropout samples should be interpolated to CRUISE (surrounded by CRUISE)
         for i in range(5, 15):
-            assert phases[i] != DrivingPhase.IDLE, f"Sample {i} should not be IDLE during GPS dropout"
-            assert phases[i] == DrivingPhase.CRUISE, f"Sample {i} should be CRUISE (interpolated)"
+            assert phases[i] != DrivingPhase.IDLE, (
+                f"Sample {i} should not be IDLE during GPS dropout"
+            )
+            assert phases[i] == DrivingPhase.CRUISE, (
+                f"Sample {i} should be CRUISE (interpolated)"
+            )
         # No IDLE segments at all
         assert all(seg.phase != DrivingPhase.IDLE for seg in segments)
 
@@ -194,7 +198,12 @@ class TestSegmentRunPhases:
 
 class TestInterpolateSpeedUnknown:
     def test_gap_between_cruise_becomes_cruise(self) -> None:
-        phases = [DrivingPhase.CRUISE, DrivingPhase.SPEED_UNKNOWN, DrivingPhase.SPEED_UNKNOWN, DrivingPhase.CRUISE]
+        phases = [
+            DrivingPhase.CRUISE,
+            DrivingPhase.SPEED_UNKNOWN,
+            DrivingPhase.SPEED_UNKNOWN,
+            DrivingPhase.CRUISE,
+        ]
         _interpolate_speed_unknown(phases)
         assert phases == [DrivingPhase.CRUISE] * 4
 

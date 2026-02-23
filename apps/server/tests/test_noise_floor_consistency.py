@@ -12,7 +12,6 @@ from vibesensor_core.vibration_strength import noise_floor_amp_p20_g
 
 from vibesensor.processing import SignalProcessor
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

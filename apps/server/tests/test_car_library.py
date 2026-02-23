@@ -122,7 +122,10 @@ def test_tire_option_name_format() -> None:
 
 
 def test_car_library_models_response_accepts_actual_data() -> None:
-    """CarLibraryModelsResponse must accept the dicts returned by get_models_for_brand_type (GH-307)."""
+    """CarLibraryModelsResponse must accept get_models_for_brand_type dicts.
+
+    Regression test for GH-307.
+    """
     from vibesensor.api import CarLibraryModelsResponse
 
     models = get_models_for_brand_type("BMW", "Sedan")

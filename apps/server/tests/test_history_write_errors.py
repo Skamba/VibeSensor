@@ -13,10 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from vibesensor.metrics_log import MetricsLogger, _MAX_HISTORY_CREATE_RETRIES
-
+from vibesensor.metrics_log import _MAX_HISTORY_CREATE_RETRIES, MetricsLogger
 
 # -- Minimal fakes -----------------------------------------------------------
 
@@ -43,7 +40,11 @@ class _FakeRegistry:
                     "strength_metrics": {
                         "vibration_strength_db": 22.0,
                         "strength_bucket": "l2",
-                        "top_peaks": [{"hz": 15.0, "amp": 0.12, "vibration_strength_db": 22.0, "strength_bucket": "l2"}],
+                        "top_peaks": [{
+                            "hz": 15.0, "amp": 0.12,
+                            "vibration_strength_db": 22.0,
+                            "strength_bucket": "l2",
+                        }],
                         "combined_spectrum_amp_g": [],
                     },
                     "combined": {"peaks": [{"hz": 15.0, "amp": 0.12}]},

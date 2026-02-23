@@ -41,6 +41,6 @@ class TestSetLocationRequestAcceptsEmptyCode:
 
         try:
             SetLocationRequest(location_code="x" * 65)
-            assert False, "Should have raised ValidationError"
+            raise AssertionError("Should have raised ValidationError")
         except ValidationError:
             pass
