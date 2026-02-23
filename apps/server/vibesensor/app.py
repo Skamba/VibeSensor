@@ -79,6 +79,9 @@ class RuntimeState:
     ws_include_heavy: bool = True
     cached_analysis_metadata: dict[str, object] | None = None
     cached_analysis_samples: list[dict[str, object]] = field(default_factory=list)
+    cached_diagnostics: dict[str, object] | None = None
+    cached_diagnostics_tick: int = -1
+    cached_diagnostics_heavy: bool = True
 
     def _rotational_basis_speed_source(
         self,
@@ -187,25 +190,27 @@ class RuntimeState:
                 payload["selected"] = self.processor.selected_payload(active)
             else:
                 payload["selected"] = {}
-            payload["diagnostics"] = self.live_diagnostics.update(
-                speed_mps=speed_mps,
-                clients=clients,
-                spectra=payload.get("spectra"),
-                settings=analysis_settings_snapshot,
-                finding_metadata=analysis_metadata,
-                finding_samples=analysis_samples,
-                language=self.settings_store.language,
-            )
+        else:
+            pass
+        if (
+            self.cached_diagnostics is not None
+            and self.cached_diagnostics_tick == self.ws_tick
+            and self.cached_diagnostics_heavy == self.ws_include_heavy
+        ):
+            payload["diagnostics"] = self.cached_diagnostics
         else:
             payload["diagnostics"] = self.live_diagnostics.update(
                 speed_mps=speed_mps,
                 clients=clients,
-                spectra=None,
+                spectra=payload.get("spectra") if self.ws_include_heavy else None,
                 settings=analysis_settings_snapshot,
                 finding_metadata=analysis_metadata,
                 finding_samples=analysis_samples,
                 language=self.settings_store.language,
             )
+            self.cached_diagnostics = payload["diagnostics"]
+            self.cached_diagnostics_tick = self.ws_tick
+            self.cached_diagnostics_heavy = self.ws_include_heavy
         return payload
 
 

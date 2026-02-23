@@ -244,7 +244,7 @@ def _top_peaks_table_rows(
     samples: list[dict[str, Any]],
     *,
     top_n: int = 12,
-    freq_bin_hz: float = 1.0,
+    freq_bin_hz: float = 2.0,
     run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, Any]]:
     """Build ranked peak table using persistence-weighted scoring.
@@ -277,7 +277,8 @@ def _top_peaks_table_rows(
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
-            freq_key = round(hz / freq_bin_hz) * freq_bin_hz
+            bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
+            freq_key = bin_low + (freq_bin_hz / 2.0)
             bucket = grouped.setdefault(
                 freq_key,
                 {

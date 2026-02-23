@@ -1415,11 +1415,14 @@ def _build_findings(
     for of in order_findings:
         pts = of.get("matched_points")
         if isinstance(pts, list):
+            matched_hz_vals: list[float] = []
             for pt in pts:
                 if isinstance(pt, dict):
                     mhz = _as_float(pt.get("matched_hz"))
                     if mhz is not None and mhz > 0:
-                        order_freqs.add(mhz)
+                        matched_hz_vals.append(mhz)
+            if matched_hz_vals:
+                order_freqs.add(percentile(sorted(matched_hz_vals), 0.50))
 
     findings.extend(
         _build_persistent_peak_findings(
