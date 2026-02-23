@@ -954,6 +954,167 @@ def make_speed_sweep_fault_samples(
     return samples
 
 
+def make_profile_dual_fault_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor_1: str,
+    fault_sensor_2: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp_1: float = 0.06,
+    fault_amp_2: float = 0.04,
+    fault_vib_db_1: float = 26.0,
+    fault_vib_db_2: float = 22.0,
+    noise_amp: float = 0.004,
+    noise_vib_db: float = 8.0,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_dual_fault_samples`."""
+    whz = profile_wheel_hz(profile, speed_kmh)
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            if sensor == fault_sensor_1:
+                peaks: list[dict[str, float]] = [
+                    {"hz": whz, "amp": fault_amp_1},
+                    {"hz": whz * 2, "amp": fault_amp_1 * 0.4},
+                    {"hz": 142.5, "amp": noise_amp},
+                ]
+                samples.append(
+                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=fault_vib_db_1, strength_floor_amp_g=noise_amp)
+                )
+            elif sensor == fault_sensor_2:
+                peaks = [
+                    {"hz": whz, "amp": fault_amp_2},
+                    {"hz": whz * 2, "amp": fault_amp_2 * 0.35},
+                    {"hz": 87.3, "amp": noise_amp},
+                ]
+                samples.append(
+                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=fault_vib_db_2, strength_floor_amp_g=noise_amp)
+                )
+            else:
+                peaks = [{"hz": 142.5, "amp": noise_amp}, {"hz": 87.3, "amp": noise_amp * 0.8}]
+                samples.append(
+                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=noise_vib_db, strength_floor_amp_g=noise_amp)
+                )
+    return samples
+
+
+def make_profile_engine_order_samples(
+    *,
+    profile: dict[str, Any],
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    engine_amp: float = 0.05,
+    engine_vib_db: float = 24.0,
+    noise_amp: float = 0.004,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_engine_order_samples`."""
+    whz = profile_wheel_hz(profile, speed_kmh)
+    ehz = whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            jitter = (_stable_hash(sensor + str(i)) % 10) * 0.001
+            peaks = [
+                {"hz": ehz, "amp": engine_amp + jitter},
+                {"hz": ehz * 2, "amp": (engine_amp + jitter) * 0.5},
+                {"hz": ehz * 0.5, "amp": (engine_amp + jitter) * 0.3},
+                {"hz": 200.0, "amp": noise_amp},
+            ]
+            samples.append(
+                make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=engine_vib_db, strength_floor_amp_g=noise_amp, engine_rpm=ehz * 60.0)
+            )
+    return samples
+
+
+def make_profile_speed_sweep_fault_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor: str,
+    sensors: list[str],
+    speed_start: float = 40.0,
+    speed_end: float = 100.0,
+    n_steps: int = 5,
+    samples_per_step: int = 10,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp: float = 0.06,
+    noise_amp: float = 0.004,
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_speed_sweep_fault_samples`."""
+    samples: list[dict[str, Any]] = []
+    t = start_t_s
+    for step in range(n_steps):
+        ratio = step / max(1, n_steps - 1)
+        speed = speed_start + (speed_end - speed_start) * ratio
+        samples.extend(
+            make_profile_fault_samples(
+                profile=profile,
+                fault_sensor=fault_sensor,
+                sensors=sensors,
+                speed_kmh=speed,
+                n_samples=samples_per_step,
+                dt_s=dt_s,
+                start_t_s=t,
+                fault_amp=fault_amp,
+                noise_amp=noise_amp,
+                fault_vib_db=fault_vib_db,
+                noise_vib_db=noise_vib_db,
+            )
+        )
+        t += samples_per_step * dt_s
+    return samples
+
+
+def make_profile_gain_mismatch_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp: float = 0.06,
+    noise_amp: float = 0.004,
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+    gain_factor: float = 1.5,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_gain_mismatch_samples`."""
+    base = make_profile_fault_samples(
+        profile=profile,
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp=fault_amp,
+        noise_amp=noise_amp,
+        fault_vib_db=fault_vib_db,
+        noise_vib_db=noise_vib_db,
+    )
+    result: list[dict[str, Any]] = []
+    for s in base:
+        if s["client_name"] == fault_sensor:
+            s = {**s}
+            s["top_peaks"] = [{"hz": p["hz"], "amp": p["amp"] * gain_factor} for p in s["top_peaks"]]
+            s["vibration_strength_db"] = s["vibration_strength_db"] + 3.0
+        result.append(s)
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Analysis runner
 # ---------------------------------------------------------------------------
