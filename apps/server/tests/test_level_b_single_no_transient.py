@@ -24,6 +24,7 @@ from builders import (
     assert_confidence_label_valid,
     assert_has_warnings,
     assert_no_wheel_fault,
+    assert_pairwise_monotonic,
     assert_strict_no_fault,
     assert_tolerant_no_fault,
     extract_top,
@@ -65,7 +66,7 @@ def test_single_sensor_fault_corner_speed(
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"No finding for {corner}@{speed}"
-    assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@{speed}")
+    assert_confidence_between(summary, 0.45, 1.0, msg=f"{corner}@{speed}")
     assert_confidence_label_valid(summary, msg=f"{corner}@{speed}")
     assert_has_warnings(summary, msg=f"{corner}@{speed}")
 
@@ -125,6 +126,40 @@ def test_single_sensor_amplitude_scaling(
     else:
         assert top is not None, f"No finding for {corner} at amp={amp_label}"
         assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} amp={amp_label}")
+
+
+@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("corner", ["FL", "RR"])
+def test_single_sensor_amplitude_scaling_monotonic(corner: str, profile: dict[str, Any]) -> None:
+    """Confidence should increase with amplitude (allowing tiny tolerated regressions)."""
+    sensor = CORNER_SENSORS[corner]
+    monotonic_tiers = [
+        ("low", 0.02, 16.0),
+        ("med", 0.05, 24.0),
+        ("strong", 0.07, 28.0),
+    ]
+    confidences: list[float] = []
+    labels: list[str] = []
+    for amp_label, fault_amp, vib_db in monotonic_tiers:
+        samples = make_profile_fault_samples(
+            profile=profile,
+            fault_sensor=sensor,
+            sensors=[sensor],
+            speed_kmh=SPEED_MID,
+            n_samples=40,
+            fault_amp=fault_amp,
+            fault_vib_db=vib_db,
+        )
+        summary = run_analysis(samples, metadata=profile_metadata(profile))
+        top = extract_top(summary)
+        confidences.append(float(top.get("confidence", 0.0)) if top else 0.0)
+        labels.append(amp_label)
+    assert_pairwise_monotonic(
+        confidences,
+        tolerance=0.03,
+        labels=labels,
+        msg=f"single-sensor amplitude scaling at {corner} ({profile['name']})",
+    )
 
 
 # ---------------------------------------------------------------------------
