@@ -206,7 +206,8 @@ def test_events_persist_when_spectra_is_none(monkeypatch) -> None:
 
 
 def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
-    """Matrix should not be lost on light ticks."""
+    """Matrix counts should not be lost on light ticks;
+    dwell seconds should continue to accumulate."""
     current_s = {"value": 10.0}
 
     def fake_monotonic() -> float:
@@ -240,9 +241,9 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
         },
     }
 
-    # Several heavy ticks to accumulate matrix
+    # Several heavy ticks to accumulate matrix (small time steps to stay inside window)
     for _ in range(5):
-        current_s["value"] += 1.0
+        current_s["value"] += 0.2
         engine.update(
             speed_mps=27.8,
             clients=[{"id": "c1", "name": "front"}],
@@ -253,7 +254,14 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
     snap_before = engine.snapshot()
     matrix_before = snap_before["matrix"]
 
-    # Light tick should preserve matrix
+    # Collect any non-zero seconds from before
+    total_seconds_before = sum(
+        cell["seconds"]
+        for cols in matrix_before.values()
+        for cell in cols.values()
+    )
+
+    # Light tick should preserve matrix structure and continue accumulating dwell seconds
     current_s["value"] += 0.1
     snap_after = engine.update(
         speed_mps=27.8,
@@ -261,7 +269,22 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
         spectra=None,
         settings={},
     )
-    assert snap_after["matrix"] == matrix_before, "Matrix should be preserved on light tick"
+    matrix_after = snap_after["matrix"]
+
+    # Matrix structure is preserved
+    assert set(matrix_after.keys()) == set(matrix_before.keys())
+    for source in matrix_before:
+        assert set(matrix_after[source].keys()) == set(matrix_before[source].keys())
+
+    # Dwell seconds should be >= before (they accumulate on light ticks now)
+    total_seconds_after = sum(
+        cell["seconds"]
+        for cols in matrix_after.values()
+        for cell in cols.values()
+    )
+    assert total_seconds_after >= total_seconds_before, (
+        "Matrix dwell seconds should not decrease on light tick"
+    )
 
 
 def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch) -> None:

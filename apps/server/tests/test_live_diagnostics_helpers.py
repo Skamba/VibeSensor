@@ -59,6 +59,7 @@ def test_engine_reset_clears_state() -> None:
 def test_engine_snapshot_has_expected_keys() -> None:
     engine = LiveDiagnosticsEngine()
     snap = engine.snapshot()
+    assert "diagnostics_sequence" in snap
     assert "matrix" in snap
     assert "events" in snap
     assert "strength_bands" in snap
