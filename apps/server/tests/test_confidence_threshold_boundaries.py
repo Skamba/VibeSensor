@@ -15,17 +15,11 @@ from builders import (
     ALL_WHEEL_SENSORS,
     CORNER_SENSORS,
     SENSOR_FL,
-    SENSOR_FR,
-    SENSOR_RL,
-    SENSOR_RR,
     SPEED_HIGH,
     SPEED_LOW,
     SPEED_MID,
-    assert_confidence_between,
     assert_confidence_label_valid,
-    assert_has_warnings,
     assert_no_wheel_fault,
-    assert_strict_no_fault,
     assert_tolerant_no_fault,
     extract_top,
     make_diffuse_samples,
@@ -87,7 +81,9 @@ def test_strong_single_sensor_reaches_high_confidence(corner: str) -> None:
     )
     summary = run_analysis(samples)
     conf = top_confidence(summary)
-    assert conf >= 0.60, f"Strong single-sensor fault at {corner} gave conf={conf:.3f}, expected ≥0.60"
+    assert conf >= 0.60, (
+        f"Strong single-sensor fault at {corner} gave conf={conf:.3f}, expected ≥0.60"
+    )
 
 
 # ===================================================================
