@@ -1,6 +1,15 @@
 import { apiJson } from "./http";
 
-export async function getClientLocations(): Promise<Record<string, string>> {
+export type LocationOption = {
+  code: string;
+  label: string;
+};
+
+export type ClientLocationsResponse = {
+  locations: LocationOption[];
+};
+
+export async function getClientLocations(): Promise<ClientLocationsResponse> {
   return apiJson("/api/client-locations");
 }
 
