@@ -81,4 +81,12 @@ export type UpdateStatusPayload = {
   issues: UpdateIssue[];
   log_tail: string[];
   exit_code: number | null;
+  runtime: {
+    commit: string;
+    ui_source_hash: string;
+    public_assets_hash: string;
+    public_build_source_hash: string;
+    public_build_commit: string;
+    assets_verified: boolean;
+  };
 };

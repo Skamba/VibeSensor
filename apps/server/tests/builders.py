@@ -88,6 +88,88 @@ SPEED_MID = 60.0
 SPEED_HIGH = 100.0
 SPEED_VERY_HIGH = 120.0
 
+# ---------------------------------------------------------------------------
+# Car profiles – five realistic vehicle configurations for cross-profile
+# parameterised testing.  Each profile overrides tire geometry and drivetrain
+# ratios that affect wheel/engine frequency calculations.
+# ---------------------------------------------------------------------------
+
+CAR_PROFILES: list[dict[str, Any]] = [
+    {
+        "name": "performance_suv",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+    },
+    {
+        "name": "economy_sedan",
+        "tire_width_mm": 205.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 16.0,
+        "final_drive_ratio": 3.94,
+        "current_gear_ratio": 0.73,
+    },
+    {
+        "name": "sports_coupe",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0,
+        "final_drive_ratio": 3.27,
+        "current_gear_ratio": 0.85,
+    },
+    {
+        "name": "off_road_truck",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 70.0,
+        "rim_in": 17.0,
+        "final_drive_ratio": 3.73,
+        "current_gear_ratio": 0.75,
+    },
+    {
+        "name": "compact_city",
+        "tire_width_mm": 195.0,
+        "tire_aspect_pct": 65.0,
+        "rim_in": 15.0,
+        "final_drive_ratio": 4.06,
+        "current_gear_ratio": 0.68,
+    },
+]
+
+CAR_PROFILE_IDS: list[str] = [p["name"] for p in CAR_PROFILES]
+
+
+def profile_circ(profile: dict[str, Any]) -> float:
+    """Compute tire circumference for a car profile."""
+    circ = tire_circumference_m_from_spec(
+        profile["tire_width_mm"],
+        profile["tire_aspect_pct"],
+        profile["rim_in"],
+    )
+    assert circ is not None and circ > 0
+    return circ
+
+
+def profile_wheel_hz(profile: dict[str, Any], speed_kmh: float) -> float:
+    """Compute wheel-1x Hz for a car profile at *speed_kmh*."""
+    circ = profile_circ(profile)
+    hz = wheel_hz_from_speed_kmh(speed_kmh, circ)
+    assert hz is not None and hz > 0
+    return hz
+
+
+def profile_metadata(profile: dict[str, Any], **overrides: Any) -> dict[str, Any]:
+    """Build run metadata for a specific car profile."""
+    circ = profile_circ(profile)
+    meta = standard_metadata(
+        tire_circumference_m=circ,
+        final_drive_ratio=profile["final_drive_ratio"],
+        current_gear_ratio=profile["current_gear_ratio"],
+    )
+    meta.update(overrides)
+    return meta
+
 
 # ---------------------------------------------------------------------------
 # Stable deterministic hash (replaces Python hash() which varies per process)
@@ -263,6 +345,70 @@ def make_fault_samples(
                     peaks.append({"hz": whz * 2, "amp": fault_amp * 0.4})
                 if add_wheel_3x:
                     peaks.append({"hz": whz * 3, "amp": fault_amp * 0.2})
+                peaks.append({"hz": 142.5, "amp": noise_amp})
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=fault_vib_db,
+                        strength_floor_amp_g=noise_amp,
+                    )
+                )
+            else:
+                other_peaks: list[dict[str, float]] = [
+                    {"hz": 142.5, "amp": noise_amp},
+                    {"hz": 87.3, "amp": noise_amp * 0.8},
+                ]
+                if transfer_fraction > 0:
+                    other_peaks.insert(
+                        0,
+                        {"hz": whz, "amp": fault_amp * transfer_fraction},
+                    )
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=other_peaks,
+                        vibration_strength_db=noise_vib_db,
+                        strength_floor_amp_g=noise_amp,
+                    )
+                )
+    return samples
+
+
+def make_profile_fault_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp: float = 0.06,
+    noise_amp: float = 0.004,
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+    add_wheel_2x: bool = True,
+    transfer_fraction: float = 0.0,
+) -> list[dict[str, Any]]:
+    """Generate wheel-order fault samples using a specific car profile's wheel Hz.
+
+    Identical to :func:`make_fault_samples` but computes wheel frequency from
+    the given *profile* dict instead of the module-level default tire circumference.
+    """
+    whz = profile_wheel_hz(profile, speed_kmh)
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            if sensor == fault_sensor:
+                peaks: list[dict[str, float]] = [{"hz": whz, "amp": fault_amp}]
+                if add_wheel_2x:
+                    peaks.append({"hz": whz * 2, "amp": fault_amp * 0.4})
                 peaks.append({"hz": 142.5, "amp": noise_amp})
                 samples.append(
                     make_sample(
@@ -815,6 +961,167 @@ def make_speed_sweep_fault_samples(
     return samples
 
 
+def make_profile_dual_fault_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor_1: str,
+    fault_sensor_2: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp_1: float = 0.06,
+    fault_amp_2: float = 0.04,
+    fault_vib_db_1: float = 26.0,
+    fault_vib_db_2: float = 22.0,
+    noise_amp: float = 0.004,
+    noise_vib_db: float = 8.0,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_dual_fault_samples`."""
+    whz = profile_wheel_hz(profile, speed_kmh)
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            if sensor == fault_sensor_1:
+                peaks: list[dict[str, float]] = [
+                    {"hz": whz, "amp": fault_amp_1},
+                    {"hz": whz * 2, "amp": fault_amp_1 * 0.4},
+                    {"hz": 142.5, "amp": noise_amp},
+                ]
+                samples.append(
+                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=fault_vib_db_1, strength_floor_amp_g=noise_amp)
+                )
+            elif sensor == fault_sensor_2:
+                peaks = [
+                    {"hz": whz, "amp": fault_amp_2},
+                    {"hz": whz * 2, "amp": fault_amp_2 * 0.35},
+                    {"hz": 87.3, "amp": noise_amp},
+                ]
+                samples.append(
+                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=fault_vib_db_2, strength_floor_amp_g=noise_amp)
+                )
+            else:
+                peaks = [{"hz": 142.5, "amp": noise_amp}, {"hz": 87.3, "amp": noise_amp * 0.8}]
+                samples.append(
+                    make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=noise_vib_db, strength_floor_amp_g=noise_amp)
+                )
+    return samples
+
+
+def make_profile_engine_order_samples(
+    *,
+    profile: dict[str, Any],
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    engine_amp: float = 0.05,
+    engine_vib_db: float = 24.0,
+    noise_amp: float = 0.004,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_engine_order_samples`."""
+    whz = profile_wheel_hz(profile, speed_kmh)
+    ehz = whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            jitter = (_stable_hash(sensor + str(i)) % 10) * 0.001
+            peaks = [
+                {"hz": ehz, "amp": engine_amp + jitter},
+                {"hz": ehz * 2, "amp": (engine_amp + jitter) * 0.5},
+                {"hz": ehz * 0.5, "amp": (engine_amp + jitter) * 0.3},
+                {"hz": 200.0, "amp": noise_amp},
+            ]
+            samples.append(
+                make_sample(t_s=t, speed_kmh=speed_kmh, client_name=sensor, top_peaks=peaks, vibration_strength_db=engine_vib_db, strength_floor_amp_g=noise_amp, engine_rpm=ehz * 60.0)
+            )
+    return samples
+
+
+def make_profile_speed_sweep_fault_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor: str,
+    sensors: list[str],
+    speed_start: float = 40.0,
+    speed_end: float = 100.0,
+    n_steps: int = 5,
+    samples_per_step: int = 10,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp: float = 0.06,
+    noise_amp: float = 0.004,
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_speed_sweep_fault_samples`."""
+    samples: list[dict[str, Any]] = []
+    t = start_t_s
+    for step in range(n_steps):
+        ratio = step / max(1, n_steps - 1)
+        speed = speed_start + (speed_end - speed_start) * ratio
+        samples.extend(
+            make_profile_fault_samples(
+                profile=profile,
+                fault_sensor=fault_sensor,
+                sensors=sensors,
+                speed_kmh=speed,
+                n_samples=samples_per_step,
+                dt_s=dt_s,
+                start_t_s=t,
+                fault_amp=fault_amp,
+                noise_amp=noise_amp,
+                fault_vib_db=fault_vib_db,
+                noise_vib_db=noise_vib_db,
+            )
+        )
+        t += samples_per_step * dt_s
+    return samples
+
+
+def make_profile_gain_mismatch_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp: float = 0.06,
+    noise_amp: float = 0.004,
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+    gain_factor: float = 1.5,
+) -> list[dict[str, Any]]:
+    """Profile-aware version of :func:`make_gain_mismatch_samples`."""
+    base = make_profile_fault_samples(
+        profile=profile,
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp=fault_amp,
+        noise_amp=noise_amp,
+        fault_vib_db=fault_vib_db,
+        noise_vib_db=noise_vib_db,
+    )
+    result: list[dict[str, Any]] = []
+    for s in base:
+        if s["client_name"] == fault_sensor:
+            s = {**s}
+            s["top_peaks"] = [{"hz": p["hz"], "amp": p["amp"] * gain_factor} for p in s["top_peaks"]]
+            s["vibration_strength_db"] = s["vibration_strength_db"] + 3.0
+        result.append(s)
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Analysis runner
 # ---------------------------------------------------------------------------
@@ -1085,3 +1392,104 @@ def assert_diagnosis_contract(
 
     # Warnings list
     assert_has_warnings(summary, msg=msg)
+
+
+# ---------------------------------------------------------------------------
+# Forbidden / allowed system assertion helpers (for negative testing)
+# ---------------------------------------------------------------------------
+
+
+def assert_forbidden_systems(
+    summary: dict[str, Any],
+    forbidden: list[str],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert that none of the *forbidden* source keywords appear at or above threshold.
+
+    Each entry in *forbidden* is matched case-insensitively against the source
+    field of every top-cause.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        for keyword in forbidden:
+            if keyword.lower() in src and conf >= confidence_threshold:
+                loc = c.get("strongest_location") or ""
+                raise AssertionError(
+                    f"Forbidden system '{keyword}' found: {src} @ {loc} "
+                    f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
+                )
+
+
+def assert_only_allowed_systems(
+    summary: dict[str, Any],
+    allowed: list[str],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert that ONLY sources matching *allowed* keywords appear at or above threshold.
+
+    Any source at/above threshold that does not match any allowed keyword triggers
+    a failure.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        if conf < confidence_threshold:
+            continue
+        if not any(kw.lower() in src for kw in allowed):
+            loc = c.get("strongest_location") or ""
+            raise AssertionError(
+                f"Unexpected system '{src}' @ {loc} conf={conf:.3f} "
+                f"(allowed={allowed}, threshold={confidence_threshold}). {msg}"
+            )
+
+
+def assert_no_persistent_fault(
+    summary: dict[str, Any],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert no source is diagnosed as a persistent fault above threshold.
+
+    Use for transient-only and no-fault scenarios.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        if conf >= confidence_threshold:
+            loc = c.get("strongest_location") or ""
+            raise AssertionError(
+                f"Unexpected persistent fault: {src} @ {loc} "
+                f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
+            )
+
+
+def assert_no_localized_wheel(
+    summary: dict[str, Any],
+    *,
+    confidence_threshold: float = 0.40,
+    msg: str = "",
+) -> None:
+    """Assert no wheel/tire source is localized to a specific corner above threshold.
+
+    Use for diffuse excitation scenarios where wheel-localization would be a
+    false positive.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        conf = float(c.get("confidence", 0))
+        if "wheel" in src and conf >= confidence_threshold:
+            loc = c.get("strongest_location") or ""
+            if loc:  # has a location → localized → false positive
+                raise AssertionError(
+                    f"Wheel/tire falsely localized to '{loc}' conf={conf:.3f}. {msg}"
+                )

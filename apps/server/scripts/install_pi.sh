@@ -39,6 +39,8 @@ run_as_root apt-get install -y \
   python3 \
   python3-venv \
   python3-pip \
+  nodejs \
+  npm \
   libopenblas0-pthread \
   network-manager \
   dnsmasq \

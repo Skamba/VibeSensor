@@ -74,7 +74,7 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
 
 
 def _format_duration(seconds: float) -> str:
-    total = max(0.0, float(seconds))
+    total = max(0.0, round(float(seconds), 1))
     minutes = int(total // 60)
     rem = total - (minutes * 60)
     return f"{minutes:02d}:{rem:04.1f}"
@@ -101,7 +101,8 @@ def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
     if not values:
         return None, None
     m = mean(values)
-    var = sum((v - m) ** 2 for v in values) / len(values)
+    n = len(values)
+    var = sum((v - m) ** 2 for v in values) / max(1, n - 1)
     return m, var
 
 

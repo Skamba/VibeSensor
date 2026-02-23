@@ -378,7 +378,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     # -- Next steps --
     test_plan = [s for s in summary.get("test_plan", []) if isinstance(s, dict)]
     next_steps: list[NextStep] = []
-    for idx, step in enumerate(test_plan[:5], start=1):
+    for idx, step in enumerate(test_plan, start=1):
         what = str(step.get("what") or "")
         why = str(step.get("why") or "")
         next_steps.append(
