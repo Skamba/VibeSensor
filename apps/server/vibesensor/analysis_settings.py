@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from math import pi
+from math import isfinite, pi
 from threading import RLock
 
 from .constants import KMH_TO_MPS
@@ -69,6 +69,9 @@ def sanitize_settings(
         except (TypeError, ValueError):
             LOGGER.debug("Dropping non-numeric analysis setting %s=%r", key, raw)
             continue
+        if not isfinite(value):
+            LOGGER.debug("Dropping non-finite analysis setting %s=%r", key, raw)
+            continue
         if key in POSITIVE_REQUIRED_KEYS and value <= 0:
             LOGGER.debug("Dropping non-positive analysis setting %s=%r", key, value)
             continue
@@ -111,6 +114,8 @@ def tire_circumference_m_from_spec(
 ) -> float | None:
     if tire_width_mm is None or tire_aspect_pct is None or rim_in is None:
         return None
+    if not all(isfinite(v) for v in (tire_width_mm, tire_aspect_pct, rim_in)):
+        return None
     if tire_width_mm <= 0 or tire_aspect_pct <= 0 or rim_in <= 0:
         return None
     sidewall_mm = tire_width_mm * (tire_aspect_pct / 100.0)
@@ -123,16 +128,22 @@ def tire_circumference_m_from_spec(
 
 def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> float | None:
     """Wheel rotational frequency from vehicle speed (km/h) and tire circumference."""
+    if not isfinite(speed_kmh) or not isfinite(tire_circumference_m):
+        return None
     if speed_kmh <= 0 or tire_circumference_m <= 0:
         return None
-    return (speed_kmh * KMH_TO_MPS) / tire_circumference_m
+    result = (speed_kmh * KMH_TO_MPS) / tire_circumference_m
+    return result if isfinite(result) else None
 
 
 def wheel_hz_from_speed_mps(speed_mps: float, tire_circumference_m: float) -> float | None:
     """Wheel rotational frequency from vehicle speed (m/s) and tire circumference."""
+    if not isfinite(speed_mps) or not isfinite(tire_circumference_m):
+        return None
     if speed_mps <= 0 or tire_circumference_m <= 0:
         return None
-    return speed_mps / tire_circumference_m
+    result = speed_mps / tire_circumference_m
+    return result if isfinite(result) else None
 
 
 def engine_rpm_from_wheel_hz(wheel_hz: float, final_drive_ratio: float, gear_ratio: float) -> float:
