@@ -81,3 +81,22 @@ def test_udp_data_queue_maxsize_override_and_clamp(tmp_path: Path) -> None:
     _write_config(config_path, {"udp": {"data_queue_maxsize": 0}})
     cfg = load_config(config_path)
     assert cfg.udp.data_queue_maxsize == 1
+
+
+# --- AP WiFi channel validation ---
+
+
+@pytest.mark.parametrize("channel", [1, 6, 7, 11, 14])
+def test_ap_channel_valid_values_accepted(tmp_path: Path, channel: int) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"ap": {"channel": channel}})
+    cfg = load_config(config_path)
+    assert cfg.ap.channel == channel
+
+
+@pytest.mark.parametrize("channel", [0, -1, 15, 200, 36, 100])
+def test_ap_channel_invalid_values_rejected(tmp_path: Path, channel: int) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"ap": {"channel": channel}})
+    with pytest.raises(ValueError, match="ap.channel must be 1-14"):
+        load_config(config_path)
