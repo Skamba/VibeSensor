@@ -839,3 +839,39 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   await expect(page.locator("#espFlashCancelBtn")).toBeDisabled();
   await expect(page.locator("#espFlashHistoryPanel")).toContainText("/dev/ttyUSB0");
 });
+
+test("settings esp flash status falls back to idle when API omits state", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ enabled: false, current_file: null }) });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ brands: [], types: [], models: [] }) });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/settings/esp-flash/ports") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ports: [] }) });
+      return;
+    }
+    if (path === "/api/settings/esp-flash/status") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ log_count: 0, error: null }) });
+      return;
+    }
+    if (path === "/api/settings/esp-flash/history") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ attempts: [] }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="espFlashTab"]').click();
+  await expect(page.locator("#espFlashStatusBanner")).toContainText("Idle");
+});

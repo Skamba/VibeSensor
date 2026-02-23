@@ -42,10 +42,14 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
 
   function renderStatus(status: EspFlashStatusPayload): void {
     if (els.espFlashStatusBanner) {
-      const stateLabel = t(`settings.esp_flash.state.${status.state}`);
+      const state =
+        typeof status.state === "string" && status.state
+          ? status.state
+          : "idle";
+      const stateLabel = t(`settings.esp_flash.state.${state}`);
       const extra = status.error ? ` — ${status.error}` : "";
       els.espFlashStatusBanner.textContent = `${stateLabel}${extra}`;
-      const variant = status.state === "success" ? "ok" : status.state === "running" ? "warn" : status.state === "failed" ? "bad" : "muted";
+      const variant = state === "success" ? "ok" : state === "running" ? "warn" : state === "failed" ? "bad" : "muted";
       els.espFlashStatusBanner.className = `pill pill--${variant}`;
     }
     if (els.espFlashStartBtn) els.espFlashStartBtn.disabled = status.state === "running";
@@ -78,7 +82,11 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       return;
     }
     const rows = attempts.map((attempt: any) => {
-      const stateLabel = t(`settings.esp_flash.state.${attempt.state}`);
+      const state =
+        typeof attempt?.state === "string" && attempt.state
+          ? attempt.state
+          : "idle";
+      const stateLabel = t(`settings.esp_flash.state.${state}`);
       const port = attempt.selected_port || t("settings.esp_flash.auto_detect");
       return `<li><strong>${escapeHtml(stateLabel)}</strong> — ${escapeHtml(port)}</li>`;
     });
