@@ -24,7 +24,7 @@
 
 ## Module Boundaries
 - **Acquisition**: `udp_data_rx.py`, `registry.py`.
-- **Computation**: `processing.py`, `analysis/*`, `live_diagnostics.py`.
+- **Computation**: `processing.py`, `libs/core/python/vibesensor_core/*`, `live_diagnostics.py`.
 - **Delivery**: `app.py`, `api.py`, `ws_hub.py`, `apps/ui/src/*`.
 - **Persistence**: `metrics_log.py`, `history_db.py`, `runlog.py`.
 - **Device Ops**: `apps/server/scripts/*`, `apps/server/systemd/*`, `infra/pi-image/pi-gen/*`.
@@ -36,7 +36,7 @@
 - `apps/server/scripts/hotspot_nmcli.sh` (boot-critical behavior).
 
 ## Safe Change Areas
-- New focused backend helpers: `apps/server/vibesensor/analysis/*`.
+- New focused backend helpers: `apps/server/vibesensor/` modules or `libs/core/python/vibesensor_core/*` for shared vibration math.
 - Test additions: `apps/server/tests/test_*` with narrow scope.
 - AI docs/runbooks: `docs/ai/*`.
 - Simulator-only enhancements: `apps/simulator/*`.
