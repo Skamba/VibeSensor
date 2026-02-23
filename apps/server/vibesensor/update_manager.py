@@ -694,6 +694,15 @@ class UpdateManager:
 
         git_ok = True
         git_base = ["git", "-C", self._repo_path]
+        safe_directory_cmd = [
+            *git_base,
+            "config",
+            "--global",
+            "--add",
+            "safe.directory",
+            self._repo_path,
+        ]
+        safe_directory_configured = False
         for git_args, desc in [
             ([*git_base, "remote", "set-url", "origin", self._git_remote], "set remote"),
             ([*git_base, "fetch", "--depth", "1", "origin", self._git_branch], "fetch"),
@@ -719,6 +728,32 @@ class UpdateManager:
                 timeout=GIT_OP_TIMEOUT_S,
                 sudo=False,
             )
+            if rc != 0 and "dubious ownership" in (stderr or "").lower():
+                self._log(
+                    "Git reported dubious repository ownership; "
+                    "configuring safe.directory and retrying"
+                )
+                safe_rc, _, safe_stderr = await self._run_cmd(
+                    safe_directory_cmd,
+                    phase="updating",
+                    timeout=GIT_OP_TIMEOUT_S,
+                    sudo=False,
+                )
+                if safe_rc != 0:
+                    self._add_issue(
+                        "updating",
+                        f"Git safe.directory setup failed (exit {safe_rc})",
+                        safe_stderr,
+                    )
+                    git_ok = False
+                    break
+                safe_directory_configured = True
+                rc, _, stderr = await self._run_cmd(
+                    git_args,
+                    phase="updating",
+                    timeout=GIT_OP_TIMEOUT_S,
+                    sudo=False,
+                )
             if rc != 0:
                 self._add_issue("updating", f"Git {desc} failed (exit {rc})", stderr)
                 git_ok = False
@@ -728,6 +763,8 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
 
+        if safe_directory_configured:
+            self._log("Git safe.directory configured for updater user")
         self._log("Git update completed successfully")
         sync_script = repo / "tools" / "sync_ui_to_pi_public.py"
         if not sync_script.is_file():
