@@ -365,11 +365,15 @@ class TestUpdateManagerAsync:
         assert mgr.status.exit_code == 0
         assert mgr.status.runtime.get("assets_verified") is True
         assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
-        git_calls = [
-            c[0] for c in runner.calls if len(c[0]) >= 3 and c[0][0] == "git" and c[0][1] == "-C"
+        sudo_git_calls = [
+            c[0]
+            for c in runner.calls
+            if len(c[0]) >= 4
+            and c[0][0] == "sudo"
+            and c[0][2] == "git"
+            and c[0][3] == "-C"
         ]
-        assert git_calls, "Expected git calls during update"
-        assert all(c[0] != "sudo" for c in git_calls), "Git update must run as service user"
+        assert sudo_git_calls, "Expected updater to run git via sudo wrapper"
         uplink_connect_calls = [
             c[0] for c in runner.calls if "device wifi connect TestNet" in " ".join(c[0])
         ]
