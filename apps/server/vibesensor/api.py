@@ -57,7 +57,7 @@ class IdentifyRequest(BaseModel):
 
 
 class SetLocationRequest(BaseModel):
-    location_code: str = Field(min_length=1, max_length=64)
+    location_code: str = Field(min_length=0, max_length=64)
 
 
 class AnalysisSettingsRequest(BaseModel):
@@ -536,24 +536,31 @@ def create_router(state: RuntimeState) -> APIRouter:
         if state.registry.get(normalized_client_id) is None:
             raise HTTPException(status_code=404, detail="Unknown client_id")
 
-        label = label_for_code(req.location_code)
-        if label is None:
-            raise HTTPException(status_code=400, detail="Unknown location_code")
+        code = req.location_code.strip()
 
-        for row in state.registry.snapshot_for_api():
-            if row["id"] != normalized_client_id and row["name"] == label:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Location already assigned to client {row['id']}",
-                )
+        if code:
+            label = label_for_code(code)
+            if label is None:
+                raise HTTPException(status_code=400, detail="Unknown location_code")
 
-        updated = state.registry.set_name(normalized_client_id, label)
+            for row in state.registry.snapshot_for_api():
+                if row["id"] != normalized_client_id and row["name"] == label:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Location already assigned to client {row['id']}",
+                    )
+
+            updated = state.registry.set_name(normalized_client_id, label)
+        else:
+            # Empty location_code → clear the assignment
+            updated = state.registry.clear_name(normalized_client_id)
+
         mac = client_id_mac(updated.client_id)
-        state.settings_store.set_sensor(mac, {"location": req.location_code})
+        state.settings_store.set_sensor(mac, {"location": code})
         return {
             "id": updated.client_id,
             "mac_address": mac,
-            "location_code": req.location_code,
+            "location_code": code,
             "name": updated.name,
         }
 
