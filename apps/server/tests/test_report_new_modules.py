@@ -601,6 +601,51 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
     assert data_nl.data_trust[0].check == "Snelheidsvariatie"
 
 
+def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
+    summary: dict = {
+        "lang": "en",
+        "sensor_count_used": 4,
+        "top_causes": [
+            {
+                "source": "wheel/tire",
+                "strongest_location": "Front Left",
+                "strongest_speed_band": "60-80 km/h",
+                "confidence": 0.82,
+            }
+        ],
+        "findings": [{"finding_id": "REF_ENGINE"}],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert data.observed.certainty_reason
+    assert "Missing reference data" not in data.observed.certainty_reason
+
+
+def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
+    summary: dict = {
+        "lang": "en",
+        "sensor_count_used": 4,
+        "top_causes": [
+            {
+                "source": "engine",
+                "strongest_location": "Engine Bay",
+                "strongest_speed_band": "60-80 km/h",
+                "confidence": 0.82,
+            }
+        ],
+        "findings": [{"finding_id": "REF_ENGINE"}],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert data.observed.certainty_reason == "Missing reference data limits pattern matching"
+
+
 def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     summary: dict = {
         "lang": "en",
