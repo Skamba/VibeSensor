@@ -46,6 +46,9 @@ from builders import (
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 
+# Ratio of driveshaft order to wheel-1x order (prop shaft speed ≈ 2.5× wheel)
+_DRIVESHAFT_WHEEL_RATIO = 2.5
+
 
 def _make_engine_plus_wheel_samples(
     *,
@@ -110,7 +113,7 @@ def _make_driveshaft_plus_wheel_samples(
     samples: list[dict[str, Any]] = []
     whz = wheel_hz(speed_kmh)
     # Driveshaft order is typically related to prop shaft speed
-    dshaft_hz = whz * 2.5  # Different from wheel harmonics
+    dshaft_hz = whz * _DRIVESHAFT_WHEEL_RATIO
     for i in range(n_samples):
         t = float(i)
         for sensor in sensors:
@@ -236,7 +239,7 @@ def test_three_systems_simultaneous(
     sensor = CORNER_SENSORS[corner]
     whz = wheel_hz(speed)
     ehz = engine_hz(speed)
-    dshaft_hz = whz * 2.5
+    dshaft_hz = whz * _DRIVESHAFT_WHEEL_RATIO
 
     samples: list[dict[str, Any]] = []
     for i in range(30):
