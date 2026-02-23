@@ -130,6 +130,21 @@ def test_spectrum_payload_has_vibration_strength_db() -> None:
     assert -200.0 < db < 200.0
 
 
+def test_spectrum_payload_reuses_cached_conversion(monkeypatch: pytest.MonkeyPatch) -> None:
+    proc = _make_processor(sample_rate_hz=400, fft_n=128, spectrum_max_hz=150)
+    samples = np.random.randn(300, 3).astype(np.float32) * 0.01
+    proc.ingest("client1", samples, sample_rate_hz=400)
+    proc.compute_metrics("client1")
+    first = proc.spectrum_payload("client1")
+
+    def _fail_float_list(*_args, **_kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("_float_list should not be called for cached spectrum payload")
+
+    monkeypatch.setattr(proc, "_float_list", _fail_float_list)
+    second = proc.spectrum_payload("client1")
+    assert second is first
+
+
 # -- multi_spectrum_payload ----------------------------------------------------
 
 
@@ -211,6 +226,21 @@ def test_selected_payload_waveform_respects_configured_window() -> None:
     assert len(waveform["t"]) == expected_points
     assert waveform["t"][-1] == pytest.approx(0.0)
     assert waveform["t"][1] - waveform["t"][0] == pytest.approx(expected_step / 50.0)
+
+
+def test_selected_payload_reuses_cached_conversion(monkeypatch: pytest.MonkeyPatch) -> None:
+    proc = _make_processor(sample_rate_hz=200, waveform_seconds=2, waveform_display_hz=50)
+    samples = np.random.randn(500, 3).astype(np.float32) * 0.01
+    proc.ingest("client1", samples, sample_rate_hz=200)
+    proc.compute_metrics("client1")
+    first = proc.selected_payload("client1")
+
+    def _fail_float_list(*_args, **_kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("_float_list should not be called for cached selected payload")
+
+    monkeypatch.setattr(proc, "_float_list", _fail_float_list)
+    second = proc.selected_payload("client1")
+    assert second is first
 
 
 def test_waveform_window_respects_seconds_for_each_client_sample_rate() -> None:
