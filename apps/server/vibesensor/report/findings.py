@@ -932,6 +932,17 @@ def _build_order_findings(
     # If a wheel/tire finding has clearly higher confidence than an
     # engine finding, the engine confidence is reduced to avoid
     # false-positive engine reports from wheel-only evidence.
+    #
+    # HARMONIC_ALIAS_RATIO: engine conf must be within this ratio of
+    #   the best wheel conf to be considered a potential alias (1.15 =
+    #   engine may be up to 15% *above* wheel and still be an alias,
+    #   since small scoring noise can push it slightly higher).
+    # ENGINE_ALIAS_SUPPRESSION: multiplicative penalty applied to both
+    #   confidence and ranking score (0.60 = 40% reduction) — enough
+    #   to push the aliased engine finding below the wheel finding
+    #   without completely eliminating it.
+    _HARMONIC_ALIAS_RATIO = 1.15
+    _ENGINE_ALIAS_SUPPRESSION = 0.60
     _best_wheel_conf = max(
         (
             float(f.get("confidence_0_to_1", 0))
@@ -945,13 +956,10 @@ def _build_order_findings(
             src = str(f.get("suspected_source") or "").strip().lower()
             if src == "engine":
                 eng_conf = float(f.get("confidence_0_to_1", 0))
-                # If engine confidence is within 85% of best wheel conf,
-                # the engine signal is likely a harmonic alias of the
-                # wheel evidence.  Suppress by reducing confidence.
-                if eng_conf <= _best_wheel_conf * 1.15:
-                    suppressed = eng_conf * 0.60
+                if eng_conf <= _best_wheel_conf * _HARMONIC_ALIAS_RATIO:
+                    suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
                     f["confidence_0_to_1"] = suppressed
-                    findings[i] = (rs * 0.60, f)
+                    findings[i] = (rs * _ENGINE_ALIAS_SUPPRESSION, f)
 
     findings.sort(key=lambda item: item[0], reverse=True)
     return [

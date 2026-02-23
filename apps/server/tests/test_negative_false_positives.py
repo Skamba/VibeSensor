@@ -53,6 +53,15 @@ from builders import (
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# Shared constants
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Confidence threshold for "medium-or-higher" findings.  Used by most negative
+# assertions to distinguish incidental low-confidence noise from a real
+# false-positive.
+_MEDIUM_CONFIDENCE = 0.55
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Section 1: NO-FAULT BASELINES across sensor counts × speed bands
 #
 # Pure noise/idle/ramp with no injected fault → must produce no fault above
@@ -147,13 +156,13 @@ def test_single_wheel_fault_no_engine(corner: str, speed: float) -> None:
     assert_forbidden_systems(
         summary,
         forbidden=["engine", "driveline"],
-        confidence_threshold=0.55,
+        confidence_threshold=_MEDIUM_CONFIDENCE,
         msg=f"wheel-fault-{corner}@{speed}",
     )
     assert_only_allowed_systems(
         summary,
         allowed=["wheel", "tire", "unknown"],
-        confidence_threshold=0.55,
+        confidence_threshold=_MEDIUM_CONFIDENCE,
         msg=f"wheel-fault-{corner}@{speed}",
     )
 
@@ -480,7 +489,7 @@ def test_engine_vibration_not_reported_as_wheel() -> None:
     assert_forbidden_systems(
         summary,
         forbidden=["wheel", "tire"],
-        confidence_threshold=0.55,
+        confidence_threshold=_MEDIUM_CONFIDENCE,
         msg="engine-order-as-wheel",
     )
 
@@ -523,7 +532,7 @@ def test_wheel_fault_with_engine_noise_no_engine_overreport(corner: str) -> None
     assert_forbidden_systems(
         summary,
         forbidden=["engine"],
-        confidence_threshold=0.55,
+        confidence_threshold=_MEDIUM_CONFIDENCE,
         msg=f"overlap-wheel-engine-{corner}",
     )
 
@@ -585,6 +594,6 @@ def test_engine_order_with_transient_no_wheel() -> None:
     assert_forbidden_systems(
         summary,
         forbidden=["wheel", "tire"],
-        confidence_threshold=0.55,
+        confidence_threshold=_MEDIUM_CONFIDENCE,
         msg="engine+transient-no-wheel",
     )
