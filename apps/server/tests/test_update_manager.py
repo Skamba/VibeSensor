@@ -534,7 +534,7 @@ class TestUpdateManagerAsync:
         ]
         assert len(restore_calls) > 0
 
-    async def test_git_dubious_ownership_retries_after_safe_directory(self, tmp_path) -> None:
+    async def test_git_dubious_ownership_avoided_by_sudo_git(self, tmp_path) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
 
@@ -555,14 +555,19 @@ class TestUpdateManagerAsync:
 
         async def run_with_dubious_once(args, *, timeout=30, env=None):
             joined = " ".join(args)
-            if "git -C" in joined and "remote set-url origin" in joined:
+            # Simulate dubious-ownership only for non-sudo git invocations.
+            if (
+                len(args) >= 4
+                and args[0] == "git"
+                and args[1] == "-C"
+                and "remote set-url origin" in joined
+            ):
                 remote_set_url_calls["count"] += 1
-                if remote_set_url_calls["count"] == 1:
-                    return (
-                        128,
-                        "",
-                        "fatal: detected dubious ownership in repository at '/opt/VibeSensor'",
-                    )
+                return (
+                    128,
+                    "",
+                    "fatal: detected dubious ownership in repository at '/opt/VibeSensor'",
+                )
             return await original_run(args, timeout=timeout, env=env)
 
         runner.run = run_with_dubious_once  # type: ignore[assignment]
@@ -573,15 +578,7 @@ class TestUpdateManagerAsync:
             await asyncio.wait_for(mgr._task, timeout=10)
 
         assert mgr.status.state == UpdateState.success
-        safe_dir_calls = [
-            c
-            for c in runner.calls
-            if len(c[0]) >= 8
-            and c[0][0] == "git"
-            and c[0][3:7] == ["config", "--global", "--add", "safe.directory"]
-        ]
-        assert safe_dir_calls, "Expected updater to configure git safe.directory"
-        assert remote_set_url_calls["count"] >= 2, "Expected git command retry after safe.directory"
+        assert remote_set_url_calls["count"] == 0, "Expected no non-sudo git invocations"
 
     async def test_password_never_in_logs(self, tmp_path) -> None:
         """Password must never appear in status log_tail or issues."""
