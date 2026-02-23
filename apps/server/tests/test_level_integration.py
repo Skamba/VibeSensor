@@ -161,7 +161,7 @@ def test_integration_full_scenario() -> None:
 
     # --- 3. Confidence is reasonable ---
     conf = float(top.get("confidence", 0))
-    assert 0.1 < conf <= 1.0, f"Confidence out of expected range: {conf}"
+    assert 0.25 <= conf <= 1.0, f"Confidence out of expected range: {conf}"
 
     # --- 4. Confidence label inside top cause ---
     assert top.get("confidence_label_key") in (

@@ -127,11 +127,10 @@ def test_negligible_strength_caps_to_medium(profile: dict[str, Any], corner: str
     assert top is not None, (
         f"Expected a finding for negligible-strength case at {corner} ({profile['name']})"
     )
-    if float(top.get("confidence", 0)) > 0.25:
-        label = top.get("confidence_label_key", "")
-        assert label != "CONFIDENCE_HIGH", (
-            f"Negligible strength ({corner}, {profile['name']}) should cap to MEDIUM, got {label}"
-        )
+    label = top.get("confidence_label_key", "")
+    assert label != "CONFIDENCE_HIGH", (
+        f"Negligible strength ({corner}, {profile['name']}) should cap to MEDIUM, got {label}"
+    )
 
 
 # ===================================================================
@@ -259,33 +258,32 @@ def test_confidence_label_transition(
         assert tier_name == "sub_floor", (
             f"Only sub_floor tier may have no finding; got none for {tier_name}"
         )
-        return
-
-    conf = float(top.get("confidence", 0))
-    label = top.get("confidence_label_key", "")
-    tone = top.get("confidence_tone", "")
-
-    # Validate label-confidence consistency
-    if conf >= 0.70:
-        assert label in ("CONFIDENCE_HIGH", "CONFIDENCE_MEDIUM"), (
-            f"conf={conf:.3f} → expected HIGH or MEDIUM label, got {label}"
-        )
-    elif conf >= 0.40:
-        assert label in ("CONFIDENCE_MEDIUM", "CONFIDENCE_LOW"), (
-            f"conf={conf:.3f} → expected MEDIUM or LOW label, got {label}"
-        )
     else:
-        assert label in ("CONFIDENCE_LOW", "CONFIDENCE_MEDIUM"), (
-            f"conf={conf:.3f} → expected LOW label, got {label}"
-        )
+        conf = float(top.get("confidence", 0))
+        label = top.get("confidence_label_key", "")
+        tone = top.get("confidence_tone", "")
 
-    # Validate tone-label consistency
-    if label == "CONFIDENCE_HIGH":
-        assert tone == "success"
-    elif label == "CONFIDENCE_MEDIUM":
-        assert tone == "warn"
-    elif label == "CONFIDENCE_LOW":
-        assert tone == "neutral"
+        # Validate label-confidence consistency
+        if conf >= 0.70:
+            assert label in ("CONFIDENCE_HIGH", "CONFIDENCE_MEDIUM"), (
+                f"conf={conf:.3f} → expected HIGH or MEDIUM label, got {label}"
+            )
+        elif conf >= 0.40:
+            assert label in ("CONFIDENCE_MEDIUM", "CONFIDENCE_LOW"), (
+                f"conf={conf:.3f} → expected MEDIUM or LOW label, got {label}"
+            )
+        else:
+            assert label in ("CONFIDENCE_LOW", "CONFIDENCE_MEDIUM"), (
+                f"conf={conf:.3f} → expected LOW label, got {label}"
+            )
+
+        # Validate tone-label consistency
+        if label == "CONFIDENCE_HIGH":
+            assert tone == "success"
+        elif label == "CONFIDENCE_MEDIUM":
+            assert tone == "warn"
+        elif label == "CONFIDENCE_LOW":
+            assert tone == "neutral"
 
 
 # ===================================================================
