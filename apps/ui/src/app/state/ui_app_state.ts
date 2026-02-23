@@ -114,13 +114,15 @@ export interface AppState {
   strengthFrameTotalsByClient: Record<string, number>;
   strengthHistory: {
     t: number[];
-    wheel: number[];
-    driveshaft: number[];
-    engine: number[];
-    other: number[];
+    wheel: (number | null)[];
+    driveshaft: (number | null)[];
+    engine: (number | null)[];
+    other: (number | null)[];
   };
   carMapSamples: CarMapSample[];
   carMapPulseLocations: Set<string>;
+  lastDiagnosticsSequence: number;
+  strengthChartAutoScale: boolean;
 }
 
 export function createAppState(): AppState {
@@ -180,5 +182,7 @@ export function createAppState(): AppState {
     strengthHistory: { t: [], wheel: [], driveshaft: [], engine: [], other: [] },
     carMapSamples: [],
     carMapPulseLocations: new Set(),
+    lastDiagnosticsSequence: -1,
+    strengthChartAutoScale: false,
   };
 }
