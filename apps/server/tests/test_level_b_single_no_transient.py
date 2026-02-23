@@ -125,7 +125,8 @@ def test_single_sensor_amplitude_scaling(
         )
     else:
         assert top is not None, f"No finding for {corner} at amp={amp_label}"
-        assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} amp={amp_label}")
+        min_conf = 0.20 if amp_label == "med" else 0.25
+        assert_confidence_between(summary, min_conf, 1.0, msg=f"{corner} amp={amp_label}")
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
