@@ -244,6 +244,91 @@ def test_read_jsonl_run_skips_blank_lines(tmp_path: Path) -> None:
     assert len(run_data.samples) == 1
 
 
+def test_read_jsonl_run_skips_corrupt_line_mid_file(tmp_path: Path) -> None:
+    """A corrupt JSON line mid-file is skipped; surrounding samples are kept."""
+    path = tmp_path / "corrupt_mid.jsonl"
+    metadata = create_run_metadata(
+        run_id="r2",
+        start_time_utc="2025-01-01T00:00:00Z",
+        sensor_model="ADXL345",
+        raw_sample_rate_hz=200,
+        feature_interval_s=0.5,
+        fft_window_size_samples=256,
+        fft_window_type="hann",
+        peak_picker_method="max_peak_amp_across_axes",
+        accel_scale_g_per_lsb=1.0 / 256.0,
+    )
+    lines = [
+        json.dumps(metadata),
+        json.dumps({"record_type": "sample", "t_s": 1.0}),
+        '{CORRUPT LINE "not valid json',  # corrupt
+        json.dumps({"record_type": "sample", "t_s": 2.0}),
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    run_data = read_jsonl_run(path)
+    assert run_data.metadata["run_id"] == "r2"
+    assert len(run_data.samples) == 2
+    assert run_data.samples[0]["t_s"] == 1.0
+    assert run_data.samples[1]["t_s"] == 2.0
+
+
+def test_read_jsonl_run_truncated_last_line(tmp_path: Path) -> None:
+    """A truncated final line (simulating power loss) doesn't crash the reader."""
+    path = tmp_path / "truncated.jsonl"
+    metadata = create_run_metadata(
+        run_id="r3",
+        start_time_utc="2025-01-01T00:00:00Z",
+        sensor_model="ADXL345",
+        raw_sample_rate_hz=200,
+        feature_interval_s=0.5,
+        fft_window_size_samples=256,
+        fft_window_type="hann",
+        peak_picker_method="max_peak_amp_across_axes",
+        accel_scale_g_per_lsb=1.0 / 256.0,
+    )
+    lines = [
+        json.dumps(metadata),
+        json.dumps({"record_type": "sample", "t_s": 1.0}),
+        json.dumps({"record_type": "sample", "t_s": 2.0}),
+        '{"record_type": "sample", "t_s": 3.0, "accel_x',  # truncated
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    run_data = read_jsonl_run(path)
+    assert run_data.metadata["run_id"] == "r3"
+    assert len(run_data.samples) == 2
+    assert run_data.samples[-1]["t_s"] == 2.0
+
+
+def test_read_jsonl_run_logs_warning_for_corrupt_lines(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Warnings are logged for each corrupt line, including line numbers."""
+    path = tmp_path / "warn.jsonl"
+    metadata = create_run_metadata(
+        run_id="r4",
+        start_time_utc="2025-01-01T00:00:00Z",
+        sensor_model="ADXL345",
+        raw_sample_rate_hz=200,
+        feature_interval_s=0.5,
+        fft_window_size_samples=256,
+        fft_window_type="hann",
+        peak_picker_method="max_peak_amp_across_axes",
+        accel_scale_g_per_lsb=1.0 / 256.0,
+    )
+    lines = [
+        json.dumps(metadata),
+        "NOT_JSON_AT_ALL",
+        json.dumps({"record_type": "sample", "t_s": 1.0}),
+    ]
+    path.write_text("\n".join(lines) + "\n")
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.runlog"):
+        run_data = read_jsonl_run(path)
+    assert len(run_data.samples) == 1
+    assert "Skipping corrupt JSONL line 2" in caplog.text
+
+
 # -- create_run_metadata -------------------------------------------------------
 
 
