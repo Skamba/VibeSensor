@@ -88,6 +88,88 @@ SPEED_MID = 60.0
 SPEED_HIGH = 100.0
 SPEED_VERY_HIGH = 120.0
 
+# ---------------------------------------------------------------------------
+# Car profiles – five realistic vehicle configurations for cross-profile
+# parameterised testing.  Each profile overrides tire geometry and drivetrain
+# ratios that affect wheel/engine frequency calculations.
+# ---------------------------------------------------------------------------
+
+CAR_PROFILES: list[dict[str, Any]] = [
+    {
+        "name": "performance_suv",
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+    },
+    {
+        "name": "economy_sedan",
+        "tire_width_mm": 205.0,
+        "tire_aspect_pct": 55.0,
+        "rim_in": 16.0,
+        "final_drive_ratio": 3.94,
+        "current_gear_ratio": 0.73,
+    },
+    {
+        "name": "sports_coupe",
+        "tire_width_mm": 225.0,
+        "tire_aspect_pct": 40.0,
+        "rim_in": 18.0,
+        "final_drive_ratio": 3.27,
+        "current_gear_ratio": 0.85,
+    },
+    {
+        "name": "off_road_truck",
+        "tire_width_mm": 265.0,
+        "tire_aspect_pct": 70.0,
+        "rim_in": 17.0,
+        "final_drive_ratio": 3.73,
+        "current_gear_ratio": 0.75,
+    },
+    {
+        "name": "compact_city",
+        "tire_width_mm": 195.0,
+        "tire_aspect_pct": 65.0,
+        "rim_in": 15.0,
+        "final_drive_ratio": 4.06,
+        "current_gear_ratio": 0.68,
+    },
+]
+
+CAR_PROFILE_IDS: list[str] = [p["name"] for p in CAR_PROFILES]
+
+
+def profile_circ(profile: dict[str, Any]) -> float:
+    """Compute tire circumference for a car profile."""
+    circ = tire_circumference_m_from_spec(
+        profile["tire_width_mm"],
+        profile["tire_aspect_pct"],
+        profile["rim_in"],
+    )
+    assert circ is not None and circ > 0
+    return circ
+
+
+def profile_wheel_hz(profile: dict[str, Any], speed_kmh: float) -> float:
+    """Compute wheel-1x Hz for a car profile at *speed_kmh*."""
+    circ = profile_circ(profile)
+    hz = wheel_hz_from_speed_kmh(speed_kmh, circ)
+    assert hz is not None and hz > 0
+    return hz
+
+
+def profile_metadata(profile: dict[str, Any], **overrides: Any) -> dict[str, Any]:
+    """Build run metadata for a specific car profile."""
+    circ = profile_circ(profile)
+    meta = standard_metadata(
+        tire_circumference_m=circ,
+        final_drive_ratio=profile["final_drive_ratio"],
+        current_gear_ratio=profile["current_gear_ratio"],
+    )
+    meta.update(overrides)
+    return meta
+
 
 # ---------------------------------------------------------------------------
 # Stable deterministic hash (replaces Python hash() which varies per process)
@@ -290,6 +372,63 @@ def make_fault_samples(
                         speed_kmh=speed_kmh,
                         client_name=sensor,
                         top_peaks=other_peaks,
+                        vibration_strength_db=noise_vib_db,
+                        strength_floor_amp_g=noise_amp,
+                    )
+                )
+    return samples
+
+
+def make_profile_fault_samples(
+    *,
+    profile: dict[str, Any],
+    fault_sensor: str,
+    sensors: list[str],
+    speed_kmh: float = 80.0,
+    n_samples: int = 30,
+    dt_s: float = 1.0,
+    start_t_s: float = 0.0,
+    fault_amp: float = 0.06,
+    noise_amp: float = 0.004,
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+    add_wheel_2x: bool = True,
+) -> list[dict[str, Any]]:
+    """Generate wheel-order fault samples using a specific car profile's wheel Hz.
+
+    Identical to :func:`make_fault_samples` but computes wheel frequency from
+    the given *profile* dict instead of the module-level default tire circumference.
+    """
+    whz = profile_wheel_hz(profile, speed_kmh)
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = start_t_s + i * dt_s
+        for sensor in sensors:
+            if sensor == fault_sensor:
+                peaks: list[dict[str, float]] = [{"hz": whz, "amp": fault_amp}]
+                if add_wheel_2x:
+                    peaks.append({"hz": whz * 2, "amp": fault_amp * 0.4})
+                peaks.append({"hz": 142.5, "amp": noise_amp})
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=fault_vib_db,
+                        strength_floor_amp_g=noise_amp,
+                    )
+                )
+            else:
+                samples.append(
+                    make_sample(
+                        t_s=t,
+                        speed_kmh=speed_kmh,
+                        client_name=sensor,
+                        top_peaks=[
+                            {"hz": 142.5, "amp": noise_amp},
+                            {"hz": 87.3, "amp": noise_amp * 0.8},
+                        ],
                         vibration_strength_db=noise_vib_db,
                         strength_floor_amp_g=noise_amp,
                     )
