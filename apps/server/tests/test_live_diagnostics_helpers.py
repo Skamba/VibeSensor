@@ -190,7 +190,7 @@ def test_driving_phase_idle_when_speed_zero(monkeypatch) -> None:
     assert snap["driving_phase"] == "idle"
 
 
-def test_driving_phase_idle_when_speed_none(monkeypatch) -> None:
+def test_driving_phase_speed_unknown_when_speed_none(monkeypatch) -> None:
     t = {"value": 0.0}
     monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
@@ -198,7 +198,7 @@ def test_driving_phase_idle_when_speed_none(monkeypatch) -> None:
         t["value"] = float(i)
         engine.update(speed_mps=None, clients=[], spectra=None, settings={})
     snap = engine.snapshot()
-    assert snap["driving_phase"] == "idle"
+    assert snap["driving_phase"] == "speed_unknown"
 
 
 def test_driving_phase_cruise_at_constant_speed(monkeypatch) -> None:

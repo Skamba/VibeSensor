@@ -2,10 +2,15 @@
 """Driving-phase segmentation for diagnostic runs.
 
 Classifies each sample in a run into one of:
-  IDLE, ACCELERATION, CRUISE, DECELERATION, COAST_DOWN
+  IDLE, ACCELERATION, CRUISE, DECELERATION, COAST_DOWN, SPEED_UNKNOWN
 
 Phase information helps the findings engine decide which samples are
 diagnostically meaningful and which should be down-weighted.
+
+Samples where GPS speed is unavailable (``speed_kmh is None``) are initially
+classified as ``SPEED_UNKNOWN``.  A post-classification interpolation step
+re-assigns unknown-speed gaps that are surrounded by moving phases so that
+GPS dropouts do not silently discard valid vibration data (issue #287).
 """
 
 from __future__ import annotations
@@ -25,6 +30,7 @@ class DrivingPhase(StrEnum):
     CRUISE = "cruise"
     DECELERATION = "deceleration"
     COAST_DOWN = "coast_down"
+    SPEED_UNKNOWN = "speed_unknown"
 
 
 # Thresholds (tuneable)
@@ -109,7 +115,9 @@ def _classify_sample_phase(
     speed_deriv_kmh_s: float | None,
 ) -> DrivingPhase:
     """Classify a single sample into a driving phase."""
-    if speed_kmh is None or speed_kmh < _IDLE_SPEED_KMH:
+    if speed_kmh is None:
+        return DrivingPhase.SPEED_UNKNOWN
+    if speed_kmh < _IDLE_SPEED_KMH:
         return DrivingPhase.IDLE
 
     if speed_deriv_kmh_s is not None:
@@ -121,6 +129,66 @@ def _classify_sample_phase(
             return DrivingPhase.DECELERATION
 
     return DrivingPhase.CRUISE
+
+
+# ---------------------------------------------------------------------------
+# SPEED_UNKNOWN interpolation
+# ---------------------------------------------------------------------------
+
+_MOVING_PHASES = frozenset({
+    DrivingPhase.ACCELERATION,
+    DrivingPhase.CRUISE,
+    DrivingPhase.DECELERATION,
+    DrivingPhase.COAST_DOWN,
+})
+
+
+def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
+    """In-place interpolation of SPEED_UNKNOWN gaps.
+
+    For each contiguous run of SPEED_UNKNOWN samples, look at the nearest
+    non-SPEED_UNKNOWN neighbour on each side:
+      * Both neighbours are moving phases → assign the gap to CRUISE (we
+        know the vehicle was moving but lack derivative info).
+      * Exactly one neighbour is a moving phase (gap at run start/end) →
+        assign the gap to that neighbour's phase.
+      * Both neighbours are IDLE (or the entire run is SPEED_UNKNOWN) →
+        leave as SPEED_UNKNOWN so that ``diagnostic_sample_mask`` still
+        *includes* these samples rather than incorrectly dropping them as
+        IDLE.
+    """
+    n = len(phases)
+    i = 0
+    while i < n:
+        if phases[i] != DrivingPhase.SPEED_UNKNOWN:
+            i += 1
+            continue
+        # Find extent of SPEED_UNKNOWN run
+        j = i
+        while j < n and phases[j] == DrivingPhase.SPEED_UNKNOWN:
+            j += 1
+        # j is now one past the end of the gap [i, j)
+
+        left = phases[i - 1] if i > 0 else None
+        right = phases[j] if j < n else None
+
+        left_moving = left in _MOVING_PHASES
+        right_moving = right in _MOVING_PHASES
+
+        if left_moving and right_moving:
+            fill = DrivingPhase.CRUISE
+        elif left_moving:
+            fill = left  # type: ignore[assignment]
+        elif right_moving:
+            fill = right  # type: ignore[assignment]
+        else:
+            # Both sides IDLE or run edges — leave as SPEED_UNKNOWN
+            i = j
+            continue
+
+        for k in range(i, j):
+            phases[k] = fill
+        i = j
 
 
 def segment_run_phases(
@@ -149,6 +217,14 @@ def segment_run_phases(
         deriv = _estimate_speed_derivative(speeds, times, i)
         phase = _classify_sample_phase(speeds[i], deriv)
         per_sample.append(phase)
+
+    # Interpolate SPEED_UNKNOWN gaps: if a contiguous block of SPEED_UNKNOWN
+    # samples is surrounded on both sides by the same moving phase (anything
+    # other than IDLE), assign them that phase.  If the surrounding phases
+    # differ but are both non-IDLE, fall back to CRUISE (the vehicle was
+    # moving but we don't know the derivative).  Gaps at the very start or
+    # end of the run that border a moving phase are assigned that phase.
+    _interpolate_speed_unknown(per_sample)
 
     # Build contiguous segments
     segments: list[PhaseSegment] = []
@@ -198,6 +274,7 @@ def phase_summary(segments: list[PhaseSegment]) -> dict[str, Any]:
         "has_acceleration": phase_counts.get(DrivingPhase.ACCELERATION.value, 0) > 0,
         "cruise_pct": phase_pcts.get(DrivingPhase.CRUISE.value, 0.0),
         "idle_pct": phase_pcts.get(DrivingPhase.IDLE.value, 0.0),
+        "speed_unknown_pct": phase_pcts.get(DrivingPhase.SPEED_UNKNOWN.value, 0.0),
     }
 
 
@@ -210,6 +287,8 @@ def diagnostic_sample_mask(
     """Return a boolean mask indicating which samples are diagnostically useful.
 
     By default excludes IDLE samples (engine-off / stationary noise).
+    SPEED_UNKNOWN samples are always *included* so that GPS dropouts do not
+    silently discard valid vibration data (issue #287).
     Coast-down can optionally be excluded when only powered driving is relevant.
     """
     mask: list[bool] = []
