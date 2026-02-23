@@ -581,6 +581,11 @@ class MetricsLogger:
         end_utc = utc_now_iso()
         if self._history_db is not None:
             try:
+                update_metadata = getattr(self._history_db, "update_run_metadata", None)
+                if callable(update_metadata):
+                    start_time_utc = self._run_start_utc or end_utc
+                    latest_metadata = self._run_metadata_record(self._run_id, start_time_utc)
+                    update_metadata(self._run_id, latest_metadata)
                 self._history_db.finalize_run(self._run_id, end_utc)
                 self._clear_last_write_error()
             except Exception as exc:
