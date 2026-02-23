@@ -19,6 +19,10 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
+class PersistenceError(RuntimeError):
+    """Raised when settings fail to persist to the database."""
+
+
 class SettingsStore:
     """Holds the full app settings: cars, speed source, and sensors.
 
@@ -98,8 +102,9 @@ class SettingsStore:
         payload = self.snapshot()
         try:
             self._db.set_settings_snapshot(payload)
-        except Exception:
-            LOGGER.warning("Failed to persist settings to SQLite", exc_info=True)
+        except Exception as exc:
+            LOGGER.error("Failed to persist settings to SQLite", exc_info=True)
+            raise PersistenceError("Failed to persist settings to SQLite") from exc
 
     # -- full snapshot ---------------------------------------------------------
 
