@@ -127,6 +127,10 @@
                 </div>
                 <div id="rotationalBasisSource" class="rotational-speeds__basis mini-label">Basis speed source: --</div>
                 <div id="rotationalReason" class="rotational-speeds__reason mini-label" hidden></div>
+                <details id="rotationalAssumptions" class="rotational-speeds__assumptions mini-label">
+                  <summary data-i18n="dashboard.rotational.assumptions_title">Calculation assumptions</summary>
+                  <div id="rotationalAssumptionsBody" class="rotational-assumptions-body"></div>
+                </details>
               </div>
               <div id="currentLogFile" class="card__subtle">Current file: --</div>
             </div>
@@ -140,12 +144,20 @@
           </div>
 
           <div class="panel card dashboard-grid__strength">
+            <div class="card__header">
+              <span class="card__title" data-i18n="chart.strength.title">Strength Trend</span>
+              <span class="card__time-label mini-label" data-i18n="dashboard.time_window_60s">(last 60 s)</span>
+              <label class="strength-scale-toggle mini-label">
+                <input type="checkbox" id="strengthAutoScaleToggle"> <span data-i18n="chart.auto_scale">Auto scale</span>
+              </label>
+            </div>
             <div id="strengthChart" class="strength-chart"></div>
           </div>
 
           <div class="panel card dashboard-grid__full">
             <div class="card__header">
               <div class="card__title" data-i18n="dashboard.vibration_count_live">Vibration Count Live</div>
+              <span class="card__time-label mini-label" data-i18n="dashboard.time_window_2s">(last 2 s window)</span>
             </div>
             <div class="matrix-note"><span data-i18n="dashboard.matrix_note">Levels use peak-over-floor dB bands (L1-L5), grouped by source type.</span></div>
             <div class="matrix-wrap">

@@ -24,6 +24,7 @@ export interface DashboardFeature {
   applyServerDiagnostics(diagnostics: AdaptedPayload["diagnostics"], hasFreshFrames?: boolean): void;
   hasFreshSensorFrames(clients: ClientRow[]): boolean;
   extractLiveLocationIntensity(): Record<string, number>;
+  extractConfirmedLocationIntensity(): Record<string, number>;
   pushCarMapSample(byLocation: Record<string, number>): void;
   renderCarMap(): void;
   resetLiveVibrationCounts(): void;
@@ -32,6 +33,9 @@ export interface DashboardFeature {
 
 export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeature {
   const { state, els, t, fmt, carMapPositions, carMapWindowMs, metricField } = ctx;
+
+  // Track latest by_location diagnostics for confirmed car map intensity
+  let latestByLocation: Record<string, Record<string, unknown>> = {};
 
   function pushCarMapSample(byLocation: Record<string, number>): void {
     const now = Date.now();
@@ -97,6 +101,15 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       if (!spec?.strength_metrics) continue;
       const amp = Number(spec.strength_metrics[metricField]);
       if (Number.isFinite(amp) && amp > 0) byLocation[code] = Math.max(byLocation[code] || 0, amp);
+    }
+    return byLocation;
+  }
+
+  function extractConfirmedLocationIntensity(): Record<string, number> {
+    const byLocation: Record<string, number> = {};
+    for (const [locKey, level] of Object.entries(latestByLocation)) {
+      const db = Number(level?.strength_db);
+      if (Number.isFinite(db) && db > 0) byLocation[locKey] = db;
     }
     return byLocation;
   }
@@ -269,7 +282,10 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     if (!state.strengthPlot) return;
     const now = Date.now() / 1000;
     state.strengthHistory.t.push(now);
-    for (const key of ["wheel", "driveshaft", "engine", "other"] as const) state.strengthHistory[key].push(bySource?.[key]?.strength_db || 0);
+    for (const key of ["wheel", "driveshaft", "engine", "other"] as const) {
+      const val = bySource?.[key]?.strength_db;
+      state.strengthHistory[key].push(typeof val === "number" && Number.isFinite(val) && val > 0 ? val : null);
+    }
     while (state.strengthHistory.t.length && now - state.strengthHistory.t[0] > 60) {
       state.strengthHistory.t.shift();
       state.strengthHistory.wheel.shift();
@@ -279,23 +295,46 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     }
     const t0 = state.strengthHistory.t[0] || now;
     const relT = state.strengthHistory.t.map((v) => v - t0);
-    state.strengthPlot.setScale("y", { min: fixedStrengthDbRange[0], max: fixedStrengthDbRange[1] });
-    state.strengthPlot.setData([relT, state.strengthHistory.wheel, state.strengthHistory.driveshaft, state.strengthHistory.engine, state.strengthHistory.other]);
+    if (state.strengthChartAutoScale) {
+      let maxDb = 10;
+      for (const key of ["wheel", "driveshaft", "engine", "other"] as const) {
+        for (const v of state.strengthHistory[key]) { if (typeof v === "number" && v > maxDb) maxDb = v; }
+      }
+      const ceiling = Math.ceil(maxDb / 10) * 10 + 5;
+      state.strengthPlot.setScale("y", { min: 0, max: ceiling });
+    } else {
+      state.strengthPlot.setScale("y", { min: fixedStrengthDbRange[0], max: fixedStrengthDbRange[1] });
+    }
+    state.strengthPlot.setData([relT, state.strengthHistory.wheel as any, state.strengthHistory.driveshaft as any, state.strengthHistory.engine as any, state.strengthHistory.other as any]);
   }
 
   function applyServerDiagnostics(diagnostics: AdaptedPayload["diagnostics"], hasFreshFrames = false): void {
     state.strengthBands = normalizeStrengthBands(diagnostics.strength_bands);
     if (diagnostics.matrix) state.eventMatrix = diagnostics.matrix;
     renderMatrix();
+
+    // Track confirmed by_location for car map
+    if (diagnostics.levels?.by_location) {
+      latestByLocation = diagnostics.levels.by_location as Record<string, Record<string, unknown>>;
+    }
+
     if (!hasFreshFrames) return;
+
+    // Deduplicate events: skip if diagnostics_sequence hasn't changed
+    const seq = diagnostics.diagnostics_sequence;
+    const isNewSequence = typeof seq === "number" && seq !== state.lastDiagnosticsSequence;
+    if (isNewSequence) state.lastDiagnosticsSequence = seq;
+
     const events = Array.isArray(diagnostics.events) ? diagnostics.events : [];
     const eventPulseLocations: string[] = [];
-    if (events.length) {
+    if (events.length && isNewSequence) {
       for (const ev of events.slice(0, 6)) {
         const labels = Array.isArray(ev.sensor_labels) ? ev.sensor_labels.join(", ") : (ev.sensor_label || "--");
         const peakAmpG = Number(ev.peak_amp_g ?? ev.peak_amp);
         const ampText = Number.isFinite(peakAmpG) && peakAmpG > 0 ? ` · ${fmt(peakAmpG, 3)} g` : "";
-        pushVibrationMessage(`Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(Number(ev.vibration_strength_db) || 0, 1)} dB${ampText}) @ ${fmt(Number(ev.peak_hz) || 0, 2)} Hz | ${labels} | ${ev.class_key || "other"}`);
+        const classKey = String(ev.class_key || "other");
+        const confidenceText = classKey.includes("_eng") || classKey.includes("shaft_eng") ? " ⚠ ambiguous" : "";
+        pushVibrationMessage(`Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(Number(ev.vibration_strength_db) || 0, 1)} dB${ampText}) @ ${fmt(Number(ev.peak_hz) || 0, 2)} Hz | ${labels} | ${classKey}${confidenceText}`);
         const sensorLabels: string[] = Array.isArray(ev.sensor_labels) ? ev.sensor_labels : ev.sensor_label ? [String(ev.sensor_label)] : [];
         for (const label of sensorLabels) {
           for (const client of state.clients) {
@@ -332,6 +371,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     applyServerDiagnostics,
     hasFreshSensorFrames,
     extractLiveLocationIntensity,
+    extractConfirmedLocationIntensity,
     pushCarMapSample,
     renderCarMap,
     recreateStrengthChart,
