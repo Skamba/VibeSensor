@@ -68,11 +68,9 @@ firmware/
   esp/         ESP32 firmware (PlatformIO, C++)
 libs/
   core/        Pure domain logic (no IO/framework)
-  adapters/    Integration/path adapters
   shared/      Canonical contracts/schemas/constants
 infra/
   pi-image/    Raspberry Pi image build pipeline
-  docker/      Dockerfiles and container tooling
   ci/          CI helpers
 docs/          Protocol spec, run schema, design language
 hardware/      Bill of materials and wiring reference
@@ -82,6 +80,15 @@ artifacts/     Build/runtime artifacts (non-source)
 ```
 
 Each component has its own README with setup instructions and details.
+
+## Docs Index (source of truth)
+
+- Setup & deployment: [README.md](README.md), [apps/server/README.md](apps/server/README.md), [firmware/esp/README.md](firmware/esp/README.md), [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md)
+- Wire protocol and ports: [docs/protocol.md](docs/protocol.md)
+- Run/report schema: [docs/run_schema_v2.md](docs/run_schema_v2.md)
+- Report/design language: [docs/design_language.md](docs/design_language.md)
+- AI guidance (canonical): [docs/ai/repo-map.md](docs/ai/repo-map.md), [.github/instructions/general.instructions.md](.github/instructions/general.instructions.md), [.github/copilot-instructions.md](.github/copilot-instructions.md)
+- Historical snapshots/audits: [docs/test_coverage_audit.md](docs/test_coverage_audit.md), [docs/ai/progress.md](docs/ai/progress.md)
 
 ## Quick Start
 
@@ -153,8 +160,9 @@ See [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md) for detai
 
 ### Verification
 
-Connect a phone to the `VibeSensor` Wi-Fi (PSK: `vibesensor123`) and open
-http://10.4.0.1. Sensor nodes should appear within seconds.
+Connect a phone to the `VibeSensor` Wi-Fi (default in `config.example.yaml` is
+an open AP with empty PSK) and open http://10.4.0.1. Sensor nodes should appear
+within seconds.
 
 > Default AP credentials are for prototype use only. Change SSID/PSK before
 > real-world deployment.
@@ -242,6 +250,8 @@ run log format and [examples/](examples/) for sample data.
 - **High dropped frames** — reduce Wi-Fi contention, keep ESP close to Pi,
   check AP channel
 - **Hotspot has no DHCP leases** — rerun `apps/server/scripts/hotspot_nmcli.sh`
+- **Need config details** — check [apps/server/README.md](apps/server/README.md)
+  and [firmware/esp/README.md](firmware/esp/README.md) for AP/firmware settings
 
 ## Developer Safeguards
 

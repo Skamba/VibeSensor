@@ -74,5 +74,5 @@ Baselines live in `tests/snapshots/`. Tests use demo mode for deterministic payl
 ## Design Language
 
 The UI follows the design system documented in
-[docs/design_language.md](../docs/design_language.md) — purple accent, minimal
+[docs/design_language.md](../../docs/design_language.md) — purple accent, minimal
 flat aesthetic, token-driven styling.
