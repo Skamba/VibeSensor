@@ -1173,7 +1173,7 @@ def assert_no_localized_wheel(
 ) -> None:
     """Assert no wheel/tire source is localized to a specific corner above threshold.
 
-    Use for diffuse excitation scenarios where wheel-localisation would be a
+    Use for diffuse excitation scenarios where wheel-localization would be a
     false positive.
     """
     causes = summary.get("top_causes") or []
