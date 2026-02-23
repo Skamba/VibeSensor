@@ -2,6 +2,9 @@ Repository overview
 - VibeSensor: Python-based data-collection and analysis backend (located in `apps/server/`), a small web UI (`apps/ui/`) built with Node, and device/firmware helpers under `firmware/esp/` and `hardware/`.
 - Key runtime artifacts: Docker Compose stack at `docker-compose.yml` and `apps/server/` Python package (`apps/server/pyproject.toml`). PDF report generation lives in `apps/server/vibesensor/report/pdf_builder.py`.
 
+Source-of-truth note
+- This file is the canonical short AI guide; `AGENTS.md` and `CLAUDE.md` should remain pointers to this file to prevent drift.
+
 Canonical instruction sources
 - Read `docs/ai/repo-map.md` first.
 - Shared workflow/validation guardrails live in `.github/instructions/general.instructions.md`.
