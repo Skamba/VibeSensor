@@ -56,7 +56,7 @@ def _history_run_ids() -> set[str]:
     return {str(r["run_id"]) for r in data.get("runs", [])}
 
 
-def _wait_for_analysis(run_id: str, *, timeout_s: float = 90.0) -> dict:
+def _wait_for_analysis(run_id: str, *, timeout_s: float = 120.0) -> dict:
     """Poll until run reaches 'complete' status."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
@@ -98,7 +98,7 @@ class TestSimulatorIngestion:
         # Record existing runs before simulation
         pre_runs = _history_run_ids()
 
-        # Run the simulator for 10 seconds with 4 sensors
+        # Run the simulator for 20 seconds with 4 sensors
         sim_cmd = [
             sys.executable,
             "-m",
@@ -118,11 +118,11 @@ class TestSimulatorIngestion:
             "--fault-wheel",
             "front-left",
             "--duration",
-            "10",
+            "20",
             "--no-auto-server",
             "--no-interactive",
         ]
-        subprocess.run(sim_cmd, cwd=str(ROOT), check=True, timeout=60)
+        subprocess.run(sim_cmd, cwd=str(ROOT), check=True, timeout=90)
 
         # Wait briefly for server to finalize the run
         time.sleep(3)
@@ -153,6 +153,14 @@ class TestSimulatorIngestion:
         assert "confidence" in top, "Top cause missing 'confidence'"
         conf = float(top["confidence"])
         assert 0.0 <= conf <= 1.0, f"Confidence out of range: {conf}"
+        src = str(top.get("source") or "").lower()
+        assert "wheel" in src or "tire" in src, (
+            f"Unexpected top source for one-wheel scenario: {src}"
+        )
+        strongest_location = str(top.get("strongest_location") or "").lower()
+        assert "front-left" in strongest_location, (
+            f"Expected front-left localization for injected fault, got {strongest_location!r}"
+        )
 
     def test_findings_nonempty(self) -> None:
         """Findings list should be non-empty for a fault scenario."""
@@ -171,3 +179,6 @@ class TestSimulatorIngestion:
         assert pdf_bytes[:5] == b"%PDF-", "Not a valid PDF"
         reader = PdfReader(io.BytesIO(pdf_bytes))
         assert len(reader.pages) >= 2, f"PDF has only {len(reader.pages)} page(s)"
+        pdf_text = "\n".join((page.extract_text() or "") for page in reader.pages).lower()
+        for token in ("next steps", "evidence", "front-left"):
+            assert token in pdf_text, f"Missing expected report content token: {token!r}"
