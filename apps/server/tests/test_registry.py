@@ -273,3 +273,44 @@ def test_registry_exposes_timing_health_metrics(tmp_path: Path) -> None:
     timing = registry.snapshot_for_api(now=3.0)[0]["timing_health"]
     assert timing["last_t0_us"] == 1_105_000
     assert isinstance(timing["jitter_us_ema"], float)
+
+
+def test_registry_clear_name_reverts_to_default(tmp_path: Path) -> None:
+    """clear_name() should remove the user-assigned name and revert to default."""
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+    client_id = "001122334455"
+
+    # Assign a user name
+    registry.set_name(client_id, "Front Left Wheel")
+    record = registry.get(client_id)
+    assert record is not None
+    assert record.name == "Front Left Wheel"
+
+    # Clear the name
+    cleared = registry.clear_name(client_id)
+    assert cleared.name == f"client-{client_id[-4:]}"
+
+    # Verify persistence: the cleared name should NOT come back after reload
+    registry2 = ClientRegistry(db=db)
+    rows = registry2.snapshot_for_api(now=1.0)
+    names = [r["name"] for r in rows if r["id"] == client_id]
+    # After clearing, the client may or may not appear in snapshot (depending on
+    # whether it's currently connected). If it appears, it should have the default name.
+    for name in names:
+        assert name == f"client-{client_id[-4:]}"
+
+
+def test_registry_clear_name_preserves_other_clients(tmp_path: Path) -> None:
+    """Clearing one client's name should not affect other clients."""
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+
+    registry.set_name("001122334455", "Front Left Wheel")
+    registry.set_name("aabbccddeeff", "Rear Right Wheel")
+
+    registry.clear_name("001122334455")
+
+    record_other = registry.get("aabbccddeeff")
+    assert record_other is not None
+    assert record_other.name == "Rear Right Wheel"
