@@ -40,7 +40,6 @@ from builders import (
     make_profile_speed_sweep_fault_samples,
     make_ramp_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
     top_confidence,
 )
@@ -120,7 +119,9 @@ def test_4sensor_no_fault(speed: float, profile: dict[str, Any]) -> None:
     ],
     ids=["FL_in_FL_RR", "RR_in_FL_RR", "FR_in_FR_RL", "RL_in_FR_RL"],
 )
-def test_2sensor_localization(sensors: list[str], fault_corner: str, profile: dict[str, Any]) -> None:
+def test_2sensor_localization(
+    sensors: list[str], fault_corner: str, profile: dict[str, Any]
+) -> None:
     """2-sensor pair, fault at one → correct localization."""
     fault_sensor = CORNER_SENSORS[fault_corner]
     samples = make_profile_fault_samples(
@@ -216,7 +217,9 @@ def test_4sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -> None
     [(_2_SENSORS_FL_RR, "2sensor"), (_4_SENSORS, "4sensor"), (_8_SENSORS, "8sensor")],
     ids=["2s", "4s", "8s"],
 )
-def test_confidence_scales_with_sensor_count(sensors: list[str], label: str, profile: dict[str, Any]) -> None:
+def test_confidence_scales_with_sensor_count(
+    sensors: list[str], label: str, profile: dict[str, Any]
+) -> None:
     """More sensors → confidence should be reasonable (not inflated beyond reality)."""
     samples = make_profile_fault_samples(
         profile=profile,
@@ -380,7 +383,9 @@ def test_12sensor_no_fault_baseline(profile: dict[str, Any]) -> None:
     [(_8_SENSORS, "8s"), (_12_SENSORS, "12s")],
     ids=["8s_diffuse", "12s_diffuse"],
 )
-def test_multi_sensor_diffuse_no_fault(sensors: list[str], label: str, profile: dict[str, Any]) -> None:
+def test_multi_sensor_diffuse_no_fault(
+    sensors: list[str], label: str, profile: dict[str, Any]
+) -> None:
     """Diffuse excitation across many sensors → no localized fault."""
     samples = make_diffuse_samples(sensors=sensors, speed_kmh=SPEED_HIGH, n_samples=35)
     summary = run_analysis(samples, metadata=profile_metadata(profile))

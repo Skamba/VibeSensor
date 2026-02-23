@@ -39,7 +39,6 @@ from builders import (
     make_ramp_samples,
     make_transient_samples,
     profile_metadata,
-    profile_wheel_hz,
     run_analysis,
 )
 
@@ -263,7 +262,9 @@ def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> 
     ],
     ids=["FL_2s", "RR_2s", "FR_2s", "RL_2s"],
 )
-def test_2sensor_fault_with_transient(sensors: list[str], fault_corner: str, profile: dict[str, Any]) -> None:
+def test_2sensor_fault_with_transient(
+    sensors: list[str], fault_corner: str, profile: dict[str, Any]
+) -> None:
     """2-sensor pair, fault + transient → fault still detected."""
     fault_sensor = CORNER_SENSORS[fault_corner]
     samples: list[dict] = []

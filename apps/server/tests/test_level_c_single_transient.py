@@ -49,7 +49,9 @@ _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
-def test_fault_with_transient_preserves_diagnosis(corner: str, speed: float, profile: dict[str, Any]) -> None:
+def test_fault_with_transient_preserves_diagnosis(
+    corner: str, speed: float, profile: dict[str, Any]
+) -> None:
     """Persistent wheel fault + short transient → fault still detected."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
@@ -159,7 +161,9 @@ _SPIKE_AMPS = [
 @pytest.mark.parametrize(
     "label,amp,vdb", _SPIKE_AMPS, ids=["spike_small", "spike_med", "spike_large"]
 )
-def test_transient_amplitude_deweighting(corner: str, label: str, amp: float, vdb: float, profile: dict[str, Any]) -> None:
+def test_transient_amplitude_deweighting(
+    corner: str, label: str, amp: float, vdb: float, profile: dict[str, Any]
+) -> None:
     """Persistent fault + transient of varying size → fault still primary."""
     sensor = CORNER_SENSORS[corner]
     samples: list[dict] = []
