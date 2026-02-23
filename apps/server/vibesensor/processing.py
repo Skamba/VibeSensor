@@ -9,6 +9,8 @@ from typing import Any
 
 import numpy as np
 from vibesensor_core.vibration_strength import (
+    PEAK_THRESHOLD_FLOOR_RATIO,
+    STRENGTH_EPSILON_MIN_G,
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
     noise_floor_amp_p20_g,
@@ -214,21 +216,21 @@ class SignalProcessor:
         amps: np.ndarray,
         *,
         top_n: int = 5,
-        floor_ratio: float = 3.0,
+        floor_ratio: float = PEAK_THRESHOLD_FLOOR_RATIO,
         smoothing_bins: int = 5,
     ) -> list[dict[str, float]]:
         if freqs.size == 0 or amps.size == 0:
             return []
         smoothed = cls._smooth_spectrum(amps, bins=smoothing_bins)
         floor_amp = cls._noise_floor(smoothed)
-        threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + 1e-9)
+        threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + STRENGTH_EPSILON_MIN_G)
 
         peak_idx: list[int] = []
         for idx in range(1, smoothed.size - 1):
             amp = float(smoothed[idx])
             if amp < threshold:
                 continue
-            if amp >= float(smoothed[idx - 1]) and amp > float(smoothed[idx + 1]):
+            if amp > float(smoothed[idx - 1]) and amp >= float(smoothed[idx + 1]):
                 peak_idx.append(idx)
 
         if not peak_idx:
@@ -376,7 +378,6 @@ class SignalProcessor:
                 freq_slice,
                 amp_for_peaks,
                 top_n=3,
-                floor_ratio=2.5,
                 smoothing_bins=3,
             )
             spectrum_by_axis[axis] = {
