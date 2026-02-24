@@ -15,7 +15,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -54,6 +53,7 @@ HOTSPOT_RESTORE_DELAY_S = 2
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
+DEFAULT_REBUILD_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 
 # ---------------------------------------------------------------------------
@@ -775,11 +775,18 @@ class UpdateManager:
             )
             self._status.state = UpdateState.failed
             return
-        rebuild_cmd = ["python3", str(sync_script)]
+        rebuild_cmd = ["python3", str(sync_script), "--force-npm-ci"]
+        rebuild_env = {
+            "PATH": os.environ.get("PATH", DEFAULT_REBUILD_PATH),
+            "NODE_ENV": "development",
+            "NPM_CONFIG_PRODUCTION": "false",
+            "NPM_CONFIG_INCLUDE": "dev",
+        }
         rc, _, stderr = await self._run_cmd(
             rebuild_cmd,
             phase="updating",
             timeout=REBUILD_OP_TIMEOUT_S,
+            env=rebuild_env,
             sudo=True,
         )
         if rc != 0:
@@ -789,7 +796,7 @@ class UpdateManager:
         self._log("Rebuild/sync completed successfully")
         backend_target = self._backend_install_target(repo)
         reinstall_cmd = [
-            sys.executable,
+            "python3",
             "-m",
             "pip",
             "install",
