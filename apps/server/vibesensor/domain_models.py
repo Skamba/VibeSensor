@@ -91,6 +91,7 @@ class CarConfig:
     name: str
     type: str
     aspects: dict[str, float]
+    variant: str | None
 
     # -- construction ----------------------------------------------------------
 
@@ -103,11 +104,14 @@ class CarConfig:
         aspects = dict(DEFAULT_CAR_ASPECTS)
         if isinstance(raw_aspects, dict):
             aspects.update(_sanitize_aspects(raw_aspects))
+        raw_variant = data.get("variant")
+        variant = str(raw_variant).strip()[:64] if raw_variant else None
         return cls(
             id=car_id,
             name=name or "Unnamed Car",
             type=car_type or "sedan",
             aspects=aspects,
+            variant=variant or None,
         )
 
     @classmethod
@@ -117,12 +121,15 @@ class CarConfig:
     # -- serialization ---------------------------------------------------------
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "id": self.id,
             "name": self.name,
             "type": self.type,
             "aspects": dict(self.aspects),
         }
+        if self.variant:
+            d["variant"] = self.variant
+        return d
 
 
 # ---------------------------------------------------------------------------

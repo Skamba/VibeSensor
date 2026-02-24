@@ -172,6 +172,9 @@ class SettingsStore:
                     car.type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
                 car.aspects.update(_sanitize_aspects(car_data["aspects"]))
+            if "variant" in car_data:
+                raw = car_data["variant"]
+                car.variant = str(raw).strip()[:64] if raw else None
             self._persist()
             return self.get_cars()
 

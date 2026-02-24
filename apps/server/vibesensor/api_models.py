@@ -51,6 +51,7 @@ class CarUpsertRequest(BaseModel):
     name: str | None = None
     type: str | None = None
     aspects: dict[str, float] | None = None
+    variant: str | None = None
 
 
 class ActiveCarRequest(BaseModel):
@@ -95,6 +96,7 @@ class CarResponse(BaseModel):
     name: str
     type: str
     aspects: dict[str, float]
+    variant: str | None = None
 
 
 class CarsResponse(BaseModel):
@@ -315,6 +317,18 @@ class CarLibraryTireOptionEntry(BaseModel):
     rim_in: float
 
 
+class CarLibraryVariantEntry(BaseModel):
+    model_config = ConfigDict(extra="allow")
+    name: str
+    engine: str | None = None
+    drivetrain: str | None = None
+    gearboxes: list[CarLibraryGearboxEntry] | None = None
+    tire_options: list[CarLibraryTireOptionEntry] | None = None
+    tire_width_mm: float | None = None
+    tire_aspect_pct: float | None = None
+    rim_in: float | None = None
+
+
 class CarLibraryModelEntry(BaseModel):
     model_config = ConfigDict(extra="allow")
     brand: str
@@ -325,6 +339,7 @@ class CarLibraryModelEntry(BaseModel):
     tire_width_mm: float
     tire_aspect_pct: float
     rim_in: float
+    variants: list[CarLibraryVariantEntry] = []
 
 
 class CarLibraryModelsResponse(BaseModel):
