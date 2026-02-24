@@ -291,8 +291,20 @@ class RoadSceneController:
         }
         if normalized in alias:
             return alias[normalized]
-        axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
-        side = "left" if "left" in normalized else "right" if "right" in normalized else None
+        axle = (
+            "front"
+            if "front" in normalized
+            else "rear"
+            if "rear" in normalized
+            else None
+        )
+        side = (
+            "left"
+            if "left" in normalized
+            else "right"
+            if "right" in normalized
+            else None
+        )
         if axle and side:
             return f"{axle}-{side}"
         return None
@@ -350,7 +362,9 @@ class RoadSceneController:
                 client.scene_noise_gain = self.rng.uniform(0.92, 1.08) + 0.06 * coupling
                 client.amp_scale = self.rng.uniform(0.52, 0.70) + 0.22 * coupling
                 client.noise_scale = self.rng.uniform(0.95, 1.06)
-                client.common_event_gain = self.rng.uniform(0.06, 0.12) + 0.10 * coupling
+                client.common_event_gain = (
+                    self.rng.uniform(0.06, 0.12) + 0.10 * coupling
+                )
 
     def _apply_all_active(self) -> None:
         pulse_strength = self.rng.uniform(0.22, 0.60)
