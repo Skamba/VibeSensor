@@ -199,7 +199,7 @@ def select_top_causes(
         if isinstance(f, dict)
         and not str(f.get("finding_id", "")).startswith("REF_")
         and str(f.get("severity") or "diagnostic").strip().lower() != "info"
-        and float(f.get("confidence_0_to_1") or 0) >= ORDER_MIN_CONFIDENCE
+        and (_as_float(f.get("confidence_0_to_1")) or 0) >= ORDER_MIN_CONFIDENCE
     ]
     if not diag_findings:
         return []
@@ -247,7 +247,7 @@ def select_top_causes(
     result: list[dict[str, object]] = []
     for rep in selected:
         label_key, tone, pct_text = confidence_label(
-            float(rep.get("confidence_0_to_1") or 0),
+            _as_float(rep.get("confidence_0_to_1")) or 0,
             strength_band_key=strength_band_key,
         )
         result.append(

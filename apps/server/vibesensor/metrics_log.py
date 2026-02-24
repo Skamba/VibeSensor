@@ -688,6 +688,8 @@ class MetricsLogger:
                 self._analysis_active_run_id = run_id
             try:
                 self._run_post_analysis(run_id)
+            except Exception:
+                LOGGER.exception("Unexpected error in analysis worker for run %s", run_id)
             finally:
                 with self._lock:
                     self._analysis_enqueued_run_ids.discard(run_id)

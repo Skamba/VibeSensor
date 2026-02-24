@@ -157,6 +157,7 @@ class CommandRunner:
         except TimeoutError:
             try:
                 proc.kill()  # type: ignore[union-attr]
+                await proc.wait()  # type: ignore[union-attr]
             except ProcessLookupError:
                 pass
             return (124, "", "Command timed out")
