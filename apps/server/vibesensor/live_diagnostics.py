@@ -786,7 +786,7 @@ class LiveDiagnosticsEngine:
             return []
 
         settings_bundle = build_diagnostic_settings(settings)
-        entries: list[tuple[str, str, list[dict[str, Any]]]] = []
+        entries: list[tuple[str, str, str, list[dict[str, Any]]]] = []
         for client_id, payload in clients_payload.items():
             if not isinstance(payload, dict):
                 continue

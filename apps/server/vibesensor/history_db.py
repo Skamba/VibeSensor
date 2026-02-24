@@ -375,7 +375,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         }
         if analysis_json:
             parsed_analysis = self._safe_json_loads(analysis_json, context=f"run {run_id} analysis")
-            if parsed_analysis is not None:
+            if isinstance(parsed_analysis, dict):
                 entry["analysis"] = parsed_analysis
         if error:
             entry["error_message"] = error
