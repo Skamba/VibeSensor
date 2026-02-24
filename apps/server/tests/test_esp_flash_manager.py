@@ -26,10 +26,17 @@ class _FakePorts(SerialPortProvider):
 
 
 class _FakeRunner(FlashCommandRunner):
-    def __init__(self, *, hang: bool = False, fail_upload: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        hang: bool = False,
+        fail_upload: bool = False,
+        fail_platformio_erase: bool = False,
+    ) -> None:
         self.calls: list[list[str]] = []
         self.hang = hang
         self.fail_upload = fail_upload
+        self.fail_platformio_erase = fail_platformio_erase
 
     async def run(
         self,
@@ -38,6 +45,7 @@ class _FakeRunner(FlashCommandRunner):
         cwd: str,
         line_cb,
         cancel_event: asyncio.Event,
+        timeout_s: float | None = None,
     ) -> int:
         self.calls.append(list(args))
         line_cb(f"running {' '.join(args)}")
@@ -45,6 +53,9 @@ class _FakeRunner(FlashCommandRunner):
             while not cancel_event.is_set():
                 await asyncio.sleep(0.05)
             return 130
+        if self.fail_platformio_erase and "run" in args and "-t" in args and "erase" in args:
+            line_cb("HTTPClientError: ")
+            return 1
         if self.fail_upload and "-t" in args and "upload" in args:
             return 1
         return 0
@@ -284,3 +295,36 @@ async def test_flash_uses_temporary_workspace_when_firmware_dir_not_writable(
     first = runner.calls[0]
     firmware_idx = first.index("-d") + 1
     assert Path(first[firmware_idx]) == workspace_root / "esp"
+
+
+@pytest.mark.asyncio
+async def test_flash_falls_back_to_offline_esptool_when_platformio_erase_fails(
+    tmp_path, monkeypatch
+) -> None:
+    def _which(name: str) -> str | None:
+        mapping = {
+            "pio": "/usr/bin/pio",
+            "esptool.py": "/usr/bin/esptool.py",
+        }
+        return mapping.get(name)
+
+    monkeypatch.setattr("shutil.which", _which)
+    repo = _make_repo(tmp_path)
+    artifact_dir = repo / "firmware" / "esp" / ".pio" / "build" / "m5stack_atom"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("bootloader.bin", "partitions.bin", "firmware.bin"):
+        (artifact_dir / name).write_bytes(b"bin")
+
+    runner = _FakeRunner(fail_platformio_erase=True)
+    mgr = EspFlashManager(
+        runner=runner,
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(repo),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "success"
+    assert any("offline esptool fallback" in line for line in mgr._logs)
+    assert any("erase_flash" in " ".join(call) for call in runner.calls)
+    assert any("write_flash" in " ".join(call) for call in runner.calls)
