@@ -14,6 +14,7 @@ dependencies = [
   "numpy>=1.26,<3",
   "PyYAML>=6,<7",
   "reportlab>=4,<5",
+  "platformio>=6,<7",
 ]
 
 [project.optional-dependencies]
