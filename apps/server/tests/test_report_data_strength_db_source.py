@@ -116,3 +116,95 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
     data = map_summary(summary)
 
     assert data.observed.strongest_sensor_location.lower() == "rear-left"
+
+
+def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() -> None:
+    summary = _summary_with_top_order(
+        {
+            "finding_id": "F_ORDER",
+            "source": "wheel/tire",
+            "strongest_location": "rear-left",
+            "strongest_speed_band": "40-60 km/h",
+            "signatures_observed": ["1x wheel order"],
+            "amplitude_metric": {"value": 0.015, "units": "g"},
+            "evidence_metrics": {"vibration_strength_db": 23.4},
+        }
+    )
+    summary["top_causes"] = [
+        {
+            "source": "unknown_resonance",
+            "strongest_location": "unknown",
+            "strongest_speed_band": "100-110 km/h",
+            "confidence_0_to_1": 0.95,
+            "weak_spatial_separation": False,
+            "signatures_observed": ["reference gap"],
+        }
+    ]
+
+    data = map_summary(summary)
+
+    assert data.observed.strongest_sensor_location.lower() == "rear-left"
+    assert data.observed.speed_band == "40-60 km/h"
+    assert data.pattern_evidence.strongest_location.lower() == "rear-left"
+    assert data.pattern_evidence.speed_band == "40-60 km/h"
+    assert data.pattern_evidence.why_parts_text is not None
+    assert "wheel" in data.pattern_evidence.why_parts_text.lower()
+
+
+def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
+    summary = {
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {
+            "peaks_table": [
+                {
+                    "order_label": "",
+                    "peak_classification": "persistent",
+                    "typical_speed_band": "any",
+                }
+            ]
+        },
+    }
+
+    data = map_summary(summary)
+
+    assert data.peak_rows
+    row = data.peak_rows[0]
+    assert row.rank == "—"
+    assert row.freq_hz == "—"
+    assert row.amp_g == "—"
+
+
+def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
+    summary = {
+        "lang": "en",
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {
+            "peaks_table": [
+                {
+                    "rank": 1,
+                    "frequency_hz": 33.0,
+                    "order_label": "",
+                    "p95_amp_g": 0.12,
+                    "strength_db": 18.4,
+                    "presence_ratio": 0.85,
+                    "persistence_score": 0.0867,
+                    "peak_classification": "patterned",
+                    "source": "wheel/tire",
+                    "typical_speed_band": "60-80 km/h",
+                }
+            ]
+        },
+    }
+
+    data = map_summary(summary)
+
+    assert data.peak_rows
+    assert data.peak_rows[0].system == "Wheel / Tire"
