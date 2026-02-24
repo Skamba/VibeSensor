@@ -101,7 +101,7 @@ def is_wheel_location(label_or_code: str) -> bool:
     return False
 
 
-def has_any_wheel_location(locations: "Iterable[str]") -> bool:
+def has_any_wheel_location(locations: Iterable[str]) -> bool:
     """Return True if *locations* contains at least one wheel/corner sensor."""
     return any(is_wheel_location(loc) for loc in locations)
 
