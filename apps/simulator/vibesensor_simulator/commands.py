@@ -7,11 +7,20 @@ from typing import Any
 
 def _normalize_wheel_slot(name: str) -> str | None:
     normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
-    alias = {"fl": "front-left", "fr": "front-right", "rl": "rear-left", "rr": "rear-right"}
+    alias = {
+        "fl": "front-left",
+        "fr": "front-right",
+        "rl": "rear-left",
+        "rr": "rear-right",
+    }
     if normalized in alias:
         return alias[normalized]
-    axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
-    side = "left" if "left" in normalized else "right" if "right" in normalized else None
+    axle = (
+        "front" if "front" in normalized else "rear" if "rear" in normalized else None
+    )
+    side = (
+        "left" if "left" in normalized else "right" if "right" in normalized else None
+    )
     if axle and side:
         return f"{axle}-{side}"
     return None
