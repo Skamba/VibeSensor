@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -53,6 +54,13 @@ def _make_repo(tmp_path: Path) -> Path:
     repo = tmp_path / "repo"
     (repo / "firmware" / "esp").mkdir(parents=True)
     return repo
+
+
+def _make_repo_with_apps_hint(tmp_path: Path) -> tuple[Path, Path]:
+    repo = _make_repo(tmp_path)
+    apps_hint = repo / "apps"
+    (apps_hint / "server").mkdir(parents=True)
+    return repo, apps_hint
 
 
 @pytest.mark.asyncio
@@ -222,3 +230,57 @@ async def test_flash_uses_python_module_fallback_when_pio_binary_missing(
     first = runner.calls[0]
     assert Path(first[0]).name.startswith("python")
     assert first[1:4] == ["-m", "platformio", "run"]
+
+
+@pytest.mark.asyncio
+async def test_flash_finds_firmware_dir_when_repo_hint_points_to_apps(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    repo, apps_hint = _make_repo_with_apps_hint(tmp_path)
+    runner = _FakeRunner()
+    mgr = EspFlashManager(
+        runner=runner,
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(apps_hint),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "success"
+    first = runner.calls[0]
+    firmware_idx = first.index("-d") + 1
+    assert Path(first[firmware_idx]) == repo / "firmware" / "esp"
+
+
+@pytest.mark.asyncio
+async def test_flash_uses_temporary_workspace_when_firmware_dir_not_writable(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    repo = _make_repo(tmp_path)
+    workspace_root = tmp_path / "flash-work"
+
+    def _access(path: str | bytes | Path, mode: int) -> bool:
+        candidate = Path(path)
+        if candidate == repo / "firmware" / "esp" and mode == os.W_OK:
+            return False
+        return True
+
+    monkeypatch.setattr("os.access", _access)
+    monkeypatch.setattr("tempfile.mkdtemp", lambda prefix="": str(workspace_root))
+
+    runner = _FakeRunner()
+    mgr = EspFlashManager(
+        runner=runner,
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(repo),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "success"
+    assert any("read-only; using temporary writable workspace" in line for line in mgr._logs)
+    first = runner.calls[0]
+    firmware_idx = first.index("-d") + 1
+    assert Path(first[firmware_idx]) == workspace_root / "esp"

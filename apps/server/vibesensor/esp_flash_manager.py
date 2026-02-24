@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +16,20 @@ from typing import Any
 LOGGER = logging.getLogger(__name__)
 
 _FLASH_HISTORY_LIMIT = 10
+
+
+def _resolve_firmware_dir(repo_hint: Path) -> Path:
+    """Locate firmware/esp across repo layout variants."""
+    roots: list[Path] = []
+    for candidate in (repo_hint.resolve(), Path(__file__).resolve()):
+        if candidate not in roots:
+            roots.append(candidate)
+    for root in roots:
+        for base in (root, *root.parents):
+            firmware_dir = base / "firmware" / "esp"
+            if firmware_dir.is_dir():
+                return firmware_dir
+    return repo_hint / "firmware" / "esp"
 
 
 def _platformio_base_cmd() -> list[str] | None:
@@ -206,7 +221,7 @@ class EspFlashManager:
             or os.environ.get("VIBESENSOR_REPO_PATH")
             or Path(__file__).resolve().parents[2]
         )
-        self._firmware_dir = self._repo_path / "firmware" / "esp"
+        self._firmware_dir = _resolve_firmware_dir(self._repo_path)
         self._status = EspFlashStatus()
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
@@ -276,12 +291,12 @@ class EspFlashManager:
             return usb_like[0].port
         raise ValueError("Multiple serial ports detected. Select the ESP port explicitly.")
 
-    async def _run_flash_step(self, phase: str, args: list[str]) -> int:
+    async def _run_flash_step(self, phase: str, args: list[str], *, cwd: Path) -> int:
         self._status.phase = phase
         self._append_log(f"$ {' '.join(args)}")
         rc = await self._runner.run(
             args,
-            cwd=str(self._firmware_dir),
+            cwd=str(cwd),
             line_cb=self._append_log,
             cancel_event=self._cancel_event,
         )
@@ -325,6 +340,23 @@ class EspFlashManager:
                 error=f"Firmware directory missing: {self._firmware_dir}",
             )
             return
+        project_dir = self._firmware_dir
+        workspace_dir: Path | None = None
+        if not os.access(self._firmware_dir, os.W_OK):
+            self._status.phase = "preparing"
+            self._append_log("Firmware directory is read-only; using temporary writable workspace.")
+            try:
+                workspace_dir = Path(tempfile.mkdtemp(prefix="vibesensor-esp-flash-"))
+                project_dir = workspace_dir / "esp"
+                shutil.copytree(self._firmware_dir, project_dir, dirs_exist_ok=True)
+            except Exception as exc:
+                self._status.exit_code = 1
+                self._append_log(f"Failed to prepare flash workspace: {exc}")
+                self._finalize(
+                    state=EspFlashState.failed,
+                    error="Failed to prepare firmware workspace",
+                )
+                return
 
         try:
             selected_port = await self._resolve_port()
@@ -335,28 +367,35 @@ class EspFlashManager:
             return
 
         self._status.selected_port = selected_port
-        base = [*pio_cmd, "run", "-d", str(self._firmware_dir)]
+        base = [*pio_cmd, "run", "-d", str(project_dir)]
         port_args = ["--upload-port", selected_port]
+        try:
+            erase_rc = await self._run_flash_step(
+                "erasing", [*base, "-t", "erase", *port_args], cwd=project_dir
+            )
+            if self._cancel_event.is_set():
+                self._status.exit_code = 130
+                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+                return
+            if erase_rc != 0:
+                self._status.exit_code = erase_rc
+                self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
+                return
 
-        erase_rc = await self._run_flash_step("erasing", [*base, "-t", "erase", *port_args])
-        if self._cancel_event.is_set():
-            self._status.exit_code = 130
-            self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
-            return
-        if erase_rc != 0:
-            self._status.exit_code = erase_rc
-            self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
-            return
+            upload_rc = await self._run_flash_step(
+                "flashing", [*base, "-t", "upload", *port_args], cwd=project_dir
+            )
+            if self._cancel_event.is_set():
+                self._status.exit_code = 130
+                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+                return
+            self._status.exit_code = upload_rc
+            if upload_rc != 0:
+                self._finalize(state=EspFlashState.failed, error="Firmware flash failed")
+                return
 
-        upload_rc = await self._run_flash_step("flashing", [*base, "-t", "upload", *port_args])
-        if self._cancel_event.is_set():
-            self._status.exit_code = 130
-            self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
-            return
-        self._status.exit_code = upload_rc
-        if upload_rc != 0:
-            self._finalize(state=EspFlashState.failed, error="Firmware flash failed")
-            return
-
-        self._status.phase = "done"
-        self._finalize(state=EspFlashState.success)
+            self._status.phase = "done"
+            self._finalize(state=EspFlashState.success)
+        finally:
+            if workspace_dir is not None:
+                shutil.rmtree(workspace_dir, ignore_errors=True)
