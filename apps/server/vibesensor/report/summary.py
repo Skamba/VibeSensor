@@ -533,7 +533,9 @@ def _compute_accel_statistics(
         if sample["x"] is not None and sample["y"] is not None and sample["z"] is not None
     ]
     amp_metric_values = [
-        value for value in (_primary_vibration_strength_db(sample) for sample in samples) if value
+        value
+        for value in (_primary_vibration_strength_db(sample) for sample in samples)
+        if value is not None
     ]
 
     sat_count = 0
@@ -635,18 +637,28 @@ def _build_run_suitability_checks(
         if not isinstance(s, dict):
             continue
         cid = str(s.get("client_id") or "")
+        if not cid:
+            continue
         d = _as_float(s.get("frames_dropped_total"))
         if d is not None:
             _per_client_dropped[cid].append(d)
         o = _as_float(s.get("queue_overflow_drops"))
         if o is not None:
             _per_client_overflow[cid].append(o)
-    total_dropped = sum(
-        int(max(vals) - min(vals)) for vals in _per_client_dropped.values() if len(vals) >= 2
-    )
-    total_overflow = sum(
-        int(max(vals) - min(vals)) for vals in _per_client_overflow.values() if len(vals) >= 2
-    )
+
+    def _counter_delta(counter_values: list[float]) -> int:
+        if len(counter_values) < 2:
+            return 0
+        delta = 0.0
+        prev = float(counter_values[0])
+        for current_raw in counter_values[1:]:
+            current = float(current_raw)
+            delta += max(0.0, current - prev)
+            prev = current
+        return int(delta)
+
+    total_dropped = sum(_counter_delta(vals) for vals in _per_client_dropped.values())
+    total_overflow = sum(_counter_delta(vals) for vals in _per_client_overflow.values())
     frame_issues = total_dropped + total_overflow
     run_suitability.append(
         {
