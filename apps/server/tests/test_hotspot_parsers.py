@@ -179,7 +179,10 @@ class TestNmLogSignals:
 class TestParsePort53Conflict:
     def test_conflict_found_double_paren(self) -> None:
         # Real ss output uses double-paren format: users:(("name",pid=…,fd=…))
-        output = 'LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*  users:(("systemd-resolved",pid=571,fd=13))\n'
+        output = (
+            "LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*"
+            '  users:(("systemd-resolved",pid=571,fd=13))\n'
+        )
         result = parse_port53_conflict(output)
         assert result == "systemd-resolved"
 
