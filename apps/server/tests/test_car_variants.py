@@ -91,7 +91,8 @@ def test_get_variants_for_model_returns_variants() -> None:
     assert len(variants) >= 3
     names = [v["name"] for v in variants]
     assert "320i" in names
-    assert "M340i" in names
+    # Data source can include either a distinct M340i trim or only xDrive form.
+    assert any("M340i" in name for name in names)
 
 
 def test_get_variants_for_model_unknown_returns_empty() -> None:
