@@ -329,7 +329,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
             or tc.get("dominant_speed_band")
             or tr("UNKNOWN")
         )
-        conf = _as_float(tc.get("confidence")) or _as_float(tc.get("confidence_0_to_1")) or 0.0
+        _conf_val = _as_float(tc.get("confidence"))
+        if _conf_val is None:
+            _conf_val = _as_float(tc.get("confidence_0_to_1"))
+        conf = _conf_val if _conf_val is not None else 0.0
     else:
         primary_source = None
         primary_system = tr("UNKNOWN")
@@ -378,9 +381,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
         pattern_text = ", ".join(str(s) for s in sigs[:3]) if sigs else tr("UNKNOWN")
         order_label = str(sigs[0]) if sigs else None
         parts_list = parts_for_pattern(str(src), order_label, lang=lang)
-        c_conf = (
-            _as_float(cause.get("confidence")) or _as_float(cause.get("confidence_0_to_1")) or 0.0
-        )
+        _c_conf_val = _as_float(cause.get("confidence"))
+        if _c_conf_val is None:
+            _c_conf_val = _as_float(cause.get("confidence_0_to_1"))
+        c_conf = _c_conf_val if _c_conf_val is not None else 0.0
         _ck, _cl, _cp, c_reason = certainty_label(c_conf, lang=lang)
         tone = cause.get("confidence_tone", "neutral")
 

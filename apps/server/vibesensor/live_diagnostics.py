@@ -561,6 +561,10 @@ class LiveDiagnosticsEngine:
                 sensor_count=2,
                 fallback_db=SILENCE_DB,
             )
+            # Remove trackers that have decayed to silence and haven't been
+            # seen for a while, preventing unbounded dict growth.
+            if tracker.current_bucket_key is None and (now_ms - tracker.last_update_ms) > 30_000:
+                del self._combined_trackers[combined_key]
 
         self._active_levels_by_source = active_by_source
         self._active_levels_by_sensor = active_by_sensor
