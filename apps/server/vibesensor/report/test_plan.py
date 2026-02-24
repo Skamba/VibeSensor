@@ -8,7 +8,7 @@ from math import ceil, floor, log1p, pow
 from statistics import mean
 
 from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
-from ..locations import is_wheel_location
+from ..locations import has_any_wheel_location, is_wheel_location
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _speed_bin_label, weak_spatial_dominance_threshold
 from .i18n import tr as _tr
@@ -285,6 +285,19 @@ def _location_speedbin_summary(
             connected_locations is not None and top_loc not in connected_locations
         )
         top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
+        # Detect wheel/tire diagnosis without any wheel sensors in the topology.
+        # When only cabin/chassis sensors are present we cannot resolve to a
+        # specific wheel corner; force weak-spatial and cap localization confidence.
+        _no_wheel_sensors = _prefer_wheel and not has_any_wheel_location(
+            loc for loc, _ in ranked_for_winner
+        )
+        _raw_loc_conf = _localization_confidence(
+            dominance_ratio=dominance,
+            location_count=len(ranked_for_winner),
+            total_samples=total_samples,
+        )
+        _loc_conf = min(_raw_loc_conf, 0.30) if _no_wheel_sensors else _raw_loc_conf
+        _raw_weak_spatial = dominance < weak_spatial_dominance_threshold(len(ranked_for_winner))
         candidate = {
             "speed_range": bin_label,
             "location": display_location,
@@ -300,13 +313,9 @@ def _location_speedbin_summary(
             "ambiguous_location": ambiguous,
             "ambiguous_locations": [top_loc, second_loc] if ambiguous else [],
             "partial_coverage": partial_coverage,
-            "localization_confidence": _localization_confidence(
-                dominance_ratio=dominance,
-                location_count=len(ranked_for_winner),
-                total_samples=total_samples,
-            ),
-            "weak_spatial_separation": dominance
-            < weak_spatial_dominance_threshold(len(ranked_for_winner)),
+            "localization_confidence": _loc_conf,
+            "weak_spatial_separation": _raw_weak_spatial or _no_wheel_sensors,
+            "no_wheel_sensors": _no_wheel_sensors,
         }
         per_bin_results.append(candidate)
         # Prefer bins that are both strong and sufficiently sampled.

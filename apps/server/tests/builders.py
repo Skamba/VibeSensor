@@ -1524,3 +1524,102 @@ def assert_no_localized_wheel(
                 raise AssertionError(
                     f"Wheel/tire falsely localized to '{loc}' conf={conf:.3f}. {msg}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# Weird-sensor-mix assertion helpers
+# ---------------------------------------------------------------------------
+
+_EXACT_CORNER_TOKENS = (
+    "front left",
+    "front-left",
+    "front_left",
+    "front right",
+    "front-right",
+    "front_right",
+    "rear left",
+    "rear-left",
+    "rear_left",
+    "rear right",
+    "rear-right",
+    "rear_right",
+)
+
+
+def assert_no_exact_corner_claim(
+    summary: dict[str, Any],
+    *,
+    confidence_threshold: float = 0.30,
+    msg: str = "",
+) -> None:
+    """Assert no top cause claims a specific wheel corner above threshold.
+
+    This is stricter than :func:`assert_no_localized_wheel` – it forbids any
+    exact-corner string (FL/FR/RL/RR) in ``strongest_location`` regardless of
+    source classification.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        conf = float(c.get("confidence", 0))
+        if conf < confidence_threshold:
+            continue
+        loc = str(c.get("strongest_location") or "").lower()
+        for token in _EXACT_CORNER_TOKENS:
+            if token in loc:
+                src = _cause_source(c)
+                raise AssertionError(
+                    f"Exact corner claim '{loc}' from {src} conf={conf:.3f} "
+                    f"(threshold={confidence_threshold}). {msg}"
+                )
+
+
+def assert_wheel_weak_spatial(
+    summary: dict[str, Any],
+    *,
+    msg: str = "",
+) -> None:
+    """Assert that every wheel/tire finding reports weak_spatial_separation.
+
+    Use when the sensor topology cannot support corner-level localization
+    (e.g. cabin-only sensors).
+    """
+    findings = summary.get("findings") or []
+    for f in findings:
+        src = str(f.get("suspected_source") or "").lower()
+        if "wheel" not in src:
+            continue
+        if str(f.get("finding_id", "")).startswith("REF_"):
+            continue
+        conf = float(f.get("confidence_0_to_1", 0))
+        if conf < 0.10:
+            continue
+        assert f.get("weak_spatial_separation"), (
+            f"Wheel/tire finding '{f.get('finding_key')}' conf={conf:.3f} has "
+            f"weak_spatial_separation=False but sensor topology does not support "
+            f"corner-level localization. {msg}"
+        )
+
+
+def assert_max_wheel_confidence(
+    summary: dict[str, Any],
+    max_confidence: float,
+    *,
+    msg: str = "",
+) -> None:
+    """Assert no wheel/tire cause exceeds *max_confidence*.
+
+    Use for cabin-only / no-wheel-sensor topologies where wheel confidence
+    should be naturally bounded.
+    """
+    causes = summary.get("top_causes") or []
+    for c in causes:
+        src = _cause_source(c)
+        if "wheel" not in src:
+            continue
+        conf = float(c.get("confidence", 0))
+        if conf > max_confidence:
+            loc = c.get("strongest_location") or ""
+            raise AssertionError(
+                f"Wheel/tire confidence {conf:.3f} exceeds max {max_confidence:.2f} "
+                f"at '{loc}'. {msg}"
+            )
