@@ -73,8 +73,9 @@ def _pdf_mentions_frequency(text: str, hz: float) -> bool:
     """Return True when PDF text mentions *hz* with rounding tolerance.
 
     PDF rendering can round frequencies differently (1–2 decimals, integer, or
-    locale decimal comma). Keep the check strict to `hz` context by requiring
-    the token to appear next to an `hz` unit marker.
+    locale decimal comma). Accepts both:
+    - adjacent-unit form (additional observations): "13.0 hz"
+    - bare decimal form (peaks table column values): "13.0"
     """
     if hz <= 0:
         return False
@@ -95,7 +96,14 @@ def _pdf_mentions_frequency(text: str, hz: float) -> bool:
     tokens_with_comma = {t.replace(".", ",") for t in tokens if "." in t}
     all_tokens = tokens | tokens_with_comma
 
-    return any((f"{token} hz" in lowered) or (f"{token}hz" in compact) for token in all_tokens)
+    # Adjacent-unit check: "13.0 hz" or "13.0hz" (additional observations section)
+    if any((f"{token} hz" in lowered) or (f"{token}hz" in compact) for token in all_tokens):
+        return True
+
+    # Bare decimal check: peaks table renders frequencies without a unit suffix.
+    # Only match decimal tokens (containing ".") to avoid matching bare integers
+    # that could collide with percentage values like "13%".
+    return any(token in lowered for token in all_tokens if "." in token)
 
 
 def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None:
