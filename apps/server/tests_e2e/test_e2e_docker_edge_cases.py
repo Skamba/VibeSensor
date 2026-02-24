@@ -101,9 +101,9 @@ def _pdf_mentions_frequency(text: str, hz: float) -> bool:
         return True
 
     # Bare decimal check: peaks table renders frequencies without a unit suffix.
-    # Only match decimal tokens (containing ".") to avoid matching bare integers
-    # that could collide with percentage values like "13%".
-    return any(token in lowered for token in all_tokens if "." in token)
+    # Only match period-decimal tokens (from the original tokens set, not comma
+    # variants) to stay locale-neutral and avoid colliding with "13%".
+    return any(token in lowered for token in tokens if "." in token)
 
 
 def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None:
