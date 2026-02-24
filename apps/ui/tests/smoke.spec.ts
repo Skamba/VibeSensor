@@ -327,6 +327,176 @@ test("gps status polling does not override websocket speed readout", async ({ pa
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
 });
 
+test("rotational assumptions effective speed follows selected unit", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/settings/language") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ language: "en" }) });
+      return;
+    }
+    if (path === "/api/settings/speed-unit") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ speedUnit: "mps" }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    const payload = {
+      server_time: new Date().toISOString(),
+      speed_mps: 10,
+      clients: [],
+      diagnostics: { strength_bands: [{ key: "wheel", label: "Wheel", color: "#2f80ed" }], events: [] },
+      rotational_speeds: {
+        basis_speed_source: "gps",
+        order_bands: [{ key: "wheel_1x", center_hz: 11.2, tolerance: 0.05 }],
+      },
+      spectra: { clients: {} },
+    };
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+        queueMicrotask(() =>
+          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
+        );
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#rotationalAssumptionsBody")).toContainText("10.0 m/s");
+});
+
+test("history preview uses dB intensity fields from insights payload", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history/**/insights**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        run_id: "run-001",
+        start_time_utc: "2026-01-01T00:00:00Z",
+        duration_s: 12.3,
+        sensor_count_used: 1,
+        sensor_intensity_by_location: [
+          {
+            location: "Front Left Wheel",
+            p50_intensity_db: 10,
+            p95_intensity_db: 20,
+            max_intensity_db: 30,
+            dropped_frames_delta: 0,
+            queue_overflow_drops_delta: 0,
+            sample_count: 15,
+          },
+        ],
+      }),
+    });
+  });
+  await page.route("**/api/history**", async (route) => {
+    const pathname = new URL(route.request().url()).pathname;
+    if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
+      await route.fallback();
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+      }),
+    });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ locations: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await page.locator("#tab-history").click();
+  await expect(page.locator("#historyTableBody")).toContainText("run-001");
+  await page.locator('tr[data-run="run-001"] td').first().click();
+  await expect(page.locator(".history-details-row")).toBeVisible();
+  await expect(page.locator(".history-preview-table tbody tr td").nth(1)).toHaveText("10.0");
+  await expect(page.locator(".history-preview-table tbody tr td").nth(2)).toHaveText("20.0");
+  await expect(page.locator(".history-preview-table tbody tr td").nth(3)).toHaveText("30.0");
+  await expect(page.locator(".mini-car-dot")).toHaveAttribute("title", /20.0 dB$/);
+});
+
 test("strength chart labels update when switching language", async ({ page }) => {
   await page.route("**/api/logging/status", async (route) => {
     await route.fulfill({

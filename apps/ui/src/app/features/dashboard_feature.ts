@@ -56,7 +56,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     const result: Record<string, number> = {};
     for (const [loc, values] of Object.entries(accum)) {
       const sorted = [...values].sort((a, b) => a - b);
-      const idx = Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95));
+      const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil(sorted.length * 0.95) - 1));
       result[loc] = sorted[idx];
     }
     return result;
@@ -80,7 +80,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     const dots: string[] = [];
     for (const [code, pos] of Object.entries(carMapPositions)) {
       const val = intensity[code];
-      const hasVal = typeof val === "number" && Number.isFinite(val) && val > 0;
+      const hasVal = typeof val === "number" && Number.isFinite(val) && val >= 0;
       const norm = hasVal ? normalizeUnit(val, min, max) : 0;
       const fill = hasVal ? heatColor(norm) : "var(--border)";
       const visible = hasVal ? " car-map-dot--visible" : "";
@@ -100,7 +100,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       const spec = state.spectra.clients[client.id];
       if (!spec?.strength_metrics) continue;
       const amp = Number(spec.strength_metrics[metricField]);
-      if (Number.isFinite(amp) && amp > 0) byLocation[code] = Math.max(byLocation[code] || 0, amp);
+      if (Number.isFinite(amp) && amp >= 0) byLocation[code] = Math.max(byLocation[code] ?? 0, amp);
     }
     return byLocation;
   }
@@ -109,7 +109,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     const byLocation: Record<string, number> = {};
     for (const [locKey, level] of Object.entries(latestByLocation)) {
       const db = Number(level?.strength_db);
-      if (Number.isFinite(db) && db > 0) byLocation[locKey] = db;
+      if (Number.isFinite(db) && db >= 0) byLocation[locKey] = db;
     }
     return byLocation;
   }
@@ -300,7 +300,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       for (const key of ["wheel", "driveshaft", "engine", "other"] as const) {
         for (const v of state.strengthHistory[key]) { if (typeof v === "number" && v > maxDb) maxDb = v; }
       }
-      const ceiling = Math.ceil(maxDb / 10) * 10 + 5;
+      const ceiling = Math.ceil(maxDb / 10) * 10;
       state.strengthPlot.setScale("y", { min: 0, max: ceiling });
     } else {
       state.strengthPlot.setScale("y", { min: fixedStrengthDbRange[0], max: fixedStrengthDbRange[1] });
