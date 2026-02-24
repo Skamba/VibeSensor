@@ -382,8 +382,7 @@ class TestUpdateManagerAsync:
             for c in runner.calls
         )
         assert any(
-            " python3 -m pip install --no-deps -e " in f" {' '.join(c[0])} "
-            for c in runner.calls
+            " python3 -m pip install --no-deps -e " in f" {' '.join(c[0])} " for c in runner.calls
         )
         restart_cmd = (
             "systemd-run --unit vibesensor-post-update-restart --on-active=2s "
