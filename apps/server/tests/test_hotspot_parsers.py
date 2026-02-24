@@ -177,20 +177,28 @@ class TestNmLogSignals:
 
 
 class TestParsePort53Conflict:
-    def test_conflict_found(self) -> None:
-        # Real ss output uses double-paren, but the parser splits on 'users:("'
-        # which is single-open-paren + quote.  Use the single-paren format the
-        # code expects.
+    def test_conflict_found_double_paren(self) -> None:
+        # Real ss output uses double-paren format: users:(("name",pid=…,fd=…))
+        output = 'LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*  users:(("systemd-resolved",pid=571,fd=13))\n'
+        result = parse_port53_conflict(output)
+        assert result == "systemd-resolved"
+
+    def test_conflict_found_single_paren(self) -> None:
+        # Some ss versions may use single-paren format
         output = 'LISTEN  0  0  *:53  *:*  users:("systemd-resolved",pid=123,fd=4)\n'
         result = parse_port53_conflict(output)
         assert result == "systemd-resolved"
 
     def test_dnsmasq_nm_ignored(self) -> None:
-        output = 'LISTEN 0 0 *:53 *:* users:("dnsmasq",pid=1,fd=2) networkmanager dnsmasq\n'
+        output = 'LISTEN 0 0 *:53 *:* users:(("dnsmasq",pid=1,fd=2)) networkmanager dnsmasq\n'
         assert parse_port53_conflict(output) is None
 
     def test_empty(self) -> None:
         assert parse_port53_conflict("") is None
+
+    def test_no_users_field(self) -> None:
+        output = "LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*\n"
+        assert parse_port53_conflict(output) is None
 
 
 # ---------------------------------------------------------------------------
