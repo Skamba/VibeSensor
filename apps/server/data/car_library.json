@@ -151,7 +151,24 @@
     ],
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "220i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "230i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M240i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -191,7 +208,24 @@
     ],
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "220i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "230i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M240i xDrive",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -231,7 +265,24 @@
     ],
     "tire_width_mm": 205.0,
     "tire_aspect_pct": 55.0,
-    "rim_in": 17.0
+    "rim_in": 17.0,
+    "variants": [
+      {
+        "name": "218i",
+        "engine": "B38 1.5L I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "220i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "225xe",
+        "engine": "B38 1.5L I3 Turbo PHEV",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -414,7 +465,24 @@
     ],
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "420i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "430i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "440i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -449,7 +517,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "420i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "430i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M440i xDrive",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -675,7 +760,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "640i",
+        "engine": "N55 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "640i xDrive",
+        "engine": "N55 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "650i",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -710,7 +812,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "630i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "640i xDrive",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -745,7 +859,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "740i",
+        "engine": "N55 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "750i",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "750i xDrive",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -780,7 +911,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "740i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "750i xDrive",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "745e",
+        "engine": "B58 3.0L I6 Turbo PHEV",
+        "drivetrain": "RWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -815,7 +963,29 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "740i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "760i xDrive",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "i7 eDrive50",
+        "engine": "Electric Single Motor",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "i7 M70 xDrive",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -850,7 +1020,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "840i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M850i xDrive",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -885,7 +1067,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "840i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M850i xDrive",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -920,7 +1114,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "840i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M850i xDrive",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -960,7 +1166,24 @@
     ],
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 50.0,
-    "rim_in": 17.0
+    "rim_in": 17.0,
+    "variants": [
+      {
+        "name": "sDrive18i",
+        "engine": "B38 1.5L I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive20i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive25i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -995,7 +1218,24 @@
     ],
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "sDrive18i",
+        "engine": "B38 1.5L I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive23i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "iX1 xDrive30",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1035,7 +1275,19 @@
     ],
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "sDrive18i",
+        "engine": "B38 1.5L I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive20i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1070,7 +1322,24 @@
     ],
     "tire_width_mm": 225.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "sDrive20i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive25e",
+        "engine": "B48 2.0L I4 Turbo PHEV",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "iX2 xDrive30",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1110,7 +1379,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 50.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "xDrive20i",
+        "engine": "N20 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive28i",
+        "engine": "N20 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive35i",
+        "engine": "N55 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1202,7 +1488,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "xDrive20",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive30",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M50 xDrive",
+        "engine": "S58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1237,7 +1540,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "xDrive20i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive28i",
+        "engine": "N20 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive35i",
+        "engine": "N55 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1272,7 +1592,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "xDrive20i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive30i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M40i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1307,7 +1644,24 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 50.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "xDrive35i",
+        "engine": "N55 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive50i",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive40e",
+        "engine": "N20 2.0L I4 Turbo PHEV",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1394,7 +1748,19 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 50.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "xDrive35i",
+        "engine": "N55 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive50i",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1429,7 +1795,19 @@
     ],
     "tire_width_mm": 275.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "xDrive40i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M50i",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1464,7 +1842,24 @@
     ],
     "tire_width_mm": 275.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 21.0
+    "rim_in": 21.0,
+    "variants": [
+      {
+        "name": "xDrive40i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive40d",
+        "engine": "B57 3.0L I6 Diesel",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M60i xDrive",
+        "engine": "S68 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1504,7 +1899,24 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "sDrive20i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "sDrive30i",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M40i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1538,7 +1950,19 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "M3",
+        "engine": "S55 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M3 Competition",
+        "engine": "S55 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1649,7 +2073,19 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "M4",
+        "engine": "S55 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M4 Competition",
+        "engine": "S55 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1743,7 +2179,19 @@
     ],
     "tire_width_mm": 275.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "M5",
+        "engine": "S63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M5 Competition",
+        "engine": "S63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1772,7 +2220,24 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "xDrive40",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "xDrive50",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "M60",
+        "engine": "Electric Dual Motor (Performance)",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "BMW",
@@ -1801,7 +2266,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "eDrive40",
+        "engine": "Electric Single Motor",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M50",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -1841,7 +2318,19 @@
     ],
     "tire_width_mm": 215.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 17.0
+    "rim_in": 17.0,
+    "variants": [
+      {
+        "name": "1.0 TFSI",
+        "engine": "1.0L I3 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "1.4 TFSI",
+        "engine": "1.4L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -1881,7 +2370,24 @@
     ],
     "tire_width_mm": 215.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 17.0
+    "rim_in": 17.0,
+    "variants": [
+      {
+        "name": "25 TFSI",
+        "engine": "1.0L I3 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "30 TFSI",
+        "engine": "1.0L I3 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "35 TFSI",
+        "engine": "1.5L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2180,7 +2686,24 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "2.0 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TFSI quattro",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TDI quattro",
+        "engine": "3.0L V6 TDI Diesel",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2215,7 +2738,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "40 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "45 TFSI quattro",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2359,7 +2894,19 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "3.0 TFSI quattro",
+        "engine": "3.0L V6 Supercharged",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TDI quattro",
+        "engine": "3.0L V6 TDI Diesel",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2394,7 +2941,19 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "45 TFSI quattro",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "55 TFSI quattro",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2429,7 +2988,19 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "3.0 TFSI quattro",
+        "engine": "3.0L V6 Supercharged",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "4.0 TFSI quattro",
+        "engine": "4.0L V8 Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2464,7 +3035,24 @@
     ],
     "tire_width_mm": 255.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "50 TFSI quattro",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "55 TFSI quattro",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "60 TFSI e quattro",
+        "engine": "3.0L V6 TFSI Turbo PHEV",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2504,7 +3092,19 @@
     ],
     "tire_width_mm": 215.0,
     "tire_aspect_pct": 50.0,
-    "rim_in": 17.0
+    "rim_in": 17.0,
+    "variants": [
+      {
+        "name": "30 TFSI",
+        "engine": "1.0L I3 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "35 TFSI",
+        "engine": "1.5L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2544,7 +3144,19 @@
     ],
     "tire_width_mm": 235.0,
     "tire_aspect_pct": 50.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "1.4 TFSI",
+        "engine": "1.4L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TFSI quattro",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2579,7 +3191,24 @@
     ],
     "tire_width_mm": 235.0,
     "tire_aspect_pct": 45.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "35 TFSI",
+        "engine": "1.5L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "40 TFSI quattro",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "45 TFSI e",
+        "engine": "1.4L I4 TFSI Turbo PHEV",
+        "drivetrain": "FWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2782,7 +3411,19 @@
     ],
     "tire_width_mm": 285.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 21.0
+    "rim_in": 21.0,
+    "variants": [
+      {
+        "name": "55 TFSI quattro",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "60 TFSI e quattro",
+        "engine": "3.0L V6 TFSI Turbo PHEV",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2822,7 +3463,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 40.0,
-    "rim_in": 18.0
+    "rim_in": 18.0,
+    "variants": [
+      {
+        "name": "2.0 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TFSI quattro",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2862,7 +3515,19 @@
     ],
     "tire_width_mm": 245.0,
     "tire_aspect_pct": 35.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "40 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "45 TFSI quattro",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2891,7 +3556,19 @@
     ],
     "tire_width_mm": 295.0,
     "tire_aspect_pct": 30.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "V10 RWD",
+        "engine": "5.2L V10 NA",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "V10 quattro",
+        "engine": "5.2L V10 NA",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2956,7 +3633,14 @@
     ],
     "tire_width_mm": 275.0,
     "tire_aspect_pct": 30.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "RS 4",
+        "engine": "2.9L V6 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -2985,7 +3669,14 @@
     ],
     "tire_width_mm": 275.0,
     "tire_aspect_pct": 30.0,
-    "rim_in": 20.0
+    "rim_in": 20.0,
+    "variants": [
+      {
+        "name": "RS 5",
+        "engine": "2.9L V6 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -3014,7 +3705,14 @@
     ],
     "tire_width_mm": 285.0,
     "tire_aspect_pct": 30.0,
-    "rim_in": 21.0
+    "rim_in": 21.0,
+    "variants": [
+      {
+        "name": "RS 6",
+        "engine": "4.0L V8 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -3043,7 +3741,14 @@
     ],
     "tire_width_mm": 285.0,
     "tire_aspect_pct": 30.0,
-    "rim_in": 21.0
+    "rim_in": 21.0,
+    "variants": [
+      {
+        "name": "RS 7",
+        "engine": "4.0L V8 TFSI Turbo",
+        "drivetrain": "AWD"
+      }
+    ]
   },
   {
     "brand": "Audi",
@@ -3113,6 +3818,18 @@
     ],
     "tire_width_mm": 235.0,
     "tire_aspect_pct": 50.0,
-    "rim_in": 19.0
+    "rim_in": 19.0,
+    "variants": [
+      {
+        "name": "40 e-tron",
+        "engine": "Electric Single Motor",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "50 e-tron quattro",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "AWD"
+      }
+    ]
   }
 ]

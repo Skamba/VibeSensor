@@ -2,6 +2,7 @@ export type {
   CarLibraryModel,
   CarLibraryGearbox,
   CarLibraryTireOption,
+  CarLibraryVariant,
 } from "./api/types";
 export {
   getAnalysisSettings,
