@@ -497,9 +497,7 @@ class SignalProcessor:
             "y": self._float_list(buf.latest_spectrum.get("y", {}).get("amp", _empty)),
             "z": self._float_list(buf.latest_spectrum.get("z", {}).get("amp", _empty)),
             "combined_spectrum_amp_g": (
-                self._float_list(
-                    buf.latest_spectrum.get("combined", {}).get("amp", _empty)
-                )
+                self._float_list(buf.latest_spectrum.get("combined", {}).get("amp", _empty))
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
@@ -593,7 +591,8 @@ class SignalProcessor:
             spectrum["freq"] = self._float_list(freq)
             for axis in AXES:
                 axis_data = buf.latest_spectrum.get(axis, {})
-                spectrum[axis] = self._float_list(axis_data.get("amp", np.array([], dtype=np.float32)))
+                _empty = np.array([], dtype=np.float32)
+                spectrum[axis] = self._float_list(axis_data.get("amp", _empty))
             combined = buf.latest_spectrum.get("combined")
             spectrum["combined_spectrum_amp_g"] = (
                 self._float_list(combined["amp"])
