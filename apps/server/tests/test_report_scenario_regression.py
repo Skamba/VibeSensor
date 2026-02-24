@@ -1005,6 +1005,19 @@ class TestPhaseSpeedBreakdown:
             assert "mean_vib_db" in row, "each amp_vs_phase row must have mean_vib_db"
             assert row["count"] > 0, "count must be positive"
 
+    def test_phase_speed_breakdown_does_not_drop_samples_when_phase_list_short(self) -> None:
+        from vibesensor.report.findings import _phase_speed_breakdown
+
+        samples = [
+            {"t_s": 0.0, "speed_kmh": 40.0, "vibration_strength_db": 10.0},
+            {"t_s": 1.0, "speed_kmh": 50.0, "vibration_strength_db": 11.0},
+            {"t_s": 2.0, "speed_kmh": 60.0, "vibration_strength_db": 12.0},
+        ]
+        rows = _phase_speed_breakdown(samples, ["cruise"])
+        total = sum(int(row["count"]) for row in rows)
+        assert total == 3
+        assert any(str(row["phase"]) == "unknown" for row in rows)
+
 
 class TestReferenceFindingDistinguishability:
     """Reference-missing findings must be distinguishable and must not inflate
