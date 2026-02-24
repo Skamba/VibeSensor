@@ -122,6 +122,20 @@ class TestUpdateJobStatus:
         assert len(d["log_tail"]) == 50  # max 50 in serialization
 
 
+class TestUpdaterInterpreterSelection:
+    def test_reinstall_python_prefers_server_venv_python3(self, tmp_path) -> None:
+        repo = tmp_path / "repo"
+        venv_python = repo / "apps" / "server" / ".venv" / "bin" / "python3"
+        venv_python.parent.mkdir(parents=True)
+        venv_python.write_text("#!/usr/bin/env python3\n")
+        assert UpdateManager._reinstall_python_executable(repo) == str(venv_python)
+
+    def test_reinstall_python_falls_back_to_python3(self, tmp_path) -> None:
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        assert UpdateManager._reinstall_python_executable(repo) == "python3"
+
+
 # ---------------------------------------------------------------------------
 # sanitize_log_line
 # ---------------------------------------------------------------------------

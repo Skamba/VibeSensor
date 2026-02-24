@@ -796,7 +796,7 @@ class UpdateManager:
         self._log("Rebuild/sync completed successfully")
         backend_target = self._backend_install_target(repo)
         reinstall_cmd = [
-            "python3",
+            self._reinstall_python_executable(repo),
             "-m",
             "pip",
             "install",
@@ -856,6 +856,14 @@ class UpdateManager:
         if (server_pkg / "pyproject.toml").is_file():
             return server_pkg
         return repo
+
+    @staticmethod
+    def _reinstall_python_executable(repo: Path) -> str:
+        server_pkg = repo / "apps" / "server"
+        venv_python3 = server_pkg / ".venv" / "bin" / "python3"
+        if venv_python3.is_file():
+            return str(venv_python3)
+        return "python3"
 
     async def _schedule_service_restart(self) -> bool:
         # Prefer a delayed transient unit so this update task can finish cleanly
