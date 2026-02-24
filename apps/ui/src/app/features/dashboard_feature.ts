@@ -130,7 +130,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     els.vibrationLog.innerHTML =
       scaleNote +
       state.vibrationMessages
-        .map((m) => `<div class="log-row"><div class="log-time">${m.ts}</div>${m.text}</div>`)
+        .map((m) => `<div class="log-row"><div class="log-time">${ctx.escapeHtml(m.ts)}</div>${ctx.escapeHtml(m.text)}</div>`)
         .join("");
   }
 
