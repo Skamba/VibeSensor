@@ -581,12 +581,12 @@ def create_router(state: RuntimeState) -> APIRouter:
             return zip_buffer.getvalue()
 
         content = await asyncio.to_thread(_build_zip)
-        safe_zip = _safe_filename(run_id)
+        safe_name = _safe_filename(run_id)
         return Response(
             content=content,
             media_type="application/zip",
             headers={
-                "Content-Disposition": f'attachment; filename="{safe_zip}.zip"',
+                "Content-Disposition": f'attachment; filename="{safe_name}.zip"',
             },
         )
 
