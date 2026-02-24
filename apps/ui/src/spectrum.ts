@@ -90,7 +90,13 @@ export class SpectrumChart {
     for (const item of seriesMeta) {
       const row = document.createElement("div");
       row.className = "legend-item";
-      row.innerHTML = `<span class="swatch" style="--swatch-color:${item.color}"></span><span>${item.label}</span>`;
+      const swatch = document.createElement("span");
+      swatch.className = "swatch";
+      swatch.style.setProperty("--swatch-color", item.color);
+      const labelSpan = document.createElement("span");
+      labelSpan.textContent = item.label;
+      row.appendChild(swatch);
+      row.appendChild(labelSpan);
       legendEl.appendChild(row);
     }
   }

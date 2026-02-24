@@ -5,6 +5,7 @@ import csv
 import io
 import json
 import logging
+import re
 import zipfile
 from collections import OrderedDict
 from collections.abc import Iterator
@@ -75,6 +76,12 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 _MAX_REPORT_SAMPLES = 12_000
 _REPORT_PDF_CACHE_MAX_ENTRIES = 16
+_SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
+
+
+def _safe_filename(name: str) -> str:
+    """Sanitize *name* for use in Content-Disposition headers and zip entry names."""
+    return _SAFE_FILENAME_RE.sub("_", name)[:200] or "download"
 
 
 def _bounded_sample(
@@ -163,7 +170,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         report_pdf_cache.move_to_end(cache_key)
         while len(report_pdf_cache) > _REPORT_PDF_CACHE_MAX_ENTRIES:
             evicted_key, _ = report_pdf_cache.popitem(last=False)
-            report_pdf_locks.pop(evicted_key, None)
+            # Only remove lock if it is not currently held by another coroutine.
+            lock = report_pdf_locks.get(evicted_key)
+            if lock is not None and not lock.locked():
+                report_pdf_locks.pop(evicted_key, None)
 
     def _analysis_language(run: dict, requested: str | None) -> str:
         if isinstance(requested, str) and requested.strip():
@@ -364,7 +374,7 @@ def create_router(state: RuntimeState) -> APIRouter:
             # Empty location_code → clear the assignment
             updated = state.registry.clear_name(normalized_client_id)
 
-        state.registry.set_location(normalized_client_id, req.location_code)
+        state.registry.set_location(normalized_client_id, code)
         mac = client_id_mac(updated.client_id)
         state.settings_store.set_sensor(mac, {"location": code})
         return {
@@ -481,12 +491,16 @@ def create_router(state: RuntimeState) -> APIRouter:
             metadata = {}
         requested_lang = _analysis_language(run, lang)
         cache_key = _report_pdf_cache_key(run, run_id, requested_lang)
+        pdf_name = f"{_safe_filename(run_id)}_report.pdf"
+        pdf_headers = {
+            "Content-Disposition": f'attachment; filename="{pdf_name}"',
+        }
         cached_pdf = _cache_get(cache_key)
         if cached_pdf is not None:
             return Response(
                 content=cached_pdf,
                 media_type="application/pdf",
-                headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+                headers=pdf_headers,
             )
 
         def _build_pdf() -> tuple[bytes, int, int, int]:
@@ -511,7 +525,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                 return Response(
                     content=cached_pdf,
                     media_type="application/pdf",
-                    headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+                    headers=pdf_headers,
                 )
             pdf, total_samples, analyzed, stride = await asyncio.to_thread(_build_pdf)
             _cache_put(cache_key, pdf)
@@ -526,7 +540,7 @@ def create_router(state: RuntimeState) -> APIRouter:
         return Response(
             content=pdf,
             media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{run_id}_report.pdf"'},
+            headers=pdf_headers,
         )
 
     @router.get("/api/history/{run_id}/export")
@@ -534,6 +548,7 @@ def create_router(state: RuntimeState) -> APIRouter:
         run = _require_run(run_id)
 
         def _build_zip() -> bytes:
+            safe_name = _safe_filename(run_id)
             fieldnames: list[str] = []
             fieldname_set: set[str] = set()
             # Single pass: collect field names and buffer all samples
@@ -559,17 +574,20 @@ def create_router(state: RuntimeState) -> APIRouter:
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
                 archive.writestr(
-                    f"{run_id}.json",
+                    f"{safe_name}.json",
                     json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
                 )
-                archive.writestr(f"{run_id}_raw.csv", csv_buffer.getvalue())
+                archive.writestr(f"{safe_name}_raw.csv", csv_buffer.getvalue())
             return zip_buffer.getvalue()
 
         content = await asyncio.to_thread(_build_zip)
+        safe_zip = _safe_filename(run_id)
         return Response(
             content=content,
             media_type="application/zip",
-            headers={"Content-Disposition": f'attachment; filename="{run_id}.zip"'},
+            headers={
+                "Content-Disposition": f'attachment; filename="{safe_zip}.zip"',
+            },
         )
 
     @router.websocket("/ws")

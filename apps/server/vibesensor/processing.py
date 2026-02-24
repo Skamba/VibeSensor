@@ -290,6 +290,9 @@ class SignalProcessor:
         cached = self._fft_cache.get(sample_rate_hz)
         if cached is not None:
             return cached
+        if sample_rate_hz <= 0:
+            empty = np.empty(0, dtype=np.float32)
+            return empty, np.empty(0, dtype=np.intp)
         freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
         valid = freqs <= self.spectrum_max_hz
         freq_slice = freqs[valid].astype(np.float32)
@@ -555,6 +558,14 @@ class SignalProcessor:
             }
 
         sr = buf.sample_rate_hz or self.sample_rate_hz
+        if sr <= 0:
+            return {
+                "client_id": client_id,
+                "sample_rate_hz": sr,
+                "waveform": {},
+                "spectrum": {},
+                "metrics": {},
+            }
         selected_cache_key = (buf.ingest_generation, buf.spectrum_generation, sr)
         if (
             buf.cached_selected_payload is not None
