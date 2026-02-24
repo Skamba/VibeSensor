@@ -53,11 +53,12 @@ def test_override_none_clears() -> None:
     assert m.override_speed_mps is None
 
 
-def test_override_zero_clears() -> None:
+def test_override_zero_sets_stationary() -> None:
     m = GPSSpeedMonitor(gps_enabled=False)
     m.set_speed_override_kmh(90.0)
+    # Zero is a valid speed (vehicle is stationary)
     m.set_speed_override_kmh(0.0)
-    assert m.override_speed_mps is None
+    assert m.override_speed_mps == 0.0
 
 
 def test_override_negative_clears() -> None:

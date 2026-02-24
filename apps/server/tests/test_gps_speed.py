@@ -14,14 +14,14 @@ def test_effective_speed_prefers_override_over_gps() -> None:
     assert abs((monitor.effective_speed_mps or 0.0) - 25.0) < 1e-9
 
 
-def test_set_speed_override_zero_clears_override() -> None:
+def test_set_speed_override_zero_sets_stationary() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
     monitor.set_speed_override_kmh(80.0)
     assert monitor.override_speed_mps is not None
 
+    # Zero is a valid speed (vehicle is stationary)
     monitor.set_speed_override_kmh(0.0)
-    assert monitor.override_speed_mps is None
-    assert monitor.effective_speed_mps is None
+    assert monitor.override_speed_mps == 0.0
 
 
 def test_manual_selected_with_override_returns_override() -> None:
