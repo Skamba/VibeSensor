@@ -144,6 +144,7 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
     data = map_summary(summary)
 
     assert data.observed.strongest_sensor_location.lower() == "rear-left"
+    assert data.observed.speed_band == "40-60 km/h"
     assert data.pattern_evidence.strongest_location.lower() == "rear-left"
     assert data.pattern_evidence.speed_band == "40-60 km/h"
     assert data.pattern_evidence.why_parts_text is not None

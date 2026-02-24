@@ -490,11 +490,15 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
         order_lower = order.lower()
         source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()
-        if source_hint == "wheel/tire" or "wheel" in order_lower:
+        if (source_hint == "wheel/tire") or ("wheel" in order_lower):
             system = tr("SOURCE_WHEEL_TIRE")
-        elif source_hint == "engine" or "engine" in order_lower:
+        elif (source_hint == "engine") or ("engine" in order_lower):
             system = tr("SOURCE_ENGINE")
-        elif source_hint == "driveline" or "driveshaft" in order_lower or "drive" in order_lower:
+        elif (
+            (source_hint == "driveline")
+            or ("driveshaft" in order_lower)
+            or ("drive" in order_lower)
+        ):
             system = tr("SOURCE_DRIVELINE")
         elif "transient" in order_lower:
             system = tr("SOURCE_TRANSIENT_IMPACT")
