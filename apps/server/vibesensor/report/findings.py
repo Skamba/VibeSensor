@@ -513,6 +513,7 @@ def _compute_order_confidence(
     is_diffuse_excitation: bool,
     diffuse_penalty: float,
     n_connected_locations: int,
+    no_wheel_sensors: bool = False,
 ) -> float:
     """Compute calibrated confidence for an order-tracking finding (clamped 0.08–0.97)."""
     confidence = (
@@ -529,6 +530,8 @@ def _compute_order_confidence(
     confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
     if weak_spatial_separation:
         confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
+    if no_wheel_sensors:
+        confidence *= 0.75
     if constant_speed:
         confidence *= 0.75
     elif steady_speed:
@@ -796,13 +799,22 @@ def _build_order_findings(
         # finding that is actually well-localised.
         # Fix: absence of matches from other connected sensors IS strong
         # spatial evidence.
+        # Exception: when diagnosing wheel/tire but no wheel sensors are
+        # present, clustering at one cabin sensor does NOT imply corner
+        # localization — keep weak_spatial_separation as set by the hotspot.
         unique_match_locations = {
             str(pt.get("location") or "") for pt in matched_points if pt.get("location")
         }
+        _no_wheel_override = (
+            bool(location_hotspot.get("no_wheel_sensors"))
+            if isinstance(location_hotspot, dict)
+            else False
+        )
         if (
             per_location_dominant
             and len(unique_match_locations) == 1
             and len(connected_locations) >= 2
+            and not _no_wheel_override
         ):
             # Strong localization: 1 of N sensors matched.
             localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
@@ -811,6 +823,7 @@ def _build_order_findings(
             len(unique_match_locations) == 1
             and len(connected_locations) >= 2
             and matched >= ORDER_MIN_MATCH_POINTS
+            and not _no_wheel_override
         ):
             # Weaker case: global rate passed but all matches still from one sensor.
             localization_confidence = max(
@@ -841,6 +854,12 @@ def _build_order_findings(
             matched_points,
         )
 
+        _no_wheel_sensors = (
+            bool(location_hotspot.get("no_wheel_sensors"))
+            if isinstance(location_hotspot, dict)
+            else False
+        )
+
         confidence = _compute_order_confidence(
             effective_match_rate=effective_match_rate,
             error_score=error_score,
@@ -858,6 +877,7 @@ def _build_order_findings(
             is_diffuse_excitation=_diffuse_excitation,
             diffuse_penalty=_diffuse_penalty,
             n_connected_locations=len(connected_locations),
+            no_wheel_sensors=_no_wheel_sensors,
         )
 
         ranking_score = (

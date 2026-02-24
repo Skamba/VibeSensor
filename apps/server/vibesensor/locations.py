@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
 LOCATION_OPTIONS: tuple[tuple[str, str], ...] = (
     ("front_left_wheel", "Front Left Wheel"),
     ("front_right_wheel", "Front Right Wheel"),
@@ -94,6 +99,11 @@ def is_wheel_location(label_or_code: str) -> bool:
     ):
         return True
     return False
+
+
+def has_any_wheel_location(locations: Iterable[str]) -> bool:
+    """Return True if *locations* contains at least one wheel/corner sensor."""
+    return any(is_wheel_location(loc) for loc in locations)
 
 
 def all_locations() -> list[dict[str, str]]:
