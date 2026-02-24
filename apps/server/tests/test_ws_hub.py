@@ -11,9 +11,9 @@ from vibesensor.ws_hub import WebSocketHub, WSConnection, sanitize_for_json
 
 
 def _make_ws() -> AsyncMock:
-    """Create a mock WebSocket with ``send_json``."""
+    """Create a mock WebSocket with ``send_text``."""
     ws = AsyncMock()
-    ws.send_json = AsyncMock()
+    ws.send_text = AsyncMock()
     return ws
 
 

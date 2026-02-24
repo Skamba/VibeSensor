@@ -957,7 +957,9 @@ def _build_order_findings(
         ]
         _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_phase_val)
         phase_evidence: dict[str, object] = {
-            "cruise_fraction": _cruise_matched / len(matched_points) if matched_points else 0.0,
+            "cruise_fraction": _cruise_matched / len(matched_phase_strs)
+            if matched_phase_strs
+            else 0.0,
             "phases_detected": sorted(set(matched_phase_strs)),
         }
         # Dominant non-cruise onset phase helps explain whether issue appears on transitions.
