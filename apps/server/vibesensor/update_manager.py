@@ -15,7 +15,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -797,7 +796,7 @@ class UpdateManager:
         self._log("Rebuild/sync completed successfully")
         backend_target = self._backend_install_target(repo)
         reinstall_cmd = [
-            sys.executable,
+            "python3",
             "-m",
             "pip",
             "install",
