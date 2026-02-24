@@ -725,15 +725,13 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
         assert sensor_rows
         assert len(rows) == int(export_json.get("sample_count", -1))
 
-        fft = analysis.get("plots", {}).get("fft_spectrum", [])
-        if fft:
-            top_fft = max(
-                fft,
-                key=lambda item: float(item[1] if isinstance(item, list) else item.get("amp") or 0),
-            )
-            peak_hz = float(top_fft[0] if isinstance(top_fft, list) else top_fft.get("hz") or 0)
+        # The PDF renders frequencies from the persistence-ranked peaks_table, not
+        # from the raw fft_spectrum top amplitude (which may be a transient spike).
+        peaks_table = analysis.get("plots", {}).get("peaks_table", [])
+        if peaks_table and isinstance(peaks_table[0], dict):
+            peak_hz = float(peaks_table[0].get("frequency_hz") or 0)
             assert _pdf_mentions_frequency(text, peak_hz), (
-                f"PDF missing expected FFT peak frequency mention near {peak_hz:.2f} Hz"
+                f"PDF missing expected peaks-table top frequency {peak_hz:.2f} Hz"
             )
 
         _assert_no_placeholders(text)
