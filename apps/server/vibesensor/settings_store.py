@@ -174,7 +174,7 @@ class SettingsStore:
                 car.aspects.update(_sanitize_aspects(car_data["aspects"]))
             if "variant" in car_data:
                 raw = car_data["variant"]
-                car.variant = str(raw).strip()[:64] if raw else None
+                car.variant = str(raw).strip()[:64] if isinstance(raw, str) and raw else None
             self._persist()
             return self.get_cars()
 
