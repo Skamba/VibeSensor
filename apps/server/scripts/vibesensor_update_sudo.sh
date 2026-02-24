@@ -9,6 +9,8 @@ ALLOWED_CMDS=(
   "nmcli"
   "git"
   "python3"
+  "systemd-run"
+  "systemctl"
   "timeout"
   "rfkill"
 )
