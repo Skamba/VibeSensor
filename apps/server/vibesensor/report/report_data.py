@@ -316,20 +316,24 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # -- Observed signature --
     primary_candidates = top_causes or findings_non_ref
-    if primary_candidates:
-        tc = primary_candidates[0]
-        primary_source = tc.get("source") or tc.get("suspected_source")
+    primary_candidate = primary_candidates[0] if primary_candidates else None
+    if primary_candidate:
+        primary_source = primary_candidate.get("source") or primary_candidate.get(
+            "suspected_source"
+        )
         primary_system = _human_source(primary_source, tr=tr)
-        primary_location = origin_location or str(tc.get("strongest_location") or tr("UNKNOWN"))
+        primary_location = origin_location or str(
+            primary_candidate.get("strongest_location") or tr("UNKNOWN")
+        )
         primary_speed = str(
-            tc.get("strongest_speed_band")
-            or tc.get("speed_band")
-            or tc.get("dominant_speed_band")
+            primary_candidate.get("strongest_speed_band")
+            or primary_candidate.get("speed_band")
+            or primary_candidate.get("dominant_speed_band")
             or tr("UNKNOWN")
         )
-        _conf_val = _as_float(tc.get("confidence"))
+        _conf_val = _as_float(primary_candidate.get("confidence"))
         if _conf_val is None:
-            _conf_val = _as_float(tc.get("confidence_0_to_1"))
+            _conf_val = _as_float(primary_candidate.get("confidence_0_to_1"))
         conf = _conf_val if _conf_val is not None else 0.0
     else:
         primary_source = None
@@ -342,7 +346,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
     str_text = strength_text(db_val, lang=lang, peak_amp_g=peak_amp_g)
 
     steady = bool(speed_stats.get("steady_speed"))
-    weak_spatial = bool(top_causes[0].get("weak_spatial_separation") if top_causes else False)
+    weak_spatial = bool(
+        primary_candidate.get("weak_spatial_separation") if primary_candidate else False
+    )
     sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
     has_ref_gaps = _has_relevant_reference_gap(findings, primary_source)
 
@@ -433,21 +439,15 @@ def map_summary(summary: dict) -> ReportTemplateData:
     systems = [
         _human_source(c.get("source") or c.get("suspected_source"), tr=tr) for c in top_causes[:3]
     ]
-    pe_loc = (
-        str(top_causes[0].get("strongest_location") or tr("UNKNOWN"))
-        if top_causes
-        else tr("UNKNOWN")
-    )
-    pe_speed = (
-        str(top_causes[0].get("strongest_speed_band") or tr("UNKNOWN"))
-        if top_causes
-        else tr("UNKNOWN")
-    )
+    pe_loc = primary_location
+    pe_speed = primary_speed
     interp = str(origin.get("explanation", "")) if isinstance(origin, dict) else ""
     src_why = str(
-        (top_causes[0].get("source") or top_causes[0].get("suspected_source")) if top_causes else ""
+        (primary_candidate.get("source") or primary_candidate.get("suspected_source"))
+        if primary_candidate
+        else ""
     )
-    sigs_why = top_causes[0].get("signatures_observed", []) if top_causes else []
+    sigs_why = primary_candidate.get("signatures_observed", []) if primary_candidate else []
     order_lbl_why = str(sigs_why[0]) if sigs_why else None
     why_text = why_parts_listed(src_why, order_lbl_why, lang=lang)
 
@@ -473,12 +473,15 @@ def map_summary(summary: dict) -> ReportTemplateData:
     for row in (plots.get("peaks_table", []) or [])[:8]:
         if not isinstance(row, dict):
             continue
-        rank = str(int(_as_float(row.get("rank")) or 0))
-        freq = f"{(_as_float(row.get('frequency_hz')) or 0.0):.1f}"
+        rank_val = _as_float(row.get("rank"))
+        rank = str(int(rank_val)) if rank_val is not None else "—"
+        freq_val = _as_float(row.get("frequency_hz"))
+        freq = f"{freq_val:.1f}" if freq_val is not None else "—"
         classification = _peak_classification_text(row.get("peak_classification"), tr=tr)
         order_label = str(row.get("order_label") or "").strip()
         order = order_label or classification
-        amp = f"{(_as_float(row.get('p95_amp_g')) or 0.0):.4f}"
+        amp_val = _as_float(row.get("p95_amp_g"))
+        amp = f"{amp_val:.4f}" if amp_val is not None else "—"
         strength_db_val = _as_float(row.get("strength_db"))
         strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "—"
         speed = str(row.get("typical_speed_band") or "\u2014")
@@ -486,11 +489,16 @@ def map_summary(summary: dict) -> ReportTemplateData:
         score = float(_as_float(row.get("persistence_score")) or 0.0)
 
         order_lower = order.lower()
-        if "wheel" in order_lower:
+        source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()
+        if (source_hint == "wheel/tire") or ("wheel" in order_lower):
             system = tr("SOURCE_WHEEL_TIRE")
-        elif "engine" in order_lower:
+        elif (source_hint == "engine") or ("engine" in order_lower):
             system = tr("SOURCE_ENGINE")
-        elif "driveshaft" in order_lower or "drive" in order_lower:
+        elif (
+            (source_hint == "driveline")
+            or ("driveshaft" in order_lower)
+            or ("drive" in order_lower)
+        ):
             system = tr("SOURCE_DRIVELINE")
         elif "transient" in order_lower:
             system = tr("SOURCE_TRANSIENT_IMPACT")
