@@ -1,12 +1,12 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import { getCarLibraryBrands, getCarLibraryModels, getCarLibraryTypes } from "../../api";
-import type { CarLibraryModel, CarLibraryGearbox, CarLibraryTireOption } from "../../api";
+import type { CarLibraryModel, CarLibraryGearbox, CarLibraryTireOption, CarLibraryVariant } from "../../api";
 
 export interface CarsFeatureDeps {
   els: UiDomElements;
   escapeHtml: (value: unknown) => string;
   fmt: (n: number, digits?: number) => string;
-  addCarFromWizard: (name: string, carType: string, aspects: Record<string, number>) => Promise<void>;
+  addCarFromWizard: (name: string, carType: string, aspects: Record<string, number>, variant?: string) => Promise<void>;
 }
 
 export interface CarsFeature {
@@ -19,8 +19,21 @@ interface WizardState {
   carType: string;
   model: string;
   selectedModel: CarLibraryModel | null;
+  selectedVariant: CarLibraryVariant | null;
   selectedGearbox: CarLibraryGearbox | null;
   selectedTire: CarLibraryTireOption | null;
+}
+
+/** Resolve effective gearboxes for the selected variant (or base model fallback). */
+function resolveGearboxes(model: CarLibraryModel | null, variant: CarLibraryVariant | null): CarLibraryGearbox[] {
+  if (variant?.gearboxes && variant.gearboxes.length > 0) return variant.gearboxes;
+  return model?.gearboxes || [];
+}
+
+/** Resolve effective tire options for the selected variant (or base model fallback). */
+function resolveTireOptions(model: CarLibraryModel | null, variant: CarLibraryVariant | null): CarLibraryTireOption[] {
+  if (variant?.tire_options && variant.tire_options.length > 0) return variant.tire_options;
+  return model?.tire_options || [];
 }
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
@@ -31,10 +44,11 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     carType: "",
     model: "",
     selectedModel: null,
+    selectedVariant: null,
     selectedGearbox: null,
     selectedTire: null,
   };
-  const WIZARD_STEP_COUNT = 4;
+  const WIZARD_STEP_COUNT = 5;
 
   function openWizard(): void {
     wizState.step = 0;
@@ -42,6 +56,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     wizState.carType = "";
     wizState.model = "";
     wizState.selectedModel = null;
+    wizState.selectedVariant = null;
     wizState.selectedGearbox = null;
     wizState.selectedTire = null;
     if (els.addCarWizard) els.addCarWizard.hidden = false;
@@ -52,9 +67,10 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     if (els.addCarWizard) els.addCarWizard.hidden = true;
   }
 
-  function buildWizardCarName(brand: string, model: string): string {
-    if (brand) return `${brand} ${model || "Custom"}`;
-    return model || "Custom Car";
+  function buildWizardCarName(brand: string, model: string, variant: CarLibraryVariant | null): string {
+    const variantSuffix = variant ? ` ${variant.name}` : "";
+    if (brand) return `${brand} ${model || "Custom"}${variantSuffix}`;
+    return (model || "Custom Car") + variantSuffix;
   }
 
   function loadWizardStep(): void {
@@ -71,7 +87,8 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     if (wizState.step === 0) void loadBrandStep();
     else if (wizState.step === 1) void loadTypeStep();
     else if (wizState.step === 2) void loadModelStep();
-    else if (wizState.step === 3) loadGearboxStep();
+    else if (wizState.step === 3) loadVariantStep();
+    else if (wizState.step === 4) loadGearboxStep();
   }
 
   async function loadBrandStep(): Promise<void> {
@@ -128,6 +145,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
           const idx = Number(btn.getAttribute("data-idx"));
           wizState.selectedModel = models[idx] || null;
           wizState.model = wizState.selectedModel?.model || "";
+          wizState.selectedVariant = null;
           wizState.selectedTire = null;
           wizState.step = 3;
           loadWizardStep();
@@ -138,10 +156,35 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     }
   }
 
+  function loadVariantStep(): void {
+    const container = document.getElementById("wizardVariantList");
+    if (!container) return;
+    const variants: CarLibraryVariant[] = wizState.selectedModel?.variants || [];
+    if (!variants.length) {
+      // No variants defined (custom model) – skip to gearbox step
+      wizState.step = 4;
+      loadWizardStep();
+      return;
+    }
+    container.innerHTML = variants.map((v, idx) => {
+      const detail = [v.drivetrain, v.engine].filter(Boolean).join(" · ");
+      return `<button type="button" class="wiz-opt" data-idx="${idx}"><span>${escapeHtml(v.name)}</span><span class="wiz-opt-detail">${escapeHtml(detail)}</span></button>`;
+    }).join("");
+    container.querySelectorAll(".wiz-opt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.getAttribute("data-idx"));
+        wizState.selectedVariant = variants[idx] || null;
+        wizState.selectedTire = null;
+        wizState.step = 4;
+        loadWizardStep();
+      });
+    });
+  }
+
   function loadGearboxStep(): void {
     const tireContainer = document.getElementById("wizardTireList");
     if (tireContainer) {
-      const tireOptions: CarLibraryTireOption[] = wizState.selectedModel?.tire_options || [];
+      const tireOptions = resolveTireOptions(wizState.selectedModel, wizState.selectedVariant);
       if (tireOptions.length > 0) {
         tireContainer.innerHTML = tireOptions.map((to, idx) => `<button type="button" class="wiz-opt${idx === 0 ? " selected" : ""}" data-tire-idx="${idx}"><span>${escapeHtml(to.name)}</span><span class="wiz-opt-detail">${to.tire_width_mm}/${to.tire_aspect_pct}R${to.rim_in}</span></button>`).join("");
         const defaultTire = tireOptions[0];
@@ -161,7 +204,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
 
     const container = document.getElementById("wizardGearboxList");
     if (!container) return;
-    const gearboxes: CarLibraryGearbox[] = wizState.selectedModel?.gearboxes || [];
+    const gearboxes = resolveGearboxes(wizState.selectedModel, wizState.selectedVariant);
     if (!gearboxes.length) {
       container.innerHTML = "<em>No pre-defined gearboxes. Enter specs manually below.</em>";
       return;
@@ -174,14 +217,15 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         if (!gb) return;
         const tire = wizState.selectedTire || wizState.selectedModel;
         if (!tire) return;
-        const carName = `${wizState.brand} ${wizState.model}`;
+        const carName = buildWizardCarName(wizState.brand, wizState.model, wizState.selectedVariant);
+        const variantName = wizState.selectedVariant?.name;
         await ctx.addCarFromWizard(carName, wizState.carType, {
           tire_width_mm: tire.tire_width_mm,
           tire_aspect_pct: tire.tire_aspect_pct,
           rim_in: tire.rim_in,
           final_drive_ratio: gb.final_drive_ratio,
           current_gear_ratio: gb.top_gear_ratio,
-        });
+        }, variantName);
         closeWizard();
       });
     });
@@ -203,6 +247,10 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       els.wizardBackBtn.addEventListener("click", () => {
         if (wizState.step > 0) {
           wizState.step -= 1;
+          // Skip variant step when going back from gearbox if no library model selected
+          if (wizState.step === 3 && !wizState.selectedModel) {
+            wizState.step = 2;
+          }
           loadWizardStep();
         }
       });
@@ -229,7 +277,8 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       if (!val) return;
       wizState.model = val;
       wizState.selectedModel = null;
-      wizState.step = 3;
+      wizState.selectedVariant = null;
+      wizState.step = 4;
       loadWizardStep();
     });
     document.getElementById("wizardManualAddBtn")?.addEventListener("click", async () => {
@@ -239,14 +288,15 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       const fd = Number((document.getElementById("wizFinalDrive") as HTMLInputElement | null)?.value);
       const gr = Number((document.getElementById("wizGearRatio") as HTMLInputElement | null)?.value);
       if (!(tw > 0 && ta > 0 && ri > 0 && fd > 0 && gr > 0)) return;
-      const name = buildWizardCarName(wizState.brand, wizState.model);
+      const name = buildWizardCarName(wizState.brand, wizState.model, wizState.selectedVariant);
+      const variantName = wizState.selectedVariant?.name;
       await ctx.addCarFromWizard(name, wizState.carType || "Custom", {
         tire_width_mm: tw,
         tire_aspect_pct: ta,
         rim_in: ri,
         final_drive_ratio: fd,
         current_gear_ratio: gr,
-      });
+      }, variantName);
       closeWizard();
     });
   }

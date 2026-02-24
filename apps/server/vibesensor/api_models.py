@@ -321,7 +321,7 @@ class CarLibraryVariantEntry(BaseModel):
     model_config = ConfigDict(extra="allow")
     name: str
     engine: str | None = None
-    drivetrain: str | None = None
+    drivetrain: str
     gearboxes: list[CarLibraryGearboxEntry] | None = None
     tire_options: list[CarLibraryTireOptionEntry] | None = None
     tire_width_mm: float | None = None
@@ -339,7 +339,7 @@ class CarLibraryModelEntry(BaseModel):
     tire_width_mm: float
     tire_aspect_pct: float
     rim_in: float
-    variants: list[CarLibraryVariantEntry] = []
+    variants: list[CarLibraryVariantEntry]
 
 
 class CarLibraryModelsResponse(BaseModel):
