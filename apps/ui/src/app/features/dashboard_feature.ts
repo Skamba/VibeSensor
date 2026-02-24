@@ -300,7 +300,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       for (const key of ["wheel", "driveshaft", "engine", "other"] as const) {
         for (const v of state.strengthHistory[key]) { if (typeof v === "number" && v > maxDb) maxDb = v; }
       }
-      const ceiling = Math.ceil(maxDb / 10) * 10;
+      const ceiling = Math.ceil(maxDb / 10) * 10 + 5;
       state.strengthPlot.setScale("y", { min: 0, max: ceiling });
     } else {
       state.strengthPlot.setScale("y", { min: fixedStrengthDbRange[0], max: fixedStrengthDbRange[1] });
