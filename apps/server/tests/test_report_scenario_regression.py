@@ -608,7 +608,7 @@ class TestOverlapDetection:
 
         # At ~80 km/h with tire_circ ≈ 2.21m: wheel_hz ≈ 10.04, wheel_2x ≈ 20.08
         # With final_drive=3.08, gear=0.64: engine_hz ≈ 19.79
-        # These overlap (0.015 < 0.03 tol)! Query at ~20.0 Hz.
+        # These overlap (0.015 < 0.025 tol)! Query at ~20.0 Hz.
         result = classify_peak_hz(
             peak_hz=20.0,
             speed_mps=80.0 / 3.6,
@@ -618,15 +618,15 @@ class TestOverlapDetection:
                 "rim_in": 21.0,
                 "final_drive_ratio": 3.08,
                 "current_gear_ratio": 0.64,
-                "wheel_bandwidth_pct": 6.0,
-                "driveshaft_bandwidth_pct": 5.6,
-                "engine_bandwidth_pct": 6.2,
-                "speed_uncertainty_pct": 0.6,
-                "tire_diameter_uncertainty_pct": 1.2,
-                "final_drive_uncertainty_pct": 0.2,
-                "gear_uncertainty_pct": 0.5,
-                "min_abs_band_hz": 0.4,
-                "max_band_half_width_pct": 8.0,
+                "wheel_bandwidth_pct": 5.0,
+                "driveshaft_bandwidth_pct": 4.5,
+                "engine_bandwidth_pct": 5.2,
+                "speed_uncertainty_pct": 1.0,
+                "tire_diameter_uncertainty_pct": 1.0,
+                "final_drive_uncertainty_pct": 0.1,
+                "gear_uncertainty_pct": 0.2,
+                "min_abs_band_hz": 0.2,
+                "max_band_half_width_pct": 6.0,
             },
         )
         # Should detect the wheel_2x / engine_1x overlap
