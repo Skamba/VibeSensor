@@ -294,6 +294,52 @@ def test_frame_drop_per_sensor_delta_avoids_cross_sensor_overcount(tmp_path: Pat
     assert fi["state"] == "warn"
 
 
+def test_frame_drop_delta_handles_counter_resets(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_frame_counter_reset.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx, dropped_total in enumerate([5, 6, 0, 1]):
+        sample = _sample(idx, speed_kmh=80.0, dominant_freq_hz=14.0, peak_amp_g=0.05)
+        sample["client_id"] = "sensor-a"
+        sample["client_name"] = "front-left"
+        sample["frames_dropped_total"] = dropped_total
+        sample["queue_overflow_drops"] = 0
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    suitability_by_key = {
+        str(item.get("check_key")): item
+        for item in summary["run_suitability"]
+        if isinstance(item, dict)
+    }
+    fi = suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]
+    assert fi["state"] == "warn"
+    assert "2" in str(fi["explanation"])
+
+
+def test_frame_drop_delta_ignores_samples_without_client_id(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_frame_missing_client_id.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx in range(4):
+        sample = _sample(idx, speed_kmh=80.0, dominant_freq_hz=14.0, peak_amp_g=0.05)
+        sample["client_id"] = ""
+        sample["frames_dropped_total"] = idx + 1
+        sample["queue_overflow_drops"] = idx + 1
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path)
+    suitability_by_key = {
+        str(item.get("check_key")): item
+        for item in summary["run_suitability"]
+        if isinstance(item, dict)
+    }
+    fi = suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]
+    assert fi["state"] == "pass"
+
+
 def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     run_path = tmp_path / "run_missing_sample_rate.jsonl"
     records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=None)]
@@ -322,6 +368,21 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
 
     pdf = build_report_pdf(summary)
     assert pdf.startswith(b"%PDF")
+
+
+def test_data_quality_outliers_include_zero_strength_values(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_zero_strength_values.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    for idx, vib_db in enumerate([0.0, 10.0, 20.0]):
+        sample = _sample(idx, speed_kmh=50.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.05)
+        sample["vibration_strength_db"] = vib_db
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    outliers = summary["data_quality"]["outliers"]["amplitude_metric"]
+    assert outliers["count"] == 3
 
 
 def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
@@ -455,7 +516,7 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(
     strength = row["strength_bucket_distribution"]
     assert strength["total"] > 0
     assert set(strength["counts"].keys()) == {"l0", "l1", "l2", "l3", "l4", "l5"}
-    pct_sum = sum(strength[f"percent_time_l{idx}"] for idx in range(1, 6))
+    pct_sum = sum(strength[f"percent_time_l{idx}"] for idx in range(0, 6))
     assert pct_sum == pytest.approx(100.0, rel=1e-6)
 
 
@@ -493,6 +554,29 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     rows = summary["sensor_intensity_by_location"]
     assert len(rows) == 2
     assert {row["location"] for row in rows} == {"front-left wheel", "front-right wheel"}
+
+
+def test_sensor_location_stats_handle_counter_reset_and_l0_percent(tmp_path: Path) -> None:
+    run_path = tmp_path / "run_location_stats_counter_reset.jsonl"
+    records: list[dict] = [_run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
+    buckets = ["l0", "l0", "l1", "l1"]
+    dropped = [5, 6, 0, 1]
+    overflow = [1, 2, 0, 1]
+    for idx in range(4):
+        sample = _sample(idx, speed_kmh=55.0 + idx, dominant_freq_hz=18.0, peak_amp_g=0.1)
+        sample["frames_dropped_total"] = dropped[idx]
+        sample["queue_overflow_drops"] = overflow[idx]
+        sample["strength_bucket"] = buckets[idx]
+        records.append(sample)
+    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
+    _write_jsonl(run_path, records)
+
+    summary = summarize_log(run_path, include_samples=False)
+    row = summary["sensor_intensity_by_location"][0]
+    assert row["dropped_frames_delta"] == 2
+    assert row["queue_overflow_drops_delta"] == 2
+    strength = row["strength_bucket_distribution"]
+    assert strength["percent_time_l0"] == pytest.approx(50.0, rel=1e-6)
 
 
 def test_sensor_location_stats_warn_on_sparse_sensor_keeps_ranking_stable(

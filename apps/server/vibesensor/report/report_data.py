@@ -187,21 +187,19 @@ def _top_strength_values(summary: dict) -> tuple[float | None, float | None]:
             if finding.get("finding_id") != cause.get("finding_id"):
                 continue
             finding_db, finding_peak = _finding_strength_values(finding)
-            if db_value is None and finding_db is not None:
-                db_value = finding_db
+            if finding_db is not None:
+                return (finding_db, finding_peak)
             if peak_amp_g is None and finding_peak is not None:
                 peak_amp_g = finding_peak
-            if db_value is not None and peak_amp_g is not None:
-                break
-        if db_value is not None and peak_amp_g is not None:
-            break
 
-    for row in summary.get("sensor_intensity_by_location", []):
-        if isinstance(row, dict):
-            v = _as_float(row.get("p95_intensity_db"))
-            if v is not None:
-                db_value = db_value if db_value is not None else v
-                break
+    sensor_rows = [
+        _as_float(row.get("p95_intensity_db"))
+        for row in summary.get("sensor_intensity_by_location", [])
+        if isinstance(row, dict)
+    ]
+    sensor_db = max((value for value in sensor_rows if value is not None), default=None)
+    if db_value is None and sensor_db is not None:
+        db_value = sensor_db
     return (db_value, peak_amp_g)
 
 
