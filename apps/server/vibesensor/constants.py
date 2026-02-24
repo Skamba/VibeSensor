@@ -43,7 +43,7 @@ SECONDS_PER_MINUTE: Final[float] = 60.0
 HARMONIC_2X: Final[float] = 2.0
 """Multiplier for the second harmonic of a fundamental frequency."""
 
-MIN_OVERLAP_TOLERANCE: Final[float] = 0.03
+MIN_OVERLAP_TOLERANCE: Final[float] = 0.025
 """Minimum relative tolerance used when checking whether two rotational
 orders (e.g. driveshaft 1× and engine 1×) overlap in frequency."""
 
