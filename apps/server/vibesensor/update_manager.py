@@ -15,6 +15,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -35,6 +36,9 @@ GIT_OP_TIMEOUT_S = 120
 REBUILD_OP_TIMEOUT_S = 300
 """Per-rebuild-operation timeout."""
 
+REINSTALL_OP_TIMEOUT_S = 180
+"""Per-backend-reinstall timeout."""
+
 NMCLI_TIMEOUT_S = 30
 """Per-nmcli-operation timeout."""
 
@@ -48,6 +52,8 @@ HOTSPOT_RESTORE_RETRIES = 3
 HOTSPOT_RESTORE_DELAY_S = 2
 
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
+UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
+UPDATE_SERVICE_NAME = "vibesensor.service"
 
 
 # ---------------------------------------------------------------------------
@@ -781,6 +787,27 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
         self._log("Rebuild/sync completed successfully")
+        backend_target = self._backend_install_target(repo)
+        reinstall_cmd = [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-deps",
+            "-e",
+            str(backend_target),
+        ]
+        rc, _, stderr = await self._run_cmd(
+            reinstall_cmd,
+            phase="updating",
+            timeout=REINSTALL_OP_TIMEOUT_S,
+            sudo=True,
+        )
+        if rc != 0:
+            self._add_issue("updating", f"Backend reinstall failed (exit {rc})", stderr)
+            self._status.state = UpdateState.failed
+            return
+        self._log("Backend reinstall completed successfully")
 
         runtime_details = self._collect_runtime_details()
         self._status.runtime = runtime_details
@@ -808,6 +835,42 @@ class UpdateManager:
         self._status.last_success_at = time.time()
         self._status.exit_code = 0
         self._log("Update completed successfully")
+        if not await self._schedule_service_restart():
+            self._add_issue(
+                "done",
+                "Backend restart was not scheduled automatically",
+                f"Run 'sudo systemctl restart {UPDATE_SERVICE_NAME}' manually",
+            )
+            self._log("Automatic backend restart scheduling failed")
+
+    @staticmethod
+    def _backend_install_target(repo: Path) -> Path:
+        server_pkg = repo / "apps" / "server"
+        if (server_pkg / "pyproject.toml").is_file():
+            return server_pkg
+        return repo
+
+    async def _schedule_service_restart(self) -> bool:
+        # Prefer a delayed transient unit so this update task can finish cleanly
+        # before restarting the currently running service process.
+        restart_attempts = [
+            [
+                "systemd-run",
+                "--unit",
+                UPDATE_RESTART_UNIT,
+                "--on-active=2s",
+                "systemctl",
+                "restart",
+                UPDATE_SERVICE_NAME,
+            ],
+            ["systemctl", "restart", UPDATE_SERVICE_NAME],
+        ]
+        for command in restart_attempts:
+            rc, _, _ = await self._run_cmd(command, phase="done", timeout=30, sudo=True)
+            if rc == 0:
+                self._log("Scheduled backend service restart")
+                return True
+        return False
 
     def _collect_runtime_details(self) -> dict[str, Any]:
         repo = Path(self._repo_path)

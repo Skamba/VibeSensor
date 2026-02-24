@@ -24,6 +24,14 @@ UI_HASH_FILE="${CACHE_DIR}/ui-build.hash"
 SERVER_DEPS_HASH_FILE="${CACHE_DIR}/server-deps.hash"
 # Set CLEAN=1 to force a full rebuild from scratch (default: incremental, reuses stage0-2)
 CLEAN="${CLEAN:-0}"
+RASPBIAN_MIRROR="${RASPBIAN_MIRROR:-}"
+RASPBIAN_MIRROR_FALLBACKS=(
+  "http://raspbian.raspberrypi.com/raspbian/"
+  "http://mirror.init7.net/raspbian/raspbian/"
+  "http://mirrors.ustc.edu.cn/raspbian/raspbian/"
+  "http://ftp.halifax.rwth-aachen.de/raspbian/raspbian/"
+  "http://mirror.ox.ac.uk/sites/archive.raspbian.org/archive/raspbian/"
+)
 
 if [ "${USE_QEMU:-0}" = "1" ]; then
   IMG_SUFFIX="${IMG_SUFFIX_BASE}-qemu"
@@ -42,6 +50,7 @@ require_cmd git
 require_cmd docker
 require_cmd rsync
 require_cmd sudo
+require_cmd curl
 require_cmd losetup
 require_cmd mount
 require_cmd umount
@@ -60,6 +69,49 @@ mkdir -p "${CACHE_DIR}" "${OUT_DIR}"
 if [ "${FAST}" = "1" ]; then
   VALIDATE=0
 fi
+
+normalize_mirror() {
+  local value="$1"
+  value="${value%/}/"
+  printf '%s\n' "${value}"
+}
+
+mirror_release_url() {
+  local base="$1"
+  printf '%sdists/%s/Release\n' "$(normalize_mirror "${base}")" "${PI_GEN_REF}"
+}
+
+probe_mirror() {
+  local base="$1"
+  local release_url
+  release_url="$(mirror_release_url "${base}")"
+  curl -fsI --max-time 10 "${release_url}" >/dev/null 2>&1
+}
+
+select_raspbian_mirror() {
+  local candidate=""
+  if [ -n "${RASPBIAN_MIRROR}" ]; then
+    candidate="$(normalize_mirror "${RASPBIAN_MIRROR}")"
+    if ! probe_mirror "${candidate}"; then
+      echo "Configured RASPBIAN_MIRROR is unreachable: ${candidate}"
+      exit 1
+    fi
+    printf '%s\n' "${candidate}"
+    return 0
+  fi
+
+  for candidate in "${RASPBIAN_MIRROR_FALLBACKS[@]}"; do
+    if probe_mirror "${candidate}"; then
+      printf '%s\n' "$(normalize_mirror "${candidate}")"
+      return 0
+    fi
+  done
+  echo "No reachable Raspbian mirror found."
+  exit 1
+}
+
+RASPBIAN_MIRROR="$(select_raspbian_mirror)"
+echo "Using Raspbian mirror: ${RASPBIAN_MIRROR}"
 
 compute_ui_hash() {
   (
@@ -143,6 +195,15 @@ else
   git -C "${PI_GEN_DIR}" reset --hard FETCH_HEAD
 fi
 
+# pi-gen contains multiple hardcoded Raspbian source definitions (debootstrap,
+# apt sources templates, and export-time source regeneration). Rewrite all to
+# the selected reachable mirror.
+while IFS= read -r mirror_file; do
+  sed -i \
+    -E "s#http://raspbian\\.raspberrypi\\.com/raspbian/#${RASPBIAN_MIRROR}#g" \
+    "${mirror_file}"
+done < <(rg -l "http://raspbian\\.raspberrypi\\.com/raspbian/" "${PI_GEN_DIR}")
+
 rm -rf "${STAGE_DIR}"
 mkdir -p "${STAGE_REPO_DIR}"
 
@@ -153,8 +214,16 @@ cat >"${STAGE_DIR}/prerun.sh" <<'EOF'
 # incremental builds (with stage0/1/2 skipped) still produce a correct image.
 rm -rf "${ROOTFS_DIR}"
 copy_previous
+
+# Retarget stale apt source entries in reused rootfs snapshots when upstream
+# mirrors are unavailable.
+if [ -d "${ROOTFS_DIR}/etc/apt" ]; then
+  find "${ROOTFS_DIR}/etc/apt" -type f \( -name '*.list' -o -name '*.sources' \) -print0 \
+    | xargs -0 -r sed -i 's#http://raspbian.raspberrypi.com/raspbian/#__RASPBIAN_MIRROR__#g'
+fi
 EOF
 chmod +x "${STAGE_DIR}/prerun.sh"
+sed -i "s#__RASPBIAN_MIRROR__#${RASPBIAN_MIRROR}#g" "${STAGE_DIR}/prerun.sh"
 
 rsync -a --delete \
   --exclude ".venv/" \

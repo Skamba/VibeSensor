@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import enum
+import importlib.util
 import logging
 import os
 import shutil
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -13,6 +15,18 @@ from typing import Any
 LOGGER = logging.getLogger(__name__)
 
 _FLASH_HISTORY_LIMIT = 10
+
+
+def _platformio_base_cmd() -> list[str] | None:
+    pio = shutil.which("pio")
+    if pio:
+        return [pio]
+    platformio = shutil.which("platformio")
+    if platformio:
+        return [platformio]
+    if importlib.util.find_spec("platformio") is not None:
+        return [sys.executable, "-m", "platformio"]
+    return None
 
 
 class EspFlashState(enum.StrEnum):
@@ -99,7 +113,10 @@ class SerialPortProvider:
     """Serial port discovery abstraction for testability."""
 
     async def list_ports(self) -> list[SerialPortInfo]:
-        args = ["pio", "device", "list", "--json-output"]
+        base_cmd = _platformio_base_cmd()
+        if base_cmd is None:
+            return []
+        args = [*base_cmd, "device", "list", "--json-output"]
         try:
             proc = await asyncio.create_subprocess_exec(
                 *args,
@@ -295,9 +312,10 @@ class EspFlashManager:
             self._history = self._history[:_FLASH_HISTORY_LIMIT]
 
     async def _run_flash_job(self) -> None:
-        if not shutil.which("pio"):
+        pio_cmd = _platformio_base_cmd()
+        if pio_cmd is None:
             self._status.exit_code = 127
-            self._append_log("PlatformIO not found. Install pio to flash firmware.")
+            self._append_log("PlatformIO not found. Install platformio to flash firmware.")
             self._finalize(state=EspFlashState.failed, error="PlatformIO (pio) is not installed")
             return
         if not self._firmware_dir.is_dir():
@@ -317,7 +335,7 @@ class EspFlashManager:
             return
 
         self._status.selected_port = selected_port
-        base = ["pio", "run", "-d", str(self._firmware_dir)]
+        base = [*pio_cmd, "run", "-d", str(self._firmware_dir)]
         port_args = ["--upload-port", selected_port]
 
         erase_rc = await self._run_flash_step("erasing", [*base, "-t", "erase", *port_args])
