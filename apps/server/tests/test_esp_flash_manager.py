@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
@@ -194,3 +195,30 @@ async def test_esp_flash_api_rejects_concurrent_start(tmp_path, monkeypatch) -> 
     manager.cancel()
     assert manager._task is not None
     await manager._task
+
+
+@pytest.mark.asyncio
+async def test_flash_uses_python_module_fallback_when_pio_binary_missing(
+    tmp_path, monkeypatch
+) -> None:
+    def _which(name: str) -> str | None:
+        return None
+
+    monkeypatch.setattr("shutil.which", _which)
+    monkeypatch.setattr(
+        "importlib.util.find_spec",
+        lambda name: SimpleNamespace() if name == "platformio" else None,
+    )
+    runner = _FakeRunner()
+    mgr = EspFlashManager(
+        runner=runner,
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(_make_repo(tmp_path)),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "success"
+    first = runner.calls[0]
+    assert Path(first[0]).name.startswith("python")
+    assert first[1:4] == ["-m", "platformio", "run"]

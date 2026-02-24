@@ -62,9 +62,11 @@ def _mock_which(name: str) -> str | None:
 
 def _seed_runtime_artifacts(repo: Path, mgr: UpdateManager, *, valid: bool = True) -> None:
     (repo / "apps" / "ui" / "src").mkdir(parents=True, exist_ok=True)
+    (repo / "apps" / "server").mkdir(parents=True, exist_ok=True)
     (repo / "apps" / "server" / "public").mkdir(parents=True, exist_ok=True)
     (repo / "tools").mkdir(parents=True, exist_ok=True)
     (repo / "tools" / "sync_ui_to_pi_public.py").write_text("#!/usr/bin/env python3\n")
+    (repo / "apps" / "server" / "pyproject.toml").write_text("[project]\nname='vibesensor'\n")
     (repo / "apps" / "ui" / "src" / "main.ts").write_text("console.log('ui')\n")
     (repo / "apps" / "ui" / "package.json").write_text('{"name":"ui"}\n')
     (repo / "apps" / "ui" / "package-lock.json").write_text('{"name":"ui","lockfileVersion":3}\n')
@@ -365,6 +367,16 @@ class TestUpdateManagerAsync:
         assert mgr.status.exit_code == 0
         assert mgr.status.runtime.get("assets_verified") is True
         assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
+        assert any(
+            " -m pip install --no-deps -e " in f" {' '.join(c[0])} "
+            and str(repo / "apps" / "server") in " ".join(c[0])
+            for c in runner.calls
+        )
+        restart_cmd = (
+            "systemd-run --unit vibesensor-post-update-restart --on-active=2s "
+            "systemctl restart vibesensor.service"
+        )
+        assert any(restart_cmd in " ".join(c[0]) for c in runner.calls)
         sudo_git_calls = [
             c[0]
             for c in runner.calls
