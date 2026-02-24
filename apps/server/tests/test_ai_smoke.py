@@ -51,3 +51,4 @@ def test_smoke_server_pyproject_includes_platformio_for_esp_flash() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     text = pyproject.read_text(encoding="utf-8")
     assert "platformio" in text, "Server dependencies must include platformio for ESP flash"
+    assert "esptool" in text, "Server dependencies must include esptool for offline ESP flash"
