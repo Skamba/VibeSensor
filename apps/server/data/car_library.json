@@ -50,8 +50,8 @@
         "drivetrain": "RWD"
       },
       {
-        "name": "M140i",
-        "engine": "B58 3.0L I6 Turbo",
+        "name": "114i",
+        "engine": "1.6L",
         "drivetrain": "RWD"
       }
     ]
@@ -62,13 +62,13 @@
     "model": "1 Series (F40, 2019-2025)",
     "gearboxes": [
       {
-        "name": "8-speed automatic (ZF 8HP)",
-        "final_drive_ratio": 3.077,
-        "top_gear_ratio": 0.667
+        "name": "8-speed Steptronic Sport transmission",
+        "final_drive_ratio": 3.075,
+        "top_gear_ratio": 0.673
       },
       {
-        "name": "7-speed dual-clutch (DKG)",
-        "final_drive_ratio": 3.636,
+        "name": "7-speed Steptronic dual-clutch transmission",
+        "final_drive_ratio": 3.684,
         "top_gear_ratio": 0.71
       }
     ],
@@ -105,11 +105,6 @@
         "name": "120i",
         "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "FWD"
-      },
-      {
-        "name": "M135i xDrive",
-        "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -164,8 +159,18 @@
         "drivetrain": "RWD"
       },
       {
-        "name": "M240i",
-        "engine": "B58 3.0L I6 Turbo",
+        "name": "228i",
+        "engine": "B48B20 2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M2",
+        "engine": "B58B30O0 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M2 Competition",
+        "engine": "N55B30T0 3.0L I6 Turbo",
         "drivetrain": "RWD"
       }
     ]
@@ -219,11 +224,6 @@
         "name": "230i",
         "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "RWD"
-      },
-      {
-        "name": "M240i xDrive",
-        "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -238,9 +238,9 @@
         "top_gear_ratio": 0.674
       },
       {
-        "name": "6-speed automatic (Aisin)",
-        "final_drive_ratio": 3.416,
-        "top_gear_ratio": 0.825
+        "name": "6-speed Steptronic (225xe iPerformance)",
+        "final_drive_ratio": 3.944,
+        "top_gear_ratio": 0.672
       }
     ],
     "tire_options": [
@@ -280,6 +280,56 @@
       {
         "name": "225xe",
         "engine": "B38 1.5L I3 Turbo PHEV",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "216i",
+        "engine": "B38A15U0 I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "225i",
+        "engine": "B48A20O0 I4 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "214d",
+        "engine": "B37C15 I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "216d",
+        "engine": "B37C15 I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "218d",
+        "engine": "B37C15 I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "220d",
+        "engine": "B47C20 I4 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "223i",
+        "engine": "B38A15M2 I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "223i xDrive",
+        "engine": "B48A20M2 I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "230xe",
+        "engine": "B38A15 I3 Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "223d xDrive",
+        "engine": "B47C20 I4 Turbo",
         "drivetrain": "AWD"
       }
     ]
@@ -409,21 +459,54 @@
         ]
       },
       {
-        "name": "M340i",
-        "engine": "B58 3.0L I6 Turbo",
+        "name": "318i",
+        "engine": "I3",
         "drivetrain": "RWD"
       },
       {
-        "name": "M340i xDrive",
-        "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "AWD",
-        "gearboxes": [
-          {
-            "name": "8-speed automatic (ZF 8HP)",
-            "final_drive_ratio": 3.077,
-            "top_gear_ratio": 0.667
-          }
-        ]
+        "name": "320e",
+        "engine": "1.6L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "330e",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "316d",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "318d",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "320d",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "320Li",
+        "engine": "I3",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "325Li",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "330Li",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "320Ld",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -473,13 +556,58 @@
         "drivetrain": "RWD"
       },
       {
+        "name": "420i xDrive",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
         "name": "430i",
         "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "RWD"
       },
       {
+        "name": "430i xDrive",
+        "engine": "B48 2.0L I4 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
         "name": "440i",
         "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "440i xDrive",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "418i",
+        "engine": "1.5L I3 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "428i",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "435i",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M4",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "430d",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "435d",
+        "engine": "3.0L I6 Turbo",
         "drivetrain": "RWD"
       }
     ]
@@ -528,11 +656,6 @@
         "name": "430i",
         "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "RWD"
-      },
-      {
-        "name": "M440i xDrive",
-        "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -594,6 +717,11 @@
       {
         "name": "550i",
         "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M5",
+        "engine": "S63B44TU V8 Turbo",
         "drivetrain": "RWD"
       }
     ]
@@ -659,9 +787,29 @@
         "drivetrain": "AWD"
       },
       {
-        "name": "M550i xDrive",
-        "engine": "N63 4.4L V8 Turbo",
+        "name": "520e",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "530e",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "545e xDrive",
+        "engine": "3.0L I6 Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "518d",
+        "engine": "4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "523d",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -672,7 +820,7 @@
     "gearboxes": [
       {
         "name": "8-speed automatic (ZF 8HP)",
-        "final_drive_ratio": 2.813,
+        "final_drive_ratio": 3.077,
         "top_gear_ratio": 0.64
       }
     ],
@@ -706,16 +854,6 @@
         "drivetrain": "RWD"
       },
       {
-        "name": "530i xDrive",
-        "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "AWD"
-      },
-      {
-        "name": "540i xDrive",
-        "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "AWD"
-      },
-      {
         "name": "i5 eDrive40",
         "engine": "Electric Single Motor",
         "drivetrain": "RWD"
@@ -733,8 +871,13 @@
     "model": "6 Series Gran Coupe (F06, 2013-2018)",
     "gearboxes": [
       {
-        "name": "8-speed automatic (ZF 8HP)",
-        "final_drive_ratio": 3.077,
+        "name": "8-speed automatic (ZF 8HP) - 640i/640i xDrive (official BMW 12/2014 tech sheet)",
+        "final_drive_ratio": 3.231,
+        "top_gear_ratio": 0.667
+      },
+      {
+        "name": "8-speed automatic (ZF 8HP) - 650i/650i xDrive/640d/640d xDrive (official BMW 12/2014 tech sheet)",
+        "final_drive_ratio": 2.813,
         "top_gear_ratio": 0.667
       }
     ],
@@ -773,9 +916,24 @@
         "drivetrain": "AWD"
       },
       {
+        "name": "640d",
+        "engine": "N57 3.0L I6 Twin-Turbo Diesel",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "640d xDrive",
+        "engine": "N57 3.0L I6 Twin-Turbo Diesel",
+        "drivetrain": "AWD"
+      },
+      {
         "name": "650i",
         "engine": "N63 4.4L V8 Turbo",
         "drivetrain": "RWD"
+      },
+      {
+        "name": "650i xDrive",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -820,8 +978,38 @@
         "drivetrain": "RWD"
       },
       {
+        "name": "640i",
+        "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
         "name": "640i xDrive",
         "engine": "B58 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "630i xDrive",
+        "engine": "B58B30 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "620d",
+        "engine": "",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "630d",
+        "engine": "B57D30 3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "630d xDrive",
+        "engine": "B57D30 3.0L I6 Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "640d xDrive",
+        "engine": "B57D30 3.0L I6 Turbo",
         "drivetrain": "AWD"
       }
     ]
@@ -875,6 +1063,21 @@
         "name": "750i xDrive",
         "engine": "N63 4.4L V8 Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "730i",
+        "engine": "3.0L I6",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "760i",
+        "engine": "6.0L V12 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "750d",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -926,6 +1129,81 @@
       {
         "name": "745e",
         "engine": "B58 3.0L I6 Turbo PHEV",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "750i",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "730i",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "740e",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "725d",
+        "engine": "4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "730d",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "740d",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "750d",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "730Li",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "740Li",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "740Le",
+        "engine": "2.0L I4 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "745Le",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "725Ld",
+        "engine": "4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "730Ld",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "740Ld",
+        "engine": "3.0L I6 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "750Ld",
+        "engine": "3.0L I6 Turbo",
         "drivetrain": "RWD"
       }
     ]
@@ -984,6 +1262,11 @@
         "name": "i7 M70 xDrive",
         "engine": "Electric Dual Motor",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "760i",
+        "engine": "N63 4.4L V8 Turbo",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -1028,9 +1311,19 @@
         "drivetrain": "RWD"
       },
       {
-        "name": "M850i xDrive",
-        "engine": "N63 4.4L V8 Turbo",
+        "name": "840i xDrive",
+        "engine": "V8",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "M8",
+        "engine": "4.4L V8 Turbo",
+        "drivetrain": "RWD"
+      },
+      {
+        "name": "M8 Competition",
+        "engine": "4.4L V8 Turbo",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -1073,11 +1366,6 @@
         "name": "840i",
         "engine": "B58 3.0L I6 Turbo",
         "drivetrain": "RWD"
-      },
-      {
-        "name": "M850i xDrive",
-        "engine": "N63 4.4L V8 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -1120,11 +1408,6 @@
         "name": "840i",
         "engine": "B58 3.0L I6 Turbo",
         "drivetrain": "RWD"
-      },
-      {
-        "name": "M850i xDrive",
-        "engine": "N63 4.4L V8 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -1182,6 +1465,36 @@
         "name": "xDrive25i",
         "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "sDrive20i",
+        "engine": "1.5L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive25e",
+        "engine": "1.5L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "sDrive16d",
+        "engine": "B46A20O0",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "sDrive18d",
+        "engine": "1.5L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "sDrive20d",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive25d",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -1286,6 +1599,46 @@
         "name": "xDrive20i",
         "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "sDrive20i",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive25e",
+        "engine": "1.5L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "sDrive28i",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive28i",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "sDrive16d",
+        "engine": "1.5L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "sDrive18d",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive20d",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "xDrive25d",
+        "engine": "2.0L",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -1447,11 +1800,6 @@
         "name": "xDrive30i",
         "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "AWD"
-      },
-      {
-        "name": "M40i",
-        "engine": "B58 3.0L I6 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -1504,6 +1852,11 @@
         "name": "M50 xDrive",
         "engine": "S58 3.0L I6 Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "M50",
+        "engine": "S58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -1602,11 +1955,6 @@
       {
         "name": "xDrive30i",
         "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "AWD"
-      },
-      {
-        "name": "M40i",
-        "engine": "B58 3.0L I6 Turbo",
         "drivetrain": "AWD"
       }
     ]
@@ -1707,11 +2055,6 @@
         "name": "xDrive45e",
         "engine": "B58 3.0L I6 Turbo PHEV",
         "drivetrain": "AWD"
-      },
-      {
-        "name": "M50i",
-        "engine": "N63 4.4L V8 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -1801,11 +2144,6 @@
         "name": "xDrive40i",
         "engine": "B58 3.0L I6 Turbo",
         "drivetrain": "AWD"
-      },
-      {
-        "name": "M50i",
-        "engine": "N63 4.4L V8 Turbo",
-        "drivetrain": "AWD"
       }
     ]
   },
@@ -1852,11 +2190,6 @@
       {
         "name": "xDrive40d",
         "engine": "B57 3.0L I6 Diesel",
-        "drivetrain": "AWD"
-      },
-      {
-        "name": "M60i xDrive",
-        "engine": "S68 4.4L V8 Turbo",
         "drivetrain": "AWD"
       }
     ]
@@ -1909,11 +2242,6 @@
       {
         "name": "sDrive30i",
         "engine": "B48 2.0L I4 Turbo",
-        "drivetrain": "RWD"
-      },
-      {
-        "name": "M40i",
-        "engine": "B58 3.0L I6 Turbo",
         "drivetrain": "RWD"
       }
     ]
@@ -2149,6 +2477,11 @@
             "top_gear_ratio": 0.667
           }
         ]
+      },
+      {
+        "name": "M4 Competition",
+        "engine": "S58 3.0L I6 Turbo",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -2567,6 +2900,11 @@
         "name": "3.0 TFSI quattro",
         "engine": "3.0L V6 Supercharged",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TFSI",
+        "engine": "3.0L V6 Supercharged",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2645,6 +2983,11 @@
             "top_gear_ratio": 0.734
           }
         ]
+      },
+      {
+        "name": "45 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2702,6 +3045,11 @@
         "name": "3.0 TDI quattro",
         "engine": "3.0L V6 TDI Diesel",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TDI",
+        "engine": "3.0L V6 TDI Diesel",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2806,6 +3154,16 @@
         "name": "3.0 TDI quattro",
         "engine": "3.0L V6 TDI Diesel",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TFSI",
+        "engine": "3.0L V6 Supercharged",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "3.0 TDI",
+        "engine": "3.0L V6 TDI Diesel",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2858,6 +3216,16 @@
         "name": "55 TFSI quattro",
         "engine": "3.0L V6 TFSI Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "45 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "55 TFSI",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2905,6 +3273,16 @@
         "name": "3.0 TDI quattro",
         "engine": "3.0L V6 TDI Diesel",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TFSI",
+        "engine": "3.0L V6 Supercharged",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "3.0 TDI",
+        "engine": "3.0L V6 TDI Diesel",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2952,6 +3330,16 @@
         "name": "55 TFSI quattro",
         "engine": "3.0L V6 TFSI Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "45 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "55 TFSI",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -2999,6 +3387,16 @@
         "name": "4.0 TFSI quattro",
         "engine": "4.0L V8 Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TFSI",
+        "engine": "3.0L V6 Supercharged",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "4.0 TFSI",
+        "engine": "4.0L V8 Turbo",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3051,6 +3449,21 @@
         "name": "60 TFSI e quattro",
         "engine": "3.0L V6 TFSI Turbo PHEV",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "50 TFSI",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "55 TFSI",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "60 TFSI e",
+        "engine": "3.0L V6 TFSI Turbo PHEV",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3155,6 +3568,11 @@
         "name": "2.0 TFSI quattro",
         "engine": "2.0L I4 TFSI Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "2.0 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3206,6 +3624,11 @@
       {
         "name": "45 TFSI e",
         "engine": "1.4L I4 TFSI Turbo PHEV",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "40 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
         "drivetrain": "FWD"
       }
     ]
@@ -3264,6 +3687,11 @@
         "name": "3.0 TDI quattro",
         "engine": "3.0L V6 TDI Diesel",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "3.0 TDI",
+        "engine": "3.0L V6 TDI Diesel",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3323,6 +3751,16 @@
         "name": "55 TFSI e quattro",
         "engine": "2.0L I4 TFSI Turbo PHEV",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "45 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "55 TFSI e",
+        "engine": "2.0L I4 TFSI Turbo PHEV",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3375,6 +3813,21 @@
         "name": "55 TFSI e quattro",
         "engine": "3.0L V6 TFSI Turbo PHEV",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "45 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "55 TFSI",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "55 TFSI e",
+        "engine": "3.0L V6 TFSI Turbo PHEV",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3422,6 +3875,16 @@
         "name": "60 TFSI e quattro",
         "engine": "3.0L V6 TFSI Turbo PHEV",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "55 TFSI",
+        "engine": "3.0L V6 TFSI Turbo",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "60 TFSI e",
+        "engine": "3.0L V6 TFSI Turbo PHEV",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3526,6 +3989,11 @@
         "name": "45 TFSI quattro",
         "engine": "2.0L I4 TFSI Turbo",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "45 TFSI",
+        "engine": "2.0L I4 TFSI Turbo",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3567,6 +4035,11 @@
         "name": "V10 quattro",
         "engine": "5.2L V10 NA",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "V10",
+        "engine": "5.2L V10 NA",
+        "drivetrain": "RWD"
       }
     ]
   },
@@ -3674,6 +4147,36 @@
       {
         "name": "RS 5",
         "engine": "2.9L V6 TFSI Turbo",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "1.8 TFSI",
+        "engine": "1.8 TFSI",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "3.0 TFSI quattro",
+        "engine": "3.0 TFSI quattro",
+        "drivetrain": "AWD"
+      },
+      {
+        "name": "2.0 TDI",
+        "engine": "2.0 TDI",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.0 TDI e",
+        "engine": "2.0 TDI e",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "2.7 TDI",
+        "engine": "2.7 TDI",
+        "drivetrain": "FWD"
+      },
+      {
+        "name": "3.0 TDI quattro",
+        "engine": "3.0 TDI quattro",
         "drivetrain": "AWD"
       }
     ]
@@ -3788,6 +4291,11 @@
         "name": "RS e-tron GT",
         "engine": "Electric Dual Motor (Performance)",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "e-tron GT",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "FWD"
       }
     ]
   },
@@ -3829,6 +4337,11 @@
         "name": "50 e-tron quattro",
         "engine": "Electric Dual Motor",
         "drivetrain": "AWD"
+      },
+      {
+        "name": "50 e-tron",
+        "engine": "Electric Dual Motor",
+        "drivetrain": "RWD"
       }
     ]
   }
