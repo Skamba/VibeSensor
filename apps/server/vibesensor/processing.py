@@ -491,16 +491,13 @@ class SignalProcessor:
             and buf.cached_spectrum_payload_generation == buf.spectrum_generation
         ):
             return buf.cached_spectrum_payload
+        _empty = np.array([], dtype=np.float32)
         payload = {
-            "x": self._float_list(buf.latest_spectrum["x"]["amp"]),
-            "y": self._float_list(buf.latest_spectrum["y"]["amp"]),
-            "z": self._float_list(buf.latest_spectrum["z"]["amp"]),
+            "x": self._float_list(buf.latest_spectrum.get("x", {}).get("amp", _empty)),
+            "y": self._float_list(buf.latest_spectrum.get("y", {}).get("amp", _empty)),
+            "z": self._float_list(buf.latest_spectrum.get("z", {}).get("amp", _empty)),
             "combined_spectrum_amp_g": (
-                self._float_list(
-                    buf.latest_spectrum.get("combined", {}).get(
-                        "amp", np.array([], dtype=np.float32)
-                    )
-                )
+                self._float_list(buf.latest_spectrum.get("combined", {}).get("amp", _empty))
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
@@ -589,10 +586,13 @@ class SignalProcessor:
 
         spectrum: dict[str, Any] = {}
         if buf.latest_spectrum:
-            freq = buf.latest_spectrum["x"]["freq"]
+            x_axis = buf.latest_spectrum.get("x", {})
+            freq = x_axis.get("freq", np.array([], dtype=np.float32))
             spectrum["freq"] = self._float_list(freq)
             for axis in AXES:
-                spectrum[axis] = self._float_list(buf.latest_spectrum[axis]["amp"])
+                axis_data = buf.latest_spectrum.get(axis, {})
+                _empty = np.array([], dtype=np.float32)
+                spectrum[axis] = self._float_list(axis_data.get("amp", _empty))
             combined = buf.latest_spectrum.get("combined")
             spectrum["combined_spectrum_amp_g"] = (
                 self._float_list(combined["amp"])

@@ -13,7 +13,7 @@ from fastapi import WebSocket
 LOGGER = logging.getLogger(__name__)
 
 
-def sanitize_for_json(obj: Any) -> Any:
+def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
     """Recursively replace non-finite floats (NaN, Inf, -Inf) with ``None``.
 
     This ensures the resulting structure can be serialised with

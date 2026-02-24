@@ -99,8 +99,14 @@ def parse_port53_conflict(ss_stdout: str) -> str | None:
         if "dnsmasq" in lowered and "networkmanager" in lowered:
             continue
         if "users:(" in lowered:
-            proc = line.split('users:("', maxsplit=1)[1].split('"', maxsplit=1)[0]
-            conflict_names.append(proc)
+            # Real ss output uses double-parens: users:(("name",pid=…))
+            # Older or alternative formats may use single-paren: users:("name",…)
+            for delimiter in ('users:(("', 'users:("'):
+                parts = line.split(delimiter, maxsplit=1)
+                if len(parts) == 2:
+                    proc = parts[1].split('"', maxsplit=1)[0]
+                    conflict_names.append(proc)
+                    break
     if not conflict_names:
         return None
     return ",".join(sorted(set(conflict_names)))
