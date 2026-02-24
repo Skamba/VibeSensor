@@ -73,8 +73,9 @@ def _pdf_mentions_frequency(text: str, hz: float) -> bool:
     """Return True when PDF text mentions *hz* with rounding tolerance.
 
     PDF rendering can round frequencies differently (1–2 decimals, integer, or
-    locale decimal comma). Keep the check strict to `hz` context by requiring
-    the token to appear next to an `hz` unit marker.
+    locale decimal comma). Accepts both:
+    - adjacent-unit form (additional observations): "13.0 hz"
+    - bare decimal form (peaks table column values): "13.0"
     """
     if hz <= 0:
         return False
@@ -95,7 +96,14 @@ def _pdf_mentions_frequency(text: str, hz: float) -> bool:
     tokens_with_comma = {t.replace(".", ",") for t in tokens if "." in t}
     all_tokens = tokens | tokens_with_comma
 
-    return any((f"{token} hz" in lowered) or (f"{token}hz" in compact) for token in all_tokens)
+    # Adjacent-unit check: "13.0 hz" or "13.0hz" (additional observations section)
+    if any((f"{token} hz" in lowered) or (f"{token}hz" in compact) for token in all_tokens):
+        return True
+
+    # Bare decimal check: peaks table renders frequencies without a unit suffix.
+    # Only match period-decimal tokens (from the original tokens set, not comma
+    # variants) to stay locale-neutral and avoid colliding with "13%".
+    return any(token in lowered for token in tokens if "." in token)
 
 
 def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None:
@@ -717,15 +725,13 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
         assert sensor_rows
         assert len(rows) == int(export_json.get("sample_count", -1))
 
-        fft = analysis.get("plots", {}).get("fft_spectrum", [])
-        if fft:
-            top_fft = max(
-                fft,
-                key=lambda item: float(item[1] if isinstance(item, list) else item.get("amp") or 0),
-            )
-            peak_hz = float(top_fft[0] if isinstance(top_fft, list) else top_fft.get("hz") or 0)
+        # The PDF renders frequencies from the persistence-ranked peaks_table, not
+        # from the raw fft_spectrum top amplitude (which may be a transient spike).
+        peaks_table = analysis.get("plots", {}).get("peaks_table", [])
+        if peaks_table and isinstance(peaks_table[0], dict):
+            peak_hz = float(peaks_table[0].get("frequency_hz") or 0)
             assert _pdf_mentions_frequency(text, peak_hz), (
-                f"PDF missing expected FFT peak frequency mention near {peak_hz:.2f} Hz"
+                f"PDF missing expected peaks-table top frequency {peak_hz:.2f} Hz"
             )
 
         _assert_no_placeholders(text)
