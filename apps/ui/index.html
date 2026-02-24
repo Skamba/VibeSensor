@@ -261,6 +261,7 @@
                 <span class="wizard-step-dot" data-step="1">2</span>
                 <span class="wizard-step-dot" data-step="2">3</span>
                 <span class="wizard-step-dot" data-step="3">4</span>
+                <span class="wizard-step-dot" data-step="4">5</span>
               </div>
 
               <!-- Step 1: Brand -->
@@ -296,8 +297,14 @@
                 </div>
               </div>
 
-              <!-- Step 4: Wheels & Gearbox -->
+              <!-- Step 4: Variant -->
               <div id="wizardStep3" class="wizard-step">
+                <h3 data-i18n="settings.car.step_variant">Select Variant</h3>
+                <div class="wizard-options wizard-options--list" id="wizardVariantList"></div>
+              </div>
+
+              <!-- Step 5: Wheels & Gearbox -->
+              <div id="wizardStep4" class="wizard-step">
                 <h3 data-i18n="settings.car.step_wheels">Select Wheels</h3>
                 <div class="wizard-options" id="wizardTireList"></div>
                 <h3 data-i18n="settings.car.step_gearbox" class="wizard-section-title">Select Gearbox</h3>

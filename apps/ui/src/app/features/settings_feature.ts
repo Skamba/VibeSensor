@@ -34,7 +34,7 @@ export interface SettingsFeature {
   saveSpeedSourceFromInputs(): void;
   saveHeaderManualSpeedFromInput(): void;
   bindSettingsTabs(): void;
-  addCarFromWizard(name: string, carType: string, aspects: Record<string, number>): Promise<void>;
+  addCarFromWizard(name: string, carType: string, aspects: Record<string, number>, variant?: string): Promise<void>;
   startGpsStatusPolling(): void;
   stopGpsStatusPolling(): void;
 }
@@ -287,10 +287,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     });
   }
 
-  async function addCarFromWizard(name: string, carType: string, aspects: Record<string, number>): Promise<void> {
+  async function addCarFromWizard(name: string, carType: string, aspects: Record<string, number>, variant?: string): Promise<void> {
     try {
       const fullAspects = { ...state.vehicleSettings, ...aspects };
-      const result = await addSettingsCar({ name, type: carType, aspects: fullAspects }) as Record<string, any>;
+      const payload: Record<string, unknown> = { name, type: carType, aspects: fullAspects };
+      if (variant) payload.variant = variant;
+      const result = await addSettingsCar(payload) as Record<string, any>;
       if (result?.cars) {
         state.cars = result.cars;
         const newCar = result.cars[result.cars.length - 1];

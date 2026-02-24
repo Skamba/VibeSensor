@@ -38,3 +38,37 @@ def get_types_for_brand(brand: str) -> list[str]:
 def get_models_for_brand_type(brand: str, car_type: str) -> list[dict]:
     """Return all library entries matching *brand* and *car_type*."""
     return [e for e in CAR_LIBRARY if e["brand"] == brand and e["type"] == car_type]
+
+
+def get_variants_for_model(brand: str, car_type: str, model: str) -> list[dict]:
+    """Return the variants list for a specific model, or [] if none."""
+    for e in CAR_LIBRARY:
+        if e["brand"] == brand and e["type"] == car_type and e["model"] == model:
+            return list(e.get("variants") or [])
+    return []
+
+
+def resolve_variant(
+    base_entry: dict,
+    variant_name: str | None,
+) -> dict:
+    """Merge a variant's overrides onto a base model entry.
+
+    Returns a new dict with the effective gearboxes, tire_options, and
+    default tire specs.  Unknown *variant_name* or ``None`` returns a copy
+    of the base entry (safe default for backward compat).
+    """
+    result = dict(base_entry)
+    if not variant_name:
+        return result
+    for v in base_entry.get("variants") or []:
+        if v.get("name") == variant_name:
+            if v.get("gearboxes"):
+                result["gearboxes"] = v["gearboxes"]
+            if v.get("tire_options"):
+                result["tire_options"] = v["tire_options"]
+            for k in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
+                if v.get(k) is not None:
+                    result[k] = v[k]
+            break
+    return result

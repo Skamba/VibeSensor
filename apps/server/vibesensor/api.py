@@ -23,6 +23,7 @@ from .api_models import (  # noqa: F401 – re-exported for backward compat
     CarLibraryModelsResponse,
     CarLibraryTireOptionEntry,
     CarLibraryTypesResponse,
+    CarLibraryVariantEntry,
     CarResponse,
     CarsResponse,
     CarUpsertRequest,
