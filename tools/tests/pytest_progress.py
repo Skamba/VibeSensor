@@ -158,8 +158,8 @@ def _print_status(
         f" xpass={stats.xpassed}"
         f" rate={rate:.2f}/s"
         f" elapsed={_format_seconds(elapsed)}"
-        f" eta={eta_text}",
-        f" idle_for={idle_text}",
+        f" eta={eta_text}"
+        f" idle_for={idle_text}"
         f" next={next_label}",
         flush=True,
     )
