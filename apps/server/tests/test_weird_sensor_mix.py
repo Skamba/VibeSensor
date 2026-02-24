@@ -4,34 +4,33 @@
 100 parameterized cases covering ambiguity-aware localization with
 non-standard sensor topologies (cabin-only, mixed, sparse).
 """
-from __future__ import annotations
 
-from typing import Any
+from __future__ import annotations
 
 import pytest
 from conftest import assert_summary_sections
 
 from tests.builders import (
+    SENSOR_DRIVER_SEAT,
+    SENSOR_ENGINE,
     SENSOR_FL,
     SENSOR_FR,
+    SENSOR_FRONT_SUBFRAME,
+    SENSOR_PASSENGER_SEAT,
+    SENSOR_REAR_SUBFRAME,
     SENSOR_RL,
     SENSOR_RR,
-    SENSOR_DRIVER_SEAT,
-    SENSOR_PASSENGER_SEAT,
     SENSOR_TRUNK,
-    SENSOR_ENGINE,
-    SENSOR_FRONT_SUBFRAME,
-    SENSOR_REAR_SUBFRAME,
-    make_fault_samples,
-    make_noise_samples,
-    make_diffuse_samples,
-    run_analysis,
-    extract_top,
+    assert_confidence_between,
+    assert_has_warnings,
+    assert_max_wheel_confidence,
     assert_no_exact_corner_claim,
     assert_wheel_weak_spatial,
-    assert_max_wheel_confidence,
-    assert_has_warnings,
-    assert_confidence_between,
+    extract_top,
+    make_diffuse_samples,
+    make_fault_samples,
+    make_noise_samples,
+    run_analysis,
 )
 
 # ---------------------------------------------------------------------------
@@ -90,9 +89,7 @@ _SPARSE_SENSORS: list[tuple[str, str]] = [
     ids=[m[0] for m in _CABIN_SENSOR_MIXES],
 )
 @pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
-def test_cabin_only_no_exact_corner(
-    mix_id: str, sensors: list[str], speed: float
-) -> None:
+def test_cabin_only_no_exact_corner(mix_id: str, sensors: list[str], speed: float) -> None:
     """Cabin-only sensors should not claim an exact wheel corner."""
     samples = make_fault_samples(
         fault_sensor=sensors[0],
@@ -252,9 +249,7 @@ def test_cabin_high_transfer_ambiguous(
     ids=[c[0] for c in _ASYMMETRIC_COMBOS],
 )
 @pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
-def test_asymmetric_cabin_front_vs_rear(
-    combo_id: str, sensors: list[str], speed: float
-) -> None:
+def test_asymmetric_cabin_front_vs_rear(combo_id: str, sensors: list[str], speed: float) -> None:
     """Asymmetric front/rear cabin mixes should not pinpoint a corner."""
     samples = make_fault_samples(
         fault_sensor=sensors[0],
@@ -285,9 +280,7 @@ _SPARSE_SPEED_IDS = ["60kph", "100kph"]
     ids=[s[0] for s in _SPARSE_SENSORS],
 )
 @pytest.mark.parametrize("speed", _SPARSE_SPEEDS, ids=_SPARSE_SPEED_IDS)
-def test_sparse_single_non_wheel(
-    sensor_id: str, sensor: str, speed: float
-) -> None:
+def test_sparse_single_non_wheel(sensor_id: str, sensor: str, speed: float) -> None:
     """A single non-wheel sensor should not claim an exact corner."""
     samples = make_fault_samples(
         fault_sensor=sensor,
@@ -324,9 +317,7 @@ _PHASED_SCENARIOS: list[tuple[str, list[str], float]] = [
     _PHASED_SCENARIOS,
     ids=[s[0] for s in _PHASED_SCENARIOS],
 )
-def test_phased_fault_cabin_only(
-    scenario_id: str, sensors: list[str], speed: float
-) -> None:
+def test_phased_fault_cabin_only(scenario_id: str, sensors: list[str], speed: float) -> None:
     """Phased runs (noise then fault) should not claim exact corner."""
     noise_phase = make_noise_samples(
         sensors=sensors,
@@ -476,9 +467,7 @@ _GRANULARITY_SCENARIOS: list[tuple[str, list[str], float]] = [
     _GRANULARITY_SCENARIOS,
     ids=[s[0] for s in _GRANULARITY_SCENARIOS],
 )
-def test_report_granularity_consistency(
-    scenario_id: str, sensors: list[str], speed: float
-) -> None:
+def test_report_granularity_consistency(scenario_id: str, sensors: list[str], speed: float) -> None:
     """Findings and top_causes should agree on weak_spatial_separation."""
     samples = make_fault_samples(
         fault_sensor=sensors[0],
