@@ -367,6 +367,15 @@ class TestUpdateManagerAsync:
         assert mgr.status.exit_code == 0
         assert mgr.status.runtime.get("assets_verified") is True
         assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
+        rebuild_calls = [c for c in runner.calls if "sync_ui_to_pi_public.py" in " ".join(c[0])]
+        assert rebuild_calls, "Expected updater rebuild command"
+        rebuild_args, rebuild_meta = rebuild_calls[0]
+        assert "--force-npm-ci" in rebuild_args
+        rebuild_env = rebuild_meta.get("env") or {}
+        assert rebuild_env.get("NODE_ENV") == "development"
+        assert rebuild_env.get("NPM_CONFIG_PRODUCTION") == "false"
+        assert rebuild_env.get("NPM_CONFIG_INCLUDE") == "dev"
+        assert rebuild_env.get("PATH")
         assert any(
             " -m pip install --no-deps -e " in f" {' '.join(c[0])} "
             and str(repo / "apps" / "server") in " ".join(c[0])
