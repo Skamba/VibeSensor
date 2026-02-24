@@ -3,6 +3,7 @@ export type CarRecord = {
   name: string;
   type: string;
   aspects: Record<string, number>;
+  variant?: string | null;
   [key: string]: unknown;
 };
 
@@ -40,6 +41,17 @@ export type HistoryEntry = {
   sample_count: number;
 };
 
+export type CarLibraryVariant = {
+  name: string;
+  engine?: string | null;
+  drivetrain: string;
+  gearboxes?: CarLibraryGearbox[] | null;
+  tire_options?: CarLibraryTireOption[] | null;
+  tire_width_mm?: number | null;
+  tire_aspect_pct?: number | null;
+  rim_in?: number | null;
+};
+
 export type CarLibraryModel = {
   model: string;
   brand: string;
@@ -49,6 +61,7 @@ export type CarLibraryModel = {
   rim_in: number;
   gearboxes: CarLibraryGearbox[];
   tire_options: CarLibraryTireOption[];
+  variants: CarLibraryVariant[];
   [key: string]: unknown;
 };
 
