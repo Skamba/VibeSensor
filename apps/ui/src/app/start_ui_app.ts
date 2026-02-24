@@ -129,7 +129,8 @@ export function startUiApp(): void {
     if (els.rotationalAssumptionsBody) {
       const vs = state.vehicleSettings;
       const speedVal = effectiveSpeedMps();
-      const speedText = speedVal != null ? `${fmt(speedVal * 3.6, 1)} km/h` : "--";
+      const speedDisplay = speedValueInSelectedUnit(speedVal);
+      const speedText = speedDisplay != null ? `${fmt(speedDisplay, 1)} ${selectedSpeedUnitLabel()}` : "--";
       const circumference = parseTireSpec({ widthMm: vs.tire_width_mm, aspect: vs.tire_aspect_pct, rimIn: vs.rim_in });
       const circumText = circumference ? `${fmt(Math.PI * tireDiameterMeters(circumference) * 1000, 0)} mm` : "--";
       const bands = rotational?.order_bands;
