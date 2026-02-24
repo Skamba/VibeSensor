@@ -16,6 +16,7 @@ from typing import Any
 LOGGER = logging.getLogger(__name__)
 
 _FLASH_HISTORY_LIMIT = 10
+_FLASH_STEP_TIMEOUT_S = 90
 
 
 def _resolve_firmware_dir(repo_hint: Path) -> Path:
@@ -41,6 +42,18 @@ def _platformio_base_cmd() -> list[str] | None:
         return [platformio]
     if importlib.util.find_spec("platformio") is not None:
         return [sys.executable, "-m", "platformio"]
+    return None
+
+
+def _esptool_base_cmd() -> list[str] | None:
+    esptool = shutil.which("esptool.py")
+    if esptool:
+        return [esptool]
+    esptool = shutil.which("esptool")
+    if esptool:
+        return [esptool]
+    if importlib.util.find_spec("esptool") is not None:
+        return [sys.executable, "-m", "esptool"]
     return None
 
 
@@ -180,6 +193,7 @@ class FlashCommandRunner:
         cwd: str,
         line_cb,
         cancel_event: asyncio.Event,
+        timeout_s: float | None = None,
     ) -> int:
         proc = await asyncio.create_subprocess_exec(
             *args,
@@ -189,11 +203,17 @@ class FlashCommandRunner:
             env={**os.environ},
         )
         assert proc.stdout is not None
+        started_at = time.monotonic()
 
         while proc.returncode is None:
             if cancel_event.is_set():
                 proc.terminate()
                 break
+            if timeout_s is not None and (time.monotonic() - started_at) > timeout_s:
+                line_cb(f"Command timed out after {int(timeout_s)}s")
+                proc.terminate()
+                await proc.wait()
+                return 124
             try:
                 line = await asyncio.wait_for(proc.stdout.readline(), timeout=0.25)
             except TimeoutError:
@@ -291,7 +311,14 @@ class EspFlashManager:
             return usb_like[0].port
         raise ValueError("Multiple serial ports detected. Select the ESP port explicitly.")
 
-    async def _run_flash_step(self, phase: str, args: list[str], *, cwd: Path) -> int:
+    async def _run_flash_step(
+        self,
+        phase: str,
+        args: list[str],
+        *,
+        cwd: Path,
+        timeout_s: float = _FLASH_STEP_TIMEOUT_S,
+    ) -> int:
         self._status.phase = phase
         self._append_log(f"$ {' '.join(args)}")
         rc = await self._runner.run(
@@ -299,6 +326,7 @@ class EspFlashManager:
             cwd=str(cwd),
             line_cb=self._append_log,
             cancel_event=self._cancel_event,
+            timeout_s=timeout_s,
         )
         if rc != 0:
             self._append_log(f"Command exited with code {rc}")
@@ -348,7 +376,12 @@ class EspFlashManager:
             try:
                 workspace_dir = Path(tempfile.mkdtemp(prefix="vibesensor-esp-flash-"))
                 project_dir = workspace_dir / "esp"
-                shutil.copytree(self._firmware_dir, project_dir, dirs_exist_ok=True)
+                shutil.copytree(
+                    self._firmware_dir,
+                    project_dir,
+                    dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns(".pio", ".git", ".vscode"),
+                )
             except Exception as exc:
                 self._status.exit_code = 1
                 self._append_log(f"Failed to prepare flash workspace: {exc}")
@@ -371,19 +404,25 @@ class EspFlashManager:
         port_args = ["--upload-port", selected_port]
         try:
             erase_rc = await self._run_flash_step(
-                "erasing", [*base, "-t", "erase", *port_args], cwd=project_dir
+                "erasing", [*base, "-t", "erase", *port_args], cwd=project_dir, timeout_s=25
             )
             if self._cancel_event.is_set():
                 self._status.exit_code = 130
                 self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
                 return
             if erase_rc != 0:
+                fallback_error = await self._try_offline_fallback(selected_port)
+                if fallback_error is None:
+                    self._status.phase = "done"
+                    self._finalize(state=EspFlashState.success)
+                    return
                 self._status.exit_code = erase_rc
+                self._append_log(fallback_error)
                 self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
                 return
 
             upload_rc = await self._run_flash_step(
-                "flashing", [*base, "-t", "upload", *port_args], cwd=project_dir
+                "flashing", [*base, "-t", "upload", *port_args], cwd=project_dir, timeout_s=180
             )
             if self._cancel_event.is_set():
                 self._status.exit_code = 130
@@ -399,3 +438,64 @@ class EspFlashManager:
         finally:
             if workspace_dir is not None:
                 shutil.rmtree(workspace_dir, ignore_errors=True)
+
+    async def _try_offline_fallback(self, port: str) -> str | None:
+        self._append_log("PlatformIO erase failed; trying offline esptool fallback.")
+        esptool_cmd = _esptool_base_cmd()
+        if esptool_cmd is None:
+            return "Offline fallback unavailable: esptool is not installed."
+        artifact_dir = self._firmware_dir / ".pio" / "build" / "m5stack_atom"
+        bootloader = artifact_dir / "bootloader.bin"
+        partitions = artifact_dir / "partitions.bin"
+        firmware = artifact_dir / "firmware.bin"
+        missing = [path.name for path in (bootloader, partitions, firmware) if not path.is_file()]
+        if missing:
+            return f"Offline fallback unavailable: missing prebuilt artifacts: {', '.join(missing)}"
+
+        erase_cmd = [
+            *esptool_cmd,
+            "--chip",
+            "esp32",
+            "--port",
+            port,
+            "--before",
+            "default_reset",
+            "--after",
+            "hard_reset",
+            "erase_flash",
+        ]
+        erase_rc = await self._run_flash_step(
+            "offline_erasing", erase_cmd, cwd=self._firmware_dir, timeout_s=45
+        )
+        if erase_rc != 0:
+            self._status.exit_code = erase_rc
+            return "Offline fallback failed during erase step."
+
+        write_cmd = [
+            *esptool_cmd,
+            "--chip",
+            "esp32",
+            "--port",
+            port,
+            "--before",
+            "default_reset",
+            "--after",
+            "hard_reset",
+            "--baud",
+            "115200",
+            "write_flash",
+            "-z",
+            "0x1000",
+            str(bootloader),
+            "0x8000",
+            str(partitions),
+            "0x10000",
+            str(firmware),
+        ]
+        write_rc = await self._run_flash_step(
+            "offline_flashing", write_cmd, cwd=self._firmware_dir, timeout_s=120
+        )
+        self._status.exit_code = write_rc
+        if write_rc != 0:
+            return "Offline fallback failed during firmware write step."
+        return None
