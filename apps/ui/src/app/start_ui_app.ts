@@ -364,7 +364,7 @@ export function startUiApp(): void {
       els.bandLegend.innerHTML = "";
       for (const b of state.chartBands) {
         const row = document.createElement("div"); row.className = "legend-item";
-        row.innerHTML = `<span class="swatch" style="--swatch-color:${b.color}"></span><span>${b.label}</span>`;
+        row.innerHTML = `<span class="swatch" style="--swatch-color:${escapeHtml(b.color)}"></span><span>${escapeHtml(b.label)}</span>`;
         els.bandLegend.appendChild(row);
       }
     }
