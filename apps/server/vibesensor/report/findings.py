@@ -181,7 +181,8 @@ def _phase_speed_breakdown(
     grouped_speeds: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
 
-    for sample, phase in zip(samples, per_sample_phases, strict=False):
+    for idx, sample in enumerate(samples):
+        phase = per_sample_phases[idx] if idx < len(per_sample_phases) else "unknown"
         phase_key = phase.value if isinstance(phase, DrivingPhase) else str(phase)
         counts[phase_key] += 1
         speed = _as_float(sample.get("speed_kmh"))
@@ -194,7 +195,7 @@ def _phase_speed_breakdown(
     # Output in a canonical phase order
     phase_order = [p.value for p in DrivingPhase]
     rows: list[dict[str, object]] = []
-    for phase_key in phase_order:
+    for phase_key in [*phase_order, *sorted(k for k in counts if k not in phase_order)]:
         if phase_key not in counts:
             continue
         amp_vals = grouped_amp.get(phase_key, [])
@@ -309,25 +310,34 @@ def _sensor_intensity_by_location(
         (sample_counts.get(location, 0) for location in target_locations), default=0
     )
 
+    def _counter_delta(counter_values: list[float]) -> int:
+        if len(counter_values) < 2:
+            return 0
+        delta = 0.0
+        prev = float(counter_values[0])
+        for current_raw in counter_values[1:]:
+            current = float(current_raw)
+            delta += max(0.0, current - prev)
+            prev = current
+        return int(delta)
+
     for location in sorted(target_locations):
         values = grouped_amp.get(location, [])
         values_sorted = sorted(values)
         dropped_vals = dropped_totals.get(location, [])
         overflow_vals = overflow_totals.get(location, [])
-        dropped_delta = int(max(dropped_vals) - min(dropped_vals)) if len(dropped_vals) >= 2 else 0
-        overflow_delta = (
-            int(max(overflow_vals) - min(overflow_vals)) if len(overflow_vals) >= 2 else 0
-        )
+        dropped_delta = _counter_delta(dropped_vals)
+        overflow_delta = _counter_delta(overflow_vals)
         bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(0, 6)})
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
         bucket_distribution: dict[str, float | int] = {
             "total": bucket_total,
             "counts": dict(bucket_counts),
         }
-        for idx in range(1, 6):
+        for idx in range(0, 6):
             key = f"l{idx}"
             bucket_distribution[f"percent_time_{key}"] = (
-                (bucket_counts[key] / bucket_total * 100.0) if bucket_total > 0 else 0.0
+                (bucket_counts.get(key, 0) / bucket_total * 100.0) if bucket_total > 0 else 0.0
             )
         sample_count = int(sample_counts.get(location, 0))
         sample_coverage_ratio = (sample_count / max_sample_count) if max_sample_count > 0 else 1.0

@@ -142,3 +142,47 @@ def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> N
     assert f"{expected_db:.1f} dB" in data.observed.strength_label
     assert "0.015 g peak" in data.observed.strength_label
     assert data.observed.strength_peak_amp_g == 0.015
+
+
+def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> None:
+    summary: dict = {
+        "top_causes": [{"finding_id": "F_PRIMARY"}, {"finding_id": "F_SECONDARY"}],
+        "findings": [
+            {
+                "finding_id": "F_PRIMARY",
+                "amplitude_metric": {"value": 0.011, "units": "g"},
+            },
+            {
+                "finding_id": "F_SECONDARY",
+                "evidence_metrics": {"vibration_strength_db": 40.0},
+            },
+        ],
+        "sensor_intensity_by_location": [{"p95_intensity_db": 22.0}],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert data.observed.strength_label is not None
+    assert "40.0 dB" in data.observed.strength_label
+    assert "g peak" not in data.observed.strength_label
+
+
+def test_map_summary_strength_label_uses_strongest_sensor_row_when_unsorted() -> None:
+    summary: dict = {
+        "top_causes": [],
+        "findings": [],
+        "sensor_intensity_by_location": [
+            {"location": "A", "p95_intensity_db": 12.0},
+            {"location": "B", "p95_intensity_db": 28.0},
+            {"location": "C", "p95_intensity_db": 20.0},
+        ],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+    data = map_summary(summary)
+    assert data.observed.strength_label is not None
+    assert "28.0 dB" in data.observed.strength_label
