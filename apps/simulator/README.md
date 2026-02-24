@@ -12,9 +12,10 @@ The simulator (`vibesensor-sim`) sends:
 - Deterministic MAC-style client IDs (shown in `list` output)
 - Distinct vibration profiles per simulated sensor (`engine_idle`, `wheel_imbalance`, `rear_body`, `rough_road`)
 - Road-scene behavior by default:
-  - sometimes quiet (near no vibration)
-  - sometimes one active sensor
-  - sometimes all sensors active together
+  - always-on per-sensor broadband floor (even in quiet periods)
+  - quiet phases with low-level road/body vibration on every sensor
+  - single-corner-dominant phases with realistic cross-corner coupling
+  - all-sensor and synchronized highway-style events
 - Optional interactive CLI to modify profiles/amplitude/noise live
 
 Authoritative protocol and network-port contract: `docs/protocol.md`
@@ -49,6 +50,7 @@ Useful options:
 - `--names front-left,front-right,rear-left,rear-right,trunk`
 - `--duration 20` to auto-stop
 - `--server-data-port 9000 --server-control-port 9001`
+- `--sensor-noise-floor 3.5` to tune always-on baseline sensor noise
 - `--interactive` force CLI mode
 - `--no-interactive` disable CLI mode
 
@@ -69,4 +71,5 @@ vibesensor-sim \
 ```
 
 This runs one slight wheel-order fault on the selected wheel while keeping other
-sensors mostly quiet, so the report should localize to that wheel.
+sensors coupled (not flat/zero), so localization remains clear but the data still
+looks like real chassis transfer paths.

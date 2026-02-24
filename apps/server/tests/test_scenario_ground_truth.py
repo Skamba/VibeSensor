@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
 import pytest
 from vibesensor_core.strength_bands import bucket_for_strength
 
@@ -221,6 +222,7 @@ def _fault_phase(
     fault_vib_db: float = 26.0,
     noise_vib_db: float = 8.0,
     add_wheel_2x: bool = True,
+    transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
     """Generate wheel-fault phase at constant speed with fault on one sensor."""
     samples: list[dict[str, Any]] = []
@@ -249,6 +251,13 @@ def _fault_phase(
                     {"hz": 142.5, "amp": noise_amp},
                     {"hz": 87.3, "amp": noise_amp * 0.8},
                 ]
+                if transfer_fraction > 0:
+                    other_peaks.insert(0, {"hz": whz, "amp": fault_amp * transfer_fraction})
+                    if add_wheel_2x:
+                        other_peaks.insert(
+                            1,
+                            {"hz": whz * 2, "amp": fault_amp * transfer_fraction * 0.24},
+                        )
                 samples.append(
                     _make_sample(
                         t_s=t,
@@ -919,11 +928,11 @@ class TestSimulatorDeterminism:
         for c in clients:
             assert c.profile_name == "rough_road"
             assert c.scene_mode == "road-fixed"
-            assert c.scene_gain == 0.12
-            assert c.scene_noise_gain == 0.85
-            assert c.common_event_gain == 0.0
-            assert c.amp_scale == 0.15
-            assert c.noise_scale == 0.80
+            assert c.scene_gain == 0.28
+            assert c.scene_noise_gain == 1.02
+            assert c.common_event_gain == 0.10
+            assert c.amp_scale == 0.52
+            assert c.noise_scale == 1.00
 
     def test_road_fixed_all_clients_identical(self) -> None:
         """All clients get the same deterministic scene state."""
@@ -946,8 +955,8 @@ class TestSimulatorDeterminism:
         gains = [(c.scene_gain, c.scene_noise_gain, c.amp_scale, c.noise_scale) for c in clients]
         assert all(g == gains[0] for g in gains), "Not all clients received identical gains"
 
-    def test_one_wheel_mild_only_fault_sensor_strong(self) -> None:
-        """one-wheel-mild scenario: fault sensor is strong, others are suppressed."""
+    def test_one_wheel_mild_fault_is_strong_but_others_remain_coupled(self) -> None:
+        """Fault corner dominates while other corners still carry coupled wheel energy."""
         from vibesensor_simulator.commands import apply_one_wheel_mild_scenario
 
         class FakeClient:
@@ -972,10 +981,71 @@ class TestSimulatorDeterminism:
         other_clients = [c for c in clients if c.name != "rear-left"]
 
         assert fault_client.profile_name == "wheel_mild_imbalance"
-        assert fault_client.scene_gain == 0.58
+        assert fault_client.scene_gain == 0.78
+        assert fault_client.scene_noise_gain == 1.04
+        assert fault_client.amp_scale == 1.0
+        assert fault_client.noise_scale == 1.04
+        assert fault_client.common_event_gain == 0.18
+        assert fault_client.scene_gain > max(c.scene_gain for c in other_clients)
         for c in other_clients:
-            assert c.profile_name == "engine_idle"
-            assert c.scene_gain == 0.05
+            assert c.profile_name == "wheel_mild_imbalance"
+            assert 0.37 <= c.scene_gain <= 0.41
+            assert 1.00 <= c.scene_noise_gain <= 1.03
+            assert 0.70 <= c.amp_scale <= 0.74
+            assert 0.98 <= c.noise_scale <= 1.00
+            assert 0.11 <= c.common_event_gain <= 0.13
+
+    def test_road_scene_single_mode_keeps_non_active_sensors_alive(self) -> None:
+        from vibesensor_simulator.sim_sender import RoadSceneController
+
+        class FakeClient:
+            def __init__(self, name: str):
+                self.name = name
+                self.profile_name = "rough_road"
+                self.scene_mode = ""
+                self.scene_gain = 0.0
+                self.scene_noise_gain = 0.0
+                self.common_event_gain = 0.0
+                self.amp_scale = 0.0
+                self.noise_scale = 0.0
+
+            def pulse(self, strength: float) -> None:
+                return None
+
+        clients = [FakeClient(n) for n in _ALL_SENSORS]
+        controller = RoadSceneController(clients)
+        controller._apply_single_active()
+
+        active_clients = [c for c in clients if c.profile_name == "wheel_mild_imbalance"]
+        assert len(active_clients) == 1
+        non_active = [c for c in clients if c.profile_name != "wheel_mild_imbalance"]
+        assert non_active
+        for c in non_active:
+            assert c.scene_gain >= 0.35
+            assert c.common_event_gain >= 0.10
+
+    def test_sensor_noise_floor_stays_present_even_when_scene_gain_is_zero(self) -> None:
+        from vibesensor_simulator.sim_sender import SimClient, make_client_id
+
+        client = SimClient(
+            name="front-left",
+            client_id=make_client_id(1),
+            control_port=9101,
+            sample_rate_hz=800,
+            frame_samples=200,
+            server_host="127.0.0.1",
+            server_data_port=5005,
+            server_control_port=5006,
+            profile_name="rough_road",
+            noise_floor_std=3.5,
+        )
+        client.scene_gain = 0.0
+        client.scene_noise_gain = 0.0
+        client.amp_scale = 0.0
+        client.noise_scale = 0.0
+        frame = client.make_frame()
+        assert frame.dtype == np.int16
+        assert np.abs(frame).sum() > 0
 
 
 # ===========================================================================

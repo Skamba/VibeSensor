@@ -105,11 +105,12 @@ def _build_fault_samples_at_speed(
     fault_vib_db: float = 24.0,
     noise_vib_db: float = 8.0,
     add_wheel_2x: bool = True,
+    transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
     """Generate samples at a fixed speed with wheel-order fault on one sensor.
 
     The fault sensor gets strong speed-scaled wheel_1x (and optionally 2x) peaks.
-    Other sensors get only broadband noise peaks (no order content).
+    Other sensors get lower-amplitude order leakage plus broadband noise.
     """
     samples: list[dict[str, Any]] = []
     whz = _wheel_hz(speed_kmh)
@@ -137,6 +138,13 @@ def _build_fault_samples_at_speed(
                 {"hz": 142.5, "amp": noise_amp},
                 {"hz": 87.3, "amp": noise_amp * 0.8},
             ]
+            if transfer_fraction > 0:
+                other_peaks.insert(0, {"hz": whz, "amp": fault_amp * transfer_fraction})
+                if add_wheel_2x:
+                    other_peaks.insert(
+                        1,
+                        {"hz": whz * 2, "amp": fault_amp * transfer_fraction * 0.24},
+                    )
             samples.append(
                 _make_sample(
                     t_s=t,
@@ -163,6 +171,7 @@ def _build_speed_sweep_fault_samples(
     noise_amp: float = 0.004,
     fault_vib_db: float = 24.0,
     noise_vib_db: float = 8.0,
+    transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
     """Generate samples with linearly varying speed and wheel-order fault on one sensor."""
     samples: list[dict[str, Any]] = []
@@ -192,6 +201,12 @@ def _build_speed_sweep_fault_samples(
                 {"hz": 142.5, "amp": noise_amp},
                 {"hz": 87.3, "amp": noise_amp * 0.8},
             ]
+            if transfer_fraction > 0:
+                other_peaks.insert(0, {"hz": whz, "amp": fault_amp * transfer_fraction})
+                other_peaks.insert(
+                    1,
+                    {"hz": whz * 2, "amp": fault_amp * transfer_fraction * 0.24},
+                )
             samples.append(
                 _make_sample(
                     t_s=t,

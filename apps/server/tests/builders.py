@@ -11,7 +11,7 @@ Public API
 - ``wheel_hz``           – wheel-1x frequency at a given speed
 - ``make_sample``        – single JSONL-style sample dict
 - ``make_noise_samples`` – broadband road-noise baseline
-- ``make_fault_samples`` – wheel-order fault at one sensor/corner
+- ``make_fault_samples`` – wheel-order fault with realistic cross-sensor transfer
 - ``make_transient_samples`` – short spike/impact events
 - ``make_diffuse_samples``  – uniform cross-sensor excitation
 - ``make_idle_samples``     – stationary/idle phase
@@ -138,6 +138,55 @@ CAR_PROFILES: list[dict[str, Any]] = [
 ]
 
 CAR_PROFILE_IDS: list[str] = [p["name"] for p in CAR_PROFILES]
+
+
+def _normalize_wheel_slot(name: str) -> str | None:
+    normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
+    aliases = {
+        "fl": SENSOR_FL,
+        "fr": SENSOR_FR,
+        "rl": SENSOR_RL,
+        "rr": SENSOR_RR,
+    }
+    if normalized in aliases:
+        return aliases[normalized]
+    axle = "front" if "front" in normalized else "rear" if "rear" in normalized else None
+    side = "left" if "left" in normalized else "right" if "right" in normalized else None
+    if axle and side:
+        return f"{axle}-{side}"
+    return None
+
+
+def _corner_transfer_fraction(fault_sensor: str, sink_sensor: str) -> float:
+    """Deterministic transfer fraction for structure-borne coupling."""
+    fault = _normalize_wheel_slot(fault_sensor)
+    sink = _normalize_wheel_slot(sink_sensor)
+    # Non-corner sensors still pick up cabin/chassis energy.
+    if fault is None or sink is None:
+        return 0.32
+    if fault == sink:
+        return 1.0
+    fault_axle, fault_side = fault.split("-", maxsplit=1)
+    sink_axle, sink_side = sink.split("-", maxsplit=1)
+    if fault_side == sink_side and fault_axle != sink_axle:
+        return 0.52
+    if fault_axle == sink_axle and fault_side != sink_side:
+        return 0.48
+    return 0.40
+
+
+def _fault_transfer_fraction(
+    fault_sensor: str,
+    sink_sensor: str,
+    *,
+    override: float | None,
+) -> float:
+    if sink_sensor == fault_sensor:
+        return 1.0
+    if override is not None:
+        return max(0.0, min(1.0, override))
+    # Keep realistic coupling while preserving clear localization headroom.
+    return _corner_transfer_fraction(fault_sensor, sink_sensor) * 0.58
 
 
 def profile_circ(profile: dict[str, Any]) -> float:
@@ -324,15 +373,15 @@ def make_fault_samples(
     noise_vib_db: float = 8.0,
     add_wheel_2x: bool = True,
     add_wheel_3x: bool = False,
-    transfer_fraction: float = 0.0,
+    transfer_fraction: float | None = None,
 ) -> list[dict[str, Any]]:
     """Generate wheel-order fault on *fault_sensor* with noise on others.
 
     Parameters
     ----------
     transfer_fraction:
-        Fraction of fault amplitude leaked to non-fault sensors (0.0–1.0).
-        Simulates vibration transfer paths in the vehicle.
+        Explicit fraction of fault amplitude leaked to non-fault sensors
+        (0.0–1.0). If ``None``, use deterministic corner/cabin coupling.
     """
     samples: list[dict[str, Any]] = []
     whz = wheel_hz(speed_kmh)
@@ -357,15 +406,25 @@ def make_fault_samples(
                     )
                 )
             else:
+                transfer = _fault_transfer_fraction(
+                    fault_sensor,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 other_peaks: list[dict[str, float]] = [
                     {"hz": 142.5, "amp": noise_amp},
                     {"hz": 87.3, "amp": noise_amp * 0.8},
                 ]
-                if transfer_fraction > 0:
+                if transfer > 0:
                     other_peaks.insert(
                         0,
-                        {"hz": whz, "amp": fault_amp * transfer_fraction},
+                        {"hz": whz, "amp": fault_amp * transfer},
                     )
+                    if add_wheel_2x:
+                        other_peaks.insert(
+                            1,
+                            {"hz": whz * 2, "amp": fault_amp * transfer * 0.24},
+                        )
                 samples.append(
                     make_sample(
                         t_s=t,
@@ -393,7 +452,7 @@ def make_profile_fault_samples(
     fault_vib_db: float = 26.0,
     noise_vib_db: float = 8.0,
     add_wheel_2x: bool = True,
-    transfer_fraction: float = 0.0,
+    transfer_fraction: float | None = None,
 ) -> list[dict[str, Any]]:
     """Generate wheel-order fault samples using a specific car profile's wheel Hz.
 
@@ -421,15 +480,25 @@ def make_profile_fault_samples(
                     )
                 )
             else:
+                transfer = _fault_transfer_fraction(
+                    fault_sensor,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 other_peaks: list[dict[str, float]] = [
                     {"hz": 142.5, "amp": noise_amp},
                     {"hz": 87.3, "amp": noise_amp * 0.8},
                 ]
-                if transfer_fraction > 0:
+                if transfer > 0:
                     other_peaks.insert(
                         0,
-                        {"hz": whz, "amp": fault_amp * transfer_fraction},
+                        {"hz": whz, "amp": fault_amp * transfer},
                     )
+                    if add_wheel_2x:
+                        other_peaks.insert(
+                            1,
+                            {"hz": whz * 2, "amp": fault_amp * transfer * 0.24},
+                        )
                 samples.append(
                     make_sample(
                         t_s=t,
@@ -785,6 +854,7 @@ def make_dual_fault_samples(
     fault_vib_db_2: float = 22.0,
     noise_amp: float = 0.004,
     noise_vib_db: float = 8.0,
+    transfer_fraction: float | None = None,
 ) -> list[dict[str, Any]]:
     """Generate samples with faults on TWO different sensors simultaneously."""
     samples: list[dict[str, Any]] = []
@@ -793,11 +863,18 @@ def make_dual_fault_samples(
         t = start_t_s + i * dt_s
         for sensor in sensors:
             if sensor == fault_sensor_1:
+                transfer_2 = _fault_transfer_fraction(
+                    fault_sensor_2,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 peaks: list[dict[str, float]] = [
                     {"hz": whz, "amp": fault_amp_1},
                     {"hz": whz * 2, "amp": fault_amp_1 * 0.4},
                     {"hz": 142.5, "amp": noise_amp},
                 ]
+                if transfer_2 > 0:
+                    peaks.append({"hz": whz, "amp": fault_amp_2 * transfer_2})
                 samples.append(
                     make_sample(
                         t_s=t,
@@ -809,11 +886,18 @@ def make_dual_fault_samples(
                     )
                 )
             elif sensor == fault_sensor_2:
+                transfer_1 = _fault_transfer_fraction(
+                    fault_sensor_1,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 peaks = [
                     {"hz": whz, "amp": fault_amp_2},
                     {"hz": whz * 2, "amp": fault_amp_2 * 0.35},
                     {"hz": 87.3, "amp": noise_amp},
                 ]
+                if transfer_1 > 0:
+                    peaks.append({"hz": whz, "amp": fault_amp_1 * transfer_1})
                 samples.append(
                     make_sample(
                         t_s=t,
@@ -825,10 +909,24 @@ def make_dual_fault_samples(
                     )
                 )
             else:
+                transfer_1 = _fault_transfer_fraction(
+                    fault_sensor_1,
+                    sensor,
+                    override=transfer_fraction,
+                )
+                transfer_2 = _fault_transfer_fraction(
+                    fault_sensor_2,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 peaks = [
                     {"hz": 142.5, "amp": noise_amp},
                     {"hz": 87.3, "amp": noise_amp * 0.8},
                 ]
+                if transfer_1 > 0:
+                    peaks.insert(0, {"hz": whz, "amp": fault_amp_1 * transfer_1})
+                if transfer_2 > 0:
+                    peaks.insert(1, {"hz": whz, "amp": fault_amp_2 * transfer_2})
                 samples.append(
                     make_sample(
                         t_s=t,
@@ -977,6 +1075,7 @@ def make_profile_dual_fault_samples(
     fault_vib_db_2: float = 22.0,
     noise_amp: float = 0.004,
     noise_vib_db: float = 8.0,
+    transfer_fraction: float | None = None,
 ) -> list[dict[str, Any]]:
     """Profile-aware version of :func:`make_dual_fault_samples`."""
     whz = profile_wheel_hz(profile, speed_kmh)
@@ -985,11 +1084,18 @@ def make_profile_dual_fault_samples(
         t = start_t_s + i * dt_s
         for sensor in sensors:
             if sensor == fault_sensor_1:
+                transfer_2 = _fault_transfer_fraction(
+                    fault_sensor_2,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 peaks: list[dict[str, float]] = [
                     {"hz": whz, "amp": fault_amp_1},
                     {"hz": whz * 2, "amp": fault_amp_1 * 0.4},
                     {"hz": 142.5, "amp": noise_amp},
                 ]
+                if transfer_2 > 0:
+                    peaks.append({"hz": whz, "amp": fault_amp_2 * transfer_2})
                 samples.append(
                     make_sample(
                         t_s=t,
@@ -1001,11 +1107,18 @@ def make_profile_dual_fault_samples(
                     )
                 )
             elif sensor == fault_sensor_2:
+                transfer_1 = _fault_transfer_fraction(
+                    fault_sensor_1,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 peaks = [
                     {"hz": whz, "amp": fault_amp_2},
                     {"hz": whz * 2, "amp": fault_amp_2 * 0.35},
                     {"hz": 87.3, "amp": noise_amp},
                 ]
+                if transfer_1 > 0:
+                    peaks.append({"hz": whz, "amp": fault_amp_1 * transfer_1})
                 samples.append(
                     make_sample(
                         t_s=t,
@@ -1017,7 +1130,21 @@ def make_profile_dual_fault_samples(
                     )
                 )
             else:
+                transfer_1 = _fault_transfer_fraction(
+                    fault_sensor_1,
+                    sensor,
+                    override=transfer_fraction,
+                )
+                transfer_2 = _fault_transfer_fraction(
+                    fault_sensor_2,
+                    sensor,
+                    override=transfer_fraction,
+                )
                 peaks = [{"hz": 142.5, "amp": noise_amp}, {"hz": 87.3, "amp": noise_amp * 0.8}]
+                if transfer_1 > 0:
+                    peaks.insert(0, {"hz": whz, "amp": fault_amp_1 * transfer_1})
+                if transfer_2 > 0:
+                    peaks.insert(1, {"hz": whz, "amp": fault_amp_2 * transfer_2})
                 samples.append(
                     make_sample(
                         t_s=t,
