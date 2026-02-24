@@ -105,7 +105,9 @@ class CarConfig:
         if isinstance(raw_aspects, dict):
             aspects.update(_sanitize_aspects(raw_aspects))
         raw_variant = data.get("variant")
-        variant = str(raw_variant).strip()[:64] if raw_variant else None
+        variant = (
+            str(raw_variant).strip()[:64] if isinstance(raw_variant, str) and raw_variant else None
+        )
         return cls(
             id=car_id,
             name=name or "Unnamed Car",
