@@ -25,6 +25,15 @@ def test_smoke_hotspot_script_has_no_runtime_apt_get() -> None:
 
 
 @pytest.mark.smoke
+def test_smoke_hotspot_script_only_reactivates_ap_after_uplink_session() -> None:
+    script = Path(__file__).resolve().parents[1] / "scripts" / "hotspot_nmcli.sh"
+    text = script.read_text(encoding="utf-8")
+    assert 'if [ "${UPLINK_SESSION_USED:-0}" = "1" ]; then' in text, (
+        "hotspot script must not re-activate AP connection unconditionally"
+    )
+
+
+@pytest.mark.smoke
 def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
     build_sh = Path(__file__).resolve().parents[3] / "infra" / "pi-image" / "pi-gen" / "build.sh"
     text = build_sh.read_text(encoding="utf-8")
@@ -33,6 +42,13 @@ def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
     assert "network-manager" in text, "build wrapper must bake network-manager"
     assert "dnsmasq" in text, "build wrapper must bake dnsmasq"
     assert "99-vibesensor-dnsmasq.conf" in text, "build wrapper must assert DNS drop-in"
+    assert "platformio/framework-arduinoespressif32" in text, (
+        "build wrapper must preload ESP32 Arduino framework for offline flash"
+    )
+    assert "platformio/tool-scons" in text, "build wrapper must preload PlatformIO tool-scons"
+    assert "linux-armhf.tar.gz" in text, (
+        "build wrapper must override ESP32 toolchain for armhf images"
+    )
 
 
 @pytest.mark.smoke
@@ -44,6 +60,13 @@ def test_smoke_install_pi_installs_rebuild_toolchain() -> None:
     assert 'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"' in text, (
         "Pi install script must ensure repo ownership for update writes"
     )
+    assert "platformio/framework-arduinoespressif32" in text, (
+        "Pi install script must preload ESP32 Arduino framework for offline flash"
+    )
+    assert "platformio/tool-scons" in text, "Pi install script must preload PlatformIO tool-scons"
+    assert "linux-armhf.tar.gz" in text, (
+        "Pi install script must enforce armhf toolchain compatibility"
+    )
 
 
 @pytest.mark.smoke
@@ -52,3 +75,19 @@ def test_smoke_server_pyproject_includes_platformio_for_esp_flash() -> None:
     text = pyproject.read_text(encoding="utf-8")
     assert "platformio" in text, "Server dependencies must include platformio for ESP flash"
     assert "esptool" in text, "Server dependencies must include esptool for offline ESP flash"
+
+
+@pytest.mark.smoke
+def test_smoke_firmware_uses_vendored_neopixel_library_for_offline_builds() -> None:
+    repo_root = Path(__file__).resolve().parents[3]
+    platformio_ini = repo_root / "firmware" / "esp" / "platformio.ini"
+    text = platformio_ini.read_text(encoding="utf-8")
+    assert "${PROJECT_DIR}/lib/Adafruit_NeoPixel" in text, (
+        "firmware platformio.ini must use vendored NeoPixel library path"
+    )
+    vendored_header = (
+        repo_root / "firmware" / "esp" / "lib" / "Adafruit_NeoPixel" / "Adafruit_NeoPixel.h"
+    )
+    assert vendored_header.is_file(), (
+        "vendored NeoPixel header must exist for offline firmware build"
+    )

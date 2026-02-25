@@ -37,6 +37,7 @@ GIT_BRANCH="${VIBESENSOR_GIT_BRANCH:-main}"
 UPLINK_SCAN_TIMEOUT_SECONDS="${UPLINK_SCAN_TIMEOUT_SECONDS:-10}"
 UPLINK_CONNECTION_NAME="${UPLINK_CONNECTION_NAME:-VibeSensor-Uplink}"
 GIT_UPDATE_TIMEOUT_SECONDS="${GIT_UPDATE_TIMEOUT_SECONDS:-120}"
+UPLINK_SESSION_USED=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -178,6 +179,8 @@ maybe_update_from_uplink() {
     run_as_root nmcli connection delete "${UPLINK_CONNECTION_NAME}" >/dev/null 2>&1 || true
     return 0
   fi
+
+  UPLINK_SESSION_USED=1
 
   if [ -d "${REPO_PATH}/.git" ] && command -v git >/dev/null 2>&1; then
     echo "Updating ${REPO_PATH} from ${GIT_REMOTE_URL} (${GIT_BRANCH})..."
@@ -347,7 +350,9 @@ if ! maybe_update_from_uplink; then
   echo "WARNING: uplink update step failed; continuing with hotspot enabled."
 fi
 
-run_as_root nmcli connection up "${CON_NAME}" >/dev/null 2>&1 || true
+if [ "${UPLINK_SESSION_USED:-0}" = "1" ]; then
+  run_as_root nmcli connection up "${CON_NAME}" >/dev/null 2>&1 || true
+fi
 run_as_root nmcli -f GENERAL.STATE,IP4.ADDRESS connection show "${CON_NAME}"
 dump_all post
 write_summary OK 0
