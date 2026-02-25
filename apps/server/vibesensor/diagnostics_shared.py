@@ -67,6 +67,41 @@ def tolerance_for_order(
     return min(max_half_rel, max(combined, abs_floor))
 
 
+def order_tolerances(
+    orders_hz: dict[str, float],
+    settings: dict[str, float],
+) -> tuple[float, float, float]:
+    """Compute (wheel_tol, drive_tol, engine_tol) for the given order frequencies.
+
+    Both callers (_build_order_bands in app.py and classify_peak_hz here) need
+    the same trio of tolerance values.  Centralising the computation here avoids
+    repeating the five-parameter call pattern three times per site.
+    """
+    common = {
+        "min_abs_band_hz": settings["min_abs_band_hz"],
+        "max_band_half_width_pct": settings["max_band_half_width_pct"],
+    }
+    wheel_tol = tolerance_for_order(
+        settings["wheel_bandwidth_pct"],
+        orders_hz["wheel_hz"],
+        orders_hz["wheel_uncertainty_pct"],
+        **common,
+    )
+    drive_tol = tolerance_for_order(
+        settings["driveshaft_bandwidth_pct"],
+        orders_hz["drive_hz"],
+        orders_hz["drive_uncertainty_pct"],
+        **common,
+    )
+    engine_tol = tolerance_for_order(
+        settings["engine_bandwidth_pct"],
+        orders_hz["engine_hz"],
+        orders_hz["engine_uncertainty_pct"],
+        **common,
+    )
+    return wheel_tol, drive_tol, engine_tol
+
+
 def vehicle_orders_hz(
     *,
     speed_mps: float | None,
@@ -126,50 +161,50 @@ def vehicle_orders_hz(
     }
 
 
+_ORDER_LABELS: dict[str, str] = {
+    "wheel1": "1x wheel order",
+    "wheel2": "2x wheel order",
+    "wheel2_eng1": "2x wheel / 1x engine order",
+    "shaft_eng1": "1x driveshaft/engine order",
+    "shaft1": "1x driveshaft order",
+    "eng1": "1x engine order",
+    "eng2": "2x engine order",
+}
+
+
 def _order_label_for_class_key(class_key: str) -> str | None:
-    if class_key == "wheel1":
-        return "1x wheel order"
-    if class_key == "wheel2":
-        return "2x wheel order"
-    if class_key == "wheel2_eng1":
-        return "2x wheel / 1x engine order"
-    if class_key == "shaft_eng1":
-        return "1x driveshaft/engine order"
-    if class_key == "shaft1":
-        return "1x driveshaft order"
-    if class_key == "eng1":
-        return "1x engine order"
-    if class_key == "eng2":
-        return "2x engine order"
-    return None
+    return _ORDER_LABELS.get(class_key)
+
+
+_SUSPECTED_SOURCES: dict[str, str] = {
+    "wheel1": "wheel/tire",
+    "wheel2": "wheel/tire",
+    "wheel2_eng1": "wheel/tire",  # default to wheel but ambiguous
+    "shaft1": "driveline",
+    "shaft_eng1": "driveline",
+    "eng1": "engine",
+    "eng2": "engine",
+    "road": "body resonance",
+}
 
 
 def suspected_source_from_class_key(class_key: str) -> str:
-    if class_key in {"wheel1", "wheel2"}:
-        return "wheel/tire"
-    if class_key == "wheel2_eng1":
-        return "wheel/tire"  # default to wheel but ambiguous
-    if class_key in {"shaft1", "shaft_eng1"}:
-        return "driveline"
-    if class_key in {"eng1", "eng2"}:
-        return "engine"
-    if class_key == "road":
-        return "body resonance"
-    return "unknown"
+    return _SUSPECTED_SOURCES.get(class_key, "unknown")
+
+
+_SOURCE_KEYS: dict[str, tuple[str, ...]] = {
+    "wheel2_eng1": ("wheel", "engine"),
+    "shaft_eng1": ("driveshaft", "engine"),
+    "eng1": ("engine",),
+    "eng2": ("engine",),
+    "shaft1": ("driveshaft",),
+    "wheel1": ("wheel",),
+    "wheel2": ("wheel",),
+}
 
 
 def source_keys_from_class_key(class_key: str) -> tuple[str, ...]:
-    if class_key == "wheel2_eng1":
-        return ("wheel", "engine")
-    if class_key == "shaft_eng1":
-        return ("driveshaft", "engine")
-    if class_key in {"eng1", "eng2"}:
-        return ("engine",)
-    if class_key == "shaft1":
-        return ("driveshaft",)
-    if class_key in {"wheel1", "wheel2"}:
-        return ("wheel",)
-    return ("other",)
+    return _SOURCE_KEYS.get(class_key, ("other",))
 
 
 def classify_peak_hz(
@@ -185,27 +220,7 @@ def classify_peak_hz(
         wheel_hz = order_refs["wheel_hz"]
         drive_hz = order_refs["drive_hz"]
         engine_hz = order_refs["engine_hz"]
-        wheel_tol = tolerance_for_order(
-            resolved_settings["wheel_bandwidth_pct"],
-            wheel_hz,
-            order_refs["wheel_uncertainty_pct"],
-            min_abs_band_hz=resolved_settings["min_abs_band_hz"],
-            max_band_half_width_pct=resolved_settings["max_band_half_width_pct"],
-        )
-        drive_tol = tolerance_for_order(
-            resolved_settings["driveshaft_bandwidth_pct"],
-            drive_hz,
-            order_refs["drive_uncertainty_pct"],
-            min_abs_band_hz=resolved_settings["min_abs_band_hz"],
-            max_band_half_width_pct=resolved_settings["max_band_half_width_pct"],
-        )
-        engine_tol = tolerance_for_order(
-            resolved_settings["engine_bandwidth_pct"],
-            engine_hz,
-            order_refs["engine_uncertainty_pct"],
-            min_abs_band_hz=resolved_settings["min_abs_band_hz"],
-            max_band_half_width_pct=resolved_settings["max_band_half_width_pct"],
-        )
+        wheel_tol, drive_tol, engine_tol = order_tolerances(order_refs, resolved_settings)
         candidates.extend(
             [
                 {"hz": wheel_hz, "tol": wheel_tol, "key": "wheel1"},
