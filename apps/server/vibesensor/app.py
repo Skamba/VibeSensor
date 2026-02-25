@@ -33,7 +33,11 @@ from .constants import (
     MIN_OVERLAP_TOLERANCE,
     SECONDS_PER_MINUTE,
 )
-from .diagnostics_shared import build_diagnostic_settings, tolerance_for_order, vehicle_orders_hz
+from .diagnostics_shared import (
+    build_diagnostic_settings,
+    order_tolerances,
+    vehicle_orders_hz,
+)
 from .esp_flash_manager import EspFlashManager
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
@@ -70,27 +74,7 @@ def _build_order_bands(
     wheel_hz = float(orders_hz["wheel_hz"])
     drive_hz = float(orders_hz["drive_hz"])
     engine_hz = float(orders_hz["engine_hz"])
-    wheel_tol = tolerance_for_order(
-        resolved["wheel_bandwidth_pct"],
-        wheel_hz,
-        orders_hz["wheel_uncertainty_pct"],
-        min_abs_band_hz=resolved["min_abs_band_hz"],
-        max_band_half_width_pct=resolved["max_band_half_width_pct"],
-    )
-    drive_tol = tolerance_for_order(
-        resolved["driveshaft_bandwidth_pct"],
-        drive_hz,
-        orders_hz["drive_uncertainty_pct"],
-        min_abs_band_hz=resolved["min_abs_band_hz"],
-        max_band_half_width_pct=resolved["max_band_half_width_pct"],
-    )
-    engine_tol = tolerance_for_order(
-        resolved["engine_bandwidth_pct"],
-        engine_hz,
-        orders_hz["engine_uncertainty_pct"],
-        min_abs_band_hz=resolved["min_abs_band_hz"],
-        max_band_half_width_pct=resolved["max_band_half_width_pct"],
-    )
+    wheel_tol, drive_tol, engine_tol = order_tolerances(orders_hz, resolved)
     bands: list[dict[str, Any]] = [
         {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
         {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
@@ -188,20 +172,18 @@ class RuntimeState:
             "engine": {"rpm": None, "mode": "calculated", "reason": None},
             "order_bands": None,
         }
-        if speed_mps is None or speed_mps <= 0:
-            reason = "speed_unavailable"
-            out["wheel"]["reason"] = reason
-            out["driveshaft"]["reason"] = reason
-            out["engine"]["reason"] = reason
+
+        def _set_all_reasons(reason: str) -> dict[str, Any]:
+            for component in ("wheel", "driveshaft", "engine"):
+                out[component]["reason"] = reason
             return out
+
+        if speed_mps is None or speed_mps <= 0:
+            return _set_all_reasons("speed_unavailable")
 
         orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
         if orders_hz is None:
-            reason = "invalid_vehicle_settings"
-            out["wheel"]["reason"] = reason
-            out["driveshaft"]["reason"] = reason
-            out["engine"]["reason"] = reason
-            return out
+            return _set_all_reasons("invalid_vehicle_settings")
 
         out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
         out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
