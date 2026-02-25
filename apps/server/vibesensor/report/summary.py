@@ -578,6 +578,7 @@ def _compute_accel_statistics(
 def _build_run_suitability_checks(
     language: str,
     steady_speed: bool,
+    speed_sufficient: bool,
     sensor_ids: set[str],
     reference_complete: bool,
     sat_count: int,
@@ -585,14 +586,15 @@ def _build_run_suitability_checks(
 ) -> list[dict[str, object]]:
     """Construct the run-suitability checklist (speed, sensors, reference, saturation, frames)."""
     sensor_count_sufficient = len(sensor_ids) >= 3
+    speed_variation_ok = speed_sufficient and not steady_speed
     run_suitability: list[dict[str, object]] = [
         {
             "check": _tr(language, "SUITABILITY_CHECK_SPEED_VARIATION"),
             "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
-            "state": "pass" if not steady_speed else "warn",
+            "state": "pass" if speed_variation_ok else "warn",
             "explanation": (
                 _tr(language, "SUITABILITY_SPEED_VARIATION_PASS")
-                if not steady_speed
+                if speed_variation_ok
                 else _tr(language, "SUITABILITY_SPEED_VARIATION_WARN")
             ),
         },
@@ -743,7 +745,12 @@ def summarize_run_data(
         per_sample_phases=_per_sample_phases,
         run_noise_baseline_g=run_noise_baseline_g,
     )
-    most_likely_origin = _most_likely_origin_summary(findings, language)
+    # Filter out REF_ reference-missing findings so origin summary is based
+    # on actual diagnostic findings, not reference gaps (e.g. REF_ENGINE).
+    _diagnostic_for_origin = [
+        f for f in findings if not str(f.get("finding_id", "")).startswith("REF_")
+    ]
+    most_likely_origin = _most_likely_origin_summary(_diagnostic_for_origin, language)
     test_plan = _merge_test_plan(findings, language)
     phase_timeline = _build_phase_timeline(phase_segments, findings, language)
 
@@ -776,6 +783,7 @@ def summarize_run_data(
     run_suitability = _build_run_suitability_checks(
         language=language,
         steady_speed=steady_speed,
+        speed_sufficient=speed_sufficient,
         sensor_ids=sensor_ids,
         reference_complete=reference_complete,
         sat_count=accel_stats["sat_count"],
