@@ -38,6 +38,9 @@ REBUILD_OP_TIMEOUT_S = 300
 REINSTALL_OP_TIMEOUT_S = 180
 """Per-backend-reinstall timeout."""
 
+ESP_PLATFORM_PRELOAD_TIMEOUT_S = 240
+"""Per-offline ESP toolchain preload timeout."""
+
 NMCLI_TIMEOUT_S = 30
 """Per-nmcli-operation timeout."""
 
@@ -822,6 +825,31 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
         self._log("Backend reinstall completed successfully")
+        preload_cmd = [
+            venv_python,
+            "-m",
+            "platformio",
+            "pkg",
+            "install",
+            "--global",
+            "--platform",
+            "espressif32",
+        ]
+        rc, _, stderr = await self._run_cmd(
+            preload_cmd,
+            phase="updating",
+            timeout=ESP_PLATFORM_PRELOAD_TIMEOUT_S,
+            sudo=False,
+        )
+        if rc != 0:
+            self._add_issue(
+                "updating",
+                f"Offline ESP platform preload failed (exit {rc})",
+                stderr,
+            )
+            self._status.state = UpdateState.failed
+            return
+        self._log("Offline ESP platform preload completed successfully")
 
         runtime_details = self._collect_runtime_details()
         self._status.runtime = runtime_details
