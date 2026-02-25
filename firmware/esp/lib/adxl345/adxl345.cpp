@@ -30,7 +30,11 @@ bool ADXL345::begin() {
   wire_.begin(sda_pin_, scl_pin_);
   wire_.setClock(kI2cClockHz);
 
-  uint8_t devid = read_reg(REG_DEVID);
+  uint8_t devid = 0;
+  if (!read_reg(REG_DEVID, &devid)) {
+    available_ = false;
+    return false;
+  }
   if (devid != VALUE_DEVID) {
     available_ = false;
     return false;
@@ -59,17 +63,35 @@ bool ADXL345::available() const {
   return available_;
 }
 
-size_t ADXL345::read_samples(int16_t* xyz_interleaved, size_t max_samples) {
+size_t ADXL345::read_samples(int16_t* xyz_interleaved,
+                             size_t max_samples,
+                             bool* had_io_error,
+                             bool* fifo_truncated) {
+  if (had_io_error != nullptr) {
+    *had_io_error = false;
+  }
+  if (fifo_truncated != nullptr) {
+    *fifo_truncated = false;
+  }
   if (!available_ || max_samples == 0 || xyz_interleaved == nullptr) {
     return 0;
   }
 
-  uint8_t fifo_status = read_reg(REG_FIFO_STATUS);
+  uint8_t fifo_status = 0;
+  if (!read_reg(REG_FIFO_STATUS, &fifo_status)) {
+    if (had_io_error != nullptr) {
+      *had_io_error = true;
+    }
+    return 0;
+  }
   size_t entries = static_cast<size_t>(fifo_status & 0x3F);
   if (entries == 0) {
     return 0;
   }
   size_t count = entries < max_samples ? entries : max_samples;
+  if (fifo_truncated != nullptr && entries > max_samples) {
+    *fifo_truncated = true;
+  }
 
   // Read each FIFO entry individually (6 bytes per entry).
   // The ADXL345 FIFO pops one entry per complete 6-byte read of
@@ -86,7 +108,12 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved, size_t max_samples) {
     if (i > 0) {
       delayMicroseconds(5);
     }
-    read_multi(REG_DATAX0, raw, 6);
+    if (!read_multi(REG_DATAX0, raw, 6)) {
+      if (had_io_error != nullptr) {
+        *had_io_error = true;
+      }
+      return i;
+    }
     const size_t out = i * 3;
     xyz_interleaved[out + 0] = static_cast<int16_t>(raw[0] | (raw[1] << 8));
     xyz_interleaved[out + 1] = static_cast<int16_t>(raw[2] | (raw[3] << 8));
@@ -95,16 +122,21 @@ size_t ADXL345::read_samples(int16_t* xyz_interleaved, size_t max_samples) {
   return count;
 }
 
-uint8_t ADXL345::read_reg(uint8_t reg) {
+bool ADXL345::read_reg(uint8_t reg, uint8_t* out_value) {
   wire_.beginTransmission(i2c_addr_);
   wire_.write(reg);
   if (wire_.endTransmission(false) != 0) {
-    return 0;
+    return false;
   }
-  if (wire_.requestFrom(static_cast<int>(i2c_addr_), 1, true) != 1) {
-    return 0;
+  if (wire_.requestFrom(i2c_addr_, static_cast<size_t>(1), true) != 1) {
+    return false;
   }
-  return wire_.read();
+  if (out_value != nullptr) {
+    *out_value = static_cast<uint8_t>(wire_.read());
+  } else {
+    (void)wire_.read();
+  }
+  return true;
 }
 
 bool ADXL345::write_reg(uint8_t reg, uint8_t value) {
@@ -114,14 +146,14 @@ bool ADXL345::write_reg(uint8_t reg, uint8_t value) {
   return wire_.endTransmission(true) == 0;
 }
 
-void ADXL345::read_multi(uint8_t reg, uint8_t* out, size_t len) {
+bool ADXL345::read_multi(uint8_t reg, uint8_t* out, size_t len) {
   wire_.beginTransmission(i2c_addr_);
   wire_.write(reg);
   if (wire_.endTransmission(false) != 0) {
     memset(out, 0, len);
-    return;
+    return false;
   }
-  size_t got = wire_.requestFrom(static_cast<int>(i2c_addr_), static_cast<int>(len), true);
+  size_t got = wire_.requestFrom(i2c_addr_, len, true);
   for (size_t i = 0; i < len; ++i) {
     if (i < got) {
       out[i] = wire_.read();
@@ -129,4 +161,5 @@ void ADXL345::read_multi(uint8_t reg, uint8_t* out, size_t len) {
       out[i] = 0;
     }
   }
+  return got == len;
 }

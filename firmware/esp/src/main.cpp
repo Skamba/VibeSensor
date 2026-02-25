@@ -3,9 +3,11 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <esp_heap_caps.h>
+#include <esp_system.h>
 #include <esp_timer.h>
 
 #include "adxl345.h"
+#include "reliability.h"
 #include "vibesensor_contracts.h"
 #include "vibesensor_network.h"
 #include "vibesensor_proto.h"
@@ -14,6 +16,7 @@ namespace {
 
 constexpr char kClientName[] = "vibe-node";
 constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
+constexpr size_t kMaxDatagramBytes = 1500;
 
 #ifndef VIBESENSOR_SAMPLE_RATE_HZ
 #define VIBESENSOR_SAMPLE_RATE_HZ 400
@@ -31,8 +34,19 @@ constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
 #define VIBESENSOR_CONTROL_PORT_BASE VS_FIRMWARE_CONTROL_PORT_BASE
 #endif
 
-constexpr uint16_t kSampleRateHz = static_cast<uint16_t>(VIBESENSOR_SAMPLE_RATE_HZ);
-constexpr uint16_t kFrameSamples = static_cast<uint16_t>(VIBESENSOR_FRAME_SAMPLES);
+constexpr uint16_t kSampleRateMinHz = 25;
+constexpr uint16_t kSampleRateMaxHz = 3200;
+constexpr uint16_t kConfiguredSampleRateHz = static_cast<uint16_t>(VIBESENSOR_SAMPLE_RATE_HZ);
+constexpr uint16_t kSampleRateHz = vibesensor::reliability::clamp_sample_rate(
+    kConfiguredSampleRateHz, kSampleRateMinHz, kSampleRateMaxHz);
+constexpr uint16_t kFrameSamplesMaxByDatagram =
+    static_cast<uint16_t>((kMaxDatagramBytes - vibesensor::kDataHeaderBytes) / 6);
+constexpr uint16_t kConfiguredFrameSamples = static_cast<uint16_t>(VIBESENSOR_FRAME_SAMPLES);
+constexpr uint16_t kFrameSamples = (kConfiguredFrameSamples == 0)
+                                       ? 1
+                                       : ((kConfiguredFrameSamples > kFrameSamplesMaxByDatagram)
+                                              ? kFrameSamplesMaxByDatagram
+                                              : kConfiguredFrameSamples);
 constexpr uint16_t kServerDataPort = static_cast<uint16_t>(VIBESENSOR_SERVER_DATA_PORT);
 constexpr uint16_t kServerControlPort = static_cast<uint16_t>(VIBESENSOR_SERVER_CONTROL_PORT);
 constexpr uint16_t kControlPortBase = static_cast<uint16_t>(VIBESENSOR_CONTROL_PORT_BASE);
@@ -46,7 +60,6 @@ constexpr uint16_t kControlPortBase = static_cast<uint16_t>(VIBESENSOR_CONTROL_P
 #endif
 constexpr size_t kFrameQueueLenTarget = static_cast<size_t>(VIBESENSOR_FRAME_QUEUE_LEN_TARGET);
 constexpr size_t kFrameQueueLenMin = static_cast<size_t>(VIBESENSOR_FRAME_QUEUE_LEN_MIN);
-constexpr size_t kMaxDatagramBytes = 1500;
 constexpr uint32_t kHelloIntervalMs = 2000;
 #ifndef VIBESENSOR_WIFI_CONNECT_TIMEOUT_MS
 #define VIBESENSOR_WIFI_CONNECT_TIMEOUT_MS 15000
@@ -69,6 +82,11 @@ constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 constexpr size_t kSensorReadBatchSamples = 8;
 constexpr size_t kMaxTxFramesPerLoop = 2;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
+constexpr uint32_t kStatusReportIntervalMs = 10000;
+constexpr uint16_t kMaxIdentifyDurationMs = 10000;
+constexpr uint8_t kSensorReinitErrorThreshold = 3;
+constexpr uint32_t kSensorReinitCooldownMs = 5000;
+constexpr uint32_t kWifiRetryIntervalMaxMs = 60000;
 #ifndef VIBESENSOR_WIFI_SCAN_INTERVAL_MS
 #define VIBESENSOR_WIFI_SCAN_INTERVAL_MS 20000
 #endif
@@ -85,6 +103,7 @@ static_assert(VIBESENSOR_FRAME_QUEUE_LEN_TARGET >= VIBESENSOR_FRAME_QUEUE_LEN_MI
         "VIBESENSOR_FRAME_QUEUE_LEN_TARGET must be >= VIBESENSOR_FRAME_QUEUE_LEN_MIN");
 static_assert(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS > 0,
         "VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS must be > 0");
+static_assert(kFrameSamplesMaxByDatagram > 0, "kMaxDatagramBytes too small for protocol");
 
 // Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
 constexpr int kI2cSdaPin = 26;
@@ -140,6 +159,25 @@ bool g_identify_leds_active = false;
 uint32_t g_last_wifi_retry_ms = 0;
 uint32_t g_queue_overflow_drops = 0;
 uint32_t g_last_wifi_scan_ms = 0;
+uint32_t g_last_status_report_ms = 0;
+uint32_t g_sensor_read_errors = 0;
+uint32_t g_sensor_fifo_truncated = 0;
+uint32_t g_sensor_reinit_attempts = 0;
+uint32_t g_sensor_reinit_success = 0;
+uint8_t g_sensor_consecutive_errors = 0;
+uint32_t g_last_sensor_reinit_ms = 0;
+uint32_t g_sampling_missed_samples = 0;
+uint32_t g_tx_pack_failures = 0;
+uint32_t g_tx_begin_failures = 0;
+uint32_t g_tx_end_failures = 0;
+uint32_t g_control_parse_errors = 0;
+uint32_t g_data_ack_parse_errors = 0;
+uint32_t g_wifi_reconnect_attempts = 0;
+uint32_t g_wifi_connect_failures = 0;
+uint8_t g_wifi_retry_failures = 0;
+uint32_t g_wifi_next_retry_ms = 0;
+uint8_t g_last_error_code = 0;
+uint32_t g_last_error_ms = 0;
 uint8_t g_target_bssid[6] = {};
 bool g_has_target_bssid = false;
 int32_t g_target_channel = 0;
@@ -147,6 +185,40 @@ bool g_has_last_real_sample = false;
 int16_t g_last_real_x = 0;
 int16_t g_last_real_y = 0;
 int16_t g_last_real_z = 0;
+
+void set_last_error(uint8_t error_code) {
+  g_last_error_code = error_code;
+  g_last_error_ms = millis();
+}
+
+void report_runtime_status(uint32_t now_ms) {
+  if (now_ms - g_last_status_report_ms < kStatusReportIntervalMs) {
+    return;
+  }
+  g_last_status_report_ms = now_ms;
+  Serial.printf(
+      "status wifi=%d q=%u/%u drop=%lu tx_fail={pack:%lu begin:%lu end:%lu} "
+      "sensor={err:%lu trunc:%lu reinit:%lu/%lu miss:%lu} wifi_retry={attempts:%lu fail:%lu} "
+      "parse={ctrl:%lu ack:%lu} last_error=%u@%lu\n",
+      WiFi.status(),
+      static_cast<unsigned>(g_q_size),
+      static_cast<unsigned>(g_queue_capacity),
+      static_cast<unsigned long>(g_queue_overflow_drops),
+      static_cast<unsigned long>(g_tx_pack_failures),
+      static_cast<unsigned long>(g_tx_begin_failures),
+      static_cast<unsigned long>(g_tx_end_failures),
+      static_cast<unsigned long>(g_sensor_read_errors),
+      static_cast<unsigned long>(g_sensor_fifo_truncated),
+      static_cast<unsigned long>(g_sensor_reinit_success),
+      static_cast<unsigned long>(g_sensor_reinit_attempts),
+      static_cast<unsigned long>(g_sampling_missed_samples),
+      static_cast<unsigned long>(g_wifi_reconnect_attempts),
+      static_cast<unsigned long>(g_wifi_connect_failures),
+      static_cast<unsigned long>(g_control_parse_errors),
+      static_cast<unsigned long>(g_data_ack_parse_errors),
+      static_cast<unsigned>(g_last_error_code),
+      static_cast<unsigned long>(g_last_error_ms));
+}
 
 bool refresh_target_ap() {
   int found = WiFi.scanNetworks(false, true);
@@ -275,8 +347,33 @@ bool next_sensor_sample(int16_t* x, int16_t* y, int16_t* z) {
     return false;
   }
   if (g_sensor_batch_index >= g_sensor_batch_count) {
-    g_sensor_batch_count = g_adxl.read_samples(g_sensor_batch_xyz, kSensorReadBatchSamples);
+    bool io_error = false;
+    bool fifo_truncated = false;
+    g_sensor_batch_count = g_adxl.read_samples(
+        g_sensor_batch_xyz, kSensorReadBatchSamples, &io_error, &fifo_truncated);
     g_sensor_batch_index = 0;
+    if (fifo_truncated) {
+      g_sensor_fifo_truncated++;
+      set_last_error(2);
+    }
+    if (io_error) {
+      g_sensor_read_errors++;
+      g_sensor_consecutive_errors++;
+      set_last_error(1);
+      uint32_t now_ms = millis();
+      if (g_sensor_consecutive_errors >= kSensorReinitErrorThreshold &&
+          (now_ms - g_last_sensor_reinit_ms) >= kSensorReinitCooldownMs) {
+        g_last_sensor_reinit_ms = now_ms;
+        g_sensor_reinit_attempts++;
+        g_sensor_ok = g_adxl.begin();
+        if (g_sensor_ok) {
+          g_sensor_reinit_success++;
+          g_sensor_consecutive_errors = 0;
+        }
+      }
+    } else if (g_sensor_batch_count > 0) {
+      g_sensor_consecutive_errors = 0;
+    }
   }
   if (g_sensor_batch_count == 0) {
     return false;
@@ -332,6 +429,7 @@ void service_sampling() {
   while (static_cast<int64_t>(now - g_next_sample_due_us) >= 0 &&
          catch_up_count < kMaxCatchUpSamplesPerLoop) {
     if (!sample_once()) {
+      g_sampling_missed_samples++;
       break;
     }
     g_next_sample_due_us += step_us;
@@ -342,6 +440,8 @@ void service_sampling() {
   if (static_cast<int64_t>(now - g_next_sample_due_us) >= 0) {
     uint64_t lag_us = now - g_next_sample_due_us;
     uint64_t skipped = (lag_us / step_us) + 1;
+    g_sampling_missed_samples += static_cast<uint32_t>(skipped);
+    set_last_error(3);
     g_next_sample_due_us += skipped * step_us;
   }
 }
@@ -363,7 +463,9 @@ void send_hello() {
 
   g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort);
   g_control_udp.write(packet, len);
-  g_control_udp.endPacket();
+  if (g_control_udp.endPacket() != 1) {
+    set_last_error(4);
+  }
 }
 
 void service_hello() {
@@ -399,15 +501,21 @@ void service_tx() {
                                        frame->xyz,
                                        frame->sample_count);
     if (len == 0) {
+      g_tx_pack_failures++;
+      set_last_error(5);
       drop_front_frame();
       continue;
     }
 
     if (g_data_udp.beginPacket(vibesensor_network::server_ip, kServerDataPort) != 1) {
+      g_tx_begin_failures++;
+      set_last_error(6);
       break;
     }
     g_data_udp.write(packet, len);
     if (g_data_udp.endPacket() != 1) {
+      g_tx_end_failures++;
+      set_last_error(7);
       break;
     }
     frame->transmitted = true;
@@ -423,7 +531,9 @@ void send_ack(uint32_t cmd_seq, uint8_t status) {
   }
   g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort);
   g_control_udp.write(packet, len);
-  g_control_udp.endPacket();
+  if (g_control_udp.endPacket() != 1) {
+    set_last_error(8);
+  }
 }
 
 void service_control_rx() {
@@ -456,10 +566,13 @@ void service_control_rx() {
                                   &cmd_seq,
                                   &identify_ms);
   if (!ok) {
+    g_control_parse_errors++;
+    set_last_error(9);
     return;
   }
 
   if (cmd_id == vibesensor::kCmdIdentify) {
+    identify_ms = identify_ms > kMaxIdentifyDurationMs ? kMaxIdentifyDurationMs : identify_ms;
     g_blink_until_ms = millis() + identify_ms;
     g_led_next_update_ms = 0;
     send_ack(cmd_seq, 0);
@@ -483,6 +596,9 @@ void service_data_rx() {
     bool ok_ack = vibesensor::parse_data_ack(packet, read, g_client_id, &last_seq_received);
     if (ok_ack) {
       ack_data_frames(last_seq_received);
+    } else {
+      g_data_ack_parse_errors++;
+      set_last_error(10);
     }
   }
 }
@@ -519,11 +635,13 @@ bool connect_wifi() {
       if (millis() - start_ms >= kWifiConnectTimeoutMs) {
         break;
       }
-      delay(300);
+      delay(50);
     }
     if (WiFi.status() == WL_CONNECTED) {
       return true;
     }
+    g_wifi_connect_failures++;
+    set_last_error(11);
     WiFi.disconnect(true, true);
     delay(kWifiRetryBackoffMs);
   }
@@ -532,25 +650,45 @@ bool connect_wifi() {
 
 void service_wifi() {
   if (WiFi.status() == WL_CONNECTED) {
+    g_wifi_retry_failures = 0;
+    g_wifi_next_retry_ms = 0;
     return;
   }
   uint32_t now = millis();
-  if (now - g_last_wifi_retry_ms < kWifiRetryIntervalMs) {
+  if (!vibesensor::reliability::retry_due(now, g_wifi_next_retry_ms)) {
     return;
   }
   g_last_wifi_retry_ms = now;
+  g_wifi_reconnect_attempts++;
+  set_last_error(12);
   if (now - g_last_wifi_scan_ms >= kWifiScanIntervalMs) {
     g_last_wifi_scan_ms = now;
     refresh_target_ap();
   }
   WiFi.disconnect(true, true);
   begin_target_wifi();
+  g_wifi_retry_failures = vibesensor::reliability::saturating_inc_u8(g_wifi_retry_failures);
+  g_wifi_next_retry_ms = now + vibesensor::reliability::compute_retry_delay_ms(
+                                   kWifiRetryIntervalMs,
+                                   kWifiRetryIntervalMaxMs,
+                                   g_wifi_retry_failures,
+                                   esp_random());
 }
 
 }  // namespace
 
 void setup() {
   Serial.begin(115200);
+  if (kSampleRateHz != kConfiguredSampleRateHz) {
+    Serial.printf("clamped sample rate from %u to %u\n",
+                  static_cast<unsigned>(kConfiguredSampleRateHz),
+                  static_cast<unsigned>(kSampleRateHz));
+  }
+  if (kFrameSamples != kConfiguredFrameSamples) {
+    Serial.printf("clamped frame samples from %u to %u for MTU safety\n",
+                  static_cast<unsigned>(kConfiguredFrameSamples),
+                  static_cast<unsigned>(kFrameSamples));
+  }
   for (size_t cap = kFrameQueueLenTarget; cap >= kFrameQueueLenMin; --cap) {
     auto* mem = static_cast<DataFrame*>(
         heap_caps_malloc(cap * sizeof(DataFrame), MALLOC_CAP_8BIT));
@@ -586,6 +724,7 @@ void setup() {
 }
 
 void loop() {
+  uint32_t now_ms = millis();
   service_wifi();
   service_data_rx();
   service_sampling();
@@ -593,5 +732,6 @@ void loop() {
   service_hello();
   service_control_rx();
   service_blink();
+  report_runtime_status(now_ms);
   delay(1);
 }
