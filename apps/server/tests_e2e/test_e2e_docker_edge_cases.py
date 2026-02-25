@@ -395,18 +395,10 @@ def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
             api_json(base, f"/api/settings/cars/{victim}", method="DELETE")
         lone = api_json(base, "/api/settings/cars")
         lone_car_id = str(lone["cars"][0]["id"])
-        api_json(base, f"/api/settings/cars/{lone_car_id}", method="DELETE", expected_status=400)
-
-        analysis = api_json(base, "/api/analysis-settings")
-        lone_active_raw = lone.get("activeCarId")
-        lone_active_id = str(lone_active_raw) if isinstance(lone_active_raw, str) else None
-        if lone_active_id is not None:
-            active_car = next(c for c in lone["cars"] if str(c["id"]) == lone_active_id)
-            assert float(analysis["tire_width_mm"]) == pytest.approx(
-                float(active_car["aspects"]["tire_width_mm"])
-            )
-        else:
-            assert lone.get("activeCarId") is None
+        api_json(base, f"/api/settings/cars/{lone_car_id}", method="DELETE", expected_status=200)
+        final_state = api_json(base, "/api/settings/cars")
+        assert final_state["cars"] == []
+        assert final_state["activeCarId"] is None
     finally:
         current = api_json(base, "/api/settings/cars")
         remaining_ids = {str(c["id"]) for c in current["cars"]}
