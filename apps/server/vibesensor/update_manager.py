@@ -407,8 +407,10 @@ class UpdateManager:
     ) -> tuple[int, str, str]:
         if sudo:
             args = [*_sudo_prefix(), *args]
-        cmd = args[0] if args else "<empty>"
-        self._log(f"[{phase}] $ {cmd} [args redacted]")
+        cmd_for_log = " ".join(self._redacted_args_for_log(args)) if args else "<empty>"
+        if len(cmd_for_log) > 500:
+            cmd_for_log = f"{cmd_for_log[:497]}..."
+        self._log(f"[{phase}] $ {cmd_for_log}")
         rc, stdout, stderr = await self._runner.run(args, timeout=timeout, env=env)
         if stdout.strip():
             self._log(f"[{phase}] stdout: {_sanitize_log_line(stdout.strip()[:500])}")
@@ -795,12 +797,17 @@ class UpdateManager:
             return
         self._log("Rebuild/sync completed successfully")
         backend_target = self._backend_install_target(repo)
+        venv_python = await self._ensure_backend_venv(repo)
+        if not venv_python:
+            self._status.state = UpdateState.failed
+            return
         reinstall_cmd = [
-            self._reinstall_python_executable(repo),
+            venv_python,
             "-m",
             "pip",
             "install",
             "--no-deps",
+            "--no-build-isolation",
             "-e",
             str(backend_target),
         ]
@@ -857,13 +864,102 @@ class UpdateManager:
             return server_pkg
         return repo
 
+    async def _ensure_backend_venv(self, repo: Path) -> str | None:
+        venv_python = Path(self._reinstall_python_executable(repo))
+        venv_dir = venv_python.parent.parent
+        if not self._is_reinstall_venv_ready(repo):
+            self._log("Backend virtualenv missing or incomplete; creating it")
+            rc, _, stderr = await self._run_cmd(
+                ["python3", "-m", "venv", str(venv_dir)],
+                phase="updating",
+                timeout=120,
+                sudo=True,
+            )
+            if rc != 0:
+                self._add_issue(
+                    "updating",
+                    f"Backend virtualenv creation failed (exit {rc})",
+                    stderr,
+                )
+                return None
+
+        # Verify this interpreter is an actual virtualenv interpreter. A broken
+        # symlink to system python triggers PEP 668 externally-managed failures.
+        rc, _, stderr = await self._run_cmd(
+            [
+                str(venv_python),
+                "-c",
+                "import sys; raise SystemExit(0 if sys.prefix != sys.base_prefix else 1)",
+            ],
+            phase="updating",
+            timeout=30,
+            sudo=True,
+        )
+        if rc != 0:
+            self._add_issue(
+                "updating",
+                "Backend virtualenv is invalid",
+                stderr or f"{venv_python} is not running inside a virtualenv",
+            )
+            return None
+
+        rc, _, stderr = await self._run_cmd(
+            [str(venv_python), "-m", "pip", "--version"],
+            phase="updating",
+            timeout=30,
+            sudo=True,
+        )
+        if rc == 0:
+            return str(venv_python)
+
+        self._log("pip missing in backend virtualenv; bootstrapping via ensurepip")
+        rc, _, stderr = await self._run_cmd(
+            [str(venv_python), "-m", "ensurepip", "--upgrade"],
+            phase="updating",
+            timeout=60,
+            sudo=True,
+        )
+        if rc != 0:
+            self._add_issue(
+                "updating",
+                f"Backend virtualenv pip bootstrap failed (exit {rc})",
+                stderr,
+            )
+            return None
+
+        rc, _, stderr = await self._run_cmd(
+            [str(venv_python), "-m", "pip", "--version"],
+            phase="updating",
+            timeout=30,
+            sudo=True,
+        )
+        if rc != 0:
+            self._add_issue(
+                "updating",
+                f"Backend virtualenv pip verification failed (exit {rc})",
+                stderr,
+            )
+            return None
+        return str(venv_python)
+
+    @staticmethod
+    def _reinstall_venv_python_path(repo: Path) -> Path:
+        return repo / "apps" / "server" / ".venv" / "bin" / "python3"
+
+    @staticmethod
+    def _reinstall_venv_config_path(repo: Path) -> Path:
+        return repo / "apps" / "server" / ".venv" / "pyvenv.cfg"
+
+    @classmethod
+    def _is_reinstall_venv_ready(cls, repo: Path) -> bool:
+        venv_python = cls._reinstall_venv_python_path(repo)
+        if not (venv_python.is_file() and os.access(venv_python, os.X_OK)):
+            return False
+        return cls._reinstall_venv_config_path(repo).is_file()
+
     @staticmethod
     def _reinstall_python_executable(repo: Path) -> str:
-        server_pkg = repo / "apps" / "server"
-        venv_python3 = server_pkg / ".venv" / "bin" / "python3"
-        if venv_python3.is_file():
-            return str(venv_python3)
-        return "python3"
+        return str(UpdateManager._reinstall_venv_python_path(repo))
 
     async def _schedule_service_restart(self) -> bool:
         # Prefer a delayed transient unit so this update task can finish cleanly
