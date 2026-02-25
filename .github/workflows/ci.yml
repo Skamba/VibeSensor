@@ -4,7 +4,47 @@ on:
   pull_request:
 
 jobs:
-  test:
+  preflight:
+    name: Preflight (lint + config)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: apps/server/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./apps/server[dev]"
+
+      - name: Lint
+        run: |
+          ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
+          ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
+
+      - name: Line endings
+        run: |
+          python tools/config/check_line_endings.py
+
+      - name: Config preflight
+        run: |
+          vibesensor-config-preflight apps/server/config.example.yaml
+          vibesensor-config-preflight apps/server/config.dev.yaml
+
+      - name: Verify no path indirections
+        run: |
+          python tools/dev/verify_no_path_indirections.py
+
+  tests:
+    name: Tests (unit + UI smoke)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -30,29 +70,43 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e "./apps/server[dev]"
 
-      - name: Lint
-        run: |
-          ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
-          ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
-
-      - name: Line endings
-        run: |
-          python tools/config/check_line_endings.py
-
-      - name: UI typecheck + build + sync
+      - name: UI sync + typecheck
         run: |
           python tools/sync_ui_to_pi_public.py
           cd apps/ui
           npm run typecheck
-      - name: Config preflight
-        run: |
-          vibesensor-config-preflight apps/server/config.example.yaml
-          vibesensor-config-preflight apps/server/config.dev.yaml
 
-      - name: Full test suite
+      - name: UI smoke tests
         run: |
-          make test-all
+          cd apps/ui
+          npx playwright install chromium
+          npm run test:smoke
 
-      - name: Verify no path indirections
+      - name: Backend tests (non-selenium)
         run: |
-          python tools/dev/verify_no_path_indirections.py
+          python3 -m pytest -q -m "not selenium" apps/server/tests
+
+  e2e:
+    name: E2E (docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: apps/server/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./apps/server[dev]"
+
+      - name: Docker-backed e2e suite (skip already-owned checks)
+        run: |
+          python3 tools/tests/run_full_suite.py --skip-ui-sync --skip-ui-smoke --skip-unit-tests
