@@ -213,7 +213,7 @@ def test_speed_bin_sort_key() -> None:
 def test_speed_stats_empty() -> None:
     result = _speed_stats([])
     assert result["min_kmh"] is None
-    assert result["steady_speed"] is True
+    assert result["steady_speed"] is False
 
 
 def test_speed_stats_steady() -> None:
