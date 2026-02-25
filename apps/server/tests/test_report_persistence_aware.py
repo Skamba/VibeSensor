@@ -303,6 +303,15 @@ class TestTopPeaksTableRows:
         assert rows
         assert rows[0]["typical_speed_band"] == "100-110 km/h"
 
+    def test_frequency_binning_matches_floor_based_spectrum_rules(self) -> None:
+        samples = [
+            _sample(0.0, 60.0, [{"hz": 10.51, "amp": 0.08}]),
+            _sample(0.5, 60.0, [{"hz": 10.52, "amp": 0.07}]),
+        ]
+        rows = _top_peaks_table_rows(samples, top_n=1, freq_bin_hz=1.0)
+        assert rows
+        assert rows[0]["frequency_hz"] == 10.0
+
     def test_typical_and_strongest_speed_bands_stay_consistent(self) -> None:
         samples = []
         for i in range(20):
