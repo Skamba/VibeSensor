@@ -7,6 +7,7 @@ import logging
 import os
 import shutil
 import sys
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -16,6 +17,8 @@ LOGGER = logging.getLogger(__name__)
 
 _FLASH_HISTORY_LIMIT = 10
 _FLASH_STEP_TIMEOUT_S = 90
+_FLASH_BUILD_TIMEOUT_S = 300
+_ESP32_PLATFORM_GLOB = "espressif32*"
 
 
 def _resolve_firmware_dir(repo_hint: Path) -> Path:
@@ -54,6 +57,20 @@ def _esptool_base_cmd() -> list[str] | None:
     if importlib.util.find_spec("esptool") is not None:
         return [sys.executable, "-m", "esptool"]
     return None
+
+
+def _platformio_core_dir() -> Path:
+    override = str(os.environ.get("PLATFORMIO_CORE_DIR") or "").strip()
+    if override:
+        return Path(override).expanduser()
+    return Path.home() / ".platformio"
+
+
+def _has_offline_esp32_platform() -> bool:
+    platforms_dir = _platformio_core_dir() / "platforms"
+    if not platforms_dir.is_dir():
+        return False
+    return any(path.is_dir() for path in platforms_dir.glob(_ESP32_PLATFORM_GLOB))
 
 
 class EspFlashState(enum.StrEnum):
@@ -393,84 +410,151 @@ class EspFlashManager:
             )
             return
 
-        self._status.phase = "preparing"
-        self._append_log("Using esptool flashing path.")
-        artifact_dir = self._firmware_dir / ".pio" / "build" / "m5stack_atom"
-        bootloader = artifact_dir / "bootloader.bin"
-        partitions = artifact_dir / "partitions.bin"
-        firmware = artifact_dir / "firmware.bin"
-        missing = [path.name for path in (bootloader, partitions, firmware) if not path.is_file()]
-        if missing:
-            self._status.exit_code = 1
-            error = f"Missing prebuilt firmware artifacts: {', '.join(missing)}"
-            self._append_log(error)
-            self._finalize(state=EspFlashState.failed, error=error)
-            return
-
+        build_workspace: tempfile.TemporaryDirectory[str] | None = None
+        build_project_dir = self._firmware_dir
         try:
-            selected_port = await self._resolve_port()
-        except ValueError as exc:
-            self._status.exit_code = 2
+            if not os.access(self._firmware_dir, os.W_OK):
+                build_workspace = tempfile.TemporaryDirectory(prefix="vibesensor-esp-build-")
+                build_project_dir = Path(build_workspace.name) / "firmware" / "esp"
+                shutil.copytree(
+                    self._firmware_dir,
+                    build_project_dir,
+                    ignore=shutil.ignore_patterns(".pio", ".vscode", "__pycache__"),
+                )
+                temp_workspace_msg = (
+                    "Firmware directory is read-only; building in temp workspace "
+                    f"{build_project_dir}"
+                )
+                self._append_log(temp_workspace_msg)
+
+            platformio_cmd = _platformio_base_cmd()
+            if platformio_cmd is None:
+                self._status.exit_code = 127
+                self._append_log("PlatformIO not found. Install platformio to build firmware.")
+                self._finalize(state=EspFlashState.failed, error="platformio is not installed")
+                return
+            if not _has_offline_esp32_platform():
+                self._status.exit_code = 1
+                install_hint = (
+                    f"{' '.join(platformio_cmd)} pkg install --global --platform espressif32"
+                )
+                self._append_log(
+                    "Offline ESP32 PlatformIO dependencies missing (platform 'espressif32')."
+                )
+                self._append_log(f"Install once while online: {install_hint}")
+                self._finalize(
+                    state=EspFlashState.failed,
+                    error="offline PlatformIO platform missing: espressif32",
+                )
+                return
+            build_cmd = [*platformio_cmd, "run", "-e", "m5stack_atom"]
+            build_rc = await self._run_flash_step(
+                "building",
+                build_cmd,
+                cwd=build_project_dir,
+                timeout_s=_FLASH_BUILD_TIMEOUT_S,
+            )
+            if self._cancel_event.is_set():
+                self._status.exit_code = 130
+                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+                return
+            if build_rc != 0:
+                self._status.exit_code = build_rc
+                self._finalize(state=EspFlashState.failed, error="Firmware build failed")
+                return
+
+            self._status.phase = "preparing"
+            self._append_log("Using esptool flashing path.")
+            artifact_dir = build_project_dir / ".pio" / "build" / "m5stack_atom"
+            bootloader = artifact_dir / "bootloader.bin"
+            partitions = artifact_dir / "partitions.bin"
+            firmware = artifact_dir / "firmware.bin"
+            missing = [
+                path.name for path in (bootloader, partitions, firmware) if not path.is_file()
+            ]
+            if missing:
+                self._status.exit_code = 1
+                error = f"Missing prebuilt firmware artifacts: {', '.join(missing)}"
+                self._append_log(error)
+                self._finalize(state=EspFlashState.failed, error=error)
+                return
+
+            try:
+                selected_port = await self._resolve_port()
+            except ValueError as exc:
+                self._status.exit_code = 2
+                self._append_log(str(exc))
+                self._finalize(state=EspFlashState.failed, error=str(exc))
+                return
+
+            self._status.selected_port = selected_port
+            erase_cmd = [
+                *esptool_cmd,
+                "--chip",
+                "esp32",
+                "--port",
+                selected_port,
+                "--before",
+                "default_reset",
+                "--after",
+                "hard_reset",
+                "erase_flash",
+            ]
+            erase_rc = await self._run_flash_step(
+                "erasing", erase_cmd, cwd=build_project_dir, timeout_s=45
+            )
+            if self._cancel_event.is_set():
+                self._status.exit_code = 130
+                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+                return
+            if erase_rc != 0:
+                self._status.exit_code = erase_rc
+                self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
+                return
+
+            write_cmd = [
+                *esptool_cmd,
+                "--chip",
+                "esp32",
+                "--port",
+                selected_port,
+                "--before",
+                "default_reset",
+                "--after",
+                "hard_reset",
+                "--baud",
+                "115200",
+                "write_flash",
+                "-z",
+                "0x1000",
+                str(bootloader),
+                "0x8000",
+                str(partitions),
+                "0x10000",
+                str(firmware),
+            ]
+            write_rc = await self._run_flash_step(
+                "flashing",
+                write_cmd,
+                cwd=build_project_dir,
+                timeout_s=120,
+            )
+            if self._cancel_event.is_set():
+                self._status.exit_code = 130
+                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+                return
+            self._status.exit_code = write_rc
+            if write_rc != 0:
+                self._finalize(state=EspFlashState.failed, error="Firmware flash failed")
+                return
+            self._status.phase = "done"
+            self._finalize(state=EspFlashState.success)
+        except OSError as exc:
+            self._status.exit_code = 1
             self._append_log(str(exc))
-            self._finalize(state=EspFlashState.failed, error=str(exc))
-            return
-
-        self._status.selected_port = selected_port
-        erase_cmd = [
-            *esptool_cmd,
-            "--chip",
-            "esp32",
-            "--port",
-            selected_port,
-            "--before",
-            "default_reset",
-            "--after",
-            "hard_reset",
-            "erase_flash",
-        ]
-        erase_rc = await self._run_flash_step(
-            "erasing", erase_cmd, cwd=self._firmware_dir, timeout_s=45
-        )
-        if self._cancel_event.is_set():
-            self._status.exit_code = 130
-            self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
-            return
-        if erase_rc != 0:
-            self._status.exit_code = erase_rc
-            self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
-            return
-
-        write_cmd = [
-            *esptool_cmd,
-            "--chip",
-            "esp32",
-            "--port",
-            selected_port,
-            "--before",
-            "default_reset",
-            "--after",
-            "hard_reset",
-            "--baud",
-            "115200",
-            "write_flash",
-            "-z",
-            "0x1000",
-            str(bootloader),
-            "0x8000",
-            str(partitions),
-            "0x10000",
-            str(firmware),
-        ]
-        write_rc = await self._run_flash_step(
-            "flashing", write_cmd, cwd=self._firmware_dir, timeout_s=120
-        )
-        if self._cancel_event.is_set():
-            self._status.exit_code = 130
-            self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
-            return
-        self._status.exit_code = write_rc
-        if write_rc != 0:
-            self._finalize(state=EspFlashState.failed, error="Firmware flash failed")
-            return
-        self._status.phase = "done"
-        self._finalize(state=EspFlashState.success)
+            self._finalize(
+                state=EspFlashState.failed, error=f"Firmware build staging failed: {exc}"
+            )
+        finally:
+            if build_workspace is not None:
+                build_workspace.cleanup()

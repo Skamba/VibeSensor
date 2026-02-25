@@ -322,6 +322,8 @@ python3 -m venv /opt/VibeSensor/apps/server/.venv
   --no-build-isolation \
   -e /opt/VibeSensor/apps/server \
   --quiet
+install -d -o 1000 -g 1000 /home/pi/.platformio
+su - pi -c '/opt/VibeSensor/apps/server/.venv/bin/python -m platformio pkg install --global --platform espressif32'
 chown -R 1000:1000 /opt/VibeSensor/apps/server/.venv
 CHROOT_EOF
 

@@ -33,6 +33,14 @@ else
   SERVICE_USER="$(id -un)"
 fi
 
+run_as_service_user() {
+  if [ "$(id -u)" -eq 0 ]; then
+    runuser -u "${SERVICE_USER}" -- "$@"
+  else
+    sudo -u "${SERVICE_USER}" "$@"
+  fi
+}
+
 run_as_root apt-get update
 run_as_root apt-get install -y \
   git \
@@ -61,6 +69,7 @@ run_as_root install -d -m 0755 /var/log/vibesensor
 run_as_root install -d -m 0755 /var/log/wifi
 run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/log/vibesensor
 run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"
+run_as_service_user "${VENV_DIR}/bin/python" -m platformio pkg install --global --platform espressif32
 run_as_root tee /etc/tmpfiles.d/vibesensor-wifi.conf >/dev/null <<'EOF'
 d /var/log/wifi 0755 root root -
 EOF
