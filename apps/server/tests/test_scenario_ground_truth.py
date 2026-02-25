@@ -51,6 +51,13 @@ _GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 _ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
 
+def _sensor_offset(sensor: str, modulo: int) -> int:
+    """Stable per-sensor offset independent of PYTHONHASHSEED."""
+    if sensor in _ALL_SENSORS:
+        return _ALL_SENSORS.index(sensor) % modulo
+    return sum(ord(ch) for ch in sensor) % modulo
+
+
 def _wheel_hz(speed_kmh: float) -> float:
     """Compute wheel_1x Hz for a given speed."""
     hz = wheel_hz_from_speed_kmh(speed_kmh, _TIRE_CIRC)
@@ -120,7 +127,7 @@ def _idle_phase(
         t = start_t_s + i * dt_s
         for sensor in sensors:
             peaks = [
-                {"hz": 12.5 + (hash(sensor) % 10), "amp": noise_amp},
+                {"hz": 12.5 + _sensor_offset(sensor, 10), "amp": noise_amp},
                 {"hz": 25.0, "amp": noise_amp * 0.5},
             ]
             samples.append(
@@ -153,7 +160,7 @@ def _road_noise_phase(
         t = start_t_s + i * dt_s
         for sensor in sensors:
             peaks = [
-                {"hz": 15.0 + (hash(sensor) % 20), "amp": noise_amp},
+                {"hz": 15.0 + _sensor_offset(sensor, 20), "amp": noise_amp},
                 {"hz": 34.0, "amp": noise_amp * 0.7},
                 {"hz": 88.0, "amp": noise_amp * 0.5},
             ]
@@ -192,7 +199,7 @@ def _ramp_phase(
         for _i in range(n_per_step):
             for sensor in sensors:
                 peaks = [
-                    {"hz": 15.0 + (hash(sensor) % 20), "amp": noise_amp},
+                    {"hz": 15.0 + _sensor_offset(sensor, 20), "amp": noise_amp},
                     {"hz": 60.0, "amp": noise_amp * 0.6},
                 ]
                 samples.append(
