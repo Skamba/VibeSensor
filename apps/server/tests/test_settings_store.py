@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.domain_models import DEFAULT_CAR_ASPECTS
 from vibesensor.domain_models import CarConfig, SensorConfig, _parse_manual_speed
 from vibesensor.history_db import HistoryDB
 from vibesensor.settings_store import (
-    DEFAULT_CAR_ASPECTS,
     PersistenceError,
     SettingsStore,
     _sanitize_aspects,
@@ -82,60 +82,81 @@ def test_validate_sensor_uses_provided_name() -> None:
 # -- SettingsStore full lifecycle -----------------------------------------------
 
 
-def test_store_default_has_one_car() -> None:
+def test_store_default_has_no_cars() -> None:
     store = SettingsStore()
     snap = store.snapshot()
-    assert len(snap["cars"]) == 1
-    assert snap["activeCarId"] == snap["cars"][0]["id"]
+    assert snap["cars"] == []
+    assert snap["activeCarId"] is None
     assert snap["speedSource"] == "gps"
     assert snap["manualSpeedKph"] is None
 
 
 def test_store_add_and_delete_car() -> None:
     store = SettingsStore()
-    initial_id = store.snapshot()["cars"][0]["id"]
     store.add_car({"name": "Track Car", "type": "coupe"})
+    store.add_car({"name": "Daily Car", "type": "sedan"})
     snap = store.snapshot()
     assert len(snap["cars"]) == 2
-    new_car = snap["cars"][1]
-    assert new_car["name"] == "Track Car"
-    assert new_car["type"] == "coupe"
+    first_car = snap["cars"][0]
+    assert first_car["name"] == "Track Car"
+    assert first_car["type"] == "coupe"
 
-    store.delete_car(new_car["id"])
+    store.set_active_car(first_car["id"])
+    store.delete_car(first_car["id"])
     assert len(store.snapshot()["cars"]) == 1
-    assert store.snapshot()["cars"][0]["id"] == initial_id
+    assert store.snapshot()["activeCarId"] is None
 
 
-def test_store_cannot_delete_last_car() -> None:
+def test_store_can_delete_last_car() -> None:
     store = SettingsStore()
-    car_id = store.snapshot()["cars"][0]["id"]
-    with pytest.raises(ValueError, match="Cannot delete the last car"):
-        store.delete_car(car_id)
+    created = store.add_car({"name": "Temporary"})
+    car_id = created["cars"][0]["id"]
+    store.set_active_car(car_id)
+    result = store.delete_car(car_id)
+    assert result["cars"] == []
+    assert result["activeCarId"] is None
 
 
 def test_store_update_car_aspects() -> None:
     store = SettingsStore()
-    car_id = store.snapshot()["cars"][0]["id"]
+    created = store.add_car({"name": "Aspect Car"})
+    car_id = created["cars"][0]["id"]
+    store.set_active_car(car_id)
     store.update_car(car_id, {"aspects": {"tire_width_mm": 245.0}})
-    aspects = store.active_car_aspects()
+    aspects = store.active_car_aspects() or {}
     assert aspects["tire_width_mm"] == 245.0
     assert aspects["rim_in"] == DEFAULT_CAR_ASPECTS["rim_in"]
 
 
 def test_store_update_active_car_aspects() -> None:
     store = SettingsStore()
+    created = store.add_car({"name": "Editable"})
+    store.set_active_car(created["cars"][0]["id"])
     updated = store.update_active_car_aspects({"tire_width_mm": 255.0, "rim_in": 19.0})
     assert updated["tire_width_mm"] == 255.0
     assert updated["rim_in"] == 19.0
-    assert store.active_car_aspects()["tire_width_mm"] == 255.0
+    assert (store.active_car_aspects() or {})["tire_width_mm"] == 255.0
+
+
+def test_store_update_active_car_aspects_without_selection_raises() -> None:
+    store = SettingsStore()
+    with pytest.raises(ValueError, match="No active car configured"):
+        store.update_active_car_aspects({"tire_width_mm": 255.0})
 
 
 def test_store_set_active_car() -> None:
     store = SettingsStore()
+    store.add_car({"name": "First Car"})
     store.add_car({"name": "Second Car"})
     second_id = store.snapshot()["cars"][1]["id"]
     store.set_active_car(second_id)
     assert store.snapshot()["activeCarId"] == second_id
+
+
+def test_store_add_car_does_not_auto_select_active_car() -> None:
+    store = SettingsStore()
+    store.add_car({"name": "Unselected Car"})
+    assert store.snapshot()["activeCarId"] is None
 
 
 def test_store_set_active_car_unknown_raises() -> None:
@@ -210,14 +231,16 @@ def test_store_set_sensor_persists_defaults(tmp_path: Path) -> None:
 def test_store_persists_and_loads(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     store1 = SettingsStore(db=db)
-    store1.add_car({"name": "Persisted Car", "type": "suv"})
+    added = store1.add_car({"name": "Persisted Car", "type": "suv"})
+    store1.set_active_car(added["cars"][0]["id"])
     store1.update_speed_source({"speedSource": "manual", "manualSpeedKph": 60})
     store1.set_sensor("11:22:33:44:55:66", {"name": "Rear", "location": "rear_left_wheel"})
 
     store2 = SettingsStore(db=db)
     snap = store2.snapshot()
-    assert len(snap["cars"]) == 2
-    assert snap["cars"][1]["name"] == "Persisted Car"
+    assert len(snap["cars"]) == 1
+    assert snap["cars"][0]["name"] == "Persisted Car"
+    assert snap["activeCarId"] == snap["cars"][0]["id"]
     assert snap["speedSource"] == "manual"
     assert snap["manualSpeedKph"] == 60.0
     assert snap["sensorsByMac"]["112233445566"]["name"] == "Rear"
@@ -225,8 +248,8 @@ def test_store_persists_and_loads(tmp_path: Path) -> None:
 
 def test_store_handles_no_db() -> None:
     store = SettingsStore()
-    # Should fall back to defaults without crashing
-    assert len(store.snapshot()["cars"]) == 1
+    assert store.snapshot()["cars"] == []
+    assert store.snapshot()["activeCarId"] is None
 
 
 def test_parse_manual_speed_returns_none_for_invalid() -> None:
@@ -239,7 +262,7 @@ def test_parse_manual_speed_returns_none_for_invalid() -> None:
 
 def test_store_update_car_name_and_type() -> None:
     store = SettingsStore()
-    cars = store.get_cars()["cars"]
+    cars = store.add_car({"name": "Original"})["cars"]
     car_id = cars[0]["id"]
     result = store.update_car(car_id, {"name": "Updated", "type": "SUV"})
     updated = next(c for c in result["cars"] if c["id"] == car_id)
@@ -253,14 +276,15 @@ def test_store_update_car_unknown_raises() -> None:
         store.update_car("nonexistent", {"name": "X"})
 
 
-def test_store_delete_car_switches_active() -> None:
+def test_store_delete_selected_car_clears_active_without_auto_select() -> None:
     store = SettingsStore()
+    store.add_car({"name": "First"})
     added = store.add_car({"name": "Second"})
     car_ids = [c["id"] for c in added["cars"]]
     store.set_active_car(car_ids[1])
     result = store.delete_car(car_ids[1])
-    # Active car should switch to remaining car
-    assert result["activeCarId"] == car_ids[0]
+    assert len(result["cars"]) == 1
+    assert result["activeCarId"] is None
 
 
 def test_store_delete_car_unknown_raises() -> None:
@@ -289,18 +313,32 @@ def test_store_corrupted_snapshot_falls_back_to_defaults(tmp_path: Path) -> None
     db.set_setting("settings_snapshot", "not-valid-json{{{")
     store = SettingsStore(db=db)
     snap = store.snapshot()
-    assert len(snap["cars"]) == 1
+    assert snap["cars"] == []
+    assert snap["activeCarId"] is None
     assert snap["speedSource"] == "gps"
 
 
-def test_store_snapshot_with_empty_cars_falls_back(tmp_path: Path) -> None:
+def test_store_snapshot_with_empty_cars_stays_empty(tmp_path: Path) -> None:
     db = HistoryDB(tmp_path / "history.db")
     db.set_settings_snapshot({"cars": [], "activeCarId": ""})
     store = SettingsStore(db=db)
     snap = store.snapshot()
-    # Should fall back to one default car
-    assert len(snap["cars"]) >= 1
-    assert snap["activeCarId"] == snap["cars"][0]["id"]
+    assert snap["cars"] == []
+    assert snap["activeCarId"] is None
+
+
+def test_store_invalid_persisted_active_car_id_clears_selection(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.set_settings_snapshot(
+        {
+            "cars": [{"id": "car-1", "name": "Only", "type": "sedan", "aspects": {}}],
+            "activeCarId": "missing-car",
+        }
+    )
+    store = SettingsStore(db=db)
+    snap = store.snapshot()
+    assert len(snap["cars"]) == 1
+    assert snap["activeCarId"] is None
 
 
 # -- persistence error propagation (GH-289) -----------------------------------
@@ -325,7 +363,7 @@ def test_persist_failure_raises_persistence_error(tmp_path: Path) -> None:
     # Restore and verify the in-memory change is there but not persisted
     db.set_settings_snapshot = original  # type: ignore[assignment]
     store2 = SettingsStore(db=db)
-    assert len(store2.get_cars()["cars"]) == 1  # only default car persisted
+    assert len(store2.get_cars()["cars"]) == 0
 
 
 def test_persist_failure_propagates_on_speed_source_update(tmp_path: Path) -> None:

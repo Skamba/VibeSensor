@@ -106,8 +106,10 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(tmp_path: P
 
     db = HistoryDB(tmp_path / "test.db")
     settings_store = SettingsStore(db=db)
+    initial = settings_store.add_car({"name": "Primary"})
+    settings_store.set_active_car(initial["cars"][0]["id"])
     analysis_settings = AnalysisSettingsStore()
-    analysis_settings.update(settings_store.active_car_aspects())
+    analysis_settings.update(settings_store.active_car_aspects() or {})
     state = _State(settings_store=settings_store, analysis_settings=analysis_settings)
     app = FastAPI()
     router = create_router(state)

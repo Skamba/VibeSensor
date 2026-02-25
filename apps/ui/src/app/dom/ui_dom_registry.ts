@@ -4,6 +4,7 @@ export interface UiDomElements {
   languageSelect: HTMLSelectElement | null;
   speedUnitSelect: HTMLSelectElement | null;
   speed: HTMLElement | null;
+  carSelectionBanner: HTMLElement | null;
   headerGpsStatus: HTMLElement | null;
   headerManualOverrideGroup: HTMLElement | null;
   headerManualSpeedInput: HTMLInputElement | null;
@@ -47,6 +48,7 @@ export interface UiDomElements {
   minAbsBandHzInput: HTMLInputElement | null;
   maxBandHalfWidthInput: HTMLInputElement | null;
   saveAnalysisBtn: HTMLButtonElement | null;
+  analysisNoCarMessage: HTMLElement | null;
   carListBody: HTMLElement | null;
   addCarBtn: HTMLButtonElement | null;
   addCarWizard: HTMLElement | null;
@@ -113,6 +115,7 @@ export function createUiDomRegistry(): UiDomElements {
     languageSelect: selectEl("languageSelect"),
     speedUnitSelect: selectEl("speedUnitSelect"),
     speed: el("speed"),
+    carSelectionBanner: el("carSelectionBanner"),
     headerGpsStatus: el("headerGpsStatus"),
     headerManualOverrideGroup: el("headerManualOverrideGroup"),
     headerManualSpeedInput: inputEl("headerManualSpeedInput"),
@@ -156,6 +159,7 @@ export function createUiDomRegistry(): UiDomElements {
     minAbsBandHzInput: inputEl("minAbsBandHzInput"),
     maxBandHalfWidthInput: inputEl("maxBandHalfWidthInput"),
     saveAnalysisBtn: btnEl("saveAnalysisBtn"),
+    analysisNoCarMessage: el("analysisNoCarMessage"),
     carListBody: el("carListBody"),
     addCarBtn: btnEl("addCarBtn"),
     addCarWizard: el("addCarWizard"),

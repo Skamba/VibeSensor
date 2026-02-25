@@ -4,7 +4,6 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 from .domain_models import (
-    DEFAULT_CAR_ASPECTS,
     CarConfig,
     SensorConfig,
     SpeedSourceConfig,
@@ -36,9 +35,8 @@ class SettingsStore:
         self._lock = RLock()
         self._db = db
 
-        default_car = CarConfig.default()
-        self._cars: list[CarConfig] = [default_car]
-        self._active_car_id: str = default_car.id
+        self._cars: list[CarConfig] = []
+        self._active_car_id: str | None = None
         self._speed_cfg = SpeedSourceConfig.default()
         self._language: str = "en"
         self._speed_unit: str = "kmh"
@@ -60,13 +58,10 @@ class SettingsStore:
             raw_cars = raw.get("cars")
             if isinstance(raw_cars, list) and raw_cars:
                 self._cars = [CarConfig.from_dict(c) for c in raw_cars if isinstance(c, dict)]
-            if not self._cars:
-                default_car = CarConfig.default()
-                self._cars = [default_car]
 
             active_id = str(raw.get("activeCarId") or "")
             car_ids = {c.id for c in self._cars}
-            self._active_car_id = active_id if active_id in car_ids else self._cars[0].id
+            self._active_car_id = active_id if active_id in car_ids else None
 
             # Speed source
             self._speed_cfg = SpeedSourceConfig.from_dict(
@@ -128,13 +123,15 @@ class SettingsStore:
                 "activeCarId": self._active_car_id,
             }
 
-    def active_car_aspects(self) -> dict[str, float]:
+    def active_car_aspects(self) -> dict[str, float] | None:
         """Return the active car's aspects as a flat analysis-settings dict."""
         with self._lock:
             car = self._find_car(self._active_car_id)
-            return dict(car.aspects) if car else dict(DEFAULT_CAR_ASPECTS)
+            return dict(car.aspects) if car else None
 
-    def _find_car(self, car_id: str) -> CarConfig | None:
+    def _find_car(self, car_id: str | None) -> CarConfig | None:
+        if not car_id:
+            return None
         for c in self._cars:
             if c.id == car_id:
                 return c
@@ -189,14 +186,12 @@ class SettingsStore:
 
     def delete_car(self, car_id: str) -> dict[str, Any]:
         with self._lock:
-            if len(self._cars) <= 1:
-                raise ValueError("Cannot delete the last car")
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
             self._cars = [c for c in self._cars if c.id != car_id]
             if self._active_car_id == car_id:
-                self._active_car_id = self._cars[0].id
+                self._active_car_id = None
             self._persist()
             return self.get_cars()
 

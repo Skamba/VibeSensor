@@ -46,6 +46,7 @@
         </nav>
       </header>
 
+      <div id="carSelectionBanner" class="connection-banner connection-banner--warn" hidden aria-live="assertive" role="alert"></div>
       <div id="connectionBanner" class="connection-banner" hidden aria-live="assertive" role="alert"></div>
 
       <section id="dashboardView" class="view active" role="tabpanel" aria-labelledby="tab-dashboard">
@@ -333,6 +334,7 @@
         <div id="analysisTab" class="settings-tab-panel" role="tabpanel" hidden>
           <div class="panel card settings-layout">
             <div class="subtle" data-i18n="settings.analysis.hint">These settings apply globally to all cars and control how vibration frequency bands are calculated.</div>
+            <div id="analysisNoCarMessage" class="empty-state" hidden data-i18n="settings.analysis.no_car_selected">No car selected. Select or create a car in Settings → Car to save analysis settings.</div>
             <div class="settings-groups">
               <section class="settings-group">
                 <h3 data-i18n="settings.group.order_band_widths">Order Band Widths</h3>

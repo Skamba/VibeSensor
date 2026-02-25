@@ -116,10 +116,6 @@ class CarConfig:
             variant=variant or None,
         )
 
-    @classmethod
-    def default(cls) -> CarConfig:
-        return cls.from_dict({"id": _new_car_id(), "name": "Default Car", "type": "sedan"})
-
     # -- serialization ---------------------------------------------------------
 
     def to_dict(self) -> dict[str, Any]:
