@@ -7,7 +7,6 @@ import logging
 import os
 import shutil
 import sys
-import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -141,6 +140,31 @@ class SerialPortProvider:
     """Serial port discovery abstraction for testability."""
 
     async def list_ports(self) -> list[SerialPortInfo]:
+        # Prefer pyserial (bundled with esptool) so flashing does not depend on
+        # PlatformIO tooling being installed.
+        try:
+            from serial.tools import list_ports as serial_list_ports
+
+            pyserial_ports: list[SerialPortInfo] = []
+            for row in serial_list_ports.comports():
+                port = str(getattr(row, "device", "") or "").strip()
+                if not port:
+                    continue
+                pyserial_ports.append(
+                    SerialPortInfo(
+                        port=port,
+                        description=str(getattr(row, "description", "") or ""),
+                        vid=getattr(row, "vid", None),
+                        pid=getattr(row, "pid", None),
+                        serial_number=str(getattr(row, "serial_number", "") or "") or None,
+                    )
+                )
+            if pyserial_ports:
+                return pyserial_ports
+        except Exception:
+            pass
+
+        # Fallback for environments where pyserial is unavailable.
         base_cmd = _platformio_base_cmd()
         if base_cmd is None:
             return []
@@ -355,11 +379,11 @@ class EspFlashManager:
             self._history = self._history[:_FLASH_HISTORY_LIMIT]
 
     async def _run_flash_job(self) -> None:
-        pio_cmd = _platformio_base_cmd()
-        if pio_cmd is None:
+        esptool_cmd = _esptool_base_cmd()
+        if esptool_cmd is None:
             self._status.exit_code = 127
-            self._append_log("PlatformIO not found. Install platformio to flash firmware.")
-            self._finalize(state=EspFlashState.failed, error="PlatformIO (pio) is not installed")
+            self._append_log("esptool not found. Install esptool to flash firmware.")
+            self._finalize(state=EspFlashState.failed, error="esptool is not installed")
             return
         if not self._firmware_dir.is_dir():
             self._status.exit_code = 1
@@ -368,28 +392,20 @@ class EspFlashManager:
                 error=f"Firmware directory missing: {self._firmware_dir}",
             )
             return
-        project_dir = self._firmware_dir
-        workspace_dir: Path | None = None
-        if not os.access(self._firmware_dir, os.W_OK):
-            self._status.phase = "preparing"
-            self._append_log("Firmware directory is read-only; using temporary writable workspace.")
-            try:
-                workspace_dir = Path(tempfile.mkdtemp(prefix="vibesensor-esp-flash-"))
-                project_dir = workspace_dir / "esp"
-                shutil.copytree(
-                    self._firmware_dir,
-                    project_dir,
-                    dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns(".pio", ".git", ".vscode"),
-                )
-            except Exception as exc:
-                self._status.exit_code = 1
-                self._append_log(f"Failed to prepare flash workspace: {exc}")
-                self._finalize(
-                    state=EspFlashState.failed,
-                    error="Failed to prepare firmware workspace",
-                )
-                return
+
+        self._status.phase = "preparing"
+        self._append_log("Using esptool flashing path.")
+        artifact_dir = self._firmware_dir / ".pio" / "build" / "m5stack_atom"
+        bootloader = artifact_dir / "bootloader.bin"
+        partitions = artifact_dir / "partitions.bin"
+        firmware = artifact_dir / "firmware.bin"
+        missing = [path.name for path in (bootloader, partitions, firmware) if not path.is_file()]
+        if missing:
+            self._status.exit_code = 1
+            error = f"Missing prebuilt firmware artifacts: {', '.join(missing)}"
+            self._append_log(error)
+            self._finalize(state=EspFlashState.failed, error=error)
+            return
 
         try:
             selected_port = await self._resolve_port()
@@ -400,64 +416,12 @@ class EspFlashManager:
             return
 
         self._status.selected_port = selected_port
-        base = [*pio_cmd, "run", "-d", str(project_dir)]
-        port_args = ["--upload-port", selected_port]
-        try:
-            erase_rc = await self._run_flash_step(
-                "erasing", [*base, "-t", "erase", *port_args], cwd=project_dir, timeout_s=25
-            )
-            if self._cancel_event.is_set():
-                self._status.exit_code = 130
-                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
-                return
-            if erase_rc != 0:
-                fallback_error = await self._try_offline_fallback(selected_port)
-                if fallback_error is None:
-                    self._status.phase = "done"
-                    self._finalize(state=EspFlashState.success)
-                    return
-                self._status.exit_code = erase_rc
-                self._append_log(fallback_error)
-                self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
-                return
-
-            upload_rc = await self._run_flash_step(
-                "flashing", [*base, "-t", "upload", *port_args], cwd=project_dir, timeout_s=180
-            )
-            if self._cancel_event.is_set():
-                self._status.exit_code = 130
-                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
-                return
-            self._status.exit_code = upload_rc
-            if upload_rc != 0:
-                self._finalize(state=EspFlashState.failed, error="Firmware flash failed")
-                return
-
-            self._status.phase = "done"
-            self._finalize(state=EspFlashState.success)
-        finally:
-            if workspace_dir is not None:
-                shutil.rmtree(workspace_dir, ignore_errors=True)
-
-    async def _try_offline_fallback(self, port: str) -> str | None:
-        self._append_log("PlatformIO erase failed; trying offline esptool fallback.")
-        esptool_cmd = _esptool_base_cmd()
-        if esptool_cmd is None:
-            return "Offline fallback unavailable: esptool is not installed."
-        artifact_dir = self._firmware_dir / ".pio" / "build" / "m5stack_atom"
-        bootloader = artifact_dir / "bootloader.bin"
-        partitions = artifact_dir / "partitions.bin"
-        firmware = artifact_dir / "firmware.bin"
-        missing = [path.name for path in (bootloader, partitions, firmware) if not path.is_file()]
-        if missing:
-            return f"Offline fallback unavailable: missing prebuilt artifacts: {', '.join(missing)}"
-
         erase_cmd = [
             *esptool_cmd,
             "--chip",
             "esp32",
             "--port",
-            port,
+            selected_port,
             "--before",
             "default_reset",
             "--after",
@@ -465,18 +429,23 @@ class EspFlashManager:
             "erase_flash",
         ]
         erase_rc = await self._run_flash_step(
-            "offline_erasing", erase_cmd, cwd=self._firmware_dir, timeout_s=45
+            "erasing", erase_cmd, cwd=self._firmware_dir, timeout_s=45
         )
+        if self._cancel_event.is_set():
+            self._status.exit_code = 130
+            self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+            return
         if erase_rc != 0:
             self._status.exit_code = erase_rc
-            return "Offline fallback failed during erase step."
+            self._finalize(state=EspFlashState.failed, error="Flash erase step failed")
+            return
 
         write_cmd = [
             *esptool_cmd,
             "--chip",
             "esp32",
             "--port",
-            port,
+            selected_port,
             "--before",
             "default_reset",
             "--after",
@@ -493,9 +462,15 @@ class EspFlashManager:
             str(firmware),
         ]
         write_rc = await self._run_flash_step(
-            "offline_flashing", write_cmd, cwd=self._firmware_dir, timeout_s=120
+            "flashing", write_cmd, cwd=self._firmware_dir, timeout_s=120
         )
+        if self._cancel_event.is_set():
+            self._status.exit_code = 130
+            self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+            return
         self._status.exit_code = write_rc
         if write_rc != 0:
-            return "Offline fallback failed during firmware write step."
-        return None
+            self._finalize(state=EspFlashState.failed, error="Firmware flash failed")
+            return
+        self._status.phase = "done"
+        self._finalize(state=EspFlashState.success)
