@@ -7,11 +7,13 @@ from pathlib import Path
 
 import pytest
 from pypdf import PdfReader
+from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor import __version__
 from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report import summarize_log
-from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.pdf_builder import _draw_system_card, build_report_pdf
+from vibesensor.report.report_data import PartSuggestion, SystemFindingCard
 
 
 def _write_jsonl(path: Path, records: list[dict]) -> None:
@@ -828,3 +830,25 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
     assert "Firmware Version" in text_blob
     assert "esp-fw-1.2.3" in text_blob
+
+
+def test_report_pdf_wraps_long_system_card_location() -> None:
+    long_location = (
+        "front-left wheel hub housing extended mount with additional bracket and balancing weight"
+    )
+    card = SystemFindingCard(
+        system_name="Wheel / Tire",
+        strongest_location=long_location,
+        pattern_summary="1.02 wheel order harmonic with sideband modulation",
+        parts=[
+            PartSuggestion(name="Front-left wheel bearing assembly with extended descriptor"),
+            PartSuggestion(name="Tire belt package"),
+        ],
+    )
+
+    buf = BytesIO()
+    canvas = Canvas(buf)
+    _draw_system_card(canvas, 40, 120, 160, 130, card, tr=lambda key: key)
+    canvas.save()
+    pdf = buf.getvalue()
+    assert long_location.encode("latin-1", errors="ignore") not in pdf
