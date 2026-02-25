@@ -94,13 +94,9 @@ constexpr uint8_t kAdxlI2cAddr = 0x53;
 #ifndef LED_BUILTIN
 constexpr int LED_BUILTIN = 27;
 #endif
-#ifndef VIBESENSOR_LED_PIXELS
-constexpr uint16_t kLedPixels = 25;
-#else
-constexpr uint16_t kLedPixels = static_cast<uint16_t>(VIBESENSOR_LED_PIXELS);
-#endif
-constexpr uint16_t kLedWavePeriodMs = 900;
-constexpr uint16_t kLedWaveStepMs = 30;
+constexpr uint16_t kLedPixels = 1;
+constexpr uint16_t kIdentifyBlinkPeriodMs = 300;
+constexpr uint8_t kIdentifyBrightness = 64;
 
 struct DataFrame {
   uint32_t seq;
@@ -140,7 +136,6 @@ size_t g_sensor_batch_index = 0;
 
 uint32_t g_blink_until_ms = 0;
 uint32_t g_led_next_update_ms = 0;
-uint8_t g_identify_wave_shift = 0;
 bool g_identify_leds_active = false;
 uint32_t g_last_wifi_retry_ms = 0;
 uint32_t g_queue_overflow_drops = 0;
@@ -200,20 +195,12 @@ void clear_leds() {
   g_led_strip.show();
 }
 
-void render_identify_wave(uint32_t now_ms) {
-  const uint16_t phase = static_cast<uint16_t>(now_ms % kLedWavePeriodMs);
-  const uint16_t base = static_cast<uint16_t>((phase * 255U) / kLedWavePeriodMs);
-
-  for (uint16_t i = 0; i < kLedPixels; ++i) {
-    uint16_t pixel_span = static_cast<uint16_t>(kLedPixels == 0 ? 1 : kLedPixels);
-    uint8_t wave = static_cast<uint8_t>(
-        (base + g_identify_wave_shift + (i * (255U / pixel_span))) & 0xFF);
-    uint8_t tri = wave < 128 ? static_cast<uint8_t>(wave * 2) : static_cast<uint8_t>((255 - wave) * 2);
-
-    uint8_t r = static_cast<uint8_t>(10 + (tri / 5));
-    uint8_t g = static_cast<uint8_t>(35 + (tri / 2));
-    uint8_t b = static_cast<uint8_t>(45 + tri);
-    g_led_strip.setPixelColor(i, g_led_strip.Color(r, g, b));
+void render_identify_blink(uint32_t now_ms) {
+  bool led_on = ((now_ms / kIdentifyBlinkPeriodMs) % 2U) == 0U;
+  if (led_on) {
+    g_led_strip.setPixelColor(0, g_led_strip.Color(0, kIdentifyBrightness, kIdentifyBrightness));
+  } else {
+    g_led_strip.setPixelColor(0, 0);
   }
   g_led_strip.show();
 }
@@ -517,10 +504,9 @@ void service_blink() {
   }
 
   if (now >= g_led_next_update_ms) {
-    render_identify_wave(now);
+    render_identify_blink(now);
     g_identify_leds_active = true;
-    g_identify_wave_shift = static_cast<uint8_t>(g_identify_wave_shift + 3);
-    g_led_next_update_ms = now + kLedWaveStepMs;
+    g_led_next_update_ms = now + (kIdentifyBlinkPeriodMs / 2U);
   }
 }
 
