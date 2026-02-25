@@ -289,7 +289,7 @@ bool next_sensor_sample(int16_t* x, int16_t* y, int16_t* z) {
   return true;
 }
 
-void sample_once() {
+bool sample_once() {
   int16_t x = 0;
   int16_t y = 0;
   int16_t z = 0;
@@ -303,17 +303,9 @@ void sample_once() {
 #if VIBESENSOR_ENABLE_SYNTH_FALLBACK
     synth_sample(&x, &y, &z);
 #else
-    // Never inject synthetic vibration in production.
-    // If FIFO is momentarily empty, hold last real sample to avoid fake spectral peaks.
-    if (g_has_last_real_sample) {
-      x = g_last_real_x;
-      y = g_last_real_y;
-      z = g_last_real_z;
-    } else {
-      x = 0;
-      y = 0;
-      z = 0;
-    }
+    // Do not inject synthetic or held samples in production.
+    // Repeating the previous sample creates artificial tones in the FFT.
+    return false;
 #endif
   }
 
@@ -330,6 +322,7 @@ void sample_once() {
   if (g_build_count >= kFrameSamples) {
     enqueue_frame();
   }
+  return true;
 }
 
 void service_sampling() {
@@ -338,7 +331,9 @@ void service_sampling() {
   size_t catch_up_count = 0;
   while (static_cast<int64_t>(now - g_next_sample_due_us) >= 0 &&
          catch_up_count < kMaxCatchUpSamplesPerLoop) {
-    sample_once();
+    if (!sample_once()) {
+      break;
+    }
     g_next_sample_due_us += step_us;
     catch_up_count++;
     now = esp_timer_get_time();
