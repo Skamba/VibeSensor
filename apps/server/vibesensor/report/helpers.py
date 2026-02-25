@@ -393,7 +393,7 @@ def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
 def _locations_connected_throughout_run(
     samples: list[dict[str, Any]], *, lang: object = "en"
 ) -> set[str]:
-    by_location_times: dict[str, list[float]] = defaultdict(list)
+    by_location_times: dict[str, set[float]] = defaultdict(set)
     all_times: list[float] = []
 
     for sample in samples:
@@ -405,7 +405,7 @@ def _locations_connected_throughout_run(
         t_s = _as_float(sample.get("t_s"))
         if t_s is None:
             continue
-        by_location_times[location].append(t_s)
+        by_location_times[location].add(t_s)
         all_times.append(t_s)
 
     if not by_location_times:
@@ -428,9 +428,15 @@ def _locations_connected_throughout_run(
             continue
         if len(times) < min_required_count:
             continue
-        loc_start = min(times)
-        loc_end = max(times)
+        sorted_times = sorted(times)
+        loc_start = sorted_times[0]
+        loc_end = sorted_times[-1]
         if loc_start <= (run_start + edge_tolerance_s) and loc_end >= (run_end - edge_tolerance_s):
-            connected.add(location)
+            max_internal_gap = max(
+                (curr - prev for prev, curr in zip(sorted_times, sorted_times[1:], strict=False)),
+                default=0.0,
+            )
+            if max_internal_gap <= (edge_tolerance_s * 2.0):
+                connected.add(location)
 
-    return connected if connected else set(by_location_times.keys())
+    return connected
