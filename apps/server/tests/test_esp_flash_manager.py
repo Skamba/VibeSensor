@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -30,13 +29,13 @@ class _FakeRunner(FlashCommandRunner):
         self,
         *,
         hang: bool = False,
-        fail_upload: bool = False,
-        fail_platformio_erase: bool = False,
+        fail_erase: bool = False,
+        fail_write: bool = False,
     ) -> None:
         self.calls: list[list[str]] = []
         self.hang = hang
-        self.fail_upload = fail_upload
-        self.fail_platformio_erase = fail_platformio_erase
+        self.fail_erase = fail_erase
+        self.fail_write = fail_write
 
     async def run(
         self,
@@ -53,17 +52,26 @@ class _FakeRunner(FlashCommandRunner):
             while not cancel_event.is_set():
                 await asyncio.sleep(0.05)
             return 130
-        if self.fail_platformio_erase and "run" in args and "-t" in args and "erase" in args:
+        if self.fail_erase and "erase_flash" in args:
             line_cb("HTTPClientError: ")
             return 1
-        if self.fail_upload and "-t" in args and "upload" in args:
+        if self.fail_write and "write_flash" in args:
             return 1
         return 0
 
 
-def _make_repo(tmp_path: Path) -> Path:
+def _seed_artifacts(repo: Path) -> None:
+    artifact_dir = repo / "firmware" / "esp" / ".pio" / "build" / "m5stack_atom"
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    for name in ("bootloader.bin", "partitions.bin", "firmware.bin"):
+        (artifact_dir / name).write_bytes(b"bin")
+
+
+def _make_repo(tmp_path: Path, *, with_artifacts: bool = True) -> Path:
     repo = tmp_path / "repo"
     (repo / "firmware" / "esp").mkdir(parents=True)
+    if with_artifacts:
+        _seed_artifacts(repo)
     return repo
 
 
@@ -105,7 +113,10 @@ async def test_port_discovery_returns_metadata(tmp_path) -> None:
 
 @pytest.mark.asyncio
 async def test_flash_job_runs_erase_and_upload_and_records_history(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
     runner = _FakeRunner()
     mgr = EspFlashManager(
         runner=runner,
@@ -117,14 +128,17 @@ async def test_flash_job_runs_erase_and_upload_and_records_history(tmp_path, mon
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "success"
-    assert any("-t" in call and "erase" in call for call in runner.calls)
-    assert any("-t" in call and "upload" in call for call in runner.calls)
+    assert any("erase_flash" in call for call in runner.calls)
+    assert any("write_flash" in call for call in runner.calls)
     assert mgr.history()[0]["state"] == "success"
 
 
 @pytest.mark.asyncio
 async def test_single_job_lock_and_cancel(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
     mgr = EspFlashManager(
         runner=_FakeRunner(hang=True),
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
@@ -141,7 +155,10 @@ async def test_single_job_lock_and_cancel(tmp_path, monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_multiple_ports_without_choice_fails_actionably(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
     mgr = EspFlashManager(
         runner=_FakeRunner(),
         port_provider=_FakePorts(
@@ -168,7 +185,10 @@ def _route_endpoint(router, path: str, method: str):
 
 @pytest.mark.asyncio
 async def test_esp_flash_api_lifecycle(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
     manager = EspFlashManager(
         runner=_FakeRunner(),
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
@@ -197,7 +217,10 @@ async def test_esp_flash_api_lifecycle(tmp_path, monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_esp_flash_api_rejects_concurrent_start(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
     manager = EspFlashManager(
         runner=_FakeRunner(hang=True),
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
@@ -217,7 +240,7 @@ async def test_esp_flash_api_rejects_concurrent_start(tmp_path, monkeypatch) -> 
 
 
 @pytest.mark.asyncio
-async def test_flash_uses_python_module_fallback_when_pio_binary_missing(
+async def test_flash_uses_python_module_fallback_when_esptool_binary_missing(
     tmp_path, monkeypatch
 ) -> None:
     def _which(name: str) -> str | None:
@@ -226,7 +249,7 @@ async def test_flash_uses_python_module_fallback_when_pio_binary_missing(
     monkeypatch.setattr("shutil.which", _which)
     monkeypatch.setattr(
         "importlib.util.find_spec",
-        lambda name: SimpleNamespace() if name == "platformio" else None,
+        lambda name: SimpleNamespace() if name == "esptool" else None,
     )
     runner = _FakeRunner()
     mgr = EspFlashManager(
@@ -240,14 +263,17 @@ async def test_flash_uses_python_module_fallback_when_pio_binary_missing(
     assert mgr.status.state.value == "success"
     first = runner.calls[0]
     assert Path(first[0]).name.startswith("python")
-    assert first[1:4] == ["-m", "platformio", "run"]
+    assert first[1:3] == ["-m", "esptool"]
 
 
 @pytest.mark.asyncio
 async def test_flash_finds_firmware_dir_when_repo_hint_points_to_apps(
     tmp_path, monkeypatch
 ) -> None:
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
     repo, apps_hint = _make_repo_with_apps_hint(tmp_path)
     runner = _FakeRunner()
     mgr = EspFlashManager(
@@ -259,27 +285,19 @@ async def test_flash_finds_firmware_dir_when_repo_hint_points_to_apps(
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "success"
-    first = runner.calls[0]
-    firmware_idx = first.index("-d") + 1
-    assert Path(first[firmware_idx]) == repo / "firmware" / "esp"
+    assert any(
+        str(repo / "firmware" / "esp" / ".pio" / "build" / "m5stack_atom" / "firmware.bin") in call
+        for call in runner.calls
+    )
 
 
 @pytest.mark.asyncio
-async def test_flash_uses_temporary_workspace_when_firmware_dir_not_writable(
-    tmp_path, monkeypatch
-) -> None:
-    monkeypatch.setattr("shutil.which", lambda _: "/usr/bin/pio")
-    repo = _make_repo(tmp_path)
-    workspace_root = tmp_path / "flash-work"
-
-    def _access(path: str | bytes | Path, mode: int) -> bool:
-        candidate = Path(path)
-        if candidate == repo / "firmware" / "esp" and mode == os.W_OK:
-            return False
-        return True
-
-    monkeypatch.setattr("os.access", _access)
-    monkeypatch.setattr("tempfile.mkdtemp", lambda prefix="": str(workspace_root))
+async def test_flash_fails_when_prebuilt_artifacts_are_missing(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
+    repo = _make_repo(tmp_path, with_artifacts=False)
 
     runner = _FakeRunner()
     mgr = EspFlashManager(
@@ -290,32 +308,19 @@ async def test_flash_uses_temporary_workspace_when_firmware_dir_not_writable(
     mgr.start(port=None, auto_detect=True)
     assert mgr._task is not None
     await mgr._task
-    assert mgr.status.state.value == "success"
-    assert any("read-only; using temporary writable workspace" in line for line in mgr._logs)
-    first = runner.calls[0]
-    firmware_idx = first.index("-d") + 1
-    assert Path(first[firmware_idx]) == workspace_root / "esp"
+    assert mgr.status.state.value == "failed"
+    assert "Missing prebuilt firmware artifacts" in str(mgr.status.error)
 
 
 @pytest.mark.asyncio
-async def test_flash_falls_back_to_offline_esptool_when_platformio_erase_fails(
-    tmp_path, monkeypatch
-) -> None:
+async def test_flash_fails_when_esptool_erase_step_fails(tmp_path, monkeypatch) -> None:
     def _which(name: str) -> str | None:
-        mapping = {
-            "pio": "/usr/bin/pio",
-            "esptool.py": "/usr/bin/esptool.py",
-        }
-        return mapping.get(name)
+        return "/usr/bin/esptool.py" if name == "esptool.py" else None
 
     monkeypatch.setattr("shutil.which", _which)
     repo = _make_repo(tmp_path)
-    artifact_dir = repo / "firmware" / "esp" / ".pio" / "build" / "m5stack_atom"
-    artifact_dir.mkdir(parents=True, exist_ok=True)
-    for name in ("bootloader.bin", "partitions.bin", "firmware.bin"):
-        (artifact_dir / name).write_bytes(b"bin")
 
-    runner = _FakeRunner(fail_platformio_erase=True)
+    runner = _FakeRunner(fail_erase=True)
     mgr = EspFlashManager(
         runner=runner,
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
@@ -324,7 +329,7 @@ async def test_flash_falls_back_to_offline_esptool_when_platformio_erase_fails(
     mgr.start(port=None, auto_detect=True)
     assert mgr._task is not None
     await mgr._task
-    assert mgr.status.state.value == "success"
-    assert any("offline esptool fallback" in line for line in mgr._logs)
+    assert mgr.status.state.value == "failed"
+    assert mgr.status.error == "Flash erase step failed"
     assert any("erase_flash" in " ".join(call) for call in runner.calls)
-    assert any("write_flash" in " ".join(call) for call in runner.calls)
+    assert not any("write_flash" in " ".join(call) for call in runner.calls)

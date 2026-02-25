@@ -130,6 +130,258 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
   await expect.poll(() => stopCalls).toBe(1);
 });
 
+test("shows header warning and blocks car-dependent analysis save when no car is selected", async ({ page }) => {
+  let analysisPostCalls = 0;
+
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/settings/cars") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ cars: [], activeCarId: null }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+  await page.route("**/api/analysis-settings", async (route) => {
+    if (route.request().method() === "POST") {
+      analysisPostCalls += 1;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#carSelectionBanner")).toBeVisible();
+  await expect(page.locator("#carSelectionBanner")).toContainText("No car selected");
+
+  await page.locator("#tab-settings").click();
+  await page.locator('[data-settings-tab="analysisTab"]').click();
+  await expect(page.locator("#analysisNoCarMessage")).toBeVisible();
+  await expect(page.locator("#saveAnalysisBtn")).toBeDisabled();
+
+  await page.waitForTimeout(150);
+  await expect.poll(() => analysisPostCalls).toBe(0);
+});
+
+test("hides header warning when a valid selected car exists", async ({ page }) => {
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.startsWith("/api/settings/cars")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          activeCarId: "car-1",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+});
+
+test("shows warning for invalid persisted selection and after deleting selected car", async ({ page }) => {
+  let firstCarsGet = true;
+
+  await page.route("**/api/logging/status", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ enabled: false, current_file: null }),
+    });
+  });
+  await page.route("**/api/history", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ brands: [], types: [], models: [] }),
+    });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    const method = route.request().method();
+    if (path === "/api/settings/cars" && method === "GET") {
+      if (firstCarsGet) {
+        firstCarsGet = false;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            cars: [
+              { id: "car-1", name: "One", type: "sedan", aspects: {} },
+              { id: "car-2", name: "Two", type: "suv", aspects: {} },
+            ],
+            activeCarId: "missing-car",
+          }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [
+            { id: "car-1", name: "One", type: "sedan", aspects: {} },
+            { id: "car-2", name: "Two", type: "suv", aspects: {} },
+          ],
+          activeCarId: "car-2",
+        }),
+      });
+      return;
+    }
+    if (path === "/api/settings/cars/active" && method === "POST") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [
+            { id: "car-1", name: "One", type: "sedan", aspects: {} },
+            { id: "car-2", name: "Two", type: "suv", aspects: {} },
+          ],
+          activeCarId: "car-2",
+        }),
+      });
+      return;
+    }
+    if (path === "/api/settings/cars/car-2" && method === "DELETE") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }],
+          activeCarId: null,
+        }),
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  });
+
+  await page.addInitScript(() => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    window.confirm = () => true;
+  });
+
+  await page.goto("/");
+  await expect(page.locator("#carSelectionBanner")).toBeVisible();
+
+  await page.locator("#tab-settings").click();
+  await expect(page.locator("#carListBody .car-activate-btn").last()).toBeVisible();
+  await page.locator("#carListBody .car-activate-btn").last().click();
+  await expect(page.locator("#carSelectionBanner")).toBeHidden();
+
+  await page.locator('#carListBody tr[data-car-id="car-2"] .car-delete-btn').click();
+  await expect(page.locator("#carSelectionBanner")).toBeVisible();
+});
+
 test("gps status uses selected speed unit in settings panel", async ({ page }) => {
   await page.route("**/api/logging/status", async (route) => {
     await route.fulfill({
@@ -456,6 +708,18 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
     });
   });
   await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/settings/cars") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          activeCarId: "car-1",
+        }),
+      });
+      return;
+    }
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await page.route("**/api/car-library/**", async (route) => {
@@ -733,6 +997,18 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
     });
   });
   await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.startsWith("/api/settings/cars")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          activeCarId: "car-1",
+        }),
+      });
+      return;
+    }
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await page.route("**/api/analysis-settings", async (route) => {
@@ -777,6 +1053,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
+  await expect(page.locator("#saveAnalysisBtn")).toBeEnabled();
 
   await page.locator("#wheelBandwidthInput").fill("7.5");
   await page.locator("#driveshaftBandwidthInput").fill("8.5");

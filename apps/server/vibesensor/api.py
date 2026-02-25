@@ -119,7 +119,8 @@ def _normalize_client_id_or_400(client_id: str) -> str:
 def _sync_active_car_to_analysis(state: RuntimeState) -> None:
     """Push active car aspects into the shared AnalysisSettingsStore."""
     aspects = state.settings_store.active_car_aspects()
-    state.analysis_settings.update(aspects)
+    if aspects:
+        state.analysis_settings.update(aspects)
 
 
 def _sync_speed_source_to_gps(state: RuntimeState) -> None:
@@ -332,7 +333,10 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
         changes = req.model_dump(exclude_none=True)
         if changes:
-            state.settings_store.update_active_car_aspects(changes)
+            try:
+                state.settings_store.update_active_car_aspects(changes)
+            except ValueError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
             _sync_active_car_to_analysis(state)
         return state.analysis_settings.snapshot()
 

@@ -46,7 +46,10 @@ def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses() -> 
 
     cars_properties = components["CarsResponse"]["properties"]
     assert cars_properties["cars"]["items"] == {"$ref": "#/components/schemas/CarResponse"}
-    assert cars_properties["activeCarId"]["type"] == "string"
+    assert cars_properties["activeCarId"] == {
+        "anyOf": [{"type": "string"}, {"type": "null"}],
+        "title": "Activecarid",
+    }
 
     update_status_properties = components["UpdateStatusResponse"]["properties"]
     assert update_status_properties["issues"]["items"] == {
