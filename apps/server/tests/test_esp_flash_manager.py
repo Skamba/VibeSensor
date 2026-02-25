@@ -21,6 +21,14 @@ from vibesensor.esp_flash_manager import (
 def _seed_platformio_core_dir(tmp_path: Path, monkeypatch) -> None:
     core_dir = tmp_path / ".platformio-core"
     (core_dir / "platforms" / "espressif32").mkdir(parents=True, exist_ok=True)
+    packages_dir = core_dir / "packages"
+    for name in ("framework-arduinoespressif32", "tool-scons", "toolchain-xtensa-esp32"):
+        (packages_dir / name).mkdir(parents=True, exist_ok=True)
+    toolchain_bin = packages_dir / "toolchain-xtensa-esp32" / "bin"
+    toolchain_bin.mkdir(parents=True, exist_ok=True)
+    compiler = toolchain_bin / "xtensa-esp32-elf-g++"
+    compiler.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    compiler.chmod(0o755)
     monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
 
 
@@ -344,6 +352,76 @@ async def test_flash_fails_fast_when_offline_platform_cache_is_missing(
     await mgr._task
     assert mgr.status.state.value == "failed"
     assert "offline PlatformIO platform missing: espressif32" == mgr.status.error
+
+
+@pytest.mark.asyncio
+async def test_flash_fails_fast_when_required_offline_package_is_missing(
+    tmp_path, monkeypatch
+) -> None:
+    def _which(name: str) -> str | None:
+        if name == "pio":
+            return "/usr/bin/pio"
+        if name == "esptool.py":
+            return "/usr/bin/esptool.py"
+        return None
+
+    monkeypatch.setattr("shutil.which", _which)
+    core_dir = tmp_path / ".platformio-missing-framework"
+    (core_dir / "platforms" / "espressif32").mkdir(parents=True, exist_ok=True)
+    (core_dir / "packages" / "tool-scons").mkdir(parents=True, exist_ok=True)
+    compiler = core_dir / "packages" / "toolchain-xtensa-esp32" / "bin" / "xtensa-esp32-elf-g++"
+    compiler.parent.mkdir(parents=True, exist_ok=True)
+    compiler.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    compiler.chmod(0o755)
+    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
+
+    mgr = EspFlashManager(
+        runner=_FakeRunner(),
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(_make_repo(tmp_path)),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "failed"
+    assert (
+        "offline PlatformIO package(s) missing: framework-arduinoespressif32"
+        == mgr.status.error
+    )
+
+
+@pytest.mark.asyncio
+async def test_flash_fails_fast_when_toolchain_binary_is_not_executable(
+    tmp_path, monkeypatch
+) -> None:
+    def _which(name: str) -> str | None:
+        if name == "pio":
+            return "/usr/bin/pio"
+        if name == "esptool.py":
+            return "/usr/bin/esptool.py"
+        return None
+
+    monkeypatch.setattr("shutil.which", _which)
+    core_dir = tmp_path / ".platformio-bad-toolchain"
+    (core_dir / "platforms" / "espressif32").mkdir(parents=True, exist_ok=True)
+    for name in ("framework-arduinoespressif32", "tool-scons", "toolchain-xtensa-esp32"):
+        (core_dir / "packages" / name).mkdir(parents=True, exist_ok=True)
+    compiler = core_dir / "packages" / "toolchain-xtensa-esp32" / "bin" / "xtensa-esp32-elf-g++"
+    compiler.parent.mkdir(parents=True, exist_ok=True)
+    compiler.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    # Intentionally no executable bit.
+    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
+
+    mgr = EspFlashManager(
+        runner=_FakeRunner(),
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(_make_repo(tmp_path)),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "failed"
+    assert "offline PlatformIO toolchain unusable: toolchain-xtensa-esp32" == mgr.status.error
 
 
 @pytest.mark.asyncio

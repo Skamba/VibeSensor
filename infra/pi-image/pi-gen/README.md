@@ -55,6 +55,7 @@ The image contains:
 - Raspberry Pi OS Lite (Bookworm, arm64)
 - VibeSensor Python server with all dependencies
 - Built web UI (served from `apps/server/public/`)
+- Preloaded offline ESP build toolchain/packages for `m5stack_atom`
 - systemd services enabled at boot:
   - `vibesensor.service` — FastAPI server
   - `vibesensor-hotspot.service` — Wi-Fi AP setup via NetworkManager

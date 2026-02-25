@@ -323,7 +323,89 @@ python3 -m venv /opt/VibeSensor/apps/server/.venv
   -e /opt/VibeSensor/apps/server \
   --quiet
 install -d -o 1000 -g 1000 /home/pi/.platformio
-su - pi -c '/opt/VibeSensor/apps/server/.venv/bin/python -m platformio pkg install --global --platform espressif32'
+cat >/tmp/vibesensor-pio-preload.sh <<'PIO_PRELOAD_EOF'
+#!/bin/bash
+set -euo pipefail
+
+VENV_PYTHON="/opt/VibeSensor/apps/server/.venv/bin/python"
+TOOLCHAIN_RELEASE="${ESP32_TOOLCHAIN_RELEASE:-esp-2021r2-patch5}"
+TOOLCHAIN_GCC_SERIES="${ESP32_TOOLCHAIN_GCC_SERIES:-gcc8_4_0}"
+TOOLCHAIN_PKG_DIR="${HOME}/.platformio/packages/toolchain-xtensa-esp32"
+TARGET_ARCH="$(dpkg --print-architecture)"
+TOOLCHAIN_ARCHIVE=""
+
+"${VENV_PYTHON}" -m platformio pkg install --global \
+  --platform espressif32 \
+  --tool platformio/tool-scons \
+  --tool platformio/framework-arduinoespressif32
+
+case "${TARGET_ARCH}" in
+  armhf)
+    TOOLCHAIN_ARCHIVE="xtensa-esp32-elf-${TOOLCHAIN_GCC_SERIES}-${TOOLCHAIN_RELEASE}-linux-armhf.tar.gz"
+    ;;
+  arm64)
+    TOOLCHAIN_ARCHIVE="xtensa-esp32-elf-${TOOLCHAIN_GCC_SERIES}-${TOOLCHAIN_RELEASE}-linux-arm64.tar.gz"
+    ;;
+  *)
+    echo "Skipping ESP32 toolchain host override for unsupported arch: ${TARGET_ARCH}"
+    ;;
+esac
+
+if [ -n "${TOOLCHAIN_ARCHIVE}" ] && [ -d "${TOOLCHAIN_PKG_DIR}" ]; then
+  TOOLCHAIN_URL="https://github.com/espressif/crosstool-NG/releases/download/${TOOLCHAIN_RELEASE}/${TOOLCHAIN_ARCHIVE}"
+  TOOLCHAIN_TMP="/tmp/${TOOLCHAIN_ARCHIVE}"
+  TOOLCHAIN_BACKUP_DIR="/tmp/vibesensor-toolchain-backup"
+
+  python3 - "${TOOLCHAIN_URL}" "${TOOLCHAIN_TMP}" <<'PY'
+import pathlib
+import sys
+import urllib.request
+
+url = sys.argv[1]
+dest = pathlib.Path(sys.argv[2])
+with urllib.request.urlopen(url, timeout=180) as resp:
+    dest.write_bytes(resp.read())
+PY
+
+  rm -rf "${TOOLCHAIN_BACKUP_DIR}"
+  mkdir -p "${TOOLCHAIN_BACKUP_DIR}"
+  for meta in package.json .piopm installed.json; do
+    if [ -f "${TOOLCHAIN_PKG_DIR}/${meta}" ]; then
+      cp -f "${TOOLCHAIN_PKG_DIR}/${meta}" "${TOOLCHAIN_BACKUP_DIR}/${meta}"
+    fi
+  done
+  tar -xzf "${TOOLCHAIN_TMP}" -C "${TOOLCHAIN_PKG_DIR}" --strip-components=1
+  for meta in package.json .piopm installed.json; do
+    if [ -f "${TOOLCHAIN_BACKUP_DIR}/${meta}" ]; then
+      cp -f "${TOOLCHAIN_BACKUP_DIR}/${meta}" "${TOOLCHAIN_PKG_DIR}/${meta}"
+    fi
+  done
+  rm -f "${TOOLCHAIN_TMP}"
+  rm -rf "${TOOLCHAIN_BACKUP_DIR}"
+fi
+
+if [ -x "${TOOLCHAIN_PKG_DIR}/bin/xtensa-esp32-elf-g++" ]; then
+  "${TOOLCHAIN_PKG_DIR}/bin/xtensa-esp32-elf-g++" --version >/dev/null
+fi
+
+PREWARM_DIR="/tmp/vibesensor-esp-prewarm"
+rm -rf "${PREWARM_DIR}"
+python3 - <<'PY'
+import shutil
+from pathlib import Path
+
+src = Path("/opt/VibeSensor/firmware/esp")
+dst = Path("/tmp/vibesensor-esp-prewarm")
+shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".pio", ".vscode", "__pycache__"))
+PY
+"${VENV_PYTHON}" -m platformio run -e m5stack_atom -d "${PREWARM_DIR}"
+rm -rf "${PREWARM_DIR}"
+PIO_PRELOAD_EOF
+chown 1000:1000 /tmp/vibesensor-pio-preload.sh
+chmod +x /tmp/vibesensor-pio-preload.sh
+su - pi -c '/tmp/vibesensor-pio-preload.sh'
+rm -f /tmp/vibesensor-pio-preload.sh
+chown -R 1000:1000 /home/pi/.platformio
 chown -R 1000:1000 /opt/VibeSensor/apps/server/.venv
 CHROOT_EOF
 
@@ -651,6 +733,17 @@ if [ "${VALIDATE}" = "1" ]; then
     exit 1
   fi
 
+  if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service" ]; then
+    echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service"
+    exit 1
+  fi
+
+  if ! grep -Fq "/opt/VibeSensor/apps/server/.venv/bin/python" \
+    "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot-self-heal.service"; then
+    echo "Validation failed: hotspot self-heal service ExecStart does not reference apps/server venv"
+    exit 1
+  fi
+
   if [ ! -d "${ROOT_MNT}/etc/vibesensor" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/vibesensor"
     exit 1
@@ -677,6 +770,16 @@ if [ "${VALIDATE}" = "1" ]; then
     exit 1
   fi
 
+  if ! grep -Fq '${PROJECT_DIR}/lib/Adafruit_NeoPixel' "${ROOT_MNT}/opt/VibeSensor/firmware/esp/platformio.ini"; then
+    echo "Validation failed: firmware platformio.ini is not pinned to vendored Adafruit_NeoPixel path"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/firmware/esp/lib/Adafruit_NeoPixel/Adafruit_NeoPixel.h" ]; then
+    echo "Validation failed: vendored Adafruit_NeoPixel library missing from firmware tree"
+    exit 1
+  fi
+
   assert_rootfs_package gpsd
   assert_rootfs_package gpsd-clients
   assert_rootfs_package libopenblas0-pthread
@@ -693,6 +796,20 @@ if [ "${VALIDATE}" = "1" ]; then
     sudo cp /usr/bin/qemu-arm-static "${ROOT_MNT}/usr/bin/"
     sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
   }
+
+  if ! run_qemu_chroot /bin/bash -lc '
+set -e
+toolchain="/home/pi/.platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-g++"
+if [ ! -x "${toolchain}" ]; then
+  echo "Missing ESP32 toolchain compiler: ${toolchain}"
+  exit 1
+fi
+"${toolchain}" --version >/dev/null
+echo "ESP32_TOOLCHAIN_OK"
+'; then
+    echo "Validation failed: ESP32 toolchain is not executable in target rootfs"
+    exit 1
+  fi
 
   if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
 import importlib
