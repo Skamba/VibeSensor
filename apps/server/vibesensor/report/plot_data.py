@@ -277,7 +277,7 @@ def _top_peaks_table_rows(
         for hz, amp in _sample_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
-            freq_key = round(hz / freq_bin_hz) * freq_bin_hz
+            freq_key = floor(hz / freq_bin_hz) * freq_bin_hz
             bucket = grouped.setdefault(
                 freq_key,
                 {
