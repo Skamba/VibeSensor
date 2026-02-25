@@ -108,29 +108,20 @@ def _speed_profile_from_points(
     allowed_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
     phase_weights: list[float] | None = None,
 ) -> tuple[float | None, tuple[float, float] | None, str | None]:
-    valid = [(speed, amp) for speed, amp in points if speed > 0 and amp > 0]
-    if allowed_speed_bins:
-        allowed = set(allowed_speed_bins)
-        if phase_weights is not None:
-            # Keep phase_weights aligned after filtering
-            indexed = [
-                (speed, amp, pw)
-                for (speed, amp), pw in zip(points, phase_weights, strict=False)
-                if speed > 0 and amp > 0 and _speed_bin_label(speed) in allowed
-            ]
-            valid = [(s, a) for s, a, _pw in indexed]
-            phase_weights = [pw for _s, _a, pw in indexed]
-        else:
-            valid = [(speed, amp) for speed, amp in valid if _speed_bin_label(speed) in allowed]
-    elif phase_weights is not None:
-        # Keep phase_weights aligned after filtering
-        indexed = [
-            (speed, amp, pw)
-            for (speed, amp), pw in zip(points, phase_weights, strict=False)
-            if speed > 0 and amp > 0
-        ]
-        valid = [(s, a) for s, a, _pw in indexed]
-        phase_weights = [pw for _s, _a, pw in indexed]
+    allowed = set(allowed_speed_bins) if allowed_speed_bins is not None else None
+    indexed: list[tuple[float, float, float]] = []
+    for idx, (speed, amp) in enumerate(points):
+        if speed <= 0 or amp <= 0:
+            continue
+        if allowed is not None and _speed_bin_label(speed) not in allowed:
+            continue
+        phase_weight = 1.0
+        if phase_weights is not None and idx < len(phase_weights):
+            parsed_weight = _as_float(phase_weights[idx])
+            if parsed_weight is not None and parsed_weight > 0:
+                phase_weight = parsed_weight
+        indexed.append((speed, amp, phase_weight))
+    valid = [(speed, amp) for speed, amp, _phase_weight in indexed]
 
     if not valid:
         return None, None, None
@@ -147,9 +138,7 @@ def _speed_profile_from_points(
     # Apply phase weights: multiply amplitude by phase weight so CRUISE
     # samples contribute more and ACCELERATION/ramp samples contribute less
     # to speed-band selection.
-    effective_amps = [amp for _speed, amp in valid]
-    if phase_weights is not None and len(phase_weights) == len(valid):
-        effective_amps = [amp * pw for amp, pw in zip(effective_amps, phase_weights, strict=True)]
+    effective_amps = [amp * phase_weight for _speed, amp, phase_weight in indexed]
 
     low_speed, high_speed = _amplitude_weighted_speed_window(
         [speed_kmh for speed_kmh, _amp in valid],
@@ -257,8 +246,8 @@ def _sensor_intensity_by_location(
     """
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     sample_counts: dict[str, int] = defaultdict(int)
-    dropped_totals: dict[str, list[float]] = defaultdict(list)
-    overflow_totals: dict[str, list[float]] = defaultdict(list)
+    dropped_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
+    overflow_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
         lambda: {f"l{idx}": 0 for idx in range(0, 6)}
     )
@@ -286,12 +275,13 @@ def _sensor_intensity_by_location(
                     else per_sample_phases[i]
                 )
                 phase_amp[location][phase_key].append(float(amp))
+        sample_t_s = _as_float(sample.get("t_s"))
         dropped_total = _as_float(sample.get("frames_dropped_total"))
         if dropped_total is not None:
-            dropped_totals[location].append(dropped_total)
+            dropped_totals[location].append((sample_t_s, dropped_total))
         overflow_total = _as_float(sample.get("queue_overflow_drops"))
         if overflow_total is not None:
-            overflow_totals[location].append(overflow_total)
+            overflow_totals[location].append((sample_t_s, overflow_total))
         vibration_strength_db = _as_float(sample.get("vibration_strength_db"))
         bucket = str(sample.get("strength_bucket") or "")
         if vibration_strength_db is None:
@@ -310,12 +300,16 @@ def _sensor_intensity_by_location(
         (sample_counts.get(location, 0) for location in target_locations), default=0
     )
 
-    def _counter_delta(counter_values: list[float]) -> int:
+    def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
         if len(counter_values) < 2:
             return 0
+        ordered = sorted(
+            counter_values,
+            key=lambda pair: (pair[0] is None, pair[0] if pair[0] is not None else 0.0),
+        )
         delta = 0.0
-        prev = float(counter_values[0])
-        for current_raw in counter_values[1:]:
+        prev = float(ordered[0][1])
+        for _t_s, current_raw in ordered[1:]:
             current = float(current_raw)
             delta += max(0.0, current - prev)
             prev = current

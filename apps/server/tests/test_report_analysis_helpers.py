@@ -8,6 +8,7 @@ from vibesensor.report.helpers import (
     _effective_engine_rpm,
     _format_duration,
     _location_label,
+    _locations_connected_throughout_run,
     _mean_variance,
     _outlier_summary,
     _percent_missing,
@@ -367,6 +368,36 @@ def test_location_label_unlabeled_nl() -> None:
 def test_location_label_with_client_id_only_nl() -> None:
     result = _location_label({"client_id": "AB:CD:EF:12:34:56"}, lang="nl")
     assert result == "Sensor 4:56"
+
+
+def test_locations_connected_throughout_requires_mid_run_continuity() -> None:
+    samples = []
+    for t_s in (0.0, 1.0, 2.0, 8.0, 9.0, 10.0):
+        samples.append({"t_s": t_s, "client_name": "Front Left"})
+    for t_s in range(0, 11):
+        samples.append({"t_s": float(t_s), "client_name": "Rear Right"})
+    connected = _locations_connected_throughout_run(samples)
+    assert connected == {"Rear Right"}
+
+
+def test_locations_connected_throughout_can_be_empty() -> None:
+    samples = [
+        {"t_s": 2.0, "client_name": "Front Left"},
+        {"t_s": 5.0, "client_name": "Front Left"},
+        {"t_s": 8.0, "client_name": "Rear Right"},
+    ]
+    assert _locations_connected_throughout_run(samples) == set()
+
+
+def test_locations_connected_throughout_deduplicates_timestamps() -> None:
+    samples = []
+    for _ in range(10):
+        samples.append({"t_s": 0.0, "client_name": "Front Left"})
+        samples.append({"t_s": 10.0, "client_name": "Front Left"})
+    for t_s in range(0, 11):
+        samples.append({"t_s": float(t_s), "client_name": "Rear Right"})
+    connected = _locations_connected_throughout_run(samples)
+    assert connected == {"Rear Right"}
 
 
 # -- _wheel_hz -----------------------------------------------------------------
