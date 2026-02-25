@@ -367,7 +367,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                 raise HTTPException(status_code=400, detail="Unknown location_code")
 
             for row in state.registry.snapshot_for_api():
-                if row["id"] != normalized_client_id and row["name"] == label:
+                if row["id"] != normalized_client_id and row.get("location") == code:
                     raise HTTPException(
                         status_code=409,
                         detail=f"Location already assigned to client {row['id']}",
