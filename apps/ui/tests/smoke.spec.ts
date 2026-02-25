@@ -228,7 +228,7 @@ test("hides header warning when a valid selected car exists", async ({ page }) =
   });
   await page.route("**/api/settings/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
-    if (path === "/api/settings/cars") {
+    if (path.startsWith("/api/settings/cars")) {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -708,6 +708,18 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
     });
   });
   await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/settings/cars") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          activeCarId: "car-1",
+        }),
+      });
+      return;
+    }
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await page.route("**/api/car-library/**", async (route) => {
@@ -985,6 +997,18 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
     });
   });
   await page.route("**/api/settings/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path.startsWith("/api/settings/cars")) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          activeCarId: "car-1",
+        }),
+      });
+      return;
+    }
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
   await page.route("**/api/analysis-settings", async (route) => {
@@ -1029,6 +1053,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   await page.goto("/");
   await page.locator("#tab-settings").click();
   await page.locator('[data-settings-tab="analysisTab"]').click();
+  await expect(page.locator("#saveAnalysisBtn")).toBeEnabled();
 
   await page.locator("#wheelBandwidthInput").fill("7.5");
   await page.locator("#driveshaftBandwidthInput").fill("8.5");
