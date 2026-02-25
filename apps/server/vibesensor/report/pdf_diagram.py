@@ -248,12 +248,18 @@ def car_location_diagram(
                 strokeWidth=1.1 if name in highlight else 0.6,
             )
         )
+        label_x = px + 10
+        label_anchor = "start"
+        if "right wheel" in name:
+            label_x = px - 10
+            label_anchor = "end"
         drawing.add(
             String(
-                px + 10,
+                label_x,
                 py - 2,
                 name,
                 fontSize=6,
+                textAnchor=label_anchor,
                 fillColor=colors.HexColor(
                     REPORT_COLORS["ink"] if is_active else REPORT_COLORS["text_muted"]
                 ),
