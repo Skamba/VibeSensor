@@ -743,7 +743,12 @@ def summarize_run_data(
         per_sample_phases=_per_sample_phases,
         run_noise_baseline_g=run_noise_baseline_g,
     )
-    most_likely_origin = _most_likely_origin_summary(findings, language)
+    # Filter out REF_ reference-missing findings so origin summary is based
+    # on actual diagnostic findings, not reference gaps (e.g. REF_ENGINE).
+    _diagnostic_for_origin = [
+        f for f in findings if not str(f.get("finding_id", "")).startswith("REF_")
+    ]
+    most_likely_origin = _most_likely_origin_summary(_diagnostic_for_origin, language)
     test_plan = _merge_test_plan(findings, language)
     phase_timeline = _build_phase_timeline(phase_segments, findings, language)
 
