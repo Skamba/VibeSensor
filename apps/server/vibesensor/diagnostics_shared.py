@@ -365,8 +365,8 @@ def severity_from_peak(
                 state["consecutive_down"] = 0
         return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}
 
-    state["consecutive_down"] = 0
     if current_bucket is None:
+        state["consecutive_down"] = 0
         _advance_pending(candidate_bucket)
         if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
             state["current_bucket"] = candidate_bucket

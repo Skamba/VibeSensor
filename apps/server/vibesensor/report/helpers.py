@@ -181,7 +181,7 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
             "mean_kmh": None,
             "stddev_kmh": None,
             "range_kmh": None,
-            "steady_speed": True,
+            "steady_speed": False,
         }
     vmin = min(speed_values)
     vmax = max(speed_values)
