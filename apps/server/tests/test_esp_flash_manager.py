@@ -292,9 +292,7 @@ async def test_flash_finds_firmware_dir_when_repo_hint_points_to_apps(
 
 
 @pytest.mark.asyncio
-async def test_flash_fails_when_prebuilt_artifacts_are_missing(
-    tmp_path, monkeypatch
-) -> None:
+async def test_flash_fails_when_prebuilt_artifacts_are_missing(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
@@ -315,9 +313,7 @@ async def test_flash_fails_when_prebuilt_artifacts_are_missing(
 
 
 @pytest.mark.asyncio
-async def test_flash_fails_when_esptool_erase_step_fails(
-    tmp_path, monkeypatch
-) -> None:
+async def test_flash_fails_when_esptool_erase_step_fails(tmp_path, monkeypatch) -> None:
     def _which(name: str) -> str | None:
         return "/usr/bin/esptool.py" if name == "esptool.py" else None
 
