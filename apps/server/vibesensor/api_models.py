@@ -101,7 +101,7 @@ class CarResponse(BaseModel):
 
 class CarsResponse(BaseModel):
     cars: list[CarResponse]
-    activeCarId: str
+    activeCarId: str | None
 
 
 class SpeedSourceResponse(BaseModel):

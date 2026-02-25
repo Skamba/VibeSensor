@@ -95,9 +95,9 @@ class TestCarConfig:
         assert d["id"] == "x"
         assert d["name"] == "Test"
 
-    def test_default_factory(self) -> None:
-        car = CarConfig.default()
-        assert car.name == "Default Car"
+    def test_missing_id_gets_generated(self) -> None:
+        car = CarConfig.from_dict({"name": "Generated"})
+        assert car.name == "Generated"
         assert car.id  # non-empty UUID
 
     def test_aspects_sanitized(self) -> None:

@@ -182,6 +182,21 @@ export function startUiApp(): void {
     }
   }
 
+  function renderCarSelectionWarning(): void {
+    const banner = els.carSelectionBanner;
+    if (!banner) return;
+    const hasValidActiveCar = Boolean(
+      state.activeCarId && state.cars.some((car) => car.id === state.activeCarId),
+    );
+    if (hasValidActiveCar) {
+      banner.hidden = true;
+      banner.textContent = "";
+      return;
+    }
+    banner.hidden = false;
+    banner.textContent = `${t("header.no_car_selected")} ${t("header.no_car_selected_action")}`;
+  }
+
   function updateSpectrumOverlay(): void {
     if (!els.spectrumOverlay) return;
     if (state.payloadError) { els.spectrumOverlay.hidden = false; els.spectrumOverlay.textContent = state.payloadError; return; }
@@ -210,7 +225,7 @@ export function startUiApp(): void {
   const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt });
   const diagnosticsFeature = createDashboardFeature({ state, els, t, fmt, escapeHtml, locationCodeForClient: (c) => sensorsFeature.locationCodeForClient(c), carMapPositions: CAR_MAP_POSITIONS, carMapWindowMs: 10_000, metricField: METRIC_FIELDS.vibration_strength_db });
   const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => diagnosticsFeature.renderMatrix(), sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
-  const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout });
+  const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout, onCarSelectionStateChange: renderCarSelectionWarning });
   const wizardFeature = createCarsFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
   const updateFeature = createUpdateFeature({ els, t, escapeHtml });
   const espFlashFeature = createEspFlashFeature({ els, t, escapeHtml });
@@ -234,6 +249,7 @@ export function startUiApp(): void {
     diagnosticsFeature.renderMatrix();
     diagnosticsFeature.recreateStrengthChart();
     renderWsState();
+    renderCarSelectionWarning();
     if (state.spectrumPlot) { state.spectrumPlot.destroy(); state.spectrumPlot = null; renderSpectrum(); }
     if (forceReloadInsights) historyFeature.reloadExpandedRunOnLanguageChange();
     updateSpectrumOverlay();
@@ -516,6 +532,7 @@ export function startUiApp(): void {
     } catch (_e) { /* ignore */ }
   })();
   applyLanguage(false);
+  renderCarSelectionWarning();
   setActiveView("dashboardView");
   void sensorsFeature.refreshLocationOptions();
   void vehicleFeature.loadSpeedSourceFromServer();
