@@ -9,7 +9,7 @@ accelerometer at 800 Hz and streams samples to the Pi server over UDP.
 - HELLO + DATA protocol packets
 - Buffered frame queue to reduce sample loss during short Wi-Fi stalls
 - UDP command listener for identify blink with ACK response
-- Identify command triggers RGB LED wave animation on ATOM LEDs
+- Identify command blinks only the single onboard RGB LED on ATOM Lite
 - ADXL345 I2C driver at 800 Hz with error-checked initialisation
 - No synthetic vibration injection in production builds
 
@@ -34,8 +34,8 @@ firmware/esp/
 ## Error Handling
 
 - **I2C init**: Every register write during `ADXL345::begin()` is validated;
-  if any write fails the sensor is marked unavailable and the firmware falls
-  back to synthetic waveform generation.
+  if any write fails the sensor is marked unavailable and sampling falls back
+  to holding the last real sample (or zeros until one real sample exists).
 - **I2C reads**: `read_reg()` and `read_multi()` return zeros on bus errors.
   This is safe because the caller (`read_samples()`) only processes FIFO
   entries reported by the hardware status register.
