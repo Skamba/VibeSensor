@@ -21,6 +21,7 @@ export interface SettingsFeatureDeps {
   fmt: (n: number, digits?: number) => string;
   renderSpectrum: () => void;
   renderSpeedReadout: () => void;
+  onCarSelectionStateChange: () => void;
 }
 
 export interface SettingsFeature {
@@ -45,6 +46,34 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   const GPS_POLL_FAST = 2_000;
   const GPS_POLL_SLOW = 10_000;
   let gpsPollTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function hasValidActiveCar(): boolean {
+    return Boolean(state.activeCarId && state.cars.some((c) => c.id === state.activeCarId));
+  }
+
+  function syncCarDependentUiState(): void {
+    const hasActiveCar = hasValidActiveCar();
+    if (els.saveAnalysisBtn) {
+      els.saveAnalysisBtn.disabled = !hasActiveCar;
+    }
+    if (els.analysisNoCarMessage) {
+      els.analysisNoCarMessage.hidden = hasActiveCar;
+    }
+    ctx.onCarSelectionStateChange();
+  }
+
+  function applyCarsPayload(payload: Record<string, any>): void {
+    if (!Array.isArray(payload.cars)) {
+      return;
+    }
+    state.cars = payload.cars;
+    const requestedActiveCarId = typeof payload.activeCarId === "string" ? payload.activeCarId : null;
+    const hasRequestedActive = requestedActiveCarId
+      ? state.cars.some((car) => car.id === requestedActiveCarId)
+      : false;
+    state.activeCarId = hasRequestedActive ? requestedActiveCarId : null;
+    syncCarDependentUiState();
+  }
 
   function syncSettingsInputs(): void {
     if (els.wheelBandwidthInput) els.wheelBandwidthInput.value = String(state.vehicleSettings.wheel_bandwidth_pct);
@@ -140,12 +169,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   async function loadCarsFromServer(): Promise<void> {
     try {
       const payload = await getSettingsCars() as Record<string, any>;
-      if (Array.isArray(payload?.cars)) {
-        state.cars = payload.cars;
-        state.activeCarId = payload.activeCarId || (payload.cars[0]?.id ?? null);
-        renderCarList();
-        syncActiveCarToInputs();
-      }
+      applyCarsPayload(payload);
+      renderCarList();
+      syncActiveCarToInputs();
     } catch (_err) { /* ignore */ }
   }
 
@@ -170,13 +196,10 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         if (!carId) return;
         try {
           const result = await setActiveSettingsCar(carId) as Record<string, any>;
-          if (result?.cars) {
-            state.cars = result.cars;
-            state.activeCarId = result.activeCarId;
-            syncActiveCarToInputs();
-            renderCarList();
-            ctx.renderSpectrum();
-          }
+          applyCarsPayload(result);
+          syncActiveCarToInputs();
+          renderCarList();
+          ctx.renderSpectrum();
         } catch (_err) { /* ignore */ }
       });
     });
@@ -186,21 +209,14 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         const carId = btn.getAttribute("data-car-id");
         if (!carId) return;
         const car = state.cars.find((c) => c.id === carId);
-        if (state.cars.length <= 1) {
-          window.alert(t("settings.car.cannot_delete_last"));
-          return;
-        }
         const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
         if (!ok) return;
         try {
           const result = await deleteSettingsCar(carId) as Record<string, any>;
-          if (result?.cars) {
-            state.cars = result.cars;
-            state.activeCarId = result.activeCarId;
-            syncActiveCarToInputs();
-            renderCarList();
-            ctx.renderSpectrum();
-          }
+          applyCarsPayload(result);
+          syncActiveCarToInputs();
+          renderCarList();
+          ctx.renderSpectrum();
         } catch (_err) { /* ignore */ }
       });
     });
@@ -208,16 +224,24 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   function syncActiveCarToInputs(): void {
     const car = state.cars.find((c) => c.id === state.activeCarId);
-    if (!car) return;
+    if (!car) {
+      syncCarDependentUiState();
+      return;
+    }
     if (car.aspects && typeof car.aspects === "object") {
       for (const key of Object.keys(car.aspects)) {
         if (typeof car.aspects[key] === "number") state.vehicleSettings[key] = car.aspects[key];
       }
     }
     syncSettingsInputs();
+    syncCarDependentUiState();
   }
 
   function saveAnalysisFromInputs(): void {
+    if (!hasValidActiveCar()) {
+      syncCarDependentUiState();
+      return;
+    }
     const wheelBandwidth = Number(els.wheelBandwidthInput?.value);
     const driveshaftBandwidth = Number(els.driveshaftBandwidthInput?.value);
     const engineBandwidth = Number(els.engineBandwidthInput?.value);
@@ -293,15 +317,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       const payload: Record<string, unknown> = { name, type: carType, aspects: fullAspects };
       if (variant) payload.variant = variant;
       const result = await addSettingsCar(payload) as Record<string, any>;
-      if (result?.cars) {
-        state.cars = result.cars;
-        const newCar = result.cars[result.cars.length - 1];
+      if (Array.isArray(result?.cars)) {
+        applyCarsPayload(result);
+        const newCar = state.cars[state.cars.length - 1];
         if (newCar) {
           const setResult = await setActiveSettingsCar(newCar.id) as Record<string, any>;
-          if (setResult?.cars) {
-            state.cars = setResult.cars;
-            state.activeCarId = setResult.activeCarId;
-          }
+          applyCarsPayload(setResult);
         }
         syncActiveCarToInputs();
         renderCarList();

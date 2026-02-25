@@ -342,7 +342,9 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     analysis_settings = AnalysisSettingsStore()
     settings_store = SettingsStore(db=history_db)
     # Sync initial settings into analysis store and GPS monitor
-    analysis_settings.update(settings_store.active_car_aspects())
+    initial_car_aspects = settings_store.active_car_aspects()
+    if initial_car_aspects:
+        analysis_settings.update(initial_car_aspects)
     ss = settings_store.get_speed_source()
     gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
     if ss["manualSpeedKph"] is not None:
