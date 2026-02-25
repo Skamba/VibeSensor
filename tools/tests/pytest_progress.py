@@ -81,7 +81,9 @@ def _format_seconds(seconds: float) -> str:
     return f"{mins:02d}:{sec:02d}"
 
 
-def _collect_total(pytest_args: list[str], timeout_s: int) -> tuple[int | None, list[str]]:
+def _collect_total(
+    pytest_args: list[str], timeout_s: int
+) -> tuple[int | None, list[str]]:
     cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q", *pytest_args]
     try:
         result = subprocess.run(
@@ -96,7 +98,9 @@ def _collect_total(pytest_args: list[str], timeout_s: int) -> tuple[int | None, 
     if result.returncode != 0:
         return None, []
     combined = (result.stdout or "") + "\n" + (result.stderr or "")
-    return _parse_collected_total(combined), _parse_collected_test_ids(result.stdout or "")
+    return _parse_collected_total(combined), _parse_collected_test_ids(
+        result.stdout or ""
+    )
 
 
 def _consume_progress(stats: ProgressStats, text: str) -> None:

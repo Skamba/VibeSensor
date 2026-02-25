@@ -34,7 +34,10 @@ def _label(check: dict[str, object]) -> str:
 
 
 def _is_green(check: dict[str, object]) -> bool:
-    return str(check.get("status") or "") == "COMPLETED" and str(check.get("conclusion") or "") == SUCCESS_CONCLUSION
+    return (
+        str(check.get("status") or "") == "COMPLETED"
+        and str(check.get("conclusion") or "") == SUCCESS_CONCLUSION
+    )
 
 
 def _is_non_green_terminal(check: dict[str, object]) -> bool:
@@ -44,10 +47,19 @@ def _is_non_green_terminal(check: dict[str, object]) -> bool:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Watch GitHub PR checks every N seconds and exit on non-green or all-green.")
+    parser = argparse.ArgumentParser(
+        description="Watch GitHub PR checks every N seconds and exit on non-green or all-green."
+    )
     parser.add_argument("--pr", required=True, help="PR number or URL")
-    parser.add_argument("--interval", type=int, default=30, help="Poll interval in seconds (default: 30)")
-    parser.add_argument("--repo", default=None, help="Optional repo in OWNER/REPO format")
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=30,
+        help="Poll interval in seconds (default: 30)",
+    )
+    parser.add_argument(
+        "--repo", default=None, help="Optional repo in OWNER/REPO format"
+    )
     args = parser.parse_args()
 
     if args.interval <= 0:
