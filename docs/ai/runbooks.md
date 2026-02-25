@@ -37,6 +37,13 @@ scripts/ai/task ai:smoke
 make ai-smoke
 ```
 
+## CI-parity suite (parallel)
+```bash
+make test-all
+# or select CI job groups
+python3 tools/tests/run_ci_parallel.py --job preflight --job tests
+```
+
 ## Context bundle
 ```bash
 scripts/ai/task ai:pack
