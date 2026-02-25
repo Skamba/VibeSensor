@@ -194,6 +194,14 @@ def _draw_kv(
     return y - (fs + 2)
 
 
+def _kv_consumed_height(value: str, *, fs: int = FS_BODY, value_w: float | None = None) -> float:
+    """Return vertical space consumed by a key/value value block."""
+    leading = fs + 2
+    if value_w is None:
+        return leading
+    return max(len(_wrap_lines(value, value_w, fs)), 1) * leading
+
+
 def _draw_footer(c: Canvas, page_num: int, total: int, version: str) -> None:
     y = MARGIN - 4 * mm
     c.setFont(FONT, 6)
@@ -270,7 +278,101 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
     na = tr("UNKNOWN")
 
     # -- Header panel (title + date + car) --
-    hdr_h = 32 * mm
+    meta_x = m + 4 * mm
+    meta_top_pad = 12 * mm
+    meta_bottom_pad = 4 * mm
+    meta_col_gap = 6 * mm
+    meta_row_gap = 1 * mm
+    left_lbl_default = 22 * mm
+
+    meta_right = meta_x + 95 * mm
+    right_lbl_default = 27 * mm
+    right_col_w = W - (meta_right - m) - 8 * mm
+    left_col_w = max(30 * mm, meta_right - meta_x - meta_col_gap)
+
+    car_parts = [p for p in (_safe(data.car.name, ""), _safe(data.car.car_type, "")) if p]
+    car_text = " \u2014 ".join(car_parts) if car_parts else na
+
+    def _label_width(label: str, *, default_w: float, col_w: float) -> float:
+        measured = c.stringWidth(f"{label}:", FONT, FS_BODY) + 1.2 * mm
+        max_allowed = max(default_w, col_w - 20 * mm)
+        return min(max(default_w, measured), max_allowed)
+
+    left_rows: list[tuple[str, str, float]] = [
+        (
+            tr("RUN_DATE"),
+            _safe(data.run_datetime),
+            _label_width(tr("RUN_DATE"), default_w=left_lbl_default, col_w=left_col_w),
+        ),
+        (
+            tr("CAR_LABEL"),
+            car_text,
+            _label_width(tr("CAR_LABEL"), default_w=12 * mm, col_w=left_col_w),
+        ),
+    ]
+    if data.start_time_utc:
+        left_rows.append(
+            (
+                tr("START_TIME_UTC"),
+                data.start_time_utc,
+                _label_width(tr("START_TIME_UTC"), default_w=left_lbl_default, col_w=left_col_w),
+            )
+        )
+    if data.end_time_utc:
+        left_rows.append(
+            (
+                tr("END_TIME_UTC"),
+                data.end_time_utc,
+                _label_width(tr("END_TIME_UTC"), default_w=left_lbl_default, col_w=left_col_w),
+            )
+        )
+
+    right_rows: list[tuple[str, str]] = []
+    if data.run_id:
+        right_rows.append((tr("RUN_ID"), data.run_id))
+    if data.duration_text:
+        right_rows.append((tr("DURATION"), data.duration_text))
+    if data.sensor_count:
+        sensor_info = str(data.sensor_count)
+        if data.sensor_locations:
+            sensor_info += f" ({', '.join(data.sensor_locations[:4])})"
+        right_rows.append((tr("SENSORS_LABEL"), sensor_info))
+    if data.sensor_model:
+        right_rows.append((tr("SENSOR_MODEL"), data.sensor_model))
+    if data.firmware_version:
+        firmware_label = "Firmwareversie" if data.lang == "nl" else "Firmware Version"
+        right_rows.append((firmware_label, data.firmware_version))
+    if data.sample_count:
+        right_rows.append((tr("SAMPLE_COUNT_LABEL"), str(data.sample_count)))
+    if data.sample_rate_hz:
+        right_rows.append((tr("RAW_SAMPLE_RATE_HZ_LABEL"), data.sample_rate_hz))
+    if data.tire_spec_text:
+        right_rows.append((tr("TIRE_SIZE"), data.tire_spec_text))
+
+    def _col_height(rows: list[tuple[str, str, float]], *, available_w: float) -> float:
+        if not rows:
+            return 0.0
+        total = 0.0
+        for idx, (_label, value, label_w) in enumerate(rows):
+            value_w = max(20 * mm, available_w - label_w)
+            total += _kv_consumed_height(value, fs=FS_BODY, value_w=value_w)
+            if idx < len(rows) - 1:
+                total += meta_row_gap
+        return total
+
+    left_rows_with_width = left_rows
+    right_rows_with_width = [
+        (
+            label,
+            value,
+            _label_width(label, default_w=right_lbl_default, col_w=right_col_w),
+        )
+        for label, value in right_rows
+    ]
+    left_h = _col_height(left_rows_with_width, available_w=left_col_w)
+    right_h = _col_height(right_rows_with_width, available_w=right_col_w)
+
+    hdr_h = max(32 * mm, meta_top_pad + max(left_h, right_h) + meta_bottom_pad)
     hdr_y = page_top - hdr_h
     _draw_panel(c, m, hdr_y, W, hdr_h, fill=SOFT_BG)
 
@@ -278,154 +380,37 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
     c.setFont(FONT_B, FS_TITLE)
     c.drawString(m + 4 * mm, hdr_y + hdr_h - 6 * mm, data.title or tr("DIAGNOSTIC_WORKSHEET"))
 
-    meta_x = m + 4 * mm
-    meta_step = 3.8 * mm
-    y_meta = hdr_y + hdr_h - 12 * mm
-    meta_lbl_w = 22 * mm
-
-    # Left column metadata
-    _draw_kv(
-        c, meta_x, y_meta, tr("RUN_DATE"), _safe(data.run_datetime), label_w=meta_lbl_w, fs=FS_BODY
-    )
-    y_meta -= meta_step
-    car_parts = [p for p in (_safe(data.car.name, ""), _safe(data.car.car_type, "")) if p]
-    car_text = " \u2014 ".join(car_parts) if car_parts else na
-    _draw_kv(c, meta_x, y_meta, tr("CAR_LABEL"), car_text, label_w=12 * mm, fs=FS_BODY)
-    y_meta -= meta_step
-    if data.start_time_utc:
-        _draw_kv(
+    y_left = hdr_y + hdr_h - meta_top_pad
+    for idx, (label, value, label_w) in enumerate(left_rows_with_width):
+        value_w = max(20 * mm, left_col_w - label_w)
+        y_left = _draw_kv(
             c,
             meta_x,
-            y_meta,
-            tr("START_TIME_UTC"),
-            data.start_time_utc,
-            label_w=meta_lbl_w,
+            y_left,
+            label,
+            value,
+            label_w=label_w,
             fs=FS_BODY,
+            value_w=value_w,
         )
-        y_meta -= meta_step
-    if data.end_time_utc:
-        _draw_kv(
-            c, meta_x, y_meta, tr("END_TIME_UTC"), data.end_time_utc, label_w=meta_lbl_w, fs=FS_BODY
-        )
+        if idx < len(left_rows_with_width) - 1:
+            y_left -= meta_row_gap
 
-    # Right column metadata — stacked vertically, never on one cramped line
-    meta_right = meta_x + 95 * mm
-    right_lbl_w = 27 * mm
-    right_val_w = W - (meta_right - m) - 8 * mm - right_lbl_w
-    y_right = hdr_y + hdr_h - 12 * mm
-    if data.run_id:
-        y_right = (
-            _draw_kv(
-                c,
-                meta_right,
-                y_right,
-                tr("RUN_ID"),
-                data.run_id,
-                label_w=right_lbl_w,
-                fs=FS_BODY,
-                value_w=right_val_w,
-            )
-            - 1.0 * mm
-        )
-    if data.duration_text:
-        y_right = (
-            _draw_kv(
-                c,
-                meta_right,
-                y_right,
-                tr("DURATION"),
-                data.duration_text,
-                label_w=right_lbl_w,
-                fs=FS_BODY,
-                value_w=right_val_w,
-            )
-            - 1.0 * mm
-        )
-    if data.sensor_count:
-        sensor_info = str(data.sensor_count)
-        if data.sensor_locations:
-            sensor_info += f" ({', '.join(data.sensor_locations[:4])})"
-        y_right = (
-            _draw_kv(
-                c,
-                meta_right,
-                y_right,
-                tr("SENSORS_LABEL"),
-                sensor_info,
-                label_w=right_lbl_w,
-                fs=FS_BODY,
-                value_w=right_val_w,
-            )
-            - 1.0 * mm
-        )
-    if data.sensor_model:
-        y_right = (
-            _draw_kv(
-                c,
-                meta_right,
-                y_right,
-                tr("SENSOR_MODEL"),
-                data.sensor_model,
-                label_w=right_lbl_w,
-                fs=FS_BODY,
-                value_w=right_val_w,
-            )
-            - 1.0 * mm
-        )
-    if data.firmware_version:
-        firmware_label = "Firmwareversie" if data.lang == "nl" else "Firmware Version"
-        y_right = (
-            _draw_kv(
-                c,
-                meta_right,
-                y_right,
-                firmware_label,
-                data.firmware_version,
-                label_w=right_lbl_w,
-                fs=FS_BODY,
-                value_w=right_val_w,
-            )
-            - 1.0 * mm
-        )
-    if data.sample_count:
-        y_right = (
-            _draw_kv(
-                c,
-                meta_right,
-                y_right,
-                tr("SAMPLE_COUNT_LABEL"),
-                str(data.sample_count),
-                label_w=right_lbl_w,
-                fs=FS_BODY,
-                value_w=right_val_w,
-            )
-            - 1.0 * mm
-        )
-    if data.sample_rate_hz:
-        y_right = (
-            _draw_kv(
-                c,
-                meta_right,
-                y_right,
-                tr("RAW_SAMPLE_RATE_HZ_LABEL"),
-                data.sample_rate_hz,
-                label_w=right_lbl_w,
-                fs=FS_BODY,
-                value_w=right_val_w,
-            )
-            - 1.0 * mm
-        )
-    if data.tire_spec_text:
-        _draw_kv(
+    y_right = hdr_y + hdr_h - meta_top_pad
+    for idx, (label, value, label_w) in enumerate(right_rows_with_width):
+        value_w = max(20 * mm, right_col_w - label_w)
+        y_right = _draw_kv(
             c,
             meta_right,
             y_right,
-            tr("TIRE_SIZE"),
-            data.tire_spec_text,
-            label_w=right_lbl_w,
+            label,
+            value,
+            label_w=label_w,
             fs=FS_BODY,
-            value_w=right_val_w,
+            value_w=value_w,
         )
+        if idx < len(right_rows_with_width) - 1:
+            y_right -= meta_row_gap
 
     y_cursor = hdr_y - GAP
 
@@ -777,10 +762,12 @@ def _page2(  # noqa: C901
         content_width=W,
         tr=tr_fn,
         text_fn=text_fn,
-        diagram_width=dw,
-        diagram_height=dh,
+        # Use the full panel-inner box so the vertical legend can sit
+        # against the left panel border instead of inside a centered mini-box.
+        diagram_width=box_w,
+        diagram_height=box_h,
     )
-    diagram.drawOn(c, dx, dy)
+    diagram.drawOn(c, box_x, box_y)
 
     # Pattern evidence panel (right)
     _draw_pattern_evidence(c, m + left_w + GAP, left_y, right_w, main_h, data.pattern_evidence, tr)
