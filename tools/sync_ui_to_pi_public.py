@@ -52,15 +52,16 @@ def main() -> None:
     lock_hash_file = ui_dir / ".npm-ci-lock.sha256"
 
     lock_hash = hashlib.sha256(lock_file.read_bytes()).hexdigest()
-    previous_lock_hash = lock_hash_file.read_text(encoding="utf-8").strip() if lock_hash_file.exists() else ""
+    previous_lock_hash = (
+        lock_hash_file.read_text(encoding="utf-8").strip()
+        if lock_hash_file.exists()
+        else ""
+    )
 
-    should_run_npm_ci = (
-        not args.skip_npm_ci
-        and (
-            args.force_npm_ci
-            or not (ui_dir / "node_modules").exists()
-            or lock_hash != previous_lock_hash
-        )
+    should_run_npm_ci = not args.skip_npm_ci and (
+        args.force_npm_ci
+        or not (ui_dir / "node_modules").exists()
+        or lock_hash != previous_lock_hash
     )
 
     if should_run_npm_ci:

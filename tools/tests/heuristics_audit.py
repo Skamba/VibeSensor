@@ -46,7 +46,11 @@ def check_file_sizes() -> tuple[bool, list[str]]:
             large.append(f"{path.relative_to(ROOT)} ({n} lines)")
     ratio_ok = (total - len(large)) / max(1, total) >= 0.9
     ok = ratio_ok
-    msgs = [f"source_files={total}", f"over_600={len(large)}", f"within_600_ratio={(total-len(large))/max(1,total):.3f}"]
+    msgs = [
+        f"source_files={total}",
+        f"over_600={len(large)}",
+        f"within_600_ratio={(total - len(large)) / max(1, total):.3f}",
+    ]
     msgs.extend(large[:30])
     return ok, msgs
 
@@ -100,11 +104,17 @@ def check_contracts() -> tuple[bool, list[str]]:
     server_ref = ROOT / "apps/server/vibesensor/shared_contracts.py"
     ui_ref = ROOT / "apps/ui/src/main.ts"
     fw_ref = ROOT / "firmware/esp/include/vibesensor_contracts.h"
-    if server_ref.exists() and "METRIC_FIELDS" in server_ref.read_text(encoding="utf-8", errors="ignore"):
+    if server_ref.exists() and "METRIC_FIELDS" in server_ref.read_text(
+        encoding="utf-8", errors="ignore"
+    ):
         uses.append("server_shared_contracts")
-    if ui_ref.exists() and "METRIC_FIELDS" in ui_ref.read_text(encoding="utf-8", errors="ignore"):
+    if ui_ref.exists() and "METRIC_FIELDS" in ui_ref.read_text(
+        encoding="utf-8", errors="ignore"
+    ):
         uses.append("ui_metric_fields")
-    if fw_ref.exists() and "VS_FIELD_VIBRATION_STRENGTH_DB" in fw_ref.read_text(encoding="utf-8", errors="ignore"):
+    if fw_ref.exists() and "VS_FIELD_VIBRATION_STRENGTH_DB" in fw_ref.read_text(
+        encoding="utf-8", errors="ignore"
+    ):
         uses.append("firmware_contract_reference")
     ok = not missing and len(uses) == 3
     msgs = [f"uses={','.join(uses) if uses else 'none'}"]
@@ -115,7 +125,11 @@ def check_contracts() -> tuple[bool, list[str]]:
 def check_tooling_docs_noise() -> tuple[bool, list[str]]:
     msgs: list[str] = []
     ok = True
-    makefile = (ROOT / "Makefile").read_text(encoding="utf-8", errors="ignore") if (ROOT / "Makefile").exists() else ""
+    makefile = (
+        (ROOT / "Makefile").read_text(encoding="utf-8", errors="ignore")
+        if (ROOT / "Makefile").exists()
+        else ""
+    )
     for target in ["format:", "lint:", "test:", "smoke:"]:
         if target not in makefile:
             ok = False
@@ -124,8 +138,17 @@ def check_tooling_docs_noise() -> tuple[bool, list[str]]:
         if not doc.exists():
             ok = False
             msgs.append(f"missing {doc.relative_to(ROOT)}")
-    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8", errors="ignore") if (ROOT / ".gitignore").exists() else ""
-    for required in ["artifacts", "apps/ui/node_modules", "apps/ui/dist", "infra/pi-image/pi-gen/.cache"]:
+    gitignore = (
+        (ROOT / ".gitignore").read_text(encoding="utf-8", errors="ignore")
+        if (ROOT / ".gitignore").exists()
+        else ""
+    )
+    for required in [
+        "artifacts",
+        "apps/ui/node_modules",
+        "apps/ui/dist",
+        "infra/pi-image/pi-gen/.cache",
+    ]:
         if required not in gitignore:
             ok = False
             msgs.append(f".gitignore missing pattern containing '{required}'")
@@ -145,13 +168,15 @@ def main() -> int:
     }
     all_ok = True
     for name, (ok, msgs) in checks.items():
-        print(f"[{ 'PASS' if ok else 'FAIL' }] {name}")
+        print(f"[{'PASS' if ok else 'FAIL'}] {name}")
         for msg in msgs:
             print(f"  - {msg}")
         all_ok &= ok
     (ROOT / "artifacts" / "ai").mkdir(parents=True, exist_ok=True)
     (ROOT / "artifacts" / "ai" / "heuristics_audit.json").write_text(
-        json.dumps({k: {"ok": v[0], "messages": v[1]} for k, v in checks.items()}, indent=2),
+        json.dumps(
+            {k: {"ok": v[0], "messages": v[1]} for k, v in checks.items()}, indent=2
+        ),
         encoding="utf-8",
     )
     print("wrote artifacts/ai/heuristics_audit.json")

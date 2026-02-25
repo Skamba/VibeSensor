@@ -69,7 +69,9 @@ def _wait_health(timeout_s: float = 60.0) -> None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run the full VibeSensor CI-aligned suite.")
+    parser = argparse.ArgumentParser(
+        description="Run the full VibeSensor CI-aligned suite."
+    )
     parser.add_argument(
         "--skip-ui-sync",
         action="store_true",
@@ -109,7 +111,15 @@ def main() -> int:
             _run(["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui")
         if not args.skip_unit_tests:
             _run(
-                ["python3", "-m", "pytest", "-q", "-m", "not selenium", "apps/server/tests"]
+                [
+                    "python3",
+                    "-m",
+                    "pytest",
+                    "-q",
+                    "-m",
+                    "not selenium",
+                    "apps/server/tests",
+                ]
             )
 
         _run(
