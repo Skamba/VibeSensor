@@ -4,8 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.domain_models import DEFAULT_CAR_ASPECTS
-from vibesensor.domain_models import CarConfig, SensorConfig, _parse_manual_speed
+from vibesensor.domain_models import (
+    DEFAULT_CAR_ASPECTS,
+    CarConfig,
+    SensorConfig,
+    _parse_manual_speed,
+)
 from vibesensor.history_db import HistoryDB
 from vibesensor.settings_store import (
     PersistenceError,
