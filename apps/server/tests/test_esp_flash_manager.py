@@ -384,10 +384,7 @@ async def test_flash_fails_fast_when_required_offline_package_is_missing(
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "failed"
-    assert (
-        "offline PlatformIO package(s) missing: framework-arduinoespressif32"
-        == mgr.status.error
-    )
+    assert "offline PlatformIO package(s) missing: framework-arduinoespressif32" == mgr.status.error
 
 
 @pytest.mark.asyncio

@@ -28,9 +28,9 @@ def test_smoke_hotspot_script_has_no_runtime_apt_get() -> None:
 def test_smoke_hotspot_script_only_reactivates_ap_after_uplink_session() -> None:
     script = Path(__file__).resolve().parents[1] / "scripts" / "hotspot_nmcli.sh"
     text = script.read_text(encoding="utf-8")
-    assert (
-        'if [ "${UPLINK_SESSION_USED:-0}" = "1" ]; then' in text
-    ), "hotspot script must not re-activate AP connection unconditionally"
+    assert 'if [ "${UPLINK_SESSION_USED:-0}" = "1" ]; then' in text, (
+        "hotspot script must not re-activate AP connection unconditionally"
+    )
 
 
 @pytest.mark.smoke
@@ -42,9 +42,9 @@ def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
     assert "network-manager" in text, "build wrapper must bake network-manager"
     assert "dnsmasq" in text, "build wrapper must bake dnsmasq"
     assert "99-vibesensor-dnsmasq.conf" in text, "build wrapper must assert DNS drop-in"
-    assert (
-        "platformio/framework-arduinoespressif32" in text
-    ), "build wrapper must preload ESP32 Arduino framework for offline flash"
+    assert "platformio/framework-arduinoespressif32" in text, (
+        "build wrapper must preload ESP32 Arduino framework for offline flash"
+    )
     assert "platformio/tool-scons" in text, "build wrapper must preload PlatformIO tool-scons"
     assert "linux-armhf.tar.gz" in text, (
         "build wrapper must override ESP32 toolchain for armhf images"
@@ -60,9 +60,9 @@ def test_smoke_install_pi_installs_rebuild_toolchain() -> None:
     assert 'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"' in text, (
         "Pi install script must ensure repo ownership for update writes"
     )
-    assert (
-        "platformio/framework-arduinoespressif32" in text
-    ), "Pi install script must preload ESP32 Arduino framework for offline flash"
+    assert "platformio/framework-arduinoespressif32" in text, (
+        "Pi install script must preload ESP32 Arduino framework for offline flash"
+    )
     assert "platformio/tool-scons" in text, "Pi install script must preload PlatformIO tool-scons"
     assert "linux-armhf.tar.gz" in text, (
         "Pi install script must enforce armhf toolchain compatibility"

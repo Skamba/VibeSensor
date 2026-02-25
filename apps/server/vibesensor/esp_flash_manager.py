@@ -493,8 +493,7 @@ class EspFlashManager:
                     ]
                 )
                 self._append_log(
-                    "Offline ESP32 PlatformIO packages missing "
-                    f"(packages: {missing_csv})."
+                    f"Offline ESP32 PlatformIO packages missing (packages: {missing_csv})."
                 )
                 self._append_log(f"Install once while online: {install_hint}")
                 self._finalize(
