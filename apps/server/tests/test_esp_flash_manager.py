@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -14,6 +15,13 @@ from vibesensor.esp_flash_manager import (
     SerialPortInfo,
     SerialPortProvider,
 )
+
+
+@pytest.fixture(autouse=True)
+def _seed_platformio_core_dir(tmp_path: Path, monkeypatch) -> None:
+    core_dir = tmp_path / ".platformio-core"
+    (core_dir / "platforms" / "espressif32").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
 
 
 class _FakePorts(SerialPortProvider):
@@ -33,6 +41,7 @@ class _FakeRunner(FlashCommandRunner):
         fail_write: bool = False,
     ) -> None:
         self.calls: list[list[str]] = []
+        self.call_cwds: list[str] = []
         self.hang = hang
         self.fail_erase = fail_erase
         self.fail_write = fail_write
@@ -47,6 +56,7 @@ class _FakeRunner(FlashCommandRunner):
         timeout_s: float | None = None,
     ) -> int:
         self.calls.append(list(args))
+        self.call_cwds.append(str(cwd))
         line_cb(f"running {' '.join(args)}")
         if self.hang:
             while not cancel_event.is_set():
@@ -249,7 +259,7 @@ async def test_flash_uses_python_module_fallback_when_esptool_binary_missing(
     monkeypatch.setattr("shutil.which", _which)
     monkeypatch.setattr(
         "importlib.util.find_spec",
-        lambda name: SimpleNamespace() if name == "esptool" else None,
+        lambda name: SimpleNamespace() if name in {"esptool", "platformio"} else None,
     )
     runner = _FakeRunner()
     mgr = EspFlashManager(
@@ -263,7 +273,77 @@ async def test_flash_uses_python_module_fallback_when_esptool_binary_missing(
     assert mgr.status.state.value == "success"
     first = runner.calls[0]
     assert Path(first[0]).name.startswith("python")
-    assert first[1:3] == ["-m", "esptool"]
+    assert first[1:3] == ["-m", "platformio"]
+    assert any(call[1:3] == ["-m", "esptool"] for call in runner.calls)
+
+
+@pytest.mark.asyncio
+async def test_flash_builds_from_temp_copy_when_firmware_dir_is_read_only(
+    tmp_path, monkeypatch
+) -> None:
+    def _which(name: str) -> str | None:
+        if name == "pio":
+            return "/usr/bin/pio"
+        if name == "esptool.py":
+            return "/usr/bin/esptool.py"
+        return None
+
+    monkeypatch.setattr("shutil.which", _which)
+
+    repo = _make_repo(tmp_path)
+    fw_dir = repo / "firmware" / "esp"
+    real_access = os.access
+
+    def _access(path: str | bytes | os.PathLike[str] | os.PathLike[bytes], mode: int) -> bool:
+        if Path(path).resolve() == fw_dir.resolve() and mode == os.W_OK:
+            return False
+        return real_access(path, mode)
+
+    monkeypatch.setattr("os.access", _access)
+
+    runner = _FakeRunner()
+    mgr = EspFlashManager(
+        runner=runner,
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(repo),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "failed"
+    assert "Missing prebuilt firmware artifacts" in str(mgr.status.error)
+    assert runner.call_cwds
+    assert Path(runner.call_cwds[0]).resolve() != fw_dir.resolve()
+    logs = mgr.logs_since(after=0)["lines"]
+    assert any("read-only" in line for line in logs)
+
+
+@pytest.mark.asyncio
+async def test_flash_fails_fast_when_offline_platform_cache_is_missing(
+    tmp_path, monkeypatch
+) -> None:
+    def _which(name: str) -> str | None:
+        if name == "pio":
+            return "/usr/bin/pio"
+        if name == "esptool.py":
+            return "/usr/bin/esptool.py"
+        return None
+
+    monkeypatch.setattr("shutil.which", _which)
+    core_dir = tmp_path / ".platformio-empty"
+    (core_dir / "platforms").mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
+
+    mgr = EspFlashManager(
+        runner=_FakeRunner(),
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        repo_path=str(_make_repo(tmp_path)),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "failed"
+    assert "offline PlatformIO platform missing: espressif32" == mgr.status.error
 
 
 @pytest.mark.asyncio
