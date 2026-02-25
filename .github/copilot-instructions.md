@@ -21,7 +21,8 @@ Execution model
 Common commands
 - `python -m pip install -e "./apps/server[dev]"`
 - `make lint`
-- `make test-all`
+- `make test-all` (CI-parity local suite: `preflight` + `tests` + `e2e` jobs in parallel)
+- `python3 tools/tests/run_ci_parallel.py --job preflight --job tests` (faster local subset)
 - `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`
 - `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`

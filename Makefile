@@ -1,4 +1,4 @@
-.PHONY: setup format lint test test-fast test-all smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
+.PHONY: setup format lint test test-fast test-all test-ci test-full-suite smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
 
 setup:
 	python3 -m pip install -e "./apps/server[dev]"
@@ -17,7 +17,12 @@ test:
 test-fast:
 	python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
 
-test-all:
+test-all: test-ci
+
+test-ci:
+	python3 tools/tests/run_ci_parallel.py
+
+test-full-suite:
 	python3 tools/tests/run_full_suite.py
 
 smoke:

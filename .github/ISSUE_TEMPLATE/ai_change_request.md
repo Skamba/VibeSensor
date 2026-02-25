@@ -24,6 +24,8 @@ assignees: []
 scripts/ai/task ai:check
 scripts/ai/task ai:test -- apps/server/tests/test_config.py -k my_case -q
 make test-all
+# (optional faster CI-parity subset)
+python3 tools/tests/run_ci_parallel.py --job preflight --job tests
 ```
 
 ## Acceptance Criteria
