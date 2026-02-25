@@ -217,7 +217,12 @@ def compute_vibration_strength_db(
             }
         )
     candidates.sort(
-        key=lambda item: float(item["vibration_strength_db"] if item["vibration_strength_db"] is not None else -1e9), reverse=True
+        key=lambda item: float(
+            item["vibration_strength_db"]
+            if item["vibration_strength_db"] is not None
+            else -1e9
+        ),
+        reverse=True,
     )
 
     chosen: list[dict[str, float | str | None]] = []

@@ -269,7 +269,8 @@ class LiveDiagnosticsEngine:
         )
         _sev_db = (severity or {}).get("db")
         tracker.last_strength_db = float(
-            _sev_db if _sev_db is not None
+            _sev_db
+            if _sev_db is not None
             else (fallback_db if fallback_db is not None else vibration_strength_db)
         )
         return previous_bucket
