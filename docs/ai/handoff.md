@@ -17,6 +17,7 @@ Use this format for future AI requests.
 
 ## 5) Validation
 - Start with targeted checks, then run CI-aligned checks (`make test-all`) before finalizing.
+  - `make test-all` maps to `tools/tests/run_ci_parallel.py` and runs CI-equivalent `preflight`, `tests`, and `e2e` groups in parallel locally.
 
 ## 6) Deliverable
 - Expected changed files + acceptance criteria.
