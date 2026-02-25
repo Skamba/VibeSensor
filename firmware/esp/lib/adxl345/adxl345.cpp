@@ -40,8 +40,8 @@ bool ADXL345::begin() {
   if (!write_reg(REG_POWER_CTL, 0x00)) { available_ = false; return false; }
   // Full resolution + +/-16g.
   if (!write_reg(REG_DATA_FORMAT, 0x0B)) { available_ = false; return false; }
-  // 800 Hz output data rate.
-  if (!write_reg(REG_BW_RATE, 0x0D)) { available_ = false; return false; }
+  // 400 Hz output data rate.
+  if (!write_reg(REG_BW_RATE, 0x0C)) { available_ = false; return false; }
   // FIFO stream mode with configurable watermark.
   if (!write_reg(REG_FIFO_CTL, static_cast<uint8_t>(0x80 | (fifo_watermark_ & 0x1F)))) {
     available_ = false; return false;

@@ -8,7 +8,7 @@ Bill of materials for the VibeSensor prototype.
 |---|------|------|
 | 1 | Raspberry Pi 3 A+ | Wi-Fi AP, server, web UI host |
 | 2 | M5Stack ATOM Lite ESP32 | Sensor node — samples accelerometer, streams UDP |
-| 3 | M5Stack Accel Unit (ADXL345) | Vibration measurement (3-axis, 800 Hz) |
+| 3 | M5Stack Accel Unit (ADXL345) | Vibration measurement (3-axis, 400 Hz) |
 | 4 | M5Stack Atomic Battery Base (200 mAh) | Portable power for the ATOM Lite node |
 
 Multiple sensor nodes (items 2-4) can connect to a single Pi simultaneously.

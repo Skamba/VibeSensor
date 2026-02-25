@@ -4,14 +4,14 @@ Portable, offline car vibration diagnostics using a Raspberry Pi and wireless ac
 
 ## What Is VibeSensor?
 
-VibeSensor is an end-to-end system that detects and localizes vehicle vibration issues — wheel imbalance, driveshaft rumble, engine harmonics — using low-cost hardware you can mount anywhere on a car. A Raspberry Pi runs as a standalone Wi-Fi access point, receives 800 Hz accelerometer streams from multiple ESP32 sensor nodes over UDP, performs real-time FFT analysis with automotive order tracking, and serves a mobile-friendly dashboard accessible from any phone or tablet. After a drive, it generates a professional PDF diagnostic report with findings, heatmaps, and evidence charts.
+VibeSensor is an end-to-end system that detects and localizes vehicle vibration issues — wheel imbalance, driveshaft rumble, engine harmonics — using low-cost hardware you can mount anywhere on a car. A Raspberry Pi runs as a standalone Wi-Fi access point, receives 400 Hz accelerometer streams from multiple ESP32 sensor nodes over UDP, performs real-time FFT analysis with automotive order tracking, and serves a mobile-friendly dashboard accessible from any phone or tablet. After a drive, it generates a professional PDF diagnostic report with findings, heatmaps, and evidence charts.
 
 No internet connection required. No cloud. Everything runs locally on the Pi.
 
 ## Key Features
 
 **Sensing & Analysis**
-- Multi-sensor 3-axis accelerometer monitoring at 800 Hz (ADXL345)
+- Multi-sensor 3-axis accelerometer monitoring at 400 Hz (ADXL345)
 - Real-time FFT spectrum with peak detection and noise floor estimation
 - Automotive order tracking — wheel, driveshaft, and engine frequency bands
 - Speed-adaptive analysis using GPS or manual speed input
