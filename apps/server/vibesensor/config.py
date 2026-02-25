@@ -285,6 +285,8 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
         raise ValueError(f"ap.ip must be a valid IPv4 address or CIDR, got {ap_ip_raw!r}") from None
 
+    self_heal_cfg = merged["ap"].get("self_heal", {})
+    self_heal_defaults = DEFAULT_CONFIG["ap"]["self_heal"]
     app_config = AppConfig(
         ap=APConfig(
             ssid=str(merged["ap"]["ssid"]),
@@ -294,30 +296,19 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ifname=str(merged["ap"]["ifname"]),
             con_name=str(merged["ap"]["con_name"]),
             self_heal=APSelfHealConfig(
-                enabled=bool(merged["ap"].get("self_heal", {}).get("enabled", True)),
-                interval_seconds=int(
-                    merged["ap"].get("self_heal", {}).get("interval_seconds", 120)
-                ),
+                enabled=bool(self_heal_cfg.get("enabled", True)),
+                interval_seconds=int(self_heal_cfg.get("interval_seconds", 120)),
                 diagnostics_lookback_minutes=int(
-                    merged["ap"].get("self_heal", {}).get("diagnostics_lookback_minutes", 5)
+                    self_heal_cfg.get("diagnostics_lookback_minutes", 5)
                 ),
                 min_restart_interval_seconds=int(
-                    merged["ap"].get("self_heal", {}).get("min_restart_interval_seconds", 120)
+                    self_heal_cfg.get("min_restart_interval_seconds", 120)
                 ),
                 allow_disable_resolved_stub_listener=bool(
-                    merged["ap"]
-                    .get("self_heal", {})
-                    .get("allow_disable_resolved_stub_listener", False)
+                    self_heal_cfg.get("allow_disable_resolved_stub_listener", False)
                 ),
                 state_file=_resolve_config_path(
-                    str(
-                        merged["ap"]
-                        .get("self_heal", {})
-                        .get(
-                            "state_file",
-                            str(DEFAULT_CONFIG["ap"]["self_heal"]["state_file"]),
-                        )
-                    ),
+                    str(self_heal_cfg.get("state_file", str(self_heal_defaults["state_file"]))),
                     path,
                 ),
             ),
@@ -348,11 +339,11 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         logging=LoggingConfig(
             log_metrics=log_metrics,
             metrics_log_path=metrics_log_path,
-            metrics_log_hz=int(merged["logging"]["metrics_log_hz"]),
-            sensor_model=str(merged["logging"].get("sensor_model", "ADXL345")),
+            metrics_log_hz=int(logging_cfg["metrics_log_hz"]),
+            sensor_model=str(logging_cfg.get("sensor_model", "ADXL345")),
             history_db_path=_resolve_config_path(
                 str(
-                    merged.get("logging", {}).get(
+                    logging_cfg.get(
                         "history_db_path",
                         str(metrics_log_path.parent / "history.db"),
                     )
@@ -360,12 +351,12 @@ def load_config(config_path: Path | None = None) -> AppConfig:
                 path,
             ),
             persist_history_db=bool(
-                merged["logging"].get(
+                logging_cfg.get(
                     "persist_history_db", DEFAULT_CONFIG["logging"]["persist_history_db"]
                 )
             ),
             shutdown_analysis_timeout_s=float(
-                merged["logging"].get(
+                logging_cfg.get(
                     "shutdown_analysis_timeout_s",
                     DEFAULT_CONFIG["logging"]["shutdown_analysis_timeout_s"],
                 )
@@ -376,10 +367,9 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         clients_json_path=_resolve_config_path(
             str(
-                merged.get(
-                    "storage",
-                    {},
-                ).get("clients_json_path", str(DEFAULT_CONFIG["storage"]["clients_json_path"]))
+                merged.get("storage", {}).get(
+                    "clients_json_path", str(DEFAULT_CONFIG["storage"]["clients_json_path"])
+                )
             ),
             path,
         ),
