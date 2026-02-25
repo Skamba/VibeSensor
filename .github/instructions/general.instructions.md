@@ -30,7 +30,8 @@ Validation (always required)
 - Treat watcher exit `RESULT=NON_GREEN` as fail-fast: inspect the latest failing run immediately, implement the minimal fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.
-- Test suite for CI alignment: `make test-all`.
+- CI-parity suite (same command groups as `.github/workflows/ci.yml`, run in parallel locally): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- Optional CI-parity subset jobs for faster loops: `python3 tools/tests/run_ci_parallel.py --job preflight --job tests`.
 - Optional focused backend pytest: `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.
 - Run lint (`ruff check`) before pushing changes.
 - After any backend or frontend change, rebuild and test via Docker before considering the work done:
