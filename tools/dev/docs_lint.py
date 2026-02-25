@@ -125,7 +125,14 @@ def _check_markdown_links(markdown_files: list[str], repo_root: Path) -> list[st
     """Flag broken local markdown links."""
     issues: list[str] = []
     link_re = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
-    ignored_prefixes = ("http://", "https://", "mailto:", "tel:", "data:", "javascript:")
+    ignored_prefixes = (
+        "http://",
+        "https://",
+        "mailto:",
+        "tel:",
+        "data:",
+        "javascript:",
+    )
     for path in markdown_files:
         md_path = repo_root / path
         try:
@@ -134,12 +141,20 @@ def _check_markdown_links(markdown_files: list[str], repo_root: Path) -> list[st
             continue
         for match in link_re.finditer(content):
             target = match.group(1).strip()
-            if not target or target.startswith("#") or target.startswith(ignored_prefixes):
+            if (
+                not target
+                or target.startswith("#")
+                or target.startswith(ignored_prefixes)
+            ):
                 continue
             target = target.strip("<>").split("#", 1)[0].strip()
             if not target:
                 continue
-            target_path = (repo_root / target.lstrip("/")) if target.startswith("/") else (md_path.parent / target)
+            target_path = (
+                (repo_root / target.lstrip("/"))
+                if target.startswith("/")
+                else (md_path.parent / target)
+            )
             if not target_path.exists():
                 issues.append(f"{path}: broken link target: {target}")
     return issues
@@ -151,11 +166,7 @@ def main() -> int:
     markdown_files = [f for f in all_files if f.endswith(".md")]
     docs_files = [f for f in markdown_files if f.startswith("docs/")]
     source_files = [
-        f
-        for f in all_files
-        if not any(
-            d in f.split("/") for d in EXCLUDED_DIRS
-        )
+        f for f in all_files if not any(d in f.split("/") for d in EXCLUDED_DIRS)
     ]
 
     issues: list[str] = []
@@ -169,7 +180,9 @@ def main() -> int:
             print(f"   {issue}")
         return 1
 
-    print("✅ No docs misuse, runtime docs access, or broken local markdown links detected.")
+    print(
+        "✅ No docs misuse, runtime docs access, or broken local markdown links detected."
+    )
     return 0
 
 
