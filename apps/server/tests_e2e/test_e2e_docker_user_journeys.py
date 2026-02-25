@@ -46,7 +46,10 @@ def test_e2e_docker_user_journeys() -> None:
     sim_duration = os.environ["VIBESENSOR_SIM_DURATION"]
 
     cars_before = api_json(base_url, "/api/settings/cars")
-    original_active_car_id = str(cars_before["activeCarId"])
+    original_active_raw = cars_before.get("activeCarId")
+    original_active_car_id = (
+        str(original_active_raw) if isinstance(original_active_raw, str) else None
+    )
     speed_source_before = api_json(base_url, "/api/settings/speed-source")
     language_before = api_json(base_url, "/api/settings/language")["language"]
 
@@ -287,12 +290,13 @@ def test_e2e_docker_user_journeys() -> None:
             body={"language": language_before},
         )
         if created_car_id is not None:
-            api_json(
-                base_url,
-                "/api/settings/cars/active",
-                method="POST",
-                body={"carId": original_active_car_id},
-            )
+            if original_active_car_id is not None:
+                api_json(
+                    base_url,
+                    "/api/settings/cars/active",
+                    method="POST",
+                    body={"carId": original_active_car_id},
+                )
             api_json(
                 base_url,
                 f"/api/settings/cars/{created_car_id}",

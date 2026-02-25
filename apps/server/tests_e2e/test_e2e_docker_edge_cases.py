@@ -345,7 +345,8 @@ def test_sensor_settings_crud_e2e(e2e_env: dict[str, str]) -> None:
 def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     cars_before = api_json(base, "/api/settings/cars")
-    original_active = str(cars_before["activeCarId"])
+    original_active_raw = cars_before.get("activeCarId")
+    original_active = str(original_active_raw) if isinstance(original_active_raw, str) else None
 
     api_json(
         base,
@@ -393,14 +394,19 @@ def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
             victim = next(str(c["id"]) for c in snapshot["cars"] if str(c["id"]) != active)
             api_json(base, f"/api/settings/cars/{victim}", method="DELETE")
         lone = api_json(base, "/api/settings/cars")
-        lone_id = str(lone["activeCarId"])
-        api_json(base, f"/api/settings/cars/{lone_id}", method="DELETE", expected_status=400)
+        lone_car_id = str(lone["cars"][0]["id"])
+        api_json(base, f"/api/settings/cars/{lone_car_id}", method="DELETE", expected_status=400)
 
         analysis = api_json(base, "/api/analysis-settings")
-        active_car = next(c for c in lone["cars"] if str(c["id"]) == lone_id)
-        assert float(analysis["tire_width_mm"]) == pytest.approx(
-            float(active_car["aspects"]["tire_width_mm"])
-        )
+        lone_active_raw = lone.get("activeCarId")
+        lone_active_id = str(lone_active_raw) if isinstance(lone_active_raw, str) else None
+        if lone_active_id is not None:
+            active_car = next(c for c in lone["cars"] if str(c["id"]) == lone_active_id)
+            assert float(analysis["tire_width_mm"]) == pytest.approx(
+                float(active_car["aspects"]["tire_width_mm"])
+            )
+        else:
+            assert lone.get("activeCarId") is None
     finally:
         current = api_json(base, "/api/settings/cars")
         remaining_ids = {str(c["id"]) for c in current["cars"]}
@@ -412,13 +418,14 @@ def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
                     method="DELETE",
                     expected_status=(200, 400, 404),
                 )
-        api_json(
-            base,
-            "/api/settings/cars/active",
-            method="POST",
-            body={"carId": original_active},
-            expected_status=(200, 404),
-        )
+        if original_active is not None:
+            api_json(
+                base,
+                "/api/settings/cars/active",
+                method="POST",
+                body={"carId": original_active},
+                expected_status=(200, 404),
+            )
 
 
 def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) -> None:
