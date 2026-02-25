@@ -483,38 +483,45 @@ def car_location_diagram(
         )
 
     # -- Heat-map legend with numeric endpoints --
-    legend_y = 36
-    legend_x = 8
+    # Vertical bar placed to the LEFT of the vehicle box.
+    # Place legend against the left drawing border.
+    legend_x = 0.5
+    legend_y = y0 + 12.0
+    legend_w = 6.0
+    legend_h = max(64.0, car_h - 24.0)
+    seg_h = legend_h / 11.0
     for i in range(0, 11):
         step = i / 10.0
         drawing.add(
             Rect(
-                legend_x + (i * 8),
-                legend_y,
-                8,
-                7,
+                legend_x,
+                legend_y + (i * seg_h),
+                legend_w,
+                seg_h,
                 fillColor=colors.HexColor(_amp_heat_color(step)),
                 strokeColor=colors.HexColor(_amp_heat_color(step)),
                 strokeWidth=0.2,
             )
         )
+
+    legend_text_x = legend_x + legend_w + 2.0
     drawing.add(
         String(
-            legend_x,
-            legend_y - 10,
+            legend_text_x,
+            legend_y - 1.0,
             tr("HEAT_LEGEND_LESS"),
             fontName="Helvetica",
-            fontSize=6.5,
+            fontSize=5.8,
             fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
         )
     )
     drawing.add(
         String(
-            legend_x + 82,
-            legend_y - 10,
+            legend_text_x,
+            legend_y + legend_h + 2.0,
             tr("HEAT_LEGEND_MORE"),
             fontName="Helvetica",
-            fontSize=6.5,
+            fontSize=5.8,
             fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
         )
     )
@@ -523,8 +530,8 @@ def car_location_diagram(
     if min_amp is not None and max_amp is not None:
         drawing.add(
             String(
-                legend_x,
-                legend_y + 10,
+                legend_text_x,
+                legend_y - 8.0,
                 _format_db(min_amp),
                 fontName="Helvetica",
                 fontSize=6,
@@ -533,8 +540,8 @@ def car_location_diagram(
         )
         drawing.add(
             String(
-                legend_x + 70,
-                legend_y + 10,
+                legend_text_x,
+                legend_y + legend_h + 10.0,
                 _format_db(max_amp),
                 fontName="Helvetica",
                 fontSize=6,
@@ -544,8 +551,8 @@ def car_location_diagram(
     if single_sensor:
         drawing.add(
             String(
-                legend_x,
-                legend_y - 16,
+                legend_text_x,
+                legend_y - 15.0,
                 tr("ONE_SENSOR_NOTE"),
                 fontName="Helvetica",
                 fontSize=6,
@@ -558,14 +565,14 @@ def car_location_diagram(
     from .theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
 
     src_legend_items = [
-        ("Wheel / Tire", FINDING_SOURCE_COLORS["wheel/tire"]),
+        (text_fn("Wheel", "Wiel"), FINDING_SOURCE_COLORS["wheel/tire"]),
         ("Driveline", FINDING_SOURCE_COLORS["driveline"]),
         ("Engine", FINDING_SOURCE_COLORS["engine"]),
     ]
-    src_legend_x = legend_x
-    # Stack below heat legend: title row, then swatches row
-    src_title_y = legend_y - 22
-    src_swatch_y = src_title_y - 9
+    src_legend_x = 8.0
+    # Keep source legend anchored low to avoid overlap with the car/rear label.
+    src_title_y = 20.0
+    src_swatch_y = src_title_y - 8
     drawing.add(
         String(
             src_legend_x,
@@ -578,14 +585,23 @@ def car_location_diagram(
             fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
         )
     )
-    swatch_spacing = min(42, max(30, (d_width - 2 * legend_x) / len(src_legend_items)))
-    for i, (label, color_hex) in enumerate(src_legend_items):
-        lx = src_legend_x + (i * swatch_spacing)
+    src_max_x = d_width - 8.0
+    item_gap = 5.0
+    row_gap = 9.0
+    cursor_x = src_legend_x
+    row = 0
+    for label, color_hex in src_legend_items:
+        item_w = 10.0 + _estimate_text_width(label, font_size=5.5) + item_gap
+        if cursor_x > src_legend_x and (cursor_x + item_w) > src_max_x:
+            row += 1
+            cursor_x = src_legend_x
+        lx = cursor_x
+        ly = src_swatch_y - (row * row_gap)
         # Color swatch
         drawing.add(
             Circle(
                 lx + 4,
-                src_swatch_y,
+                ly,
                 3,
                 fillColor=colors.HexColor(color_hex),
                 strokeColor=colors.HexColor(color_hex),
@@ -595,12 +611,13 @@ def car_location_diagram(
         drawing.add(
             String(
                 lx + 10,
-                src_swatch_y - 2,
+                ly - 2,
                 label,
                 fontName="Helvetica",
                 fontSize=5.5,
                 fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
             )
         )
+        cursor_x += item_w
 
     return drawing
