@@ -16,7 +16,10 @@ class ADXL345 {
 
   // Reads up to max_samples from FIFO and writes XYZ triples into xyz_interleaved.
   // Returns number of samples written.
-  size_t read_samples(int16_t* xyz_interleaved, size_t max_samples);
+  size_t read_samples(int16_t* xyz_interleaved,
+                      size_t max_samples,
+                      bool* had_io_error = nullptr,
+                      bool* fifo_truncated = nullptr);
 
  private:
   TwoWire& wire_;
@@ -26,7 +29,7 @@ class ADXL345 {
   uint8_t fifo_watermark_;
   bool available_;
 
-  uint8_t read_reg(uint8_t reg);
+  bool read_reg(uint8_t reg, uint8_t* out_value);
   bool write_reg(uint8_t reg, uint8_t value);
-  void read_multi(uint8_t reg, uint8_t* out, size_t len);
+  bool read_multi(uint8_t reg, uint8_t* out, size_t len);
 };
