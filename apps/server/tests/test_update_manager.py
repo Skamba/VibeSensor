@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 from pathlib import Path
 from unittest.mock import patch
@@ -128,12 +129,25 @@ class TestUpdaterInterpreterSelection:
         venv_python = repo / "apps" / "server" / ".venv" / "bin" / "python3"
         venv_python.parent.mkdir(parents=True)
         venv_python.write_text("#!/usr/bin/env python3\n")
+        os.chmod(venv_python, 0o755)
+        (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
         assert UpdateManager._reinstall_python_executable(repo) == str(venv_python)
 
-    def test_reinstall_python_falls_back_to_python3(self, tmp_path) -> None:
+    def test_reinstall_python_uses_server_venv_path_even_if_missing(self, tmp_path) -> None:
         repo = tmp_path / "repo"
         repo.mkdir()
-        assert UpdateManager._reinstall_python_executable(repo) == "python3"
+        expected = repo / "apps" / "server" / ".venv" / "bin" / "python3"
+        assert UpdateManager._reinstall_python_executable(repo) == str(expected)
+
+    def test_reinstall_venv_readiness_requires_pyvenv_cfg(self, tmp_path) -> None:
+        repo = tmp_path / "repo"
+        venv_python = repo / "apps" / "server" / ".venv" / "bin" / "python3"
+        venv_python.parent.mkdir(parents=True)
+        venv_python.write_text("#!/usr/bin/env python3\n")
+        os.chmod(venv_python, 0o755)
+        assert not UpdateManager._is_reinstall_venv_ready(repo)
+        (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
+        assert UpdateManager._is_reinstall_venv_ready(repo)
 
 
 # ---------------------------------------------------------------------------
@@ -390,13 +404,20 @@ class TestUpdateManagerAsync:
         assert rebuild_env.get("NPM_CONFIG_PRODUCTION") == "false"
         assert rebuild_env.get("NPM_CONFIG_INCLUDE") == "dev"
         assert rebuild_env.get("PATH")
+        venv_python = repo / "apps" / "server" / ".venv" / "bin" / "python3"
         assert any(
-            " -m pip install --no-deps -e " in f" {' '.join(c[0])} "
+            f"python3 -m venv {repo / 'apps' / 'server' / '.venv'}" in " ".join(c[0])
+            for c in runner.calls
+        ), "Expected updater to create missing backend venv"
+        assert any(
+            " -m pip install --no-deps --no-build-isolation -e " in f" {' '.join(c[0])} "
             and str(repo / "apps" / "server") in " ".join(c[0])
             for c in runner.calls
         )
         assert any(
-            " python3 -m pip install --no-deps -e " in f" {' '.join(c[0])} " for c in runner.calls
+            f" {venv_python} -m pip install --no-deps --no-build-isolation -e "
+            in f" {' '.join(c[0])} "
+            for c in runner.calls
         )
         restart_cmd = (
             "systemd-run --unit vibesensor-post-update-restart --on-active=2s "
@@ -737,6 +758,31 @@ class TestUpdateManagerAsync:
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
         assert "rebuild/sync failed" in issues_text
+
+    async def test_backend_venv_creation_failure_fails_update(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+        runner.set_response("python3 -m venv", 1, "", "venv create failed")
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        with patch("shutil.which", _mock_which):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "virtualenv creation failed" in issues_text
 
     async def test_missing_tools_fails_gracefully(self, tmp_path) -> None:
         """When nmcli is not found, update fails with clear issue."""
