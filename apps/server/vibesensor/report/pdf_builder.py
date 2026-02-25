@@ -594,43 +594,61 @@ def _draw_system_card(
     cx = x + 3 * mm
     cy = y + h - 4 * mm
 
-    c.setFillColor(_hex(TEXT_CLR))
-    c.setFont(FONT_B, 8)
-    c.drawString(cx, cy, card.system_name)
-
-    c.setFillColor(_hex(SUB_CLR))
-    c.setFont(FONT, 7)
-    c.drawString(
-        cx,
-        cy - 4 * mm,
-        f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location, na)}",
-    )
-
-    _draw_text(
+    title_bottom = _draw_text(
         c,
         cx,
-        cy - 8 * mm,
+        cy,
+        w - 6 * mm,
+        card.system_name,
+        font=FONT_B,
+        size=8,
+        color=TEXT_CLR,
+        max_lines=2,
+    )
+
+    strongest_bottom = _draw_text(
+        c,
+        cx,
+        title_bottom - 1.2 * mm,
+        w - 6 * mm,
+        f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location, na)}",
+        size=7,
+        color=SUB_CLR,
+        max_lines=2,
+    )
+
+    pattern_bottom = _draw_text(
+        c,
+        cx,
+        strongest_bottom - 1.0 * mm,
         w - 6 * mm,
         _safe(card.pattern_summary, na),
         size=7,
         color=SUB_CLR,
-        max_lines=1,
+        max_lines=2,
     )
 
     # Parts list
-    parts_y = y + h - 21 * mm
+    parts_y = pattern_bottom - 1.0 * mm
     c.setFillColor(_hex(TEXT_CLR))
     c.setFont(FONT_B, 7)
     c.drawString(cx, parts_y, tr("COMMON_PARTS"))
 
     py = parts_y - 3.6 * mm
-    c.setFont(FONT, 6.7)
     for p in card.parts[:3]:
         if py <= y + 3 * mm:
             break
-        c.setFillColor(_hex(TEXT_CLR))
-        c.drawString(cx, py, f"\u2022 {p.name}")
-        py -= 3.2 * mm
+        py = _draw_text(
+            c,
+            cx,
+            py,
+            w - 6 * mm,
+            f"\u2022 {p.name}",
+            size=6.7,
+            color=TEXT_CLR,
+            max_lines=2,
+        )
+        py -= 0.8 * mm
 
 
 def _draw_next_steps_table(
