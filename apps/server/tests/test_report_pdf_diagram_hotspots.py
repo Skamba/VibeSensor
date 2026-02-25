@@ -3,6 +3,7 @@ from __future__ import annotations
 from vibesensor.report.pdf_diagram import (
     _amp_heat_color,
     _build_sensor_render_plan,
+    _estimate_text_width,
     _resolve_marker_states,
     car_location_diagram,
 )
@@ -138,3 +139,60 @@ def test_single_sensor_uses_heat_midpoint_not_neutral_grey() -> None:
     assert single_sensor is True
     assert markers[0].fill == _amp_heat_color(0.5)
     assert markers[0].fill != REPORT_COLORS["text_secondary"]
+
+
+def test_legend_text_stays_clear_of_color_bar_and_source_labels_do_not_overlap() -> None:
+    summary = {
+        "sensor_locations": [
+            "front-left wheel",
+            "front-right wheel",
+            "rear-left wheel",
+            "rear-right wheel",
+        ],
+        "sensor_intensity_by_location": [
+            {"location": "front-left wheel", "p95_intensity_db": 31.1},
+            {"location": "front-right wheel", "p95_intensity_db": 34.9},
+            {"location": "rear-left wheel", "p95_intensity_db": 30.9},
+            {"location": "rear-right wheel", "p95_intensity_db": 31.4},
+        ],
+    }
+    diagram = car_location_diagram(
+        [{"strongest_location": "front-right wheel", "source": "wheel/tire"}],
+        summary,
+        [],
+        content_width=300.0,
+        tr=lambda key, **kwargs: key,
+        text_fn=lambda en, nl: en,
+        diagram_width=104.0,  # narrow width that previously triggered source-legend overlap
+        diagram_height=252.0,
+    )
+
+    text_items = [item for item in diagram.contents if hasattr(item, "text")]
+
+    db_labels = [item for item in text_items if str(getattr(item, "text", "")).endswith("dB")]
+    assert db_labels, "Expected dB endpoint labels for the heat legend"
+    # Bar top is y=43 (legend_y=36 + 7); labels should be clearly above that.
+    assert all(float(getattr(item, "y", 0.0)) > 43.0 for item in db_labels)
+
+    source_labels = [
+        item
+        for item in text_items
+        if str(getattr(item, "text", "")) in {"Wheel", "Driveline", "Engine"}
+    ]
+    assert len(source_labels) == 3
+
+    boxes: list[tuple[float, float, float, float]] = []
+    for item in source_labels:
+        text = str(getattr(item, "text", ""))
+        x = float(getattr(item, "x", 0.0))
+        y = float(getattr(item, "y", 0.0))
+        size = float(getattr(item, "fontSize", 5.5))
+        width = _estimate_text_width(text, font_size=size)
+        box = (x, y - 1.0, x + width, y + size + 1.0)
+        boxes.append(box)
+        assert box[0] >= 0.0
+        assert box[2] <= float(diagram.width) + 0.1
+
+    for idx in range(len(boxes)):
+        for jdx in range(idx + 1, len(boxes)):
+            assert not _rectangles_overlap(boxes[idx], boxes[jdx])
