@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shutil
@@ -68,24 +69,48 @@ def _wait_health(timeout_s: float = 60.0) -> None:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Run the full VibeSensor CI-aligned suite.")
+    parser.add_argument(
+        "--skip-ui-sync",
+        action="store_true",
+        help="Skip UI sync/build into apps/server/public.",
+    )
+    parser.add_argument(
+        "--skip-ui-smoke",
+        action="store_true",
+        help="Skip Playwright install and UI smoke tests.",
+    )
+    parser.add_argument(
+        "--skip-unit-tests",
+        action="store_true",
+        help="Skip backend unit/integration pytest suite in apps/server/tests.",
+    )
+    args = parser.parse_args()
+
     data_dir = Path(tempfile.mkdtemp(prefix="vibesensor-e2e-data-"))
     shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
     sim_log = data_dir / "sim_sender.log"
     container_started = False
     try:
-        _run(["python3", "tools/sync_ui_to_pi_public.py"])
-        playwright_marker = ROOT / "apps" / "ui" / ".playwright-chromium-installed"
-        if os.environ.get("FORCE_PLAYWRIGHT_INSTALL", "0") == "1" or not playwright_marker.exists():
+        if not args.skip_ui_sync:
+            _run(["python3", "tools/sync_ui_to_pi_public.py"])
+        if not args.skip_ui_smoke:
+            playwright_marker = ROOT / "apps" / "ui" / ".playwright-chromium-installed"
+            if (
+                os.environ.get("FORCE_PLAYWRIGHT_INSTALL", "0") == "1"
+                or not playwright_marker.exists()
+            ):
+                _run(
+                    ["npx", "playwright", "install", "chromium"],
+                    env={**os.environ, "PLAYWRIGHT_SKIP_BROWSER_GC": "1"},
+                    cwd=ROOT / "apps" / "ui",
+                )
+                playwright_marker.write_text("chromium\n", encoding="utf-8")
+            _run(["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui")
+        if not args.skip_unit_tests:
             _run(
-                ["npx", "playwright", "install", "chromium"],
-                env={**os.environ, "PLAYWRIGHT_SKIP_BROWSER_GC": "1"},
-                cwd=ROOT / "apps" / "ui",
+                ["python3", "-m", "pytest", "-q", "-m", "not selenium", "apps/server/tests"]
             )
-            playwright_marker.write_text("chromium\n", encoding="utf-8")
-        _run(["npm", "run", "test:smoke"], cwd=ROOT / "apps" / "ui")
-        _run(
-            ["python3", "-m", "pytest", "-q", "-m", "not selenium", "apps/server/tests"]
-        )
 
         _run(
             [
