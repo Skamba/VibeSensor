@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Literal
 
 from ..runlog import as_float_or_none as _as_float
 from .pdf_helpers import _canonical_location, _source_color, color_blend
@@ -17,6 +18,33 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
+MarkerState = Literal["connected-active", "connected-inactive", "disconnected"]
+
+
+@dataclass(frozen=True)
+class MarkerRenderPlan:
+    name: str
+    x: float
+    y: float
+    state: MarkerState
+    fill: str
+    stroke: str
+    stroke_width: float
+    radius: float
+
+
+@dataclass(frozen=True)
+class LabelRenderPlan:
+    name: str
+    text: str
+    x: float
+    y: float
+    anchor: str
+    color: str
+    font_size: float
+    bbox: tuple[float, float, float, float]
+
+
 def _amp_heat_color(norm: float) -> str:
     if norm <= 0.5:
         return color_blend(HEAT_LOW, HEAT_MID, norm * 2.0)
@@ -26,6 +54,213 @@ def _amp_heat_color(norm: float) -> str:
 def _format_db(value: float) -> str:
     """Format an intensity value in decibels."""
     return f"{value:.1f} dB"
+
+
+def _estimate_text_width(text: str, *, font_size: float) -> float:
+    return max(10.0, float(len(text)) * font_size * 0.52)
+
+
+def _label_bbox(
+    *,
+    x: float,
+    y: float,
+    text: str,
+    anchor: str,
+    font_size: float,
+) -> tuple[float, float, float, float]:
+    width = _estimate_text_width(text, font_size=font_size)
+    if anchor == "end":
+        x0 = x - width
+    elif anchor == "middle":
+        x0 = x - (width / 2.0)
+    else:
+        x0 = x
+    y0 = y - 1.0
+    return (x0, y0, x0 + width, y0 + font_size + 2.0)
+
+
+def _boxes_overlap(
+    a: tuple[float, float, float, float], b: tuple[float, float, float, float]
+) -> bool:
+    return min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1])
+
+
+def _bounds_overflow(
+    box: tuple[float, float, float, float],
+    *,
+    width: float,
+    height: float,
+    margin: float = 2.0,
+) -> float:
+    left = max(0.0, margin - box[0])
+    right = max(0.0, box[2] - (width - margin))
+    bottom = max(0.0, margin - box[1])
+    top = max(0.0, box[3] - (height - margin))
+    return left + right + bottom + top
+
+
+def _resolve_marker_states(
+    location_names: list[str],
+    *,
+    connected_locations: set[str],
+    amp_by_location: dict[str, float],
+) -> dict[str, MarkerState]:
+    states: dict[str, MarkerState] = {}
+    for name in location_names:
+        if name in amp_by_location:
+            states[name] = "connected-active"
+        elif name in connected_locations:
+            states[name] = "connected-inactive"
+        else:
+            states[name] = "disconnected"
+    return states
+
+
+def _choose_label_plan(
+    *,
+    name: str,
+    px: float,
+    py: float,
+    width: float,
+    height: float,
+    occupied_boxes: list[tuple[float, float, float, float]],
+    font_size: float,
+    color: str,
+) -> LabelRenderPlan:
+    prefer_right = px < (width * 0.5)
+    ordered_candidates = (
+        [(10.0, -2.0, "start"), (-10.0, -2.0, "end"), (0.0, 9.0, "middle"), (0.0, -11.0, "middle")]
+        if prefer_right
+        else [
+            (-10.0, -2.0, "end"),
+            (10.0, -2.0, "start"),
+            (0.0, 9.0, "middle"),
+            (0.0, -11.0, "middle"),
+        ]
+    )
+
+    best: tuple[float, LabelRenderPlan] | None = None
+    for idx, (dx, dy, anchor) in enumerate(ordered_candidates):
+        x = px + dx
+        y = py + dy
+        bbox = _label_bbox(x=x, y=y, text=name, anchor=anchor, font_size=font_size)
+        overlap_penalty = sum(1 for box in occupied_boxes if _boxes_overlap(bbox, box))
+        overflow_penalty = _bounds_overflow(bbox, width=width, height=height)
+        score = (overlap_penalty * 1000.0) + (overflow_penalty * 10.0) + float(idx)
+        candidate = LabelRenderPlan(
+            name=name,
+            text=name,
+            x=x,
+            y=y,
+            anchor=anchor,
+            color=color,
+            font_size=font_size,
+            bbox=bbox,
+        )
+        if best is None or score < best[0]:
+            best = (score, candidate)
+
+    assert best is not None
+    return best[1]
+
+
+def _build_sensor_render_plan(
+    *,
+    location_points: dict[str, tuple[float, float]],
+    drawing_width: float,
+    drawing_height: float,
+    connected_locations: set[str],
+    amp_by_location: dict[str, float],
+    highlight: dict[str, str],
+) -> tuple[list[MarkerRenderPlan], list[LabelRenderPlan], bool]:
+    states = _resolve_marker_states(
+        list(location_points.keys()),
+        connected_locations=connected_locations,
+        amp_by_location=amp_by_location,
+    )
+
+    min_amp = min(amp_by_location.values()) if amp_by_location else None
+    max_amp = max(amp_by_location.values()) if amp_by_location else None
+    active_count = sum(1 for value in states.values() if value == "connected-active")
+    single_sensor = active_count <= 1 and (min_amp is None or min_amp == max_amp)
+
+    markers: list[MarkerRenderPlan] = []
+    occupied_boxes: list[tuple[float, float, float, float]] = []
+    for name, (px, py) in location_points.items():
+        state = states[name]
+        amp = amp_by_location.get(name)
+        if state == "connected-active":
+            if (
+                amp is not None
+                and min_amp is not None
+                and max_amp is not None
+                and max_amp > min_amp
+            ):
+                norm = (amp - min_amp) / (max_amp - min_amp)
+            else:
+                norm = 0.5
+            fill = _amp_heat_color(norm)
+            radius = 5.2 + (norm * 1.8)
+            default_stroke = REPORT_COLORS["ink"]
+            stroke = highlight.get(name, default_stroke)
+            stroke_width = 1.1 if name in highlight else 0.8
+        elif state == "connected-inactive":
+            fill = REPORT_COLORS["surface_alt"]
+            radius = 4.8
+            stroke = REPORT_COLORS["axis"]
+            stroke_width = 0.8
+        else:
+            fill = "#e3e8f1"
+            radius = 4.0
+            stroke = REPORT_COLORS["table_row_border"]
+            stroke_width = 0.6
+
+        marker = MarkerRenderPlan(
+            name=name,
+            x=px,
+            y=py,
+            state=state,
+            fill=fill,
+            stroke=stroke,
+            stroke_width=stroke_width,
+            radius=radius,
+        )
+        markers.append(marker)
+        occupied_boxes.append(
+            (px - radius - 1.0, py - radius - 1.0, px + radius + 1.0, py + radius + 1.0)
+        )
+
+    labels: list[LabelRenderPlan] = []
+    labeled_names = {
+        marker.name
+        for marker in markers
+        if marker.state in {"connected-active", "connected-inactive"} or marker.name in highlight
+    }
+    for name in sorted(
+        labeled_names, key=lambda value: (location_points[value][1], location_points[value][0])
+    ):
+        px, py = location_points[name]
+        marker = next(item for item in markers if item.name == name)
+        if marker.state == "connected-active":
+            color = REPORT_COLORS["ink"]
+        elif marker.state == "connected-inactive":
+            color = REPORT_COLORS["text_secondary"]
+        else:
+            color = REPORT_COLORS["text_muted"]
+        label = _choose_label_plan(
+            name=name,
+            px=px,
+            py=py,
+            width=drawing_width,
+            height=drawing_height,
+            occupied_boxes=occupied_boxes,
+            font_size=6.0,
+            color=color,
+        )
+        labels.append(label)
+        occupied_boxes.append(label.bbox)
+
+    return markers, labels, single_sensor
 
 
 def car_location_diagram(
@@ -176,7 +411,7 @@ def car_location_diagram(
         "trunk": (cx, y0 + (car_h * 0.28)),
     }
 
-    active_locations = {
+    connected_locations = {
         _canonical_location(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()
     }
     amp_by_location: dict[str, float] = {}
@@ -205,8 +440,7 @@ def car_location_diagram(
             )
         if loc and loc not in amp_by_location and mean_val is not None and mean_val > 0:
             amp_by_location[loc] = mean_val
-    min_amp = min(amp_by_location.values()) if amp_by_location else None
-    max_amp = max(amp_by_location.values()) if amp_by_location else None
+    connected_locations.update(amp_by_location.keys())
 
     highlight: dict[str, str] = {}
     for finding in top_findings[:3]:
@@ -216,53 +450,35 @@ def car_location_diagram(
         if loc:
             highlight[loc] = _source_color(finding.get("source") or finding.get("suspected_source"))
 
-    single_sensor = len(amp_by_location) <= 1 and (min_amp is None or min_amp == max_amp)
-
-    for name, (px, py) in location_points.items():
-        is_active = name in active_locations or name in amp_by_location
-        amp = amp_by_location.get(name)
-        if single_sensor and is_active:
-            fill = REPORT_COLORS["text_secondary"]
-            radius = 5.4
-        elif amp is not None and min_amp is not None and max_amp is not None:
-            if max_amp > min_amp:
-                norm = (amp - min_amp) / (max_amp - min_amp)
-            else:
-                norm = 1.0
-            fill = _amp_heat_color(norm)
-            radius = 5.0 + (norm * 2.2)
-        elif is_active:
-            fill = REPORT_COLORS["text_secondary"]
-            radius = 5.4
-        else:
-            fill = "#d3dbe8"
-            radius = 4.6
-
+    marker_plan, label_plan, single_sensor = _build_sensor_render_plan(
+        location_points=location_points,
+        drawing_width=d_width,
+        drawing_height=drawing_h,
+        connected_locations=connected_locations,
+        amp_by_location=amp_by_location,
+        highlight=highlight,
+    )
+    for marker in marker_plan:
         drawing.add(
             Circle(
-                px,
-                py,
-                radius,
-                fillColor=colors.HexColor(fill),
-                strokeColor=colors.HexColor(highlight.get(name, REPORT_COLORS["ink"])),
-                strokeWidth=1.1 if name in highlight else 0.6,
+                marker.x,
+                marker.y,
+                marker.radius,
+                fillColor=colors.HexColor(marker.fill),
+                strokeColor=colors.HexColor(marker.stroke),
+                strokeWidth=marker.stroke_width,
             )
         )
-        label_x = px + 10
-        label_anchor = "start"
-        if "right wheel" in name:
-            label_x = px - 10
-            label_anchor = "end"
+
+    for label in label_plan:
         drawing.add(
             String(
-                label_x,
-                py - 2,
-                name,
-                fontSize=6,
-                textAnchor=label_anchor,
-                fillColor=colors.HexColor(
-                    REPORT_COLORS["ink"] if is_active else REPORT_COLORS["text_muted"]
-                ),
+                label.x,
+                label.y,
+                label.text,
+                fontSize=label.font_size,
+                textAnchor=label.anchor,
+                fillColor=colors.HexColor(label.color),
             )
         )
 
@@ -302,6 +518,8 @@ def car_location_diagram(
             fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
         )
     )
+    min_amp = min(amp_by_location.values()) if amp_by_location else None
+    max_amp = max(amp_by_location.values()) if amp_by_location else None
     if min_amp is not None and max_amp is not None:
         drawing.add(
             String(
