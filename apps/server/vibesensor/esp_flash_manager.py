@@ -6,6 +6,7 @@ import importlib.util
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
@@ -19,6 +20,11 @@ _FLASH_HISTORY_LIMIT = 10
 _FLASH_STEP_TIMEOUT_S = 90
 _FLASH_BUILD_TIMEOUT_S = 300
 _ESP32_PLATFORM_GLOB = "espressif32*"
+_ESP32_REQUIRED_PACKAGES = (
+    "framework-arduinoespressif32",
+    "tool-scons",
+    "toolchain-xtensa-esp32",
+)
 
 
 def _resolve_firmware_dir(repo_hint: Path) -> Path:
@@ -71,6 +77,35 @@ def _has_offline_esp32_platform() -> bool:
     if not platforms_dir.is_dir():
         return False
     return any(path.is_dir() for path in platforms_dir.glob(_ESP32_PLATFORM_GLOB))
+
+
+def _missing_offline_esp32_packages() -> list[str]:
+    packages_dir = _platformio_core_dir() / "packages"
+    missing: list[str] = []
+    for name in _ESP32_REQUIRED_PACKAGES:
+        if not (packages_dir / name).is_dir():
+            missing.append(name)
+    return missing
+
+
+def _esp32_toolchain_runnable() -> bool:
+    compiler = _platformio_core_dir() / "packages" / "toolchain-xtensa-esp32" / "bin"
+    compiler = compiler / "xtensa-esp32-elf-g++"
+    if not compiler.is_file():
+        return False
+    if not os.access(compiler, os.X_OK):
+        return False
+    try:
+        proc = subprocess.run(
+            [str(compiler), "--version"],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return proc.returncode == 0
 
 
 class EspFlashState(enum.StrEnum):
@@ -445,6 +480,40 @@ class EspFlashManager:
                 self._finalize(
                     state=EspFlashState.failed,
                     error="offline PlatformIO platform missing: espressif32",
+                )
+                return
+            missing_packages = _missing_offline_esp32_packages()
+            if missing_packages:
+                self._status.exit_code = 1
+                missing_csv = ", ".join(missing_packages)
+                install_hint = " && ".join(
+                    [
+                        f"{' '.join(platformio_cmd)} pkg install --global --tool platformio/{name}"
+                        for name in missing_packages
+                    ]
+                )
+                self._append_log(
+                    "Offline ESP32 PlatformIO packages missing "
+                    f"(packages: {missing_csv})."
+                )
+                self._append_log(f"Install once while online: {install_hint}")
+                self._finalize(
+                    state=EspFlashState.failed,
+                    error=f"offline PlatformIO package(s) missing: {missing_csv}",
+                )
+                return
+            if not _esp32_toolchain_runnable():
+                self._status.exit_code = 1
+                self._append_log(
+                    "Offline ESP32 toolchain is present but not executable on this host."
+                )
+                self._append_log(
+                    "Reinstall toolchain package matching this Pi architecture "
+                    "(toolchain-xtensa-esp32)."
+                )
+                self._finalize(
+                    state=EspFlashState.failed,
+                    error="offline PlatformIO toolchain unusable: toolchain-xtensa-esp32",
                 )
                 return
             build_cmd = [*platformio_cmd, "run", "-e", "m5stack_atom"]

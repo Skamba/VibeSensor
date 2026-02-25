@@ -5,5 +5,5 @@ Wants=NetworkManager.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/VibeSensor/pi/.venv/bin/python -m vibesensor.hotspot_self_heal --mode check-heal --config /etc/vibesensor/config.yaml
+ExecStart=/opt/VibeSensor/apps/server/.venv/bin/python -m vibesensor.hotspot_self_heal --mode check-heal --config /etc/vibesensor/config.yaml
 SyslogIdentifier=vibesensor-hotspot-selfheal
