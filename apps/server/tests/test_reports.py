@@ -855,7 +855,7 @@ def test_report_pdf_wraps_long_system_card_location() -> None:
     assert long_location.encode("latin-1", errors="ignore") not in pdf
 
 
-def test_car_diagram_right_wheel_labels_anchor_left_for_readability() -> None:
+def test_car_diagram_wheel_labels_stay_within_bounds_without_overlap() -> None:
     sensor_locations = [
         "front-left wheel",
         "front-right wheel",
@@ -872,12 +872,37 @@ def test_car_diagram_right_wheel_labels_anchor_left_for_readability() -> None:
         diagram_width=200.0,
         diagram_height=250.0,
     )
-    anchors = {
-        str(item.text): str(item.textAnchor)
+    labels = [
+        item
         for item in diagram.contents
-        if hasattr(item, "text") and "wheel" in str(item.text)
-    }
-    assert anchors["front-left wheel"] == "start"
-    assert anchors["rear-left wheel"] == "start"
-    assert anchors["front-right wheel"] == "end"
-    assert anchors["rear-right wheel"] == "end"
+        if hasattr(item, "text") and str(getattr(item, "text", "")).endswith("wheel")
+    ]
+    assert len(labels) == 4
+
+    boxes: list[tuple[float, float, float, float]] = []
+    for item in labels:
+        text = str(item.text)
+        font_size = float(getattr(item, "fontSize", 6.0))
+        x = float(item.x)
+        y = float(item.y)
+        width = max(10.0, len(text) * font_size * 0.52)
+        anchor = str(getattr(item, "textAnchor", "start"))
+        if anchor == "end":
+            x0 = x - width
+        elif anchor == "middle":
+            x0 = x - (width / 2.0)
+        else:
+            x0 = x
+        y0 = y - 1.0
+        box = (x0, y0, x0 + width, y0 + font_size + 2.0)
+        boxes.append(box)
+        assert box[0] >= 0.0
+        assert box[1] >= 0.0
+        assert box[2] <= float(diagram.width)
+        assert box[3] <= float(diagram.height)
+
+    for i in range(len(boxes)):
+        for j in range(i + 1, len(boxes)):
+            a = boxes[i]
+            b = boxes[j]
+            assert not (min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1]))
