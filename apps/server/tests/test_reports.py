@@ -13,6 +13,7 @@ from vibesensor import __version__
 from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report import summarize_log
 from vibesensor.report.pdf_builder import _draw_system_card, build_report_pdf
+from vibesensor.report.pdf_diagram import car_location_diagram
 from vibesensor.report.report_data import PartSuggestion, SystemFindingCard
 
 
@@ -852,3 +853,31 @@ def test_report_pdf_wraps_long_system_card_location() -> None:
     canvas.save()
     pdf = buf.getvalue()
     assert long_location.encode("latin-1", errors="ignore") not in pdf
+
+
+def test_car_diagram_right_wheel_labels_anchor_left_for_readability() -> None:
+    sensor_locations = [
+        "front-left wheel",
+        "front-right wheel",
+        "rear-left wheel",
+        "rear-right wheel",
+    ]
+    diagram = car_location_diagram(
+        [{"strongest_location": "front-left wheel", "source": "wheel/tire"}],
+        {"sensor_locations": sensor_locations},
+        [],
+        content_width=300.0,
+        tr=lambda key, **kwargs: key,
+        text_fn=lambda en, nl: en,
+        diagram_width=200.0,
+        diagram_height=250.0,
+    )
+    anchors = {
+        str(item.text): str(item.textAnchor)
+        for item in diagram.contents
+        if hasattr(item, "text") and "wheel" in str(item.text)
+    }
+    assert anchors["front-left wheel"] == "start"
+    assert anchors["rear-left wheel"] == "start"
+    assert anchors["front-right wheel"] == "end"
+    assert anchors["rear-right wheel"] == "end"
