@@ -23,6 +23,7 @@ from .helpers import (
     _amplitude_weighted_speed_window,
     _corr_abs,
     _effective_engine_rpm,
+    _estimate_strength_floor_amp_g,
     _location_label,
     _locations_connected_throughout_run,
     _primary_vibration_strength_db,
@@ -689,7 +690,7 @@ def _build_order_findings(
                 matched_by_phase[phase_key] += 1
             rel_errors.append(delta_hz / max(1e-9, predicted_hz))
             matched_amp.append(best_amp)
-            floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
+            floor_amp = _estimate_strength_floor_amp_g(sample) or 0.0
             matched_floor.append(max(0.0, floor_amp))
             predicted_vals.append(predicted_hz)
             measured_vals.append(best_hz)
@@ -1528,8 +1529,10 @@ def _build_findings(
         key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
     )
     findings = reference_findings + diagnostic_findings + informational_findings
-    for idx, finding in enumerate(findings, start=1):
+    diag_counter = 0
+    for finding in findings:
         fid = str(finding.get("finding_id", "")).strip()
         if not fid.startswith("REF_"):
-            finding["finding_id"] = f"F{idx:03d}"
+            diag_counter += 1
+            finding["finding_id"] = f"F{diag_counter:03d}"
     return findings

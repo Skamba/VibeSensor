@@ -134,7 +134,7 @@ class GPSSpeedMonitor:
             self.override_speed_mps = None
             return None
         speed_val = float(speed_kmh)
-        if speed_val < 0:
+        if speed_val < 0 or not math.isfinite(speed_val):
             self.override_speed_mps = None
             return None
         self.override_speed_mps = speed_val * KMH_TO_MPS
