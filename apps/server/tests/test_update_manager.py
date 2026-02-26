@@ -450,9 +450,15 @@ class TestUpdateManagerAsync:
         ]
         assert sudo_git_calls, "Expected updater to run git via sudo wrapper"
         uplink_connect_calls = [
-            c[0] for c in runner.calls if "device wifi connect TestNet" in " ".join(c[0])
+            c[0] for c in runner.calls if "connection up VibeSensor-Uplink" in " ".join(c[0])
         ]
-        assert uplink_connect_calls, "Expected secure uplink wifi connect call"
+        assert uplink_connect_calls, "Expected updater to bring up explicit uplink profile"
+        assert any(
+            "connection modify VibeSensor-Uplink" in " ".join(c[0])
+            and "ipv4.ignore-auto-dns yes" in " ".join(c[0])
+            and "ipv4.dns 1.1.1.1,1.0.0.1" in " ".join(c[0])
+            for c in runner.calls
+        ), "Expected updater to apply client-mode DNS fallback on uplink profile"
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         """When sudo is unavailable, update fails with clear issue."""
@@ -530,7 +536,7 @@ class TestUpdateManagerAsync:
 
         async def run_with_retry(args, *, timeout=30, env=None):
             joined = " ".join(args)
-            if "device wifi connect TestNet" in joined:
+            if "connection up VibeSensor-Uplink" in joined:
                 connect_calls["count"] += 1
                 if connect_calls["count"] == 1:
                     return (10, "", "Error: No network with SSID 'TestNet' found.\n")
