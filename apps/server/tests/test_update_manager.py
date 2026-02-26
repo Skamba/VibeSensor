@@ -784,6 +784,80 @@ class TestUpdateManagerAsync:
         issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
         assert "rebuild/sync failed" in issues_text
 
+    async def test_transient_rebuild_failure_retries_and_succeeds(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        original_run = runner.run
+        sync_attempts = 0
+
+        async def run_with_retry(args, *, timeout=30, env=None):
+            nonlocal sync_attempts
+            if "sync_ui_to_pi_public.py" in " ".join(args):
+                sync_attempts += 1
+                if sync_attempts == 1:
+                    return (1, "", "npm ERR! code EAI_AGAIN registry.npmjs.org")
+                return (0, "ok", "")
+            return await original_run(args, timeout=timeout, env=env)
+
+        runner.run = run_with_retry  # type: ignore[assignment]
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.update_manager.REBUILD_RETRY_DELAY_S", 0),
+        ):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.success
+        assert sync_attempts == 2
+
+    async def test_transient_rebuild_retry_failure_sets_issue(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+        runner.set_response(
+            "sync_ui_to_pi_public.py",
+            1,
+            "",
+            "npm ERR! code EAI_AGAIN request to registry.npmjs.org failed",
+        )
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        (repo / ".git").mkdir()
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            git_remote="https://example.com/repo.git",
+            git_branch="main",
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.update_manager.REBUILD_RETRY_DELAY_S", 0),
+        ):
+            mgr.start("TestNet", "pass")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "after retry" in issues_text
+        assert "network/dns" in issues_text
+
     async def test_backend_venv_creation_failure_fails_update(self, tmp_path) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
