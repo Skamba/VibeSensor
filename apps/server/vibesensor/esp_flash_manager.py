@@ -6,51 +6,18 @@ import importlib.util
 import logging
 import os
 import shutil
-import subprocess
 import sys
-import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from vibesensor.firmware_cache import FirmwareCache, validate_bundle
+
 LOGGER = logging.getLogger(__name__)
 
 _FLASH_HISTORY_LIMIT = 10
 _FLASH_STEP_TIMEOUT_S = 90
-_FLASH_BUILD_TIMEOUT_S = 300
-_ESP32_PLATFORM_GLOB = "espressif32*"
-_ESP32_REQUIRED_PACKAGES = (
-    "framework-arduinoespressif32",
-    "tool-scons",
-    "toolchain-xtensa-esp32",
-)
-
-
-def _resolve_firmware_dir(repo_hint: Path) -> Path:
-    """Locate firmware/esp across repo layout variants."""
-    roots: list[Path] = []
-    for candidate in (repo_hint.resolve(), Path(__file__).resolve()):
-        if candidate not in roots:
-            roots.append(candidate)
-    for root in roots:
-        for base in (root, *root.parents):
-            firmware_dir = base / "firmware" / "esp"
-            if firmware_dir.is_dir():
-                return firmware_dir
-    return repo_hint / "firmware" / "esp"
-
-
-def _platformio_base_cmd() -> list[str] | None:
-    pio = shutil.which("pio")
-    if pio:
-        return [pio]
-    platformio = shutil.which("platformio")
-    if platformio:
-        return [platformio]
-    if importlib.util.find_spec("platformio") is not None:
-        return [sys.executable, "-m", "platformio"]
-    return None
 
 
 def _esptool_base_cmd() -> list[str] | None:
@@ -63,49 +30,6 @@ def _esptool_base_cmd() -> list[str] | None:
     if importlib.util.find_spec("esptool") is not None:
         return [sys.executable, "-m", "esptool"]
     return None
-
-
-def _platformio_core_dir() -> Path:
-    override = str(os.environ.get("PLATFORMIO_CORE_DIR") or "").strip()
-    if override:
-        return Path(override).expanduser()
-    return Path.home() / ".platformio"
-
-
-def _has_offline_esp32_platform() -> bool:
-    platforms_dir = _platformio_core_dir() / "platforms"
-    if not platforms_dir.is_dir():
-        return False
-    return any(path.is_dir() for path in platforms_dir.glob(_ESP32_PLATFORM_GLOB))
-
-
-def _missing_offline_esp32_packages() -> list[str]:
-    packages_dir = _platformio_core_dir() / "packages"
-    missing: list[str] = []
-    for name in _ESP32_REQUIRED_PACKAGES:
-        if not (packages_dir / name).is_dir():
-            missing.append(name)
-    return missing
-
-
-def _esp32_toolchain_runnable() -> bool:
-    compiler = _platformio_core_dir() / "packages" / "toolchain-xtensa-esp32" / "bin"
-    compiler = compiler / "xtensa-esp32-elf-g++"
-    if not compiler.is_file():
-        return False
-    if not os.access(compiler, os.X_OK):
-        return False
-    try:
-        proc = subprocess.run(
-            [str(compiler), "--version"],
-            check=False,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=10,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return False
-    return proc.returncode == 0
 
 
 class EspFlashState(enum.StrEnum):
@@ -192,8 +116,7 @@ class SerialPortProvider:
     """Serial port discovery abstraction for testability."""
 
     async def list_ports(self) -> list[SerialPortInfo]:
-        # Prefer pyserial (bundled with esptool) so flashing does not depend on
-        # PlatformIO tooling being installed.
+        # Use pyserial (bundled with esptool) for port discovery.
         try:
             from serial.tools import list_ports as serial_list_ports
 
@@ -211,52 +134,9 @@ class SerialPortProvider:
                         serial_number=str(getattr(row, "serial_number", "") or "") or None,
                     )
                 )
-            if pyserial_ports:
-                return pyserial_ports
-        except Exception:
-            pass
-
-        # Fallback for environments where pyserial is unavailable.
-        base_cmd = _platformio_base_cmd()
-        if base_cmd is None:
-            return []
-        args = [*base_cmd, "device", "list", "--json-output"]
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                *args,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            out, _err = await proc.communicate()
-        except FileNotFoundError:
-            return []
-        if (proc.returncode or 0) != 0:
-            return []
-        try:
-            import json
-
-            payload = json.loads(out.decode("utf-8", errors="replace"))
+            return pyserial_ports
         except Exception:
             return []
-        ports: list[SerialPortInfo] = []
-        if not isinstance(payload, list):
-            return ports
-        for row in payload:
-            if not isinstance(row, dict):
-                continue
-            port = str(row.get("port") or "").strip()
-            if not port:
-                continue
-            ports.append(
-                SerialPortInfo(
-                    port=port,
-                    description=str(row.get("description") or ""),
-                    vid=row.get("vid") if isinstance(row.get("vid"), int) else None,
-                    pid=row.get("pid") if isinstance(row.get("pid"), int) else None,
-                    serial_number=str(row.get("serial_number") or "") or None,
-                )
-            )
-        return ports
 
 
 class FlashCommandRunner:
@@ -308,16 +188,12 @@ class EspFlashManager:
         *,
         runner: FlashCommandRunner | None = None,
         port_provider: SerialPortProvider | None = None,
+        firmware_cache: FirmwareCache | None = None,
         repo_path: str | None = None,
     ) -> None:
         self._runner = runner or FlashCommandRunner()
         self._ports = port_provider or SerialPortProvider()
-        self._repo_path = Path(
-            repo_path
-            or os.environ.get("VIBESENSOR_REPO_PATH")
-            or Path(__file__).resolve().parents[2]
-        )
-        self._firmware_dir = _resolve_firmware_dir(self._repo_path)
+        self._firmware_cache = firmware_cache or FirmwareCache()
         self._status = EspFlashStatus()
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
@@ -437,114 +313,60 @@ class EspFlashManager:
             self._append_log("esptool not found. Install esptool to flash firmware.")
             self._finalize(state=EspFlashState.failed, error="esptool is not installed")
             return
-        if not self._firmware_dir.is_dir():
+
+        # Locate active firmware bundle (downloaded cache > baseline > fail fast)
+        bundle_dir = self._firmware_cache.active_bundle_dir()
+        if bundle_dir is None:
             self._status.exit_code = 1
+            self._append_log(
+                "No valid firmware bundle found in cache. "
+                "Run the updater while online (vibesensor-fw-refresh) "
+                "or reinstall Pi image with embedded baseline."
+            )
             self._finalize(
                 state=EspFlashState.failed,
-                error=f"Firmware directory missing: {self._firmware_dir}",
+                error="No firmware bundle available (run updater while online)",
             )
             return
 
-        build_workspace: tempfile.TemporaryDirectory[str] | None = None
-        build_project_dir = self._firmware_dir
         try:
-            if not os.access(self._firmware_dir, os.W_OK):
-                build_workspace = tempfile.TemporaryDirectory(prefix="vibesensor-esp-build-")
-                build_project_dir = Path(build_workspace.name) / "firmware" / "esp"
-                shutil.copytree(
-                    self._firmware_dir,
-                    build_project_dir,
-                    ignore=shutil.ignore_patterns(".pio", ".vscode", "__pycache__"),
-                )
-                temp_workspace_msg = (
-                    "Firmware directory is read-only; building in temp workspace "
-                    f"{build_project_dir}"
-                )
-                self._append_log(temp_workspace_msg)
-
-            platformio_cmd = _platformio_base_cmd()
-            if platformio_cmd is None:
-                self._status.exit_code = 127
-                self._append_log("PlatformIO not found. Install platformio to build firmware.")
-                self._finalize(state=EspFlashState.failed, error="platformio is not installed")
-                return
-            if not _has_offline_esp32_platform():
-                self._status.exit_code = 1
-                install_hint = (
-                    f"{' '.join(platformio_cmd)} pkg install --global --platform espressif32"
-                )
-                self._append_log(
-                    "Offline ESP32 PlatformIO dependencies missing (platform 'espressif32')."
-                )
-                self._append_log(f"Install once while online: {install_hint}")
-                self._finalize(
-                    state=EspFlashState.failed,
-                    error="offline PlatformIO platform missing: espressif32",
-                )
-                return
-            missing_packages = _missing_offline_esp32_packages()
-            if missing_packages:
-                self._status.exit_code = 1
-                missing_csv = ", ".join(missing_packages)
-                install_hint = " && ".join(
-                    [
-                        f"{' '.join(platformio_cmd)} pkg install --global --tool platformio/{name}"
-                        for name in missing_packages
-                    ]
-                )
-                self._append_log(
-                    f"Offline ESP32 PlatformIO packages missing (packages: {missing_csv})."
-                )
-                self._append_log(f"Install once while online: {install_hint}")
-                self._finalize(
-                    state=EspFlashState.failed,
-                    error=f"offline PlatformIO package(s) missing: {missing_csv}",
-                )
-                return
-            if not _esp32_toolchain_runnable():
-                self._status.exit_code = 1
-                self._append_log(
-                    "Offline ESP32 toolchain is present but not executable on this host."
-                )
-                self._append_log(
-                    "Reinstall toolchain package matching this Pi architecture "
-                    "(toolchain-xtensa-esp32)."
-                )
-                self._finalize(
-                    state=EspFlashState.failed,
-                    error="offline PlatformIO toolchain unusable: toolchain-xtensa-esp32",
-                )
-                return
-            build_cmd = [*platformio_cmd, "run", "-e", "m5stack_atom"]
-            build_rc = await self._run_flash_step(
-                "building",
-                build_cmd,
-                cwd=build_project_dir,
-                timeout_s=_FLASH_BUILD_TIMEOUT_S,
-            )
-            if self._cancel_event.is_set():
-                self._status.exit_code = 130
-                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
-                return
-            if build_rc != 0:
-                self._status.exit_code = build_rc
-                self._finalize(state=EspFlashState.failed, error="Firmware build failed")
-                return
-
             self._status.phase = "preparing"
-            self._append_log("Using esptool flashing path.")
-            artifact_dir = build_project_dir / ".pio" / "build" / "m5stack_atom"
-            bootloader = artifact_dir / "bootloader.bin"
-            partitions = artifact_dir / "partitions.bin"
-            firmware = artifact_dir / "firmware.bin"
-            missing = [
-                path.name for path in (bootloader, partitions, firmware) if not path.is_file()
-            ]
-            if missing:
+            meta = self._firmware_cache.active_meta()
+            if meta is None:
+                LOGGER.warning("Firmware bundle at %s has no metadata", bundle_dir)
+            source_label = meta.source if meta else "unknown"
+            tag_label = meta.tag if meta else "unknown"
+            self._append_log(
+                f"Using {source_label} firmware bundle (tag={tag_label}) from {bundle_dir}"
+            )
+
+            # Load and validate manifest
+            manifest = validate_bundle(bundle_dir)
+
+            # Use first environment (typically m5stack_atom)
+            if not manifest.environments:
                 self._status.exit_code = 1
-                error = f"Missing prebuilt firmware artifacts: {', '.join(missing)}"
-                self._append_log(error)
-                self._finalize(state=EspFlashState.failed, error=error)
+                self._finalize(
+                    state=EspFlashState.failed,
+                    error="Firmware manifest has no environments",
+                )
+                return
+
+            env = manifest.environments[0]
+            self._append_log(f"Flashing environment: {env.name}")
+
+            # Build write_flash arguments from manifest segments
+            flash_args: list[str] = []
+            for seg in env.segments:
+                seg_path = bundle_dir / seg.file
+                flash_args.extend([seg.offset, str(seg_path)])
+
+            if not flash_args:
+                self._status.exit_code = 1
+                self._finalize(
+                    state=EspFlashState.failed,
+                    error="Firmware manifest has no segments to flash",
+                )
                 return
 
             try:
@@ -569,7 +391,7 @@ class EspFlashManager:
                 "erase_flash",
             ]
             erase_rc = await self._run_flash_step(
-                "erasing", erase_cmd, cwd=build_project_dir, timeout_s=45
+                "erasing", erase_cmd, cwd=bundle_dir, timeout_s=45
             )
             if self._cancel_event.is_set():
                 self._status.exit_code = 130
@@ -594,17 +416,12 @@ class EspFlashManager:
                 "115200",
                 "write_flash",
                 "-z",
-                "0x1000",
-                str(bootloader),
-                "0x8000",
-                str(partitions),
-                "0x10000",
-                str(firmware),
+                *flash_args,
             ]
             write_rc = await self._run_flash_step(
                 "flashing",
                 write_cmd,
-                cwd=build_project_dir,
+                cwd=bundle_dir,
                 timeout_s=120,
             )
             if self._cancel_event.is_set():
@@ -617,12 +434,7 @@ class EspFlashManager:
                 return
             self._status.phase = "done"
             self._finalize(state=EspFlashState.success)
-        except OSError as exc:
+        except (OSError, ValueError) as exc:
             self._status.exit_code = 1
             self._append_log(str(exc))
-            self._finalize(
-                state=EspFlashState.failed, error=f"Firmware build staging failed: {exc}"
-            )
-        finally:
-            if build_workspace is not None:
-                build_workspace.cleanup()
+            self._finalize(state=EspFlashState.failed, error=f"Flash failed: {exc}")

@@ -14,7 +14,6 @@ dependencies = [
   "numpy>=1.26,<3",
   "PyYAML>=6,<7",
   "reportlab>=4,<5",
-  "platformio>=6,<7",
   "esptool>=4,<5",
 ]
 
@@ -37,6 +36,8 @@ vibesensor-hotspot-self-heal = "vibesensor.hotspot_self_heal:main"
 vibesensor-sim = "vibesensor_simulator.sim_sender:main"
 vibesensor-ws-smoke = "vibesensor_simulator.ws_smoke:main"
 vibesensor-config-preflight = "vibesensor_tools_config.config_preflight:main"
+vibesensor-fw-refresh = "vibesensor.firmware_cache:refresh_cache_cli"
+vibesensor-fw-info = "vibesensor.firmware_cache:cache_info_cli"
 
 [tool.setuptools]
 include-package-data = true
