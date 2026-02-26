@@ -69,7 +69,7 @@
   },
   "DETECTED_AT_ONE_MONITORED_LOCATION": {
     "en": "detected at one monitored location",
-    "nl": "gedetecteerd op een bewaakte locatie"
+    "nl": "gedetecteerd op een gemonitorde locatie"
   },
   "DOMINANT_FREQUENCY_CLUSTER_NEAR_CENTER_HZ_2F_HZ": {
     "en": "Dominant frequency cluster near {center_hz:.2f} Hz from FFT-derived peaks ({count} points).",
@@ -637,7 +637,7 @@
   },
   "TIRE_WIDTH_MM_LABEL": {
     "en": "Tire Width (mm)",
-    "nl": "Bandbreedte (mm)"
+    "nl": "Bandenbreedte (mm)"
   },
   "TIRE_ASPECT_PCT_LABEL": {
     "en": "Tire Aspect (%)",
@@ -801,7 +801,7 @@
   },
   "OUTLIER_SUMMARY_LINE": {
     "en": "Outliers (acceleration magnitude): {accel_pct}% ({accel_count} of {accel_total}). Outliers (amplitude metric): {amp_pct}% ({amp_count} of {amp_total}).",
-    "nl": "Uitschieters (versnellingsgrootte): {accel_pct}% ({accel_count} van {accel_total}). Uitschieters (amplitudemetriek): {amp_pct}% ({amp_count} van {amp_total})."
+    "nl": "Uitschieters (versnellingsgrootte): {accel_pct}% ({accel_count} van {accel_total}). Uitschieters (amplitudemeetwaarde): {amp_pct}% ({amp_count} van {amp_total})."
   },
   "FINDING": {
     "en": "Finding",
@@ -981,11 +981,11 @@
   },
   "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF": {
     "en": "Vibration signature was detected at {active_count} of {monitored_count} monitored locations. Highest peak was at {strongest_loc} ({strongest_peak:.4f} g).",
-    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} bewaakte locaties. Hoogste piek was bij {strongest_loc} ({strongest_peak:.4f} g)."
+    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} gemonitorde locaties. Hoogste piek was bij {strongest_loc} ({strongest_peak:.4f} g)."
   },
   "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB": {
     "en": "Vibration signature was detected at {active_count} of {monitored_count} monitored locations. Highest intensity was at {strongest_loc} ({strongest_peak:.1f} dB).",
-    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} bewaakte locaties. Hoogste intensiteit was bij {strongest_loc} ({strongest_peak:.1f} dB)."
+    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} gemonitorde locaties. Hoogste intensiteit was bij {strongest_loc} ({strongest_peak:.1f} dB)."
   },
   "WHEEL_ORDER_LABELS_BECOME_AVAILABLE_ONCE_TIRE_REFERENCE": {
     "en": "Wheel-order labels become available once tire reference is present.",
@@ -1073,7 +1073,7 @@
   },
   "MATCHED_SYSTEMS": {
     "en": "Matched system(s)",
-    "nl": "Gematchte systemen"
+    "nl": "Overeenkomende systemen"
   },
   "INTERPRETATION": {
     "en": "Interpretation",
@@ -1321,7 +1321,7 @@
   },
   "LOCATION_HINT_AT_WHEEL_CORNERS": {
     "en": "At the wheel/tire corners,",
-    "nl": "Bij de wiel/band-hoeken,"
+    "nl": "Bij de wiel-/bandposities,"
   },
   "ACTION_WHEEL_BALANCE_WHAT": {
     "en": "Inspect and balance {wheel_focus}; measure radial/lateral runout on the wheel and tire{speed_hint}.",
@@ -1365,7 +1365,7 @@
   },
   "ACTION_DRIVELINE_INSPECTION_WHAT": {
     "en": "Inspect propshaft runout/balance, center support bearing, CV/guibo joints {driveline_focus}.",
-    "nl": "Controleer cardanas slingering/balans, middenlager, homokineten/hardy-schijf {driveline_focus}."
+    "nl": "Controleer cardanas slingering/balans, middenlager, homokineten/flexschijf {driveline_focus}."
   },
   "ACTION_DRIVELINE_INSPECTION_WHY": {
     "en": "Driveline-order vibration is commonly caused by shaft imbalance, joint wear, or support bearing issues.",
@@ -1385,7 +1385,7 @@
   },
   "ACTION_DRIVELINE_MOUNTS_WHY": {
     "en": "Loose or degraded mounts can amplify normal order content into cabin vibration.",
-    "nl": "Losse of versleten steunen kunnen normale orde-inhoud versterken tot voelbare trillingen in de auto."
+    "nl": "Losse of versleten steunen kunnen normale orde-trillingen versterken tot voelbare trillingen in de auto."
   },
   "ACTION_DRIVELINE_MOUNTS_CONFIRM": {
     "en": "Loose mount/fastener or cracked rubber support is found.",
@@ -1417,7 +1417,7 @@
   },
   "ACTION_ENGINE_COMBUSTION_WHY": {
     "en": "Combustion imbalance can create engine-order vibration without obvious mechanical noise.",
-    "nl": "Verbrandingsonbalans kan motororde-trillingen geven zonder duidelijk mechanisch geluid."
+    "nl": "Verbrandingsonbalans kan motororde-trillingen veroorzaken zonder duidelijk mechanisch geluid."
   },
   "ACTION_ENGINE_COMBUSTION_CONFIRM": {
     "en": "Cylinder-specific deviation aligns with the vibration complaint.",
@@ -1453,7 +1453,7 @@
   },
   "METRIC_MEAN_MATCHED_PEAK_AMPLITUDE": {
     "en": "Mean matched peak amplitude from the combined FFT spectrum.",
-    "nl": "Gemiddelde gematchte piekamplitude uit het gecombineerde FFT-spectrum."
+    "nl": "Gemiddelde overeenkomende piekamplitude uit het gecombineerde FFT-spectrum."
   },
   "NEXT_SENSOR_MOVE_DEFAULT": {
     "en": "Inspect the highest-ranked hotspot path first.",
@@ -1461,11 +1461,11 @@
   },
   "EVIDENCE_PEAK_PRESENT": {
     "en": "{freq:.1f} Hz peak present in {pct:.0%} of samples (p95 amplitude {p95:.4f} {units}, burstiness {burst:.1f}×, classification: {cls}).",
-    "nl": "{freq:.1f} Hz piek aanwezig in {pct:.0%} van de samples (p95 amplitude {p95:.4f} {units}, burstigheid {burst:.1f}×, classificatie: {cls})."
+    "nl": "{freq:.1f} Hz piek aanwezig in {pct:.0%} van de samples (p95 amplitude {p95:.4f} {units}, impulsiviteit {burst:.1f}×, classificatie: {cls})."
   },
   "METRIC_P95_PEAK_AMPLITUDE": {
     "en": "p95 peak amplitude across matched samples.",
-    "nl": "p95 piekamplitude over gematchte samples."
+    "nl": "p95 piekamplitude over overeenkomende samples."
   },
   "INSUFFICIENT_CONFIDENCE_TITLE": {
     "en": "Insufficient confidence to identify specific faults",
