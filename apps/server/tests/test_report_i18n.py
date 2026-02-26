@@ -145,3 +145,188 @@ def test_dutch_translation_audit_round_3() -> None:
 
     # Consistency: "amplitudemetriek" → "amplitudemeetwaarde" matching METRIC_LABEL
     assert "amplitudemeetwaarde" in nl("OUTLIER_SUMMARY_LINE")
+
+
+def test_dutch_translation_audit_round_4() -> None:
+    """Verify Dutch translation improvements from the fourth audit round (50+ changes)."""
+    data = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+
+    def nl(key: str) -> str:
+        return data[key]["nl"]
+
+    # --- report_i18n.json improvements ---
+
+    # Formal Dutch: "vs" → "versus"
+    assert "versus" in nl("AMPLITUDE_VS_TIME")
+    assert "versus" in nl("DOMINANT_FREQ_VS_TIME")
+
+    # SI spacing: space before unit symbol
+    assert nl("DURATION_DURATION_1F_S") == "Duur: {duration:.1f} s"
+
+    # Anglicism removal: "snelheids-binning" → "snelheidsgroepering"
+    assert "snelheidsgroepering" in nl("SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND")
+
+    # Anglicism removal: "gematchte" → "overeenkomende" in origin explanation
+    assert "overeenkomende samples" in nl("ORIGIN_EXPLANATION_FINDING_1")
+
+    # Anglicism removal: "sweep" → "toerentalbereik"
+    assert "toerentalbereik" in nl("PEAK_DOES_NOT_TRACK_RPM_DURING_STEADY_STATE")
+
+    # Technical Dutch: "aanstoting" → "excitatie"
+    assert "excitatie" in nl("CHART_INTERPRETATION_SWEEP")
+
+    # Anglicism removal: "Snelheidssweep" → "Snelheidsbereik"
+    assert "Snelheidsbereik" in nl("SUITABILITY_SPEED_VARIATION_PASS")
+    assert "Snelheidsbereik" in nl("SUITABILITY_SPEED_VARIATION_WARN")
+
+    # Compound: "orde-tracking" → "ordetracking"
+    assert "ordetracking" in nl("SUITABILITY_SPEED_VARIATION_PASS")
+
+    # Natural Dutch: remove "hotspot-pad"
+    assert "piekwaarde" in nl("NEXT_SENSOR_MOVE_DEFAULT")
+
+    # Anglicism removal: "patroontracking" → "patroonherkenning"
+    assert "patroonherkenning" in nl("TIER_A_CAPTURE_WIDER_SPEED")
+
+    # Natural Dutch: add article for completeness
+    assert "de meting" in nl("RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE")
+
+    # Consistency: "kwaliteitsmeting" → "kwaliteitsmeetwaarde" matching METRIC_LABEL
+    assert "kwaliteitsmeetwaarde" in nl("CONSEQUENCE_QUALITY_METRIC_UNAVAILABLE")
+
+    # Anglicism removal: "issue" → "probleem"
+    assert "aandrijflijnprobleem" in nl("ACTION_DRIVELINE_INSPECTION_FALSIFY")
+
+    # Compound: "orde-fout" → "ordefout"
+    assert "ordefout" in nl("FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST")
+    assert "ordefout" in nl("FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND")
+
+    # Natural Dutch: "bedrijfsconditie" → "bedrijfsomstandigheid"
+    assert "bedrijfsomstandigheid" in nl(
+        "PEAK_FREQUENCY_SHIFTS_RANDOMLY_WITH_NO_REPEATABLE_OPERATING"
+    )
+
+    # Anglicism removal: "motororde-matching" → "motororde-vergelijking"
+    assert "motororde-vergelijking" in nl("ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON")
+
+    # Grammar: article before "resonantiegebied"
+    assert "het resonantiegebied" in nl("TAP_TEST_NEARBY_PANELS_SEATS_AND_COMPARE_RESONANCE")
+
+    # Anglicism removal: "Orde-match" → "Orde-overeenkomst"
+    assert "Orde-overeenkomst" in nl("ORDER_MATCH_DEGRADES_WHEN_USING_MEASURED_TIRE_CIRCUMFERENCE")
+
+    # Anglicism removal: "orde-matching" → "ordevergelijking"
+    assert "ordevergelijking" in nl("MEASURED_RPM_BASED_ORDER_MATCHING_DISAGREES_WITH_DERIVED")
+
+    # Clarity: "onbekende band" → "onbekend snelheidsbereik"
+    assert nl("UNKNOWN_SPEED_BAND") == "onbekend snelheidsbereik"
+
+    # Natural Dutch: "niet-null" → "beschikbaar"
+    assert "beschikbaar" in nl("SPEED_COVERAGE_LINE")
+    assert "niet-null" not in nl("SPEED_COVERAGE_LINE")
+
+    # Grammar: add article "de"
+    assert "de voertuigsnelheid" in nl("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR")
+
+    # Anglicism removal: "trefferratio" → "trefkans"
+    assert "trefkans" in nl("EVIDENCE_ORDER_TRACKED")
+
+    # Natural Dutch: "Valideer" → "Controleer"
+    assert nl("VALIDATE_GEARING_SLIP_ASSUMPTIONS_AGAINST_REAL_RPM_IF").startswith("Controleer")
+
+    # Compound correction: "brandstof/ontsteking-adaptaties" → proper Dutch compound
+    assert "brandstof-/ontstekingsadaptaties" in nl("ACTION_ENGINE_COMBUSTION_WHAT")
+
+    # Natural Dutch: "snelheidsrecords" → "snelheidsmetingen"
+    assert "snelheidsmetingen" in nl("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED")
+
+    # Interfixed s: "snelheid-" → "snelheids-"
+    assert "snelheids- en versnellingsstromen" in nl(
+        "VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"
+    )
+
+    # Passive construction: "komen door" → "worden veroorzaakt door"
+    assert "worden meestal veroorzaakt door" in nl("ACTION_WHEEL_BALANCE_WHY")
+
+    # Grammar: add "een" article
+    assert "een patroongebaseerde" in nl("PATTERN_SUGGESTION_DISCLAIMER")
+
+    # Compound: "motor-snelheidsreferentie" → "motorsnelheidsreferentie"
+    assert "motorsnelheidsreferentie" in nl("ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON")
+
+    # Terminology: "referentiegegevens" → "referentiedata"
+    assert "referentiedata" in nl("STATUS_REFERENCE_GAPS")
+
+    # Natural Dutch: "einddiagnose" → "definitieve diagnose"
+    assert "definitieve diagnose" in nl("STATUS_REFERENCE_GAPS")
+
+    # Precision: "blijft gelijk" → "blijft ongewijzigd"
+    assert "ongewijzigd" in nl("ACTION_WHEEL_BALANCE_FALSIFY")
+
+    # Compound: "klachten-snelheidsband" → "klachtsnelheidsband"
+    assert "klachtsnelheidsband" in nl("ACTION_TIRE_CONDITION_CONFIRM")
+
+    # Compound: "Verbrandingskwaliteits-indicatoren" → "Verbrandingskwaliteitsindicatoren"
+    assert "Verbrandingskwaliteitsindicatoren" in nl("ACTION_ENGINE_COMBUSTION_FALSIFY")
+
+    # Grammar: article before phase
+    assert "de {phase}fase" in nl("ORIGIN_PHASE_ONSET_NOTE")
+
+
+def test_dutch_translation_audit_round_4_ui_and_python() -> None:
+    """Verify Dutch translation improvements in nl.json (UI) and Python files."""
+    # --- nl.json UI translations ---
+    ui_json = (
+        Path(__file__).resolve().parent.parent.parent
+        / "ui"
+        / "src"
+        / "i18n"
+        / "catalogs"
+        / "nl.json"
+    )
+    ui = json.loads(ui_json.read_text(encoding="utf-8"))
+
+    # Natural Dutch: "Autoschaal" → "Automatisch schalen"
+    assert ui["chart.auto_scale"] == "Automatisch schalen"
+
+    # Standard Dutch term: "Voorpassagiersstoel" → "Bijrijdersstoel"
+    assert ui["location.front_passenger_seat"] == "Bijrijdersstoel"
+
+    # Natural Dutch: "aangepast" → "eigen"
+    assert "eigen merk" in ui["settings.car.or_custom_brand"]
+    assert "eigen type" in ui["settings.car.or_custom_type"]
+    assert "eigen model" in ui["settings.car.or_custom_model"]
+    assert ui["settings.car.use_custom"] == "Eigen invoer gebruiken"
+
+    # Technical Dutch: "Bouw en flash" → "Compileer en flash de"
+    assert ui["settings.esp_flash.hint"].startswith("Compileer en flash de firmware")
+
+    # Infinitive form: "wacht" → "wachten"
+    assert "wachten op" in ui["spectrum.stale"]
+
+    # Avoid repeating "niet beschikbaar"
+    assert "geen snelheid beschikbaar" in ui["dashboard.rotational.reason.speed_unavailable"]
+
+    # Anglicism removal: "Preview" → "Voorvertoning"
+    assert ui["history.loading_preview"] == "Voorvertoning laden..."
+    assert "Voorvertoning" in ui["history.preview_unavailable"]
+    assert "Voorvertoning" in ui["history.preview_heatmap_title"]
+
+    # Consistent slash spacing matching report style
+    assert ui["matrix.source.wheel"] == "Wiel / Band"
+    assert ui["matrix.source.other"] == "Overig / Weg"
+
+    # --- Python file improvements ---
+    from vibesensor.report.pattern_parts import _DEFAULT_PARTS
+    from vibesensor.report.strength_labels import _CERTAINTY_REASONS
+
+    # Anglicism removal: "match" → "overeenkomst"
+    assert "overeenkomst" in _CERTAINTY_REASONS["strong_order_match"]["nl"]
+    assert "overeenkomst" in _CERTAINTY_REASONS["moderate_order_match"]["nl"]
+
+    # Anglicism removal: "patroonmatching" → "patroonvergelijking"
+    assert "patroonvergelijking" in _CERTAINTY_REASONS["reference_gaps"]["nl"]
+
+    # Dutch terminology: "rubberbushing" → "rubberbus"
+    default_nl = [entry[2] for entry in _DEFAULT_PARTS]
+    assert any("rubberbus" in label for label in default_nl)
