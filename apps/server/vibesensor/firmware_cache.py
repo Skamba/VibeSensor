@@ -202,12 +202,19 @@ class GitHubReleaseFetcher:
             headers["Authorization"] = f"Bearer {self._config.github_token}"
         return headers
 
+    def _validate_url(self, url: str) -> None:
+        """Ensure URL uses HTTPS to prevent insecure firmware downloads."""
+        if not url.startswith("https://"):
+            raise ValueError(f"Refusing non-HTTPS URL for firmware operation: {url}")
+
     def _api_get(self, url: str) -> Any:
+        self._validate_url(url)
         req = Request(url, headers=self._api_headers())
         with urlopen(req, timeout=30) as resp:  # noqa: S310
             return json.loads(resp.read().decode("utf-8"))
 
     def _download_asset(self, url: str, dest: Path) -> None:
+        self._validate_url(url)
         headers = self._api_headers()
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)

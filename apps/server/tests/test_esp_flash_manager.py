@@ -524,13 +524,11 @@ async def test_flash_no_network_access_in_flash_path(tmp_path, monkeypatch) -> N
         firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
 
-    # Monkeypatch urlopen to fail if called
-    import vibesensor.firmware_cache as fc_mod
-
+    # Monkeypatch urlopen to fail if called (patch at urllib level for resilience)
     def _block_network(*args, **kwargs):
         raise AssertionError("Network access during flashing is not allowed")
 
-    monkeypatch.setattr(fc_mod, "urlopen", _block_network)
+    monkeypatch.setattr("urllib.request.urlopen", _block_network)
 
     mgr.start(port=None, auto_detect=True)
     assert mgr._task is not None

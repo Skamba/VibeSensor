@@ -332,6 +332,8 @@ class EspFlashManager:
         try:
             self._status.phase = "preparing"
             meta = self._firmware_cache.active_meta()
+            if meta is None:
+                LOGGER.warning("Firmware bundle at %s has no metadata", bundle_dir)
             source_label = meta.source if meta else "unknown"
             tag_label = meta.tag if meta else "unknown"
             self._append_log(
