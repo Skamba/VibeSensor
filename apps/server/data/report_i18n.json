@@ -1169,7 +1169,7 @@
   },
   "ORIGIN_PHASE_ONSET_NOTE": {
     "en": "Vibration onset consistent with {phase} phase.",
-    "nl": "Trillingsaanvang consistent met de {phase}-fase."
+    "nl": "Trillingsaanvang consistent met {phase} fase."
   },
   "DRIVING_PHASE_ACCELERATION": {
     "en": "acceleration",
