@@ -22,11 +22,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          empty_tree_hash="$(git hash-object -t tree /dev/null)"
+          firmware_path_pattern='^(firmware/|apps/firmware/|platformio\.ini$|.*/platformio\.ini$|partitions[^/]*\.csv$|.*/partitions[^/]*\.csv$|sdkconfig[^/]*$|.*/sdkconfig[^/]*$|components/|.*/components/)'
 
           if git rev-parse "${GITHUB_SHA}^" >/dev/null 2>&1; then
             previous_sha="$(git rev-parse "${GITHUB_SHA}^")"
           else
-            previous_sha="$(git hash-object -t tree /dev/null)"
+            previous_sha="${empty_tree_hash}"
             echo "No parent commit found; treating as first commit."
           fi
 
@@ -40,7 +42,7 @@ jobs:
           fi
 
           firmware_changed=false
-          if printf '%s\n' "${changed_files}" | grep -E -q '^(firmware/|apps/firmware/|platformio\.ini$|.*/platformio\.ini$|partitions[^/]*\.csv$|.*/partitions[^/]*\.csv$|sdkconfig[^/]*$|.*/sdkconfig[^/]*$|components/|.*/components/)'; then
+          if printf '%s\n' "${changed_files}" | grep -E -q "${firmware_path_pattern}"; then
             firmware_changed=true
           fi
 
@@ -74,7 +76,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t platformio_files < <(git ls-files 'platformio.ini' ':(glob)**/platformio.ini')
+          mapfile -t platformio_files < <(git ls-files 'platformio.ini' ':(glob)**/platformio.ini' | sort)
           if [ "${#platformio_files[@]}" -eq 0 ]; then
             echo "No platformio.ini found in repository." >&2
             exit 1
@@ -82,7 +84,7 @@ jobs:
 
           selected_file="${platformio_files[0]}"
           for candidate in "${platformio_files[@]}"; do
-            if [ "${candidate}" = "firmware/esp/platformio.ini" ]; then
+            if [[ "${candidate}" == firmware/* ]]; then
               selected_file="${candidate}"
               break
             fi
@@ -136,16 +138,18 @@ jobs:
           python - <<'PY'
           import hashlib
           import json
+          import os
           import re
           import subprocess
           from pathlib import Path
 
           dist = Path("dist")
-          manifest = {"generated_from": "", "environments": []}
+          standard_esp32_app_offset = "0x10000"
+          manifest = {"generated_from": os.getenv("GITHUB_SHA", "unknown"), "environments": []}
           env_dirs = sorted([p for p in dist.iterdir() if p.is_dir()])
           for env_dir in env_dirs:
               env_name = env_dir.name
-              app_offset = "0x10000"
+              app_offset = standard_esp32_app_offset
               try:
                   envdump = subprocess.run(
                       ["pio", "run", "-e", env_name, "-t", "envdump"],
@@ -155,9 +159,15 @@ jobs:
                   ).stdout
                   match = re.search(r"ESP32_APP_OFFSET[^0-9A-Fa-f]*(0x[0-9A-Fa-f]+)", envdump)
                   if match:
-                      app_offset = match.group(1)
+                      parsed_offset = match.group(1)
+                      validated_offset = hex(int(parsed_offset, 16))
+                      app_offset = validated_offset
+                  else:
+                      print(f"warning: ESP32_APP_OFFSET not found for env '{env_name}', using {standard_esp32_app_offset}")
               except subprocess.CalledProcessError:
                   pass
+              except ValueError:
+                  print(f"warning: invalid ESP32_APP_OFFSET for env '{env_name}', using {standard_esp32_app_offset}")
 
               segments = []
               for file_name, offset in (
