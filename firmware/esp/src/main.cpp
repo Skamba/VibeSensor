@@ -16,7 +16,13 @@ namespace {
 
 constexpr char kClientName[] = "vibe-node";
 constexpr char kFirmwareVersion[] = "esp32-atom-0.1";
-constexpr size_t kMaxDatagramBytes = 1500;
+// Conservative UDP payload cap that avoids IP fragmentation on MTU-1500 paths.
+// 1500 (link MTU) − 20 (IP header) − 8 (UDP header) = 1472 safe payload bytes.
+// Override via build_flags: -D VIBESENSOR_MAX_UDP_PAYLOAD=<bytes>
+#ifndef VIBESENSOR_MAX_UDP_PAYLOAD
+#define VIBESENSOR_MAX_UDP_PAYLOAD 1472
+#endif
+constexpr size_t kMaxDatagramBytes = static_cast<size_t>(VIBESENSOR_MAX_UDP_PAYLOAD);
 
 #ifndef VIBESENSOR_SAMPLE_RATE_HZ
 #define VIBESENSOR_SAMPLE_RATE_HZ 400

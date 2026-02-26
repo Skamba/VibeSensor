@@ -26,6 +26,9 @@ CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
 
 HELLO_FIXED_BYTES = 1 + 1 + CLIENT_ID_BYTES + 2 + 2 + 2 + 1 + 1 + 4
 DATA_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 8 + 2
+# Conservative max UDP payload that avoids IP fragmentation on MTU-1500 paths:
+# 1500 (link MTU) − 20 (IP) − 8 (UDP) = 1472.
+MAX_SAFE_UDP_PAYLOAD = 1472
 ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 1
 DATA_ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4
 CMD_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 1 + 4
