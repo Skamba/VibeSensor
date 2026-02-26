@@ -801,7 +801,7 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
 
     assert "Duur:" in text_blob
     assert "Sensoren:" in text_blob
-    assert "Aantal samples:" in text_blob
+    assert "Aantal metingen:" in text_blob
     assert "Bemonsteringsfrequentie (Hz):" in text_blob
     assert " sensors" not in text_blob.lower()
 

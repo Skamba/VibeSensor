@@ -99,7 +99,7 @@ _CERTAINTY_REASONS: dict[str, dict[str, str]] = {
     },
     "narrow_speed_range": {
         "en": "Limited speed variation reduces tracking confidence",
-        "nl": "Beperkte snelheidsvariatie vermindert tracking-betrouwbaarheid",
+        "nl": "Beperkte snelheidsvariatie vermindert trackingbetrouwbaarheid",
     },
     "reference_gaps": {
         "en": "Missing reference data limits pattern matching",
