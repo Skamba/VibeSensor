@@ -10,8 +10,6 @@ HOTSPOT_HEAL_SERVICE_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.se
 HOTSPOT_HEAL_TIMER_TEMPLATE="${PI_DIR}/systemd/vibesensor-hotspot-self-heal.timer"
 VENV_DIR="${PI_DIR}/.venv"
 SKIP_SERVICE_START="${VIBESENSOR_SKIP_SERVICE_START:-0}"
-ESP32_TOOLCHAIN_RELEASE="${ESP32_TOOLCHAIN_RELEASE:-esp-2021r2-patch5}"
-ESP32_TOOLCHAIN_GCC_SERIES="${ESP32_TOOLCHAIN_GCC_SERIES:-gcc8_4_0}"
 
 if [ "$(id -u)" -eq 0 ]; then
   AS_ROOT=""
@@ -71,58 +69,16 @@ run_as_root install -d -m 0755 /var/log/vibesensor
 run_as_root install -d -m 0755 /var/log/wifi
 run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/log/vibesensor
 run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"
-run_as_service_user "${VENV_DIR}/bin/python" -m platformio pkg install --global \
-  --platform espressif32 \
-  --tool platformio/tool-scons \
-  --tool platformio/framework-arduinoespressif32
 
-TOOLCHAIN_PKG_DIR="/home/${SERVICE_USER}/.platformio/packages/toolchain-xtensa-esp32"
-TARGET_ARCH="$(dpkg --print-architecture)"
-TOOLCHAIN_ARCHIVE=""
-case "${TARGET_ARCH}" in
-  armhf)
-    TOOLCHAIN_ARCHIVE="xtensa-esp32-elf-${ESP32_TOOLCHAIN_GCC_SERIES}-${ESP32_TOOLCHAIN_RELEASE}-linux-armhf.tar.gz"
-    ;;
-  arm64)
-    TOOLCHAIN_ARCHIVE="xtensa-esp32-elf-${ESP32_TOOLCHAIN_GCC_SERIES}-${ESP32_TOOLCHAIN_RELEASE}-linux-arm64.tar.gz"
-    ;;
-  *)
-    echo "Skipping ESP32 toolchain host override for unsupported arch: ${TARGET_ARCH}"
-    ;;
-esac
+# Refresh ESP firmware cache from GitHub Releases (requires network).
+# This downloads the latest prebuilt firmware bundle so the device can flash
+# ESP32 chips offline.  The embedded baseline (if present in the Pi image)
+# remains available as a fallback.
+echo "Refreshing ESP firmware cache..."
+run_as_service_user "${VENV_DIR}/bin/vibesensor-fw-refresh" \
+  --cache-dir /var/lib/vibesensor/firmware || \
+  echo "WARNING: ESP firmware cache refresh failed. Flashing will use embedded baseline if available."
 
-if [ -n "${TOOLCHAIN_ARCHIVE}" ] && [ -d "${TOOLCHAIN_PKG_DIR}" ]; then
-  TOOLCHAIN_URL="https://github.com/espressif/crosstool-NG/releases/download/${ESP32_TOOLCHAIN_RELEASE}/${TOOLCHAIN_ARCHIVE}"
-  TOOLCHAIN_TMP="/tmp/${TOOLCHAIN_ARCHIVE}"
-  TOOLCHAIN_BACKUP_DIR="/tmp/vibesensor-toolchain-backup"
-
-  run_as_service_user python3 - "${TOOLCHAIN_URL}" "${TOOLCHAIN_TMP}" <<'PY'
-import pathlib
-import sys
-import urllib.request
-
-url = sys.argv[1]
-dest = pathlib.Path(sys.argv[2])
-with urllib.request.urlopen(url, timeout=180) as resp:
-    dest.write_bytes(resp.read())
-PY
-
-  run_as_service_user rm -rf "${TOOLCHAIN_BACKUP_DIR}"
-  run_as_service_user mkdir -p "${TOOLCHAIN_BACKUP_DIR}"
-  for meta in package.json .piopm installed.json; do
-    if [ -f "${TOOLCHAIN_PKG_DIR}/${meta}" ]; then
-      run_as_service_user cp -f "${TOOLCHAIN_PKG_DIR}/${meta}" "${TOOLCHAIN_BACKUP_DIR}/${meta}"
-    fi
-  done
-  run_as_service_user tar -xzf "${TOOLCHAIN_TMP}" -C "${TOOLCHAIN_PKG_DIR}" --strip-components=1
-  for meta in package.json .piopm installed.json; do
-    if [ -f "${TOOLCHAIN_BACKUP_DIR}/${meta}" ]; then
-      run_as_service_user cp -f "${TOOLCHAIN_BACKUP_DIR}/${meta}" "${TOOLCHAIN_PKG_DIR}/${meta}"
-    fi
-  done
-  run_as_service_user rm -f "${TOOLCHAIN_TMP}"
-  run_as_service_user rm -rf "${TOOLCHAIN_BACKUP_DIR}"
-fi
 run_as_root tee /etc/tmpfiles.d/vibesensor-wifi.conf >/dev/null <<'EOF'
 d /var/log/wifi 0755 root root -
 EOF
