@@ -199,3 +199,49 @@ def certainty_label(
     )
     reason = _CERTAINTY_REASONS[reason_key][lang]
     return (level_key, label, pct_text, reason)
+
+
+# ---------------------------------------------------------------------------
+# Certainty tier gating  (shared helper for report section suppression)
+# ---------------------------------------------------------------------------
+
+# Tier thresholds: these define the certainty boundaries for report behavior.
+#
+# * TIER_A_CEILING (≤ 15%): Very low certainty – insufficient data for any
+#   specific diagnosis.  The report must NOT suggest repair actions or name
+#   specific systems as fault sources.  Instead it guides the user toward
+#   better data collection.  The 15% boundary sits above the minimum
+#   confidence floor (ORDER_MIN_CONFIDENCE = 0.25 → 25% is typical low-end
+#   for a surviving finding), so Tier A only fires when confidence is truly
+#   marginal – e.g. single weak match with penalty cascades.
+#
+# * TIER_B_CEILING (≤ 40%): Low-to-medium certainty – the report may list
+#   candidate systems as hypotheses but must NOT recommend repair.  Next
+#   steps should be verification-oriented.  The 40% boundary aligns with
+#   the existing medium/low certainty-label cut in certainty_label().
+#
+# * Tier C (> 40%): Sufficient certainty for the existing diagnostic report
+#   behavior (system cards, repair-oriented next steps).
+
+TIER_A_CEILING = 0.15  # Very low: suppress specific diagnoses
+TIER_B_CEILING = 0.40  # Guarded: hypotheses only, verification steps
+
+
+def certainty_tier(confidence_0_to_1: float) -> str:
+    """Return the certainty tier key for report section gating.
+
+    Parameters
+    ----------
+    confidence_0_to_1:
+        Analysis confidence from 0.0 to 1.0.
+
+    Returns
+    -------
+    str
+        ``"A"`` (very low), ``"B"`` (guarded), or ``"C"`` (sufficient).
+    """
+    if confidence_0_to_1 <= TIER_A_CEILING:
+        return "A"
+    if confidence_0_to_1 <= TIER_B_CEILING:
+        return "B"
+    return "C"
