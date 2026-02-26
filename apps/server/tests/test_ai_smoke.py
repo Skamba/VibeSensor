@@ -44,6 +44,15 @@ def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
     assert "99-vibesensor-dnsmasq.conf" in text, "build wrapper must assert DNS drop-in"
     assert "firmware" in text, "build wrapper must handle ESP firmware cache/baseline"
     assert "flash.json" in text, "build wrapper must validate firmware manifest"
+    assert "10-vibesensor-hostkeys.conf" in text, (
+        "build wrapper must include ssh host-key bootstrap drop-in"
+    )
+    assert "Validation failed: ssh.service is not enabled in multi-user.target" in text, (
+        "build wrapper must validate ssh.service enablement"
+    )
+    assert "Validation failed: sshd first-boot readiness test failed" in text, (
+        "build wrapper must validate sshd first-boot readiness"
+    )
 
 
 @pytest.mark.smoke

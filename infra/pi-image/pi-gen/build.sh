@@ -14,6 +14,7 @@ IMG_SUFFIX_BASE="-vibesensor-lite"
 VS_FIRST_USER_NAME="${VS_FIRST_USER_NAME:-pi}"
 VS_FIRST_USER_PASS="${VS_FIRST_USER_PASS:-vibesensor}"
 VS_WPA_COUNTRY="${VS_WPA_COUNTRY:-US}"
+SSH_FIRST_BOOT_DEBUG="${SSH_FIRST_BOOT_DEBUG:-0}"
 VALIDATE="${VALIDATE:-1}"
 FAST="${FAST:-0}"
 FORCE_UI_BUILD="${FORCE_UI_BUILD:-0}"
@@ -273,6 +274,13 @@ install -d "${ROOTFS_DIR}/etc/systemd/system"
 install -d "${ROOTFS_DIR}/etc/NetworkManager/conf.d"
 install -d "${ROOTFS_DIR}/etc/tmpfiles.d"
 install -d "${ROOTFS_DIR}/etc/ssh/sshd_config.d"
+install -d "${ROOTFS_DIR}/etc/systemd/system/ssh.service.d"
+install -d "${ROOTFS_DIR}/etc/sudoers.d"
+# Updater runs as pi and uses a restricted sudo wrapper for privileged ops.
+cat >"${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update" <<'SUDOERS'
+pi ALL=(root) NOPASSWD: /opt/VibeSensor/apps/server/scripts/vibesensor_update_sudo.sh
+SUDOERS
+chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update"
 
 # Build the Python virtualenv inside the ARM rootfs via QEMU chroot emulation.
 on_chroot << 'CHROOT_EOF'
@@ -434,9 +442,73 @@ PasswordAuthentication yes
 KbdInteractiveAuthentication no
 UsePAM yes
 SSHCONF
+
+# Make first-boot SSH deterministic when host keys are intentionally absent in
+# the baked image; generate device-unique keys before sshd starts.
+cat >"${ROOTFS_DIR}/etc/systemd/system/ssh.service.d/10-vibesensor-hostkeys.conf" <<'SSHUNIT'
+[Unit]
+Wants=regenerate_ssh_host_keys.service
+After=regenerate_ssh_host_keys.service
+
+[Service]
+ExecStartPre=/bin/sh -c 'if ! ls /etc/ssh/ssh_host_*_key >/dev/null 2>&1; then /usr/bin/ssh-keygen -A; fi'
+SSHUNIT
+
+if [ "__SSH_FIRST_BOOT_DEBUG__" = "1" ]; then
+  install -d "${ROOTFS_DIR}/usr/local/sbin"
+  cat >"${ROOTFS_DIR}/usr/local/sbin/vibesensor-ssh-debug" <<'SSHDEBUG'
+#!/bin/sh
+set -eu
+
+FWLOC=""
+if FWLOC="$(/usr/lib/raspberrypi-sys-mods/get_fw_loc 2>/dev/null)"; then
+  :
+elif [ -d /boot/firmware ]; then
+  FWLOC=/boot/firmware
+else
+  FWLOC=/boot
+fi
+
+OUT="${FWLOC}/ssh-debug.txt"
+
+{
+  echo "=== vibesensor ssh debug ($(date -u +%Y-%m-%dT%H:%M:%SZ)) ==="
+  echo "-- ssh service status --"
+  systemctl --no-pager --full status ssh || true
+  echo
+  echo "-- regenerate_ssh_host_keys service status --"
+  systemctl --no-pager --full status regenerate_ssh_host_keys || true
+  echo
+  echo "-- last boot journal (ssh units) --"
+  journalctl -b --no-pager -u regenerate_ssh_host_keys -u ssh || true
+  echo
+  echo "-- host key files --"
+  ls -la /etc/ssh/ssh_host_* || true
+} >"${OUT}" 2>&1
+SSHDEBUG
+  chmod 0755 "${ROOTFS_DIR}/usr/local/sbin/vibesensor-ssh-debug"
+
+  cat >"${ROOTFS_DIR}/etc/systemd/system/vibesensor-ssh-debug.service" <<'SSHDEBUGUNIT'
+[Unit]
+Description=Write first-boot SSH diagnostics to firmware partition
+After=multi-user.target
+Wants=ssh.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/vibesensor-ssh-debug
+
+[Install]
+WantedBy=multi-user.target
+SSHDEBUGUNIT
+
+  ln -sf /etc/systemd/system/vibesensor-ssh-debug.service \
+    "${ROOTFS_DIR}/etc/systemd/system/multi-user.target.wants/vibesensor-ssh-debug.service"
+fi
 EOF
 chmod +x "${STAGE_STEP_DIR}/00-run.sh"
 sed -i "s/__SERVER_DEPS_HASH__/${SERVER_DEPS_HASH}/g" "${STAGE_STEP_DIR}/00-run.sh"
+sed -i "s/__SSH_FIRST_BOOT_DEBUG__/${SSH_FIRST_BOOT_DEBUG}/g" "${STAGE_STEP_DIR}/00-run.sh"
 
 cat >"${STAGE_STEP_DIR}/00-packages" <<'EOF'
 git
@@ -742,6 +814,7 @@ if [ "${VALIDATE}" = "1" ]; then
 
   assert_rootfs_package gpsd
   assert_rootfs_package gpsd-clients
+  assert_rootfs_package openssh-server
   assert_rootfs_package libopenblas0-pthread
   assert_rootfs_package libgfortran5
 
@@ -817,6 +890,19 @@ echo "SERVER_STARTUP_SMOKE_OK"
     exit 1
   fi
 
+  if ! run_qemu_chroot /bin/bash -lc '
+set -e
+rm -f /etc/ssh/ssh_host_*_key*
+if ! ls /etc/ssh/ssh_host_*_key >/dev/null 2>&1; then
+  /usr/bin/ssh-keygen -A
+fi
+/usr/sbin/sshd -t
+echo "SSHD_FIRST_BOOT_READINESS_OK"
+'; then
+    echo "Validation failed: sshd first-boot readiness test failed"
+    exit 1
+  fi
+
   if grep -n "apt-get" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh" >/dev/null 2>&1; then
     echo "Validation failed: hotspot script still contains apt-get"
     exit 1
@@ -849,6 +935,32 @@ echo "SERVER_STARTUP_SMOKE_OK"
 
   if ! grep -Eq '^PasswordAuthentication[[:space:]]+yes$' "${ROOT_MNT}/etc/ssh/sshd_config.d/99-vibesensor-password-auth.conf"; then
     echo "Validation failed: SSH password auth drop-in does not enable PasswordAuthentication"
+    exit 1
+  fi
+
+  if [ ! -L "${ROOT_MNT}/etc/systemd/system/multi-user.target.wants/ssh.service" ]; then
+    echo "Validation failed: ssh.service is not enabled in multi-user.target"
+    exit 1
+  fi
+
+  if [ -L "${ROOT_MNT}/etc/systemd/system/ssh.service" ] && \
+    [ "$(readlink "${ROOT_MNT}/etc/systemd/system/ssh.service")" = "/dev/null" ]; then
+    echo "Validation failed: ssh.service is masked"
+    exit 1
+  fi
+
+  if [ ! -L "${ROOT_MNT}/etc/systemd/system/multi-user.target.wants/regenerate_ssh_host_keys.service" ]; then
+    echo "Validation failed: regenerate_ssh_host_keys.service is not enabled"
+    exit 1
+  fi
+
+  if [ ! -f "${ROOT_MNT}/etc/systemd/system/ssh.service.d/10-vibesensor-hostkeys.conf" ]; then
+    echo "Validation failed: missing ssh host-key bootstrap drop-in"
+    exit 1
+  fi
+
+  if ! grep -Fq 'ssh-keygen -A' "${ROOT_MNT}/etc/systemd/system/ssh.service.d/10-vibesensor-hostkeys.conf"; then
+    echo "Validation failed: ssh host-key bootstrap drop-in does not generate host keys"
     exit 1
   fi
 
