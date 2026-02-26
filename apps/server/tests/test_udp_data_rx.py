@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from vibesensor.protocol import pack_data
+from vibesensor.registry import DataUpdateResult
 from vibesensor.udp_data_rx import DataDatagramProtocol
 
 
@@ -22,6 +23,7 @@ class _FakeTransport:
 @pytest.mark.asyncio
 async def test_datagram_received_queues_work_before_processing() -> None:
     registry = Mock()
+    registry.update_from_data.return_value = DataUpdateResult()
     registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
     processor = Mock()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
@@ -90,3 +92,37 @@ def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
     )
     assert "suppressed %d additional drop warnings" in warning_log.call_args_list[1].args[0]
     assert warning_log.call_args_list[1].args[-1] == 2
+
+
+@pytest.mark.asyncio
+async def test_duplicate_data_still_sends_ack_but_skips_ingest() -> None:
+    """A duplicate DATA frame should be ACKed but NOT ingested."""
+    registry = Mock()
+    # First call: new frame; second call: duplicate
+    registry.update_from_data.side_effect = [
+        DataUpdateResult(),
+        DataUpdateResult(is_duplicate=True),
+    ]
+    registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
+    processor = Mock()
+
+    transport = _FakeTransport()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(transport)
+
+    cid = bytes.fromhex("010203040506")
+    pkt = pack_data(cid, seq=42, t0_us=100_000, samples=np.zeros((4, 3), dtype=np.int16))
+
+    # Send same packet twice
+    proto.datagram_received(pkt, ("127.0.0.1", 12345))
+    proto.datagram_received(pkt, ("127.0.0.1", 12345))
+
+    consumer = asyncio.create_task(proto.process_queue())
+    await asyncio.wait_for(proto._queue.join(), timeout=2.0)
+    consumer.cancel()
+    await asyncio.gather(consumer, return_exceptions=True)
+
+    # Ingest should be called only once (for the non-duplicate)
+    assert processor.ingest.call_count == 1
+    # ACK should be sent for both (2 DATA_ACK packets)
+    assert len(transport.sent) == 2

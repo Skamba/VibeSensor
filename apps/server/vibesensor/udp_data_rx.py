@@ -87,16 +87,17 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         try:
             now_ts = time.time()
             client_id = msg.client_id.hex()
-            reset_detected = self.registry.update_from_data(msg, addr, now_ts)
-            if reset_detected:
-                LOGGER.warning(
-                    "Sensor reset detected for %s — flushing FFT buffer",
-                    client_id,
-                )
-                self.processor.flush_client_buffer(client_id)
-            record = self.registry.get(client_id)
-            sample_rate_hz = record.sample_rate_hz if record is not None else None
-            self.processor.ingest(client_id, msg.samples, sample_rate_hz=sample_rate_hz)
+            result = self.registry.update_from_data(msg, addr, now_ts)
+            if not result.is_duplicate:
+                if result.reset_detected:
+                    LOGGER.warning(
+                        "Sensor reset detected for %s — flushing FFT buffer",
+                        client_id,
+                    )
+                    self.processor.flush_client_buffer(client_id)
+                record = self.registry.get(client_id)
+                sample_rate_hz = record.sample_rate_hz if record is not None else None
+                self.processor.ingest(client_id, msg.samples, sample_rate_hz=sample_rate_hz)
             if self.transport is not None:
                 ack_payload = pack_data_ack(msg.client_id, msg.seq)
                 self.transport.sendto(ack_payload, addr)
