@@ -18,7 +18,7 @@ from ..runlog import as_float_or_none as _as_float
 from .i18n import normalize_lang
 from .i18n import tr as _tr
 from .pattern_parts import parts_for_pattern, why_parts_listed
-from .strength_labels import certainty_label, strength_label, strength_text
+from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -129,6 +129,7 @@ class ReportTemplateData:
     phase_info: dict | None = None
     version_marker: str = ""
     lang: str = "en"
+    certainty_tier_key: str = "C"
 
 
 # ---------------------------------------------------------------------------
@@ -362,6 +363,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         strength_band_key=strength_label(db_val)[0] if db_val is not None else None,
     )
 
+    tier = certainty_tier(conf)
+
     observed = ObservedSignature(
         primary_system=primary_system,
         strongest_sensor_location=primary_location,
@@ -376,49 +379,70 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # -- System cards --
     system_cards: list[SystemFindingCard] = []
-    card_sources = top_causes or findings_non_ref or findings
-    for cause in card_sources[:3]:
-        src = cause.get("source") or cause.get("suspected_source") or "unknown"
-        src_human = _human_source(src, tr=tr)
-        location = str(cause.get("strongest_location") or tr("UNKNOWN"))
-        sigs = cause.get("signatures_observed", [])
-        pattern_text = ", ".join(str(s) for s in sigs[:3]) if sigs else tr("UNKNOWN")
-        order_label = str(sigs[0]) if sigs else None
-        parts_list = parts_for_pattern(str(src), order_label, lang=lang)
-        _c_conf_val = _as_float(cause.get("confidence"))
-        if _c_conf_val is None:
-            _c_conf_val = _as_float(cause.get("confidence_0_to_1"))
-        c_conf = _c_conf_val if _c_conf_val is not None else 0.0
-        _ck, _cl, _cp, c_reason = certainty_label(c_conf, lang=lang)
-        tone = cause.get("confidence_tone", "neutral")
+    if tier == "A":
+        # Tier A: suppress specific system findings entirely.
+        pass
+    else:
+        card_sources = top_causes or findings_non_ref or findings
+        for cause in card_sources[:3]:
+            src = cause.get("source") or cause.get("suspected_source") or "unknown"
+            src_human = _human_source(src, tr=tr)
+            location = str(cause.get("strongest_location") or tr("UNKNOWN"))
+            sigs = cause.get("signatures_observed", [])
+            pattern_text = ", ".join(str(s) for s in sigs[:3]) if sigs else tr("UNKNOWN")
+            order_label = str(sigs[0]) if sigs else None
+            parts_list = parts_for_pattern(str(src), order_label, lang=lang)
+            _c_conf_val = _as_float(cause.get("confidence"))
+            if _c_conf_val is None:
+                _c_conf_val = _as_float(cause.get("confidence_0_to_1"))
+            c_conf = _c_conf_val if _c_conf_val is not None else 0.0
+            _ck, _cl, _cp, c_reason = certainty_label(c_conf, lang=lang)
+            tone = cause.get("confidence_tone", "neutral")
 
-        system_cards.append(
-            SystemFindingCard(
-                system_name=src_human,
-                strongest_location=location,
-                pattern_summary=pattern_text,
-                parts=[PartSuggestion(name=p, why_shown=c_reason) for p in parts_list],
-                tone=tone,
+            card_system_name = src_human
+            card_parts = [PartSuggestion(name=p, why_shown=c_reason) for p in parts_list]
+            if tier == "B":
+                # Tier B: label as hypothesis, suppress repair-oriented parts.
+                card_system_name = f"{src_human} — {tr('TIER_B_HYPOTHESIS_LABEL')}"
+                card_parts = []
+
+            system_cards.append(
+                SystemFindingCard(
+                    system_name=card_system_name,
+                    strongest_location=location,
+                    pattern_summary=pattern_text,
+                    parts=card_parts,
+                    tone=tone,
+                )
             )
-        )
 
     # -- Next steps --
-    test_plan = [s for s in summary.get("test_plan", []) if isinstance(s, dict)]
     next_steps: list[NextStep] = []
-    for idx, step in enumerate(test_plan, start=1):
-        what = str(step.get("what") or "")
-        why = str(step.get("why") or "")
-        next_steps.append(
-            NextStep(
-                action=what,
-                why=why or None,
-                rank=idx,
-                speed_band=str(step.get("speed_band") or "") or None,
-                confirm=str(step.get("confirm") or "") or None,
-                falsify=str(step.get("falsify") or "") or None,
-                eta=str(step.get("eta") or "") or None,
+    if tier == "A":
+        # Tier A: replace repair steps with data-collection guidance.
+        _guidance = [
+            (tr("TIER_A_CAPTURE_WIDER_SPEED"), cert_reason),
+            (tr("TIER_A_CAPTURE_MORE_SENSORS"), cert_reason),
+            (tr("TIER_A_CAPTURE_REFERENCE_DATA"), cert_reason),
+        ]
+        for idx, (action, why) in enumerate(_guidance, start=1):
+            next_steps.append(NextStep(action=action, why=why, rank=idx))
+    else:
+        test_plan = [s for s in summary.get("test_plan", []) if isinstance(s, dict)]
+        for idx, step in enumerate(test_plan, start=1):
+            what = str(step.get("what") or "")
+            why = str(step.get("why") or "")
+            next_steps.append(
+                NextStep(
+                    action=what,
+                    why=why or None,
+                    rank=idx,
+                    speed_band=str(step.get("speed_band") or "") or None,
+                    confirm=str(step.get("confirm") or "") or None,
+                    falsify=str(step.get("falsify") or "") or None,
+                    eta=str(step.get("eta") or "") or None,
+                )
             )
-        )
 
     # -- Data trust --
     data_trust: list[DataTrustItem] = []
@@ -576,4 +600,5 @@ def map_summary(summary: dict) -> ReportTemplateData:
         phase_info=phase_info,
         version_marker=version_marker,
         lang=lang,
+        certainty_tier_key=tier,
     )
