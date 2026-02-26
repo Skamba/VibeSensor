@@ -20,6 +20,9 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+# Maximum number of recent sequence numbers tracked per client for
+# deduplication.  Bounds memory while covering the largest realistic
+# retransmit / out-of-order window on a local Wi-Fi link.
 _DEDUP_WINDOW = 128
 
 
@@ -72,6 +75,7 @@ class ClientRecord:
     latest_metrics: dict[str, Any] = field(default_factory=dict)
     duplicates_received: int = 0
     _seen_seqs: set[int] = field(default_factory=set)
+    _seen_seqs_max: int = -1
 
 
 class ClientRegistry:
@@ -189,9 +193,11 @@ class ClientRegistry:
                 return DataUpdateResult(is_duplicate=True)
 
             record._seen_seqs.add(data_msg.seq)
+            if data_msg.seq > record._seen_seqs_max:
+                record._seen_seqs_max = data_msg.seq
             # Prune old entries to keep the window bounded.
             if len(record._seen_seqs) > _DEDUP_WINDOW:
-                cutoff = max(record._seen_seqs) - _DEDUP_WINDOW + 1
+                cutoff = record._seen_seqs_max - _DEDUP_WINDOW + 1
                 record._seen_seqs = {s for s in record._seen_seqs if s >= cutoff}
 
             # --- Normal (non-duplicate) processing ---
@@ -222,6 +228,7 @@ class ClientRegistry:
                     record.timing_drift_us_total = 0.0
                     record._seen_seqs.clear()
                     record._seen_seqs.add(data_msg.seq)
+                    record._seen_seqs_max = data_msg.seq
                     reset_detected = True
                 else:
                     expected = (record.last_seq + 1) & 0xFFFFFFFF
