@@ -1466,5 +1466,37 @@
   "METRIC_P95_PEAK_AMPLITUDE": {
     "en": "p95 peak amplitude across matched samples.",
     "nl": "p95 piekamplitude over gematchte samples."
+  },
+  "INSUFFICIENT_CONFIDENCE_TITLE": {
+    "en": "Insufficient confidence to identify specific faults",
+    "nl": "Onvoldoende betrouwbaarheid om specifieke fouten te identificeren"
+  },
+  "INSUFFICIENT_CONFIDENCE_GUIDANCE": {
+    "en": "The available data does not support a specific diagnosis. Follow the capture guidance below to improve results.",
+    "nl": "De beschikbare data ondersteunt geen specifieke diagnose. Volg de onderstaande opnamerichtlijnen om resultaten te verbeteren."
+  },
+  "TIER_A_NO_SYSTEMS": {
+    "en": "Confidence is too low to attribute vibration to specific systems. Improve data quality and re-run.",
+    "nl": "Betrouwbaarheid is te laag om trillingen aan specifieke systemen toe te schrijven. Verbeter datakwaliteit en run opnieuw."
+  },
+  "TIER_A_CAPTURE_WIDER_SPEED": {
+    "en": "Repeat the run with a broader speed sweep (e.g. 30-120 km/h) to improve pattern tracking.",
+    "nl": "Herhaal de run met een bredere snelheidsvariatie (bijv. 30-120 km/u) om patroontracking te verbeteren."
+  },
+  "TIER_A_CAPTURE_MORE_SENSORS": {
+    "en": "Add sensor locations (e.g. near each wheel, engine bay) to improve spatial separation.",
+    "nl": "Voeg sensorlocaties toe (bijv. bij elk wiel, motorruimte) om ruimtelijke scheiding te verbeteren."
+  },
+  "TIER_A_CAPTURE_REFERENCE_DATA": {
+    "en": "Ensure tire size, engine RPM, and speed references are complete for accurate order matching.",
+    "nl": "Zorg dat bandenmaat, motor-RPM en snelheidsreferenties compleet zijn voor nauwkeurige ordetracking."
+  },
+  "TIER_B_HYPOTHESIS_LABEL": {
+    "en": "Hypothesis (unconfirmed)",
+    "nl": "Hypothese (onbevestigd)"
+  },
+  "TIER_B_VERIFICATION_HEADER": {
+    "en": "Verification steps (not repair recommendations)",
+    "nl": "Verificatiestappen (geen reparatieaanbevelingen)"
   }
 }
