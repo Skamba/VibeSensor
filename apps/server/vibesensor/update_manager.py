@@ -771,6 +771,33 @@ class UpdateManager:
             return
 
         self._log("Git update completed successfully")
+        backend_target = self._backend_install_target(repo)
+        venv_python = await self._ensure_backend_venv(repo)
+        if not venv_python:
+            self._status.state = UpdateState.failed
+            return
+        refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
+        refresh_cmd = [
+            refresh_exe,
+            "--cache-dir",
+            "/var/lib/vibesensor/firmware",
+        ]
+        rc, _, stderr = await self._run_cmd(
+            refresh_cmd,
+            phase="updating",
+            timeout=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+            sudo=False,
+        )
+        if rc != 0:
+            self._add_issue(
+                "updating",
+                f"ESP firmware cache refresh failed (exit {rc})",
+                stderr,
+            )
+            self._status.state = UpdateState.failed
+            return
+        self._log("ESP firmware cache refresh completed successfully")
+
         sync_script = repo / "tools" / "sync_ui_to_pi_public.py"
         if not sync_script.is_file():
             self._add_issue(
@@ -799,11 +826,6 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
         self._log("Rebuild/sync completed successfully")
-        backend_target = self._backend_install_target(repo)
-        venv_python = await self._ensure_backend_venv(repo)
-        if not venv_python:
-            self._status.state = UpdateState.failed
-            return
         reinstall_cmd = [
             venv_python,
             "-m",
@@ -825,27 +847,6 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
         self._log("Backend reinstall completed successfully")
-        refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
-        refresh_cmd = [
-            refresh_exe,
-            "--cache-dir",
-            "/var/lib/vibesensor/firmware",
-        ]
-        rc, _, stderr = await self._run_cmd(
-            refresh_cmd,
-            phase="updating",
-            timeout=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
-            sudo=False,
-        )
-        if rc != 0:
-            self._add_issue(
-                "updating",
-                f"ESP firmware cache refresh failed (exit {rc})",
-                stderr,
-            )
-            self._status.state = UpdateState.failed
-            return
-        self._log("ESP firmware cache refresh completed successfully")
 
         runtime_details = self._collect_runtime_details()
         self._status.runtime = runtime_details
