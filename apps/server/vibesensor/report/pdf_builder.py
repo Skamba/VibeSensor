@@ -470,6 +470,19 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
             value_w=W - 8 * mm - lw,
         )
 
+    # Tier A: add prominent insufficient-confidence note in observed panel
+    if data.certainty_tier_key == "A":
+        oy -= obs_step
+        _draw_text(
+            c,
+            ox,
+            oy,
+            W - 8 * mm,
+            tr("INSUFFICIENT_CONFIDENCE_TITLE"),
+            size=FS_BODY,
+            color="#c0392b",
+        )
+
     # Disclaimer at bottom of observed panel
     disc_text = tr("PATTERN_SUGGESTION_DISCLAIMER")
     _draw_text(
@@ -489,10 +502,14 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
     inner_w = W - 8 * mm
     inner_top = cards_y + cards_h - 10.5 * mm
 
-    if not cards:
-        c.setFillColor(_hex(SUB_CLR))
-        c.setFont(FONT, FS_BODY)
-        c.drawString(inner_x, inner_top, tr("NO_SYSTEMS_WITH_FINDINGS"))
+    if data.certainty_tier_key == "A" or not cards:
+        # Tier A or empty: show neutral message instead of system cards
+        msg = (
+            tr("TIER_A_NO_SYSTEMS")
+            if data.certainty_tier_key == "A"
+            else tr("NO_SYSTEMS_WITH_FINDINGS")
+        )
+        _draw_text(c, inner_x, inner_top, inner_w, msg, size=FS_BODY, color=SUB_CLR)
     else:
         card_gap = 3 * mm
         card_w = (inner_w - card_gap * max(n_cards - 1, 1)) / max(n_cards, 1)
