@@ -33,7 +33,7 @@
   },
   "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER": {
     "en": "Check driveshaft runout and joint condition for higher orders.",
-    "nl": "Controleer aandrijfas-slingering en koppelingstoestand voor hogere ordes."
+    "nl": "Controleer aandrijfas-slingering en koppelingstoestand voor hogere orden."
   },
   "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS": {
     "en": "Collect a longer run with stable driving conditions.",
@@ -337,7 +337,7 @@
   },
   "NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND": {
     "en": "No usable amplitude-by-location data was found for this run.",
-    "nl": "Geen bruikbare amplitude-per-locatiegegevens gevonden voor deze run."
+    "nl": "Geen bruikbare amplitude-per-locatiedata gevonden voor deze run."
   },
   "NVH_DIAGNOSTIC_REPORT": {
     "en": "NVH Diagnostic Report",
@@ -405,7 +405,7 @@
   },
   "RUN_CONDITIONS": {
     "en": "Run conditions",
-    "nl": "Runcondities"
+    "nl": "Meetcondities"
   },
   "RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT": {
     "en": "Raw accelerometer sample rate is missing, so dominant-frequency confidence is reduced and spectral trend interpretation is limited.",
@@ -513,7 +513,7 @@
   },
   "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND": {
     "en": "Speed data missing or insufficient; speed-binned and wheel-order analysis skipped.",
-    "nl": "Snelheidsgegevens ontbreken of zijn onvoldoende; snelheids-binning en wielorde-analyse zijn overgeslagen."
+    "nl": "Snelheidsdata ontbreken of zijn onvoldoende; snelheids-binning en wielorde-analyse zijn overgeslagen."
   },
   "SPEED_KM_H": {
     "en": "speed (km/h)",
@@ -649,7 +649,7 @@
   },
   "FINAL_DRIVE_RATIO_LABEL": {
     "en": "Final Drive Ratio",
-    "nl": "Eindreductieverhouding"
+    "nl": "Eindoverbrenging"
   },
   "CURRENT_GEAR_RATIO_LABEL": {
     "en": "Current Gear Ratio",
@@ -717,7 +717,7 @@
   },
   "CONFIDENCE_LABEL": {
     "en": "Confidence",
-    "nl": "Score"
+    "nl": "Betrouwbaarheid"
   },
   "CERTAINTY": {
     "en": "Certainty",
@@ -833,7 +833,7 @@
   },
   "METRIC_LABEL": {
     "en": "Metric",
-    "nl": "Metriek"
+    "nl": "Meetwaarde"
   },
   "CONSEQUENCE_TIMELINE_ALIGNMENT_IMPOSSIBLE": {
     "en": "timeline alignment impossible",
@@ -905,11 +905,11 @@
   },
   "TOP_ACTIONS": {
     "en": "Top Actions",
-    "nl": "Topacties"
+    "nl": "Belangrijkste acties"
   },
   "TOP_SUSPECTED_CAUSE": {
     "en": "Top suspected cause",
-    "nl": "Top vermoedelijke oorzaak"
+    "nl": "Meest waarschijnlijke oorzaak"
   },
   "T_10_20_MIN": {
     "en": "10-20 min",
@@ -937,7 +937,7 @@
   },
   "WHAT_TO_CHECK_FIRST": {
     "en": "What to check first",
-    "nl": "Wat eerst te controleren"
+    "nl": "Wat eerst controleren"
   },
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
@@ -1117,7 +1117,7 @@
   },
   "NO_NEXT_STEPS": {
     "en": "Collect additional data with a wider speed sweep to enable pattern analysis.",
-    "nl": "Verzamel aanvullende gegevens met een bredere snelheidsvariatie voor patroonanalyse."
+    "nl": "Verzamel aanvullende data met een bredere snelheidsvariatie voor patroonanalyse."
   },
   "CAR_LABEL": {
     "en": "Car",
@@ -1213,11 +1213,11 @@
   },
   "SUITABILITY_REFERENCE_COMPLETENESS_PASS": {
     "en": "Required order references are present.",
-    "nl": "Vereiste ordesreferenties zijn aanwezig."
+    "nl": "Vereiste ordereferenties zijn aanwezig."
   },
   "SUITABILITY_REFERENCE_COMPLETENESS_WARN": {
     "en": "Some order references are missing or derived with uncertainty.",
-    "nl": "Sommige ordesreferenties ontbreken of zijn onzeker afgeleid."
+    "nl": "Sommige ordereferenties ontbreken of zijn onzeker afgeleid."
   },
   "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS": {
     "en": "Saturation and outliers",
