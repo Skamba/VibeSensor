@@ -566,8 +566,8 @@ def car_location_diagram(
 
     src_legend_items = [
         (text_fn("Wheel", "Wiel"), FINDING_SOURCE_COLORS["wheel/tire"]),
-        ("Driveline", FINDING_SOURCE_COLORS["driveline"]),
-        ("Engine", FINDING_SOURCE_COLORS["engine"]),
+        (text_fn("Driveline", "Aandrijflijn"), FINDING_SOURCE_COLORS["driveline"]),
+        (text_fn("Engine", "Motor"), FINDING_SOURCE_COLORS["engine"]),
     ]
     src_legend_x = 8.0
     # Keep source legend anchored low to avoid overlap with the car/rear label.

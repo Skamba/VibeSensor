@@ -249,7 +249,7 @@ def test_e2e_docker_user_journeys() -> None:
         assert str(pdf_en.headers.get("content-type", "")).startswith("application/pdf")
         text_nl = pdf_text(pdf_nl.body)
         text_en = pdf_text(pdf_en.body)
-        assert "diagnostisch werkblad" in text_nl
+        assert "diagnostisch werkformulier" in text_nl
         assert "diagnostic worksheet" in text_en
 
     finally:

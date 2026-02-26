@@ -13,7 +13,7 @@
   },
   "APPENDIX_C_DETAILED_FINDINGS_TABLE": {
     "en": "Appendix C: Detailed Findings Table",
-    "nl": "Bijlage C: Gedetailleerde bevindingstabel"
+    "nl": "Bijlage C: Gedetailleerde tabel met bevindingen"
   },
   "AMPLITUDE_VS_TIME": {
     "en": "Vibration amplitude vs time",
@@ -125,11 +125,11 @@
   },
   "EVIDENCE_SNAPSHOT": {
     "en": "Evidence snapshot",
-    "nl": "Bewijsoverzicht"
+    "nl": "Bewijssamenvatting"
   },
   "ETA": {
     "en": "ETA",
-    "nl": "Geschatte tijd"
+    "nl": "Geschatte resterende tijd"
   },
   "FINDINGS": {
     "en": "Findings:",
@@ -157,11 +157,11 @@
   },
   "FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST": {
     "en": "Frequency tracks engine order using {ref_label} (best match {best_order}x, mean abs order error {best_error:.3f}).",
-    "nl": "Frequentie volgt motororde met {ref_label} (beste match {best_order}x, gemiddelde absolute ordefout {best_error:.3f})."
+    "nl": "Frequentie volgt motororde met {ref_label} (beste overeenkomst {best_order}x, gemiddelde absolute ordefout {best_error:.3f})."
   },
   "FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND": {
     "en": "Frequency tracks wheel order using vehicle speed and {tire_ref_note} (best match {best_order}x, mean abs order error {best_error:.3f}).",
-    "nl": "Frequentie volgt wielorde met voertuigsnelheid en {tire_ref_note} (beste match {best_order}x, gemiddelde absolute ordefout {best_error:.3f})."
+    "nl": "Frequentie volgt wielorde met voertuigsnelheid en {tire_ref_note} (beste overeenkomst {best_order}x, gemiddelde absolute ordefout {best_error:.3f})."
   },
   "GENERATED_GENERATED": {
     "en": "Generated: {generated}",
@@ -193,7 +193,7 @@
   },
   "INFORMATIONAL_REFERENCE_NOTE": {
     "en": "Informational reference note.",
-    "nl": "Informatieve referentie-opmerking."
+    "nl": "Informatieve referentieopmerking."
   },
   "INPUT_WARNINGS": {
     "en": "Input warnings:",
@@ -313,7 +313,7 @@
   },
   "NONE_LISTED": {
     "en": "None listed",
-    "nl": "Geen items"
+    "nl": "Niets vermeld"
   },
   "OBSERVED_SIGNATURES": {
     "en": "Observed signatures",
@@ -337,7 +337,7 @@
   },
   "NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND": {
     "en": "No usable amplitude-by-location data was found for this run.",
-    "nl": "Geen bruikbare amplitude-per-locatiedata gevonden voor deze run."
+    "nl": "Geen bruikbare locatiedata voor amplitude gevonden voor deze run."
   },
   "NVH_DIAGNOSTIC_REPORT": {
     "en": "NVH Diagnostic Report",
@@ -401,7 +401,7 @@
   },
   "REFERENCE_COMPLETENESS": {
     "en": "Reference completeness",
-    "nl": "Referentiecompleetheid"
+    "nl": "Referentievolledigheid"
   },
   "RUN_CONDITIONS": {
     "en": "Run conditions",
@@ -437,7 +437,7 @@
   },
   "REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED": {
     "en": "Reference missing; order-specific amplitude ranking skipped.",
-    "nl": "Referentie ontbreekt; orde-specifieke amplituderangschikking is overgeslagen."
+    "nl": "Referentie ontbreekt; ordespecifieke amplituderangschikking is overgeslagen."
   },
   "REFERENCE_NOT_AVAILABLE": {
     "en": "Reference not available",
@@ -449,11 +449,11 @@
   },
   "REL_0F_OF_STRONGEST": {
     "en": "{rel:.0f}% of strongest",
-    "nl": "{rel:.0f}% van sterkste"
+    "nl": "{rel:.0f}% van de sterkste"
   },
   "REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK": {
     "en": "Repeat run with stable route and verify peak repeatability.",
-    "nl": "Herhaal de run met een stabiele route en controleer piek-herhaalbaarheid."
+    "nl": "Herhaal de run met een stabiele route en controleer piekherhaalbaarheid."
   },
   "REPORT_DATE": {
     "en": "Report Date",
@@ -461,7 +461,7 @@
   },
   "REQUIRED_COLUMN": {
     "en": "Required Column",
-    "nl": "Vereiste kolom"
+    "nl": "Verplicht veld"
   },
   "RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE": {
     "en": "Re-run with measured loaded tire circumference.",
@@ -509,7 +509,7 @@
   },
   "SPEED_BINNED_ANALYSIS": {
     "en": "Speed-Binned Analysis",
-    "nl": "Snelheidsgebonden analyse"
+    "nl": "Analyse per snelheidsband"
   },
   "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND": {
     "en": "Speed data missing or insufficient; speed-binned and wheel-order analysis skipped.",
@@ -577,7 +577,7 @@
   },
   "THIS_REPORT_IS_GENERATED_FROM_EXPLICIT_REFERENCES_ONLY": {
     "en": "This report is generated from explicit references only. When speed, RPM, or sample-rate metadata is missing, order labeling is skipped.",
-    "nl": "Dit rapport wordt alleen gegenereerd met expliciete referenties. Wanneer snelheid, toerental of metadata van de bemonsteringsfrequentie ontbreekt, wordt orde-labeling overgeslagen."
+    "nl": "Dit rapport wordt alleen gegenereerd met expliciete referenties. Wanneer snelheid, toerental of metadata van de bemonsteringsfrequentie ontbreekt, wordt ordelabeling overgeslagen."
   },
   "TIME_S": {
     "en": "time (s)",
@@ -609,7 +609,7 @@
   },
   "SAMPLE_COUNT_LABEL": {
     "en": "Sample count",
-    "nl": "Aantal samples"
+    "nl": "Aantal metingen"
   },
   "SENSOR_PLACEMENT_AND_HOTSPOTS": {
     "en": "Sensor placement and hotspots",
@@ -641,7 +641,7 @@
   },
   "TIRE_ASPECT_PCT_LABEL": {
     "en": "Tire Aspect (%)",
-    "nl": "Bandprofiel (%)"
+    "nl": "Bandenprofiel (%)"
   },
   "RIM_SIZE_IN_LABEL": {
     "en": "Rim Size (in)",
@@ -785,7 +785,7 @@
   },
   "PLOT_DOM_FREQ_SKIPPED": {
     "en": "Dominant-frequency plot skipped because raw sample rate or dominant-frequency points are missing.",
-    "nl": "Grafiek van de dominante frequentie overgeslagen omdat de ruwe bemonsteringsfrequentie of dominante-frequentiepunten ontbreken."
+    "nl": "Grafiek van de dominante frequentie overgeslagen omdat de ruwe bemonsteringsfrequentie of dominante frequentiepunten ontbreken."
   },
   "PLOT_NO_DATA_AVAILABLE": {
     "en": "No data available for this plot",
@@ -821,7 +821,7 @@
   },
   "RECORD_ADDITIONAL_DATA": {
     "en": "Record additional data",
-    "nl": "Leg extra data vast"
+    "nl": "Verzamel aanvullende data"
   },
   "REPORT_FOOTER_TITLE": {
     "en": "VibeSensor Diagnostic Report",
@@ -1001,7 +1001,7 @@
   },
   "DIAGNOSTIC_WORKSHEET": {
     "en": "Diagnostic Worksheet",
-    "nl": "Diagnostisch werkblad"
+    "nl": "Diagnostisch werkformulier"
   },
   "OBSERVED_SIGNATURE": {
     "en": "Observed Signature",
@@ -1105,7 +1105,7 @@
   },
   "PEAK_AMP_G": {
     "en": "Peak Amp (g)",
-    "nl": "Piekamp (g)"
+    "nl": "Piekamplitude (g)"
   },
   "STRENGTH_DB": {
     "en": "Strength (dB)",
@@ -1165,7 +1165,7 @@
   },
   "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY": {
     "en": "Weak spatial separation; inspect both top nearby components before replacing parts.",
-    "nl": "Zwakke ruimtelijke scheiding; controleer eerst beide dichtstbijzijnde componenten voordat je onderdelen vervangt."
+    "nl": "Zwakke ruimtelijke scheiding; controleer eerst beide dichtstbijzijnde componenten voordat onderdelen worden vervangen."
   },
   "ORIGIN_PHASE_ONSET_NOTE": {
     "en": "Vibration onset consistent with {phase} phase.",
@@ -1177,7 +1177,7 @@
   },
   "DRIVING_PHASE_DECELERATION": {
     "en": "deceleration",
-    "nl": "deceleratie"
+    "nl": "vertraging"
   },
   "DRIVING_PHASE_COAST_DOWN": {
     "en": "coast-down",
@@ -1205,11 +1205,11 @@
   },
   "SUITABILITY_SENSOR_COVERAGE_WARN": {
     "en": "Few active sensors; location ranking is weaker.",
-    "nl": "Weinig actieve sensoren; locatierangschikking is zwakker."
+    "nl": "Weinig actieve sensoren; locatievergelijking is minder betrouwbaar."
   },
   "SUITABILITY_CHECK_REFERENCE_COMPLETENESS": {
     "en": "Reference completeness",
-    "nl": "Referentiecompleetheid"
+    "nl": "Referentievolledigheid"
   },
   "SUITABILITY_REFERENCE_COMPLETENESS_PASS": {
     "en": "Required order references are present.",
@@ -1313,7 +1313,7 @@
   },
   "SPEED_HINT_FOCUS": {
     "en": " with focus around {speed_band}",
-    "nl": " met focus rond {speed_band}"
+    "nl": " met nadruk op {speed_band}"
   },
   "LOCATION_HINT_NEAR": {
     "en": "Near the strongest location ({location}),",
@@ -1373,7 +1373,7 @@
   },
   "ACTION_DRIVELINE_INSPECTION_CONFIRM": {
     "en": "Mechanical defect or out-of-spec runout/play is found in driveline components.",
-    "nl": "Mechanisch defect of buiten-specificatie slingering/speling wordt gevonden in aandrijflijncomponenten."
+    "nl": "Mechanisch defect of buiten specificatie slingering/speling wordt gevonden in aandrijflijncomponenten."
   },
   "ACTION_DRIVELINE_INSPECTION_FALSIFY": {
     "en": "No driveline play/runout/balance issue is found.",
@@ -1489,7 +1489,7 @@
   },
   "TIER_A_CAPTURE_REFERENCE_DATA": {
     "en": "Ensure tire size, engine RPM, and speed references are complete for accurate order matching.",
-    "nl": "Zorg dat bandenmaat, motor-RPM en snelheidsreferenties compleet zijn voor nauwkeurige ordetracking."
+    "nl": "Zorg dat bandenmaat, motortoerental en snelheidsreferenties compleet zijn voor nauwkeurige ordetracking."
   },
   "TIER_B_HYPOTHESIS_LABEL": {
     "en": "Hypothesis (unconfirmed)",
