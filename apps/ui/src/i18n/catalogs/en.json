@@ -289,5 +289,6 @@
   "settings.esp_flash.state.running": "Running",
   "settings.esp_flash.state.success": "Success",
   "settings.esp_flash.state.failed": "Failed",
-  "settings.esp_flash.state.cancelled": "Cancelled"
+  "settings.esp_flash.state.cancelled": "Cancelled",
+  "status.age_ms_ago": "{value} ms ago"
 }
