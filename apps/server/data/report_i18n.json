@@ -269,7 +269,7 @@
   },
   "MEDIUM": {
     "en": "Medium",
-    "nl": "Middel"
+    "nl": "Gemiddeld"
   },
   "MISSING": {
     "en": "Missing %",
@@ -709,7 +709,7 @@
   },
   "CONFIDENCE_MEDIUM": {
     "en": "Medium",
-    "nl": "Middel"
+    "nl": "Gemiddeld"
   },
   "CONFIDENCE_LOW": {
     "en": "Low",
@@ -1169,7 +1169,7 @@
   },
   "ORIGIN_PHASE_ONSET_NOTE": {
     "en": "Vibration onset consistent with {phase} phase.",
-    "nl": "Vibratie-aanvang consistent met {phase} fase."
+    "nl": "Trillingsaanvang consistent met {phase} fase."
   },
   "DRIVING_PHASE_ACCELERATION": {
     "en": "acceleration",
@@ -1498,5 +1498,9 @@
   "TIER_B_VERIFICATION_HEADER": {
     "en": "Verification steps (not repair recommendations)",
     "nl": "Verificatiestappen (geen reparatieaanbevelingen)"
+  },
+  "FIRMWARE_VERSION": {
+    "en": "Firmware Version",
+    "nl": "Firmwareversie"
   }
 }
