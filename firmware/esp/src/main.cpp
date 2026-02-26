@@ -118,6 +118,7 @@ constexpr uint16_t kIdentifyBlinkPeriodMs = 300;
 constexpr uint8_t kIdentifyBrightness = 64;
 
 struct DataFrame {
+  // One UDP payload worth of accelerometer samples, tracked until ACKed.
   uint32_t seq;
   uint64_t t0_us;
   uint16_t sample_count;
@@ -288,6 +289,7 @@ void enqueue_frame() {
   }
 
   if (g_q_size == g_queue_capacity) {
+    // Ring buffer is full: drop oldest frame so freshest samples stay prioritized.
     g_queue_overflow_drops++;
     g_q_tail = (g_q_tail + 1) % g_queue_capacity;
     g_q_size--;
@@ -423,6 +425,7 @@ bool sample_once() {
 }
 
 void service_sampling() {
+  // Keep up with wall-clock sampling; if we fall behind, account for skipped samples.
   const uint64_t step_us = 1000000ULL / kSampleRateHz;
   uint64_t now = esp_timer_get_time();
   size_t catch_up_count = 0;
@@ -489,6 +492,7 @@ void service_tx() {
     }
 
     uint32_t now_ms = millis();
+    // Retry unacked frames at a bounded cadence to avoid flooding.
     if (frame->transmitted && (now_ms - frame->last_tx_ms) < kDataRetransmitIntervalMs) {
       return;
     }
@@ -548,6 +552,7 @@ void service_control_rx() {
   }
 
   if (packet[0] == vibesensor::kMsgDataAck) {
+    // Control socket may also receive ACKs; accept them here for robustness.
     uint32_t last_seq_received = 0;
     bool ok_ack = vibesensor::parse_data_ack(packet, read, g_client_id, &last_seq_received);
     if (ok_ack) {
@@ -690,6 +695,7 @@ void setup() {
                   static_cast<unsigned>(kFrameSamples));
   }
   for (size_t cap = kFrameQueueLenTarget; cap >= kFrameQueueLenMin; --cap) {
+    // Try the largest queue first, then gracefully degrade if RAM is tight.
     auto* mem = static_cast<DataFrame*>(
         heap_caps_malloc(cap * sizeof(DataFrame), MALLOC_CAP_8BIT));
     if (mem != nullptr) {
@@ -724,6 +730,7 @@ void setup() {
 }
 
 void loop() {
+  // Cooperative scheduler: each service call handles one concern and returns quickly.
   uint32_t now_ms = millis();
   service_wifi();
   service_data_rx();
