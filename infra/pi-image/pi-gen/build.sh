@@ -338,10 +338,11 @@ cat >/tmp/vibesensor-fw-baseline.sh <<'FW_BASELINE_EOF'
 set -euo pipefail
 
 VENV_PYTHON="/opt/VibeSensor/apps/server/.venv/bin/python"
+VENV_FW_REFRESH="/opt/VibeSensor/apps/server/.venv/bin/vibesensor-fw-refresh"
 FW_CACHE_DIR="/var/lib/vibesensor/firmware"
 
 echo "Refreshing ESP firmware cache (embedding baseline)..."
-"${VENV_PYTHON}" -m vibesensor.firmware_cache refresh_cache_cli \
+"${VENV_FW_REFRESH}" \
   --cache-dir "${FW_CACHE_DIR}" 2>&1 || true
 
 # If refresh succeeded, copy the downloaded cache as the baseline
