@@ -337,7 +337,12 @@ def test_map_summary_basic(tmp_path: Path) -> None:
 
 
 def test_map_summary_no_top_causes() -> None:
-    """map_summary handles empty summary gracefully."""
+    """map_summary handles empty summary gracefully.
+
+    With no findings and zero confidence, the report falls into Tier A
+    (very low certainty) and provides data-collection guidance instead
+    of empty next steps.
+    """
     summary: dict = {
         "top_causes": [],
         "findings": [],
@@ -349,7 +354,9 @@ def test_map_summary_no_top_causes() -> None:
     data = map_summary(summary)
     assert isinstance(data, ReportTemplateData)
     assert data.system_cards == []
-    assert data.next_steps == []
+    # Tier A provides capture guidance instead of empty next steps
+    assert data.certainty_tier_key == "A"
+    assert len(data.next_steps) >= 1
 
 
 def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> None:
