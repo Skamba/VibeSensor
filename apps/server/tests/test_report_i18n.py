@@ -330,3 +330,188 @@ def test_dutch_translation_audit_round_4_ui_and_python() -> None:
     # Dutch terminology: "rubberbushing" → "rubberbus"
     default_nl = [entry[2] for entry in _DEFAULT_PARTS]
     assert any("rubberbus" in label for label in default_nl)
+
+
+def test_dutch_translation_audit_round_5() -> None:
+    """Verify Dutch translation improvements from the fifth audit round."""
+    data = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+
+    def nl(key: str) -> str:
+        return data[key]["nl"]
+
+    # --- report_i18n.json improvements ---
+
+    # Consistency with UI: "Bandprofiel" → "Bandenprofiel"
+    assert nl("TIRE_ASPECT_PCT_LABEL") == "Bandenprofiel (%)"
+
+    # Anglicism removal: "beste match" → "beste overeenkomst"
+    assert "beste overeenkomst" in nl("FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST")
+    assert "beste overeenkomst" in nl("FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND")
+
+    # Compound correction: "orde-specifieke" → "ordespecifieke"
+    assert "ordespecifieke" in nl("REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED")
+
+    # Compound correction: "piek-herhaalbaarheid" → "piekherhaalbaarheid"
+    assert "piekherhaalbaarheid" in nl("REPEAT_RUN_WITH_STABLE_ROUTE_AND_VERIFY_PEAK")
+
+    # Natural Dutch: "Referentiecompleetheid" → "Referentievolledigheid"
+    assert nl("REFERENCE_COMPLETENESS") == "Referentievolledigheid"
+    assert nl("SUITABILITY_CHECK_REFERENCE_COMPLETENESS") == "Referentievolledigheid"
+
+    # Natural Dutch: "deceleratie" → "vertraging"
+    assert nl("DRIVING_PHASE_DECELERATION") == "vertraging"
+
+    # Grammar: add article "de" before "sterkste"
+    assert "van de sterkste" in nl("REL_0F_OF_STRONGEST")
+
+    # Consistency: "Aantal samples" → "Aantal metingen" matching SAMPLES key
+    assert nl("SAMPLE_COUNT_LABEL") == "Aantal metingen"
+
+    # Closer to English: "Geen items" → "Niets vermeld"
+    assert nl("NONE_LISTED") == "Niets vermeld"
+
+    # Consistency: "motor-RPM" → "motortoerental"
+    assert "motortoerental" in nl("TIER_A_CAPTURE_REFERENCE_DATA")
+
+    # Formal register: remove informal "je" → passive
+    assert "voordat onderdelen worden vervangen" in nl("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY")
+
+    # Compound: "orde-labeling" → "ordelabeling"
+    assert "ordelabeling" in nl("THIS_REPORT_IS_GENERATED_FROM_EXPLICIT_REFERENCES_ONLY")
+
+    # Hyphen removal: "dominante-frequentiepunten" → "dominante frequentiepunten"
+    assert "dominante frequentiepunten" in nl("PLOT_DOM_FREQ_SKIPPED")
+
+    # Compound: "referentie-opmerking" → "referentieopmerking"
+    assert "referentieopmerking" in nl("INFORMATIONAL_REFERENCE_NOTE")
+
+    # More precise: "werkblad" → "werkformulier"
+    assert nl("DIAGNOSTIC_WORKSHEET") == "Diagnostisch werkformulier"
+
+    # "Bewijsoverzicht" → "Bewijssamenvatting"
+    assert nl("EVIDENCE_SNAPSHOT") == "Bewijssamenvatting"
+
+    # Avoid abbreviation: "Piekamp (g)" → "Piekamplitude (g)"
+    assert nl("PEAK_AMP_G") == "Piekamplitude (g)"
+
+    # Natural Dutch: "Analyse per snelheidsband"
+    assert nl("SPEED_BINNED_ANALYSIS") == "Analyse per snelheidsband"
+
+    # More natural: "met nadruk op" instead of "met focus rond"
+    assert "met nadruk op" in nl("SPEED_HINT_FOCUS")
+
+    # Consistency: "Verzamel aanvullende data"
+    assert nl("RECORD_ADDITIONAL_DATA") == "Verzamel aanvullende data"
+
+    # Clearer: "locatievergelijking is minder betrouwbaar"
+    assert "locatievergelijking is minder betrouwbaar" in nl("SUITABILITY_SENSOR_COVERAGE_WARN")
+
+    # "buiten-specificatie" → "buiten specificatie"
+    assert "buiten specificatie" in nl("ACTION_DRIVELINE_INSPECTION_CONFIRM")
+
+
+def test_dutch_translation_audit_round_5_ui_and_python() -> None:
+    """Verify Dutch translation improvements in nl.json and Python files (round 5)."""
+    # --- nl.json UI translations ---
+    ui_json = (
+        Path(__file__).resolve().parent.parent.parent
+        / "ui"
+        / "src"
+        / "i18n"
+        / "catalogs"
+        / "nl.json"
+    )
+    ui = json.loads(ui_json.read_text(encoding="utf-8"))
+
+    # Natural Dutch: "Live trillingsteller" → "Actuele trillingsteller"
+    assert ui["dashboard.vibration_count_live"] == "Actuele trillingsteller"
+
+    # More accurate: "piek-boven-ruisvloer" in matrix note
+    assert "piek-boven-ruisvloer" in ui["dashboard.matrix_note"]
+
+    # Natural Dutch: "(laatste 5 min)" → "(afgelopen 5 min)"
+    assert ui["dashboard.time_window_2s"] == "(afgelopen 5 min)"
+
+    # Consistency: "Snelheidsbasis" → "Snelheidsbron" matching settings.speed.title
+    assert "Snelheidsbron:" in ui["dashboard.rotational.basis_source"]
+
+    # Natural Dutch: "Handmatige terugval" → "Terugval naar handmatig"
+    assert ui["dashboard.rotational.source.fallback_manual"] == "Terugval naar handmatig"
+
+    # More natural: "verversen" → "herladen"
+    assert ui["history.refresh"] == "Geschiedenis herladen"
+
+    # More concise: "PDF genereren mislukt."
+    assert ui["history.pdf_failed"] == "PDF genereren mislukt."
+
+    # More accurate: "Verlies Δ" → "Verloren Δ"
+    assert ui["history.table.dropped_delta"] == "Verloren Δ"
+
+    # Dutch for overflow: "Overflow Δ" → "Overloop Δ"
+    assert ui["history.table.overflow_delta"] == "Overloop Δ"
+
+    # Better word order for bandwidth labels
+    assert ui["settings.wheel_bandwidth"] == "Wielorde-bandbreedte (%)"
+    assert ui["settings.driveshaft_bandwidth"] == "Aandrijfasorde-bandbreedte (%)"
+    assert ui["settings.engine_bandwidth"] == "Motororde-bandbreedte (%)"
+
+    # Avoid abbreviations: "Min" → "Minimale", "Max" → "Maximale"
+    assert ui["settings.min_half_width"] == "Minimale halve breedte (Hz)"
+    assert ui["settings.max_half_width"] == "Maximale halve breedte (%)"
+
+    # More accurate: "Actief" → "Lopend" for "Running"
+    assert ui["status.running"] == "Lopend"
+
+    # Dutch override term: "Geforceerd" → "Handmatig"
+    assert "Handmatig" in ui["speed.override"]
+
+    # Concise: "Snelheidseenheid" → "Eenheid"
+    assert ui["speed.unit"] == "Eenheid"
+
+    # Natural Dutch: "verbinden" → "verbinding maken"
+    assert "verbinding maken" in ui["ws.connecting"]
+
+    # Consistency: "herverbinden"
+    assert "herverbinden" in ui["ws.reconnecting"]
+    assert "herverbinden" in ui["ws.banner.reconnecting"]
+
+    # Better Dutch: "Verbinding maken met server"
+    assert "Verbinding maken met server" in ui["ws.banner.connecting"]
+
+    # More precise: "Gemengd" → "Gecombineerd"
+    assert "Gecombineerd" in ui["chart.spectrum_title"]
+
+    # Consistent spacing: "Aandrijfas+Motor" → "Aandrijfas + Motor"
+    assert ui["bands.driveshaft_engine_1x"] == "Aandrijfas + Motor 1x"
+
+    # Compound: "Voorste subframe" → "Voorsubframe"
+    assert ui["location.front_subframe"] == "Voorsubframe"
+    assert ui["location.rear_subframe"] == "Achtersubframe"
+
+    # More natural: "Niet overeenkomend" → "Komt niet overeen"
+    assert ui["settings.update.runtime_assets_bad"] == "Komt niet overeen"
+
+    # Anglicism: "Auto-detectie" → "Automatische detectie"
+    assert ui["settings.esp_flash.auto_detect"] == "Automatische detectie"
+
+    # Dutch word order: "Flash nieuwste" → "Nieuwste flashen"
+    assert ui["settings.esp_flash.start"] == "Nieuwste flashen"
+
+    # --- Python source file improvements ---
+    from vibesensor.report.pattern_parts import why_parts_listed
+    from vibesensor.report.strength_labels import _CERTAINTY_REASONS
+
+    # Compound fix: "tracking-betrouwbaarheid" → "trackingbetrouwbaarheid"
+    assert "trackingbetrouwbaarheid" in _CERTAINTY_REASONS["narrow_speed_range"]["nl"]
+
+    # Compound fix in pattern_parts: "cardanas-orde" → "cardanasorde"
+    result = why_parts_listed("driveline", "1x", lang="nl")
+    assert "cardanasorde" in result
+
+    # Compound fix: "aandrijflijn-trillingspatronen" → "aandrijflijntrillingspatronen"
+    result = why_parts_listed("driveline", lang="nl")
+    assert "aandrijflijntrillingspatronen" in result
+
+    # Compound fix: "motor-trillingspatronen" → "motortrillingspatronen"
+    result = why_parts_listed("engine", lang="nl")
+    assert "motortrillingspatronen" in result

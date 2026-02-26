@@ -430,7 +430,7 @@ def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
     origin = _most_likely_origin_summary(findings, "nl")
 
     assert origin["dominant_phase"] == "deceleration"
-    assert "deceleratie" in origin["explanation"].lower()
+    assert "vertraging" in origin["explanation"].lower()
 
 
 def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
