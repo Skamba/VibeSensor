@@ -104,3 +104,44 @@ def test_dutch_translation_audit_round_2() -> None:
     assert "Snelheidsdata" in report_i18n.tr(
         "nl", "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
     )
+
+
+def test_dutch_translation_audit_round_3() -> None:
+    """Verify Dutch translation improvements from the third audit round (22 changes)."""
+    data = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
+
+    def nl(key: str) -> str:
+        return data[key]["nl"]
+
+    # --- report_i18n.json improvements ---
+
+    # Consistency: "Bandbreedte" → "Bandenbreedte" matching UI term
+    assert nl("TIRE_WIDTH_MM_LABEL") == "Bandenbreedte (mm)"
+
+    # Accuracy: "bewaakte" → "gemonitorde" for "monitored"
+    assert "gemonitorde locatie" in nl("DETECTED_AT_ONE_MONITORED_LOCATION")
+    assert "gemonitorde locaties" in nl("VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF")
+    assert "gemonitorde locaties" in nl("VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB")
+
+    # Anglicism removal: "gematchte" → "overeenkomende"
+    assert "overeenkomende piekamplitude" in nl("METRIC_MEAN_MATCHED_PEAK_AMPLITUDE")
+    assert "overeenkomende samples" in nl("METRIC_P95_PEAK_AMPLITUDE")
+    assert nl("MATCHED_SYSTEMS") == "Overeenkomende systemen"
+
+    # Natural Dutch: "burstigheid" → "impulsiviteit"
+    assert "impulsiviteit" in nl("EVIDENCE_PEAK_PRESENT")
+
+    # Consistency: "hardy-schijf" → "flexschijf" matching pattern_parts.py
+    assert "flexschijf" in nl("ACTION_DRIVELINE_INSPECTION_WHAT")
+
+    # Natural Dutch: "wiel/band-hoeken" → "wiel-/bandposities"
+    assert "wiel-/bandposities" in nl("LOCATION_HINT_AT_WHEEL_CORNERS")
+
+    # Precise verb: "geven" → "veroorzaken"
+    assert "veroorzaken" in nl("ACTION_ENGINE_COMBUSTION_WHY")
+
+    # Clearer Dutch: "orde-inhoud" → "orde-trillingen"
+    assert "orde-trillingen" in nl("ACTION_DRIVELINE_MOUNTS_WHY")
+
+    # Consistency: "amplitudemetriek" → "amplitudemeetwaarde" matching METRIC_LABEL
+    assert "amplitudemeetwaarde" in nl("OUTLIER_SUMMARY_LINE")
