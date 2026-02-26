@@ -36,17 +36,27 @@ FORCE_UI_BUILD=1 ./infra/pi-image/pi-gen/build.sh
 
 # optional artifact copy destination (disabled by default)
 COPY_ARTIFACT_DIR=/tmp/pi-images ./infra/pi-image/pi-gen/build.sh
+
+# optional: write first-boot SSH diagnostics to /boot/ssh-debug.txt
+SSH_FIRST_BOOT_DEBUG=1 ./infra/pi-image/pi-gen/build.sh
 ```
 
 Default SSH credentials in generated images:
 - user: `pi`
 - password: `vibesensor`
 
+SSH first-boot behavior:
+- `openssh-server` is installed and `ssh.service` is enabled at image build time.
+- Host keys are intentionally not pre-generated in the image; they are generated on-device at first boot.
+- A systemd SSH drop-in ensures host keys are generated before `sshd` starts, so SSH is available on first boot without relying on timing.
+
 Override at build time if needed:
 
 ```bash
 VS_FIRST_USER_NAME=pi VS_FIRST_USER_PASS='your-password' ./infra/pi-image/pi-gen/build.sh
 ```
+
+If you require key-only SSH, provision authorized keys during image customization and validate they exist; this repo defaults to password auth for recovery-oriented hotspot deployments.
 
 ## What's Included
 
