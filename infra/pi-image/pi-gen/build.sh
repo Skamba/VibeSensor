@@ -894,6 +894,8 @@ echo "SERVER_STARTUP_SMOKE_OK"
   if ! run_qemu_chroot /bin/bash -lc '
 set -e
 rm -f /etc/ssh/ssh_host_*_key*
+mkdir -p /run/sshd
+chmod 0755 /run/sshd
 if ! ls /etc/ssh/ssh_host_*_key >/dev/null 2>&1; then
   /usr/bin/ssh-keygen -A
 fi

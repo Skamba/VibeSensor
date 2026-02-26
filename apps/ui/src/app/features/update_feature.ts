@@ -36,6 +36,17 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
     const isRunning = status.state === "running";
     const isIdle = status.state === "idle";
+    const hasAssetRelatedIssue = status.issues.some((issue) => {
+      const text = `${issue.message} ${issue.detail}`.toLowerCase();
+      return (
+        text.includes("asset") ||
+        text.includes("artifacts") ||
+        text.includes("stale") ||
+        text.includes("hash") ||
+        text.includes("missing")
+      );
+    });
+    const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue;
 
     // Toggle buttons
     if (els.updateStartBtn) {
@@ -113,10 +124,12 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets"))}</span>`;
       html += `<span>${escapeHtml(status.runtime.public_assets_hash.slice(0, 12))}</span>`;
       html += `</div>`;
-      html += `<div class="update-status-row">`;
-      html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets_check"))}</span>`;
-      html += `<span>${escapeHtml(t(status.runtime.assets_verified ? "settings.update.runtime_assets_ok" : "settings.update.runtime_assets_bad"))}</span>`;
-      html += `</div>`;
+      if (showRuntimeAssetsCheck) {
+        html += `<div class="update-status-row">`;
+        html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_assets_check"))}</span>`;
+        html += `<span>${escapeHtml(t(status.runtime.assets_verified ? "settings.update.runtime_assets_ok" : "settings.update.runtime_assets_bad"))}</span>`;
+        html += `</div>`;
+      }
     }
 
     html += `</div>`;

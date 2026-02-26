@@ -35,6 +35,9 @@ GIT_OP_TIMEOUT_S = 120
 REBUILD_OP_TIMEOUT_S = 300
 """Per-rebuild-operation timeout."""
 
+REBUILD_RETRY_DELAY_S = 3
+"""Delay before retrying transient rebuild failures."""
+
 REINSTALL_OP_TIMEOUT_S = 180
 """Per-backend-reinstall timeout."""
 
@@ -58,6 +61,15 @@ UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
 DEFAULT_REBUILD_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+TRANSIENT_REBUILD_ERROR_MARKERS = (
+    "eai_again",
+    "enotfound",
+    "econnreset",
+    "etimedout",
+    "network timeout",
+    "temporary failure in name resolution",
+    "registry.npmjs.org",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -806,8 +818,25 @@ class UpdateManager:
             env=rebuild_env,
             sudo=True,
         )
+        if rc != 0 and self._is_transient_rebuild_failure(stderr):
+            self._log("Rebuild/sync failed due to transient network/DNS error; retrying once")
+            await asyncio.sleep(REBUILD_RETRY_DELAY_S)
+            rc, _, stderr = await self._run_cmd(
+                rebuild_cmd,
+                phase="updating",
+                timeout=REBUILD_OP_TIMEOUT_S,
+                env=rebuild_env,
+                sudo=True,
+            )
         if rc != 0:
-            self._add_issue("updating", f"Rebuild/sync failed (exit {rc})", stderr)
+            if self._is_transient_rebuild_failure(stderr):
+                self._add_issue(
+                    "updating",
+                    f"Rebuild/sync failed after retry (transient network/DNS; exit {rc})",
+                    stderr,
+                )
+            else:
+                self._add_issue("updating", f"Rebuild/sync failed (exit {rc})", stderr)
             self._status.state = UpdateState.failed
             return
         self._log("Rebuild/sync completed successfully")
@@ -873,6 +902,11 @@ class UpdateManager:
         if (server_pkg / "pyproject.toml").is_file():
             return server_pkg
         return repo
+
+    @staticmethod
+    def _is_transient_rebuild_failure(stderr: str) -> bool:
+        normalized = stderr.lower()
+        return any(marker in normalized for marker in TRANSIENT_REBUILD_ERROR_MARKERS)
 
     async def _ensure_backend_venv(self, repo: Path) -> str | None:
         venv_python = Path(self._reinstall_python_executable(repo))
