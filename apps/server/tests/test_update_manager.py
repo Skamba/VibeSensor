@@ -419,6 +419,17 @@ class TestUpdateManagerAsync:
             in f" {' '.join(c[0])} "
             for c in runner.calls
         )
+        refresh_token = (
+            " -m vibesensor.firmware_cache refresh_cache_cli"
+            " --cache-dir /var/lib/vibesensor/firmware"
+        )
+        assert any(refresh_token in f" {' '.join(c[0])} " for c in runner.calls), (
+            "Expected updater to refresh ESP firmware cache from GitHub releases"
+        )
+        assert not any(
+            " platformio " in f" {' '.join(c[0])} " or " pio " in f" {' '.join(c[0])} "
+            for c in runner.calls
+        ), "Updater must not invoke PlatformIO on Pi runtime path"
         restart_cmd = (
             "systemd-run --unit vibesensor-post-update-restart --on-active=2s "
             "systemctl restart vibesensor.service"
