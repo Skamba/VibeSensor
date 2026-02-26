@@ -170,8 +170,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       return;
     }
     const age = clientRow.last_seen_age_ms ?? null;
-    const ageSuffix = state.lang === "nl" ? "ms geleden" : "ms ago";
-    const ageValue = age === null ? "--" : `${formatInt(Math.max(0, age))} ${ageSuffix}`;
+    const ageValue = age === null ? "--" : t("status.age_ms_ago", { value: formatInt(Math.max(0, age)) });
     ctx.setStatValue(els.lastSeen, ageValue);
     ctx.setStatValue(els.dropped, formatInt(clientRow.dropped_frames ?? 0));
     ctx.setStatValue(els.framesTotal, formatInt(clientRow.frames_total ?? 0));

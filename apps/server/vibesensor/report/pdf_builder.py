@@ -340,8 +340,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
     if data.sensor_model:
         right_rows.append((tr("SENSOR_MODEL"), data.sensor_model))
     if data.firmware_version:
-        firmware_label = "Firmwareversie" if data.lang == "nl" else "Firmware Version"
-        right_rows.append((firmware_label, data.firmware_version))
+        right_rows.append((tr("FIRMWARE_VERSION"), data.firmware_version))
     if data.sample_count:
         right_rows.append((tr("SAMPLE_COUNT_LABEL"), str(data.sample_count)))
     if data.sample_rate_hz:
