@@ -419,10 +419,7 @@ class TestUpdateManagerAsync:
             in f" {' '.join(c[0])} "
             for c in runner.calls
         )
-        refresh_token = (
-            "vibesensor-fw-refresh"
-            " --cache-dir /var/lib/vibesensor/firmware"
-        )
+        refresh_token = "vibesensor-fw-refresh --cache-dir /var/lib/vibesensor/firmware"
         assert any(refresh_token in f" {' '.join(c[0])} " for c in runner.calls), (
             "Expected updater to refresh ESP firmware cache from GitHub releases"
         )
