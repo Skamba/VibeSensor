@@ -18,7 +18,7 @@ from __future__ import annotations
 _SYSTEM_PARTS: dict[tuple[str, str], list[tuple[str, str, str]]] = {
     # Wheel / Tire
     ("wheel/tire", "1x"): [
-        ("flat_spot", "Tire flat spot / out-of-round", "Band platte plek / uit-rond"),
+        ("flat_spot", "Tire flat spot / out-of-round", "Band platte plek / niet-rond"),
         ("wheel_balance", "Wheel balance weights", "Wielbalanseringsgewichten"),
         ("hub_bearing", "Wheel hub bearing", "Wielnaaf-lager"),
     ],
@@ -36,11 +36,10 @@ _SYSTEM_PARTS: dict[tuple[str, str], list[tuple[str, str, str]]] = {
         ("brake_caliper", "Brake caliper / pad contact", "Remklauw / blokcontact"),
     ],
     ("wheel/tire", "*"): [
-        ("flat_spot", "Tire flat spot / out-of-round", "Band platte plek / uit-rond"),
+        ("flat_spot", "Tire flat spot / out-of-round", "Band platte plek / niet-rond"),
         ("wheel_balance", "Wheel balance weights", "Wielbalanseringsgewichten"),
         ("hub_bearing", "Wheel hub bearing", "Wielnaaf-lager"),
     ],
-    # Driveline
     ("driveline", "1x"): [
         ("center_bearing", "Center support bearing", "Middensteunlager"),
         ("u_joint", "Universal joint / flex disc", "Kruiskoppeling / flexschijf"),
