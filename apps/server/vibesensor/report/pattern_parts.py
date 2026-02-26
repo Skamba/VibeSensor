@@ -65,7 +65,7 @@ _SYSTEM_PARTS: dict[tuple[str, str], list[tuple[str, str, str]]] = {
     ],
     ("engine", "2x"): [
         ("engine_mount", "Engine / transmission mount", "Motor- / versnellingsbaksteun"),
-        ("misfire", "Cylinder misfire / injector", "Cilinderontsteking / injector"),
+        ("misfire", "Cylinder misfire / injector", "Cilindermisfire / injector"),
         ("exhaust_mount", "Exhaust mount / heat shield", "Uitlaatophanging / hitteschild"),
     ],
     ("engine", "higher"): [
@@ -170,12 +170,12 @@ def why_parts_listed(
             return (
                 f"{base_en} a {bucket} driveshaft-order vibration pattern."
                 if lang != "nl"
-                else f"{base_nl} een {bucket} cardanas-orde trillingspatroon."
+                else f"{base_nl} een {bucket} cardanasorde-trillingspatroon."
             )
         return (
             f"{base_en} driveline vibration patterns."
             if lang != "nl"
-            else f"{base_nl} aandrijflijn-trillingspatronen."
+            else f"{base_nl} aandrijflijntrillingspatronen."
         )
     if src == "engine":
         if bucket in ("1x", "2x"):
@@ -187,7 +187,7 @@ def why_parts_listed(
         return (
             f"{base_en} engine vibration patterns."
             if lang != "nl"
-            else f"{base_nl} motor-trillingspatronen."
+            else f"{base_nl} motortrillingspatronen."
         )
 
     return (
