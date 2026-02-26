@@ -80,7 +80,7 @@ _SYSTEM_PARTS: dict[tuple[str, str], list[tuple[str, str, str]]] = {
 
 # Fallback for unknown systems
 _DEFAULT_PARTS: list[tuple[str, str, str]] = [
-    ("mount_general", "Mounting / rubber bushing", "Ophanging / rubberbushing"),
+    ("mount_general", "Mounting / rubber bushing", "Ophanging / rubberbus"),
     ("resonance", "Structural resonance path", "Structureel resonantiepad"),
 ]
 

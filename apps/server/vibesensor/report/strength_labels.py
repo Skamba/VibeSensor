@@ -83,11 +83,11 @@ def strength_text(
 _CERTAINTY_REASONS: dict[str, dict[str, str]] = {
     "strong_order_match": {
         "en": "Consistent order-tracking match across speed range",
-        "nl": "Consistente ordetracking-match over snelheidsbereik",
+        "nl": "Consistente ordetracking-overeenkomst over snelheidsbereik",
     },
     "moderate_order_match": {
         "en": "Partial order-tracking match with some scatter",
-        "nl": "Gedeeltelijke ordetracking-match met enige spreiding",
+        "nl": "Gedeeltelijke ordetracking-overeenkomst met enige spreiding",
     },
     "weak_order_match": {
         "en": "Weak pattern correlation — additional data recommended",
@@ -103,7 +103,7 @@ _CERTAINTY_REASONS: dict[str, dict[str, str]] = {
     },
     "reference_gaps": {
         "en": "Missing reference data limits pattern matching",
-        "nl": "Ontbrekende referentiedata beperkt patroonmatching",
+        "nl": "Ontbrekende referentiedata beperkt patroonvergelijking",
     },
     "good_spatial_separation": {
         "en": "Clear spatial separation between sensor locations",
