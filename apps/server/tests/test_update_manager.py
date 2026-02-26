@@ -423,6 +423,17 @@ class TestUpdateManagerAsync:
         assert any(refresh_token in f" {' '.join(c[0])} " for c in runner.calls), (
             "Expected updater to refresh ESP firmware cache from GitHub releases"
         )
+        refresh_index = next(
+            i for i, call in enumerate(runner.calls) if refresh_token in f" {' '.join(call[0])} "
+        )
+        rebuild_index = next(
+            i
+            for i, call in enumerate(runner.calls)
+            if "sync_ui_to_pi_public.py" in " ".join(call[0])
+        )
+        assert refresh_index < rebuild_index, (
+            "Updater must refresh firmware cache before long rebuild/sync operations"
+        )
         assert not any(
             " platformio " in f" {' '.join(c[0])} " or " pio " in f" {' '.join(c[0])} "
             for c in runner.calls
@@ -745,7 +756,7 @@ class TestUpdateManagerAsync:
     async def test_rebuild_failure_fails_update(self, tmp_path) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
-        runner.set_response("python3", 1, "", "npm: command not found")
+        runner.set_response("sync_ui_to_pi_public.py", 1, "", "npm: command not found")
 
         repo = tmp_path / "repo"
         repo.mkdir()
