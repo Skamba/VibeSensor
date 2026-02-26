@@ -40,6 +40,7 @@ constexpr uint16_t kConfiguredSampleRateHz = static_cast<uint16_t>(VIBESENSOR_SA
 constexpr uint16_t kSampleRateHz = vibesensor::reliability::clamp_sample_rate(
     kConfiguredSampleRateHz, kSampleRateMinHz, kSampleRateMaxHz);
 constexpr uint16_t kFrameSamplesMaxByDatagram =
+    // Each sample contributes 3 axes * 2 bytes = 6 payload bytes.
     static_cast<uint16_t>((kMaxDatagramBytes - vibesensor::kDataHeaderBytes) / 6);
 constexpr uint16_t kConfiguredFrameSamples = static_cast<uint16_t>(VIBESENSOR_FRAME_SAMPLES);
 constexpr uint16_t kFrameSamples = (kConfiguredFrameSamples == 0)
@@ -138,6 +139,7 @@ uint16_t g_control_port = kControlPortBase;
 
 DataFrame* g_queue = nullptr;
 size_t g_queue_capacity = 0;
+// Head points to next write slot, tail points to oldest queued frame.
 size_t g_q_head = 0;
 size_t g_q_tail = 0;
 size_t g_q_size = 0;
@@ -324,6 +326,7 @@ void drop_front_frame() {
 }
 
 bool seq_less_or_equal(uint32_t lhs, uint32_t rhs) {
+  // Signed subtraction keeps comparisons valid across uint32 wrap-around.
   return static_cast<int32_t>(lhs - rhs) <= 0;
 }
 
@@ -633,6 +636,7 @@ bool connect_wifi() {
 #endif
   WiFi.setSleep(false);
   refresh_target_ap();
+  // Give boot-time connectivity a few bounded retries before background recovery.
   for (uint8_t attempt = 1; attempt <= kWifiInitialConnectAttempts; ++attempt) {
     begin_target_wifi();
     uint32_t start_ms = millis();
@@ -740,5 +744,6 @@ void loop() {
   service_control_rx();
   service_blink();
   report_runtime_status(now_ms);
+  // Yield briefly so Wi-Fi and other background tasks can run.
   delay(1);
 }
