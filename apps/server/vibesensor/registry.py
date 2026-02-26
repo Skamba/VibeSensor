@@ -170,6 +170,12 @@ class ClientRegistry:
                 if advertised:
                     record.name = advertised
 
+    @staticmethod
+    def _clear_dedup(record: ClientRecord) -> None:
+        """Reset the per-client dedup window (e.g. on restart or hard reset)."""
+        record._seen_seqs.clear()
+        record._seen_seqs_max = -1
+
     def update_from_data(
         self,
         data_msg: DataMessage,
@@ -196,6 +202,10 @@ class ClientRegistry:
                 # Distinguish genuine retransmit from client restart.
                 # A retransmit has seq close to last_seq (backward ≤ gap).
                 # A restart reuses low seq numbers while last_seq is higher.
+                # Note: backward=0 covers same-seq retransmit (last_seq ==
+                # data_msg.seq) and forward duplicates — both are genuine dups.
+                # Wraparound is not handled; 32-bit seq wraps after ~4 billion
+                # frames which far exceeds any realistic session.
                 backward = (
                     (record.last_seq - data_msg.seq)
                     if record.last_seq is not None and record.last_seq > data_msg.seq
@@ -205,8 +215,7 @@ class ClientRegistry:
                     record.duplicates_received += 1
                     return DataUpdateResult(is_duplicate=True)
                 # Likely client restart — clear dedup window and accept.
-                record._seen_seqs.clear()
-                record._seen_seqs_max = -1
+                self._clear_dedup(record)
 
             record._seen_seqs.add(data_msg.seq)
             if data_msg.seq > record._seen_seqs_max:
