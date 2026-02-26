@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-import os
+import hashlib
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -15,21 +16,11 @@ from vibesensor.esp_flash_manager import (
     SerialPortInfo,
     SerialPortProvider,
 )
-
-
-@pytest.fixture(autouse=True)
-def _seed_platformio_core_dir(tmp_path: Path, monkeypatch) -> None:
-    core_dir = tmp_path / ".platformio-core"
-    (core_dir / "platforms" / "espressif32").mkdir(parents=True, exist_ok=True)
-    packages_dir = core_dir / "packages"
-    for name in ("framework-arduinoespressif32", "tool-scons", "toolchain-xtensa-esp32"):
-        (packages_dir / name).mkdir(parents=True, exist_ok=True)
-    toolchain_bin = packages_dir / "toolchain-xtensa-esp32" / "bin"
-    toolchain_bin.mkdir(parents=True, exist_ok=True)
-    compiler = toolchain_bin / "xtensa-esp32-elf-g++"
-    compiler.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    compiler.chmod(0o755)
-    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
+from vibesensor.firmware_cache import (
+    FirmwareCache,
+    FirmwareCacheConfig,
+    validate_bundle,
+)
 
 
 class _FakePorts(SerialPortProvider):
@@ -78,30 +69,161 @@ class _FakeRunner(FlashCommandRunner):
         return 0
 
 
-def _seed_artifacts(repo: Path) -> None:
-    artifact_dir = repo / "firmware" / "esp" / ".pio" / "build" / "m5stack_atom"
-    artifact_dir.mkdir(parents=True, exist_ok=True)
+def _make_bundle(bundle_dir: Path) -> None:
+    """Create a valid firmware bundle with flash.json manifest and binaries."""
+    env_dir = bundle_dir / "m5stack_atom"
+    env_dir.mkdir(parents=True, exist_ok=True)
+    bins = {}
     for name in ("bootloader.bin", "partitions.bin", "firmware.bin"):
-        (artifact_dir / name).write_bytes(b"bin")
+        content = f"fake-{name}".encode()
+        (env_dir / name).write_bytes(content)
+        bins[name] = hashlib.sha256(content).hexdigest()
+    manifest = {
+        "generated_from": "test",
+        "environments": [
+            {
+                "name": "m5stack_atom",
+                "segments": [
+                    {
+                        "file": "m5stack_atom/firmware.bin",
+                        "offset": "0x10000",
+                        "sha256": bins["firmware.bin"],
+                    },
+                    {
+                        "file": "m5stack_atom/bootloader.bin",
+                        "offset": "0x1000",
+                        "sha256": bins["bootloader.bin"],
+                    },
+                    {
+                        "file": "m5stack_atom/partitions.bin",
+                        "offset": "0x8000",
+                        "sha256": bins["partitions.bin"],
+                    },
+                ],
+            }
+        ],
+    }
+    (bundle_dir / "flash.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
-def _make_repo(tmp_path: Path, *, with_artifacts: bool = True) -> Path:
-    repo = tmp_path / "repo"
-    (repo / "firmware" / "esp").mkdir(parents=True)
-    if with_artifacts:
-        _seed_artifacts(repo)
-    return repo
+def _make_cache(tmp_path: Path, *, with_current: bool = False, with_baseline: bool = False):
+    """Create a firmware cache directory with optional current/baseline bundles."""
+    cache_dir = tmp_path / "fw-cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    if with_current:
+        _make_bundle(cache_dir / "current")
+        meta = {
+            "tag": "fw-main-abc1234",
+            "asset": "vibesensor-fw-main-abc1234.zip",
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "sha256": "abc123",
+            "source": "downloaded",
+        }
+        (cache_dir / "current" / "_meta.json").write_text(
+            json.dumps(meta, indent=2), encoding="utf-8"
+        )
+    if with_baseline:
+        _make_bundle(cache_dir / "baseline")
+        meta = {
+            "tag": "baseline",
+            "asset": "embedded",
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "sha256": "baseline123",
+            "source": "baseline",
+        }
+        (cache_dir / "baseline" / "_meta.json").write_text(
+            json.dumps(meta, indent=2), encoding="utf-8"
+        )
+    return cache_dir
 
 
-def _make_repo_with_apps_hint(tmp_path: Path) -> tuple[Path, Path]:
-    repo = _make_repo(tmp_path)
-    apps_hint = repo / "apps"
-    (apps_hint / "server").mkdir(parents=True)
-    return repo, apps_hint
+# ── Firmware Cache Tests ──
+
+
+def test_validate_bundle_succeeds(tmp_path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _make_bundle(bundle_dir)
+    manifest = validate_bundle(bundle_dir)
+    assert len(manifest.environments) == 1
+    assert manifest.environments[0].name == "m5stack_atom"
+
+
+def test_validate_bundle_fails_missing_manifest(tmp_path) -> None:
+    bundle_dir = tmp_path / "empty"
+    bundle_dir.mkdir()
+    with pytest.raises(ValueError, match="missing manifest"):
+        validate_bundle(bundle_dir)
+
+
+def test_validate_bundle_fails_missing_binary(tmp_path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _make_bundle(bundle_dir)
+    (bundle_dir / "m5stack_atom" / "firmware.bin").unlink()
+    with pytest.raises(ValueError, match="missing referenced binary"):
+        validate_bundle(bundle_dir)
+
+
+def test_validate_bundle_fails_checksum_mismatch(tmp_path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    _make_bundle(bundle_dir)
+    (bundle_dir / "m5stack_atom" / "firmware.bin").write_bytes(b"corrupted")
+    with pytest.raises(ValueError, match="Checksum mismatch"):
+        validate_bundle(bundle_dir)
+
+
+def test_cache_active_bundle_uses_current_over_baseline(tmp_path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True, with_baseline=True)
+    cache = FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir)))
+    active = cache.active_bundle_dir()
+    assert active is not None
+    assert active == cache_dir / "current"
+
+
+def test_cache_falls_back_to_baseline_when_no_current(tmp_path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=False, with_baseline=True)
+    cache = FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir)))
+    active = cache.active_bundle_dir()
+    assert active is not None
+    assert active == cache_dir / "baseline"
+
+
+def test_cache_returns_none_when_empty(tmp_path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=False, with_baseline=False)
+    cache = FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir)))
+    assert cache.active_bundle_dir() is None
+
+
+def test_cache_falls_back_when_current_is_invalid(tmp_path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True, with_baseline=True)
+    # Corrupt the current bundle
+    (cache_dir / "current" / "flash.json").unlink()
+    cache = FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir)))
+    active = cache.active_bundle_dir()
+    assert active == cache_dir / "baseline"
+
+
+def test_cache_info_reports_source_and_tag(tmp_path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True)
+    cache = FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir)))
+    info = cache.info()
+    assert info["status"] == "ok"
+    assert info["source"] == "downloaded"
+    assert info["tag"] == "fw-main-abc1234"
+
+
+def test_cache_info_no_firmware(tmp_path) -> None:
+    cache_dir = _make_cache(tmp_path)
+    cache = FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir)))
+    info = cache.info()
+    assert info["status"] == "no_firmware"
+
+
+# ── Flash Manager Tests (using cached bundles) ──
 
 
 @pytest.mark.asyncio
 async def test_port_discovery_returns_metadata(tmp_path) -> None:
+    cache_dir = _make_cache(tmp_path, with_current=True)
     mgr = EspFlashManager(
         runner=_FakeRunner(),
         port_provider=_FakePorts(
@@ -115,7 +237,7 @@ async def test_port_discovery_returns_metadata(tmp_path) -> None:
                 )
             ]
         ),
-        repo_path=str(_make_repo(tmp_path)),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     ports = await mgr.list_ports()
     assert ports == [
@@ -130,16 +252,17 @@ async def test_port_discovery_returns_metadata(tmp_path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_flash_job_runs_erase_and_upload_and_records_history(tmp_path, monkeypatch) -> None:
+async def test_flash_job_uses_cached_bundle_manifest(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
     )
+    cache_dir = _make_cache(tmp_path, with_current=True)
     runner = _FakeRunner()
     mgr = EspFlashManager(
         runner=runner,
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     mgr.start(port=None, auto_detect=True)
     assert mgr.status.state.value == "running"
@@ -150,6 +273,55 @@ async def test_flash_job_runs_erase_and_upload_and_records_history(tmp_path, mon
     assert any("write_flash" in call for call in runner.calls)
     assert mgr.history()[0]["state"] == "success"
 
+    # Verify manifest-driven offsets are used
+    write_call = [c for c in runner.calls if "write_flash" in c][0]
+    assert "0x10000" in write_call
+    assert "0x1000" in write_call
+    assert "0x8000" in write_call
+    assert any("firmware.bin" in arg for arg in write_call)
+
+
+@pytest.mark.asyncio
+async def test_flash_uses_baseline_when_no_current(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
+    cache_dir = _make_cache(tmp_path, with_current=False, with_baseline=True)
+    runner = _FakeRunner()
+    mgr = EspFlashManager(
+        runner=runner,
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "success"
+    logs = mgr.logs_since(after=0)["lines"]
+    assert any("baseline" in line for line in logs)
+
+
+@pytest.mark.asyncio
+async def test_flash_fails_fast_when_no_firmware_available(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
+    cache_dir = _make_cache(tmp_path)
+    mgr = EspFlashManager(
+        runner=_FakeRunner(),
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
+    )
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "failed"
+    assert "No firmware bundle available" in str(mgr.status.error)
+    logs = mgr.logs_since(after=0)["lines"]
+    assert any("updater" in line.lower() for line in logs)
+
 
 @pytest.mark.asyncio
 async def test_single_job_lock_and_cancel(tmp_path, monkeypatch) -> None:
@@ -157,10 +329,11 @@ async def test_single_job_lock_and_cancel(tmp_path, monkeypatch) -> None:
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
     )
+    cache_dir = _make_cache(tmp_path, with_current=True)
     mgr = EspFlashManager(
         runner=_FakeRunner(hang=True),
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     mgr.start(port=None, auto_detect=True)
     with pytest.raises(RuntimeError, match="already in progress"):
@@ -177,6 +350,7 @@ async def test_multiple_ports_without_choice_fails_actionably(tmp_path, monkeypa
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
     )
+    cache_dir = _make_cache(tmp_path, with_current=True)
     mgr = EspFlashManager(
         runner=_FakeRunner(),
         port_provider=_FakePorts(
@@ -185,7 +359,7 @@ async def test_multiple_ports_without_choice_fails_actionably(tmp_path, monkeypa
                 SerialPortInfo(port="/dev/ttyUSB1", description="USB B"),
             ]
         ),
-        repo_path=str(_make_repo(tmp_path)),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     mgr.start(port=None, auto_detect=True)
     assert mgr._task is not None
@@ -207,10 +381,11 @@ async def test_esp_flash_api_lifecycle(tmp_path, monkeypatch) -> None:
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
     )
+    cache_dir = _make_cache(tmp_path, with_current=True)
     manager = EspFlashManager(
         runner=_FakeRunner(),
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     state = type("S", (), {"esp_flash_manager": manager})()
     router = create_router(state)
@@ -239,10 +414,11 @@ async def test_esp_flash_api_rejects_concurrent_start(tmp_path, monkeypatch) -> 
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
     )
+    cache_dir = _make_cache(tmp_path, with_current=True)
     manager = EspFlashManager(
         runner=_FakeRunner(hang=True),
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     state = type("S", (), {"esp_flash_manager": manager})()
     router = create_router(state)
@@ -267,204 +443,47 @@ async def test_flash_uses_python_module_fallback_when_esptool_binary_missing(
     monkeypatch.setattr("shutil.which", _which)
     monkeypatch.setattr(
         "importlib.util.find_spec",
-        lambda name: SimpleNamespace() if name in {"esptool", "platformio"} else None,
+        lambda name: SimpleNamespace() if name == "esptool" else None,
     )
+    cache_dir = _make_cache(tmp_path, with_current=True)
     runner = _FakeRunner()
     mgr = EspFlashManager(
         runner=runner,
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     mgr.start(port=None, auto_detect=True)
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "success"
-    first = runner.calls[0]
-    assert Path(first[0]).name.startswith("python")
-    assert first[1:3] == ["-m", "platformio"]
     assert any(call[1:3] == ["-m", "esptool"] for call in runner.calls)
 
 
 @pytest.mark.asyncio
-async def test_flash_builds_from_temp_copy_when_firmware_dir_is_read_only(
-    tmp_path, monkeypatch
-) -> None:
-    def _which(name: str) -> str | None:
-        if name == "pio":
-            return "/usr/bin/pio"
-        if name == "esptool.py":
-            return "/usr/bin/esptool.py"
-        return None
-
-    monkeypatch.setattr("shutil.which", _which)
-
-    repo = _make_repo(tmp_path)
-    fw_dir = repo / "firmware" / "esp"
-    real_access = os.access
-
-    def _access(path: str | bytes | os.PathLike[str] | os.PathLike[bytes], mode: int) -> bool:
-        if Path(path).resolve() == fw_dir.resolve() and mode == os.W_OK:
-            return False
-        return real_access(path, mode)
-
-    monkeypatch.setattr("os.access", _access)
-
-    runner = _FakeRunner()
-    mgr = EspFlashManager(
-        runner=runner,
-        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(repo),
-    )
-    mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
-    assert mgr.status.state.value == "failed"
-    assert "Missing prebuilt firmware artifacts" in str(mgr.status.error)
-    assert runner.call_cwds
-    assert Path(runner.call_cwds[0]).resolve() != fw_dir.resolve()
-    logs = mgr.logs_since(after=0)["lines"]
-    assert any("read-only" in line for line in logs)
-
-
-@pytest.mark.asyncio
-async def test_flash_fails_fast_when_offline_platform_cache_is_missing(
-    tmp_path, monkeypatch
-) -> None:
-    def _which(name: str) -> str | None:
-        if name == "pio":
-            return "/usr/bin/pio"
-        if name == "esptool.py":
-            return "/usr/bin/esptool.py"
-        return None
-
-    monkeypatch.setattr("shutil.which", _which)
-    core_dir = tmp_path / ".platformio-empty"
-    (core_dir / "platforms").mkdir(parents=True, exist_ok=True)
-    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
-
-    mgr = EspFlashManager(
-        runner=_FakeRunner(),
-        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
-    )
-    mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
-    assert mgr.status.state.value == "failed"
-    assert "offline PlatformIO platform missing: espressif32" == mgr.status.error
-
-
-@pytest.mark.asyncio
-async def test_flash_fails_fast_when_required_offline_package_is_missing(
-    tmp_path, monkeypatch
-) -> None:
-    def _which(name: str) -> str | None:
-        if name == "pio":
-            return "/usr/bin/pio"
-        if name == "esptool.py":
-            return "/usr/bin/esptool.py"
-        return None
-
-    monkeypatch.setattr("shutil.which", _which)
-    core_dir = tmp_path / ".platformio-missing-framework"
-    (core_dir / "platforms" / "espressif32").mkdir(parents=True, exist_ok=True)
-    (core_dir / "packages" / "tool-scons").mkdir(parents=True, exist_ok=True)
-    compiler = core_dir / "packages" / "toolchain-xtensa-esp32" / "bin" / "xtensa-esp32-elf-g++"
-    compiler.parent.mkdir(parents=True, exist_ok=True)
-    compiler.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    compiler.chmod(0o755)
-    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
-
-    mgr = EspFlashManager(
-        runner=_FakeRunner(),
-        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
-    )
-    mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
-    assert mgr.status.state.value == "failed"
-    assert "offline PlatformIO package(s) missing: framework-arduinoespressif32" == mgr.status.error
-
-
-@pytest.mark.asyncio
-async def test_flash_fails_fast_when_toolchain_binary_is_not_executable(
-    tmp_path, monkeypatch
-) -> None:
-    def _which(name: str) -> str | None:
-        if name == "pio":
-            return "/usr/bin/pio"
-        if name == "esptool.py":
-            return "/usr/bin/esptool.py"
-        return None
-
-    monkeypatch.setattr("shutil.which", _which)
-    core_dir = tmp_path / ".platformio-bad-toolchain"
-    (core_dir / "platforms" / "espressif32").mkdir(parents=True, exist_ok=True)
-    for name in ("framework-arduinoespressif32", "tool-scons", "toolchain-xtensa-esp32"):
-        (core_dir / "packages" / name).mkdir(parents=True, exist_ok=True)
-    compiler = core_dir / "packages" / "toolchain-xtensa-esp32" / "bin" / "xtensa-esp32-elf-g++"
-    compiler.parent.mkdir(parents=True, exist_ok=True)
-    compiler.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
-    # Intentionally no executable bit.
-    monkeypatch.setenv("PLATFORMIO_CORE_DIR", str(core_dir))
-
-    mgr = EspFlashManager(
-        runner=_FakeRunner(),
-        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(_make_repo(tmp_path)),
-    )
-    mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
-    assert mgr.status.state.value == "failed"
-    assert "offline PlatformIO toolchain unusable: toolchain-xtensa-esp32" == mgr.status.error
-
-
-@pytest.mark.asyncio
-async def test_flash_finds_firmware_dir_when_repo_hint_points_to_apps(
-    tmp_path, monkeypatch
-) -> None:
+async def test_flash_no_platformio_dependency(tmp_path, monkeypatch) -> None:
+    """The Pi runtime path must not invoke PlatformIO for firmware."""
     monkeypatch.setattr(
         "shutil.which",
         lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
     )
-    repo, apps_hint = _make_repo_with_apps_hint(tmp_path)
+    cache_dir = _make_cache(tmp_path, with_current=True)
     runner = _FakeRunner()
     mgr = EspFlashManager(
         runner=runner,
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(apps_hint),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     mgr.start(port=None, auto_detect=True)
     assert mgr._task is not None
     await mgr._task
     assert mgr.status.state.value == "success"
-    assert any(
-        str(repo / "firmware" / "esp" / ".pio" / "build" / "m5stack_atom" / "firmware.bin") in call
-        for call in runner.calls
-    )
 
-
-@pytest.mark.asyncio
-async def test_flash_fails_when_prebuilt_artifacts_are_missing(tmp_path, monkeypatch) -> None:
-    monkeypatch.setattr(
-        "shutil.which",
-        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
-    )
-    repo = _make_repo(tmp_path, with_artifacts=False)
-
-    runner = _FakeRunner()
-    mgr = EspFlashManager(
-        runner=runner,
-        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(repo),
-    )
-    mgr.start(port=None, auto_detect=True)
-    assert mgr._task is not None
-    await mgr._task
-    assert mgr.status.state.value == "failed"
-    assert "Missing prebuilt firmware artifacts" in str(mgr.status.error)
+    # Assert no PlatformIO was invoked (check command names, not full arg strings)
+    for call in runner.calls:
+        cmd_name = Path(call[0]).name.lower() if call else ""
+        assert cmd_name not in ("pio", "platformio"), f"PlatformIO invoked: {call}"
+        if len(call) > 2:
+            assert call[1:3] != ["-m", "platformio"], f"PlatformIO module invoked: {call}"
 
 
 @pytest.mark.asyncio
@@ -473,13 +492,13 @@ async def test_flash_fails_when_esptool_erase_step_fails(tmp_path, monkeypatch) 
         return "/usr/bin/esptool.py" if name == "esptool.py" else None
 
     monkeypatch.setattr("shutil.which", _which)
-    repo = _make_repo(tmp_path)
+    cache_dir = _make_cache(tmp_path, with_current=True)
 
     runner = _FakeRunner(fail_erase=True)
     mgr = EspFlashManager(
         runner=runner,
         port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
-        repo_path=str(repo),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
     )
     mgr.start(port=None, auto_detect=True)
     assert mgr._task is not None
@@ -488,3 +507,32 @@ async def test_flash_fails_when_esptool_erase_step_fails(tmp_path, monkeypatch) 
     assert mgr.status.error == "Flash erase step failed"
     assert any("erase_flash" in " ".join(call) for call in runner.calls)
     assert not any("write_flash" in " ".join(call) for call in runner.calls)
+
+
+@pytest.mark.asyncio
+async def test_flash_no_network_access_in_flash_path(tmp_path, monkeypatch) -> None:
+    """Flashing must not make any network requests."""
+    monkeypatch.setattr(
+        "shutil.which",
+        lambda name: "/usr/bin/esptool.py" if name == "esptool.py" else None,
+    )
+    cache_dir = _make_cache(tmp_path, with_current=True)
+    runner = _FakeRunner()
+    mgr = EspFlashManager(
+        runner=runner,
+        port_provider=_FakePorts([SerialPortInfo(port="/dev/ttyUSB0", description="USB UART")]),
+        firmware_cache=FirmwareCache(FirmwareCacheConfig(cache_dir=str(cache_dir))),
+    )
+
+    # Monkeypatch urlopen to fail if called
+    import vibesensor.firmware_cache as fc_mod
+
+    def _block_network(*args, **kwargs):
+        raise AssertionError("Network access during flashing is not allowed")
+
+    monkeypatch.setattr(fc_mod, "urlopen", _block_network)
+
+    mgr.start(port=None, auto_detect=True)
+    assert mgr._task is not None
+    await mgr._task
+    assert mgr.status.state.value == "success"
