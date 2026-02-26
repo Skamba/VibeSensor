@@ -24,6 +24,10 @@ LOGGER = logging.getLogger(__name__)
 # deduplication.  Bounds memory while covering the largest realistic
 # retransmit / out-of-order window on a local Wi-Fi link.
 _DEDUP_WINDOW = 128
+# Maximum backward distance (last_seq − incoming seq) that still looks
+# like a genuine retransmit / UDP duplicate.  Anything beyond this is
+# treated as a client restart so that the dedup window is cleared.
+_DEDUP_RESTART_GAP = 4
 
 
 def _sanitize_name(name: str) -> str:
@@ -189,8 +193,20 @@ class ClientRegistry:
 
             # --- Deduplication check ---
             if data_msg.seq in record._seen_seqs:
-                record.duplicates_received += 1
-                return DataUpdateResult(is_duplicate=True)
+                # Distinguish genuine retransmit from client restart.
+                # A retransmit has seq close to last_seq (backward ≤ gap).
+                # A restart reuses low seq numbers while last_seq is higher.
+                backward = (
+                    (record.last_seq - data_msg.seq)
+                    if record.last_seq is not None and record.last_seq > data_msg.seq
+                    else 0
+                )
+                if backward <= _DEDUP_RESTART_GAP:
+                    record.duplicates_received += 1
+                    return DataUpdateResult(is_duplicate=True)
+                # Likely client restart — clear dedup window and accept.
+                record._seen_seqs.clear()
+                record._seen_seqs_max = -1
 
             record._seen_seqs.add(data_msg.seq)
             if data_msg.seq > record._seen_seqs_max:
