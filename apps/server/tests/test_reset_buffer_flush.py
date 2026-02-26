@@ -11,7 +11,7 @@ import pytest
 
 from vibesensor.processing import SignalProcessor
 from vibesensor.protocol import DataMessage, pack_data
-from vibesensor.registry import ClientRegistry, HelloMessage
+from vibesensor.registry import ClientRegistry, DataUpdateResult, HelloMessage
 from vibesensor.udp_data_rx import DataDatagramProtocol
 
 # ---------------------------------------------------------------------------
@@ -150,7 +150,7 @@ def test_registry_update_from_data_returns_true_on_reset(tmp_path) -> None:
         ("10.4.0.2", 50000),
         now=2.0,
     )
-    assert result1 is False
+    assert result1.reset_detected is False
 
     # Second data message with large backward seq jump — reset
     result2 = registry.update_from_data(
@@ -164,7 +164,7 @@ def test_registry_update_from_data_returns_true_on_reset(tmp_path) -> None:
         ("10.4.0.2", 50000),
         now=3.0,
     )
-    assert result2 is True
+    assert result2.reset_detected is True
 
 
 def test_registry_update_from_data_returns_false_on_normal_seq(tmp_path) -> None:
@@ -193,8 +193,8 @@ def test_registry_update_from_data_returns_false_on_normal_seq(tmp_path) -> None
         ("10.4.0.2", 50000),
         now=3.0,
     )
-    assert r1 is False
-    assert r2 is False
+    assert r1.reset_detected is False
+    assert r2.reset_detected is False
 
 
 # ---------------------------------------------------------------------------
@@ -217,7 +217,10 @@ async def test_udp_handler_flushes_buffer_on_sensor_reset() -> None:
     processor = Mock()
 
     # First call: normal (no reset), second call: reset detected
-    registry.update_from_data.side_effect = [False, True]
+    registry.update_from_data.side_effect = [
+        DataUpdateResult(),
+        DataUpdateResult(reset_detected=True),
+    ]
     registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
 
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
@@ -248,7 +251,7 @@ async def test_udp_handler_no_flush_on_normal_data() -> None:
     """No buffer flush when there is no reset."""
     registry = Mock()
     processor = Mock()
-    registry.update_from_data.return_value = False
+    registry.update_from_data.return_value = DataUpdateResult()
     registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
 
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)

@@ -20,6 +20,15 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+# Maximum number of recent sequence numbers tracked per client for
+# deduplication.  Bounds memory while covering the largest realistic
+# retransmit / out-of-order window on a local Wi-Fi link.
+_DEDUP_WINDOW = 128
+# Maximum backward distance (last_seq − incoming seq) that still looks
+# like a genuine retransmit / UDP duplicate.  Anything beyond this is
+# treated as a client restart so that the dedup window is cleared.
+_DEDUP_RESTART_GAP = 4
+
 
 def _sanitize_name(name: str) -> str:
     # Strip control characters (U+0000–U+001F, U+007F) except common whitespace
@@ -32,6 +41,14 @@ def _sanitize_name(name: str) -> str:
 
 def _normalize_client_id(client_id: str) -> str:
     return parse_client_id(client_id).hex()
+
+
+@dataclass(slots=True)
+class DataUpdateResult:
+    """Return value of :meth:`ClientRegistry.update_from_data`."""
+
+    reset_detected: bool = False
+    is_duplicate: bool = False
 
 
 @dataclass(slots=True)
@@ -60,6 +77,9 @@ class ClientRecord:
     timing_jitter_us_ema: float = 0.0
     timing_drift_us_total: float = 0.0
     latest_metrics: dict[str, Any] = field(default_factory=dict)
+    duplicates_received: int = 0
+    _seen_seqs: set[int] = field(default_factory=set)
+    _seen_seqs_max: int = -1
 
 
 class ClientRegistry:
@@ -150,16 +170,23 @@ class ClientRegistry:
                 if advertised:
                     record.name = advertised
 
+    @staticmethod
+    def _clear_dedup(record: ClientRecord) -> None:
+        """Reset the per-client dedup window (e.g. on restart or hard reset)."""
+        record._seen_seqs.clear()
+        record._seen_seqs_max = -1
+
     def update_from_data(
         self,
         data_msg: DataMessage,
         addr: tuple[str, int],
         now: float | None = None,
-    ) -> bool:
+    ) -> DataUpdateResult:
         """Update bookkeeping from a DATA message.
 
-        Returns ``True`` when a sensor reset was detected (sequence-number
-        wraparound), so that calling code can flush downstream buffers.
+        Returns a :class:`DataUpdateResult` indicating whether a sensor reset
+        was detected and whether this message is a duplicate retransmit.
+        Duplicates are tracked but do not inflate counters or timing metrics.
         """
         with self._lock:
             now_ts = self._resolve_now_wall(now)
@@ -169,6 +196,36 @@ class ClientRegistry:
             record.last_seen = now_ts
             record.last_seen_mono = now_mono
             record.data_addr = (addr[0], addr[1])
+
+            # --- Deduplication check ---
+            if data_msg.seq in record._seen_seqs:
+                # Distinguish genuine retransmit from client restart.
+                # A retransmit has seq close to last_seq (backward ≤ gap).
+                # A restart reuses low seq numbers while last_seq is higher.
+                # Note: backward=0 covers same-seq retransmit (last_seq ==
+                # data_msg.seq) and forward duplicates — both are genuine dups.
+                # Wraparound is not handled; 32-bit seq wraps after ~4 billion
+                # frames which far exceeds any realistic session.
+                backward = (
+                    (record.last_seq - data_msg.seq)
+                    if record.last_seq is not None and record.last_seq > data_msg.seq
+                    else 0
+                )
+                if backward <= _DEDUP_RESTART_GAP:
+                    record.duplicates_received += 1
+                    return DataUpdateResult(is_duplicate=True)
+                # Likely client restart — clear dedup window and accept.
+                self._clear_dedup(record)
+
+            record._seen_seqs.add(data_msg.seq)
+            if data_msg.seq > record._seen_seqs_max:
+                record._seen_seqs_max = data_msg.seq
+            # Prune old entries to keep the window bounded.
+            if len(record._seen_seqs) > _DEDUP_WINDOW:
+                cutoff = record._seen_seqs_max - _DEDUP_WINDOW + 1
+                record._seen_seqs = {s for s in record._seen_seqs if s >= cutoff}
+
+            # --- Normal (non-duplicate) processing ---
             record.frames_total += 1
             reset_detected = False
             if (
@@ -194,6 +251,9 @@ class ClientRegistry:
                     record.last_t0_us = None
                     record.timing_jitter_us_ema = 0.0
                     record.timing_drift_us_total = 0.0
+                    record._seen_seqs.clear()
+                    record._seen_seqs.add(data_msg.seq)
+                    record._seen_seqs_max = data_msg.seq
                     reset_detected = True
                 else:
                     expected = (record.last_seq + 1) & 0xFFFFFFFF
@@ -203,7 +263,7 @@ class ClientRegistry:
                             record.frames_dropped += gap
             record.last_seq = data_msg.seq
             record.last_t0_us = data_msg.t0_us
-            return reset_detected
+            return DataUpdateResult(reset_detected=reset_detected)
 
     def update_from_ack(self, ack: AckMessage, now: float | None = None) -> None:
         with self._lock:
@@ -379,6 +439,7 @@ class ClientRegistry:
                             "control_addr": None,
                             "frames_total": 0,
                             "dropped_frames": 0,
+                            "duplicates_received": 0,
                             "queue_overflow_drops": 0,
                             "parse_errors": 0,
                             "server_queue_drops": 0,
@@ -413,6 +474,7 @@ class ClientRegistry:
                         "control_addr": record.control_addr,
                         "frames_total": record.frames_total,
                         "dropped_frames": record.frames_dropped,
+                        "duplicates_received": record.duplicates_received,
                         "queue_overflow_drops": record.queue_overflow_drops,
                         "parse_errors": record.parse_errors,
                         "server_queue_drops": record.server_queue_drops,

@@ -18,6 +18,14 @@ void test_frame_samples_zero_uses_safe_minimum() {
   TEST_ASSERT_EQUAL_UINT16(1, clamped);
 }
 
+void test_frame_samples_clamped_for_mtu_safe_payload() {
+  // MTU-safe default: 1472 bytes payload (1500 MTU − 20 IP − 8 UDP).
+  // Real protocol header is 22 bytes; (1472 − 22) / 6 = 241 max samples.
+  const uint16_t clamped =
+      vibesensor::reliability::clamp_frame_samples(500, 1472, 22);
+  TEST_ASSERT_EQUAL_UINT16(241, clamped);
+}
+
 void test_retry_backoff_grows_and_caps_with_jitter() {
   const uint32_t base = 4000;
   const uint32_t cap = 60000;
@@ -50,6 +58,7 @@ int main() {
   UNITY_BEGIN();
   RUN_TEST(test_frame_samples_are_clamped_to_datagram_limit);
   RUN_TEST(test_frame_samples_zero_uses_safe_minimum);
+  RUN_TEST(test_frame_samples_clamped_for_mtu_safe_payload);
   RUN_TEST(test_retry_backoff_grows_and_caps_with_jitter);
   RUN_TEST(test_fault_injection_repeated_failures_keep_retry_bounded);
   return UNITY_END();
