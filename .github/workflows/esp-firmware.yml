@@ -123,9 +123,15 @@ jobs:
             mkdir -p "${target_dir}"
 
             cp "${env_dir}/firmware.bin" "${target_dir}/firmware.bin"
-            [ -f "${env_dir}/bootloader.bin" ] && cp "${env_dir}/bootloader.bin" "${target_dir}/bootloader.bin"
-            [ -f "${env_dir}/partitions.bin" ] && cp "${env_dir}/partitions.bin" "${target_dir}/partitions.bin"
-            [ -f "${env_dir}/boot_app0.bin" ] && cp "${env_dir}/boot_app0.bin" "${target_dir}/boot_app0.bin"
+            if [ -f "${env_dir}/bootloader.bin" ]; then
+              cp "${env_dir}/bootloader.bin" "${target_dir}/bootloader.bin"
+            fi
+            if [ -f "${env_dir}/partitions.bin" ]; then
+              cp "${env_dir}/partitions.bin" "${target_dir}/partitions.bin"
+            fi
+            if [ -f "${env_dir}/boot_app0.bin" ]; then
+              cp "${env_dir}/boot_app0.bin" "${target_dir}/boot_app0.bin"
+            fi
           done
 
       - name: Generate flash manifest
