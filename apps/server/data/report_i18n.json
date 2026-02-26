@@ -17,7 +17,7 @@
   },
   "AMPLITUDE_VS_TIME": {
     "en": "Vibration amplitude vs time",
-    "nl": "Trillingsamplitude vs tijd"
+    "nl": "Trillingsamplitude versus tijd"
   },
   "AXIS": {
     "en": "Axis",
@@ -81,7 +81,7 @@
   },
   "DOMINANT_FREQ_VS_TIME": {
     "en": "Dominant frequency vs time",
-    "nl": "Dominante frequentie vs tijd"
+    "nl": "Dominante frequentie versus tijd"
   },
   "DOMINANT_PEAK_AMPLITUDE": {
     "en": "Dominant peak amplitude",
@@ -97,7 +97,7 @@
   },
   "DURATION_DURATION_1F_S": {
     "en": "Duration: {duration:.1f}s",
-    "nl": "Duur: {duration:.1f}s"
+    "nl": "Duur: {duration:.1f} s"
   },
   "ENGINE_ORDER_CHECKS_BECOME_AVAILABLE_WITH_ADEQUATE_RPM": {
     "en": "Engine-order checks become available with adequate RPM coverage.",
@@ -113,7 +113,7 @@
   },
   "ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON": {
     "en": "Engine speed reference coverage is {engine_rpm_non_null_pct:.1f}%, which is insufficient for engine-order matching.",
-    "nl": "Dekking van motor-snelheidsreferentie is {engine_rpm_non_null_pct:.1f}%, wat onvoldoende is voor motororde-matching."
+    "nl": "Dekking van de motorsnelheidsreferentie is {engine_rpm_non_null_pct:.1f}%, wat onvoldoende is voor motororde-vergelijking."
   },
   "ESTIMATED_TIME": {
     "en": "Estimated Time",
@@ -157,11 +157,11 @@
   },
   "FREQUENCY_TRACKS_ENGINE_ORDER_USING_REF_LABEL_BEST": {
     "en": "Frequency tracks engine order using {ref_label} (best match {best_order}x, mean abs order error {best_error:.3f}).",
-    "nl": "Frequentie volgt motororde met {ref_label} (beste match {best_order}x, gemiddelde absolute orde-fout {best_error:.3f})."
+    "nl": "Frequentie volgt motororde met {ref_label} (beste match {best_order}x, gemiddelde absolute ordefout {best_error:.3f})."
   },
   "FREQUENCY_TRACKS_WHEEL_ORDER_USING_VEHICLE_SPEED_AND": {
     "en": "Frequency tracks wheel order using vehicle speed and {tire_ref_note} (best match {best_order}x, mean abs order error {best_error:.3f}).",
-    "nl": "Frequentie volgt wielorde met voertuigsnelheid en {tire_ref_note} (beste match {best_order}x, gemiddelde absolute orde-fout {best_error:.3f})."
+    "nl": "Frequentie volgt wielorde met voertuigsnelheid en {tire_ref_note} (beste match {best_order}x, gemiddelde absolute ordefout {best_error:.3f})."
   },
   "GENERATED_GENERATED": {
     "en": "Generated: {generated}",
@@ -213,7 +213,7 @@
   },
   "KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED": {
     "en": "Keep timestamp base shared with accelerometer and speed records.",
-    "nl": "Gebruik dezelfde tijdstempelbasis voor versnellings- en snelheidsrecords."
+    "nl": "Gebruik dezelfde tijdstempelbasis voor versnellings- en snelheidsmetingen."
   },
   "LARGEST_SINGLE_SIDED_FFT_PEAK_AMPLITUDE_ACROSS_AXES": {
     "en": "largest single-sided FFT peak amplitude across axes from the dominant frequency cluster",
@@ -261,7 +261,7 @@
   },
   "MEASURED_RPM_BASED_ORDER_MATCHING_DISAGREES_WITH_DERIVED": {
     "en": "Measured RPM-based order matching disagrees with derived reference.",
-    "nl": "Gemeten toerentalgebaseerde orde-matching wijkt af van afgeleide referentie."
+    "nl": "Gemeten op toerental gebaseerde ordevergelijking wijkt af van afgeleide referentie."
   },
   "MEASURED_TIRE_CIRCUMFERENCE": {
     "en": "measured tire circumference",
@@ -345,7 +345,7 @@
   },
   "ORDER_MATCH_DEGRADES_WHEN_USING_MEASURED_TIRE_CIRCUMFERENCE": {
     "en": "Order match degrades when using measured tire circumference.",
-    "nl": "Orde-match verslechtert bij gebruik van gemeten bandenomtrek."
+    "nl": "Orde-overeenkomst verslechtert bij gebruik van gemeten bandenomtrek."
   },
   "OVERALL_STATUS": {
     "en": "Overall status",
@@ -369,7 +369,7 @@
   },
   "PEAK_DOES_NOT_TRACK_RPM_DURING_STEADY_STATE": {
     "en": "Peak does not track RPM during steady-state sweep.",
-    "nl": "Piek volgt toerental niet tijdens stationaire sweep."
+    "nl": "Piek volgt toerental niet tijdens stationair toerentalbereik."
   },
   "PEAK_FOLLOWS_WHEEL_SPEED_INSTEAD_OF_ENGINE_SPEED": {
     "en": "Peak follows wheel speed instead of engine speed.",
@@ -377,7 +377,7 @@
   },
   "PEAK_FREQUENCY_SHIFTS_RANDOMLY_WITH_NO_REPEATABLE_OPERATING": {
     "en": "Peak frequency shifts randomly with no repeatable operating condition.",
-    "nl": "Piekfrequentie verschuift willekeurig zonder herhaalbare bedrijfsconditie."
+    "nl": "Piekfrequentie verschuift willekeurig zonder herhaalbare bedrijfsomstandigheid."
   },
   "PEAK_VANISHES_WHEN_SENSOR_IS_MOVED_OFF_THE": {
     "en": "Peak vanishes when sensor is moved off the suspected path.",
@@ -421,7 +421,7 @@
   },
   "RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR": {
     "en": "Record vehicle speed for most samples (GPS or CAN source).",
-    "nl": "Leg voertuigsnelheid vast voor de meeste samples (GPS- of CAN-bron)."
+    "nl": "Leg de voertuigsnelheid vast voor de meeste samples (GPS- of CAN-bron)."
   },
   "REFERENCE_AVAILABLE_DERIVED": {
     "en": "reference available (derived)",
@@ -465,7 +465,7 @@
   },
   "RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE": {
     "en": "Re-run with measured loaded tire circumference.",
-    "nl": "Herhaal met gemeten belaste bandenomtrek."
+    "nl": "Herhaal de meting met de gemeten belaste bandenomtrek."
   },
   "REPEAT_RUN_AFTER_CHECKING_SENSOR_MOUNTING_AND_ROUTING": {
     "en": "Repeat the run after checking sensor mounting and routing.",
@@ -513,7 +513,7 @@
   },
   "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND": {
     "en": "Speed data missing or insufficient; speed-binned and wheel-order analysis skipped.",
-    "nl": "Snelheidsdata ontbreken of zijn onvoldoende; snelheids-binning en wielorde-analyse zijn overgeslagen."
+    "nl": "Snelheidsdata ontbreken of zijn onvoldoende; snelheidsgroepering en wielorde-analyse zijn overgeslagen."
   },
   "SPEED_KM_H": {
     "en": "speed (km/h)",
@@ -569,7 +569,7 @@
   },
   "TAP_TEST_NEARBY_PANELS_SEATS_AND_COMPARE_RESONANCE": {
     "en": "Tap-test nearby panels/seats and compare resonance region.",
-    "nl": "Doe een tiktest op nabijgelegen panelen/stoelen en vergelijk resonantiegebied."
+    "nl": "Doe een tiktest op nabijgelegen panelen/stoelen en vergelijk het resonantiegebied."
   },
   "THIS_MOST_STRONGLY_INDICATES_A_FAULT_NEAR_THE": {
     "en": " This most strongly indicates a fault near the {strongest_location} location.",
@@ -657,7 +657,7 @@
   },
   "STATUS_REFERENCE_GAPS": {
     "en": "Reference gaps detected. Complete reference inputs before final diagnosis.",
-    "nl": "Ontbrekende referenties gedetecteerd. Vul eerst alle referentiegegevens aan voor een einddiagnose."
+    "nl": "Ontbrekende referenties gedetecteerd. Vul eerst alle referentiedata aan voor een definitieve diagnose."
   },
   "STATUS_ACTIONABLE_HIGH_CONFIDENCE": {
     "en": "Actionable finding detected with high confidence.",
@@ -737,7 +737,7 @@
   },
   "CHART_INTERPRETATION_SWEEP": {
     "en": "Charts show how vibration amplitude and frequency track with vehicle speed. A clear rising pattern confirms speed-dependent excitation.",
-    "nl": "Grafieken tonen hoe trillingsamplitude en frequentie meebewegen met voertuigsnelheid. Een duidelijk stijgend patroon bevestigt snelheidsafhankelijke aanstoting."
+    "nl": "Grafieken tonen hoe trillingsamplitude en frequentie meebewegen met voertuigsnelheid. Een duidelijk stijgend patroon bevestigt snelheidsafhankelijke excitatie."
   },
   "CHART_INTERPRETATION_STEADY": {
     "en": "Charts show vibration amplitude and dominant frequency over time at near-constant speed. Consistent patterns indicate a repeatable source.",
@@ -793,7 +793,7 @@
   },
   "SPEED_COVERAGE_LINE": {
     "en": "Speed coverage: non-null={non_null_pct}% | min={min_kmh} km/h | max={max_kmh} km/h.",
-    "nl": "Snelheidsdekking: niet-null={non_null_pct}% | min={min_kmh} km/u | max={max_kmh} km/u."
+    "nl": "Snelheidsdekking: beschikbaar={non_null_pct}% | min={min_kmh} km/u | max={max_kmh} km/u."
   },
   "SATURATION_CHECKS_LINE": {
     "en": "Saturation checks: limit={limit} g | count={count}.",
@@ -881,7 +881,7 @@
   },
   "CONSEQUENCE_QUALITY_METRIC_UNAVAILABLE": {
     "en": "quality metric unavailable",
-    "nl": "kwaliteitsmeting niet beschikbaar"
+    "nl": "kwaliteitsmeetwaarde niet beschikbaar"
   },
   "CONSEQUENCE_SPEED_BINS_UNAVAILABLE": {
     "en": "speed bins unavailable",
@@ -957,7 +957,7 @@
   },
   "VALIDATE_GEARING_SLIP_ASSUMPTIONS_AGAINST_REAL_RPM_IF": {
     "en": "Validate gearing/slip assumptions against real RPM if available.",
-    "nl": "Valideer aannames over versnelling/slip met echt toerental indien beschikbaar."
+    "nl": "Controleer aannames over versnelling/slip met echt toerental indien beschikbaar."
   },
   "VARIANCE_G_2": {
     "en": "Variance (g^2)",
@@ -973,7 +973,7 @@
   },
   "VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM": {
     "en": "Verify timestamp alignment between speed and acceleration streams.",
-    "nl": "Controleer tijdstempeluitlijning tussen snelheid- en versnellingsstromen."
+    "nl": "Controleer tijdstempeluitlijning tussen snelheids- en versnellingsstromen."
   },
   "VIBESENSOR_NVH_REPORT": {
     "en": "VibeSensor NVH Report",
@@ -1029,7 +1029,7 @@
   },
   "PATTERN_SUGGESTION_DISCLAIMER": {
     "en": "Pattern-based suggestion only — this is not a definitive diagnosis.",
-    "nl": "Alleen patroongebaseerde suggestie — dit is geen definitieve diagnose."
+    "nl": "Alleen een patroongebaseerde suggestie — dit is geen definitieve diagnose."
   },
   "PRESENCE": {
     "en": "presence",
@@ -1153,11 +1153,11 @@
   },
   "UNKNOWN_SPEED_BAND": {
     "en": "unknown band",
-    "nl": "onbekende band"
+    "nl": "onbekend snelheidsbereik"
   },
   "ORIGIN_EXPLANATION_FINDING_1": {
     "en": "Based on Finding 1 ({source}) matched samples in {speed_band}, strongest at {location}, dominance {dominance}.",
-    "nl": "Gebaseerd op Bevinding 1 ({source}) met gematchte samples in {speed_band}, sterkst bij {location}, dominantie {dominance}."
+    "nl": "Gebaseerd op Bevinding 1 ({source}) met overeenkomende samples in {speed_band}, sterkst bij {location}, dominantie {dominance}."
   },
   "NOT_APPLICABLE_SHORT": {
     "en": "n/a",
@@ -1169,7 +1169,7 @@
   },
   "ORIGIN_PHASE_ONSET_NOTE": {
     "en": "Vibration onset consistent with {phase} phase.",
-    "nl": "Trillingsaanvang consistent met {phase} fase."
+    "nl": "Trillingsaanvang consistent met de {phase}fase."
   },
   "DRIVING_PHASE_ACCELERATION": {
     "en": "acceleration",
@@ -1189,11 +1189,11 @@
   },
   "SUITABILITY_SPEED_VARIATION_PASS": {
     "en": "Wide enough speed sweep for order tracking.",
-    "nl": "Snelheidssweep is breed genoeg voor orde-tracking."
+    "nl": "Snelheidsbereik is breed genoeg voor ordetracking."
   },
   "SUITABILITY_SPEED_VARIATION_WARN": {
     "en": "Speed sweep is narrow; repeat with +20 to +30 km/h span.",
-    "nl": "Snelheidssweep is smal; herhaal met +20 tot +30 km/u bereik."
+    "nl": "Snelheidsbereik is te smal; herhaal met +20 tot +30 km/u extra bereik."
   },
   "SUITABILITY_CHECK_SENSOR_COVERAGE": {
     "en": "Sensor coverage",
@@ -1329,7 +1329,7 @@
   },
   "ACTION_WHEEL_BALANCE_WHY": {
     "en": "{location_hint} wheel-order signatures are most likely caused by imbalance, runout, or tire deformation.",
-    "nl": "{location_hint} wielorde-signaturen komen meestal door onbalans, slingering of banddeformatie."
+    "nl": "{location_hint} wielorde-signaturen worden meestal veroorzaakt door onbalans, slingering of banddeformatie."
   },
   "ACTION_WHEEL_BALANCE_CONFIRM": {
     "en": "A clear imbalance or runout is found and corrected, with vibration complaint reduced.",
@@ -1337,7 +1337,7 @@
   },
   "ACTION_WHEEL_BALANCE_FALSIFY": {
     "en": "Balance and runout are within spec on all checked wheels/tires and complaint remains unchanged.",
-    "nl": "Balans en slingering zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft gelijk."
+    "nl": "Balans en slingering zijn binnen specificatie op alle gecontroleerde wielen/banden en de klacht blijft ongewijzigd."
   },
   "ACTION_TIRE_CONDITION_WHAT": {
     "en": "Inspect {wheel_focus} for tire defects: flat spots, belt shift, uneven wear, pressure mismatch.",
@@ -1349,7 +1349,7 @@
   },
   "ACTION_TIRE_CONDITION_CONFIRM": {
     "en": "Visible/measureable tire defect aligns with complaint speed band.",
-    "nl": "Zichtbaar/meetbaar banddefect sluit aan op de klachten-snelheidsband."
+    "nl": "Zichtbaar/meetbaar banddefect sluit aan op de klachtsnelheidsband."
   },
   "ACTION_TIRE_CONDITION_FALSIFY": {
     "en": "No tire condition anomaly is found on inspected wheels.",
@@ -1377,7 +1377,7 @@
   },
   "ACTION_DRIVELINE_INSPECTION_FALSIFY": {
     "en": "No driveline play/runout/balance issue is found.",
-    "nl": "Er wordt geen aandrijflijn-issue in speling/slingering/balans gevonden."
+    "nl": "Er wordt geen aandrijflijnprobleem met speling, slingering of balans gevonden."
   },
   "ACTION_DRIVELINE_MOUNTS_WHAT": {
     "en": "Check driveline mounts and fastening torque (diff mounts, shaft couplings, carrier brackets).",
@@ -1413,7 +1413,7 @@
   },
   "ACTION_ENGINE_COMBUSTION_WHAT": {
     "en": "Check misfire counters and fuel/ignition adaptation for cylinders contributing to roughness.",
-    "nl": "Controleer misfire-tellers en brandstof/ontsteking-adaptaties op cilinders die ruwloop veroorzaken."
+    "nl": "Controleer misfire-tellers en brandstof-/ontstekingsadaptaties op cilinders die ruwloop veroorzaken."
   },
   "ACTION_ENGINE_COMBUSTION_WHY": {
     "en": "Combustion imbalance can create engine-order vibration without obvious mechanical noise.",
@@ -1425,7 +1425,7 @@
   },
   "ACTION_ENGINE_COMBUSTION_FALSIFY": {
     "en": "Combustion quality indicators are stable and balanced.",
-    "nl": "Verbrandingskwaliteits-indicatoren zijn stabiel en gebalanceerd."
+    "nl": "Verbrandingskwaliteitsindicatoren zijn stabiel en gebalanceerd."
   },
   "ACTION_GENERAL_FALLBACK_WHY": {
     "en": "Use direct mechanical checks first because source classification is not specific enough yet.",
@@ -1449,7 +1449,7 @@
   },
   "EVIDENCE_ORDER_TRACKED": {
     "en": "{order_label} tracked over {matched}/{possible} samples (match rate {match_rate:.0%}, mean relative error {mean_rel_err:.3f}, reference {ref_text}).",
-    "nl": "{order_label} gevolgd over {matched}/{possible} samples (trefferratio {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, referentie {ref_text})."
+    "nl": "{order_label} gevolgd over {matched}/{possible} samples (trefkans {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, referentie {ref_text})."
   },
   "METRIC_MEAN_MATCHED_PEAK_AMPLITUDE": {
     "en": "Mean matched peak amplitude from the combined FFT spectrum.",
@@ -1457,7 +1457,7 @@
   },
   "NEXT_SENSOR_MOVE_DEFAULT": {
     "en": "Inspect the highest-ranked hotspot path first.",
-    "nl": "Controleer eerst het hoogste hotspot-pad."
+    "nl": "Controleer eerst het pad met de hoogste piekwaarde."
   },
   "EVIDENCE_PEAK_PRESENT": {
     "en": "{freq:.1f} Hz peak present in {pct:.0%} of samples (p95 amplitude {p95:.4f} {units}, burstiness {burst:.1f}×, classification: {cls}).",
@@ -1481,7 +1481,7 @@
   },
   "TIER_A_CAPTURE_WIDER_SPEED": {
     "en": "Repeat the run with a broader speed sweep (e.g. 30-120 km/h) to improve pattern tracking.",
-    "nl": "Herhaal de run met een bredere snelheidsvariatie (bijv. 30-120 km/u) om patroontracking te verbeteren."
+    "nl": "Herhaal de run met een bredere snelheidsvariatie (bijv. 30-120 km/u) om patroonherkenning te verbeteren."
   },
   "TIER_A_CAPTURE_MORE_SENSORS": {
     "en": "Add sensor locations (e.g. near each wheel, engine bay) to improve spatial separation.",
