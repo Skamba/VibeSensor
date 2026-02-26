@@ -76,3 +76,31 @@ def test_dutch_translation_corrections() -> None:
         report_i18n.tr("nl", "ENGINE_ORDER_CHECKS_BECOME_AVAILABLE_WITH_ADEQUATE_RPM")
         == "Motororde-controles komen beschikbaar bij voldoende toerentaldekking."
     )
+
+
+def test_dutch_translation_audit_round_2() -> None:
+    """Verify Dutch translation improvements from the second audit round."""
+    # Anglicism fixes: "Top" → natural Dutch
+    assert report_i18n.tr("nl", "TOP_ACTIONS") == "Belangrijkste acties"
+    assert report_i18n.tr("nl", "TOP_SUSPECTED_CAUSE") == "Meest waarschijnlijke oorzaak"
+    # Natural phrasing
+    assert report_i18n.tr("nl", "WHAT_TO_CHECK_FIRST") == "Wat eerst controleren"
+    assert report_i18n.tr("nl", "RUN_CONDITIONS") == "Meetcondities"
+    # Accurate translation of "Confidence"
+    assert report_i18n.tr("nl", "CONFIDENCE_LABEL") == "Betrouwbaarheid"
+    # Consistency with UI term
+    assert report_i18n.tr("nl", "FINAL_DRIVE_RATIO_LABEL") == "Eindoverbrenging"
+    # Correct plural "orden" (not "ordes")
+    assert "hogere orden" in report_i18n.tr(
+        "nl", "CHECK_DRIVESHAFT_RUNOUT_AND_JOINT_CONDITION_FOR_HIGHER"
+    )
+    # Correct compound "ordereferenties" (not "ordesreferenties")
+    assert "ordereferenties" in report_i18n.tr("nl", "SUITABILITY_REFERENCE_COMPLETENESS_PASS")
+    assert "ordereferenties" in report_i18n.tr("nl", "SUITABILITY_REFERENCE_COMPLETENESS_WARN")
+    # Consistent "data" terminology (not mixed "gegevens")
+    assert "locatiedata" in report_i18n.tr("nl", "NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND")
+    assert "aanvullende data" in report_i18n.tr("nl", "NO_NEXT_STEPS")
+    assert report_i18n.tr("nl", "METRIC_LABEL") == "Meetwaarde"
+    assert "Snelheidsdata" in report_i18n.tr(
+        "nl", "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
+    )
