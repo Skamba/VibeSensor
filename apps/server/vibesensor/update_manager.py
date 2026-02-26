@@ -46,6 +46,7 @@ NMCLI_TIMEOUT_S = 30
 
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
 UPLINK_CONNECT_WAIT_S = 30
+UPLINK_FALLBACK_DNS = "1.1.1.1,1.0.0.1"
 
 DEFAULT_GIT_REMOTE = "https://github.com/Skamba/VibeSensor.git"
 DEFAULT_GIT_BRANCH = "main"
@@ -575,29 +576,47 @@ class UpdateManager:
                     return
 
         # Clean up any previous uplink
-        await self._run_cmd(
-            ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
+        rc, stdout, _ = await self._run_cmd(
+            ["nmcli", "-t", "-f", "UUID,NAME", "connection", "show"],
             phase="connecting_wifi",
             sudo=True,
         )
+        existing_uplink_uuids: list[str] = []
+        if rc == 0 and stdout:
+            for line in stdout.splitlines():
+                if not line:
+                    continue
+                uuid, _, name = line.partition(":")
+                if name == UPLINK_CONNECTION_NAME and uuid:
+                    existing_uplink_uuids.append(uuid)
+        for uuid in existing_uplink_uuids:
+            await self._run_cmd(
+                ["nmcli", "connection", "delete", "uuid", uuid],
+                phase="connecting_wifi",
+                sudo=True,
+            )
 
         # Create uplink connection
+        add_cmd = [
+            "nmcli",
+            "connection",
+            "add",
+            "type",
+            "wifi",
+            "ifname",
+            self._wifi_ifname,
+            "con-name",
+            UPLINK_CONNECTION_NAME,
+            "autoconnect",
+            "no",
+            "ssid",
+            ssid,
+        ]
+        if password:
+            add_cmd.extend(["wifi-sec.key-mgmt", "wpa-psk", "wifi-sec.psk", password])
+
         rc, _, stderr = await self._run_cmd(
-            [
-                "nmcli",
-                "connection",
-                "add",
-                "type",
-                "wifi",
-                "ifname",
-                self._wifi_ifname,
-                "con-name",
-                UPLINK_CONNECTION_NAME,
-                "autoconnect",
-                "no",
-                "ssid",
-                ssid,
-            ],
+            add_cmd,
             phase="connecting_wifi",
             sudo=True,
         )
@@ -606,33 +625,49 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
 
-        if password:
-            connect_cmd = [
+        rc, _, stderr = await self._run_cmd(
+            [
                 "nmcli",
-                "--wait",
-                str(UPLINK_CONNECT_WAIT_S),
-                "device",
-                "wifi",
-                "connect",
-                ssid,
-                "password",
-                password,
-                "ifname",
-                self._wifi_ifname,
-                "name",
+                "connection",
+                "modify",
                 UPLINK_CONNECTION_NAME,
-            ]
-            rc = 1
-            stderr = ""
-            for attempt in range(1, 4):
-                rc, _, stderr = await self._run_cmd(
-                    connect_cmd,
-                    phase="connecting_wifi",
-                    sudo=True,
-                    timeout=float(UPLINK_CONNECT_WAIT_S + 10),
-                )
-                if rc == 0:
-                    break
+                "autoconnect",
+                "no",
+                "ipv4.method",
+                "auto",
+                "ipv4.ignore-auto-dns",
+                "yes",
+                "ipv4.dns",
+                UPLINK_FALLBACK_DNS,
+                "ipv6.method",
+                "ignore",
+            ],
+            phase="connecting_wifi",
+            sudo=True,
+        )
+
+        if rc != 0:
+            self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
+            self._status.state = UpdateState.failed
+            return
+
+        rc = 1
+        stderr = ""
+        for attempt in range(1, 4):
+            rc, _, stderr = await self._run_cmd(
+                [
+                    "nmcli",
+                    "--wait",
+                    str(UPLINK_CONNECT_WAIT_S),
+                    "connection",
+                    "up",
+                    UPLINK_CONNECTION_NAME,
+                ],
+                phase="connecting_wifi",
+                sudo=True,
+                timeout=float(UPLINK_CONNECT_WAIT_S + 10),
+            )
+            if rc != 0:
                 if "No network with SSID" not in (stderr or ""):
                     break
                 self._log(
@@ -657,65 +692,15 @@ class UpdateManager:
                     sudo=True,
                 )
                 await asyncio.sleep(2.0)
-            if rc == 0:
-                await self._run_cmd(
-                    [
-                        "nmcli",
-                        "connection",
-                        "modify",
-                        UPLINK_CONNECTION_NAME,
-                        "autoconnect",
-                        "no",
-                        "ipv4.method",
-                        "auto",
-                        "ipv6.method",
-                        "ignore",
-                    ],
-                    phase="connecting_wifi",
-                    sudo=True,
-                )
-        else:
-            rc, _, stderr = await self._run_cmd(
-                [
-                    "nmcli",
-                    "connection",
-                    "modify",
-                    UPLINK_CONNECTION_NAME,
-                    "ipv4.method",
-                    "auto",
-                    "ipv6.method",
-                    "ignore",
-                ],
-                phase="connecting_wifi",
-                sudo=True,
-            )
+                continue
+            break
 
         if rc != 0:
-            self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
+            self._add_issue("connecting_wifi", f"Failed to connect to Wi-Fi '{ssid}'", stderr)
             self._status.state = UpdateState.failed
             return
 
-        if not password:
-            # Open-network flow uses explicit connection activation after profile setup.
-            rc, _, stderr = await self._run_cmd(
-                [
-                    "nmcli",
-                    "--wait",
-                    str(UPLINK_CONNECT_WAIT_S),
-                    "connection",
-                    "up",
-                    UPLINK_CONNECTION_NAME,
-                ],
-                phase="connecting_wifi",
-                sudo=True,
-                timeout=float(UPLINK_CONNECT_WAIT_S + 10),
-            )
-            if rc != 0:
-                self._add_issue("connecting_wifi", f"Failed to connect to Wi-Fi '{ssid}'", stderr)
-                self._status.state = UpdateState.failed
-                return
-
-        self._log("Wi-Fi connected successfully")
+        self._log(f"Wi-Fi connected successfully (client DNS fallback={UPLINK_FALLBACK_DNS})")
 
         if self._cancel_event.is_set():
             return
