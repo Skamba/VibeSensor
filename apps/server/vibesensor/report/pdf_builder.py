@@ -480,7 +480,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
             W - 8 * mm,
             tr("INSUFFICIENT_CONFIDENCE_TITLE"),
             size=FS_BODY,
-            color=_hex("#c0392b"),
+            color="#c0392b",
         )
 
     # Disclaimer at bottom of observed panel
@@ -504,10 +504,12 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
 
     if data.certainty_tier_key == "A" or not cards:
         # Tier A or empty: show neutral message instead of system cards
-        c.setFillColor(_hex(SUB_CLR))
-        c.setFont(FONT, FS_BODY)
-        msg = tr("TIER_A_NO_SYSTEMS") if data.certainty_tier_key == "A" else tr("NO_SYSTEMS_WITH_FINDINGS")
-        _draw_text(c, inner_x, inner_top, inner_w, msg, size=FS_BODY, color=_hex(SUB_CLR))
+        msg = (
+            tr("TIER_A_NO_SYSTEMS")
+            if data.certainty_tier_key == "A"
+            else tr("NO_SYSTEMS_WITH_FINDINGS")
+        )
+        _draw_text(c, inner_x, inner_top, inner_w, msg, size=FS_BODY, color=SUB_CLR)
     else:
         card_gap = 3 * mm
         card_w = (inner_w - card_gap * max(n_cards - 1, 1)) / max(n_cards, 1)
