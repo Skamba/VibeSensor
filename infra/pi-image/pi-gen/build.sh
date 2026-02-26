@@ -322,90 +322,45 @@ python3 -m venv /opt/VibeSensor/apps/server/.venv
   --no-build-isolation \
   -e /opt/VibeSensor/apps/server \
   --quiet
-install -d -o 1000 -g 1000 /home/pi/.platformio
-cat >/tmp/vibesensor-pio-preload.sh <<'PIO_PRELOAD_EOF'
+install -d -o 1000 -g 1000 /var/lib/vibesensor/firmware
+# Embed baseline ESP firmware bundle from the latest GitHub Release.
+# This enables first-boot flashing without running the updater.
+cat >/tmp/vibesensor-fw-baseline.sh <<'FW_BASELINE_EOF'
 #!/bin/bash
 set -euo pipefail
 
 VENV_PYTHON="/opt/VibeSensor/apps/server/.venv/bin/python"
-TOOLCHAIN_RELEASE="${ESP32_TOOLCHAIN_RELEASE:-esp-2021r2-patch5}"
-TOOLCHAIN_GCC_SERIES="${ESP32_TOOLCHAIN_GCC_SERIES:-gcc8_4_0}"
-TOOLCHAIN_PKG_DIR="${HOME}/.platformio/packages/toolchain-xtensa-esp32"
-TARGET_ARCH="$(dpkg --print-architecture)"
-TOOLCHAIN_ARCHIVE=""
+FW_CACHE_DIR="/var/lib/vibesensor/firmware"
 
-"${VENV_PYTHON}" -m platformio pkg install --global \
-  --platform espressif32 \
-  --tool platformio/tool-scons \
-  --tool platformio/framework-arduinoespressif32
+echo "Refreshing ESP firmware cache (embedding baseline)..."
+"${VENV_PYTHON}" -m vibesensor.firmware_cache refresh_cache_cli \
+  --cache-dir "${FW_CACHE_DIR}" 2>&1 || true
 
-case "${TARGET_ARCH}" in
-  armhf)
-    TOOLCHAIN_ARCHIVE="xtensa-esp32-elf-${TOOLCHAIN_GCC_SERIES}-${TOOLCHAIN_RELEASE}-linux-armhf.tar.gz"
-    ;;
-  arm64)
-    TOOLCHAIN_ARCHIVE="xtensa-esp32-elf-${TOOLCHAIN_GCC_SERIES}-${TOOLCHAIN_RELEASE}-linux-arm64.tar.gz"
-    ;;
-  *)
-    echo "Skipping ESP32 toolchain host override for unsupported arch: ${TARGET_ARCH}"
-    ;;
-esac
-
-if [ -n "${TOOLCHAIN_ARCHIVE}" ] && [ -d "${TOOLCHAIN_PKG_DIR}" ]; then
-  TOOLCHAIN_URL="https://github.com/espressif/crosstool-NG/releases/download/${TOOLCHAIN_RELEASE}/${TOOLCHAIN_ARCHIVE}"
-  TOOLCHAIN_TMP="/tmp/${TOOLCHAIN_ARCHIVE}"
-  TOOLCHAIN_BACKUP_DIR="/tmp/vibesensor-toolchain-backup"
-
-  python3 - "${TOOLCHAIN_URL}" "${TOOLCHAIN_TMP}" <<'PY'
-import pathlib
-import sys
-import urllib.request
-
-url = sys.argv[1]
-dest = pathlib.Path(sys.argv[2])
-with urllib.request.urlopen(url, timeout=180) as resp:
-    dest.write_bytes(resp.read())
-PY
-
-  rm -rf "${TOOLCHAIN_BACKUP_DIR}"
-  mkdir -p "${TOOLCHAIN_BACKUP_DIR}"
-  for meta in package.json .piopm installed.json; do
-    if [ -f "${TOOLCHAIN_PKG_DIR}/${meta}" ]; then
-      cp -f "${TOOLCHAIN_PKG_DIR}/${meta}" "${TOOLCHAIN_BACKUP_DIR}/${meta}"
-    fi
-  done
-  tar -xzf "${TOOLCHAIN_TMP}" -C "${TOOLCHAIN_PKG_DIR}" --strip-components=1
-  for meta in package.json .piopm installed.json; do
-    if [ -f "${TOOLCHAIN_BACKUP_DIR}/${meta}" ]; then
-      cp -f "${TOOLCHAIN_BACKUP_DIR}/${meta}" "${TOOLCHAIN_PKG_DIR}/${meta}"
-    fi
-  done
-  rm -f "${TOOLCHAIN_TMP}"
-  rm -rf "${TOOLCHAIN_BACKUP_DIR}"
+# If refresh succeeded, copy the downloaded cache as the baseline
+if [ -d "${FW_CACHE_DIR}/current" ] && [ -f "${FW_CACHE_DIR}/current/flash.json" ]; then
+  rm -rf "${FW_CACHE_DIR}/baseline"
+  cp -a "${FW_CACHE_DIR}/current" "${FW_CACHE_DIR}/baseline"
+  # Update source in baseline metadata
+  if [ -f "${FW_CACHE_DIR}/baseline/_meta.json" ]; then
+    "${VENV_PYTHON}" -c "
+import json, pathlib
+p = pathlib.Path('${FW_CACHE_DIR}/baseline/_meta.json')
+d = json.loads(p.read_text())
+d['source'] = 'baseline'
+p.write_text(json.dumps(d, indent=2) + '\n')
+"
+  fi
+  echo "Baseline firmware embedded successfully."
+else
+  echo "WARNING: Could not embed baseline firmware (no release found or network unavailable)."
+  echo "First-boot flashing will require running the updater while online."
 fi
-
-if [ -x "${TOOLCHAIN_PKG_DIR}/bin/xtensa-esp32-elf-g++" ]; then
-  "${TOOLCHAIN_PKG_DIR}/bin/xtensa-esp32-elf-g++" --version >/dev/null
-fi
-
-PREWARM_DIR="/tmp/vibesensor-esp-prewarm"
-rm -rf "${PREWARM_DIR}"
-python3 - <<'PY'
-import shutil
-from pathlib import Path
-
-src = Path("/opt/VibeSensor/firmware/esp")
-dst = Path("/tmp/vibesensor-esp-prewarm")
-shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".pio", ".vscode", "__pycache__"))
-PY
-"${VENV_PYTHON}" -m platformio run -e m5stack_atom -d "${PREWARM_DIR}"
-rm -rf "${PREWARM_DIR}"
-PIO_PRELOAD_EOF
-chown 1000:1000 /tmp/vibesensor-pio-preload.sh
-chmod +x /tmp/vibesensor-pio-preload.sh
-su - pi -c '/tmp/vibesensor-pio-preload.sh'
-rm -f /tmp/vibesensor-pio-preload.sh
-chown -R 1000:1000 /home/pi/.platformio
+FW_BASELINE_EOF
+chown 1000:1000 /tmp/vibesensor-fw-baseline.sh
+chmod +x /tmp/vibesensor-fw-baseline.sh
+su - pi -c '/tmp/vibesensor-fw-baseline.sh'
+rm -f /tmp/vibesensor-fw-baseline.sh
+chown -R 1000:1000 /var/lib/vibesensor
 chown -R 1000:1000 /opt/VibeSensor/apps/server/.venv
 CHROOT_EOF
 
@@ -770,14 +725,19 @@ if [ "${VALIDATE}" = "1" ]; then
     exit 1
   fi
 
-  if ! grep -Fq '${PROJECT_DIR}/lib/Adafruit_NeoPixel' "${ROOT_MNT}/opt/VibeSensor/firmware/esp/platformio.ini"; then
-    echo "Validation failed: firmware platformio.ini is not pinned to vendored Adafruit_NeoPixel path"
-    exit 1
+  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/firmware/esp/platformio.ini" ]; then
+    echo "Validation info: firmware/esp/platformio.ini not found (expected: Pi uses prebuilt cache)"
   fi
 
-  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/firmware/esp/lib/Adafruit_NeoPixel/Adafruit_NeoPixel.h" ]; then
-    echo "Validation failed: vendored Adafruit_NeoPixel library missing from firmware tree"
-    exit 1
+  # Validate firmware cache baseline is present
+  if [ -d "${ROOT_MNT}/var/lib/vibesensor/firmware/baseline" ]; then
+    if [ ! -f "${ROOT_MNT}/var/lib/vibesensor/firmware/baseline/flash.json" ]; then
+      echo "WARNING: Baseline firmware directory exists but flash.json manifest is missing"
+    else
+      echo "Firmware baseline bundle validated OK"
+    fi
+  else
+    echo "WARNING: No embedded baseline firmware bundle (first-boot flash requires online updater)"
   fi
 
   assert_rootfs_package gpsd
@@ -797,17 +757,12 @@ if [ "${VALIDATE}" = "1" ]; then
     sudo chroot "${ROOT_MNT}" /usr/bin/qemu-arm-static "$@"
   }
 
-  if ! run_qemu_chroot /bin/bash -lc '
-set -e
-toolchain="/home/pi/.platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-g++"
-if [ ! -x "${toolchain}" ]; then
-  echo "Missing ESP32 toolchain compiler: ${toolchain}"
-  exit 1
-fi
-"${toolchain}" --version >/dev/null
-echo "ESP32_TOOLCHAIN_OK"
+  # Validate firmware cache CLI is available
+  if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python -c '
+import vibesensor.firmware_cache
+print("FIRMWARE_CACHE_MODULE_OK")
 '; then
-    echo "Validation failed: ESP32 toolchain is not executable in target rootfs"
+    echo "Validation failed: firmware_cache module not importable in target rootfs"
     exit 1
   fi
 

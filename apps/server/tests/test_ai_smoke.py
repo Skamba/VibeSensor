@@ -42,13 +42,8 @@ def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
     assert "network-manager" in text, "build wrapper must bake network-manager"
     assert "dnsmasq" in text, "build wrapper must bake dnsmasq"
     assert "99-vibesensor-dnsmasq.conf" in text, "build wrapper must assert DNS drop-in"
-    assert "platformio/framework-arduinoespressif32" in text, (
-        "build wrapper must preload ESP32 Arduino framework for offline flash"
-    )
-    assert "platformio/tool-scons" in text, "build wrapper must preload PlatformIO tool-scons"
-    assert "linux-armhf.tar.gz" in text, (
-        "build wrapper must override ESP32 toolchain for armhf images"
-    )
+    assert "firmware" in text, "build wrapper must handle ESP firmware cache/baseline"
+    assert "flash.json" in text, "build wrapper must validate firmware manifest"
 
 
 @pytest.mark.smoke
@@ -60,21 +55,21 @@ def test_smoke_install_pi_installs_rebuild_toolchain() -> None:
     assert 'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"' in text, (
         "Pi install script must ensure repo ownership for update writes"
     )
-    assert "platformio/framework-arduinoespressif32" in text, (
-        "Pi install script must preload ESP32 Arduino framework for offline flash"
+    assert "vibesensor-fw-refresh" in text, (
+        "Pi install script must refresh ESP firmware cache from GitHub Releases"
     )
-    assert "platformio/tool-scons" in text, "Pi install script must preload PlatformIO tool-scons"
-    assert "linux-armhf.tar.gz" in text, (
-        "Pi install script must enforce armhf toolchain compatibility"
-    )
+    assert "firmware" in text, "Pi install script must handle ESP firmware cache"
 
 
 @pytest.mark.smoke
-def test_smoke_server_pyproject_includes_platformio_for_esp_flash() -> None:
+def test_smoke_server_pyproject_includes_esptool_for_esp_flash() -> None:
     pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
     text = pyproject.read_text(encoding="utf-8")
-    assert "platformio" in text, "Server dependencies must include platformio for ESP flash"
     assert "esptool" in text, "Server dependencies must include esptool for offline ESP flash"
+    assert "vibesensor-fw-refresh" in text, (
+        "Server must expose firmware cache refresh CLI entry point"
+    )
+    assert "vibesensor-fw-info" in text, "Server must expose firmware cache info CLI entry point"
 
 
 @pytest.mark.smoke
