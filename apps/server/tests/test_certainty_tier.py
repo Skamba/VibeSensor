@@ -178,6 +178,8 @@ class TestTierBReportOutput:
             assert (
                 "hypothesis" in card.system_name.lower() or "hypothese" in card.system_name.lower()
             )
+
+    def test_tier_b_no_repair_parts(self):
         data = map_summary(_make_summary(confidence=0.25))
         for card in data.system_cards:
             assert card.parts == [], f"Tier B cards should have no parts, got {card.parts}"
