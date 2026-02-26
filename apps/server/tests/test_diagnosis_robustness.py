@@ -1019,5 +1019,7 @@ class TestPdfContentForDiagnosedScenario:
         text_lower = text.lower()
 
         # Dutch section headers
-        assert "diagnostisch werkformulier" in text_lower, "Missing Dutch 'Diagnostisch werkformulier'"
+        assert "diagnostisch werkformulier" in text_lower, (
+            "Missing Dutch 'Diagnostisch werkformulier'"
+        )
         assert "km/h" in text_lower
