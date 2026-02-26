@@ -489,3 +489,44 @@ def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
     row = registry.snapshot_for_api(now=4.0)[0]
     assert row["frames_total"] == 3
     assert row["duplicates_received"] == 0
+
+
+def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
+    """Simulator restart with seq=0 after a short session must not be a dup.
+
+    Reproduces the E2E failure where the simulator runs twice with the same
+    client IDs but fewer than 1000 frames (below the hard-reset threshold).
+    """
+    registry, client_id = _make_registry_with_hello(tmp_path)
+    samples = np.zeros((100, 3), dtype=np.int16)
+
+    # First session: seq 0..49 (a short E2E run)
+    for seq in range(50):
+        msg = DataMessage(
+            client_id=client_id,
+            seq=seq,
+            t0_us=seq * 10000,
+            sample_count=100,
+            samples=samples,
+        )
+        registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0 + seq * 0.01)
+
+    row = registry.snapshot_for_api(now=3.0)[0]
+    assert row["frames_total"] == 50
+    assert row["duplicates_received"] == 0
+
+    # Second session: simulator restarts, seq goes back to 0
+    for seq in range(50):
+        msg = DataMessage(
+            client_id=client_id,
+            seq=seq,
+            t0_us=100_000 + seq * 10000,
+            sample_count=100,
+            samples=samples,
+        )
+        r = registry.update_from_data(msg, ("10.4.0.2", 50000), now=5.0 + seq * 0.01)
+        assert r.is_duplicate is False, f"seq={seq} wrongly flagged as duplicate"
+
+    row2 = registry.snapshot_for_api(now=6.0)[0]
+    assert row2["frames_total"] == 100
+    assert row2["duplicates_received"] == 0
