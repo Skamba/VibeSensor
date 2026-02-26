@@ -825,11 +825,9 @@ class UpdateManager:
             self._status.state = UpdateState.failed
             return
         self._log("Backend reinstall completed successfully")
+        refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
         refresh_cmd = [
-            venv_python,
-            "-m",
-            "vibesensor.firmware_cache",
-            "refresh_cache_cli",
+            refresh_exe,
             "--cache-dir",
             "/var/lib/vibesensor/firmware",
         ]

@@ -420,7 +420,7 @@ class TestUpdateManagerAsync:
             for c in runner.calls
         )
         refresh_token = (
-            " -m vibesensor.firmware_cache refresh_cache_cli"
+            "vibesensor-fw-refresh"
             " --cache-dir /var/lib/vibesensor/firmware"
         )
         assert any(refresh_token in f" {' '.join(c[0])} " for c in runner.calls), (
