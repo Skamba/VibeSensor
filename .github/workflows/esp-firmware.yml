@@ -1,0 +1,227 @@
+name: ESP Firmware
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  esp-firmware:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect firmware changes
+        id: changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          empty_tree_hash="$(git hash-object -t tree /dev/null)"
+          firmware_path_pattern='^(firmware/|apps/firmware/|platformio\.ini$|.*/platformio\.ini$|partitions[^/]*\.csv$|.*/partitions[^/]*\.csv$|sdkconfig[^/]*$|.*/sdkconfig[^/]*$|components/|.*/components/)'
+
+          if git rev-parse "${GITHUB_SHA}^" >/dev/null 2>&1; then
+            previous_sha="$(git rev-parse "${GITHUB_SHA}^")"
+          else
+            previous_sha="${empty_tree_hash}"
+            echo "No parent commit found; treating as first commit."
+          fi
+
+          changed_files="$(git diff --name-only "${previous_sha}" "${GITHUB_SHA}" || true)"
+
+          echo "Changed files:"
+          if [ -n "${changed_files}" ]; then
+            printf '%s\n' "${changed_files}"
+          else
+            echo "(none)"
+          fi
+
+          firmware_changed=false
+          if printf '%s\n' "${changed_files}" | grep -E -q "${firmware_path_pattern}"; then
+            firmware_changed=true
+          fi
+
+          echo "Firmware change detected: ${firmware_changed}"
+          echo "firmware_changed=${firmware_changed}" >> "${GITHUB_OUTPUT}"
+
+      - name: Compute metadata
+        id: meta
+        shell: bash
+        run: |
+          short_sha="$(git rev-parse --short "${GITHUB_SHA}")"
+          echo "short_sha=${short_sha}" >> "${GITHUB_OUTPUT}"
+          echo "tag=fw-main-${short_sha}" >> "${GITHUB_OUTPUT}"
+          echo "bundle=vibesensor-fw-main-${short_sha}.zip" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PlatformIO
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipx
+          python -m pipx ensurepath
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          pipx install platformio
+
+      - name: Detect firmware directory
+        id: firmware_dir
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t platformio_files < <(git ls-files 'platformio.ini' ':(glob)**/platformio.ini' | sort)
+          if [ "${#platformio_files[@]}" -eq 0 ]; then
+            echo "No platformio.ini found in repository." >&2
+            exit 1
+          fi
+
+          selected_file="${platformio_files[0]}"
+          for candidate in "${platformio_files[@]}"; do
+            if [[ "${candidate}" == firmware/* ]]; then
+              selected_file="${candidate}"
+              break
+            fi
+          done
+
+          firmware_dir="$(dirname "${selected_file}")"
+          echo "Using firmware directory: ${firmware_dir}"
+          echo "path=${firmware_dir}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build firmware (always)
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "${{ steps.firmware_dir.outputs.path }}"
+          pio run
+
+      - name: Package firmware artifacts
+        if: steps.changes.outputs.firmware_changed == 'true'
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "${{ steps.firmware_dir.outputs.path }}"
+          mkdir -p dist
+
+          mapfile -t firmware_bins < <(find .pio/build -mindepth 2 -maxdepth 2 -type f -name firmware.bin | sort)
+          if [ "${#firmware_bins[@]}" -eq 0 ]; then
+            echo "No firmware.bin found under .pio/build." >&2
+            exit 1
+          fi
+
+          for firmware_bin in "${firmware_bins[@]}"; do
+            env_dir="$(dirname "${firmware_bin}")"
+            env_name="$(basename "${env_dir}")"
+            target_dir="dist/${env_name}"
+            mkdir -p "${target_dir}"
+
+            cp "${env_dir}/firmware.bin" "${target_dir}/firmware.bin"
+            [ -f "${env_dir}/bootloader.bin" ] && cp "${env_dir}/bootloader.bin" "${target_dir}/bootloader.bin"
+            [ -f "${env_dir}/partitions.bin" ] && cp "${env_dir}/partitions.bin" "${target_dir}/partitions.bin"
+            [ -f "${env_dir}/boot_app0.bin" ] && cp "${env_dir}/boot_app0.bin" "${target_dir}/boot_app0.bin"
+          done
+
+      - name: Generate flash manifest
+        if: steps.changes.outputs.firmware_changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "${{ steps.firmware_dir.outputs.path }}"
+
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          dist = Path("dist")
+          standard_esp32_app_offset = "0x10000"
+          manifest = {"generated_from": os.getenv("GITHUB_SHA", "unknown"), "environments": []}
+          env_dirs = sorted([p for p in dist.iterdir() if p.is_dir()])
+          for env_dir in env_dirs:
+              env_name = env_dir.name
+              app_offset = standard_esp32_app_offset
+              try:
+                  envdump = subprocess.run(
+                      ["pio", "run", "-e", env_name, "-t", "envdump"],
+                      check=True,
+                      capture_output=True,
+                      text=True,
+                  ).stdout
+                  match = re.search(r"ESP32_APP_OFFSET[^0-9A-Fa-f]*(0x[0-9A-Fa-f]+)", envdump)
+                  if match:
+                      parsed_offset = match.group(1)
+                      validated_offset = hex(int(parsed_offset, 16))
+                      app_offset = validated_offset
+                  else:
+                      print(f"warning: ESP32_APP_OFFSET not found for env '{env_name}', using {standard_esp32_app_offset}")
+              except subprocess.CalledProcessError:
+                  pass
+              except ValueError:
+                  print(f"warning: invalid ESP32_APP_OFFSET for env '{env_name}', using {standard_esp32_app_offset}")
+
+              segments = []
+              for file_name, offset in (
+                  ("firmware.bin", app_offset),
+                  ("bootloader.bin", "0x1000"),
+                  ("partitions.bin", "0x8000"),
+                  ("boot_app0.bin", "0xe000"),
+              ):
+                  artifact = env_dir / file_name
+                  if artifact.exists():
+                      segments.append(
+                          {
+                              "file": f"{env_name}/{file_name}",
+                              "offset": offset,
+                              "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest(),
+                          }
+                      )
+
+              manifest["environments"].append({"name": env_name, "segments": segments})
+
+          (dist / "flash.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Create firmware bundle
+        if: steps.changes.outputs.firmware_changed == 'true'
+        id: bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "${{ steps.firmware_dir.outputs.path }}"
+          bundle_name="${{ steps.meta.outputs.bundle }}"
+          (cd dist && zip -r "../${bundle_name}" .)
+          echo "path=${{ steps.firmware_dir.outputs.path }}/${bundle_name}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check if tag exists
+        if: steps.changes.outputs.firmware_changed == 'true'
+        id: tag_check
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ steps.meta.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists; skipping release."
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "Tag ${tag} does not exist; creating prerelease."
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Create prerelease
+        if: steps.changes.outputs.firmware_changed == 'true' && steps.tag_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: Auto firmware build ${{ steps.meta.outputs.short_sha }}
+          prerelease: true
+          files: ${{ steps.bundle.outputs.path }}
