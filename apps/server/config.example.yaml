@@ -53,3 +53,7 @@ storage:
 
 gps:
   gps_enabled: true
+
+update:
+  server_repo: Skamba/VibeSensor
+  rollback_dir: /var/lib/vibesensor/rollback
