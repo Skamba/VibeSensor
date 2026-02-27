@@ -206,6 +206,7 @@ def create_router(state: RuntimeState) -> APIRouter:
             "status": "ok",
             "processing_state": state.processing_state,
             "processing_failures": state.processing_failure_count,
+            "intake_stats": state.processor.intake_stats(),
         }
 
     # -- new settings endpoints (3-tab model) ----------------------------------

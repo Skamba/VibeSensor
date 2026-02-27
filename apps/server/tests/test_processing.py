@@ -106,3 +106,89 @@ def test_ingest_waits_while_processor_lock_is_held() -> None:
         processor._lock.release()
     worker.join(timeout=1.0)
     assert done.is_set()
+
+
+def test_ingest_not_blocked_during_compute() -> None:
+    """Regression: ingest must stay responsive while compute_metrics runs in a thread.
+
+    Before the snapshot-based refactor, compute_metrics held the processor
+    lock for the entire FFT computation, blocking ingest on the event loop.
+    """
+    sample_rate_hz = 800
+    fft_n = 2048
+    processor = SignalProcessor(
+        sample_rate_hz=sample_rate_hz,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=fft_n,
+        spectrum_max_hz=200,
+    )
+    # Seed buffer with enough data for FFT
+    seed = np.random.default_rng(42).standard_normal((fft_n * 2, 3)).astype(np.float32)
+    processor.ingest("c1", seed, sample_rate_hz=sample_rate_hz)
+
+    compute_started = Event()
+    compute_done = Event()
+    ingest_latencies: list[float] = []
+
+    def _compute_loop() -> None:
+        compute_started.set()
+        for _ in range(10):
+            processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
+            # Bump ingest generation so compute doesn't fast-path skip
+            processor.ingest(
+                "c1",
+                np.random.default_rng(0).standard_normal((100, 3)).astype(np.float32),
+                sample_rate_hz=sample_rate_hz,
+            )
+        compute_done.set()
+
+    worker = Thread(target=_compute_loop)
+    worker.start()
+    compute_started.wait(timeout=2.0)
+
+    # Repeatedly ingest while compute runs and measure latency
+    chunk = np.zeros((50, 3), dtype=np.float32)
+    while not compute_done.is_set():
+        t0 = time.monotonic()
+        processor.ingest("c2", chunk, sample_rate_hz=sample_rate_hz)
+        ingest_latencies.append(time.monotonic() - t0)
+
+    worker.join(timeout=5.0)
+    assert compute_done.is_set()
+    assert ingest_latencies, "Should have measured at least some ingest calls"
+    max_latency_ms = max(ingest_latencies) * 1000
+    # With snapshot-based compute, ingest should never be blocked for more
+    # than a few milliseconds (lock is held only briefly for snapshot/store).
+    assert max_latency_ms < 50, (
+        f"Ingest latency spike {max_latency_ms:.1f}ms during compute; "
+        "expected < 50ms with snapshot-based locking"
+    )
+
+
+def test_intake_stats_tracks_samples_and_compute() -> None:
+    processor = SignalProcessor(
+        sample_rate_hz=800,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=1024,
+        spectrum_max_hz=200,
+    )
+    stats_before = processor.intake_stats()
+    assert stats_before["total_ingested_samples"] == 0
+    assert stats_before["total_compute_calls"] == 0
+
+    samples = np.zeros((100, 3), dtype=np.float32)
+    processor.ingest("c1", samples, sample_rate_hz=800)
+
+    stats_after_ingest = processor.intake_stats()
+    assert stats_after_ingest["total_ingested_samples"] == 100
+
+    # Seed enough data for FFT
+    big_chunk = np.zeros((1024, 3), dtype=np.float32)
+    processor.ingest("c1", big_chunk, sample_rate_hz=800)
+    processor.compute_metrics("c1", sample_rate_hz=800)
+
+    stats_after_compute = processor.intake_stats()
+    assert stats_after_compute["total_compute_calls"] == 1
+    assert stats_after_compute["last_compute_duration_s"] > 0
