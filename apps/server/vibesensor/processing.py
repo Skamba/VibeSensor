@@ -17,6 +17,7 @@ from vibesensor_core.vibration_strength import (
 )
 
 from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
+from .worker_pool import WorkerPool
 
 AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
@@ -73,6 +74,7 @@ class SignalProcessor:
         fft_n: int,
         spectrum_max_hz: int,
         accel_scale_g_per_lsb: float | None = None,
+        worker_pool: WorkerPool | None = None,
     ):
         self.sample_rate_hz = sample_rate_hz
         self.waveform_seconds = waveform_seconds
@@ -93,10 +95,16 @@ class SignalProcessor:
         self._fft_cache_maxsize = 64
         self._spike_filter_enabled = True
         self._lock = RLock()
+        # Worker pool for parallel per-client FFT.  Owned externally when
+        # injected, otherwise a private pool is created.
+        self._worker_pool = worker_pool
+        self._owns_pool = worker_pool is None
         # Lightweight intake/analysis metrics for observability.
         self._total_ingested_samples: int = 0
         self._total_compute_calls: int = 0
         self._last_compute_duration_s: float = 0.0
+        self._last_compute_all_duration_s: float = 0.0
+        self._last_ingest_duration_s: float = 0.0
 
     @staticmethod
     def _medfilt3(block: np.ndarray) -> np.ndarray:
@@ -169,6 +177,7 @@ class SignalProcessor:
         sample_rate_hz: int | None = None,
         t0_us: int | None = None,
     ) -> None:
+        t_start = time.monotonic()
         if samples.size == 0:
             return
         buf = self._get_or_create(client_id)
@@ -224,6 +233,7 @@ class SignalProcessor:
         buf.cached_selected_payload = None
         buf.cached_selected_payload_key = None
         self._total_ingested_samples += n
+        self._last_ingest_duration_s = time.monotonic() - t_start
 
     def _latest(self, buf: ClientBuffer, n: int) -> np.ndarray:
         if n <= 0 or buf.count == 0:
@@ -508,10 +518,25 @@ class SignalProcessor:
         sample_rates_hz: dict[str, int] | None = None,
     ) -> dict[str, dict[str, Any]]:
         rates = sample_rates_hz or {}
-        return {
-            client_id: self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
-            for client_id in client_ids
-        }
+        if len(client_ids) <= 1 or self._worker_pool is None:
+            # Fast path: single client or no pool – avoid thread overhead.
+            t0 = time.monotonic()
+            result = {
+                client_id: self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
+                for client_id in client_ids
+            }
+            self._last_compute_all_duration_s = time.monotonic() - t0
+            return result
+
+        # Parallel path: submit per-client FFT work to the pool.
+        t0 = time.monotonic()
+
+        def _compute_one(client_id: str) -> dict[str, Any]:
+            return self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
+
+        result = self._worker_pool.map_unordered(_compute_one, client_ids)
+        self._last_compute_all_duration_s = time.monotonic() - t0
+        return result
 
     @_synchronized
     def spectrum_payload(self, client_id: str) -> dict[str, Any]:
@@ -817,11 +842,16 @@ class SignalProcessor:
 
     def intake_stats(self) -> dict[str, Any]:
         """Return lightweight intake/analysis metrics for observability."""
-        return {
+        stats: dict[str, Any] = {
             "total_ingested_samples": self._total_ingested_samples,
             "total_compute_calls": self._total_compute_calls,
             "last_compute_duration_s": self._last_compute_duration_s,
+            "last_compute_all_duration_s": self._last_compute_all_duration_s,
+            "last_ingest_duration_s": self._last_ingest_duration_s,
         }
+        if self._worker_pool is not None:
+            stats["worker_pool"] = self._worker_pool.stats()
+        return stats
 
     # -- Time-alignment helpers ------------------------------------------------
 
