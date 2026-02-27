@@ -45,6 +45,12 @@ class ClientBuffer:
     latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
     last_ingest_mono_s: float = 0.0
     first_ingest_mono_s: float = 0.0
+    # Sensor-clock timestamp (µs) of the most recent ingested frame.
+    # After CMD_SYNC_CLOCK this is server-relative and comparable across sensors.
+    last_t0_us: int = 0
+    # Number of samples ingested since last_t0_us was recorded.  Used to
+    # back-compute the timestamp of the oldest sample in the analysis window.
+    samples_since_t0: int = 0
     # Generation counters: ingest_generation increments on new samples,
     # compute_generation marks which ingest generation metrics reflect, and
     # spectrum_generation marks spectrum snapshot updates for payload caching.
@@ -123,6 +129,8 @@ class SignalProcessor:
         buf.write_idx = 0
         buf.count = 0
         buf.first_ingest_mono_s = 0.0
+        buf.last_t0_us = 0
+        buf.samples_since_t0 = 0
         buf.latest_metrics = {}
         buf.latest_spectrum = {}
         buf.latest_strength_metrics = {}
@@ -159,6 +167,7 @@ class SignalProcessor:
         client_id: str,
         samples: np.ndarray,
         sample_rate_hz: int | None = None,
+        t0_us: int | None = None,
     ) -> None:
         if samples.size == 0:
             return
@@ -205,6 +214,12 @@ class SignalProcessor:
 
         buf.write_idx = end % capacity
         buf.count = min(capacity, buf.count + n)
+        # Track sensor-clock timestamp for cross-sensor alignment.
+        if t0_us is not None and t0_us > 0:
+            buf.last_t0_us = int(t0_us)
+            buf.samples_since_t0 = n
+        else:
+            buf.samples_since_t0 += n
         buf.ingest_generation += 1
         buf.cached_selected_payload = None
         buf.cached_selected_payload_key = None
@@ -536,6 +551,8 @@ class SignalProcessor:
 
         # --- Compute per-sensor time ranges for alignment metadata -----------
         ranges: list[tuple[str, float, float]] = []
+        any_synced = False
+        all_synced = True
         for client_id in client_ids:
             buf = self._buffers.get(client_id)
             if buf is None or not buf.latest_spectrum:
@@ -559,6 +576,10 @@ class SignalProcessor:
             tr = self._analysis_time_range(buf)
             if tr is not None:
                 ranges.append((client_id, tr[0], tr[1]))
+                if tr[2]:
+                    any_synced = True
+                else:
+                    all_synced = False
 
         payload: dict[str, Any] = {
             "freq": self._float_list(shared_freq) if shared_freq is not None else [],
@@ -586,6 +607,7 @@ class SignalProcessor:
                 "aligned": overlap_ratio >= _ALIGNMENT_MIN_OVERLAP,
                 "shared_window_s": round(overlap, 4),
                 "sensor_count": len(ranges),
+                "clock_synced": all_synced and any_synced,
             }
         return payload
 
@@ -802,13 +824,16 @@ class SignalProcessor:
 
     # -- Time-alignment helpers ------------------------------------------------
 
-    def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float] | None:
-        """Return ``(start_mono_s, end_mono_s)`` for the current analysis window.
+    def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:
+        """Return ``(start_s, end_s, synced)`` for the current analysis window.
 
-        The analysis window is the most recent ``waveform_seconds`` of data in the
-        buffer (capped by available samples).  The end time is
-        ``last_ingest_mono_s``; the start is estimated from the number of
-        buffered samples and the effective sample rate.
+        When the sensor has reported a ``t0_us`` (set by ``CMD_SYNC_CLOCK``),
+        the range is derived from the *sensor* timestamp which is already in
+        server-relative microseconds — this is precise.  Otherwise the range
+        is estimated from the server-side ``last_ingest_mono_s``.
+
+        The third element *synced* is ``True`` when ``t0_us``-based alignment
+        is in use.
 
         Returns ``None`` when the buffer has no data or no timing information.
         """
@@ -820,9 +845,21 @@ class SignalProcessor:
         desired = int(max(1, float(sr) * float(self.waveform_seconds)))
         n_window = min(buf.count, buf.capacity, desired)
         duration_s = float(n_window) / float(sr)
+
+        if buf.last_t0_us > 0:
+            # Sensor-clock path (precise, after CMD_SYNC_CLOCK).
+            # last_t0_us marks the *first sample* in the most recently
+            # ingested frame.  Advance by the samples in that frame to
+            # approximate the newest sample time.
+            end_us = buf.last_t0_us + int(float(buf.samples_since_t0) / float(sr) * 1_000_000.0)
+            end_s = float(end_us) / 1_000_000.0
+            start_s = end_s - duration_s
+            return (start_s, end_s, True)
+
+        # Fallback: server arrival time.
         end = buf.last_ingest_mono_s
         start = end - duration_s
-        return (start, end)
+        return (start, end, False)
 
     @_synchronized
     def time_alignment_info(self, client_ids: list[str]) -> dict[str, Any]:
@@ -830,16 +867,18 @@ class SignalProcessor:
 
         Returns a dict with:
 
-        * ``per_sensor``  – per-client time-range info
+        * ``per_sensor``  – per-client time-range info (includes ``synced`` flag)
         * ``shared_window`` – intersection of all time ranges (``None`` if disjoint)
         * ``overlap_ratio`` – fraction of the union covered by the intersection
         * ``aligned`` – ``True`` when the overlap ratio meets the minimum threshold
+        * ``clock_synced`` – ``True`` when *all* included sensors use synced timestamps
         * ``sensors_included`` / ``sensors_excluded`` – partition of *client_ids*
         """
-        per_sensor: dict[str, dict[str, float]] = {}
+        per_sensor: dict[str, dict[str, Any]] = {}
         ranges: list[tuple[float, float]] = []
         included: list[str] = []
         excluded: list[str] = []
+        all_synced = True
 
         for cid in client_ids:
             buf = self._buffers.get(cid)
@@ -850,11 +889,14 @@ class SignalProcessor:
             if tr is None:
                 excluded.append(cid)
                 continue
-            start, end = tr
+            start, end, synced = tr
+            if not synced:
+                all_synced = False
             per_sensor[cid] = {
-                "start_mono_s": start,
-                "end_mono_s": end,
+                "start_s": start,
+                "end_s": end,
                 "duration_s": end - start,
+                "synced": synced,
             }
             ranges.append((start, end))
             included.append(cid)
@@ -865,6 +907,7 @@ class SignalProcessor:
                 "shared_window": None,
                 "overlap_ratio": 1.0 if len(ranges) == 1 else 0.0,
                 "aligned": True,
+                "clock_synced": all_synced and len(included) > 0,
                 "sensors_included": included,
                 "sensors_excluded": excluded,
             }
@@ -886,8 +929,8 @@ class SignalProcessor:
         shared: dict[str, float] | None = None
         if overlap > 0:
             shared = {
-                "start_mono_s": shared_start,
-                "end_mono_s": shared_end,
+                "start_s": shared_start,
+                "end_s": shared_end,
                 "duration_s": overlap,
             }
 
@@ -896,6 +939,7 @@ class SignalProcessor:
             "shared_window": shared,
             "overlap_ratio": round(overlap_ratio, 4),
             "aligned": aligned,
+            "clock_synced": all_synced,
             "sensors_included": included,
             "sensors_excluded": excluded,
         }
