@@ -12,6 +12,7 @@ constexpr size_t kAckBytes = 1 + 1 + kClientIdBytes + 4 + 1;
 constexpr size_t kDataAckBytes = 1 + 1 + kClientIdBytes + 4;
 constexpr size_t kCmdHeaderBytes = 1 + 1 + kClientIdBytes + 1 + 4;
 constexpr size_t kCmdIdentifyBytes = kCmdHeaderBytes + 2;
+constexpr size_t kCmdSyncClockBytes = kCmdHeaderBytes + 8;
 
 enum MessageType : uint8_t {
   kMsgHello = 1,
@@ -23,6 +24,7 @@ enum MessageType : uint8_t {
 
 enum CommandId : uint8_t {
   kCmdIdentify = 1,
+  kCmdSyncClock = 2,
 };
 
 bool parse_mac(const String& mac, uint8_t out_client_id[6]);
@@ -51,7 +53,8 @@ bool parse_cmd(const uint8_t* data,
                const uint8_t expected_client_id[6],
                uint8_t* out_cmd_id,
                uint32_t* out_cmd_seq,
-               uint16_t* out_identify_duration_ms);
+               uint16_t* out_identify_duration_ms,
+               uint64_t* out_server_time_us = nullptr);
 
 size_t pack_ack(uint8_t* out,
                 size_t out_len,
