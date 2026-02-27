@@ -214,7 +214,9 @@ def create_router(state: RuntimeState) -> APIRouter:
         try:
             payload = req.model_dump(exclude_none=True)
             result = await asyncio.to_thread(
-                state.settings_store.update_car, car_id, payload,
+                state.settings_store.update_car,
+                car_id,
+                payload,
             )
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
@@ -248,7 +250,8 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
         payload = req.model_dump(exclude_none=True)
         result = await asyncio.to_thread(
-            state.settings_store.update_speed_source, payload,
+            state.settings_store.update_speed_source,
+            payload,
         )
         state.apply_speed_source_settings()
         return result
@@ -269,7 +272,9 @@ def create_router(state: RuntimeState) -> APIRouter:
         try:
             payload = req.model_dump(exclude_none=True)
             await asyncio.to_thread(
-                state.settings_store.set_sensor, mac, payload,
+                state.settings_store.set_sensor,
+                mac,
+                payload,
             )
             return _sensors_response()
         except ValueError as exc:

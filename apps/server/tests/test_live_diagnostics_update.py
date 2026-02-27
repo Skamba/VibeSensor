@@ -15,6 +15,7 @@ from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_spectra(
     client_ids: list[str],
     *,
@@ -83,8 +84,15 @@ class TestUpdateSnapshotContract:
         )
 
         required_keys = {
-            "diagnostics_sequence", "matrix", "events", "strength_bands",
-            "levels", "findings", "top_finding", "driving_phase", "error",
+            "diagnostics_sequence",
+            "matrix",
+            "events",
+            "strength_bands",
+            "levels",
+            "findings",
+            "top_finding",
+            "driving_phase",
+            "error",
         }
         assert required_keys.issubset(snap.keys()), f"Missing: {required_keys - snap.keys()}"
 
@@ -173,7 +181,10 @@ class TestSingleSensorEventEmission:
         for _ in range(5):
             t["now"] += 0.5
             snap = engine.update(
-                speed_mps=20.0, clients=clients, spectra=spectra, settings={},
+                speed_mps=20.0,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
             seqs.append(snap["diagnostics_sequence"])
 
@@ -196,14 +207,20 @@ class TestTrackerDecay:
         for _ in range(8):
             t["now"] += 1.0
             engine.update(
-                speed_mps=27.8, clients=clients, spectra=strong_spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=strong_spectra,
+                settings={},
             )
 
         # Now send weak spectra for many ticks — tracker should eventually decay
         for _ in range(30):
             t["now"] += 1.0
             snap = engine.update(
-                speed_mps=27.8, clients=clients, spectra=weak_spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=weak_spectra,
+                settings={},
             )
 
         # After enough silence ticks, the by_source levels should be empty or nil
@@ -230,25 +247,27 @@ class TestLightTickBehavior:
         for _ in range(6):
             t["now"] += 1.0
             engine.update(
-                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
 
         snap_before = engine.snapshot()
         total_sec_before = sum(
-            cell["seconds"]
-            for cols in snap_before["matrix"].values()
-            for cell in cols.values()
+            cell["seconds"] for cols in snap_before["matrix"].values() for cell in cols.values()
         )
 
         # Light tick with dt=2 seconds — should still accumulate dwell
         t["now"] += 2.0
         snap_after = engine.update(
-            speed_mps=27.8, clients=clients, spectra=None, settings={},
+            speed_mps=27.8,
+            clients=clients,
+            spectra=None,
+            settings={},
         )
         total_sec_after = sum(
-            cell["seconds"]
-            for cols in snap_after["matrix"].values()
-            for cell in cols.values()
+            cell["seconds"] for cols in snap_after["matrix"].values() for cell in cols.values()
         )
         # The total may grow if any source has an active bucket
         assert total_sec_after >= total_sec_before
@@ -265,24 +284,26 @@ class TestLightTickBehavior:
         for _ in range(8):
             t["now"] += 1.0
             engine.update(
-                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
 
         total_counts_before = sum(
-            cell["count"]
-            for cols in engine.snapshot()["matrix"].values()
-            for cell in cols.values()
+            cell["count"] for cols in engine.snapshot()["matrix"].values() for cell in cols.values()
         )
 
         # Light tick
         t["now"] += 0.1
         snap = engine.update(
-            speed_mps=27.8, clients=clients, spectra=None, settings={},
+            speed_mps=27.8,
+            clients=clients,
+            spectra=None,
+            settings={},
         )
         total_counts_after = sum(
-            cell["count"]
-            for cols in snap["matrix"].values()
-            for cell in cols.values()
+            cell["count"] for cols in snap["matrix"].values() for cell in cols.values()
         )
         assert total_counts_after >= total_counts_before
 
@@ -353,7 +374,10 @@ class TestMultiSensorGrouping:
         for _ in range(12):
             t["now"] += 1.0
             snap = engine.update(
-                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
             all_events.extend(snap.get("events", []))
 
@@ -371,7 +395,10 @@ class TestDrivingPhase:
 
         engine = LiveDiagnosticsEngine()
         snap = engine.update(
-            speed_mps=None, clients=[], spectra=None, settings={},
+            speed_mps=None,
+            clients=[],
+            spectra=None,
+            settings={},
         )
         assert snap["driving_phase"] == "speed_unknown"
 
@@ -406,16 +433,17 @@ class TestResetClearsState:
         for _ in range(8):
             t["now"] += 1.0
             engine.update(
-                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
 
         engine.reset()
         snap = engine.snapshot()
 
         total_counts = sum(
-            cell["count"]
-            for cols in snap["matrix"].values()
-            for cell in cols.values()
+            cell["count"] for cols in snap["matrix"].values() for cell in cols.values()
         )
         assert total_counts == 0
         assert snap["events"] == []
