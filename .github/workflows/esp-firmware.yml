@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - main
+  schedule:
+    # Nightly at 02:30 UTC (offset from server-release)
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Create release even if no firmware changes"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -54,9 +63,24 @@ jobs:
         shell: bash
         run: |
           short_sha="$(git rev-parse --short "${GITHUB_SHA}")"
+          base_ver="$(date -u +%Y.%-m.%-d)"
+          # Check for same-day firmware releases and append .N suffix
+          existing="$(git tag -l "fw-v${base_ver}*" --sort=-creatordate | head -n1 || true)"
+          if [ -z "${existing}" ]; then
+            version="${base_ver}"
+          else
+            suffix="${existing##fw-v${base_ver}}"
+            if [ -z "${suffix}" ]; then
+              version="${base_ver}.1"
+            else
+              n="${suffix#.}"
+              version="${base_ver}.$((n + 1))"
+            fi
+          fi
           echo "short_sha=${short_sha}" >> "${GITHUB_OUTPUT}"
-          echo "tag=fw-main-${short_sha}" >> "${GITHUB_OUTPUT}"
-          echo "bundle=vibesensor-fw-main-${short_sha}.zip" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=fw-v${version}" >> "${GITHUB_OUTPUT}"
+          echo "bundle=vibesensor-fw-v${version}.zip" >> "${GITHUB_OUTPUT}"
 
       - uses: actions/setup-python@v5
         with:
@@ -102,7 +126,7 @@ jobs:
           pio run
 
       - name: Package firmware artifacts
-        if: steps.changes.outputs.firmware_changed == 'true'
+        if: steps.changes.outputs.firmware_changed == 'true' || (github.event.inputs.force == 'true')
         id: package
         shell: bash
         run: |
@@ -135,7 +159,7 @@ jobs:
           done
 
       - name: Generate flash manifest
-        if: steps.changes.outputs.firmware_changed == 'true'
+        if: steps.changes.outputs.firmware_changed == 'true' || (github.event.inputs.force == 'true')
         shell: bash
         run: |
           set -euo pipefail
@@ -198,7 +222,7 @@ jobs:
           PY
 
       - name: Create firmware bundle
-        if: steps.changes.outputs.firmware_changed == 'true'
+        if: steps.changes.outputs.firmware_changed == 'true' || (github.event.inputs.force == 'true')
         id: bundle
         shell: bash
         run: |
@@ -209,7 +233,7 @@ jobs:
           echo "path=${{ steps.firmware_dir.outputs.path }}/${bundle_name}" >> "${GITHUB_OUTPUT}"
 
       - name: Check if tag exists
-        if: steps.changes.outputs.firmware_changed == 'true'
+        if: steps.changes.outputs.firmware_changed == 'true' || (github.event.inputs.force == 'true')
         id: tag_check
         shell: bash
         run: |
@@ -223,11 +247,11 @@ jobs:
             echo "exists=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Create prerelease
-        if: steps.changes.outputs.firmware_changed == 'true' && steps.tag_check.outputs.exists == 'false'
+      - name: Create release
+        if: (steps.changes.outputs.firmware_changed == 'true' || github.event.inputs.force == 'true') && steps.tag_check.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
-          name: Auto firmware build ${{ steps.meta.outputs.short_sha }}
-          prerelease: true
+          name: Firmware ${{ steps.meta.outputs.version }}
+          prerelease: false
           files: ${{ steps.bundle.outputs.path }}
