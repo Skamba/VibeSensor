@@ -689,6 +689,39 @@ class TestUpdateManagerAsync:
         assert "password required" in issues_text
         assert not any("connection up VibeSensor-Uplink" in " ".join(c[0]) for c in runner.calls)
 
+    async def test_password_is_applied_via_connection_modify(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            rollback_dir=str(tmp_path / "rollback"),
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.15"),
+        ):
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = None
+
+            mgr.start("Pim", "tomaat123")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        joined_calls = [" ".join(c[0]) for c in runner.calls]
+        assert any(
+            "connection modify VibeSensor-Uplink wifi-sec.key-mgmt wpa-psk wifi-sec.psk" in call
+            for call in joined_calls
+        )
+
     async def test_download_failure_still_restores_hotspot(self, tmp_path) -> None:
         """When release download fails, hotspot is still restored."""
         runner = FakeRunner()

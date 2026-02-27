@@ -18,6 +18,16 @@ Execution model
 - Stop only when all plan items are validated complete, no similar in-scope issues remain, a real blocker exists, or time budget is reached.
 - Long deep runs are allowed and preferred for deeper tasks; 45–60 minutes is acceptable for medium/large work.
 
+Updater delivery model (authoritative)
+- Production updater behavior is wheel-based: devices fetch release wheels and install them (`apps/server/vibesensor/update_manager.py`).
+- Do not treat in-place edits under `/opt/VibeSensor/.../site-packages` as a normal deployment mechanism.
+- Emergency-only exception: direct on-device patching is allowed for live incident mitigation when updater path itself is broken.
+- If emergency patching is used, always follow up by:
+	1. implementing the same fix in-repo,
+	2. validating tests/lint,
+	3. opening and merging a PR,
+	4. re-running updater successfully so the device returns to wheel-managed state.
+
 Common commands
 - `python -m pip install -e "./apps/server[dev]"`
 - `make lint`
