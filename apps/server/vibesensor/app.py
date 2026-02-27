@@ -420,7 +420,8 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                             frame_samples,
                             runtime.config.processing.fft_n,
                         )
-                metrics_by_client = runtime.processor.compute_all(
+                metrics_by_client = await asyncio.to_thread(
+                    runtime.processor.compute_all,
                     fresh_ids,
                     sample_rates_hz=sample_rates,
                 )
