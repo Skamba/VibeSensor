@@ -88,6 +88,15 @@ def test_smoke_server_pyproject_includes_esptool_for_esp_flash() -> None:
 
 
 @pytest.mark.smoke
+def test_smoke_systemd_service_sets_contracts_dir_env() -> None:
+    service_template = Path(__file__).resolve().parents[1] / "systemd" / "vibesensor.service"
+    text = service_template.read_text(encoding="utf-8")
+    assert "VIBESENSOR_CONTRACTS_DIR" in text, (
+        "systemd service must set shared contracts directory for wheel-based runtime"
+    )
+
+
+@pytest.mark.smoke
 def test_smoke_firmware_uses_vendored_neopixel_library_for_offline_builds() -> None:
     repo_root = Path(__file__).resolve().parents[3]
     platformio_ini = repo_root / "firmware" / "esp" / "platformio.ini"
