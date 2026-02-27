@@ -24,6 +24,14 @@ import numpy as np
 from vibesensor.processing import SignalProcessor
 from vibesensor.worker_pool import WorkerPool
 
+
+def _p95(values: list[float]) -> float:
+    """Return the 95th percentile from a sorted list."""
+    s = sorted(values)
+    idx = min(len(s) - 1, int(len(s) * 0.95))
+    return s[idx]
+
+
 SAMPLE_RATE_HZ = 800
 FFT_N = 512
 WAVEFORM_SECONDS = 4
@@ -123,15 +131,15 @@ def run_benchmark(
         "n_ingest_per_round": n_ingest_per_round,
         "sequential": {
             "ingest_median_ms": round(statistics.median(seq_ingest_ms), 3),
-            "ingest_p95_ms": round(sorted(seq_ingest_ms)[int(0.95 * len(seq_ingest_ms))], 3),
+            "ingest_p95_ms": round(_p95(seq_ingest_ms), 3),
             "compute_median_ms": round(statistics.median(seq_compute_ms), 3),
-            "compute_p95_ms": round(sorted(seq_compute_ms)[int(0.95 * len(seq_compute_ms))], 3),
+            "compute_p95_ms": round(_p95(seq_compute_ms), 3),
         },
         "parallel": {
             "ingest_median_ms": round(statistics.median(par_ingest_ms), 3),
-            "ingest_p95_ms": round(sorted(par_ingest_ms)[int(0.95 * len(par_ingest_ms))], 3),
+            "ingest_p95_ms": round(_p95(par_ingest_ms), 3),
             "compute_median_ms": round(statistics.median(par_compute_ms), 3),
-            "compute_p95_ms": round(sorted(par_compute_ms)[int(0.95 * len(par_compute_ms))], 3),
+            "compute_p95_ms": round(_p95(par_compute_ms), 3),
         },
         "speedup_compute_median": round(
             statistics.median(seq_compute_ms) / max(0.001, statistics.median(par_compute_ms)), 2
