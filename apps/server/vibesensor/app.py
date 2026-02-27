@@ -376,8 +376,15 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     async def processing_loop() -> None:
         interval = 1.0 / max(1, config.processing.fft_update_hz)
         consecutive_failures = 0
+        _sync_clock_tick = 0
+        _SYNC_CLOCK_EVERY_N_TICKS = max(1, int(5.0 / interval))  # ~every 5 s
         while True:
             try:
+                _sync_clock_tick += 1
+                if _sync_clock_tick >= _SYNC_CLOCK_EVERY_N_TICKS:
+                    _sync_clock_tick = 0
+                    if runtime.control_plane is not None:
+                        runtime.control_plane.broadcast_sync_clock()
                 runtime.registry.evict_stale()
                 active_ids = runtime.registry.active_client_ids()
                 # Only recompute metrics for clients that received new data

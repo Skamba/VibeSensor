@@ -12,6 +12,7 @@ from .protocol import (
     ProtocolError,
     extract_client_id_hex,
     pack_cmd_identify,
+    pack_cmd_sync_clock,
     parse_ack,
     parse_client_id,
     parse_hello,
@@ -90,3 +91,26 @@ class UDPControlPlane:
         self.transport.sendto(payload, record.control_addr)
         self.registry.mark_cmd_sent(normalized_client_id, self._cmd_seq)
         return True, self._cmd_seq
+
+    def broadcast_sync_clock(self) -> int:
+        """Send a clock-sync command to every active sensor.
+
+        Returns the number of sensors that received the message.
+        """
+        if self.transport is None:
+            return 0
+        server_time_us = int(time.monotonic() * 1_000_000)
+        sent = 0
+        for client_id in self.registry.active_client_ids():
+            record = self.registry.get(client_id)
+            if record is None or record.control_addr is None:
+                continue
+            self._cmd_seq = (self._cmd_seq + 1) & 0xFFFFFFFF
+            payload = pack_cmd_sync_clock(
+                bytes.fromhex(record.client_id),
+                self._cmd_seq,
+                server_time_us,
+            )
+            self.transport.sendto(payload, record.control_addr)
+            sent += 1
+        return sent

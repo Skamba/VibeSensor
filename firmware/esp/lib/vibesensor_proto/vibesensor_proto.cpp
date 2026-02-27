@@ -35,6 +35,14 @@ uint32_t read_u32_le(const uint8_t* src) {
          (static_cast<uint32_t>(src[3]) << 24);
 }
 
+uint64_t read_u64_le(const uint8_t* src) {
+  uint64_t v = 0;
+  for (uint8_t i = 0; i < 8; ++i) {
+    v |= static_cast<uint64_t>(src[i]) << (8 * i);
+  }
+  return v;
+}
+
 }  // namespace
 
 bool parse_mac(const String& mac, uint8_t out_client_id[6]) {
@@ -135,7 +143,8 @@ bool parse_cmd(const uint8_t* data,
                const uint8_t expected_client_id[6],
                uint8_t* out_cmd_id,
                uint32_t* out_cmd_seq,
-               uint16_t* out_identify_duration_ms) {
+               uint16_t* out_identify_duration_ms,
+               uint64_t* out_server_time_us) {
   const size_t base = kCmdHeaderBytes;
   if (len < base) {
     return false;
@@ -162,6 +171,15 @@ bool parse_cmd(const uint8_t* data,
     }
     if (out_identify_duration_ms != nullptr) {
       *out_identify_duration_ms = read_u16_le(data + base);
+    }
+  }
+
+  if (cmd_id == kCmdSyncClock) {
+    if (len < kCmdSyncClockBytes) {
+      return false;
+    }
+    if (out_server_time_us != nullptr) {
+      *out_server_time_us = read_u64_le(data + base);
     }
   }
 

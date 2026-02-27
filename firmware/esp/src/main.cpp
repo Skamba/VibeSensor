@@ -163,6 +163,7 @@ size_t g_sensor_batch_count = 0;
 size_t g_sensor_batch_index = 0;
 
 uint32_t g_blink_until_ms = 0;
+int64_t g_clock_offset_us = 0;
 uint32_t g_led_next_update_ms = 0;
 bool g_identify_leds_active = false;
 uint32_t g_last_wifi_retry_ms = 0;
@@ -305,7 +306,11 @@ void enqueue_frame() {
 
   DataFrame& frame = g_queue[g_q_head];
   frame.seq = g_next_seq++;
-  frame.t0_us = g_build_t0_us;
+  // Apply clock offset from CMD_SYNC_CLOCK to make t0_us server-relative.
+  // g_build_t0_us is always from esp_timer_get_time() (µs since boot)
+  // which stays well within int64_t range for any practical uptime.
+  frame.t0_us = static_cast<uint64_t>(
+      static_cast<int64_t>(g_build_t0_us) + g_clock_offset_us);
   frame.sample_count = g_build_count;
   frame.transmitted = false;
   frame.last_tx_ms = 0;
@@ -573,12 +578,14 @@ void service_control_rx() {
   uint8_t cmd_id = 0;
   uint32_t cmd_seq = 0;
   uint16_t identify_ms = 0;
+  uint64_t server_time_us = 0;
   bool ok = vibesensor::parse_cmd(packet,
                                   read,
                                   g_client_id,
                                   &cmd_id,
                                   &cmd_seq,
-                                  &identify_ms);
+                                  &identify_ms,
+                                  &server_time_us);
   if (!ok) {
     g_control_parse_errors++;
     set_last_error(9);
@@ -589,6 +596,10 @@ void service_control_rx() {
     identify_ms = identify_ms > kMaxIdentifyDurationMs ? kMaxIdentifyDurationMs : identify_ms;
     g_blink_until_ms = millis() + identify_ms;
     g_led_next_update_ms = 0;
+    send_ack(cmd_seq, 0);
+  } else if (cmd_id == vibesensor::kCmdSyncClock) {
+    int64_t local_us = static_cast<int64_t>(esp_timer_get_time());
+    g_clock_offset_us = static_cast<int64_t>(server_time_us) - local_us;
     send_ack(cmd_seq, 0);
   } else {
     send_ack(cmd_seq, 2);

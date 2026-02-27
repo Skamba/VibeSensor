@@ -16,6 +16,7 @@ MSG_ACK = 4
 MSG_DATA_ACK = 5
 
 CMD_IDENTIFY = 1
+CMD_SYNC_CLOCK = 2
 
 HELLO_BASE = struct.Struct("<BB6sHHHB")
 DATA_HEADER = struct.Struct("<BB6sIQH")
@@ -23,6 +24,7 @@ ACK_STRUCT = struct.Struct("<BB6sIB")
 DATA_ACK_STRUCT = struct.Struct("<BB6sI")
 CMD_HEADER = struct.Struct("<BB6sBI")
 CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
+CMD_SYNC_CLOCK_STRUCT = struct.Struct("<BB6sBIQ")
 
 HELLO_FIXED_BYTES = 1 + 1 + CLIENT_ID_BYTES + 2 + 2 + 2 + 1 + 1 + 4
 DATA_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 8 + 2
@@ -33,6 +35,7 @@ ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 1
 DATA_ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4
 CMD_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 1 + 4
 CMD_IDENTIFY_BYTES = CMD_HEADER_BYTES + 2
+CMD_SYNC_CLOCK_BYTES = CMD_HEADER_BYTES + 8
 
 
 class ProtocolError(ValueError):
@@ -231,6 +234,17 @@ def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes
         CMD_IDENTIFY,
         cmd_seq,
         max(1, min(60_000, int(duration_ms))),
+    )
+
+
+def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> bytes:
+    return CMD_SYNC_CLOCK_STRUCT.pack(
+        MSG_CMD,
+        VERSION,
+        client_id,
+        CMD_SYNC_CLOCK,
+        cmd_seq,
+        max(0, int(server_time_us)),
     )
 
 
