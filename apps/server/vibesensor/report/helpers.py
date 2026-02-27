@@ -26,6 +26,11 @@ SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
 SPEED_MIN_POINTS = 8
 
+# Minimum realistic MEMS accelerometer noise floor (~0.001 g).
+# Used as the lower bound for SNR computations to prevent ratio blow-up
+# when the measured floor is near zero (sensor artifact / perfectly clean signal).
+MEMS_NOISE_FLOOR_G = 0.001
+
 ORDER_TOLERANCE_REL = 0.08
 ORDER_TOLERANCE_MIN_HZ = 0.5
 ORDER_MIN_MATCH_POINTS = 4
@@ -361,6 +366,19 @@ def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
         return None
     floors_sorted = sorted(floors)
     return percentile(floors_sorted, 0.50) if len(floors_sorted) >= 2 else floors_sorted[0]
+
+
+def _effective_baseline_floor(
+    run_noise_baseline_g: float | None,
+    *,
+    extra_fallback: float | None = None,
+) -> float:
+    """Return a safe noise-floor value for SNR computations.
+
+    Resolution order: *run_noise_baseline_g* → *extra_fallback* → 0.0,
+    clamped to at least :data:`MEMS_NOISE_FLOOR_G`.
+    """
+    return max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g or extra_fallback or 0.0)
 
 
 def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:

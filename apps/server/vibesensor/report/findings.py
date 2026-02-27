@@ -13,6 +13,7 @@ from vibesensor_core.vibration_strength import percentile, vibration_strength_db
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
+    MEMS_NOISE_FLOOR_G,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
     ORDER_MIN_COVERAGE_POINTS,
@@ -22,6 +23,7 @@ from .helpers import (
     SPEED_COVERAGE_MIN_PCT,
     _amplitude_weighted_speed_window,
     _corr_abs,
+    _effective_baseline_floor,
     _effective_engine_rpm,
     _estimate_strength_floor_amp_g,
     _location_label,
@@ -49,10 +51,8 @@ _NEGLIGIBLE_STRENGTH_MAX_DB = (
 _LIGHT_STRENGTH_MAX_DB = (
     float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
 )
-# Minimum realistic MEMS accelerometer noise floor (~0.001 g).
-# Used as the lower bound for SNR computations to prevent ratio blow-up
-# when the measured floor is near zero (sensor artifact / perfectly clean signal).
-_MEMS_NOISE_FLOOR_G = 0.001
+# Kept as an alias for existing in-module references.
+_MEMS_NOISE_FLOOR_G = MEMS_NOISE_FLOOR_G
 
 # ── Diffuse excitation detection constants ──────────────────────────────
 # If one sensor's amplitude is more than this ratio above the weakest,
@@ -1197,7 +1197,7 @@ def _build_persistent_peak_findings(
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
         mean_floor = mean(bin_floors.get(bin_center, [0.0])) if bin_floors.get(bin_center) else 0.0
-        effective_floor = max(0.001, run_noise_baseline_g or mean_floor or 0.0)
+        effective_floor = _effective_baseline_floor(run_noise_baseline_g, extra_fallback=mean_floor)
         raw_snr = p95_amp / effective_floor
         spatial_uniformity: float | None = None
         if len(total_locations) >= 2:
