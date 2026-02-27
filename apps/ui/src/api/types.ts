@@ -95,12 +95,14 @@ export type UpdateStatusPayload = {
   log_tail: string[];
   exit_code: number | null;
   runtime: {
+    version: string;
     commit: string;
     ui_source_hash: string;
     public_assets_hash: string;
     public_build_source_hash: string;
     public_build_commit: string;
     assets_verified: boolean;
+    has_packaged_static: boolean;
   };
 };
 
