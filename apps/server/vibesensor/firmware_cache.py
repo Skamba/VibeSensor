@@ -241,6 +241,8 @@ class GitHubReleaseFetcher:
             is_draft = release.get("draft", False)
             if is_draft:
                 continue
+            if not self._release_has_firmware_asset(release):
+                continue
             if self._config.channel == "stable" and not is_prerelease:
                 return release
             if self._config.channel in ("prerelease", "edge") and is_prerelease:
@@ -248,13 +250,25 @@ class GitHubReleaseFetcher:
 
         # Fallback: use the latest prerelease (firmware releases are typically prereleases)
         for release in releases:
-            if not release.get("draft", False):
-                return release
+            if release.get("draft", False):
+                continue
+            if not self._release_has_firmware_asset(release):
+                continue
+            return release
 
         raise ValueError(
             f"No eligible firmware release found for channel '{self._config.channel}' "
             f"in {self._config.firmware_repo}"
         )
+
+    @staticmethod
+    def _release_has_firmware_asset(release: dict[str, Any]) -> bool:
+        assets = release.get("assets", [])
+        for asset in assets:
+            name = str(asset.get("name", ""))
+            if name.startswith("vibesensor-fw-") and name.endswith(".zip"):
+                return True
+        return False
 
     def find_firmware_asset(self, release: dict[str, Any]) -> dict[str, Any]:
         """Find the firmware bundle asset in a release."""
