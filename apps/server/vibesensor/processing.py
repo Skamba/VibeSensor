@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass, field
 from functools import wraps
 from threading import RLock
-from typing import Any
+from typing import Any, NamedTuple
 
 import numpy as np
 from vibesensor_core.vibration_strength import (
@@ -23,6 +23,39 @@ AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = 4096
 _ALIGNMENT_MIN_OVERLAP = 0.5  # shared window must cover ≥50 % of the union
+
+
+class _OverlapResult(NamedTuple):
+    """Computed overlap between multiple sensor time-ranges."""
+
+    overlap_ratio: float
+    aligned: bool
+    shared_start: float
+    shared_end: float
+    overlap_s: float
+
+
+def _compute_overlap(starts: list[float], ends: list[float]) -> _OverlapResult:
+    """Compute the intersection-over-union overlap for a set of time ranges.
+
+    Each pair ``(starts[i], ends[i])`` defines one sensor's active window.
+    Returns an :class:`_OverlapResult` with the overlap ratio, alignment flag,
+    and the shared window boundaries.
+    """
+    shared_start = max(starts)
+    shared_end = min(ends)
+    overlap = max(0.0, shared_end - shared_start)
+    union_start = min(starts)
+    union_end = max(ends)
+    union = max(1e-9, union_end - union_start)
+    overlap_ratio = overlap / union
+    return _OverlapResult(
+        overlap_ratio=overlap_ratio,
+        aligned=overlap_ratio >= _ALIGNMENT_MIN_OVERLAP,
+        shared_start=shared_start,
+        shared_end=shared_end,
+        overlap_s=overlap,
+    )
 
 
 def _synchronized(method):
@@ -72,7 +105,8 @@ class SignalProcessor:
         waveform_seconds: int,
         waveform_display_hz: int,
         fft_n: int,
-        spectrum_max_hz: int,
+        spectrum_min_hz: float = 0.0,
+        spectrum_max_hz: int = 200,
         accel_scale_g_per_lsb: float | None = None,
         worker_pool: WorkerPool | None = None,
     ):
@@ -80,6 +114,7 @@ class SignalProcessor:
         self.waveform_seconds = waveform_seconds
         self.waveform_display_hz = waveform_display_hz
         self.fft_n = fft_n
+        self.spectrum_min_hz = max(0.0, float(spectrum_min_hz))
         self.spectrum_max_hz = spectrum_max_hz
         self.accel_scale_g_per_lsb = (
             float(accel_scale_g_per_lsb)
@@ -331,7 +366,7 @@ class SignalProcessor:
             empty = np.empty(0, dtype=np.float32)
             return empty, np.empty(0, dtype=np.intp)
         freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
-        valid = freqs <= self.spectrum_max_hz
+        valid = (freqs >= self.spectrum_min_hz) & (freqs <= self.spectrum_max_hz)
         freq_slice = freqs[valid].astype(np.float32)
         valid_idx = np.flatnonzero(valid)
         self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
@@ -621,18 +656,14 @@ class SignalProcessor:
 
         # --- Alignment metadata ----------------------------------------------
         if len(ranges) >= 2:
-            shared_start = max(s for _, s, _ in ranges)
-            shared_end = min(e for _, _, e in ranges)
-            overlap = max(0.0, shared_end - shared_start)
-            union_start = min(s for _, s, _ in ranges)
-            union_end = max(e for _, _, e in ranges)
-            # Guard against zero-division with a tiny epsilon.
-            union = max(1e-9, union_end - union_start)
-            overlap_ratio = overlap / union
+            ov = _compute_overlap(
+                [s for _, s, _ in ranges],
+                [e for _, _, e in ranges],
+            )
             payload["alignment"] = {
-                "overlap_ratio": round(overlap_ratio, 4),
-                "aligned": overlap_ratio >= _ALIGNMENT_MIN_OVERLAP,
-                "shared_window_s": round(overlap, 4),
+                "overlap_ratio": round(ov.overlap_ratio, 4),
+                "aligned": ov.aligned,
+                "shared_window_s": round(ov.overlap_s, 4),
                 "sensor_count": len(ranges),
                 "clock_synced": all_synced and any_synced,
             }
@@ -787,6 +818,7 @@ class SignalProcessor:
             "fft_n": self.fft_n,
             "fft_scale": self._fft_scale,
             "window": "hann",
+            "spectrum_min_hz": self.spectrum_min_hz,
             "spectrum_max_hz": self.spectrum_max_hz,
             "freq_bins": len(freq_slice),
             "freq_resolution_hz": float(sr) / self.fft_n,
@@ -944,34 +976,24 @@ class SignalProcessor:
                 "sensors_excluded": excluded,
             }
 
-        # Shared window = intersection of all ranges.
-        shared_start = max(s for s, _ in ranges)
-        shared_end = min(e for _, e in ranges)
-        overlap = max(0.0, shared_end - shared_start)
-
-        # Union span (earliest start → latest end).
-        # Guard against zero-division with a tiny epsilon.
-        union_start = min(s for s, _ in ranges)
-        union_end = max(e for _, e in ranges)
-        union = max(1e-9, union_end - union_start)
-
-        overlap_ratio = overlap / union
-        # Aligned if at least 50 % of the union is covered by the intersection.
-        aligned = overlap_ratio >= _ALIGNMENT_MIN_OVERLAP
+        ov = _compute_overlap(
+            [s for s, _ in ranges],
+            [e for _, e in ranges],
+        )
 
         shared: dict[str, float] | None = None
-        if overlap > 0:
+        if ov.overlap_s > 0:
             shared = {
-                "start_s": shared_start,
-                "end_s": shared_end,
-                "duration_s": overlap,
+                "start_s": ov.shared_start,
+                "end_s": ov.shared_end,
+                "duration_s": ov.overlap_s,
             }
 
         return {
             "per_sensor": per_sensor,
             "shared_window": shared,
-            "overlap_ratio": round(overlap_ratio, 4),
-            "aligned": aligned,
+            "overlap_ratio": round(ov.overlap_ratio, 4),
+            "aligned": ov.aligned,
             "clock_synced": all_synced,
             "sensors_included": included,
             "sensors_excluded": excluded,
