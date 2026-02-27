@@ -75,6 +75,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 _MAX_REPORT_SAMPLES = 12_000
+_EXPORT_BATCH_SIZE = 2048
 _REPORT_PDF_CACHE_MAX_ENTRIES = 16
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 
@@ -557,7 +558,7 @@ def create_router(state: RuntimeState) -> APIRouter:
             fieldnames: list[str] = []
             fieldname_set: set[str] = set()
             sample_count = 0
-            for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+            for batch in state.history_db.iter_run_samples(run_id, batch_size=_EXPORT_BATCH_SIZE):
                 sample_count += len(batch)
                 for sample in batch:
                     for key in sample:
@@ -579,7 +580,9 @@ def create_router(state: RuntimeState) -> APIRouter:
                         raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
                         writer = csv.DictWriter(raw_csv_text, fieldnames=fieldnames)
                         writer.writeheader()
-                        for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+                        for batch in state.history_db.iter_run_samples(
+                            run_id, batch_size=_EXPORT_BATCH_SIZE
+                        ):
                             writer.writerows(batch)
                         raw_csv_text.flush()
                 else:
