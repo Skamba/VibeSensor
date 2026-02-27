@@ -20,7 +20,6 @@ import pytest
 from vibesensor.processing import SignalProcessor
 from vibesensor.worker_pool import WorkerPool
 
-
 # ---------------------------------------------------------------------------
 # WorkerPool unit tests
 # ---------------------------------------------------------------------------
@@ -147,7 +146,7 @@ class TestParallelComputeAll:
         try:
             client_ids = [f"c{i}" for i in range(4)]
             freqs = [20.0, 30.0, 40.0, 50.0]
-            for cid, freq in zip(client_ids, freqs):
+            for cid, freq in zip(client_ids, freqs, strict=True):
                 _inject_test_signal(proc, cid, freq_hz=freq)
 
             results = proc.compute_all(client_ids)
