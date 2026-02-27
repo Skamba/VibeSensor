@@ -60,6 +60,40 @@ def test_classify_peak_matches_engine_order() -> None:
     assert cls["key"] in {"eng1", "shaft_eng1"}
 
 
+def test_classify_peak_below_road_min_classified_as_road() -> None:
+    """Peaks between ROAD_RESONANCE_MIN_HZ (0.5) and ROAD_RESONANCE_MAX_HZ should be 'road'."""
+    from vibesensor.diagnostics_shared import ROAD_RESONANCE_MIN_HZ
+
+    assert ROAD_RESONANCE_MIN_HZ == 0.5
+    settings = build_diagnostic_settings({})
+    # 1.5 Hz peak — should now classify as "road" (previously fell through to "other").
+    cls = classify_peak_hz(peak_hz=1.5, speed_mps=30.0, settings=settings)
+    assert cls["key"] == "road"
+    # 0.4 Hz — below minimum, should still be "other"
+    cls_low = classify_peak_hz(peak_hz=0.4, speed_mps=30.0, settings=settings)
+    assert cls_low["key"] == "other"
+
+
+def test_vehicle_orders_hz_uses_tire_deflection_factor() -> None:
+    """vehicle_orders_hz should compute frequencies with the deflected circumference."""
+    from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
+
+    settings_no_deflection = dict(DEFAULT_ANALYSIS_SETTINGS)
+    settings_no_deflection["tire_deflection_factor"] = 1.0
+    settings_with_deflection = dict(DEFAULT_ANALYSIS_SETTINGS)
+    settings_with_deflection["tire_deflection_factor"] = 0.97
+
+    orders_no = vehicle_orders_hz(speed_mps=30.0, settings=settings_no_deflection)
+    orders_with = vehicle_orders_hz(speed_mps=30.0, settings=settings_with_deflection)
+    assert orders_no is not None and orders_with is not None
+
+    # With deflection (smaller circumference), wheel Hz should be higher.
+    assert orders_with["wheel_hz"] > orders_no["wheel_hz"]
+    # The ratio should be approximately 1/0.97 ≈ 1.0309
+    ratio = orders_with["wheel_hz"] / orders_no["wheel_hz"]
+    assert abs(ratio - 1.0 / 0.97) < 1e-6
+
+
 def test_vehicle_orders_hz_returns_none_for_non_finite_inputs() -> None:
     settings = build_diagnostic_settings({})
     assert vehicle_orders_hz(speed_mps=nan, settings=settings) is None
@@ -144,6 +178,7 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
             "rim_in": settings["rim_in"],
             "final_drive_ratio": settings["final_drive_ratio"],
             "current_gear_ratio": settings["current_gear_ratio"],
+            "tire_deflection_factor": settings["tire_deflection_factor"],
         }
     ]
     speed_kmh = speed_mps * MPS_TO_KMH

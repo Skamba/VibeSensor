@@ -13,11 +13,39 @@ from vibesensor.analysis_settings import (
 
 
 def test_tire_circumference_typical_spec() -> None:
-    # 285/30R21 → sidewall 85.5 mm, diameter 618.4 mm
-    result = tire_circumference_m_from_spec(285.0, 30.0, 21.0)
+    # 285/30R21 → sidewall 85.5 mm, diameter 704.4 mm (no deflection)
+    result = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
     assert result is not None
     expected_diameter_m = ((21.0 * 25.4) + (2.0 * 285.0 * 30.0 / 100.0)) / 1000.0
     assert abs(result - expected_diameter_m * pi) < 1e-9
+
+
+def test_tire_circumference_with_deflection_factor() -> None:
+    # Deflection factor of 0.97 reduces circumference by 3%.
+    no_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
+    with_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=0.97)
+    assert no_deflection is not None and with_deflection is not None
+    assert abs(with_deflection - no_deflection * 0.97) < 1e-9
+
+
+def test_tire_circumference_deflection_factor_one_is_identity() -> None:
+    no_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
+    factor_one = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=1.0)
+    assert no_deflection is not None and factor_one is not None
+    assert abs(factor_one - no_deflection) < 1e-9
+
+
+def test_tire_circumference_deflection_factor_none_omitted() -> None:
+    # When deflection_factor is None (legacy/no setting), no deflection applied.
+    a = tire_circumference_m_from_spec(285.0, 30.0, 21.0)
+    b = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
+    assert a is not None and b is not None
+    assert a == b
+
+
+def test_tire_deflection_factor_in_default_analysis_settings() -> None:
+    assert "tire_deflection_factor" in DEFAULT_ANALYSIS_SETTINGS
+    assert DEFAULT_ANALYSIS_SETTINGS["tire_deflection_factor"] == 0.97
 
 
 def test_tire_circumference_returns_none_for_none_inputs() -> None:

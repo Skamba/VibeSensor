@@ -218,7 +218,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
             _metadata: dict,
             _circumference: float | None,
         ) -> tuple[float, str]:
-            return 1.0, "speed_kmh"
+            return 5.0, "speed_kmh"
 
     monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
     monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
@@ -244,7 +244,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
                 "t_s": float(idx),
                 "speed_kmh": 40.0 + idx,
                 "strength_floor_amp_g": 1000.0,
-                "top_peaks": [{"hz": 1.5 if matched else 3.0, "amp": 0.001}],
+                "top_peaks": [{"hz": 5.5 if matched else 20.0, "amp": 0.001}],
                 "location": "front_left",
             }
         )
@@ -290,7 +290,7 @@ def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
             _metadata: dict,
             _circumference: float | None,
         ) -> tuple[float, str]:
-            return 1.0, "speed_kmh"
+            return 5.0, "speed_kmh"
 
     monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
     monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
@@ -310,14 +310,14 @@ def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
 
     from vibesensor.report.phase_segmentation import DrivingPhase
 
-    # 20 samples all in acceleration phase, all matching at 1.0 Hz
+    # 20 samples all in acceleration phase, all matching at 5.0 Hz
     n = 20
     samples: list[dict] = [
         {
             "t_s": float(i),
             "speed_kmh": 40.0 + float(i),
             "strength_floor_amp_g": 0.001,
-            "top_peaks": [{"hz": 1.0, "amp": 0.05}],
+            "top_peaks": [{"hz": 5.0, "amp": 0.05}],
             "location": "front_left",
         }
         for i in range(n)
@@ -361,7 +361,7 @@ def test_build_order_findings_dominant_phase_none_without_phases(
             _metadata: dict,
             _circumference: float | None,
         ) -> tuple[float, str]:
-            return 1.0, "speed_kmh"
+            return 5.0, "speed_kmh"
 
     monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
     monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
@@ -385,7 +385,7 @@ def test_build_order_findings_dominant_phase_none_without_phases(
             "t_s": float(i),
             "speed_kmh": 40.0 + float(i),
             "strength_floor_amp_g": 0.001,
-            "top_peaks": [{"hz": 1.0, "amp": 0.05}],
+            "top_peaks": [{"hz": 5.0, "amp": 0.05}],
             "location": "front_left",
         }
         for i in range(n)

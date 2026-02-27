@@ -20,6 +20,7 @@ POSITIVE_REQUIRED_KEYS: frozenset[str] = frozenset(
         "driveshaft_bandwidth_pct",
         "engine_bandwidth_pct",
         "max_band_half_width_pct",
+        "tire_deflection_factor",
     }
 )
 NON_NEGATIVE_KEYS: frozenset[str] = frozenset(
@@ -47,6 +48,7 @@ _BOUNDS: dict[str, tuple[float, float]] = {
     "tire_width_mm": (100.0, 500.0),
     "tire_aspect_pct": (10.0, 90.0),
     "rim_in": (10.0, 30.0),
+    "tire_deflection_factor": (0.85, 1.0),
 }
 
 
@@ -104,6 +106,7 @@ DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
     "gear_uncertainty_pct": 0.2,
     "min_abs_band_hz": 0.2,
     "max_band_half_width_pct": 6.0,
+    "tire_deflection_factor": 0.97,
 }
 
 
@@ -111,6 +114,7 @@ def tire_circumference_m_from_spec(
     tire_width_mm: float | None,
     tire_aspect_pct: float | None,
     rim_in: float | None,
+    deflection_factor: float | None = None,
 ) -> float | None:
     if tire_width_mm is None or tire_aspect_pct is None or rim_in is None:
         return None
@@ -123,7 +127,14 @@ def tire_circumference_m_from_spec(
     diameter_m = diameter_mm / 1000.0
     if diameter_m <= 0:
         return None
-    return diameter_m * pi
+    circumference = diameter_m * pi
+    # Apply loaded rolling-radius deflection factor (default ~3%).
+    # Under vehicle weight the effective rolling circumference is shorter
+    # than the unloaded specification diameter, which shifts all predicted
+    # rotational-order frequencies upward to match reality.
+    if deflection_factor is not None and isfinite(deflection_factor) and deflection_factor > 0:
+        circumference *= deflection_factor
+    return circumference
 
 
 def wheel_hz_from_speed_kmh(speed_kmh: float, tire_circumference_m: float) -> float | None:

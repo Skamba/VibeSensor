@@ -46,7 +46,7 @@ def test_default_100_kmh_order_calculation_matches_vehicle_spec() -> None:
     # Independent manual calculation from default tire and drivetrain values.
     sidewall_mm = settings["tire_width_mm"] * (settings["tire_aspect_pct"] / 100.0)
     diameter_m = ((settings["rim_in"] * 25.4) + (2.0 * sidewall_mm)) / 1000.0
-    circumference_m = pi * diameter_m
+    circumference_m = pi * diameter_m * settings["tire_deflection_factor"]
     wheel_hz_manual = SPEED_MPS / circumference_m
     drive_hz_manual = wheel_hz_manual * settings["final_drive_ratio"]
     engine_hz_manual = drive_hz_manual * settings["current_gear_ratio"]
@@ -55,10 +55,10 @@ def test_default_100_kmh_order_calculation_matches_vehicle_spec() -> None:
     assert orders["drive_hz"] == pytest.approx(drive_hz_manual, rel=1e-6)
     assert orders["engine_hz"] == pytest.approx(engine_hz_manual, rel=1e-6)
 
-    # Sanity anchors for regression readability at 100 km/h defaults.
-    assert orders["wheel_hz"] == pytest.approx(12.55244, rel=1e-4)
-    assert orders["drive_hz"] == pytest.approx(38.66153, rel=1e-4)
-    assert orders["engine_hz"] == pytest.approx(24.74338, rel=1e-4)
+    # Sanity anchors for regression readability at 100 km/h defaults with 0.97 deflection.
+    assert orders["wheel_hz"] == pytest.approx(12.9407, rel=1e-4)
+    assert orders["drive_hz"] == pytest.approx(39.8572, rel=1e-4)
+    assert orders["engine_hz"] == pytest.approx(25.5086, rel=1e-4)
 
 
 def test_tolerance_window_is_respected_for_order_classification() -> None:

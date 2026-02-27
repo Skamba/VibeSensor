@@ -105,7 +105,8 @@ class SignalProcessor:
         waveform_seconds: int,
         waveform_display_hz: int,
         fft_n: int,
-        spectrum_max_hz: int,
+        spectrum_min_hz: float = 0.0,
+        spectrum_max_hz: int = 200,
         accel_scale_g_per_lsb: float | None = None,
         worker_pool: WorkerPool | None = None,
     ):
@@ -113,6 +114,7 @@ class SignalProcessor:
         self.waveform_seconds = waveform_seconds
         self.waveform_display_hz = waveform_display_hz
         self.fft_n = fft_n
+        self.spectrum_min_hz = max(0.0, float(spectrum_min_hz))
         self.spectrum_max_hz = spectrum_max_hz
         self.accel_scale_g_per_lsb = (
             float(accel_scale_g_per_lsb)
@@ -364,7 +366,7 @@ class SignalProcessor:
             empty = np.empty(0, dtype=np.float32)
             return empty, np.empty(0, dtype=np.intp)
         freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
-        valid = freqs <= self.spectrum_max_hz
+        valid = (freqs >= self.spectrum_min_hz) & (freqs <= self.spectrum_max_hz)
         freq_slice = freqs[valid].astype(np.float32)
         valid_idx = np.flatnonzero(valid)
         self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
@@ -816,6 +818,7 @@ class SignalProcessor:
             "fft_n": self.fft_n,
             "fft_scale": self._fft_scale,
             "window": "hann",
+            "spectrum_min_hz": self.spectrum_min_hz,
             "spectrum_max_hz": self.spectrum_max_hz,
             "freq_bins": len(freq_slice),
             "freq_resolution_hz": float(sr) / self.fft_n,

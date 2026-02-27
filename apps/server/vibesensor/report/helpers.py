@@ -38,6 +38,13 @@ ORDER_MIN_COVERAGE_POINTS = 6
 ORDER_MIN_CONFIDENCE = 0.25
 ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
 CONSTANT_SPEED_STDDEV_KMH = 0.5
+
+# Minimum frequency for analysis peaks.  Sub-road-resonance content
+# (body sway, suspension heave) is not actionable for drivetrain
+# diagnostics and dilutes findings.  New data is already filtered at
+# the FFT level via ``spectrum_min_hz``; this constant protects the
+# report pipeline against old recorded runs.
+MIN_ANALYSIS_FREQ_HZ = 3.0
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
 
@@ -246,6 +253,7 @@ def _tire_reference_from_metadata(metadata: dict[str, Any]) -> tuple[float | Non
         _as_float(metadata.get("tire_width_mm")),
         _as_float(metadata.get("tire_aspect_pct")),
         _as_float(metadata.get("rim_in")),
+        deflection_factor=_as_float(metadata.get("tire_deflection_factor")),
     )
     if derived is not None and derived > 0:
         return derived, "derived_from_tire_dimensions"
@@ -326,6 +334,11 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
             hz = _as_float(peak.get("hz"))
             amp = _as_float(peak.get("amp"))
             if hz is None or amp is None or hz <= 0:
+                continue
+            # Defence-in-depth: skip sub-road-resonance frequencies that may
+            # exist in old recorded run data (new data is filtered at the FFT
+            # level via ``spectrum_min_hz``).
+            if hz < MIN_ANALYSIS_FREQ_HZ:
                 continue
             out.append((hz, amp))
     return out

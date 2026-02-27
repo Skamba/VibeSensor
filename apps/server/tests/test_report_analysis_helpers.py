@@ -342,6 +342,23 @@ def test_sample_top_peaks_filters_invalid() -> None:
     assert len(peaks) == 0
 
 
+def test_sample_top_peaks_filters_sub_min_analysis_freq() -> None:
+    """Peaks below MIN_ANALYSIS_FREQ_HZ (3.0 Hz) should be excluded."""
+    from vibesensor.report.helpers import MIN_ANALYSIS_FREQ_HZ
+
+    sample = {
+        "top_peaks": [
+            {"hz": 1.5, "amp": 0.2},  # below MIN_ANALYSIS_FREQ_HZ
+            {"hz": 2.9, "amp": 0.15},  # below MIN_ANALYSIS_FREQ_HZ
+            {"hz": 3.0, "amp": 0.1},  # at boundary — should pass
+            {"hz": 15.0, "amp": 0.05},  # well above — should pass
+        ]
+    }
+    peaks = _sample_top_peaks(sample)
+    assert len(peaks) == 2
+    assert all(hz >= MIN_ANALYSIS_FREQ_HZ for hz, _ in peaks)
+
+
 # -- _location_label -----------------------------------------------------------
 
 

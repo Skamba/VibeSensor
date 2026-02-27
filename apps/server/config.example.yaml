@@ -34,6 +34,7 @@ processing:
   ui_heavy_push_hz: 4
   fft_update_hz: 4
   fft_n: 2048
+  spectrum_min_hz: 3.0
   spectrum_max_hz: 200
   client_ttl_seconds: 120
   accel_scale_g_per_lsb: null

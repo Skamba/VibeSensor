@@ -34,6 +34,7 @@ _TIRE_CIRC = tire_circumference_m_from_spec(
     DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
     DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
     DEFAULT_ANALYSIS_SETTINGS["rim_in"],
+    deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor"),
 )
 _FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
 _GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
