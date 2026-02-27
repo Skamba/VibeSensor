@@ -49,6 +49,7 @@ from .settings_store import SettingsStore
 from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
 from .update_manager import UpdateManager
+from .worker_pool import WorkerPool
 from .ws_hub import WebSocketHub
 
 LOGGER = logging.getLogger(__name__)
@@ -306,6 +307,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         if config.processing.accel_scale_g_per_lsb is not None
         else get_accel_scale_g_per_lsb(config.logging.sensor_model)
     )
+    worker_pool = WorkerPool(max_workers=4, thread_name_prefix="vibesensor-fft")
     processor = SignalProcessor(
         sample_rate_hz=config.processing.sample_rate_hz,
         waveform_seconds=config.processing.waveform_seconds,
@@ -313,6 +315,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         fft_n=config.processing.fft_n,
         spectrum_max_hz=config.processing.spectrum_max_hz,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+        worker_pool=worker_pool,
     )
     ws_hub = WebSocketHub()
     control_plane = UDPControlPlane(
@@ -508,6 +511,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             runtime.data_consumer_task.cancel()
             await asyncio.gather(runtime.data_consumer_task, return_exceptions=True)
             runtime.data_consumer_task = None
+        worker_pool.shutdown(wait=True)
         runtime.history_db.close()
 
     @asynccontextmanager
