@@ -52,6 +52,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "ui_heavy_push_hz": 4,
         "fft_update_hz": 4,
         "fft_n": 2048,
+        "spectrum_min_hz": 3.0,
         "spectrum_max_hz": 200,
         "client_ttl_seconds": 120,
         "accel_scale_g_per_lsb": None,
@@ -153,6 +154,7 @@ class ProcessingConfig:
     ui_heavy_push_hz: int
     fft_update_hz: int
     fft_n: int
+    spectrum_min_hz: float
     spectrum_max_hz: int
     client_ttl_seconds: int
     accel_scale_g_per_lsb: float | None
@@ -199,6 +201,14 @@ class ProcessingConfig:
                 next_pow2,
             )
             object.__setattr__(self, "fft_n", next_pow2)
+
+        # --- spectrum_min_hz must be non-negative ----------------------------------
+        if self.spectrum_min_hz < 0:
+            _cfg_logger.warning(
+                "processing.spectrum_min_hz=%s is negative — clamped to 0",
+                self.spectrum_min_hz,
+            )
+            object.__setattr__(self, "spectrum_min_hz", 0.0)
 
         # --- spectrum_max_hz must be below Nyquist (sample_rate_hz / 2) -------------
         nyquist = self.sample_rate_hz // 2
@@ -338,6 +348,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             ui_heavy_push_hz=int(merged["processing"].get("ui_heavy_push_hz", 4)),
             fft_update_hz=int(merged["processing"]["fft_update_hz"]),
             fft_n=int(merged["processing"]["fft_n"]),
+            spectrum_min_hz=float(merged["processing"].get("spectrum_min_hz", 3.0)),
             spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
             client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
             accel_scale_g_per_lsb=accel_scale,

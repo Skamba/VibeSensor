@@ -25,46 +25,34 @@ from vibesensor.report.strength_labels import (
 class TestCertaintyTierThresholds:
     """Verify tier boundaries are correctly applied."""
 
-    def test_zero_confidence_is_tier_a(self):
-        assert certainty_tier(0.0) == "A"
-
-    def test_six_percent_is_tier_a(self):
-        """Regression: the ~6% screenshot scenario must be Tier A."""
-        assert certainty_tier(0.06) == "A"
-
-    def test_ceiling_a_is_tier_a(self):
-        assert certainty_tier(TIER_A_CEILING) == "A"
-
-    def test_just_above_tier_a_is_tier_b(self):
-        assert certainty_tier(TIER_A_CEILING + 0.001) == "B"
-
-    def test_ceiling_b_is_tier_b(self):
-        assert certainty_tier(TIER_B_CEILING) == "B"
-
-    def test_just_above_tier_b_is_tier_c(self):
-        assert certainty_tier(TIER_B_CEILING + 0.001) == "C"
-
-    def test_high_confidence_is_tier_c(self):
-        assert certainty_tier(0.80) == "C"
-
-    def test_maximum_confidence_is_tier_c(self):
-        assert certainty_tier(1.0) == "C"
-
-    @pytest.mark.parametrize("conf", [0.0, 0.05, 0.10, 0.15])
-    def test_tier_a_range(self, conf):
-        assert certainty_tier(conf) == "A"
-
-    @pytest.mark.parametrize("conf", [0.16, 0.20, 0.30, 0.40])
-    def test_tier_b_range(self, conf):
-        assert certainty_tier(conf) == "B"
-
-    @pytest.mark.parametrize("conf", [0.41, 0.50, 0.70, 0.97])
-    def test_tier_c_range(self, conf):
-        assert certainty_tier(conf) == "C"
-
-    def test_negative_confidence_is_tier_a(self):
-        """Edge case: negative confidence should not crash."""
-        assert certainty_tier(-0.1) == "A"
+    @pytest.mark.parametrize(
+        ("confidence", "expected_tier"),
+        [
+            # Tier A: low confidence (≤ 15%)
+            pytest.param(0.0, "A", id="zero"),
+            pytest.param(0.05, "A", id="5pct"),
+            pytest.param(0.06, "A", id="6pct_screenshot_regression"),
+            pytest.param(0.10, "A", id="10pct"),
+            pytest.param(TIER_A_CEILING, "A", id="ceiling_a"),
+            pytest.param(-0.1, "A", id="negative_edge_case"),
+            # Tier B: moderate confidence (15% < x ≤ 40%)
+            pytest.param(TIER_A_CEILING + 0.001, "B", id="just_above_a"),
+            pytest.param(0.16, "B", id="16pct"),
+            pytest.param(0.20, "B", id="20pct"),
+            pytest.param(0.30, "B", id="30pct"),
+            pytest.param(TIER_B_CEILING, "B", id="ceiling_b"),
+            # Tier C: high confidence (> 40%)
+            pytest.param(TIER_B_CEILING + 0.001, "C", id="just_above_b"),
+            pytest.param(0.41, "C", id="41pct"),
+            pytest.param(0.50, "C", id="50pct"),
+            pytest.param(0.70, "C", id="70pct"),
+            pytest.param(0.80, "C", id="80pct"),
+            pytest.param(0.97, "C", id="97pct"),
+            pytest.param(1.0, "C", id="maximum"),
+        ],
+    )
+    def test_tier_classification(self, confidence: float, expected_tier: str) -> None:
+        assert certainty_tier(confidence) == expected_tier
 
     def test_tier_a_ceiling_constant(self):
         assert TIER_A_CEILING == 0.15

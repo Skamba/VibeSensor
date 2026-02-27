@@ -332,6 +332,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         waveform_seconds=config.processing.waveform_seconds,
         waveform_display_hz=config.processing.waveform_display_hz,
         fft_n=config.processing.fft_n,
+        spectrum_min_hz=config.processing.spectrum_min_hz,
         spectrum_max_hz=config.processing.spectrum_max_hz,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         worker_pool=worker_pool,

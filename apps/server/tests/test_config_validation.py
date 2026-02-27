@@ -34,6 +34,7 @@ def _make_processing(**overrides: int | float | None) -> ProcessingConfig:
         ui_heavy_push_hz=4,
         fft_update_hz=4,
         fft_n=2048,
+        spectrum_min_hz=3.0,
         spectrum_max_hz=200,
         client_ttl_seconds=120,
         accel_scale_g_per_lsb=None,
@@ -128,6 +129,26 @@ class TestSpectrumMaxHzNyquist:
         assert cfg.spectrum_max_hz == 200
 
 
+class TestSpectrumMinHz:
+    """spectrum_min_hz validation."""
+
+    def test_negative_spectrum_min_hz_clamped_to_zero(self) -> None:
+        cfg = _make_processing(spectrum_min_hz=-5.0)
+        assert cfg.spectrum_min_hz == 0.0
+
+    def test_zero_spectrum_min_hz_preserved(self) -> None:
+        cfg = _make_processing(spectrum_min_hz=0.0)
+        assert cfg.spectrum_min_hz == 0.0
+
+    def test_positive_spectrum_min_hz_preserved(self) -> None:
+        cfg = _make_processing(spectrum_min_hz=3.0)
+        assert cfg.spectrum_min_hz == 3.0
+
+    def test_default_spectrum_min_hz(self) -> None:
+        cfg = _make_processing()
+        assert cfg.spectrum_min_hz == 3.0
+
+
 class TestLoadConfigValidation:
     """load_config() integration: invalid YAML values are clamped."""
 
@@ -170,4 +191,5 @@ class TestLoadConfigValidation:
         assert cfg.processing.sample_rate_hz == 800
         assert cfg.processing.fft_n == 2048
         assert cfg.processing.waveform_seconds == 8
+        assert cfg.processing.spectrum_min_hz == 3.0
         assert cfg.processing.spectrum_max_hz == 200

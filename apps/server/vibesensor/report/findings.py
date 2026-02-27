@@ -13,6 +13,7 @@ from vibesensor_core.vibration_strength import percentile, vibration_strength_db
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
+    MEMS_NOISE_FLOOR_G,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
     ORDER_MIN_COVERAGE_POINTS,
@@ -22,6 +23,7 @@ from .helpers import (
     SPEED_COVERAGE_MIN_PCT,
     _amplitude_weighted_speed_window,
     _corr_abs,
+    _effective_baseline_floor,
     _effective_engine_rpm,
     _estimate_strength_floor_amp_g,
     _location_label,
@@ -49,10 +51,8 @@ _NEGLIGIBLE_STRENGTH_MAX_DB = (
 _LIGHT_STRENGTH_MAX_DB = (
     float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
 )
-# Minimum realistic MEMS accelerometer noise floor (~0.001 g).
-# Used as the lower bound for SNR computations to prevent ratio blow-up
-# when the measured floor is near zero (sensor artifact / perfectly clean signal).
-_MEMS_NOISE_FLOOR_G = 0.001
+# Kept as an alias for existing in-module references.
+_MEMS_NOISE_FLOOR_G = MEMS_NOISE_FLOOR_G
 
 # ── Diffuse excitation detection constants ──────────────────────────────
 # If one sensor's amplitude is more than this ratio above the weakest,
@@ -1033,6 +1033,7 @@ def _build_order_findings(
             "next_sensor_move": str(actions[0].get("what") or "")
             or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),
             "actions": actions,
+            "_ranking_score": ranking_score,
         }
         findings.append((ranking_score, finding))
 
@@ -1197,7 +1198,7 @@ def _build_persistent_peak_findings(
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
         mean_floor = mean(bin_floors.get(bin_center, [0.0])) if bin_floors.get(bin_center) else 0.0
-        effective_floor = max(0.001, run_noise_baseline_g or mean_floor or 0.0)
+        effective_floor = _effective_baseline_floor(run_noise_baseline_g, extra_fallback=mean_floor)
         raw_snr = p95_amp / effective_floor
         spatial_uniformity: float | None = None
         if len(total_locations) >= 2:
@@ -1339,6 +1340,7 @@ def _build_persistent_peak_findings(
         }
 
         ranking_score = (presence_ratio**2) * p95_amp
+        finding["_ranking_score"] = ranking_score
         if peak_type == "transient":
             transient_findings.append((ranking_score, finding))
         else:
@@ -1522,12 +1524,24 @@ def _build_findings(
         for item in non_reference_findings
         if str(item.get("severity") or "").strip().lower() != "info"
     ]
-    diagnostic_findings.sort(
-        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
-    )
-    informational_findings.sort(
-        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
-    )
+
+    def _finding_sort_key(item: dict) -> tuple[float, float]:
+        """Sort key: (quantised confidence, ranking_score) for deterministic ordering.
+
+        Confidence is quantised to 0.02 steps so that findings whose
+        confidence differs only due to noise/timing jitter are treated as
+        equal, allowing the ranking_score (which properly incorporates
+        signal amplitude) to break the tie.
+        """
+        conf = float(item.get("confidence_0_to_1", 0.0))
+        # Quantise to 0.02 (50 bins across 0-1) so near-equal
+        # confidences compare as equal.
+        quantised = round(conf / 0.02) * 0.02
+        rank = float(item.get("_ranking_score", 0.0))
+        return (quantised, rank)
+
+    diagnostic_findings.sort(key=_finding_sort_key, reverse=True)
+    informational_findings.sort(key=_finding_sort_key, reverse=True)
     findings = reference_findings + diagnostic_findings + informational_findings
     diag_counter = 0
     for finding in findings:

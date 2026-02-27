@@ -13,7 +13,9 @@ from vibesensor_core.vibration_strength import percentile, vibration_strength_db
 from ..runlog import as_float_or_none as _as_float
 from .findings import _classify_peak_type, _speed_bin_label
 from .helpers import (
+    MEMS_NOISE_FLOOR_G,
     _amplitude_weighted_speed_window,
+    _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
     _location_label,
     _primary_vibration_strength_db,
@@ -53,7 +55,7 @@ def _aggregate_fft_spectrum(
         return []
     if run_noise_baseline_g is None:
         run_noise_baseline_g = _run_noise_baseline_g(samples)
-    baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
+    baseline_floor = _effective_baseline_floor(run_noise_baseline_g)
     result: dict[float, float] = {}
     for bin_center, amps in bin_amps.items():
         if aggregation == "max":
@@ -181,7 +183,7 @@ def _spectrogram_from_peaks(
 
     if run_noise_baseline_g is None:
         run_noise_baseline_g = _run_noise_baseline_g(samples)
-    baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
+    baseline_floor = _effective_baseline_floor(run_noise_baseline_g)
     min_presence_snr = 2.0
 
     for (x_key, y_key), amp_floor_pairs in cell_by_bin.items():
@@ -193,7 +195,8 @@ def _spectrogram_from_peaks(
             effective_amps: list[float] = []
             for amp, floor_amp in amp_floor_pairs:
                 local_floor = max(
-                    0.001, floor_amp if floor_amp is not None and floor_amp > 0 else baseline_floor
+                    MEMS_NOISE_FLOOR_G,
+                    floor_amp if floor_amp is not None and floor_amp > 0 else baseline_floor,
                 )
                 snr = amp / local_floor
                 if snr < min_presence_snr:
@@ -262,7 +265,7 @@ def _top_peaks_table_rows(
     n_samples = 0
     if run_noise_baseline_g is None:
         run_noise_baseline_g = _run_noise_baseline_g(samples)
-    baseline_floor = max(0.001, run_noise_baseline_g or 0.0)
+    baseline_floor = _effective_baseline_floor(run_noise_baseline_g)
     for sample in samples:
         if not isinstance(sample, dict):
             continue

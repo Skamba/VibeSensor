@@ -85,6 +85,7 @@ def test_multi_sensor_udp_to_report_pipeline(tmp_path: Path) -> None:
             DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
             DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
             DEFAULT_ANALYSIS_SETTINGS["rim_in"],
+            deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor"),
         )
         assert tire_circ is not None
 

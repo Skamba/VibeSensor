@@ -299,12 +299,14 @@ class MetricsLogger:
                 "gear_uncertainty_pct": settings.get("gear_uncertainty_pct"),
                 "min_abs_band_hz": settings.get("min_abs_band_hz"),
                 "max_band_half_width_pct": settings.get("max_band_half_width_pct"),
+                "tire_deflection_factor": settings.get("tire_deflection_factor"),
             }
         )
         metadata["tire_circumference_m"] = tire_circumference_m_from_spec(
             settings.get("tire_width_mm"),
             settings.get("tire_aspect_pct"),
             settings.get("rim_in"),
+            deflection_factor=settings.get("tire_deflection_factor"),
         )
         if self._language_provider is not None:
             metadata["language"] = str(self._language_provider()).strip().lower() or "en"
@@ -354,6 +356,7 @@ class MetricsLogger:
             settings.get("tire_width_mm"),
             settings.get("tire_aspect_pct"),
             settings.get("rim_in"),
+            deflection_factor=settings.get("tire_deflection_factor"),
         )
         final_drive_ratio = settings.get("final_drive_ratio")
         gear_ratio = settings.get("current_gear_ratio")

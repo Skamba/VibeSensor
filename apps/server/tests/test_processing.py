@@ -192,3 +192,56 @@ def test_intake_stats_tracks_samples_and_compute() -> None:
     stats_after_compute = processor.intake_stats()
     assert stats_after_compute["total_compute_calls"] == 1
     assert stats_after_compute["last_compute_duration_s"] > 0
+
+
+def test_spectrum_min_hz_excludes_low_frequency_bins() -> None:
+    """spectrum_min_hz should prevent sub-cutoff bins from appearing in peaks."""
+    sample_rate_hz = 800
+    fft_n = 2048
+    min_hz = 5.0
+    processor = SignalProcessor(
+        sample_rate_hz=sample_rate_hz,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=fft_n,
+        spectrum_min_hz=min_hz,
+        spectrum_max_hz=200,
+    )
+
+    # Inject a strong 2 Hz signal (below spectrum_min_hz) + a 20 Hz signal.
+    t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
+    x = (0.1 * np.sin(2.0 * pi * 2.0 * t) + 0.05 * np.sin(2.0 * pi * 20.0 * t)).astype(np.float32)
+    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
+
+    metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
+    combined_peaks = metrics.get("combined", {}).get("peaks", [])
+    # No peak should be below spectrum_min_hz.
+    for peak in combined_peaks:
+        assert float(peak["hz"]) >= min_hz, f"Peak at {peak['hz']} Hz is below {min_hz} Hz cutoff"
+    # The 20 Hz peak should still be present.
+    assert any(abs(float(p["hz"]) - 20.0) < 1.0 for p in combined_peaks)
+
+
+def test_spectrum_min_hz_zero_allows_all_frequencies() -> None:
+    """spectrum_min_hz=0 should behave like no cutoff (existing default)."""
+    sample_rate_hz = 400
+    fft_n = 1024
+    processor = SignalProcessor(
+        sample_rate_hz=sample_rate_hz,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=fft_n,
+        spectrum_min_hz=0.0,
+        spectrum_max_hz=200,
+    )
+
+    t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
+    x = (0.1 * np.sin(2.0 * pi * 2.0 * t)).astype(np.float32)
+    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
+
+    metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
+    combined_peaks = metrics.get("combined", {}).get("peaks", [])
+    # With min_hz=0, the 2 Hz peak should appear.
+    assert any(abs(float(p["hz"]) - 2.0) < 1.0 for p in combined_peaks)

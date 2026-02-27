@@ -609,6 +609,8 @@ class TestOverlapDetection:
         # At ~80 km/h with tire_circ ≈ 2.21m: wheel_hz ≈ 10.04, wheel_2x ≈ 20.08
         # With final_drive=3.08, gear=0.64: engine_hz ≈ 19.79
         # These overlap (0.015 < 0.025 tol)! Query at ~20.0 Hz.
+        # tire_deflection_factor=1.0 keeps undeflected spec circumference so
+        # the overlap arithmetic stays as designed for this test.
         result = classify_peak_hz(
             peak_hz=20.0,
             speed_mps=80.0 / 3.6,
@@ -616,6 +618,7 @@ class TestOverlapDetection:
                 "tire_width_mm": 285.0,
                 "tire_aspect_pct": 30.0,
                 "rim_in": 21.0,
+                "tire_deflection_factor": 1.0,
                 "final_drive_ratio": 3.08,
                 "current_gear_ratio": 0.64,
                 "wheel_bandwidth_pct": 5.0,

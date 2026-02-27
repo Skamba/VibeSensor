@@ -26,6 +26,11 @@ SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
 SPEED_MIN_POINTS = 8
 
+# Minimum realistic MEMS accelerometer noise floor (~0.001 g).
+# Used as the lower bound for SNR computations to prevent ratio blow-up
+# when the measured floor is near zero (sensor artifact / perfectly clean signal).
+MEMS_NOISE_FLOOR_G = 0.001
+
 ORDER_TOLERANCE_REL = 0.08
 ORDER_TOLERANCE_MIN_HZ = 0.5
 ORDER_MIN_MATCH_POINTS = 4
@@ -33,6 +38,13 @@ ORDER_MIN_COVERAGE_POINTS = 6
 ORDER_MIN_CONFIDENCE = 0.25
 ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
 CONSTANT_SPEED_STDDEV_KMH = 0.5
+
+# Minimum frequency for analysis peaks.  Sub-road-resonance content
+# (body sway, suspension heave) is not actionable for drivetrain
+# diagnostics and dilutes findings.  New data is already filtered at
+# the FFT level via ``spectrum_min_hz``; this constant protects the
+# report pipeline against old recorded runs.
+MIN_ANALYSIS_FREQ_HZ = 3.0
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
 
@@ -241,6 +253,7 @@ def _tire_reference_from_metadata(metadata: dict[str, Any]) -> tuple[float | Non
         _as_float(metadata.get("tire_width_mm")),
         _as_float(metadata.get("tire_aspect_pct")),
         _as_float(metadata.get("rim_in")),
+        deflection_factor=_as_float(metadata.get("tire_deflection_factor")),
     )
     if derived is not None and derived > 0:
         return derived, "derived_from_tire_dimensions"
@@ -322,6 +335,11 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
             amp = _as_float(peak.get("amp"))
             if hz is None or amp is None or hz <= 0:
                 continue
+            # Defence-in-depth: skip sub-road-resonance frequencies that may
+            # exist in old recorded run data (new data is filtered at the FFT
+            # level via ``spectrum_min_hz``).
+            if hz < MIN_ANALYSIS_FREQ_HZ:
+                continue
             out.append((hz, amp))
     return out
 
@@ -361,6 +379,19 @@ def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
         return None
     floors_sorted = sorted(floors)
     return percentile(floors_sorted, 0.50) if len(floors_sorted) >= 2 else floors_sorted[0]
+
+
+def _effective_baseline_floor(
+    run_noise_baseline_g: float | None,
+    *,
+    extra_fallback: float | None = None,
+) -> float:
+    """Return a safe noise-floor value for SNR computations.
+
+    Resolution order: *run_noise_baseline_g* → *extra_fallback* → 0.0,
+    clamped to at least :data:`MEMS_NOISE_FLOOR_G`.
+    """
+    return max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g or extra_fallback or 0.0)
 
 
 def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:

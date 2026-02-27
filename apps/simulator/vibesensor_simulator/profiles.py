@@ -13,6 +13,7 @@ DEFAULT_SPEED_KMH = 100.0
 DEFAULT_TIRE_WIDTH_MM = DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"]
 DEFAULT_TIRE_ASPECT_PCT = DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"]
 DEFAULT_RIM_IN = DEFAULT_ANALYSIS_SETTINGS["rim_in"]
+DEFAULT_DEFLECTION_FACTOR = DEFAULT_ANALYSIS_SETTINGS["tire_deflection_factor"]
 DEFAULT_FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
 DEFAULT_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 
@@ -20,7 +21,10 @@ DEFAULT_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 def calc_default_orders() -> dict[str, float]:
     speed_mps = DEFAULT_SPEED_KMH * KMH_TO_MPS
     circumference = tire_circumference_m_from_spec(
-        DEFAULT_TIRE_WIDTH_MM, DEFAULT_TIRE_ASPECT_PCT, DEFAULT_RIM_IN
+        DEFAULT_TIRE_WIDTH_MM,
+        DEFAULT_TIRE_ASPECT_PCT,
+        DEFAULT_RIM_IN,
+        deflection_factor=DEFAULT_DEFLECTION_FACTOR,
     )
     if circumference is None:
         raise ValueError("Failed to compute tire circumference from default specs")
