@@ -210,9 +210,7 @@ def test_spectrum_min_hz_excludes_low_frequency_bins() -> None:
 
     # Inject a strong 2 Hz signal (below spectrum_min_hz) + a 20 Hz signal.
     t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
-    x = (0.1 * np.sin(2.0 * pi * 2.0 * t) + 0.05 * np.sin(2.0 * pi * 20.0 * t)).astype(
-        np.float32
-    )
+    x = (0.1 * np.sin(2.0 * pi * 2.0 * t) + 0.05 * np.sin(2.0 * pi * 20.0 * t)).astype(np.float32)
     samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
     processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
 
