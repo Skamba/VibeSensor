@@ -44,7 +44,7 @@ CONSTANT_SPEED_STDDEV_KMH = 0.5
 # diagnostics and dilutes findings.  New data is already filtered at
 # the FFT level via ``spectrum_min_hz``; this constant protects the
 # report pipeline against old recorded runs.
-MIN_ANALYSIS_FREQ_HZ = 3.0
+MIN_ANALYSIS_FREQ_HZ = 5.0
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
 
