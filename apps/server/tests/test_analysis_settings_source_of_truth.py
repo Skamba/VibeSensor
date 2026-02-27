@@ -21,6 +21,14 @@ class _State:
     settings_store: SettingsStore
     analysis_settings: AnalysisSettingsStore
 
+    def apply_car_settings(self) -> None:
+        aspects = self.settings_store.active_car_aspects()
+        if aspects:
+            self.analysis_settings.update(aspects)
+
+    def apply_speed_source_settings(self) -> None:
+        pass
+
     def __post_init__(self) -> None:
         self.live_diagnostics = type("D", (), {"reset": lambda self: None})()
         self.metrics_logger = type(

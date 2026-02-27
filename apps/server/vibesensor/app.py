@@ -132,6 +132,25 @@ class RuntimeState:
     cached_diagnostics_tick: int = -1
     cached_diagnostics_heavy: bool = True
 
+    def apply_car_settings(self) -> None:
+        """Push active car aspects into the shared AnalysisSettingsStore."""
+        aspects = self.settings_store.active_car_aspects()
+        if aspects:
+            self.analysis_settings.update(aspects)
+
+    def apply_speed_source_settings(self) -> None:
+        """Push speed-source settings into GPSSpeedMonitor."""
+        ss = self.settings_store.get_speed_source()
+        self.gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
+        if ss["manualSpeedKph"] is not None:
+            self.gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
+        else:
+            self.gps_monitor.set_speed_override_kmh(None)
+        self.gps_monitor.set_fallback_settings(
+            stale_timeout_s=ss.get("staleTimeoutS"),
+            fallback_mode=ss.get("fallbackMode"),
+        )
+
     def _rotational_basis_speed_source(
         self,
         *,
@@ -326,18 +345,6 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     gps_monitor = GPSSpeedMonitor(gps_enabled=config.gps.gps_enabled)
     analysis_settings = AnalysisSettingsStore()
     settings_store = SettingsStore(db=history_db)
-    # Sync initial settings into analysis store and GPS monitor
-    initial_car_aspects = settings_store.active_car_aspects()
-    if initial_car_aspects:
-        analysis_settings.update(initial_car_aspects)
-    ss = settings_store.get_speed_source()
-    gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
-    if ss["manualSpeedKph"] is not None:
-        gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
-    gps_monitor.set_fallback_settings(
-        stale_timeout_s=ss.get("staleTimeoutS"),
-        fallback_mode=ss.get("fallbackMode"),
-    )
     metrics_logger = MetricsLogger(
         enabled=config.logging.log_metrics,
         log_path=config.logging.metrics_log_path,
@@ -376,6 +383,9 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         update_manager=update_manager,
         esp_flash_manager=esp_flash_manager,
     )
+    # Sync initial settings into analysis store and GPS monitor
+    runtime.apply_car_settings()
+    runtime.apply_speed_source_settings()
 
     async def processing_loop() -> None:
         interval = 1.0 / max(1, config.processing.fft_update_hz)
