@@ -20,9 +20,7 @@ def test_find_release_stable_skips_non_firmware_assets() -> None:
             "tag_name": "fw-v2026.2.27",
             "draft": False,
             "prerelease": False,
-            "assets": [
-                {"name": "vibesensor-fw-v2026.2.27.zip", "url": "https://api.github.com/b"}
-            ],
+            "assets": [{"name": "vibesensor-fw-v2026.2.27.zip", "url": "https://api.github.com/b"}],
         },
     ]
 
@@ -41,7 +39,10 @@ def test_find_release_prerelease_skips_non_firmware_assets() -> None:
             "draft": False,
             "prerelease": True,
             "assets": [
-                {"name": "vibesensor-2026.2.28rc1-py3-none-any.whl", "url": "https://api.github.com/a"}
+                {
+                    "name": "vibesensor-2026.2.28rc1-py3-none-any.whl",
+                    "url": "https://api.github.com/a",
+                }
             ],
         },
         {
