@@ -528,6 +528,34 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(tmp_path: Pat
     assert timed_out is True
 
 
+def test_append_records_does_not_timeout_on_brief_gap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=_NoActiveRegistry(),
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    logger.start_logging()
+    snapshot = logger._session_snapshot()
+    assert snapshot is not None
+    run_id, start_time_utc, start_mono = snapshot
+    monkeypatch.setattr("vibesensor.metrics_log.time.monotonic", lambda: 100.0)
+    logger._last_data_progress_mono_s = 95.0
+
+    timed_out = logger._append_records(run_id, start_time_utc, start_mono)
+
+    assert timed_out is False
+
+
 def test_stop_logging_does_not_block_on_post_analysis(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

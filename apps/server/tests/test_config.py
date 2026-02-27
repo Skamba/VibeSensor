@@ -45,6 +45,17 @@ def test_logging_flags_allow_db_only_mode(tmp_path: Path) -> None:
     assert cfg.logging.persist_history_db is True
 
 
+def test_logging_no_data_timeout_defaults_and_allows_override(tmp_path: Path) -> None:
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {})
+    cfg = load_config(config_path)
+    assert cfg.logging.no_data_timeout_s == 15.0
+
+    _write_config(config_path, {"logging": {"no_data_timeout_s": 30}})
+    cfg = load_config(config_path)
+    assert cfg.logging.no_data_timeout_s == 30.0
+
+
 def test_dev_and_docker_configs_equivalent() -> None:
     """config.dev.yaml and config.docker.yaml must produce identical AppConfig."""
     dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")

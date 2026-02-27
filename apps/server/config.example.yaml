@@ -42,6 +42,7 @@ logging:
   log_metrics: true
   metrics_log_path: data/metrics.jsonl
   metrics_log_hz: 4
+  no_data_timeout_s: 15.0
   sensor_model: ADXL345
   persist_history_db: true
   shutdown_analysis_timeout_s: 30
