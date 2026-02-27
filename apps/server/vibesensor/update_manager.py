@@ -1155,10 +1155,7 @@ class UpdateManager:
             return
 
         dropin_path = Path(SERVICE_ENV_DROPIN)
-        dropin_body = (
-            "[Service]\\n"
-            f"Environment=VIBESENSOR_CONTRACTS_DIR={contracts_dir}\\n"
-        )
+        dropin_body = f"[Service]\\nEnvironment=VIBESENSOR_CONTRACTS_DIR={contracts_dir}\\n"
         escaped_body = dropin_body.replace("\\", "\\\\").replace("'", "\\'")
         script = (
             "from pathlib import Path; "
