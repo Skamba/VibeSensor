@@ -866,6 +866,37 @@ class TestUpdateManagerAsync:
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
         assert "python3" in issues_text
 
+    async def test_ensure_contracts_env_dropin_reload_when_changed(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("python3 -c", 0, "changed", "")
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+        contracts_dir = tmp_path / "contracts"
+        contracts_dir.mkdir()
+
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            rollback_dir=str(tmp_path / "rollback"),
+        )
+
+        with (
+            patch(
+                "vibesensor.update_manager.SERVICE_CONTRACTS_DIR",
+                str(contracts_dir),
+            ),
+            patch(
+                "vibesensor.update_manager.SERVICE_ENV_DROPIN",
+                str(tmp_path / "10-contracts-dir.conf"),
+            ),
+        ):
+            await mgr._ensure_service_contracts_env()
+
+        joined_calls = [" ".join(c[0]) for c in runner.calls]
+        assert any("python3 -c" in call for call in joined_calls)
+        assert any("systemctl daemon-reload" in call for call in joined_calls)
+
 
 # ---------------------------------------------------------------------------
 # API endpoint tests
