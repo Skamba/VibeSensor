@@ -85,6 +85,10 @@ class SignalProcessor:
         self._fft_cache_maxsize = 64
         self._spike_filter_enabled = True
         self._lock = RLock()
+        # Lightweight intake/analysis metrics for observability.
+        self._total_ingested_samples: int = 0
+        self._total_compute_calls: int = 0
+        self._last_compute_duration_s: float = 0.0
 
     @staticmethod
     def _medfilt3(block: np.ndarray) -> np.ndarray:
@@ -198,6 +202,7 @@ class SignalProcessor:
         buf.ingest_generation += 1
         buf.cached_selected_payload = None
         buf.cached_selected_payload_key = None
+        self._total_ingested_samples += n
 
     def _latest(self, buf: ClientBuffer, n: int) -> np.ndarray:
         if n <= 0 or buf.count == 0:
@@ -304,6 +309,7 @@ class SignalProcessor:
         return freq_slice, valid_idx
 
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
+        t0 = time.monotonic()
         # --- Phase 1: snapshot buffer state under a brief lock ---------------
         with self._lock:
             buf = self._buffers.get(client_id)
@@ -398,6 +404,8 @@ class SignalProcessor:
                 buf.cached_spectrum_payload_generation = -1
                 buf.cached_selected_payload = None
                 buf.cached_selected_payload_key = None
+        self._last_compute_duration_s = time.monotonic() - t0
+        self._total_compute_calls += 1
         return metrics
 
     def _compute_fft_spectrum(
@@ -753,3 +761,11 @@ class SignalProcessor:
         ]
         for client_id in stale_ids:
             self._buffers.pop(client_id, None)
+
+    def intake_stats(self) -> dict[str, Any]:
+        """Return lightweight intake/analysis metrics for observability."""
+        return {
+            "total_ingested_samples": self._total_ingested_samples,
+            "total_compute_calls": self._total_compute_calls,
+            "last_compute_duration_s": self._last_compute_duration_s,
+        }
