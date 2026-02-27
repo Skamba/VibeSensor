@@ -585,6 +585,86 @@ class TestUpdateManagerAsync:
         ]
         assert rescan_calls, "Expected updater to rescan Wi-Fi after SSID-not-found"
 
+    async def test_dns_not_ready_fails_with_clear_issue(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+        runner.set_response("socket.getaddrinfo", 1, "", "Temporary failure in name resolution")
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            rollback_dir=str(tmp_path / "rollback"),
+        )
+
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.update_manager.DNS_READY_MIN_WAIT_S", 0.05),
+            patch("vibesensor.update_manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.15"),
+        ):
+            mgr.start("TestNet", "pass123")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+            MockFetcher.assert_not_called()
+
+        assert mgr.status.state == UpdateState.failed
+        issues_blob = " ".join(
+            f"{issue.message} {issue.detail}" for issue in mgr.status.issues
+        ).lower()
+        assert "dns" in issues_blob
+        assert "waited at least" in issues_blob
+
+    async def test_dns_probe_retries_then_update_continues(self, tmp_path) -> None:
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            rollback_dir=str(tmp_path / "rollback"),
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        original_run = runner.run
+        probe_attempts = {"count": 0}
+
+        async def run_with_dns_retry(args, *, timeout=30, env=None):
+            joined = " ".join(args)
+            if "socket.getaddrinfo" in joined:
+                probe_attempts["count"] += 1
+                if probe_attempts["count"] < 3:
+                    return (1, "", "Temporary failure in name resolution")
+            return await original_run(args, timeout=timeout, env=env)
+
+        runner.run = run_with_dns_retry  # type: ignore[assignment]
+
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.update_manager.DNS_READY_MIN_WAIT_S", 0.2),
+            patch("vibesensor.update_manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.15"),
+        ):
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = None
+
+            mgr.start("TestNet", "pass123")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.success
+        assert probe_attempts["count"] >= 3
+
     async def test_secure_ssid_requires_password(self, tmp_path) -> None:
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
