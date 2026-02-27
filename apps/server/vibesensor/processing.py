@@ -85,6 +85,10 @@ class SignalProcessor:
         self._fft_cache_maxsize = 64
         self._spike_filter_enabled = True
         self._lock = RLock()
+        # Lightweight intake/analysis metrics for observability.
+        self._total_ingested_samples: int = 0
+        self._total_compute_calls: int = 0
+        self._last_compute_duration_s: float = 0.0
 
     @staticmethod
     def _medfilt3(block: np.ndarray) -> np.ndarray:
@@ -198,6 +202,7 @@ class SignalProcessor:
         buf.ingest_generation += 1
         buf.cached_selected_payload = None
         buf.cached_selected_payload_key = None
+        self._total_ingested_samples += n
 
     def _latest(self, buf: ClientBuffer, n: int) -> np.ndarray:
         if n <= 0 or buf.count == 0:
@@ -303,22 +308,29 @@ class SignalProcessor:
             del self._fft_cache[oldest]
         return freq_slice, valid_idx
 
-    @_synchronized
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
-        buf = self._buffers.get(client_id)
-        if buf is None or buf.count == 0:
-            return {}
-        if sample_rate_hz is not None and sample_rate_hz > 0:
-            buf.sample_rate_hz = int(sample_rate_hz)
-        sr = buf.sample_rate_hz or self.sample_rate_hz
-        # Fast-path: no new ingested samples at this sample-rate, so keep the
-        # previously computed metrics/spectrum snapshot for payload reuse.
-        if buf.compute_generation == buf.ingest_generation and buf.compute_sample_rate_hz == sr:
-            return buf.latest_metrics
+        t0 = time.monotonic()
+        # --- Phase 1: snapshot buffer state under a brief lock ---------------
+        with self._lock:
+            buf = self._buffers.get(client_id)
+            if buf is None or buf.count == 0:
+                return {}
+            if sample_rate_hz is not None and sample_rate_hz > 0:
+                buf.sample_rate_hz = int(sample_rate_hz)
+            sr = buf.sample_rate_hz or self.sample_rate_hz
+            # Fast-path: no new ingested samples at this sample-rate, so keep
+            # the previously computed metrics/spectrum snapshot for payload reuse.
+            if buf.compute_generation == buf.ingest_generation and buf.compute_sample_rate_hz == sr:
+                return buf.latest_metrics
 
-        desired_samples = int(max(1.0, float(sr) * float(self.waveform_seconds)))
-        n_time = min(buf.count, buf.capacity, max(1, desired_samples))
-        time_window = self._latest(buf, n_time)
+            desired_samples = int(max(1.0, float(sr) * float(self.waveform_seconds)))
+            n_time = min(buf.count, buf.capacity, max(1, desired_samples))
+            time_window = self._latest(buf, n_time)  # returns a copy
+            has_fft_data = buf.count >= self.fft_n
+            fft_block = self._latest(buf, self.fft_n) if has_fft_data else None
+            snap_ingest_gen = buf.ingest_generation
+
+        # --- Phase 2: heavy computation (no lock held) -----------------------
         if self._spike_filter_enabled:
             time_window = self._medfilt3(time_window)
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
@@ -350,8 +362,9 @@ class SignalProcessor:
             "peaks": [],
         }
 
-        if buf.count >= self.fft_n:
-            fft_block = self._latest(buf, self.fft_n)
+        spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
+        strength_metrics_dict: dict[str, Any] = {}
+        if has_fft_data and fft_block is not None:
             fft_result = self._compute_fft_spectrum(fft_block, sr)
             freq_slice = fft_result["freq_slice"]
             spectrum_by_axis = fft_result["spectrum_by_axis"]
@@ -371,23 +384,28 @@ class SignalProcessor:
                     "freq": freq_slice,
                     "amp": combined_amp,
                 }
-                buf.latest_strength_metrics = dict(strength_metrics)
-            else:
-                buf.latest_strength_metrics = {}
-            buf.latest_spectrum = spectrum_by_axis
-            buf.spectrum_generation += 1
-        else:
-            buf.latest_spectrum = {}
-            buf.latest_strength_metrics = {}
-            buf.spectrum_generation += 1
+                strength_metrics_dict = dict(strength_metrics)
 
-        buf.latest_metrics = metrics
-        buf.compute_generation = buf.ingest_generation
-        buf.compute_sample_rate_hz = sr
-        buf.cached_spectrum_payload = None
-        buf.cached_spectrum_payload_generation = -1
-        buf.cached_selected_payload = None
-        buf.cached_selected_payload_key = None
+        # --- Phase 3: store results under a brief lock -----------------------
+        with self._lock:
+            buf = self._buffers.get(client_id)
+            if buf is not None:
+                buf.latest_metrics = metrics
+                buf.compute_generation = snap_ingest_gen
+                buf.compute_sample_rate_hz = sr
+                if has_fft_data:
+                    buf.latest_spectrum = spectrum_by_axis
+                    buf.latest_strength_metrics = strength_metrics_dict
+                else:
+                    buf.latest_spectrum = {}
+                    buf.latest_strength_metrics = {}
+                buf.spectrum_generation += 1
+                buf.cached_spectrum_payload = None
+                buf.cached_spectrum_payload_generation = -1
+                buf.cached_selected_payload = None
+                buf.cached_selected_payload_key = None
+        self._last_compute_duration_s = time.monotonic() - t0
+        self._total_compute_calls += 1
         return metrics
 
     def _compute_fft_spectrum(
@@ -463,7 +481,6 @@ class SignalProcessor:
             "axis_peaks": axis_peaks,
         }
 
-    @_synchronized
     def compute_all(
         self,
         client_ids: list[str],
@@ -744,3 +761,11 @@ class SignalProcessor:
         ]
         for client_id in stale_ids:
             self._buffers.pop(client_id, None)
+
+    def intake_stats(self) -> dict[str, Any]:
+        """Return lightweight intake/analysis metrics for observability."""
+        return {
+            "total_ingested_samples": self._total_ingested_samples,
+            "total_compute_calls": self._total_compute_calls,
+            "last_compute_duration_s": self._last_compute_duration_s,
+        }

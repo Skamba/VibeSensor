@@ -89,6 +89,7 @@ class HealthResponse(BaseModel):
     status: str
     processing_state: str
     processing_failures: int
+    intake_stats: dict[str, Any] = Field(default_factory=dict)
 
 
 class CarResponse(BaseModel):
