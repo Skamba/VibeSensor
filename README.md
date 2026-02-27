@@ -84,6 +84,7 @@ Each component has its own README with setup instructions and details.
 ## Docs Index (source of truth)
 
 - Setup & deployment: [README.md](README.md), [apps/server/README.md](apps/server/README.md), [firmware/esp/README.md](firmware/esp/README.md), [infra/pi-image/pi-gen/README.md](infra/pi-image/pi-gen/README.md)
+- Updater architecture & policy: [apps/server/README.md](apps/server/README.md)
 - Wire protocol and ports: [docs/protocol.md](docs/protocol.md)
 - Run/report schema: [docs/run_schema_v2.md](docs/run_schema_v2.md)
 - Report/design language: [docs/design_language.md](docs/design_language.md)

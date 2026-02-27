@@ -24,6 +24,11 @@ Canonical agent workflow (shared source of truth)
   - when adding large inline data definitions, move them into appropriate data files (`.json`, `.yaml`, etc.),
   - do not create duplicate parallel implementations when extending existing logic is cleaner.
 
+Updater deployment policy
+- Treat updater delivery as wheel-first. Runtime fixes must land in repo code and flow through PR/CI; avoid relying on ad-hoc runtime file edits.
+- Emergency-only exception: if updater path is broken on a live device, temporary in-place patching on the device is allowed strictly to restore service.
+- After any emergency in-place patch, complete the follow-up loop in the same run when feasible: repo fix + tests/lint + PR green + merge + successful updater rerun on device.
+
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
 - For every PR, use `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor` as the default monitor.
