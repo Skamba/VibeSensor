@@ -143,7 +143,7 @@ jobs:
             echo "body<<CHANGELOG_EOF"
             echo "## Changes"
             echo ""
-            git log --oneline --no-decorate "${range}" | head -50
+            git log --oneline --no-decorate --max-count=50 "${range}"
             echo ""
             echo "CHANGELOG_EOF"
           } >> "${GITHUB_OUTPUT}"
