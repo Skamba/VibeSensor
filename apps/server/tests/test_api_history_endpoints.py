@@ -308,8 +308,8 @@ async def test_history_export_streams_zip_with_json_and_csv() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_export_reads_samples_once() -> None:
-    """Export must iterate samples exactly once (no double I/O). GH-304."""
+async def test_history_export_reads_samples_twice_without_buffering_rows() -> None:
+    """Export scans samples twice (schema + write) but does not buffer all rows."""
     router, state = _make_router_and_state(language="en", sample_count=50)
     db = state.history_db
     original_iter = db.iter_run_samples
@@ -323,7 +323,7 @@ async def test_history_export_reads_samples_once() -> None:
     db.iter_run_samples = _counting_iter  # type: ignore[assignment]
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
-    assert call_count == 1, f"iter_run_samples called {call_count} times, expected 1"
+    assert call_count == 2, f"iter_run_samples called {call_count} times, expected 2"
     # Verify CSV content is still correct
     with zipfile.ZipFile(io.BytesIO(response.body), "r") as archive:
         rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))

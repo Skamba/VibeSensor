@@ -556,25 +556,17 @@ def create_router(state: RuntimeState) -> APIRouter:
             safe_name = _safe_filename(run_id)
             fieldnames: list[str] = []
             fieldname_set: set[str] = set()
-            # Single pass: collect field names and buffer all samples
-            all_samples: list[dict[str, Any]] = []
+            sample_count = 0
             for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+                sample_count += len(batch)
                 for sample in batch:
                     for key in sample:
                         if key not in fieldname_set:
                             fieldname_set.add(key)
                             fieldnames.append(key)
-                all_samples.extend(batch)
-
-            # Write CSV from buffered samples
-            csv_buffer = io.StringIO(newline="")
-            if fieldnames:
-                writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(all_samples)
 
             run_details = dict(run)
-            run_details["sample_count"] = len(all_samples)
+            run_details["sample_count"] = sample_count
 
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -582,7 +574,16 @@ def create_router(state: RuntimeState) -> APIRouter:
                     f"{safe_name}.json",
                     json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
                 )
-                archive.writestr(f"{safe_name}_raw.csv", csv_buffer.getvalue())
+                if fieldnames:
+                    with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
+                        raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
+                        writer = csv.DictWriter(raw_csv_text, fieldnames=fieldnames)
+                        writer.writeheader()
+                        for batch in state.history_db.iter_run_samples(run_id, batch_size=2048):
+                            writer.writerows(batch)
+                        raw_csv_text.flush()
+                else:
+                    archive.writestr(f"{safe_name}_raw.csv", "")
             return zip_buffer.getvalue()
 
         content = await asyncio.to_thread(_build_zip)
