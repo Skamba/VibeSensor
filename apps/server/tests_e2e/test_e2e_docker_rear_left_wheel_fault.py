@@ -610,39 +610,6 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     # Validation 3: fft_spectrum bins match independently computed spectrum
     _validate_graph_spikes(run_analysis, export_samples)
 
-    # DEBUG: dump findings and peaks for diagnosis
-    import json as _json
-    print("\n=== DEBUG: findings ===", flush=True)
-    for i, f in enumerate(run_analysis.get("findings", [])):
-        fid = f.get("finding_id", "?")
-        key = f.get("key", "?")
-        matched = f.get("matched_hz") or f.get("frequency_hz_or_order", "?")
-        source = f.get("suspected_source", "?")
-        conf = f.get("confidence", "?")
-        loc = f.get("strongest_location", "?")
-        print(f"  [{i}] id={fid} key={key} matched={matched} source={source} conf={conf} loc={loc}", flush=True)
-        mp = f.get("matched_points", [])
-        if mp:
-            hz_vals = [float(p.get("matched_hz", 0)) for p in mp if isinstance(p, dict)]
-            print(f"       matched_points hz: {hz_vals[:10]}", flush=True)
-    print("\n=== DEBUG: peaks_table ===", flush=True)
-    peaks = run_analysis.get("plots", {}).get("peaks_table", [])
-    for i, p in enumerate(peaks[:10]):
-        print(f"  [{i}] {p}", flush=True)
-    print("\n=== DEBUG: fft_spectrum top 10 by amp ===", flush=True)
-    fft = run_analysis.get("plots", {}).get("fft_spectrum", [])
-    if fft:
-        entries = []
-        for e in fft:
-            if isinstance(e, dict):
-                entries.append((float(e.get("hz", 0)), float(e.get("amp", 0))))
-            elif isinstance(e, (list, tuple)) and len(e) >= 2:
-                entries.append((float(e[0]), float(e[1])))
-        entries.sort(key=lambda x: x[1], reverse=True)
-        for i, (hz, amp) in enumerate(entries[:10]):
-            print(f"  [{i}] hz={hz:.2f} amp={amp:.6f}", flush=True)
-    print("=== END DEBUG ===\n", flush=True)
-
     # Validation 4: primary finding matched Hz aligns with top graph spike
     _validate_primary_finding_vs_graph(run_analysis)
 

@@ -1033,6 +1033,7 @@ def _build_order_findings(
             "next_sensor_move": str(actions[0].get("what") or "")
             or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),
             "actions": actions,
+            "_ranking_score": ranking_score,
         }
         findings.append((ranking_score, finding))
 
@@ -1339,6 +1340,7 @@ def _build_persistent_peak_findings(
         }
 
         ranking_score = (presence_ratio**2) * p95_amp
+        finding["_ranking_score"] = ranking_score
         if peak_type == "transient":
             transient_findings.append((ranking_score, finding))
         else:
@@ -1522,12 +1524,24 @@ def _build_findings(
         for item in non_reference_findings
         if str(item.get("severity") or "").strip().lower() != "info"
     ]
-    diagnostic_findings.sort(
-        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
-    )
-    informational_findings.sort(
-        key=lambda item: float(item.get("confidence_0_to_1", 0.0)), reverse=True
-    )
+
+    def _finding_sort_key(item: dict) -> tuple[float, float]:
+        """Sort key: (quantised confidence, ranking_score) for deterministic ordering.
+
+        Confidence is quantised to 0.02 steps so that findings whose
+        confidence differs only due to noise/timing jitter are treated as
+        equal, allowing the ranking_score (which properly incorporates
+        signal amplitude) to break the tie.
+        """
+        conf = float(item.get("confidence_0_to_1", 0.0))
+        # Quantise to 0.02 (50 bins across 0-1) so near-equal
+        # confidences compare as equal.
+        quantised = round(conf / 0.02) * 0.02
+        rank = float(item.get("_ranking_score", 0.0))
+        return (quantised, rank)
+
+    diagnostic_findings.sort(key=_finding_sort_key, reverse=True)
+    informational_findings.sort(key=_finding_sort_key, reverse=True)
     findings = reference_findings + diagnostic_findings + informational_findings
     diag_counter = 0
     for finding in findings:
