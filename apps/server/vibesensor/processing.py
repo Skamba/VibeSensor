@@ -274,8 +274,9 @@ class SignalProcessor:
 
     @staticmethod
     def _float_list(values: np.ndarray | list[float]) -> list[float]:
-        flat = values.ravel() if isinstance(values, np.ndarray) else values
-        return [float(v) for v in flat]
+        if isinstance(values, np.ndarray):
+            return values.ravel().tolist()
+        return [float(v) for v in values]
 
     @classmethod
     def _top_peaks(
