@@ -446,7 +446,8 @@ class TestConfidenceCalibration:
     def test_strong_match_high_confidence(self) -> None:
         """Strong wheel-1x match with wide speed sweep → high confidence."""
         meta = _standard_metadata()
-        samples = _build_speed_sweep_samples(peak_amp=0.08, vib_db=24.0, n=50)
+        # Start at 40 km/h so wheel-1x (~5.5 Hz) is above MIN_ANALYSIS_FREQ_HZ
+        samples = _build_speed_sweep_samples(peak_amp=0.08, vib_db=24.0, n=50, speed_start_kmh=40.0)
         summary = summarize_run_data(meta, samples, include_samples=False)
         order_findings = [
             f
@@ -461,7 +462,13 @@ class TestConfidenceCalibration:
             assert conf >= 0.40, f"Strong match should have conf >= 0.40, got {conf}"
 
     def test_steady_speed_penalty(self) -> None:
-        """Constant speed → lower confidence than a sweep."""
+        """Constant speed → lower confidence than a sweep.
+
+        Compare only order-tracking findings (wheel/driveshaft/engine) so
+        that persistent-peak findings (which are pathway-agnostic) don't
+        skew the comparison.
+        """
+        _ORDER_SOURCES = {"wheel/tire", "driveline", "engine"}
         meta = _standard_metadata()
         sweep_samples = _build_speed_sweep_samples(
             peak_amp=0.04, vib_db=18.0, speed_start_kmh=40.0, speed_end_kmh=100.0
@@ -478,6 +485,7 @@ class TestConfidenceCalibration:
                     float(f.get("confidence_0_to_1") or 0)
                     for f in summary.get("findings", [])
                     if not str(f.get("finding_id", "")).startswith("REF_")
+                    and str(f.get("suspected_source") or "").strip().lower() in _ORDER_SOURCES
                 ),
                 default=0.0,
             )
@@ -489,7 +497,12 @@ class TestConfidenceCalibration:
             assert sweep_conf > steady_conf, f"Sweep {sweep_conf} should > steady {steady_conf}"
 
     def test_steady_speed_confidence_ceiling(self) -> None:
-        """Constant speed findings should remain capped below high-certainty range."""
+        """Constant speed order-tracking findings should remain capped below high-certainty range.
+
+        Only considers order-tracking findings (wheel/driveshaft/engine) so
+        persistent-peak findings don't skew the ceiling check.
+        """
+        _ORDER_SOURCES = {"wheel/tire", "driveline", "engine"}
         meta = _standard_metadata()
         steady_samples = _build_speed_sweep_samples(
             peak_amp=0.04,
@@ -504,6 +517,7 @@ class TestConfidenceCalibration:
                 float(f.get("confidence_0_to_1") or 0.0)
                 for f in steady_summary.get("findings", [])
                 if not str(f.get("finding_id", "")).startswith("REF_")
+                and str(f.get("suspected_source") or "").strip().lower() in _ORDER_SOURCES
             ),
             default=0.0,
         )

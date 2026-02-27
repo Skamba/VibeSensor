@@ -38,6 +38,12 @@ Common commands
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`
 - `docker compose build --pull && docker compose up -d`
 
+Pi access defaults (prebuilt image)
+- Hotspot address: `10.4.0.1`
+- SSH user: `pi`
+- SSH password: `vibesensor`
+- Source: `infra/pi-image/pi-gen/README.md` (values may be overridden at image build time via `VS_FIRST_USER_NAME` / `VS_FIRST_USER_PASS`).
+
 PR monitoring rule
 - On every PR update, run the watcher command above; if it exits `RESULT=NON_GREEN`, fix and re-run. Merge only after `RESULT=ALL_GREEN`.
 

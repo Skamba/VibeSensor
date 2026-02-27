@@ -84,7 +84,7 @@ CORNER_SENSORS = {
 }
 
 # Speed bands
-SPEED_LOW = 30.0  # km/h
+SPEED_LOW = 50.0  # km/h  (wheel_1x ≈ 6.5 Hz with default tires, above MIN_ANALYSIS_FREQ_HZ)
 SPEED_MID = 60.0
 SPEED_HIGH = 100.0
 SPEED_VERY_HIGH = 120.0

@@ -519,14 +519,40 @@ def _compute_order_confidence(
     diffuse_penalty: float,
     n_connected_locations: int,
     no_wheel_sensors: bool = False,
+    path_compliance: float = 1.0,
 ) -> float:
-    """Compute calibrated confidence for an order-tracking finding (clamped 0.08–0.97)."""
+    """Compute calibrated confidence for an order-tracking finding (clamped 0.08–0.97).
+
+    ``path_compliance`` accounts for mechanical transmission path damping:
+    1.0 = stiff direct coupling (driveshaft/engine), higher = softer path
+    (e.g. 1.5 for wheel orders through suspension bushings).  Compliant paths
+    physically broaden the frequency peak, so we redistribute weight from
+    correlation (which penalises peak wander) to match_rate (which rewards
+    consistent detection despite wider peaks).
+
+    Among speed-tracked findings the ranking favours stronger vibrations:
+    SNR (amplitude above noise floor) receives more weight than correlation
+    because on rough roads the wheel is already shaking from road input,
+    reducing correlation, while the fault amplitude persists.
+    """
+    # Weight budget (sums to 0.95 including base 0.10):
+    #   match  error  corr  snr
+    #   0.35   0.20   0.10  0.20   (baseline, stiff path)
+    #   0.40   0.20   0.05  0.20   (compliance=1.5, wheel path)
+    #
+    # Correlation is intentionally the lightest component: on real roads
+    # FFT-bin wander, road noise, and suspension compliance all degrade
+    # correlation for genuine faults, while amplitude (SNR) and consistent
+    # detection (match) are more robust fault indicators.
+    corr_shift = min(0.05, 0.10 * (path_compliance - 1.0))  # 0.0 at 1.0, 0.05 at 1.5
+    match_weight = 0.35 + corr_shift
+    corr_weight = 0.10 - corr_shift
     confidence = (
         0.10
-        + (0.35 * effective_match_rate)
+        + (match_weight * effective_match_rate)
         + (0.20 * error_score)
-        + (0.15 * corr_val)
-        + (0.15 * snr_score)
+        + (corr_weight * corr_val)
+        + (0.20 * snr_score)
     )
     if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
         confidence = min(confidence, 0.45)
@@ -534,8 +560,20 @@ def _compute_order_confidence(
         confidence *= 0.80
     confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
     if weak_spatial_separation:
-        confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
-    if no_wheel_sensors:
+        if no_wheel_sensors and dominance_ratio is not None and dominance_ratio >= 1.5:
+            # When weak_spatial_separation was forced by no_wheel_sensors but
+            # the actual spatial signal is strong (e.g. trunk 2× driver seat),
+            # apply a lighter penalty.  We can't resolve the specific wheel
+            # corner, but the clear amplitude asymmetry is still diagnostic.
+            confidence *= 0.90
+        else:
+            confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
+    if no_wheel_sensors and not weak_spatial_separation:
+        # Only apply the no-wheel-sensors penalty when weak_spatial_separation
+        # wasn't already triggered.  When no_wheel_sensors forced
+        # weak_spatial_separation (test_plan.py), the location uncertainty
+        # is already penalised; stacking a second penalty double-counts
+        # the same underlying lack of wheel-corner resolution.
         confidence *= 0.75
     if constant_speed:
         confidence *= 0.75
@@ -675,6 +713,7 @@ def _build_order_findings(
                 phase_key = str(ph.value if hasattr(ph, "value") else ph)
                 possible_by_phase[phase_key] += 1
 
+            compliance = getattr(hypothesis, "path_compliance", 1.0)
             tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL)
             best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
             delta_hz = abs(best_hz - predicted_hz)
@@ -842,7 +881,12 @@ def _build_order_findings(
             {str(pt.get("location") or "") for pt in matched_points if pt.get("location")}
         )
 
-        error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / 0.25))
+        # Error score: compliant paths (wheel through suspension) produce
+        # broader peaks that wander more across FFT bins, so we use a more
+        # lenient denominator (0.25 * compliance) to avoid over-penalising.
+        compliance = getattr(hypothesis, "path_compliance", 1.0)
+        error_denominator = 0.25 * compliance
+        error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
         snr_score = min(1.0, log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor)) / 2.5)
         # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
         if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
@@ -883,6 +927,7 @@ def _build_order_findings(
             diffuse_penalty=_diffuse_penalty,
             n_connected_locations=len(connected_locations),
             no_wheel_sensors=_no_wheel_sensors,
+            path_compliance=compliance,
         )
 
         ranking_score = (
@@ -1486,9 +1531,16 @@ def _build_findings(
     )
     findings.extend(order_findings)
 
-    # Collect frequencies already claimed by order findings to avoid duplicates
+    # Collect frequencies claimed by order findings to avoid duplicate
+    # persistent-peak findings.  Only suppress persistent peaks when the
+    # order finding has moderate confidence — a marginal order match
+    # (e.g. single-sensor constant-speed with conf ≈ 0.27) should not
+    # mask a more confident persistent-peak interpretation.
+    _ORDER_SUPPRESS_PERSISTENT_MIN_CONF = 0.40
     order_freqs: set[float] = set()
     for of in order_findings:
+        if float(of.get("confidence_0_to_1", 0)) < _ORDER_SUPPRESS_PERSISTENT_MIN_CONF:
+            continue
         pts = of.get("matched_points")
         if isinstance(pts, list):
             for pt in pts:
