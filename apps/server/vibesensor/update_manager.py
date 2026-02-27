@@ -685,8 +685,6 @@ class UpdateManager:
             "ssid",
             ssid,
         ]
-        if password:
-            add_cmd.extend(["wifi-sec.key-mgmt", "wpa-psk", "wifi-sec.psk", password])
 
         rc, _, stderr = await self._run_cmd(
             add_cmd,
@@ -723,6 +721,26 @@ class UpdateManager:
             self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
             self._status.state = UpdateState.failed
             return
+
+        if password:
+            rc, _, stderr = await self._run_cmd(
+                [
+                    "nmcli",
+                    "connection",
+                    "modify",
+                    UPLINK_CONNECTION_NAME,
+                    "wifi-sec.key-mgmt",
+                    "wpa-psk",
+                    "wifi-sec.psk",
+                    password,
+                ],
+                phase="connecting_wifi",
+                sudo=True,
+            )
+            if rc != 0:
+                self._add_issue("connecting_wifi", "Failed to set Wi-Fi credentials", stderr)
+                self._status.state = UpdateState.failed
+                return
 
         rc = 1
         stderr = ""

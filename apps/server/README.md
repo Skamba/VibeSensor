@@ -130,6 +130,29 @@ before switching to AP mode.
 Behavior: scan for uplink SSID (up to 10 s) → connect and wait for update →
 disconnect → start hotspot. If SSID not found, start hotspot directly.
 
+## Updater Delivery Model
+
+Production devices use a wheel-based updater flow:
+- API trigger: `POST /api/settings/update/start`
+- Runtime orchestrator: `vibesensor/update_manager.py`
+- Package source: GitHub Releases wheel artifacts
+
+Expected behavior:
+1. hotspot down,
+2. uplink connect,
+3. release check/download,
+4. wheel install,
+5. hotspot restore,
+6. service restart.
+
+Normal operations should not depend on manual edits in
+`/opt/VibeSensor/apps/server/.venv/lib/python*/site-packages`.
+
+Emergency incident handling (when updater path itself is broken):
+- temporary in-place patching is allowed to restore service quickly,
+- but must be followed by the same fix in-repo, tests/lint, PR merge, and a
+  successful updater run so the device returns to wheel-managed state.
+
 ## API Reference
 
 ### Health

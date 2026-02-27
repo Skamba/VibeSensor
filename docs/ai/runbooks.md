@@ -44,6 +44,17 @@ make test-all
 python3 tools/tests/run_ci_parallel.py --job preflight --job tests
 ```
 
+## Updater incident runbook (wheel-first)
+
+- Default updater model is wheel-based (`vibesensor/update_manager.py` installs release wheels).
+- Do not use direct runtime file patching as normal delivery.
+- Emergency-only path: if updater itself is broken on a live Pi, apply a temporary in-place patch to restore service.
+- Mandatory follow-up after emergency patching:
+  1. same fix in repo,
+  2. targeted tests + lint,
+  3. PR to green + merge,
+  4. rerun updater on device and confirm success (`state=success`) so device returns to wheel-managed state.
+
 ## Context bundle
 ```bash
 scripts/ai/task ai:pack
