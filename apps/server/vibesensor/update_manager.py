@@ -66,6 +66,8 @@ DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
+SERVICE_ENV_DROPIN = "/etc/systemd/system/vibesensor.service.d/10-contracts-dir.conf"
+SERVICE_CONTRACTS_DIR = "/opt/VibeSensor/libs/shared/contracts"
 DEFAULT_REBUILD_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 TRANSIENT_REBUILD_ERROR_MARKERS = (
     "eai_again",
@@ -891,6 +893,7 @@ class UpdateManager:
         self._status.last_success_at = time.time()
         self._status.exit_code = 0
         self._log("Update completed successfully")
+        await self._ensure_service_contracts_env()
         if not await self._schedule_service_restart():
             self._add_issue(
                 "done",
@@ -1145,6 +1148,54 @@ class UpdateManager:
                 self._log("Scheduled backend service restart")
                 return True
         return False
+
+    async def _ensure_service_contracts_env(self) -> None:
+        contracts_dir = Path(SERVICE_CONTRACTS_DIR)
+        if not contracts_dir.is_dir():
+            return
+
+        dropin_path = Path(SERVICE_ENV_DROPIN)
+        dropin_body = f"[Service]\\nEnvironment=VIBESENSOR_CONTRACTS_DIR={contracts_dir}\\n"
+        escaped_body = dropin_body.replace("\\", "\\\\").replace("'", "\\'")
+        script = (
+            "from pathlib import Path; "
+            f"p=Path('{dropin_path}'); "
+            "p.parent.mkdir(parents=True, exist_ok=True); "
+            f"content='{escaped_body}'; "
+            "changed=(not p.exists()) or (p.read_text(encoding='utf-8')!=content); "
+            "p.write_text(content, encoding='utf-8'); "
+            "print('changed' if changed else 'unchanged')"
+        )
+
+        rc, stdout, stderr = await self._run_cmd(
+            ["python3", "-c", script],
+            phase="done",
+            timeout=15,
+            sudo=True,
+        )
+        if rc != 0:
+            self._add_issue(
+                "done",
+                "Failed to configure contracts environment for service",
+                stderr,
+            )
+            return
+
+        if "changed" in (stdout or ""):
+            rc, _, stderr = await self._run_cmd(
+                ["systemctl", "daemon-reload"],
+                phase="done",
+                timeout=15,
+                sudo=True,
+            )
+            if rc != 0:
+                self._add_issue(
+                    "done",
+                    "Failed to reload systemd after contracts environment update",
+                    stderr,
+                )
+                return
+            self._log("Updated systemd drop-in for shared contracts directory")
 
     def _collect_runtime_details(self) -> dict[str, Any]:
         repo = Path(self._repo_path)
