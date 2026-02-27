@@ -1,6 +1,7 @@
 """Background system-update manager.
 
-Orchestrates: hotspot down → Wi-Fi uplink connect → git pull → hotspot restore.
+Orchestrates: hotspot down → Wi-Fi uplink connect → download release →
+install wheel → rollback on failure → hotspot restore.
 All operations run as a background asyncio task so the API endpoint returns
 immediately.  Job state is kept in memory and survives UI disconnects.
 """
@@ -26,20 +27,23 @@ LOGGER = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-UPDATE_TIMEOUT_S = 300
+UPDATE_TIMEOUT_S = 600
 """Hard timeout for the entire update job (seconds)."""
 
 GIT_OP_TIMEOUT_S = 120
-"""Per-git-operation timeout."""
+"""Per-git-operation timeout (kept for legacy compat, unused in release flow)."""
 
 REBUILD_OP_TIMEOUT_S = 300
-"""Per-rebuild-operation timeout."""
+"""Per-rebuild-operation timeout (kept for legacy compat, unused in release flow)."""
 
 REBUILD_RETRY_DELAY_S = 3
-"""Delay before retrying transient rebuild failures."""
+"""Delay before retrying transient rebuild failures (legacy)."""
 
 REINSTALL_OP_TIMEOUT_S = 180
 """Per-backend-reinstall timeout."""
+
+DOWNLOAD_TIMEOUT_S = 300
+"""Timeout for downloading a release wheel."""
 
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 """Per-online ESP firmware cache refresh timeout."""
@@ -56,6 +60,8 @@ DEFAULT_GIT_BRANCH = "main"
 
 HOTSPOT_RESTORE_RETRIES = 3
 HOTSPOT_RESTORE_DELAY_S = 2
+
+DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
@@ -89,7 +95,9 @@ class UpdatePhase(enum.StrEnum):
     validating = "validating"
     stopping_hotspot = "stopping_hotspot"
     connecting_wifi = "connecting_wifi"
-    updating = "updating"
+    checking = "checking"
+    downloading = "downloading"
+    installing = "installing"
     restoring_hotspot = "restoring_hotspot"
     done = "done"
 
@@ -287,6 +295,7 @@ class UpdateManager:
         git_branch: str | None = None,
         ap_con_name: str = "VibeSensor-AP",
         wifi_ifname: str = "wlan0",
+        rollback_dir: str | None = None,
     ) -> None:
         self._runner = runner or CommandRunner()
         self._repo_path = repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor")
@@ -294,6 +303,9 @@ class UpdateManager:
         self._git_branch = git_branch or os.environ.get("VIBESENSOR_GIT_BRANCH", DEFAULT_GIT_BRANCH)
         self._ap_con_name = ap_con_name
         self._wifi_ifname = wifi_ifname
+        self._rollback_dir = Path(
+            rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR)
+        )
         self._status = UpdateJobStatus()
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
@@ -514,8 +526,8 @@ class UpdateManager:
         self._status.phase = UpdatePhase.validating
         self._log(f"Starting update with SSID: {ssid}")
 
-        # Check required tools
-        for tool in ("nmcli", "git", "python3", "npm"):
+        # Check required tools (git and npm no longer needed)
+        for tool in ("nmcli", "python3"):
             if not shutil.which(tool):
                 self._add_issue("validating", f"Required tool not found: {tool}")
                 self._status.state = UpdateState.failed
@@ -523,7 +535,6 @@ class UpdateManager:
 
         # Check sudo / privileges
         if os.geteuid() != 0:
-            # Check if we can sudo
             rc, _, _ = await self._run_cmd(["sudo", "-n", "true"], phase="validating", timeout=5)
             if rc != 0:
                 self._add_issue(
@@ -717,161 +728,153 @@ class UpdateManager:
         if self._cancel_event.is_set():
             return
 
-        # --- Phase: Update from git ---
-        self._status.phase = UpdatePhase.updating
-        self._log(f"Updating from {self._git_remote} ({self._git_branch})")
+        # --- Phase: Check for updates ---
+        self._status.phase = UpdatePhase.checking
+        self._log("Checking for available updates...")
 
-        repo = Path(self._repo_path)
-        if not (repo / ".git").is_dir():
-            self._add_issue(
-                "updating",
-                f"Repo path {self._repo_path} is not a git checkout",
-            )
+        from vibesensor import __version__ as current_version
+        from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
+
+        fetcher_config = ReleaseFetcherConfig(
+            rollback_dir=str(self._rollback_dir),
+        )
+        fetcher = ServerReleaseFetcher(fetcher_config)
+
+        try:
+            release = await asyncio.to_thread(fetcher.check_update_available, current_version)
+        except Exception as exc:
+            self._add_issue("checking", f"Failed to check for updates: {exc}")
             self._status.state = UpdateState.failed
             return
-        self._bootstrap_runtime_metadata_if_missing()
 
-        git_ok = True
-        git_base = ["git", "-C", self._repo_path]
-        for git_args, desc in [
-            ([*git_base, "remote", "set-url", "origin", self._git_remote], "set remote"),
-            ([*git_base, "fetch", "--depth", "1", "origin", self._git_branch], "fetch"),
-            (
-                [
-                    *git_base,
-                    "checkout",
-                    "-f",
-                    "-B",
-                    self._git_branch,
-                    f"origin/{self._git_branch}",
-                ],
-                "checkout",
-            ),
-            ([*git_base, "reset", "--hard", f"origin/{self._git_branch}"], "reset"),
-            ([*git_base, "clean", "-fd"], "clean"),
-        ]:
+        if release is None:
+            self._log(f"Already up-to-date (version={current_version})")
+            # Still refresh ESP firmware cache
+            await self._refresh_esp_firmware()
+
             if self._cancel_event.is_set():
                 return
-            rc, _, stderr = await self._run_cmd(
-                git_args,
-                phase="updating",
-                timeout=GIT_OP_TIMEOUT_S,
-                sudo=True,
-            )
-            if rc != 0:
-                self._add_issue("updating", f"Git {desc} failed (exit {rc})", stderr)
-                git_ok = False
-                break
 
-        if not git_ok:
-            self._status.state = UpdateState.failed
+            restored = await self._restore_hotspot()
+            if not restored:
+                self._status.state = UpdateState.failed
+                return
+            self._status.state = UpdateState.success
+            self._status.phase = UpdatePhase.done
+            self._status.last_success_at = time.time()
+            self._status.exit_code = 0
+            self._log("No server update needed; ESP firmware checked")
             return
 
-        self._log("Git update completed successfully")
-        backend_target = self._backend_install_target(repo)
-        venv_python = await self._ensure_backend_venv(repo)
-        if not venv_python:
-            self._status.state = UpdateState.failed
-            return
-        refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
-        refresh_cmd = [
-            refresh_exe,
-            "--cache-dir",
-            "/var/lib/vibesensor/firmware",
-        ]
-        rc, _, stderr = await self._run_cmd(
-            refresh_cmd,
-            phase="updating",
-            timeout=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
-            sudo=False,
-        )
-        if rc != 0:
-            self._add_issue(
-                "updating",
-                f"ESP firmware cache refresh failed (exit {rc})",
-                stderr,
-            )
-            self._status.state = UpdateState.failed
-            return
-        self._log("ESP firmware cache refresh completed successfully")
+        self._log(f"Update available: {current_version} → {release.version}")
 
-        sync_script = repo / "tools" / "sync_ui_to_pi_public.py"
-        if not sync_script.is_file():
-            self._add_issue(
-                "updating",
-                f"Required rebuild script not found: {sync_script}",
-                str(sync_script),
-            )
-            self._status.state = UpdateState.failed
+        if self._cancel_event.is_set():
             return
-        rebuild_cmd = ["python3", str(sync_script), "--force-npm-ci"]
-        rebuild_env = {
-            "PATH": os.environ.get("PATH", DEFAULT_REBUILD_PATH),
-            "NODE_ENV": "development",
-            "NPM_CONFIG_PRODUCTION": "false",
-            "NPM_CONFIG_INCLUDE": "dev",
-        }
-        rc, _, stderr = await self._run_cmd(
-            rebuild_cmd,
-            phase="updating",
-            timeout=REBUILD_OP_TIMEOUT_S,
-            env=rebuild_env,
-            sudo=True,
-        )
-        if rc != 0 and self._is_transient_rebuild_failure(stderr):
-            self._log("Rebuild/sync failed due to transient network/DNS error; retrying once")
-            await asyncio.sleep(REBUILD_RETRY_DELAY_S)
-            rc, _, stderr = await self._run_cmd(
-                rebuild_cmd,
-                phase="updating",
-                timeout=REBUILD_OP_TIMEOUT_S,
-                env=rebuild_env,
-                sudo=True,
-            )
-        if rc != 0:
-            if self._is_transient_rebuild_failure(stderr):
-                self._add_issue(
-                    "updating",
-                    f"Rebuild/sync failed after retry (transient network/DNS; exit {rc})",
-                    stderr,
-                )
-            else:
-                self._add_issue("updating", f"Rebuild/sync failed (exit {rc})", stderr)
+
+        # --- Phase: Download ---
+        self._status.phase = UpdatePhase.downloading
+        self._log(f"Downloading release {release.tag}...")
+
+        import tempfile
+
+        staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
+        try:
+            wheel_path = await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
+        except Exception as exc:
+            self._add_issue("downloading", f"Failed to download release: {exc}")
             self._status.state = UpdateState.failed
+            if staging_dir.exists():
+                shutil.rmtree(staging_dir, ignore_errors=True)
             return
-        self._log("Rebuild/sync completed successfully")
-        reinstall_cmd = [
+
+        self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
+
+        # Also refresh ESP firmware
+        await self._refresh_esp_firmware()
+
+        if self._cancel_event.is_set():
+            if staging_dir.exists():
+                shutil.rmtree(staging_dir, ignore_errors=True)
+            return
+
+        # --- Phase: Install ---
+        self._status.phase = UpdatePhase.installing
+        self._log("Installing update...")
+
+        # Snapshot current version for rollback
+        rollback_ok = await self._snapshot_for_rollback()
+        if not rollback_ok:
+            self._log("WARNING: Could not create rollback snapshot; proceeding anyway")
+
+        repo = Path(self._repo_path)
+        venv_python = self._reinstall_python_executable(repo)
+        if not Path(venv_python).is_file():
+            # Fall back to system python in venv
+            venv_python = str(
+                Path(self._repo_path) / "apps" / "server" / ".venv" / "bin" / "python3"
+            )
+
+        # Install the new wheel
+        install_cmd = [
             venv_python,
             "-m",
             "pip",
             "install",
+            "--force-reinstall",
             "--no-deps",
-            "--no-build-isolation",
-            "-e",
-            str(backend_target),
+            str(wheel_path),
         ]
         rc, _, stderr = await self._run_cmd(
-            reinstall_cmd,
-            phase="updating",
+            install_cmd,
+            phase="installing",
             timeout=REINSTALL_OP_TIMEOUT_S,
-            sudo=True,
+            sudo=False,
         )
         if rc != 0:
-            self._add_issue("updating", f"Backend reinstall failed (exit {rc})", stderr)
+            self._add_issue("installing", f"Wheel install failed (exit {rc})", stderr)
+            self._log("Attempting rollback...")
+            await self._rollback()
             self._status.state = UpdateState.failed
+            if staging_dir.exists():
+                shutil.rmtree(staging_dir, ignore_errors=True)
             return
-        self._log("Backend reinstall completed successfully")
+
+        self._log(f"Installed vibesensor {release.version}")
+
+        # Verify the installed package can be imported
+        verify_cmd = [
+            venv_python,
+            "-c",
+            "from vibesensor import __version__; print(__version__)",
+        ]
+        rc, stdout, stderr = await self._run_cmd(
+            verify_cmd,
+            phase="installing",
+            timeout=30,
+            sudo=False,
+        )
+        if rc != 0:
+            self._add_issue(
+                "installing",
+                f"Post-install verification failed (exit {rc})",
+                stderr,
+            )
+            self._log("Attempting rollback...")
+            await self._rollback()
+            self._status.state = UpdateState.failed
+            if staging_dir.exists():
+                shutil.rmtree(staging_dir, ignore_errors=True)
+            return
+
+        installed_version = stdout.strip()
+        self._log(f"Verified installed version: {installed_version}")
+
+        # Clean up staging
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir, ignore_errors=True)
 
         runtime_details = self._collect_runtime_details()
         self._status.runtime = runtime_details
-        if not runtime_details.get("assets_verified", False):
-            self._add_issue(
-                "updating",
-                "Deploy artifacts are stale or missing",
-                "UI source hash does not match apps/server/public build metadata",
-            )
-            self._status.state = UpdateState.failed
-            return
 
         if self._cancel_event.is_set():
             return
@@ -895,6 +898,122 @@ class UpdateManager:
                 f"Run 'sudo systemctl restart {UPDATE_SERVICE_NAME}' manually",
             )
             self._log("Automatic backend restart scheduling failed")
+
+    async def _refresh_esp_firmware(self) -> None:
+        """Refresh the ESP firmware cache.  Non-fatal on failure."""
+        self._log("Refreshing ESP firmware cache...")
+        repo = Path(self._repo_path)
+        venv_python = self._reinstall_python_executable(repo)
+        refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
+        # Fall back to module invocation if the entry point doesn't exist
+        if not Path(refresh_exe).is_file():
+            refresh_cmd = [venv_python, "-m", "vibesensor.firmware_cache"]
+        else:
+            refresh_cmd = [
+                refresh_exe,
+                "--cache-dir",
+                "/var/lib/vibesensor/firmware",
+            ]
+        rc, _, stderr = await self._run_cmd(
+            refresh_cmd,
+            phase="downloading",
+            timeout=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+            sudo=False,
+        )
+        if rc != 0:
+            self._add_issue(
+                "downloading",
+                f"ESP firmware cache refresh failed (exit {rc})",
+                stderr,
+            )
+            self._log("ESP firmware refresh failed; continuing with existing cache")
+        else:
+            self._log("ESP firmware cache refresh completed successfully")
+
+    async def _snapshot_for_rollback(self) -> bool:
+        """Save the current wheel to the rollback directory.
+
+        Returns True on success, False on failure (non-fatal).
+        """
+        self._rollback_dir.mkdir(parents=True, exist_ok=True)
+        repo = Path(self._repo_path)
+        venv_python = self._reinstall_python_executable(repo)
+
+        # Use pip to download the currently installed version into rollback dir
+        from vibesensor import __version__ as current_version
+
+        self._log(f"Creating rollback snapshot (version={current_version})")
+
+        # Clear old rollback wheels
+        for old_whl in self._rollback_dir.glob("vibesensor-*.whl"):
+            old_whl.unlink()
+
+        # pip download the installed package to rollback dir
+        rc, _, stderr = await self._run_cmd(
+            [
+                venv_python,
+                "-m",
+                "pip",
+                "download",
+                "--no-deps",
+                "--no-build-isolation",
+                "-d",
+                str(self._rollback_dir),
+                f"vibesensor=={current_version}",
+            ],
+            phase="installing",
+            timeout=60,
+            sudo=False,
+        )
+        if rc != 0:
+            # Fallback: just record the version number
+            self._log(f"pip download for rollback failed (exit {rc}): {stderr}")
+            meta_path = self._rollback_dir / "rollback_version.txt"
+            meta_path.write_text(current_version, encoding="utf-8")
+            return False
+
+        self._log("Rollback snapshot created successfully")
+        return True
+
+    async def _rollback(self) -> bool:
+        """Attempt to restore the previous version from rollback dir.
+
+        Returns True if rollback succeeded.
+        """
+        self._log("Rolling back to previous version...")
+        rollback_wheels = list(self._rollback_dir.glob("vibesensor-*.whl"))
+        if not rollback_wheels:
+            self._add_issue("installing", "No rollback wheel available")
+            return False
+
+        repo = Path(self._repo_path)
+        venv_python = self._reinstall_python_executable(repo)
+        wheel = rollback_wheels[0]
+
+        rc, _, stderr = await self._run_cmd(
+            [
+                venv_python,
+                "-m",
+                "pip",
+                "install",
+                "--force-reinstall",
+                "--no-deps",
+                str(wheel),
+            ],
+            phase="installing",
+            timeout=REINSTALL_OP_TIMEOUT_S,
+            sudo=False,
+        )
+        if rc != 0:
+            self._add_issue(
+                "installing",
+                f"Rollback install failed (exit {rc})",
+                stderr,
+            )
+            return False
+
+        self._log(f"Rolled back to {wheel.name}")
+        return True
 
     @staticmethod
     def _backend_install_target(repo: Path) -> Path:
@@ -1033,6 +1152,14 @@ class UpdateManager:
         public_root = repo / "apps" / "server" / "public"
         metadata_path = public_root / UI_BUILD_METADATA_FILE
 
+        # Get installed version
+        try:
+            from vibesensor import __version__
+
+            version = __version__
+        except Exception:
+            version = "unknown"
+
         commit = ""
         if (repo / ".git").exists():
             try:
@@ -1046,6 +1173,10 @@ class UpdateManager:
                     commit = proc.stdout.strip()
             except OSError:
                 pass
+
+        # Check for packaged static assets (wheel-based install)
+        packaged_static = Path(__file__).resolve().parent / "static"
+        has_packaged_static = (packaged_static / "index.html").exists()
 
         ui_source_hash = _hash_tree(
             ui_root,
@@ -1063,7 +1194,10 @@ class UpdateManager:
         public_build_source_hash = str(metadata.get("ui_source_hash") or "")
         public_build_assets_hash = str(metadata.get("public_assets_hash") or "")
         public_build_commit = str(metadata.get("git_commit") or "")
-        assets_verified = (
+
+        # Assets are verified if either packaged static assets exist (wheel)
+        # or the legacy public/ dir matches the source hashes.
+        assets_verified = has_packaged_static or (
             bool(ui_source_hash)
             and bool(public_assets_hash)
             and bool(public_build_source_hash)
@@ -1073,12 +1207,14 @@ class UpdateManager:
         )
 
         return {
+            "version": version,
             "commit": commit,
             "ui_source_hash": ui_source_hash,
             "public_assets_hash": public_assets_hash,
             "public_build_source_hash": public_build_source_hash,
             "public_build_commit": public_build_commit,
             "assets_verified": assets_verified,
+            "has_packaged_static": has_packaged_static,
         }
 
     def _bootstrap_runtime_metadata_if_missing(self) -> None:

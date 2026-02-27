@@ -43,12 +43,9 @@ run_as_service_user() {
 
 run_as_root apt-get update
 run_as_root apt-get install -y \
-  git \
   python3 \
   python3-venv \
   python3-pip \
-  nodejs \
-  npm \
   libopenblas0-pthread \
   network-manager \
   dnsmasq \
@@ -65,9 +62,10 @@ python3 -m venv "${VENV_DIR}"
 run_as_root install -d /etc/vibesensor
 run_as_root install -d /etc/tmpfiles.d
 run_as_root install -d -m 0755 /var/lib/vibesensor
+run_as_root install -d -m 0755 /var/lib/vibesensor/rollback
 run_as_root install -d -m 0755 /var/log/vibesensor
 run_as_root install -d -m 0755 /var/log/wifi
-run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/log/vibesensor
+run_as_root chown "${SERVICE_USER}:${SERVICE_USER}" /var/lib/vibesensor /var/lib/vibesensor/rollback /var/log/vibesensor
 run_as_root chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"
 
 # Refresh ESP firmware cache from GitHub Releases (requires network).

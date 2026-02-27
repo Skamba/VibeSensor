@@ -7,7 +7,7 @@ import json
 import os
 import time
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -56,7 +56,7 @@ class FakeRunner(CommandRunner):
 
 def _mock_which(name: str) -> str | None:
     """Pretend required update tools exist."""
-    if name in ("nmcli", "git", "python3", "npm"):
+    if name in ("nmcli", "python3"):
         return f"/usr/bin/{name}"
     return None
 
@@ -106,16 +106,16 @@ class TestUpdateJobStatus:
     def test_status_with_issues(self) -> None:
         status = UpdateJobStatus(
             state=UpdateState.failed,
-            phase=UpdatePhase.updating,
+            phase=UpdatePhase.installing,
             ssid="TestNet",
-            issues=[UpdateIssue(phase="updating", message="Git pull failed", detail="rc=1")],
+            issues=[UpdateIssue(phase="installing", message="Install failed", detail="rc=1")],
         )
         d = status.to_dict()
         assert d["state"] == "failed"
         assert d["ssid"] == "TestNet"
         assert len(d["issues"]) == 1
-        assert d["issues"][0]["phase"] == "updating"
-        assert d["issues"][0]["message"] == "Git pull failed"
+        assert d["issues"][0]["phase"] == "installing"
+        assert d["issues"][0]["message"] == "Install failed"
 
     def test_log_tail_truncated(self) -> None:
         status = UpdateJobStatus(log_tail=[f"line {i}" for i in range(100)])
@@ -367,23 +367,47 @@ class TestUpdateManager:
 @pytest.mark.asyncio
 class TestUpdateManagerAsync:
     async def test_happy_path(self, tmp_path) -> None:
-        """Full update completes successfully."""
+        """Full update completes successfully with release-based flow."""
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
+
+        # Create rollback dir
+        rollback_dir = tmp_path / "rollback"
+        rollback_dir.mkdir()
 
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(rollback_dir),
         )
         _seed_runtime_artifacts(repo, mgr, valid=True)
 
-        with patch("shutil.which", _mock_which):
+        # Mock the release fetcher to return a fake release
+        mock_release = MagicMock()
+        mock_release.version = "2025.6.15"
+        mock_release.tag = "server-v2025.6.15"
+        mock_release.sha256 = "abc123"
+        mock_release.asset_name = "vibesensor-2025.6.15-py3-none-any.whl"
+
+        mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+        mock_wheel_path.write_text("fake-wheel")
+
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.14"),
+        ):
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = mock_release
+            mock_fetcher_inst.download_wheel.return_value = mock_wheel_path
+
+            # Mock the installed version check (post-install verification)
+            runner.set_response("from vibesensor import __version__", 0, "2025.6.15", "")
+
             mgr.start("TestNet", "pass123")
             assert mgr._task is not None
             await asyncio.wait_for(mgr._task, timeout=10)
@@ -393,72 +417,69 @@ class TestUpdateManagerAsync:
         assert mgr.status.finished_at is not None
         assert mgr.status.last_success_at is not None
         assert mgr.status.exit_code == 0
-        assert mgr.status.runtime.get("assets_verified") is True
-        assert any("sync_ui_to_pi_public.py" in " ".join(c[0]) for c in runner.calls)
-        rebuild_calls = [c for c in runner.calls if "sync_ui_to_pi_public.py" in " ".join(c[0])]
-        assert rebuild_calls, "Expected updater rebuild command"
-        rebuild_args, rebuild_meta = rebuild_calls[0]
-        assert "--force-npm-ci" in rebuild_args
-        rebuild_env = rebuild_meta.get("env") or {}
-        assert rebuild_env.get("NODE_ENV") == "development"
-        assert rebuild_env.get("NPM_CONFIG_PRODUCTION") == "false"
-        assert rebuild_env.get("NPM_CONFIG_INCLUDE") == "dev"
-        assert rebuild_env.get("PATH")
-        venv_python = repo / "apps" / "server" / ".venv" / "bin" / "python3"
-        assert any(
-            f"python3 -m venv {repo / 'apps' / 'server' / '.venv'}" in " ".join(c[0])
+
+        # Verify pip install was called with the wheel
+        pip_install_calls = [
+            c[0]
             for c in runner.calls
-        ), "Expected updater to create missing backend venv"
-        assert any(
-            " -m pip install --no-deps --no-build-isolation -e " in f" {' '.join(c[0])} "
-            and str(repo / "apps" / "server") in " ".join(c[0])
-            for c in runner.calls
-        )
-        assert any(
-            f" {venv_python} -m pip install --no-deps --no-build-isolation -e "
-            in f" {' '.join(c[0])} "
-            for c in runner.calls
-        )
-        refresh_token = "vibesensor-fw-refresh --cache-dir /var/lib/vibesensor/firmware"
-        assert any(refresh_token in f" {' '.join(c[0])} " for c in runner.calls), (
-            "Expected updater to refresh ESP firmware cache from GitHub releases"
-        )
-        refresh_index = next(
-            i for i, call in enumerate(runner.calls) if refresh_token in f" {' '.join(call[0])} "
-        )
-        rebuild_index = next(
-            i
-            for i, call in enumerate(runner.calls)
-            if "sync_ui_to_pi_public.py" in " ".join(call[0])
-        )
-        assert refresh_index < rebuild_index, (
-            "Updater must refresh firmware cache before long rebuild/sync operations"
-        )
-        assert not any(
-            " platformio " in f" {' '.join(c[0])} " or " pio " in f" {' '.join(c[0])} "
-            for c in runner.calls
-        ), "Updater must not invoke PlatformIO on Pi runtime path"
+            if "pip" in " ".join(c[0])
+            and "install" in " ".join(c[0])
+            and "vibesensor" in " ".join(c[0])
+        ]
+        assert pip_install_calls, "Expected pip install with wheel"
+
+        # Verify hotspot restore was attempted
+        restore_calls = [
+            c for c in runner.calls if "VibeSensor-AP" in " ".join(c[0]) and "up" in " ".join(c[0])
+        ]
+        assert len(restore_calls) > 0
+
+        # Verify service restart was scheduled
         restart_cmd = (
             "systemd-run --unit vibesensor-post-update-restart --on-active=2s "
             "systemctl restart vibesensor.service"
         )
         assert any(restart_cmd in " ".join(c[0]) for c in runner.calls)
-        sudo_git_calls = [
+
+    async def test_already_up_to_date(self, tmp_path) -> None:
+        """When already up-to-date, skip install and succeed."""
+        runner = FakeRunner()
+        runner.set_response("sudo -n true", 0)
+
+        repo = tmp_path / "repo"
+        repo.mkdir()
+
+        mgr = UpdateManager(
+            runner=runner,
+            repo_path=str(repo),
+            rollback_dir=str(tmp_path / "rollback"),
+        )
+        _seed_runtime_artifacts(repo, mgr, valid=True)
+
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.15"),
+        ):
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = None
+
+            mgr.start("TestNet", "pass123")
+            assert mgr._task is not None
+            await asyncio.wait_for(mgr._task, timeout=10)
+
+        assert mgr.status.state == UpdateState.success
+
+        # No pip install calls should have been made
+        pip_install_calls = [
             c[0]
             for c in runner.calls
-            if len(c[0]) >= 4 and c[0][0] == "sudo" and c[0][2] == "git" and c[0][3] == "-C"
+            if "pip" in " ".join(c[0])
+            and "install" in " ".join(c[0])
+            and "force-reinstall" in " ".join(c[0])
         ]
-        assert sudo_git_calls, "Expected updater to run git via sudo wrapper"
-        uplink_connect_calls = [
-            c[0] for c in runner.calls if "connection up VibeSensor-Uplink" in " ".join(c[0])
-        ]
-        assert uplink_connect_calls, "Expected updater to bring up explicit uplink profile"
-        assert any(
-            "connection modify VibeSensor-Uplink" in " ".join(c[0])
-            and "ipv4.ignore-auto-dns yes" in " ".join(c[0])
-            and "ipv4.dns 1.1.1.1,1.0.0.1" in " ".join(c[0])
-            for c in runner.calls
-        ), "Expected updater to apply client-mode DNS fallback on uplink profile"
+        assert not pip_install_calls, "Should not install when already up-to-date"
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         """When sudo is unavailable, update fails with clear issue."""
@@ -467,7 +488,6 @@ class TestUpdateManagerAsync:
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
 
         mgr = UpdateManager(runner=runner, repo_path=str(repo))
 
@@ -493,13 +513,11 @@ class TestUpdateManagerAsync:
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
 
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
 
         with patch("shutil.which", _mock_which):
@@ -522,12 +540,10 @@ class TestUpdateManagerAsync:
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
         _seed_runtime_artifacts(repo, mgr, valid=True)
 
@@ -544,7 +560,15 @@ class TestUpdateManagerAsync:
 
         runner.run = run_with_retry  # type: ignore[assignment]
 
-        with patch("shutil.which", _mock_which):
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.15"),
+        ):
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = None
+
             mgr.start("TestNet", "pass123")
             assert mgr._task is not None
             await asyncio.wait_for(mgr._task, timeout=10)
@@ -568,13 +592,11 @@ class TestUpdateManagerAsync:
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
 
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
 
         with patch("shutil.which", _mock_which):
@@ -587,24 +609,35 @@ class TestUpdateManagerAsync:
         assert "password required" in issues_text
         assert not any("connection up VibeSensor-Uplink" in " ".join(c[0]) for c in runner.calls)
 
-    async def test_git_failure_still_restores_hotspot(self, tmp_path) -> None:
-        """When git pull fails, hotspot is still restored."""
+    async def test_download_failure_still_restores_hotspot(self, tmp_path) -> None:
+        """When release download fails, hotspot is still restored."""
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
-        runner.set_response("reset --hard", 1, "", "fatal: unable to access")
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
 
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
 
-        with patch("shutil.which", _mock_which):
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.14"),
+        ):
+            mock_release = MagicMock()
+            mock_release.version = "2025.6.15"
+            mock_release.tag = "server-v2025.6.15"
+            mock_release.sha256 = "abc"
+
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = mock_release
+            mock_fetcher_inst.download_wheel.side_effect = OSError("Network error")
+
             mgr.start("TestNet", "pass")
             assert mgr._task is not None
             await asyncio.wait_for(mgr._task, timeout=10)
@@ -615,51 +648,49 @@ class TestUpdateManagerAsync:
         ]
         assert len(restore_calls) > 0
 
-    async def test_git_dubious_ownership_avoided_by_sudo_git(self, tmp_path) -> None:
+    async def test_install_failure_triggers_rollback(self, tmp_path) -> None:
+        """When pip install fails, rollback is attempted and hotspot restored."""
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
+        # Make pip install fail
+        runner.set_response("pip", 1, "", "ERROR: Could not install")
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
+        rollback_dir = tmp_path / "rollback"
+        rollback_dir.mkdir()
 
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(rollback_dir),
         )
-        _seed_runtime_artifacts(repo, mgr, valid=True)
 
-        original_run = runner.run
-        remote_set_url_calls = {"count": 0}
+        fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+        fake_wheel.write_text("fake-wheel")
 
-        async def run_with_dubious_once(args, *, timeout=30, env=None):
-            joined = " ".join(args)
-            # Simulate dubious-ownership only for non-sudo git invocations.
-            if (
-                len(args) >= 4
-                and args[0] == "git"
-                and args[1] == "-C"
-                and "remote set-url origin" in joined
-            ):
-                remote_set_url_calls["count"] += 1
-                return (
-                    128,
-                    "",
-                    "fatal: detected dubious ownership in repository at '/opt/VibeSensor'",
-                )
-            return await original_run(args, timeout=timeout, env=env)
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.14"),
+        ):
+            mock_release = MagicMock()
+            mock_release.version = "2025.6.15"
+            mock_release.tag = "server-v2025.6.15"
+            mock_release.sha256 = "abc"
 
-        runner.run = run_with_dubious_once  # type: ignore[assignment]
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = mock_release
+            mock_fetcher_inst.download_wheel.return_value = fake_wheel
 
-        with patch("shutil.which", _mock_which):
             mgr.start("TestNet", "pass")
             assert mgr._task is not None
             await asyncio.wait_for(mgr._task, timeout=10)
 
-        assert mgr.status.state == UpdateState.success
-        assert remote_set_url_calls["count"] == 0, "Expected no non-sudo git invocations"
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "install" in issues_text
 
     async def test_password_never_in_logs(self, tmp_path) -> None:
         """Password must never appear in status log_tail or issues."""
@@ -669,17 +700,22 @@ class TestUpdateManagerAsync:
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
 
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
-        _seed_runtime_artifacts(repo, mgr, valid=True)
 
-        with patch("shutil.which", _mock_which):
+        with (
+            patch("shutil.which", _mock_which),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.15"),
+        ):
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = None
+
             mgr.start("TestNet", secret)
             assert mgr._task is not None
             await asyncio.wait_for(mgr._task, timeout=10)
@@ -693,30 +729,23 @@ class TestUpdateManagerAsync:
             assert secret not in issue.message
             assert secret not in issue.detail
 
-    async def test_stale_public_assets_fail_update(self, tmp_path) -> None:
+    async def test_stale_public_assets_detected_in_runtime(self, tmp_path) -> None:
+        """Runtime details report assets_verified=False when legacy public/ hashes mismatch."""
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
         _seed_runtime_artifacts(repo, mgr, valid=False)
 
-        with patch("shutil.which", _mock_which):
-            mgr.start("TestNet", "pass123")
-            assert mgr._task is not None
-            await asyncio.wait_for(mgr._task, timeout=10)
-
-        assert mgr.status.state == UpdateState.failed
-        assert mgr.status.runtime.get("assets_verified") is False
-        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
-        assert "stale" in issues_text or "missing" in issues_text
+        details = mgr._collect_runtime_details()
+        # Without packaged static, stale hashes → not verified
+        assert details["assets_verified"] is False
 
     async def test_timeout_handling(self, tmp_path) -> None:
         """When update times out, it fails and restores hotspot."""
@@ -725,12 +754,12 @@ class TestUpdateManagerAsync:
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
 
         original_run = runner.run
 
         async def slow_run(args, *, timeout=30, env=None):
-            if "fetch" in " ".join(args):
+            # Make the Wi-Fi connect step hang to trigger the update timeout.
+            if "connection up" in " ".join(args):
                 await asyncio.sleep(300)
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
@@ -740,8 +769,7 @@ class TestUpdateManagerAsync:
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
 
         with (
@@ -759,129 +787,38 @@ class TestUpdateManagerAsync:
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
         assert "timeout" in issues_text or "timed out" in issues_text
 
-    async def test_rebuild_failure_fails_update(self, tmp_path) -> None:
-        runner = FakeRunner()
-        runner.set_response("sudo -n true", 0)
-        runner.set_response("sync_ui_to_pi_public.py", 1, "", "npm: command not found")
-
-        repo = tmp_path / "repo"
-        repo.mkdir()
-        (repo / ".git").mkdir()
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
-        )
-        _seed_runtime_artifacts(repo, mgr, valid=True)
-
-        with patch("shutil.which", _mock_which):
-            mgr.start("TestNet", "pass")
-            assert mgr._task is not None
-            await asyncio.wait_for(mgr._task, timeout=10)
-
-        assert mgr.status.state == UpdateState.failed
-        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
-        assert "rebuild/sync failed" in issues_text
-
-    async def test_transient_rebuild_failure_retries_and_succeeds(self, tmp_path) -> None:
+    async def test_check_update_failure_fails_update(self, tmp_path) -> None:
+        """When check_update_available raises, update fails gracefully."""
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
 
-        original_run = runner.run
-        sync_attempts = 0
-
-        async def run_with_retry(args, *, timeout=30, env=None):
-            nonlocal sync_attempts
-            if "sync_ui_to_pi_public.py" in " ".join(args):
-                sync_attempts += 1
-                if sync_attempts == 1:
-                    return (1, "", "npm ERR! code EAI_AGAIN registry.npmjs.org")
-                return (0, "ok", "")
-            return await original_run(args, timeout=timeout, env=env)
-
-        runner.run = run_with_retry  # type: ignore[assignment]
-
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
+
         mgr = UpdateManager(
             runner=runner,
             repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
+            rollback_dir=str(tmp_path / "rollback"),
         )
-        _seed_runtime_artifacts(repo, mgr, valid=True)
 
         with (
             patch("shutil.which", _mock_which),
-            patch("vibesensor.update_manager.REBUILD_RETRY_DELAY_S", 0),
+            patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
+            patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
+            patch("vibesensor._version.__version__", "2025.6.14"),
         ):
-            mgr.start("TestNet", "pass")
-            assert mgr._task is not None
-            await asyncio.wait_for(mgr._task, timeout=10)
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.side_effect = RuntimeError(
+                "API rate limit exceeded"
+            )
 
-        assert mgr.status.state == UpdateState.success
-        assert sync_attempts == 2
-
-    async def test_transient_rebuild_retry_failure_sets_issue(self, tmp_path) -> None:
-        runner = FakeRunner()
-        runner.set_response("sudo -n true", 0)
-        runner.set_response(
-            "sync_ui_to_pi_public.py",
-            1,
-            "",
-            "npm ERR! code EAI_AGAIN request to registry.npmjs.org failed",
-        )
-
-        repo = tmp_path / "repo"
-        repo.mkdir()
-        (repo / ".git").mkdir()
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
-        )
-        _seed_runtime_artifacts(repo, mgr, valid=True)
-
-        with (
-            patch("shutil.which", _mock_which),
-            patch("vibesensor.update_manager.REBUILD_RETRY_DELAY_S", 0),
-        ):
             mgr.start("TestNet", "pass")
             assert mgr._task is not None
             await asyncio.wait_for(mgr._task, timeout=10)
 
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
-        assert "after retry" in issues_text
-        assert "network/dns" in issues_text
-
-    async def test_backend_venv_creation_failure_fails_update(self, tmp_path) -> None:
-        runner = FakeRunner()
-        runner.set_response("sudo -n true", 0)
-        runner.set_response("python3 -m venv", 1, "", "venv create failed")
-
-        repo = tmp_path / "repo"
-        repo.mkdir()
-        (repo / ".git").mkdir()
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(repo),
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
-        )
-        _seed_runtime_artifacts(repo, mgr, valid=True)
-
-        with patch("shutil.which", _mock_which):
-            mgr.start("TestNet", "pass")
-            assert mgr._task is not None
-            await asyncio.wait_for(mgr._task, timeout=10)
-
-        assert mgr.status.state == UpdateState.failed
-        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
-        assert "virtualenv creation failed" in issues_text
+        assert "check" in issues_text or "update" in issues_text
 
     async def test_missing_tools_fails_gracefully(self, tmp_path) -> None:
         """When nmcli is not found, update fails with clear issue."""
@@ -894,7 +831,6 @@ class TestUpdateManagerAsync:
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
 
         mgr = UpdateManager(runner=runner, repo_path=str(repo))
 
@@ -907,27 +843,28 @@ class TestUpdateManagerAsync:
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
         assert "nmcli" in issues_text
 
-    async def test_missing_npm_fails_gracefully(self, tmp_path) -> None:
+    async def test_missing_python3_fails_gracefully(self, tmp_path) -> None:
+        """When python3 is not found, update fails with clear issue."""
         runner = FakeRunner()
 
-        def no_npm(name: str) -> str | None:
-            if name == "npm":
+        def no_python3(name: str) -> str | None:
+            if name == "python3":
                 return None
             return f"/usr/bin/{name}"
 
         repo = tmp_path / "repo"
         repo.mkdir()
-        (repo / ".git").mkdir()
+
         mgr = UpdateManager(runner=runner, repo_path=str(repo))
 
-        with patch("shutil.which", no_npm):
+        with patch("shutil.which", no_python3):
             mgr.start("TestNet", "pass")
             assert mgr._task is not None
             await asyncio.wait_for(mgr._task, timeout=10)
 
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
-        assert "npm" in issues_text
+        assert "python3" in issues_text
 
 
 # ---------------------------------------------------------------------------

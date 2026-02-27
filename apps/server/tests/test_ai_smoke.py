@@ -59,13 +59,16 @@ def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
 
 
 @pytest.mark.smoke
-def test_smoke_install_pi_installs_rebuild_toolchain() -> None:
+def test_smoke_install_pi_installs_core_toolchain() -> None:
+    """Verify install_pi.sh installs required packages and sets up rollback dir."""
     script = Path(__file__).resolve().parents[1] / "scripts" / "install_pi.sh"
     text = script.read_text(encoding="utf-8")
-    assert "nodejs" in text, "Pi install script must install nodejs for on-device rebuilds"
-    assert "npm" in text, "Pi install script must install npm for on-device rebuilds"
+    assert "python3" in text, "Pi install script must install python3"
     assert 'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"' in text, (
         "Pi install script must ensure repo ownership for update writes"
+    )
+    assert "rollback" in text, (
+        "Pi install script must create rollback directory for release-based updates"
     )
     assert "vibesensor-fw-refresh" in text, (
         "Pi install script must refresh ESP firmware cache from GitHub Releases"
