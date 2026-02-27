@@ -102,6 +102,7 @@ class TestWorkerPool:
 # Parallel compute_all tests
 # ---------------------------------------------------------------------------
 
+
 def _make_processor(pool: WorkerPool | None = None) -> SignalProcessor:
     return SignalProcessor(
         sample_rate_hz=800,
