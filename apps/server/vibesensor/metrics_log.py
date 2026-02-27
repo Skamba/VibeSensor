@@ -59,6 +59,7 @@ class MetricsLogger:
         history_db: HistoryDB | None = None,
         persist_history_db: bool = True,
         language_provider: Callable[[], str] | None = None,
+        no_data_timeout_s: float = 15.0,
     ):
         self.enabled = bool(enabled)
         self.log_path = log_path
@@ -88,7 +89,7 @@ class MetricsLogger:
         self._history_run_created = False
         self._history_create_fail_count = 0
         self._written_sample_count = 0
-        self._no_data_timeout_s = 3.0
+        self._no_data_timeout_s = max(1.0, float(no_data_timeout_s))
         self._last_data_progress_mono_s: float | None = None
         self._last_active_frames_total = 0
         self._live_start_utc = utc_now_iso()

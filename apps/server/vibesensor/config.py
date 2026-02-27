@@ -60,6 +60,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "log_metrics": True,
         "metrics_log_path": "data/metrics.jsonl",
         "metrics_log_hz": 4,
+        "no_data_timeout_s": 15.0,
         "sensor_model": "ADXL345",
         "persist_history_db": True,
         "shutdown_analysis_timeout_s": 30,
@@ -213,6 +214,7 @@ class LoggingConfig:
     log_metrics: bool
     metrics_log_path: Path
     metrics_log_hz: int
+    no_data_timeout_s: float
     sensor_model: str
     history_db_path: Path
     persist_history_db: bool
@@ -340,6 +342,12 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             log_metrics=log_metrics,
             metrics_log_path=metrics_log_path,
             metrics_log_hz=int(logging_cfg["metrics_log_hz"]),
+            no_data_timeout_s=float(
+                logging_cfg.get(
+                    "no_data_timeout_s",
+                    DEFAULT_CONFIG["logging"]["no_data_timeout_s"],
+                )
+            ),
             sensor_model=str(logging_cfg.get("sensor_model", "ADXL345")),
             history_db_path=_resolve_config_path(
                 str(
