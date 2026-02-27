@@ -600,6 +600,7 @@ class SignalProcessor:
             overlap = max(0.0, shared_end - shared_start)
             union_start = min(s for _, s, _ in ranges)
             union_end = max(e for _, _, e in ranges)
+            # Guard against zero-division with a tiny epsilon.
             union = max(1e-9, union_end - union_start)
             overlap_ratio = overlap / union
             payload["alignment"] = {
@@ -851,7 +852,7 @@ class SignalProcessor:
             # last_t0_us marks the *first sample* in the most recently
             # ingested frame.  Advance by the samples in that frame to
             # approximate the newest sample time.
-            end_us = buf.last_t0_us + int(float(buf.samples_since_t0) / float(sr) * 1_000_000.0)
+            end_us = buf.last_t0_us + (buf.samples_since_t0 * 1_000_000) // max(1, sr)
             end_s = float(end_us) / 1_000_000.0
             start_s = end_s - duration_s
             return (start_s, end_s, True)
@@ -918,6 +919,7 @@ class SignalProcessor:
         overlap = max(0.0, shared_end - shared_start)
 
         # Union span (earliest start → latest end).
+        # Guard against zero-division with a tiny epsilon.
         union_start = min(s for s, _ in ranges)
         union_end = max(e for _, e in ranges)
         union = max(1e-9, union_end - union_start)
