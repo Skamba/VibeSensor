@@ -7,8 +7,8 @@ set -euo pipefail
 
 ALLOWED_CMDS=(
   "nmcli"
-  "git"
   "python3"
+  "pip"
   "systemd-run"
   "systemctl"
   "timeout"

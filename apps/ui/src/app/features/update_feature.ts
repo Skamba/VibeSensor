@@ -113,6 +113,12 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
       html += `<span>${escapeHtml(formatTimestamp(status.last_success_at))}</span>`;
       html += `</div>`;
     }
+    if (status.runtime?.version && status.runtime.version !== "unknown") {
+      html += `<div class="update-status-row">`;
+      html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_version"))}</span>`;
+      html += `<span>${escapeHtml(status.runtime.version)}</span>`;
+      html += `</div>`;
+    }
     if (status.runtime?.commit) {
       html += `<div class="update-status-row">`;
       html += `<span class="update-label">${escapeHtml(t("settings.update.runtime_commit"))}</span>`;

@@ -69,6 +69,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "clients_json_path": "data/clients.json",
     },
     "gps": {"gps_enabled": True},
+    "update": {
+        "server_repo": "Skamba/VibeSensor",
+        "rollback_dir": "/var/lib/vibesensor/rollback",
+    },
 }
 
 
