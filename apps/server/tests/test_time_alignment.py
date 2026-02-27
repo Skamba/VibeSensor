@@ -250,7 +250,7 @@ class TestCmdSyncClockProtocol:
 
         # Verify server_time_us is in the params payload
         params = msg.params
-        (parsed_time_us,) = struct.unpack("<Q", params)
+        parsed_time_us = struct.unpack("<Q", params)[0]
         assert parsed_time_us == server_time_us
 
     def test_pack_sync_clock_struct_size(self) -> None:

@@ -306,6 +306,9 @@ void enqueue_frame() {
 
   DataFrame& frame = g_queue[g_q_head];
   frame.seq = g_next_seq++;
+  // Apply clock offset from CMD_SYNC_CLOCK to make t0_us server-relative.
+  // g_build_t0_us is always from esp_timer_get_time() (µs since boot)
+  // which stays well within int64_t range for any practical uptime.
   frame.t0_us = static_cast<uint64_t>(
       static_cast<int64_t>(g_build_t0_us) + g_clock_offset_us);
   frame.sample_count = g_build_count;
