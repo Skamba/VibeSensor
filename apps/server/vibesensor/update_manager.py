@@ -54,6 +54,9 @@ NMCLI_TIMEOUT_S = 30
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
 UPLINK_CONNECT_WAIT_S = 30
 UPLINK_FALLBACK_DNS = "1.1.1.1,1.0.0.1"
+DNS_READY_MIN_WAIT_S = 10.0
+DNS_RETRY_INTERVAL_S = 1.0
+DNS_PROBE_HOST = "api.github.com"
 
 DEFAULT_GIT_REMOTE = "https://github.com/Skamba/VibeSensor.git"
 DEFAULT_GIT_BRANCH = "main"
@@ -450,6 +453,51 @@ class UpdateManager:
             self._log(f"[{phase}] exit code: {rc}")
         return rc, stdout, stderr
 
+    async def _wait_for_dns_ready(self) -> bool:
+        """Wait for uplink DNS resolution before online update operations."""
+        self._log(
+            f"Validating uplink internet/DNS readiness for at least {int(DNS_READY_MIN_WAIT_S)}s..."
+        )
+        probe_cmd = [
+            "python3",
+            "-c",
+            (
+                "import socket; "
+                f"socket.getaddrinfo('{DNS_PROBE_HOST}', 443, proto=socket.IPPROTO_TCP)"
+            ),
+        ]
+        deadline = time.monotonic() + DNS_READY_MIN_WAIT_S
+        last_error = ""
+        attempt = 0
+
+        while True:
+            attempt += 1
+            rc, stdout, stderr = await self._run_cmd(
+                probe_cmd,
+                phase="connecting_wifi",
+                timeout=5,
+                sudo=False,
+            )
+            if rc == 0:
+                self._log(f"DNS probe succeeded on attempt {attempt}")
+                return True
+
+            last_error = (stderr or stdout or f"exit {rc}").strip()
+            if time.monotonic() >= deadline:
+                break
+            await asyncio.sleep(DNS_RETRY_INTERVAL_S)
+
+        self._add_issue(
+            "connecting_wifi",
+            "Connected to Wi-Fi, but internet/DNS is not ready",
+            (
+                f"Waited at least {int(DNS_READY_MIN_WAIT_S)} seconds for DNS resolution "
+                f"({DNS_PROBE_HOST}) before starting the updater. "
+                f"Last probe error: {last_error or 'unknown'}"
+            ),
+        )
+        return False
+
     async def _restore_hotspot(self) -> bool:
         """Best-effort hotspot restore with retries.  Returns True if successful."""
         self._status.phase = UpdatePhase.restoring_hotspot
@@ -728,6 +776,10 @@ class UpdateManager:
         self._log(f"Wi-Fi connected successfully (client DNS fallback={UPLINK_FALLBACK_DNS})")
 
         if self._cancel_event.is_set():
+            return
+
+        if not await self._wait_for_dns_ready():
+            self._status.state = UpdateState.failed
             return
 
         # --- Phase: Check for updates ---
