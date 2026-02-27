@@ -10,7 +10,11 @@ STAGE_DIR="${PI_GEN_DIR}/stage-vibesensor"
 STAGE_STEP_DIR="${STAGE_DIR}/00-vibesensor"
 STAGE_REPO_DIR="${STAGE_STEP_DIR}/files/opt/VibeSensor"
 OUT_DIR="${SCRIPT_DIR}/out"
+APP_ARTIFACT_DIR="${OUT_DIR}/app-artifacts"
+APP_WHEEL_DIR="${APP_ARTIFACT_DIR}/wheels"
+APP_PUBLIC_DIR="${APP_ARTIFACT_DIR}/public"
 IMG_SUFFIX_BASE="-vibesensor-lite"
+BUILD_MODE="${BUILD_MODE:-all}"
 VS_FIRST_USER_NAME="${VS_FIRST_USER_NAME:-pi}"
 VS_FIRST_USER_PASS="${VS_FIRST_USER_PASS:-vibesensor}"
 VS_WPA_COUNTRY="${VS_WPA_COUNTRY:-US}"
@@ -19,10 +23,7 @@ VALIDATE="${VALIDATE:-1}"
 FAST="${FAST:-0}"
 FORCE_UI_BUILD="${FORCE_UI_BUILD:-0}"
 COPY_ARTIFACT_DIR="${COPY_ARTIFACT_DIR:-}"
-PIP_CACHE_DIR="${CACHE_DIR}/pip"
-PIP_CACHE_STAGE_DIR="${SCRIPT_DIR}/.pip-cache-stage"
 UI_HASH_FILE="${CACHE_DIR}/ui-build.hash"
-SERVER_DEPS_HASH_FILE="${CACHE_DIR}/server-deps.hash"
 # Set CLEAN=1 to force a full rebuild from scratch (default: incremental, reuses stage0-2)
 CLEAN="${CLEAN:-0}"
 RASPBIAN_MIRROR="${RASPBIAN_MIRROR:-}"
@@ -47,25 +48,45 @@ require_cmd() {
   fi
 }
 
-require_cmd git
-require_cmd docker
-require_cmd rsync
-require_cmd sudo
-require_cmd curl
-require_cmd losetup
-require_cmd mount
-require_cmd umount
-require_cmd awk
-require_cmd qemu-arm-static
-require_cmd npm
-
-if ! docker info >/dev/null 2>&1; then
-  echo "Docker daemon is not available for current user."
-  echo "Start Docker and/or add your user to the docker group."
+if [[ "${BUILD_MODE}" != "all" && "${BUILD_MODE}" != "app" && "${BUILD_MODE}" != "image" ]]; then
+  echo "Invalid BUILD_MODE='${BUILD_MODE}'. Use one of: all, app, image."
   exit 1
 fi
 
-mkdir -p "${CACHE_DIR}" "${OUT_DIR}"
+require_app_prereqs() {
+  require_cmd git
+  require_cmd rsync
+  require_cmd npm
+  require_cmd python3
+}
+
+require_image_prereqs() {
+  require_cmd git
+  require_cmd docker
+  require_cmd rsync
+  require_cmd sudo
+  require_cmd curl
+  require_cmd losetup
+  require_cmd mount
+  require_cmd umount
+  require_cmd awk
+  require_cmd qemu-arm-static
+}
+
+mkdir -p "${CACHE_DIR}" "${OUT_DIR}" "${APP_WHEEL_DIR}"
+
+if [[ "${BUILD_MODE}" == "app" || "${BUILD_MODE}" == "all" ]]; then
+  require_app_prereqs
+fi
+
+if [[ "${BUILD_MODE}" == "image" || "${BUILD_MODE}" == "all" ]]; then
+  require_image_prereqs
+  if ! docker info >/dev/null 2>&1; then
+    echo "Docker daemon is not available for current user."
+    echo "Start Docker and/or add your user to the docker group."
+    exit 1
+  fi
+fi
 
 if [ "${FAST}" = "1" ]; then
   VALIDATE=0
@@ -111,8 +132,10 @@ select_raspbian_mirror() {
   exit 1
 }
 
-RASPBIAN_MIRROR="$(select_raspbian_mirror)"
-echo "Using Raspbian mirror: ${RASPBIAN_MIRROR}"
+if [[ "${BUILD_MODE}" == "image" || "${BUILD_MODE}" == "all" ]]; then
+  RASPBIAN_MIRROR="$(select_raspbian_mirror)"
+  echo "Using Raspbian mirror: ${RASPBIAN_MIRROR}"
+fi
 
 compute_ui_hash() {
   (
@@ -125,17 +148,6 @@ compute_ui_hash() {
       | xargs sha256sum \
       | sha256sum \
       | awk '{print $1}'
-  )
-}
-
-compute_server_deps_hash() {
-  (
-    cd "${REPO_ROOT}"
-    local inputs=(
-      "apps/server/pyproject.toml"
-      "apps/server/requirements-docker.txt"
-    )
-    sha256sum "${inputs[@]}" | sha256sum | awk '{print $1}'
   )
 }
 
@@ -178,10 +190,85 @@ build_ui_bundle() {
   rsync -a --delete "${ui_dir}/dist/" "${server_public_dir}/"
 }
 
-build_ui_bundle
+build_app_artifacts() {
+  local build_root=""
+  local wheel_path=""
 
-SERVER_DEPS_HASH="$(compute_server_deps_hash)"
-printf '%s\n' "${SERVER_DEPS_HASH}" >"${SERVER_DEPS_HASH_FILE}"
+  echo "Preparing app artifacts..."
+  build_ui_bundle
+
+  rm -rf "${APP_ARTIFACT_DIR}"
+  mkdir -p "${APP_WHEEL_DIR}" "${APP_PUBLIC_DIR}"
+  rsync -a --delete "${REPO_ROOT}/apps/server/public/" "${APP_PUBLIC_DIR}/"
+
+  build_root="$(mktemp -d -p "${CACHE_DIR}" app-build-XXXXXX)"
+  mkdir -p \
+    "${build_root}/apps" \
+    "${build_root}/libs/core" \
+    "${build_root}/libs/shared" \
+    "${build_root}/tools"
+  rsync -a --delete \
+    "${REPO_ROOT}/apps/server/" "${build_root}/apps/server/"
+  rsync -a --delete \
+    "${REPO_ROOT}/apps/simulator/" "${build_root}/apps/simulator/"
+  rsync -a --delete \
+    "${REPO_ROOT}/libs/core/python/" "${build_root}/libs/core/python/"
+  rsync -a --delete \
+    "${REPO_ROOT}/libs/shared/python/" "${build_root}/libs/shared/python/"
+  rsync -a --delete \
+    "${REPO_ROOT}/tools/config/" "${build_root}/tools/config/"
+
+  rm -rf "${build_root}/apps/server/vibesensor/static"
+  mkdir -p "${build_root}/apps/server/vibesensor/static"
+  rsync -a --delete "${APP_PUBLIC_DIR}/" "${build_root}/apps/server/vibesensor/static/"
+
+  (
+    cd "${build_root}"
+    python3 -m venv .build-venv
+    ./.build-venv/bin/pip install --upgrade pip build >/dev/null
+    ./.build-venv/bin/python -m build --wheel apps/server
+  )
+
+  wheel_path="$(find "${build_root}/apps/server/dist" -maxdepth 1 -type f -name 'vibesensor-*.whl' | sort -V | tail -n 1)"
+  if [ -z "${wheel_path}" ]; then
+    echo "Failed to build vibesensor wheel artifact."
+    rm -rf "${build_root}"
+    exit 1
+  fi
+  cp -f "${wheel_path}" "${APP_WHEEL_DIR}/"
+
+  {
+    echo "build_mode=app"
+    echo "generated_at_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo "wheel=$(basename "${wheel_path}")"
+    echo "wheel_sha256=$(sha256sum "${APP_WHEEL_DIR}/$(basename "${wheel_path}")" | awk '{print $1}')"
+  } >"${APP_ARTIFACT_DIR}/manifest.txt"
+
+  rm -rf "${build_root}"
+  echo "App artifacts ready in: ${APP_ARTIFACT_DIR}"
+}
+
+if [[ "${BUILD_MODE}" == "app" || "${BUILD_MODE}" == "all" ]]; then
+  build_app_artifacts
+fi
+
+if [[ "${BUILD_MODE}" == "app" ]]; then
+  echo "Build mode 'app' complete."
+  exit 0
+fi
+
+APP_WHEEL_PATH="$(find "${APP_WHEEL_DIR}" -maxdepth 1 -type f -name 'vibesensor-*.whl' | sort -V | tail -n 1)"
+if [ -z "${APP_WHEEL_PATH}" ]; then
+  echo "Missing app wheel artifact in ${APP_WHEEL_DIR}."
+  echo "Run BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh first."
+  exit 1
+fi
+APP_WHEEL_FILE="$(basename "${APP_WHEEL_PATH}")"
+if [ ! -f "${APP_PUBLIC_DIR}/index.html" ]; then
+  echo "Missing prebuilt UI assets in ${APP_PUBLIC_DIR}."
+  echo "Run BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh first."
+  exit 1
+fi
 
 if [ -z "${VS_FIRST_USER_NAME}" ] || [ -z "${VS_FIRST_USER_PASS}" ]; then
   echo "VS_FIRST_USER_NAME and VS_FIRST_USER_PASS must be non-empty to avoid first-boot user prompt."
@@ -227,6 +314,9 @@ chmod +x "${STAGE_DIR}/prerun.sh"
 sed -i "s#__RASPBIAN_MIRROR__#${RASPBIAN_MIRROR}#g" "${STAGE_DIR}/prerun.sh"
 
 rsync -a --delete \
+  --exclude ".git/" \
+  --exclude ".github/" \
+  --exclude ".githooks/" \
   --exclude ".venv/" \
   --exclude ".pytest_cache/" \
   --exclude ".ruff_cache/" \
@@ -235,37 +325,36 @@ rsync -a --delete \
   --exclude "__pycache__/" \
   --exclude "*.pyc" \
   --exclude "artifacts/" \
-  --exclude "apps/ui/node_modules/" \
-  --exclude "apps/ui/dist/" \
-  --exclude "apps/ui/test-results/" \
-  --exclude "apps/ui/playwright-report/" \
+  --exclude '$MNT/' \
+  --exclude "apps/ui/" \
+  --exclude "apps/simulator/" \
+  --exclude "apps/server/tests/" \
+  --exclude "apps/server/tests_e2e/" \
+  --exclude "docs/" \
+  --exclude "examples/" \
+  --exclude "firmware/" \
+  --exclude "hardware/" \
+  --exclude "tools/tests/" \
   --include "apps/server/data/" \
   --include "apps/server/data/car_library.json" \
   --include "apps/server/data/report_i18n.json" \
   --exclude "apps/server/data/*" \
   --exclude "infra/pi-image/pi-gen/.cache/" \
+  --exclude "infra/pi-image/pi-gen/.pip-cache-stage/" \
   --exclude "infra/pi-image/pi-gen/out/" \
   "${REPO_ROOT}/" "${STAGE_REPO_DIR}/"
 
-rm -rf "${PIP_CACHE_STAGE_DIR}"
-mkdir -p "${PIP_CACHE_STAGE_DIR}"
-if [ -d "${PIP_CACHE_DIR}" ]; then
-  rsync -a --delete "${PIP_CACHE_DIR}/" "${PIP_CACHE_STAGE_DIR}/"
-fi
-if [ -d "${PIP_CACHE_STAGE_DIR}" ]; then
-  mkdir -p "${STAGE_STEP_DIR}/files/var/cache/pip"
-  rsync -a --delete "${PIP_CACHE_STAGE_DIR}/" "${STAGE_STEP_DIR}/files/var/cache/pip/"
-fi
+mkdir -p "${STAGE_REPO_DIR}/apps/server/public"
+rsync -a --delete "${APP_PUBLIC_DIR}/" "${STAGE_REPO_DIR}/apps/server/public/"
+
+mkdir -p "${STAGE_STEP_DIR}/files/opt/vibesensor-artifacts/wheels"
+cp -f "${APP_WHEEL_PATH}" "${STAGE_STEP_DIR}/files/opt/vibesensor-artifacts/wheels/${APP_WHEEL_FILE}"
 
 cat >"${STAGE_STEP_DIR}/00-run.sh" <<'EOF'
 #!/bin/bash -e
 
 install -d "${ROOTFS_DIR}/opt"
-cp -a files/opt/VibeSensor "${ROOTFS_DIR}/opt/"
-install -d "${ROOTFS_DIR}/var/cache/pip"
-if [ -d files/var/cache/pip ]; then
-  cp -a files/var/cache/pip/. "${ROOTFS_DIR}/var/cache/pip/"
-fi
+cp -a files/opt/. "${ROOTFS_DIR}/opt/"
 
 install -d "${ROOTFS_DIR}/etc/vibesensor"
 install -d -o 1000 -g 1000 "${ROOTFS_DIR}/var/lib/vibesensor" "${ROOTFS_DIR}/var/log/vibesensor"
@@ -285,36 +374,36 @@ chmod 0440 "${ROOTFS_DIR}/etc/sudoers.d/vibesensor-update"
 # Build the Python virtualenv inside the ARM rootfs via QEMU chroot emulation.
 on_chroot << 'CHROOT_EOF'
 set -e
-export PIP_CACHE_DIR=/var/cache/pip
-DEPS_HASH="__SERVER_DEPS_HASH__"
-HASH_FILE=/var/cache/pip/vibesensor-deps.hash
-WHEELHOUSE=/var/cache/pip/wheels
-NEEDS_WHEEL_REBUILD=1
+PIP_TMP_CACHE=/tmp/vibesensor-pip-cache
+WHEELHOUSE=/tmp/vibesensor-wheelhouse
+PREBUILT_WHEEL="/opt/vibesensor-artifacts/wheels/__APP_WHEEL_FILE__"
+BUILD_DEPS=(python3-dev)
 
-if [ -f "${HASH_FILE}" ] && [ -d "${WHEELHOUSE}" ] && [ -n "$(ls -A "${WHEELHOUSE}" 2>/dev/null)" ]; then
-  if [ "$(cat "${HASH_FILE}")" = "${DEPS_HASH}" ]; then
-    NEEDS_WHEEL_REBUILD=0
-  fi
+if [ ! -f "${PREBUILT_WHEEL}" ]; then
+  echo "ERROR: missing prebuilt app wheel at ${PREBUILT_WHEEL}"
+  exit 1
 fi
 
-if [ "${NEEDS_WHEEL_REBUILD}" = "1" ]; then
-  echo "Dependency hash changed or wheel cache empty; rebuilding ARM wheelhouse"
-  rm -rf "${WHEELHOUSE}"
-  mkdir -p "${WHEELHOUSE}"
-  python3 -m venv /tmp/vibesensor-wheel-build
-  /tmp/vibesensor-wheel-build/bin/pip install --upgrade pip --quiet
-  /tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
-    --cache-dir /var/cache/pip \
-    /opt/VibeSensor/apps/server
-  /tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
-    --cache-dir /var/cache/pip \
-    "setuptools>=68" \
-    "wheel>=0.38"
-  printf '%s\n' "${DEPS_HASH}" > "${HASH_FILE}"
-  rm -rf /tmp/vibesensor-wheel-build
-else
-  echo "Dependency hash unchanged; reusing cached ARM wheelhouse"
-fi
+echo "Installing transient build deps for wheel compilation"
+apt-get update
+apt-get install -y --no-install-recommends "${BUILD_DEPS[@]}"
+
+echo "Rebuilding ARM wheelhouse (wheel-first runtime)"
+rm -rf "${WHEELHOUSE}"
+mkdir -p "${WHEELHOUSE}"
+mkdir -p "${PIP_TMP_CACHE}"
+python3 -m venv /tmp/vibesensor-wheel-build
+/tmp/vibesensor-wheel-build/bin/pip install --upgrade pip --quiet
+/tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
+  --prefer-binary \
+  --cache-dir "${PIP_TMP_CACHE}" \
+  "${PREBUILT_WHEEL}"
+/tmp/vibesensor-wheel-build/bin/pip wheel --wheel-dir "${WHEELHOUSE}" \
+  --prefer-binary \
+  --cache-dir "${PIP_TMP_CACHE}" \
+  "setuptools>=68" \
+  "wheel>=0.38"
+rm -rf /tmp/vibesensor-wheel-build
 
 python3 -m venv /opt/VibeSensor/apps/server/.venv
 /opt/VibeSensor/apps/server/.venv/bin/pip install --upgrade pip --quiet
@@ -324,12 +413,86 @@ python3 -m venv /opt/VibeSensor/apps/server/.venv
   "setuptools>=68" \
   "wheel>=0.38" \
   --quiet
+VIBESENSOR_WHEEL="$(find "${WHEELHOUSE}" -maxdepth 1 -type f -name 'vibesensor-*.whl' | sort -V | tail -n 1)"
+if [ -z "${VIBESENSOR_WHEEL}" ]; then
+  echo "ERROR: no vibesensor wheel found in ${WHEELHOUSE}"
+  exit 1
+fi
 /opt/VibeSensor/apps/server/.venv/bin/pip install \
   --no-index \
   --find-links "${WHEELHOUSE}" \
+  --force-reinstall \
   --no-build-isolation \
-  -e /opt/VibeSensor/apps/server \
+  "${VIBESENSOR_WHEEL}" \
   --quiet
+echo "Purging transient build deps"
+apt-get purge -y "${BUILD_DEPS[@]}"
+apt-get autoremove -y --purge
+
+# Trim image-only bloat that is not needed on Raspberry Pi 3 A+ runtime:
+# - non-Broadcom firmware families,
+# - kernel header packages (dev-only).
+TRIM_PACKAGES=(
+  firmware-atheros
+  firmware-libertas
+  firmware-mediatek
+  firmware-realtek
+  gpsd-tools
+  build-essential
+  gcc
+  g++
+  cpp
+  gdb
+  libc6-dbg
+  manpages-dev
+  mkvtoolnix
+  iso-codes
+  p7zip-full
+)
+while IFS= read -r pkg; do
+  if [ -n "${pkg}" ]; then
+    TRIM_PACKAGES+=("${pkg}")
+  fi
+done < <(dpkg-query -W -f='${Package}\n' 'linux-headers-*' 2>/dev/null || true)
+INSTALLED_TRIM_PACKAGES=()
+for pkg in "${TRIM_PACKAGES[@]}"; do
+  if dpkg-query -W -f='${Status}' "${pkg}" 2>/dev/null | grep -q "install ok installed"; then
+    INSTALLED_TRIM_PACKAGES+=("${pkg}")
+  fi
+done
+if [ "${#INSTALLED_TRIM_PACKAGES[@]}" -gt 0 ]; then
+  echo "Purging trim-only packages: ${INSTALLED_TRIM_PACKAGES[*]}"
+  apt-get purge -y --auto-remove "${INSTALLED_TRIM_PACKAGES[@]}"
+fi
+SITE_PACKAGES="$(/opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
+import site
+print(site.getsitepackages()[0])
+PY
+)"
+rm -rf "${SITE_PACKAGES}/data" "${SITE_PACKAGES}/public"
+cp -a /opt/VibeSensor/apps/server/data "${SITE_PACKAGES}/data"
+cp -a /opt/VibeSensor/apps/server/public "${SITE_PACKAGES}/public"
+# Keep runtime assets/scripts/config while ensuring Python code comes from wheels.
+rm -rf \
+  /opt/VibeSensor/apps/server/vibesensor \
+  /opt/VibeSensor/apps/server/tests \
+  /opt/VibeSensor/apps/server/tests_e2e \
+  "${WHEELHOUSE}" \
+  "${PIP_TMP_CACHE}" \
+  /opt/vibesensor-artifacts \
+  '/opt/VibeSensor/$MNT' \
+  /opt/VibeSensor/.git \
+  /opt/VibeSensor/.github \
+  /opt/VibeSensor/infra/pi-image/pi-gen/.pip-cache-stage
+# Strip docs/manpages/locales from the appliance image to reduce size.
+rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/linda/*
+find /usr/share/locale -mindepth 1 -maxdepth 1 \
+  ! -name 'en*' \
+  ! -name 'C' \
+  ! -name 'POSIX' \
+  ! -name 'locale.alias' \
+  -exec rm -rf {} +
+rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /var/cache/apt/archives/partial/*
 install -d -o 1000 -g 1000 /var/lib/vibesensor/firmware
 # Embed baseline ESP firmware bundle from the latest GitHub Release.
 # This enables first-boot flashing without running the updater.
@@ -508,22 +671,18 @@ SSHDEBUGUNIT
 fi
 EOF
 chmod +x "${STAGE_STEP_DIR}/00-run.sh"
-sed -i "s/__SERVER_DEPS_HASH__/${SERVER_DEPS_HASH}/g" "${STAGE_STEP_DIR}/00-run.sh"
+sed -i "s#__APP_WHEEL_FILE__#${APP_WHEEL_FILE}#g" "${STAGE_STEP_DIR}/00-run.sh"
 sed -i "s/__SSH_FIRST_BOOT_DEBUG__/${SSH_FIRST_BOOT_DEBUG}/g" "${STAGE_STEP_DIR}/00-run.sh"
 
 cat >"${STAGE_STEP_DIR}/00-packages" <<'EOF'
-git
-nodejs
-npm
 network-manager
 dnsmasq
 rfkill
 iw
 gpsd
-gpsd-clients
 python3-venv
-python3-pip
 libopenblas0-pthread
+libopenjp2-7
 EOF
 
 # Ensure this custom stage is exported as the final image artifact.
@@ -531,6 +690,20 @@ touch "${STAGE_DIR}/EXPORT_IMAGE"
 
 # Avoid accidentally exporting stock stage2 images that could be flashed by mistake.
 touch "${PI_GEN_DIR}/stage2/SKIP_IMAGES"
+
+# Trim apt metadata after export-image source rewrites so it doesn't inflate
+# final image size.
+EXPORT_TRIM_DIR="${PI_GEN_DIR}/export-image/04-vibesensor-trim"
+mkdir -p "${EXPORT_TRIM_DIR}"
+cat >"${EXPORT_TRIM_DIR}/00-run.sh" <<'EOF'
+#!/bin/bash -e
+
+on_chroot << 'CHROOT_EOF'
+set -e
+rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /var/cache/apt/archives/partial/*
+CHROOT_EOF
+EOF
+chmod +x "${EXPORT_TRIM_DIR}/00-run.sh"
 
 cat >"${PI_GEN_DIR}/config" <<EOF
 # This image is tuned for Raspberry Pi 3 A+ deployments.
@@ -748,8 +921,6 @@ if [ "${VALIDATE}" = "1" ]; then
   IW_PATH="$(assert_rootfs_binary iw)"
   DNSMASQ_PATH="$(assert_rootfs_binary dnsmasq)"
   GPSD_PATH="$(assert_rootfs_binary gpsd)"
-  NODE_PATH="$(assert_rootfs_binary node)"
-  NPM_PATH="$(assert_rootfs_binary npm)"
 
   if [ ! -f "${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service" ]; then
     echo "Validation failed: missing ${ROOT_MNT}/etc/systemd/system/vibesensor-hotspot.service"
@@ -787,6 +958,11 @@ if [ "${VALIDATE}" = "1" ]; then
     exit 1
   fi
 
+  if [ -d "${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor" ]; then
+    echo "Validation failed: source tree still present at ${ROOT_MNT}/opt/VibeSensor/apps/server/vibesensor"
+    exit 1
+  fi
+
   if [ ! -d "${ROOT_MNT}/var/log/wifi" ] && [ ! -f "${ROOT_MNT}/etc/tmpfiles.d/vibesensor-wifi.conf" ]; then
     echo "Validation failed: missing /var/log/wifi and /etc/tmpfiles.d/vibesensor-wifi.conf"
     exit 1
@@ -796,10 +972,6 @@ if [ "${VALIDATE}" = "1" ]; then
     [ ! -f "${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin/python" ]; then
     echo "Validation failed: Python venv not built at ${ROOT_MNT}/opt/VibeSensor/apps/server/.venv/bin"
     exit 1
-  fi
-
-  if [ ! -f "${ROOT_MNT}/opt/VibeSensor/firmware/esp/platformio.ini" ]; then
-    echo "Validation info: firmware/esp/platformio.ini not found (expected: Pi uses prebuilt cache)"
   fi
 
   # Validate firmware cache baseline is present
@@ -814,7 +986,6 @@ if [ "${VALIDATE}" = "1" ]; then
   fi
 
   assert_rootfs_package gpsd
-  assert_rootfs_package gpsd-clients
   assert_rootfs_package openssh-server
   assert_rootfs_package libopenblas0-pthread
   assert_rootfs_package libgfortran5
@@ -861,9 +1032,31 @@ PY
     exit 1
   fi
 
-  if ! run_qemu_chroot /bin/bash -lc '
+  if ! run_qemu_chroot /opt/VibeSensor/apps/server/.venv/bin/python - <<'PY'
+import pathlib
+import vibesensor
+
+module_path = pathlib.Path(vibesensor.__file__).resolve()
+if "/site-packages/" not in str(module_path):
+    raise SystemExit(f"vibesensor imported from unexpected path: {module_path}")
+print("WHEEL_INSTALL_PATH_OK")
+PY
+  then
+    echo "Validation failed: vibesensor is not imported from site-packages wheel install"
+    exit 1
+  fi
+
+  if run_qemu_chroot /bin/bash -lc '
+ls /opt/VibeSensor/apps/server/.venv/lib/python*/site-packages/__editable__.vibesensor-*.pth >/dev/null 2>&1
+'; then
+    echo "Validation failed: editable install marker found; expected wheel-first runtime"
+    exit 1
+  fi
+
+if ! run_qemu_chroot /bin/bash -lc '
 set -e
 export VIBESENSOR_DISABLE_AUTO_APP=1
+export VIBESENSOR_CONTRACTS_DIR=/opt/VibeSensor/libs/shared/contracts
 pkill -f "python -m vibesensor.app" >/dev/null 2>&1 || true
 cp /etc/vibesensor/config.yaml /tmp/vibesensor-smoke-config.yaml
 sed -i \
@@ -989,8 +1182,8 @@ PY
   echo "=== Validation: /opt/VibeSensor exists ==="
   ls -la "${ROOT_MNT}/opt/VibeSensor" | head -n 20
 
-  echo "=== Validation: nmcli + rfkill + iw + dnsmasq + node + npm binaries ==="
-  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}" "${ROOT_MNT}${NODE_PATH}" "${ROOT_MNT}${NPM_PATH}"
+  echo "=== Validation: nmcli + rfkill + iw + dnsmasq + gpsd binaries ==="
+  ls -l "${ROOT_MNT}/usr/bin/nmcli" "${ROOT_MNT}${RFKILL_PATH}" "${ROOT_MNT}${IW_PATH}" "${ROOT_MNT}${DNSMASQ_PATH}" "${ROOT_MNT}${GPSD_PATH}"
 
   echo "=== Validation: vibesensor systemd units ==="
   ls -la "${ROOT_MNT}/etc/systemd/system" | grep -i vibesensor || true
@@ -1037,12 +1230,6 @@ PY
 
   echo "=== Validation: hotspot script references /var/log/wifi ==="
   grep -n "/var/log/wifi" "${ROOT_MNT}/opt/VibeSensor/apps/server/scripts/hotspot_nmcli.sh"
-
-  if [ -d "${ROOT_MNT}/var/cache/pip" ]; then
-    mkdir -p "${PIP_CACHE_DIR}"
-    sudo rsync -a --delete "${ROOT_MNT}/var/cache/pip/" "${PIP_CACHE_DIR}/"
-    sudo chown -R "$(id -u):$(id -g)" "${PIP_CACHE_DIR}"
-  fi
 
   cleanup_mounts
   trap - EXIT

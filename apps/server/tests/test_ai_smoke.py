@@ -37,8 +37,9 @@ def test_smoke_hotspot_script_only_reactivates_ap_after_uplink_session() -> None
 def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
     build_sh = Path(__file__).resolve().parents[3] / "infra" / "pi-image" / "pi-gen" / "build.sh"
     text = build_sh.read_text(encoding="utf-8")
-    assert "nodejs" in text, "build wrapper must bake nodejs for on-device UI rebuild"
-    assert "npm" in text, "build wrapper must bake npm for on-device UI rebuild"
+    assert "BUILD_MODE" in text, "build wrapper must support split app/image build modes"
+    assert "BUILD_MODE=app" in text, "build wrapper must support app-only artifact builds"
+    assert "npm" in text, "build wrapper must build UI artifacts during app build mode"
     assert "network-manager" in text, "build wrapper must bake network-manager"
     assert "dnsmasq" in text, "build wrapper must bake dnsmasq"
     assert "99-vibesensor-dnsmasq.conf" in text, "build wrapper must assert DNS drop-in"

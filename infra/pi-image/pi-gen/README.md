@@ -20,7 +20,23 @@ cd VibeSensor
 ./infra/pi-image/pi-gen/build.sh
 ```
 
-Output image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
+Default (`BUILD_MODE=all`) runs:
+1. app artifact build (UI + server wheel),
+2. image build.
+
+Split workflow (wheel-first):
+
+```bash
+# build app artifacts only (re-runnable, cacheable in CI)
+BUILD_MODE=app ./infra/pi-image/pi-gen/build.sh
+
+# build image from previously built app artifacts
+BUILD_MODE=image ./infra/pi-image/pi-gen/build.sh
+```
+
+Artifacts:
+- app artifacts: `infra/pi-image/pi-gen/out/app-artifacts/`
+- image: `infra/pi-image/pi-gen/out/vibesensor-rpi3a-plus-bookworm-lite.img`
 
 Useful build flags for faster x86 iteration:
 
@@ -84,6 +100,7 @@ start automatically on first boot.
 `build.sh` uses [pi-gen](https://github.com/RPi-Distro/pi-gen) in Docker to
 produce the image. It adds a custom stage that:
 
-1. Copies the VibeSensor repository into `/opt/VibeSensor`
-2. Runs `apps/server/scripts/install_pi.sh` (deps, venv, systemd units)
-3. Enables the hotspot and self-heal services
+1. builds app artifacts (UI bundle + `vibesensor-*.whl`),
+2. copies runtime repo + app artifacts into the image stage,
+3. builds an ARM wheelhouse and installs the server from the prebuilt wheel (non-editable),
+4. enables the hotspot and self-heal services.
