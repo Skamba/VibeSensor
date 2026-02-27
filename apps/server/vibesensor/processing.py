@@ -21,6 +21,7 @@ from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = 4096
+_ALIGNMENT_MIN_OVERLAP = 0.5  # shared window must cover ≥50 % of the union
 
 
 def _synchronized(method):
@@ -43,6 +44,7 @@ class ClientBuffer:
     latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
     latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
     last_ingest_mono_s: float = 0.0
+    first_ingest_mono_s: float = 0.0
     # Generation counters: ingest_generation increments on new samples,
     # compute_generation marks which ingest generation metrics reflect, and
     # spectrum_generation marks spectrum snapshot updates for payload caching.
@@ -120,6 +122,7 @@ class SignalProcessor:
         buf.data[:] = 0.0
         buf.write_idx = 0
         buf.count = 0
+        buf.first_ingest_mono_s = 0.0
         buf.latest_metrics = {}
         buf.latest_spectrum = {}
         buf.latest_strength_metrics = {}
@@ -181,7 +184,10 @@ class SignalProcessor:
                 )
             buf.sample_rate_hz = clamped_rate
             self._resize_buffer(buf, buf.sample_rate_hz * self.waveform_seconds)
-        buf.last_ingest_mono_s = time.monotonic()
+        now_mono = time.monotonic()
+        if buf.first_ingest_mono_s <= 0:
+            buf.first_ingest_mono_s = now_mono
+        buf.last_ingest_mono_s = now_mono
 
         n = int(chunk.shape[0])
         capacity = buf.capacity
@@ -527,6 +533,9 @@ class SignalProcessor:
         shared_freq: np.ndarray | None = None
         clients: dict[str, dict[str, list[float]]] = {}
         mismatch_ids: list[str] = []
+
+        # --- Compute per-sensor time ranges for alignment metadata -----------
+        ranges: list[tuple[str, float, float]] = []
         for client_id in client_ids:
             buf = self._buffers.get(client_id)
             if buf is None or not buf.latest_spectrum:
@@ -546,6 +555,11 @@ class SignalProcessor:
             client_payload = self.spectrum_payload(client_id)
             client_payload["freq"] = self._float_list(client_freq)
             clients[client_id] = client_payload
+
+            tr = self._analysis_time_range(buf)
+            if tr is not None:
+                ranges.append((client_id, tr[0], tr[1]))
+
         payload: dict[str, Any] = {
             "freq": self._float_list(shared_freq) if shared_freq is not None else [],
             "clients": clients,
@@ -557,6 +571,22 @@ class SignalProcessor:
                 "client_ids": sorted(mismatch_ids),
             }
             payload["freq"] = []
+
+        # --- Alignment metadata ----------------------------------------------
+        if len(ranges) >= 2:
+            shared_start = max(s for _, s, _ in ranges)
+            shared_end = min(e for _, _, e in ranges)
+            overlap = max(0.0, shared_end - shared_start)
+            union_start = min(s for _, s, _ in ranges)
+            union_end = max(e for _, _, e in ranges)
+            union = max(1e-9, union_end - union_start)
+            overlap_ratio = overlap / union
+            payload["alignment"] = {
+                "overlap_ratio": round(overlap_ratio, 4),
+                "aligned": overlap_ratio >= _ALIGNMENT_MIN_OVERLAP,
+                "shared_window_s": round(overlap, 4),
+                "sensor_count": len(ranges),
+            }
         return payload
 
     @_synchronized
@@ -768,4 +798,104 @@ class SignalProcessor:
             "total_ingested_samples": self._total_ingested_samples,
             "total_compute_calls": self._total_compute_calls,
             "last_compute_duration_s": self._last_compute_duration_s,
+        }
+
+    # -- Time-alignment helpers ------------------------------------------------
+
+    def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float] | None:
+        """Return ``(start_mono_s, end_mono_s)`` for the current analysis window.
+
+        The analysis window is the most recent ``waveform_seconds`` of data in the
+        buffer (capped by available samples).  The end time is
+        ``last_ingest_mono_s``; the start is estimated from the number of
+        buffered samples and the effective sample rate.
+
+        Returns ``None`` when the buffer has no data or no timing information.
+        """
+        if buf.count == 0 or buf.last_ingest_mono_s <= 0:
+            return None
+        sr = buf.sample_rate_hz or self.sample_rate_hz
+        if sr <= 0:
+            return None
+        desired = int(max(1, float(sr) * float(self.waveform_seconds)))
+        n_window = min(buf.count, buf.capacity, desired)
+        duration_s = float(n_window) / float(sr)
+        end = buf.last_ingest_mono_s
+        start = end - duration_s
+        return (start, end)
+
+    @_synchronized
+    def time_alignment_info(self, client_ids: list[str]) -> dict[str, Any]:
+        """Compute time-alignment metadata across multiple sensors.
+
+        Returns a dict with:
+
+        * ``per_sensor``  – per-client time-range info
+        * ``shared_window`` – intersection of all time ranges (``None`` if disjoint)
+        * ``overlap_ratio`` – fraction of the union covered by the intersection
+        * ``aligned`` – ``True`` when the overlap ratio meets the minimum threshold
+        * ``sensors_included`` / ``sensors_excluded`` – partition of *client_ids*
+        """
+        per_sensor: dict[str, dict[str, float]] = {}
+        ranges: list[tuple[float, float]] = []
+        included: list[str] = []
+        excluded: list[str] = []
+
+        for cid in client_ids:
+            buf = self._buffers.get(cid)
+            if buf is None:
+                excluded.append(cid)
+                continue
+            tr = self._analysis_time_range(buf)
+            if tr is None:
+                excluded.append(cid)
+                continue
+            start, end = tr
+            per_sensor[cid] = {
+                "start_mono_s": start,
+                "end_mono_s": end,
+                "duration_s": end - start,
+            }
+            ranges.append((start, end))
+            included.append(cid)
+
+        if len(ranges) < 2:
+            return {
+                "per_sensor": per_sensor,
+                "shared_window": None,
+                "overlap_ratio": 1.0 if len(ranges) == 1 else 0.0,
+                "aligned": True,
+                "sensors_included": included,
+                "sensors_excluded": excluded,
+            }
+
+        # Shared window = intersection of all ranges.
+        shared_start = max(s for s, _ in ranges)
+        shared_end = min(e for _, e in ranges)
+        overlap = max(0.0, shared_end - shared_start)
+
+        # Union span (earliest start → latest end).
+        union_start = min(s for s, _ in ranges)
+        union_end = max(e for _, e in ranges)
+        union = max(1e-9, union_end - union_start)
+
+        overlap_ratio = overlap / union
+        # Aligned if at least 50 % of the union is covered by the intersection.
+        aligned = overlap_ratio >= _ALIGNMENT_MIN_OVERLAP
+
+        shared: dict[str, float] | None = None
+        if overlap > 0:
+            shared = {
+                "start_mono_s": shared_start,
+                "end_mono_s": shared_end,
+                "duration_s": overlap,
+            }
+
+        return {
+            "per_sensor": per_sensor,
+            "shared_window": shared,
+            "overlap_ratio": round(overlap_ratio, 4),
+            "aligned": aligned,
+            "sensors_included": included,
+            "sensors_excluded": excluded,
         }
