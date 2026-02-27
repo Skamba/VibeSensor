@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from vibesensor_core.vibration_strength import percentile
 
 from vibesensor.constants import KMH_TO_MPS
@@ -45,54 +46,52 @@ def test_normalize_lang_nl() -> None:
 # -- _as_float -----------------------------------------------------------------
 
 
-def test_as_float_valid() -> None:
-    assert _as_float(3.14) == 3.14
-    assert _as_float(0) == 0.0
-    assert _as_float("2.5") == 2.5
-
-
-def test_as_float_invalid() -> None:
-    assert _as_float(None) is None
-    assert _as_float("") is None
-    assert _as_float("abc") is None
-    assert _as_float(float("nan")) is None
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param(3.14, 3.14, id="float"),
+        pytest.param(0, 0.0, id="int_zero"),
+        pytest.param("2.5", 2.5, id="numeric_string"),
+        pytest.param(None, None, id="none"),
+        pytest.param("", None, id="empty_string"),
+        pytest.param("abc", None, id="non_numeric_string"),
+        pytest.param(float("nan"), None, id="nan"),
+    ],
+)
+def test_as_float(value: object, expected: float | None) -> None:
+    assert _as_float(value) is expected if expected is None else _as_float(value) == expected
 
 
 # -- _format_duration ----------------------------------------------------------
 
 
-def test_format_duration_zero() -> None:
-    assert _format_duration(0) == "00:00.0"
-
-
-def test_format_duration_90_seconds() -> None:
-    assert _format_duration(90.0) == "01:30.0"
-
-
-def test_format_duration_negative_clamped_to_zero() -> None:
-    assert _format_duration(-5.0) == "00:00.0"
-
-
-def test_format_duration_fractional() -> None:
-    result = _format_duration(65.3)
-    assert result == "01:05.3"
-
-
-def test_format_duration_rounding_at_60s_boundary() -> None:
-    """Rounding 59.96 to 1 decimal gives 60.0 → should show 01:00.0, not 00:60.0."""
-    assert _format_duration(59.96) == "01:00.0"
-    assert _format_duration(119.96) == "02:00.0"
+@pytest.mark.parametrize(
+    ("seconds", "expected"),
+    [
+        pytest.param(0, "00:00.0", id="zero"),
+        pytest.param(90.0, "01:30.0", id="90s"),
+        pytest.param(-5.0, "00:00.0", id="negative_clamped"),
+        pytest.param(65.3, "01:05.3", id="fractional"),
+        pytest.param(59.96, "01:00.0", id="60s_boundary_low"),
+        pytest.param(119.96, "02:00.0", id="60s_boundary_high"),
+    ],
+)
+def test_format_duration(seconds: float, expected: str) -> None:
+    assert _format_duration(seconds) == expected
 
 
 # -- _text (bilingual helper) -------------------------------------------------
 
 
-def test_text_en() -> None:
-    assert _text("en", "hello", "hallo") == "hello"
-
-
-def test_text_nl() -> None:
-    assert _text("nl", "hello", "hallo") == "hallo"
+@pytest.mark.parametrize(
+    ("lang", "expected"),
+    [
+        pytest.param("en", "hello", id="en"),
+        pytest.param("nl", "hallo", id="nl"),
+    ],
+)
+def test_text(lang: str, expected: str) -> None:
+    assert _text(lang, "hello", "hallo") == expected
 
 
 # -- _percent_missing ----------------------------------------------------------
@@ -151,23 +150,18 @@ def test_mean_variance_two_values_sample_variance() -> None:
 # -- percentile ---------------------------------------------------------------
 
 
-def test_percentile_median() -> None:
-    sorted_vals = [1.0, 2.0, 3.0, 4.0, 5.0]
-    assert abs(percentile(sorted_vals, 0.5) - 3.0) < 1e-9
-
-
-def test_percentile_empty_returns_zero() -> None:
-    assert percentile([], 0.5) == 0.0
-
-
-def test_percentile_single_element() -> None:
-    assert percentile([7.0], 0.5) == 7.0
-
-
-def test_percentile_boundary_values() -> None:
-    sorted_vals = [10.0, 20.0, 30.0]
-    assert abs(percentile(sorted_vals, 0.0) - 10.0) < 1e-9
-    assert abs(percentile(sorted_vals, 1.0) - 30.0) < 1e-9
+@pytest.mark.parametrize(
+    ("sorted_vals", "q", "expected"),
+    [
+        pytest.param([1.0, 2.0, 3.0, 4.0, 5.0], 0.5, 3.0, id="median"),
+        pytest.param([], 0.5, 0.0, id="empty"),
+        pytest.param([7.0], 0.5, 7.0, id="single_element"),
+        pytest.param([10.0, 20.0, 30.0], 0.0, 10.0, id="q0_min"),
+        pytest.param([10.0, 20.0, 30.0], 1.0, 30.0, id="q1_max"),
+    ],
+)
+def test_percentile(sorted_vals: list[float], q: float, expected: float) -> None:
+    assert percentile(sorted_vals, q) == pytest.approx(expected, abs=1e-9)
 
 
 # -- _outlier_summary ----------------------------------------------------------
@@ -297,15 +291,18 @@ def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
     assert total == len(samples)
 
 
-def test_sensor_limit_adxl345() -> None:
-    assert _sensor_limit_g("ADXL345") == 16.0
-    assert _sensor_limit_g("my-adxl345-board") == 16.0
-
-
-def test_sensor_limit_unknown() -> None:
-    assert _sensor_limit_g("LIS3DH") is None
-    assert _sensor_limit_g(None) is None
-    assert _sensor_limit_g(42) is None
+@pytest.mark.parametrize(
+    ("sensor", "expected"),
+    [
+        pytest.param("ADXL345", 16.0, id="adxl345"),
+        pytest.param("my-adxl345-board", 16.0, id="adxl345_substring"),
+        pytest.param("LIS3DH", None, id="unknown_chip"),
+        pytest.param(None, None, id="none"),
+        pytest.param(42, None, id="non_string"),
+    ],
+)
+def test_sensor_limit_g(sensor: object, expected: float | None) -> None:
+    assert _sensor_limit_g(sensor) == expected
 
 
 # -- _primary_vibration_strength_db -------------------------------------------
@@ -348,26 +345,18 @@ def test_sample_top_peaks_filters_invalid() -> None:
 # -- _location_label -----------------------------------------------------------
 
 
-def test_location_label_with_name() -> None:
-    assert _location_label({"client_name": "Front Left"}) == "Front Left"
-
-
-def test_location_label_with_client_id_only() -> None:
-    result = _location_label({"client_id": "AB:CD:EF:12:34:56"})
-    assert result == "Sensor 4:56"
-
-
-def test_location_label_unlabeled() -> None:
-    assert _location_label({}) == "Unlabeled sensor"
-
-
-def test_location_label_unlabeled_nl() -> None:
-    assert _location_label({}, lang="nl") == "Sensor zonder label"
-
-
-def test_location_label_with_client_id_only_nl() -> None:
-    result = _location_label({"client_id": "AB:CD:EF:12:34:56"}, lang="nl")
-    assert result == "Sensor 4:56"
+@pytest.mark.parametrize(
+    ("info", "lang", "expected"),
+    [
+        pytest.param({"client_name": "Front Left"}, "en", "Front Left", id="name_en"),
+        pytest.param({"client_id": "AB:CD:EF:12:34:56"}, "en", "Sensor 4:56", id="client_id_en"),
+        pytest.param({}, "en", "Unlabeled sensor", id="unlabeled_en"),
+        pytest.param({}, "nl", "Sensor zonder label", id="unlabeled_nl"),
+        pytest.param({"client_id": "AB:CD:EF:12:34:56"}, "nl", "Sensor 4:56", id="client_id_nl"),
+    ],
+)
+def test_location_label(info: dict, lang: str, expected: str) -> None:
+    assert _location_label(info, lang=lang) == expected
 
 
 def test_locations_connected_throughout_requires_mid_run_continuity() -> None:
