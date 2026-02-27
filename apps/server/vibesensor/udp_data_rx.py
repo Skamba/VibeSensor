@@ -97,7 +97,9 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                     self.processor.flush_client_buffer(client_id)
                 record = self.registry.get(client_id)
                 sample_rate_hz = record.sample_rate_hz if record is not None else None
-                self.processor.ingest(client_id, msg.samples, sample_rate_hz=sample_rate_hz)
+                self.processor.ingest(
+                    client_id, msg.samples, sample_rate_hz=sample_rate_hz, t0_us=msg.t0_us
+                )
             if self.transport is not None:
                 ack_payload = pack_data_ack(msg.client_id, msg.seq)
                 self.transport.sendto(ack_payload, addr)
