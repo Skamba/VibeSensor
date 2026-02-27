@@ -59,6 +59,12 @@ class _OrderHypothesis:
     suspected_source: str
     order_label_base: str
     order: int
+    # Path compliance factor: models how much the mechanical transmission
+    # path between the vibration source and the sensor dampens/broadens
+    # the frequency peak.  1.0 = stiff direct coupling (driveshaft), higher
+    # values = softer compliant path (wheel through suspension bushings).
+    # Used to widen match tolerance and soften error/correlation penalties.
+    path_compliance: float = 1.0
 
     def predicted_hz(
         self,
@@ -82,12 +88,17 @@ class _OrderHypothesis:
 
 def _order_hypotheses() -> list[_OrderHypothesis]:
     return [
-        _OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1),
-        _OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2),
-        _OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1),
-        _OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2),
-        _OrderHypothesis("engine_1x", "engine", "engine", 1),
-        _OrderHypothesis("engine_2x", "engine", "engine", 2),
+        # Wheel orders travel through tire sidewall → hub → knuckle → control
+        # arms → bushings → subframe → body → sensor.  Each rubber component
+        # broadens the peak and reduces tracking precision.
+        _OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1, path_compliance=1.5),
+        _OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2, path_compliance=1.5),
+        # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
+        _OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1, path_compliance=1.0),
+        _OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2, path_compliance=1.0),
+        # Engine is stiffly mounted on most vehicles.
+        _OrderHypothesis("engine_1x", "engine", "engine", 1, path_compliance=1.0),
+        _OrderHypothesis("engine_2x", "engine", "engine", 2, path_compliance=1.0),
     ]
 
 
