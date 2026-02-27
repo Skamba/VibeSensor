@@ -117,27 +117,6 @@ def _normalize_client_id_or_400(client_id: str) -> str:
         raise HTTPException(status_code=400, detail="Invalid client_id") from exc
 
 
-def _sync_active_car_to_analysis(state: RuntimeState) -> None:
-    """Push active car aspects into the shared AnalysisSettingsStore."""
-    aspects = state.settings_store.active_car_aspects()
-    if aspects:
-        state.analysis_settings.update(aspects)
-
-
-def _sync_speed_source_to_gps(state: RuntimeState) -> None:
-    """Push speed-source settings into GPSSpeedMonitor."""
-    ss = state.settings_store.get_speed_source()
-    state.gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
-    if ss["manualSpeedKph"] is not None:
-        state.gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
-    else:
-        state.gps_monitor.set_speed_override_kmh(None)
-    state.gps_monitor.set_fallback_settings(
-        stale_timeout_s=ss.get("staleTimeoutS"),
-        fallback_mode=ss.get("fallbackMode"),
-    )
-
-
 def create_router(state: RuntimeState) -> APIRouter:
     router = APIRouter()
     report_pdf_cache: OrderedDict[tuple[object, ...], bytes] = OrderedDict()
@@ -201,6 +180,13 @@ def create_router(state: RuntimeState) -> APIRouter:
             raise HTTPException(status_code=404, detail="Run not found")
         return run
 
+    async def _async_require_run(run_id: str) -> dict[str, Any]:
+        """Fetch a history run in a thread or raise 404."""
+        run = await asyncio.to_thread(state.history_db.get_run, run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="Run not found")
+        return run
+
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
         return {
@@ -218,36 +204,40 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/cars", response_model=CarsResponse)
     async def add_car(req: CarUpsertRequest) -> CarsResponse:
-        result = state.settings_store.add_car(req.model_dump(exclude_none=True))
-        _sync_active_car_to_analysis(state)
+        payload = req.model_dump(exclude_none=True)
+        result = await asyncio.to_thread(state.settings_store.add_car, payload)
+        state.apply_car_settings()
         return result
 
     @router.put("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def update_car(car_id: str, req: CarUpsertRequest) -> CarsResponse:
         try:
-            result = state.settings_store.update_car(car_id, req.model_dump(exclude_none=True))
+            payload = req.model_dump(exclude_none=True)
+            result = await asyncio.to_thread(
+                state.settings_store.update_car, car_id, payload,
+            )
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
-        _sync_active_car_to_analysis(state)
+        state.apply_car_settings()
         return result
 
     @router.delete("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def delete_car(car_id: str) -> CarsResponse:
         try:
-            result = state.settings_store.delete_car(car_id)
+            result = await asyncio.to_thread(state.settings_store.delete_car, car_id)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
-        _sync_active_car_to_analysis(state)
+        state.apply_car_settings()
         return result
 
     @router.post("/api/settings/cars/active", response_model=CarsResponse)
     async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
         car_id = req.carId
         try:
-            result = state.settings_store.set_active_car(car_id)
+            result = await asyncio.to_thread(state.settings_store.set_active_car, car_id)
         except ValueError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
-        _sync_active_car_to_analysis(state)
+        state.apply_car_settings()
         return result
 
     @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
@@ -256,8 +246,11 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
-        result = state.settings_store.update_speed_source(req.model_dump(exclude_none=True))
-        _sync_speed_source_to_gps(state)
+        payload = req.model_dump(exclude_none=True)
+        result = await asyncio.to_thread(
+            state.settings_store.update_speed_source, payload,
+        )
+        state.apply_speed_source_settings()
         return result
 
     @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
@@ -274,7 +267,10 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:
         try:
-            state.settings_store.set_sensor(mac, req.model_dump(exclude_none=True))
+            payload = req.model_dump(exclude_none=True)
+            await asyncio.to_thread(
+                state.settings_store.set_sensor, mac, payload,
+            )
             return _sensors_response()
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -282,7 +278,7 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.delete("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def delete_sensor(mac: str) -> SensorsResponse:
         try:
-            removed = state.settings_store.remove_sensor(mac)
+            removed = await asyncio.to_thread(state.settings_store.remove_sensor, mac)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not removed:
@@ -296,7 +292,7 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.post("/api/settings/language", response_model=LanguageResponse)
     async def set_language(req: LanguageRequest) -> LanguageResponse:
         try:
-            language = state.settings_store.set_language(req.language)
+            language = await asyncio.to_thread(state.settings_store.set_language, req.language)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"language": language}
@@ -308,7 +304,7 @@ def create_router(state: RuntimeState) -> APIRouter:
     @router.post("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
         try:
-            unit = state.settings_store.set_speed_unit(req.speedUnit)
+            unit = await asyncio.to_thread(state.settings_store.set_speed_unit, req.speedUnit)
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"speedUnit": unit}
@@ -336,10 +332,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         changes = req.model_dump(exclude_none=True)
         if changes:
             try:
-                state.settings_store.update_active_car_aspects(changes)
+                await asyncio.to_thread(state.settings_store.update_active_car_aspects, changes)
             except ValueError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
-            _sync_active_car_to_analysis(state)
+            state.apply_car_settings()
         return state.analysis_settings.snapshot()
 
     @router.post("/api/clients/{client_id}/identify", response_model=IdentifyResponse)
@@ -382,7 +378,7 @@ def create_router(state: RuntimeState) -> APIRouter:
 
         state.registry.set_location(normalized_client_id, code)
         mac = client_id_mac(updated.client_id)
-        state.settings_store.set_sensor(mac, {"location": code})
+        await asyncio.to_thread(state.settings_store.set_sensor, mac, {"location": code})
         return {
             "id": updated.client_id,
             "mac_address": mac,
@@ -413,18 +409,19 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/history", response_model=HistoryListResponse)
     async def get_history() -> HistoryListResponse:
-        return {"runs": state.history_db.list_runs()}
+        runs = await asyncio.to_thread(state.history_db.list_runs)
+        return {"runs": runs}
 
     @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)
     async def get_history_run(run_id: str) -> HistoryRunResponse:
-        return _require_run(run_id)
+        return await _async_require_run(run_id)
 
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
         lang: str | None = Query(default=None),
     ) -> HistoryInsightsResponse:
-        run = _require_run(run_id)
+        run = await _async_require_run(run_id)
         if run["status"] == "analyzing":
             return {"run_id": run_id, "status": "analyzing"}
         if run["status"] == "error":
@@ -470,16 +467,17 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
-        active_run_id = state.history_db.get_active_run_id()
+        active_run_id = await asyncio.to_thread(state.history_db.get_active_run_id)
         if active_run_id == run_id:
             raise HTTPException(
                 status_code=409, detail="Cannot delete the active run; stop recording first"
             )
-        if state.history_db.get_run_status(run_id) == "analyzing":
+        run_status = await asyncio.to_thread(state.history_db.get_run_status, run_id)
+        if run_status == "analyzing":
             raise HTTPException(
                 status_code=409, detail="Cannot delete run while analysis is in progress"
             )
-        deleted = state.history_db.delete_run(run_id)
+        deleted = await asyncio.to_thread(state.history_db.delete_run, run_id)
         if not deleted:
             raise HTTPException(status_code=404, detail="Run not found")
         return {"run_id": run_id, "status": "deleted"}
@@ -488,7 +486,7 @@ def create_router(state: RuntimeState) -> APIRouter:
     async def download_history_report_pdf(
         run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
-        run = _require_run(run_id)
+        run = await _async_require_run(run_id)
         analysis = run.get("analysis")
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
@@ -551,7 +549,7 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/history/{run_id}/export")
     async def export_history_run(run_id: str) -> Response:
-        run = _require_run(run_id)
+        run = await _async_require_run(run_id)
 
         def _build_zip() -> bytes:
             safe_name = _safe_filename(run_id)
