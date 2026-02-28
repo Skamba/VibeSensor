@@ -1116,8 +1116,8 @@
     "nl": "Bewijs voor {source} vereist aanvullende controles."
   },
   "SOURCE_LEGEND_TITLE": {
-    "en": "Finding source:",
-    "nl": "Bevindingsbron:"
+    "en": "Diagnosed location source:",
+    "nl": "Bron van gediagnosticeerde locatie:"
   },
   "SOURCE_TRANSIENT_IMPACT": {
     "en": "Transient impact",
