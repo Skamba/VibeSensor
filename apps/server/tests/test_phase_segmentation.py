@@ -6,9 +6,9 @@ import pytest
 
 from vibesensor.analysis.phase_segmentation import (
     DrivingPhase,
-    _classify_sample_phase,
     _estimate_speed_derivative,
     _interpolate_speed_unknown,
+    classify_sample_phase,
     diagnostic_sample_mask,
     segment_run_phases,
 )
@@ -65,35 +65,35 @@ class TestEstimateSpeedDerivative:
 
 
 # ---------------------------------------------------------------------------
-# _classify_sample_phase
+# classify_sample_phase
 # ---------------------------------------------------------------------------
 
 
 class TestClassifySamplePhase:
     def test_idle_zero_speed(self) -> None:
-        assert _classify_sample_phase(0.0, 0.0) == DrivingPhase.IDLE
+        assert classify_sample_phase(0.0, 0.0) == DrivingPhase.IDLE
 
     def test_idle_none_speed(self) -> None:
         # None speed → SPEED_UNKNOWN (not IDLE), see issue #287
-        assert _classify_sample_phase(None, None) == DrivingPhase.SPEED_UNKNOWN
+        assert classify_sample_phase(None, None) == DrivingPhase.SPEED_UNKNOWN
 
     @pytest.mark.smoke
     def test_cruise(self) -> None:
-        assert _classify_sample_phase(80.0, 0.0) == DrivingPhase.CRUISE
+        assert classify_sample_phase(80.0, 0.0) == DrivingPhase.CRUISE
 
     def test_acceleration(self) -> None:
-        assert _classify_sample_phase(80.0, 5.0) == DrivingPhase.ACCELERATION
+        assert classify_sample_phase(80.0, 5.0) == DrivingPhase.ACCELERATION
 
     def test_deceleration(self) -> None:
-        assert _classify_sample_phase(80.0, -5.0) == DrivingPhase.DECELERATION
+        assert classify_sample_phase(80.0, -5.0) == DrivingPhase.DECELERATION
 
     def test_coast_down_low_speed(self) -> None:
         # Low speed + deceleration → coast_down
-        assert _classify_sample_phase(10.0, -5.0) == DrivingPhase.COAST_DOWN
+        assert classify_sample_phase(10.0, -5.0) == DrivingPhase.COAST_DOWN
 
     def test_cruise_with_none_derivative(self) -> None:
         # No derivative info → defaults to cruise if speed is above idle threshold
-        assert _classify_sample_phase(80.0, None) == DrivingPhase.CRUISE
+        assert classify_sample_phase(80.0, None) == DrivingPhase.CRUISE
 
 
 # ---------------------------------------------------------------------------
