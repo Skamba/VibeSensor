@@ -6,12 +6,9 @@ import asyncio
 import logging
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
 
+from .models import UpdateIssue
 from .runner import CommandRunner, _sudo_prefix, sanitize_log_line
-
-if TYPE_CHECKING:
-    from .models import UpdateIssue
 
 LOGGER = logging.getLogger(__name__)
 
@@ -28,9 +25,7 @@ HOTSPOT_RESTORE_DELAY_S = 2
 
 def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
     """Parse wifi diagnostic files into structured issues."""
-    from .models import UpdateIssue as _Issue
-
-    issues: list[_Issue] = []
+    issues: list[UpdateIssue] = []
     log_path = Path(log_dir)
     if not log_path.is_dir():
         return issues
@@ -43,7 +38,7 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
                 line = line.strip()
                 if line.startswith("status=") and "FAILED" in line.upper():
                     issues.append(
-                        _Issue(
+                        UpdateIssue(
                             phase="diagnostics",
                             message="Hotspot summary reports failure",
                             detail=line,
@@ -62,7 +57,7 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
                 if "error" in lower or "failed" in lower or "timeout" in lower:
                     sanitized = sanitize_log_line(line)
                     issues.append(
-                        _Issue(
+                        UpdateIssue(
                             phase="diagnostics",
                             message="Hotspot log issue",
                             detail=sanitized,
@@ -74,11 +69,7 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
     return issues
 
 
-async def cleanup_uplink(
-    runner: CommandRunner,
-    *,
-    log_fn: object | None = None,
-) -> None:
+async def cleanup_uplink(runner: CommandRunner) -> None:
     """Best-effort removal of the temporary uplink connection."""
     sudo = _sudo_prefix()
     await runner.run(
@@ -94,8 +85,6 @@ async def cleanup_uplink(
 async def restore_hotspot(
     runner: CommandRunner,
     ap_con_name: str,
-    *,
-    log_fn: object | None = None,
 ) -> bool:
     """Bring the AP connection back up with retries.  Returns True on success."""
     sudo = _sudo_prefix()
