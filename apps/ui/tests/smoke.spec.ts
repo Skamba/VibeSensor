@@ -579,82 +579,6 @@ test("gps status polling does not override websocket speed readout", async ({ pa
   await expect(page.locator("#speed")).toContainText("72.0 km/h");
 });
 
-test("rotational assumptions effective speed follows selected unit", async ({ page }) => {
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ locations: [] }),
-    });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/settings/language") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ language: "en" }) });
-      return;
-    }
-    if (path === "/api/settings/speed-unit") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ speedUnit: "mps" }) });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
-  });
-
-  await page.addInitScript(() => {
-    const payload = {
-      server_time: new Date().toISOString(),
-      speed_mps: 10,
-      clients: [],
-      diagnostics: { strength_bands: [{ key: "wheel", label: "Wheel", color: "#2f80ed" }], events: [] },
-      rotational_speeds: {
-        basis_speed_source: "gps",
-        order_bands: [{ key: "wheel_1x", center_hz: 11.2, tolerance: 0.05 }],
-      },
-      spectra: { clients: {} },
-    };
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-        queueMicrotask(() =>
-          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
-        );
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
-
-  await page.goto("/");
-  await expect(page.locator("#rotationalAssumptionsBody")).toContainText("10.0 m/s");
-});
-
 test("history preview uses dB intensity fields from insights payload", async ({ page }) => {
   await page.route("**/api/logging/status", async (route) => {
     await route.fulfill({
@@ -761,7 +685,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
   await expect(page.locator(".mini-car-dot")).toHaveAttribute("title", /20.0 dB$/);
 });
 
-test("strength chart labels update when switching language", async ({ page }) => {
+test("spectrum title updates when switching language", async ({ page }) => {
   await page.route("**/api/logging/status", async (route) => {
     await route.fulfill({
       status: 200,
@@ -878,9 +802,9 @@ test("strength chart labels update when switching language", async ({ page }) =>
   });
 
   await page.goto("/");
-  await expect(page.locator("#strengthChart .u-title")).toHaveText("Strength over time");
+  await expect(page.locator("#dashboardView [data-i18n='chart.spectrum_title']")).toHaveText("Multi-Sensor Blended Spectrum");
   await page.locator("#languageSelect").selectOption("nl");
-  await expect(page.locator("#strengthChart .u-title")).toHaveText("Sterkte over tijd");
+  await expect(page.locator("#dashboardView [data-i18n='chart.spectrum_title']")).toHaveText("Gecombineerd spectrum van meerdere sensoren");
 });
 
 test("manual speed save uses settings endpoint only (no speed-override call)", async ({ page }) => {

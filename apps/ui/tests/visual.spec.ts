@@ -26,15 +26,8 @@ async function assertSpectrumHasData(page: import("@playwright/test").Page): Pro
 }
 
 test.describe("Live view", () => {
-  test("renders spectrum and car map", async ({ page }) => {
+  test("renders spectrum-only dashboard", async ({ page }) => {
     await page.goto("/?demo=1");
-    // Wait for car map dots (demo data applied)
-    await page.waitForSelector(".car-map-dot--visible", { timeout: 8_000 });
-    // Wait for the vibration event log entry (confirms event payload was processed)
-    await page.waitForFunction(
-      () => document.querySelector(".log-row .log-time") !== null,
-      { timeout: 8_000 },
-    );
 
     // Verify the spectrum chart has visible graph data (not just an empty canvas)
     await assertSpectrumHasData(page);

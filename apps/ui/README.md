@@ -45,7 +45,7 @@ in one step.
 
 ## Features
 
-- **Live view** — spectrum chart, stat cards, car heatmap, vibration log, recording controls
+- **Live view** — multi-sensor spectrum chart and recording controls
 - **History view** — recorded runs with insights, PDF download, ZIP export (CSV raw samples + JSON run details)
 - **Settings view** — car profiles (tire/drivetrain wizard with car library), analysis parameters, speed source, sensor naming and location mapping
 - **Auto theme** — follows system light/dark preference
