@@ -520,7 +520,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
             explanation_raw = item.get("explanation") or ""
             detail = (
                 _resolve_i18n(lang, explanation_raw).strip()
-                if _is_i18n_ref(explanation_raw)
+                if _is_i18n_ref(explanation_raw) or isinstance(explanation_raw, list)
                 else (str(explanation_raw).strip() or None)
             )
             data_trust.append(
