@@ -525,6 +525,10 @@ async def test_export_offloaded_to_thread() -> None:
 
     result = await endpoint("run-exp")
     assert result.media_type == "application/zip"
-    with zipfile.ZipFile(io.BytesIO(result.body), "r") as zf:
+    chunks = []
+    async for chunk in result.body_iterator:
+        chunks.append(chunk.encode("utf-8") if isinstance(chunk, str) else chunk)
+    body = b"".join(chunks)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as zf:
         assert "run-exp_raw.csv" in zf.namelist()
         assert "run-exp.json" in zf.namelist()
