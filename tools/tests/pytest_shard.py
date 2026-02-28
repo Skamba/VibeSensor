@@ -14,7 +14,10 @@ def _parse_collected_test_ids(output: str) -> list[str]:
             continue
         if line.startswith("=") or line.startswith("<"):
             continue
-        if line.startswith("tests/") or line.startswith("apps/server/tests/"):
+        if line.startswith("tests/"):
+            test_ids.append(f"apps/server/{line}")
+            continue
+        if line.startswith("apps/server/tests/"):
             test_ids.append(line)
     return test_ids
 
