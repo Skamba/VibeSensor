@@ -194,7 +194,7 @@ _LIVE_PROCESSING_FILES = [
 def test_live_processing_does_not_import_analysis(filename: str) -> None:
     """Live signal-processing modules must not depend on the analysis package.
 
-    ``processing.py`` produces the raw metrics that analysis consumes.
+    These modules produce the raw metrics that analysis consumes.
     A dependency in the other direction would create a circular
     coupling between the live pipeline and the post-stop pipeline.
     """
