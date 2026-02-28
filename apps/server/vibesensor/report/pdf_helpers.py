@@ -182,16 +182,11 @@ def location_hotspots(
         strongest_peak=strongest_peak,
     )
     if matched_points:
-        summary_text = text_fn(
-            (
-                "Order-matched comparison: strongest response is at {strongest_loc} "
-                "({strongest_peak:.4f} g)."
-            ),
-            (
-                "Orde-gematchte vergelijking: sterkste respons zit bij {strongest_loc} "
-                "({strongest_peak:.4f} g)."
-            ),
-        ).format(strongest_loc=strongest_loc, strongest_peak=strongest_peak)
+        summary_text = tr(
+            "ORDER_MATCHED_COMPARISON_SUMMARY",
+            strongest_loc=strongest_loc,
+            strongest_peak=strongest_peak,
+        )
     if (
         monitored_count >= 3
         and active_count == monitored_count

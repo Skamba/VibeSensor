@@ -92,6 +92,7 @@ class MetricsLogger:
         self._written_sample_count = 0
         self._no_data_timeout_s = max(1.0, float(no_data_timeout_s))
         self._last_data_progress_mono_s: float | None = None
+        self._session_generation: int = 0
         self._last_active_frames_total = 0
         self._live_start_utc = utc_now_iso()
         self._live_start_mono_s = time.monotonic()
@@ -105,6 +106,7 @@ class MetricsLogger:
             self._start_new_session_locked()
 
     def _start_new_session_locked(self) -> None:
+        self._session_generation += 1
         self._run_id = uuid4().hex
         self._run_start_utc = utc_now_iso()
         self._run_start_mono_s = time.monotonic()
@@ -134,6 +136,10 @@ class MetricsLogger:
         return total
 
     def _refresh_data_progress_marker(self, now_mono_s: float) -> None:
+        """Update data-progress tracking.
+
+        Must be called while holding ``self._lock``.
+        """
         current_total = self._active_frames_total()
         if current_total > self._last_active_frames_total:
             self._last_active_frames_total = current_total
@@ -143,30 +149,42 @@ class MetricsLogger:
             self._last_active_frames_total = current_total
             self._last_data_progress_mono_s = now_mono_s
 
-    def _ensure_history_run_created(self, run_id: str, start_time_utc: str) -> None:
-        if self._history_db is None or self._history_run_created:
-            return
-        if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
-            return
+    def _ensure_history_run_created(
+        self, run_id: str, start_time_utc: str, *, session_generation: int
+    ) -> None:
+        with self._lock:
+            if self._session_generation != session_generation:
+                return
+            if self._history_db is None or self._history_run_created:
+                return
+            if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+                return
         metadata = self._run_metadata_record(run_id, start_time_utc)
         try:
             self._history_db.create_run(run_id, start_time_utc, metadata)
-            self._history_run_created = True
-            self._history_create_fail_count = 0
+            with self._lock:
+                if self._session_generation != session_generation:
+                    return
+                self._history_run_created = True
+                self._history_create_fail_count = 0
             self._clear_last_write_error()
         except Exception as exc:
-            self._history_create_fail_count += 1
+            with self._lock:
+                if self._session_generation != session_generation:
+                    return
+                self._history_create_fail_count += 1
+                fail_count = self._history_create_fail_count
             msg = (
                 f"history create_run failed"
-                f" (attempt {self._history_create_fail_count}"
+                f" (attempt {fail_count}"
                 f"/{_MAX_HISTORY_CREATE_RETRIES}): {exc}"
             )
             self._set_last_write_error(msg)
-            if self._history_create_fail_count >= _MAX_HISTORY_CREATE_RETRIES:
+            if fail_count >= _MAX_HISTORY_CREATE_RETRIES:
                 LOGGER.error(
                     "Persistent DB failure: giving up after %d attempts for run %s — "
                     "all subsequent samples will be dropped. Error: %s",
-                    self._history_create_fail_count,
+                    fail_count,
                     run_id,
                     exc,
                     exc_info=True,
@@ -174,11 +192,11 @@ class MetricsLogger:
             else:
                 LOGGER.warning(
                     "Failed to create history run in DB (attempt %d)",
-                    self._history_create_fail_count,
+                    fail_count,
                     exc_info=True,
                 )
 
-    def _session_snapshot(self) -> tuple[str, str, float] | None:
+    def _session_snapshot(self) -> tuple[str, str, float, int] | None:
         with self._lock:
             if (
                 not self.enabled
@@ -191,6 +209,7 @@ class MetricsLogger:
                 self._run_id,
                 self._run_start_utc,
                 self._run_start_mono_s,
+                self._session_generation,
             )
 
     def status(self) -> dict[str, str | bool | None]:
@@ -231,6 +250,7 @@ class MetricsLogger:
                 if self._history_run_created and self._written_sample_count > 0:
                     run_id_to_analyze = self._run_id
                 self._finalize_run_locked()
+            self._session_generation += 1
             self.enabled = False
             self._run_id = None
             self._run_start_utc = None
@@ -598,10 +618,14 @@ class MetricsLogger:
         start_time_utc: str,
         run_start_mono_s: float,
         *,
+        session_generation: int,
         prebuilt_rows: list[dict[str, object]] | None = None,
     ) -> bool:
         now_mono_s = time.monotonic()
-        self._refresh_data_progress_marker(now_mono_s)
+        with self._lock:
+            if self._session_generation != session_generation:
+                return False
+            self._refresh_data_progress_marker(now_mono_s)
         t_s = max(0.0, now_mono_s - run_start_mono_s)
         timestamp_utc = utc_now_iso()
         if prebuilt_rows is not None:
@@ -611,32 +635,52 @@ class MetricsLogger:
         else:
             rows = self._build_sample_records(run_id=run_id, t_s=t_s, timestamp_utc=timestamp_utc)
         if rows:
-            self._last_data_progress_mono_s = now_mono_s
+            with self._lock:
+                if self._session_generation != session_generation:
+                    return False
+                self._last_data_progress_mono_s = now_mono_s
             if self._history_db is not None and self._persist_history_db:
-                self._ensure_history_run_created(run_id, start_time_utc)
-                if self._history_run_created:
+                self._ensure_history_run_created(
+                    run_id, start_time_utc, session_generation=session_generation
+                )
+                with self._lock:
+                    if self._session_generation != session_generation:
+                        return False
+                    history_created = self._history_run_created
+                if history_created:
                     try:
                         self._history_db.append_samples(run_id, rows)
-                        self._written_sample_count += len(rows)
+                        with self._lock:
+                            if self._session_generation != session_generation:
+                                return False
+                            self._written_sample_count += len(rows)
                         self._clear_last_write_error()
                     except Exception as exc:
                         self._set_last_write_error(f"history append_samples failed: {exc}")
                         LOGGER.warning("Failed to append samples to history DB", exc_info=True)
                 else:
+                    with self._lock:
+                        fail_count = self._history_create_fail_count
                     LOGGER.warning(
                         "Dropping %d sample(s) for run %s: "
                         "history run not created (fail count %d/%d)",
                         len(rows),
                         run_id,
-                        self._history_create_fail_count,
+                        fail_count,
                         _MAX_HISTORY_CREATE_RETRIES,
                     )
             else:
-                self._written_sample_count += len(rows)
+                with self._lock:
+                    if self._session_generation != session_generation:
+                        return False
+                    self._written_sample_count += len(rows)
 
-        if self._last_data_progress_mono_s is None:
-            return False
-        return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
+        with self._lock:
+            if self._session_generation != session_generation:
+                return False
+            if self._last_data_progress_mono_s is None:
+                return False
+            return (now_mono_s - self._last_data_progress_mono_s) >= self._no_data_timeout_s
 
     def _prune_live_samples_locked(self, live_t_s: float) -> None:
         """Keep only the rolling live window used by the dashboard."""
@@ -863,12 +907,13 @@ class MetricsLogger:
                     self._prune_live_samples_locked(live_t_s)
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
-                    run_id, start_time_utc, start_mono_s = snapshot
+                    run_id, start_time_utc, start_mono_s, generation = snapshot
                     no_data_timeout = await asyncio.to_thread(
                         self._append_records,
                         run_id,
                         start_time_utc,
                         start_mono_s,
+                        session_generation=generation,
                         prebuilt_rows=live_rows,
                     )
                     if no_data_timeout:
