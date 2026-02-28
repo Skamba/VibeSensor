@@ -372,7 +372,14 @@ class MetricsLogger:
             if isinstance(effective_speed_mps, (int, float))
             else None
         )
-        _resolve_source = self.gps_monitor.resolve_speed().source
+        if hasattr(self.gps_monitor, 'resolve_speed'):
+            _resolve_source = self.gps_monitor.resolve_speed().source
+        else:
+            _resolve_source = (
+                "manual"
+                if isinstance(override_speed_mps, (int, float))
+                else ("gps" if gps_speed_kmh is not None else "none")
+            )
         _SOURCE_MAP = {"manual": "manual", "gps": "gps", "fallback_manual": "manual", "none": "gps"}
         speed_source = _SOURCE_MAP.get(_resolve_source, "gps")
         engine_rpm_estimated = None

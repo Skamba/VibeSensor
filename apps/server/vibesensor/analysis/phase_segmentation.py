@@ -238,13 +238,24 @@ def segment_run_phases(
         seg_end = i - 1
         seg_speeds = [s for s in speeds[seg_start : seg_end + 1] if s is not None]
         seg_times = [t for t in times[seg_start : seg_end + 1] if t is not None]
+        # When no time values are available in this segment, estimate from
+        # neighboring segments or fall back to the sample index.
+        if seg_times:
+            start_t = min(seg_times)
+            end_t = max(seg_times)
+        elif segments and segments[-1].end_t_s > 0:
+            start_t = segments[-1].end_t_s
+            end_t = start_t
+        else:
+            start_t = float(seg_start)
+            end_t = float(seg_end)
         segments.append(
             PhaseSegment(
                 phase=per_sample[seg_start],
                 start_idx=seg_start,
                 end_idx=seg_end,
-                start_t_s=min(seg_times) if seg_times else 0.0,
-                end_t_s=max(seg_times) if seg_times else 0.0,
+                start_t_s=start_t,
+                end_t_s=end_t,
                 speed_min_kmh=min(seg_speeds) if seg_speeds else None,
                 speed_max_kmh=max(seg_speeds) if seg_speeds else None,
                 sample_count=seg_end - seg_start + 1,

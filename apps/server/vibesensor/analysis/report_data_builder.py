@@ -91,7 +91,7 @@ def _order_label_human(lang: str, label: str) -> str:
     parts = label.split(" ", 1)
     if len(parts) == 2:
         multiplier, base = parts
-        localized = names.get(base, base)
+        localized = names.get(base.lower(), base)
         return f"{multiplier} {localized}"
     return label
 
