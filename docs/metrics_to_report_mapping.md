@@ -25,7 +25,7 @@ analysis.summarize_run_data(meta, samples)
 |----------------------|------------------------------|------------------------------------|--------------------------|
 | Title                | `title`                      | i18n `DIAGNOSTIC_WORKSHEET`        | string                   |
 | Run date             | `run_datetime`               | `summary.report_date`              | `YYYY-MM-DD HH:MM:SS`   |
-| Car                  | `car.name`, `car.car_type`   | `metadata.car_name/vehicle_name`, `metadata.car_type/vehicle_type` | string |
+| Car                  | `car.name`, `car.car_type`   | `metadata.car_name` (fallback: `vehicle_name`), `metadata.car_type` (fallback: `vehicle_type`) | string |
 | Start time UTC       | `start_time_utc`             | `summary.start_time_utc`           | ISO 8601 string          |
 | End time UTC         | `end_time_utc`               | `summary.end_time_utc`             | ISO 8601 string          |
 | Run ID               | `run_id`                     | `summary.run_id`                   | string                   |
