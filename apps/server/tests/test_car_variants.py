@@ -182,7 +182,7 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
 
 
 def test_car_config_from_dict_without_variant() -> None:
-    """CarConfig.from_dict without variant sets variant to None (backward compat)."""
+    """CarConfig.from_dict without variant sets variant to None."""
     car = CarConfig.from_dict({"name": "Old Car", "type": "sedan"})
     assert car.variant is None
     d = car.to_dict()
