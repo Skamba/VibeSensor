@@ -3,6 +3,11 @@
 Stores run history (metadata, samples, analysis), application settings
 and client names in a single file – lightweight enough for a
 Raspberry Pi 3A+.
+
+Schema v5 stores time-series samples as typed columns instead of JSON
+blobs, dramatically improving write speed, read speed and storage size
+on Raspberry Pi class hardware.  Legacy v4 ``samples`` rows (JSON) are
+read transparently for old runs that have not been migrated.
 """
 
 from __future__ import annotations
@@ -24,8 +29,63 @@ LOGGER = logging.getLogger(__name__)
 
 # -- Schema -------------------------------------------------------------------
 
-_SCHEMA_VERSION = 4
+_SCHEMA_VERSION = 5
 ANALYSIS_SCHEMA_VERSION = 1
+
+# Typed scalar columns in samples_v2 that map 1:1 to SensorFrame dict keys.
+_V2_TYPED_COLS: tuple[str, ...] = (
+    "run_id",
+    "record_type",
+    "schema_version",
+    "timestamp_utc",
+    "t_s",
+    "client_id",
+    "client_name",
+    "location",
+    "sample_rate_hz",
+    "speed_kmh",
+    "gps_speed_kmh",
+    "speed_source",
+    "engine_rpm",
+    "engine_rpm_source",
+    "gear",
+    "final_drive_ratio",
+    "accel_x_g",
+    "accel_y_g",
+    "accel_z_g",
+    "dominant_freq_hz",
+    "dominant_axis",
+    "vibration_strength_db",
+    "strength_bucket",
+    "strength_peak_amp_g",
+    "strength_floor_amp_g",
+    "frames_dropped_total",
+    "queue_overflow_drops",
+)
+
+# Peak-list columns stored as compact JSON arrays.
+_V2_PEAK_COLS: tuple[str, ...] = (
+    "top_peaks",
+    "top_peaks_x",
+    "top_peaks_y",
+    "top_peaks_z",
+)
+
+# All known SensorFrame dict keys.
+_V2_KNOWN_KEYS: frozenset[str] = frozenset(_V2_TYPED_COLS) | frozenset(_V2_PEAK_COLS)
+
+# Full column list for INSERT (typed + peaks + extra_json).
+_V2_INSERT_COLS: tuple[str, ...] = _V2_TYPED_COLS + _V2_PEAK_COLS + ("extra_json",)
+_V2_INSERT_SQL: str = (
+    f"INSERT INTO samples_v2 ({', '.join(_V2_INSERT_COLS)}) "
+    f"VALUES ({', '.join('?' * len(_V2_INSERT_COLS))})"
+)
+
+# SELECT column list (id first, then all insert cols).
+_V2_SELECT_COLS: tuple[str, ...] = ("id",) + _V2_INSERT_COLS
+_V2_SELECT_SQL_COLS: str = ", ".join(_V2_SELECT_COLS)
+
+# -- Schema DDL ---------------------------------------------------------------
 
 _SCHEMA_SQL = """\
 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -48,13 +108,44 @@ CREATE TABLE IF NOT EXISTS runs (
     analysis_completed_at   TEXT
 );
 
-CREATE TABLE IF NOT EXISTS samples (
-    id         INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_id     TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
-    sample_json TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS samples_v2 (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    record_type           TEXT,
+    schema_version        TEXT,
+    timestamp_utc         TEXT,
+    t_s                   REAL,
+    client_id             TEXT,
+    client_name           TEXT,
+    location              TEXT,
+    sample_rate_hz        INTEGER,
+    speed_kmh             REAL,
+    gps_speed_kmh         REAL,
+    speed_source          TEXT,
+    engine_rpm            REAL,
+    engine_rpm_source     TEXT,
+    gear                  REAL,
+    final_drive_ratio     REAL,
+    accel_x_g             REAL,
+    accel_y_g             REAL,
+    accel_z_g             REAL,
+    dominant_freq_hz      REAL,
+    dominant_axis         TEXT,
+    vibration_strength_db REAL,
+    strength_bucket       TEXT,
+    strength_peak_amp_g   REAL,
+    strength_floor_amp_g  REAL,
+    frames_dropped_total  INTEGER DEFAULT 0,
+    queue_overflow_drops  INTEGER DEFAULT 0,
+    top_peaks             TEXT,
+    top_peaks_x           TEXT,
+    top_peaks_y           TEXT,
+    top_peaks_z           TEXT,
+    extra_json            TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx_samples_run_id ON samples(run_id);
+CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
+CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
 
 CREATE TABLE IF NOT EXISTS settings_kv (
     key         TEXT PRIMARY KEY,
@@ -67,6 +158,48 @@ CREATE TABLE IF NOT EXISTS client_names (
     name        TEXT NOT NULL,
     updated_at  TEXT NOT NULL
 );
+"""
+
+# DDL applied when migrating an existing v4 database to v5.
+_MIGRATION_V4_TO_V5_SQL = """\
+CREATE TABLE IF NOT EXISTS samples_v2 (
+    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+    run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
+    record_type           TEXT,
+    schema_version        TEXT,
+    timestamp_utc         TEXT,
+    t_s                   REAL,
+    client_id             TEXT,
+    client_name           TEXT,
+    location              TEXT,
+    sample_rate_hz        INTEGER,
+    speed_kmh             REAL,
+    gps_speed_kmh         REAL,
+    speed_source          TEXT,
+    engine_rpm            REAL,
+    engine_rpm_source     TEXT,
+    gear                  REAL,
+    final_drive_ratio     REAL,
+    accel_x_g             REAL,
+    accel_y_g             REAL,
+    accel_z_g             REAL,
+    dominant_freq_hz      REAL,
+    dominant_axis         TEXT,
+    vibration_strength_db REAL,
+    strength_bucket       TEXT,
+    strength_peak_amp_g   REAL,
+    strength_floor_amp_g  REAL,
+    frames_dropped_total  INTEGER DEFAULT 0,
+    queue_overflow_drops  INTEGER DEFAULT 0,
+    top_peaks             TEXT,
+    top_peaks_x           TEXT,
+    top_peaks_y           TEXT,
+    top_peaks_z           TEXT,
+    extra_json            TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
+CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
 """
 
 
@@ -82,6 +215,7 @@ class HistoryDB:
         self._conn.execute("PRAGMA wal_autocheckpoint=500")
         self._conn.execute("PRAGMA foreign_keys=ON")
         self._ensure_schema()
+        self._has_legacy_samples: bool = self._table_exists("samples")
 
     # -- lifecycle ------------------------------------------------------------
 
@@ -157,11 +291,34 @@ class HistoryDB:
                 )
                 return
             version = int(str(row[0]))
-            if version != _SCHEMA_VERSION:
-                raise RuntimeError(
-                    f"Unsupported history DB schema version {version}; "
-                    f"expected {_SCHEMA_VERSION}. Delete the database file to recreate."
-                )
+            if version == _SCHEMA_VERSION:
+                return
+            if version == 4:
+                self._migrate_v4_to_v5()
+                return
+            raise RuntimeError(
+                f"Unsupported history DB schema version {version}; "
+                f"expected {_SCHEMA_VERSION}. Delete the database file to recreate."
+            )
+
+    def _migrate_v4_to_v5(self) -> None:
+        """Create the structured samples_v2 table alongside the legacy samples table."""
+        LOGGER.info("Migrating history DB from schema v4 to v5 (structured samples)")
+        with self._cursor() as cur:
+            cur.executescript(_MIGRATION_V4_TO_V5_SQL)
+            cur.execute(
+                "UPDATE schema_meta SET value = ? WHERE key = 'version'",
+                (str(_SCHEMA_VERSION),),
+            )
+        LOGGER.info("Migration v4→v5 complete; legacy sample rows remain readable")
+
+    def _table_exists(self, name: str) -> bool:
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
+                (name,),
+            )
+            return cur.fetchone() is not None
 
     # -- write ----------------------------------------------------------------
 
@@ -189,22 +346,88 @@ class HistoryDB:
         if not samples:
             return
 
-        def _to_json(item: dict[str, Any] | SensorFrame) -> str:
-            d = item.to_dict() if isinstance(item, SensorFrame) else item
-            return self._safe_json_dumps(d)
-
         chunk_size = 256
         with self._cursor() as cur:
             for start in range(0, len(samples), chunk_size):
                 batch = samples[start : start + chunk_size]
                 cur.executemany(
-                    "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
-                    ((run_id, _to_json(s)) for s in batch),
+                    _V2_INSERT_SQL,
+                    (self._sample_to_v2_row(run_id, s) for s in batch),
                 )
             cur.execute(
                 "UPDATE runs SET sample_count = sample_count + ? WHERE run_id = ?",
                 (len(samples), run_id),
             )
+
+    # -- v2 row conversion helpers --------------------------------------------
+
+    @classmethod
+    def _sample_to_v2_row(cls, run_id: str, item: dict[str, Any] | SensorFrame) -> tuple[Any, ...]:
+        """Convert a sample dict or SensorFrame to a row tuple for samples_v2."""
+        d: dict[str, Any] = item.to_dict() if isinstance(item, SensorFrame) else item
+
+        typed_vals: list[Any] = []
+        for col in _V2_TYPED_COLS:
+            val = d.get(col)
+            if col == "run_id":
+                val = run_id
+            if isinstance(val, float) and not math.isfinite(val):
+                val = None
+            typed_vals.append(val)
+
+        peak_vals: list[str | None] = []
+        for col in _V2_PEAK_COLS:
+            raw = d.get(col)
+            if raw:
+                peak_vals.append(
+                    json.dumps(
+                        cls._sanitize_for_json(raw),
+                        ensure_ascii=False,
+                        allow_nan=False,
+                    )
+                )
+            else:
+                peak_vals.append(None)
+
+        extra = {k: v for k, v in d.items() if k not in _V2_KNOWN_KEYS}
+        extra_json: str | None = None
+        if extra:
+            extra_json = json.dumps(
+                cls._sanitize_for_json(extra), ensure_ascii=False, allow_nan=False
+            )
+
+        return tuple(typed_vals) + tuple(peak_vals) + (extra_json,)
+
+    @classmethod
+    def _v2_row_to_dict(cls, row: tuple[Any, ...]) -> dict[str, Any]:
+        """Reconstruct a sample dict from a samples_v2 row.
+
+        *row* layout: ``(id, <typed cols>, <peak cols>, extra_json)``.
+        """
+        d: dict[str, Any] = {}
+        offset = 1  # skip autoincrement id
+
+        for i, col in enumerate(_V2_TYPED_COLS):
+            val = row[offset + i]
+            if val is not None:
+                d[col] = val
+
+        offset += len(_V2_TYPED_COLS)
+        for i, col in enumerate(_V2_PEAK_COLS):
+            raw = row[offset + i]
+            if raw:
+                parsed = cls._safe_json_loads(raw, context=f"peak column {col}")
+                d[col] = parsed if isinstance(parsed, list) else []
+            else:
+                d[col] = []
+
+        extra_json = row[offset + len(_V2_PEAK_COLS)]
+        if extra_json:
+            extra = cls._safe_json_loads(extra_json, context="extra_json")
+            if isinstance(extra, dict):
+                d.update(extra)
+
+        return d
 
     def finalize_run(self, run_id: str, end_time_utc: str) -> None:
         now = datetime.now(UTC).isoformat()
@@ -403,6 +626,66 @@ class HistoryDB:
     def iter_run_samples(
         self, run_id: str, batch_size: int = 1000, offset: int = 0
     ) -> Iterator[list[dict[str, Any]]]:
+        if self._run_has_v2_samples(run_id):
+            yield from self._iter_v2_samples(run_id, batch_size, offset)
+        elif self._has_legacy_samples:
+            yield from self._iter_legacy_samples(run_id, batch_size, offset)
+
+    def _run_has_v2_samples(self, run_id: str) -> bool:
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                "SELECT 1 FROM samples_v2 WHERE run_id = ? LIMIT 1",
+                (run_id,),
+            )
+            return cur.fetchone() is not None
+
+    def _iter_v2_samples(
+        self, run_id: str, batch_size: int = 1000, offset: int = 0
+    ) -> Iterator[list[dict[str, Any]]]:
+        size = max(1, int(batch_size))
+        last_id: int | None = None
+        if offset > 0:
+            with self._cursor(commit=False) as cur:
+                cur.execute(
+                    "SELECT id FROM samples_v2 WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
+                    (run_id, max(0, int(offset)) - 1),
+                )
+                row = cur.fetchone()
+                if row:
+                    last_id = row[0]
+                else:
+                    return
+        while True:
+            with self._cursor(commit=False) as cur:
+                if last_id is None:
+                    cur.execute(
+                        f"SELECT {_V2_SELECT_SQL_COLS} FROM samples_v2"
+                        " WHERE run_id = ? ORDER BY id LIMIT ?",
+                        (run_id, size),
+                    )
+                else:
+                    cur.execute(
+                        f"SELECT {_V2_SELECT_SQL_COLS} FROM samples_v2"
+                        " WHERE run_id = ? AND id > ? ORDER BY id LIMIT ?",
+                        (run_id, last_id, size),
+                    )
+                batch_rows = cur.fetchall()
+            if not batch_rows:
+                return
+            last_id = batch_rows[-1][0]
+            parsed_batch: list[dict[str, Any]] = []
+            for row in batch_rows:
+                try:
+                    parsed_batch.append(self._v2_row_to_dict(row))
+                except Exception:
+                    LOGGER.warning("Skipping corrupt v2 sample row id=%s", row[0], exc_info=True)
+            if parsed_batch:
+                yield parsed_batch
+
+    def _iter_legacy_samples(
+        self, run_id: str, batch_size: int = 1000, offset: int = 0
+    ) -> Iterator[list[dict[str, Any]]]:
+        """Read samples from the legacy v4 JSON-blob ``samples`` table."""
         size = max(1, int(batch_size))
         last_id: int | None = None
         if offset > 0:
