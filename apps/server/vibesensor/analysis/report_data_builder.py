@@ -334,6 +334,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
     has_ref_gaps = _has_relevant_reference_gap(findings, primary_source)
 
+    _strength_band_key = strength_label(db_val)[0] if db_val is not None else None
     cert_key, cert_label_text, cert_pct, cert_reason = certainty_label(
         conf,
         lang=lang,
@@ -341,10 +342,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
         weak_spatial=weak_spatial,
         sensor_count=sensor_count,
         has_reference_gaps=has_ref_gaps,
-        strength_band_key=strength_label(db_val)[0] if db_val is not None else None,
+        strength_band_key=_strength_band_key,
     )
 
-    tier = certainty_tier(conf)
+    tier = certainty_tier(conf, strength_band_key=_strength_band_key)
 
     observed = ObservedSignature(
         primary_system=primary_system,
@@ -482,7 +483,11 @@ def map_summary(summary: dict) -> ReportTemplateData:
     # Iterate over all peaks so that significant peaks beyond early noise
     # entries are still included.
     raw_peaks = [r for r in (plots.get("peaks_table", []) or []) if isinstance(r, dict)]
-    above_noise = [r for r in raw_peaks if (_as_float(r.get("strength_db")) or 0) > 0]
+    above_noise = [
+        r
+        for r in raw_peaks
+        if _as_float(r.get("strength_db")) is None or _as_float(r.get("strength_db")) > 0  # type: ignore[operator]
+    ]
     for row in above_noise[:8]:
         rank_val = _as_float(row.get("rank"))
         rank = str(int(rank_val)) if rank_val is not None else "\u2014"
