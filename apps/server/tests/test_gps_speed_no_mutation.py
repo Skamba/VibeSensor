@@ -61,8 +61,9 @@ class TestResolveSpeedPure:
         m.resolve_speed()
         assert self._snapshot(m) == before
 
-    def test_legacy_override_no_mutation(self) -> None:
+    def test_override_no_mutation(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
+        m.manual_source_selected = True
         m.override_speed_mps = 25.0
         m.speed_mps = 10.0
         m.last_update_ts = time.monotonic()
@@ -162,10 +163,10 @@ class TestFallbackActiveConsistency:
 
     def test_fallback_active_consistent_disconnected(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
+        m.manual_source_selected = True
         m.connection_state = "disconnected"
         m.override_speed_mps = 25.0
-        # With legacy path (manual_source_selected=None), override takes
-        # priority over fallback logic.
+        # With manual source selected, override takes priority.
         r = m.resolve_speed()
         assert r.speed_mps == 25.0
         assert r.fallback_active is False  # override wins, not fallback

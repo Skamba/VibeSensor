@@ -118,13 +118,12 @@ class TestFallback:
         assert m.fallback_active is True
 
     def test_disconnected_with_override_returns_override(self) -> None:
-        """Override always wins, so setting override_speed_mps directly
-        means it's the primary source, not a fallback."""
+        """With manual source selected, override takes priority."""
         m = GPSSpeedMonitor(gps_enabled=True)
+        m.manual_source_selected = True
         m.connection_state = "disconnected"
         m.override_speed_mps = 25.0
         assert m.effective_speed_mps == pytest.approx(25.0)
-        # Override takes priority before fallback logic is considered
         assert m.fallback_active is False
 
     def test_disconnected_no_override_returns_none(self) -> None:
@@ -136,6 +135,7 @@ class TestFallback:
     def test_override_always_wins(self) -> None:
         """When override_speed_mps is set AND speed_source is manual, override takes priority."""
         m = GPSSpeedMonitor(gps_enabled=True)
+        m.manual_source_selected = True
         m.override_speed_mps = 25.0
         m.speed_mps = 10.0
         m.last_update_ts = time.monotonic()
@@ -240,15 +240,6 @@ class TestSpeedSourceConfigFallback:
             {"speedSource": "gps", "staleTimeoutS": 30, "fallbackMode": "manual"}
         )
         assert cfg.stale_timeout_s == 30.0
-        assert cfg.fallback_mode == "manual"
-
-    def test_from_dict_snake_case(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
-        cfg = SpeedSourceConfig.from_dict(
-            {"speed_source": "gps", "stale_timeout_s": 60, "fallback_mode": "manual"}
-        )
-        assert cfg.stale_timeout_s == 60.0
         assert cfg.fallback_mode == "manual"
 
     def test_from_dict_clamps_timeout(self) -> None:

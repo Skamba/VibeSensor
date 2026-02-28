@@ -623,7 +623,7 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
     assert data.data_trust[0].detail == "3 dropped frames, 2 queue overflows detected."
 
 
-def test_map_summary_data_trust_supports_legacy_literal_check_labels() -> None:
+def test_map_summary_data_trust_literal_check_labels() -> None:
     summary: dict = {
         "lang": "nl",
         "top_causes": [],
