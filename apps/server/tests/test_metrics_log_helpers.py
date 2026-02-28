@@ -267,8 +267,46 @@ def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
     assert peaks[0]["amp"] == 0.12
     assert peaks[0]["vibration_strength_db"] == 22.0
     assert peaks[0]["strength_bucket"] == "l2"
+    assert rows[0]["top_peaks_x"] == [{"hz": 15.0, "amp": 0.12}]
+    assert rows[0]["top_peaks_y"] == [{"hz": 16.0, "amp": 0.08}]
+    assert rows[0]["top_peaks_z"] == [{"hz": 14.0, "amp": 0.07}]
     assert rows[0]["strength_peak_amp_g"] == 0.15
     assert rows[0]["strength_floor_amp_g"] == 0.003
+
+
+def test_build_sample_records_caps_combined_and_axis_peak_lists(tmp_path: Path) -> None:
+    registry = _FakeRegistry()
+    active = registry.get("active")
+    assert active is not None
+    active.latest_metrics["strength_metrics"]["top_peaks"] = [  # type: ignore[index]
+        {"hz": float(i + 1), "amp": 0.2, "vibration_strength_db": 22.0, "strength_bucket": "l2"}
+        for i in range(12)
+    ]
+    active.latest_metrics["x"]["peaks"] = [  # type: ignore[index]
+        {"hz": float(i + 1), "amp": 0.1} for i in range(6)
+    ]
+
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=2,
+        registry=registry,
+        gps_monitor=_FakeGPSMonitor(),
+        processor=_FakeProcessor(),
+        analysis_settings=_FakeAnalysisSettings(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=1024,
+    )
+
+    rows = logger._build_sample_records(
+        run_id="run-1",
+        t_s=1.0,
+        timestamp_utc="2026-02-16T12:00:00+00:00",
+    )
+
+    assert len(rows[0]["top_peaks"]) == 8
+    assert len(rows[0]["top_peaks_x"]) == 3
 
 
 def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None:
