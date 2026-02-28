@@ -191,8 +191,9 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
         if (!spectrum || typeof spectrum !== "object") continue;
         const specObj = spectrum as Record<string, unknown>;
         // Prefer per-client freq (present only on mismatch), fall back to shared.
-        const perClientFreq = asNumberArray(specObj.freq);
-        const freq = perClientFreq.length > 0 ? perClientFreq : sharedFreq;
+        const rawPerClientFreq = specObj.freq;
+        const hasPerClientFreq = Array.isArray(rawPerClientFreq) && rawPerClientFreq.length > 0;
+        const freq = hasPerClientFreq ? asNumberArray(rawPerClientFreq) : sharedFreq;
         const combined = asNumberArray(specObj.combined_spectrum_amp_g);
         const strengthMetrics = specObj.strength_metrics;
         if (!freq.length || !combined.length || !strengthMetrics || typeof strengthMetrics !== "object") {
