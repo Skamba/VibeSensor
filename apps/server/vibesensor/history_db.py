@@ -158,7 +158,8 @@ class HistoryDB:
             version = int(str(row[0]))
             if version != _SCHEMA_VERSION:
                 raise RuntimeError(
-                    f"Unsupported history DB schema version {version}; expected {_SCHEMA_VERSION}"
+                    f"Unsupported history DB schema version {version}; "
+                    f"expected {_SCHEMA_VERSION}. Delete the database file to recreate."
                 )
 
     # -- write ----------------------------------------------------------------
