@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 
+from .analysis.summary import summarize_run_data
 from .api_models import (  # noqa: F401 – re-exported for backward compat
     ActiveCarRequest,
     AnalysisSettingsRequest,
@@ -68,10 +69,10 @@ from .api_models import (  # noqa: F401 – re-exported for backward compat
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
-from .analysis.summary import summarize_run_data
 
 if TYPE_CHECKING:
     from .app import RuntimeState
+    from .report.report_data import ReportTemplateData
 
 LOGGER = logging.getLogger(__name__)
 _MAX_REPORT_SAMPLES = 12_000
@@ -85,7 +86,7 @@ def _safe_filename(name: str) -> str:
     return _SAFE_FILENAME_RE.sub("_", name)[:200] or "download"
 
 
-def _reconstruct_report_template_data(d: dict) -> "ReportTemplateData":
+def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
     """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
     from .report.report_data import (
         CarMeta,
@@ -131,18 +132,10 @@ def _reconstruct_report_template_data(d: dict) -> "ReportTemplateData":
             for c in d.get("system_cards", [])
             if isinstance(c, dict)
         ],
-        next_steps=[
-            NextStep(**s) for s in d.get("next_steps", []) if isinstance(s, dict)
-        ],
-        data_trust=[
-            DataTrustItem(**t) for t in d.get("data_trust", []) if isinstance(t, dict)
-        ],
-        pattern_evidence=(
-            PatternEvidence(**pe) if isinstance(pe, dict) else PatternEvidence()
-        ),
-        peak_rows=[
-            PeakRow(**r) for r in d.get("peak_rows", []) if isinstance(r, dict)
-        ],
+        next_steps=[NextStep(**s) for s in d.get("next_steps", []) if isinstance(s, dict)],
+        data_trust=[DataTrustItem(**t) for t in d.get("data_trust", []) if isinstance(t, dict)],
+        pattern_evidence=(PatternEvidence(**pe) if isinstance(pe, dict) else PatternEvidence()),
+        peak_rows=[PeakRow(**r) for r in d.get("peak_rows", []) if isinstance(r, dict)],
         phase_info=d.get("phase_info"),
         version_marker=d.get("version_marker", ""),
         lang=d.get("lang", "en"),
@@ -581,13 +574,9 @@ def create_router(state: RuntimeState) -> APIRouter:
         def _build_pdf() -> bytes:
             # Prefer pre-built ReportTemplateData from analysis.
             report_data_dict = (
-                analysis.get("_report_template_data")
-                if isinstance(analysis, dict)
-                else None
+                analysis.get("_report_template_data") if isinstance(analysis, dict) else None
             )
             if isinstance(report_data_dict, dict):
-                from .report.report_data import ReportTemplateData
-
                 data = _reconstruct_report_template_data(report_data_dict)
                 return build_report_pdf(data)
 

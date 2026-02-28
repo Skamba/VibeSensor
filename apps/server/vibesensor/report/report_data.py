@@ -127,4 +127,3 @@ class ReportTemplateData:
     top_causes: list[dict] = field(default_factory=list)
     sensor_intensity_by_location: list[dict] = field(default_factory=list)
     location_hotspot_rows: list[dict] = field(default_factory=list)
-

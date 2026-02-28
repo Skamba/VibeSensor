@@ -286,8 +286,8 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
 
     from fastapi import FastAPI
 
-    from vibesensor.api import create_router
     from vibesensor.analysis import summarize_run_data
+    from vibesensor.api import create_router
 
     metadata = {
         "run_id": "run-pdf",
@@ -413,8 +413,8 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
 
     from fastapi import FastAPI
 
-    from vibesensor.api import create_router
     from vibesensor.analysis import summarize_run_data
+    from vibesensor.api import create_router
 
     metadata = {
         "run_id": "run-ins",

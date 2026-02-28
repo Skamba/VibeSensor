@@ -11,14 +11,14 @@ from pypdf import PdfReader
 
 from vibesensor.analysis import summarize_log
 from vibesensor.analysis.pattern_parts import parts_for_pattern, why_parts_listed
+from vibesensor.analysis.report_data_builder import map_summary
+from vibesensor.analysis.strength_labels import certainty_label, strength_label, strength_text
 from vibesensor.report.pdf_builder import (
     assert_aspect_preserved,
     build_report_pdf,
     fit_rect_preserve_aspect,
 )
-from vibesensor.analysis.report_data_builder import map_summary
 from vibesensor.report.report_data import ReportTemplateData
-from vibesensor.analysis.strength_labels import certainty_label, strength_label, strength_text
 
 # ---------------------------------------------------------------------------
 # strength_label / strength_text

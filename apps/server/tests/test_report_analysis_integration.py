@@ -790,8 +790,8 @@ def test_location_speedbin_summary_prefers_connected_throughout_locations() -> N
 def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
     from vibesensor.analysis import findings as findings_module
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     metadata = {
         "sensor_model": "ADXL345",
@@ -860,8 +860,8 @@ def test_build_findings_penalizes_low_localization_confidence(
 def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
     from vibesensor.analysis import findings as findings_module
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     metadata = {
         "sensor_model": "ADXL345",
@@ -949,8 +949,8 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
 def test_build_findings_passes_focused_speed_band_to_location_summary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
     from vibesensor.analysis import findings as findings_module
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     metadata = {
         "sensor_model": "ADXL345",
@@ -1165,8 +1165,8 @@ def _make_order_finding_samples(
 
 def test_build_order_findings_per_phase_confidence_key_present() -> None:
     """per_phase_confidence must appear in evidence_metrics when phases are provided."""
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
     from vibesensor.analysis.phase_segmentation import DrivingPhase
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     speed_kmh = 70.0
     wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
@@ -1228,8 +1228,8 @@ def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> No
 
 def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() -> None:
     """Multi-phase evidence must produce >= confidence vs identical single-phase evidence."""
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
     from vibesensor.analysis.phase_segmentation import DrivingPhase
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     speed_kmh = 70.0
     wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
@@ -1276,8 +1276,8 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
 
 def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
     """End-to-end: per_phase_confidence appears in order findings via summarize_run_data."""
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
     from vibesensor.analysis.summary import summarize_run_data
+    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     metadata = {
         "sensor_model": "ADXL345",

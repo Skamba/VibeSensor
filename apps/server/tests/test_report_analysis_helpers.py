@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 from vibesensor_core.vibration_strength import percentile
 
-from vibesensor.constants import KMH_TO_MPS
 from vibesensor.analysis.helpers import (
     _corr_abs,
     _effective_engine_rpm,
@@ -23,6 +22,7 @@ from vibesensor.analysis.helpers import (
     _text,
 )
 from vibesensor.analysis.order_analysis import _wheel_hz
+from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.runlog import as_float_or_none as _as_float
 

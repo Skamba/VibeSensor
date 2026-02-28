@@ -9,6 +9,8 @@ from typing import Any
 from vibesensor_core.strength_bands import BANDS, band_rank
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
+from .analysis.phase_segmentation import DrivingPhase, _classify_sample_phase
+from .analysis.summary import build_findings_for_samples
 from .constants import MPS_TO_KMH, SILENCE_DB
 from .diagnostics_shared import (
     build_diagnostic_settings,
@@ -16,8 +18,6 @@ from .diagnostics_shared import (
     severity_from_peak,
     source_keys_from_class_key,
 )
-from .analysis.phase_segmentation import DrivingPhase, _classify_sample_phase
-from .analysis.summary import build_findings_for_samples
 
 SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")

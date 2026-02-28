@@ -7,9 +7,8 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
-from vibesensor.constants import KMH_TO_MPS
 from vibesensor.analysis import confidence_label, select_top_causes, summarize_log
-from vibesensor.report import pdf_builder
+from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
 

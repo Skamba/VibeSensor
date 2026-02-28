@@ -23,13 +23,13 @@ from typing import Any
 
 from vibesensor_core.strength_bands import bucket_for_strength
 
+from vibesensor.analysis.findings import _classify_peak_type
+from vibesensor.analysis.summary import summarize_run_data
 from vibesensor.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from vibesensor.analysis.findings import _classify_peak_type
-from vibesensor.analysis.summary import summarize_run_data
 
 # ---------------------------------------------------------------------------
 # Shared helpers
