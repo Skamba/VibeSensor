@@ -43,12 +43,20 @@ def _engine_hz(
     return rpm / 60.0, src
 
 
-def _order_label(order: int, base: str) -> str:
+def _order_label(*args: object) -> str:
     """Return a language-neutral order label like ``'1x wheel'``.
 
-    Translation to human-readable form happens at report render time.
+    Supports both signatures for compatibility during refactors:
+    - ``_order_label(order, base)``
+    - ``_order_label(lang, order, base)`` (legacy callers)
     """
-    return f"{order}x {base}"
+    if len(args) == 2:
+        order, base = args
+    elif len(args) == 3:
+        _, order, base = args
+    else:
+        raise TypeError("_order_label() expects 2 or 3 positional arguments")
+    return f"{int(order)}x {str(base)}"
 
 
 @dataclass(slots=True)
@@ -127,7 +135,8 @@ def _i18n_ref(key: str, **params: object) -> dict[str, object]:
 
 
 def _finding_actions_for_source(
-    source: str,
+    lang_or_source: str,
+    source: str | None = None,
     *,
     strongest_location: str = "",
     strongest_speed_band: str = "",
@@ -139,6 +148,9 @@ def _finding_actions_for_source(
     dict (``{"_i18n_key": "KEY", ...params}``) that the report layer resolves
     at render time.
     """
+    if source is None:
+        source = lang_or_source
+
     location = strongest_location.strip()
     speed_band = strongest_speed_band.strip()
     speed_hint = _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band) if speed_band else ""
