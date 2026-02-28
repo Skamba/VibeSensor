@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.report import summarize_log
+from vibesensor.analysis import summarize_log
 from vibesensor.report.pdf_builder import build_report_pdf
 
 pdfium = pytest.importorskip("pypdfium2")

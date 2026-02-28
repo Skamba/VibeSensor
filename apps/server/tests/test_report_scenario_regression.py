@@ -1197,7 +1197,7 @@ class TestPhaseInfoInSummary:
     def test_build_findings_for_samples_uses_phase_filtering(self) -> None:
         """build_findings_for_samples must compute phase segments and pass them
         to _build_findings so that IDLE samples are excluded from analysis."""
-        from vibesensor.report import build_findings_for_samples
+        from vibesensor.analysis import build_findings_for_samples
 
         meta = _standard_metadata()
         # 10 idle + 10 cruise samples

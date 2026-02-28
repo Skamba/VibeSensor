@@ -15,7 +15,7 @@ from vibesensor.diagnostics_shared import (
     vehicle_orders_hz,
 )
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
-from vibesensor.report import build_findings_for_samples, summarize_log
+from vibesensor.analysis import build_findings_for_samples, summarize_log
 from vibesensor.analysis.findings import _sensor_intensity_by_location
 
 

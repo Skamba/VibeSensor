@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-import vibesensor.report.plot_data as plot_data_module
+import vibesensor.analysis.plot_data as plot_data_module
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.analysis.plot_data import _plot_data
 

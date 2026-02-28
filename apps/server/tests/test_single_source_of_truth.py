@@ -122,14 +122,14 @@ def test_as_float_single_source_of_truth() -> None:
 
 
 def test_percentile_single_source_of_truth() -> None:
-    """report.helpers.percentile must be imported from
+    """analysis.helpers.percentile must be imported from
     vibesensor_core.vibration_strength, not re-defined locally."""
     from vibesensor_core.vibration_strength import percentile as canonical
 
     from vibesensor.analysis.helpers import percentile
 
     assert percentile is canonical, (
-        "report.helpers.percentile must be imported from vibesensor_core.vibration_strength"
+        "analysis.helpers.percentile must be imported from vibesensor_core.vibration_strength"
     )
 
 
@@ -207,8 +207,8 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
     root = Path(__file__).resolve().parents[1]
     files_to_check = [
         root / "vibesensor" / "metrics_log.py",
-        root / "vibesensor" / "report" / "helpers.py",
-        root / "vibesensor" / "report" / "summary.py",
+        root / "vibesensor" / "analysis" / "helpers.py",
+        root / "vibesensor" / "analysis" / "summary.py",
     ]
     for fpath in files_to_check:
         source = fpath.read_text(encoding="utf-8")

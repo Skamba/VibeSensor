@@ -8,7 +8,8 @@ import pytest
 from pypdf import PdfReader
 
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.report import confidence_label, pdf_builder, select_top_causes, summarize_log
+from vibesensor.analysis import confidence_label, select_top_causes, summarize_log
+from vibesensor.report import pdf_builder
 from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
 
@@ -401,41 +402,30 @@ def test_pdf_peaks_table_includes_peak_amp_and_strength_columns(tmp_path: Path) 
 def test_pdf_additional_observations_heading_for_transient_findings(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        pdf_builder,
-        "map_summary",
-        lambda _summary: ReportTemplateData(
-            title="Diagnostic worksheet",
-            pattern_evidence=PatternEvidence(),
-            lang="en",
-        ),
-    )
-    monkeypatch.setattr(
-        pdf_builder,
-        "location_hotspots",
-        lambda *_args, **_kwargs: ([], None, None, None),
+    data = ReportTemplateData(
+        title="Diagnostic worksheet",
+        pattern_evidence=PatternEvidence(),
+        lang="en",
+        findings=[
+            {
+                "finding_id": "F001",
+                "severity": "diagnostic",
+                "suspected_source": "wheel/tire",
+                "confidence_0_to_1": 0.55,
+                "frequency_hz_or_order": "1x wheel order",
+            },
+            {
+                "finding_id": "F002",
+                "severity": "info",
+                "suspected_source": "transient_impact",
+                "peak_classification": "transient",
+                "confidence_0_to_1": 0.22,
+                "frequency_hz_or_order": "95.0 Hz",
+            },
+        ],
     )
 
-    summary = {"samples": [], "top_causes": []}
-    summary["findings"] = [
-        {
-            "finding_id": "F001",
-            "severity": "diagnostic",
-            "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.55,
-            "frequency_hz_or_order": "1x wheel order",
-        },
-        {
-            "finding_id": "F002",
-            "severity": "info",
-            "suspected_source": "transient_impact",
-            "peak_classification": "transient",
-            "confidence_0_to_1": 0.22,
-            "frequency_hz_or_order": "95.0 Hz",
-        },
-    ]
-
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(data)
     text = _extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text

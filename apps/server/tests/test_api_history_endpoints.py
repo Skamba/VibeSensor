@@ -12,7 +12,7 @@ import pytest
 from fastapi import FastAPI, WebSocketDisconnect
 
 from vibesensor.api import create_router
-from vibesensor.report import summarize_run_data
+from vibesensor.analysis import summarize_run_data
 
 
 def _sample(i: int) -> dict[str, Any]:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.report import build_findings_for_samples, summarize_log
+from vibesensor.analysis import build_findings_for_samples, summarize_log
 from vibesensor.analysis import findings as findings_module
 from vibesensor.analysis.findings import _speed_breakdown
 from vibesensor.analysis.plot_data import _top_peaks_table_rows
@@ -1334,7 +1334,7 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
         return original_segment_run_phases(s)
 
     with patch(
-        "vibesensor.report.findings.segment_run_phases",
+        "vibesensor.analysis.findings.segment_run_phases",
         side_effect=_patched_segment_run_phases,
     ):
         findings_module._build_findings(
@@ -1386,7 +1386,7 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
         recompute_calls.append(1)
         return original_srp(s)
 
-    with patch("vibesensor.report.findings.segment_run_phases", side_effect=_patched_srp):
+    with patch("vibesensor.analysis.findings.segment_run_phases", side_effect=_patched_srp):
         summary = summarize_run_data(metadata, samples, include_samples=False)
 
     assert "findings" in summary

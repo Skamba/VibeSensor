@@ -11,7 +11,7 @@ from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor import __version__
 from vibesensor.constants import KMH_TO_MPS
-from vibesensor.report import summarize_log
+from vibesensor.analysis import summarize_log
 from vibesensor.report.pdf_builder import _draw_system_card, build_report_pdf
 from vibesensor.report.pdf_diagram import car_location_diagram
 from vibesensor.report.report_data import PartSuggestion, SystemFindingCard
