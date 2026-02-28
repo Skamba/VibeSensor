@@ -424,6 +424,9 @@ class SensorFrame:
     dominant_freq_hz: float | None
     dominant_axis: str
     top_peaks: list[dict[str, object]]
+    top_peaks_x: list[dict[str, object]]
+    top_peaks_y: list[dict[str, object]]
+    top_peaks_z: list[dict[str, object]]
     vibration_strength_db: float | None
     strength_bucket: str | None
     strength_peak_amp_g: float | None
@@ -455,6 +458,9 @@ class SensorFrame:
             "dominant_freq_hz": self.dominant_freq_hz,
             "dominant_axis": self.dominant_axis,
             "top_peaks": list(self.top_peaks),
+            "top_peaks_x": list(self.top_peaks_x),
+            "top_peaks_y": list(self.top_peaks_y),
+            "top_peaks_z": list(self.top_peaks_z),
             _VSD_KEY: self.vibration_strength_db,
             _BUCKET_KEY: self.strength_bucket,
             "strength_peak_amp_g": self.strength_peak_amp_g,
@@ -482,11 +488,11 @@ class SensorFrame:
         strength_floor_amp_g = _as_float_or_none(record.get("strength_floor_amp_g"))
         sample_rate_hz = _as_int_or_none(record.get("sample_rate_hz"))
 
-        # Normalize top_peaks
-        top_peaks_raw = record.get("top_peaks")
-        normalized_peaks: list[dict[str, object]] = []
-        if isinstance(top_peaks_raw, list):
-            for peak in top_peaks_raw[:10]:
+        def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str, object]]:
+            normalized: list[dict[str, object]] = []
+            if not isinstance(peaks_raw, list):
+                return normalized
+            for peak in peaks_raw[:max_items]:
                 if not isinstance(peak, dict):
                     continue
                 hz = _as_float_or_none(peak.get("hz"))
@@ -500,7 +506,13 @@ class SensorFrame:
                 peak_bucket = peak.get(METRIC_FIELDS["strength_bucket"])
                 if peak_bucket not in (None, ""):
                     normalized_peak[METRIC_FIELDS["strength_bucket"]] = str(peak_bucket)
-                normalized_peaks.append(normalized_peak)
+                normalized.append(normalized_peak)
+            return normalized
+
+        normalized_peaks = _normalize_peak_list(record.get("top_peaks"), max_items=10)
+        normalized_peaks_x = _normalize_peak_list(record.get("top_peaks_x"), max_items=3)
+        normalized_peaks_y = _normalize_peak_list(record.get("top_peaks_y"), max_items=3)
+        normalized_peaks_z = _normalize_peak_list(record.get("top_peaks_z"), max_items=3)
 
         return cls(
             record_type=RUN_SAMPLE_TYPE,
@@ -525,6 +537,9 @@ class SensorFrame:
             dominant_freq_hz=dominant_freq_hz,
             dominant_axis=str(record.get("dominant_axis", "")),
             top_peaks=normalized_peaks,
+            top_peaks_x=normalized_peaks_x,
+            top_peaks_y=normalized_peaks_y,
+            top_peaks_z=normalized_peaks_z,
             vibration_strength_db=vibration_strength_db,
             strength_bucket=strength_bucket,
             strength_peak_amp_g=strength_peak_amp_g,
