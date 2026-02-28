@@ -22,11 +22,7 @@ _SERVER_PKG = Path(__file__).resolve().parents[1] / "vibesensor"
 _ANALYSIS_PKG = _SERVER_PKG / "analysis"
 
 # All Python files in vibesensor/ that are NOT inside analysis/
-_EXTERNAL_MODULES = [
-    p
-    for p in _SERVER_PKG.glob("*.py")
-    if p.name != "__init__.py"
-]
+_EXTERNAL_MODULES = [p for p in _SERVER_PKG.glob("*.py") if p.name != "__init__.py"]
 
 
 # ---------------------------------------------------------------------------
@@ -47,16 +43,12 @@ def _analysis_submodule_imports(source: str, filename: str) -> list[str]:
         if level > 0:
             # Relative import: `from .analysis.xyz import …` is a violation;
             # `from .analysis import …` is fine.
-            if mod.startswith("analysis.") and "." in mod[len("analysis."):]:
+            if mod.startswith("analysis.") and "." in mod[len("analysis.") :]:
                 # e.g. "analysis.summary" → sub-module access
-                violations.append(
-                    f"line {node.lineno}: from {'.' * level}{mod} import ..."
-                )
+                violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
             elif mod.startswith("analysis."):
                 # "analysis.summary" with exactly one dot after "analysis"
-                violations.append(
-                    f"line {node.lineno}: from {'.' * level}{mod} import ..."
-                )
+                violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
         else:
             # Absolute import: `from vibesensor.analysis.xyz import …`
             parts = mod.split(".")
@@ -99,13 +91,10 @@ def test_analysis_init_exports_core_symbols() -> None:
         "classify_sample_phase",
     ]
     for name in expected_names:
-        assert hasattr(analysis, name), (
-            f"vibesensor.analysis.__init__ must export '{name}'"
-        )
+        assert hasattr(analysis, name), f"vibesensor.analysis.__init__ must export '{name}'"
     # __all__ must list them
     assert set(expected_names) <= set(analysis.__all__), (
-        f"vibesensor.analysis.__all__ is missing: "
-        f"{set(expected_names) - set(analysis.__all__)}"
+        f"vibesensor.analysis.__all__ is missing: {set(expected_names) - set(analysis.__all__)}"
     )
 
 
@@ -181,14 +170,10 @@ def test_no_analysis_files_outside_analysis_folder() -> None:
     # Check vibesensor/ root
     root_files = {p.name for p in _SERVER_PKG.glob("*.py")}
     unexpected = root_files & analysis_only_names
-    assert not unexpected, (
-        f"Analysis files found outside analysis/ folder: {unexpected}"
-    )
+    assert not unexpected, f"Analysis files found outside analysis/ folder: {unexpected}"
     # Check report/ folder
     report_dir = _SERVER_PKG / "report"
     if report_dir.is_dir():
         report_files = {p.name for p in report_dir.glob("*.py")}
         unexpected = report_files & analysis_only_names
-        assert not unexpected, (
-            f"Analysis files found in report/ folder: {unexpected}"
-        )
+        assert not unexpected, f"Analysis files found in report/ folder: {unexpected}"

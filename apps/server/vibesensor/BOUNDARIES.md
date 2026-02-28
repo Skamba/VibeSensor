@@ -2,6 +2,13 @@
 
 Use this when changing backend code without scanning the whole package.
 
+## Analysis Pipeline
+- All post-stop analysis lives in `analysis/`. See [docs/analysis_pipeline.md](../../../docs/analysis_pipeline.md).
+- Single entrypoint: `summarize_run_data()` in `analysis/summary.py`.
+- External code imports only from `analysis/__init__.py` (public API).
+- `report/` is renderer-only and must not import from `analysis/`.
+- Rule: no analysis helpers outside the analysis folder.
+
 ## Orchestration vs Computation
 - `app.py`: orchestrates runtime loops, task startup/shutdown, payload assembly.
 - FFT/metrics computation source of truth lives in `vibesensor_core`
