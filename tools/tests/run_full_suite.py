@@ -87,7 +87,24 @@ def main() -> int:
         action="store_true",
         help="Skip backend unit/integration pytest suite in apps/server/tests.",
     )
+    parser.add_argument(
+        "--fast-e2e",
+        action="store_true",
+        help="Run only fast docker e2e tests (exclude long_sim-marked scenarios).",
+    )
+    parser.add_argument(
+        "--pytest-marker",
+        default=None,
+        help=(
+            "Override pytest marker expression for apps/server/tests_e2e "
+            "(for example: 'e2e and not long_sim')."
+        ),
+    )
     args = parser.parse_args()
+
+    e2e_marker_expr = args.pytest_marker
+    if e2e_marker_expr is None:
+        e2e_marker_expr = "e2e and not long_sim" if args.fast_e2e else "e2e"
 
     data_dir = Path(tempfile.mkdtemp(prefix="vibesensor-e2e-data-"))
     shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
@@ -172,6 +189,8 @@ def main() -> int:
                 "-m",
                 "pytest",
                 "-q",
+                "-m",
+                e2e_marker_expr,
                 "apps/server/tests_e2e",
             ],
             env=env,
