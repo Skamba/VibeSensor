@@ -26,6 +26,7 @@ def test_override_has_priority_over_gps() -> None:
 
 def test_override_used_when_no_gps() -> None:
     m = GPSSpeedMonitor(gps_enabled=False)
+    m.manual_source_selected = True
     m.override_speed_mps = 25.0
     assert m.effective_speed_mps == 25.0
 

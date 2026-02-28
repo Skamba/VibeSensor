@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
-from vibesensor.analysis import confidence_label, select_top_causes, summarize_log
+from vibesensor.analysis import confidence_label, map_summary, select_top_causes, summarize_log
 from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
@@ -359,7 +359,7 @@ def _extract_pdf_text(pdf_bytes: bytes) -> str:
 def test_pdf_section_headings_present(tmp_path: Path) -> None:
     run_path = _make_run_jsonl(tmp_path)
     summary = summarize_log(run_path, lang="en")
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     text = _extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     missing = []
@@ -373,7 +373,7 @@ def test_pdf_section_headings_present(tmp_path: Path) -> None:
 def test_pdf_nl_contains_dutch_headings(tmp_path: Path) -> None:
     run_path = _make_run_jsonl(tmp_path)
     summary = summarize_log(run_path, lang="nl")
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     text = _extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     missing = []
@@ -387,7 +387,7 @@ def test_pdf_nl_contains_dutch_headings(tmp_path: Path) -> None:
 def test_pdf_peaks_table_includes_peak_amp_and_strength_columns(tmp_path: Path) -> None:
     run_path = _make_run_jsonl(tmp_path)
     summary = summarize_log(run_path, lang="en")
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     text = _extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     missing = []

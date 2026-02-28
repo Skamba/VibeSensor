@@ -28,8 +28,7 @@ _REPORT_MODULES = [p for p in _REPORT_DIR.glob("*.py") if p.name != "__init__.py
 def test_report_module_does_not_import_analysis(module_path: Path) -> None:
     """No ``report/*.py`` file may statically import from ``vibesensor.analysis``.
 
-    Lazy imports inside function bodies are allowed for backward compatibility
-    (e.g. the legacy-dict fallback in ``build_report_pdf``).  Only module-level
+    Lazy imports inside function bodies are allowed.  Only module-level
     (top-of-file) imports are flagged.
     """
     source = module_path.read_text(encoding="utf-8")

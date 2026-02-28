@@ -31,13 +31,13 @@ UPDATE_TIMEOUT_S = 600
 """Hard timeout for the entire update job (seconds)."""
 
 GIT_OP_TIMEOUT_S = 120
-"""Per-git-operation timeout (kept for legacy compat, unused in release flow)."""
+"""Per-git-operation timeout."""
 
 REBUILD_OP_TIMEOUT_S = 300
-"""Per-rebuild-operation timeout (kept for legacy compat, unused in release flow)."""
+"""Per-rebuild-operation timeout."""
 
 REBUILD_RETRY_DELAY_S = 3
-"""Delay before retrying transient rebuild failures (legacy)."""
+"""Delay before retrying transient rebuild failures."""
 
 REINSTALL_OP_TIMEOUT_S = 180
 """Per-backend-reinstall timeout."""
@@ -1316,8 +1316,8 @@ class UpdateManager:
         public_build_assets_hash = str(metadata.get("public_assets_hash") or "")
         public_build_commit = str(metadata.get("git_commit") or "")
 
-        # Assets are verified if either packaged static assets exist (wheel)
-        # or the legacy public/ dir matches the source hashes.
+        # Assets are verified if packaged static assets exist (wheel)
+        # or the public/ dir matches the source hashes.
         assets_verified = has_packaged_static or (
             bool(ui_source_hash)
             and bool(public_assets_hash)

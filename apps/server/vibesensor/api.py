@@ -15,7 +15,7 @@ from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconn
 from fastapi.responses import Response
 
 from .analysis import summarize_run_data
-from .api_models import (  # noqa: F401 – re-exported for backward compat
+from .api_models import (  # noqa: F401
     ActiveCarRequest,
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,
@@ -581,7 +581,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                     data = _reconstruct_report_template_data(report_data_dict)
                     return build_report_pdf(data)
 
-            # Rebuild from persisted summary (language mismatch or legacy data
+            # Rebuild from persisted summary (language mismatch or data
             # without _report_template_data).
             from .analysis import map_summary
 

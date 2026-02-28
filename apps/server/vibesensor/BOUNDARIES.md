@@ -19,7 +19,7 @@ Use this when changing backend code without scanning the whole package.
 
 ## API Surface
 - `api.py` is the HTTP boundary.
-- Keep response keys stable for UI compatibility.
+- Keep response keys stable.
 
 ## Persistence Surface
 - `metrics_log.py` and `history_db.py` own session persistence semantics.

@@ -202,28 +202,17 @@ def _dominant_phase(phase_info: dict | None) -> str | None:
     return best_phase
 
 
-def _peak_classification_text(value: object, tr: Callable[..., str] | None = None) -> str:
+def _peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     normalized = str(value or "").strip().lower()
-    if tr is not None:
-        if normalized == "patterned":
-            return tr("CLASSIFICATION_PATTERNED")
-        if normalized == "persistent":
-            return tr("CLASSIFICATION_PERSISTENT")
-        if normalized == "transient":
-            return tr("CLASSIFICATION_TRANSIENT")
-        if normalized == "baseline_noise":
-            return tr("CLASSIFICATION_BASELINE_NOISE")
-        return tr("CLASSIFICATION_PERSISTENT")
-    # Fallback without translator (backward compat)
     if normalized == "patterned":
-        return "patterned"
+        return tr("CLASSIFICATION_PATTERNED")
     if normalized == "persistent":
-        return "persistent"
+        return tr("CLASSIFICATION_PERSISTENT")
     if normalized == "transient":
-        return "transient impact"
+        return tr("CLASSIFICATION_TRANSIENT")
     if normalized == "baseline_noise":
-        return "noise floor"
-    return "persistent"
+        return tr("CLASSIFICATION_BASELINE_NOISE")
+    return tr("CLASSIFICATION_PERSISTENT")
 
 
 def _has_relevant_reference_gap(findings: list[dict], primary_source: object) -> bool:
@@ -319,8 +308,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # -- Metadata --
     meta = summary.get("metadata", {}) if isinstance(summary.get("metadata"), dict) else {}
-    car_name = str(meta.get("car_name") or meta.get("vehicle_name") or "").strip() or None
-    car_type = str(meta.get("car_type") or meta.get("vehicle_type") or "").strip() or None
+    car_name = str(meta.get("car_name") or "").strip() or None
+    car_type = str(meta.get("car_type") or "").strip() or None
 
     # -- Date --
     report_date = summary.get("report_date") or datetime.now(UTC).isoformat()

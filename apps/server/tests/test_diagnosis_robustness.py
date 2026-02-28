@@ -25,6 +25,7 @@ from conftest import (
 )
 from vibesensor_core.strength_bands import bucket_for_strength
 
+from vibesensor.analysis import map_summary
 from vibesensor.analysis.summary import summarize_run_data
 from vibesensor.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
@@ -950,7 +951,7 @@ class TestPdfContentForDiagnosedScenario:
         # Build PDF
         from vibesensor.report.pdf_builder import build_report_pdf
 
-        pdf_bytes = build_report_pdf(summary)
+        pdf_bytes = build_report_pdf(map_summary(summary))
 
         # Extract text
         from conftest import extract_pdf_text
@@ -1011,7 +1012,7 @@ class TestPdfContentForDiagnosedScenario:
 
         from vibesensor.report.pdf_builder import build_report_pdf
 
-        pdf_bytes = build_report_pdf(summary)
+        pdf_bytes = build_report_pdf(map_summary(summary))
 
         from conftest import extract_pdf_text
 
