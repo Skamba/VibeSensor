@@ -98,3 +98,4 @@ artifacts/**
 *.swo
 .DS_Store
 .coverage
+apps/ui/test-results/.last-run.json
