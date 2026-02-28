@@ -318,8 +318,7 @@ class LiveDiagnosticsEngine:
                 str(dominant.get("bucket_key") or ""),
                 int(
                     round(
-                        float(dominant.get("peak_hz") or 0.0)
-                        / max(0.01, self._multi_freq_bin_hz)
+                        float(dominant.get("peak_hz") or 0.0) / max(0.01, self._multi_freq_bin_hz)
                     )
                 ),
             )
@@ -330,10 +329,7 @@ class LiveDiagnosticsEngine:
                     str(row.get("class_key") or ""),
                     str(row.get("bucket_key") or ""),
                     int(
-                        round(
-                            float(row.get("peak_hz") or 0.0)
-                            / max(0.01, self._multi_freq_bin_hz)
-                        )
+                        round(float(row.get("peak_hz") or 0.0) / max(0.01, self._multi_freq_bin_hz))
                     ),
                 )
                 == dominant_bin
