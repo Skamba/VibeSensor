@@ -12,7 +12,7 @@ export interface SpectrumText {
 }
 
 export class SpectrumChart {
-  private static readonly FIXED_Y_RANGE: [number, number] = [0, 60];
+  private static readonly FIXED_Y_RANGE: [number, number] = [0, 100];
   private plot: uPlot | null = null;
   private readonly hostEl: HTMLElement;
   private readonly measureEl: HTMLElement;
