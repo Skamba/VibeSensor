@@ -16,7 +16,7 @@ def test_compute_strength_returns_absolute_amplitude_fields() -> None:
     assert isinstance(result["noise_floor_amp_g"], float)
 
 
-def test_near_zero_db_with_meaningful_peak_is_labeled_with_peak_amplitude() -> None:
+def test_near_zero_db_with_meaningful_peak_is_still_labeled_in_db() -> None:
     freq_hz = [float(i) for i in range(21)]
     combined = [0.03] * 6 + [0.18] * 15
     combined[12] = 0.20
@@ -30,10 +30,5 @@ def test_near_zero_db_with_meaningful_peak_is_labeled_with_peak_amplitude() -> N
     assert result["peak_amp_g"] > 0.18
     assert result["noise_floor_amp_g"] >= 0.17
 
-    label = strength_text(
-        result["vibration_strength_db"],
-        lang="en",
-        peak_amp_g=result["peak_amp_g"],
-    )
+    label = strength_text(result["vibration_strength_db"], lang="en")
     assert "dB" in label
-    assert "g peak" in label

@@ -39,7 +39,7 @@ def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -
 
     assert data.observed.strength_label is not None
     assert "23.4 dB" in data.observed.strength_label
-    assert "0.015 g peak" in data.observed.strength_label
+    assert " g" not in data.observed.strength_label
 
 
 def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> None:
@@ -58,7 +58,7 @@ def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> N
 
     assert data.observed.strength_label is not None
     assert f"{expected_db:.1f} dB" in data.observed.strength_label
-    assert "0.015 g peak" in data.observed.strength_label
+    assert " g" not in data.observed.strength_label
 
 
 def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
@@ -175,7 +175,7 @@ def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
     row = data.peak_rows[0]
     assert row.rank == "—"
     assert row.freq_hz == "—"
-    assert row.amp_g == "—"
+    assert row.peak_db == "—"
 
 
 def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
@@ -192,7 +192,7 @@ def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
                     "rank": 1,
                     "frequency_hz": 33.0,
                     "order_label": "",
-                    "p95_amp_g": 0.12,
+                    "p95_intensity_db": 18.4,
                     "strength_db": 18.4,
                     "presence_ratio": 0.85,
                     "persistence_score": 0.0867,

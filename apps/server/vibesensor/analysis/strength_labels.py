@@ -64,14 +64,11 @@ def strength_text(
     db_value: float | None,
     *,
     lang: str = "en",
-    peak_amp_g: float | None = None,
 ) -> str:
-    """Return a formatted strength string like ``'Moderate (22.0 dB · 0.032 g peak)'``."""
+    """Return a formatted strength string like ``'Moderate (22.0 dB)'``."""
     _, label = strength_label(db_value, lang=lang)
     if db_value is None:
         return label
-    if peak_amp_g is not None:
-        return f"{label} ({db_value:.1f} dB · {peak_amp_g:.3f} g peak)"
     return f"{label} ({db_value:.1f} dB)"
 
 

@@ -346,7 +346,7 @@ _SECTION_HEADING_KEYS = [
 ]
 
 _PEAK_TABLE_COLUMN_KEYS = [
-    "PEAK_AMP_G",
+    "PEAK_DB",
     "STRENGTH_DB",
 ]
 

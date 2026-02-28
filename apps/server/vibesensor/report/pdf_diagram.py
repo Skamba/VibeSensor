@@ -434,9 +434,7 @@ def car_location_diagram(
         unit = str(row.get("unit") or "").strip().lower()
         mean_val = _as_float(row.get("mean_value"))
         if mean_val is None:
-            mean_val = (
-                _as_float(row.get("mean_db")) if unit == "db" else _as_float(row.get("mean_g"))
-            )
+            mean_val = _as_float(row.get("mean_db")) if unit == "db" else None
         if loc and loc not in amp_by_location and mean_val is not None and mean_val > 0:
             amp_by_location[loc] = mean_val
     connected_locations.update(amp_by_location.keys())
