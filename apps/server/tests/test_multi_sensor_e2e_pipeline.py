@@ -136,7 +136,12 @@ def test_multi_sensor_udp_to_report_pipeline(tmp_path: Path) -> None:
             metrics_by_client = processor.compute_all(active_ids, sample_rates_hz=rates)
             for cid, metrics in metrics_by_client.items():
                 registry.set_latest_metrics(cid, metrics)
-            logger._append_records(run_id, start_utc, start_mono)
+            logger._append_records(
+                run_id,
+                start_utc,
+                start_mono,
+                session_generation=logger._session_generation,
+            )
 
         logger.stop_logging()
         assert logger.wait_for_post_analysis(timeout_s=20.0)

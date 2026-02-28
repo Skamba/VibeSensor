@@ -421,9 +421,8 @@ def car_location_diagram(
             if not isinstance(row, dict):
                 continue
             loc = _canonical_location(row.get("location"))
-            p95_db = _as_float(row.get("p95_intensity_db")) or _as_float(
-                row.get("mean_intensity_db")
-            )
+            p95_val = _as_float(row.get("p95_intensity_db"))
+            p95_db = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
             if loc and p95_db is not None and p95_db > 0:
                 amp_by_location[loc] = p95_db
     # Also check location_rows for any locations not already covered

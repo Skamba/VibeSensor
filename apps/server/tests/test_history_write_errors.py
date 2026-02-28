@@ -123,9 +123,9 @@ class TestCreateRunFailureExposesWriteError:
         logger.start_logging()
         snap = logger._session_snapshot()
         assert snap is not None
-        run_id, start_utc, start_mono = snap
+        run_id, start_utc, start_mono, generation = snap
 
-        logger._ensure_history_run_created(run_id, start_utc)
+        logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
         status = logger.status()
         assert status["write_error"] is not None
@@ -140,14 +140,14 @@ class TestCreateRunFailureExposesWriteError:
         logger.start_logging()
         snap = logger._session_snapshot()
         assert snap is not None
-        run_id, start_utc, start_mono = snap
+        run_id, start_utc, start_mono, generation = snap
 
         # First call fails
-        logger._ensure_history_run_created(run_id, start_utc)
+        logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
         assert logger.status()["write_error"] is not None
 
         # Second call succeeds
-        logger._ensure_history_run_created(run_id, start_utc)
+        logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
         assert logger._history_run_created
         assert logger.status()["write_error"] is None
 
@@ -163,10 +163,10 @@ class TestPersistentCreateRunFailureStopsRetrying:
         logger.start_logging()
         snap = logger._session_snapshot()
         assert snap is not None
-        run_id, start_utc, _start_mono = snap
+        run_id, start_utc, _start_mono, generation = snap
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES + 3):
-            logger._ensure_history_run_created(run_id, start_utc)
+            logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
         # Should have been called exactly _MAX_HISTORY_CREATE_RETRIES times
         assert db.create_run.call_count == _MAX_HISTORY_CREATE_RETRIES
@@ -184,7 +184,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
         assert snap is not None
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._ensure_history_run_created(snap[0], snap[1])
+            logger._ensure_history_run_created(snap[0], snap[1], session_generation=snap[3])
 
         assert logger._history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
 
@@ -206,9 +206,9 @@ class TestAppendSamplesFailureExposesError:
         logger.start_logging()
         snap = logger._session_snapshot()
         assert snap is not None
-        run_id, start_utc, start_mono = snap
+        run_id, start_utc, start_mono, generation = snap
 
-        logger._append_records(run_id, start_utc, start_mono)
+        logger._append_records(run_id, start_utc, start_mono, session_generation=generation)
 
         status = logger.status()
         assert status["write_error"] is not None
@@ -228,15 +228,15 @@ class TestDroppedSamplesLogged:
         logger.start_logging()
         snap = logger._session_snapshot()
         assert snap is not None
-        run_id, start_utc, start_mono = snap
+        run_id, start_utc, start_mono, generation = snap
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._ensure_history_run_created(run_id, start_utc)
+            logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
         # Now append_records should log about dropped samples
         with patch("vibesensor.metrics_log.LOGGER") as mock_logger:
-            logger._append_records(run_id, start_utc, start_mono)
+            logger._append_records(run_id, start_utc, start_mono, session_generation=generation)
             # Verify warning about dropped samples was logged
             warning_calls = [
                 call for call in mock_logger.warning.call_args_list if "Dropping" in str(call)
@@ -263,7 +263,7 @@ class TestStatusAlwaysIncludesWriteError:
         logger.start_logging()
         snap = logger._session_snapshot()
         assert snap is not None
-        logger._ensure_history_run_created(snap[0], snap[1])
+        logger._ensure_history_run_created(snap[0], snap[1], session_generation=snap[3])
 
         # Error persists across status calls
         assert logger.status()["write_error"] is not None
@@ -277,7 +277,7 @@ class TestStatusAlwaysIncludesWriteError:
         logger.start_logging()
         snap = logger._session_snapshot()
         assert snap is not None
-        logger._ensure_history_run_created(snap[0], snap[1])
+        logger._ensure_history_run_created(snap[0], snap[1], session_generation=snap[3])
         assert logger.status()["write_error"] is not None
 
         logger.stop_logging()

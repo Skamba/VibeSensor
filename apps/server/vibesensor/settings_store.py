@@ -69,6 +69,8 @@ class SettingsStore:
                     "speedSource": raw.get("speedSource"),
                     "manualSpeedKph": raw.get("manualSpeedKph"),
                     "obd2Config": raw.get("obd2Config"),
+                    "staleTimeoutS": raw.get("staleTimeoutS"),
+                    "fallbackMode": raw.get("fallbackMode"),
                 }
             )
             language = str(raw.get("language") or "en").strip().lower()
@@ -160,13 +162,17 @@ class SettingsStore:
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
             if "name" in car_data:
-                name = str(car_data["name"]).strip()[:64]
-                if name:
-                    car.name = name
+                raw_name = car_data["name"]
+                if isinstance(raw_name, str):
+                    name = raw_name.strip()[:64]
+                    if name:
+                        car.name = name
             if "type" in car_data:
-                car_type = str(car_data["type"]).strip()[:32]
-                if car_type:
-                    car.type = car_type
+                raw_type = car_data["type"]
+                if isinstance(raw_type, str):
+                    car_type = raw_type.strip()[:32]
+                    if car_type:
+                        car.type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
                 car.aspects.update(_sanitize_aspects(car_data["aspects"]))
             if "variant" in car_data:

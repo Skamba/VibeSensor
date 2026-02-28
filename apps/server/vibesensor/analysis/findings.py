@@ -1188,6 +1188,7 @@ def _build_persistent_peak_findings(
     bin_phase_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
     total_locations: set[str] = set()
+    total_location_sample_counts: dict[str, int] = defaultdict(int)
     n_samples = 0
     has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
@@ -1199,11 +1200,12 @@ def _build_persistent_peak_findings(
         sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
         if sample_speed_bin is not None:
             total_speed_bin_counts[sample_speed_bin] += 1
-        _floor_raw = _as_float(sample.get("strength_floor_amp_g"))
+        _floor_raw = _estimate_strength_floor_amp_g(sample)
         floor_amp = _floor_raw if _floor_raw is not None else 0.0
         location = _location_label(sample, lang=lang)
         if location:
             total_locations.add(location)
+            total_location_sample_counts[location] += 1
         sample_phase: str | None = None
         if per_sample_phases is not None and i < len(per_sample_phases):
             sample_phase = _phase_to_str(per_sample_phases[i])
@@ -1240,6 +1242,20 @@ def _build_persistent_peak_findings(
         sorted_amps = sorted(amps)
         count = len(sorted_amps)
         presence_ratio = count / max(1, n_samples)
+
+        # Per-location rescue: in multi-sensor runs, a single-sensor fault's
+        # global presence_ratio is diluted by 1/n_sensors.  Compute the best
+        # per-location presence ratio and use it when higher.
+        if total_location_sample_counts and bin_location_counts.get(bin_center):
+            loc_counts = bin_location_counts[bin_center]
+            for loc in total_locations:
+                loc_hits = loc_counts.get(loc, 0)
+                loc_total = total_location_sample_counts.get(loc, 0)
+                if loc_total >= 3:
+                    loc_presence = loc_hits / loc_total
+                    if loc_presence > presence_ratio:
+                        presence_ratio = loc_presence
+
         median_amp = percentile(sorted_amps, 0.50) if count >= 2 else sorted_amps[0]
         p95_amp = percentile(sorted_amps, 0.95) if count >= 2 else sorted_amps[-1]
         max_amp = sorted_amps[-1]
