@@ -58,7 +58,8 @@ Common derived fields:
 - `dominant_freq_hz`
 - `vibration_strength_db` (canonical vibration severity metric in dB — see `docs/metrics.md`)
 - `strength_bucket` (severity band key: `l1`–`l5` or `null`)
-- `top_peaks` (list of `{hz, amp, vibration_strength_db, strength_bucket}` from combined spectrum)
+- `top_peaks` (up to 8 entries of `{hz, amp, vibration_strength_db, strength_bucket}` from combined spectrum)
+- `top_peaks_x` / `top_peaks_y` / `top_peaks_z` (bounded per-axis summaries, up to 3 entries per axis: `{hz, amp}`)
 
 ### `run_end`
 
