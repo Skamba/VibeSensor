@@ -208,10 +208,10 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
     _write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    assert (
-        summary["speed_breakdown_skipped_reason"]
-        == "Speed data missing or insufficient; speed-binned and wheel-order analysis skipped."
-    )
+    # speed_breakdown_skipped_reason is now an i18n ref dict
+    skipped = summary["speed_breakdown_skipped_reason"]
+    assert isinstance(skipped, dict)
+    assert skipped["_i18n_key"] == "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
     assert summary["speed_breakdown"] == []
     assert any(f.get("finding_id") == "REF_SPEED" for f in summary["findings"])
     assert all(
