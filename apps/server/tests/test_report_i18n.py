@@ -391,8 +391,7 @@ def test_dutch_translation_audit_round_5() -> None:
     # "Bewijsoverzicht" → "Bewijssamenvatting"
     assert nl("EVIDENCE_SNAPSHOT") == "Bewijssamenvatting"
 
-    # Avoid abbreviation: "Piekamp (g)" → "Piekamplitude (g)"
-    assert nl("PEAK_AMP_G") == "Piekamplitude (g)"
+    assert nl("PEAK_DB") == "Piek (dB)"
 
     # Natural Dutch: "Analyse per snelheidsband"
     assert nl("SPEED_BINNED_ANALYSIS") == "Analyse per snelheidsband"

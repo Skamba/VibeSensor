@@ -82,16 +82,16 @@ def _safe(v: str | None, fallback: str = "—") -> str:
 
 def _strength_with_peak(
     strength_label: str | None,
-    peak_amp_g: float | None,
+    peak_db: float | None,
     *,
     fallback: str,
 ) -> str:
     base = _safe(strength_label, fallback)
-    if peak_amp_g is None:
+    if peak_db is None:
         return base
-    if "g peak" in base.lower():
+    if "db peak" in base.lower():
         return base
-    return f"{base} · {peak_amp_g:.3f} g peak"
+    return f"{base} · {peak_db:.1f} dB peak"
 
 
 def _draw_panel(
@@ -446,7 +446,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
         oy,
         tr("STRENGTH"),
         _strength_with_peak(
-            data.observed.strength_label, data.observed.strength_peak_amp_g, fallback=na
+            data.observed.strength_label, data.observed.strength_peak_db, fallback=na
         ),
         label_w=lw,
     )
@@ -869,7 +869,7 @@ def _draw_pattern_evidence(
         rx,
         ry,
         tr("STRENGTH"),
-        _strength_with_peak(ev.strength_label, ev.strength_peak_amp_g, fallback=na),
+        _strength_with_peak(ev.strength_label, ev.strength_peak_db, fallback=na),
         label_w=lw,
         fs=7,
         value_w=val_w,
@@ -939,7 +939,7 @@ def _draw_peaks_table(
         (tr("SYSTEM"), 24 * mm),
         (tr("FREQUENCY_HZ"), 18 * mm),
         (tr("ORDER_LABEL"), 24 * mm),
-        (tr("PEAK_AMP_G"), 18 * mm),
+        (tr("PEAK_DB"), 18 * mm),
         (tr("STRENGTH_DB"), 16 * mm),
         (tr("SPEED_BAND"), 22 * mm),
     ]
@@ -986,7 +986,7 @@ def _draw_peaks_table(
             row.system,
             row.freq_hz,
             row.order,
-            row.amp_g,
+            row.peak_db,
             row.strength_db,
             row.speed_band,
             row.relevance,

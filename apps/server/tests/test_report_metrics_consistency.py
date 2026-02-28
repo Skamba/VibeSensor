@@ -121,9 +121,9 @@ def _assert_cross_section_consistency(rd: ReportTemplateData) -> None:
         f"Strength label mismatch: observed='{obs.strength_label}' vs "
         f"pattern_evidence='{pe.strength_label}'"
     )
-    assert obs.strength_peak_amp_g == pe.strength_peak_amp_g, (
-        f"Strength peak amp mismatch: observed={obs.strength_peak_amp_g} vs "
-        f"pattern_evidence={pe.strength_peak_amp_g}"
+    assert obs.strength_peak_db == pe.strength_peak_db, (
+        f"Strength peak dB mismatch: observed={obs.strength_peak_db} vs "
+        f"pattern_evidence={pe.strength_peak_db}"
     )
     assert obs.certainty_label == pe.certainty_label, (
         f"Certainty label mismatch: observed='{obs.certainty_label}' vs "
@@ -171,18 +171,15 @@ def _assert_unit_consistency(rd: ReportTemplateData) -> None:
     # Strength label should contain "dB" if a dB value is present
     sl = rd.observed.strength_label or ""
     if "dB" in sl:
-        assert "g peak" in sl or rd.observed.strength_peak_amp_g is None, (
-            f"Strength label has dB but missing g peak format: '{sl}'"
-        )
+        assert " g" not in sl, f"Strength label must be dB-only: '{sl}'"
 
-    # Peak rows: amplitude should be in g, strength in dB
+    # Peak rows: all strength columns should be dB-formatted numeric strings
     for pr in rd.peak_rows:
-        if pr.amp_g != "\u2014":
-            # Should be a float string (e.g. "0.0600")
+        if pr.peak_db != "\u2014":
             try:
-                float(pr.amp_g)
+                float(pr.peak_db)
             except ValueError:
-                pytest.fail(f"Peak row amp_g not a valid float: '{pr.amp_g}'")
+                pytest.fail(f"Peak row peak_db not a valid float: '{pr.peak_db}'")
         if pr.strength_db != "\u2014":
             try:
                 float(pr.strength_db)

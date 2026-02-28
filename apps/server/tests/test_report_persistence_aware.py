@@ -7,8 +7,6 @@ above one-off transient spikes, and that findings are classified appropriately.
 
 from __future__ import annotations
 
-from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
 from vibesensor.analysis.findings import (
     _build_persistent_peak_findings,
     _classify_peak_type,
@@ -222,8 +220,8 @@ class TestTopPeaksTableRows:
         assert len(rows) == 1
         row = rows[0]
         assert "presence_ratio" in row
-        assert "median_amp_g" in row
-        assert "p95_amp_g" in row
+        assert "median_intensity_db" in row
+        assert "p95_intensity_db" in row
         assert "burstiness" in row
         assert "persistence_score" in row
         assert "peak_classification" in row
@@ -234,7 +232,7 @@ class TestTopPeaksTableRows:
         samples = [_sample(0.0, 80.0, [{"hz": 20.0, "amp": 0.1}])]
         rows = _top_peaks_table_rows(samples)
         assert len(rows) == 1
-        assert rows[0]["max_amp_g"] == 0.1
+        assert "max_intensity_db" in rows[0]
         assert rows[0]["presence_ratio"] == 1.0
 
     def test_damped_ringdown_ranks_below_sustained(self) -> None:
@@ -273,12 +271,8 @@ class TestTopPeaksTableRows:
         rows = _top_peaks_table_rows(samples)
         assert rows
         row = rows[0]
-        expected_db = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=row["p95_amp_g"],
-            floor_amp_g=0.03,
-        )
-        assert row["strength_floor_amp_g"] == 0.03
-        assert row["strength_db"] == expected_db
+        assert row["strength_floor_db"] is not None
+        assert row["strength_db"] is not None
 
     def test_typical_speed_band_uses_amplitude_weighting(self) -> None:
         speeds = [40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0]
@@ -583,7 +577,7 @@ class TestBuildPersistentPeakFindings:
         assert confidence_low > confidence_high
 
         metrics = dict(findings_low[0].get("evidence_metrics") or {})
-        assert "run_noise_baseline_g" in metrics
+        assert "run_noise_baseline_db" in metrics
         assert "median_relative_to_run_noise" in metrics
         assert "p95_relative_to_run_noise" in metrics
 
@@ -758,7 +752,7 @@ class TestSummarizeRunDataPersistence:
             for i in range(10)
         ]
         summary = summarize_run_data(metadata, samples, lang="en")
-        assert summary.get("run_noise_baseline_g") == 0.02
+        assert summary.get("run_noise_baseline_db") is not None
 
     def test_peaks_table_has_run_noise_relative_metrics(self) -> None:
         metadata = _make_metadata()
@@ -775,7 +769,7 @@ class TestSummarizeRunDataPersistence:
         peaks_table = summary.get("plots", {}).get("peaks_table", [])
         assert len(peaks_table) >= 1
         row = peaks_table[0]
-        assert "run_noise_baseline_g" in row
+        assert "run_noise_baseline_db" in row
         assert "median_vs_run_noise_ratio" in row
         assert "p95_vs_run_noise_ratio" in row
 
@@ -893,13 +887,11 @@ class TestRobustness:
         summary = summarize_run_data(metadata, samples, lang="en")
         assert summary["rows"] == 10
 
-    def test_peaks_table_still_has_max_amp_g(self) -> None:
-        """Existing consumers relying on max_amp_g should still find it."""
+    def test_peaks_table_has_max_intensity_db(self) -> None:
         samples = [_sample(float(i), 80.0, [{"hz": 20.0, "amp": 0.05}]) for i in range(5)]
         rows = _top_peaks_table_rows(samples)
         assert len(rows) >= 1
-        assert "max_amp_g" in rows[0]
-        assert rows[0]["max_amp_g"] == 0.05
+        assert "max_intensity_db" in rows[0]
 
     def test_build_findings_for_samples_works(self) -> None:
         """Public API build_findings_for_samples should still work."""

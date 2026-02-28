@@ -8,9 +8,10 @@ from math import floor
 from statistics import mean
 from typing import Any, Literal
 
-from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
+from vibesensor_core.vibration_strength import percentile
 
 from ..runlog import as_float_or_none as _as_float
+from .db_units import canonical_vibration_db
 from .findings import _classify_peak_type, _speed_bin_label
 from .helpers import (
     MEMS_NOISE_FLOOR_G,
@@ -320,11 +321,18 @@ def _top_peaks_table_rows(
             if len(floor_amps) >= 2
             else (floor_amps[0] if floor_amps else None)
         )
-        strength_db = (
-            vibration_strength_db_scalar(
-                peak_band_rms_amp_g=p95_amp,
-                floor_amp_g=floor_amp,
-            )
+        max_intensity_db = (
+            canonical_vibration_db(peak_band_rms_amp_g=max_amp, floor_amp_g=floor_amp)
+            if floor_amp is not None
+            else None
+        )
+        median_intensity_db = (
+            canonical_vibration_db(peak_band_rms_amp_g=median_amp, floor_amp_g=floor_amp)
+            if floor_amp is not None
+            else None
+        )
+        p95_intensity_db = (
+            canonical_vibration_db(peak_band_rms_amp_g=p95_amp, floor_amp_g=floor_amp)
             if floor_amp is not None
             else None
         )
@@ -347,14 +355,28 @@ def _top_peaks_table_rows(
                     if len(hit_rates) > 1
                     else 0.0
                 )
-        bucket["max_amp_g"] = max_amp
-        bucket["median_amp_g"] = median_amp
-        bucket["p95_amp_g"] = p95_amp
-        bucket["run_noise_baseline_g"] = run_noise_baseline_g
+        bucket["max_intensity_db"] = max_intensity_db
+        bucket["median_intensity_db"] = median_intensity_db
+        bucket["p95_intensity_db"] = p95_intensity_db
+        bucket["run_noise_baseline_db"] = (
+            canonical_vibration_db(
+                peak_band_rms_amp_g=_effective_baseline_floor(run_noise_baseline_g),
+                floor_amp_g=MEMS_NOISE_FLOOR_G,
+            )
+            if run_noise_baseline_g is not None
+            else None
+        )
         bucket["median_vs_run_noise_ratio"] = median_amp / baseline_floor
         bucket["p95_vs_run_noise_ratio"] = p95_amp / baseline_floor
-        bucket["strength_floor_amp_g"] = floor_amp
-        bucket["strength_db"] = strength_db
+        bucket["strength_floor_db"] = (
+            canonical_vibration_db(
+                peak_band_rms_amp_g=floor_amp,
+                floor_amp_g=MEMS_NOISE_FLOOR_G,
+            )
+            if floor_amp is not None
+            else None
+        )
+        bucket["strength_db"] = p95_intensity_db
         bucket["presence_ratio"] = presence_ratio
         bucket["burstiness"] = burstiness
         bucket["persistence_score"] = (presence_ratio**2) * p95_amp
@@ -382,10 +404,10 @@ def _top_peaks_table_rows(
                 "rank": idx,
                 "frequency_hz": float(item.get("frequency_hz") or 0.0),
                 "order_label": "",
-                "max_amp_g": float(item.get("max_amp_g") or 0.0),
-                "median_amp_g": float(item.get("median_amp_g") or 0.0),
-                "p95_amp_g": float(item.get("p95_amp_g") or 0.0),
-                "run_noise_baseline_g": _as_float(item.get("run_noise_baseline_g")),
+                "max_intensity_db": _as_float(item.get("max_intensity_db")),
+                "median_intensity_db": _as_float(item.get("median_intensity_db")),
+                "p95_intensity_db": _as_float(item.get("p95_intensity_db")),
+                "run_noise_baseline_db": _as_float(item.get("run_noise_baseline_db")),
                 "median_vs_run_noise_ratio": float(
                     item.get("median_vs_run_noise_ratio")
                     if item.get("median_vs_run_noise_ratio") is not None
@@ -396,7 +418,7 @@ def _top_peaks_table_rows(
                     if item.get("p95_vs_run_noise_ratio") is not None
                     else 0.0
                 ),
-                "strength_floor_amp_g": _as_float(item.get("strength_floor_amp_g")),
+                "strength_floor_db": _as_float(item.get("strength_floor_db")),
                 "strength_db": _as_float(item.get("strength_db")),
                 "presence_ratio": float(
                     item.get("presence_ratio") if item.get("presence_ratio") is not None else 0.0

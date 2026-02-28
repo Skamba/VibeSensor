@@ -483,8 +483,8 @@ class TestConfidenceCalibration:
 class TestUnitConsistency:
     """Amplitude units must be consistent end-to-end."""
 
-    def test_findings_amplitude_units_are_g(self) -> None:
-        """All finding amplitude_metric.units must be 'g'."""
+    def test_findings_amplitude_units_are_db(self) -> None:
+        """All finding amplitude_metric.units must be 'dB'."""
         sensors = _ALL_WHEEL_SENSORS
         samples: list[dict[str, Any]] = []
         for i in range(30):
@@ -511,8 +511,8 @@ class TestUnitConsistency:
         for f in findings:
             amp_metric = f.get("amplitude_metric")
             if isinstance(amp_metric, dict) and amp_metric.get("value") is not None:
-                assert amp_metric.get("units") == "g", (
-                    f"Expected 'g' units, got {amp_metric.get('units')}"
+                assert amp_metric.get("units") == "dB", (
+                    f"Expected 'dB' units, got {amp_metric.get('units')}"
                 )
 
     def test_evidence_metrics_include_strength_db(self) -> None:

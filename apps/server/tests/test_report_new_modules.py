@@ -550,8 +550,8 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
                     "rank": 1,
                     "frequency_hz": 33.0,
                     "order_label": "",
-                    "max_amp_g": 0.9,
-                    "p95_amp_g": 0.12,
+                    "max_intensity_db": 22.0,
+                    "p95_intensity_db": 18.4,
                     "strength_db": 18.4,
                     "presence_ratio": 0.85,
                     "persistence_score": 0.0867,
@@ -564,7 +564,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
     data = map_summary(summary)
     assert data.peak_rows
     row = data.peak_rows[0]
-    assert row.amp_g == "0.1200"
+    assert row.peak_db == "18.4"
     assert row.strength_db == "18.4"
     assert "patterned" in row.relevance
     assert "85%" in row.relevance
@@ -584,8 +584,8 @@ def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
                     "rank": 1,
                     "frequency_hz": 18.0,
                     "order_label": "",
-                    "max_amp_g": 0.01,
-                    "p95_amp_g": 0.009,
+                    "max_intensity_db": 2.1,
+                    "p95_intensity_db": 2.1,
                     "strength_db": 2.1,
                     "presence_ratio": 0.1,
                     "persistence_score": 0.001,

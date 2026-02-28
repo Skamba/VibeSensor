@@ -2,10 +2,26 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
 RELATIVE_POINTER_RE = re.compile(r"^(?:\./|\.\./)\S+$")
 PY_PATH_HACK_RE = re.compile(r"sys\.path\.(?:insert|append)\(|PYTHONPATH=")
+
+
+def _iter_repo_files() -> list[Path]:
+    try:
+        output = subprocess.check_output(
+            ["git", "-C", str(ROOT), "ls-files", "-z"],
+            text=False,
+        )
+        return [
+            ROOT / rel_path
+            for rel_path in output.decode("utf-8", errors="ignore").split("\0")
+            if rel_path
+        ]
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return [path for path in ROOT.rglob("*") if path.is_file()]
 
 
 def _is_pointer_file(path: Path) -> bool:
@@ -20,8 +36,8 @@ def _is_pointer_file(path: Path) -> bool:
 def main() -> int:
     pointer_files: list[str] = []
     python_path_hacks: list[str] = []
-    for path in ROOT.rglob("*"):
-        if not path.is_file() or ".git" in path.parts:
+    for path in _iter_repo_files():
+        if ".git" in path.parts:
             continue
         rel = str(path.relative_to(ROOT))
         if _is_pointer_file(path):
