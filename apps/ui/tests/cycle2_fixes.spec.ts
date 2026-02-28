@@ -14,6 +14,7 @@
 import { expect, test } from "@playwright/test";
 import { adaptServerPayload } from "../src/server_payload";
 import { applySpectrumTick } from "../src/app/state/ui_app_state";
+import { areHeavyFramesCompatible, interpolateHeavyFrame } from "../src/app/spectrum_animation";
 
 // ---------------------------------------------------------------------------
 // 1. adaptServerPayload – spectra null yields null, not stale data
@@ -91,6 +92,51 @@ test.describe("applySpectrumTick heavy/light handling", () => {
     expect(updated.spectra).toEqual({ clients: {} });
     expect(updated.hasSpectrumData).toBe(false);
     expect(updated.hasNewSpectrumFrame).toBe(false);
+  });
+});
+
+test.describe("spectrum heavy-frame animation compatibility", () => {
+  const baseFrame = {
+    seriesIds: ["sensor1", "sensor2"],
+    freq: [10, 20, 30],
+    values: [[1, 2, 3], [4, 5, 6]],
+  };
+
+  test("accepts compatible heavy frames for tweening", () => {
+    const next = {
+      seriesIds: ["sensor1", "sensor2"],
+      freq: [10, 20, 30],
+      values: [[2, 3, 4], [5, 6, 7]],
+    };
+    expect(areHeavyFramesCompatible(baseFrame, next)).toBe(true);
+  });
+
+  test("rejects incompatible heavy frames when series order changes", () => {
+    const next = {
+      ...baseFrame,
+      seriesIds: ["sensor2", "sensor1"],
+    };
+    expect(areHeavyFramesCompatible(baseFrame, next)).toBe(false);
+  });
+
+  test("rejects incompatible heavy frames when frequency axis changes", () => {
+    const next = {
+      ...baseFrame,
+      freq: [10, 20, 31],
+    };
+    expect(areHeavyFramesCompatible(baseFrame, next)).toBe(false);
+  });
+
+  test("interpolates line values between compatible heavy frames", () => {
+    const next = {
+      seriesIds: ["sensor1", "sensor2"],
+      freq: [10, 20, 30],
+      values: [[3, 5, 7], [7, 9, 11]],
+    };
+    const mid = interpolateHeavyFrame(baseFrame, next, 0.5);
+    expect(mid.values).toEqual([[2, 3.5, 5], [5.5, 7, 8.5]]);
+    expect(mid.seriesIds).toEqual(next.seriesIds);
+    expect(mid.freq).toEqual(next.freq);
   });
 });
 

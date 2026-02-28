@@ -25,15 +25,18 @@ import { createUpdateFeature } from "./features/update_feature";
 import { applySpectrumTick } from "./state/ui_app_state";
 import type { AppState, ChartBand, ClientRow } from "./state/ui_app_state";
 import type { UiDomElements } from "./dom/ui_dom_registry";
+import { areHeavyFramesCompatible, interpolateHeavyFrame } from "./spectrum_animation";
+import type { SpectrumHeavyFrame } from "./spectrum_animation";
 
 export function startUiApp(): void {
   const els: UiDomElements = createUiDomRegistry();
   const state: AppState = createAppState();
 
   const SPECTRUM_DB_MIN = 0;
-  const SPECTRUM_DB_MAX = 60;
+  const SPECTRUM_DB_MAX = 100;
   const SPECTRUM_DB_REFERENCE_AMP_G = 1e-4;
   const SPECTRUM_MIN_RENDER_AMP_G = 1e-6;
+  const SPECTRUM_TWEEN_DURATION_MS = 180;
 
   function t(key: string, vars?: Record<string, any>): string { return I18N.get(state.lang, key, vars); }
   function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
@@ -63,6 +66,25 @@ export function startUiApp(): void {
   }
 
   let latestRotationalSpeeds: RotationalSpeeds | null = null;
+  let spectrumTweenRaf: number | null = null;
+  let spectrumLastFrame: SpectrumHeavyFrame | null = null;
+
+  function stopSpectrumTween(): void {
+    if (spectrumTweenRaf !== null) {
+      window.cancelAnimationFrame(spectrumTweenRaf);
+      spectrumTweenRaf = null;
+    }
+  }
+
+  function setSpectrumDataFromFrame(frame: SpectrumHeavyFrame): void {
+    if (!state.spectrumPlot) return;
+    state.spectrumPlot.setData([frame.freq, ...frame.values]);
+    spectrumLastFrame = {
+      seriesIds: frame.seriesIds.slice(),
+      freq: frame.freq.slice(),
+      values: frame.values.map((series) => series.slice()),
+    };
+  }
 
   function renderWsState(): void {
     if (state.payloadError) return setPillState(els.linkState, "bad", "Payload error");
@@ -241,6 +263,8 @@ export function startUiApp(): void {
   }
 
   function recreateSpectrumPlot(seriesMeta: { id: string; label: string; color: string; values: number[] }[]): void {
+    stopSpectrumTween();
+    spectrumLastFrame = null;
     if (state.spectrumPlot) { state.spectrumPlot.destroy(); state.spectrumPlot = null; }
     state.spectrumPlot = new SpectrumChart(els.specChart!, els.spectrumOverlay, 360, els.specChartWrap);
     state.spectrumPlot.ensurePlot(seriesMeta, { title: t("chart.spectrum_title"), axisHz: t("chart.axis.hz"), axisAmplitude: t("chart.axis.amplitude") }, [bandPlugin()]);
@@ -296,10 +320,42 @@ export function startUiApp(): void {
         els.bandLegend.appendChild(row);
       }
     }
-    if (!targetFreq.length || !entries.length) { state.hasSpectrumData = false; state.spectrumPlot!.setData([[], ...entries.map(() => [] as number[])]); updateSpectrumOverlay(); return; }
+    if (!targetFreq.length || !entries.length) {
+      stopSpectrumTween();
+      spectrumLastFrame = null;
+      state.hasSpectrumData = false;
+      state.spectrumPlot!.setData([[], ...entries.map(() => [] as number[])]);
+      updateSpectrumOverlay();
+      return;
+    }
     state.hasSpectrumData = true;
     const minLen = Math.min(targetFreq.length, ...entries.map((e) => e.values.length));
-    state.spectrumPlot!.setData([targetFreq.slice(0, minLen), ...entries.map((e) => e.values.slice(0, minLen))]);
+    const nextFrame: SpectrumHeavyFrame = {
+      seriesIds: entries.map((entry) => entry.id),
+      freq: targetFreq.slice(0, minLen),
+      values: entries.map((entry) => entry.values.slice(0, minLen)),
+    };
+    const canTween = state.wsState === "connected" && areHeavyFramesCompatible(spectrumLastFrame, nextFrame);
+    stopSpectrumTween();
+    if (!canTween || !spectrumLastFrame) {
+      setSpectrumDataFromFrame(nextFrame);
+      updateSpectrumOverlay();
+      return;
+    }
+    const tweenFrom = spectrumLastFrame;
+    const startedAt = performance.now();
+    const animate = (now: number): void => {
+      const alpha = Math.min(1, Math.max(0, (now - startedAt) / SPECTRUM_TWEEN_DURATION_MS));
+      setSpectrumDataFromFrame(interpolateHeavyFrame(tweenFrom, nextFrame, alpha));
+      if (alpha >= 1) {
+        spectrumTweenRaf = null;
+        setSpectrumDataFromFrame(nextFrame);
+        updateSpectrumOverlay();
+        return;
+      }
+      spectrumTweenRaf = window.requestAnimationFrame(animate);
+    };
+    spectrumTweenRaf = window.requestAnimationFrame(animate);
     updateSpectrumOverlay();
   }
 
