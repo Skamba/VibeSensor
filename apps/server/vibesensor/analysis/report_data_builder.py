@@ -46,6 +46,9 @@ def _human_source(source: object, *, tr) -> str:  # type: ignore[type-arg]
         "driveline": tr("SOURCE_DRIVELINE"),
         "engine": tr("SOURCE_ENGINE"),
         "body resonance": tr("SOURCE_BODY_RESONANCE"),
+        "transient_impact": tr("SOURCE_TRANSIENT_IMPACT"),
+        "baseline_noise": tr("SOURCE_BASELINE_NOISE"),
+        "unknown_resonance": tr("SOURCE_UNKNOWN_RESONANCE"),
         "unknown": tr("UNKNOWN"),
     }
     return mapping.get(raw, raw.replace("_", " ").title() if raw else tr("UNKNOWN"))
@@ -77,11 +80,22 @@ def _finding_strength_values(finding: dict) -> tuple[float | None, float | None]
     return (None, peak_amp_g)
 
 
-def _top_strength_values(summary: dict) -> tuple[float | None, float | None]:
-    """Return best ``(vibration_strength_db, peak_amp_g)`` for observed strength text."""
+def _top_strength_values(
+    summary: dict,
+    *,
+    effective_causes: list[dict] | None = None,
+) -> tuple[float | None, float | None]:
+    """Return best ``(vibration_strength_db, peak_amp_g)`` for observed strength text.
+
+    When *effective_causes* is provided the strength values are drawn from those
+    causes (matching by ``finding_id`` against the summary's findings list).
+    This ensures the displayed strength traces to the same finding that is shown
+    as the primary system rather than a potentially-filtered raw top_cause.
+    """
     db_value: float | None = None
     peak_amp_g: float | None = None
-    for cause in summary.get("top_causes", []):
+    causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
+    for cause in causes:
         if not isinstance(cause, dict):
             continue
         for finding in summary.get("findings", []):
@@ -310,7 +324,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         primary_speed = tr("UNKNOWN")
         conf = 0.0
 
-    db_val, peak_amp_g = _top_strength_values(summary)
+    db_val, peak_amp_g = _top_strength_values(summary, effective_causes=top_causes)
     str_text = strength_text(db_val, lang=lang, peak_amp_g=peak_amp_g)
 
     steady = bool(speed_stats.get("steady_speed"))
@@ -320,6 +334,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
     has_ref_gaps = _has_relevant_reference_gap(findings, primary_source)
 
+    _strength_band_key = strength_label(db_val)[0] if db_val is not None else None
     cert_key, cert_label_text, cert_pct, cert_reason = certainty_label(
         conf,
         lang=lang,
@@ -327,10 +342,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
         weak_spatial=weak_spatial,
         sensor_count=sensor_count,
         has_reference_gaps=has_ref_gaps,
-        strength_band_key=strength_label(db_val)[0] if db_val is not None else None,
+        strength_band_key=_strength_band_key,
     )
 
-    tier = certainty_tier(conf)
+    tier = certainty_tier(conf, strength_band_key=_strength_band_key)
 
     observed = ObservedSignature(
         primary_system=primary_system,
@@ -427,9 +442,12 @@ def map_summary(summary: dict) -> ReportTemplateData:
             )
 
     # -- Pattern evidence --
-    systems = [
+    systems_raw = [
         _human_source(c.get("source") or c.get("suspected_source"), tr=tr) for c in top_causes[:3]
     ]
+    # Deduplicate while preserving order so that e.g. three baseline_noise
+    # findings don't appear as three repeated system names.
+    systems = list(dict.fromkeys(systems_raw))
     pe_loc = primary_location
     pe_speed = primary_speed
     interp = str(origin.get("explanation", "")) if isinstance(origin, dict) else ""
@@ -461,9 +479,16 @@ def map_summary(summary: dict) -> ReportTemplateData:
     # -- Peak rows --
     plots = summary.get("plots", {}) if isinstance(summary.get("plots"), dict) else {}
     peak_rows: list[PeakRow] = []
-    for row in (plots.get("peaks_table", []) or [])[:8]:
-        if not isinstance(row, dict):
-            continue
+    # Filter out noise-floor peaks (≤ 0 dB) before taking the top 8.
+    # Iterate over all peaks so that significant peaks beyond early noise
+    # entries are still included.
+    raw_peaks = [r for r in (plots.get("peaks_table", []) or []) if isinstance(r, dict)]
+    above_noise = [
+        r
+        for r in raw_peaks
+        if _as_float(r.get("strength_db")) is None or _as_float(r.get("strength_db")) > 0  # type: ignore[operator]
+    ]
+    for row in above_noise[:8]:
         rank_val = _as_float(row.get("rank"))
         rank = str(int(rank_val)) if rank_val is not None else "\u2014"
         freq_val = _as_float(row.get("frequency_hz"))

@@ -227,13 +227,22 @@ TIER_A_CEILING = 0.15  # Very low: suppress specific diagnoses
 TIER_B_CEILING = 0.40  # Guarded: hypotheses only, verification steps
 
 
-def certainty_tier(confidence_0_to_1: float) -> str:
+def certainty_tier(
+    confidence_0_to_1: float,
+    *,
+    strength_band_key: str | None = None,
+) -> str:
     """Return the certainty tier key for report section gating.
 
     Parameters
     ----------
     confidence_0_to_1:
         Analysis confidence from 0.0 to 1.0.
+    strength_band_key:
+        Optional vibration-strength band key (e.g. ``"negligible"``).
+        When the signal is negligible the tier is capped at ``"B"`` so
+        the report does not recommend specific repairs for a
+        barely-detectable vibration.
 
     Returns
     -------
@@ -243,5 +252,9 @@ def certainty_tier(confidence_0_to_1: float) -> str:
     if confidence_0_to_1 <= TIER_A_CEILING:
         return "A"
     if confidence_0_to_1 <= TIER_B_CEILING:
+        return "B"
+    # Cap at B when the vibration strength is negligible — recommending
+    # specific repairs for a barely-detectable signal is misleading.
+    if (strength_band_key or "").strip().lower() == "negligible":
         return "B"
     return "C"
