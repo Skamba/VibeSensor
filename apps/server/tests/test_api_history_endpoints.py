@@ -426,7 +426,7 @@ async def test_history_export_csv_nested_values_are_json() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_export_reads_samples_once() -> None:
+async def test_history_export_single_pass_fixed_columns() -> None:
     """Export uses fixed columns and reads samples only once (single pass)."""
     router, state = _make_router_and_state(language="en", sample_count=50)
     db = state.history_db

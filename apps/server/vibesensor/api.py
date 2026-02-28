@@ -688,34 +688,38 @@ def create_router(state: RuntimeState) -> APIRouter:
             spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
                 max_size=_EXPORT_SPOOL_THRESHOLD
             )
-            with zipfile.ZipFile(
-                spool, mode="w", compression=zipfile.ZIP_DEFLATED
-            ) as archive:
-                # Write CSV with fixed column schema (single pass).
-                with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
-                    raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
-                    writer = csv.DictWriter(
-                        raw_csv_text,
-                        fieldnames=_EXPORT_CSV_COLUMNS,
-                        extrasaction="ignore",
+            try:
+                with zipfile.ZipFile(
+                    spool, mode="w", compression=zipfile.ZIP_DEFLATED
+                ) as archive:
+                    # Write CSV with fixed column schema (single pass).
+                    with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
+                        raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
+                        writer = csv.DictWriter(
+                            raw_csv_text,
+                            fieldnames=_EXPORT_CSV_COLUMNS,
+                            extrasaction="ignore",
+                        )
+                        writer.writeheader()
+                        for batch in state.history_db.iter_run_samples(
+                            run_id, batch_size=_EXPORT_BATCH_SIZE
+                        ):
+                            sample_count += len(batch)
+                            writer.writerows([_flatten_for_csv(row) for row in batch])
+                        raw_csv_text.flush()
+
+                    # Write run metadata as JSON (after CSV so sample_count is known).
+                    run_details = dict(run)
+                    run_details["sample_count"] = sample_count
+                    archive.writestr(
+                        f"{safe_name}.json",
+                        json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
                     )
-                    writer.writeheader()
-                    for batch in state.history_db.iter_run_samples(
-                        run_id, batch_size=_EXPORT_BATCH_SIZE
-                    ):
-                        sample_count += len(batch)
-                        writer.writerows([_flatten_for_csv(row) for row in batch])
-                    raw_csv_text.flush()
 
-                # Write run metadata as JSON (after CSV so sample_count is known).
-                run_details = dict(run)
-                run_details["sample_count"] = sample_count
-                archive.writestr(
-                    f"{safe_name}.json",
-                    json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
-                )
-
-            spool.seek(0)
+                spool.seek(0)
+            except BaseException:
+                spool.close()
+                raise
             return spool
 
         spool = await asyncio.to_thread(_build_zip_file)
