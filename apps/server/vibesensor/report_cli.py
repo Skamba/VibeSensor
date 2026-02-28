@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .analysis.summary import summarize_log
+from .analysis import summarize_log
 from .report.pdf_builder import build_report_pdf
 
 

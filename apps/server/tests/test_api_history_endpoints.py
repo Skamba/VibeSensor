@@ -423,7 +423,9 @@ async def test_ws_selected_client_id_validation() -> None:
 async def test_history_insights_lang_sampling_is_bounded() -> None:
     router, _ = _make_router_and_state(language="en", sample_count=30_000)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
-    payload = await endpoint("run-1", "en")
+    # Request a *different* language to trigger re-computation; same language
+    # returns the persisted analysis without re-running the pipeline.
+    payload = await endpoint("run-1", "nl")
     sampling = payload.get("sampling", {})
     assert sampling.get("analyzed_samples", 0) <= 12_000
     assert sampling.get("total_samples") == 30_000
