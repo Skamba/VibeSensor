@@ -160,9 +160,7 @@ def main() -> int:
     e2e_marker_expr = args.pytest_marker
     if e2e_marker_expr is None:
         e2e_marker_expr = "e2e and not long_sim" if args.fast_e2e else "e2e"
-    pytest_targets = (
-        list(args.pytest_target) if args.pytest_target else ["apps/server/tests_e2e"]
-    )
+    pytest_targets = args.pytest_target or ["apps/server/tests_e2e"]
     base_url = f"http://127.0.0.1:{args.http_port}"
 
     cleanup_data_dir = args.data_dir is None

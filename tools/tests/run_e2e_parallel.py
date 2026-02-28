@@ -81,7 +81,7 @@ def _run(cmd: list[str], *, log_path: Path) -> int:
             log_file.write(output)
             if not output.endswith("\n"):
                 log_file.write("\n")
-    return int(proc.returncode)
+    return proc.returncode if proc.returncode is not None else 1
 
 
 def _tail(path: Path, lines: int = 60) -> str:
@@ -150,6 +150,9 @@ def _shard_worker(
                     f"[e2e-parallel] shard {config.index}/{config.count} failed "
                     f"(exit {rc}) tail:\n{_tail(config.log_path)}"
                 )
+    except Exception as exc:
+        rc = 1
+        _emit(f"[e2e-parallel] shard {config.index}/{config.count} crashed: {exc!r}")
     finally:
         shutil.rmtree(config.data_dir, ignore_errors=True)
         elapsed = time.monotonic() - started
@@ -278,7 +281,11 @@ def main() -> int:
     _emit("\n=== e2e parallel summary ===")
     overall_ok = True
     for shard_index in range(1, args.shards + 1):
-        result = results[shard_index]
+        result = results.get(shard_index)
+        if result is None:
+            overall_ok = False
+            _emit(f"- shard {shard_index}/{args.shards}: FAIL missing result")
+            continue
         if result.return_code == 0:
             _emit(
                 f"- shard {result.index}/{args.shards}: PASS tests={result.selected_tests} "
