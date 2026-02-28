@@ -484,7 +484,12 @@ def create_router(state: RuntimeState) -> APIRouter:
         if isinstance(analysis, dict) and analysis_version is not None:
             from .history_db import ANALYSIS_SCHEMA_VERSION
 
-            analysis["_analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+            try:
+                analysis["_analysis_is_current"] = (
+                    int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+                )
+            except (TypeError, ValueError):
+                analysis["_analysis_is_current"] = False
 
         # Re-run analysis only when a *different* language is explicitly
         # requested.  The post-stop pipeline is the single source of truth;
