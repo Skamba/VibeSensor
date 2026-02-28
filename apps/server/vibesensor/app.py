@@ -3,7 +3,7 @@
 Boundary note for maintainers:
 - Keep this module focused on orchestration, not algorithm details.
 - Metric math belongs in `processing.py` / `analysis/*`.
-- API schemas belong in `api.py` and must remain backward-compatible.
+- API schemas belong in `api.py`.
 """
 
 from __future__ import annotations

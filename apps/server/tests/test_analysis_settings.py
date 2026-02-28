@@ -36,7 +36,7 @@ def test_tire_circumference_deflection_factor_one_is_identity() -> None:
 
 
 def test_tire_circumference_deflection_factor_none_omitted() -> None:
-    # When deflection_factor is None (legacy/no setting), no deflection applied.
+    # When deflection_factor is None, no deflection applied.
     a = tire_circumference_m_from_spec(285.0, 30.0, 21.0)
     b = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
     assert a is not None and b is not None

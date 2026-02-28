@@ -96,12 +96,6 @@ def test_as_int_or_none_none_for_invalid() -> None:
 # -- normalize_sample_record ---------------------------------------------------
 
 
-def test_normalize_sample_record_strength_db_backward_compat() -> None:
-    record = {"strength_db": 42.5}
-    result = normalize_sample_record(record)
-    assert result["vibration_strength_db"] == 42.5
-
-
 def test_normalize_sample_record_basic() -> None:
     record = {
         "t_s": "1.5",

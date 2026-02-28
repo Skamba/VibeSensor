@@ -180,16 +180,14 @@ class SpeedSourceConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SpeedSourceConfig:
-        src = str(data.get("speedSource") or data.get("speed_source") or "gps")
+        src = str(data.get("speedSource") or "gps")
         speed_source = src if src in VALID_SPEED_SOURCES else "gps"
-        manual_speed_kph = _parse_manual_speed(
-            data.get("manualSpeedKph") or data.get("manual_speed_kph")
-        )
-        obd2 = data.get("obd2Config") or data.get("obd2_config")
+        manual_speed_kph = _parse_manual_speed(data.get("manualSpeedKph"))
+        obd2 = data.get("obd2Config")
         obd2_config = obd2 if isinstance(obd2, dict) else {}
-        raw_timeout = data.get("staleTimeoutS") or data.get("stale_timeout_s")
+        raw_timeout = data.get("staleTimeoutS")
         stale_timeout_s = _parse_stale_timeout(raw_timeout)
-        raw_fallback = data.get("fallbackMode") or data.get("fallback_mode")
+        raw_fallback = data.get("fallbackMode")
         fallback_mode = (
             str(raw_fallback)
             if isinstance(raw_fallback, str) and raw_fallback in VALID_FALLBACK_MODES
@@ -467,10 +465,7 @@ class SensorFrame:
 
     @classmethod
     def from_dict(cls, record: dict[str, Any]) -> SensorFrame:
-        """Normalize a raw sample dict (e.g. from JSONL or DB) into a SensorFrame.
-
-        Handles backward-compat rename ``strength_db`` -> ``vibration_strength_db``.
-        """
+        """Normalize a raw sample dict (e.g. from JSONL or DB) into a SensorFrame."""
         t_s = _as_float_or_none(record.get("t_s"))
         speed_kmh = _as_float_or_none(record.get("speed_kmh"))
         gps_speed_kmh = _as_float_or_none(record.get("gps_speed_kmh"))
@@ -480,11 +475,7 @@ class SensorFrame:
         engine_rpm = _as_float_or_none(record.get("engine_rpm"))
         gear = _as_float_or_none(record.get("gear"))
         dominant_freq_hz = _as_float_or_none(record.get(REPORT_FIELDS["dominant_freq_hz"]))
-        # Backward-compat: old runs wrote "strength_db"; new runs write "vibration_strength_db".
-        raw_vsd = record.get(_VSD_KEY)
-        if raw_vsd is None:
-            raw_vsd = record.get("strength_db")
-        vibration_strength_db = _as_float_or_none(raw_vsd)
+        vibration_strength_db = _as_float_or_none(record.get(_VSD_KEY))
         raw_bucket = record.get(_BUCKET_KEY)
         strength_bucket = str(raw_bucket) if raw_bucket not in (None, "") else None
         strength_peak_amp_g = _as_float_or_none(record.get("strength_peak_amp_g"))
