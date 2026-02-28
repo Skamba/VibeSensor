@@ -229,6 +229,79 @@ async def test_report_pdf_respects_lang_query() -> None:
 
 
 @pytest.mark.asyncio
+async def test_report_pdf_respects_lang_query_with_persisted_report_template_data() -> None:
+    """When analysis was run in NL, requesting ?lang=en still returns English PDF."""
+    from io import BytesIO
+
+    from pypdf import PdfReader
+
+    router, _ = _make_router_and_state(language="nl")
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
+
+    nl = await endpoint("run-1", "nl")
+    en = await endpoint("run-1", "en")
+
+    assert nl.body.startswith(b"%PDF")
+    assert en.body.startswith(b"%PDF")
+
+    nl_reader = PdfReader(BytesIO(nl.body))
+    en_reader = PdfReader(BytesIO(en.body))
+    nl_text = "\n".join(page.extract_text() or "" for page in nl_reader.pages).lower()
+    en_text = "\n".join(page.extract_text() or "" for page in en_reader.pages).lower()
+    assert "diagnostisch werkformulier" in nl_text
+    assert "diagnostic worksheet" in en_text
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
+    """When _report_template_data is persisted in NL, requesting ?lang=en must
+    rebuild the PDF in English (not serve the cached NL template)."""
+    from dataclasses import asdict
+    from io import BytesIO
+
+    from pypdf import PdfReader
+
+    from vibesensor.analysis.report_data_builder import map_summary
+
+    # Create state with NL analysis + embedded _report_template_data
+    metadata = {
+        "run_id": "run-1",
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "end_time_utc": "2026-01-01T00:00:20Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "nl",
+    }
+    samples = [_sample(i) for i in range(20)]
+    analysis = summarize_run_data(metadata, samples, lang="nl", include_samples=False)
+    # Embed _report_template_data as the new post-analysis code does
+    report_data = map_summary(analysis)
+    analysis["_report_template_data"] = asdict(report_data)
+
+    db = _FakeHistoryDB(metadata, samples, analysis)
+    state = _FakeState(db, _FakeWsHub())
+    app = FastAPI()
+    router = create_router(state)
+    app.include_router(router)
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
+
+    nl = await endpoint("run-1", "nl")
+    en = await endpoint("run-1", "en")
+
+    assert nl.body.startswith(b"%PDF")
+    assert en.body.startswith(b"%PDF")
+    nl_text = "\n".join(
+        (page.extract_text() or "") for page in PdfReader(BytesIO(nl.body)).pages
+    ).lower()
+    en_text = "\n".join(
+        (page.extract_text() or "") for page in PdfReader(BytesIO(en.body)).pages
+    ).lower()
+    assert "diagnostisch werkformulier" in nl_text
+    assert "diagnostic worksheet" in en_text
+
+
+@pytest.mark.asyncio
 async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_version() -> None:
     router, _ = _make_router_and_state(language="en")
     endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")

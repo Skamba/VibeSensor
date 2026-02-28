@@ -572,16 +572,20 @@ def create_router(state: RuntimeState) -> APIRouter:
             )
 
         def _build_pdf() -> bytes:
-            # Prefer pre-built ReportTemplateData from analysis.
+            # Prefer pre-built ReportTemplateData from analysis when the
+            # language matches.  If the caller requested a different language,
+            # fall through to rebuild via map_summary().
             report_data_dict = (
                 analysis.get("_report_template_data") if isinstance(analysis, dict) else None
             )
             if isinstance(report_data_dict, dict):
-                data = _reconstruct_report_template_data(report_data_dict)
-                return build_report_pdf(data)
+                persisted_lang = str(report_data_dict.get("lang") or "en").strip().lower()
+                if persisted_lang == requested_lang:
+                    data = _reconstruct_report_template_data(report_data_dict)
+                    return build_report_pdf(data)
 
-            # Fallback for runs analyzed before ReportTemplateData persistence:
-            # rebuild from persisted summary using the analysis builder.
+            # Rebuild from persisted summary (language mismatch or legacy data
+            # without _report_template_data).
             if isinstance(analysis, dict):
                 from .analysis.report_data_builder import map_summary
 
