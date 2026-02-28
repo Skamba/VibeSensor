@@ -83,9 +83,7 @@ class TestFinding1_FirstValidBinZeroed:
         if target_idx == 0:
             # BUG: combined_amp[0] is 0.0 even though there's real
             # energy at this frequency
-            assert (
-                combined_amp[0] == 0.0
-            ), "Expected bin 0 to be zeroed (demonstrating the bug)"
+            assert combined_amp[0] == 0.0, "Expected bin 0 to be zeroed (demonstrating the bug)"
         else:
             # If freq resolution puts 6 Hz in bin > 0, the energy is preserved
             assert combined_amp[target_idx] > 0
@@ -123,15 +121,12 @@ class TestFinding2_DoubleBinRemoval:
             dtype=np.float32,
         )
 
-        correct_floor = noise_floor_amp_p20_g(
-            combined_spectrum_amp_g=[float(v) for v in amps]
-        )
+        correct_floor = noise_floor_amp_p20_g(combined_spectrum_amp_g=[float(v) for v in amps])
         actual_floor = SignalProcessor._noise_floor(amps)
 
         # After fix: both should agree exactly
         assert actual_floor == pytest.approx(correct_floor, abs=1e-6), (
-            f"Noise floor mismatch: actual={actual_floor:.4f} "
-            f"vs correct={correct_floor:.4f}"
+            f"Noise floor mismatch: actual={actual_floor:.4f} vs correct={correct_floor:.4f}"
         )
 
 
@@ -231,9 +226,7 @@ class TestFinding5_BoundedSampleNoHint:
         # Without total_hint: starts with stride=1, collects all until overflow
         kept_no_hint, total, stride = bounded_sample(iter(items), max_items=50)
         # With total_hint: computes stride upfront
-        kept_with_hint, total2, stride2 = bounded_sample(
-            iter(items), max_items=50, total_hint=200
-        )
+        kept_with_hint, total2, stride2 = bounded_sample(iter(items), max_items=50, total_hint=200)
         # Without hint, stride grows reactively via doubling
         assert stride >= 2, "Reactive doubling should have kicked in"
         # With hint, stride is computed upfront (200//50 = 4)

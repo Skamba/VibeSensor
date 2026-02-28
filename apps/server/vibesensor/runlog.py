@@ -171,7 +171,7 @@ def append_jsonl_records(
     cadence = max(1, int(durable_every_records))
     with path.open("a", encoding="utf-8") as f:
         for index, record in enumerate(records, start=1):
-            f.write(json.dumps(record, ensure_ascii=False, allow_nan=False, separators=(",",":")))
+            f.write(json.dumps(record, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
             f.write("\n")
             if durable and (index % cadence) == 0:
                 f.flush()

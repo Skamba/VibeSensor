@@ -91,9 +91,7 @@ class TestPeakDbEqualsStrengthDb:
         from vibesensor.analysis.report_data_builder import map_summary
 
         row = _make_peaks_table_row(p95_intensity_db=22.3, strength_db=22.3)
-        summary = _make_minimal_summary(
-            overrides={"plots": {"peaks_table": [row]}}
-        )
+        summary = _make_minimal_summary(overrides={"plots": {"peaks_table": [row]}})
         data = map_summary(summary)
         assert len(data.peak_rows) == 1
         pr = data.peak_rows[0]
@@ -108,9 +106,7 @@ class TestPeakDbEqualsStrengthDb:
 
         # Simulate a hypothetical fix where strength_db ≠ p95_intensity_db
         row = _make_peaks_table_row(p95_intensity_db=22.3, strength_db=15.1)
-        summary = _make_minimal_summary(
-            overrides={"plots": {"peaks_table": [row]}}
-        )
+        summary = _make_minimal_summary(overrides={"plots": {"peaks_table": [row]}})
         data = map_summary(summary)
         pr = data.peak_rows[0]
         assert pr.peak_db == "22.3"
@@ -174,9 +170,7 @@ class TestNextStepFieldsNotRendered:
         data = map_summary(summary)
         # Find the step that came from our test_plan (not Tier A guidance)
         matching = [ns for ns in data.next_steps if "bearing" in ns.action.lower()]
-        assert len(matching) == 1, (
-            f"Expected 1 bearing step, got {len(matching)}"
-        )
+        assert len(matching) == 1, f"Expected 1 bearing step, got {len(matching)}"
         ns = matching[0]
         assert ns.confirm == "Noise disappears at low speed"
         assert ns.falsify == "Noise persists with new bearing"
@@ -310,9 +304,7 @@ class TestDeadDbValueVariable:
         from vibesensor.analysis.report_data_builder import _top_strength_values
 
         source = inspect.getsource(_top_strength_values)
-        assert "db_value" not in source, (
-            "Dead db_value variable should have been removed"
-        )
+        assert "db_value" not in source, "Dead db_value variable should have been removed"
 
 
 # ===================================================================
@@ -337,9 +329,7 @@ class TestSystemFindingCardToneUnused:
         from vibesensor.report.pdf_builder import _draw_system_card
 
         source = inspect.getsource(_draw_system_card)
-        assert "card.tone" in source, (
-            "_draw_system_card must reference card.tone for theme colors"
-        )
+        assert "card.tone" in source, "_draw_system_card must reference card.tone for theme colors"
 
     def test_tone_is_populated_by_builder(self) -> None:
         from vibesensor.analysis.report_data_builder import map_summary
@@ -453,7 +443,7 @@ class TestDataTrustPanelOverflow:
 
         source = inspect.getsource(_page1)
         # The data trust section starts after "Data Trust (right-bottom)"
-        trust_section = source[source.index("Data Trust"):]
+        trust_section = source[source.index("Data Trust") :]
         # There's no boundary check like 'ty < next_y' or 'ty < bottom'
         assert "ty < next_y" not in trust_section
         assert "ty < " not in trust_section.split("return")[0]
@@ -490,13 +480,8 @@ class TestPeaksTableFixedHeight:
         is fixed regardless."""
         from vibesensor.analysis.report_data_builder import map_summary
 
-        rows = [
-            _make_peaks_table_row(rank=i, frequency_hz=20.0 + i * 5)
-            for i in range(1, 9)
-        ]
-        summary = _make_minimal_summary(
-            overrides={"plots": {"peaks_table": rows}}
-        )
+        rows = [_make_peaks_table_row(rank=i, frequency_hz=20.0 + i * 5) for i in range(1, 9)]
+        summary = _make_minimal_summary(overrides={"plots": {"peaks_table": rows}})
         data = map_summary(summary)
         # Builder forwards up to 8 above-noise peaks
         assert len(data.peak_rows) == 8

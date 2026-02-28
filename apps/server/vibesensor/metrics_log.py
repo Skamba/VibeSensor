@@ -250,10 +250,7 @@ class MetricsLogger:
         with self._lock:
             # Guard: when called from auto-stop, only act if the session
             # that timed out is still the active one.
-            if (
-                _only_if_generation is not None
-                and self._session_generation != _only_if_generation
-            ):
+            if _only_if_generation is not None and self._session_generation != _only_if_generation:
                 return self.status()
             run_id_to_analyze: str | None = None
             if self.enabled and self._run_id:
@@ -757,9 +754,7 @@ class MetricsLogger:
                 start_time_utc = self._run_start_utc or end_utc
                 latest_metadata = self._run_metadata_record(self._run_id, start_time_utc)
                 latest_metadata["end_time_utc"] = end_utc
-                self._history_db.finalize_run_with_metadata(
-                    self._run_id, end_utc, latest_metadata
-                )
+                self._history_db.finalize_run_with_metadata(self._run_id, end_utc, latest_metadata)
                 self._clear_last_write_error()
             except Exception as exc:
                 self._set_last_write_error(f"history finalize_run failed: {exc}")

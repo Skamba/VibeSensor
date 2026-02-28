@@ -23,29 +23,32 @@ class TestRankingScoreSyncAfterSuppression:
         from vibesensor.analysis.findings import _suppress_engine_aliases
 
         findings = [
-            (0.8, {
-                "suspected_source": "wheel/tire",
-                "confidence_0_to_1": 0.6,
-                "_ranking_score": 0.8,
-                "key": "wheel_1",
-            }),
-            (0.7, {
-                "suspected_source": "engine",
-                "confidence_0_to_1": 0.5,
-                "_ranking_score": 0.7,
-                "key": "engine_2",
-            }),
+            (
+                0.8,
+                {
+                    "suspected_source": "wheel/tire",
+                    "confidence_0_to_1": 0.6,
+                    "_ranking_score": 0.8,
+                    "key": "wheel_1",
+                },
+            ),
+            (
+                0.7,
+                {
+                    "suspected_source": "engine",
+                    "confidence_0_to_1": 0.5,
+                    "_ranking_score": 0.7,
+                    "key": "engine_2",
+                },
+            ),
         ]
         result = _suppress_engine_aliases(findings)
-        engine_findings = [
-            f for f in result
-            if f.get("suspected_source") == "engine"
-        ]
+        engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
         for f in engine_findings:
             # _ranking_score must match suppressed tuple score
-            assert f["_ranking_score"] == pytest.approx(
-                0.7 * 0.60, abs=1e-9
-            ), "_ranking_score must be updated after suppression"
+            assert f["_ranking_score"] == pytest.approx(0.7 * 0.60, abs=1e-9), (
+                "_ranking_score must be updated after suppression"
+            )
 
 
 class TestNegligibleCapAligned:
@@ -72,9 +75,7 @@ class TestSteadySpeedUsesAND:
         # This produces stddev ~1.98*sqrt(n/(n-1)) ≈ 3.95
         speeds = [50.0 + (i % 2) * 7.9 for i in range(50)]
         stats = _speed_stats(speeds)
-        assert not stats["steady_speed"], (
-            "High stddev should not be steady even with low range"
-        )
+        assert not stats["steady_speed"], "High stddev should not be steady even with low range"
 
     def test_both_low_is_steady(self) -> None:
         from vibesensor.analysis.helpers import _speed_stats
@@ -143,18 +144,19 @@ class TestSuppressEngineAliasesCapRaised:
         from vibesensor.analysis.findings import _suppress_engine_aliases
 
         findings = [
-            (0.9 - i * 0.1, {
-                "suspected_source": "wheel/tire",
-                "confidence_0_to_1": 0.8 - i * 0.1,
-                "_ranking_score": 0.9 - i * 0.1,
-                "key": f"wheel_{i}",
-            })
+            (
+                0.9 - i * 0.1,
+                {
+                    "suspected_source": "wheel/tire",
+                    "confidence_0_to_1": 0.8 - i * 0.1,
+                    "_ranking_score": 0.9 - i * 0.1,
+                    "key": f"wheel_{i}",
+                },
+            )
             for i in range(4)
         ]
         result = _suppress_engine_aliases(findings)
-        assert len(result) == 4, (
-            f"Expected 4 findings (was capped at 3), got {len(result)}"
-        )
+        assert len(result) == 4, f"Expected 4 findings (was capped at 3), got {len(result)}"
 
 
 class TestWorkerPoolDeterministic:
@@ -165,6 +167,4 @@ class TestWorkerPoolDeterministic:
         import tests.test_worker_pool as mod
 
         source = inspect.getsource(mod)
-        assert "np.random.seed" not in source, (
-            "Must use np.random.default_rng, not np.random.seed"
-        )
+        assert "np.random.seed" not in source, "Must use np.random.default_rng, not np.random.seed"

@@ -129,7 +129,7 @@ class TestEvidencePeakPresentFormat:
         from pathlib import Path
 
         i18n_path = Path(__file__).parent.parent / "data" / "report_i18n.json"
-        with open(i18n_path)as f:
+        with open(i18n_path) as f:
             data = json.load(f)
 
         en_template = data["EVIDENCE_PEAK_PRESENT"]["en"]

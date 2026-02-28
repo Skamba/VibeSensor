@@ -50,9 +50,7 @@ class TestSmoothSpectrumEdgePadding:
         smoothed = SignalProcessor._smooth_spectrum(amps, bins=3)
         # With edge-padding the last bin should reflect the actual values,
         # not be dragged toward zero.
-        assert smoothed[-1] > 0.85, (
-            f"Last-bin smoothed value {smoothed[-1]} should remain high"
-        )
+        assert smoothed[-1] > 0.85, f"Last-bin smoothed value {smoothed[-1]} should remain high"
 
     def test_output_length_matches_input(self) -> None:
         """Smoothed output must have the same length as the input."""
@@ -115,6 +113,4 @@ class TestCoreStrengthLastBin:
             top_n=5,
         )
         top_hz = [p["hz"] for p in result["top_peaks"]]
-        assert freq_hz[-1] in top_hz, (
-            f"Core: last-bin peak at {freq_hz[-1]} Hz not in {top_hz}"
-        )
+        assert freq_hz[-1] in top_hz, f"Core: last-bin peak at {freq_hz[-1]} Hz not in {top_hz}"

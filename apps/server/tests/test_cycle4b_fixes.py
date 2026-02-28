@@ -29,9 +29,7 @@ class TestNextStepNumberingContinuation:
         from vibesensor.report.pdf_builder import _page2
 
         src = inspect.getsource(_page2)
-        assert "start_number=" in src, (
-            "_page2 must pass start_number to _draw_next_steps_table"
-        )
+        assert "start_number=" in src, "_page2 must pass start_number to _draw_next_steps_table"
 
 
 class TestSystemCardTone:
@@ -95,9 +93,7 @@ class TestFftNUpperBound:
 
     def test_absurd_fft_n_clamped(self) -> None:
         cfg = _make_processing_config(fft_n=2**20)
-        assert cfg.fft_n <= 65536, (
-            f"fft_n should be clamped but got {cfg.fft_n}"
-        )
+        assert cfg.fft_n <= 65536, f"fft_n should be clamped but got {cfg.fft_n}"
 
     def test_normal_fft_n_unchanged(self) -> None:
         cfg = _make_processing_config(fft_n=4096)
@@ -122,16 +118,10 @@ class TestOrphanI18nKeysRemoved:
     ]
 
     def test_orphan_keys_absent(self) -> None:
-        i18n_path = (
-            Path(__file__).resolve().parents[1]
-            / "data"
-            / "report_i18n.json"
-        )
+        i18n_path = Path(__file__).resolve().parents[1] / "data" / "report_i18n.json"
         data = json.loads(i18n_path.read_text())
         for key in self.ORPHAN_KEYS:
-            assert key not in data, (
-                f"Orphan key {key!r} should have been removed"
-            )
+            assert key not in data, f"Orphan key {key!r} should have been removed"
 
 
 class TestNoGlobalRandomSeed:
@@ -141,9 +131,7 @@ class TestNoGlobalRandomSeed:
         import tests.test_i18n_separation as mod
 
         src = inspect.getsource(mod)
-        assert "random.seed(" not in src, (
-            "Must use random.Random(seed) instead of random.seed()"
-        )
+        assert "random.seed(" not in src, "Must use random.Random(seed) instead of random.seed()"
 
 
 class TestNoMutableClassDefault:

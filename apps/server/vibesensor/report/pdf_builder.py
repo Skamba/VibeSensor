@@ -587,9 +587,7 @@ def _draw_system_card(
     """Render a single system-finding card."""
     na = tr("NOT_AVAILABLE")
 
-    tone_bg = REPORT_COLORS.get(
-        f"card_{card.tone}_bg", REPORT_COLORS["card_neutral_bg"]
-    )
+    tone_bg = REPORT_COLORS.get(f"card_{card.tone}_bg", REPORT_COLORS["card_neutral_bg"])
     tone_border = REPORT_COLORS.get(
         f"card_{card.tone}_border", REPORT_COLORS["card_neutral_border"]
     )

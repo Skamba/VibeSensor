@@ -199,9 +199,7 @@ class _FakeHistoryDB:
         self.updated_metadata.append((run_id, metadata))
         return True
 
-    def finalize_run_with_metadata(
-        self, run_id: str, end_time_utc: str, metadata: dict
-    ) -> None:
+    def finalize_run_with_metadata(self, run_id: str, end_time_utc: str, metadata: dict) -> None:
         self.updated_metadata.append((run_id, metadata))
         self.finalize_calls.append(run_id)
 

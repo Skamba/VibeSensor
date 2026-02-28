@@ -659,15 +659,11 @@ def create_router(state: RuntimeState) -> APIRouter:
                 ) as archive:
                     archive.writestr(
                         f"{safe_name}.json",
-                        json.dumps(
-                            run_details, ensure_ascii=False, indent=2, sort_keys=True
-                        ),
+                        json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
                     )
                     if fieldnames:
                         with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
-                            raw_csv_text = io.TextIOWrapper(
-                                raw_csv, encoding="utf-8", newline=""
-                            )
+                            raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
                             writer = csv.DictWriter(
                                 raw_csv_text,
                                 fieldnames=fieldnames,
@@ -677,9 +673,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                             for batch in state.history_db.iter_run_samples(
                                 run_id, batch_size=_EXPORT_BATCH_SIZE
                             ):
-                                writer.writerows(
-                                    [_flatten_for_csv(row) for row in batch]
-                                )
+                                writer.writerows([_flatten_for_csv(row) for row in batch])
                             raw_csv_text.flush()
                     else:
                         archive.writestr(f"{safe_name}_raw.csv", "")

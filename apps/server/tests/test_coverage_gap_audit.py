@@ -176,10 +176,9 @@ class TestDetectDiffuseExcitation:
         locs = {"front_left", "rear"}
         possible = {"front_left": 20, "rear": 20}
         matched = {"front_left": 15, "rear": 14}
-        pts = (
-            [{"location": "front_left", "amp": 0.30}] * 15
-            + [{"location": "rear", "amp": 0.05}] * 14
-        )
+        pts = [{"location": "front_left", "amp": 0.30}] * 15 + [
+            {"location": "rear", "amp": 0.05}
+        ] * 14
         is_diff, penalty = _detect_diffuse_excitation(locs, possible, matched, pts)
         assert not is_diff, "Strong amplitude dominance should NOT be diffuse"
 
@@ -233,9 +232,9 @@ class TestSuppressEngineAliases:
             (0.5, self._make_finding("driveshaft", 0.40)),
         ]
         result = _suppress_engine_aliases(findings)
-        assert any(
-            f.get("suspected_source") == "engine" for f in result
-        ), "Engine finding should survive when no wheel finding exists"
+        assert any(f.get("suspected_source") == "engine" for f in result), (
+            "Engine finding should survive when no wheel finding exists"
+        )
 
     def test_engine_suppressed_by_stronger_wheel(self) -> None:
         from vibesensor.analysis.findings import _suppress_engine_aliases
@@ -348,9 +347,7 @@ class TestBuildRunSuitabilityChecks:
             samples=[],
         )
         sat_check = next(
-            c
-            for c in checks
-            if c["check_key"] == "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"
+            c for c in checks if c["check_key"] == "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"
         )
         assert sat_check["state"] == "warn"
 
