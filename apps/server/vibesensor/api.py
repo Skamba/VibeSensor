@@ -69,6 +69,7 @@ from .api_models import (  # noqa: F401 – re-exported for backward compat
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
+from .runlog import bounded_sample as _bounded_sample
 
 if TYPE_CHECKING:
     from .app import RuntimeState
@@ -145,31 +146,6 @@ def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
         sensor_intensity_by_location=d.get("sensor_intensity_by_location", []),
         location_hotspot_rows=d.get("location_hotspot_rows", []),
     )
-
-
-def _bounded_sample(
-    samples: Iterator[dict],
-    *,
-    max_items: int,
-    total_hint: int = 0,
-) -> tuple[list[dict], int, int]:
-    """Down-sample *samples* to at most *max_items*.
-
-    When *total_hint* is available the stride is computed upfront so
-    that we never over-collect and re-halve.
-    """
-    stride: int = max(1, total_hint // max_items) if total_hint > max_items else 1
-    kept: list[dict] = []
-    total = 0
-    for sample in samples:
-        total += 1
-        if (total - 1) % stride != 0:
-            continue
-        kept.append(sample)
-        if len(kept) > max_items:
-            kept = kept[::2]
-            stride *= 2
-    return kept, total, stride
 
 
 def _normalize_client_id_or_400(client_id: str) -> str:
@@ -522,7 +498,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                 result = summarize_run_data(
                     metadata,
                     samples,
-                    lang=lang,
+                    lang=requested_lang,
                     file_name=run_id,
                     include_samples=False,
                 )
@@ -594,15 +570,12 @@ def create_router(state: RuntimeState) -> APIRouter:
 
             # Rebuild from persisted summary (language mismatch or legacy data
             # without _report_template_data).
-            if isinstance(analysis, dict):
-                from .analysis import map_summary
+            from .analysis import map_summary
 
-                summary = dict(analysis)
-                summary["lang"] = requested_lang
-                data = map_summary(summary)
-                return build_report_pdf(data)
-
-            return build_report_pdf(analysis)
+            summary = dict(analysis) if isinstance(analysis, dict) else {}
+            summary["lang"] = requested_lang
+            data = map_summary(summary)
+            return build_report_pdf(data)
 
         build_lock = report_pdf_locks.setdefault(cache_key, asyncio.Lock())
         async with build_lock:

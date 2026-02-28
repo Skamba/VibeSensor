@@ -826,7 +826,7 @@ def summarize_run_data(
         "duration_s": duration_s,
         "record_length": _format_duration(duration_s),
         "lang": language,
-        "report_date": datetime.now(UTC).isoformat(),
+        "report_date": metadata.get("end_time_utc") or datetime.now(UTC).isoformat(),
         "start_time_utc": metadata.get("start_time_utc"),
         "end_time_utc": metadata.get("end_time_utc"),
         "sensor_model": metadata.get("sensor_model"),
@@ -869,7 +869,6 @@ def summarize_run_data(
         "sensor_locations_connected_throughout": sorted(connected_locations),
         "sensor_count_used": len(sensor_locations),
         "sensor_intensity_by_location": sensor_intensity_by_location,
-        "sensor_statistics_by_location": sensor_intensity_by_location,
         "run_suitability": run_suitability,
         "samples": samples,
         "data_quality": {
