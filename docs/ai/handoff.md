@@ -6,7 +6,7 @@ Use this format for future AI requests.
 - One paragraph: what must change and why.
 
 ## 2) Constraints
-- Non-negotiables (performance, UX, safety, scope). Backward compatibility is optional and never required.
+- Non-negotiables (performance, UX, safety, scope).
 - Output discipline (low-noise, avoid large logs in chat).
 
 ## 3) Affected Area

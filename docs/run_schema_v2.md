@@ -93,8 +93,7 @@ Legacy CSV files are intentionally not supported in this lab setup.
 
 ## Removed Fields (schema history)
 
-The following fields were present in earlier runs and are no longer written.
-`normalize_sample_record()` in `runlog.py` handles backward compatibility when reading old files.
+The following fields were present in earlier runs and are no longer written or read.
 
 | Removed field | Replacement |
 |---------------|-------------|
