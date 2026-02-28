@@ -110,7 +110,7 @@ def _estimate_speed_derivative(
     return None
 
 
-def _classify_sample_phase(
+def classify_sample_phase(
     speed_kmh: float | None,
     speed_deriv_kmh_s: float | None,
 ) -> DrivingPhase:
@@ -217,7 +217,7 @@ def segment_run_phases(
     per_sample: list[DrivingPhase] = []
     for i in range(n):
         deriv = _estimate_speed_derivative(speeds, times, i)
-        phase = _classify_sample_phase(speeds[i], deriv)
+        phase = classify_sample_phase(speeds[i], deriv)
         per_sample.append(phase)
 
     # Interpolate SPEED_UNKNOWN gaps: if a contiguous block of SPEED_UNKNOWN

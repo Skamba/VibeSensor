@@ -722,6 +722,7 @@ def summarize_run_data(
     accel_stats = _compute_accel_statistics(samples, metadata.get("sensor_model"))
 
     raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
+    # --- Speed breakdown ---
     speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
     speed_breakdown_skipped_reason = None
     if not speed_sufficient:
@@ -795,8 +796,10 @@ def summarize_run_data(
     _median_db = _median(amp_metric_values) if amp_metric_values else None
     _overall_band_key = _strength_label(_median_db)[0] if _median_db is not None else None
 
+    # --- Top-cause selection ---
     top_causes = select_top_causes(findings, strength_band_key=_overall_band_key)
 
+    # --- Sensor analysis ---
     sensor_locations = sorted(
         {
             _location_label(sample, lang=language)
@@ -815,6 +818,7 @@ def summarize_run_data(
         per_sample_phases=_per_sample_phases,  # phase context; issue #192
     )
 
+    # --- Summary construction ---
     summary: dict[str, Any] = {
         "file_name": file_name,
         "run_id": run_id,
@@ -900,6 +904,7 @@ def summarize_run_data(
             },
         },
     }
+    # --- Plot generation & peak annotation ---
     summary["plots"] = _plot_data(
         summary,
         run_noise_baseline_g=run_noise_baseline_g,

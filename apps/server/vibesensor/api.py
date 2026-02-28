@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response
 
-from .analysis.summary import summarize_run_data
+from .analysis import summarize_run_data
 from .api_models import (  # noqa: F401 – re-exported for backward compat
     ActiveCarRequest,
     AnalysisSettingsRequest,
@@ -496,7 +496,15 @@ def create_router(state: RuntimeState) -> APIRouter:
         analysis = run.get("analysis")
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
-        if lang is not None:
+
+        # Re-run analysis only when a *different* language is explicitly
+        # requested.  The post-stop pipeline is the single source of truth;
+        # on-demand re-computation is reserved for language variants only.
+        from .report_i18n import normalize_lang as _norm_lang
+
+        requested_lang = _norm_lang(lang) if lang is not None else None
+        persisted_lang = _norm_lang(analysis.get("lang")) if isinstance(analysis, dict) else None
+        if requested_lang is not None and requested_lang != persisted_lang:
 
             def _recompute() -> dict:
                 from .runlog import normalize_sample_record
@@ -587,7 +595,7 @@ def create_router(state: RuntimeState) -> APIRouter:
             # Rebuild from persisted summary (language mismatch or legacy data
             # without _report_template_data).
             if isinstance(analysis, dict):
-                from .analysis.report_data_builder import map_summary
+                from .analysis import map_summary
 
                 summary = dict(analysis)
                 summary["lang"] = requested_lang

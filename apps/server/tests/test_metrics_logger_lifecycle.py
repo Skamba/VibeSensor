@@ -129,7 +129,7 @@ def test_start_append_stop_produces_complete_run_in_db(
     def _fast_summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return dict(fake_analysis)
 
-    monkeypatch.setattr("vibesensor.analysis.summary.summarize_run_data", _fast_summary)
+    monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _fast_summary)
     logger.stop_logging()
 
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)

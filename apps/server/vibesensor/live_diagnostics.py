@@ -9,8 +9,7 @@ from typing import Any
 from vibesensor_core.strength_bands import BANDS, band_rank
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
-from .analysis.phase_segmentation import DrivingPhase, _classify_sample_phase
-from .analysis.summary import build_findings_for_samples
+from .analysis import DrivingPhase, build_findings_for_samples, classify_sample_phase
 from .constants import MPS_TO_KMH, SILENCE_DB
 from .diagnostics_shared import (
     build_diagnostic_settings,
@@ -365,7 +364,7 @@ class LiveDiagnosticsEngine:
             dt = t1 - t0
             if dt >= 0.1:
                 deriv = (s1 - s0) / dt
-        self._current_phase = _classify_sample_phase(speed_kmh, deriv).value
+        self._current_phase = classify_sample_phase(speed_kmh, deriv).value
 
     def snapshot(self) -> dict[str, Any]:
         top_finding: dict[str, Any] | None = None
