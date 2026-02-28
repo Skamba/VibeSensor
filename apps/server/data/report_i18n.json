@@ -1518,5 +1518,9 @@
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
     "nl": "Werkplaatsoverzicht"
+  },
+  "ORDER_MATCHED_COMPARISON_SUMMARY": {
+    "en": "Order-matched comparison: strongest response is at {strongest_loc} ({strongest_peak:.4f} g).",
+    "nl": "Op orde gematchte vergelijking: sterkste respons zit bij {strongest_loc} ({strongest_peak:.4f} g)."
   }
 }

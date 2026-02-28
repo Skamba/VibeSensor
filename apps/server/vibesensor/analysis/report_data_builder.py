@@ -212,6 +212,8 @@ def _peak_classification_text(value: object, tr: Callable[..., str]) -> str:
         return tr("CLASSIFICATION_TRANSIENT")
     if normalized == "baseline_noise":
         return tr("CLASSIFICATION_BASELINE_NOISE")
+    if not normalized:
+        return tr("UNKNOWN")
     return tr("CLASSIFICATION_PERSISTENT")
 
 
@@ -423,7 +425,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         pass
     else:
         card_sources = top_causes or findings_non_ref or findings
-        for cause in card_sources[:3]:
+        for cause in card_sources[:2]:
             src = cause.get("source") or cause.get("suspected_source") or "unknown"
             src_human = _human_source(src, tr=tr)
             location = str(cause.get("strongest_location") or tr("UNKNOWN"))

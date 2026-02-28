@@ -175,7 +175,7 @@
       },
       {
         "name": "M2 Competition",
-        "engine": "N55B30T0 3.0L I6 Turbo",
+        "engine": "S55B30T0 3.0L I6 Turbo",
         "drivetrain": "RWD"
       }
     ]
@@ -475,7 +475,7 @@
       },
       {
         "name": "316d",
-        "engine": "3.0L I6 Turbo",
+        "engine": "B47D20 2.0L I4 Turbo Diesel",
         "drivetrain": "RWD"
       },
       {
@@ -803,7 +803,7 @@
       },
       {
         "name": "518d",
-        "engine": "4.4L V8 Turbo",
+        "engine": "B47D20 2.0L I4 Turbo Diesel",
         "drivetrain": "RWD"
       },
       {
@@ -989,12 +989,12 @@
       },
       {
         "name": "630i xDrive",
-        "engine": "B58B30 3.0L I6 Turbo",
+        "engine": "B48 2.0L I4 Turbo",
         "drivetrain": "AWD"
       },
       {
         "name": "620d",
-        "engine": "",
+        "engine": "B47D20 2.0L I4 Turbo Diesel",
         "drivetrain": "RWD"
       },
       {
@@ -1148,7 +1148,7 @@
       },
       {
         "name": "725d",
-        "engine": "4.4L V8 Turbo",
+        "engine": "B47D20 2.0L I4 Turbo Diesel",
         "drivetrain": "RWD"
       },
       {
@@ -1188,7 +1188,7 @@
       },
       {
         "name": "725Ld",
-        "engine": "4.4L V8 Turbo",
+        "engine": "B47D20 2.0L I4 Turbo Diesel",
         "drivetrain": "RWD"
       },
       {
@@ -1307,7 +1307,7 @@
       },
       {
         "name": "840i xDrive",
-        "engine": "V8",
+        "engine": "B58 3.0L I6 Turbo",
         "drivetrain": "AWD"
       },
       {
@@ -3428,17 +3428,17 @@
       {
         "name": "50 TFSI",
         "engine": "3.0L V6 TFSI Turbo",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       },
       {
         "name": "55 TFSI",
         "engine": "3.0L V6 TFSI Turbo",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       },
       {
         "name": "60 TFSI e",
         "engine": "3.0L V6 TFSI Turbo PHEV",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -3767,17 +3767,17 @@
       {
         "name": "45 TFSI",
         "engine": "2.0L I4 TFSI Turbo",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       },
       {
         "name": "55 TFSI",
         "engine": "3.0L V6 TFSI Turbo",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       },
       {
         "name": "55 TFSI e",
         "engine": "3.0L V6 TFSI Turbo PHEV",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -3829,12 +3829,12 @@
       {
         "name": "55 TFSI",
         "engine": "3.0L V6 TFSI Turbo",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       },
       {
         "name": "60 TFSI e",
         "engine": "3.0L V6 TFSI Turbo PHEV",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       }
     ]
   },
@@ -4210,7 +4210,7 @@
       {
         "name": "e-tron GT",
         "engine": "Electric Dual Motor",
-        "drivetrain": "FWD"
+        "drivetrain": "AWD"
       }
     ]
   },

@@ -232,6 +232,8 @@ class GPSSpeedMonitor:
                 while True:
                     line = await asyncio.wait_for(reader.readline(), timeout=_GPS_READ_TIMEOUT_S)
                     if not line:
+                        self.speed_mps = None
+                        self.connection_state = "disconnected"
                         break
                     try:
                         payload: dict[str, Any] = json.loads(line.decode("utf-8", errors="replace"))
