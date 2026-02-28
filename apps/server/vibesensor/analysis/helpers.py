@@ -90,7 +90,6 @@ def _format_duration(seconds: float) -> str:
     return f"{minutes:02d}:{rem:04.1f}"
 
 
-
 def _percent_missing(samples: list[dict[str, Any]], key: str) -> float:
     if not samples:
         return 100.0

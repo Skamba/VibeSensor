@@ -353,10 +353,20 @@ def test_sample_top_peaks_filters_sub_min_analysis_freq() -> None:
     ("info", "lang", "expected"),
     [
         pytest.param({"client_name": "Front Left"}, "en", "Front Left", id="name_en"),
-        pytest.param({"client_id": "AB:CD:EF:12:34:56"}, "en", "Sensor \u20264:56", id="client_id_en"),
+        pytest.param(
+            {"client_id": "AB:CD:EF:12:34:56"},
+            "en",
+            "Sensor \u20264:56",
+            id="client_id_en",
+        ),
         pytest.param({}, "en", "Unknown sensor", id="unlabeled_en"),
         pytest.param({}, "nl", "Unknown sensor", id="unlabeled_nl_neutral"),
-        pytest.param({"client_id": "AB:CD:EF:12:34:56"}, "nl", "Sensor \u20264:56", id="client_id_nl_neutral"),
+        pytest.param(
+            {"client_id": "AB:CD:EF:12:34:56"},
+            "nl",
+            "Sensor \u20264:56",
+            id="client_id_nl_neutral",
+        ),
     ],
 )
 def test_location_label(info: dict, lang: str, expected: str) -> None:

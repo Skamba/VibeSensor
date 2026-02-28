@@ -488,14 +488,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
             confirm_raw = step.get("confirm") or ""
             falsify_raw = step.get("falsify") or ""
             confirm = (
-                _resolve_i18n(lang, confirm_raw)
-                if _is_i18n_ref(confirm_raw)
-                else str(confirm_raw)
+                _resolve_i18n(lang, confirm_raw) if _is_i18n_ref(confirm_raw) else str(confirm_raw)
             )
             falsify = (
-                _resolve_i18n(lang, falsify_raw)
-                if _is_i18n_ref(falsify_raw)
-                else str(falsify_raw)
+                _resolve_i18n(lang, falsify_raw) if _is_i18n_ref(falsify_raw) else str(falsify_raw)
             )
             next_steps.append(
                 NextStep(

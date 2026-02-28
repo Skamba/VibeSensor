@@ -24,9 +24,7 @@ _ANALYSIS_PKG = _SERVER_PKG / "analysis"
 # Analysis modules that must NOT import from report_i18n.
 # report_data_builder.py is the sole i18n bridge and is allowed.
 _ANALYSIS_MODULES_NO_I18N = [
-    p
-    for p in _ANALYSIS_PKG.glob("*.py")
-    if p.name not in ("__init__.py", "report_data_builder.py")
+    p for p in _ANALYSIS_PKG.glob("*.py") if p.name not in ("__init__.py", "report_data_builder.py")
 ]
 
 
@@ -59,8 +57,7 @@ def test_analysis_module_does_not_import_i18n(module_path: Path) -> None:
             violations.append(f"line {node.lineno}: from {full} import ...")
     assert not violations, (
         f"{module_path.name} imports from report_i18n. "
-        "Analysis modules must not use translation resources directly:\n"
-        + "\n".join(violations)
+        "Analysis modules must not use translation resources directly:\n" + "\n".join(violations)
     )
 
 
@@ -139,8 +136,7 @@ def test_analysis_output_is_language_neutral() -> None:
         summary_nl.pop(key, None)
 
     assert summary_en == summary_nl, (
-        "Analysis output differs between EN and NL. "
-        "Analysis must produce language-neutral output."
+        "Analysis output differs between EN and NL. Analysis must produce language-neutral output."
     )
 
 
@@ -191,8 +187,8 @@ def test_analysis_output_contains_no_translated_strings() -> None:
         summary.pop(skip_key, None)
 
     violations = _check_no_translated_strings(summary, "summary")
-    assert not violations, (
-        "Analysis output contains translated strings:\n" + "\n".join(violations[:10])
+    assert not violations, "Analysis output contains translated strings:\n" + "\n".join(
+        violations[:10]
     )
 
 

@@ -413,7 +413,8 @@ def test_most_likely_origin_summary_phase_onset_acceleration() -> None:
     explanation = origin["explanation"]
     assert isinstance(explanation, list)
     assert any(
-        isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+        isinstance(part, dict)
+        and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
         and part.get("phase") == "acceleration"
         for part in explanation
     )
@@ -442,7 +443,8 @@ def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
     explanation = origin["explanation"]
     assert isinstance(explanation, list)
     assert any(
-        isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+        isinstance(part, dict)
+        and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
         and part.get("phase") == "deceleration"
         for part in explanation
     )

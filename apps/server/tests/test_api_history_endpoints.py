@@ -214,7 +214,9 @@ async def test_history_insights_respects_lang_query() -> None:
     # The lang parameter only affects render-time translation (report layer).
     assert en["most_likely_origin"] == nl["most_likely_origin"]
     # Suitability check keys are now i18n keys (language-neutral)
-    check_keys = {str(item.get("check_key") or item.get("check")) for item in en.get("run_suitability", [])}
+    check_keys = {
+        str(item.get("check_key") or item.get("check")) for item in en.get("run_suitability", [])
+    }
     assert "SUITABILITY_CHECK_SPEED_VARIATION" in check_keys
 
 

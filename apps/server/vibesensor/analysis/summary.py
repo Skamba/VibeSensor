@@ -374,9 +374,7 @@ def _most_likely_origin_summary(
         "coast_down": "DRIVING_PHASE_COAST_DOWN",
     }
     if dominant_phase and dominant_phase in _phase_i18n_map:
-        explanation_parts.append(
-            _i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase)
-        )
+        explanation_parts.append(_i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
     # Store explanation as structured i18n parts for render-time resolution.
     explanation = explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
     return {

@@ -1075,7 +1075,9 @@ def _build_order_findings(
                 "phases_with_evidence": phases_with_evidence,
                 "diffuse_excitation": _diffuse_excitation,
             },
-            "next_sensor_move": actions[0].get("what") if actions else _i18n_ref("NEXT_SENSOR_MOVE_DEFAULT"),
+            "next_sensor_move": actions[0].get("what")
+            if actions
+            else _i18n_ref("NEXT_SENSOR_MOVE_DEFAULT"),
             "actions": actions,
             "_ranking_score": ranking_score,
         }
