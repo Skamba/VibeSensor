@@ -205,6 +205,15 @@ class ProcessingConfig:
             )
             object.__setattr__(self, "fft_n", next_pow2)
 
+        _MAX_FFT_N = 65536
+        if self.fft_n > _MAX_FFT_N:
+            _cfg_logger.warning(
+                "processing.fft_n=%s exceeds maximum %s — clamped",
+                self.fft_n,
+                _MAX_FFT_N,
+            )
+            object.__setattr__(self, "fft_n", _MAX_FFT_N)
+
         # --- spectrum_min_hz must be non-negative ----------------------------------
         if self.spectrum_min_hz < 0:
             _cfg_logger.warning(

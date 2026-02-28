@@ -59,7 +59,8 @@ def test_spectrum_payload_has_no_combined_alias() -> None:
     assert "combined_spectrum_amp_g" in payload
 
     # Client with data
-    samples = np.random.randn(600, 3).astype(np.float32) * 0.01
+    rng = np.random.default_rng(42)
+    samples = rng.standard_normal((600, 3)).astype(np.float32) * 0.01
     proc.ingest("test_client", samples, sample_rate_hz=800)
     proc.compute_metrics("test_client")
     payload = proc.spectrum_payload("test_client")
@@ -80,7 +81,8 @@ def test_selected_payload_has_no_combined_alias() -> None:
         fft_n=512,
         spectrum_max_hz=200,
     )
-    samples = np.random.randn(600, 3).astype(np.float32) * 0.01
+    rng = np.random.default_rng(43)
+    samples = rng.standard_normal((600, 3)).astype(np.float32) * 0.01
     proc.ingest("test_client", samples, sample_rate_hz=800)
     proc.compute_metrics("test_client")
     payload = proc.selected_payload("test_client")

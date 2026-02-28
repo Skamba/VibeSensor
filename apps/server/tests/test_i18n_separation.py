@@ -82,7 +82,7 @@ def _make_analysis_summary() -> dict:
     }
     import random
 
-    random.seed(123)
+    rng = random.Random(123)
     samples = []
     for i in range(40):
         loc = ["Front Left", "Front Right", "Rear Left", "Rear Right"][i % 4]
@@ -94,12 +94,12 @@ def _make_analysis_summary() -> dict:
                 "accel_x_g": 0.01,
                 "accel_y_g": 0.01,
                 "accel_z_g": 1.0,
-                "vibration_strength_db": 20.0 + random.uniform(-3, 3),
+                "vibration_strength_db": 20.0 + rng.uniform(-3, 3),
                 "location": loc,
                 "client_id": f"sensor_{loc.lower().replace(' ', '_')}",
                 "client_name": loc,
                 "top_peaks": [
-                    {"hz": 12.5 + random.gauss(0, 0.2), "amp": 0.05},
+                    {"hz": 12.5 + rng.gauss(0, 0.2), "amp": 0.05},
                 ],
                 "strength_floor_amp_g": 0.005,
             }

@@ -82,6 +82,19 @@ _REPORT_PDF_CACHE_MAX_ENTRIES = 16
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
 
 
+def _flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
+    """Convert nested/complex values to JSON strings for CSV export.
+
+    ``csv.DictWriter`` calls ``str()`` on values, which produces Python
+    repr for dicts/lists (single-quoted keys, etc.).  Serializing them as
+    JSON ensures the output is parseable by non-Python consumers.
+    """
+    return {
+        k: json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
+        for k, v in row.items()
+    }
+
+
 def _safe_filename(name: str) -> str:
     """Sanitize *name* for use in Content-Disposition headers and zip entry names."""
     return _SAFE_FILENAME_RE.sub("_", name)[:200] or "download"
@@ -389,7 +402,8 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/clients/{client_id}/identify", response_model=IdentifyResponse)
     async def identify_client(client_id: str, req: IdentifyRequest) -> IdentifyResponse:
-        ok, cmd_seq = state.control_plane.send_identify(client_id, req.duration_ms)
+        normalized = _normalize_client_id_or_400(client_id)
+        ok, cmd_seq = state.control_plane.send_identify(normalized, req.duration_ms)
         if not ok:
             raise HTTPException(status_code=404, detail="Client missing or no control address")
         return {"status": "sent", "cmd_seq": cmd_seq}
@@ -531,19 +545,21 @@ def create_router(state: RuntimeState) -> APIRouter:
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
     async def delete_history_run(run_id: str) -> DeleteHistoryRunResponse:
-        active_run_id = await asyncio.to_thread(state.history_db.get_active_run_id)
-        if active_run_id == run_id:
-            raise HTTPException(
-                status_code=409, detail="Cannot delete the active run; stop recording first"
-            )
-        run_status = await asyncio.to_thread(state.history_db.get_run_status, run_id)
-        if run_status == "analyzing":
-            raise HTTPException(
-                status_code=409, detail="Cannot delete run while analysis is in progress"
-            )
-        deleted = await asyncio.to_thread(state.history_db.delete_run, run_id)
+        deleted, reason = await asyncio.to_thread(state.history_db.delete_run_if_safe, run_id)
         if not deleted:
-            raise HTTPException(status_code=404, detail="Run not found")
+            if reason == "not_found":
+                raise HTTPException(status_code=404, detail="Run not found")
+            if reason == "active":
+                raise HTTPException(
+                    status_code=409,
+                    detail="Cannot delete the active run; stop recording first",
+                )
+            if reason == "analyzing":
+                raise HTTPException(
+                    status_code=409,
+                    detail="Cannot delete run while analysis is in progress",
+                )
+            raise HTTPException(status_code=409, detail=f"Cannot delete run: {reason}")
         return {"run_id": run_id, "status": "deleted"}
 
     @router.get("/api/history/{run_id}/report.pdf")
@@ -616,35 +632,57 @@ def create_router(state: RuntimeState) -> APIRouter:
             fieldnames: list[str] = []
             fieldname_set: set[str] = set()
             sample_count = 0
-            for batch in state.history_db.iter_run_samples(run_id, batch_size=_EXPORT_BATCH_SIZE):
-                sample_count += len(batch)
-                for sample in batch:
-                    for key in sample:
-                        if key not in fieldname_set:
-                            fieldname_set.add(key)
-                            fieldnames.append(key)
 
-            run_details = dict(run)
-            run_details["sample_count"] = sample_count
+            # Wrap both read passes in a single read transaction so the
+            # data cannot change between the fieldname scan and CSV write.
+            from contextlib import nullcontext
 
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
-                archive.writestr(
-                    f"{safe_name}.json",
-                    json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
-                )
-                if fieldnames:
-                    with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
-                        raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
-                        writer = csv.DictWriter(raw_csv_text, fieldnames=fieldnames)
-                        writer.writeheader()
-                        for batch in state.history_db.iter_run_samples(
-                            run_id, batch_size=_EXPORT_BATCH_SIZE
-                        ):
-                            writer.writerows(batch)
-                        raw_csv_text.flush()
-                else:
-                    archive.writestr(f"{safe_name}_raw.csv", "")
+            read_tx = getattr(state.history_db, "read_transaction", None)
+            tx_ctx = read_tx() if callable(read_tx) else nullcontext()
+            with tx_ctx:
+                for batch in state.history_db.iter_run_samples(
+                    run_id, batch_size=_EXPORT_BATCH_SIZE
+                ):
+                    sample_count += len(batch)
+                    for sample in batch:
+                        for key in sample:
+                            if key not in fieldname_set:
+                                fieldname_set.add(key)
+                                fieldnames.append(key)
+
+                run_details = dict(run)
+                run_details["sample_count"] = sample_count
+
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(
+                    zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED
+                ) as archive:
+                    archive.writestr(
+                        f"{safe_name}.json",
+                        json.dumps(
+                            run_details, ensure_ascii=False, indent=2, sort_keys=True
+                        ),
+                    )
+                    if fieldnames:
+                        with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
+                            raw_csv_text = io.TextIOWrapper(
+                                raw_csv, encoding="utf-8", newline=""
+                            )
+                            writer = csv.DictWriter(
+                                raw_csv_text,
+                                fieldnames=fieldnames,
+                                extrasaction="ignore",
+                            )
+                            writer.writeheader()
+                            for batch in state.history_db.iter_run_samples(
+                                run_id, batch_size=_EXPORT_BATCH_SIZE
+                            ):
+                                writer.writerows(
+                                    [_flatten_for_csv(row) for row in batch]
+                                )
+                            raw_csv_text.flush()
+                    else:
+                        archive.writestr(f"{safe_name}_raw.csv", "")
             return zip_buffer.getvalue()
 
         content = await asyncio.to_thread(_build_zip)

@@ -106,6 +106,12 @@ def strength_floor_amp_g(
         amp = float(combined_spectrum_amp_g[idx])
         if amp >= 0.0 and isfinite(amp):
             selected.append(amp)
+    if not selected:
+        # All bins fell within peak exclusion zones; fall back to P20 noise
+        # floor to avoid returning 0.0 which would produce ~140 dB artifacts.
+        return noise_floor_amp_p20_g(
+            combined_spectrum_amp_g=list(combined_spectrum_amp_g[:n]),
+        )
     return median(selected)
 
 
@@ -182,6 +188,11 @@ def compute_vibration_strength_db(
             continue
         if value > combined[idx - 1] and value >= combined[idx + 1]:
             local_maxima.append(idx)
+    # Boundary check: last bin can be a peak if it exceeds its left neighbor.
+    if n > 1:
+        last_val = combined[n - 1]
+        if last_val >= threshold and last_val > combined[n - 2]:
+            local_maxima.append(n - 1)
     local_maxima.sort(key=lambda idx: combined[idx], reverse=True)
     peak_indexes = local_maxima[: max(1, top_n)]
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -468,6 +469,10 @@ async def test_export_offloaded_to_thread() -> None:
         def iter_run_samples(self, run_id, batch_size=1000):
             for start in range(0, len(samples), batch_size):
                 yield samples[start : start + batch_size]
+
+        @contextmanager
+        def read_transaction(self):
+            yield
 
     class _State:
         history_db = _DB()

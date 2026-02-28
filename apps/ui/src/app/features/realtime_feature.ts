@@ -186,8 +186,8 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       setPillState(els.loggingStatus, on ? "ok" : "muted", on ? t("status.running") : t("status.stopped"));
     }
     if (els.currentLogFile) els.currentLogFile.textContent = t("status.current_file", { value: status.current_file || "--" });
-    if (els.startLoggingBtn) els.startLoggingBtn.disabled = !hasActiveClients;
-    if (els.stopLoggingBtn) els.stopLoggingBtn.disabled = !hasActiveClients;
+    if (els.startLoggingBtn) els.startLoggingBtn.disabled = on || !hasActiveClients;
+    if (els.stopLoggingBtn) els.stopLoggingBtn.disabled = !on;
   }
 
   async function refreshLoggingStatus(): Promise<void> {
@@ -210,7 +210,10 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       resetLiveVibrationCounts();
       renderLoggingStatus();
       await ctx.refreshHistory();
-    } catch (_err) { /* ignore */ }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
+    }
   }
 
   async function stopLogging(): Promise<void> {
@@ -218,7 +221,10 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       state.loggingStatus = await stopLoggingRun() as AppState["loggingStatus"];
       renderLoggingStatus();
       await ctx.refreshHistory();
-    } catch (_err) { /* ignore */ }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setPillState(els.loggingStatus, "bad", msg || t("status.unavailable"));
+    }
   }
 
   async function refreshLocationOptions(): Promise<void> {

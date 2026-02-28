@@ -292,15 +292,16 @@ class SignalProcessor:
         if amps.size < width:
             return amps.astype(np.float32, copy=True)
         kernel = np.ones(width, dtype=np.float32) / np.float32(width)
-        return np.convolve(amps, kernel, mode="same").astype(np.float32)
+        half = width // 2
+        padded = np.pad(amps, (half, half), mode="edge")
+        return np.convolve(padded, kernel, mode="valid").astype(np.float32)
 
     @staticmethod
     def _noise_floor(amps: np.ndarray) -> float:
         """P20 noise floor delegating to the canonical core-lib implementation."""
         if amps.size == 0:
             return 0.0
-        band = amps[1:] if amps.size > 1 else amps
-        finite = band[np.isfinite(band)]
+        finite = amps[np.isfinite(amps)]
         if finite.size == 0:
             return 0.0
         return noise_floor_amp_p20_g(
@@ -336,6 +337,12 @@ class SignalProcessor:
                 continue
             if amp > float(smoothed[idx - 1]) and amp >= float(smoothed[idx + 1]):
                 peak_idx.append(idx)
+        # Boundary check: last bin can be a peak if it exceeds its left neighbor.
+        if smoothed.size > 1:
+            last = smoothed.size - 1
+            amp_last = float(smoothed[last])
+            if amp_last >= threshold and amp_last > float(smoothed[last - 1]):
+                peak_idx.append(last)
 
         if not peak_idx:
             if smoothed.size > 1:
@@ -504,7 +511,7 @@ class SignalProcessor:
                 spec[-1] *= 0.5
             amp_slice = spec[valid_idx]
             amp_for_peaks = amp_slice.copy()
-            if amp_for_peaks.size > 1:
+            if amp_for_peaks.size > 1 and freq_slice.size > 0 and freq_slice[0] < 0.5:
                 amp_for_peaks[0] = 0.0
             axis_peaks[axis] = self._top_peaks(
                 freq_slice,
@@ -517,7 +524,7 @@ class SignalProcessor:
                 "amp": amp_slice,
             }
             axis_amps[axis] = amp_slice
-            axis_amp_slices.append(amp_for_peaks)
+            axis_amp_slices.append(amp_slice)
 
         combined_amp = np.empty(0, dtype=np.float32)
         strength_metrics: dict[str, Any] = {}

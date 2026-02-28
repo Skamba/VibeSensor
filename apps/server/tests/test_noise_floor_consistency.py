@@ -22,8 +22,7 @@ def _core_noise_floor_from_array(arr: np.ndarray) -> float:
     the core lib — used as the expected-value oracle."""
     if arr.size == 0:
         return 0.0
-    band = arr[1:] if arr.size > 1 else arr
-    finite = band[np.isfinite(band)]
+    finite = arr[np.isfinite(arr)]
     if finite.size == 0:
         return 0.0
     return noise_floor_amp_p20_g(

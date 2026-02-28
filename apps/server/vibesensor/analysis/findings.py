@@ -556,7 +556,7 @@ def _compute_order_confidence(
         + (0.20 * snr_score)
     )
     if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
-        confidence = min(confidence, 0.45)
+        confidence = min(confidence, 0.40)
     elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
         confidence *= 0.80
     confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
@@ -592,9 +592,16 @@ def _compute_order_confidence(
         confidence *= 1.03
     if is_diffuse_excitation:
         confidence *= diffuse_penalty
-    if n_connected_locations <= 1:
+    # Sensor-coverage scaling: only apply when localization_confidence is
+    # above a minimum threshold.  For single-sensor runs,
+    # localization_confidence is typically very low (~0.05) which already
+    # produces a heavy multiplicative penalty via the localization term
+    # above, AND weak_spatial_separation adds another penalty.  Stacking
+    # the explicit sensor-count scale on top triple-counts the same
+    # underlying uncertainty.
+    if n_connected_locations <= 1 and localization_confidence >= 0.30:
         confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
-    elif n_connected_locations == 2:
+    elif n_connected_locations == 2 and localization_confidence >= 0.30:
         confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
     return max(0.08, min(0.97, confidence))
 
@@ -624,13 +631,19 @@ def _suppress_engine_aliases(
                 if eng_conf <= _best_wheel_conf * _HARMONIC_ALIAS_RATIO:
                     suppressed = eng_conf * _ENGINE_ALIAS_SUPPRESSION
                     f["confidence_0_to_1"] = suppressed
-                    findings[i] = (rs * _ENGINE_ALIAS_SUPPRESSION, f)
+                    new_rs = rs * _ENGINE_ALIAS_SUPPRESSION
+                    f["_ranking_score"] = new_rs
+                    findings[i] = (new_rs, f)
     findings.sort(key=lambda item: item[0], reverse=True)
-    return [
+    # Filter below-threshold findings FIRST, then slice — otherwise
+    # suppressed engine aliases consume top-N slots and valid findings
+    # at later positions are permanently lost.
+    valid = [
         item[1]
-        for item in findings[:3]
+        for item in findings
         if float(item[1].get("confidence_0_to_1", 0)) >= ORDER_MIN_CONFIDENCE
     ]
+    return valid[:5]
 
 
 def _build_order_findings(
@@ -715,7 +728,14 @@ def _build_order_findings(
                 possible_by_phase[phase_key] += 1
 
             compliance = getattr(hypothesis, "path_compliance", 1.0)
-            tolerance_hz = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL)
+            # Scale tolerance by sqrt(compliance) — a conservative widening
+            # for mechanically compliant paths (wheel/bushing) without
+            # inflating false-positive match rates excessively.
+            compliance_scale = compliance**0.5
+            tolerance_hz = max(
+                ORDER_TOLERANCE_MIN_HZ,
+                predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
+            )
             best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
             delta_hz = abs(best_hz - predicted_hz)
             if delta_hz > tolerance_hz:
@@ -932,10 +952,14 @@ def _build_order_findings(
             path_compliance=compliance,
         )
 
+        # Use the same compliance-adjusted error denominator as the
+        # confidence formula so ranking and confidence agree on how much
+        # frequency-tracking error is tolerable.
+        ranking_error_denom = 0.25 * compliance
         ranking_score = (
             effective_match_rate
             * log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor))
-            * max(0.0, (1.0 - min(1.0, mean_rel_err / 0.5)))
+            * max(0.0, (1.0 - min(1.0, mean_rel_err / ranking_error_denom)))
         )
 
         ref_text = ", ".join(sorted(ref_sources))
@@ -1327,7 +1351,7 @@ def _build_persistent_peak_findings(
             if location_counts and spatial_concentration <= 0.35:
                 confidence = min(confidence, 0.35)
             if peak_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
-                confidence = min(confidence, 0.35)
+                confidence = min(confidence, 0.40)
 
         peak_speed_kmh, speed_window_kmh, derived_speed_band = _speed_profile_from_points(
             bin_speed_amp_pairs.get(bin_center, [])

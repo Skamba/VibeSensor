@@ -165,9 +165,9 @@ class TestParallelComputeAll:
         proc_par = _make_processor(pool=pool)
         try:
             client_ids = [f"c{i}" for i in range(4)]
-            np.random.seed(42)
+            rng = np.random.default_rng(42)
             for cid in client_ids:
-                freq = 15.0 + np.random.uniform(0, 50)
+                freq = 15.0 + rng.uniform(0, 50)
                 n = 512
                 t = np.arange(n, dtype=np.float64) / 800
                 x_lsb = (0.05 * np.sin(2.0 * pi * freq * t) * 256.0).astype(np.int16)
