@@ -317,8 +317,8 @@ def test_dutch_translation_audit_round_4_ui_and_python() -> None:
     assert ui["matrix.source.other"] == "Overig / Weg"
 
     # --- Python file improvements ---
-    from vibesensor.report.pattern_parts import _DEFAULT_PARTS
-    from vibesensor.report.strength_labels import _CERTAINTY_REASONS
+    from vibesensor.analysis.pattern_parts import _DEFAULT_PARTS
+    from vibesensor.analysis.strength_labels import _CERTAINTY_REASONS
 
     # Anglicism removal: "match" → "overeenkomst"
     assert "overeenkomst" in _CERTAINTY_REASONS["strong_order_match"]["nl"]
@@ -498,8 +498,8 @@ def test_dutch_translation_audit_round_5_ui_and_python() -> None:
     assert ui["settings.esp_flash.start"] == "Nieuwste flashen"
 
     # --- Python source file improvements ---
-    from vibesensor.report.pattern_parts import why_parts_listed
-    from vibesensor.report.strength_labels import _CERTAINTY_REASONS
+    from vibesensor.analysis.pattern_parts import why_parts_listed
+    from vibesensor.analysis.strength_labels import _CERTAINTY_REASONS
 
     # Compound fix: "tracking-betrouwbaarheid" → "trackingbetrouwbaarheid"
     assert "trackingbetrouwbaarheid" in _CERTAINTY_REASONS["narrow_speed_range"]["nl"]

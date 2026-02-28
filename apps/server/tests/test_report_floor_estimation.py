@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from vibesensor_core.vibration_strength import percentile
 
-from vibesensor.report.helpers import _estimate_strength_floor_amp_g, _run_noise_baseline_g
-from vibesensor.report.plot_data import _top_peaks_table_rows
+from vibesensor.analysis.helpers import _estimate_strength_floor_amp_g, _run_noise_baseline_g
+from vibesensor.analysis.plot_data import _top_peaks_table_rows
 
 
 def _sample(

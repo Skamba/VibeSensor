@@ -5,9 +5,9 @@ from pathlib import Path
 import pytest
 
 from vibesensor.report import build_findings_for_samples, summarize_log
-from vibesensor.report import findings as findings_module
-from vibesensor.report.findings import _speed_breakdown
-from vibesensor.report.plot_data import _top_peaks_table_rows
+from vibesensor.analysis import findings as findings_module
+from vibesensor.analysis.findings import _speed_breakdown
+from vibesensor.analysis.plot_data import _top_peaks_table_rows
 from vibesensor.runlog import (
     append_jsonl_records,
     create_run_end_record,
@@ -308,7 +308,7 @@ def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
     )
     monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
 
-    from vibesensor.report.phase_segmentation import DrivingPhase
+    from vibesensor.analysis.phase_segmentation import DrivingPhase
 
     # 20 samples all in acceleration phase, all matching at 5.0 Hz
     n = 20
@@ -587,7 +587,7 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
 
 
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
-    from vibesensor.report.test_plan import _location_speedbin_summary
+    from vibesensor.analysis.test_plan import _location_speedbin_summary
 
     matches = [
         {"speed_kmh": 85.0, "amp": 0.0110, "location": "Rear Right"},
@@ -607,7 +607,7 @@ def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> 
 
 
 def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_count() -> None:
-    from vibesensor.report.test_plan import _location_speedbin_summary
+    from vibesensor.analysis.test_plan import _location_speedbin_summary
 
     base_matches = [
         {"speed_kmh": 85.0, "amp": 1.30, "location": "Front Left"},
@@ -630,7 +630,7 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
 
 
 def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> None:
-    from vibesensor.report.summary import _most_likely_origin_summary
+    from vibesensor.analysis.summary import _most_likely_origin_summary
 
     findings = [
         {
@@ -649,7 +649,7 @@ def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> Non
 
 
 def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None:
-    from vibesensor.report.test_plan import _location_speedbin_summary
+    from vibesensor.analysis.test_plan import _location_speedbin_summary
 
     matches = [
         {"speed_kmh": 65.0, "amp": 0.030, "location": "Rear Left"},
@@ -676,7 +676,7 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
 
 
 def test_location_speedbin_summary_reports_weighted_boundary_straddling_window() -> None:
-    from vibesensor.report.test_plan import _location_speedbin_summary
+    from vibesensor.analysis.test_plan import _location_speedbin_summary
 
     matches = [
         {"speed_kmh": 74.0, "amp": 0.005, "location": "Front Left"},
@@ -704,7 +704,7 @@ def test_location_speedbin_summary_reports_weighted_boundary_straddling_window()
 
 
 def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outlier_bin() -> None:
-    from vibesensor.report.test_plan import _location_speedbin_summary
+    from vibesensor.analysis.test_plan import _location_speedbin_summary
 
     sparse_loud_bin = [
         {"speed_kmh": 85.0, "amp": 0.120, "location": "Rear Left"},
@@ -726,7 +726,7 @@ def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outl
 
 
 def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() -> None:
-    from vibesensor.report.test_plan import _location_speedbin_summary
+    from vibesensor.analysis.test_plan import _location_speedbin_summary
 
     matches = [
         {
@@ -767,7 +767,7 @@ def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() 
 
 
 def test_location_speedbin_summary_prefers_connected_throughout_locations() -> None:
-    from vibesensor.report.test_plan import _location_speedbin_summary
+    from vibesensor.analysis.test_plan import _location_speedbin_summary
 
     matches = [
         {"speed_kmh": 85.0, "amp": 0.022, "location": "Front Left"},
@@ -791,7 +791,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-    from vibesensor.report import findings as findings_module
+    from vibesensor.analysis import findings as findings_module
 
     metadata = {
         "sensor_model": "ADXL345",
@@ -861,7 +861,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-    from vibesensor.report import findings as findings_module
+    from vibesensor.analysis import findings as findings_module
 
     metadata = {
         "sensor_model": "ADXL345",
@@ -950,7 +950,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-    from vibesensor.report import findings as findings_module
+    from vibesensor.analysis import findings as findings_module
 
     metadata = {
         "sensor_model": "ADXL345",
@@ -1166,7 +1166,7 @@ def _make_order_finding_samples(
 def test_build_order_findings_per_phase_confidence_key_present() -> None:
     """per_phase_confidence must appear in evidence_metrics when phases are provided."""
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-    from vibesensor.report.phase_segmentation import DrivingPhase
+    from vibesensor.analysis.phase_segmentation import DrivingPhase
 
     speed_kmh = 70.0
     wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
@@ -1229,7 +1229,7 @@ def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> No
 def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() -> None:
     """Multi-phase evidence must produce >= confidence vs identical single-phase evidence."""
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-    from vibesensor.report.phase_segmentation import DrivingPhase
+    from vibesensor.analysis.phase_segmentation import DrivingPhase
 
     speed_kmh = 70.0
     wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
@@ -1277,7 +1277,7 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
 def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
     """End-to-end: per_phase_confidence appears in order findings via summarize_run_data."""
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-    from vibesensor.report.summary import summarize_run_data
+    from vibesensor.analysis.summary import summarize_run_data
 
     metadata = {
         "sensor_model": "ADXL345",
@@ -1320,7 +1320,7 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
     """
     from unittest.mock import patch
 
-    from vibesensor.report.phase_segmentation import segment_run_phases
+    from vibesensor.analysis.phase_segmentation import segment_run_phases
 
     samples = [_make_sample(float(i) * 0.5, 60.0, 0.02) for i in range(20)]
     pre_computed_phases, _ = segment_run_phases(samples)
@@ -1363,7 +1363,7 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
     """
     from unittest.mock import patch
 
-    from vibesensor.report.summary import summarize_run_data
+    from vibesensor.analysis.summary import summarize_run_data
 
     metadata = _make_metadata()
     samples = [
@@ -1380,7 +1380,7 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
     ]
 
     recompute_calls: list[int] = []
-    from vibesensor.report.phase_segmentation import segment_run_phases as original_srp
+    from vibesensor.analysis.phase_segmentation import segment_run_phases as original_srp
 
     def _patched_srp(s):
         recompute_calls.append(1)

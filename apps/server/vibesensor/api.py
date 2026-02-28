@@ -68,7 +68,7 @@ from .api_models import (  # noqa: F401 – re-exported for backward compat
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
-from .report.summary import summarize_run_data
+from .analysis.summary import summarize_run_data
 
 if TYPE_CHECKING:
     from .app import RuntimeState

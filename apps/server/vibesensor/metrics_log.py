@@ -738,7 +738,7 @@ class MetricsLogger:
         analysis_start = time.monotonic()
         LOGGER.info("Analysis started for run %s", run_id)
         try:
-            from .report.summary import summarize_run_data
+            from .analysis.summary import summarize_run_data
             from .runlog import normalize_sample_record
 
             metadata = self._history_db.get_run_metadata(run_id)

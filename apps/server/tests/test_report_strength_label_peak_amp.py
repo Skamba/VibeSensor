@@ -3,8 +3,8 @@ from __future__ import annotations
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.report.pdf_builder import _strength_with_peak
-from vibesensor.report.report_data import map_summary
-from vibesensor.report.strength_labels import strength_text
+from vibesensor.analysis.report_data_builder import map_summary
+from vibesensor.analysis.strength_labels import strength_text
 
 
 def test_strength_text_value_with_peak_amp() -> None:
