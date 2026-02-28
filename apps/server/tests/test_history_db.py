@@ -540,8 +540,7 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
     # Simulate recording
     for batch_start in range(0, 20, 5):
         batch = [
-            _sensor_frame_dict(i, run_id="run-full")
-            for i in range(batch_start, batch_start + 5)
+            _sensor_frame_dict(i, run_id="run-full") for i in range(batch_start, batch_start + 5)
         ]
         db.append_samples("run-full", batch)
 
@@ -586,15 +585,9 @@ def test_v2_iter_with_offset(tmp_path: Path) -> None:
     assert [r["i"] for r in rows1] == list(range(1, 10))
 
     # offset=5 with batch_size=3
-    rows5 = [
-        s
-        for b in db.iter_run_samples("run-off", batch_size=3, offset=5)
-        for s in b
-    ]
+    rows5 = [s for b in db.iter_run_samples("run-off", batch_size=3, offset=5) for s in b]
     assert [r["i"] for r in rows5] == [5, 6, 7, 8, 9]
 
     # offset >= total → empty
-    rows_past = [
-        s for b in db.iter_run_samples("run-off", offset=20) for s in b
-    ]
+    rows_past = [s for b in db.iter_run_samples("run-off", offset=20) for s in b]
     assert rows_past == []

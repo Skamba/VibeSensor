@@ -362,9 +362,7 @@ class HistoryDB:
     # -- v2 row conversion helpers --------------------------------------------
 
     @classmethod
-    def _sample_to_v2_row(
-        cls, run_id: str, item: dict[str, Any] | SensorFrame
-    ) -> tuple[Any, ...]:
+    def _sample_to_v2_row(cls, run_id: str, item: dict[str, Any] | SensorFrame) -> tuple[Any, ...]:
         """Convert a sample dict or SensorFrame to a row tuple for samples_v2."""
         d: dict[str, Any] = item.to_dict() if isinstance(item, SensorFrame) else item
 
@@ -680,9 +678,7 @@ class HistoryDB:
                 try:
                     parsed_batch.append(self._v2_row_to_dict(row))
                 except Exception:
-                    LOGGER.warning(
-                        "Skipping corrupt v2 sample row id=%s", row[0], exc_info=True
-                    )
+                    LOGGER.warning("Skipping corrupt v2 sample row id=%s", row[0], exc_info=True)
             if parsed_batch:
                 yield parsed_batch
 
