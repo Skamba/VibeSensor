@@ -196,7 +196,7 @@ def test_analysis_is_current(tmp_path: Path) -> None:
 
 
 def test_analysis_is_not_current_without_analysis(tmp_path: Path) -> None:
-    """Fix 6: analysis_is_current returns False for unanylzed run."""
+    """Fix 6: analysis_is_current returns False for unanalyzed run."""
     db = _make_db(tmp_path)
     db.create_run("r1", "2026-01-01T00:00:00Z", {})
     assert db.analysis_is_current("r1") is False

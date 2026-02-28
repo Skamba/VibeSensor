@@ -135,7 +135,13 @@ def bounded_sample(
     When *total_hint* is available the stride is computed upfront so
     that we never over-collect and re-halve.
 
-    Returns ``(kept_samples, total_count, final_stride)``.
+    Returns
+    -------
+    tuple[list[dict], int, int]
+        ``(kept_samples, total_count, final_stride)`` where
+        *kept_samples* is the down-sampled list, *total_count* is the
+        number of items consumed from the iterator, and *final_stride*
+        is the stride factor that was applied.
     """
     stride: int = max(1, total_hint // max_items) if total_hint > max_items else 1
     kept: list[dict] = []
