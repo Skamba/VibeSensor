@@ -18,7 +18,6 @@ from vibesensor.ws_models import (
     SpectrumSeries,
 )
 
-
 # ---------------------------------------------------------------------------
 # ws_models.py – Pydantic model tests
 # ---------------------------------------------------------------------------
@@ -211,9 +210,7 @@ class TestMultiSpectrumFreqDedup:
         # Per-client freq should be present
         assert "freq" in result["clients"]["aaa"]
         assert "freq" in result["clients"]["bbb"]
-        assert result["clients"]["aaa"]["freq"] == pytest.approx(
-            [10.0, 20.0, 30.0], abs=1e-4
-        )
+        assert result["clients"]["aaa"]["freq"] == pytest.approx([10.0, 20.0, 30.0], abs=1e-4)
         # Warning should be present
         assert "warning" in result
         assert result["warning"]["code"] == "frequency_bin_mismatch"

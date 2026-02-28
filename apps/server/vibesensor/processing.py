@@ -660,9 +660,7 @@ class SignalProcessor:
             shared_freq_list: list[float] = []
         else:
             # All axes match: shared freq only, no per-client duplication.
-            shared_freq_list = (
-                self._float_list(shared_freq) if shared_freq is not None else []
-            )
+            shared_freq_list = self._float_list(shared_freq) if shared_freq is not None else []
 
         payload: dict[str, Any] = {
             "freq": shared_freq_list,

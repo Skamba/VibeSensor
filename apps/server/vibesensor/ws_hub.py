@@ -188,8 +188,7 @@ class WebSocketHub:
                 except Exception:
                     pass
                 LOGGER.debug(
-                    "WS_DEBUG selected=%r size_bytes=%d connections=%d "
-                    "per_client_freq=%s",
+                    "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
                     sel_id,
                     len(text),
                     len(conns),

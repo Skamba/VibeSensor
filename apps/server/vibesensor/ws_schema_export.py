@@ -28,7 +28,7 @@ def export_schema(out_path: Path | None = None) -> str:
 
 def main() -> None:
     default_out = (
-        Path(__file__).resolve().parents[2]
+        Path(__file__).resolve().parents[3]
         / "apps"
         / "ui"
         / "src"
