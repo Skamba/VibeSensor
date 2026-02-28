@@ -100,7 +100,6 @@ def _merge_test_plan(
             continue
         source = str(finding.get("suspected_source") or "").strip().lower()
         generated_steps = _finding_actions_for_source(
-            lang,
             source,
             strongest_location=str(finding.get("strongest_location") or ""),
             strongest_speed_band=str(finding.get("strongest_speed_band") or ""),

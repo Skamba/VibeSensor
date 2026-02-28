@@ -26,5 +26,5 @@
 
 ## D6: Default change scope
 - Decision: breaking changes and larger cross-cutting changes are allowed.
-- Rationale: rapid learning is prioritized over strict backward compatibility.
-- Implication: backward compatibility is never a requirement; document impact clearly and update validation/tests to match the new behavior.
+- Rationale: rapid learning is prioritized; there is a single deployment.
+- Implication: document impact clearly and update validation/tests to match the new behavior.

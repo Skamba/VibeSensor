@@ -390,8 +390,6 @@ def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
     NOTE: This is used as a **grouping key** across the data pipeline, so it
     must be language-invariant.  Translation to the report language happens at
     render time in the PDF builder / template layer.
-
-    The ``lang`` parameter is accepted but ignored for backward compatibility.
     """
     # Prefer structured location code (from SensorConfig) if available
     from ..locations import label_for_code as _label_for_code  # local to avoid circular import

@@ -230,7 +230,7 @@ class TestTopPeaksTableRows:
         assert row["presence_ratio"] == 1.0  # Present in all 5 samples
 
     def test_single_sample_still_works(self) -> None:
-        """Backward compat: a single sample must produce valid rows."""
+        """A single sample must produce valid rows."""
         samples = [_sample(0.0, 80.0, [{"hz": 20.0, "amp": 0.1}])]
         rows = _top_peaks_table_rows(samples)
         assert len(rows) == 1
@@ -864,13 +864,13 @@ class TestSpectrogramPersistence:
 
 
 # ---------------------------------------------------------------------------
-# Backward compatibility
+# Robustness
 # ---------------------------------------------------------------------------
 
 
-class TestBackwardCompatibility:
-    def test_old_schema_without_new_fields(self) -> None:
-        """Samples missing new optional fields (vibration_strength_db on peaks)
+class TestRobustness:
+    def test_schema_without_optional_fields(self) -> None:
+        """Samples missing optional fields (vibration_strength_db on peaks)
         should still be processed gracefully."""
         metadata = _make_metadata()
         samples = [

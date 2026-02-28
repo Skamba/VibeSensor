@@ -156,76 +156,11 @@ class HistoryDB:
                 )
                 return
             version = int(str(row[0]))
-            if version < 1:
+            if version != _SCHEMA_VERSION:
                 raise RuntimeError(
-                    f"Unsupported history DB schema version {version}; expected {_SCHEMA_VERSION}"
+                    f"Unsupported history DB schema version {version}; "
+                    f"expected {_SCHEMA_VERSION}. Delete the database file to recreate."
                 )
-            if version < _SCHEMA_VERSION:
-                if version < 2:
-                    self._migrate_v1_to_v2()
-                if version < 3:
-                    self._migrate_v2_to_v3()
-                if version < 4:
-                    self._migrate_v3_to_v4()
-                cur.execute(
-                    "UPDATE schema_meta SET value = ? WHERE key = ?",
-                    (str(_SCHEMA_VERSION), "version"),
-                )
-            elif version != _SCHEMA_VERSION:
-                raise RuntimeError(
-                    f"Unsupported history DB schema version {version}; expected {_SCHEMA_VERSION}"
-                )
-
-    def _migrate_v1_to_v2(self) -> None:
-        with self._lock:
-            # Idempotent: check if column exists before adding
-            cursor = self._conn.execute("PRAGMA table_info(runs)")
-            columns = {row[1] for row in cursor.fetchall()}
-            if "sample_count" not in columns:
-                self._conn.execute(
-                    "ALTER TABLE runs ADD COLUMN sample_count INTEGER NOT NULL DEFAULT 0"
-                )
-            self._conn.execute(
-                "UPDATE runs SET sample_count = "
-                "(SELECT COUNT(*) FROM samples s WHERE s.run_id = runs.run_id)"
-            )
-
-    def _migrate_v2_to_v3(self) -> None:
-        """Add settings_kv and client_names tables."""
-        with self._lock:
-            self._conn.executescript(
-                """\
-CREATE TABLE IF NOT EXISTS settings_kv (
-    key         TEXT PRIMARY KEY,
-    value_json  TEXT NOT NULL,
-    updated_at  TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS client_names (
-    client_id   TEXT PRIMARY KEY,
-    name        TEXT NOT NULL,
-    updated_at  TEXT NOT NULL
-);
-"""
-            )
-
-    def _migrate_v3_to_v4(self) -> None:
-        """Add analysis versioning and timestamp columns to runs table."""
-        with self._lock:
-            cursor = self._conn.execute("PRAGMA table_info(runs)")
-            columns = {row[1] for row in cursor.fetchall()}
-            for col, typedef in (
-                ("analysis_version", "INTEGER"),
-                ("analysis_started_at", "TEXT"),
-                ("analysis_completed_at", "TEXT"),
-            ):
-                if col not in columns:
-                    self._conn.execute(f"ALTER TABLE runs ADD COLUMN {col} {typedef}")
-            # Back-fill analysis_version for existing complete runs
-            self._conn.execute(
-                "UPDATE runs SET analysis_version = 1 "
-                "WHERE status = 'complete' AND analysis_json IS NOT NULL "
-                "AND analysis_version IS NULL"
-            )
 
     # -- write ----------------------------------------------------------------
 

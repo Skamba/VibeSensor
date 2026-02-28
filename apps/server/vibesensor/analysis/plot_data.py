@@ -480,9 +480,6 @@ def _plot_data(
             continue
         amp = _as_float(row.get("mean_vibration_strength_db"))
         if amp is None:
-            # Fallback for legacy data that used the old key
-            amp = _as_float(row.get("mean_amplitude_g"))
-        if amp is None:
             continue
         speed_amp_points.append(((low + high) / 2.0, amp))
 

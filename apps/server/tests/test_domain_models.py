@@ -160,17 +160,6 @@ class TestSpeedSourceConfig:
         assert ssc.manual_speed_kph == 80.0
         assert ssc.stale_timeout_s == 5.0
 
-    def test_from_dict_snake_case_keys(self) -> None:
-        ssc = SpeedSourceConfig.from_dict(
-            {
-                "speed_source": "obd2",
-                "manual_speed_kph": 60.0,
-                "stale_timeout_s": 20.0,
-            }
-        )
-        assert ssc.speed_source == "obd2"
-        assert ssc.manual_speed_kph == 60.0
-
     def test_invalid_speed_source_defaults_to_gps(self) -> None:
         ssc = SpeedSourceConfig.from_dict({"speedSource": "invalid"})
         assert ssc.speed_source == "gps"
@@ -275,7 +264,7 @@ class TestRunMetadata:
         assert rm2.sensor_model == rm.sensor_model
         assert rm2.raw_sample_rate_hz == rm.raw_sample_rate_hz
 
-    def test_backward_compat_no_phase_metadata(self) -> None:
+    def test_default_phase_metadata(self) -> None:
         rm = RunMetadata.from_dict({"run_id": "old"})
         assert "version" in rm.phase_metadata
 
@@ -323,24 +312,9 @@ class TestSensorFrame:
         assert sf.speed_kmh is None
         assert sf.accel_x_g is None
 
-    def test_backward_compat_strength_db(self) -> None:
-        """Old 'strength_db' key should be read as vibration_strength_db."""
-        record = self._minimal_record()
-        del record["vibration_strength_db"]
-        record["strength_db"] = 15.0
-        sf = SensorFrame.from_dict(record)
-        assert sf.vibration_strength_db == 15.0
-
     def test_vibration_strength_db_zero_preserved(self) -> None:
         """0.0 is a valid measurement (signal at noise floor) and must not become None."""
         sf = SensorFrame.from_dict(self._minimal_record(vibration_strength_db=0.0))
-        assert sf.vibration_strength_db == 0.0
-
-    def test_vibration_strength_db_zero_prefers_canonical_over_legacy(self) -> None:
-        """When canonical key is 0.0 and legacy key exists, canonical 0.0 wins."""
-        record = self._minimal_record(vibration_strength_db=0.0)
-        record["strength_db"] = 5.0
-        sf = SensorFrame.from_dict(record)
         assert sf.vibration_strength_db == 0.0
 
     def test_vibration_strength_db_zero_roundtrip(self) -> None:

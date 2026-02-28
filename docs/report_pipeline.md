@@ -90,16 +90,6 @@ needs:
 | `speed_stats.steady_speed`    | used to compute `certainty_label` |
 | `sensor_intensity_by_location`| `sensor_intensity_by_location`  |
 
-### Backward compatibility
-
-For runs analyzed before `ReportTemplateData` persistence was introduced,
-the PDF endpoint falls back to building `ReportTemplateData` from the
-persisted summary dict via `map_summary()`.  This fallback uses a lazy
-import to avoid violating the renderer-only rule at module level.  This
-means that for legacy data, analysis code *is* called at report time as a
-one-time migration path — new recordings always have pre-built
-`ReportTemplateData` available.
-
 ## Adding new report sections
 
 1. Add any new analysis output to `summarize_run_data()` in

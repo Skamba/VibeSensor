@@ -5,12 +5,13 @@ from vibesensor.gps_speed import GPSSpeedMonitor
 
 def test_effective_speed_prefers_override_over_gps() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
+    monitor.manual_source_selected = True
     monitor.set_speed_override_kmh(90.0)
     assert monitor.effective_speed_mps is not None
     assert abs(monitor.effective_speed_mps - 25.0) < 1e-9
 
     monitor.speed_mps = 12.5
-    # override takes priority over GPS
+    # override takes priority over GPS when manual source selected
     assert abs((monitor.effective_speed_mps or 0.0) - 25.0) < 1e-9
 
 
