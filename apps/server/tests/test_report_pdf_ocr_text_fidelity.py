@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.analysis import summarize_log
+from vibesensor.analysis import map_summary, summarize_log
 from vibesensor.report.pdf_builder import build_report_pdf
 
 pdfium = pytest.importorskip("pypdfium2")
@@ -136,7 +136,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
         summary["findings"][0]["strongest_location"] = "front-left wheel"
         summary["findings"][0]["source"] = "wheel/tire"
 
-    pdf_bytes = build_report_pdf(summary)
+    pdf_bytes = build_report_pdf(map_summary(summary))
 
     audit_root_env = os.getenv("VIBESENSOR_OCR_AUDIT_DIR")
     artifact_dir = Path(audit_root_env) if audit_root_env else tmp_path

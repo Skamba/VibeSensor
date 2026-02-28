@@ -343,7 +343,7 @@ def test_recover_stale_does_not_touch_analyzing(tmp_path: Path) -> None:
 
 
 def test_build_report_pdf_rejects_invalid_type() -> None:
-    """Fix 15: build_report_pdf raises TypeError for non-dict/non-RTD input."""
+    """build_report_pdf raises TypeError for non-dict/non-RTD input."""
     from vibesensor.report.pdf_builder import build_report_pdf
 
     with pytest.raises(TypeError, match="expects ReportTemplateData or dict"):

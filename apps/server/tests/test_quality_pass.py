@@ -210,9 +210,8 @@ def test_iter_run_samples_offset(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_migrate_v2_to_v3_adds_settings_tables(tmp_path: Path) -> None:
-    """Create a v2-compatible DB manually, then open it via HistoryDB
-    which should transparently migrate to v3."""
+def test_old_schema_version_raises(tmp_path: Path) -> None:
+    """Opening a DB with an older schema version should raise RuntimeError."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
     conn.executescript(
@@ -241,13 +240,5 @@ CREATE TABLE samples (
     conn.commit()
     conn.close()
 
-    # Opening the DB should migrate v2→v3 without error
-    db = HistoryDB(db_path)
-
-    # Confirm settings_kv and client_names tables exist by doing basic ops
-    db._conn.execute("SELECT * FROM settings_kv LIMIT 1")
-    db._conn.execute("SELECT * FROM client_names LIMIT 1")
-
-    # Confirm version is now 4 (migrated through v3 and v4)
-    cur = db._conn.execute("SELECT value FROM schema_meta WHERE key = 'version'")
-    assert cur.fetchone()[0] == "4"
+    with pytest.raises(RuntimeError, match="Unsupported history DB schema version 2"):
+        HistoryDB(db_path)

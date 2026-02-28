@@ -11,7 +11,7 @@ import pytest
 
 from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
 
-# -- Schema v4 migration tests -----------------------------------------------
+# -- Schema v4 tests ----------------------------------------------------------
 
 
 def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
@@ -25,8 +25,8 @@ def test_fresh_db_has_analysis_columns(tmp_path: Path) -> None:
     db.close()
 
 
-def test_migrate_v3_to_v4_adds_analysis_columns(tmp_path: Path) -> None:
-    """A v3 DB should be transparently migrated to v4 with new columns."""
+def test_old_schema_version_raises(tmp_path: Path) -> None:
+    """Opening a DB with an older schema version should raise RuntimeError."""
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
     conn.executescript(
@@ -61,65 +61,8 @@ CREATE TABLE client_names (
     conn.commit()
     conn.close()
 
-    db = HistoryDB(db_path)
-    cursor = db._conn.execute("PRAGMA table_info(runs)")
-    columns = {row[1] for row in cursor.fetchall()}
-    assert "analysis_version" in columns
-    assert "analysis_started_at" in columns
-    assert "analysis_completed_at" in columns
-
-    cur = db._conn.execute("SELECT value FROM schema_meta WHERE key = 'version'")
-    assert cur.fetchone()[0] == "4"
-    db.close()
-
-
-def test_migrate_v3_backfills_existing_complete_runs(tmp_path: Path) -> None:
-    """Existing complete runs should get analysis_version=1 during migration."""
-    db_path = tmp_path / "history.db"
-    conn = sqlite3.connect(str(db_path))
-    conn.executescript(
-        """\
-CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
-INSERT INTO schema_meta (key, value) VALUES ('version', '3');
-CREATE TABLE runs (
-    run_id TEXT PRIMARY KEY,
-    status TEXT NOT NULL DEFAULT 'recording',
-    start_time_utc TEXT NOT NULL,
-    end_time_utc TEXT,
-    metadata_json TEXT NOT NULL,
-    analysis_json TEXT,
-    error_message TEXT,
-    sample_count INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL
-);
-INSERT INTO runs (run_id, status, start_time_utc, metadata_json, analysis_json, created_at)
-    VALUES ('r1', 'complete', '2026-01-01T00:00:00Z', '{}', '{"lang":"en"}', '2026-01-01T00:00:00Z');
-INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at)
-    VALUES ('r2', 'error', '2026-01-01T00:00:00Z', '{}', '2026-01-01T00:00:00Z');
-CREATE TABLE samples (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_id TEXT NOT NULL, sample_json TEXT NOT NULL
-);
-CREATE TABLE settings_kv (
-    key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_at TEXT NOT NULL
-);
-CREATE TABLE client_names (
-    client_id TEXT PRIMARY KEY, name TEXT NOT NULL, updated_at TEXT NOT NULL
-);
-"""
-    )
-    conn.commit()
-    conn.close()
-
-    db = HistoryDB(db_path)
-    # Complete run should have analysis_version back-filled
-    cur = db._conn.execute("SELECT analysis_version FROM runs WHERE run_id = 'r1'")
-    assert cur.fetchone()[0] == 1
-
-    # Error run should NOT have analysis_version
-    cur = db._conn.execute("SELECT analysis_version FROM runs WHERE run_id = 'r2'")
-    assert cur.fetchone()[0] is None
-    db.close()
+    with pytest.raises(RuntimeError, match="Unsupported history DB schema version 3"):
+        HistoryDB(db_path)
 
 
 # -- Analysis storage tests ---------------------------------------------------
