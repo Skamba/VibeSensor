@@ -13,6 +13,7 @@
 
 import { expect, test } from "@playwright/test";
 import { adaptServerPayload } from "../src/server_payload";
+import { applySpectrumTick } from "../src/app/state/ui_app_state";
 
 // ---------------------------------------------------------------------------
 // 1. adaptServerPayload – spectra null yields null, not stale data
@@ -64,6 +65,32 @@ test.describe("adaptServerPayload spectra handling", () => {
     expect(adapted.spectra).not.toBeNull();
     expect(adapted.spectra!.clients).not.toHaveProperty("bad");
     expect(adapted.spectra!.clients).toHaveProperty("good");
+  });
+});
+
+test.describe("applySpectrumTick heavy/light handling", () => {
+  const heavyFrame = {
+    clients: {
+      sensor1: {
+        freq: [1, 2, 3],
+        combined: [0.01, 0.02, 0.03],
+        strength_metrics: { vibration_strength_db: 12 },
+      },
+    },
+  };
+
+  test("keeps previous frame and data flag when current tick omits spectra", () => {
+    const updated = applySpectrumTick(heavyFrame, true, null);
+    expect(updated.spectra).toBe(heavyFrame);
+    expect(updated.hasSpectrumData).toBe(true);
+    expect(updated.hasNewSpectrumFrame).toBe(false);
+  });
+
+  test("stays empty before first heavy frame when spectra are still missing", () => {
+    const updated = applySpectrumTick({ clients: {} }, false, null);
+    expect(updated.spectra).toEqual({ clients: {} });
+    expect(updated.hasSpectrumData).toBe(false);
+    expect(updated.hasNewSpectrumFrame).toBe(false);
   });
 });
 
