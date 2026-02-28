@@ -117,6 +117,12 @@ class SpeedSourceStatusResponse(BaseModel):
     gps_enabled: bool
     connection_state: str
     device: str | None = None
+    fix_mode: int | None = None
+    fix_dimension: str | None = None
+    speed_confidence: str | None = None
+    epx_m: float | None = None
+    epy_m: float | None = None
+    epv_m: float | None = None
     last_update_age_s: float | None = None
     raw_speed_kmh: float | None = None
     effective_speed_kmh: float | None = None
