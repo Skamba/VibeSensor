@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from math import sqrt
 from pathlib import Path
 from statistics import median as _median
@@ -153,11 +153,12 @@ def confidence_label(
         high confidence is capped to medium as a defensive label guard —
         mirrors the guard in :func:`certainty_label`.
     """
-    pct = max(0.0, min(100.0, conf_0_to_1 * 100.0))
+    pct = max(0.0, min(100.0, (conf_0_to_1 or 0.0) * 100.0))
     pct_text = f"{pct:.0f}%"
-    if conf_0_to_1 >= 0.70:
+    conf = conf_0_to_1 if conf_0_to_1 is not None else 0.0
+    if conf >= 0.70:
         label_key, tone = "CONFIDENCE_HIGH", "success"
-    elif conf_0_to_1 >= 0.40:
+    elif conf >= 0.40:
         label_key, tone = "CONFIDENCE_MEDIUM", "warn"
     else:
         label_key, tone = "CONFIDENCE_LOW", "neutral"
@@ -508,7 +509,7 @@ def _compute_run_timing(
     if end_ts is None and samples:
         sample_max_t = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
         if start_ts is not None:
-            end_ts = start_ts.fromtimestamp(start_ts.timestamp() + sample_max_t, tz=UTC)
+            end_ts = start_ts + timedelta(seconds=sample_max_t)
     duration_s = 0.0
     if start_ts is not None and end_ts is not None:
         duration_s = max(0.0, (end_ts - start_ts).total_seconds())

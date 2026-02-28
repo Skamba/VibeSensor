@@ -39,7 +39,10 @@ def tr(lang: object, key: str, **kwargs: Any) -> str:
     else:
         locale = normalize_lang(lang)
         template = values.get(locale) or values.get("en") or key
-    return template.format(**kwargs)
+    try:
+        return template.format(**kwargs)
+    except (KeyError, IndexError):
+        return template
 
 
 def variants(key: str) -> tuple[str, str]:

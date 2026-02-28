@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from math import sqrt
+from math import isfinite, sqrt
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -84,7 +84,7 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
 
 
 def _format_duration(seconds: float) -> str:
-    total = max(0.0, round(float(seconds), 1))
+    total = max(0.0, round(float(seconds), 1)) if isfinite(seconds) else 0.0
     minutes = int(total // 60)
     rem = total - (minutes * 60)
     return f"{minutes:02d}:{rem:04.1f}"
@@ -132,6 +132,8 @@ def _outlier_summary(values: list[float]) -> dict[str, object]:
 
 
 def _speed_bin_label(kmh: float) -> str:
+    if not isfinite(kmh):
+        return "0-10 km/h"
     low = int(kmh // SPEED_BIN_WIDTH_KMH) * SPEED_BIN_WIDTH_KMH
     high = low + SPEED_BIN_WIDTH_KMH
     return f"{low}-{high} km/h"

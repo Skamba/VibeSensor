@@ -99,7 +99,10 @@ def _split_host_port(value: str) -> tuple[str, int]:
     host, sep, port = value.rpartition(":")
     if sep == "":
         raise ValueError(f"Expected HOST:PORT, got: {value!r}")
-    return host, int(port)
+    try:
+        return host, int(port)
+    except ValueError:
+        raise ValueError(f"Invalid port number in {value!r}: {port!r} is not an integer") from None
 
 
 def _resolve_config_path(path_text: str, config_path: Path) -> Path:

@@ -372,11 +372,16 @@ class MetricsLogger:
             if isinstance(effective_speed_mps, (int, float))
             else None
         )
-        speed_source = (
-            "override"
-            if isinstance(override_speed_mps, (int, float))
-            else ("gps" if gps_speed_kmh is not None else "missing")
-        )
+        if hasattr(self.gps_monitor, "resolve_speed"):
+            _resolve_source = self.gps_monitor.resolve_speed().source
+        else:
+            _resolve_source = (
+                "manual"
+                if isinstance(override_speed_mps, (int, float))
+                else ("gps" if gps_speed_kmh is not None else "none")
+            )
+        _SOURCE_MAP = {"manual": "manual", "gps": "gps", "fallback_manual": "manual", "none": "gps"}
+        speed_source = _SOURCE_MAP.get(_resolve_source, "gps")
         engine_rpm_estimated = None
         if (
             speed_kmh is not None
@@ -781,19 +786,14 @@ class MetricsLogger:
                 "sampling_method": "full" if stride == 1 else f"stride_{stride}",
             }
             if stride > 1:
-                if language == "nl":
-                    check = "Analysebemonstering"
-                    explanation = (
-                        f"Lange run geanalyseerd met stride {stride}. "
-                        "Korte, intermitterende events "
-                        "kunnen ondervertegenwoordigd zijn."
-                    )
-                else:
-                    check = "Analysis sampling"
-                    explanation = (
-                        f"Long run analyzed with stride {stride}. Brief intermittent events may be "
-                        "underrepresented."
-                    )
+                from .report_i18n import tr as _tr
+
+                check = _tr(language, "SUITABILITY_CHECK_ANALYSIS_SAMPLING")
+                explanation = _tr(
+                    language,
+                    "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
+                    stride=str(stride),
+                )
                 summary.setdefault("run_suitability", []).append(
                     {
                         "check": check,
