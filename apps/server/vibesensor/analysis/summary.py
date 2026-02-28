@@ -38,8 +38,8 @@ from .helpers import (
     _validate_required_strength_metrics,
     weak_spatial_dominance_threshold,
 )
-from .i18n import normalize_lang
-from .i18n import tr as _tr
+from ..report.i18n import normalize_lang
+from ..report.i18n import tr as _tr
 from .phase_segmentation import (
     phase_summary as _phase_summary,
 )

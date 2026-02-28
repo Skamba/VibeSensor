@@ -28,7 +28,6 @@ from .report_data import (
     PatternEvidence,
     ReportTemplateData,
     SystemFindingCard,
-    map_summary,
 )
 from .theme import REPORT_COLORS
 
@@ -719,7 +718,6 @@ def _page2(  # noqa: C901
     c: Canvas,
     data: ReportTemplateData,
     *,
-    summary: dict,
     location_rows: list,
     top_causes: list,
     tr_fn,
@@ -769,11 +767,18 @@ def _page2(  # noqa: C901
     # Assert aspect ratio is preserved
     assert_aspect_preserved(src_w, src_h, dw, dh, tolerance=0.03)
 
+    # Build a rendering-only summary dict from pre-computed ReportTemplateData
+    # so that car_location_diagram receives the data it needs without raw samples.
+    render_summary = {
+        "sensor_locations": data.sensor_locations,
+        "sensor_intensity_by_location": data.sensor_intensity_by_location,
+    }
+
     # Render the real car diagram as a ReportLab Drawing
-    findings = summary.get("findings", [])
+    findings = data.findings
     diagram = car_location_diagram(
         top_causes or (findings if isinstance(findings, list) else []),
-        summary,
+        render_summary,
         location_rows,
         content_width=W,
         tr=tr_fn,
@@ -1019,17 +1024,31 @@ def _draw_additional_observations(
 # ---------------------------------------------------------------------------
 
 
-def build_report_pdf(summary: dict[str, object]) -> bytes:
-    """Build a 2-page diagnostic-worksheet PDF from a run summary dict."""
+def build_report_pdf(
+    summary_or_data: dict[str, object] | ReportTemplateData,
+) -> bytes:
+    """Build a 2-page diagnostic-worksheet PDF.
+
+    Accepts either a pre-built :class:`ReportTemplateData` (preferred — no
+    analysis imports required) or a legacy summary *dict* for backward
+    compatibility (the dict is converted via the analysis builder).
+    """
+    if isinstance(summary_or_data, ReportTemplateData):
+        data = summary_or_data
+    else:
+        # Backward-compat: caller passed a raw summary dict.
+        # Import the builder lazily to avoid hard analysis dependency.
+        from ..analysis.report_data_builder import map_summary  # noqa: F811
+
+        data = map_summary(summary_or_data)
     try:
-        return _build_canvas_pdf(summary)
+        return _build_canvas_pdf(data)
     except Exception as exc:
         LOGGER.error("PDF generation failed.", exc_info=True)
         raise RuntimeError("PDF generation failed") from exc
 
 
-def _build_canvas_pdf(summary: dict) -> bytes:
-    data = map_summary(summary)
+def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
     lang = data.lang
 
     def tr_fn(key: str, **kw: object) -> str:
@@ -1038,37 +1057,19 @@ def _build_canvas_pdf(summary: dict) -> bytes:
     def text_fn(en: str, nl: str) -> str:
         return nl if lang == "nl" else en
 
-    # Compute location hotspot rows for the car diagram
-    findings = summary.get("findings", [])
-    actionable_findings = [
-        f
-        for f in findings
-        if isinstance(f, dict)
-        and not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
-    ]
-    location_rows, _, _, _ = location_hotspots(
-        summary.get("samples", []),
-        findings,
-        tr=tr_fn,
-        text_fn=text_fn,
-    )
-    top_causes_all = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
-    top_causes_non_ref = [
-        c
-        for c in top_causes_all
-        if not str(c.get("finding_id") or "").strip().upper().startswith("REF_")
-    ]
-    top_causes_actionable = [
-        c
-        for c in top_causes_non_ref
-        if str(c.get("source") or c.get("suspected_source") or "").strip().lower()
-        not in {"unknown_resonance", "unknown"}
-        or str(c.get("strongest_location") or "").strip().lower()
-        not in {"", "unknown", "not available", "n/a"}
-    ]
-    top_causes = (
-        top_causes_actionable or actionable_findings or top_causes_non_ref or top_causes_all
-    )
+    # Use pre-computed location hotspot rows when available.
+    if data.location_hotspot_rows:
+        location_rows = data.location_hotspot_rows
+    else:
+        location_rows, _, _, _ = location_hotspots(
+            [],  # no raw samples — use findings path only
+            data.findings,
+            tr=tr_fn,
+            text_fn=text_fn,
+        )
+
+    # Pre-computed top causes from ReportTemplateData.
+    top_causes = data.top_causes
 
     buf = BytesIO()
     c = Canvas(buf, pagesize=PAGE_SIZE, pageCompression=0)
@@ -1082,7 +1083,6 @@ def _build_canvas_pdf(summary: dict) -> bytes:
     _page2(
         c,
         data,
-        summary=summary,
         location_rows=location_rows,
         top_causes=top_causes,
         tr_fn=tr_fn,

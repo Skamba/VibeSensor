@@ -1,10 +1,16 @@
-"""vibesensor.report – split report-analysis modules.
+"""vibesensor.report – renderer-only PDF/report modules.
 
-Public API re-exported here so that ``from vibesensor.report import …``
-works the same as importing from the individual sub-modules.
+This package contains **only** rendering code.  All analysis logic
+(findings, ranking, phase segmentation, strength classification, etc.)
+lives in ``vibesensor.analysis``.
+
+For backward compatibility the most-used analysis symbols are
+re-exported here so that existing ``from vibesensor.report import …``
+call-sites keep working.  New code should import from
+``vibesensor.analysis`` directly.
 """
 
-from .summary import (
+from ..analysis import (
     build_findings_for_samples,
     confidence_label,
     select_top_causes,

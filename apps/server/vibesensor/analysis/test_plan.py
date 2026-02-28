@@ -11,7 +11,7 @@ from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
 from ..locations import has_any_wheel_location, is_wheel_location
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _speed_bin_label, weak_spatial_dominance_threshold
-from .i18n import tr as _tr
+from ..report.i18n import tr as _tr
 from .order_analysis import _finding_actions_for_source
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
