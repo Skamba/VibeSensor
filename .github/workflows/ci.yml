@@ -43,6 +43,10 @@ jobs:
         run: |
           python tools/dev/verify_no_path_indirections.py
 
+      - name: WS payload schema sync check
+        run: |
+          python -m vibesensor.ws_schema_export --check
+
   tests-ui:
     name: Tests (UI smoke)
     runs-on: ubuntu-latest
