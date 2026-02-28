@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from math import sqrt
 from pathlib import Path
 from statistics import median as _median
@@ -508,7 +508,7 @@ def _compute_run_timing(
     if end_ts is None and samples:
         sample_max_t = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
         if start_ts is not None:
-            end_ts = start_ts.fromtimestamp(start_ts.timestamp() + sample_max_t, tz=UTC)
+            end_ts = start_ts + timedelta(seconds=sample_max_t)
     duration_s = 0.0
     if start_ts is not None and end_ts is not None:
         duration_s = max(0.0, (end_ts - start_ts).total_seconds())
