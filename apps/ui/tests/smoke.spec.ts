@@ -883,7 +883,7 @@ test("strength chart labels update when switching language", async ({ page }) =>
   await expect(page.locator("#strengthChart .u-title")).toHaveText("Sterkte over tijd");
 });
 
-test("manual speed save uses settings endpoint only (no legacy speed-override call)", async ({ page }) => {
+test("manual speed save uses settings endpoint only (no speed-override call)", async ({ page }) => {
   let speedSourcePostCalls = 0;
   let speedOverrideCalls = 0;
   await page.route("**/api/logging/status", async (route) => {

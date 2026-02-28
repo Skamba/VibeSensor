@@ -146,12 +146,6 @@
 | `test_store_corrupted_snapshot_falls_back_to_defaults` | Invalid DB data → safe defaults |
 | `test_store_snapshot_with_empty_cars_falls_back` | Empty cars list → default car |
 
-### Added to `test_runlog.py` (1 test)
-
-| Test | What it validates |
-|------|-------------------|
-| `test_normalize_sample_record_strength_db_backward_compat` | `strength_db` → `vibration_strength_db` rename |
-
 ### Added to `test_health_endpoint.py` (1 test)
 
 | Test | What it validates |
@@ -221,7 +215,7 @@ All 7 existing tests updated for 3-tab UI restructure. Added `_activate_settings
 | PDF chart rendering regression | Low | Low (content still correct) | Section heading tests catch structural issues |
 | i18n key added to code but not JSON | **Medium** | Medium (crash on translate) | **NEW** regression test catches this |
 | Strength bucket boundary change | **Medium** | High (wrong severity) | **NEW** exact boundary tests catch this |
-| Schema migration regression | Low | High (DB unusable) | **NEW** v1→v2→v3 + future version tests |
+| Schema version enforcement | Low | High (DB unusable) | **DONE** old-schema-version-raises tests |
 | MetricsLogger lifecycle breaks | Low | High (no analysis) | **NEW** end-to-end lifecycle test with real DB |
 
 ---
