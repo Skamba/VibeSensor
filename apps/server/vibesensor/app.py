@@ -26,7 +26,7 @@ from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 
 from .analysis_settings import AnalysisSettingsStore
 from .api import create_router
-from .config import AppConfig, load_config
+from .config import SERVER_DIR, AppConfig, load_config
 from .constants import (
     FREQUENCY_EPSILON_HZ,
     HARMONIC_2X,
@@ -547,17 +547,25 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     app.state.runtime = runtime
     app.include_router(create_router(runtime))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
+        # Prefer packaged static assets (baked into the wheel by CI), then
+        # fall back to the legacy ``apps/server/public/`` directory used by
+        # Docker builds and local development.
         packaged_static = Path(__file__).resolve().parent / "static"
+        legacy_public = SERVER_DIR / "public"
         if (packaged_static / "index.html").exists():
             static_dir = packaged_static
+        elif (legacy_public / "index.html").exists():
+            static_dir = legacy_public
         else:
             message = (
-                "UI not built. Build the Docker image or install a release wheel."
+                "UI not built. Run tools/sync_ui_to_pi_public.py, "
+                "build the Docker image, or install a release wheel."
             )
             LOGGER.error(
-                "%s Missing index.html in %s",
+                "%s Missing index.html in %s and %s",
                 message,
                 packaged_static,
+                legacy_public,
             )
             raise RuntimeError(message)
         app.mount("/", StaticFiles(directory=static_dir, html=True), name="public")

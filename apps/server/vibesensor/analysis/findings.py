@@ -939,7 +939,7 @@ def _build_order_findings(
         ref_text = ", ".join(sorted(ref_sources))
         evidence = _i18n_ref(
             "EVIDENCE_ORDER_TRACKED",
-            order_label=_order_label(hypothesis.order, hypothesis.order_label_base),
+            order_label=_order_label(lang, hypothesis.order, hypothesis.order_label_base),
             matched=matched,
             possible=possible,
             match_rate=effective_match_rate,
@@ -987,6 +987,7 @@ def _build_order_findings(
         if focused_speed_band and not strongest_speed_band:
             strongest_speed_band = focused_speed_band
         actions = _finding_actions_for_source(
+            lang,
             hypothesis.suspected_source,
             strongest_location=strongest_location,
             strongest_speed_band=strongest_speed_band,
@@ -1032,7 +1033,7 @@ def _build_order_findings(
             "suspected_source": hypothesis.suspected_source,
             "evidence_summary": evidence,
             "frequency_hz_or_order": _order_label(
-                hypothesis.order, hypothesis.order_label_base
+                lang, hypothesis.order, hypothesis.order_label_base
             ),
             "amplitude_metric": {
                 "name": "strength_peak_band_rms_amp_g",
