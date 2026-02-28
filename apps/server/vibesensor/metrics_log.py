@@ -472,7 +472,7 @@ class MetricsLogger:
         top_peaks_raw = strength_metrics.get("top_peaks")
         top_peaks: list[dict[str, object]] = []
         if isinstance(top_peaks_raw, list):
-            for peak in top_peaks_raw[:5]:
+            for peak in top_peaks_raw[:8]:
                 if not isinstance(peak, dict):
                     continue
                 try:
@@ -508,6 +508,32 @@ class MetricsLogger:
             strength_floor_amp_g,
             top_peaks,
         )
+
+    @staticmethod
+    def _extract_axis_top_peaks(metrics: dict[str, object], axis: str) -> list[dict[str, object]]:
+        axis_metrics = metrics.get(axis)
+        if not isinstance(axis_metrics, dict):
+            return []
+        axis_peaks_raw = axis_metrics.get("peaks")
+        axis_peaks: list[dict[str, object]] = []
+        if isinstance(axis_peaks_raw, list):
+            for peak in axis_peaks_raw[:3]:
+                if not isinstance(peak, dict):
+                    continue
+                try:
+                    hz = float(peak.get("hz"))
+                    amp = float(peak.get("amp"))
+                except (TypeError, ValueError):
+                    continue
+                if (
+                    not math.isnan(hz)
+                    and not math.isnan(amp)
+                    and not math.isinf(hz)
+                    and not math.isinf(amp)
+                    and hz > 0
+                ):
+                    axis_peaks.append({"hz": hz, "amp": amp})
+        return axis_peaks
 
     @staticmethod
     def _dominant_hz_from_strength(
@@ -564,6 +590,9 @@ class MetricsLogger:
                 strength_floor_amp_g,
                 top_peaks,
             ) = self._extract_strength_data(metrics)
+            top_peaks_x = self._extract_axis_top_peaks(metrics, "x")
+            top_peaks_y = self._extract_axis_top_peaks(metrics, "y")
+            top_peaks_z = self._extract_axis_top_peaks(metrics, "z")
             dominant_hz = self._dominant_hz_from_strength(strength_metrics)
 
             sample_rate_hz = (
@@ -601,6 +630,9 @@ class MetricsLogger:
                 dominant_freq_hz=dominant_hz,
                 dominant_axis="combined",
                 top_peaks=top_peaks,
+                top_peaks_x=top_peaks_x,
+                top_peaks_y=top_peaks_y,
+                top_peaks_z=top_peaks_z,
                 vibration_strength_db=vibration_strength_db,
                 strength_bucket=strength_bucket,
                 strength_peak_amp_g=strength_peak_amp_g,

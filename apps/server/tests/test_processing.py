@@ -38,6 +38,28 @@ def test_processing_scales_to_g_detrends_dc_and_tracks_peak() -> None:
     assert any(abs(float(peak["hz"]) - 20.0) < 1.0 for peak in peaks)
 
 
+def test_processing_combined_strength_top_peaks_includes_eight_candidates() -> None:
+    sample_rate_hz = 800
+    fft_n = 4096
+    processor = SignalProcessor(
+        sample_rate_hz=sample_rate_hz,
+        waveform_seconds=8,
+        waveform_display_hz=100,
+        fft_n=fft_n,
+        spectrum_max_hz=200,
+    )
+
+    t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
+    freqs = [12.0, 20.0, 28.0, 36.0, 44.0, 52.0, 60.0, 68.0]
+    x = sum(0.02 * np.sin(2.0 * pi * freq * t) for freq in freqs).astype(np.float32)
+    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
+
+    metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
+    top_peaks = metrics["strength_metrics"]["top_peaks"]
+    assert len(top_peaks) >= 8
+
+
 def test_processing_window_seconds_uses_client_sample_rate() -> None:
     sample_rate_hz = 400
     processor = SignalProcessor(

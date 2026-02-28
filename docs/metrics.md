@@ -64,7 +64,10 @@ The canonical field written to `.jsonl` run files is `vibration_strength_db` (dB
 |-------|------|-------------|
 | `vibration_strength_db` | float | Canonical vibration strength (dB above noise floor) |
 | `strength_bucket` | str \| null | Severity band key (`l1`–`l5`) or `null` |
-| `top_peaks` | list | Top peaks: `[{hz, amp, vibration_strength_db, strength_bucket}]` |
+| `top_peaks` | list | Up to 8 combined-spectrum peaks: `[{hz, amp, vibration_strength_db, strength_bucket}]` |
+| `top_peaks_x` | list | Up to 3 X-axis peak summaries: `[{hz, amp}]` |
+| `top_peaks_y` | list | Up to 3 Y-axis peak summaries: `[{hz, amp}]` |
+| `top_peaks_z` | list | Up to 3 Z-axis peak summaries: `[{hz, amp}]` |
 | `dominant_freq_hz` | float | Frequency of dominant peak (Hz) |
 
 ### Removed fields (previously present, now deleted)

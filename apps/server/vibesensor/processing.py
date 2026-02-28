@@ -534,7 +534,7 @@ class SignalProcessor:
                 combined_spectrum_amp_g_values=self._float_list(combined_amp),
                 peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
                 peak_separation_hz=PEAK_SEPARATION_HZ,
-                top_n=5,
+                top_n=8,
             )
 
         return {
