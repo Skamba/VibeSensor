@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import math
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -11,6 +12,8 @@ from typing import Any
 from fastapi import WebSocket
 
 LOGGER = logging.getLogger(__name__)
+
+_WS_DEBUG = os.environ.get("VIBESENSOR_WS_DEBUG", "0") == "1"
 
 
 def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
@@ -169,6 +172,28 @@ class WebSocketHub:
                 ", ".join(repr(cid) for cid in failed_client_ids),
                 affected,
             )
+
+        # Dev-only instrumentation: log payload sizes when VIBESENSOR_WS_DEBUG=1.
+        if _WS_DEBUG and payload_cache:
+            for sel_id, text in payload_cache.items():
+                has_per_client_freq = False
+                try:
+                    parsed = json.loads(text)
+                    spectra = parsed.get("spectra")
+                    if isinstance(spectra, dict):
+                        for _cid, cs in (spectra.get("clients") or {}).items():
+                            if isinstance(cs, dict) and cs.get("freq"):
+                                has_per_client_freq = True
+                                break
+                except Exception:
+                    pass
+                LOGGER.debug(
+                    "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
+                    sel_id,
+                    len(text),
+                    len(conns),
+                    has_per_client_freq,
+                )
 
     async def run(
         self,

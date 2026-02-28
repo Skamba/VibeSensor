@@ -1,4 +1,5 @@
 import type { StrengthBand } from "./diagnostics";
+import { EXPECTED_SCHEMA_VERSION } from "./contracts/ws_payload_types";
 
 export type AdaptedSpectrum = {
   freq: number[];
@@ -102,10 +103,24 @@ function adaptRotationalSpeedValue(value: unknown): RotationalSpeedValue {
   };
 }
 
+let _schemaWarningLogged = false;
+
 export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPayload {
   if (!payload || typeof payload !== "object") {
     throw new Error("Missing websocket payload.");
   }
+
+  // Schema version check: warn once if unknown, but continue decoding.
+  const schemaVersion = typeof payload.schema_version === "string" ? payload.schema_version : undefined;
+  if (schemaVersion !== undefined && schemaVersion !== EXPECTED_SCHEMA_VERSION && !_schemaWarningLogged) {
+    _schemaWarningLogged = true;
+    console.error(
+      `[VibeSensor] Unknown WS payload schema_version "${schemaVersion}" ` +
+      `(expected "${EXPECTED_SCHEMA_VERSION}"). The dashboard may not display correctly. ` +
+      `Update the UI to match the server version.`,
+    );
+  }
+
   if (!payload.diagnostics || typeof payload.diagnostics !== "object") {
     throw new Error("Missing diagnostics payload from server.");
   }
@@ -167,24 +182,29 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
 
   if (payload.spectra && typeof payload.spectra === "object") {
     const spectraObj = payload.spectra as Record<string, unknown>;
-    const clients = spectraObj.clients;
-    if (clients && typeof clients === "object") {
+    // Shared frequency axis: used when all clients share the same axis.
+    const sharedFreq = asNumberArray(spectraObj.freq);
+    const clientsMap = spectraObj.clients;
+    if (clientsMap && typeof clientsMap === "object") {
       adapted.spectra = { clients: {} };
-      for (const [clientId, spectrum] of Object.entries(clients as Record<string, unknown>)) {
-      if (!spectrum || typeof spectrum !== "object") continue;
-      const specObj = spectrum as Record<string, unknown>;
-      const freq = asNumberArray(specObj.freq);
-      const combined = asNumberArray(specObj.combined_spectrum_amp_g);
-      const strengthMetrics = specObj.strength_metrics;
-      if (!freq.length || !combined.length || !strengthMetrics || typeof strengthMetrics !== "object") {
-        continue;  // skip this client's incomplete spectrum
+      for (const [clientId, spectrum] of Object.entries(clientsMap as Record<string, unknown>)) {
+        if (!spectrum || typeof spectrum !== "object") continue;
+        const specObj = spectrum as Record<string, unknown>;
+        // Prefer per-client freq (present only on mismatch), fall back to shared.
+        const rawPerClientFreq = specObj.freq;
+        const hasPerClientFreq = Array.isArray(rawPerClientFreq) && rawPerClientFreq.length > 0;
+        const freq = hasPerClientFreq ? asNumberArray(rawPerClientFreq) : sharedFreq;
+        const combined = asNumberArray(specObj.combined_spectrum_amp_g);
+        const strengthMetrics = specObj.strength_metrics;
+        if (!freq.length || !combined.length || !strengthMetrics || typeof strengthMetrics !== "object") {
+          continue;  // skip this client's incomplete spectrum
+        }
+        adapted.spectra.clients[clientId] = {
+          freq,
+          combined,
+          strength_metrics: strengthMetrics as Record<string, unknown>,
+        };
       }
-      adapted.spectra.clients[clientId] = {
-        freq,
-        combined,
-        strength_metrics: strengthMetrics as Record<string, unknown>,
-      };
-    }
     }
   }
 

@@ -1,0 +1,371 @@
+{
+  "$defs": {
+    "AlignmentInfo": {
+      "properties": {
+        "aligned": {
+          "title": "Aligned",
+          "type": "boolean"
+        },
+        "clock_synced": {
+          "title": "Clock Synced",
+          "type": "boolean"
+        },
+        "overlap_ratio": {
+          "title": "Overlap Ratio",
+          "type": "number"
+        },
+        "sensor_count": {
+          "title": "Sensor Count",
+          "type": "integer"
+        },
+        "shared_window_s": {
+          "title": "Shared Window S",
+          "type": "number"
+        }
+      },
+      "required": [
+        "overlap_ratio",
+        "aligned",
+        "shared_window_s",
+        "sensor_count",
+        "clock_synced"
+      ],
+      "title": "AlignmentInfo",
+      "type": "object"
+    },
+    "FrequencyWarning": {
+      "properties": {
+        "client_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Client Ids",
+          "type": "array"
+        },
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "client_ids"
+      ],
+      "title": "FrequencyWarning",
+      "type": "object"
+    },
+    "OrderBand": {
+      "properties": {
+        "center_hz": {
+          "title": "Center Hz",
+          "type": "number"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "tolerance": {
+          "title": "Tolerance",
+          "type": "number"
+        }
+      },
+      "required": [
+        "key",
+        "center_hz",
+        "tolerance"
+      ],
+      "title": "OrderBand",
+      "type": "object"
+    },
+    "RotationalSpeedValue": {
+      "properties": {
+        "mode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mode"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "rpm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rpm"
+        }
+      },
+      "title": "RotationalSpeedValue",
+      "type": "object"
+    },
+    "RotationalSpeeds": {
+      "properties": {
+        "basis_speed_source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Basis Speed Source"
+        },
+        "driveshaft": {
+          "$ref": "#/$defs/RotationalSpeedValue",
+          "default": {
+            "mode": null,
+            "reason": null,
+            "rpm": null
+          }
+        },
+        "engine": {
+          "$ref": "#/$defs/RotationalSpeedValue",
+          "default": {
+            "mode": null,
+            "reason": null,
+            "rpm": null
+          }
+        },
+        "order_bands": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/OrderBand"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Order Bands"
+        },
+        "wheel": {
+          "$ref": "#/$defs/RotationalSpeedValue",
+          "default": {
+            "mode": null,
+            "reason": null,
+            "rpm": null
+          }
+        }
+      },
+      "title": "RotationalSpeeds",
+      "type": "object"
+    },
+    "SpectraPayload": {
+      "additionalProperties": true,
+      "description": "Top-level spectra block included on heavy ticks.",
+      "properties": {
+        "alignment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AlignmentInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "clients": {
+          "additionalProperties": {
+            "$ref": "#/$defs/SpectrumSeries"
+          },
+          "default": {},
+          "title": "Clients",
+          "type": "object"
+        },
+        "freq": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Freq",
+          "type": "array"
+        },
+        "warning": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FrequencyWarning"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "SpectraPayload",
+      "type": "object"
+    },
+    "SpectrumSeries": {
+      "additionalProperties": true,
+      "description": "Per-client spectrum data sent on heavy ticks.",
+      "properties": {
+        "combined_spectrum_amp_g": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Combined Spectrum Amp G",
+          "type": "array"
+        },
+        "freq": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Freq"
+        },
+        "strength_metrics": {
+          "additionalProperties": true,
+          "default": {},
+          "title": "Strength Metrics",
+          "type": "object"
+        },
+        "x": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "X",
+          "type": "array"
+        },
+        "y": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Y",
+          "type": "array"
+        },
+        "z": {
+          "default": [],
+          "items": {
+            "type": "number"
+          },
+          "title": "Z",
+          "type": "array"
+        }
+      },
+      "title": "SpectrumSeries",
+      "type": "object"
+    }
+  },
+  "additionalProperties": true,
+  "description": "Root model for every WebSocket message pushed to the UI.",
+  "properties": {
+    "clients": {
+      "default": [],
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Clients",
+      "type": "array"
+    },
+    "diagnostics": {
+      "additionalProperties": true,
+      "default": {},
+      "title": "Diagnostics",
+      "type": "object"
+    },
+    "rotational_speeds": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RotationalSpeeds"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "selected_client_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Client Id"
+    },
+    "server_time": {
+      "title": "Server Time",
+      "type": "string"
+    },
+    "spectra": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SpectraPayload"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "speed_mps": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Speed Mps"
+    }
+  },
+  "required": [
+    "server_time"
+  ],
+  "title": "LiveWsPayload",
+  "type": "object"
+}

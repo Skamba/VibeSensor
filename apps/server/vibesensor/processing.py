@@ -614,8 +614,11 @@ class SignalProcessor:
     @_synchronized
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
         shared_freq: np.ndarray | None = None
-        clients: dict[str, dict[str, list[float]]] = {}
+        clients: dict[str, dict[str, Any]] = {}
         mismatch_ids: list[str] = []
+        # Track per-client freq arrays so we can decide later whether to
+        # include them per-client or only at the top level.
+        per_client_freq: dict[str, np.ndarray] = {}
 
         # --- Compute per-sensor time ranges for alignment metadata -----------
         ranges: list[tuple[str, float, float]] = []
@@ -637,9 +640,8 @@ class SignalProcessor:
                 atol=1e-6,
             ):
                 mismatch_ids.append(client_id)
-            client_payload = self.spectrum_payload(client_id)
-            client_payload["freq"] = self._float_list(client_freq)
-            clients[client_id] = client_payload
+            per_client_freq[client_id] = client_freq
+            clients[client_id] = self.spectrum_payload(client_id)
 
             tr = self._analysis_time_range(buf)
             if tr is not None:
@@ -649,8 +651,19 @@ class SignalProcessor:
                 else:
                     all_synced = False
 
+        # When all clients share the same frequency axis, emit a single
+        # top-level "freq" and omit per-client "freq" to reduce payload size.
+        if mismatch_ids:
+            # Axes differ: include per-client freq and clear shared.
+            for cid, freq_arr in per_client_freq.items():
+                clients[cid]["freq"] = self._float_list(freq_arr)
+            shared_freq_list: list[float] = []
+        else:
+            # All axes match: shared freq only, no per-client duplication.
+            shared_freq_list = self._float_list(shared_freq) if shared_freq is not None else []
+
         payload: dict[str, Any] = {
-            "freq": self._float_list(shared_freq) if shared_freq is not None else [],
+            "freq": shared_freq_list,
             "clients": clients,
         }
         if mismatch_ids:
@@ -659,7 +672,6 @@ class SignalProcessor:
                 "message": "Per-client frequency axes returned due to sample-rate mismatch.",
                 "client_ids": sorted(mismatch_ids),
             }
-            payload["freq"] = []
 
         # --- Alignment metadata ----------------------------------------------
         if len(ranges) >= 2:

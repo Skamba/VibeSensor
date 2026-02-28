@@ -272,6 +272,8 @@ class RuntimeState:
         return diagnostics
 
     def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
+        from .ws_models import SCHEMA_VERSION
+
         clients = self.registry.snapshot_for_api()
         active = selected_client
         if active is None and clients:
@@ -284,6 +286,7 @@ class RuntimeState:
         resolution = self.gps_monitor.resolve_speed()
         speed_mps = resolution.speed_mps
         payload: dict[str, Any] = {
+            "schema_version": SCHEMA_VERSION,
             "server_time": datetime.now(UTC).isoformat(),
             "speed_mps": speed_mps,
             "clients": clients,
