@@ -193,7 +193,8 @@ def create_router(state: RuntimeState) -> APIRouter:
         # Prune stale locks that no longer have a cache entry or active holder
         if len(report_pdf_locks) > _REPORT_PDF_CACHE_MAX_ENTRIES * 2:
             stale_keys = [
-                k for k, v in report_pdf_locks.items()
+                k
+                for k, v in report_pdf_locks.items()
                 if k not in report_pdf_cache and not v.locked()
             ]
             for k in stale_keys:

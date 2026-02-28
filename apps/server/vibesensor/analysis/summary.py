@@ -461,7 +461,14 @@ def _prepare_speed_and_phases(
         speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
     )
     per_sample_phases, phase_segments = _segment_run_phases(samples)
-    return speed_values, speed_stats, speed_non_null_pct, speed_sufficient, per_sample_phases, phase_segments
+    return (
+        speed_values,
+        speed_stats,
+        speed_non_null_pct,
+        speed_sufficient,
+        per_sample_phases,
+        phase_segments,
+    )
 
 
 def build_findings_for_samples(
@@ -715,9 +722,14 @@ def summarize_run_data(
     run_id, start_ts, end_ts, duration_s = _compute_run_timing(metadata, samples, file_name)
 
     # --- Speed & phase (shared computation) ---
-    speed_values, speed_stats, speed_non_null_pct, speed_sufficient, _per_sample_phases, phase_segments = (
-        _prepare_speed_and_phases(samples)
-    )
+    (
+        speed_values,
+        speed_stats,
+        speed_non_null_pct,
+        speed_sufficient,
+        _per_sample_phases,
+        phase_segments,
+    ) = _prepare_speed_and_phases(samples)
     run_noise_baseline_g = _run_noise_baseline_g(samples)
 
     phase_info = _phase_summary(phase_segments)

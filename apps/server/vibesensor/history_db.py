@@ -510,8 +510,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         """
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ? "
-                "WHERE status = 'recording'",
+                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
                 ("Recovered stale recording during startup",),
             )
             return cur.rowcount
@@ -520,8 +519,7 @@ CREATE TABLE IF NOT EXISTS client_names (
         """Return run IDs stuck in 'analyzing' state (e.g. after a crash)."""
         with self._cursor(commit=False) as cur:
             cur.execute(
-                "SELECT run_id FROM runs WHERE status = 'analyzing' "
-                "ORDER BY created_at ASC"
+                "SELECT run_id FROM runs WHERE status = 'analyzing' ORDER BY created_at ASC"
             )
             return [row[0] for row in cur.fetchall()]
 
