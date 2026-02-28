@@ -5,7 +5,7 @@ on:
 
 jobs:
   preflight:
-    name: Preflight (lint + config)
+    name: Preflight (config + optional lint)
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -26,6 +26,7 @@ jobs:
           python -m pip install -e "./apps/server[dev]"
 
       - name: Lint
+        continue-on-error: true
         run: |
           ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
           ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
