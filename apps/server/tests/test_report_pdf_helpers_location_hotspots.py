@@ -15,6 +15,10 @@ def _tr(key: str, **kwargs: object) -> str:
         "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB": (
             "Peak at {strongest_loc} ({strongest_peak:.1f} dB)."
         ),
+        "ORDER_MATCHED_COMPARISON_SUMMARY": (
+            "Order-matched comparison: strongest response is at "
+            "{strongest_loc} ({strongest_peak:.4f} g)."
+        ),
         "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST": "",
     }
     template = templates[key]

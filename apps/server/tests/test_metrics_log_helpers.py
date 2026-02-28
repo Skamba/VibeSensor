@@ -402,9 +402,14 @@ def test_history_run_created_on_first_sample_append(tmp_path: Path) -> None:
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono, generation = snapshot
 
-    timed_out = logger._append_records(run_id, start_time_utc, start_mono)
+    timed_out = logger._append_records(
+        run_id,
+        start_time_utc,
+        start_mono,
+        session_generation=generation,
+    )
 
     assert timed_out is False
     assert history_db.create_calls == [(run_id, start_time_utc)]
@@ -431,8 +436,8 @@ def test_finalize_refreshes_run_metadata_from_latest_settings(tmp_path: Path) ->
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono, generation = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
     settings.values["tire_width_mm"] = 315.0
     logger.stop_logging()
@@ -462,9 +467,9 @@ def test_append_records_surfaces_create_run_failure_in_status(tmp_path: Path) ->
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono, generation = snapshot
 
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
     status = logger.status()
 
     assert status["write_error"] is not None
@@ -491,14 +496,14 @@ def test_append_records_clears_write_error_after_successful_retry(tmp_path: Path
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono, generation = snapshot
 
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
     failed_status = logger.status()
     assert failed_status["write_error"] is not None
     assert "history append_samples failed" in str(failed_status["write_error"])
 
-    logger._append_records(run_id, start_time_utc, start_mono)
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
     recovered_status = logger.status()
     assert recovered_status["write_error"] is None
 
@@ -520,10 +525,15 @@ def test_append_records_reports_timeout_when_no_data_for_threshold(tmp_path: Pat
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono, generation = snapshot
     logger._last_data_progress_mono_s = 0.0
 
-    timed_out = logger._append_records(run_id, start_time_utc, start_mono)
+    timed_out = logger._append_records(
+        run_id,
+        start_time_utc,
+        start_mono,
+        session_generation=generation,
+    )
 
     assert timed_out is True
 
@@ -547,11 +557,16 @@ def test_append_records_does_not_timeout_on_brief_gap(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono, generation = snapshot
     monkeypatch.setattr("vibesensor.metrics_log.time.monotonic", lambda: 100.0)
     logger._last_data_progress_mono_s = 95.0
 
-    timed_out = logger._append_records(run_id, start_time_utc, start_mono)
+    timed_out = logger._append_records(
+        run_id,
+        start_time_utc,
+        start_mono,
+        session_generation=generation,
+    )
 
     assert timed_out is False
 
@@ -582,8 +597,8 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono, generation = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
     def _slow_summary(*args, **kwargs):
         time.sleep(0.20)
@@ -619,8 +634,8 @@ def test_post_analysis_failure_sets_persistent_error_status(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono, generation = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
     def _failing_summary(*args, **kwargs):
         raise RuntimeError("analysis exploded")
@@ -807,8 +822,8 @@ def test_post_analysis_uses_run_language_from_metadata(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono, generation = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return {"lang": lang, "row_count": len(samples)}
@@ -840,8 +855,8 @@ def test_db_persists_when_jsonl_disabled(tmp_path: Path) -> None:
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
-    logger._append_records(run_id, start_time_utc, start_mono)
+    run_id, start_time_utc, start_mono, generation = snapshot
+    logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
     logger.stop_logging()
 
     assert history_db.get_run(run_id) is not None
@@ -872,9 +887,9 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     logger.start_logging()
     snapshot = logger._session_snapshot()
     assert snapshot is not None
-    run_id, start_time_utc, start_mono = snapshot
+    run_id, start_time_utc, start_mono, generation = snapshot
     for _ in range(cap + 50):
-        logger._append_records(run_id, start_time_utc, start_mono)
+        logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return {"row_count": len(samples), "run_suitability": []}

@@ -7,22 +7,28 @@ export type AdaptedSpectrum = {
 };
 
 export type ClientInfo = {
-  client_id: string;
+  id: string;
   name: string;
-  last_seen_ms: number;
+  last_seen_age_ms: number;
   sample_rate_hz: number;
-  location_code: string;
+  location: string;
   firmware_version: string;
   [key: string]: unknown;
 };
 
 export type DiagnosticEvent = {
-  source: string;
-  severity: string;
-  client_id: string;
+  event_id: string;
+  kind: string;
+  class_key: string;
+  severity_key: string;
+  sensor_id: string;
+  sensor_label: string;
+  sensor_labels: string[];
+  sensor_count: number;
   peak_hz: number;
-  strength_db: number;
-  ts_ms: number;
+  peak_amp: number;
+  peak_amp_g: number;
+  vibration_strength_db: number;
   [key: string]: unknown;
 };
 
@@ -111,8 +117,19 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
     // No strength bands yet — return payload with empty bands.
   }
 
+  const rawClients = Array.isArray(payload.clients) ? (payload.clients as Record<string, unknown>[]) : [];
+  // Remap server field names to UI-internal field names
+  const clients: ClientInfo[] = rawClients.map((c) => {
+    const mapped = { ...c } as ClientInfo;
+    // Server sends "location", UI uses "location_code" in ClientRow
+    if ("location" in c && !("location_code" in c)) {
+      (mapped as unknown as Record<string, unknown>).location_code = c.location;
+    }
+    return mapped;
+  });
+
   const adapted: AdaptedPayload = {
-    clients: Array.isArray(payload.clients) ? (payload.clients as ClientInfo[]) : [],
+    clients,
     speed_mps: typeof payload.speed_mps === "number" ? payload.speed_mps : null,
     rotational_speeds: null,
     diagnostics: {

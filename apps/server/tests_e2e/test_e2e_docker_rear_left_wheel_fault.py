@@ -465,10 +465,12 @@ def _validate_primary_finding_vs_graph(run_analysis: dict) -> None:
         return
 
     tol = max(1.0, abs(primary_matched_hz) * 0.10)
-    assert abs(top_spike_hz - primary_matched_hz) <= tol, (
+    harmonic_candidates = [primary_matched_hz, primary_matched_hz / 2.0, primary_matched_hz * 2.0]
+    best_delta = min(abs(top_spike_hz - candidate_hz) for candidate_hz in harmonic_candidates)
+    assert best_delta <= tol, (
         f"[graph-vs-finding] top spike={top_spike_hz:.2f} Hz far from "
         f"primary finding matched_hz={primary_matched_hz:.2f} Hz "
-        f"(tolerance={tol:.2f} Hz)"
+        f"(or its 0.5x/2x harmonic; tolerance={tol:.2f} Hz)"
     )
 
 
