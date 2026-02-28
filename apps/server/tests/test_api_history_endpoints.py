@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import zipfile
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
 from unittest.mock import patch
@@ -77,6 +78,10 @@ class _FakeHistoryDB:
             return []
         return list(self.samples)
 
+    @contextmanager
+    def read_transaction(self):
+        yield
+
     def list_runs(self) -> list[dict[str, Any]]:
         return []
 
@@ -90,6 +95,11 @@ class _FakeHistoryDB:
 
     def delete_run(self, run_id: str) -> bool:
         return False
+
+    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        if run_id != "run-1":
+            return False, "not_found"
+        return True, None
 
 
 @dataclass
@@ -384,6 +394,25 @@ async def test_history_export_streams_zip_with_json_and_csv() -> None:
 
 
 @pytest.mark.asyncio
+async def test_history_export_csv_nested_values_are_json() -> None:
+    """Nested dicts/lists in CSV cells must be valid JSON, not Python repr."""
+    router, _ = _make_router_and_state(language="en", sample_count=3)
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
+    response = await endpoint("run-1")
+    with zipfile.ZipFile(io.BytesIO(response.body), "r") as archive:
+        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+    assert len(rows) == 3
+    # The top_peaks column contains a list of dicts.  Before the fix it was
+    # Python repr (single quotes); now it must be valid JSON.
+    for row in rows:
+        raw = row.get("top_peaks", "")
+        if raw:
+            parsed = json.loads(raw)  # must not raise
+            assert isinstance(parsed, list)
+            assert all(isinstance(p, dict) for p in parsed)
+
+
+@pytest.mark.asyncio
 async def test_history_export_reads_samples_twice_without_buffering_rows() -> None:
     """Export scans samples twice (schema + write) but does not buffer all rows."""
     router, state = _make_router_and_state(language="en", sample_count=50)
@@ -443,6 +472,11 @@ async def test_delete_active_run_returns_409() -> None:
         def get_active_run_id(self) -> str | None:
             return "run-1"
 
+        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+            if run_id == "run-1":
+                return False, "active"
+            return False, "not_found"
+
     metadata = {
         "run_id": "run-1",
         "start_time_utc": "2026-01-01T00:00:00Z",
@@ -484,6 +518,11 @@ async def test_delete_analyzing_run_returns_409() -> None:
             if run_id == "run-1":
                 return "analyzing"
             return None
+
+        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+            if run_id == "run-1":
+                return False, "analyzing"
+            return False, "not_found"
 
         def delete_run(self, run_id: str) -> bool:  # pragma: no cover - defensive
             raise AssertionError("delete_run should not be called for analyzing run")

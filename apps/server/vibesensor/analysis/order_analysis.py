@@ -110,14 +110,16 @@ def _order_hypotheses() -> list[_OrderHypothesis]:
 
 def _wheel_focus_from_location(location: str) -> dict[str, str]:
     """Return an i18n reference for the wheel focus label."""
-    token = location.strip().lower()
-    if "front-left wheel" in token:
+    # Normalize hyphens/underscores to spaces for robust matching against
+    # label_for_code() output which uses spaces (e.g. "Front Left Wheel").
+    token = location.strip().lower().replace("-", " ").replace("_", " ")
+    if "front left wheel" in token:
         return {"_i18n_key": "WHEEL_FOCUS_FRONT_LEFT"}
-    if "front-right wheel" in token:
+    if "front right wheel" in token:
         return {"_i18n_key": "WHEEL_FOCUS_FRONT_RIGHT"}
-    if "rear-left wheel" in token:
+    if "rear left wheel" in token:
         return {"_i18n_key": "WHEEL_FOCUS_REAR_LEFT"}
-    if "rear-right wheel" in token:
+    if "rear right wheel" in token:
         return {"_i18n_key": "WHEEL_FOCUS_REAR_RIGHT"}
     if "rear" in token or "trunk" in token:
         return {"_i18n_key": "WHEEL_FOCUS_REAR"}

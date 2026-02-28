@@ -131,10 +131,6 @@
     "en": "Vibration amplitude vs time",
     "nl": "Trillingsamplitude versus tijd"
   },
-  "AMP_G": {
-    "en": "Amp (g)",
-    "nl": "Amp (g)"
-  },
   "APPENDIX_A_DATA_QUALITY_CHECKS": {
     "en": "Appendix A: Data Quality Checks",
     "nl": "Bijlage A: Datakwaliteitscontroles"
@@ -436,8 +432,8 @@
     "nl": "{order_label} gevolgd over {matched}/{possible} samples (trefkans {match_rate:.0%}, gemiddelde relatieve fout {mean_rel_err:.3f}, referentie {ref_text})."
   },
   "EVIDENCE_PEAK_PRESENT": {
-    "en": "{freq:.1f} Hz peak present in {pct:.0%} of samples (p95 amplitude {p95:.4f} {units}, burstiness {burst:.1f}×, classification: {cls}).",
-    "nl": "{freq:.1f} Hz piek aanwezig in {pct:.0%} van de samples (p95 amplitude {p95:.4f} {units}, impulsiviteit {burst:.1f}×, classificatie: {cls})."
+    "en": "{freq:.1f} Hz peak present in {pct:.0%} of samples (p95 amplitude {p95:.1f} {units}, burstiness {burst:.1f}×, classification: {cls}).",
+    "nl": "{freq:.1f} Hz piek aanwezig in {pct:.0%} van de samples (p95 amplitude {p95:.1f} {units}, impulsiviteit {burst:.1f}×, classificatie: {cls})."
   },
   "EVIDENCE_SNAPSHOT": {
     "en": "Evidence snapshot",
@@ -639,18 +635,6 @@
     "en": "Matched system(s)",
     "nl": "Overeenkomende systemen"
   },
-  "MAX_AMPLITUDE_G": {
-    "en": "Max Strength (dB)",
-    "nl": "Maximale sterkte (dB)"
-  },
-  "MEAN_AMPLITUDE_G": {
-    "en": "Mean Strength (dB)",
-    "nl": "Gemiddelde sterkte (dB)"
-  },
-  "MEAN_G": {
-    "en": "Mean (g)",
-    "nl": "Gemiddelde (g)"
-  },
   "MEASURED_ENGINE_RPM": {
     "en": "measured engine RPM",
     "nl": "gemeten motortoerental"
@@ -851,14 +835,6 @@
     "en": "Pattern",
     "nl": "Patroon"
   },
-  "PEAK_AMPLITUDE_G": {
-    "en": "Peak Amplitude (g)",
-    "nl": "Piekamplitude (g)"
-  },
-  "PEAK_AMP_G": {
-    "en": "Peak Amp (g)",
-    "nl": "Piekamplitude (g)"
-  },
   "PEAK_DB": {
     "en": "Peak (dB)",
     "nl": "Piek (dB)"
@@ -926,10 +902,6 @@
   "PLOT_SERIES_MEAN_AMPLITUDE": {
     "en": "mean amplitude",
     "nl": "gemiddelde amplitude"
-  },
-  "PLOT_Y_MEAN_AMPLITUDE_G": {
-    "en": "mean amplitude (g)",
-    "nl": "gemiddelde amplitude (g)"
   },
   "PRESENCE": {
     "en": "presence",

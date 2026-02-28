@@ -168,11 +168,9 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
   if (payload.spectra && typeof payload.spectra === "object") {
     const spectraObj = payload.spectra as Record<string, unknown>;
     const clients = spectraObj.clients;
-    if (!clients || typeof clients !== "object") {
-      throw new Error("Missing spectra.clients payload from server.");
-    }
-    adapted.spectra = { clients: {} };
-    for (const [clientId, spectrum] of Object.entries(clients as Record<string, unknown>)) {
+    if (clients && typeof clients === "object") {
+      adapted.spectra = { clients: {} };
+      for (const [clientId, spectrum] of Object.entries(clients as Record<string, unknown>)) {
       if (!spectrum || typeof spectrum !== "object") continue;
       const specObj = spectrum as Record<string, unknown>;
       const freq = asNumberArray(specObj.freq);
@@ -186,6 +184,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
         combined,
         strength_metrics: strengthMetrics as Record<string, unknown>,
       };
+    }
     }
   }
 

@@ -254,7 +254,10 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     const validBandwidths = wheelBandwidth > 0 && wheelBandwidth <= 40 && driveshaftBandwidth > 0 && driveshaftBandwidth <= 40 && engineBandwidth > 0 && engineBandwidth <= 40;
     const validUncertainty = speedUncertainty >= 0 && speedUncertainty <= 20 && tireDiameterUncertainty >= 0 && tireDiameterUncertainty <= 20 && finalDriveUncertainty >= 0 && finalDriveUncertainty <= 10 && gearUncertainty >= 0 && gearUncertainty <= 20;
     const validBandLimits = minAbsBandHz >= 0 && minAbsBandHz <= 10 && maxBandHalfWidth > 0 && maxBandHalfWidth <= 25;
-    if (!validBandwidths || !validUncertainty || !validBandLimits) return;
+    if (!validBandwidths || !validUncertainty || !validBandLimits) {
+      window.alert(t("settings.validation_error"));
+      return;
+    }
     state.vehicleSettings.wheel_bandwidth_pct = wheelBandwidth;
     state.vehicleSettings.driveshaft_bandwidth_pct = driveshaftBandwidth;
     state.vehicleSettings.engine_bandwidth_pct = engineBandwidth;
@@ -274,7 +277,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     radios.forEach((r) => { if (r.checked) src = r.value; });
     const manual = Number(els.manualSpeedInput?.value);
     state.speedSource = src;
-    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 ? manual : null;
+    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null;
     void syncSpeedSourceToServer();
     ctx.renderSpeedReadout();
   }
@@ -282,7 +285,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   function saveHeaderManualSpeedFromInput(): void {
     const manual = Number(els.headerManualSpeedInput?.value);
     state.speedSource = "manual";
-    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 ? manual : null;
+    state.manualSpeedKph = Number.isFinite(manual) && manual > 0 && manual <= 500 ? manual : null;
     syncSpeedSourceInputs();
     void syncSpeedSourceToServer();
     ctx.renderSpeedReadout();

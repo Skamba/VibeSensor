@@ -432,7 +432,9 @@ class TestBuildPersistentPeakFindings:
             and str(f.get("peak_classification") or "") in {"patterned", "persistent"}
         ]
         assert candidates
-        assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.35
+        # Cap aligned with order-finding negligible cap (0.40) so that weak
+        # order findings always suppress persistent peaks at the same frequency.
+        assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.40
 
     def test_single_thud_classified_as_transient(self) -> None:
         """A peak that appears in only 1 of 20 samples should be transient."""

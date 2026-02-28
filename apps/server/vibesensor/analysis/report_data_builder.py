@@ -151,7 +151,6 @@ def _top_strength_values(
     This ensures the displayed strength traces to the same finding that is shown
     as the primary system rather than a potentially-filtered raw top_cause.
     """
-    db_value: float | None = None
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
     for cause in causes:
         if not isinstance(cause, dict):
@@ -171,9 +170,7 @@ def _top_strength_values(
         if isinstance(row, dict)
     ]
     sensor_db = max((value for value in sensor_rows if value is not None), default=None)
-    if db_value is None and sensor_db is not None:
-        db_value = sensor_db
-    return db_value
+    return sensor_db
 
 
 def _dominant_phase(phase_info: dict | None) -> str | None:

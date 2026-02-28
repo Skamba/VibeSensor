@@ -86,7 +86,8 @@ class HistoryDB:
     # -- lifecycle ------------------------------------------------------------
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()
 
     @contextmanager
     def _cursor(self, *, commit: bool = True):
@@ -228,6 +229,49 @@ class HistoryDB:
             )
             return cur.rowcount > 0
 
+    def finalize_run_with_metadata(
+        self, run_id: str, end_time_utc: str, metadata: dict[str, Any]
+    ) -> None:
+        """Atomically update metadata and transition status to 'analyzing'.
+
+        Combines :meth:`update_run_metadata` and :meth:`finalize_run` into a
+        single transaction so that a crash between the two cannot leave the
+        run in an inconsistent state.
+        """
+        now = datetime.now(UTC).isoformat()
+        with self._cursor() as cur:
+            cur.execute(
+                "UPDATE runs SET metadata_json = ?, status = 'analyzing', "
+                "end_time_utc = ?, analysis_started_at = ? "
+                "WHERE run_id = ? AND status = 'recording'",
+                (self._safe_json_dumps(metadata), end_time_utc, now, run_id),
+            )
+            if cur.rowcount == 0:
+                LOGGER.warning(
+                    "finalize_run_with_metadata for run %s: no rows updated "
+                    "(run missing or not in 'recording' state)",
+                    run_id,
+                )
+
+    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+        """Atomically check status and delete a run.
+
+        Returns ``(True, None)`` on success, ``(False, reason)`` if the
+        run cannot be deleted because it is recording or analyzing.
+        """
+        with self._cursor() as cur:
+            cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
+            row = cur.fetchone()
+            if row is None:
+                return False, "not_found"
+            status = row[0]
+            if status == "recording":
+                return False, "active"
+            if status == "analyzing":
+                return False, "analyzing"
+            cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
+            return cur.rowcount > 0, None
+
     def store_analysis(self, run_id: str, analysis: dict[str, Any]) -> None:
         now = datetime.now(UTC).isoformat()
         with self._cursor() as cur:
@@ -256,7 +300,8 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ?, "
-                "analysis_completed_at = ? WHERE run_id = ?",
+                "analysis_completed_at = ? "
+                "WHERE run_id = ? AND status NOT IN ('complete')",
                 (error, now, run_id),
             )
 

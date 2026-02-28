@@ -54,7 +54,7 @@ export function startUiApp(): void {
   function renderSpeedReadout(): void {
     if (!els.speed) return;
     const unitLabel = selectedSpeedUnitLabel();
-    if (typeof state.speedMps === "number") {
+    if (typeof state.speedMps === "number" && Number.isFinite(state.speedMps)) {
       const value = speedValueInSelectedUnit(state.speedMps);
       const isManualSource = state.speedSource === "manual"
         && typeof state.manualSpeedKph === "number"
@@ -415,6 +415,8 @@ export function startUiApp(): void {
     state.clients = adapted.clients as unknown as ClientRow[];
     if (adapted.spectra) {
       state.spectra = { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, AdaptedSpectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics as Record<string, any>, combined: spectrum.combined }])) };
+    } else {
+      state.spectra = { clients: {} };
     }
     sensorsFeature.updateClientSelection();
     sensorsFeature.maybeRenderSensorsSettingsList();
@@ -422,7 +424,11 @@ export function startUiApp(): void {
     if (prevSelected !== state.selectedClientId) sendSelection();
     state.speedMps = adapted.speed_mps;
     latestRotationalSpeeds = adapted.rotational_speeds;
-    if (adapted.spectra) state.hasSpectrumData = Object.values(adapted.spectra.clients).some((clientSpec: AdaptedSpectrum) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
+    if (adapted.spectra) {
+      state.hasSpectrumData = Object.values(adapted.spectra.clients).some((clientSpec: AdaptedSpectrum) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
+    } else {
+      state.hasSpectrumData = false;
+    }
     const hasFreshFrames = diagnosticsFeature.hasFreshSensorFrames(state.clients);
     diagnosticsFeature.applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
@@ -444,7 +450,18 @@ export function startUiApp(): void {
     state.ws = new WsClient({
       url: `${proto}//${window.location.host}/ws`, staleAfterMs: 10000,
       onPayload: (payload) => { state.hasReceivedPayload = true; state.pendingPayload = payload; queueRender(); },
-      onStateChange: (nextState) => { state.wsState = nextState; renderWsState(); updateSpectrumOverlay(); if (nextState === "connected" || nextState === "no_data") sendSelection(); },
+      onStateChange: (nextState) => {
+        state.wsState = nextState;
+        renderWsState();
+        updateSpectrumOverlay();
+        if (nextState === "connected" || nextState === "no_data") {
+          // Reset stale live-session counters so a server restart doesn't
+          // cause hasFreshSensorFrames() to return false indefinitely.
+          state.strengthFrameTotalsByClient = {};
+          state.carMapSamples = [];
+          sendSelection();
+        }
+      },
     });
     state.ws.connect();
   }
