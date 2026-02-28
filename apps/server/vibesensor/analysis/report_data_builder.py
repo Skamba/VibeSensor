@@ -63,6 +63,18 @@ def _resolve_i18n(lang: str, value: object) -> str:
     for pk, pv in params.items():
         if _is_i18n_ref(pv):
             resolved_params[pk] = _resolve_i18n(lang, pv)
+        elif pk == "source" and isinstance(pv, str):
+            # Translate known source codes to human-readable form
+            resolved_params[pk] = _human_source(pv, tr=lambda k, **kw: _tr(lang, k, **kw))
+        elif pk == "phase" and isinstance(pv, str):
+            # Translate phase codes to human-readable form
+            _phase_map = {
+                "acceleration": "DRIVING_PHASE_ACCELERATION",
+                "deceleration": "DRIVING_PHASE_DECELERATION",
+                "coast_down": "DRIVING_PHASE_COAST_DOWN",
+            }
+            i18n_key = _phase_map.get(pv)
+            resolved_params[pk] = _tr(lang, i18n_key) if i18n_key else pv
         else:
             resolved_params[pk] = pv
     result = _tr(lang, key, **resolved_params)
@@ -340,6 +352,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
     if not isinstance(origin, dict):
         origin = {}
     origin_location = str(origin.get("location") or "").strip()
+    # Translate bare "unknown" from language-neutral analysis to localized form
+    if origin_location.lower() == "unknown":
+        origin_location = ""
 
     # -- Phase info --
     raw_phase_info = summary.get("phase_info")
@@ -421,8 +436,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
             src_human = _human_source(src, tr=tr)
             location = str(cause.get("strongest_location") or tr("UNKNOWN"))
             sigs = cause.get("signatures_observed", [])
-            pattern_text = ", ".join(str(s) for s in sigs[:3]) if sigs else tr("UNKNOWN")
-            order_label = str(sigs[0]) if sigs else None
+            # Translate language-neutral order labels (e.g. "1x wheel" → "1x wheel order")
+            sigs_human = [_order_label_human(lang, str(s)) for s in sigs[:3]] if sigs else []
+            pattern_text = ", ".join(sigs_human) if sigs_human else tr("UNKNOWN")
+            order_label = sigs_human[0] if sigs_human else None
             parts_list = parts_for_pattern(str(src), order_label, lang=lang)
             _c_conf_val = _as_float(cause.get("confidence"))
             if _c_conf_val is None:
@@ -536,7 +553,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         else ""
     )
     sigs_why = primary_candidate.get("signatures_observed", []) if primary_candidate else []
-    order_lbl_why = str(sigs_why[0]) if sigs_why else None
+    order_lbl_why = _order_label_human(lang, str(sigs_why[0])) if sigs_why else None
     why_text = why_parts_listed(src_why, order_lbl_why, lang=lang)
 
     warning_text = cert_reason if weak_spatial else None
