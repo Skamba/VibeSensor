@@ -601,8 +601,8 @@ class TestUpdateManagerAsync:
 
         with (
             patch("shutil.which", _mock_which),
-            patch("vibesensor.update_manager.DNS_READY_MIN_WAIT_S", 0.05),
-            patch("vibesensor.update_manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.update.manager.DNS_READY_MIN_WAIT_S", 0.05),
+            patch("vibesensor.update.manager.DNS_RETRY_INTERVAL_S", 0.01),
             patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
             patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
@@ -649,8 +649,8 @@ class TestUpdateManagerAsync:
 
         with (
             patch("shutil.which", _mock_which),
-            patch("vibesensor.update_manager.DNS_READY_MIN_WAIT_S", 0.2),
-            patch("vibesensor.update_manager.DNS_RETRY_INTERVAL_S", 0.01),
+            patch("vibesensor.update.manager.DNS_READY_MIN_WAIT_S", 0.2),
+            patch("vibesensor.update.manager.DNS_RETRY_INTERVAL_S", 0.01),
             patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
             patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
@@ -887,7 +887,7 @@ class TestUpdateManagerAsync:
 
         with (
             patch("shutil.which", _mock_which),
-            patch("vibesensor.update_manager.UPDATE_TIMEOUT_S", 0.5),
+            patch("vibesensor.update.manager.UPDATE_TIMEOUT_S", 0.5),
         ):
             mgr.start("TestNet", "pass")
             assert mgr._task is not None
@@ -996,11 +996,11 @@ class TestUpdateManagerAsync:
 
         with (
             patch(
-                "vibesensor.update_manager.SERVICE_CONTRACTS_DIR",
+                "vibesensor.update.manager.SERVICE_CONTRACTS_DIR",
                 str(contracts_dir),
             ),
             patch(
-                "vibesensor.update_manager.SERVICE_ENV_DROPIN",
+                "vibesensor.update.manager.SERVICE_ENV_DROPIN",
                 str(tmp_path / "10-contracts-dir.conf"),
             ),
         ):
