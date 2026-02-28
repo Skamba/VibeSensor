@@ -352,7 +352,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
     if not isinstance(origin, dict):
         origin = {}
     origin_location = str(origin.get("location") or "").strip()
-    # Translate bare "unknown" from language-neutral analysis to localized form
+    # The analysis layer stores "unknown" as a language-neutral placeholder.
+    # Clear it so the report builder falls through to tr("UNKNOWN") which
+    # produces the properly localised label (e.g. "Onbekend" in NL).
     if origin_location.lower() == "unknown":
         origin_location = ""
 

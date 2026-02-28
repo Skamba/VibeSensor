@@ -55,6 +55,10 @@ def _normalize_lang(lang: object) -> str:
     raw = str(lang or "").strip().lower()
     return "nl" if raw.startswith("nl") else "en"
 
+
+# Language-neutral placeholder for unknown/missing values in analysis output.
+_UNKNOWN = "unknown"
+
 # ---------------------------------------------------------------------------
 # Peak-table order-label annotation
 # ---------------------------------------------------------------------------
@@ -283,15 +287,15 @@ def _most_likely_origin_summary(
 ) -> dict[str, object]:
     if not findings:
         return {
-            "location": "unknown",
+            "location": _UNKNOWN,
             "alternative_locations": [],
-            "source": "unknown",
+            "source": _UNKNOWN,
             "dominance_ratio": None,
             "weak_spatial_separation": True,
             "explanation": _i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
     top = findings[0]
-    primary_location = str(top.get("strongest_location") or "").strip() or "unknown"
+    primary_location = str(top.get("strongest_location") or "").strip() or _UNKNOWN
     alternative_locations: list[str] = []
     hotspot = top.get("location_hotspot")
     if isinstance(hotspot, dict):
@@ -307,7 +311,7 @@ def _most_likely_origin_summary(
         ):
             alternative_locations.append(second_location)
 
-    source = str(top.get("suspected_source") or "unknown")
+    source = str(top.get("suspected_source") or _UNKNOWN)
     dominance = _as_float(top.get("dominance_ratio"))
     location_hotspot = top.get("location_hotspot")
     location_count = _as_float(top.get("location_count"))
@@ -356,7 +360,7 @@ def _most_likely_origin_summary(
         _i18n_ref(
             "ORIGIN_EXPLANATION_FINDING_1",
             source=source,
-            speed_band=speed_band or "unknown",
+            speed_band=speed_band or _UNKNOWN,
             location=location,
             dominance=f"{dominance:.2f}x" if dominance is not None else "n/a",
         ),

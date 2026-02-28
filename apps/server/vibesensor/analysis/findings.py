@@ -947,7 +947,8 @@ def _build_order_findings(
             ref_text=ref_text,
         )
         if location_line:
-            evidence = {"_i18n_key": evidence["_i18n_key"], **{k: v for k, v in evidence.items() if k != "_i18n_key"}, "_suffix": f" {location_line}"}
+            evidence = dict(evidence)
+            evidence["_suffix"] = f" {location_line}"
 
         strongest_location = (
             str(location_hotspot.get("location")) if isinstance(location_hotspot, dict) else ""
