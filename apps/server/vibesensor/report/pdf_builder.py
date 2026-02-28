@@ -628,27 +628,28 @@ def _draw_system_card(
         max_lines=2,
     )
 
-    # Parts list
-    parts_y = pattern_bottom - 1.0 * mm
-    c.setFillColor(_hex(TEXT_CLR))
-    c.setFont(FONT_B, 7)
-    c.drawString(cx, parts_y, tr("COMMON_PARTS"))
+    # Parts list (only show header when parts are present)
+    if card.parts:
+        parts_y = pattern_bottom - 1.0 * mm
+        c.setFillColor(_hex(TEXT_CLR))
+        c.setFont(FONT_B, 7)
+        c.drawString(cx, parts_y, tr("COMMON_PARTS"))
 
-    py = parts_y - 3.6 * mm
-    for p in card.parts[:3]:
-        if py <= y + 3 * mm:
-            break
-        py = _draw_text(
-            c,
-            cx,
-            py,
-            w - 6 * mm,
-            f"\u2022 {p.name}",
-            size=6.7,
-            color=TEXT_CLR,
-            max_lines=2,
-        )
-        py -= 0.8 * mm
+        py = parts_y - 3.6 * mm
+        for p in card.parts[:3]:
+            if py <= y + 3 * mm:
+                break
+            py = _draw_text(
+                c,
+                cx,
+                py,
+                w - 6 * mm,
+                f"\u2022 {p.name}",
+                size=6.7,
+                color=TEXT_CLR,
+                max_lines=2,
+            )
+            py -= 0.8 * mm
 
 
 def _draw_next_steps_table(
