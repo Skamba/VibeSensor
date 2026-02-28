@@ -10,7 +10,7 @@ from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
 
 from vibesensor import __version__
-from vibesensor.analysis import summarize_log
+from vibesensor.analysis import map_summary, summarize_log
 from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report.pdf_builder import _draw_system_card, build_report_pdf
 from vibesensor.report.pdf_diagram import car_location_diagram
@@ -184,7 +184,7 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
         if isinstance(series, dict)
     )
 
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     assert pdf.startswith(b"%PDF")
     _assert_pdf_contains(pdf, "Diagnostic Worksheet")
     _assert_pdf_contains(pdf, "Observed Signature")
@@ -228,7 +228,7 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
         for f in summary["findings"]
     )
 
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     assert pdf.startswith(b"%PDF")
 
 
@@ -373,7 +373,7 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     )
     assert summary["findings"]
 
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     assert pdf.startswith(b"%PDF")
 
 
@@ -482,7 +482,7 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     assert bool(summary["speed_stats"]["steady_speed"]) is True
 
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     assert pdf.startswith(b"%PDF")
     # New layout shows certainty reason for steady speed
     _assert_pdf_contains(pdf, "Certainty")
@@ -686,7 +686,7 @@ def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
     _write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     x0, y0, x1, y1 = _extract_media_box(pdf)
     width = x1 - x0
     height = y1 - y0
@@ -717,7 +717,7 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
     assert row["sample_count"] == 12
     assert row["strength_bucket_distribution"]["total"] == 8
 
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     assert pdf.startswith(b"%PDF")
 
 
@@ -741,7 +741,7 @@ def test_report_pdf_footer_contains_version_marker(
     _write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     marker = f"v{__version__} (a1b2c3d4)"
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
@@ -774,7 +774,7 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
     _write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
     assert text_blob.count("Next steps") == 1
@@ -799,7 +799,7 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
     _write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, lang="nl")
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
 
@@ -830,7 +830,7 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
     summary = summarize_log(run_path)
     assert summary.get("firmware_version") == "esp-fw-1.2.3"
 
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     reader = PdfReader(BytesIO(pdf))
     text_blob = "\n".join((page.extract_text() or "") for page in reader.pages)
     assert "Firmware Version" in text_blob
