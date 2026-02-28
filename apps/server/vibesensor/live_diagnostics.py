@@ -316,7 +316,12 @@ class LiveDiagnosticsEngine:
             dominant_bin = (
                 str(dominant.get("class_key") or ""),
                 str(dominant.get("bucket_key") or ""),
-                int(round(float(dominant.get("peak_hz") or 0.0) / max(0.01, self._multi_freq_bin_hz))),
+                int(
+                    round(
+                        float(dominant.get("peak_hz") or 0.0)
+                        / max(0.01, self._multi_freq_bin_hz)
+                    )
+                ),
             )
             agreeing_ids = {
                 str(row.get("sensor_id") or "")
@@ -324,7 +329,12 @@ class LiveDiagnosticsEngine:
                 if (
                     str(row.get("class_key") or ""),
                     str(row.get("bucket_key") or ""),
-                    int(round(float(row.get("peak_hz") or 0.0) / max(0.01, self._multi_freq_bin_hz))),
+                    int(
+                        round(
+                            float(row.get("peak_hz") or 0.0)
+                            / max(0.01, self._multi_freq_bin_hz)
+                        )
+                    ),
                 )
                 == dominant_bin
                 and str(row.get("sensor_id") or "")
@@ -697,7 +707,10 @@ class LiveDiagnosticsEngine:
                 avg_strength = _combine_amplitude_strength_db(
                     [item.last_strength_db for item in group]
                 )
-                freq_bin = round(avg_hz / self._multi_freq_bin_hz) if self._multi_freq_bin_hz > 0 else 0
+                if self._multi_freq_bin_hz > 0:
+                    freq_bin = round(avg_hz / self._multi_freq_bin_hz)
+                else:
+                    freq_bin = 0
                 combined_key = f"combined:{class_key}:{freq_bin}"
                 seen_combined_keys.add(combined_key)
                 tracker = self._combined_trackers.get(combined_key) or _TrackerLevelState(
