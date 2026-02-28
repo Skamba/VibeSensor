@@ -193,6 +193,7 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                     "--skip-ui-sync",
                     "--skip-ui-smoke",
                     "--skip-unit-tests",
+                    "--fast-e2e",
                 ],
             ),
         ],
