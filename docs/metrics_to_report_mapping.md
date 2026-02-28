@@ -44,7 +44,7 @@ analysis.summarize_run_data(meta, samples)
 | Primary system           | `observed.primary_system`                       | `top_causes[0].source` → `_human_source()`  | i18n string                  |
 | Strongest sensor         | `observed.strongest_sensor_location`            | `most_likely_origin.location` or `top_causes[0].strongest_location` | string |
 | Speed band               | `observed.speed_band`                           | `top_causes[0].strongest_speed_band`         | string (e.g. "80–100 km/h") |
-| Strength                 | `observed.strength_label`, `observed.strength_peak_amp_g` | `_top_strength_values()` → `strength_text()` | `"{Label} ({db:.1f} dB · {g:.3f} g peak)"` |
+| Strength                 | `observed.strength_label`, `observed.strength_peak_db` | `_top_strength_values()` → `strength_text()` | `"{Label} ({db:.1f} dB)"` |
 | Certainty                | `observed.certainty_label`, `observed.certainty_pct` | `certainty_label(conf)` | `"{Label} ({pct}%)"` |
 | Certainty reason         | `observed.certainty_reason`                     | `certainty_label()` reason output            | string                       |
 | Tier indicator           | `certainty_tier_key`                            | `certainty_tier(conf)` → `"A"`, `"B"`, `"C"` | single char               |
@@ -92,7 +92,7 @@ analysis.summarize_run_data(meta, samples)
 | Report field       | ReportTemplateData field          | Analysis source                              | Unit / format |
 |--------------------|-----------------------------------|----------------------------------------------|---------------|
 | Location rows      | `location_hotspot_rows`           | Pre-computed from `findings[].matched_points` or `sensor_intensity_by_location` | list[dict] |
-| Hotspot unit       | `location_hotspot_rows[].unit`    | `"g"` (from matched_points) or `"db"` (from sensor_intensity) | string |
+| Hotspot unit       | `location_hotspot_rows[].unit`    | `"db"` | string |
 | Peak value         | `location_hotspot_rows[].peak_value` | max amplitude at location                 | float         |
 | Mean value         | `location_hotspot_rows[].mean_value` | mean amplitude at location                | float         |
 
@@ -103,7 +103,7 @@ analysis.summarize_run_data(meta, samples)
 | Matched systems      | `pattern_evidence.matched_systems`              | `top_causes[:3].source` → `_human_source()` | list[str] |
 | Strongest location   | `pattern_evidence.strongest_location`           | Same as `observed.strongest_sensor_location` | string |
 | Speed band           | `pattern_evidence.speed_band`                   | Same as `observed.speed_band`          | string        |
-| Strength             | `pattern_evidence.strength_label`, `.strength_peak_amp_g` | Same as `observed.strength_*` | same format |
+| Strength             | `pattern_evidence.strength_label`, `.strength_peak_db` | Same as `observed.strength_*` | same format |
 | Certainty            | `pattern_evidence.certainty_label`, `.certainty_pct` | Same as `observed.certainty_*` | same format |
 | Certainty reason     | `pattern_evidence.certainty_reason`             | Same as `observed.certainty_reason`    | string        |
 | Warning              | `pattern_evidence.warning`                      | `certainty_reason` if `weak_spatial_separation` | string or None |
@@ -118,23 +118,20 @@ analysis.summarize_run_data(meta, samples)
 | System          | `peak_rows[].system`       | Inferred from `source`/`order_label` | i18n string           |
 | Frequency       | `peak_rows[].freq_hz`      | `plots.peaks_table[].frequency_hz`   | `{:.1f}` Hz           |
 | Order           | `peak_rows[].order`        | `plots.peaks_table[].order_label`    | string                |
-| Amplitude       | `peak_rows[].amp_g`        | `plots.peaks_table[].p95_amp_g`      | `{:.4f}` g            |
+| Peak (dB)       | `peak_rows[].peak_db`      | `plots.peaks_table[].p95_intensity_db` | `{:.1f}` dB         |
 | Strength (dB)   | `peak_rows[].strength_db`  | `plots.peaks_table[].strength_db`    | `{:.1f}` dB           |
 | Speed band      | `peak_rows[].speed_band`   | `plots.peaks_table[].typical_speed_band` | string            |
 | Relevance       | `peak_rows[].relevance`    | Composed from `peak_classification`, `presence_ratio`, `persistence_score` | `"{class} · {pres:.0%} PRESENCE · SCORE {score:.2f}"` |
 
 ## Cross-section consistency rules
 
-1. **Observed ↔ Pattern Evidence**: `strength_label`, `strength_peak_amp_g`,
+1. **Observed ↔ Pattern Evidence**: `strength_label`, `strength_peak_db`,
    `certainty_label`, `certainty_pct`, `certainty_reason`, `strongest_sensor_location`,
    and `speed_band` must be identical between `observed` and `pattern_evidence`.
 
 2. **Tier gating**: `certainty_tier_key` controls which sections are shown/suppressed.
    The tier is derived from the same confidence value used for `certainty_label`.
 
-3. **Units**: Strength is always in dB (formatted `{:.1f}`), amplitude in g
-   (formatted `{:.4f}` in peaks, `{:.3f}` in observed), frequency in Hz (`{:.1f}`).
+3. **Units**: Strength/intensity outputs in persisted analysis and report artifacts are always dB (formatted `{:.1f}`). Frequency remains Hz (`{:.1f}`).
 
-4. **Location hotspot unit**: Either "g" (from matched_points) or "db" (from
-   sensor_intensity fallback). Both paths are valid but must not be mixed within
-   a single report.
+4. **Location hotspot unit**: Always "db" for persisted/report-ready analysis data.

@@ -28,7 +28,7 @@ class ObservedSignature:
     speed_band: str | None = None
     phase: str | None = None
     strength_label: str | None = None
-    strength_peak_amp_g: float | None = None
+    strength_peak_db: float | None = None
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
@@ -73,7 +73,7 @@ class PatternEvidence:
     strongest_location: str | None = None
     speed_band: str | None = None
     strength_label: str | None = None
-    strength_peak_amp_g: float | None = None
+    strength_peak_db: float | None = None
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
@@ -88,7 +88,7 @@ class PeakRow:
     system: str
     freq_hz: str
     order: str
-    amp_g: str
+    peak_db: str
     strength_db: str
     speed_band: str
     relevance: str

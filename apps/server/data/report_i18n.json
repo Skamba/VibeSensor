@@ -679,6 +679,10 @@
     "en": "p95 peak amplitude across matched samples.",
     "nl": "p95 piekamplitude over overeenkomende samples."
   },
+  "METRIC_VIBRATION_STRENGTH_DB": {
+    "en": "Vibration strength in dB using the canonical peak-vs-floor definition.",
+    "nl": "Trillingssterkte in dB met de canonieke piek-tegen-vloerdefinitie."
+  },
   "MISSING": {
     "en": "Missing %",
     "nl": "Ontbreekt %"
@@ -854,6 +858,10 @@
   "PEAK_AMP_G": {
     "en": "Peak Amp (g)",
     "nl": "Piekamplitude (g)"
+  },
+  "PEAK_DB": {
+    "en": "Peak (dB)",
+    "nl": "Piek (dB)"
   },
   "PEAK_DISAPPEARS_AFTER_SENSOR_REMOUNT_OR_CABLE_RESEAT": {
     "en": "Peak disappears after sensor remount or cable reseat.",

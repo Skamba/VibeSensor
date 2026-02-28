@@ -47,7 +47,7 @@ def test_location_hotspots_fallback_uses_db_unit() -> None:
     assert " g" not in summary
 
 
-def test_location_hotspots_matched_points_uses_g_unit() -> None:
+def test_location_hotspots_matched_points_still_uses_db_unit() -> None:
     rows, summary, _, _ = location_hotspots(
         [{"client_name": "front-left wheel", "vibration_strength_db": 22.5}],
         [{"matched_points": [{"location": "front-left wheel", "amp": 0.15}]}],
@@ -55,7 +55,7 @@ def test_location_hotspots_matched_points_uses_g_unit() -> None:
         text_fn=_text_fn,
     )
 
-    assert rows[0]["unit"] == "g"
-    assert "peak_g" in rows[0]
-    assert "peak_db" not in rows[0]
-    assert "0.1500 g" in summary
+    assert rows[0]["unit"] == "db"
+    assert "peak_db" in rows[0]
+    assert "peak_g" not in rows[0]
+    assert "dB" in summary

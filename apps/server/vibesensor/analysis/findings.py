@@ -8,9 +8,10 @@ from math import floor, log1p
 from statistics import mean
 from typing import Any
 
-from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
+from vibesensor_core.vibration_strength import percentile
 
 from ..runlog import as_float_or_none as _as_float
+from .db_units import canonical_vibration_db
 from .helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
     MEMS_NOISE_FLOOR_G,
@@ -892,7 +893,7 @@ def _build_order_findings(
         # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
         if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
             snr_score = min(snr_score, 0.40)
-        absolute_strength_db = vibration_strength_db_scalar(
+        absolute_strength_db = canonical_vibration_db(
             peak_band_rms_amp_g=mean_amp,
             floor_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
         )
@@ -1037,10 +1038,10 @@ def _build_order_findings(
                 lang, hypothesis.order, hypothesis.order_label_base
             ),
             "amplitude_metric": {
-                "name": "strength_peak_band_rms_amp_g",
-                "value": mean_amp,
-                "units": accel_units,
-                "definition": _i18n_ref("METRIC_MEAN_MATCHED_PEAK_AMPLITUDE"),
+                "name": "vibration_strength_db",
+                "value": absolute_strength_db,
+                "units": "dB",
+                "definition": _i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
             },
             "confidence_0_to_1": confidence,
             "quick_checks": quick_checks,
@@ -1066,8 +1067,11 @@ def _build_order_findings(
                 "global_match_rate": match_rate,
                 "focused_speed_band": focused_speed_band,
                 "mean_relative_error": mean_rel_err,
-                "mean_matched_amplitude": mean_amp,
-                "mean_noise_floor": mean_floor,
+                "mean_matched_intensity_db": absolute_strength_db,
+                "mean_noise_floor_db": canonical_vibration_db(
+                    peak_band_rms_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
+                    floor_amp_g=_MEMS_NOISE_FLOOR_G,
+                ),
                 "vibration_strength_db": absolute_strength_db,
                 "possible_samples": possible,
                 "matched_samples": matched,
@@ -1300,7 +1304,7 @@ def _build_persistent_peak_findings(
         spatial_penalty = (0.35 + 0.65 * spatial_concentration) if location_counts else 1.0
 
         # Confidence for persistent/patterned peaks (analogous to order confidence)
-        peak_strength_db = vibration_strength_db_scalar(
+        peak_strength_db = canonical_vibration_db(
             peak_band_rms_amp_g=p95_amp,
             floor_amp_g=effective_floor,
         )
@@ -1334,8 +1338,8 @@ def _build_persistent_peak_findings(
             "EVIDENCE_PEAK_PRESENT",
             freq=bin_center,
             pct=presence_ratio,
-            p95=p95_amp,
-            units=accel_units,
+            p95=peak_strength_db,
+            units="dB",
             burst=burstiness,
             cls=peak_type,
         )
@@ -1371,10 +1375,10 @@ def _build_persistent_peak_findings(
             "evidence_summary": evidence,
             "frequency_hz_or_order": f"{bin_center:.1f} Hz",
             "amplitude_metric": {
-                "name": "strength_p95_band_rms_amp_g",
-                "value": p95_amp,
-                "units": accel_units,
-                "definition": _i18n_ref("METRIC_P95_PEAK_AMPLITUDE"),
+                "name": "vibration_strength_db",
+                "value": peak_strength_db,
+                "units": "dB",
+                "definition": _i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
             },
             "confidence_0_to_1": confidence,
             "quick_checks": [],
@@ -1382,12 +1386,28 @@ def _build_persistent_peak_findings(
             "phase_evidence": peak_phase_evidence,
             "evidence_metrics": {
                 "presence_ratio": presence_ratio,
-                "median_amplitude": median_amp,
-                "p95_amplitude": p95_amp,
-                "max_amplitude": max_amp,
+                "median_intensity_db": canonical_vibration_db(
+                    peak_band_rms_amp_g=median_amp,
+                    floor_amp_g=effective_floor,
+                ),
+                "p95_intensity_db": peak_strength_db,
+                "max_intensity_db": canonical_vibration_db(
+                    peak_band_rms_amp_g=max_amp,
+                    floor_amp_g=effective_floor,
+                ),
                 "burstiness": burstiness,
-                "mean_noise_floor": mean_floor,
-                "run_noise_baseline_g": run_noise_baseline_g,
+                "mean_noise_floor_db": canonical_vibration_db(
+                    peak_band_rms_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
+                    floor_amp_g=_MEMS_NOISE_FLOOR_G,
+                ),
+                "run_noise_baseline_db": (
+                    canonical_vibration_db(
+                        peak_band_rms_amp_g=max(_MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+                        floor_amp_g=_MEMS_NOISE_FLOOR_G,
+                    )
+                    if run_noise_baseline_g is not None
+                    else None
+                ),
                 "median_relative_to_run_noise": median_amp / effective_floor,
                 "p95_relative_to_run_noise": p95_amp / effective_floor,
                 "sample_count": count,

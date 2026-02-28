@@ -240,7 +240,7 @@ def test_report_renders_in_en_and_nl_from_same_analysis() -> None:
 
     # Numeric values must be identical
     assert report_en.observed.certainty_pct == report_nl.observed.certainty_pct
-    assert report_en.observed.strength_peak_amp_g == report_nl.observed.strength_peak_amp_g
+    assert report_en.observed.strength_peak_db == report_nl.observed.strength_peak_db
 
     # Translated content must differ
     if report_en.data_trust and report_nl.data_trust:

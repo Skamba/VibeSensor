@@ -450,7 +450,7 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
     _write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    assert summary["accel_scale_g_per_lsb"] == (1.0 / 256.0)
+    assert summary["accel_scale_per_lsb"] == (1.0 / 256.0)
     units = summary["metadata"]["units"]
     assert units["accel_x_g"] == "g"
     assert units["vibration_strength_db"] == "dB"

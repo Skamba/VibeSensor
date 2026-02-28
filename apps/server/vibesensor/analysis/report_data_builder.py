@@ -14,8 +14,6 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from statistics import mean as _mean
 
-from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
 from .. import __version__
 from ..report.report_data import (
     CarMeta,
@@ -31,6 +29,7 @@ from ..report.report_data import (
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
+from .db_units import canonical_vibration_db
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
@@ -116,9 +115,9 @@ def _human_source(source: object, *, tr) -> str:  # type: ignore[type-arg]
     return mapping.get(raw, raw.replace("_", " ").title() if raw else tr("UNKNOWN"))
 
 
-def _finding_strength_values(finding: dict) -> tuple[float | None, float | None]:
+def _finding_strength_values(finding: dict) -> float | None:
     amp_metric = finding.get("amplitude_metric")
-    peak_amp_g = _as_float(amp_metric.get("value")) if isinstance(amp_metric, dict) else None
+    peak_amp = _as_float(amp_metric.get("value")) if isinstance(amp_metric, dict) else None
 
     evidence_metrics = finding.get("evidence_metrics")
     db_value = (
@@ -127,27 +126,25 @@ def _finding_strength_values(finding: dict) -> tuple[float | None, float | None]
         else None
     )
     if db_value is not None:
-        return (db_value, peak_amp_g)
+        return db_value
 
     if isinstance(evidence_metrics, dict):
         noise_floor = _as_float(evidence_metrics.get("mean_noise_floor"))
-        if peak_amp_g is not None and noise_floor is not None and noise_floor > 0:
-            return (
-                vibration_strength_db_scalar(
-                    peak_band_rms_amp_g=peak_amp_g, floor_amp_g=noise_floor
-                ),
-                peak_amp_g,
+        if peak_amp is not None and noise_floor is not None and noise_floor > 0:
+            return canonical_vibration_db(
+                peak_band_rms_amp_g=peak_amp,
+                floor_amp_g=noise_floor,
             )
 
-    return (None, peak_amp_g)
+    return None
 
 
 def _top_strength_values(
     summary: dict,
     *,
     effective_causes: list[dict] | None = None,
-) -> tuple[float | None, float | None]:
-    """Return best ``(vibration_strength_db, peak_amp_g)`` for observed strength text.
+) -> float | None:
+    """Return best vibration strength in dB for observed strength text.
 
     When *effective_causes* is provided the strength values are drawn from those
     causes (matching by ``finding_id`` against the summary's findings list).
@@ -155,7 +152,6 @@ def _top_strength_values(
     as the primary system rather than a potentially-filtered raw top_cause.
     """
     db_value: float | None = None
-    peak_amp_g: float | None = None
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
     for cause in causes:
         if not isinstance(cause, dict):
@@ -165,11 +161,9 @@ def _top_strength_values(
                 continue
             if finding.get("finding_id") != cause.get("finding_id"):
                 continue
-            finding_db, finding_peak = _finding_strength_values(finding)
+            finding_db = _finding_strength_values(finding)
             if finding_db is not None:
-                return (finding_db, finding_peak)
-            if peak_amp_g is None and finding_peak is not None:
-                peak_amp_g = finding_peak
+                return finding_db
 
     sensor_rows = [
         _as_float(row.get("p95_intensity_db"))
@@ -179,7 +173,7 @@ def _top_strength_values(
     sensor_db = max((value for value in sensor_rows if value is not None), default=None)
     if db_value is None and sensor_db is not None:
         db_value = sensor_db
-    return (db_value, peak_amp_g)
+    return db_value
 
 
 def _dominant_phase(phase_info: dict | None) -> str | None:
@@ -241,24 +235,7 @@ def _compute_location_hotspot_rows(
     """
     amp_by_location: dict[str, list[float]] = defaultdict(list)
 
-    # Prefer matched_points from findings (amplitude in g).
-    matched_points: list[dict] = []
-    for finding in findings:
-        if not isinstance(finding, dict):
-            continue
-        rows = finding.get("matched_points")
-        if isinstance(rows, list) and rows:
-            matched_points = [r for r in rows if isinstance(r, dict)]
-            break
-
-    if matched_points:
-        for row in matched_points:
-            location = str(row.get("location") or "").strip()
-            amp = _as_float(row.get("amp"))
-            if location and amp is not None and amp > 0:
-                amp_by_location[location].append(amp)
-        amp_unit = "g"
-    elif sensor_intensity:
+    if sensor_intensity:
         for row in sensor_intensity:
             if not isinstance(row, dict):
                 continue
@@ -282,12 +259,8 @@ def _compute_location_hotspot_rows(
             "peak_value": peak_val,
             "mean_value": mean_val,
         }
-        if amp_unit == "g":
-            row["peak_g"] = peak_val
-            row["mean_g"] = mean_val
-        else:
-            row["peak_db"] = peak_val
-            row["mean_db"] = mean_val
+        row["peak_db"] = peak_val
+        row["mean_db"] = mean_val
         hotspot_rows.append(row)
     hotspot_rows.sort(
         key=lambda r: (float(r["peak_value"]), float(r["mean_value"])),
@@ -383,8 +356,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         primary_speed = tr("UNKNOWN")
         conf = 0.0
 
-    db_val, peak_amp_g = _top_strength_values(summary, effective_causes=top_causes)
-    str_text = strength_text(db_val, lang=lang, peak_amp_g=peak_amp_g)
+    db_val = _top_strength_values(summary, effective_causes=top_causes)
+    str_text = strength_text(db_val, lang=lang)
 
     steady = bool(speed_stats.get("steady_speed"))
     weak_spatial = bool(
@@ -412,7 +385,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         speed_band=primary_speed,
         phase=dom_phase,
         strength_label=str_text,
-        strength_peak_amp_g=peak_amp_g,
+        strength_peak_db=db_val,
         certainty_label=cert_label_text,
         certainty_pct=cert_pct,
         certainty_reason=cert_reason,
@@ -553,7 +526,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         strongest_location=pe_loc,
         speed_band=pe_speed,
         strength_label=str_text,
-        strength_peak_amp_g=peak_amp_g,
+        strength_peak_db=db_val,
         certainty_label=cert_label_text,
         certainty_pct=cert_pct,
         certainty_reason=cert_reason,
@@ -582,8 +555,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         classification = _peak_classification_text(row.get("peak_classification"), tr=tr)
         order_label_raw = str(row.get("order_label") or "").strip()
         order = _order_label_human(lang, order_label_raw) if order_label_raw else classification
-        amp_val = _as_float(row.get("p95_amp_g"))
-        amp = f"{amp_val:.4f}" if amp_val is not None else "\u2014"
+        peak_db_val = _as_float(row.get("p95_intensity_db"))
+        peak_db = f"{peak_db_val:.1f}" if peak_db_val is not None else "\u2014"
         strength_db_val = _as_float(row.get("strength_db"))
         strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "\u2014"
         speed = str(row.get("typical_speed_band") or "\u2014")
@@ -617,7 +590,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
                 system=system,
                 freq_hz=freq,
                 order=order,
-                amp_g=amp,
+                peak_db=peak_db,
                 strength_db=strength_db,
                 speed_band=speed,
                 relevance=relevance,
