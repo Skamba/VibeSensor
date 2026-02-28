@@ -247,7 +247,7 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
 
     summary = summarize_log(run_path)
     # No car metadata in summary
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     assert pdf.startswith(b"%PDF")
 
     reader = PdfReader(BytesIO(pdf))
@@ -268,7 +268,7 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
     _write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     reader = PdfReader(BytesIO(pdf))
     assert len(reader.pages) == 2
 
@@ -738,7 +738,7 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
         "samples": [],
     }
 
-    pdf = build_report_pdf(summary)
+    pdf = build_report_pdf(map_summary(summary))
     # Detail text wraps across lines in the Data Trust panel, so check key
     # fragments rather than the exact full string.
     assert b"5 potential saturation" in pdf

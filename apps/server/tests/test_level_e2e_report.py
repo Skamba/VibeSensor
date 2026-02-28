@@ -41,6 +41,7 @@ from builders import (
 )
 from pypdf import PdfReader
 
+from vibesensor.analysis import map_summary
 from vibesensor.report.pdf_builder import build_report_pdf
 
 # ---------------------------------------------------------------------------
@@ -320,7 +321,7 @@ class TestPdfReportValidation:
     def _run_and_generate(self) -> None:
         meta, samples = _build_20s_scenario()
         self.summary = run_analysis(samples, metadata=meta)
-        self.pdf_bytes = build_report_pdf(self.summary)
+        self.pdf_bytes = build_report_pdf(map_summary(self.summary))
         self.pdf_text = self._extract_text(self.pdf_bytes)
         self.top = extract_top(self.summary)
 
@@ -396,7 +397,7 @@ class TestPdfReportValidation:
             rows[1]["p95_intensity_db"] = 37.2
             rows[1]["mean_intensity_db"] = 35.0
 
-        pdf_text = self._extract_text(build_report_pdf(summary))
+        pdf_text = self._extract_text(build_report_pdf(map_summary(summary)))
         assert "21.5 db" in pdf_text or "37.2 db" in pdf_text
         assert "21.5 g" not in pdf_text
         assert "37.2 g" not in pdf_text
@@ -418,7 +419,7 @@ class TestPdfReportValidation:
             }
             for i in range(1, 9)
         ]
-        pdf_bytes = build_report_pdf(summary)
+        pdf_bytes = build_report_pdf(map_summary(summary))
         reader = PdfReader(io.BytesIO(pdf_bytes))
         pdf_text = self._extract_text(pdf_bytes)
 
@@ -439,7 +440,7 @@ class TestPdfReportValidation:
             "ADXL345 laboratory validation model with extended calibration metadata "
             "tailtoken-sensormodel-98765"
         )
-        pdf_text = self._extract_text(build_report_pdf(summary))
+        pdf_text = self._extract_text(build_report_pdf(map_summary(summary)))
         assert "tailtoken-runid-12345" in pdf_text
         assert "tailtoken" in pdf_text and "sensormodel-98765" in pdf_text
 
@@ -461,8 +462,8 @@ class TestPdfLanguageParity:
 
         self.summary_en = run_analysis(samples, metadata=meta_en)
         self.summary_nl = run_analysis(samples, metadata=meta_nl)
-        self.pdf_en = build_report_pdf(self.summary_en)
-        self.pdf_nl = build_report_pdf(self.summary_nl)
+        self.pdf_en = build_report_pdf(map_summary(self.summary_en))
+        self.pdf_nl = build_report_pdf(map_summary(self.summary_nl))
 
     @staticmethod
     def _extract_text(pdf_bytes: bytes) -> str:
