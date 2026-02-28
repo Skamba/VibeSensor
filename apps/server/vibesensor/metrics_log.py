@@ -786,19 +786,14 @@ class MetricsLogger:
                 "sampling_method": "full" if stride == 1 else f"stride_{stride}",
             }
             if stride > 1:
-                if language == "nl":
-                    check = "Analysebemonstering"
-                    explanation = (
-                        f"Lange run geanalyseerd met stride {stride}. "
-                        "Korte, intermitterende events "
-                        "kunnen ondervertegenwoordigd zijn."
-                    )
-                else:
-                    check = "Analysis sampling"
-                    explanation = (
-                        f"Long run analyzed with stride {stride}. Brief intermittent events may be "
-                        "underrepresented."
-                    )
+                from .report_i18n import tr as _tr
+
+                check = _tr(language, "SUITABILITY_CHECK_ANALYSIS_SAMPLING")
+                explanation = _tr(
+                    language,
+                    "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING",
+                    stride=str(stride),
+                )
                 summary.setdefault("run_suitability", []).append(
                     {
                         "check": check,
