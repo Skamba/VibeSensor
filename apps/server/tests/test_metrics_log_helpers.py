@@ -272,7 +272,7 @@ def test_build_sample_records_uses_only_active_clients(tmp_path: Path) -> None:
 
 
 def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None:
-    """speed_source should be 'override' when override_speed_mps is set."""
+    """speed_source should be 'manual' when override_speed_mps is set."""
     gps = _FakeGPSMonitor()
     gps.speed_mps = 10.0  # GPS available
     gps.override_speed_mps = 20.0  # Override active
@@ -298,7 +298,7 @@ def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None
     )
 
     assert len(rows) == 1
-    assert rows[0]["speed_source"] == "override"
+    assert rows[0]["speed_source"] == "manual"
     assert rows[0]["speed_kmh"] == pytest.approx(20.0 * 3.6, abs=0.01)
 
 
@@ -334,7 +334,7 @@ def test_speed_source_reports_gps_when_no_override(tmp_path: Path) -> None:
 
 
 def test_speed_source_reports_missing_when_nothing_set(tmp_path: Path) -> None:
-    """speed_source should be 'missing' when neither GPS nor override is set."""
+    """speed_source should be 'gps' (default) when neither GPS nor override is set."""
     logger = MetricsLogger(
         enabled=False,
         log_path=tmp_path / "metrics.jsonl",
@@ -355,7 +355,7 @@ def test_speed_source_reports_missing_when_nothing_set(tmp_path: Path) -> None:
     )
 
     assert len(rows) == 1
-    assert rows[0]["speed_source"] == "missing"
+    assert rows[0]["speed_source"] == "gps"
     assert rows[0]["speed_kmh"] is None
 
 

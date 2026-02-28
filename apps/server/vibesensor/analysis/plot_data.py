@@ -386,16 +386,38 @@ def _top_peaks_table_rows(
                 "median_amp_g": float(item.get("median_amp_g") or 0.0),
                 "p95_amp_g": float(item.get("p95_amp_g") or 0.0),
                 "run_noise_baseline_g": _as_float(item.get("run_noise_baseline_g")),
-                "median_vs_run_noise_ratio": float(item.get("median_vs_run_noise_ratio") or 0.0),
-                "p95_vs_run_noise_ratio": float(item.get("p95_vs_run_noise_ratio") or 0.0),
+                "median_vs_run_noise_ratio": float(
+                    item.get("median_vs_run_noise_ratio")
+                    if item.get("median_vs_run_noise_ratio") is not None
+                    else 0.0
+                ),
+                "p95_vs_run_noise_ratio": float(
+                    item.get("p95_vs_run_noise_ratio")
+                    if item.get("p95_vs_run_noise_ratio") is not None
+                    else 0.0
+                ),
                 "strength_floor_amp_g": _as_float(item.get("strength_floor_amp_g")),
                 "strength_db": _as_float(item.get("strength_db")),
-                "presence_ratio": float(item.get("presence_ratio") or 0.0),
-                "burstiness": float(item.get("burstiness") or 0.0),
-                "persistence_score": float(item.get("persistence_score") or 0.0),
+                "presence_ratio": float(
+                    item.get("presence_ratio") if item.get("presence_ratio") is not None else 0.0
+                ),
+                "burstiness": float(
+                    item.get("burstiness") if item.get("burstiness") is not None else 0.0
+                ),
+                "persistence_score": float(
+                    item.get("persistence_score")
+                    if item.get("persistence_score") is not None
+                    else 0.0
+                ),
                 "peak_classification": _classify_peak_type(
-                    presence_ratio=float(item.get("presence_ratio") or 0.0),
-                    burstiness=float(item.get("burstiness") or 0.0),
+                    presence_ratio=float(
+                        item.get("presence_ratio")
+                        if item.get("presence_ratio") is not None
+                        else 0.0
+                    ),
+                    burstiness=float(
+                        item.get("burstiness") if item.get("burstiness") is not None else 0.0
+                    ),
                     snr=_as_float(item.get("p95_vs_run_noise_ratio")),
                     spatial_uniformity=_as_float(item.get("spatial_uniformity")),
                     speed_uniformity=_as_float(item.get("speed_uniformity")),

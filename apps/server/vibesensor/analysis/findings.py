@@ -375,8 +375,8 @@ def _sensor_intensity_by_location(
         key=lambda row: (
             1 if not bool(row.get("partial_coverage")) else 0,
             1 if not bool(row.get("sample_coverage_warning")) else 0,
-            float(row.get("p95_intensity_db") or 0.0),
-            float(row.get("max_intensity_db") or 0.0),
+            float(row.get("p95_intensity_db") if row.get("p95_intensity_db") is not None else 0.0),
+            float(row.get("max_intensity_db") if row.get("max_intensity_db") is not None else 0.0),
         ),
         reverse=True,
     )
@@ -729,7 +729,8 @@ def _build_order_findings(
                 matched_by_phase[phase_key] += 1
             rel_errors.append(delta_hz / max(1e-9, predicted_hz))
             matched_amp.append(best_amp)
-            floor_amp = _estimate_strength_floor_amp_g(sample) or 0.0
+            _floor_est = _estimate_strength_floor_amp_g(sample)
+            floor_amp = _floor_est if _floor_est is not None else 0.0
             matched_floor.append(max(0.0, floor_amp))
             predicted_vals.append(predicted_hz)
             measured_vals.append(best_hz)
@@ -1198,7 +1199,8 @@ def _build_persistent_peak_findings(
         sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
         if sample_speed_bin is not None:
             total_speed_bin_counts[sample_speed_bin] += 1
-        floor_amp = _as_float(sample.get("strength_floor_amp_g")) or 0.0
+        _floor_raw = _as_float(sample.get("strength_floor_amp_g"))
+        floor_amp = _floor_raw if _floor_raw is not None else 0.0
         location = _location_label(sample, lang=lang)
         if location:
             total_locations.add(location)
