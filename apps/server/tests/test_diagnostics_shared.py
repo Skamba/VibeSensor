@@ -221,7 +221,7 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
         finding.get("suspected_source") == "wheel/tire" for finding in summary.get("findings", [])
     )
     assert any(
-        "wheel order" in str(finding.get("frequency_hz_or_order", "")).lower()
+        "wheel" in str(finding.get("frequency_hz_or_order", "")).lower()
         for finding in summary.get("findings", [])
     )
 

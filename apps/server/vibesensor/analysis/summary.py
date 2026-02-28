@@ -11,8 +11,6 @@ from statistics import median as _median
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
 from .findings import (
@@ -40,6 +38,7 @@ from .helpers import (
     _validate_required_strength_metrics,
     weak_spatial_dominance_threshold,
 )
+from .order_analysis import _i18n_ref
 from .phase_segmentation import (
     phase_summary as _phase_summary,
 )
@@ -49,6 +48,12 @@ from .phase_segmentation import (
 from .plot_data import _plot_data
 from .strength_labels import strength_label as _strength_label
 from .test_plan import _merge_test_plan
+
+
+def _normalize_lang(lang: object) -> str:
+    """Minimal language normalization without importing report_i18n."""
+    raw = str(lang or "").strip().lower()
+    return "nl" if raw.startswith("nl") else "en"
 
 # ---------------------------------------------------------------------------
 # Peak-table order-label annotation
@@ -278,15 +283,15 @@ def _most_likely_origin_summary(
 ) -> dict[str, object]:
     if not findings:
         return {
-            "location": _tr(lang, "UNKNOWN"),
+            "location": "unknown",
             "alternative_locations": [],
-            "source": _tr(lang, "UNKNOWN"),
+            "source": "unknown",
             "dominance_ratio": None,
             "weak_spatial_separation": True,
-            "explanation": _tr(lang, "ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
+            "explanation": _i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
         }
     top = findings[0]
-    primary_location = str(top.get("strongest_location") or "").strip() or _tr(lang, "UNKNOWN")
+    primary_location = str(top.get("strongest_location") or "").strip() or "unknown"
     alternative_locations: list[str] = []
     hotspot = top.get("location_hotspot")
     if isinstance(hotspot, dict):
@@ -303,16 +308,6 @@ def _most_likely_origin_summary(
             alternative_locations.append(second_location)
 
     source = str(top.get("suspected_source") or "unknown")
-    _source_i18n_map = {
-        "wheel/tire": "SOURCE_WHEEL_TIRE",
-        "driveline": "SOURCE_DRIVELINE",
-        "engine": "SOURCE_ENGINE",
-        "unknown": "UNKNOWN",
-    }
-    source_i18n_key = _source_i18n_map.get(source)
-    source_human = (
-        _tr(lang, source_i18n_key) if source_i18n_key else source.replace("_", " ").title()
-    )
     dominance = _as_float(top.get("dominance_ratio"))
     location_hotspot = top.get("location_hotspot")
     location_count = _as_float(top.get("location_count"))
@@ -356,19 +351,18 @@ def _most_likely_origin_summary(
             ]
         )
 
-    speed_band = str(top.get("strongest_speed_band") or _tr(lang, "UNKNOWN_SPEED_BAND"))
-    explanation = _tr(
-        lang,
-        "ORIGIN_EXPLANATION_FINDING_1",
-        source=source_human,
-        speed_band=speed_band,
-        location=location,
-        dominance=(
-            f"{dominance:.2f}x" if dominance is not None else _tr(lang, "NOT_APPLICABLE_SHORT")
+    speed_band = str(top.get("strongest_speed_band") or "")
+    explanation_parts: list[object] = [
+        _i18n_ref(
+            "ORIGIN_EXPLANATION_FINDING_1",
+            source=source,
+            speed_band=speed_band or "unknown",
+            location=location,
+            dominance=f"{dominance:.2f}x" if dominance is not None else "n/a",
         ),
-    )
+    ]
     if weak:
-        explanation += " " + _tr(lang, "WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY")
+        explanation_parts.append(_i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
     dominant_phase = str(top.get("dominant_phase") or "").strip()
     _phase_i18n_map = {
         "acceleration": "DRIVING_PHASE_ACCELERATION",
@@ -376,17 +370,19 @@ def _most_likely_origin_summary(
         "coast_down": "DRIVING_PHASE_COAST_DOWN",
     }
     if dominant_phase and dominant_phase in _phase_i18n_map:
-        phase_human = _tr(lang, _phase_i18n_map[dominant_phase])
-        explanation += " " + _tr(lang, "ORIGIN_PHASE_ONSET_NOTE", phase=phase_human)
+        explanation_parts.append(
+            _i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase)
+        )
+    # Store explanation as structured i18n parts for render-time resolution.
+    explanation = explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
     return {
         "location": location,
         "alternative_locations": alternative_locations,
         "source": source,
-        "source_human": source_human,
         "dominance_ratio": dominance,
         "weak_spatial_separation": weak,
         "spatial_disagreement": spatial_disagreement,
-        "speed_band": speed_band,
+        "speed_band": speed_band or None,
         "dominant_phase": dominant_phase or None,
         "explanation": explanation,
     }
@@ -477,7 +473,7 @@ def build_findings_for_samples(
     samples: list[dict[str, Any]],
     lang: str | None = None,
 ) -> list[dict[str, object]]:
-    language = normalize_lang(lang)
+    language = _normalize_lang(lang)
     rows = list(samples) if isinstance(samples, list) else []
     _validate_required_strength_metrics(rows)
     _, speed_stats, speed_non_null_pct, speed_sufficient, _per_sample_phases, _ = (
@@ -605,48 +601,52 @@ def _build_run_suitability_checks(
     sat_count: int,
     samples: list[dict[str, Any]],
 ) -> list[dict[str, object]]:
-    """Construct the run-suitability checklist (speed, sensors, reference, saturation, frames)."""
+    """Construct the run-suitability checklist (speed, sensors, reference, saturation, frames).
+
+    Output is language-neutral: ``check`` stores the i18n key directly and
+    ``explanation`` stores an i18n reference dict for render-time translation.
+    """
     sensor_count_sufficient = len(sensor_ids) >= 3
     speed_variation_ok = speed_sufficient and not steady_speed
     run_suitability: list[dict[str, object]] = [
         {
-            "check": _tr(language, "SUITABILITY_CHECK_SPEED_VARIATION"),
+            "check": "SUITABILITY_CHECK_SPEED_VARIATION",
             "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
             "state": "pass" if speed_variation_ok else "warn",
             "explanation": (
-                _tr(language, "SUITABILITY_SPEED_VARIATION_PASS")
+                _i18n_ref("SUITABILITY_SPEED_VARIATION_PASS")
                 if speed_variation_ok
-                else _tr(language, "SUITABILITY_SPEED_VARIATION_WARN")
+                else _i18n_ref("SUITABILITY_SPEED_VARIATION_WARN")
             ),
         },
         {
-            "check": _tr(language, "SUITABILITY_CHECK_SENSOR_COVERAGE"),
+            "check": "SUITABILITY_CHECK_SENSOR_COVERAGE",
             "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
             "state": "pass" if sensor_count_sufficient else "warn",
             "explanation": (
-                _tr(language, "SUITABILITY_SENSOR_COVERAGE_PASS")
+                _i18n_ref("SUITABILITY_SENSOR_COVERAGE_PASS")
                 if sensor_count_sufficient
-                else _tr(language, "SUITABILITY_SENSOR_COVERAGE_WARN")
+                else _i18n_ref("SUITABILITY_SENSOR_COVERAGE_WARN")
             ),
         },
         {
-            "check": _tr(language, "SUITABILITY_CHECK_REFERENCE_COMPLETENESS"),
+            "check": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
             "check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
             "state": "pass" if reference_complete else "warn",
             "explanation": (
-                _tr(language, "SUITABILITY_REFERENCE_COMPLETENESS_PASS")
+                _i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_PASS")
                 if reference_complete
-                else _tr(language, "SUITABILITY_REFERENCE_COMPLETENESS_WARN")
+                else _i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_WARN")
             ),
         },
         {
-            "check": _tr(language, "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"),
+            "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
             "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
             "state": "pass" if sat_count == 0 else "warn",
             "explanation": (
-                _tr(language, "SUITABILITY_SATURATION_PASS")
+                _i18n_ref("SUITABILITY_SATURATION_PASS")
                 if sat_count == 0
-                else _tr(language, "SUITABILITY_SATURATION_WARN", sat_count=sat_count)
+                else _i18n_ref("SUITABILITY_SATURATION_WARN", sat_count=sat_count)
             ),
         },
     ]
@@ -685,14 +685,13 @@ def _build_run_suitability_checks(
     frame_issues = total_dropped + total_overflow
     run_suitability.append(
         {
-            "check": _tr(language, "SUITABILITY_CHECK_FRAME_INTEGRITY"),
+            "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
             "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
             "state": "pass" if frame_issues == 0 else "warn",
             "explanation": (
-                _tr(language, "SUITABILITY_FRAME_INTEGRITY_PASS")
+                _i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
                 if frame_issues == 0
-                else _tr(
-                    language,
+                else _i18n_ref(
                     "SUITABILITY_FRAME_INTEGRITY_WARN",
                     total_dropped=total_dropped,
                     total_overflow=total_overflow,
@@ -715,7 +714,7 @@ def summarize_run_data(
     This is the single computation path used by both the History UI and the
     PDF report — callers must never re-derive metrics independently.
     """
-    language = normalize_lang(lang)
+    language = _normalize_lang(lang)
     _validate_required_strength_metrics(samples)
 
     # --- Timing ---
@@ -741,10 +740,10 @@ def summarize_run_data(
     raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
     # --- Speed breakdown ---
     speed_breakdown = _speed_breakdown(samples) if speed_sufficient else []
-    speed_breakdown_skipped_reason = None
+    speed_breakdown_skipped_reason: object = None
     if not speed_sufficient:
-        speed_breakdown_skipped_reason = _tr(
-            language, "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
+        speed_breakdown_skipped_reason = _i18n_ref(
+            "SPEED_DATA_MISSING_OR_INSUFFICIENT_SPEED_BINNED_AND"
         )
 
     # Phase-grouped speed breakdown (issue #189)

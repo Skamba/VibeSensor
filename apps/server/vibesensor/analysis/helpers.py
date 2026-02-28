@@ -17,8 +17,6 @@ from ..analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
 from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
 
@@ -91,15 +89,6 @@ def _format_duration(seconds: float) -> str:
     rem = total - (minutes * 60)
     return f"{minutes:02d}:{rem:04.1f}"
 
-
-def _required_text(value: object, consequence: str, lang: object = "en") -> str:
-    if value in (None, "", []):
-        return _tr(lang, "MISSING_CONSEQUENCE", consequence=consequence)
-    return str(value)
-
-
-def _text(lang: object, en_text: str, nl_text: str) -> str:
-    return nl_text if normalize_lang(lang) == "nl" else en_text
 
 
 def _percent_missing(samples: list[dict[str, Any]], key: str) -> float:
@@ -395,11 +384,13 @@ def _effective_baseline_floor(
 
 
 def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
-    """Return a stable English location label for the sample.
+    """Return a stable language-neutral location label for the sample.
 
     NOTE: This is used as a **grouping key** across the data pipeline, so it
     must be language-invariant.  Translation to the report language happens at
     render time in the PDF builder / template layer.
+
+    The ``lang`` parameter is accepted but ignored for backward compatibility.
     """
     # Prefer structured location code (from SensorConfig) if available
     from ..locations import label_for_code as _label_for_code  # local to avoid circular import
@@ -417,8 +408,8 @@ def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
         return client_name_raw
     client_id_raw = str(sample.get("client_id") or "").strip()
     if client_id_raw:
-        return _tr(lang, "SENSOR_ID_SUFFIX", sensor_id=client_id_raw[-4:])
-    return _tr(lang, "UNLABELED_SENSOR")
+        return f"Sensor \u2026{client_id_raw[-4:]}"
+    return "Unknown sensor"
 
 
 def _locations_connected_throughout_run(

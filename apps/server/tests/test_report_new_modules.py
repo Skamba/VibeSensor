@@ -409,11 +409,18 @@ def test_most_likely_origin_summary_phase_onset_acceleration() -> None:
     origin = _most_likely_origin_summary(findings, "en")
 
     assert origin["dominant_phase"] == "acceleration"
-    assert "acceleration" in origin["explanation"].lower()
+    # explanation is now a list of i18n refs when phase onset is present
+    explanation = origin["explanation"]
+    assert isinstance(explanation, list)
+    assert any(
+        isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+        and part.get("phase") == "acceleration"
+        for part in explanation
+    )
 
 
 def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
-    """Dutch translation of phase-onset note for deceleration."""
+    """Phase onset note for deceleration stores phase code (language-neutral)."""
     from vibesensor.analysis.summary import _most_likely_origin_summary
 
     findings = [
@@ -431,7 +438,14 @@ def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
     origin = _most_likely_origin_summary(findings, "nl")
 
     assert origin["dominant_phase"] == "deceleration"
-    assert "vertraging" in origin["explanation"].lower()
+    # explanation is now a list of i18n refs (language-neutral)
+    explanation = origin["explanation"]
+    assert isinstance(explanation, list)
+    assert any(
+        isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+        and part.get("phase") == "deceleration"
+        for part in explanation
+    )
 
 
 def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
@@ -453,7 +467,15 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
     origin = _most_likely_origin_summary(findings, "en")
 
     # cruise is not a notable onset phase — no onset addendum
-    assert "onset" not in origin["explanation"].lower()
+    explanation = origin["explanation"]
+    # Single ref (not a list) means no phase onset was appended
+    if isinstance(explanation, list):
+        assert not any(
+            isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+            for part in explanation
+        )
+    else:
+        assert isinstance(explanation, dict)
 
 
 def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
@@ -474,7 +496,14 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     origin = _most_likely_origin_summary(findings, "en")
 
     assert origin["dominant_phase"] is None
-    assert "onset" not in origin["explanation"].lower()
+    explanation = origin["explanation"]
+    if isinstance(explanation, list):
+        assert not any(
+            isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+            for part in explanation
+        )
+    else:
+        assert isinstance(explanation, dict)
 
     summary: dict = {
         "lang": "en",

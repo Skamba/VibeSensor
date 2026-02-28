@@ -35,6 +35,56 @@ from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
 # ---------------------------------------------------------------------------
+# i18n resolution helpers
+# ---------------------------------------------------------------------------
+
+
+def _is_i18n_ref(value: object) -> bool:
+    """Check whether *value* is a language-neutral i18n reference dict."""
+    return isinstance(value, dict) and "_i18n_key" in value
+
+
+def _resolve_i18n(lang: str, value: object) -> str:
+    """Resolve a value that may be an i18n reference dict, a list of refs, or a plain string.
+
+    - If *value* is a dict with ``_i18n_key``, translate using ``tr(lang, key, **params)``.
+    - If *value* is a list of i18n refs, resolve each and join with spaces.
+    - Otherwise return ``str(value)``.
+    """
+    if isinstance(value, list):
+        return " ".join(_resolve_i18n(lang, item) for item in value if item)
+    if not isinstance(value, dict) or "_i18n_key" not in value:
+        return str(value) if value is not None else ""
+    key = str(value["_i18n_key"])
+    suffix = str(value.get("_suffix", ""))
+    params = {k: v for k, v in value.items() if k not in ("_i18n_key", "_suffix")}
+    # Recursively resolve any nested i18n refs in params
+    resolved_params: dict[str, object] = {}
+    for pk, pv in params.items():
+        if _is_i18n_ref(pv):
+            resolved_params[pk] = _resolve_i18n(lang, pv)
+        else:
+            resolved_params[pk] = pv
+    result = _tr(lang, key, **resolved_params)
+    return result + suffix if suffix else result
+
+
+def _order_label_human(lang: str, label: str) -> str:
+    """Translate a language-neutral order label like ``'1x wheel'`` to localized form."""
+    if lang == "nl":
+        names = {"wheel": "wielorde", "engine": "motororde", "driveshaft": "aandrijfasorde"}
+    else:
+        names = {"wheel": "wheel order", "engine": "engine order", "driveshaft": "driveshaft order"}
+    # Parse "Nx base" format
+    parts = label.split(" ", 1)
+    if len(parts) == 2:
+        multiplier, base = parts
+        localized = names.get(base, base)
+        return f"{multiplier} {localized}"
+    return label
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -412,16 +462,30 @@ def map_summary(summary: dict) -> ReportTemplateData:
     else:
         test_plan = [s for s in summary.get("test_plan", []) if isinstance(s, dict)]
         for idx, step in enumerate(test_plan, start=1):
-            what = str(step.get("what") or "")
-            why = str(step.get("why") or "")
+            what_raw = step.get("what") or ""
+            why_raw = step.get("why") or ""
+            what = _resolve_i18n(lang, what_raw) if _is_i18n_ref(what_raw) else str(what_raw)
+            why = _resolve_i18n(lang, why_raw) if _is_i18n_ref(why_raw) else str(why_raw)
+            confirm_raw = step.get("confirm") or ""
+            falsify_raw = step.get("falsify") or ""
+            confirm = (
+                _resolve_i18n(lang, confirm_raw)
+                if _is_i18n_ref(confirm_raw)
+                else str(confirm_raw)
+            )
+            falsify = (
+                _resolve_i18n(lang, falsify_raw)
+                if _is_i18n_ref(falsify_raw)
+                else str(falsify_raw)
+            )
             next_steps.append(
                 NextStep(
                     action=what,
                     why=why or None,
                     rank=idx,
                     speed_band=str(step.get("speed_band") or "") or None,
-                    confirm=str(step.get("confirm") or "") or None,
-                    falsify=str(step.get("falsify") or "") or None,
+                    confirm=confirm or None,
+                    falsify=falsify or None,
                     eta=str(step.get("eta") or "") or None,
                 )
             )
@@ -430,9 +494,19 @@ def map_summary(summary: dict) -> ReportTemplateData:
     data_trust: list[DataTrustItem] = []
     for item in summary.get("run_suitability", []):
         if isinstance(item, dict):
-            check_raw = str(item.get("check") or "")
-            check_text = tr(check_raw) if check_raw.startswith("SUITABILITY_CHECK_") else check_raw
-            detail = str(item.get("explanation") or "").strip() or None
+            check_raw = item.get("check") or ""
+            if _is_i18n_ref(check_raw):
+                check_text = _resolve_i18n(lang, check_raw)
+            elif isinstance(check_raw, str) and check_raw.startswith("SUITABILITY_CHECK_"):
+                check_text = tr(check_raw)
+            else:
+                check_text = str(check_raw)
+            explanation_raw = item.get("explanation") or ""
+            detail = (
+                _resolve_i18n(lang, explanation_raw).strip()
+                if _is_i18n_ref(explanation_raw)
+                else (str(explanation_raw).strip() or None)
+            )
             data_trust.append(
                 DataTrustItem(
                     check=check_text,
@@ -450,7 +524,12 @@ def map_summary(summary: dict) -> ReportTemplateData:
     systems = list(dict.fromkeys(systems_raw))
     pe_loc = primary_location
     pe_speed = primary_speed
-    interp = str(origin.get("explanation", "")) if isinstance(origin, dict) else ""
+    interp_raw = origin.get("explanation", "") if isinstance(origin, dict) else ""
+    interp = (
+        _resolve_i18n(lang, interp_raw)
+        if _is_i18n_ref(interp_raw) or isinstance(interp_raw, list)
+        else str(interp_raw)
+    )
     src_why = str(
         (primary_candidate.get("source") or primary_candidate.get("suspected_source"))
         if primary_candidate
@@ -494,8 +573,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         freq_val = _as_float(row.get("frequency_hz"))
         freq = f"{freq_val:.1f}" if freq_val is not None else "\u2014"
         classification = _peak_classification_text(row.get("peak_classification"), tr=tr)
-        order_label = str(row.get("order_label") or "").strip()
-        order = order_label or classification
+        order_label_raw = str(row.get("order_label") or "").strip()
+        order = _order_label_human(lang, order_label_raw) if order_label_raw else classification
         amp_val = _as_float(row.get("p95_amp_g"))
         amp = f"{amp_val:.4f}" if amp_val is not None else "\u2014"
         strength_db_val = _as_float(row.get("strength_db"))

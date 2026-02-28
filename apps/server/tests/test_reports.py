@@ -171,11 +171,11 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     assert not summary["speed_breakdown_skipped_reason"]
     assert summary["speed_breakdown"]
     assert summary["findings"]
-    assert any("order" in str(f.get("frequency_hz_or_order", "")) for f in summary["findings"])
+    assert any("order" in str(f.get("frequency_hz_or_order", "")) or "x " in str(f.get("frequency_hz_or_order", "")) for f in summary["findings"])
     plots = summary["plots"]
     assert plots["vib_magnitude"]
     assert any(
-        "wheel order" in str(series.get("label", "")).lower()
+        "wheel" in str(series.get("label", "")).lower()
         for series in plots.get("matched_amp_vs_speed", [])
         if isinstance(series, dict)
     )

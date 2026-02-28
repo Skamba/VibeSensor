@@ -210,11 +210,12 @@ async def test_history_insights_respects_lang_query() -> None:
     nl = await endpoint("run-1", "nl")
     assert en["lang"] == "en"
     assert nl["lang"] == "nl"
-    assert en["most_likely_origin"] != nl["most_likely_origin"]
-    checks_en = {str(item.get("check")) for item in en.get("run_suitability", [])}
-    checks_nl = {str(item.get("check")) for item in nl.get("run_suitability", [])}
-    assert "Speed variation" in checks_en
-    assert "Snelheidsvariatie" in checks_nl
+    # Analysis output is now language-neutral: same analysis dict for any lang.
+    # The lang parameter only affects render-time translation (report layer).
+    assert en["most_likely_origin"] == nl["most_likely_origin"]
+    # Suitability check keys are now i18n keys (language-neutral)
+    check_keys = {str(item.get("check_key") or item.get("check")) for item in en.get("run_suitability", [])}
+    assert "SUITABILITY_CHECK_SPEED_VARIATION" in check_keys
 
 
 @pytest.mark.asyncio
