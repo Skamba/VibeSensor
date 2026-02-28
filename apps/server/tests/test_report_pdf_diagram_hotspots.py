@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from vibesensor.report.pdf_diagram import (
-    _amp_heat_color,
     _build_sensor_render_plan,
     _estimate_text_width,
     _resolve_marker_states,
     car_location_diagram,
 )
-from vibesensor.report.theme import HEAT_HIGH, HEAT_LOW, REPORT_COLORS
+from vibesensor.report.theme import REPORT_COLORS
 
 
 def _rectangles_overlap(
@@ -29,29 +28,35 @@ def test_sensor_state_mapping_connected_active_inactive_and_disconnected() -> No
     assert states["engine bay"] == "disconnected"
 
 
-def test_marker_colors_follow_heat_scale_and_disconnected_is_neutral() -> None:
+def test_marker_colors_follow_diagnostic_highlight_and_use_single_color_markers() -> None:
     location_points = {
         "front-left wheel": (40.0, 180.0),
         "front-right wheel": (160.0, 180.0),
+        "rear-left wheel": (40.0, 80.0),
         "engine bay": (100.0, 140.0),
     }
     markers, _, _ = _build_sensor_render_plan(
         location_points=location_points,
         drawing_width=220.0,
         drawing_height=252.0,
-        connected_locations={"front-left wheel", "front-right wheel"},
-        amp_by_location={"front-left wheel": 10.0, "front-right wheel": 30.0},
-        highlight={},
+        connected_locations={"front-left wheel", "front-right wheel", "rear-left wheel"},
+        amp_by_location={
+            "front-left wheel": 30.0,
+            "front-right wheel": 28.0,
+            "rear-left wheel": 15.0,
+        },
+        highlight={"rear-left wheel": REPORT_COLORS["danger"]},
     )
     marker_by_name = {marker.name: marker for marker in markers}
 
-    assert marker_by_name["front-left wheel"].fill == HEAT_LOW
-    assert marker_by_name["front-right wheel"].fill == HEAT_HIGH
-    assert marker_by_name["front-left wheel"].fill != REPORT_COLORS["text_secondary"]
-    assert marker_by_name["front-right wheel"].fill != REPORT_COLORS["text_secondary"]
+    assert marker_by_name["rear-left wheel"].fill == REPORT_COLORS["danger"]
+    assert marker_by_name["rear-left wheel"].radius > marker_by_name["front-left wheel"].radius
+    assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["text_secondary"]
+    assert marker_by_name["front-right wheel"].fill == REPORT_COLORS["text_secondary"]
+    assert marker_by_name["rear-left wheel"].stroke == marker_by_name["rear-left wheel"].fill
+    assert marker_by_name["front-left wheel"].stroke == marker_by_name["front-left wheel"].fill
     assert marker_by_name["engine bay"].state == "disconnected"
-    assert marker_by_name["engine bay"].fill != HEAT_LOW
-    assert marker_by_name["engine bay"].fill != HEAT_HIGH
+    assert marker_by_name["engine bay"].stroke == marker_by_name["engine bay"].fill
 
 
 def test_label_placement_stays_in_bounds_and_avoids_overlap_for_dense_layout() -> None:
@@ -125,7 +130,7 @@ def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
     assert labels == {"front-left wheel", "rear-right wheel"}
 
 
-def test_single_sensor_uses_heat_midpoint_not_neutral_grey() -> None:
+def test_single_sensor_uses_diagnostic_highlight_color() -> None:
     location_points = {"front-left wheel": (40.0, 180.0)}
     markers, _, single_sensor = _build_sensor_render_plan(
         location_points=location_points,
@@ -133,15 +138,15 @@ def test_single_sensor_uses_heat_midpoint_not_neutral_grey() -> None:
         drawing_height=252.0,
         connected_locations={"front-left wheel"},
         amp_by_location={"front-left wheel": 25.0},
-        highlight={},
+        highlight={"front-left wheel": REPORT_COLORS["danger"]},
     )
 
     assert single_sensor is True
-    assert markers[0].fill == _amp_heat_color(0.5)
-    assert markers[0].fill != REPORT_COLORS["text_secondary"]
+    assert markers[0].fill == REPORT_COLORS["danger"]
+    assert markers[0].stroke == markers[0].fill
 
 
-def test_legend_text_stays_clear_of_color_bar_and_source_labels_do_not_overlap() -> None:
+def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() -> None:
     summary = {
         "sensor_locations": [
             "front-left wheel",
@@ -170,9 +175,7 @@ def test_legend_text_stays_clear_of_color_bar_and_source_labels_do_not_overlap()
     text_items = [item for item in diagram.contents if hasattr(item, "text")]
 
     db_labels = [item for item in text_items if str(getattr(item, "text", "")).endswith("dB")]
-    assert db_labels, "Expected dB endpoint labels for the heat legend"
-    # Bar top is y=43 (legend_y=36 + 7); labels should be clearly above that.
-    assert all(float(getattr(item, "y", 0.0)) > 43.0 for item in db_labels)
+    assert not db_labels, "Map should not show raw intensity heat legend labels"
 
     source_labels = [
         item
@@ -196,3 +199,28 @@ def test_legend_text_stays_clear_of_color_bar_and_source_labels_do_not_overlap()
     for idx in range(len(boxes)):
         for jdx in range(idx + 1, len(boxes)):
             assert not _rectangles_overlap(boxes[idx], boxes[jdx])
+
+
+def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs() -> None:
+    location_points = {
+        "front-left wheel": (40.0, 180.0),
+        "front-right wheel": (160.0, 180.0),
+        "rear-left wheel": (40.0, 80.0),
+        "rear-right wheel": (160.0, 80.0),
+    }
+    markers, _, _ = _build_sensor_render_plan(
+        location_points=location_points,
+        drawing_width=220.0,
+        drawing_height=252.0,
+        connected_locations=set(location_points.keys()),
+        amp_by_location={
+            "front-left wheel": 36.0,
+            "front-right wheel": 34.0,
+            "rear-left wheel": 27.0,
+            "rear-right wheel": 26.0,
+        },
+        highlight={"rear-left wheel": REPORT_COLORS["danger"]},
+    )
+    marker_by_name = {marker.name: marker for marker in markers}
+    assert marker_by_name["front-left wheel"].fill == REPORT_COLORS["text_secondary"]
+    assert marker_by_name["rear-left wheel"].fill == REPORT_COLORS["danger"]

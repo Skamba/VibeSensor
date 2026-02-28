@@ -188,31 +188,24 @@ def _build_sensor_render_plan(
     occupied_boxes: list[tuple[float, float, float, float]] = []
     for name, (px, py) in location_points.items():
         state = states[name]
-        amp = amp_by_location.get(name)
         if state == "connected-active":
-            if (
-                amp is not None
-                and min_amp is not None
-                and max_amp is not None
-                and max_amp > min_amp
-            ):
-                norm = (amp - min_amp) / (max_amp - min_amp)
+            if name in highlight:
+                fill = highlight[name]
+                radius = 6.2
             else:
-                norm = 0.5
-            fill = _amp_heat_color(norm)
-            radius = 5.2 + (norm * 1.8)
-            default_stroke = REPORT_COLORS["ink"]
-            stroke = highlight.get(name, default_stroke)
-            stroke_width = 1.1 if name in highlight else 0.8
+                fill = REPORT_COLORS["text_secondary"]
+                radius = 5.0
+            stroke = fill
+            stroke_width = 0.8
         elif state == "connected-inactive":
             fill = REPORT_COLORS["surface_alt"]
             radius = 4.8
-            stroke = REPORT_COLORS["axis"]
+            stroke = fill
             stroke_width = 0.8
         else:
             fill = "#e3e8f1"
             radius = 4.0
-            stroke = REPORT_COLORS["table_row_border"]
+            stroke = fill
             stroke_width = 0.6
 
         marker = MarkerRenderPlan(
@@ -479,86 +472,7 @@ def car_location_diagram(
             )
         )
 
-    # -- Heat-map legend with numeric endpoints --
-    # Vertical bar placed to the LEFT of the vehicle box.
-    # Place legend against the left drawing border.
-    legend_x = 0.5
-    legend_y = y0 + 12.0
-    legend_w = 6.0
-    legend_h = max(64.0, car_h - 24.0)
-    seg_h = legend_h / 11.0
-    for i in range(0, 11):
-        step = i / 10.0
-        drawing.add(
-            Rect(
-                legend_x,
-                legend_y + (i * seg_h),
-                legend_w,
-                seg_h,
-                fillColor=colors.HexColor(_amp_heat_color(step)),
-                strokeColor=colors.HexColor(_amp_heat_color(step)),
-                strokeWidth=0.2,
-            )
-        )
-
-    legend_text_x = legend_x + legend_w + 2.0
-    drawing.add(
-        String(
-            legend_text_x,
-            legend_y - 1.0,
-            tr("HEAT_LEGEND_LESS"),
-            fontName="Helvetica",
-            fontSize=5.8,
-            fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
-        )
-    )
-    drawing.add(
-        String(
-            legend_text_x,
-            legend_y + legend_h + 2.0,
-            tr("HEAT_LEGEND_MORE"),
-            fontName="Helvetica",
-            fontSize=5.8,
-            fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
-        )
-    )
-    min_amp = min(amp_by_location.values()) if amp_by_location else None
-    max_amp = max(amp_by_location.values()) if amp_by_location else None
-    if min_amp is not None and max_amp is not None:
-        drawing.add(
-            String(
-                legend_text_x,
-                legend_y - 8.0,
-                _format_db(min_amp),
-                fontName="Helvetica",
-                fontSize=6,
-                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
-            )
-        )
-        drawing.add(
-            String(
-                legend_text_x,
-                legend_y + legend_h + 10.0,
-                _format_db(max_amp),
-                fontName="Helvetica",
-                fontSize=6,
-                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
-            )
-        )
-    if single_sensor:
-        drawing.add(
-            String(
-                legend_text_x,
-                legend_y - 15.0,
-                tr("ONE_SENSOR_NOTE"),
-                fontName="Helvetica",
-                fontSize=6,
-                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
-            )
-        )
-
-    # -- Source highlight legend (explains stroke colours on the circles) --
-    # Placed below the heat-map legend so it fits within the narrow Drawing.
+    # -- Source highlight legend (explains marker colors on the circles) --
     from .theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
 
     src_legend_items = [
@@ -568,7 +482,7 @@ def car_location_diagram(
     ]
     src_legend_x = 8.0
     # Keep source legend anchored low to avoid overlap with the car/rear label.
-    src_title_y = 20.0
+    src_title_y = 30.0
     src_swatch_y = src_title_y - 8
     drawing.add(
         String(
@@ -582,6 +496,17 @@ def car_location_diagram(
             fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
         )
     )
+    if single_sensor:
+        drawing.add(
+            String(
+                src_legend_x,
+                src_title_y + 8.0,
+                tr("ONE_SENSOR_NOTE"),
+                fontName="Helvetica",
+                fontSize=6,
+                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+            )
+        )
     src_max_x = d_width - 8.0
     item_gap = 5.0
     row_gap = 9.0
