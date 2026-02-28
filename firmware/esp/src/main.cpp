@@ -87,6 +87,8 @@ constexpr uint8_t kWifiInitialConnectAttempts =
   static_cast<uint8_t>(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS);
 constexpr size_t kMaxCatchUpSamplesPerLoop = 8;
 constexpr size_t kSensorReadBatchSamples = 8;
+constexpr size_t kSensorPrefetchSamples = 32;
+constexpr size_t kSensorPrefetchLowWaterSamples = 8;
 constexpr size_t kMaxTxFramesPerLoop = 2;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
 constexpr uint32_t kStatusReportIntervalMs = 10000;
@@ -111,6 +113,8 @@ static_assert(VIBESENSOR_FRAME_QUEUE_LEN_TARGET >= VIBESENSOR_FRAME_QUEUE_LEN_MI
 static_assert(VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS > 0,
         "VIBESENSOR_WIFI_INITIAL_CONNECT_ATTEMPTS must be > 0");
 static_assert(kFrameSamplesMaxByDatagram > 0, "kMaxDatagramBytes too small for protocol");
+static_assert(kSensorPrefetchLowWaterSamples < kSensorPrefetchSamples,
+        "sensor prefetch low-water must be below prefetch capacity");
 
 // Default I2C pins for M5Stack ATOM Lite Unit port (4-pin cable).
 constexpr int kI2cSdaPin = 26;
@@ -159,8 +163,10 @@ uint64_t g_next_sample_due_us = 0;
 uint32_t g_last_hello_ms = 0;
 bool g_sensor_ok = false;
 int16_t g_sensor_batch_xyz[kSensorReadBatchSamples * 3] = {};
-size_t g_sensor_batch_count = 0;
-size_t g_sensor_batch_index = 0;
+int16_t g_sensor_prefetch_xyz[kSensorPrefetchSamples * 3] = {};
+size_t g_sensor_prefetch_head = 0;
+size_t g_sensor_prefetch_tail = 0;
+size_t g_sensor_prefetch_count = 0;
 
 uint32_t g_blink_until_ms = 0;
 int64_t g_clock_offset_us = 0;
@@ -362,12 +368,19 @@ bool next_sensor_sample(int16_t* x, int16_t* y, int16_t* z) {
   if (!g_sensor_ok) {
     return false;
   }
-  if (g_sensor_batch_index >= g_sensor_batch_count) {
+  if (g_sensor_prefetch_count <= kSensorPrefetchLowWaterSamples) {
     bool io_error = false;
     bool fifo_truncated = false;
-    g_sensor_batch_count = g_adxl.read_samples(
-        g_sensor_batch_xyz, kSensorReadBatchSamples, &io_error, &fifo_truncated);
-    g_sensor_batch_index = 0;
+    size_t max_to_read = kSensorReadBatchSamples;
+    size_t free_slots = kSensorPrefetchSamples - g_sensor_prefetch_count;
+    if (free_slots < max_to_read) {
+      max_to_read = free_slots;
+    }
+    if (max_to_read > 1) {
+      max_to_read = 1 + (esp_random() % max_to_read);
+    }
+    size_t read_count = g_adxl.read_samples(
+        g_sensor_batch_xyz, max_to_read, &io_error, &fifo_truncated);
     if (fifo_truncated) {
       g_sensor_fifo_truncated++;
       set_last_error(2);
@@ -385,20 +398,33 @@ bool next_sensor_sample(int16_t* x, int16_t* y, int16_t* z) {
         if (g_sensor_ok) {
           g_sensor_reinit_success++;
           g_sensor_consecutive_errors = 0;
+          g_sensor_prefetch_head = 0;
+          g_sensor_prefetch_tail = 0;
+          g_sensor_prefetch_count = 0;
         }
       }
-    } else if (g_sensor_batch_count > 0) {
+    } else if (read_count > 0) {
       g_sensor_consecutive_errors = 0;
+      for (size_t i = 0; i < read_count && g_sensor_prefetch_count < kSensorPrefetchSamples; ++i) {
+        const size_t src = i * 3;
+        const size_t dst = g_sensor_prefetch_head * 3;
+        g_sensor_prefetch_xyz[dst + 0] = g_sensor_batch_xyz[src + 0];
+        g_sensor_prefetch_xyz[dst + 1] = g_sensor_batch_xyz[src + 1];
+        g_sensor_prefetch_xyz[dst + 2] = g_sensor_batch_xyz[src + 2];
+        g_sensor_prefetch_head = (g_sensor_prefetch_head + 1) % kSensorPrefetchSamples;
+        g_sensor_prefetch_count++;
+      }
     }
   }
-  if (g_sensor_batch_count == 0) {
+  if (g_sensor_prefetch_count == 0) {
     return false;
   }
-  const size_t offset = g_sensor_batch_index * 3;
-  *x = g_sensor_batch_xyz[offset + 0];
-  *y = g_sensor_batch_xyz[offset + 1];
-  *z = g_sensor_batch_xyz[offset + 2];
-  g_sensor_batch_index++;
+  const size_t offset = g_sensor_prefetch_tail * 3;
+  *x = g_sensor_prefetch_xyz[offset + 0];
+  *y = g_sensor_prefetch_xyz[offset + 1];
+  *z = g_sensor_prefetch_xyz[offset + 2];
+  g_sensor_prefetch_tail = (g_sensor_prefetch_tail + 1) % kSensorPrefetchSamples;
+  g_sensor_prefetch_count--;
   return true;
 }
 
