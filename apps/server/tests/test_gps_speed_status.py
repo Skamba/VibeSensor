@@ -141,6 +141,16 @@ class TestFallback:
         m.last_update_ts = time.monotonic()
         assert m.effective_speed_mps == pytest.approx(25.0)
 
+    def test_gps_primary_ignores_override(self) -> None:
+        """With default manual_source_selected=False, GPS is primary and override is ignored."""
+        m = GPSSpeedMonitor(gps_enabled=True)
+        assert m.manual_source_selected is False
+        m.override_speed_mps = 25.0
+        m.speed_mps = 10.0
+        m.last_update_ts = time.monotonic()
+        assert m.effective_speed_mps == pytest.approx(10.0)
+        assert m.fallback_active is False
+
     def test_stale_timeout_respected(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.stale_timeout_s = 5.0
