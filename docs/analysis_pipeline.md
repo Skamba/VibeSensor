@@ -16,6 +16,32 @@ its entrypoint, ordered steps, outputs, and architectural rules.
    sub-modules directly.
 5. **Renderer-only report package** — `vibesensor.report` must not
    import from `vibesensor.analysis` (enforced by tests).
+6. **No circular coupling** — the live signal-processing layer
+   (`processing.py`) must not import from `analysis/`.
+
+## Live Processing vs Post-Stop Analysis
+
+The system has two distinct computational pipelines:
+
+| | Live Processing (`processing.py`) | Post-Stop Analysis (`analysis/`) |
+|-|-----------------------------------|----------------------------------|
+| **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
+| **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB |
+| **Output** | Per-tick metrics: FFT spectrum, peaks, strength_db, RMS, P2P | Diagnostic findings, rankings, reports |
+| **Purpose** | Data acquisition — transform raw signals into structured metrics | Diagnostic reasoning — classify, rank, and explain vibration causes |
+| **Stateless?** | Yes — each tick processes the current rolling window | Yes — processes all stored samples in one pass |
+
+`processing.py` computes FFT spectra, peak detection, and vibration
+strength metrics in real time.  These are **measurement steps** that
+produce the sample records stored during recording.  The analysis
+pipeline then reads those stored records and applies diagnostic
+reasoning (pattern matching, order tracking, confidence scoring,
+localisation) to produce findings and reports.
+
+The mathematical primitives (e.g. `compute_vibration_strength_db`,
+`noise_floor_amp_p20_g`) live in the shared `vibesensor_core` library
+and are used by both layers — this is intentional code reuse, not
+duplication.
 
 ## Trigger Flow
 

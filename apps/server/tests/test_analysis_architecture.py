@@ -5,6 +5,7 @@ These tests verify the architectural invariants:
    (the package ``__init__.py``), never from sub-modules directly.
 2. The analysis pipeline has a single clear entrypoint (``summarize_run_data``).
 3. Post-stop analysis code lives exclusively in the analysis folder.
+4. Live signal processing (``processing.py``) does not depend on analysis.
 """
 
 from __future__ import annotations
@@ -177,3 +178,38 @@ def test_no_analysis_files_outside_analysis_folder() -> None:
         report_files = {p.name for p in report_dir.glob("*.py")}
         unexpected = report_files & analysis_only_names
         assert not unexpected, f"Analysis files found in report/ folder: {unexpected}"
+
+
+# ---------------------------------------------------------------------------
+# 5. processing.py (live signal processing) does not import analysis
+# ---------------------------------------------------------------------------
+
+_LIVE_PROCESSING_FILES = [
+    "processing.py",
+    "udp_data_rx.py",
+]
+
+
+@pytest.mark.parametrize("filename", _LIVE_PROCESSING_FILES)
+def test_live_processing_does_not_import_analysis(filename: str) -> None:
+    """Live signal-processing modules must not depend on the analysis package.
+
+    ``processing.py`` produces the raw metrics that analysis consumes.
+    A dependency in the other direction would create a circular
+    coupling between the live pipeline and the post-stop pipeline.
+    """
+    source = (_SERVER_PKG / filename).read_text(encoding="utf-8")
+    tree = ast.parse(source, filename=filename)
+    violations: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.ImportFrom) or not node.module:
+            continue
+        mod = node.module
+        level = node.level or 0
+        full = ("." * level) + mod
+        if "analysis" in mod.split("."):
+            violations.append(f"line {node.lineno}: from {full} import ...")
+    assert not violations, (
+        f"{filename} imports from the analysis package. "
+        "Live signal processing must not depend on post-stop analysis:\n" + "\n".join(violations)
+    )
