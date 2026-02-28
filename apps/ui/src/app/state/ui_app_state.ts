@@ -74,6 +74,34 @@ export interface SpectrumClientData {
   combined: number[];
 }
 
+export interface SpectrumTickUpdate {
+  spectra: { clients: Record<string, SpectrumClientData> };
+  hasSpectrumData: boolean;
+  hasNewSpectrumFrame: boolean;
+}
+
+export function applySpectrumTick(
+  previousSpectra: { clients: Record<string, SpectrumClientData> },
+  previousHasSpectrumData: boolean,
+  incomingSpectra: { clients: Record<string, SpectrumClientData> } | null,
+): SpectrumTickUpdate {
+  if (!incomingSpectra) {
+    return {
+      spectra: previousSpectra,
+      hasSpectrumData: previousHasSpectrumData,
+      hasNewSpectrumFrame: false,
+    };
+  }
+  const hasSpectrumData = Object.values(incomingSpectra.clients).some(
+    (clientSpec: SpectrumClientData) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
+  );
+  return {
+    spectra: incomingSpectra,
+    hasSpectrumData,
+    hasNewSpectrumFrame: true,
+  };
+}
+
 export interface AppState {
   ws: WsClient | null;
   wsState: string;
