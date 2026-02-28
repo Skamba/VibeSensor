@@ -17,7 +17,6 @@ import os
 import shutil
 import subprocess
 import time
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -29,8 +28,8 @@ from .network import (
     HOTSPOT_RESTORE_DELAY_S,
     HOTSPOT_RESTORE_RETRIES,
     NMCLI_TIMEOUT_S,
-    UPLINK_CONNECTION_NAME,
     UPLINK_CONNECT_WAIT_S,
+    UPLINK_CONNECTION_NAME,
     UPLINK_FALLBACK_DNS,
     cleanup_uplink,
     parse_wifi_diagnostics,

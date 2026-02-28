@@ -11,7 +11,11 @@ from pathlib import Path
 # sudo wrapper helpers
 # ---------------------------------------------------------------------------
 
-_WRAPPER_SCRIPT = Path(__file__).resolve().parent.parent.parent / "scripts" / "vibesensor_update_sudo.sh"
+_WRAPPER_SCRIPT = (
+    Path(__file__).resolve().parent.parent.parent
+    / "scripts"
+    / "vibesensor_update_sudo.sh"
+)
 
 
 def _sudo_prefix() -> list[str]:

@@ -81,8 +81,14 @@ async def cleanup_uplink(
 ) -> None:
     """Best-effort removal of the temporary uplink connection."""
     sudo = _sudo_prefix()
-    await runner.run([*sudo, "nmcli", "connection", "down", UPLINK_CONNECTION_NAME], timeout=NMCLI_TIMEOUT_S)
-    await runner.run([*sudo, "nmcli", "connection", "delete", UPLINK_CONNECTION_NAME], timeout=NMCLI_TIMEOUT_S)
+    await runner.run(
+        [*sudo, "nmcli", "connection", "down", UPLINK_CONNECTION_NAME],
+        timeout=NMCLI_TIMEOUT_S,
+    )
+    await runner.run(
+        [*sudo, "nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
+        timeout=NMCLI_TIMEOUT_S,
+    )
 
 
 async def restore_hotspot(

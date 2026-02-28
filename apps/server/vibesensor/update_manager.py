@@ -8,23 +8,7 @@ continue to work without changes.
 
 from __future__ import annotations
 
-# Re-export models
-from .update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
-
-# Re-export runner / helpers
-from .update.runner import CommandRunner, sanitize_log_line as _sanitize_log_line
-
-# Re-export network helpers
-from .update.network import parse_wifi_diagnostics
-
-# Re-export state store
-from .update.state_store import UpdateStateStore
-
-# Re-export manager
-from .update.manager import UpdateManager
-
-# Re-export constants (used by tests and other code)
-from .update.manager import (
+from .update.manager import (  # noqa: F401
     DEFAULT_GIT_BRANCH,
     DEFAULT_GIT_REMOTE,
     DEFAULT_REBUILD_PATH,
@@ -35,24 +19,31 @@ from .update.manager import (
     REBUILD_OP_TIMEOUT_S,
     REBUILD_RETRY_DELAY_S,
     REINSTALL_OP_TIMEOUT_S,
+    SERVICE_CONTRACTS_DIR,
+    SERVICE_ENV_DROPIN,
     TRANSIENT_REBUILD_ERROR_MARKERS,
     UI_BUILD_METADATA_FILE,
     UPDATE_RESTART_UNIT,
     UPDATE_SERVICE_NAME,
     UPDATE_TIMEOUT_S,
+    UpdateManager,
 )
-from .update.network import (
+from .update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState  # noqa: F401
+from .update.network import (  # noqa: F401
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
     DNS_RETRY_INTERVAL_S,
     HOTSPOT_RESTORE_DELAY_S,
     HOTSPOT_RESTORE_RETRIES,
     NMCLI_TIMEOUT_S,
-    UPLINK_CONNECTION_NAME,
     UPLINK_CONNECT_WAIT_S,
+    UPLINK_CONNECTION_NAME,
     UPLINK_FALLBACK_DNS,
+    parse_wifi_diagnostics,
 )
-from .update.manager import SERVICE_CONTRACTS_DIR, SERVICE_ENV_DROPIN
+from .update.runner import CommandRunner  # noqa: F401
+from .update.runner import sanitize_log_line as _sanitize_log_line  # noqa: F401
+from .update.state_store import UpdateStateStore  # noqa: F401
 
 __all__ = [
     "CommandRunner",
