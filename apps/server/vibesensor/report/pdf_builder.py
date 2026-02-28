@@ -1026,27 +1026,12 @@ def _draw_additional_observations(
 
 
 def build_report_pdf(
-    summary_or_data: dict[str, object] | ReportTemplateData,
+    data: ReportTemplateData,
 ) -> bytes:
     """Build a 2-page diagnostic-worksheet PDF.
 
-    Accepts either a pre-built :class:`ReportTemplateData` (preferred — no
-    analysis imports required) or a legacy summary *dict* for backward
-    compatibility (the dict is converted via the analysis builder).
+    Accepts a pre-built :class:`ReportTemplateData`.
     """
-    if isinstance(summary_or_data, ReportTemplateData):
-        data = summary_or_data
-    elif isinstance(summary_or_data, dict):
-        # Backward-compat: caller passed a raw summary dict.
-        # Import the builder lazily to avoid hard analysis dependency.
-        from ..analysis.report_data_builder import map_summary
-
-        data = map_summary(summary_or_data)
-    else:
-        raise TypeError(
-            f"build_report_pdf expects ReportTemplateData or dict, "
-            f"got {type(summary_or_data).__name__}"
-        )
     try:
         return _build_canvas_pdf(data)
     except Exception as exc:

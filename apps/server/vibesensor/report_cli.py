@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .analysis import summarize_log
+from .analysis import map_summary, summarize_log
 from .report.pdf_builder import build_report_pdf
 
 
@@ -32,7 +32,7 @@ def main() -> int:
     summary = summarize_log(args.input, include_samples=include_samples)
     out_pdf = args.output or args.input.with_name(f"{args.input.stem}_report.pdf")
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
-    out_pdf.write_bytes(build_report_pdf(summary))
+    out_pdf.write_bytes(build_report_pdf(map_summary(summary)))
     print(f"wrote report: {out_pdf}")
 
     if args.summary_json is not None:

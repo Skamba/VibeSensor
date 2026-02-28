@@ -43,10 +43,9 @@ def _engine_hz(
     return rpm / 60.0, src
 
 
-def _order_label(lang: object, order: int, base: str) -> str:
+def _order_label(order: int, base: str) -> str:
     """Return a language-neutral order label like ``'1x wheel'``.
 
-    The ``lang`` parameter is accepted but ignored for backward compatibility.
     Translation to human-readable form happens at report render time.
     """
     return f"{order}x {base}"
@@ -101,11 +100,8 @@ def _order_hypotheses() -> list[_OrderHypothesis]:
     ]
 
 
-def _wheel_focus_from_location(lang: object, location: str) -> dict[str, str]:
-    """Return an i18n reference for the wheel focus label.
-
-    The ``lang`` parameter is accepted but ignored for backward compatibility.
-    """
+def _wheel_focus_from_location(location: str) -> dict[str, str]:
+    """Return an i18n reference for the wheel focus label."""
     token = location.strip().lower()
     if "front-left wheel" in token:
         return {"_i18n_key": "WHEEL_FOCUS_FRONT_LEFT"}
@@ -131,7 +127,6 @@ def _i18n_ref(key: str, **params: object) -> dict[str, object]:
 
 
 def _finding_actions_for_source(
-    lang: object,
     source: str,
     *,
     strongest_location: str = "",
@@ -140,7 +135,6 @@ def _finding_actions_for_source(
 ) -> list[dict[str, object]]:
     """Return language-neutral action plan dicts with i18n references.
 
-    The ``lang`` parameter is accepted but ignored for backward compatibility.
     Each ``what``, ``why``, ``confirm``, ``falsify`` field is an i18n reference
     dict (``{"_i18n_key": "KEY", ...params}``) that the report layer resolves
     at render time.
@@ -149,7 +143,7 @@ def _finding_actions_for_source(
     speed_band = strongest_speed_band.strip()
     speed_hint = _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band) if speed_band else ""
     if source == "wheel/tire":
-        wheel_focus = _wheel_focus_from_location(lang, location)
+        wheel_focus = _wheel_focus_from_location(location)
         location_hint = (
             _i18n_ref("LOCATION_HINT_NEAR", location=location)
             if location
