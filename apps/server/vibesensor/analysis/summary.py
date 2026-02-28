@@ -442,6 +442,28 @@ def _build_phase_timeline(
     return entries
 
 
+def _prepare_speed_and_phases(
+    samples: list[dict[str, Any]],
+) -> tuple[list[float], dict, float, bool, list, list]:
+    """Compute speed stats and phase segmentation shared by multiple entry points.
+
+    Returns ``(speed_values, speed_stats, speed_non_null_pct,
+    speed_sufficient, per_sample_phases, phase_segments)``.
+    """
+    speed_values = [
+        speed
+        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
+        if speed is not None and speed > 0
+    ]
+    speed_stats = _speed_stats(speed_values)
+    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
+    speed_sufficient = (
+        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
+    )
+    per_sample_phases, phase_segments = _segment_run_phases(samples)
+    return speed_values, speed_stats, speed_non_null_pct, speed_sufficient, per_sample_phases, phase_segments
+
+
 def build_findings_for_samples(
     *,
     metadata: dict[str, Any],
@@ -451,18 +473,10 @@ def build_findings_for_samples(
     language = normalize_lang(lang)
     rows = list(samples) if isinstance(samples, list) else []
     _validate_required_strength_metrics(rows)
-    speed_values = [
-        speed
-        for speed in (_as_float(sample.get("speed_kmh")) for sample in rows)
-        if speed is not None and speed > 0
-    ]
-    speed_stats = _speed_stats(speed_values)
-    speed_non_null_pct = (len(speed_values) / len(rows) * 100.0) if rows else 0.0
-    speed_sufficient = (
-        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
+    _, speed_stats, speed_non_null_pct, speed_sufficient, _per_sample_phases, _ = (
+        _prepare_speed_and_phases(rows)
     )
     raw_sample_rate_hz = _as_float(metadata.get("raw_sample_rate_hz"))
-    _per_sample_phases, _ = _segment_run_phases(rows)
     return _build_findings(
         metadata=dict(metadata),
         samples=rows,
@@ -700,21 +714,12 @@ def summarize_run_data(
     # --- Timing ---
     run_id, start_ts, end_ts, duration_s = _compute_run_timing(metadata, samples, file_name)
 
-    # --- Speed statistics ---
-    speed_values = [
-        speed
-        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
-        if speed is not None and speed > 0
-    ]
-    speed_stats = _speed_stats(speed_values)
-    run_noise_baseline_g = _run_noise_baseline_g(samples)
-    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
-    speed_sufficient = (
-        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
+    # --- Speed & phase (shared computation) ---
+    speed_values, speed_stats, speed_non_null_pct, speed_sufficient, _per_sample_phases, phase_segments = (
+        _prepare_speed_and_phases(samples)
     )
+    run_noise_baseline_g = _run_noise_baseline_g(samples)
 
-    # --- Phase segmentation ---
-    _per_sample_phases, phase_segments = _segment_run_phases(samples)
     phase_info = _phase_summary(phase_segments)
     speed_stats_by_phase = _speed_stats_by_phase(samples, _per_sample_phases)
 

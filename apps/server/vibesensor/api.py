@@ -189,10 +189,15 @@ def create_router(state: RuntimeState) -> APIRouter:
         report_pdf_cache.move_to_end(cache_key)
         while len(report_pdf_cache) > _REPORT_PDF_CACHE_MAX_ENTRIES:
             evicted_key, _ = report_pdf_cache.popitem(last=False)
-            # Only remove lock if it is not currently held by another coroutine.
-            lock = report_pdf_locks.get(evicted_key)
-            if lock is not None and not lock.locked():
-                report_pdf_locks.pop(evicted_key, None)
+            report_pdf_locks.pop(evicted_key, None)
+        # Prune stale locks that no longer have a cache entry or active holder
+        if len(report_pdf_locks) > _REPORT_PDF_CACHE_MAX_ENTRIES * 2:
+            stale_keys = [
+                k for k, v in report_pdf_locks.items()
+                if k not in report_pdf_cache and not v.locked()
+            ]
+            for k in stale_keys:
+                report_pdf_locks.pop(k, None)
 
     def _analysis_language(run: dict, requested: str | None) -> str:
         if isinstance(requested, str) and requested.strip():
@@ -473,6 +478,13 @@ def create_router(state: RuntimeState) -> APIRouter:
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
 
+        # Expose staleness to callers so they can decide whether to re-request
+        analysis_version = run.get("analysis_version")
+        if isinstance(analysis, dict) and analysis_version is not None:
+            from .history_db import ANALYSIS_SCHEMA_VERSION
+
+            analysis["_analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+
         # Re-run analysis only when a *different* language is explicitly
         # requested.  The post-stop pipeline is the single source of truth;
         # on-demand re-computation is reserved for language variants only.
@@ -483,15 +495,8 @@ def create_router(state: RuntimeState) -> APIRouter:
         if requested_lang is not None and requested_lang != persisted_lang:
 
             def _recompute() -> dict:
-                from .runlog import normalize_sample_record
-
-                normalized_iter = (
-                    normalize_sample_record(sample)
-                    for batch in state.history_db.iter_run_samples(run_id)
-                    for sample in batch
-                )
                 samples, total_samples, stride = _bounded_sample(
-                    normalized_iter,
+                    _iter_normalized_samples(run_id),
                     max_items=_MAX_REPORT_SAMPLES,
                 )
                 metadata = run.get("metadata", {})
@@ -514,6 +519,10 @@ def create_router(state: RuntimeState) -> APIRouter:
                 analysis = await asyncio.to_thread(_recompute)
             except ValueError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+        # Strip internal renderer-only fields before returning
+        if isinstance(analysis, dict):
+            analysis = {k: v for k, v in analysis.items() if not k.startswith("_")}
         return analysis
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)

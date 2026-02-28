@@ -503,13 +503,27 @@ CREATE TABLE IF NOT EXISTS client_names (
         return row[0] if row else None
 
     def recover_stale_recording_runs(self) -> int:
+        """Mark stale 'recording' runs as error and return count.
+
+        Runs still in 'analyzing' state are left alone; the analysis
+        worker will pick them up for re-processing.
+        """
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ? "
-                "WHERE status IN ('recording', 'analyzing')",
-                ("Recovered stale run during startup",),
+                "WHERE status = 'recording'",
+                ("Recovered stale recording during startup",),
             )
             return cur.rowcount
+
+    def stale_analyzing_run_ids(self) -> list[str]:
+        """Return run IDs stuck in 'analyzing' state (e.g. after a crash)."""
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                "SELECT run_id FROM runs WHERE status = 'analyzing' "
+                "ORDER BY created_at ASC"
+            )
+            return [row[0] for row in cur.fetchall()]
 
     # -- settings KV ----------------------------------------------------------
 
