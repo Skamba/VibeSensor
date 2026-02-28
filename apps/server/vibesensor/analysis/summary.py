@@ -177,7 +177,7 @@ def _phase_ranking_score(finding: dict[str, object]) -> float:
     Boosts findings with strong CRUISE-phase evidence (steady driving provides
     the most reliable vibration signature) by up to 15%.  Findings without
     phase evidence receive a neutral multiplier (0.85) and are ranked purely
-    by confidence, preserving backward compatibility.
+    by confidence.
     """
     conf = finding.get("confidence_0_to_1")
     confidence = float(conf if conf is not None else 0)
@@ -937,7 +937,7 @@ def summarize_run_data(
 def summarize_log(
     log_path: Path, lang: str | None = None, include_samples: bool = True
 ) -> dict[str, object]:
-    """Backward-compatible wrapper: reads a JSONL run file and analyses it."""
+    """Reads a JSONL run file and analyses it."""
     metadata, samples, _warnings = _load_run(log_path)
     return summarize_run_data(
         metadata,

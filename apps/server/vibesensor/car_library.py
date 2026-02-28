@@ -56,7 +56,7 @@ def resolve_variant(
 
     Returns a new dict with the effective gearboxes, tire_options, and
     default tire specs.  Unknown *variant_name* or ``None`` returns a copy
-    of the base entry (safe default for backward compat).
+    of the base entry.
     """
     result = dict(base_entry)
     if not variant_name:

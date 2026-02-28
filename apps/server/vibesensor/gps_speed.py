@@ -45,11 +45,9 @@ class GPSSpeedMonitor:
         self.gps_enabled = gps_enabled
         self.speed_mps: float | None = None
         self.override_speed_mps: float | None = None
-        # None keeps legacy behavior (override has top priority) for backwards
-        # compatibility in isolated monitor usage/tests.
         # True means manual is the selected primary source.
         # False means GPS is primary and manual is fallback-only.
-        self.manual_source_selected: bool | None = None
+        self.manual_source_selected: bool = False
 
         # --- status tracking ---
         self.connection_state: str = "disabled" if not gps_enabled else "disconnected"
@@ -73,11 +71,7 @@ class GPSSpeedMonitor:
         consumers should prefer this over reading ``effective_speed_mps``
         and ``fallback_active`` separately when they need both values.
         """
-        if self.manual_source_selected is None:
-            # Legacy path: override has top priority
-            if isinstance(self.override_speed_mps, (int, float)):
-                return SpeedResolution(float(self.override_speed_mps), False, "manual")
-        elif self.manual_source_selected is True:
+        if self.manual_source_selected:
             if isinstance(self.override_speed_mps, (int, float)):
                 return SpeedResolution(float(self.override_speed_mps), False, "manual")
             # Manual selected but no override set → fall through to GPS
