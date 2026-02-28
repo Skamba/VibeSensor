@@ -398,9 +398,7 @@ def test_pdf_peaks_table_includes_peak_amp_and_strength_columns(tmp_path: Path) 
     assert missing == [], f"Missing peak table columns in PDF: {missing}"
 
 
-def test_pdf_additional_observations_heading_for_transient_findings(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_pdf_additional_observations_heading_for_transient_findings() -> None:
     data = ReportTemplateData(
         title="Diagnostic worksheet",
         pattern_evidence=PatternEvidence(),

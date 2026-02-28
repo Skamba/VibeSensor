@@ -11,8 +11,8 @@ from statistics import median as _median
 from typing import Any
 
 from ..analysis_settings import tire_circumference_m_from_spec
-from ..report.i18n import normalize_lang
-from ..report.i18n import tr as _tr
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
 from .findings import (

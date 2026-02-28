@@ -1038,7 +1038,7 @@ def build_report_pdf(
     else:
         # Backward-compat: caller passed a raw summary dict.
         # Import the builder lazily to avoid hard analysis dependency.
-        from ..analysis.report_data_builder import map_summary  # noqa: F811
+        from ..analysis.report_data_builder import map_summary
 
         data = map_summary(summary_or_data)
     try:

@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
-from ..report.i18n import normalize_lang
-from ..report.i18n import tr as _tr
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _effective_engine_rpm
 

@@ -95,7 +95,10 @@ needs:
 For runs analyzed before `ReportTemplateData` persistence was introduced,
 the PDF endpoint falls back to building `ReportTemplateData` from the
 persisted summary dict via `map_summary()`.  This fallback uses a lazy
-import to avoid violating the renderer-only rule at module level.
+import to avoid violating the renderer-only rule at module level.  This
+means that for legacy data, analysis code *is* called at report time as a
+one-time migration path — new recordings always have pre-built
+`ReportTemplateData` available.
 
 ## Adding new report sections
 
