@@ -25,12 +25,12 @@ from conftest import (
 )
 from vibesensor_core.strength_bands import bucket_for_strength
 
+from vibesensor.analysis.summary import summarize_run_data
 from vibesensor.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from vibesensor.report.summary import summarize_run_data
 
 # ---------------------------------------------------------------------------
 # Shared helpers (kept local to this module for clarity)

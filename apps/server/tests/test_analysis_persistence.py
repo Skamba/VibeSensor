@@ -258,7 +258,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
             "rows": len(samples),
         }
 
-    monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _fake_summarize)
+    monkeypatch.setattr("vibesensor.analysis.summary.summarize_run_data", _fake_summarize)
 
     # Stop logging - should trigger post-analysis
     logger.stop_logging()
@@ -286,8 +286,8 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
 
     from fastapi import FastAPI
 
+    from vibesensor.analysis import summarize_run_data
     from vibesensor.api import create_router
-    from vibesensor.report import summarize_run_data
 
     metadata = {
         "run_id": "run-pdf",
@@ -413,8 +413,8 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
 
     from fastapi import FastAPI
 
+    from vibesensor.analysis import summarize_run_data
     from vibesensor.api import create_router
-    from vibesensor.report import summarize_run_data
 
     metadata = {
         "run_id": "run-ins",

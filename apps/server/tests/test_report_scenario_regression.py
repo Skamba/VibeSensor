@@ -12,15 +12,15 @@ from typing import Any
 
 from vibesensor_core.strength_bands import bucket_for_strength
 
-from vibesensor.report.findings import _classify_peak_type
-from vibesensor.report.phase_segmentation import (
+from vibesensor.analysis.findings import _classify_peak_type
+from vibesensor.analysis.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
     phase_summary,
     segment_run_phases,
 )
-from vibesensor.report.strength_labels import certainty_label
-from vibesensor.report.summary import (
+from vibesensor.analysis.strength_labels import certainty_label
+from vibesensor.analysis.summary import (
     confidence_label,
     summarize_run_data,
 )
@@ -345,7 +345,7 @@ class TestConfidenceCalibration:
         """
         from math import log1p as _log1p
 
-        from vibesensor.report.findings import _MEMS_NOISE_FLOOR_G
+        from vibesensor.analysis.findings import _MEMS_NOISE_FLOOR_G
 
         mean_amp = 0.002  # 2 mg – barely above MEMS noise
         near_zero_floor = 1e-7  # pathological near-zero floor
@@ -660,7 +660,7 @@ class TestLocationLabel:
     """_location_label should prefer structured location codes."""
 
     def test_structured_location_preferred(self) -> None:
-        from vibesensor.report.helpers import _location_label
+        from vibesensor.analysis.helpers import _location_label
 
         sample = {
             "client_name": "My sensor",
@@ -670,7 +670,7 @@ class TestLocationLabel:
         assert label == "Front Left Wheel"
 
     def test_fallback_to_client_name(self) -> None:
-        from vibesensor.report.helpers import _location_label
+        from vibesensor.analysis.helpers import _location_label
 
         sample = {
             "client_name": "Rear Axle Custom",
@@ -679,7 +679,7 @@ class TestLocationLabel:
         assert label == "Rear Axle Custom"
 
     def test_unknown_location_code_used_raw(self) -> None:
-        from vibesensor.report.helpers import _location_label
+        from vibesensor.analysis.helpers import _location_label
 
         sample = {
             "location": "custom_spot",
@@ -769,7 +769,7 @@ class TestReportMetadataCompleteness:
     """map_summary should populate new metadata fields."""
 
     def test_report_data_has_metadata_fields(self) -> None:
-        from vibesensor.report.report_data import map_summary
+        from vibesensor.analysis.report_data_builder import map_summary
 
         meta = _standard_metadata()
         samples = _build_speed_sweep_samples(n=20, vib_db=18.0)
@@ -780,7 +780,7 @@ class TestReportMetadataCompleteness:
         assert tmpl.sensor_count >= 1
 
     def test_next_steps_have_enriched_fields(self) -> None:
-        from vibesensor.report.report_data import map_summary
+        from vibesensor.analysis.report_data_builder import map_summary
 
         meta = _standard_metadata()
         samples = _build_speed_sweep_samples(n=40, peak_amp=0.06, vib_db=22.0)
@@ -806,8 +806,8 @@ class TestSensorIntensityPhaseContext:
 
     def test_phase_intensity_present_when_phases_provided(self) -> None:
         """Each location row should have phase_intensity when per_sample_phases given."""
-        from vibesensor.report.findings import _sensor_intensity_by_location
-        from vibesensor.report.phase_segmentation import segment_run_phases
+        from vibesensor.analysis.findings import _sensor_intensity_by_location
+        from vibesensor.analysis.phase_segmentation import segment_run_phases
 
         # Build samples with two distinct locations and phases
         samples = []
@@ -845,7 +845,7 @@ class TestSensorIntensityPhaseContext:
 
     def test_phase_intensity_absent_without_phases(self) -> None:
         """Without per_sample_phases, phase_intensity should be None."""
-        from vibesensor.report.findings import _sensor_intensity_by_location
+        from vibesensor.analysis.findings import _sensor_intensity_by_location
 
         samples = [
             {"t_s": 0.0, "speed_kmh": 60.0, "vibration_strength_db": 22.0, "location_key": "fl"},
@@ -880,7 +880,7 @@ class TestOrderFindingsPhaseFiltering:
         With only IDLE samples and insufficient diagnostic samples, the fallback
         to full sample set applies. With a mix, IDLE should be excluded.
         """
-        from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
+        from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 
         # Build 5 idle + 15 cruise samples
         idle = [{"t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 5.0} for i in range(5)]
@@ -943,8 +943,8 @@ class TestPhaseSpeedBreakdown:
 
     def test_phase_speed_breakdown_groups_by_phase(self) -> None:
         """Output must have one row per detected phase, keyed by phase name."""
-        from vibesensor.report.findings import _phase_speed_breakdown
-        from vibesensor.report.phase_segmentation import DrivingPhase, segment_run_phases
+        from vibesensor.analysis.findings import _phase_speed_breakdown
+        from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 
         # Build a sequence: idle → cruise
         samples = []
@@ -986,8 +986,8 @@ class TestPhaseSpeedBreakdown:
 
     def test_phase_breakdown_rows_cover_all_samples(self) -> None:
         """Sum of phase row counts must equal total samples processed."""
-        from vibesensor.report.findings import _phase_speed_breakdown
-        from vibesensor.report.phase_segmentation import segment_run_phases
+        from vibesensor.analysis.findings import _phase_speed_breakdown
+        from vibesensor.analysis.phase_segmentation import segment_run_phases
 
         samples = _build_phased_samples([(5, 0.0, 0.0), (10, 50.0, 80.0), (5, 0.0, 0.0)])
         per_sample_phases, _ = segment_run_phases(samples)
@@ -1023,7 +1023,7 @@ class TestPhaseSpeedBreakdown:
             assert row["count"] > 0, "count must be positive"
 
     def test_phase_speed_breakdown_does_not_drop_samples_when_phase_list_short(self) -> None:
-        from vibesensor.report.findings import _phase_speed_breakdown
+        from vibesensor.analysis.findings import _phase_speed_breakdown
 
         samples = [
             {"t_s": 0.0, "speed_kmh": 40.0, "vibration_strength_db": 10.0},
@@ -1042,7 +1042,7 @@ class TestReferenceFindingDistinguishability:
 
     def test_reference_finding_has_finding_type_field(self) -> None:
         """_reference_missing_finding must include finding_type='reference'."""
-        from vibesensor.report.findings import _reference_missing_finding
+        from vibesensor.analysis.findings import _reference_missing_finding
 
         ref = _reference_missing_finding(
             finding_id="REF_SPEED",
@@ -1056,7 +1056,7 @@ class TestReferenceFindingDistinguishability:
 
     def test_reference_findings_excluded_from_top_causes(self) -> None:
         """select_top_causes must not include REF_ findings in output."""
-        from vibesensor.report.findings import _reference_missing_finding
+        from vibesensor.analysis.findings import _reference_missing_finding
 
         ref = _reference_missing_finding(
             finding_id="REF_SPEED",
@@ -1074,7 +1074,7 @@ class TestReferenceFindingDistinguishability:
                 "severity": "diagnostic",
             },
         ]
-        from vibesensor.report.summary import select_top_causes
+        from vibesensor.analysis.summary import select_top_causes
 
         top = select_top_causes(findings)
         for cause in top:
@@ -1085,7 +1085,7 @@ class TestReferenceFindingDistinguishability:
 
     def test_all_ref_variants_have_reference_type(self) -> None:
         """All four REF_ finding IDs must carry finding_type='reference'."""
-        from vibesensor.report.findings import _reference_missing_finding
+        from vibesensor.analysis.findings import _reference_missing_finding
 
         for fid in ("REF_SPEED", "REF_WHEEL", "REF_ENGINE", "REF_SAMPLE_RATE"):
             ref = _reference_missing_finding(
@@ -1100,7 +1100,7 @@ class TestReferenceFindingDistinguishability:
 
     def test_reference_finding_confidence_is_none(self) -> None:
         """Reference findings must have confidence_0_to_1=None to avoid inflating statistics."""
-        from vibesensor.report.findings import _reference_missing_finding
+        from vibesensor.analysis.findings import _reference_missing_finding
 
         ref = _reference_missing_finding(
             finding_id="REF_SPEED",
@@ -1197,7 +1197,7 @@ class TestPhaseInfoInSummary:
     def test_build_findings_for_samples_uses_phase_filtering(self) -> None:
         """build_findings_for_samples must compute phase segments and pass them
         to _build_findings so that IDLE samples are excluded from analysis."""
-        from vibesensor.report import build_findings_for_samples
+        from vibesensor.analysis import build_findings_for_samples
 
         meta = _standard_metadata()
         # 10 idle + 10 cruise samples
@@ -1226,7 +1226,7 @@ class TestSpeedStatsByPhase:
 
     def test_speed_stats_by_phase_keys_are_phase_labels(self) -> None:
         """Each key in speed_stats_by_phase must be a valid driving phase string."""
-        from vibesensor.report.phase_segmentation import DrivingPhase
+        from vibesensor.analysis.phase_segmentation import DrivingPhase
 
         meta = _standard_metadata()
         samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])

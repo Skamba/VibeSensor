@@ -36,11 +36,7 @@ LOCATION_CODES = (
 
 def _circumference_m(width_mm: float, aspect_pct: float, rim_in: float) -> float:
     # Apply default deflection factor (0.97) to match server-side computation.
-    return (
-        math.pi
-        * ((rim_in * 25.4 + 2.0 * (width_mm * (aspect_pct / 100.0))) / 1000.0)
-        * 0.97
-    )
+    return math.pi * ((rim_in * 25.4 + 2.0 * (width_mm * (aspect_pct / 100.0))) / 1000.0) * 0.97
 
 
 def test_e2e_docker_user_journeys() -> None:

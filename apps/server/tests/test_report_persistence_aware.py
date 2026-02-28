@@ -9,19 +9,19 @@ from __future__ import annotations
 
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
-from vibesensor.report.findings import (
+from vibesensor.analysis.findings import (
     _build_persistent_peak_findings,
     _classify_peak_type,
 )
-from vibesensor.report.phase_segmentation import DrivingPhase
-from vibesensor.report.plot_data import (
+from vibesensor.analysis.phase_segmentation import DrivingPhase
+from vibesensor.analysis.plot_data import (
     _aggregate_fft_spectrum,
     _aggregate_fft_spectrum_raw,
     _spectrogram_from_peaks,
     _spectrogram_from_peaks_raw,
     _top_peaks_table_rows,
 )
-from vibesensor.report.summary import (
+from vibesensor.analysis.summary import (
     _annotate_peaks_with_order_labels,
     build_findings_for_samples,
     summarize_run_data,

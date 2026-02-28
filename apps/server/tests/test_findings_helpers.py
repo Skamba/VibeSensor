@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from vibesensor.report.findings import (
+from vibesensor.analysis.findings import (
     _sensor_intensity_by_location,
     _speed_profile_from_points,
     _weighted_percentile,

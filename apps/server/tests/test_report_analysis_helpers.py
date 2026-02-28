@@ -3,8 +3,7 @@ from __future__ import annotations
 import pytest
 from vibesensor_core.vibration_strength import percentile
 
-from vibesensor.constants import KMH_TO_MPS
-from vibesensor.report.helpers import (
+from vibesensor.analysis.helpers import (
     _corr_abs,
     _effective_engine_rpm,
     _format_duration,
@@ -22,7 +21,8 @@ from vibesensor.report.helpers import (
     _speed_stats_by_phase,
     _text,
 )
-from vibesensor.report.order_analysis import _wheel_hz
+from vibesensor.analysis.order_analysis import _wheel_hz
+from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.runlog import as_float_or_none as _as_float
 
@@ -279,7 +279,7 @@ def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
 
 
 def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
-    from vibesensor.report.phase_segmentation import segment_run_phases
+    from vibesensor.analysis.phase_segmentation import segment_run_phases
 
     samples = [
         {"t_s": float(i), "speed_kmh": 0.5 if i < 5 else 60.0, "vibration_strength_db": 10.0}
@@ -344,7 +344,7 @@ def test_sample_top_peaks_filters_invalid() -> None:
 
 def test_sample_top_peaks_filters_sub_min_analysis_freq() -> None:
     """Peaks below MIN_ANALYSIS_FREQ_HZ (5.0 Hz) should be excluded."""
-    from vibesensor.report.helpers import MIN_ANALYSIS_FREQ_HZ
+    from vibesensor.analysis.helpers import MIN_ANALYSIS_FREQ_HZ
 
     sample = {
         "top_peaks": [
