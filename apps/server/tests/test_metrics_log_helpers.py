@@ -675,10 +675,11 @@ def test_post_analysis_burst_uses_single_daemon_worker(
 
     assert max_active == 1
     assert len(seen) == 12
+    # After all work completes, the worker thread should have exited and
+    # been cleared to allow a fresh thread on the next scheduling call.
     with logger._lock:
         worker = logger._analysis_thread
-    assert worker is not None
-    assert worker.daemon is True
+    assert worker is None
 
 
 def test_analysis_snapshot_isolated_per_logging_run(tmp_path: Path) -> None:

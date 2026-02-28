@@ -275,9 +275,15 @@ CREATE TABLE IF NOT EXISTS client_names (
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'analyzing', end_time_utc = ?, "
-                "analysis_started_at = ? WHERE run_id = ?",
+                "analysis_started_at = ? WHERE run_id = ? AND status = 'recording'",
                 (end_time_utc, now, run_id),
             )
+            if cur.rowcount == 0:
+                LOGGER.warning(
+                    "finalize_run for run %s: no rows updated "
+                    "(run missing or not in 'recording' state)",
+                    run_id,
+                )
 
     def update_run_metadata(self, run_id: str, metadata: dict[str, Any]) -> bool:
         with self._cursor() as cur:
@@ -292,7 +298,8 @@ CREATE TABLE IF NOT EXISTS client_names (
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
-                "analysis_version = ?, analysis_completed_at = ? WHERE run_id = ?",
+                "analysis_version = ?, analysis_completed_at = ? "
+                "WHERE run_id = ? AND status NOT IN ('complete')",
                 (
                     self._safe_json_dumps(analysis),
                     ANALYSIS_SCHEMA_VERSION,
@@ -300,6 +307,14 @@ CREATE TABLE IF NOT EXISTS client_names (
                     run_id,
                 ),
             )
+            if cur.rowcount == 0:
+                cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
+                row = cur.fetchone()
+                if row is not None and row[0] == "complete":
+                    LOGGER.warning(
+                        "store_analysis for run %s: skipped — already complete",
+                        run_id,
+                    )
 
     def store_analysis_error(self, run_id: str, error: str) -> None:
         now = datetime.now(UTC).isoformat()
@@ -309,6 +324,18 @@ CREATE TABLE IF NOT EXISTS client_names (
                 "analysis_completed_at = ? WHERE run_id = ?",
                 (error, now, run_id),
             )
+
+    def analysis_is_current(self, run_id: str) -> bool:
+        """Return *True* when the persisted analysis version matches the current schema."""
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                "SELECT analysis_version FROM runs WHERE run_id = ?",
+                (run_id,),
+            )
+            row = cur.fetchone()
+        if row is None or row[0] is None:
+            return False
+        return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
 
     # -- read -----------------------------------------------------------------
 
@@ -476,13 +503,25 @@ CREATE TABLE IF NOT EXISTS client_names (
         return row[0] if row else None
 
     def recover_stale_recording_runs(self) -> int:
+        """Mark stale 'recording' runs as error and return count.
+
+        Runs still in 'analyzing' state are left alone; the analysis
+        worker will pick them up for re-processing.
+        """
         with self._cursor() as cur:
             cur.execute(
-                "UPDATE runs SET status = 'error', error_message = ? "
-                "WHERE status IN ('recording', 'analyzing')",
-                ("Recovered stale run during startup",),
+                "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
+                ("Recovered stale recording during startup",),
             )
             return cur.rowcount
+
+    def stale_analyzing_run_ids(self) -> list[str]:
+        """Return run IDs stuck in 'analyzing' state (e.g. after a crash)."""
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                "SELECT run_id FROM runs WHERE status = 'analyzing' ORDER BY created_at ASC"
+            )
+            return [row[0] for row in cur.fetchall()]
 
     # -- settings KV ----------------------------------------------------------
 

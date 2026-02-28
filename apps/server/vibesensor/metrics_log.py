@@ -27,6 +27,7 @@ from .gps_speed import GPSSpeedMonitor
 from .processing import SignalProcessor
 from .registry import ClientRegistry
 from .runlog import (
+    bounded_sample,
     create_run_metadata,
     utc_now_iso,
 )
@@ -658,6 +659,7 @@ class MetricsLogger:
                 if callable(update_metadata):
                     start_time_utc = self._run_start_utc or end_utc
                     latest_metadata = self._run_metadata_record(self._run_id, start_time_utc)
+                    latest_metadata["end_time_utc"] = end_utc
                     update_metadata(self._run_id, latest_metadata)
                 self._history_db.finalize_run(self._run_id, end_utc)
                 self._clear_last_write_error()
@@ -672,21 +674,29 @@ class MetricsLogger:
                 return
             self._analysis_queue.append(run_id)
             self._analysis_enqueued_run_ids.add(run_id)
-            worker = self._analysis_thread
-            if worker is None or not worker.is_alive():
-                worker = Thread(
-                    target=self._analysis_worker_loop,
-                    name="metrics-post-analysis-worker",
-                    daemon=True,
-                )
-                self._analysis_thread = worker
-                worker.start()
+            self._ensure_analysis_worker_running()
+
+    def _ensure_analysis_worker_running(self) -> None:
+        """Start a new analysis worker thread if none is alive.
+
+        Must be called while holding ``self._lock``.
+        """
+        worker = self._analysis_thread
+        if worker is None or not worker.is_alive():
+            worker = Thread(
+                target=self._analysis_worker_loop,
+                name="metrics-post-analysis-worker",
+                daemon=True,
+            )
+            self._analysis_thread = worker
+            worker.start()
 
     def _analysis_worker_loop(self) -> None:
         while True:
             with self._lock:
                 if not self._analysis_queue:
                     self._analysis_active_run_id = None
+                    self._analysis_thread = None
                     return
                 run_id = self._analysis_queue.popleft()
                 self._analysis_active_run_id = run_id
@@ -746,21 +756,18 @@ class MetricsLogger:
                 LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
                 return
             language = str(metadata.get("language") or "en")
-            samples: list[dict[str, object]] = []
-            total_sample_count = 0
-            stride = 1
+
             read_tx = getattr(self._history_db, "read_transaction", None)
             tx_ctx = read_tx() if callable(read_tx) else nullcontext()
             with tx_ctx:
-                for batch in self._history_db.iter_run_samples(run_id, batch_size=1024):
-                    for sample in batch:
-                        total_sample_count += 1
-                        if (total_sample_count - 1) % stride != 0:
-                            continue
-                        samples.append(normalize_sample_record(sample))
-                        if len(samples) > _MAX_POST_ANALYSIS_SAMPLES:
-                            samples = samples[::2]
-                            stride *= 2
+                normalized_iter = (
+                    normalize_sample_record(sample)
+                    for batch in self._history_db.iter_run_samples(run_id, batch_size=1024)
+                    for sample in batch
+                )
+                samples, total_sample_count, stride = bounded_sample(
+                    normalized_iter, max_items=_MAX_POST_ANALYSIS_SAMPLES
+                )
             if not samples:
                 LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
                 self._history_db.store_analysis_error(run_id, "No samples collected during run")
@@ -805,8 +812,9 @@ class MetricsLogger:
                 report_data = map_summary(summary)
                 summary["_report_template_data"] = asdict(report_data)
             except Exception:
-                LOGGER.warning(
-                    "Failed to build ReportTemplateData for run %s",
+                LOGGER.error(
+                    "Failed to build ReportTemplateData for run %s; "
+                    "PDF will rebuild from summary on request",
                     run_id,
                     exc_info=True,
                 )
