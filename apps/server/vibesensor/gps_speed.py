@@ -163,13 +163,43 @@ class GPSSpeedMonitor:
         if not isinstance(mode, int) or mode < 3:
             return False
 
-        eph = payload.get("eph")
-        if isinstance(eph, (int, float)) and math.isfinite(eph) and eph > _GPS_MAX_EPH_M:
+        lat = payload.get("lat")
+        lon = payload.get("lon")
+        if not (
+            isinstance(lat, (int, float))
+            and not isinstance(lat, bool)
+            and math.isfinite(lat)
+            and isinstance(lon, (int, float))
+            and not isinstance(lon, bool)
+            and math.isfinite(lon)
+        ):
+            return False
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
+            return False
+        if lat == 0.0 and lon == 0.0:
             return False
 
+        eph = payload.get("eph")
+        if eph is not None:
+            if (
+                not isinstance(eph, (int, float))
+                or isinstance(eph, bool)
+                or not math.isfinite(eph)
+                or eph < 0
+                or eph > _GPS_MAX_EPH_M
+            ):
+                return False
+
         eps = payload.get("eps")
-        if isinstance(eps, (int, float)) and math.isfinite(eps) and eps > _GPS_MAX_EPS_MPS:
-            return False
+        if eps is not None:
+            if (
+                not isinstance(eps, (int, float))
+                or isinstance(eps, bool)
+                or not math.isfinite(eps)
+                or eps < 0
+                or eps > _GPS_MAX_EPS_MPS
+            ):
+                return False
 
         return True
 

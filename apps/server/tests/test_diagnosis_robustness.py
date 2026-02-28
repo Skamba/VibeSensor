@@ -694,7 +694,15 @@ class TestGpsSpeedValidation:
 
         return (
             _json.dumps(
-                {"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "speed": speed_value}
+                {
+                    "class": "TPV",
+                    "mode": 3,
+                    "eph": 10.0,
+                    "eps": 0.5,
+                    "lat": 54.6872,
+                    "lon": 25.2797,
+                    "speed": speed_value,
+                }
             ).encode()
             + b"\n"
         )
@@ -705,7 +713,15 @@ class TestGpsSpeedValidation:
 
         return (
             _json.dumps(
-                {"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "speed": speed}
+                {
+                    "class": "TPV",
+                    "mode": 3,
+                    "eph": 10.0,
+                    "eps": 0.5,
+                    "lat": 54.6872,
+                    "lon": 25.2797,
+                    "speed": speed,
+                }
             ).encode()
             + b"\n"
         )
