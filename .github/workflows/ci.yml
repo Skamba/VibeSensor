@@ -109,4 +109,4 @@ jobs:
 
       - name: Docker-backed e2e suite (skip already-owned checks)
         run: |
-          python3 tools/tests/run_full_suite.py --skip-ui-sync --skip-ui-smoke --skip-unit-tests
+          python3 tools/tests/run_full_suite.py --skip-ui-sync --skip-ui-smoke --skip-unit-tests --fast-e2e
