@@ -419,9 +419,7 @@ class TestBug18IntensitySortZero:
             }
             for i in range(10)
         ]
-        result = _sensor_intensity_by_location(
-            samples, include_locations={"FL"}, lang="en"
-        )
+        result = _sensor_intensity_by_location(samples, include_locations={"FL"}, lang="en")
         assert len(result) > 0
 
 
@@ -452,9 +450,7 @@ class TestBug20PlotDataOrZero:
         # Verify the fixed pattern preserves 0.0
         item = {"presence_ratio": 0.0, "burstiness": 0.0, "persistence_score": 0.0}
         presence = float(
-            item.get("presence_ratio")
-            if item.get("presence_ratio") is not None
-            else 0.0
+            item.get("presence_ratio") if item.get("presence_ratio") is not None else 0.0
         )
         assert presence == 0.0
         # Old behavior: float(item.get("presence_ratio") or 0.0) would also
@@ -463,8 +459,6 @@ class TestBug20PlotDataOrZero:
     def test_none_presence_ratio_defaults_to_zero(self) -> None:
         item: dict = {"presence_ratio": None}
         presence = float(
-            item.get("presence_ratio")
-            if item.get("presence_ratio") is not None
-            else 0.0
+            item.get("presence_ratio") if item.get("presence_ratio") is not None else 0.0
         )
         assert presence == 0.0

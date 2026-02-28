@@ -485,9 +485,7 @@ def create_router(state: RuntimeState) -> APIRouter:
             from .history_db import ANALYSIS_SCHEMA_VERSION
 
             try:
-                analysis["_analysis_is_current"] = (
-                    int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
-                )
+                analysis["_analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
             except (TypeError, ValueError):
                 analysis["_analysis_is_current"] = False
 

@@ -372,7 +372,7 @@ class MetricsLogger:
             if isinstance(effective_speed_mps, (int, float))
             else None
         )
-        if hasattr(self.gps_monitor, 'resolve_speed'):
+        if hasattr(self.gps_monitor, "resolve_speed"):
             _resolve_source = self.gps_monitor.resolve_speed().source
         else:
             _resolve_source = (
