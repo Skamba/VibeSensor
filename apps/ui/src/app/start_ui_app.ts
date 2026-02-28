@@ -22,6 +22,7 @@ import { createSettingsFeature } from "./features/settings_feature";
 import { createCarsFeature } from "./features/cars_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createUpdateFeature } from "./features/update_feature";
+import { applySpectrumTick } from "./state/ui_app_state";
 import type { AppState, ChartBand, ClientRow } from "./state/ui_app_state";
 import type { UiDomElements } from "./dom/ui_dom_registry";
 
@@ -323,24 +324,20 @@ export function startUiApp(): void {
     state.payloadError = null; renderWsState();
     const prevSelected = state.selectedClientId;
     state.clients = adapted.clients as unknown as ClientRow[];
-    if (adapted.spectra) {
-      state.spectra = { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, AdaptedSpectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics as Record<string, any>, combined: spectrum.combined }])) };
-    } else {
-      state.spectra = { clients: {} };
-    }
+    const incomingSpectra = adapted.spectra
+      ? { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, AdaptedSpectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics as Record<string, any>, combined: spectrum.combined }])) }
+      : null;
+    const spectrumTick = applySpectrumTick(state.spectra, state.hasSpectrumData, incomingSpectra);
+    state.spectra = spectrumTick.spectra;
     sensorsFeature.updateClientSelection();
     sensorsFeature.maybeRenderSensorsSettingsList();
     sensorsFeature.renderLoggingStatus();
     if (prevSelected !== state.selectedClientId) sendSelection();
     state.speedMps = adapted.speed_mps;
     latestRotationalSpeeds = adapted.rotational_speeds;
-    if (adapted.spectra) {
-      state.hasSpectrumData = Object.values(adapted.spectra.clients).some((clientSpec: AdaptedSpectrum) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0);
-    } else {
-      state.hasSpectrumData = false;
-    }
+    state.hasSpectrumData = spectrumTick.hasSpectrumData;
     renderSpeedReadout();
-    if (adapted.spectra) renderSpectrum(); else updateSpectrumOverlay();
+    if (spectrumTick.hasNewSpectrumFrame) renderSpectrum(); else updateSpectrumOverlay();
     sensorsFeature.renderStatus(state.clients.find((c) => c.id === state.selectedClientId));
   }
 
