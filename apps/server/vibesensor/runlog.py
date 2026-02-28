@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -41,6 +41,7 @@ __all__ = [
     "normalize_sample_record",
     "append_jsonl_records",
     "read_jsonl_run",
+    "bounded_sample",
 ]
 
 
@@ -121,6 +122,39 @@ def normalize_sample_record(record: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(record)
     normalized.update(frame.to_dict())
     return normalized
+
+
+def bounded_sample(
+    samples: Iterator[dict],
+    *,
+    max_items: int,
+    total_hint: int = 0,
+) -> tuple[list[dict], int, int]:
+    """Down-sample *samples* to at most *max_items*.
+
+    When *total_hint* is available the stride is computed upfront so
+    that we never over-collect and re-halve.
+
+    Returns
+    -------
+    tuple[list[dict], int, int]
+        ``(kept_samples, total_count, final_stride)`` where
+        *kept_samples* is the down-sampled list, *total_count* is the
+        number of items consumed from the iterator, and *final_stride*
+        is the stride factor that was applied.
+    """
+    stride: int = max(1, total_hint // max_items) if total_hint > max_items else 1
+    kept: list[dict] = []
+    total = 0
+    for sample in samples:
+        total += 1
+        if (total - 1) % stride != 0:
+            continue
+        kept.append(sample)
+        if len(kept) > max_items:
+            kept = kept[::2]
+            stride *= 2
+    return kept, total, stride
 
 
 def append_jsonl_records(

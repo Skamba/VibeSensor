@@ -28,7 +28,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    summary = summarize_log(args.input)
+    include_samples = args.summary_json is not None
+    summary = summarize_log(args.input, include_samples=include_samples)
     out_pdf = args.output or args.input.with_name(f"{args.input.stem}_report.pdf")
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
     out_pdf.write_bytes(build_report_pdf(summary))

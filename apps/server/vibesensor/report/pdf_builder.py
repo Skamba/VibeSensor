@@ -1035,12 +1035,17 @@ def build_report_pdf(
     """
     if isinstance(summary_or_data, ReportTemplateData):
         data = summary_or_data
-    else:
+    elif isinstance(summary_or_data, dict):
         # Backward-compat: caller passed a raw summary dict.
         # Import the builder lazily to avoid hard analysis dependency.
         from ..analysis.report_data_builder import map_summary
 
         data = map_summary(summary_or_data)
+    else:
+        raise TypeError(
+            f"build_report_pdf expects ReportTemplateData or dict, "
+            f"got {type(summary_or_data).__name__}"
+        )
     try:
         return _build_canvas_pdf(data)
     except Exception as exc:

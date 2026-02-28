@@ -365,6 +365,15 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         persist_history_db=config.logging.persist_history_db,
         language_provider=lambda: settings_store.language,
     )
+
+    # Re-queue runs stuck in 'analyzing' state (e.g. after a crash)
+    stale_analyzing = history_db.stale_analyzing_run_ids()
+    for stale_run_id in stale_analyzing:
+        LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
+        metrics_logger._schedule_post_analysis(stale_run_id)
+    if stale_analyzing:
+        LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
+
     live_diagnostics = LiveDiagnosticsEngine()
     update_manager = UpdateManager()
     esp_flash_manager = EspFlashManager()
