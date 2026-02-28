@@ -7,10 +7,10 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _effective_engine_rpm
-from .i18n import normalize_lang
-from .i18n import tr as _tr
 
 
 def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> float | None:

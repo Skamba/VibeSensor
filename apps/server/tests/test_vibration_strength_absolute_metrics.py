@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
-from vibesensor.report.strength_labels import strength_text
+from vibesensor.analysis.strength_labels import strength_text
 
 
 def test_compute_strength_returns_absolute_amplitude_fields() -> None:

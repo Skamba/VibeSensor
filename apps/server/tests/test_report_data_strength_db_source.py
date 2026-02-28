@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
-from vibesensor.report.report_data import map_summary
+from vibesensor.analysis.report_data_builder import map_summary
 
 
 def _summary_with_top_order(finding: dict, *, sensor_rows: list[dict] | None = None) -> dict:

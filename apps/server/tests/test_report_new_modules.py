@@ -9,15 +9,16 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
-from vibesensor.report import summarize_log
-from vibesensor.report.pattern_parts import parts_for_pattern, why_parts_listed
+from vibesensor.analysis import summarize_log
+from vibesensor.analysis.pattern_parts import parts_for_pattern, why_parts_listed
+from vibesensor.analysis.report_data_builder import map_summary
+from vibesensor.analysis.strength_labels import certainty_label, strength_label, strength_text
 from vibesensor.report.pdf_builder import (
     assert_aspect_preserved,
     build_report_pdf,
     fit_rect_preserve_aspect,
 )
-from vibesensor.report.report_data import ReportTemplateData, map_summary
-from vibesensor.report.strength_labels import certainty_label, strength_label, strength_text
+from vibesensor.report.report_data import ReportTemplateData
 
 # ---------------------------------------------------------------------------
 # strength_label / strength_text
@@ -360,7 +361,7 @@ def test_map_summary_no_top_causes() -> None:
 
 
 def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> None:
-    from vibesensor.report.summary import _most_likely_origin_summary
+    from vibesensor.analysis.summary import _most_likely_origin_summary
 
     findings = [
         {
@@ -391,7 +392,7 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
 
 def test_most_likely_origin_summary_phase_onset_acceleration() -> None:
     """When top finding has dominant_phase='acceleration', explanation mentions it."""
-    from vibesensor.report.summary import _most_likely_origin_summary
+    from vibesensor.analysis.summary import _most_likely_origin_summary
 
     findings = [
         {
@@ -413,7 +414,7 @@ def test_most_likely_origin_summary_phase_onset_acceleration() -> None:
 
 def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
     """Dutch translation of phase-onset note for deceleration."""
-    from vibesensor.report.summary import _most_likely_origin_summary
+    from vibesensor.analysis.summary import _most_likely_origin_summary
 
     findings = [
         {
@@ -435,7 +436,7 @@ def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
 
 def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
     """Cruise phase does not trigger a phase-onset note (it is the default phase)."""
-    from vibesensor.report.summary import _most_likely_origin_summary
+    from vibesensor.analysis.summary import _most_likely_origin_summary
 
     findings = [
         {
@@ -457,7 +458,7 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
 
 def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     """When dominant_phase is not set, the explanation has no phase-onset addendum."""
-    from vibesensor.report.summary import _most_likely_origin_summary
+    from vibesensor.analysis.summary import _most_likely_origin_summary
 
     findings = [
         {

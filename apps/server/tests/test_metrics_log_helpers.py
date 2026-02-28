@@ -589,7 +589,7 @@ def test_stop_logging_does_not_block_on_post_analysis(
         time.sleep(0.20)
         return {"summary": "ok"}
 
-    monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _slow_summary)
+    monkeypatch.setattr("vibesensor.analysis.summary.summarize_run_data", _slow_summary)
     started = time.monotonic()
     logger.stop_logging()
     elapsed = time.monotonic() - started
@@ -625,7 +625,7 @@ def test_post_analysis_failure_sets_persistent_error_status(
     def _failing_summary(*args, **kwargs):
         raise RuntimeError("analysis exploded")
 
-    monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _failing_summary)
+    monkeypatch.setattr("vibesensor.analysis.summary.summarize_run_data", _failing_summary)
     logger.stop_logging()
 
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "error", timeout_s=2.0)
@@ -812,7 +812,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return {"lang": lang, "row_count": len(samples)}
 
-    monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _summary)
+    monkeypatch.setattr("vibesensor.analysis.summary.summarize_run_data", _summary)
     logger.stop_logging()
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=2.0)
     stored = history_db.get_run_analysis(run_id)
@@ -878,7 +878,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
     def _summary(metadata, samples, lang=None, file_name="run", include_samples=False):
         return {"row_count": len(samples), "run_suitability": []}
 
-    monkeypatch.setattr("vibesensor.report.summary.summarize_run_data", _summary)
+    monkeypatch.setattr("vibesensor.analysis.summary.summarize_run_data", _summary)
     logger.stop_logging()
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=3.0)
     stored = history_db.get_run_analysis(run_id)

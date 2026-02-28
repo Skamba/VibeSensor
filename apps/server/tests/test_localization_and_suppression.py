@@ -13,9 +13,9 @@ from typing import Any
 
 import pytest
 
+from vibesensor.analysis.summary import build_findings_for_samples, summarize_run_data
+from vibesensor.analysis.test_plan import _location_speedbin_summary
 from vibesensor.locations import WHEEL_LOCATION_CODES, is_wheel_location
-from vibesensor.report.summary import build_findings_for_samples, summarize_run_data
-from vibesensor.report.test_plan import _location_speedbin_summary
 
 # ---------------------------------------------------------------------------
 # Helpers (reused from test_scenario_ground_truth patterns)
