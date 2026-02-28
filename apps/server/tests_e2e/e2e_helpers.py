@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import os
 import subprocess
 import sys
 import time
@@ -116,7 +117,13 @@ def run_simulator(
     scenario: str = "one-wheel-mild",
     fault_wheel: str = "rear-left",
     speed_kmh: float = 0.0,
+    client_control_base: int | str | None = None,
 ) -> None:
+    control_base = (
+        client_control_base
+        if client_control_base is not None
+        else os.environ.get("VIBESENSOR_SIM_CLIENT_CONTROL_BASE", "9100")
+    )
     sim_cmd = [
         sys.executable,
         str(ROOT / "apps" / "simulator" / "sim_sender.py"),
@@ -140,6 +147,8 @@ def run_simulator(
         str(speed_kmh),
         "--duration",
         str(duration_s),
+        "--client-control-base",
+        str(control_base),
         "--no-auto-server",
         "--no-interactive",
     ]
