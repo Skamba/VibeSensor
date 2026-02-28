@@ -378,12 +378,24 @@ async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> N
     assert call_count == 2
 
 
+async def _read_streaming_body(response) -> bytes:
+    """Consume a StreamingResponse's body_iterator into bytes."""
+    chunks = []
+    async for chunk in response.body_iterator:
+        if isinstance(chunk, str):
+            chunks.append(chunk.encode("utf-8"))
+        else:
+            chunks.append(chunk)
+    return b"".join(chunks)
+
+
 @pytest.mark.asyncio
 async def test_history_export_streams_zip_with_json_and_csv() -> None:
     router, _ = _make_router_and_state(language="en", sample_count=1000)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
-    with zipfile.ZipFile(io.BytesIO(response.body), "r") as archive:
+    body = await _read_streaming_body(response)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         names = set(archive.namelist())
         assert names == {"run-1.json", "run-1_raw.csv"}
         metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
@@ -399,7 +411,8 @@ async def test_history_export_csv_nested_values_are_json() -> None:
     router, _ = _make_router_and_state(language="en", sample_count=3)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
-    with zipfile.ZipFile(io.BytesIO(response.body), "r") as archive:
+    body = await _read_streaming_body(response)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
     assert len(rows) == 3
     # The top_peaks column contains a list of dicts.  Before the fix it was
@@ -413,8 +426,8 @@ async def test_history_export_csv_nested_values_are_json() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_export_reads_samples_twice_without_buffering_rows() -> None:
-    """Export scans samples twice (schema + write) but does not buffer all rows."""
+async def test_history_export_single_pass_fixed_columns() -> None:
+    """Export uses fixed columns and reads samples only once (single pass)."""
     router, state = _make_router_and_state(language="en", sample_count=50)
     db = state.history_db
     original_iter = db.iter_run_samples
@@ -428,11 +441,59 @@ async def test_history_export_reads_samples_twice_without_buffering_rows() -> No
     db.iter_run_samples = _counting_iter  # type: ignore[assignment]
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
-    assert call_count == 2, f"iter_run_samples called {call_count} times, expected 2"
+    assert call_count == 1, f"iter_run_samples called {call_count} times, expected 1"
     # Verify CSV content is still correct
-    with zipfile.ZipFile(io.BytesIO(response.body), "r") as archive:
+    body = await _read_streaming_body(response)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
         rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
         assert len(rows) == 50
+
+
+@pytest.mark.asyncio
+async def test_history_export_uses_streaming_response() -> None:
+    """Export uses StreamingResponse with SpooledTemporaryFile, not BytesIO.getvalue()."""
+    from starlette.responses import StreamingResponse as _SR
+
+    router, _ = _make_router_and_state(language="en", sample_count=10)
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
+    response = await endpoint("run-1")
+    assert isinstance(response, _SR), f"Expected StreamingResponse, got {type(response).__name__}"
+    assert response.media_type == "application/zip"
+    # Content-Length header must be present (set from spool file size).
+    content_length = response.headers.get("content-length")
+    assert content_length is not None
+    assert int(content_length) > 0
+
+
+@pytest.mark.asyncio
+async def test_history_export_csv_has_fixed_columns() -> None:
+    """CSV header uses the fixed column schema regardless of sample keys."""
+    from vibesensor.api import _EXPORT_CSV_COLUMNS
+
+    router, _ = _make_router_and_state(language="en", sample_count=5)
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
+    response = await endpoint("run-1")
+    body = await _read_streaming_body(response)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
+        reader = csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8")))
+        assert tuple(reader.fieldnames or []) == _EXPORT_CSV_COLUMNS
+
+
+@pytest.mark.asyncio
+async def test_history_export_large_run() -> None:
+    """Export for a larger run produces valid ZIP with expected row count."""
+    router, _ = _make_router_and_state(language="en", sample_count=5000)
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
+    response = await endpoint("run-1")
+    body = await _read_streaming_body(response)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
+        names = set(archive.namelist())
+        assert "run-1_raw.csv" in names
+        assert "run-1.json" in names
+        metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
+        assert metadata["sample_count"] == 5000
+        rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
+        assert len(rows) == 5000
 
 
 @pytest.mark.asyncio
