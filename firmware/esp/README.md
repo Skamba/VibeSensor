@@ -11,6 +11,8 @@ accelerometer at 400 Hz and streams samples to the Pi server over UDP.
 - UDP command listener for identify blink with ACK response
 - Identify command blinks only the single onboard RGB LED on ATOM Lite
 - ADXL345 I2C driver at 400 Hz with error-checked initialisation
+- Small software prefetch buffer de-correlates ADXL345 FIFO reads from fixed
+  batch cadence while keeping output samples uniformly timed
 - No synthetic vibration injection in production builds
 
 Authoritative protocol and port contract: `docs/protocol.md`
@@ -106,6 +108,14 @@ Settings that still remain in `src/main.cpp`:
 
 - `kClientName`
 - I2C settings (`kI2cSdaPin`, `kI2cSclPin`, `kAdxlI2cAddr`)
+
+## Sampling cadence note
+
+The firmware keeps sample emission uniformly spaced at the configured sensor
+rate (for example 400 Hz), but ADXL345 FIFO reads are intentionally opportunistic
+through a small software-side prefetch ring. This avoids a deterministic
+`sample_rate / read_batch_size` I2C burst pattern (for example `400 / 8 = 50 Hz`)
+that can otherwise imprint a narrowband artifact in idle spectra.
 
 Default ATOM Lite Unit-port mapping used in this repo (4-pin Unit cable):
 
