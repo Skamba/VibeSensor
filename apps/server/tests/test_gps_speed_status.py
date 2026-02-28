@@ -31,6 +31,9 @@ class TestStatusDict:
         assert s["effective_speed_kmh"] is None
         assert s["last_error"] is None
         assert s["reconnect_delay_s"] is None
+        assert s["fix_mode"] is None
+        assert s["fix_dimension"] == "none"
+        assert s["speed_confidence"] == "low"
         assert s["fallback_active"] is False
         assert s["stale_timeout_s"] == DEFAULT_STALE_TIMEOUT_S
         assert s["fallback_mode"] == DEFAULT_FALLBACK_MODE
@@ -48,6 +51,20 @@ class TestStatusDict:
         assert s["raw_speed_kmh"] == pytest.approx(36.0, abs=0.1)
         assert s["effective_speed_kmh"] == pytest.approx(36.0, abs=0.1)
         assert s["fallback_active"] is False
+
+    def test_status_includes_fix_quality_metadata(self) -> None:
+        m = GPSSpeedMonitor(gps_enabled=True)
+        m.last_fix_mode = 2
+        m.last_epx_m = 4.2
+        m.last_epy_m = 5.1
+        m.last_epv_m = 8.0
+        s = m.status_dict()
+        assert s["fix_mode"] == 2
+        assert s["fix_dimension"] == "2d"
+        assert s["speed_confidence"] == "medium"
+        assert s["epx_m"] == pytest.approx(4.2)
+        assert s["epy_m"] == pytest.approx(5.1)
+        assert s["epv_m"] == pytest.approx(8.0)
 
     def test_stale_detected_on_status_dict(self) -> None:
         """status_dict() transitions connection_state to stale when GPS data is old."""
