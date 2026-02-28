@@ -3,7 +3,7 @@
 These tests prevent regression of the consolidation work by verifying:
 1. DEFAULT_DIAGNOSTIC_SETTINGS is the same object as DEFAULT_ANALYSIS_SETTINGS
 2. Spectrum payloads do not contain dead alias fields
-3. The legacy strength_scoring module is removed
+3. The strength_scoring module does not exist
 4. Metrics log records use canonical field names only
 5. as_float_or_none is the single canonical float converter
 6. percentile is the single canonical percentile implementation
@@ -35,7 +35,7 @@ def test_analysis_settings_keys_match() -> None:
 
 
 def test_strength_scoring_module_removed() -> None:
-    """The legacy strength_scoring.py wrapper should no longer exist."""
+    """The strength_scoring.py wrapper should not exist."""
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("vibesensor.strength_scoring")
 
@@ -89,7 +89,7 @@ def test_selected_payload_has_no_combined_alias() -> None:
 
 
 def test_metrics_log_no_legacy_field_names() -> None:
-    """New metrics log records must not contain legacy field aliases."""
+    """Metrics log records must not contain old field aliases."""
     from vibesensor.runlog import default_units
 
     units = default_units()
