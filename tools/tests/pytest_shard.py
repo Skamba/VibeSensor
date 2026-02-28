@@ -6,7 +6,7 @@ import subprocess
 import sys
 
 
-def _parse_collected_test_ids(output: str) -> list[str]:
+def parse_collected_test_ids(output: str) -> list[str]:
     test_ids: list[str] = []
     for raw_line in output.splitlines():
         line = raw_line.strip()
@@ -17,19 +17,35 @@ def _parse_collected_test_ids(output: str) -> list[str]:
         if line.startswith("tests/"):
             test_ids.append(f"apps/server/{line}")
             continue
-        if line.startswith("apps/server/tests/"):
+        if line.startswith("apps/server/tests/") or line.startswith(
+            "apps/server/tests_e2e/"
+        ):
             test_ids.append(line)
+            continue
+        if line.startswith("tests_e2e/"):
+            test_ids.append(f"apps/server/{line}")
     return test_ids
 
 
-def _collect_test_ids(pytest_args: list[str]) -> list[str]:
+def collect_test_ids(pytest_args: list[str]) -> list[str]:
     cmd = [sys.executable, "-m", "pytest", "--collect-only", "-q", *pytest_args]
     result = subprocess.run(cmd, check=False, capture_output=True, text=True)
     if result.returncode != 0:
         sys.stdout.write(result.stdout or "")
         sys.stderr.write(result.stderr or "")
         raise SystemExit(result.returncode)
-    return _parse_collected_test_ids(result.stdout or "")
+    return parse_collected_test_ids(result.stdout or "")
+
+
+def select_shard_tests(
+    collected_test_ids: list[str], *, shard_index: int, shard_count: int
+) -> list[str]:
+    shard_zero_index = shard_index - 1
+    return [
+        test_id
+        for index, test_id in enumerate(collected_test_ids)
+        if index % shard_count == shard_zero_index
+    ]
 
 
 def _run_shard(selected_test_ids: list[str]) -> int:
@@ -83,13 +99,10 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = _parse_args()
-    collected = _collect_test_ids(list(args.pytest_args))
-    shard_zero_index = args.shard_index - 1
-    selected = [
-        test_id
-        for index, test_id in enumerate(collected)
-        if index % args.shard_count == shard_zero_index
-    ]
+    collected = collect_test_ids(list(args.pytest_args))
+    selected = select_shard_tests(
+        collected, shard_index=args.shard_index, shard_count=args.shard_count
+    )
 
     print(
         "[pytest-shard]"

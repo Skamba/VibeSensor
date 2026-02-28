@@ -237,10 +237,9 @@ def _job_steps(python_cmd: str) -> dict[str, list[Step]]:
                 "docker-backed e2e suite",
                 [
                     python_cmd,
-                    "tools/tests/run_full_suite.py",
-                    "--skip-ui-sync",
-                    "--skip-ui-smoke",
-                    "--skip-unit-tests",
+                    "tools/tests/run_e2e_parallel.py",
+                    "--shards",
+                    "2",
                     "--fast-e2e",
                 ],
             ),
