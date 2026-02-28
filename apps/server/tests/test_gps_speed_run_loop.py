@@ -141,7 +141,10 @@ async def test_run_reconnects_on_connection_failure(
 @pytest.mark.asyncio
 async def test_run_does_not_swallow_processing_programming_errors() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
-    monitor._tpv_mode = lambda payload: (_ for _ in ()).throw(RuntimeError("bug"))  # type: ignore[method-assign]
+    def _raise_bug(payload: dict[str, object]) -> int:
+        raise RuntimeError("bug")
+
+    monitor._tpv_mode = _raise_bug  # type: ignore[method-assign]
 
     async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
         await reader.readline()
@@ -264,7 +267,7 @@ async def test_run_ignores_malformed_json() -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_ignores_tpv_speed_without_3d_fix() -> None:
+async def test_run_ignores_tpv_speed_with_mode_below_2() -> None:
     """TPV speeds with mode < 2 must not be used."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
 
@@ -290,7 +293,7 @@ async def test_run_ignores_tpv_speed_without_3d_fix() -> None:
 
 
 @pytest.mark.asyncio
-async def test_run_ignores_tpv_speed_with_poor_quality_3d_fix() -> None:
+async def test_run_accepts_tpv_speed_with_poor_quality_3d_fix() -> None:
     """3D fix with valid speed is still accepted even with poor quality metrics."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
 
@@ -517,6 +520,34 @@ async def test_run_filters_single_zero_speed_drop() -> None:
     await asyncio.sleep(0.4)
 
     assert monitor.speed_mps == 12.0
+
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    server.close()
+    await server.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_run_accepts_three_consecutive_zero_speed_samples() -> None:
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await reader.readline()
+        writer.write(_tpv_line(10.0, mode=2))
+        writer.write(_tpv_line(0.0, mode=2))
+        writer.write(_tpv_line(0.0, mode=2))
+        writer.write(_tpv_line(0.0, mode=2))
+        await writer.drain()
+        await asyncio.sleep(0.2)
+        writer.close()
+        await writer.wait_closed()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+    await asyncio.sleep(0.4)
+
+    assert monitor.speed_mps == 0.0
 
     task.cancel()
     await asyncio.gather(task, return_exceptions=True)
