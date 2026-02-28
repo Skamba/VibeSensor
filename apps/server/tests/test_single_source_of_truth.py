@@ -88,12 +88,12 @@ def test_selected_payload_has_no_combined_alias() -> None:
     assert "combined_spectrum_amp_g" in payload["spectrum"]
 
 
-def test_metrics_log_no_legacy_field_names() -> None:
+def test_metrics_log_no_old_field_names() -> None:
     """Metrics log records must not contain old field aliases."""
     from vibesensor.runlog import default_units
 
     units = default_units()
-    legacy_fields = {
+    old_fields = {
         "accel_magnitude_rms_g",
         "accel_magnitude_p2p_g",
         "dominant_peak_amp_g",
@@ -105,8 +105,8 @@ def test_metrics_log_no_legacy_field_names() -> None:
         "strength_peak_band_rms_amp_g",
         "strength_db",
     }
-    present = legacy_fields & set(units.keys())
-    assert not present, f"Legacy fields still in default_units: {present}"
+    present = old_fields & set(units.keys())
+    assert not present, f"Old fields still in default_units: {present}"
     assert "vibration_strength_db" in units, "vibration_strength_db missing from default_units"
 
 

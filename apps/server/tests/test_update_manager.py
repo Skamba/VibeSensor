@@ -843,7 +843,7 @@ class TestUpdateManagerAsync:
             assert secret not in issue.detail
 
     async def test_stale_public_assets_detected_in_runtime(self, tmp_path) -> None:
-        """Runtime details report assets_verified=False when legacy public/ hashes mismatch."""
+        """Runtime details report assets_verified=False when public/ hashes mismatch."""
         runner = FakeRunner()
         runner.set_response("sudo -n true", 0)
 
