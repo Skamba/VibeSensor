@@ -85,6 +85,75 @@ def _safe_filename(name: str) -> str:
     return _SAFE_FILENAME_RE.sub("_", name)[:200] or "download"
 
 
+def _reconstruct_report_template_data(d: dict) -> "ReportTemplateData":
+    """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
+    from .report.report_data import (
+        CarMeta,
+        DataTrustItem,
+        NextStep,
+        ObservedSignature,
+        PartSuggestion,
+        PatternEvidence,
+        PeakRow,
+        ReportTemplateData,
+        SystemFindingCard,
+    )
+
+    car = d.get("car") or {}
+    obs = d.get("observed") or {}
+    pe = d.get("pattern_evidence") or {}
+    return ReportTemplateData(
+        title=d.get("title", ""),
+        run_datetime=d.get("run_datetime"),
+        run_id=d.get("run_id"),
+        duration_text=d.get("duration_text"),
+        start_time_utc=d.get("start_time_utc"),
+        end_time_utc=d.get("end_time_utc"),
+        sample_rate_hz=d.get("sample_rate_hz"),
+        tire_spec_text=d.get("tire_spec_text"),
+        sample_count=d.get("sample_count", 0),
+        sensor_count=d.get("sensor_count", 0),
+        sensor_locations=d.get("sensor_locations", []),
+        sensor_model=d.get("sensor_model"),
+        firmware_version=d.get("firmware_version"),
+        car=CarMeta(**car) if isinstance(car, dict) else CarMeta(),
+        observed=ObservedSignature(**obs) if isinstance(obs, dict) else ObservedSignature(),
+        system_cards=[
+            SystemFindingCard(
+                **{
+                    **c,
+                    "parts": [
+                        PartSuggestion(**p) if isinstance(p, dict) else PartSuggestion(name=str(p))
+                        for p in (c.get("parts") or [])
+                    ],
+                }
+            )
+            for c in d.get("system_cards", [])
+            if isinstance(c, dict)
+        ],
+        next_steps=[
+            NextStep(**s) for s in d.get("next_steps", []) if isinstance(s, dict)
+        ],
+        data_trust=[
+            DataTrustItem(**t) for t in d.get("data_trust", []) if isinstance(t, dict)
+        ],
+        pattern_evidence=(
+            PatternEvidence(**pe) if isinstance(pe, dict) else PatternEvidence()
+        ),
+        peak_rows=[
+            PeakRow(**r) for r in d.get("peak_rows", []) if isinstance(r, dict)
+        ],
+        phase_info=d.get("phase_info"),
+        version_marker=d.get("version_marker", ""),
+        lang=d.get("lang", "en"),
+        certainty_tier_key=d.get("certainty_tier_key", "C"),
+        findings=d.get("findings", []),
+        top_causes=d.get("top_causes", []),
+        sensor_intensity_by_location=d.get("sensor_intensity_by_location", []),
+        location_hotspot_rows=d.get("location_hotspot_rows", []),
+    )
+
+
 def _bounded_sample(
     samples: Iterator[dict],
     *,
@@ -495,9 +564,6 @@ def create_router(state: RuntimeState) -> APIRouter:
         analysis = run.get("analysis")
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
-        metadata = run.get("metadata", {})
-        if not isinstance(metadata, dict):
-            metadata = {}
         requested_lang = _analysis_language(run, lang)
         cache_key = _report_pdf_cache_key(run, run_id, requested_lang)
         pdf_name = f"{_safe_filename(run_id)}_report.pdf"
@@ -512,20 +578,30 @@ def create_router(state: RuntimeState) -> APIRouter:
                 headers=pdf_headers,
             )
 
-        def _build_pdf() -> tuple[bytes, int, int, int]:
-            samples, total_samples, stride = _bounded_sample(
-                _iter_normalized_samples(run_id, batch_size=2048),
-                max_items=_MAX_REPORT_SAMPLES,
+        def _build_pdf() -> bytes:
+            # Prefer pre-built ReportTemplateData from analysis.
+            report_data_dict = (
+                analysis.get("_report_template_data")
+                if isinstance(analysis, dict)
+                else None
             )
-            report_model = summarize_run_data(
-                metadata,
-                samples,
-                lang=requested_lang,
-                file_name=run_id,
-                include_samples=True,
-            )
-            pdf = build_report_pdf(report_model)
-            return pdf, total_samples, len(samples), stride
+            if isinstance(report_data_dict, dict):
+                from .report.report_data import ReportTemplateData
+
+                data = _reconstruct_report_template_data(report_data_dict)
+                return build_report_pdf(data)
+
+            # Fallback for runs analyzed before ReportTemplateData persistence:
+            # rebuild from persisted summary using the analysis builder.
+            if isinstance(analysis, dict):
+                from .analysis.report_data_builder import map_summary
+
+                summary = dict(analysis)
+                summary["lang"] = requested_lang
+                data = map_summary(summary)
+                return build_report_pdf(data)
+
+            return build_report_pdf(analysis)
 
         build_lock = report_pdf_locks.setdefault(cache_key, asyncio.Lock())
         async with build_lock:
@@ -536,16 +612,8 @@ def create_router(state: RuntimeState) -> APIRouter:
                     media_type="application/pdf",
                     headers=pdf_headers,
                 )
-            pdf, total_samples, analyzed, stride = await asyncio.to_thread(_build_pdf)
+            pdf = await asyncio.to_thread(_build_pdf)
             _cache_put(cache_key, pdf)
-        if stride > 1:
-            LOGGER.info(
-                "PDF report sample downsampling applied for run %s: total=%d analyzed=%d stride=%d",
-                run_id,
-                total_samples,
-                analyzed,
-                stride,
-            )
         return Response(
             content=pdf,
             media_type="application/pdf",

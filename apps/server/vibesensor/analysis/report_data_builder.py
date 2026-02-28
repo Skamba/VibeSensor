@@ -9,8 +9,10 @@ only the finished :class:`ReportTemplateData` dataclass.
 from __future__ import annotations
 
 import os
+from collections import defaultdict
 from collections.abc import Callable
 from datetime import UTC, datetime
+from statistics import mean as _mean
 
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
@@ -159,6 +161,73 @@ def _has_relevant_reference_gap(findings: list[dict], primary_source: object) ->
         if fid == "REF_ENGINE" and src == "engine":
             return True
     return False
+
+
+def _compute_location_hotspot_rows(
+    findings: list[dict],
+    sensor_intensity: list[dict],
+) -> list[dict]:
+    """Pre-compute location hotspot rows from findings matched_points.
+
+    Falls back to sensor_intensity_by_location when no matched_points
+    are available.  Never reads raw time-series samples.
+    """
+    amp_by_location: dict[str, list[float]] = defaultdict(list)
+
+    # Prefer matched_points from findings (amplitude in g).
+    matched_points: list[dict] = []
+    for finding in findings:
+        if not isinstance(finding, dict):
+            continue
+        rows = finding.get("matched_points")
+        if isinstance(rows, list) and rows:
+            matched_points = [r for r in rows if isinstance(r, dict)]
+            break
+
+    if matched_points:
+        for row in matched_points:
+            location = str(row.get("location") or "").strip()
+            amp = _as_float(row.get("amp"))
+            if location and amp is not None and amp > 0:
+                amp_by_location[location].append(amp)
+        amp_unit = "g"
+    elif sensor_intensity:
+        for row in sensor_intensity:
+            if not isinstance(row, dict):
+                continue
+            location = str(row.get("location") or "").strip()
+            p95 = _as_float(row.get("p95_intensity_db")) or _as_float(
+                row.get("mean_intensity_db")
+            )
+            if location and p95 is not None and p95 > 0:
+                amp_by_location[location].append(p95)
+        amp_unit = "db"
+    else:
+        return []
+
+    hotspot_rows: list[dict] = []
+    for location, amps in amp_by_location.items():
+        peak_val = max(amps)
+        mean_val = _mean(amps)
+        row: dict = {
+            "location": location,
+            "count": len(amps),
+            "unit": amp_unit,
+            "peak_value": peak_val,
+            "mean_value": mean_val,
+        }
+        if amp_unit == "g":
+            row["peak_g"] = peak_val
+            row["mean_g"] = mean_val
+        else:
+            row["peak_db"] = peak_val
+            row["mean_db"] = mean_val
+        hotspot_rows.append(row)
+    hotspot_rows.sort(
+        key=lambda r: (float(r["peak_value"]), float(r["mean_value"])),
+        reverse=True,
+    )
+    return hotspot_rows
 
 
 # ---------------------------------------------------------------------------
@@ -485,6 +554,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
     if not isinstance(raw_sensor_intensity, list):
         raw_sensor_intensity = []
 
+    # Pre-compute location hotspot rows from findings matched_points
+    # so the PDF renderer never reads raw samples.
+    hotspot_rows = _compute_location_hotspot_rows(raw_findings, raw_sensor_intensity)
+
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=date_str,
@@ -513,4 +586,5 @@ def map_summary(summary: dict) -> ReportTemplateData:
         findings=raw_findings,
         top_causes=top_causes,
         sensor_intensity_by_location=raw_sensor_intensity,
+        location_hotspot_rows=hotspot_rows,
     )

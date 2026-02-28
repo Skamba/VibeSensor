@@ -795,7 +795,24 @@ class MetricsLogger:
                         "explanation": explanation,
                     }
                 )
+            # Build the renderer-ready ReportTemplateData and embed it in
+            # the analysis dict so report generation needs zero analysis imports.
+            try:
+                from dataclasses import asdict
+
+                from .analysis.report_data_builder import map_summary
+
+                report_data = map_summary(summary)
+                summary["_report_template_data"] = asdict(report_data)
+            except Exception:
+                LOGGER.warning(
+                    "Failed to build ReportTemplateData for run %s",
+                    run_id,
+                    exc_info=True,
+                )
+
             self._history_db.store_analysis(run_id, summary)
+
             duration_s = time.monotonic() - analysis_start
             LOGGER.info(
                 "Analysis completed for run %s: %d samples in %.2fs",
