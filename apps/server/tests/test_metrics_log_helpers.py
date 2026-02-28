@@ -199,6 +199,10 @@ class _FakeHistoryDB:
         self.updated_metadata.append((run_id, metadata))
         return True
 
+    def finalize_run_with_metadata(self, run_id: str, end_time_utc: str, metadata: dict) -> None:
+        self.updated_metadata.append((run_id, metadata))
+        self.finalize_calls.append(run_id)
+
 
 class _FailingCreateRunHistoryDB(_FakeHistoryDB):
     def create_run(self, run_id: str, start_time_utc: str, metadata: dict) -> None:
@@ -639,7 +643,7 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
     def _slow_summary(*args, **kwargs):
-        time.sleep(0.20)
+        time.sleep(0.50)
         return {"summary": "ok"}
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _slow_summary)
@@ -647,8 +651,8 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger.stop_logging()
     elapsed = time.monotonic() - started
 
-    # stop_logging() must return quickly; the 0.20s summary runs in a worker thread
-    assert elapsed < 0.20, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.20s)"
+    # stop_logging() must return quickly; the 0.50s summary runs in a worker thread
+    assert elapsed < 0.30, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.30s)"
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=5.0)
 
 

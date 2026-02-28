@@ -587,8 +587,12 @@ def _draw_system_card(
     """Render a single system-finding card."""
     na = tr("NOT_AVAILABLE")
 
-    c.setFillColor(_hex(SOFT_BG))
-    c.setStrokeColor(_hex(LINE_CLR))
+    tone_bg = REPORT_COLORS.get(f"card_{card.tone}_bg", REPORT_COLORS["card_neutral_bg"])
+    tone_border = REPORT_COLORS.get(
+        f"card_{card.tone}_border", REPORT_COLORS["card_neutral_border"]
+    )
+    c.setFillColor(_hex(tone_bg))
+    c.setStrokeColor(_hex(tone_border))
     c.roundRect(x, y, w, h, 4, stroke=1, fill=1)
 
     cx = x + 3 * mm
@@ -659,6 +663,8 @@ def _draw_next_steps_table(
     w: float,
     y_bottom: float,
     steps: list[NextStep],
+    *,
+    start_number: int = 1,
 ) -> int:
     """Draw ordered next-steps rows with multi-line wrapping."""
     col1_w = 12 * mm
@@ -669,10 +675,16 @@ def _draw_next_steps_table(
 
     y = y_top
     drawn = 0
-    for idx, step in enumerate(steps, start=1):
+    for idx, step in enumerate(steps, start=start_number):
         action_text = step.action
         if step.why:
             action_text += f" \u2014 {step.why}"
+        if step.confirm:
+            action_text += f"  \u2713 {step.confirm}"
+        if step.falsify:
+            action_text += f"  \u2717 {step.falsify}"
+        if step.eta:
+            action_text += f"  \u23f1 {step.eta}"
 
         # Measure how many lines this step needs
         lines = _wrap_lines(action_text, text_w, fs)
@@ -827,6 +839,7 @@ def _page2(  # noqa: C901
         if cont_top - cont_bottom > 16 * mm:
             cont_h = cont_top - cont_bottom
             _draw_panel(c, m, cont_bottom, W, cont_h, tr("NEXT_STEPS"))
+            page1_drawn = len(data.next_steps) - len(next_steps_continued)
             _draw_next_steps_table(
                 c,
                 m + 4 * mm,
@@ -834,6 +847,7 @@ def _page2(  # noqa: C901
                 W - 8 * mm,
                 cont_bottom + 3 * mm,
                 next_steps_continued,
+                start_number=page1_drawn + 1,
             )
 
 

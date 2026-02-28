@@ -20,11 +20,14 @@ class _FakeRecord:
     client_id: str = "c1"
     name: str = "test"
     sample_rate_hz: int = 800
-    latest_metrics: dict = {}
+    latest_metrics: dict  # type: ignore[assignment]
     location: str = ""
     frames_total: int = 0
     frames_dropped: int = 0
     queue_overflow_drops: int = 0
+
+    def __init__(self) -> None:
+        self.latest_metrics = {}
 
 
 class _FakeRegistry:
@@ -108,7 +111,7 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
 
     def _very_slow_analysis(run_id: str) -> None:
         started.set()
-        time.sleep(5.0)  # Longer than the wait timeout
+        time.sleep(1.0)  # Just needs to outlive the 0.3s wait timeout
 
     monkeypatch.setattr(logger, "_run_post_analysis", _very_slow_analysis)
     logger._schedule_post_analysis("run-slow")

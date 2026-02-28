@@ -232,7 +232,8 @@ class MetricsLogger:
             if self.enabled and self._run_id:
                 if self._history_run_created and self._written_sample_count > 0:
                     completed_run_id = self._run_id
-                self._finalize_run_locked()
+                if not self._finalize_run_locked():
+                    completed_run_id = None
             self.enabled = True
             self._start_new_session_locked()
             self._live_samples.clear()
@@ -243,13 +244,21 @@ class MetricsLogger:
             self._schedule_post_analysis(completed_run_id)
         return result
 
-    def stop_logging(self) -> dict[str, str | bool | None]:
+    def stop_logging(
+        self, *, _only_if_generation: int | None = None
+    ) -> dict[str, str | bool | None]:
         with self._lock:
+            # Guard: when called from auto-stop, only act if the session
+            # that timed out is still the active one.
+            if _only_if_generation is not None and self._session_generation != _only_if_generation:
+                return self.status()
             run_id_to_analyze: str | None = None
             if self.enabled and self._run_id:
                 if self._history_run_created and self._written_sample_count > 0:
                     run_id_to_analyze = self._run_id
-                self._finalize_run_locked()
+                finalized_ok = self._finalize_run_locked()
+                if not finalized_ok:
+                    run_id_to_analyze = None
             self._session_generation += 1
             self.enabled = False
             self._run_id = None
@@ -728,25 +737,30 @@ class MetricsLogger:
                 break
             self._live_samples.popleft()
 
-    def _finalize_run_locked(self) -> None:
+    def _finalize_run_locked(self) -> bool:
+        """Finalize the current run in the history DB.
+
+        Returns ``True`` when finalization succeeded (or was skipped because
+        there is nothing to finalize), ``False`` on DB failure so that callers
+        can avoid scheduling analysis for an un-finalized run.
+        """
         if not self._run_id:
-            return
+            return True
         if not self._history_run_created:
-            return
+            return True
         end_utc = utc_now_iso()
         if self._history_db is not None:
             try:
-                update_metadata = getattr(self._history_db, "update_run_metadata", None)
-                if callable(update_metadata):
-                    start_time_utc = self._run_start_utc or end_utc
-                    latest_metadata = self._run_metadata_record(self._run_id, start_time_utc)
-                    latest_metadata["end_time_utc"] = end_utc
-                    update_metadata(self._run_id, latest_metadata)
-                self._history_db.finalize_run(self._run_id, end_utc)
+                start_time_utc = self._run_start_utc or end_utc
+                latest_metadata = self._run_metadata_record(self._run_id, start_time_utc)
+                latest_metadata["end_time_utc"] = end_utc
+                self._history_db.finalize_run_with_metadata(self._run_id, end_utc, latest_metadata)
                 self._clear_last_write_error()
             except Exception as exc:
                 self._set_last_write_error(f"history finalize_run failed: {exc}")
                 LOGGER.warning("Failed to finalize run in history DB", exc_info=True)
+                return False
+        return True
 
     def _schedule_post_analysis(self, run_id: str) -> None:
         LOGGER.info("Analysis queued for run %s", run_id)
@@ -928,8 +942,12 @@ class MetricsLogger:
             try:
                 timestamp_utc = utc_now_iso()
                 live_t_s = max(0.0, time.monotonic() - self._live_start_mono_s)
-                live_rows = self._build_sample_records(
-                    run_id=self._run_id or "live",
+                # Build sample records off the event loop to avoid blocking
+                # it during lock acquisition and per-client iteration.
+                run_id_for_live = self._run_id or "live"
+                live_rows = await asyncio.to_thread(
+                    self._build_sample_records,
+                    run_id=run_id_for_live,
                     t_s=live_t_s,
                     timestamp_utc=timestamp_utc,
                 )
@@ -954,7 +972,9 @@ class MetricsLogger:
                             run_id,
                             self._no_data_timeout_s,
                         )
-                        self.stop_logging()
+                        # Use generation guard so a freshly started session
+                        # is not killed by a stale timeout decision.
+                        self.stop_logging(_only_if_generation=generation)
             except Exception as exc:
                 self._set_last_write_error(f"metrics logger tick failed: {exc}")
                 LOGGER.warning(

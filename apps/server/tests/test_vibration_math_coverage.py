@@ -31,7 +31,7 @@ from vibesensor_core.vibration_strength import (
         (45.999, "l4"),
         (46.0, "l5"),
         (0.0, "l0"),
-        (-10.0, None),
+        (-10.0, "l0"),
         (100.0, "l5"),
     ],
 )

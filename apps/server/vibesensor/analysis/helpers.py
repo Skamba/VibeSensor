@@ -196,7 +196,7 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
         "mean_kmh": vmean,
         "stddev_kmh": stddev,
         "range_kmh": vrange,
-        "steady_speed": stddev < STEADY_SPEED_STDDEV_KMH or vrange < STEADY_SPEED_RANGE_KMH,
+        "steady_speed": stddev < STEADY_SPEED_STDDEV_KMH and vrange < STEADY_SPEED_RANGE_KMH,
     }
 
 

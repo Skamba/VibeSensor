@@ -164,6 +164,7 @@
   "settings.final_drive_uncertainty": "Final Drive Uncertainty (%)",
   "settings.gear_slip_uncertainty": "Gear/Slip Uncertainty (%)",
   "settings.select_location": "Select location",
+  "settings.validation_error": "One or more analysis settings are out of range. Please check your values.",
   "status.online": "Online",
   "status.offline": "Offline",
   "status.last_seen_label": "Last seen",

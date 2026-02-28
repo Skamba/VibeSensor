@@ -164,6 +164,7 @@
   "settings.final_drive_uncertainty": "Onzekerheid eindoverbrenging (%)",
   "settings.gear_slip_uncertainty": "Versnellings-/sliponzekerheid (%)",
   "settings.select_location": "Selecteer locatie",
+  "settings.validation_error": "Een of meer analyse-instellingen vallen buiten het bereik. Controleer uw waarden.",
   "status.online": "Online",
   "status.offline": "Offline",
   "status.last_seen_label": "Laatst gezien",
