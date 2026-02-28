@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from vibesensor.history_db import ANALYSIS_SCHEMA_VERSION, HistoryDB
+from vibesensor.history_db import HistoryDB
 
 
 def test_append_samples_in_chunks(tmp_path: Path) -> None:
@@ -463,8 +463,10 @@ def test_v4_to_v5_migration(tmp_path: Path) -> None:
     """)
     # Insert legacy run with JSON-blob samples
     conn.execute(
-        "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at, sample_count) "
-        "VALUES (?, 'complete', '2026-01-01T00:00:00Z', '{}', '2026-01-01T00:00:00Z', 3)",
+        "INSERT INTO runs (run_id, status, start_time_utc, metadata_json,"
+        " created_at, sample_count) "
+        "VALUES (?, 'complete', '2026-01-01T00:00:00Z', '{}', "
+        "'2026-01-01T00:00:00Z', 3)",
         ("legacy-run",),
     )
     for i in range(3):
@@ -537,7 +539,10 @@ def test_v2_record_then_export_roundtrip(tmp_path: Path) -> None:
 
     # Simulate recording
     for batch_start in range(0, 20, 5):
-        batch = [_sensor_frame_dict(i, run_id="run-full") for i in range(batch_start, batch_start + 5)]
+        batch = [
+            _sensor_frame_dict(i, run_id="run-full")
+            for i in range(batch_start, batch_start + 5)
+        ]
         db.append_samples("run-full", batch)
 
     db.finalize_run("run-full", "2026-01-01T00:00:20Z")
@@ -572,6 +577,24 @@ def test_v2_iter_with_offset(tmp_path: Path) -> None:
     db.create_run("run-off", "2026-01-01T00:00:00Z", {"source": "test"})
     db.append_samples("run-off", [{"i": i} for i in range(10)])
 
-    # Start from offset 5
-    rows = [s for b in db.iter_run_samples("run-off", batch_size=3, offset=5) for s in b]
-    assert [r["i"] for r in rows] == [5, 6, 7, 8, 9]
+    # offset=0 → all rows
+    rows0 = [s for b in db.iter_run_samples("run-off", offset=0) for s in b]
+    assert [r["i"] for r in rows0] == list(range(10))
+
+    # offset=1 → skip first row
+    rows1 = [s for b in db.iter_run_samples("run-off", offset=1) for s in b]
+    assert [r["i"] for r in rows1] == list(range(1, 10))
+
+    # offset=5 with batch_size=3
+    rows5 = [
+        s
+        for b in db.iter_run_samples("run-off", batch_size=3, offset=5)
+        for s in b
+    ]
+    assert [r["i"] for r in rows5] == [5, 6, 7, 8, 9]
+
+    # offset >= total → empty
+    rows_past = [
+        s for b in db.iter_run_samples("run-off", offset=20) for s in b
+    ]
+    assert rows_past == []
