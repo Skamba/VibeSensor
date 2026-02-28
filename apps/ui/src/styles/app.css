@@ -362,13 +362,10 @@ input:focus-visible,
 .dashboard-grid {
   display: grid;
   gap: var(--space-4);
-  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
-  grid-template-areas: "spectrum side" "strength strength" "matrix matrix";
+  grid-template-columns: minmax(0, 1fr);
 }
-.dashboard-grid__main { grid-area: spectrum; }
-.dashboard-grid__side { grid-area: side; display: grid; gap: var(--space-4); }
-.dashboard-grid__strength { grid-area: strength; }
-.dashboard-grid__full { grid-area: matrix; }
+.dashboard-grid__main,
+.dashboard-grid__controls { min-width: 0; }
 
 /* Spectrum + Car map split */
 .spectrum-split {
@@ -824,10 +821,7 @@ label { font-size: 0.86rem; color: var(--pill-muted-text); }
 .uplot .u-select { background: rgba(124, 58, 237, 0.12); }
 
 @media (max-width: 980px) {
-  .dashboard-grid {
-    grid-template-columns: 1fr;
-    grid-template-areas: "spectrum" "side" "strength" "matrix";
-  }
+  .dashboard-grid { grid-template-columns: 1fr; }
   .menu { width: 100%; overflow-x: auto; }
   .speed { min-width: 180px; }
   .logging-actions {

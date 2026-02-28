@@ -10,7 +10,6 @@ import { adaptServerPayload } from "../server_payload";
 import type { AdaptedSpectrum } from "../server_payload";
 import type { RotationalSpeeds } from "../server_payload";
 import { WsClient } from "../ws";
-import { METRIC_FIELDS } from "../generated/shared_contracts";
 import { runDemoMode } from "../features/demo/runDemoMode";
 import { chartSeriesPalette, orderBandFills } from "../theme";
 import { createEmptyMatrix } from "../diagnostics";
@@ -21,7 +20,6 @@ import { createHistoryFeature } from "./features/history_feature";
 import { createRealtimeFeature } from "./features/realtime_feature";
 import { createSettingsFeature } from "./features/settings_feature";
 import { createCarsFeature } from "./features/cars_feature";
-import { createDashboardFeature } from "./features/dashboard_feature";
 import { createEspFlashFeature } from "./features/esp_flash_feature";
 import { createUpdateFeature } from "./features/update_feature";
 import type { AppState, ChartBand, ClientRow } from "./state/ui_app_state";
@@ -31,11 +29,6 @@ export function startUiApp(): void {
   const els: UiDomElements = createUiDomRegistry();
   const state: AppState = createAppState();
 
-  const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
-    front_left_wheel: { top: 24, left: 15 }, front_right_wheel: { top: 24, left: 85 }, rear_left_wheel: { top: 72, left: 15 }, rear_right_wheel: { top: 72, left: 85 },
-    engine_bay: { top: 18, left: 50 }, front_subframe: { top: 30, left: 50 }, transmission: { top: 42, left: 50 }, driveshaft_tunnel: { top: 52, left: 50 },
-    driver_seat: { top: 44, left: 35 }, front_passenger_seat: { top: 44, left: 65 }, rear_left_seat: { top: 60, left: 32 }, rear_center_seat: { top: 60, left: 50 }, rear_right_seat: { top: 60, left: 68 }, rear_subframe: { top: 72, left: 50 }, trunk: { top: 84, left: 50 },
-  };
   const SPECTRUM_DB_MIN = 0;
   const SPECTRUM_DB_MAX = 60;
   const SPECTRUM_DB_REFERENCE_AMP_G = 1e-4;
@@ -69,84 +62,6 @@ export function startUiApp(): void {
   }
 
   let latestRotationalSpeeds: RotationalSpeeds | null = null;
-
-  function rotationalSourceLabel(source: string | null): string {
-    if (source === "manual") return t("dashboard.rotational.source.manual");
-    if (source === "gps") return t("dashboard.rotational.source.gps");
-    if (source === "obd2") return t("dashboard.rotational.source.obd2");
-    if (source === "fallback_manual") return t("dashboard.rotational.source.fallback_manual");
-    return t("dashboard.rotational.source.unknown");
-  }
-
-  function rotationalReasonText(reason: string | null): string {
-    if (reason === "speed_unavailable") return t("dashboard.rotational.reason.speed_unavailable");
-    if (reason === "invalid_vehicle_settings") return t("dashboard.rotational.reason.invalid_vehicle_settings");
-    return t("dashboard.rotational.reason.not_available");
-  }
-
-  function rotationalModeText(mode: string | null): string {
-    if (mode === "measured") return t("dashboard.rotational.mode.measured");
-    if (mode === "calculated") return t("dashboard.rotational.mode.calculated");
-    return t("dashboard.rotational.mode.unavailable");
-  }
-
-  function renderRotationalSpeeds(): void {
-    if (!els.rotationalBasisSource) return;
-    const rotational = latestRotationalSpeeds;
-    const source = rotationalSourceLabel(rotational?.basis_speed_source ?? null);
-    els.rotationalBasisSource.textContent = t("dashboard.rotational.basis_source", { source });
-
-    const rows = [
-      { valueEl: els.rotationalWheelValue, modeEl: els.rotationalWheelMode, value: rotational?.wheel ?? null },
-      { valueEl: els.rotationalDriveshaftValue, modeEl: els.rotationalDriveshaftMode, value: rotational?.driveshaft ?? null },
-      { valueEl: els.rotationalEngineValue, modeEl: els.rotationalEngineMode, value: rotational?.engine ?? null },
-    ];
-
-    let displayReason: string | null = null;
-    for (const row of rows) {
-      if (!row.valueEl || !row.modeEl) continue;
-      const rpm = row.value?.rpm;
-      row.valueEl.textContent = typeof rpm === "number" && Number.isFinite(rpm)
-        ? t("dashboard.rotational.rpm", { value: fmt(rpm, 0) })
-        : "--";
-      row.modeEl.textContent = rotationalModeText(row.value?.mode ?? null);
-      row.modeEl.className = "pill pill--muted rotational-speed-row__mode";
-      if (!displayReason && !(typeof rpm === "number" && Number.isFinite(rpm)) && row.value?.reason) {
-        displayReason = row.value.reason;
-      }
-    }
-
-    if (!els.rotationalReason) return;
-    if (displayReason) {
-      els.rotationalReason.hidden = false;
-      els.rotationalReason.textContent = rotationalReasonText(displayReason);
-    } else {
-      els.rotationalReason.hidden = true;
-      els.rotationalReason.textContent = "";
-    }
-
-    // Assumptions panel: show speed source, tire spec, gear ratios, calculated Hz
-    if (els.rotationalAssumptionsBody) {
-      const vs = state.vehicleSettings;
-      const speedVal = effectiveSpeedMps();
-      const speedDisplay = speedValueInSelectedUnit(speedVal);
-      const speedText = speedDisplay != null ? `${fmt(speedDisplay, 1)} ${selectedSpeedUnitLabel()}` : "--";
-      const circumference = parseTireSpec({ widthMm: vs.tire_width_mm, aspect: vs.tire_aspect_pct, rimIn: vs.rim_in });
-      const circumText = circumference ? `${fmt(Math.PI * tireDiameterMeters(circumference) * 1000, 0)} mm` : "--";
-      const bands = rotational?.order_bands;
-      const bandText = Array.isArray(bands) && bands.length
-        ? bands.map((b) => `${b.key}: ${fmt(b.center_hz, 1)} Hz ±${fmt(b.tolerance * 100, 1)}%`).join(", ")
-        : "--";
-      els.rotationalAssumptionsBody.innerHTML = [
-        `<div>${escapeHtml(t("dashboard.rotational.assumptions.speed_source"))}: ${escapeHtml(source)}</div>`,
-        `<div>${escapeHtml(t("dashboard.rotational.assumptions.effective_speed"))}: ${escapeHtml(speedText)}</div>`,
-        `<div>${escapeHtml(t("dashboard.rotational.assumptions.tire_circumference"))}: ${escapeHtml(circumText)}</div>`,
-        `<div>${escapeHtml(t("dashboard.rotational.assumptions.final_drive"))}: ${escapeHtml(String(vs.final_drive_ratio))}</div>`,
-        `<div>${escapeHtml(t("dashboard.rotational.assumptions.gear_ratio"))}: ${escapeHtml(String(vs.current_gear_ratio))}</div>`,
-        `<div>${escapeHtml(t("dashboard.rotational.assumptions.order_bands"))}: ${escapeHtml(bandText)}</div>`,
-      ].join("");
-    }
-  }
 
   function renderWsState(): void {
     if (state.payloadError) return setPillState(els.linkState, "bad", "Payload error");
@@ -223,8 +138,7 @@ export function startUiApp(): void {
 
   // Create features — cross-feature callbacks use lazy references via closures.
   const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt });
-  const diagnosticsFeature = createDashboardFeature({ state, els, t, fmt, escapeHtml, locationCodeForClient: (c) => sensorsFeature.locationCodeForClient(c), carMapPositions: CAR_MAP_POSITIONS, carMapWindowMs: 10_000, metricField: METRIC_FIELDS.vibration_strength_db });
-  const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => diagnosticsFeature.renderMatrix(), sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
+  const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => {}, sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
   const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout, onCarSelectionStateChange: renderCarSelectionWarning });
   const wizardFeature = createCarsFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
   const updateFeature = createUpdateFeature({ els, t, escapeHtml });
@@ -242,12 +156,8 @@ export function startUiApp(): void {
     state.sensorsSettingsSignature = "";
     sensorsFeature.maybeRenderSensorsSettingsList(true);
     renderSpeedReadout();
-    renderRotationalSpeeds();
     sensorsFeature.renderLoggingStatus();
     historyFeature.renderHistoryTable();
-    diagnosticsFeature.renderVibrationLog();
-    diagnosticsFeature.renderMatrix();
-    diagnosticsFeature.recreateStrengthChart();
     renderWsState();
     renderCarSelectionWarning();
     if (state.spectrumPlot) { state.spectrumPlot.destroy(); state.spectrumPlot = null; renderSpectrum(); }
@@ -429,18 +339,7 @@ export function startUiApp(): void {
     } else {
       state.hasSpectrumData = false;
     }
-    const hasFreshFrames = diagnosticsFeature.hasFreshSensorFrames(state.clients);
-    diagnosticsFeature.applyServerDiagnostics(adapted.diagnostics, hasFreshFrames);
     renderSpeedReadout();
-    renderRotationalSpeeds();
-    // Prefer confirmed location intensity from backend diagnostics (by_location);
-    // fall back to raw spectrum-derived intensity when by_location is empty.
-    const confirmedIntensity = diagnosticsFeature.extractConfirmedLocationIntensity();
-    const liveIntensity = Object.keys(confirmedIntensity).length
-      ? confirmedIntensity
-      : diagnosticsFeature.extractLiveLocationIntensity();
-    if (Object.keys(liveIntensity).length) diagnosticsFeature.pushCarMapSample(liveIntensity);
-    diagnosticsFeature.renderCarMap();
     if (adapted.spectra) renderSpectrum(); else updateSpectrumOverlay();
     sensorsFeature.renderStatus(state.clients.find((c) => c.id === state.selectedClientId));
   }
@@ -533,7 +432,7 @@ export function startUiApp(): void {
   }
   if (els.speedUnitSelect) {
     els.speedUnitSelect.value = state.speedUnit;
-    els.speedUnitSelect.addEventListener("change", () => { saveSpeedUnit(els.speedUnitSelect!.value); renderSpeedReadout(); renderRotationalSpeeds(); });
+    els.speedUnitSelect.addEventListener("change", () => { saveSpeedUnit(els.speedUnitSelect!.value); renderSpeedReadout(); });
   }
 
   vehicleFeature.syncSettingsInputs();
@@ -545,7 +444,7 @@ export function startUiApp(): void {
     } catch (_e) { /* ignore */ }
     try {
       const unitRes = await getSettingsSpeedUnit();
-      if (unitRes?.speedUnit) { state.speedUnit = normalizeSpeedUnit(unitRes.speedUnit); if (els.speedUnitSelect) els.speedUnitSelect.value = state.speedUnit; renderSpeedReadout(); renderRotationalSpeeds(); }
+      if (unitRes?.speedUnit) { state.speedUnit = normalizeSpeedUnit(unitRes.speedUnit); if (els.speedUnitSelect) els.speedUnitSelect.value = state.speedUnit; renderSpeedReadout(); }
     } catch (_e) { /* ignore */ }
   })();
   applyLanguage(false);
