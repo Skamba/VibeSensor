@@ -13,8 +13,7 @@ from urllib.request import urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
 IMAGE = "vibesensor-full-suite"
-CONTAINER = f"vibesensor-full-suite-{os.getpid()}"
-BASE_URL = "http://127.0.0.1:18000"
+CONTAINER_PREFIX = "vibesensor-full-suite"
 
 
 def _run(
@@ -28,26 +27,29 @@ def _run(
     return subprocess.run(cmd, cwd=str(cwd), check=check, text=True, env=env)
 
 
-def _api_snapshot(path: str) -> str:
+def _api_snapshot(base_url: str, path: str) -> str:
     try:
-        with urlopen(f"{BASE_URL}{path}", timeout=5) as resp:
+        with urlopen(f"{base_url}{path}", timeout=5) as resp:
             payload = json.loads(resp.read())
         return json.dumps(payload, indent=2, sort_keys=True)
     except (URLError, TimeoutError, OSError, json.JSONDecodeError) as exc:
         return f"<unavailable: {exc}>"
 
 
-def _print_diagnostics(sim_log: Path) -> None:
+def _print_diagnostics(*, sim_log: Path, container_name: str, base_url: str) -> None:
     print("\n=== diagnostics: docker ps ===", flush=True)
     _run(["docker", "ps", "-a"], check=False)
     print("\n=== diagnostics: docker inspect state ===", flush=True)
-    _run(["docker", "inspect", CONTAINER, "--format", "{{json .State}}"], check=False)
+    _run(
+        ["docker", "inspect", container_name, "--format", "{{json .State}}"],
+        check=False,
+    )
     print("\n=== diagnostics: docker logs (tail 200) ===", flush=True)
-    _run(["docker", "logs", "--tail", "200", CONTAINER], check=False)
+    _run(["docker", "logs", "--tail", "200", container_name], check=False)
     print("\n=== diagnostics: /api/clients ===", flush=True)
-    print(_api_snapshot("/api/clients"), flush=True)
+    print(_api_snapshot(base_url, "/api/clients"), flush=True)
     print("\n=== diagnostics: /api/history ===", flush=True)
-    print(_api_snapshot("/api/history"), flush=True)
+    print(_api_snapshot(base_url, "/api/history"), flush=True)
     print("\n=== diagnostics: simulator log ===", flush=True)
     if sim_log.exists():
         print(sim_log.read_text(encoding="utf-8"), flush=True)
@@ -55,11 +57,11 @@ def _print_diagnostics(sim_log: Path) -> None:
         print("<no simulator log>", flush=True)
 
 
-def _wait_health(timeout_s: float = 60.0) -> None:
+def _wait_health(base_url: str, timeout_s: float = 60.0) -> None:
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         try:
-            with urlopen(f"{BASE_URL}/api/health", timeout=2) as resp:
+            with urlopen(f"{base_url}/api/health", timeout=2) as resp:
                 if resp.status == 200:
                     return
         except (URLError, TimeoutError, OSError):
@@ -100,13 +102,74 @@ def main() -> int:
             "(for example: 'e2e and not long_sim')."
         ),
     )
+    parser.add_argument(
+        "--pytest-target",
+        action="append",
+        default=[],
+        help=(
+            "Optional explicit pytest target(s) for e2e execution. Repeat to pass "
+            "multiple node ids or paths."
+        ),
+    )
+    parser.add_argument(
+        "--docker-image",
+        default=IMAGE,
+        help="Docker image name to build/run for the e2e suite.",
+    )
+    parser.add_argument(
+        "--container-name",
+        default=f"{CONTAINER_PREFIX}-{os.getpid()}",
+        help="Docker container name to use for e2e runtime.",
+    )
+    parser.add_argument(
+        "--http-port",
+        type=int,
+        default=18000,
+        help="Host HTTP port mapped to container port 8000.",
+    )
+    parser.add_argument(
+        "--sim-data-port",
+        type=int,
+        default=19000,
+        help="Host UDP data port mapped to container port 9000.",
+    )
+    parser.add_argument(
+        "--sim-control-port",
+        type=int,
+        default=19001,
+        help="Host UDP control port mapped to container port 9001.",
+    )
+    parser.add_argument(
+        "--sim-client-control-base",
+        type=int,
+        default=9100,
+        help="Base UDP control port used by local simulator client sockets.",
+    )
+    parser.add_argument(
+        "--data-dir",
+        default=None,
+        help="Optional host data dir to mount into /app/apps/server/data.",
+    )
+    parser.add_argument(
+        "--skip-docker-build",
+        action="store_true",
+        help="Skip docker build and reuse an existing --docker-image.",
+    )
     args = parser.parse_args()
 
     e2e_marker_expr = args.pytest_marker
     if e2e_marker_expr is None:
         e2e_marker_expr = "e2e and not long_sim" if args.fast_e2e else "e2e"
+    pytest_targets = args.pytest_target or ["apps/server/tests_e2e"]
+    base_url = f"http://127.0.0.1:{args.http_port}"
 
-    data_dir = Path(tempfile.mkdtemp(prefix="vibesensor-e2e-data-"))
+    cleanup_data_dir = args.data_dir is None
+    data_dir = (
+        Path(tempfile.mkdtemp(prefix="vibesensor-e2e-data-"))
+        if cleanup_data_dir
+        else Path(args.data_dir).resolve()
+    )
+    data_dir.mkdir(parents=True, exist_ok=True)
     shutil.copytree(ROOT / "apps" / "server" / "data", data_dir, dirs_exist_ok=True)
     sim_log = data_dir / "sim_sender.log"
     container_started = False
@@ -139,45 +202,47 @@ def main() -> int:
                 ]
             )
 
-        _run(
-            [
-                "docker",
-                "build",
-                "-f",
-                "apps/server/Dockerfile",
-                "-t",
-                IMAGE,
-                ".",
-            ]
-        )
+        if not args.skip_docker_build:
+            _run(
+                [
+                    "docker",
+                    "build",
+                    "-f",
+                    "apps/server/Dockerfile",
+                    "-t",
+                    args.docker_image,
+                    ".",
+                ]
+            )
         _run(
             [
                 "docker",
                 "run",
                 "--detach",
                 "--name",
-                CONTAINER,
+                args.container_name,
                 "-p",
-                "18000:8000",
+                f"{args.http_port}:8000",
                 "-p",
-                "19000:9000/udp",
+                f"{args.sim_data_port}:9000/udp",
                 "-p",
-                "19001:9001/udp",
+                f"{args.sim_control_port}:9001/udp",
                 "-v",
                 f"{data_dir}:/app/apps/server/data",
-                IMAGE,
+                args.docker_image,
             ]
         )
         container_started = True
-        _wait_health()
+        _wait_health(base_url)
 
         env = os.environ.copy()
         env.update(
             {
-                "VIBESENSOR_BASE_URL": BASE_URL,
+                "VIBESENSOR_BASE_URL": base_url,
                 "VIBESENSOR_SIM_SERVER_HOST": "127.0.0.1",
-                "VIBESENSOR_SIM_DATA_PORT": "19000",
-                "VIBESENSOR_SIM_CONTROL_PORT": "19001",
+                "VIBESENSOR_SIM_DATA_PORT": str(args.sim_data_port),
+                "VIBESENSOR_SIM_CONTROL_PORT": str(args.sim_control_port),
+                "VIBESENSOR_SIM_CLIENT_CONTROL_BASE": str(args.sim_client_control_base),
                 "VIBESENSOR_SIM_DURATION": "12",
                 "VIBESENSOR_SIM_DURATION_LONG": "20",
                 "VIBESENSOR_SIM_LOG": str(sim_log),
@@ -191,21 +256,26 @@ def main() -> int:
                 "-q",
                 "-m",
                 e2e_marker_expr,
-                "apps/server/tests_e2e",
+                *pytest_targets,
             ],
             env=env,
         )
         return 0
     except subprocess.CalledProcessError:
-        _print_diagnostics(sim_log)
+        _print_diagnostics(
+            sim_log=sim_log, container_name=args.container_name, base_url=base_url
+        )
         return 1
     except Exception:
-        _print_diagnostics(sim_log)
+        _print_diagnostics(
+            sim_log=sim_log, container_name=args.container_name, base_url=base_url
+        )
         raise
     finally:
         if container_started:
-            _run(["docker", "rm", "-f", CONTAINER], check=False)
-        shutil.rmtree(data_dir, ignore_errors=True)
+            _run(["docker", "rm", "-f", args.container_name], check=False)
+        if cleanup_data_dir:
+            shutil.rmtree(data_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":
