@@ -100,16 +100,10 @@ def test_label_placement_stays_in_bounds_and_avoids_overlap_for_dense_layout() -
 
 
 def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
-    summary = {
-        "sensor_locations": ["front-left wheel", "rear-right wheel"],
-        "sensor_intensity_by_location": [
-            {"location": "front-left wheel", "p95_intensity_db": 22.0},
-        ],
-    }
     diagram = car_location_diagram(
-        [{"strongest_location": "front-left wheel", "source": "wheel/tire"}],
-        summary,
-        [],
+        connected_locations={"front-left wheel", "rear-right wheel"},
+        amp_by_location={"front-left wheel": 22.0},
+        highlight={"front-left wheel": "#d32f2f"},
         content_width=300.0,
         tr=lambda key, **kwargs: key,
         text_fn=lambda en, nl: en,
@@ -142,24 +136,20 @@ def test_single_sensor_uses_heat_midpoint_not_neutral_grey() -> None:
 
 
 def test_legend_text_stays_clear_of_color_bar_and_source_labels_do_not_overlap() -> None:
-    summary = {
-        "sensor_locations": [
+    diagram = car_location_diagram(
+        connected_locations={
             "front-left wheel",
             "front-right wheel",
             "rear-left wheel",
             "rear-right wheel",
-        ],
-        "sensor_intensity_by_location": [
-            {"location": "front-left wheel", "p95_intensity_db": 31.1},
-            {"location": "front-right wheel", "p95_intensity_db": 34.9},
-            {"location": "rear-left wheel", "p95_intensity_db": 30.9},
-            {"location": "rear-right wheel", "p95_intensity_db": 31.4},
-        ],
-    }
-    diagram = car_location_diagram(
-        [{"strongest_location": "front-right wheel", "source": "wheel/tire"}],
-        summary,
-        [],
+        },
+        amp_by_location={
+            "front-left wheel": 31.1,
+            "front-right wheel": 34.9,
+            "rear-left wheel": 30.9,
+            "rear-right wheel": 31.4,
+        },
+        highlight={"front-right wheel": "#d32f2f"},
         content_width=300.0,
         tr=lambda key, **kwargs: key,
         text_fn=lambda en, nl: en,

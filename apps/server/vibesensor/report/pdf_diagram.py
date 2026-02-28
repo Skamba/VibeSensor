@@ -5,8 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
-from ..runlog import as_float_or_none as _as_float
-from .pdf_helpers import _canonical_location, _source_color, color_blend
+from .pdf_helpers import color_blend
 from .theme import (
     HEAT_HIGH,
     HEAT_LOW,
@@ -264,10 +263,10 @@ def _build_sensor_render_plan(
 
 
 def car_location_diagram(
-    top_findings: list[dict[str, object]],
-    summary: dict[str, object],
-    location_rows: list[dict[str, object]],
     *,
+    connected_locations: set[str],
+    amp_by_location: dict[str, float],
+    highlight: dict[str, str],
     content_width: float,
     tr: Callable[..., str],
     text_fn: Callable[..., str],
@@ -410,45 +409,6 @@ def car_location_diagram(
         "driver seat": (x0 + (car_w * 0.36), y0 + (car_h * 0.58)),
         "trunk": (cx, y0 + (car_h * 0.28)),
     }
-
-    connected_locations = {
-        _canonical_location(loc) for loc in summary.get("sensor_locations", []) if str(loc).strip()
-    }
-    amp_by_location: dict[str, float] = {}
-    sensor_intensity_rows = summary.get("sensor_intensity_by_location", [])
-    if isinstance(sensor_intensity_rows, list):
-        for row in sensor_intensity_rows:
-            if not isinstance(row, dict):
-                continue
-            loc = _canonical_location(row.get("location"))
-            p95_db = _as_float(row.get("p95_intensity_db")) or _as_float(
-                row.get("mean_intensity_db")
-            )
-            if loc and p95_db is not None and p95_db > 0:
-                amp_by_location[loc] = p95_db
-    # Also check location_rows for any locations not already covered
-    # (sensor_intensity_by_location may only have partial data)
-    for row in location_rows:
-        if not isinstance(row, dict):
-            continue
-        loc = _canonical_location(row.get("location"))
-        unit = str(row.get("unit") or "").strip().lower()
-        mean_val = _as_float(row.get("mean_value"))
-        if mean_val is None:
-            mean_val = (
-                _as_float(row.get("mean_db")) if unit == "db" else _as_float(row.get("mean_g"))
-            )
-        if loc and loc not in amp_by_location and mean_val is not None and mean_val > 0:
-            amp_by_location[loc] = mean_val
-    connected_locations.update(amp_by_location.keys())
-
-    highlight: dict[str, str] = {}
-    for finding in top_findings[:3]:
-        if not isinstance(finding, dict):
-            continue
-        loc = _canonical_location(finding.get("strongest_location"))
-        if loc:
-            highlight[loc] = _source_color(finding.get("source") or finding.get("suspected_source"))
 
     marker_plan, label_plan, single_sensor = _build_sensor_render_plan(
         location_points=location_points,

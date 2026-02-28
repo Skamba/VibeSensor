@@ -18,6 +18,7 @@ from ..runlog import as_float_or_none as _as_float
 from .i18n import normalize_lang
 from .i18n import tr as _tr
 from .pattern_parts import parts_for_pattern, why_parts_listed
+from .pdf_helpers import _canonical_location, _source_color, location_hotspots
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
 # ---------------------------------------------------------------------------
@@ -105,6 +106,12 @@ class PeakRow:
 
 
 @dataclass
+class TransientObservation:
+    label: str
+    confidence_pct: str
+
+
+@dataclass
 class ReportTemplateData:
     title: str = ""
     run_datetime: str | None = None
@@ -130,6 +137,11 @@ class ReportTemplateData:
     version_marker: str = ""
     lang: str = "en"
     certainty_tier_key: str = "C"
+    transient_observations: list[TransientObservation] = field(default_factory=list)
+    diagram_connected_locations: list[str] = field(default_factory=list)
+    diagram_amp_by_location: dict[str, float] = field(default_factory=dict)
+    diagram_highlight: dict[str, str] = field(default_factory=dict)
+    location_hotspot_rows: list[dict[str, object]] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -576,6 +588,76 @@ def map_summary(summary: dict) -> ReportTemplateData:
     sensor_model_val = str(summary.get("sensor_model") or "").strip() or None
     firmware_version_val = str(summary.get("firmware_version") or "").strip() or None
 
+    # -- Transient observations --
+    transient_observations: list[TransientObservation] = []
+    for finding in findings:
+        severity = str(finding.get("severity") or "").strip().lower()
+        suspected_src = str(finding.get("suspected_source") or "").strip().lower()
+        peak_cls = str(finding.get("peak_classification") or "").strip().lower()
+        if severity == "info" and (suspected_src == "transient_impact" or peak_cls == "transient"):
+            order_label = str(finding.get("frequency_hz_or_order") or "").strip()
+            if not order_label:
+                order_label = tr("SOURCE_TRANSIENT_IMPACT")
+            confidence_val = float(finding.get("confidence_0_to_1") or 0.0)
+            transient_observations.append(
+                TransientObservation(
+                    label=order_label,
+                    confidence_pct=f"{confidence_val * 100.0:.0f}%",
+                )
+            )
+
+    # -- Diagram data (pre-computed for car location diagram) --
+    def _text_fn(en: str, nl: str) -> str:
+        return nl if lang == "nl" else en
+
+    diagram_connected: set[str] = {
+        _canonical_location(loc)
+        for loc in sensor_locations_list
+        if str(loc).strip()
+    }
+    diagram_amp: dict[str, float] = {}
+    sensor_intensity_rows = summary.get("sensor_intensity_by_location", [])
+    if isinstance(sensor_intensity_rows, list):
+        for row in sensor_intensity_rows:
+            if not isinstance(row, dict):
+                continue
+            loc = _canonical_location(row.get("location"))
+            p95_db = _as_float(row.get("p95_intensity_db")) or _as_float(
+                row.get("mean_intensity_db")
+            )
+            if loc and p95_db is not None and p95_db > 0:
+                diagram_amp[loc] = p95_db
+
+    hotspot_rows, _, _, _ = location_hotspots(
+        summary.get("samples", []),
+        findings,
+        tr=tr,
+        text_fn=_text_fn,
+    )
+    for row in hotspot_rows:
+        if not isinstance(row, dict):
+            continue
+        loc = _canonical_location(row.get("location"))
+        unit = str(row.get("unit") or "").strip().lower()
+        mean_val = _as_float(row.get("mean_value"))
+        if mean_val is None:
+            mean_val = (
+                _as_float(row.get("mean_db")) if unit == "db" else _as_float(row.get("mean_g"))
+            )
+        if loc and loc not in diagram_amp and mean_val is not None and mean_val > 0:
+            diagram_amp[loc] = mean_val
+    diagram_connected.update(diagram_amp.keys())
+
+    diagram_highlight: dict[str, str] = {}
+    for cause in top_causes[:3]:
+        if not isinstance(cause, dict):
+            continue
+        loc = _canonical_location(cause.get("strongest_location"))
+        if loc:
+            diagram_highlight[loc] = _source_color(
+                cause.get("source") or cause.get("suspected_source")
+            )
+
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=date_str,
@@ -601,4 +683,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
         version_marker=version_marker,
         lang=lang,
         certainty_tier_key=tier,
+        transient_observations=transient_observations[:3],
+        diagram_connected_locations=sorted(diagram_connected),
+        diagram_amp_by_location=diagram_amp,
+        diagram_highlight=diagram_highlight,
+        location_hotspot_rows=hotspot_rows,
     )

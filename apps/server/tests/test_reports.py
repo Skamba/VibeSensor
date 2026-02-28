@@ -863,9 +863,9 @@ def test_car_diagram_wheel_labels_stay_within_bounds_without_overlap() -> None:
         "rear-right wheel",
     ]
     diagram = car_location_diagram(
-        [{"strongest_location": "front-left wheel", "source": "wheel/tire"}],
-        {"sensor_locations": sensor_locations},
-        [],
+        connected_locations=set(sensor_locations),
+        amp_by_location={},
+        highlight={"front-left wheel": "#d32f2f"},
         content_width=300.0,
         tr=lambda key, **kwargs: key,
         text_fn=lambda en, nl: en,

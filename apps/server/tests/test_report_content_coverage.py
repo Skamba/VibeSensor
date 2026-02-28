@@ -401,6 +401,8 @@ def test_pdf_peaks_table_includes_peak_amp_and_strength_columns(tmp_path: Path) 
 def test_pdf_additional_observations_heading_for_transient_findings(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from vibesensor.report.report_data import TransientObservation
+
     monkeypatch.setattr(
         pdf_builder,
         "map_summary",
@@ -408,32 +410,13 @@ def test_pdf_additional_observations_heading_for_transient_findings(
             title="Diagnostic worksheet",
             pattern_evidence=PatternEvidence(),
             lang="en",
+            transient_observations=[
+                TransientObservation(label="95.0 Hz", confidence_pct="22%"),
+            ],
         ),
     )
-    monkeypatch.setattr(
-        pdf_builder,
-        "location_hotspots",
-        lambda *_args, **_kwargs: ([], None, None, None),
-    )
 
-    summary = {"samples": [], "top_causes": []}
-    summary["findings"] = [
-        {
-            "finding_id": "F001",
-            "severity": "diagnostic",
-            "suspected_source": "wheel/tire",
-            "confidence_0_to_1": 0.55,
-            "frequency_hz_or_order": "1x wheel order",
-        },
-        {
-            "finding_id": "F002",
-            "severity": "info",
-            "suspected_source": "transient_impact",
-            "peak_classification": "transient",
-            "confidence_0_to_1": 0.22,
-            "frequency_hz_or_order": "95.0 Hz",
-        },
-    ]
+    summary: dict = {}
 
     pdf = build_report_pdf(summary)
     text = _extract_pdf_text(pdf)

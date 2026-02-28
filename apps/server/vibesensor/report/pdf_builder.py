@@ -22,7 +22,6 @@ from reportlab.pdfgen.canvas import Canvas
 
 from .i18n import tr as _tr
 from .pdf_diagram import car_location_diagram
-from .pdf_helpers import location_hotspots
 from .report_data import (
     NextStep,
     PatternEvidence,
@@ -719,9 +718,6 @@ def _page2(  # noqa: C901
     c: Canvas,
     data: ReportTemplateData,
     *,
-    summary: dict,
-    location_rows: list,
-    top_causes: list,
     tr_fn,
     text_fn,
     next_steps_continued: list[NextStep] | None = None,
@@ -770,11 +766,10 @@ def _page2(  # noqa: C901
     assert_aspect_preserved(src_w, src_h, dw, dh, tolerance=0.03)
 
     # Render the real car diagram as a ReportLab Drawing
-    findings = summary.get("findings", [])
     diagram = car_location_diagram(
-        top_causes or (findings if isinstance(findings, list) else []),
-        summary,
-        location_rows,
+        connected_locations=set(data.diagram_connected_locations),
+        amp_by_location=data.diagram_amp_by_location,
+        highlight=data.diagram_highlight,
         content_width=W,
         tr=tr_fn,
         text_fn=text_fn,
@@ -798,20 +793,12 @@ def _page2(  # noqa: C901
         c, m + 4 * mm, table_y + table_h - 10 * mm, W - 8 * mm, table_y + 3 * mm, data, tr
     )
 
-    transient_findings = [
-        finding
-        for finding in findings
-        if isinstance(finding, dict)
-        and str(finding.get("severity") or "").strip().lower() == "info"
-        and (
-            str(finding.get("suspected_source") or "").strip().lower() == "transient_impact"
-            or str(finding.get("peak_classification") or "").strip().lower() == "transient"
-        )
-    ]
-    if transient_findings:
+    if data.transient_observations:
         obs_h = 24 * mm
         obs_y = table_y - GAP - obs_h
-        _draw_additional_observations(c, m, obs_y, W, obs_h, transient_findings, tr)
+        _draw_additional_observations_from_data(
+            c, m, obs_y, W, obs_h, data.transient_observations, tr
+        )
     else:
         obs_y = table_y
 
@@ -990,26 +977,27 @@ def _draw_peaks_table(
             cx_off += cw
 
 
-def _draw_additional_observations(
+def _draw_additional_observations_from_data(
     c: Canvas,
     x: float,
     y: float,
     w: float,
     h: float,
-    transient_findings: list[dict[str, object]],
+    observations: list,
     tr,
 ) -> None:
+    from .report_data import TransientObservation
+
     _draw_panel(c, x, y, w, h, tr("ADDITIONAL_OBSERVATIONS"), fill=SOFT_BG)
     c.setFillColor(_hex(MUTED_CLR))
     c.setFont(FONT, 6.5)
 
     y_cursor = y + h - 10 * mm
-    for finding in transient_findings[:3]:
-        order_label = str(finding.get("frequency_hz_or_order") or "").strip()
-        if not order_label:
-            order_label = tr("SOURCE_TRANSIENT_IMPACT")
-        confidence = float(finding.get("confidence_0_to_1") or 0.0)
-        line = f"• {order_label} ({confidence * 100.0:.0f}%)"
+    for obs in observations[:3]:
+        if isinstance(obs, TransientObservation):
+            line = f"\u2022 {obs.label} ({obs.confidence_pct})"
+        else:
+            line = f"\u2022 {obs}"
         c.drawString(x + 4 * mm, y_cursor, line)
         y_cursor -= 3.5 * mm
 
@@ -1038,38 +1026,6 @@ def _build_canvas_pdf(summary: dict) -> bytes:
     def text_fn(en: str, nl: str) -> str:
         return nl if lang == "nl" else en
 
-    # Compute location hotspot rows for the car diagram
-    findings = summary.get("findings", [])
-    actionable_findings = [
-        f
-        for f in findings
-        if isinstance(f, dict)
-        and not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
-    ]
-    location_rows, _, _, _ = location_hotspots(
-        summary.get("samples", []),
-        findings,
-        tr=tr_fn,
-        text_fn=text_fn,
-    )
-    top_causes_all = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
-    top_causes_non_ref = [
-        c
-        for c in top_causes_all
-        if not str(c.get("finding_id") or "").strip().upper().startswith("REF_")
-    ]
-    top_causes_actionable = [
-        c
-        for c in top_causes_non_ref
-        if str(c.get("source") or c.get("suspected_source") or "").strip().lower()
-        not in {"unknown_resonance", "unknown"}
-        or str(c.get("strongest_location") or "").strip().lower()
-        not in {"", "unknown", "not available", "n/a"}
-    ]
-    top_causes = (
-        top_causes_actionable or actionable_findings or top_causes_non_ref or top_causes_all
-    )
-
     buf = BytesIO()
     c = Canvas(buf, pagesize=PAGE_SIZE, pageCompression=0)
 
@@ -1082,9 +1038,6 @@ def _build_canvas_pdf(summary: dict) -> bytes:
     _page2(
         c,
         data,
-        summary=summary,
-        location_rows=location_rows,
-        top_causes=top_causes,
         tr_fn=tr_fn,
         text_fn=text_fn,
         next_steps_continued=remaining_next_steps,
