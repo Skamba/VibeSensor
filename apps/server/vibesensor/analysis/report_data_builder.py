@@ -272,7 +272,8 @@ def _compute_location_hotspot_rows(
             if not isinstance(row, dict):
                 continue
             location = str(row.get("location") or "").strip()
-            p95 = _as_float(row.get("p95_intensity_db")) or _as_float(row.get("mean_intensity_db"))
+            p95_val = _as_float(row.get("p95_intensity_db"))
+            p95 = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
             if location and p95 is not None and p95 > 0:
                 amp_by_location[location].append(p95)
         amp_unit = "db"

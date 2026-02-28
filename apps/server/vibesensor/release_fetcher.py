@@ -167,12 +167,29 @@ class ServerReleaseFetcher:
         """Check if a newer release is available.
 
         Returns :class:`ReleaseInfo` if a newer version exists, ``None``
-        if already up-to-date.  Raises on API errors.
+        if already up-to-date or the latest release is older.
+        Raises on API errors.
         """
         release = self.find_latest_release()
         if release.version == current_version:
             LOGGER.info("Already up-to-date (version=%s)", current_version)
             return None
+        # Guard against suggesting downgrades: compare versions so that only
+        # genuinely newer releases are reported.
+        try:
+            from packaging.version import Version
+
+            if Version(release.version) <= Version(current_version):
+                LOGGER.info(
+                    "Latest release %s is not newer than current %s; skipping",
+                    release.version,
+                    current_version,
+                )
+                return None
+        except Exception:
+            # If packaging is unavailable or versions are unparseable,
+            # fall through and treat any difference as an update.
+            pass
         LOGGER.info(
             "Update available: %s → %s",
             current_version,

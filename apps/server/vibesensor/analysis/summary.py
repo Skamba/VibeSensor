@@ -153,11 +153,12 @@ def confidence_label(
         high confidence is capped to medium as a defensive label guard —
         mirrors the guard in :func:`certainty_label`.
     """
-    pct = max(0.0, min(100.0, conf_0_to_1 * 100.0))
+    pct = max(0.0, min(100.0, (conf_0_to_1 or 0.0) * 100.0))
     pct_text = f"{pct:.0f}%"
-    if conf_0_to_1 >= 0.70:
+    conf = conf_0_to_1 if conf_0_to_1 is not None else 0.0
+    if conf >= 0.70:
         label_key, tone = "CONFIDENCE_HIGH", "success"
-    elif conf_0_to_1 >= 0.40:
+    elif conf >= 0.40:
         label_key, tone = "CONFIDENCE_MEDIUM", "warn"
     else:
         label_key, tone = "CONFIDENCE_LOW", "neutral"
