@@ -31,6 +31,8 @@ _GPS_READ_TIMEOUT_S: float = 3.0
 _GPS_RECONNECT_MAX_DELAY_S: float = 15.0
 _GPS_MAX_EPH_M: float = 40.0
 _GPS_MAX_EPS_MPS: float = 1.5
+_GPS_ZERO_DROP_PREV_THRESHOLD_MPS: float = 0.5
+_GPS_ZERO_CONFIRM_SAMPLES: int = 3
 
 # Fallback defaults
 DEFAULT_STALE_TIMEOUT_S: float = 10.0
@@ -57,6 +59,11 @@ class GPSSpeedMonitor:
         self.last_error: str | None = None
         self.current_reconnect_delay: float = _GPS_RECONNECT_DELAY_S
         self.device_info: str | None = None
+        self.last_fix_mode: int | None = None
+        self.last_epx_m: float | None = None
+        self.last_epy_m: float | None = None
+        self.last_epv_m: float | None = None
+        self._zero_speed_streak: int = 0
 
         # --- fallback ---
         self.stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S
@@ -158,49 +165,46 @@ class GPSSpeedMonitor:
             self.fallback_mode = fallback_mode
 
     @staticmethod
-    def _has_good_3d_fix(payload: dict[str, Any]) -> bool:
-        mode = payload.get("mode")
-        if not isinstance(mode, int) or mode < 3:
-            return False
-
-        lat = payload.get("lat")
-        lon = payload.get("lon")
-        if not (
-            isinstance(lat, (int, float))
-            and not isinstance(lat, bool)
-            and math.isfinite(lat)
-            and isinstance(lon, (int, float))
-            and not isinstance(lon, bool)
-            and math.isfinite(lon)
+    def _read_non_negative_metric(payload: dict[str, Any], field: str) -> float | None:
+        value = payload.get(field)
+        if (
+            isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and math.isfinite(value)
+            and value >= 0
         ):
-            return False
-        if not (-90.0 <= lat <= 90.0 and -180.0 <= lon <= 180.0):
-            return False
-        if lat == 0.0 and lon == 0.0:
-            return False
+            return float(value)
+        return None
 
-        eph = payload.get("eph")
-        if eph is not None:
+    @staticmethod
+    def _tpv_mode(payload: dict[str, Any]) -> int | None:
+        mode = payload.get("mode")
+        if isinstance(mode, int) and not isinstance(mode, bool):
+            return mode
+        return None
+
+    def _speed_confidence(self) -> str:
+        mode = self.last_fix_mode
+        if not isinstance(mode, int) or mode < 2:
+            return "low"
+        if mode >= 3:
+            return "high"
+        if self.last_epx_m is not None and self.last_epy_m is not None:
+            if self.last_epx_m <= _GPS_MAX_EPH_M and self.last_epy_m <= _GPS_MAX_EPH_M:
+                return "medium"
+            return "low"
+        return "medium"
+
+    def _accept_speed_sample(self, speed_mps: float) -> bool:
+        if speed_mps == 0.0:
+            prev_speed = self.speed_mps
             if (
-                not isinstance(eph, (int, float))
-                or isinstance(eph, bool)
-                or not math.isfinite(eph)
-                or eph < 0
-                or eph > _GPS_MAX_EPH_M
+                isinstance(prev_speed, (int, float))
+                and prev_speed > _GPS_ZERO_DROP_PREV_THRESHOLD_MPS
             ):
-                return False
-
-        eps = payload.get("eps")
-        if eps is not None:
-            if (
-                not isinstance(eps, (int, float))
-                or isinstance(eps, bool)
-                or not math.isfinite(eps)
-                or eps < 0
-                or eps > _GPS_MAX_EPS_MPS
-            ):
-                return False
-
+                self._zero_speed_streak += 1
+                return self._zero_speed_streak >= _GPS_ZERO_CONFIRM_SAMPLES
+        self._zero_speed_streak = 0
         return True
 
     def status_dict(self) -> dict[str, Any]:
@@ -226,6 +230,18 @@ class GPSSpeedMonitor:
             "gps_enabled": self.gps_enabled,
             "connection_state": conn_state,
             "device": self.device_info,
+            "fix_mode": self.last_fix_mode,
+            "fix_dimension": (
+                "3d"
+                if isinstance(self.last_fix_mode, int) and self.last_fix_mode >= 3
+                else "2d"
+                if self.last_fix_mode == 2
+                else "none"
+            ),
+            "speed_confidence": self._speed_confidence(),
+            "epx_m": self.last_epx_m,
+            "epy_m": self.last_epy_m,
+            "epv_m": self.last_epv_m,
             "last_update_age_s": last_update_age_s,
             "raw_speed_kmh": raw_speed_kmh,
             "effective_speed_kmh": effective_speed_kmh,
@@ -277,16 +293,26 @@ class GPSSpeedMonitor:
                             if isinstance(rev, str):
                                 self.device_info = f"gpsd {rev}"
                         continue
-                    has_3d_fix = self._has_good_3d_fix(payload)
+                    mode = self._tpv_mode(payload)
+                    self.last_fix_mode = mode
+                    self.last_epx_m = self._read_non_negative_metric(payload, "epx")
+                    self.last_epy_m = self._read_non_negative_metric(payload, "epy")
+                    self.last_epv_m = self._read_non_negative_metric(payload, "epv")
                     speed = payload.get("speed")
                     if (
-                        has_3d_fix
+                        isinstance(mode, int)
+                        and mode >= 2
                         and isinstance(speed, (int, float))
+                        and not isinstance(speed, bool)
                         and math.isfinite(speed)
                         and speed >= 0
                     ):
-                        self.speed_mps = float(speed)
-                        self.last_update_ts = time.monotonic()
+                        speed_mps = float(speed)
+                        if self._accept_speed_sample(speed_mps):
+                            self.speed_mps = speed_mps
+                            self.last_update_ts = time.monotonic()
+                    else:
+                        self._zero_speed_streak = 0
                     # Extract device from TPV
                     device = payload.get("device")
                     if isinstance(device, str) and device:
