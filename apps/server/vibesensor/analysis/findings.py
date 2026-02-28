@@ -10,7 +10,6 @@ from typing import Any
 
 from vibesensor_core.vibration_strength import percentile, vibration_strength_db_scalar
 
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
@@ -38,6 +37,7 @@ from .helpers import (
 )
 from .order_analysis import (
     _finding_actions_for_source,
+    _i18n_ref,
     _order_hypotheses,
     _order_label,
 )
@@ -387,8 +387,8 @@ def _reference_missing_finding(
     *,
     finding_id: str,
     suspected_source: str,
-    evidence_summary: str,
-    quick_checks: list[str],
+    evidence_summary: object,
+    quick_checks: list[object],
     lang: object = "en",
 ) -> dict[str, object]:
     return {
@@ -396,12 +396,12 @@ def _reference_missing_finding(
         "finding_type": "reference",
         "suspected_source": suspected_source,
         "evidence_summary": evidence_summary,
-        "frequency_hz_or_order": _tr(lang, "REFERENCE_MISSING"),
+        "frequency_hz_or_order": _i18n_ref("REFERENCE_MISSING"),
         "amplitude_metric": {
             "name": "not_available",
             "value": None,
             "units": "n/a",
-            "definition": _tr(lang, "REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED"),
+            "definition": _i18n_ref("REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED"),
         },
         "confidence_0_to_1": None,
         "quick_checks": quick_checks[:3],
@@ -937,8 +937,7 @@ def _build_order_findings(
         )
 
         ref_text = ", ".join(sorted(ref_sources))
-        evidence = _tr(
-            lang,
+        evidence = _i18n_ref(
             "EVIDENCE_ORDER_TRACKED",
             order_label=_order_label(lang, hypothesis.order, hypothesis.order_label_base),
             matched=matched,
@@ -948,7 +947,8 @@ def _build_order_findings(
             ref_text=ref_text,
         )
         if location_line:
-            evidence = f"{evidence} {location_line}"
+            evidence = dict(evidence)
+            evidence["_suffix"] = f" {location_line}"
 
         strongest_location = (
             str(location_hotspot.get("location")) if isinstance(location_hotspot, dict) else ""
@@ -1039,7 +1039,7 @@ def _build_order_findings(
                 "name": "strength_peak_band_rms_amp_g",
                 "value": mean_amp,
                 "units": accel_units,
-                "definition": _tr(lang, "METRIC_MEAN_MATCHED_PEAK_AMPLITUDE"),
+                "definition": _i18n_ref("METRIC_MEAN_MATCHED_PEAK_AMPLITUDE"),
             },
             "confidence_0_to_1": confidence,
             "quick_checks": quick_checks,
@@ -1075,8 +1075,9 @@ def _build_order_findings(
                 "phases_with_evidence": phases_with_evidence,
                 "diffuse_excitation": _diffuse_excitation,
             },
-            "next_sensor_move": str(actions[0].get("what") or "")
-            or _tr(lang, "NEXT_SENSOR_MOVE_DEFAULT"),
+            "next_sensor_move": actions[0].get("what")
+            if actions
+            else _i18n_ref("NEXT_SENSOR_MOVE_DEFAULT"),
             "actions": actions,
             "_ranking_score": ranking_score,
         }
@@ -1311,8 +1312,7 @@ def _build_persistent_peak_findings(
         )
         speed_band = derived_speed_band or "-"
 
-        evidence = _tr(
-            lang,
+        evidence = _i18n_ref(
             "EVIDENCE_PEAK_PRESENT",
             freq=bin_center,
             pct=presence_ratio,
@@ -1356,7 +1356,7 @@ def _build_persistent_peak_findings(
                 "name": "strength_p95_band_rms_amp_g",
                 "value": p95_amp,
                 "units": accel_units,
-                "definition": _tr(lang, "METRIC_P95_PEAK_AMPLITUDE"),
+                "definition": _i18n_ref("METRIC_P95_PEAK_AMPLITUDE"),
             },
             "confidence_0_to_1": confidence,
             "quick_checks": [],
@@ -1426,15 +1426,14 @@ def _build_findings(
             _reference_missing_finding(
                 finding_id="REF_SPEED",
                 suspected_source="unknown",
-                evidence_summary=_tr(
-                    lang,
+                evidence_summary=_i18n_ref(
                     "VEHICLE_SPEED_COVERAGE_IS_SPEED_NON_NULL_PCT",
                     speed_non_null_pct=speed_non_null_pct,
                     threshold=SPEED_COVERAGE_MIN_PCT,
                 ),
                 quick_checks=[
-                    _tr(lang, "RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
-                    _tr(lang, "VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
+                    _i18n_ref("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
+                    _i18n_ref("VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
                 ],
                 lang=lang,
             )
@@ -1445,13 +1444,12 @@ def _build_findings(
             _reference_missing_finding(
                 finding_id="REF_WHEEL",
                 suspected_source="wheel/tire",
-                evidence_summary=_tr(
-                    lang,
+                evidence_summary=_i18n_ref(
                     "VEHICLE_SPEED_IS_AVAILABLE_BUT_TIRE_CIRCUMFERENCE_REFERENCE",
                 ),
                 quick_checks=[
-                    _tr(lang, "PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
-                    _tr(lang, "RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
+                    _i18n_ref("PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
+                    _i18n_ref("RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
                 ],
                 lang=lang,
             )
@@ -1469,14 +1467,13 @@ def _build_findings(
             _reference_missing_finding(
                 finding_id="REF_ENGINE",
                 suspected_source="engine",
-                evidence_summary=_tr(
-                    lang,
+                evidence_summary=_i18n_ref(
                     "ENGINE_SPEED_REFERENCE_COVERAGE_IS_ENGINE_RPM_NON",
                     engine_rpm_non_null_pct=engine_rpm_non_null_pct,
                 ),
                 quick_checks=[
-                    _tr(lang, "LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
-                    _tr(lang, "KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
+                    _i18n_ref("LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
+                    _i18n_ref("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
                 ],
                 lang=lang,
             )
@@ -1487,8 +1484,8 @@ def _build_findings(
             _reference_missing_finding(
                 finding_id="REF_SAMPLE_RATE",
                 suspected_source="unknown",
-                evidence_summary=_tr(lang, "RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
-                quick_checks=[_tr(lang, "RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
+                evidence_summary=_i18n_ref("RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
+                quick_checks=[_i18n_ref("RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
                 lang=lang,
             )
         )

@@ -7,8 +7,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _effective_engine_rpm
 
@@ -46,11 +44,12 @@ def _engine_hz(
 
 
 def _order_label(lang: object, order: int, base: str) -> str:
-    if normalize_lang(lang) == "nl":
-        names = {"wheel": "wielorde", "engine": "motororde", "driveshaft": "aandrijfasorde"}
-    else:
-        names = {"wheel": "wheel order", "engine": "engine order", "driveshaft": "driveshaft order"}
-    return f"{order}x {names.get(base, base)}"
+    """Return a language-neutral order label like ``'1x wheel'``.
+
+    The ``lang`` parameter is accepted but ignored for backward compatibility.
+    Translation to human-readable form happens at report render time.
+    """
+    return f"{order}x {base}"
 
 
 @dataclass(slots=True)
@@ -102,21 +101,33 @@ def _order_hypotheses() -> list[_OrderHypothesis]:
     ]
 
 
-def _wheel_focus_from_location(lang: object, location: str) -> str:
+def _wheel_focus_from_location(lang: object, location: str) -> dict[str, str]:
+    """Return an i18n reference for the wheel focus label.
+
+    The ``lang`` parameter is accepted but ignored for backward compatibility.
+    """
     token = location.strip().lower()
     if "front-left wheel" in token:
-        return _tr(lang, "WHEEL_FOCUS_FRONT_LEFT")
+        return {"_i18n_key": "WHEEL_FOCUS_FRONT_LEFT"}
     if "front-right wheel" in token:
-        return _tr(lang, "WHEEL_FOCUS_FRONT_RIGHT")
+        return {"_i18n_key": "WHEEL_FOCUS_FRONT_RIGHT"}
     if "rear-left wheel" in token:
-        return _tr(lang, "WHEEL_FOCUS_REAR_LEFT")
+        return {"_i18n_key": "WHEEL_FOCUS_REAR_LEFT"}
     if "rear-right wheel" in token:
-        return _tr(lang, "WHEEL_FOCUS_REAR_RIGHT")
+        return {"_i18n_key": "WHEEL_FOCUS_REAR_RIGHT"}
     if "rear" in token or "trunk" in token:
-        return _tr(lang, "WHEEL_FOCUS_REAR")
+        return {"_i18n_key": "WHEEL_FOCUS_REAR"}
     if "front" in token or "engine" in token:
-        return _tr(lang, "WHEEL_FOCUS_FRONT")
-    return _tr(lang, "WHEEL_FOCUS_ALL")
+        return {"_i18n_key": "WHEEL_FOCUS_FRONT"}
+    return {"_i18n_key": "WHEEL_FOCUS_ALL"}
+
+
+def _i18n_ref(key: str, **params: object) -> dict[str, object]:
+    """Build a language-neutral i18n reference dict."""
+    ref: dict[str, object] = {"_i18n_key": key}
+    if params:
+        ref.update(params)
+    return ref
 
 
 def _finding_actions_for_source(
@@ -126,63 +137,69 @@ def _finding_actions_for_source(
     strongest_location: str = "",
     strongest_speed_band: str = "",
     weak_spatial_separation: bool = False,
-) -> list[dict[str, str]]:
+) -> list[dict[str, object]]:
+    """Return language-neutral action plan dicts with i18n references.
+
+    The ``lang`` parameter is accepted but ignored for backward compatibility.
+    Each ``what``, ``why``, ``confirm``, ``falsify`` field is an i18n reference
+    dict (``{"_i18n_key": "KEY", ...params}``) that the report layer resolves
+    at render time.
+    """
     location = strongest_location.strip()
     speed_band = strongest_speed_band.strip()
-    speed_hint = _tr(lang, "SPEED_HINT_FOCUS", speed_band=speed_band) if speed_band else ""
+    speed_hint = _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band) if speed_band else ""
     if source == "wheel/tire":
         wheel_focus = _wheel_focus_from_location(lang, location)
         location_hint = (
-            _tr(lang, "LOCATION_HINT_NEAR", location=location)
+            _i18n_ref("LOCATION_HINT_NEAR", location=location)
             if location
-            else _tr(lang, "LOCATION_HINT_AT_WHEEL_CORNERS")
+            else _i18n_ref("LOCATION_HINT_AT_WHEEL_CORNERS")
         )
         return [
             {
                 "action_id": "wheel_balance_and_runout",
-                "what": _tr(
-                    lang,
+                "what": _i18n_ref(
                     "ACTION_WHEEL_BALANCE_WHAT",
                     wheel_focus=wheel_focus,
                     speed_hint=speed_hint,
                 ),
-                "why": _tr(lang, "ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
-                "confirm": _tr(lang, "ACTION_WHEEL_BALANCE_CONFIRM"),
-                "falsify": _tr(lang, "ACTION_WHEEL_BALANCE_FALSIFY"),
+                "why": _i18n_ref("ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
+                "confirm": _i18n_ref("ACTION_WHEEL_BALANCE_CONFIRM"),
+                "falsify": _i18n_ref("ACTION_WHEEL_BALANCE_FALSIFY"),
                 "eta": "20-45 min",
             },
             {
                 "action_id": "wheel_tire_condition",
-                "what": _tr(lang, "ACTION_TIRE_CONDITION_WHAT", wheel_focus=wheel_focus),
-                "why": _tr(lang, "ACTION_TIRE_CONDITION_WHY"),
-                "confirm": _tr(lang, "ACTION_TIRE_CONDITION_CONFIRM"),
-                "falsify": _tr(lang, "ACTION_TIRE_CONDITION_FALSIFY"),
+                "what": _i18n_ref("ACTION_TIRE_CONDITION_WHAT", wheel_focus=wheel_focus),
+                "why": _i18n_ref("ACTION_TIRE_CONDITION_WHY"),
+                "confirm": _i18n_ref("ACTION_TIRE_CONDITION_CONFIRM"),
+                "falsify": _i18n_ref("ACTION_TIRE_CONDITION_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
     if source == "driveline":
         driveline_focus = (
-            _tr(lang, "LOCATION_HINT_NEAR_SHORT", location=location)
+            _i18n_ref("LOCATION_HINT_NEAR_SHORT", location=location)
             if location
-            else _tr(lang, "LOCATION_HINT_ALONG_DRIVELINE")
+            else _i18n_ref("LOCATION_HINT_ALONG_DRIVELINE")
         )
         return [
             {
                 "action_id": "driveline_inspection",
-                "what": _tr(
-                    lang, "ACTION_DRIVELINE_INSPECTION_WHAT", driveline_focus=driveline_focus
+                "what": _i18n_ref(
+                    "ACTION_DRIVELINE_INSPECTION_WHAT", driveline_focus=driveline_focus
                 ),
-                "why": _tr(lang, "ACTION_DRIVELINE_INSPECTION_WHY"),
-                "confirm": _tr(lang, "ACTION_DRIVELINE_INSPECTION_CONFIRM"),
-                "falsify": _tr(lang, "ACTION_DRIVELINE_INSPECTION_FALSIFY"),
+                "why": _i18n_ref("ACTION_DRIVELINE_INSPECTION_WHY"),
+                "confirm": _i18n_ref("ACTION_DRIVELINE_INSPECTION_CONFIRM"),
+                "falsify": _i18n_ref("ACTION_DRIVELINE_INSPECTION_FALSIFY"),
                 "eta": "20-35 min",
             },
             {
                 "action_id": "driveline_mounts_and_fasteners",
-                "what": _tr(lang, "ACTION_DRIVELINE_MOUNTS_WHAT"),
-                "why": _tr(lang, "ACTION_DRIVELINE_MOUNTS_WHY"),
-                "confirm": _tr(lang, "ACTION_DRIVELINE_MOUNTS_CONFIRM"),
-                "falsify": _tr(lang, "ACTION_DRIVELINE_MOUNTS_FALSIFY"),
+                "what": _i18n_ref("ACTION_DRIVELINE_MOUNTS_WHAT"),
+                "why": _i18n_ref("ACTION_DRIVELINE_MOUNTS_WHY"),
+                "confirm": _i18n_ref("ACTION_DRIVELINE_MOUNTS_CONFIRM"),
+                "falsify": _i18n_ref("ACTION_DRIVELINE_MOUNTS_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
@@ -190,31 +207,31 @@ def _finding_actions_for_source(
         return [
             {
                 "action_id": "engine_mounts_and_accessories",
-                "what": _tr(lang, "ACTION_ENGINE_MOUNTS_WHAT"),
-                "why": _tr(lang, "ACTION_ENGINE_MOUNTS_WHY"),
-                "confirm": _tr(lang, "ACTION_ENGINE_MOUNTS_CONFIRM"),
-                "falsify": _tr(lang, "ACTION_ENGINE_MOUNTS_FALSIFY"),
+                "what": _i18n_ref("ACTION_ENGINE_MOUNTS_WHAT"),
+                "why": _i18n_ref("ACTION_ENGINE_MOUNTS_WHY"),
+                "confirm": _i18n_ref("ACTION_ENGINE_MOUNTS_CONFIRM"),
+                "falsify": _i18n_ref("ACTION_ENGINE_MOUNTS_FALSIFY"),
                 "eta": "15-30 min",
             },
             {
                 "action_id": "engine_combustion_quality",
-                "what": _tr(lang, "ACTION_ENGINE_COMBUSTION_WHAT"),
-                "why": _tr(lang, "ACTION_ENGINE_COMBUSTION_WHY"),
-                "confirm": _tr(lang, "ACTION_ENGINE_COMBUSTION_CONFIRM"),
-                "falsify": _tr(lang, "ACTION_ENGINE_COMBUSTION_FALSIFY"),
+                "what": _i18n_ref("ACTION_ENGINE_COMBUSTION_WHAT"),
+                "why": _i18n_ref("ACTION_ENGINE_COMBUSTION_WHY"),
+                "confirm": _i18n_ref("ACTION_ENGINE_COMBUSTION_CONFIRM"),
+                "falsify": _i18n_ref("ACTION_ENGINE_COMBUSTION_FALSIFY"),
                 "eta": "10-20 min",
             },
         ]
-    fallback_why = _tr(lang, "ACTION_GENERAL_FALLBACK_WHY")
+    fallback_why = _i18n_ref("ACTION_GENERAL_FALLBACK_WHY")
     if weak_spatial_separation:
-        fallback_why = _tr(lang, "ACTION_GENERAL_WEAK_SPATIAL_WHY")
+        fallback_why = _i18n_ref("ACTION_GENERAL_WEAK_SPATIAL_WHY")
     return [
         {
             "action_id": "general_mechanical_inspection",
-            "what": _tr(lang, "ACTION_GENERAL_INSPECTION_WHAT"),
+            "what": _i18n_ref("ACTION_GENERAL_INSPECTION_WHAT"),
             "why": fallback_why,
-            "confirm": _tr(lang, "ACTION_GENERAL_INSPECTION_CONFIRM"),
-            "falsify": _tr(lang, "ACTION_GENERAL_INSPECTION_FALSIFY"),
+            "confirm": _i18n_ref("ACTION_GENERAL_INSPECTION_CONFIRM"),
+            "falsify": _i18n_ref("ACTION_GENERAL_INSPECTION_FALSIFY"),
             "eta": "20-35 min",
         }
     ]

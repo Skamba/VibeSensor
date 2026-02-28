@@ -9,10 +9,9 @@ from statistics import mean
 
 from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
 from ..locations import has_any_wheel_location, is_wheel_location
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _speed_bin_label, weak_spatial_dominance_threshold
-from .order_analysis import _finding_actions_for_source
+from .order_analysis import _finding_actions_for_source, _i18n_ref
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
 
@@ -136,14 +135,12 @@ def _merge_test_plan(
     return [
         {
             "action_id": "general_mechanical_inspection",
-            "what": _tr(lang, "COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
-            "why": _tr(lang, "NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
-            "confirm": _tr(
-                lang,
+            "what": _i18n_ref("COLLECT_A_LONGER_RUN_WITH_STABLE_DRIVING_CONDITIONS"),
+            "why": _i18n_ref("NO_ACTIONABLE_FINDINGS_WERE_GENERATED_FROM_CURRENT_DATA"),
+            "confirm": _i18n_ref(
                 "CONFIRM_CONCRETE_MECHANICAL_ISSUE_IDENTIFIED",
             ),
-            "falsify": _tr(
-                lang,
+            "falsify": _i18n_ref(
                 "FALSIFY_NO_ABNORMAL_PLAY_WEAR_OR_LOOSENESS",
             ),
             "eta": "20-35 min",
@@ -364,14 +361,13 @@ def _location_speedbin_summary(
     best_out = dict(best)
     best_out["per_bin_results"] = [dict(item) for item in per_bin_results]
 
-    sentence = _tr(
-        lang,
+    sentence = _i18n_ref(
         "STRONGEST_AT_LOCATION_IN_SPEED_RANGE",
         location=best_out["location"],
         speed_range=best_out["speed_range"],
         dominance=f"{float(best_out['dominance_ratio']):.2f}",
         weak_note=(
-            _tr(lang, "WEAK_SPATIAL_SEPARATION_NOTE")
+            _i18n_ref("WEAK_SPATIAL_SEPARATION_NOTE")
             if bool(best_out.get("weak_spatial_separation"))
             else ""
         ),

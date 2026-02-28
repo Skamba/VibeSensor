@@ -241,8 +241,9 @@ def test_e2e_docker_user_journeys() -> None:
         insights_en = api_json(base_url, f"/api/history/{run_id_3}/insights?lang=en")
         checks_nl = {str(item.get("check")) for item in insights_nl.get("run_suitability", [])}
         checks_en = {str(item.get("check")) for item in insights_en.get("run_suitability", [])}
-        assert "Snelheidsvariatie" in checks_nl
-        assert "Speed variation" in checks_en
+        # Analysis output is now language-neutral: check field contains i18n keys
+        assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_nl
+        assert "SUITABILITY_CHECK_SPEED_VARIATION" in checks_en
 
         pdf_nl = api_bytes(base_url, f"/api/history/{run_id_3}/report.pdf?lang=nl")
         pdf_en = api_bytes(base_url, f"/api/history/{run_id_3}/report.pdf?lang=en")

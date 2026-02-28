@@ -484,7 +484,7 @@ def test_build_findings_detects_driveline_2x_order() -> None:
 
     assert driveline_2x is not None
     assert driveline_2x.get("suspected_source") == "driveline"
-    assert driveline_2x.get("frequency_hz_or_order") == "2x driveshaft order"
+    assert driveline_2x.get("frequency_hz_or_order") == "2x driveshaft"
 
 
 def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> None:
@@ -603,7 +603,10 @@ def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> 
     assert hotspot.get("location") == "ambiguous location: Rear Right / Rear Left"
     assert hotspot.get("ambiguous_locations") == ["Rear Right", "Rear Left"]
     assert float(hotspot.get("localization_confidence") or 0.0) < 0.4
-    assert "ambiguous location" in sentence
+    # sentence is now an i18n ref dict with location embedded as a parameter
+    assert isinstance(sentence, dict)
+    assert sentence.get("_i18n_key") == "STRONGEST_AT_LOCATION_IN_SPEED_RANGE"
+    assert "ambiguous location" in str(sentence.get("location", ""))
 
 
 def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_count() -> None:

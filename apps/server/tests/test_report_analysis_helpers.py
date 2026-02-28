@@ -19,7 +19,6 @@ from vibesensor.analysis.helpers import (
     _speed_bin_sort_key,
     _speed_stats,
     _speed_stats_by_phase,
-    _text,
 )
 from vibesensor.analysis.order_analysis import _wheel_hz
 from vibesensor.constants import KMH_TO_MPS
@@ -78,20 +77,6 @@ def test_as_float(value: object, expected: float | None) -> None:
 )
 def test_format_duration(seconds: float, expected: str) -> None:
     assert _format_duration(seconds) == expected
-
-
-# -- _text (bilingual helper) -------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("lang", "expected"),
-    [
-        pytest.param("en", "hello", id="en"),
-        pytest.param("nl", "hallo", id="nl"),
-    ],
-)
-def test_text(lang: str, expected: str) -> None:
-    assert _text(lang, "hello", "hallo") == expected
 
 
 # -- _percent_missing ----------------------------------------------------------
@@ -368,10 +353,20 @@ def test_sample_top_peaks_filters_sub_min_analysis_freq() -> None:
     ("info", "lang", "expected"),
     [
         pytest.param({"client_name": "Front Left"}, "en", "Front Left", id="name_en"),
-        pytest.param({"client_id": "AB:CD:EF:12:34:56"}, "en", "Sensor 4:56", id="client_id_en"),
-        pytest.param({}, "en", "Unlabeled sensor", id="unlabeled_en"),
-        pytest.param({}, "nl", "Sensor zonder label", id="unlabeled_nl"),
-        pytest.param({"client_id": "AB:CD:EF:12:34:56"}, "nl", "Sensor 4:56", id="client_id_nl"),
+        pytest.param(
+            {"client_id": "AB:CD:EF:12:34:56"},
+            "en",
+            "Sensor \u20264:56",
+            id="client_id_en",
+        ),
+        pytest.param({}, "en", "Unknown sensor", id="unlabeled_en"),
+        pytest.param({}, "nl", "Unknown sensor", id="unlabeled_nl_neutral"),
+        pytest.param(
+            {"client_id": "AB:CD:EF:12:34:56"},
+            "nl",
+            "Sensor \u20264:56",
+            id="client_id_nl_neutral",
+        ),
     ],
 )
 def test_location_label(info: dict, lang: str, expected: str) -> None:
