@@ -6,13 +6,14 @@ import io
 import json
 import logging
 import re
+import tempfile
 import zipfile
 from collections import OrderedDict
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 
 from .analysis import summarize_run_data
 from .api_models import (  # noqa: F401
@@ -78,8 +79,51 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 _MAX_REPORT_SAMPLES = 12_000
 _EXPORT_BATCH_SIZE = 2048
+_EXPORT_SPOOL_THRESHOLD = 4 * 1024 * 1024  # 4 MB before spilling to disk
+_EXPORT_STREAM_CHUNK = 1024 * 1024  # 1 MB read chunks when streaming
 _REPORT_PDF_CACHE_MAX_ENTRIES = 16
 _SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
+
+# Fixed CSV column order derived from SensorFrame canonical keys.
+# Using a fixed schema avoids a pre-scan pass to discover columns.
+# Any sample keys not in this list are serialized into the ``extras`` column.
+_EXPORT_CSV_COLUMNS: tuple[str, ...] = (
+    "record_type",
+    "schema_version",
+    "run_id",
+    "timestamp_utc",
+    "t_s",
+    "client_id",
+    "client_name",
+    "location",
+    "sample_rate_hz",
+    "speed_kmh",
+    "gps_speed_kmh",
+    "speed_source",
+    "engine_rpm",
+    "engine_rpm_source",
+    "gear",
+    "final_drive_ratio",
+    "accel_x_g",
+    "accel_y_g",
+    "accel_z_g",
+    "dominant_freq_hz",
+    "dominant_axis",
+    "top_peaks",
+    "top_peaks_x",
+    "top_peaks_y",
+    "top_peaks_z",
+    "vibration_strength_db",
+    "strength_bucket",
+    "strength_peak_amp_g",
+    "strength_floor_amp_g",
+    "frames_dropped_total",
+    "queue_overflow_drops",
+    "extras",
+)
+
+
+_EXPORT_CSV_COLUMN_SET: frozenset[str] = frozenset(_EXPORT_CSV_COLUMNS) - {"extras"}
 
 
 def _flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
@@ -88,11 +132,20 @@ def _flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     ``csv.DictWriter`` calls ``str()`` on values, which produces Python
     repr for dicts/lists (single-quoted keys, etc.).  Serializing them as
     JSON ensures the output is parseable by non-Python consumers.
+
+    Keys not in the fixed CSV column set are collected into an ``extras``
+    column as a JSON object.
     """
-    return {
-        k: json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
-        for k, v in row.items()
-    }
+    out: dict[str, Any] = {}
+    extras: dict[str, Any] = {}
+    for k, v in row.items():
+        if k in _EXPORT_CSV_COLUMN_SET:
+            out[k] = json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
+        else:
+            extras[k] = v
+    if extras:
+        out["extras"] = json.dumps(extras, ensure_ascii=False)
+    return out
 
 
 def _safe_filename(name: str) -> str:
@@ -624,68 +677,68 @@ def create_router(state: RuntimeState) -> APIRouter:
         )
 
     @router.get("/api/history/{run_id}/export")
-    async def export_history_run(run_id: str) -> Response:
+    async def export_history_run(run_id: str) -> StreamingResponse:
         run = await _async_require_run(run_id)
 
-        def _build_zip() -> bytes:
+        def _build_zip_file() -> tempfile.SpooledTemporaryFile[bytes]:
+            """Build the export ZIP into a spooled temp file (single-pass)."""
             safe_name = _safe_filename(run_id)
-            fieldnames: list[str] = []
-            fieldname_set: set[str] = set()
             sample_count = 0
 
-            # Wrap both read passes in a single read transaction so the
-            # data cannot change between the fieldname scan and CSV write.
-            from contextlib import nullcontext
+            spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
+                max_size=_EXPORT_SPOOL_THRESHOLD
+            )
+            with zipfile.ZipFile(
+                spool, mode="w", compression=zipfile.ZIP_DEFLATED
+            ) as archive:
+                # Write CSV with fixed column schema (single pass).
+                with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
+                    raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
+                    writer = csv.DictWriter(
+                        raw_csv_text,
+                        fieldnames=_EXPORT_CSV_COLUMNS,
+                        extrasaction="ignore",
+                    )
+                    writer.writeheader()
+                    for batch in state.history_db.iter_run_samples(
+                        run_id, batch_size=_EXPORT_BATCH_SIZE
+                    ):
+                        sample_count += len(batch)
+                        writer.writerows([_flatten_for_csv(row) for row in batch])
+                    raw_csv_text.flush()
 
-            read_tx = getattr(state.history_db, "read_transaction", None)
-            tx_ctx = read_tx() if callable(read_tx) else nullcontext()
-            with tx_ctx:
-                for batch in state.history_db.iter_run_samples(
-                    run_id, batch_size=_EXPORT_BATCH_SIZE
-                ):
-                    sample_count += len(batch)
-                    for sample in batch:
-                        for key in sample:
-                            if key not in fieldname_set:
-                                fieldname_set.add(key)
-                                fieldnames.append(key)
-
+                # Write run metadata as JSON (after CSV so sample_count is known).
                 run_details = dict(run)
                 run_details["sample_count"] = sample_count
+                archive.writestr(
+                    f"{safe_name}.json",
+                    json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
+                )
 
-                zip_buffer = io.BytesIO()
-                with zipfile.ZipFile(
-                    zip_buffer, mode="w", compression=zipfile.ZIP_DEFLATED
-                ) as archive:
-                    archive.writestr(
-                        f"{safe_name}.json",
-                        json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
-                    )
-                    if fieldnames:
-                        with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
-                            raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
-                            writer = csv.DictWriter(
-                                raw_csv_text,
-                                fieldnames=fieldnames,
-                                extrasaction="ignore",
-                            )
-                            writer.writeheader()
-                            for batch in state.history_db.iter_run_samples(
-                                run_id, batch_size=_EXPORT_BATCH_SIZE
-                            ):
-                                writer.writerows([_flatten_for_csv(row) for row in batch])
-                            raw_csv_text.flush()
-                    else:
-                        archive.writestr(f"{safe_name}_raw.csv", "")
-            return zip_buffer.getvalue()
+            spool.seek(0)
+            return spool
 
-        content = await asyncio.to_thread(_build_zip)
+        spool = await asyncio.to_thread(_build_zip_file)
+        file_size = spool.seek(0, 2)
+        spool.seek(0)
+
+        def _iter_spool():
+            try:
+                while True:
+                    chunk = spool.read(_EXPORT_STREAM_CHUNK)
+                    if not chunk:
+                        break
+                    yield chunk
+            finally:
+                spool.close()
+
         safe_name = _safe_filename(run_id)
-        return Response(
-            content=content,
+        return StreamingResponse(
+            content=_iter_spool(),
             media_type="application/zip",
             headers={
                 "Content-Disposition": f'attachment; filename="{safe_name}.zip"',
+                "Content-Length": str(file_size),
             },
         )
 
