@@ -20,12 +20,16 @@ def _tpv_line(
     mode: int = 3,
     eph: float | None = None,
     eps: float | None = None,
+    lat: float | None = 54.6872,
+    lon: float | None = 25.2797,
 ) -> bytes:
-    payload: dict[str, float | int | str] = {"class": "TPV", "speed": speed, "mode": mode}
+    payload: dict[str, float | int | str | None] = {"class": "TPV", "speed": speed, "mode": mode}
     if eph is not None:
         payload["eph"] = eph
     if eps is not None:
         payload["eps"] = eps
+    payload["lat"] = lat
+    payload["lon"] = lon
     return json.dumps(payload).encode() + b"\n"
 
 
@@ -302,6 +306,101 @@ async def test_run_ignores_tpv_speed_with_poor_quality_3d_fix() -> None:
     await asyncio.sleep(0.4)
 
     assert monitor.speed_mps is None
+
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    server.close()
+    await server.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_run_ignores_tpv_speed_with_zero_coordinates_and_keeps_last_update_ts() -> None:
+    """mode=3 TPV with zero coordinates must not refresh speed or timestamp."""
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await reader.readline()
+        writer.write(_tpv_line(8.0, lat=54.6872, lon=25.2797))
+        await writer.drain()
+        await asyncio.sleep(0.05)
+        writer.write(_tpv_line(13.0, lat=0.0, lon=0.0))
+        await writer.drain()
+        await asyncio.sleep(0.2)
+        writer.close()
+        await writer.wait_closed()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+
+    for _ in range(50):
+        if monitor.speed_mps is not None and monitor.last_update_ts is not None:
+            break
+        await asyncio.sleep(0.05)
+
+    first_update_ts = monitor.last_update_ts
+    await asyncio.sleep(0.2)
+
+    assert monitor.speed_mps == 8.0
+    assert monitor.last_update_ts == first_update_ts
+
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    server.close()
+    await server.wait_closed()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("eph", "eps"),
+    [(-0.1, 0.1), (0.1, -0.1)],
+)
+async def test_run_ignores_tpv_speed_with_negative_uncertainty(eph: float, eps: float) -> None:
+    """mode=3 TPV with negative eph/eps must not be used."""
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await reader.readline()
+        writer.write(_tpv_line(8.8, mode=3, eph=eph, eps=eps))
+        await writer.drain()
+        await asyncio.sleep(0.2)
+        writer.close()
+        await writer.wait_closed()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+    await asyncio.sleep(0.4)
+
+    assert monitor.speed_mps is None
+    assert monitor.last_update_ts is None
+
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+    server.close()
+    await server.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_run_ignores_tpv_speed_missing_lat_lon() -> None:
+    """mode=3 TPV without lat/lon must not be used."""
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await reader.readline()
+        writer.write(_tpv_line(8.8, lat=None, lon=None))
+        await writer.drain()
+        await asyncio.sleep(0.2)
+        writer.close()
+        await writer.wait_closed()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+    await asyncio.sleep(0.4)
+
+    assert monitor.speed_mps is None
+    assert monitor.last_update_ts is None
 
     task.cancel()
     await asyncio.gather(task, return_exceptions=True)
