@@ -110,6 +110,9 @@ After `summarize_run_data()` returns, the orchestrator in
 Report endpoints read the persisted analysis and use
 `_report_template_data` for PDF rendering without re-running analysis.
 
+Persisted post-stop analysis strength/intensity outputs are dB-only. Raw ingest/sample
+acceleration fields may still be expressed in g.
+
 ## Module Map
 
 ```

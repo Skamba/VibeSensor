@@ -38,6 +38,14 @@ No internet connection required. No cloud. Everything runs locally on the Pi.
 - Ruff linting and TypeScript type checking enforced in CI
 - Custom binary UDP protocol with sequence-based loss detection
 
+## Units
+
+- Raw sensor samples may contain acceleration values in g (for example `accel_x_g`, `accel_y_g`, `accel_z_g`) and related ingest-time/raw-spectrum amplitudes.
+- Post-stop analysis outputs (persisted analysis summaries, findings metrics, report-template artifacts, and report-facing strength fields) are dB-only.
+- The canonical vibration-strength definition is implemented in `libs/core/python/vibesensor_core/vibration_strength.py` via `vibration_strength_db_scalar()` and follows:
+  - `20*log10((peak_band_rms_amp_g + eps) / (floor_amp_g + eps))`
+  - `eps = max(1e-9, floor_amp_g * 0.05)`
+
 ## System Architecture
 
 ```

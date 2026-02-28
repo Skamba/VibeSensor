@@ -27,10 +27,14 @@ above the floor.
 The canonical implementation lives in `libs/core/python/vibesensor_core/vibration_strength.py`:
 
 - `compute_vibration_strength_db()` — full pipeline (spectrum → peaks → dB metric)
-- `_vibration_strength_db_scalar()` — low-level scalar helper (private)
+- `vibration_strength_db_scalar()` — low-level scalar helper (canonical)
 
 No other module may re-implement this formula. Use `bucket_for_strength()` for severity
 classification — never compare raw dB values against band thresholds inline.
+
+For post-stop persisted analysis/report artifacts (`summarize_run_data()` output,
+`_report_template_data`, report-facing strength/intensity fields), expose dB-only
+strength values. Raw ingest/sample fields may still carry g-based units.
 
 ## Severity Bands (l1–l5)
 

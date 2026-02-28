@@ -102,42 +102,22 @@ def location_hotspots(
     all_locations: set[str] = set()
     amp_by_location: dict[str, list[float]] = defaultdict(list)
 
-    matched_points: list[dict[str, object]] = []
-    if isinstance(findings_obj, list):
-        for finding in findings_obj:
-            if not isinstance(finding, dict):
-                continue
-            rows = finding.get("matched_points")
-            if isinstance(rows, list) and rows:
-                matched_points = [row for row in rows if isinstance(row, dict)]
-                break
+    for sample in samples_obj:
+        if not isinstance(sample, dict):
+            continue
+        client_name = str(sample.get("client_name") or "").strip()
+        client_id = str(sample.get("client_id") or "").strip()
+        location = client_name or (
+            tr("SENSOR_ID_SUFFIX", sensor_id=client_id[-4:])
+            if client_id
+            else tr("UNLABELED_SENSOR")
+        )
+        all_locations.add(location)
+        amp = _as_float(sample.get("vibration_strength_db"))
+        if amp is not None and amp > 0:
+            amp_by_location[location].append(amp)
 
-    if matched_points:
-        for row in matched_points:
-            location = str(row.get("location") or "").strip()
-            amp = _as_float(row.get("amp"))
-            if not location:
-                continue
-            all_locations.add(location)
-            if amp is not None and amp > 0:
-                amp_by_location[location].append(amp)
-    else:
-        for sample in samples_obj:
-            if not isinstance(sample, dict):
-                continue
-            client_name = str(sample.get("client_name") or "").strip()
-            client_id = str(sample.get("client_id") or "").strip()
-            location = client_name or (
-                tr("SENSOR_ID_SUFFIX", sensor_id=client_id[-4:])
-                if client_id
-                else tr("UNLABELED_SENSOR")
-            )
-            all_locations.add(location)
-            amp = _as_float(sample.get("vibration_strength_db"))
-            if amp is not None and amp > 0:
-                amp_by_location[location].append(amp)
-
-    amp_unit = "g" if matched_points else "db"
+    amp_unit = "db"
     hotspot_rows: list[dict[str, object]] = []
     for location, amps in amp_by_location.items():
         peak_val = max(amps)
@@ -149,12 +129,8 @@ def location_hotspots(
             "peak_value": peak_val,
             "mean_value": mean_val,
         }
-        if amp_unit == "g":
-            row["peak_g"] = peak_val
-            row["mean_g"] = mean_val
-        else:
-            row["peak_db"] = peak_val
-            row["mean_db"] = mean_val
+        row["peak_db"] = peak_val
+        row["mean_db"] = mean_val
         hotspot_rows.append(row)
     hotspot_rows.sort(
         key=lambda row: (float(row["peak_value"]), float(row["mean_value"])), reverse=True
@@ -173,20 +149,12 @@ def location_hotspots(
     strongest_loc = str(strongest["location"])
     strongest_peak = float(strongest["peak_value"])
     summary_text = tr(
-        "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB"
-        if amp_unit == "db"
-        else "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF",
+        "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB",
         active_count=active_count,
         monitored_count=monitored_count,
         strongest_loc=strongest_loc,
         strongest_peak=strongest_peak,
     )
-    if matched_points:
-        summary_text = tr(
-            "ORDER_MATCHED_COMPARISON_SUMMARY",
-            strongest_loc=strongest_loc,
-            strongest_peak=strongest_peak,
-        )
     if (
         monitored_count >= 3
         and active_count == monitored_count

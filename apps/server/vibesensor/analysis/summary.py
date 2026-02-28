@@ -13,6 +13,7 @@ from typing import Any
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
+from .db_units import canonical_vibration_db
 from .findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -20,6 +21,7 @@ from .findings import (
     _speed_breakdown,
 )
 from .helpers import (
+    MEMS_NOISE_FLOOR_G,
     ORDER_MIN_CONFIDENCE,
     SPEED_COVERAGE_MIN_PCT,
     SPEED_MIN_POINTS,
@@ -855,7 +857,7 @@ def summarize_run_data(
         "fft_window_size_samples": metadata.get("fft_window_size_samples"),
         "fft_window_type": metadata.get("fft_window_type"),
         "peak_picker_method": metadata.get("peak_picker_method"),
-        "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
+        "accel_scale_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
         "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
         "metadata": metadata,
         "warnings": [],
@@ -874,7 +876,14 @@ def summarize_run_data(
             }
             for seg in phase_segments
         ],
-        "run_noise_baseline_g": run_noise_baseline_g,
+        "run_noise_baseline_db": (
+            canonical_vibration_db(
+                peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+                floor_amp_g=MEMS_NOISE_FLOOR_G,
+            )
+            if run_noise_baseline_g is not None
+            else None
+        ),
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
         "top_causes": top_causes,
@@ -894,9 +903,9 @@ def summarize_run_data(
             "required_missing_pct": {
                 "t_s": _percent_missing(samples, "t_s"),
                 "speed_kmh": _percent_missing(samples, "speed_kmh"),
-                "accel_x_g": _percent_missing(samples, "accel_x_g"),
-                "accel_y_g": _percent_missing(samples, "accel_y_g"),
-                "accel_z_g": _percent_missing(samples, "accel_z_g"),
+                "accel_x": _percent_missing(samples, "accel_x_g"),
+                "accel_y": _percent_missing(samples, "accel_y_g"),
+                "accel_z": _percent_missing(samples, "accel_z_g"),
             },
             "speed_coverage": {
                 "non_null_pct": speed_non_null_pct,
@@ -907,17 +916,17 @@ def summarize_run_data(
                 "count_non_null": len(speed_values),
             },
             "accel_sanity": {
-                "x_mean_g": accel_stats["x_mean"],
-                "x_variance_g2": accel_stats["x_var"],
-                "y_mean_g": accel_stats["y_mean"],
-                "y_variance_g2": accel_stats["y_var"],
-                "z_mean_g": accel_stats["z_mean"],
-                "z_variance_g2": accel_stats["z_var"],
-                "sensor_limit_g": accel_stats["sensor_limit"],
+                "x_mean": accel_stats["x_mean"],
+                "x_variance": accel_stats["x_var"],
+                "y_mean": accel_stats["y_mean"],
+                "y_variance": accel_stats["y_var"],
+                "z_mean": accel_stats["z_mean"],
+                "z_variance": accel_stats["z_var"],
+                "sensor_limit": accel_stats["sensor_limit"],
                 "saturation_count": accel_stats["sat_count"],
             },
             "outliers": {
-                "accel_magnitude_g": _outlier_summary(accel_stats["accel_mag_vals"]),
+                "accel_magnitude": _outlier_summary(accel_stats["accel_mag_vals"]),
                 "amplitude_metric": _outlier_summary(amp_metric_values),
             },
         },

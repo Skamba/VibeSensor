@@ -8,10 +8,10 @@ from vibesensor.report.pdf_builder import _strength_with_peak
 
 
 def test_strength_text_value_with_peak_amp() -> None:
-    txt = strength_text(22.0, lang="en", peak_amp_g=0.032)
+    txt = strength_text(22.0, lang="en")
     assert "Moderate" in txt
     assert "22.0 dB" in txt
-    assert "0.032 g peak" in txt
+    assert " g" not in txt
 
 
 def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
@@ -41,11 +41,11 @@ def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
     data = map_summary(summary)
     assert data.observed.strength_label is not None
     assert "22.0 dB" in data.observed.strength_label
-    assert "0.032 g peak" in data.observed.strength_label
-    assert data.observed.strength_peak_amp_g == 0.032
+    assert " g" not in data.observed.strength_label
+    assert data.observed.strength_peak_db == 22.0
     assert data.pattern_evidence.strength_label is not None
-    assert "0.032 g peak" in data.pattern_evidence.strength_label
-    assert data.pattern_evidence.strength_peak_amp_g == 0.032
+    assert " g" not in data.pattern_evidence.strength_label
+    assert data.pattern_evidence.strength_peak_db == 22.0
 
 
 def test_map_summary_strength_label_falls_back_to_db_only_without_peak_amp() -> None:
@@ -62,18 +62,18 @@ def test_map_summary_strength_label_falls_back_to_db_only_without_peak_amp() -> 
     assert data.observed.strength_label is not None
     assert "22.0 dB" in data.observed.strength_label
     assert "g peak" not in data.observed.strength_label
-    assert data.observed.strength_peak_amp_g is None
-    assert data.pattern_evidence.strength_peak_amp_g is None
+    assert data.observed.strength_peak_db == 22.0
+    assert data.pattern_evidence.strength_peak_db == 22.0
 
 
 def test_strength_with_peak_appends_only_when_label_lacks_peak_text() -> None:
     assert (
         _strength_with_peak("Moderate (22.0 dB)", 0.032, fallback="N/A")
-        == "Moderate (22.0 dB) · 0.032 g peak"
+        == "Moderate (22.0 dB) · 0.0 dB peak"
     )
     assert (
-        _strength_with_peak("Moderate (22.0 dB · 0.032 g peak)", 0.032, fallback="N/A")
-        == "Moderate (22.0 dB · 0.032 g peak)"
+        _strength_with_peak("Moderate (22.0 dB · 0.0 dB peak)", 0.032, fallback="N/A")
+        == "Moderate (22.0 dB · 0.0 dB peak)"
     )
 
 
@@ -105,8 +105,8 @@ def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -
     data = map_summary(summary)
     assert data.observed.strength_label is not None
     assert "23.4 dB" in data.observed.strength_label
-    assert "0.015 g peak" in data.observed.strength_label
-    assert data.observed.strength_peak_amp_g == 0.015
+    assert " g" not in data.observed.strength_label
+    assert data.observed.strength_peak_db == 23.4
 
 
 def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> None:
@@ -140,8 +140,8 @@ def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> N
     data = map_summary(summary)
     assert data.observed.strength_label is not None
     assert f"{expected_db:.1f} dB" in data.observed.strength_label
-    assert "0.015 g peak" in data.observed.strength_label
-    assert data.observed.strength_peak_amp_g == 0.015
+    assert " g" not in data.observed.strength_label
+    assert data.observed.strength_peak_db is not None
 
 
 def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> None:

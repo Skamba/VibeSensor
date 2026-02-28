@@ -1,6 +1,8 @@
 Repository overview
 - VibeSensor: Python-based data-collection and analysis backend (located in `apps/server/`), a small web UI (`apps/ui/`) built with Node, and device/firmware helpers under `firmware/esp/` and `hardware/`.
 - Key runtime artifacts: Docker Compose stack at `docker-compose.yml` and `apps/server/` Python package (`apps/server/pyproject.toml`). PDF report generation lives in `apps/server/vibesensor/report/pdf_builder.py`.
+- Units policy: raw ingest/sample acceleration values may use g, but post-stop analysis outputs (persisted summaries/findings/report-template artifacts) must expose vibration strength/intensity in dB only.
+- Canonical dB definition: `libs/core/python/vibesensor_core/vibration_strength.py::vibration_strength_db_scalar()` (`20*log10((peak+eps)/(floor+eps))`, `eps=max(1e-9, floor*0.05)`).
 
 Source-of-truth note
 - This file is the canonical short AI guide; `AGENTS.md` and `CLAUDE.md` should remain pointers to this file to prevent drift.
