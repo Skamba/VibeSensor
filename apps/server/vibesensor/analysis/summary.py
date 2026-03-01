@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from math import sqrt
 from pathlib import Path
 from statistics import median as _median
@@ -16,7 +16,7 @@ from vibesensor_core.vibration_strength import (
 
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
-from ..runlog import parse_iso8601
+from ..runlog import parse_iso8601, utc_now_iso
 from .findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -848,7 +848,7 @@ def summarize_run_data(
         "duration_s": duration_s,
         "record_length": _format_duration(duration_s),
         "lang": language,
-        "report_date": metadata.get("end_time_utc") or datetime.now(UTC).isoformat(),
+        "report_date": metadata.get("end_time_utc") or utc_now_iso(),
         "start_time_utc": metadata.get("start_time_utc"),
         "end_time_utc": metadata.get("end_time_utc"),
         "sensor_model": metadata.get("sensor_model"),

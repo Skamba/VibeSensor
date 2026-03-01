@@ -11,7 +11,6 @@ from __future__ import annotations
 import os
 from collections import defaultdict
 from collections.abc import Callable
-from datetime import UTC, datetime
 from statistics import mean as _mean
 
 from vibesensor_core.vibration_strength import (
@@ -33,6 +32,7 @@ from ..report.report_data import (
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
+from ..runlog import utc_now_iso
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
@@ -287,7 +287,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     car_type = str(meta.get("car_type") or "").strip() or None
 
     # -- Date --
-    report_date = summary.get("report_date") or datetime.now(UTC).isoformat()
+    report_date = summary.get("report_date") or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
     # -- Top causes and findings --
