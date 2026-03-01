@@ -16,9 +16,17 @@ _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json
 
 @lru_cache(maxsize=1)
 def _load_library() -> list[dict]:
-    with open(_DATA_FILE) as fh:
-        data: list[dict] = json.load(fh)
-    return data
+    try:
+        with open(_DATA_FILE) as fh:
+            data: list[dict] = json.load(fh)
+        return data
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Could not load car library from %s: %s", _DATA_FILE, exc
+        )
+        return []
 
 
 # Module-level alias keeps existing ``from vibesensor.car_library import CAR_LIBRARY`` working.
