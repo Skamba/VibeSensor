@@ -196,6 +196,23 @@ class TestParseWifiDiagnostics:
         assert len(issues) >= 1
         assert any("failure" in i.message.lower() for i in issues)
 
+    def test_summary_timeout_case_insensitive(self, tmp_path) -> None:
+        log_dir = tmp_path / "wifi"
+        log_dir.mkdir()
+        (log_dir / "summary.txt").write_text("status=timeout\n")
+        issues = parse_wifi_diagnostics(str(log_dir))
+        assert len(issues) >= 1
+        assert any("timeout" in (i.detail or "").lower() for i in issues)
+
+    def test_summary_password_not_leaked(self, tmp_path) -> None:
+        log_dir = tmp_path / "wifi"
+        log_dir.mkdir()
+        (log_dir / "summary.txt").write_text("status=FAILED psk=hunter2\n")
+        issues = parse_wifi_diagnostics(str(log_dir))
+        assert len(issues) >= 1
+        for issue in issues:
+            assert "hunter2" not in (issue.detail or "")
+
     def test_hotspot_log_errors(self, tmp_path) -> None:
         log_dir = tmp_path / "wifi"
         log_dir.mkdir()
