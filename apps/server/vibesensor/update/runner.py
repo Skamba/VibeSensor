@@ -72,7 +72,12 @@ class CommandRunner:
                 proc.kill()  # type: ignore[union-attr]
                 await proc.wait()  # type: ignore[union-attr]
             except ProcessLookupError:
-                pass
+                pass  # process already exited
+            import logging as _logging
+
+            _logging.getLogger(__name__).warning(
+                "Command timed out after %.0fs: %s", timeout, " ".join(args)
+            )
             return (124, "", "Command timed out")
         except FileNotFoundError:
             return (127, "", f"Command not found: {args[0]}")

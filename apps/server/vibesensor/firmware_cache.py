@@ -48,6 +48,18 @@ _META_FILE = "_meta.json"
 _MANIFEST_FILE = "flash.json"
 
 
+def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
+    """Extract *zf* into *dest*, rejecting entries that escape the target directory."""
+    dest_resolved = dest.resolve()
+    for member in zf.infolist():
+        target = (dest / member.filename).resolve()
+        if not str(target).startswith(str(dest_resolved) + os.sep) and target != dest_resolved:
+            raise ValueError(
+                f"Zip entry '{member.filename}' would extract outside the target directory"
+            )
+    zf.extractall(dest)
+
+
 @dataclass
 class FirmwareCacheConfig:
     cache_dir: str = ""
@@ -292,7 +304,7 @@ class GitHubReleaseFetcher:
         extract_dir = dest_dir / "extracted"
         extract_dir.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(zip_path) as zf:
-            zf.extractall(extract_dir)
+            _safe_extractall(zf, extract_dir)
         zip_path.unlink()
         return extract_dir
 

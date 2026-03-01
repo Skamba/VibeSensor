@@ -267,3 +267,17 @@ def test_spectrum_min_hz_zero_allows_all_frequencies() -> None:
     combined_peaks = metrics.get("combined", {}).get("peaks", [])
     # With min_hz=0, the 2 Hz peak should appear.
     assert any(abs(float(p["hz"]) - 2.0) < 1.0 for p in combined_peaks)
+
+
+def test_top_peaks_handles_nan_noise_floor() -> None:
+    """_top_peaks must not produce NaN when noise floor returns non-finite values."""
+    freqs = np.array([10.0, 20.0, 30.0], dtype=np.float32)
+    amps = np.array([0.01, 0.05, 0.01], dtype=np.float32)
+    peaks = SignalProcessor._top_peaks(freqs, amps, top_n=3)
+    assert len(peaks) > 0
+    for p in peaks:
+        import math
+
+        assert math.isfinite(p["snr_ratio"]), f"snr_ratio is not finite: {p['snr_ratio']}"
+        assert math.isfinite(p["hz"])
+        assert math.isfinite(p["amp"])

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import time
 from dataclasses import dataclass, field
 from functools import wraps
@@ -328,6 +329,8 @@ class SignalProcessor:
             return []
         smoothed = cls._smooth_spectrum(amps, bins=smoothing_bins)
         floor_amp = cls._noise_floor(smoothed)
+        if not math.isfinite(floor_amp) or floor_amp < 0:
+            floor_amp = 0.0
         threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + STRENGTH_EPSILON_MIN_G)
 
         peak_idx: list[int] = []
