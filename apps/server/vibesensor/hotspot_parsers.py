@@ -12,6 +12,8 @@ import re
 import time
 from pathlib import Path
 
+LOGGER = logging.getLogger(__name__)
+
 
 def parse_active_connection_names(stdout: str) -> list[str]:
     """Parse ``nmcli -t -f NAME connection show`` output into a list of names."""
@@ -123,7 +125,7 @@ class HealStateStore:
                 return {}
             return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
         except Exception:
-            logging.getLogger(__name__).debug(
+            LOGGER.debug(
                 "HealStateStore: ignoring corrupt state file %s", self._path, exc_info=True
             )
             return {}

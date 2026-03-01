@@ -9,6 +9,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+__all__ = ["sanitize_for_json", "sanitize_value"]
+
 
 def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
     """Recursively replace non-finite floats (NaN, Inf, -Inf) with ``None``.
