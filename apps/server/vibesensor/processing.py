@@ -43,7 +43,7 @@ def _compute_overlap(starts: list[float], ends: list[float]) -> _OverlapResult:
     Returns an :class:`_OverlapResult` with the overlap ratio, alignment flag,
     and the shared window boundaries.
     """
-    if not starts or not ends:
+    if not starts or not ends or len(starts) != len(ends):
         return _OverlapResult(
             overlap_ratio=0.0,
             aligned=False,

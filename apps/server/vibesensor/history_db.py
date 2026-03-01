@@ -221,11 +221,15 @@ class HistoryDB:
 
     def close(self) -> None:
         with self._lock:
-            self._conn.close()
+            if self._conn is not None:
+                self._conn.close()
+                self._conn = None  # type: ignore[assignment]
 
     @contextmanager
     def _cursor(self, *, commit: bool = True):
         with self._lock:
+            if self._conn is None:
+                raise RuntimeError("HistoryDB is closed")
             cur = self._conn.cursor()
             try:
                 yield cur
@@ -241,6 +245,8 @@ class HistoryDB:
     def read_transaction(self):
         """Hold a single read transaction across multi-step read operations."""
         with self._lock:
+            if self._conn is None:
+                raise RuntimeError("HistoryDB is closed")
             cur = self._conn.cursor()
             try:
                 cur.execute("BEGIN")
@@ -254,13 +260,17 @@ class HistoryDB:
 
     @staticmethod
     def _sanitize_for_json(value: Any) -> Any:
+        # Numpy array → Python list (check ndim to distinguish from scalars).
+        if hasattr(value, "tolist") and hasattr(value, "ndim"):
+            value = value.tolist()
+        # Numpy scalar → native Python type via .item().
+        elif hasattr(value, "item"):
+            value = value.item()
         if isinstance(value, float):
             return value if math.isfinite(value) else None
         if isinstance(value, dict):
             return {k: HistoryDB._sanitize_for_json(v) for k, v in value.items()}
-        if isinstance(value, list):
-            return [HistoryDB._sanitize_for_json(v) for v in value]
-        if isinstance(value, tuple):
+        if isinstance(value, (list, tuple)):
             return [HistoryDB._sanitize_for_json(v) for v in value]
         return value
 

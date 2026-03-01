@@ -84,9 +84,9 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             self.registry.note_parse_error(client_id)
             return
 
+        client_id = msg.client_id.hex()
         try:
             now_ts = time.time()
-            client_id = msg.client_id.hex()
             result = self.registry.update_from_data(msg, addr, now_ts)
             if not result.is_duplicate:
                 if result.reset_detected:
@@ -105,7 +105,10 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
                 self.transport.sendto(ack_payload, addr)
         except Exception:
             LOGGER.warning(
-                "Error processing datagram from %s: %s", addr, msg.client_id.hex(), exc_info=True
+                "Error processing datagram from %s (client=%s)",
+                addr,
+                client_id,
+                exc_info=True,
             )
 
 
