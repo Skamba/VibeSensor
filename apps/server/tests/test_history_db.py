@@ -591,3 +591,44 @@ def test_v2_iter_with_offset(tmp_path: Path) -> None:
     # offset >= total → empty
     rows_past = [s for b in db.iter_run_samples("run-off", offset=20) for s in b]
     assert rows_past == []
+
+
+def test_close_is_idempotent(tmp_path: Path) -> None:
+    """Calling close() multiple times must not raise."""
+    db = HistoryDB(tmp_path / "history.db")
+    db.close()
+    db.close()  # second call must be a no-op
+
+
+def test_sanitize_for_json_handles_numpy_scalars() -> None:
+    """_sanitize_for_json must convert numpy scalars to native Python types."""
+    import numpy as np
+
+    assert HistoryDB._sanitize_for_json(np.float32(1.5)) == 1.5
+    assert isinstance(HistoryDB._sanitize_for_json(np.float32(1.5)), float)
+
+    assert HistoryDB._sanitize_for_json(np.float64(2.5)) == 2.5
+    assert isinstance(HistoryDB._sanitize_for_json(np.float64(2.5)), float)
+
+    assert HistoryDB._sanitize_for_json(np.int32(42)) == 42
+    assert isinstance(HistoryDB._sanitize_for_json(np.int32(42)), int)
+
+    assert HistoryDB._sanitize_for_json(np.int64(99)) == 99
+    assert isinstance(HistoryDB._sanitize_for_json(np.int64(99)), int)
+
+    # NaN numpy scalar → None
+    assert HistoryDB._sanitize_for_json(np.float64(float("nan"))) is None
+
+    # Inf numpy scalar → None
+    assert HistoryDB._sanitize_for_json(np.float32(float("inf"))) is None
+
+
+def test_sanitize_for_json_handles_nested_numpy(tmp_path: Path) -> None:
+    """_sanitize_for_json recurses into dicts/lists with numpy values."""
+    import numpy as np
+
+    data = {"a": np.float32(1.0), "b": [np.int64(2), np.float64(float("nan"))]}
+    result = HistoryDB._sanitize_for_json(data)
+    assert result == {"a": 1.0, "b": [2, None]}
+    # Verify the result is JSON-serializable
+    json.dumps(result)

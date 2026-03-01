@@ -332,6 +332,18 @@ class TestSanitizeForJson:
         assert cleaned["t"] == [1.0, None, 3.0]
         assert had is True
 
+    def test_numpy_scalars_converted(self) -> None:
+        import numpy as np
+
+        data = {"a": np.float32(1.5), "b": np.int64(42), "c": np.float64(float("nan"))}
+        cleaned, had = sanitize_for_json(data)
+        assert cleaned["a"] == 1.5
+        assert isinstance(cleaned["a"], float)
+        assert cleaned["b"] == 42
+        assert isinstance(cleaned["b"], int)
+        assert cleaned["c"] is None
+        assert had is True
+
 
 # ── Integration: broadcast with NaN sanitisation ─────────────────────────────
 
