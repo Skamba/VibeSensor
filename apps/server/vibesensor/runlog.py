@@ -182,9 +182,7 @@ def append_jsonl_records(
                     "Record %d contains non-finite float; serialising with allow_nan",
                     index,
                 )
-                line = json.dumps(
-                    record, ensure_ascii=False, allow_nan=True, separators=(",", ":")
-                )
+                line = json.dumps(record, ensure_ascii=False, allow_nan=True, separators=(",", ":"))
             except TypeError as exc:
                 # Non-serialisable value (datetime, bytes, set, …). Coerce
                 # to string representation so we never silently drop a
@@ -195,7 +193,10 @@ def append_jsonl_records(
                     exc,
                 )
                 line = json.dumps(
-                    record, ensure_ascii=False, allow_nan=True, separators=(",", ":"),
+                    record,
+                    ensure_ascii=False,
+                    allow_nan=True,
+                    separators=(",", ":"),
                     default=str,
                 )
             f.write(line)

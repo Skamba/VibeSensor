@@ -16,6 +16,7 @@ import pytest
 # 1. pdf_builder confidence guard (integration-level)
 # ------------------------------------------------------------------
 
+
 class TestPdfBuilderConfidenceGuard:
     """float() on confidence should not crash on non-numeric values."""
 
@@ -49,6 +50,7 @@ class TestPdfBuilderConfidenceGuard:
 # 2. summary.py frequency guard
 # ------------------------------------------------------------------
 
+
 class TestSummaryFrequencyGuard:
     """float() on frequency_hz should not crash on non-numeric values."""
 
@@ -69,6 +71,7 @@ class TestSummaryFrequencyGuard:
 # ------------------------------------------------------------------
 # 3. _order_label — edge cases
 # ------------------------------------------------------------------
+
 
 class TestOrderLabel:
     """_order_label should handle 2-arg and 3-arg signatures."""
@@ -105,6 +108,7 @@ class TestOrderLabel:
 # ------------------------------------------------------------------
 # 4. _driveshaft_hz — edge cases
 # ------------------------------------------------------------------
+
 
 class TestDriveshaftHz:
     """_driveshaft_hz must handle missing/zero/negative inputs gracefully."""
@@ -154,6 +158,7 @@ class TestDriveshaftHz:
 # ------------------------------------------------------------------
 # 5. _as_float_or_none — NaN handling
 # ------------------------------------------------------------------
+
 
 class TestAsFloatOrNone:
     """_as_float_or_none must reject NaN and Inf."""

@@ -33,7 +33,9 @@ class TestVibrationStrengthNanGuard:
     def test_both_nan_returns_finite(self):
         from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
-        result = vibration_strength_db_scalar(peak_band_rms_amp_g=float("nan"), floor_amp_g=float("nan"))
+        result = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=float("nan"), floor_amp_g=float("nan")
+        )
         assert math.isfinite(result), f"Expected finite, got {result}"
 
     def test_inf_floor_returns_finite(self):

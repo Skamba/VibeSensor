@@ -106,9 +106,7 @@ class ServerReleaseFetcher:
                         total += len(chunk)
                         if total > self._MAX_DOWNLOAD_BYTES:
                             max_mb = self._MAX_DOWNLOAD_BYTES // (1024 * 1024)
-                            raise ValueError(
-                                f"Asset exceeds {max_mb} MB limit"
-                            )
+                            raise ValueError(f"Asset exceeds {max_mb} MB limit")
                         f.write(chunk)
                     f.flush()
                     os.fsync(f.fileno())

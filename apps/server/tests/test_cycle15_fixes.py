@@ -29,17 +29,21 @@ def _make_processor(**overrides) -> SignalProcessor:
 # 1. _medfilt3 — NaN resilience
 # ------------------------------------------------------------------
 
+
 class TestMedfilt3NanResilience:
     """_medfilt3 must not propagate NaN to neighbors of a single NaN sample."""
 
     def test_single_nan_not_spread(self) -> None:
         proc = _make_processor()
         # 3 axes, 5 samples. One spike at index 2 (a NaN).
-        arr = np.array([
-            [1.0, 1.0, float("nan"), 1.0, 1.0],
-            [2.0, 2.0, 2.0, 2.0, 2.0],
-            [3.0, 3.0, 3.0, 3.0, 3.0],
-        ], dtype=np.float32)
+        arr = np.array(
+            [
+                [1.0, 1.0, float("nan"), 1.0, 1.0],
+                [2.0, 2.0, 2.0, 2.0, 2.0],
+                [3.0, 3.0, 3.0, 3.0, 3.0],
+            ],
+            dtype=np.float32,
+        )
         result = proc._medfilt3(arr)
         # The NaN in axis0 index2 should be replaced by nanmedian of [1,nan,1]=1.0
         assert np.isfinite(result[0, 2]), f"NaN at [0,2] not cleaned: {result[0, 2]}"
@@ -53,11 +57,14 @@ class TestMedfilt3NanResilience:
 
     def test_edges_preserved(self) -> None:
         proc = _make_processor()
-        arr = np.array([
-            [10.0, 1.0, 1.0, 1.0, 20.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0],
-        ], dtype=np.float32)
+        arr = np.array(
+            [
+                [10.0, 1.0, 1.0, 1.0, 20.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=np.float32,
+        )
         result = proc._medfilt3(arr)
         # Edge values should be preserved
         assert result[0, 0] == 10.0
@@ -66,11 +73,14 @@ class TestMedfilt3NanResilience:
     def test_spike_removal(self) -> None:
         proc = _make_processor()
         # Normal values with a spike at index 2
-        arr = np.array([
-            [1.0, 1.0, 100.0, 1.0, 1.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0, 0.0],
-        ], dtype=np.float32)
+        arr = np.array(
+            [
+                [1.0, 1.0, 100.0, 1.0, 1.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=np.float32,
+        )
         result = proc._medfilt3(arr)
         # Spike should be replaced by median of [1, 100, 1] = 1.0
         assert result[0, 2] == pytest.approx(1.0)
@@ -86,6 +96,7 @@ class TestMedfilt3NanResilience:
 # ------------------------------------------------------------------
 # 2. _resize_buffer — edge cases
 # ------------------------------------------------------------------
+
 
 class TestResizeBuffer:
     """_resize_buffer must handle shrink, grow, and same-size correctly."""

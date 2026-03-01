@@ -252,9 +252,8 @@ class GitHubReleaseFetcher:
             # Stream directly to a temp file to avoid buffering the entire
             # firmware binary in memory (Pi 3A+ has only 512 MB RAM).
             import tempfile
-            tmp_fd, tmp_path = tempfile.mkstemp(
-                dir=str(dest.parent), suffix=".dl_tmp"
-            )
+
+            tmp_fd, tmp_path = tempfile.mkstemp(dir=str(dest.parent), suffix=".dl_tmp")
             fdopen_ok = False
             try:
                 total = 0

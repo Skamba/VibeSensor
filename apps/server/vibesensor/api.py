@@ -191,13 +191,11 @@ def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
         sensor_locations=d.get("sensor_locations", []),
         sensor_model=d.get("sensor_model"),
         firmware_version=d.get("firmware_version"),
-        car=(
-            CarMeta(**_filter_fields(CarMeta, car))
-            if isinstance(car, dict) else CarMeta()
-        ),
+        car=(CarMeta(**_filter_fields(CarMeta, car)) if isinstance(car, dict) else CarMeta()),
         observed=(
             ObservedSignature(**_filter_fields(ObservedSignature, obs))
-            if isinstance(obs, dict) else ObservedSignature()
+            if isinstance(obs, dict)
+            else ObservedSignature()
         ),
         system_cards=[
             SystemFindingCard(
@@ -218,19 +216,23 @@ def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
         ],
         next_steps=[
             NextStep(**_filter_fields(NextStep, s))
-            for s in d.get("next_steps", []) if isinstance(s, dict)
+            for s in d.get("next_steps", [])
+            if isinstance(s, dict)
         ],
         data_trust=[
             DataTrustItem(**_filter_fields(DataTrustItem, t))
-            for t in d.get("data_trust", []) if isinstance(t, dict)
+            for t in d.get("data_trust", [])
+            if isinstance(t, dict)
         ],
         pattern_evidence=(
             PatternEvidence(**_filter_fields(PatternEvidence, pe))
-            if isinstance(pe, dict) else PatternEvidence()
+            if isinstance(pe, dict)
+            else PatternEvidence()
         ),
         peak_rows=[
             PeakRow(**_filter_fields(PeakRow, r))
-            for r in d.get("peak_rows", []) if isinstance(r, dict)
+            for r in d.get("peak_rows", [])
+            if isinstance(r, dict)
         ],
         phase_info=d.get("phase_info"),
         version_marker=d.get("version_marker", ""),
@@ -620,9 +622,7 @@ def create_router(state: RuntimeState) -> APIRouter:
     ) -> Response:
         run = await _async_require_run(run_id)
         if run.get("status") == "analyzing":
-            raise HTTPException(
-                status_code=409, detail="Analysis is still in progress"
-            )
+            raise HTTPException(status_code=409, detail="Analysis is still in progress")
         if run.get("status") == "error":
             raise HTTPException(
                 status_code=422,
@@ -742,9 +742,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                     except ValueError:
                         # Analysis data may contain NaN/Inf floats;
                         # fall back so the export still succeeds.
-                        LOGGER.warning(
-                            "Export run %s: analysis contains non-finite floats", run_id
-                        )
+                        LOGGER.warning("Export run %s: analysis contains non-finite floats", run_id)
                         details_json = json.dumps(
                             run_details,
                             ensure_ascii=False,

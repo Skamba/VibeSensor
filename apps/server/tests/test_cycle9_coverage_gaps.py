@@ -266,9 +266,7 @@ class TestWSHubRunLoop:
         from vibesensor.ws_hub import WebSocketHub
 
         hub = WebSocketHub()
-        task = asyncio.create_task(
-            hub.run(hz=0, payload_builder=lambda _: {})
-        )
+        task = asyncio.create_task(hub.run(hz=0, payload_builder=lambda _: {}))
         await asyncio.sleep(0.05)
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
@@ -515,9 +513,7 @@ class TestHistoryDBFinalizeNoOp:
         finally:
             db.close()
 
-    def test_finalize_run_with_metadata_noop_when_not_recording(
-        self, tmp_path: Path
-    ) -> None:
+    def test_finalize_run_with_metadata_noop_when_not_recording(self, tmp_path: Path) -> None:
         from vibesensor.history_db import HistoryDB
 
         db = HistoryDB(tmp_path / "test.db")
