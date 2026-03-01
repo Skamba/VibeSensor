@@ -12,7 +12,6 @@ from vibesensor_core.vibration_strength import (
     percentile,
 )
 
-
 # -- median -------------------------------------------------------------------
 
 
