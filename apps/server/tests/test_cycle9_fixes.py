@@ -44,9 +44,7 @@ class TestEspFlashManagerCancelledError:
         cancel_block_start = source.find("except asyncio.CancelledError")
         generic_block_start = source.find("except Exception")
         cancel_block = source[cancel_block_start:generic_block_start]
-        assert "raise" in cancel_block, (
-            "CancelledError handler must re-raise the exception"
-        )
+        assert "raise" in cancel_block, "CancelledError handler must re-raise the exception"
 
 
 # ── 2. PDF diagram SOURCE_LEGEND_TITLE dead fallback ─────────────────────
@@ -185,9 +183,7 @@ class TestWebSocketHubCircuitBreaker:
         from vibesensor.ws_hub import WebSocketHub
 
         source = inspect.getsource(WebSocketHub.run)
-        assert "_consecutive_failures" in source, (
-            "run() should track consecutive failures"
-        )
+        assert "_consecutive_failures" in source, "run() should track consecutive failures"
         assert "_MAX_CONSECUTIVE_FAILURES" in source, (
             "run() should have a max consecutive failures threshold"
         )
@@ -238,7 +234,9 @@ class TestWebSocketHubCircuitBreaker:
             await task
         except asyncio.CancelledError:
             pass
-        assert call_count >= 4, f"on_tick should have been called at least 4 times, got {call_count}"
+        assert call_count >= 4, (
+            f"on_tick should have been called at least 4 times, got {call_count}"
+        )
 
 
 # ── 7. CSV export record_type/schema_version population ──────────────────
@@ -297,7 +295,17 @@ class TestCarErrorI18nKeys:
         ],
     )
     def test_en_key_exists(self, key):
-        en_path = Path(__file__).resolve().parent.parent / "vibesensor" / ".." / ".." / "ui" / "src" / "i18n" / "catalogs" / "en.json"
+        en_path = (
+            Path(__file__).resolve().parent.parent
+            / "vibesensor"
+            / ".."
+            / ".."
+            / "ui"
+            / "src"
+            / "i18n"
+            / "catalogs"
+            / "en.json"
+        )
         # Use the known workspace layout
         repo_root = Path(__file__).resolve().parent.parent.parent.parent
         en_path = repo_root / "apps" / "ui" / "src" / "i18n" / "catalogs" / "en.json"

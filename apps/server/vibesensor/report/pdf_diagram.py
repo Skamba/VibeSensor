@@ -147,9 +147,7 @@ def _choose_label_plan(
             best = (score, candidate)
 
     if best is None:
-        raise ValueError(
-            f"No valid label placement found for {name!r} in diagram"
-        )
+        raise ValueError(f"No valid label placement found for {name!r} in diagram")
     return best[1]
 
 

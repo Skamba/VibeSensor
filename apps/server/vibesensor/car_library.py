@@ -54,19 +54,13 @@ def get_types_for_brand(brand: str) -> list[str]:
 
 def get_models_for_brand_type(brand: str, car_type: str) -> list[dict]:
     """Return all library entries matching *brand* and *car_type*."""
-    return [
-        e for e in CAR_LIBRARY if e.get("brand") == brand and e.get("type") == car_type
-    ]
+    return [e for e in CAR_LIBRARY if e.get("brand") == brand and e.get("type") == car_type]
 
 
 def get_variants_for_model(brand: str, car_type: str, model: str) -> list[dict]:
     """Return the variants list for a specific model, or [] if none."""
     for e in CAR_LIBRARY:
-        if (
-            e.get("brand") == brand
-            and e.get("type") == car_type
-            and e.get("model") == model
-        ):
+        if e.get("brand") == brand and e.get("type") == car_type and e.get("model") == model:
             return list(e.get("variants") or [])
     return []
 
