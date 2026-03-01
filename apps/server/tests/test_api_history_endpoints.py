@@ -219,9 +219,9 @@ async def test_history_insights_respects_lang_query() -> None:
     en = await endpoint("run-1", "en")
     nl = await endpoint("run-1", "nl")
     assert en["lang"] == "en"
-    assert nl["lang"] == "nl"
-    # Analysis output is now language-neutral: same analysis dict for any lang.
-    # The lang parameter only affects render-time translation (report layer).
+    assert nl["lang"] == "en"
+    # /insights is persisted post-stop output only: lang query must not
+    # trigger on-demand recomputation.
     assert en["most_likely_origin"] == nl["most_likely_origin"]
     # Suitability check keys are now i18n keys (language-neutral)
     check_keys = {
@@ -513,15 +513,13 @@ async def test_ws_selected_client_id_validation() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_insights_lang_sampling_is_bounded() -> None:
+async def test_history_insights_lang_query_does_not_recompute() -> None:
     router, _ = _make_router_and_state(language="en", sample_count=30_000)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
-    # Request a *different* language to trigger re-computation; same language
-    # returns the persisted analysis without re-running the pipeline.
+    # Requesting a different language should still return persisted analysis.
     payload = await endpoint("run-1", "nl")
-    sampling = payload.get("sampling", {})
-    assert sampling.get("analyzed_samples", 0) <= 12_000
-    assert sampling.get("total_samples") == 30_000
+    assert payload["lang"] == "en"
+    assert "sampling" not in payload
 
 
 @pytest.mark.asyncio
