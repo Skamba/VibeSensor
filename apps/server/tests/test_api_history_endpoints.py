@@ -266,10 +266,10 @@ async def test_report_pdf_respects_lang_query_with_persisted_report_template_dat
     nl_reader = PdfReader(BytesIO(nl.body))
     en_reader = PdfReader(BytesIO(en.body))
     nl_text = "\n".join(page.extract_text() or "" for page in nl_reader.pages).lower()
-    en_text = "\n".join(page.extract_text() or "" for page in en_reader.pages).lower()
+    text_from_en_request = "\n".join(page.extract_text() or "" for page in en_reader.pages).lower()
     assert "diagnostisch werkformulier" in nl_text
-    assert "diagnostisch werkformulier" in en_text
-    assert "diagnostic worksheet" not in en_text
+    assert "diagnostisch werkformulier" in text_from_en_request
+    assert "diagnostic worksheet" not in text_from_en_request
 
 
 @pytest.mark.asyncio
@@ -317,12 +317,12 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     nl_text = "\n".join(
         (page.extract_text() or "") for page in PdfReader(BytesIO(nl.body)).pages
     ).lower()
-    en_text = "\n".join(
+    text_from_en_request = "\n".join(
         (page.extract_text() or "") for page in PdfReader(BytesIO(en.body)).pages
     ).lower()
     assert "diagnostisch werkformulier" in nl_text
-    assert "diagnostisch werkformulier" in en_text
-    assert "diagnostic worksheet" not in en_text
+    assert "diagnostisch werkformulier" in text_from_en_request
+    assert "diagnostic worksheet" not in text_from_en_request
 
 
 @pytest.mark.asyncio
