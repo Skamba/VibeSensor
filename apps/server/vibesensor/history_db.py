@@ -221,7 +221,9 @@ class HistoryDB:
 
     def close(self) -> None:
         with self._lock:
-            self._conn.close()
+            if self._conn is not None:
+                self._conn.close()
+                self._conn = None  # type: ignore[assignment]
 
     @contextmanager
     def _cursor(self, *, commit: bool = True):
@@ -254,13 +256,14 @@ class HistoryDB:
 
     @staticmethod
     def _sanitize_for_json(value: Any) -> Any:
+        # Convert numpy scalars to native Python types first.
+        if hasattr(value, "item"):
+            value = value.item()
         if isinstance(value, float):
             return value if math.isfinite(value) else None
         if isinstance(value, dict):
             return {k: HistoryDB._sanitize_for_json(v) for k, v in value.items()}
-        if isinstance(value, list):
-            return [HistoryDB._sanitize_for_json(v) for v in value]
-        if isinstance(value, tuple):
+        if isinstance(value, (list, tuple)):
             return [HistoryDB._sanitize_for_json(v) for v in value]
         return value
 
