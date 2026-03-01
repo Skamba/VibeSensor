@@ -156,7 +156,7 @@ class WebSocketHub:
                             if isinstance(cs, dict) and cs.get("freq"):
                                 has_per_client_freq = True
                                 break
-                except Exception:
+                except Exception:  # best-effort debug parsing; never block broadcast
                     pass
                 LOGGER.debug(
                     "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
