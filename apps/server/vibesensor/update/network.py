@@ -36,12 +36,17 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
             text = summary.read_text(encoding="utf-8", errors="replace")
             for line in text.splitlines():
                 line = line.strip()
-                if line.startswith("status=") and "FAILED" in line.upper():
+                lower_line = line.lower()
+                if not lower_line.startswith("status="):
+                    continue
+                status_value = lower_line.split("=", 1)[1].strip()
+                if any(marker in status_value for marker in ("failed", "error", "timeout")):
+                    sanitized = sanitize_log_line(line)
                     issues.append(
                         UpdateIssue(
                             phase="diagnostics",
                             message="Hotspot summary reports failure",
-                            detail=line,
+                            detail=sanitized,
                         )
                     )
         except OSError:
