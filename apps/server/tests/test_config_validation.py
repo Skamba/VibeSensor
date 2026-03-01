@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.config import ProcessingConfig, ServerConfig, UDPConfig, load_config
+from vibesensor.config import LoggingConfig, ProcessingConfig, ServerConfig, UDPConfig, load_config
 
 
 def _write_config(path: Path, payload: dict) -> None:
@@ -259,3 +259,43 @@ class TestUDPConfigValidation:
                 control_port=9001,
                 data_queue_maxsize=bad_value,
             )
+
+
+# ---------------------------------------------------------------------------
+# LoggingConfig.__post_init__ validation
+# ---------------------------------------------------------------------------
+
+
+class TestLoggingConfigValidation:
+    """LoggingConfig clamping for numeric fields."""
+
+    def _make(self, **overrides) -> LoggingConfig:
+        defaults = dict(
+            log_metrics=True,
+            metrics_log_path=Path("/tmp/metrics"),
+            metrics_log_hz=4,
+            no_data_timeout_s=15.0,
+            sensor_model="ADXL345",
+            history_db_path=Path("/tmp/history.db"),
+            persist_history_db=True,
+            shutdown_analysis_timeout_s=30.0,
+        )
+        defaults.update(overrides)
+        return LoggingConfig(**defaults)
+
+    def test_valid_config(self) -> None:
+        cfg = self._make()
+        assert cfg.metrics_log_hz == 4
+        assert cfg.no_data_timeout_s == 15.0
+
+    def test_zero_metrics_log_hz_clamped(self) -> None:
+        cfg = self._make(metrics_log_hz=0)
+        assert cfg.metrics_log_hz >= 1
+
+    def test_negative_no_data_timeout_clamped(self) -> None:
+        cfg = self._make(no_data_timeout_s=-5.0)
+        assert cfg.no_data_timeout_s >= 0
+
+    def test_negative_shutdown_timeout_clamped(self) -> None:
+        cfg = self._make(shutdown_analysis_timeout_s=-1.0)
+        assert cfg.shutdown_analysis_timeout_s >= 0
