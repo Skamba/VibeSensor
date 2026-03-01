@@ -5,17 +5,21 @@ from pathlib import Path
 from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
 
 
-def test_find_release_stable_skips_non_firmware_assets() -> None:
+def test_find_release_stable_prefers_combined_release_assets() -> None:
     config = FirmwareCacheConfig(firmware_repo="Skamba/VibeSensor", channel="stable")
     fetcher = GitHubReleaseFetcher(config)
 
     releases = [
         {
-            "tag_name": "server-v2026.2.27",
+            "tag_name": "server-v2026.2.28",
             "draft": False,
             "prerelease": False,
             "assets": [
-                {"name": "vibesensor-2026.2.27-py3-none-any.whl", "url": "https://api.github.com/a"}
+                {
+                    "name": "vibesensor-2026.2.28-py3-none-any.whl",
+                    "url": "https://api.github.com/a",
+                },
+                {"name": "vibesensor-fw-v2026.2.28.zip", "url": "https://api.github.com/b"},
             ],
         },
         {
@@ -28,10 +32,10 @@ def test_find_release_stable_skips_non_firmware_assets() -> None:
 
     fetcher._api_get = lambda _url: releases  # type: ignore[method-assign]
     selected = fetcher.find_release()
-    assert selected["tag_name"] == "fw-v2026.2.27"
+    assert selected["tag_name"] == "server-v2026.2.28"
 
 
-def test_find_release_prerelease_skips_non_firmware_assets() -> None:
+def test_find_release_prerelease_prefers_combined_release_assets() -> None:
     config = FirmwareCacheConfig(firmware_repo="Skamba/VibeSensor", channel="prerelease")
     fetcher = GitHubReleaseFetcher(config)
 
@@ -44,7 +48,8 @@ def test_find_release_prerelease_skips_non_firmware_assets() -> None:
                 {
                     "name": "vibesensor-2026.2.28rc1-py3-none-any.whl",
                     "url": "https://api.github.com/a",
-                }
+                },
+                {"name": "vibesensor-fw-v2026.2.28-rc1.zip", "url": "https://api.github.com/b"},
             ],
         },
         {
@@ -52,14 +57,14 @@ def test_find_release_prerelease_skips_non_firmware_assets() -> None:
             "draft": False,
             "prerelease": True,
             "assets": [
-                {"name": "vibesensor-fw-v2026.2.28-rc1.zip", "url": "https://api.github.com/b"}
+                {"name": "vibesensor-fw-v2026.2.28-rc1.zip", "url": "https://api.github.com/c"}
             ],
         },
     ]
 
     fetcher._api_get = lambda _url: releases  # type: ignore[method-assign]
     selected = fetcher.find_release()
-    assert selected["tag_name"] == "fw-v2026.2.28-rc1"
+    assert selected["tag_name"] == "server-v2026.2.28-rc1"
 
 
 def test_find_release_raises_when_no_firmware_assets() -> None:
