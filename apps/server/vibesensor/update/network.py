@@ -109,10 +109,7 @@ async def wait_for_dns_ready(runner: CommandRunner) -> tuple[bool, str]:
     probe_cmd = [
         "python3",
         "-c",
-        (
-            "import socket; "
-            f"socket.getaddrinfo('{DNS_PROBE_HOST}', 443, proto=socket.IPPROTO_TCP)"
-        ),
+        (f"import socket; socket.getaddrinfo('{DNS_PROBE_HOST}', 443, proto=socket.IPPROTO_TCP)"),
     ]
     deadline = time.monotonic() + DNS_READY_MIN_WAIT_S
     last_error = ""
