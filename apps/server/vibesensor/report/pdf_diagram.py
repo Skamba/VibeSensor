@@ -147,9 +147,7 @@ def _choose_label_plan(
             best = (score, candidate)
 
     if best is None:
-        raise ValueError(
-            f"No valid label placement found for {name!r} in diagram"
-        )
+        raise ValueError(f"No valid label placement found for {name!r} in diagram")
     return best[1]
 
 
@@ -463,7 +461,7 @@ def car_location_diagram(
         )
 
     # -- Source highlight legend (explains marker colors on the circles) --
-    from .theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
+    from .theme import FINDING_SOURCE_COLORS
 
     src_legend_items = [
         (tr("SOURCE_WHEEL_TIRE"), FINDING_SOURCE_COLORS["wheel/tire"]),

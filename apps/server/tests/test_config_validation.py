@@ -299,3 +299,88 @@ class TestLoggingConfigValidation:
     def test_negative_shutdown_timeout_clamped(self) -> None:
         cfg = self._make(shutdown_analysis_timeout_s=-1.0)
         assert cfg.shutdown_analysis_timeout_s >= 0
+
+
+# ---------------------------------------------------------------------------
+# ProcessingConfig: fft_n max bound
+# ---------------------------------------------------------------------------
+
+
+class TestFftNMaxBound:
+    """fft_n exceeding _MAX_FFT_N (65536) must be clamped."""
+
+    def test_fft_n_exceeding_max_clamped(self) -> None:
+        cfg = _make_processing(fft_n=131072)
+        assert cfg.fft_n == 65536
+
+    def test_fft_n_at_max_preserved(self) -> None:
+        cfg = _make_processing(fft_n=65536)
+        assert cfg.fft_n == 65536
+
+
+# ---------------------------------------------------------------------------
+# ProcessingConfig: spectrum_min_hz >= spectrum_max_hz
+# ---------------------------------------------------------------------------
+
+
+class TestSpectrumMinVsMax:
+    """spectrum_min_hz must be < spectrum_max_hz; otherwise clamped to 0."""
+
+    def test_min_equal_to_max_clamped(self) -> None:
+        cfg = _make_processing(spectrum_min_hz=200.0, spectrum_max_hz=200)
+        assert cfg.spectrum_min_hz == 0.0
+        assert cfg.spectrum_min_hz < cfg.spectrum_max_hz
+
+    def test_min_greater_than_max_clamped(self) -> None:
+        cfg = _make_processing(spectrum_min_hz=300.0, spectrum_max_hz=200)
+        assert cfg.spectrum_min_hz == 0.0
+
+    def test_min_less_than_max_preserved(self) -> None:
+        cfg = _make_processing(spectrum_min_hz=5.0, spectrum_max_hz=200)
+        assert cfg.spectrum_min_hz == 5.0
+
+
+# ---------------------------------------------------------------------------
+# ProcessingConfig: buffer memory bound
+# ---------------------------------------------------------------------------
+
+
+class TestBufferMemoryBound:
+    """sample_rate_hz × waveform_seconds exceeding 524288 clamps waveform_seconds."""
+
+    def test_extreme_buffer_clamped(self) -> None:
+        cfg = _make_processing(sample_rate_hz=50000, waveform_seconds=20)
+        # 50000 × 20 = 1,000,000 > 524,288 → waveform_seconds should be clamped
+        assert cfg.sample_rate_hz * cfg.waveform_seconds <= 524_288
+
+    def test_normal_buffer_preserved(self) -> None:
+        cfg = _make_processing(sample_rate_hz=800, waveform_seconds=8)
+        # 800 × 8 = 6,400 — well within limit
+        assert cfg.waveform_seconds == 8
+
+
+# ---------------------------------------------------------------------------
+# load_config: accel_scale_g_per_lsb validation
+# ---------------------------------------------------------------------------
+
+
+class TestAccelScaleValidation:
+    """accel_scale_g_per_lsb ≤ 0 should be reset to None (auto-detection)."""
+
+    def test_zero_accel_scale_reset(self, tmp_path: Path) -> None:
+        config_path = tmp_path / "config.yaml"
+        _write_config(config_path, {"processing": {"accel_scale_g_per_lsb": 0}})
+        cfg = load_config(config_path)
+        assert cfg.processing.accel_scale_g_per_lsb is None
+
+    def test_negative_accel_scale_reset(self, tmp_path: Path) -> None:
+        config_path = tmp_path / "config.yaml"
+        _write_config(config_path, {"processing": {"accel_scale_g_per_lsb": -0.004}})
+        cfg = load_config(config_path)
+        assert cfg.processing.accel_scale_g_per_lsb is None
+
+    def test_valid_accel_scale_preserved(self, tmp_path: Path) -> None:
+        config_path = tmp_path / "config.yaml"
+        _write_config(config_path, {"processing": {"accel_scale_g_per_lsb": 0.004}})
+        cfg = load_config(config_path)
+        assert cfg.processing.accel_scale_g_per_lsb == pytest.approx(0.004)

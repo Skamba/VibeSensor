@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Plot data builders – FFT spectrum, spectrogram, peak tables, and composite plot payload."""
 
 from __future__ import annotations

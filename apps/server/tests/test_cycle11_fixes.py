@@ -22,6 +22,7 @@ import pytest
 # 1. firmware_cache.refresh() – UnboundLocalError guard
 # ------------------------------------------------------------------
 
+
 class TestFirmwareCacheRefreshUnboundGuard:
     """target/old_current must be defined before the try block so the
     except handler never raises UnboundLocalError."""
@@ -51,6 +52,7 @@ class TestFirmwareCacheRefreshUnboundGuard:
 # ------------------------------------------------------------------
 # 2. firmware_cache._download_asset() – fd leak guard
 # ------------------------------------------------------------------
+
 
 class TestDownloadAssetFdLeakGuard:
     """When os.fdopen fails, the raw fd must be closed."""
@@ -85,6 +87,7 @@ class TestDownloadAssetFdLeakGuard:
 # 3. gps_speed.resolve_speed() – TOCTOU snapshot
 # ------------------------------------------------------------------
 
+
 class TestResolveSpeedTOCTOU:
     """resolve_speed must snapshot speed_mps to avoid read-between-lines races."""
 
@@ -116,6 +119,7 @@ class TestResolveSpeedTOCTOU:
 # 4. gps_speed._is_gps_stale() – TOCTOU snapshot
 # ------------------------------------------------------------------
 
+
 class TestIsGpsStaleTOCTOU:
     """_is_gps_stale must snapshot last_update_ts."""
 
@@ -145,6 +149,7 @@ class TestIsGpsStaleTOCTOU:
 # 5. report_cli – PDF generation error handling
 # ------------------------------------------------------------------
 
+
 class TestReportCliErrorHandling:
     """PDF generation failures should return exit code 1, not raise."""
 
@@ -163,9 +168,7 @@ class TestReportCliErrorHandling:
             patch("vibesensor.report_cli.map_summary", return_value={}),
             patch(
                 "vibesensor.report_cli.parse_args",
-                return_value=MagicMock(
-                    input=run_file, output=None, summary_json=None
-                ),
+                return_value=MagicMock(input=run_file, output=None, summary_json=None),
             ),
         ):
             result = main()
@@ -196,6 +199,7 @@ class TestReportCliErrorHandling:
 # ------------------------------------------------------------------
 # 6. report_data_builder – UTC suffix on date_str
 # ------------------------------------------------------------------
+
 
 class TestReportDataBuilderUTCSuffix:
     """date_str in report data must end with ' UTC'."""

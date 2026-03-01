@@ -376,8 +376,7 @@ class SignalProcessor:
                     "hz": float(freqs[idx]),
                     "amp": raw_amp,
                     "snr_ratio": (
-                        (raw_amp + STRENGTH_EPSILON_MIN_G)
-                        / (floor_amp + STRENGTH_EPSILON_MIN_G)
+                        (raw_amp + STRENGTH_EPSILON_MIN_G) / (floor_amp + STRENGTH_EPSILON_MIN_G)
                     ),
                 }
             )
