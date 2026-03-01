@@ -497,7 +497,7 @@ class SensorFrame:
                     continue
                 hz = _as_float_or_none(peak.get("hz"))
                 amp = _as_float_or_none(peak.get("amp"))
-                if hz is None or amp is None or hz <= 0:
+                if hz is None or amp is None or hz <= 0 or amp <= 0:
                     continue
                 normalized_peak: dict[str, object] = {"hz": hz, "amp": amp}
                 peak_db = _as_float_or_none(peak.get(METRIC_FIELDS["vibration_strength_db"]))
@@ -544,6 +544,6 @@ class SensorFrame:
             strength_bucket=strength_bucket,
             strength_peak_amp_g=strength_peak_amp_g,
             strength_floor_amp_g=strength_floor_amp_g,
-            frames_dropped_total=int(record.get("frames_dropped_total") or 0),
-            queue_overflow_drops=int(record.get("queue_overflow_drops") or 0),
+            frames_dropped_total=_as_int_or_none(record.get("frames_dropped_total")) or 0,
+            queue_overflow_drops=_as_int_or_none(record.get("queue_overflow_drops")) or 0,
         )

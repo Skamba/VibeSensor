@@ -8,14 +8,9 @@ from __future__ import annotations
 
 import asyncio
 import math
-import os
-import tempfile
-from pathlib import Path
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 
 # ── 1. NaN guard in vibration_strength_db_scalar ─────────────────────────
 
@@ -419,7 +414,6 @@ class TestFirmwareCacheRestore:
 
     def test_old_current_restored_on_rename_failure(self, tmp_path):
         """If extract_dir.rename(target) fails, old_current should be restored."""
-        import shutil
 
         current = tmp_path / "current"
         current.mkdir()

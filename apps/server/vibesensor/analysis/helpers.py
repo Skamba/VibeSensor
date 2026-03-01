@@ -132,8 +132,8 @@ def _outlier_summary(values: list[float]) -> dict[str, object]:
 
 
 def _speed_bin_label(kmh: float) -> str:
-    if not isfinite(kmh):
-        return "0-10 km/h"
+    if not isfinite(kmh) or kmh < 0:
+        kmh = 0.0
     low = int(kmh // SPEED_BIN_WIDTH_KMH) * SPEED_BIN_WIDTH_KMH
     high = low + SPEED_BIN_WIDTH_KMH
     return f"{low}-{high} km/h"
@@ -501,3 +501,21 @@ def _weighted_percentile(
         if cumulative >= threshold:
             return value
     return ordered[-1][0]
+
+
+def counter_delta(counter_values: list[float]) -> int:
+    """Compute cumulative positive delta from a list of monotonic counter values.
+
+    Returns the total increment, ignoring any decreases (which indicate
+    counter resets).  Accepts ``list[float]`` — callers with timestamped
+    tuples should sort and extract the value column before calling.
+    """
+    if len(counter_values) < 2:
+        return 0
+    delta = 0.0
+    prev = float(counter_values[0])
+    for current_raw in counter_values[1:]:
+        current = float(current_raw)
+        delta += max(0.0, current - prev)
+        prev = current
+    return int(delta)

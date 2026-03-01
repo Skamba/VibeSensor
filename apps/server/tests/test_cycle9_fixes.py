@@ -231,7 +231,7 @@ class TestWebSocketHubCircuitBreaker:
         )
         try:
             await asyncio.wait_for(stop_after_4(), timeout=5.0)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             pass
         task.cancel()
         try:

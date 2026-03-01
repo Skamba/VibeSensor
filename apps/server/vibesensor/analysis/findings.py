@@ -38,6 +38,7 @@ from .helpers import (
     _speed_bin_sort_key,
     _tire_reference_from_metadata,
     _weighted_percentile,
+    counter_delta,
 )
 from .order_analysis import (
     _finding_actions_for_source,
@@ -55,8 +56,6 @@ _NEGLIGIBLE_STRENGTH_MAX_DB = (
 _LIGHT_STRENGTH_MAX_DB = (
     float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
 )
-# Kept as an alias for existing in-module references.
-_MEMS_NOISE_FLOOR_G = MEMS_NOISE_FLOOR_G
 
 # Minimum order-finding confidence to suppress a matching persistent-peak.
 _ORDER_SUPPRESS_PERSISTENT_MIN_CONF = 0.40
@@ -294,19 +293,14 @@ def _sensor_intensity_by_location(
     )
 
     def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
+        """Sort timestamped counter pairs and delegate to shared helper."""
         if len(counter_values) < 2:
             return 0
         ordered = sorted(
             counter_values,
             key=lambda pair: (pair[0] is None, pair[0] if pair[0] is not None else 0.0),
         )
-        delta = 0.0
-        prev = float(ordered[0][1])
-        for _t_s, current_raw in ordered[1:]:
-            current = float(current_raw)
-            delta += max(0.0, current - prev)
-            prev = current
-        return int(delta)
+        return counter_delta([float(v) for _t, v in ordered])
 
     for location in sorted(target_locations):
         values = grouped_amp.get(location, [])
@@ -891,13 +885,13 @@ def _build_order_findings(
         compliance = getattr(hypothesis, "path_compliance", 1.0)
         error_denominator = 0.25 * compliance
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
-        snr_score = min(1.0, log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR)
+        snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR)
         # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
-        if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
+        if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
             snr_score = min(snr_score, 0.40)
         absolute_strength_db = canonical_vibration_db(
             peak_band_rms_amp_g=mean_amp,
-            floor_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
+            floor_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
         )
 
         _diffuse_excitation, _diffuse_penalty = _detect_diffuse_excitation(
@@ -940,7 +934,7 @@ def _build_order_findings(
         ranking_error_denom = 0.25 * compliance
         ranking_score = (
             effective_match_rate
-            * log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor))
+            * log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor))
             * max(0.0, (1.0 - min(1.0, mean_rel_err / ranking_error_denom)))
         )
 
@@ -1075,8 +1069,8 @@ def _build_order_findings(
                 "mean_relative_error": mean_rel_err,
                 "mean_matched_intensity_db": absolute_strength_db,
                 "mean_noise_floor_db": canonical_vibration_db(
-                    peak_band_rms_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
-                    floor_amp_g=_MEMS_NOISE_FLOOR_G,
+                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
+                    floor_amp_g=MEMS_NOISE_FLOOR_G,
                 ),
                 "vibration_strength_db": absolute_strength_db,
                 "possible_samples": possible,
@@ -1403,13 +1397,13 @@ def _build_persistent_peak_findings(
                 ),
                 "burstiness": burstiness,
                 "mean_noise_floor_db": canonical_vibration_db(
-                    peak_band_rms_amp_g=max(_MEMS_NOISE_FLOOR_G, mean_floor),
-                    floor_amp_g=_MEMS_NOISE_FLOOR_G,
+                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
+                    floor_amp_g=MEMS_NOISE_FLOOR_G,
                 ),
                 "run_noise_baseline_db": (
                     canonical_vibration_db(
-                        peak_band_rms_amp_g=max(_MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
-                        floor_amp_g=_MEMS_NOISE_FLOOR_G,
+                        peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+                        floor_amp_g=MEMS_NOISE_FLOOR_G,
                     )
                     if run_noise_baseline_g is not None
                     else None

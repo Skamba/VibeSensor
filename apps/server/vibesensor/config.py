@@ -248,6 +248,16 @@ class ProcessingConfig:
             )
             object.__setattr__(self, "spectrum_max_hz", clamped)
 
+        # --- spectrum_min_hz must be < spectrum_max_hz --------------------------
+        if self.spectrum_min_hz >= self.spectrum_max_hz:
+            _cfg_logger.warning(
+                "processing.spectrum_min_hz=%s >= spectrum_max_hz=%s — "
+                "clamping spectrum_min_hz to 0",
+                self.spectrum_min_hz,
+                self.spectrum_max_hz,
+            )
+            object.__setattr__(self, "spectrum_min_hz", 0.0)
+
         # --- buffer memory bound: sample_rate_hz * waveform_seconds ----------------
         # Each client allocates a 3×capacity float32 buffer.  Cap the per-client
         # buffer at ~2 MB (524288 samples × 3 × 4 bytes = 6 MB) to avoid OOM on
@@ -312,11 +322,20 @@ class AppConfig:
 def _read_config_file(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
-    with path.open("r", encoding="utf-8") as f:
-        data = yaml.safe_load(f) or {}
-        if not isinstance(data, dict):
-            raise ValueError(f"{path} must contain a YAML object at the top level.")
-        return data
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except PermissionError:
+        raise ValueError(
+            f"Cannot read config file {path}: permission denied"
+        ) from None
+    except yaml.YAMLError as exc:
+        raise ValueError(
+            f"Config file {path} contains invalid YAML: {exc}"
+        ) from None
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} must contain a YAML object at the top level.")
+    return data
 
 
 def load_config(config_path: Path | None = None) -> AppConfig:

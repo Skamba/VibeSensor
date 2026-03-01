@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import logging
-from functools import lru_cache
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
@@ -17,15 +16,24 @@ LOGGER = logging.getLogger(__name__)
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json"
 
 
-@lru_cache(maxsize=1)
 def _load_library() -> list[dict]:
+    """Load and return the car library from the canonical JSON file.
+
+    Unlike an ``@lru_cache`` approach, this retries on every call so a
+    transient I/O or permission error at first import does not permanently
+    disable the library for the lifetime of the process.
+    """
     try:
         with open(_DATA_FILE) as fh:
             data: list[dict] = json.load(fh)
         return data
-    except (FileNotFoundError, json.JSONDecodeError) as exc:
+    except (FileNotFoundError, json.JSONDecodeError, PermissionError, OSError) as exc:
         LOGGER.warning("Could not load car library from %s: %s", _DATA_FILE, exc)
         return []
+
+
+# Eagerly loaded; on transient failures the module-level list stays empty
+# but callers can call ``_load_library()`` again to retry.
 
 
 # Module-level alias keeps existing ``from vibesensor.car_library import CAR_LIBRARY`` working.
@@ -34,23 +42,31 @@ CAR_LIBRARY: list[dict] = _load_library()
 
 def get_brands() -> list[str]:
     """Return sorted list of unique brands in the library."""
-    return sorted({e["brand"] for e in CAR_LIBRARY})
+    return sorted({e.get("brand", "") for e in CAR_LIBRARY if e.get("brand")})
 
 
 def get_types_for_brand(brand: str) -> list[str]:
     """Return sorted body types available for *brand*."""
-    return sorted({e["type"] for e in CAR_LIBRARY if e["brand"] == brand})
+    return sorted(
+        {e.get("type", "") for e in CAR_LIBRARY if e.get("brand") == brand and e.get("type")}
+    )
 
 
 def get_models_for_brand_type(brand: str, car_type: str) -> list[dict]:
     """Return all library entries matching *brand* and *car_type*."""
-    return [e for e in CAR_LIBRARY if e["brand"] == brand and e["type"] == car_type]
+    return [
+        e for e in CAR_LIBRARY if e.get("brand") == brand and e.get("type") == car_type
+    ]
 
 
 def get_variants_for_model(brand: str, car_type: str, model: str) -> list[dict]:
     """Return the variants list for a specific model, or [] if none."""
     for e in CAR_LIBRARY:
-        if e["brand"] == brand and e["type"] == car_type and e["model"] == model:
+        if (
+            e.get("brand") == brand
+            and e.get("type") == car_type
+            and e.get("model") == model
+        ):
             return list(e.get("variants") or [])
     return []
 
@@ -62,10 +78,13 @@ def resolve_variant(
     """Merge a variant's overrides onto a base model entry.
 
     Returns a new dict with the effective gearboxes, tire_options, and
-    default tire specs.  Unknown *variant_name* or ``None`` returns a copy
-    of the base entry.
+    default tire specs.  Unknown *variant_name* or ``None`` returns a
+    deep copy of the base entry so callers cannot corrupt the cached
+    library data.
     """
-    result = dict(base_entry)
+    import copy
+
+    result = copy.deepcopy(base_entry)
     if not variant_name:
         return result
     for v in base_entry.get("variants") or []:

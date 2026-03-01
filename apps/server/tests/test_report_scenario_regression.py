@@ -345,19 +345,19 @@ class TestConfidenceCalibration:
         """
         from math import log1p as _log1p
 
-        from vibesensor.analysis.findings import _MEMS_NOISE_FLOOR_G
+        from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G
 
         mean_amp = 0.002  # 2 mg – barely above MEMS noise
         near_zero_floor = 1e-7  # pathological near-zero floor
 
         # Without guard (old: max(1e-6, floor)):
         snr_without_guard = min(1.0, _log1p(mean_amp / max(1e-6, near_zero_floor)) / 2.5)
-        # With floor clamp (current: max(_MEMS_NOISE_FLOOR_G, floor)):
+        # With floor clamp (current: max(MEMS_NOISE_FLOOR_G, floor)):
         snr_floor_clamped = min(
-            1.0, _log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, near_zero_floor)) / 2.5
+            1.0, _log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, near_zero_floor)) / 2.5
         )
         # With absolute-strength guard applied (acceptance criteria):
-        if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
+        if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
             snr_with_abs_guard = min(snr_floor_clamped, 0.40)
         else:
             snr_with_abs_guard = snr_floor_clamped
@@ -366,11 +366,11 @@ class TestConfidenceCalibration:
         assert snr_with_abs_guard <= 0.40, (
             f"With floor+abs guard, SNR for 2mg amp must be <= 0.40, got {snr_with_abs_guard:.3f}"
         )
-        assert _MEMS_NOISE_FLOOR_G == 0.001, "MEMS noise floor constant must be 0.001g"
+        assert MEMS_NOISE_FLOOR_G == 0.001, "MEMS noise floor constant must be 0.001g"
         # Normal floor (already >= 0.001g) must be unaffected by floor clamp
         normal_floor = 0.005
         snr_normal_clamped = min(
-            1.0, _log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5
+            1.0, _log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5
         )
         snr_normal_direct = min(1.0, _log1p(mean_amp / normal_floor) / 2.5)
         assert abs(snr_normal_clamped - snr_normal_direct) < 1e-10, "Normal floor must be unchanged"
