@@ -19,13 +19,8 @@ from .api_models import (
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,
     CarLibraryBrandsResponse,
-    CarLibraryGearboxEntry,
-    CarLibraryModelEntry,
     CarLibraryModelsResponse,
-    CarLibraryTireOptionEntry,
     CarLibraryTypesResponse,
-    CarLibraryVariantEntry,
-    CarResponse,
     CarsResponse,
     CarUpsertRequest,
     ClientLocationsResponse,
@@ -46,10 +41,8 @@ from .api_models import (
     IdentifyResponse,
     LanguageRequest,
     LanguageResponse,
-    LocationOptionResponse,
     LoggingStatusResponse,
     RemoveClientResponse,
-    SensorConfigResponse,
     SensorRequest,
     SensorsResponse,
     SetClientLocationResponse,
@@ -60,7 +53,6 @@ from .api_models import (
     SpeedUnitRequest,
     SpeedUnitResponse,
     UpdateCancelResponse,
-    UpdateIssueResponse,
     UpdateStartRequest,
     UpdateStartResponse,
     UpdateStatusResponse,
@@ -68,7 +60,7 @@ from .api_models import (
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
-from .runlog import bounded_sample as _bounded_sample
+from .runlog import bounded_sample as _bounded_sample  # noqa: F401  # re-exported for tests
 
 if TYPE_CHECKING:
     from .app import RuntimeState

@@ -6,7 +6,7 @@ working.  Report-internal code should import from this module
 (``vibesensor.report.i18n``) to express the correct dependency direction.
 """
 
-from ..report_i18n import (
+from ..report_i18n import (  # noqa: F401
     _load_translations,
     normalize_lang,
     tr,

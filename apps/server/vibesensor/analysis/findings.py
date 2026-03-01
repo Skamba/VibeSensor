@@ -1109,8 +1109,9 @@ def _classify_peak_type(
     spatial_uniformity: float | None = None,
     speed_uniformity: float | None = None,
 ) -> str:
-    """Classify a frequency peak as ``patterned``, ``persistent``, ``transient``, or ``baseline_noise``.
+    """Classify a frequency peak as patterned/persistent/transient/baseline_noise.
 
+    Categories:
     * **patterned**: high presence and low burstiness → likely a fault vibration.
     * **persistent**: moderate presence → unknown but repeated resonance.
     * **transient**: low presence or very high burstiness → one-off impact/thud.
