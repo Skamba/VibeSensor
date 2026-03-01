@@ -17,7 +17,21 @@ from vibesensor.runlog import (
     normalize_sample_record,
     parse_iso8601,
     read_jsonl_run,
+    utc_now_iso,
 )
+
+# -- utc_now_iso ---------------------------------------------------------------
+
+
+def test_utc_now_iso_returns_valid_isoformat() -> None:
+    result = utc_now_iso()
+    assert isinstance(result, str)
+    # Should be parseable by parse_iso8601
+    parsed = parse_iso8601(result)
+    assert parsed is not None
+    # Should contain timezone info (UTC offset)
+    assert "+" in result or "Z" in result
+
 
 # -- parse_iso8601 ------------------------------------------------------------
 
