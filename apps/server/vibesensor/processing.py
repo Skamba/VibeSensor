@@ -441,12 +441,12 @@ class SignalProcessor:
             vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
             vib_mag_rms = float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64)))
             vib_mag_p2p = float(np.max(vib_mag) - np.min(vib_mag))
+            if not math.isfinite(vib_mag_rms):
+                vib_mag_rms = 0.0
+            if not math.isfinite(vib_mag_p2p):
+                vib_mag_p2p = 0.0
         else:
             vib_mag_rms = 0.0
-            vib_mag_p2p = 0.0
-        if not math.isfinite(vib_mag_rms):
-            vib_mag_rms = 0.0
-        if not math.isfinite(vib_mag_p2p):
             vib_mag_p2p = 0.0
 
         metrics["combined"] = {

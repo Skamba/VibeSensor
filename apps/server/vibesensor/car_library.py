@@ -8,8 +8,11 @@ exposes lightweight query helpers used by the API layer.
 from __future__ import annotations
 
 import json
+import logging
 from functools import lru_cache
 from pathlib import Path
+
+LOGGER = logging.getLogger(__name__)
 
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json"
 
@@ -21,11 +24,7 @@ def _load_library() -> list[dict]:
             data: list[dict] = json.load(fh)
         return data
     except (FileNotFoundError, json.JSONDecodeError) as exc:
-        import logging
-
-        logging.getLogger(__name__).warning(
-            "Could not load car library from %s: %s", _DATA_FILE, exc
-        )
+        LOGGER.warning("Could not load car library from %s: %s", _DATA_FILE, exc)
         return []
 
 

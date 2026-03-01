@@ -53,7 +53,7 @@ def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
     dest_resolved = dest.resolve()
     for member in zf.infolist():
         target = (dest / member.filename).resolve()
-        if not str(target).startswith(str(dest_resolved) + os.sep) and target != dest_resolved:
+        if not target.is_relative_to(dest_resolved):
             raise ValueError(
                 f"Zip entry '{member.filename}' would extract outside the target directory"
             )
