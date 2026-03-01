@@ -549,7 +549,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             await asyncio.gather(runtime.data_consumer_task, return_exceptions=True)
             runtime.data_consumer_task = None
         try:
-            await asyncio.to_thread(worker_pool.shutdown, True)
+            worker_pool.shutdown(wait=True)
         except Exception:
             LOGGER.warning("Error shutting down worker pool", exc_info=True)
         try:
