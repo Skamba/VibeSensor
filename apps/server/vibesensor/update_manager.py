@@ -8,7 +8,7 @@ continue to work without changes.
 
 from __future__ import annotations
 
-from .update.manager import (  # noqa: F401
+from .update.manager import (
     DEFAULT_GIT_BRANCH,
     DEFAULT_GIT_REMOTE,
     DEFAULT_REBUILD_PATH,
@@ -27,8 +27,8 @@ from .update.manager import (  # noqa: F401
     UPDATE_TIMEOUT_S,
     UpdateManager,
 )
-from .update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState  # noqa: F401
-from .update.network import (  # noqa: F401
+from .update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from .update.network import (
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
     DNS_RETRY_INTERVAL_S,
@@ -40,9 +40,9 @@ from .update.network import (  # noqa: F401
     UPLINK_FALLBACK_DNS,
     parse_wifi_diagnostics,
 )
-from .update.runner import CommandRunner  # noqa: F401
-from .update.runner import sanitize_log_line as _sanitize_log_line  # noqa: F401
-from .update.state_store import UpdateStateStore  # noqa: F401
+from .update.runner import CommandRunner
+from .update.runner import sanitize_log_line as _sanitize_log_line
+from .update.state_store import UpdateStateStore
 
 __all__ = [
     "CommandRunner",

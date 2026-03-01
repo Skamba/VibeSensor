@@ -254,7 +254,7 @@ def assert_aspect_preserved(
 # ---------------------------------------------------------------------------
 
 
-def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
+def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:
     """Render the full page-1 worksheet layout."""
     m = MARGIN
     W = PAGE_W - 2 * m
@@ -719,7 +719,7 @@ _BMW_LENGTH_MM = 5007.0
 _BMW_WIDTH_MM = 1894.0
 
 
-def _page2(  # noqa: C901
+def _page2(
     c: Canvas,
     data: ReportTemplateData,
     *,

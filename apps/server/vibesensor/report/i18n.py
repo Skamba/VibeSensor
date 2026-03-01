@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Report internationalisation – re-export from canonical module.
 
 The implementation stays in ``vibesensor.report_i18n`` so that existing
@@ -7,7 +6,7 @@ working.  Report-internal code should import from this module
 (``vibesensor.report.i18n``) to express the correct dependency direction.
 """
 
-from ..report_i18n import (  # noqa: F401
+from ..report_i18n import (
     _load_translations,
     normalize_lang,
     tr,

@@ -84,7 +84,7 @@ class ServerReleaseFetcher:
     def _api_get(self, url: str) -> Any:
         _validate_url(url)
         req = Request(url, headers=self._api_headers())
-        with urlopen(req, timeout=30) as resp:  # noqa: S310
+        with urlopen(req, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
     _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
@@ -96,7 +96,7 @@ class ServerReleaseFetcher:
         req = Request(url, headers=headers)
         tmp = dest.with_suffix(".tmp")
         try:
-            with urlopen(req, timeout=300) as resp:  # noqa: S310
+            with urlopen(req, timeout=300) as resp:
                 total = 0
                 with open(tmp, "wb") as f:
                     while True:

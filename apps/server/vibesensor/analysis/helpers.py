@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Low-level helpers, constants, and utility functions for report analysis."""
 
 from __future__ import annotations

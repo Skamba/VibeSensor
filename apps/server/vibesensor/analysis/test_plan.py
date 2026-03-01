@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Test-plan merging and location/speed-bin summary helpers."""
 
 from __future__ import annotations

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response, StreamingResponse
 
-from .api_models import (  # noqa: F401
+from .api_models import (
     ActiveCarRequest,
     AnalysisSettingsRequest,
     AnalysisSettingsResponse,
@@ -68,7 +68,7 @@ from .api_models import (  # noqa: F401
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
-from .runlog import bounded_sample as _bounded_sample  # noqa: F401 - compatibility export
+from .runlog import bounded_sample as _bounded_sample
 
 if TYPE_CHECKING:
     from .app import RuntimeState

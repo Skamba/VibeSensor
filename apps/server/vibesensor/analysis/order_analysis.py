@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Order-tracking helpers – wheel/engine/driveshaft Hz, hypotheses, and action plans."""
 
 from __future__ import annotations

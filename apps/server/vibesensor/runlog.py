@@ -241,7 +241,7 @@ def read_jsonl_run(path: Path) -> RunData:
             elif record_type == RUN_SAMPLE_TYPE:
                 try:
                     samples.append(normalize_sample_record(payload))
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:
                     LOGGER.warning(
                         "Skipping malformed sample at line %d in %s: %s",
                         line_no,

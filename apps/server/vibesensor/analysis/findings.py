@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Findings engine – order tracking, reference checks, and action plans."""
 
 from __future__ import annotations
