@@ -9,7 +9,10 @@ from __future__ import annotations
 import math
 
 import pytest
-from vibesensor_core.vibration_strength import compute_vibration_strength_db
+from vibesensor_core.vibration_strength import (
+    compute_vibration_strength_db,
+    vibration_strength_db_scalar,
+)
 
 
 class TestComputeVibrationStrengthBoundaries:
@@ -109,8 +112,6 @@ class TestComputeVibrationStrengthBoundaries:
 
 # -- vibration_strength_db_scalar direct tests --------------------------------
 
-from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
 
 class TestVibrationStrengthDbScalar:
     """Direct unit tests for the dB scalar computation."""
@@ -142,8 +143,6 @@ class TestVibrationStrengthDbScalar:
         assert math.isfinite(db)
 
     def test_custom_epsilon(self) -> None:
-        db = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=0.0, floor_amp_g=0.0, epsilon_g=1e-6
-        )
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.0, floor_amp_g=0.0, epsilon_g=1e-6)
         assert math.isfinite(db)
         assert abs(db) < 0.01

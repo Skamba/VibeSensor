@@ -5,7 +5,9 @@ from math import inf, nan, pi
 from vibesensor.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     AnalysisSettingsStore,
+    engine_rpm_from_wheel_hz,
     tire_circumference_m_from_spec,
+    wheel_hz_from_speed_kmh,
     wheel_hz_from_speed_mps,
 )
 
@@ -214,8 +216,6 @@ def test_sanitize_keeps_valid_tire_params_unchanged() -> None:
 
 # -- wheel_hz_from_speed_kmh --------------------------------------------------
 
-from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
 
 def test_wheel_hz_from_speed_kmh_typical_value() -> None:
     """100 km/h with 2m circumference → ~13.9 Hz."""
@@ -246,8 +246,6 @@ def test_wheel_hz_from_speed_kmh_non_finite_returns_none() -> None:
 
 
 # -- engine_rpm_from_wheel_hz -------------------------------------------------
-
-from vibesensor.analysis_settings import engine_rpm_from_wheel_hz
 
 
 def test_engine_rpm_from_wheel_hz_basic() -> None:
