@@ -600,6 +600,14 @@ def test_close_is_idempotent(tmp_path: Path) -> None:
     db.close()  # second call must be a no-op
 
 
+def test_operations_after_close_raise(tmp_path: Path) -> None:
+    """Operations on a closed database must raise RuntimeError."""
+    db = HistoryDB(tmp_path / "history.db")
+    db.close()
+    with pytest.raises(RuntimeError, match="closed"):
+        db.create_run("run-x", "2026-01-01T00:00:00Z", {})
+
+
 def test_sanitize_for_json_handles_numpy_scalars() -> None:
     """_sanitize_for_json must convert numpy scalars to native Python types."""
     import numpy as np

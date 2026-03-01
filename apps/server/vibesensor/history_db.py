@@ -228,6 +228,8 @@ class HistoryDB:
     @contextmanager
     def _cursor(self, *, commit: bool = True):
         with self._lock:
+            if self._conn is None:
+                raise RuntimeError("HistoryDB is closed")
             cur = self._conn.cursor()
             try:
                 yield cur
@@ -243,6 +245,8 @@ class HistoryDB:
     def read_transaction(self):
         """Hold a single read transaction across multi-step read operations."""
         with self._lock:
+            if self._conn is None:
+                raise RuntimeError("HistoryDB is closed")
             cur = self._conn.cursor()
             try:
                 cur.execute("BEGIN")
