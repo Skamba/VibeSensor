@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import inspect
+from pathlib import Path
 
 import pytest
 
@@ -98,28 +99,31 @@ class TestHistoryDbCloseLocked:
         assert "self._lock" in source, "close() must use self._lock"
 
 
-class TestJsonlRejectsNan:
-    """Regression: JSONL serialization must reject NaN/Infinity."""
+class TestJsonlHandlesNan:
+    """Regression: JSONL serialization must handle NaN/Infinity gracefully.
 
-    def test_nan_raises(self) -> None:
+    Instead of crashing mid-batch (which risks partial writes and data loss),
+    ``append_jsonl_records`` falls back to ``allow_nan=True`` so the record
+    is persisted with a warning.
+    """
+
+    def test_nan_falls_back(self, tmp_path: Path) -> None:
         from vibesensor.runlog import append_jsonl_records
 
         record = {"value": float("nan")}
-        with pytest.raises(ValueError):
-            append_jsonl_records(
-                path=pytest.importorskip("pathlib").Path("/dev/null"),
-                records=[record],
-            )
+        out = tmp_path / "out.jsonl"
+        append_jsonl_records(path=out, records=[record])
+        text = out.read_text()
+        assert "NaN" in text, "NaN should be serialised with allow_nan fallback"
 
-    def test_inf_raises(self) -> None:
+    def test_inf_falls_back(self, tmp_path: Path) -> None:
         from vibesensor.runlog import append_jsonl_records
 
         record = {"value": float("inf")}
-        with pytest.raises(ValueError):
-            append_jsonl_records(
-                path=pytest.importorskip("pathlib").Path("/dev/null"),
-                records=[record],
-            )
+        out = tmp_path / "out.jsonl"
+        append_jsonl_records(path=out, records=[record])
+        text = out.read_text()
+        assert "Infinity" in text, "Infinity should be serialised with allow_nan fallback"
 
 
 class TestIdentifyClientNormalized:

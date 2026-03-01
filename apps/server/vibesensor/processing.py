@@ -106,6 +106,13 @@ class ClientBuffer:
     cached_selected_payload: dict[str, Any] | None = None
     cached_selected_payload_key: tuple[int, int, int] | None = None
 
+    def invalidate_caches(self) -> None:
+        """Reset all cached payload fields to force recomputation."""
+        self.cached_spectrum_payload = None
+        self.cached_spectrum_payload_generation = -1
+        self.cached_selected_payload = None
+        self.cached_selected_payload_key = None
+
 
 class SignalProcessor:
     def __init__(
@@ -162,7 +169,7 @@ class SignalProcessor:
             return block
         stacked = np.stack([block[:, :-2], block[:, 1:-1], block[:, 2:]], axis=0)
         filtered = block.copy()
-        filtered[:, 1:-1] = np.median(stacked, axis=0)
+        filtered[:, 1:-1] = np.nanmedian(stacked, axis=0)
         return filtered
 
     @_synchronized
@@ -186,10 +193,7 @@ class SignalProcessor:
         buf.latest_metrics = {}
         buf.latest_spectrum = {}
         buf.latest_strength_metrics = {}
-        buf.cached_spectrum_payload = None
-        buf.cached_spectrum_payload_generation = -1
-        buf.cached_selected_payload = None
-        buf.cached_selected_payload_key = None
+        buf.invalidate_caches()
         buf.ingest_generation += 1
         LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
 
@@ -275,8 +279,7 @@ class SignalProcessor:
         else:
             buf.samples_since_t0 += n
         buf.ingest_generation += 1
-        buf.cached_selected_payload = None
-        buf.cached_selected_payload_key = None
+        buf.invalidate_caches()
         self._total_ingested_samples += n
         self._last_ingest_duration_s = time.monotonic() - t_start
 
@@ -487,7 +490,7 @@ class SignalProcessor:
         # --- Phase 3: store results under a brief lock -----------------------
         with self._lock:
             buf = self._buffers.get(client_id)
-            if buf is not None:
+            if buf is not None and snap_ingest_gen >= buf.compute_generation:
                 buf.latest_metrics = metrics
                 buf.compute_generation = snap_ingest_gen
                 buf.compute_sample_rate_hz = sr
@@ -498,10 +501,7 @@ class SignalProcessor:
                     buf.latest_spectrum = {}
                     buf.latest_strength_metrics = {}
                 buf.spectrum_generation += 1
-                buf.cached_spectrum_payload = None
-                buf.cached_spectrum_payload_generation = -1
-                buf.cached_selected_payload = None
-                buf.cached_selected_payload_key = None
+                buf.invalidate_caches()
         self._last_compute_duration_s = time.monotonic() - t0
         self._total_compute_calls += 1
         return metrics

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from collections import deque
 from dataclasses import dataclass
 from time import monotonic
@@ -54,11 +55,15 @@ def _copy_matrix(
 def _combine_amplitude_strength_db(values_db: list[float]) -> float:
     if not values_db:
         return SILENCE_DB
-    linear = [
-        10.0 ** (max(-60.0, min(200.0, float(value))) / 20.0)
-        for value in values_db
-    ]
-    mean_linear = sum(linear) / max(1, len(linear))
+    linear = []
+    for value in values_db:
+        v = float(value)
+        if not math.isfinite(v):
+            continue  # skip NaN/Inf — they would poison the mean
+        linear.append(10.0 ** (max(-60.0, min(200.0, v)) / 20.0))
+    if not linear:
+        return SILENCE_DB
+    mean_linear = sum(linear) / len(linear)
     if mean_linear <= 0.0:
         return SILENCE_DB
     return vibration_strength_db_scalar(

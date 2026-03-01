@@ -89,12 +89,13 @@ class GPSSpeedMonitor:
                 return SpeedResolution(float(self.override_speed_mps), False, "manual")
             # Manual selected but no override set → fall through to GPS
 
-        # Check if GPS data exists and is fresh
-        if isinstance(self.speed_mps, (int, float)):
+        # Snapshot GPS speed to avoid TOCTOU race with concurrent updates.
+        _speed = self.speed_mps
+        if isinstance(_speed, (int, float)):
             if self._is_gps_stale():
                 fb = self._fallback_speed_value()
                 return SpeedResolution(fb, True, "fallback_manual" if fb is not None else "none")
-            return SpeedResolution(float(self.speed_mps), False, "gps")
+            return SpeedResolution(float(_speed), False, "gps")
 
         # No GPS data at all → check if fallback should kick in
         eff_conn = self._effective_connection_state()
@@ -125,9 +126,10 @@ class GPSSpeedMonitor:
 
     def _is_gps_stale(self) -> bool:
         """Check if the last GPS update is older than the configured stale timeout."""
-        if self.last_update_ts is None:
+        ts = self.last_update_ts  # snapshot to avoid TOCTOU
+        if ts is None:
             return True
-        age = time.monotonic() - self.last_update_ts
+        age = time.monotonic() - ts
         return age > self.stale_timeout_s
 
     def _fallback_speed_value(self) -> float | None:

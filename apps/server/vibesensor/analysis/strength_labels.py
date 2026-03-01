@@ -7,6 +7,8 @@ of phrases.
 
 from __future__ import annotations
 
+import math
+
 from vibesensor_core.strength_bands import BANDS
 
 # ---------------------------------------------------------------------------
@@ -48,7 +50,7 @@ def strength_label(db_value: float | None, *, lang: str = "en") -> tuple[str, st
     tuple[str, str]
         ``(band_key, human_label)`` — e.g. ``("moderate", "Moderate")``.
     """
-    if db_value is None:
+    if db_value is None or not math.isfinite(db_value):
         return ("unknown", "Onbekend" if lang == "nl" else "Unknown")
     label_idx = 3 if lang == "nl" else 2
     result = _STRENGTH_THRESHOLDS[0]
@@ -175,6 +177,10 @@ def certainty_label(
     """
     pct = max(0.0, min(100.0, confidence_0_to_1 * 100.0))
     pct_text = f"{pct:.0f}%"
+    # Clamp non-finite confidence to zero to prevent silent misclassification.
+    if not math.isfinite(confidence_0_to_1):
+        confidence_0_to_1 = 0.0
+        pct_text = "0%"
 
     if confidence_0_to_1 >= 0.70:
         level_key, label_en, label_nl = "high", "High", "Hoog"

@@ -42,6 +42,7 @@ from .helpers import (
     _speed_stats,
     _speed_stats_by_phase,
     _validate_required_strength_metrics,
+    counter_delta,
     weak_spatial_dominance_threshold,
 )
 from .order_analysis import _i18n_ref
@@ -126,7 +127,10 @@ def _annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
         for idx, row in enumerate(peaks_table):
             if idx in used_rows:
                 continue
-            freq = float(row.get("frequency_hz") or 0.0)
+            try:
+                freq = float(row.get("frequency_hz") or 0.0)
+            except (ValueError, TypeError):
+                continue
             dist = abs(freq - median_hz)
             if dist < best_dist:
                 best_dist = dist
@@ -683,19 +687,8 @@ def _build_run_suitability_checks(
         if o is not None:
             _per_client_overflow[cid].append(o)
 
-    def _counter_delta(counter_values: list[float]) -> int:
-        if len(counter_values) < 2:
-            return 0
-        delta = 0.0
-        prev = float(counter_values[0])
-        for current_raw in counter_values[1:]:
-            current = float(current_raw)
-            delta += max(0.0, current - prev)
-            prev = current
-        return int(delta)
-
-    total_dropped = sum(_counter_delta(vals) for vals in _per_client_dropped.values())
-    total_overflow = sum(_counter_delta(vals) for vals in _per_client_overflow.values())
+    total_dropped = sum(counter_delta(vals) for vals in _per_client_dropped.values())
+    total_overflow = sum(counter_delta(vals) for vals in _per_client_overflow.values())
     frame_issues = total_dropped + total_overflow
     run_suitability.append(
         {

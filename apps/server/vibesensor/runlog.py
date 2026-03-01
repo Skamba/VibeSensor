@@ -171,7 +171,34 @@ def append_jsonl_records(
     cadence = max(1, int(durable_every_records))
     with path.open("a", encoding="utf-8") as f:
         for index, record in enumerate(records, start=1):
-            f.write(json.dumps(record, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
+            try:
+                line = json.dumps(
+                    record, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+                )
+            except ValueError:
+                # NaN/Inf values — fall back to default serialisation so we
+                # never silently drop records mid-batch.
+                LOGGER.warning(
+                    "Record %d contains non-finite float; serialising with allow_nan",
+                    index,
+                )
+                line = json.dumps(
+                    record, ensure_ascii=False, allow_nan=True, separators=(",", ":")
+                )
+            except TypeError as exc:
+                # Non-serialisable value (datetime, bytes, set, …). Coerce
+                # to string representation so we never silently drop a
+                # record mid-batch or leave a partial trailing line.
+                LOGGER.warning(
+                    "Record %d contains non-serialisable value (%s); using default fallback",
+                    index,
+                    exc,
+                )
+                line = json.dumps(
+                    record, ensure_ascii=False, allow_nan=True, separators=(",", ":"),
+                    default=str,
+                )
+            f.write(line)
             f.write("\n")
             if durable and (index % cadence) == 0:
                 f.flush()
@@ -211,7 +238,16 @@ def read_jsonl_run(path: Path) -> RunData:
             if record_type == RUN_METADATA_TYPE and metadata is None:
                 metadata = payload
             elif record_type == RUN_SAMPLE_TYPE:
-                samples.append(normalize_sample_record(payload))
+                try:
+                    samples.append(normalize_sample_record(payload))
+                except Exception as exc:  # noqa: BLE001
+                    LOGGER.warning(
+                        "Skipping malformed sample at line %d in %s: %s",
+                        line_no,
+                        path,
+                        exc,
+                    )
+                    skipped += 1
             elif record_type == RUN_END_TYPE:
                 end_record = payload
 

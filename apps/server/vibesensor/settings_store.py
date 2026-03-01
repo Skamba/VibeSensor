@@ -205,8 +205,13 @@ class SettingsStore:
             car = self._find_car(self._active_car_id)
             if car is None:
                 raise ValueError("No active car configured")
+            old_aspects = dict(car.aspects)
             car.aspects.update(_sanitize_aspects(aspects))
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                car.aspects = old_aspects
+                raise
             return dict(car.aspects)
 
     def delete_car(self, car_id: str) -> dict[str, Any]:
@@ -237,8 +242,13 @@ class SettingsStore:
 
     def update_speed_source(self, data: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
+            old_dict = self._speed_cfg.to_dict()
             self._speed_cfg.apply_update(data)
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                self._speed_cfg = SpeedSourceConfig.from_dict(old_dict)
+                raise
             return self._speed_cfg.to_dict()
 
     # -- sensors ---------------------------------------------------------------
@@ -250,16 +260,25 @@ class SettingsStore:
     def set_sensor(self, mac: str, data: dict[str, Any]) -> dict[str, Any]:
         sensor_id = normalize_sensor_id(mac)
         with self._lock:
+            old_sensor = self._sensors.get(sensor_id)
             existing = self._sensors.get(sensor_id)
             if existing is None:
                 existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
+            old_name, old_location = existing.name, existing.location
             if "name" in data:
                 name = str(data["name"]).strip()[:64]
                 existing.name = name if name else sensor_id
             if "location" in data:
                 existing.location = str(data["location"]).strip()[:64]
             self._sensors[sensor_id] = existing
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                if old_sensor is None:
+                    self._sensors.pop(sensor_id, None)
+                else:
+                    existing.name, existing.location = old_name, old_location
+                raise
             return {sensor_id: existing.to_dict()}
 
     def remove_sensor(self, mac: str) -> bool:
@@ -280,8 +299,13 @@ class SettingsStore:
         if language not in {"en", "nl"}:
             raise ValueError("language must be 'en' or 'nl'")
         with self._lock:
+            old_language = self._language
             self._language = language
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                self._language = old_language
+                raise
             return self._language
 
     @property
@@ -294,6 +318,11 @@ class SettingsStore:
         if unit not in {"kmh", "mps"}:
             raise ValueError("speed_unit must be 'kmh' or 'mps'")
         with self._lock:
+            old_unit = self._speed_unit
             self._speed_unit = unit
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                self._speed_unit = old_unit
+                raise
             return self._speed_unit

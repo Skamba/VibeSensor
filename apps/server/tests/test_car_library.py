@@ -153,15 +153,10 @@ def test_load_library_handles_missing_file(tmp_path: Path) -> None:
 
     from vibesensor.car_library import _load_library
 
-    # Clear the lru_cache so the function re-executes
-    _load_library.cache_clear()
-    try:
-        fake_path = tmp_path / "nonexistent.json"
-        with patch("vibesensor.car_library._DATA_FILE", fake_path):
-            result = _load_library()
-        assert result == []
-    finally:
-        _load_library.cache_clear()
+    fake_path = tmp_path / "nonexistent.json"
+    with patch("vibesensor.car_library._DATA_FILE", fake_path):
+        result = _load_library()
+    assert result == []
 
 
 def test_load_library_handles_invalid_json(tmp_path: Path) -> None:
@@ -170,12 +165,8 @@ def test_load_library_handles_invalid_json(tmp_path: Path) -> None:
 
     from vibesensor.car_library import _load_library
 
-    _load_library.cache_clear()
-    try:
-        bad_file = tmp_path / "bad.json"
-        bad_file.write_text("not valid json {{{")
-        with patch("vibesensor.car_library._DATA_FILE", bad_file):
-            result = _load_library()
-        assert result == []
-    finally:
-        _load_library.cache_clear()
+    bad_file = tmp_path / "bad.json"
+    bad_file.write_text("not valid json {{{")
+    with patch("vibesensor.car_library._DATA_FILE", bad_file):
+        result = _load_library()
+    assert result == []

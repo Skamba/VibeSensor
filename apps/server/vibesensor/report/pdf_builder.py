@@ -1019,7 +1019,10 @@ def _draw_additional_observations(
         order_label = str(finding.get("frequency_hz_or_order") or "").strip()
         if not order_label:
             order_label = tr("SOURCE_TRANSIENT_IMPACT")
-        confidence = float(finding.get("confidence_0_to_1") or 0.0)
+        try:
+            confidence = float(finding.get("confidence_0_to_1") or 0.0)
+        except (ValueError, TypeError):
+            confidence = 0.0
         line = f"• {order_label} ({confidence * 100.0:.0f}%)"
         c.drawString(x + 4 * mm, y_cursor, line)
         y_cursor -= 3.5 * mm
