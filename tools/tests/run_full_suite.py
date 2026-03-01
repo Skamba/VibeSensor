@@ -66,7 +66,7 @@ def _wait_health(base_url: str, timeout_s: float = 60.0) -> None:
                     return
         except (URLError, TimeoutError, OSError):
             pass
-        time.sleep(1.0)
+        time.sleep(0.5)
     raise RuntimeError("Container did not become healthy in time")
 
 
@@ -243,7 +243,7 @@ def main() -> int:
                 "VIBESENSOR_SIM_DATA_PORT": str(args.sim_data_port),
                 "VIBESENSOR_SIM_CONTROL_PORT": str(args.sim_control_port),
                 "VIBESENSOR_SIM_CLIENT_CONTROL_BASE": str(args.sim_client_control_base),
-                "VIBESENSOR_SIM_DURATION": "12",
+                "VIBESENSOR_SIM_DURATION": "8",
                 "VIBESENSOR_SIM_DURATION_LONG": "20",
                 "VIBESENSOR_SIM_LOG": str(sim_log),
             }
