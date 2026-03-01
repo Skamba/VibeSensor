@@ -15,6 +15,7 @@ from vibesensor_core.vibration_strength import (
 )
 
 from ..analysis_settings import tire_circumference_m_from_spec
+from ..constants import MEMS_NOISE_FLOOR_G
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601, utc_now_iso
 from .findings import (
@@ -24,7 +25,6 @@ from .findings import (
     _speed_breakdown,
 )
 from .helpers import (
-    MEMS_NOISE_FLOOR_G,
     ORDER_MIN_CONFIDENCE,
     SPEED_COVERAGE_MIN_PCT,
     SPEED_MIN_POINTS,

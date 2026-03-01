@@ -12,10 +12,10 @@ from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
+from ..constants import MEMS_NOISE_FLOOR_G
 from ..runlog import as_float_or_none as _as_float
 from .helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
-    MEMS_NOISE_FLOOR_G,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
     ORDER_MIN_CONFIDENCE,
     ORDER_MIN_COVERAGE_POINTS,

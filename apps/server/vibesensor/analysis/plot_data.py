@@ -12,10 +12,10 @@ from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
+from ..constants import MEMS_NOISE_FLOOR_G
 from ..runlog import as_float_or_none as _as_float
 from .findings import _classify_peak_type, _speed_bin_label
 from .helpers import (
-    MEMS_NOISE_FLOOR_G,
     _amplitude_weighted_speed_window,
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
