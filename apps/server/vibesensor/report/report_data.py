@@ -8,7 +8,16 @@ stays renderer-only with zero analysis imports.
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass, field
+from typing import Any
+
+
+def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
+    """Keep only keys that match declared dataclass fields."""
+    valid = {f.name for f in dataclasses.fields(cls)}
+    return {k: v for k, v in raw.items() if k in valid}
+
 
 # ---------------------------------------------------------------------------
 # Data model
@@ -19,6 +28,12 @@ from dataclasses import dataclass, field
 class CarMeta:
     name: str | None = None
     car_type: str | None = None
+
+    @classmethod
+    def from_dict(cls, d: Any) -> CarMeta:
+        if not isinstance(d, dict):
+            return cls()
+        return cls(**_filter_fields(cls, d))
 
 
 @dataclass
@@ -33,20 +48,42 @@ class ObservedSignature:
     certainty_pct: str | None = None
     certainty_reason: str | None = None
 
+    @classmethod
+    def from_dict(cls, d: Any) -> ObservedSignature:
+        if not isinstance(d, dict):
+            return cls()
+        return cls(**_filter_fields(cls, d))
+
 
 @dataclass
 class PartSuggestion:
-    name: str
+    name: str = ""
     why_shown: str | None = None
+
+    @classmethod
+    def from_dict(cls, d: Any) -> PartSuggestion:
+        if isinstance(d, str):
+            return cls(name=d)
+        if not isinstance(d, dict):
+            return cls(name=str(d))
+        return cls(**_filter_fields(cls, d))
 
 
 @dataclass
 class SystemFindingCard:
-    system_name: str
+    system_name: str = ""
     strongest_location: str | None = None
     pattern_summary: str | None = None
     parts: list[PartSuggestion] = field(default_factory=list)
     tone: str = "neutral"
+
+    @classmethod
+    def from_dict(cls, d: Any) -> SystemFindingCard:
+        if not isinstance(d, dict):
+            return cls()
+        filtered = _filter_fields(cls, d)
+        filtered["parts"] = [PartSuggestion.from_dict(p) for p in (d.get("parts") or [])]
+        return cls(**filtered)
 
 
 @dataclass
@@ -59,12 +96,24 @@ class NextStep:
     falsify: str | None = None
     eta: str | None = None
 
+    @classmethod
+    def from_dict(cls, d: Any) -> NextStep:
+        if not isinstance(d, dict):
+            return cls()
+        return cls(**_filter_fields(cls, d))
+
 
 @dataclass
 class DataTrustItem:
-    check: str
-    state: str  # "pass" or "warn"
+    check: str = ""
+    state: str = "pass"
     detail: str | None = None
+
+    @classmethod
+    def from_dict(cls, d: Any) -> DataTrustItem:
+        if not isinstance(d, dict):
+            return cls()
+        return cls(**_filter_fields(cls, d))
 
 
 @dataclass
@@ -81,17 +130,29 @@ class PatternEvidence:
     interpretation: str | None = None
     why_parts_text: str | None = None
 
+    @classmethod
+    def from_dict(cls, d: Any) -> PatternEvidence:
+        if not isinstance(d, dict):
+            return cls()
+        return cls(**_filter_fields(cls, d))
+
 
 @dataclass
 class PeakRow:
-    rank: str
-    system: str
-    freq_hz: str
-    order: str
-    peak_db: str
-    strength_db: str
-    speed_band: str
-    relevance: str
+    rank: str = ""
+    system: str = ""
+    freq_hz: str = ""
+    order: str = ""
+    peak_db: str = ""
+    strength_db: str = ""
+    speed_band: str = ""
+    relevance: str = ""
+
+    @classmethod
+    def from_dict(cls, d: Any) -> PeakRow:
+        if not isinstance(d, dict):
+            return cls()
+        return cls(**_filter_fields(cls, d))
 
 
 @dataclass
@@ -127,3 +188,18 @@ class ReportTemplateData:
     top_causes: list[dict] = field(default_factory=list)
     sensor_intensity_by_location: list[dict] = field(default_factory=list)
     location_hotspot_rows: list[dict] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> ReportTemplateData:
+        """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
+        filtered = _filter_fields(cls, d)
+        filtered["car"] = CarMeta.from_dict(d.get("car"))
+        filtered["observed"] = ObservedSignature.from_dict(d.get("observed"))
+        filtered["system_cards"] = [
+            SystemFindingCard.from_dict(c) for c in d.get("system_cards", [])
+        ]
+        filtered["next_steps"] = [NextStep.from_dict(s) for s in d.get("next_steps", [])]
+        filtered["data_trust"] = [DataTrustItem.from_dict(t) for t in d.get("data_trust", [])]
+        filtered["pattern_evidence"] = PatternEvidence.from_dict(d.get("pattern_evidence"))
+        filtered["peak_rows"] = [PeakRow.from_dict(r) for r in d.get("peak_rows", [])]
+        return cls(**filtered)

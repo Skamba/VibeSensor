@@ -55,56 +55,7 @@ def _build_report_data(summary: dict) -> ReportTemplateData:
 def _roundtrip_report_data(rd: ReportTemplateData) -> ReportTemplateData:
     """Simulate persistence round-trip (dict → ReportTemplateData)."""
     d = asdict(rd)
-    # Reconstruct sub-dataclasses
-    from vibesensor.report.report_data import (
-        CarMeta,
-        DataTrustItem,
-        NextStep,
-        ObservedSignature,
-        PartSuggestion,
-        PatternEvidence,
-        PeakRow,
-        SystemFindingCard,
-    )
-
-    return ReportTemplateData(
-        title=d["title"],
-        run_datetime=d.get("run_datetime"),
-        run_id=d.get("run_id"),
-        duration_text=d.get("duration_text"),
-        start_time_utc=d.get("start_time_utc"),
-        end_time_utc=d.get("end_time_utc"),
-        sample_rate_hz=d.get("sample_rate_hz"),
-        tire_spec_text=d.get("tire_spec_text"),
-        sample_count=d.get("sample_count", 0),
-        sensor_count=d.get("sensor_count", 0),
-        sensor_locations=d.get("sensor_locations", []),
-        sensor_model=d.get("sensor_model"),
-        firmware_version=d.get("firmware_version"),
-        car=CarMeta(**d.get("car", {})),
-        observed=ObservedSignature(**d.get("observed", {})),
-        system_cards=[
-            SystemFindingCard(
-                **{
-                    **sc,
-                    "parts": [PartSuggestion(**p) for p in sc.get("parts", [])],
-                }
-            )
-            for sc in d.get("system_cards", [])
-        ],
-        next_steps=[NextStep(**ns) for ns in d.get("next_steps", [])],
-        data_trust=[DataTrustItem(**dt) for dt in d.get("data_trust", [])],
-        pattern_evidence=PatternEvidence(**d.get("pattern_evidence", {})),
-        peak_rows=[PeakRow(**pr) for pr in d.get("peak_rows", [])],
-        phase_info=d.get("phase_info"),
-        version_marker=d.get("version_marker", ""),
-        lang=d.get("lang", "en"),
-        certainty_tier_key=d.get("certainty_tier_key", "C"),
-        findings=d.get("findings", []),
-        top_causes=d.get("top_causes", []),
-        sensor_intensity_by_location=d.get("sensor_intensity_by_location", []),
-        location_hotspot_rows=d.get("location_hotspot_rows", []),
-    )
+    return ReportTemplateData.from_dict(d)
 
 
 # ---------------------------------------------------------------------------
