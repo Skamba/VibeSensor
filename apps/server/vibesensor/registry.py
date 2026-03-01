@@ -6,13 +6,13 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING, Any
 
+from .domain_models import normalize_sensor_id
 from .protocol import (
     AckMessage,
     DataMessage,
     HelloMessage,
     client_id_hex,
     client_id_mac,
-    parse_client_id,
 )
 
 if TYPE_CHECKING:
@@ -37,10 +37,6 @@ def _sanitize_name(name: str) -> str:
     if not clean:
         return ""
     return clean.encode("utf-8", errors="ignore")[:32].decode("utf-8", errors="ignore")
-
-
-def _normalize_client_id(client_id: str) -> str:
-    return parse_client_id(client_id).hex()
 
 
 @dataclass(slots=True)
@@ -135,7 +131,7 @@ class ClientRegistry:
         return time.monotonic() if now is None else now
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
-        normalized = _normalize_client_id(client_id)
+        normalized = normalize_sensor_id(client_id)
         record = self._clients.get(normalized)
         if record is None:
             default_name = self._user_names.get(normalized, f"client-{normalized[-4:]}")
@@ -280,7 +276,7 @@ class ClientRegistry:
         if not client_id:
             return
         try:
-            normalized = _normalize_client_id(client_id)
+            normalized = normalize_sensor_id(client_id)
         except ValueError:
             return
         with self._lock:
@@ -291,7 +287,7 @@ class ClientRegistry:
         if not client_id:
             return
         try:
-            normalized = _normalize_client_id(client_id)
+            normalized = normalize_sensor_id(client_id)
         except ValueError:
             return
         with self._lock:
@@ -329,7 +325,7 @@ class ClientRegistry:
 
     def remove_client(self, client_id: str) -> bool:
         try:
-            normalized = _normalize_client_id(client_id)
+            normalized = normalize_sensor_id(client_id)
         except ValueError:
             return False
         with self._lock:
@@ -347,7 +343,7 @@ class ClientRegistry:
 
     def get(self, client_id: str) -> ClientRecord | None:
         try:
-            normalized = _normalize_client_id(client_id)
+            normalized = normalize_sensor_id(client_id)
         except ValueError:
             return None
         with self._lock:
