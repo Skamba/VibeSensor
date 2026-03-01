@@ -142,4 +142,4 @@ jobs:
 
       - name: Docker-backed e2e suite (skip already-owned checks)
         run: |
-          python3 tools/tests/run_e2e_parallel.py --shards 2 --fast-e2e
+          python3 tools/tests/run_e2e_parallel.py --shards 3 --fast-e2e

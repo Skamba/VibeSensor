@@ -159,7 +159,7 @@ def wait_for(
     predicate,
     *,
     timeout_s: float,
-    interval_s: float = 1.0,
+    interval_s: float = 0.5,
     message: str,
 ):
     deadline = time.monotonic() + timeout_s
@@ -187,7 +187,7 @@ def wait_run_status(
     return wait_for(
         _check,
         timeout_s=timeout_s,
-        interval_s=1.0,
+        interval_s=0.5,
         message=f"Run {run_id} did not reach statuses {statuses}",
     )
 
