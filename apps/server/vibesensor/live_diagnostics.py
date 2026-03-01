@@ -23,6 +23,15 @@ SOURCE_KEYS = ("engine", "driveshaft", "wheel", "other")
 SEVERITY_KEYS = ("l5", "l4", "l3", "l2", "l1")
 LOGGER = logging.getLogger(__name__)
 
+_MULTI_SYNC_WINDOW_MS = 800
+"""Sensor sync window for multi-client alignment (milliseconds)."""
+
+_MULTI_FREQ_BIN_HZ = 1.5
+"""Frequency bin width for multi-sensor correlation (Hz)."""
+
+_HEARTBEAT_EMIT_INTERVAL_MS = 3000
+"""Minimum interval between WebSocket heartbeat emissions (milliseconds)."""
+
 _PHASE_HISTORY_MAX = 5
 _MATRIX_WINDOW_MS = 5 * 60 * 1000
 
@@ -123,9 +132,9 @@ class LiveDiagnosticsEngine:
         self._matrix_seconds_events: deque[_MatrixSecondsEvent] = deque(maxlen=10_000)
         self._sensor_trackers: dict[str, _TrackerLevelState] = {}
         self._combined_trackers: dict[str, _TrackerLevelState] = {}
-        self._multi_sync_window_ms = 800
-        self._multi_freq_bin_hz = 1.5
-        self._heartbeat_emit_ms = 3000
+        self._multi_sync_window_ms = _MULTI_SYNC_WINDOW_MS
+        self._multi_freq_bin_hz = _MULTI_FREQ_BIN_HZ
+        self._heartbeat_emit_ms = _HEARTBEAT_EMIT_INTERVAL_MS
         self._latest_events: list[dict[str, Any]] = []
         self._latest_findings: list[dict[str, Any]] = []
         self._active_levels_by_source: dict[str, dict[str, Any]] = {}
