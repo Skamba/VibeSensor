@@ -636,7 +636,14 @@ def create_router(state: RuntimeState) -> APIRouter:
                     media_type="application/pdf",
                     headers=pdf_headers,
                 )
-            pdf = await asyncio.to_thread(_build_pdf)
+            try:
+                pdf = await asyncio.to_thread(_build_pdf)
+            except Exception as exc:
+                LOGGER.warning("PDF generation failed for run %s", run_id, exc_info=True)
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"PDF generation failed: {exc}",
+                ) from exc
             _cache_put(cache_key, pdf)
         return Response(
             content=pdf,

@@ -266,3 +266,16 @@ class TestCertaintyTierNL:
             assert (
                 "hypothese" in card.system_name.lower() or "hypothesis" in card.system_name.lower()
             )
+
+
+class TestCertaintyLabelLanguageFallback:
+    """Unknown lang values must fall back to English."""
+
+    def test_unknown_lang_falls_back_to_en(self):
+        from vibesensor.analysis.strength_labels import certainty_label
+
+        level_key, label, pct_text, reason = certainty_label(0.80, lang="xx")
+        assert level_key == "high"
+        assert label == "High"
+        # reason should be the English text (not KeyError)
+        assert reason

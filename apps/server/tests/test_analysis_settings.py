@@ -66,6 +66,14 @@ def test_tire_circumference_returns_none_for_non_finite_values() -> None:
     assert tire_circumference_m_from_spec(285.0, inf, 21.0) is None
 
 
+def test_tire_circumference_deflection_factor_above_one_ignored() -> None:
+    """Deflection factor > 1.0 is physically unrealistic and must be ignored."""
+    no_deflection = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=None)
+    above_one = tire_circumference_m_from_spec(285.0, 30.0, 21.0, deflection_factor=1.5)
+    assert no_deflection is not None and above_one is not None
+    assert abs(above_one - no_deflection) < 1e-9  # factor ignored
+
+
 def test_wheel_hz_from_speed_mps_returns_none_for_non_finite_values() -> None:
     assert wheel_hz_from_speed_mps(nan, 2.0) is None
     assert wheel_hz_from_speed_mps(20.0, inf) is None

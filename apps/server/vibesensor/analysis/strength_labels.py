@@ -194,7 +194,8 @@ def certainty_label(
         sensor_count=sensor_count,
         has_reference_gaps=has_reference_gaps,
     )
-    reason = _CERTAINTY_REASONS[reason_key][lang]
+    reason_texts = _CERTAINTY_REASONS[reason_key]
+    reason = reason_texts.get(lang) or reason_texts["en"]
     return (level_key, label, pct_text, reason)
 
 

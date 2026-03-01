@@ -138,6 +138,10 @@ class ServerConfig:
     host: str
     port: int
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.port, int) or not (1 <= self.port <= 65535):
+            raise ValueError(f"ServerConfig.port must be 1–65535, got {self.port!r}")
+
 
 @dataclass(slots=True)
 class UDPConfig:
@@ -146,6 +150,16 @@ class UDPConfig:
     control_host: str
     control_port: int
     data_queue_maxsize: int
+
+    def __post_init__(self) -> None:
+        for name in ("data_port", "control_port"):
+            val = getattr(self, name)
+            if not isinstance(val, int) or not (1 <= val <= 65535):
+                raise ValueError(f"UDPConfig.{name} must be 1–65535, got {val!r}")
+        if not isinstance(self.data_queue_maxsize, int) or self.data_queue_maxsize < 1:
+            raise ValueError(
+                f"UDPConfig.data_queue_maxsize must be ≥1, got {self.data_queue_maxsize!r}"
+            )
 
 
 @dataclass(slots=True)
@@ -245,6 +259,17 @@ class LoggingConfig:
     history_db_path: Path
     persist_history_db: bool
     shutdown_analysis_timeout_s: float
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.metrics_log_hz, int) or self.metrics_log_hz < 1:
+            object.__setattr__(self, "metrics_log_hz", max(1, int(self.metrics_log_hz or 1)))
+        if not isinstance(self.no_data_timeout_s, (int, float)) or self.no_data_timeout_s < 0:
+            object.__setattr__(self, "no_data_timeout_s", 15.0)
+        if (
+            not isinstance(self.shutdown_analysis_timeout_s, (int, float))
+            or self.shutdown_analysis_timeout_s < 0
+        ):
+            object.__setattr__(self, "shutdown_analysis_timeout_s", 30.0)
 
 
 @dataclass(slots=True)
