@@ -15,18 +15,13 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from ..constants import WEAK_SPATIAL_DOMINANCE_THRESHOLD
+from ..constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ, WEAK_SPATIAL_DOMINANCE_THRESHOLD
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
 
 SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
 SPEED_MIN_POINTS = 8
-
-# Minimum realistic MEMS accelerometer noise floor (~0.001 g).
-# Used as the lower bound for SNR computations to prevent ratio blow-up
-# when the measured floor is near zero (sensor artifact / perfectly clean signal).
-MEMS_NOISE_FLOOR_G = 0.001
 
 ORDER_TOLERANCE_REL = 0.08
 ORDER_TOLERANCE_MIN_HZ = 0.5
@@ -36,12 +31,6 @@ ORDER_MIN_CONFIDENCE = 0.25
 ORDER_CONSTANT_SPEED_MIN_MATCH_RATE = 0.55
 CONSTANT_SPEED_STDDEV_KMH = 0.5
 
-# Minimum frequency for analysis peaks.  Sub-road-resonance content
-# (body sway, suspension heave) is not actionable for drivetrain
-# diagnostics and dilutes findings.  New data is already filtered at
-# the FFT level via ``spectrum_min_hz``; this constant protects the
-# report pipeline against old recorded runs.
-MIN_ANALYSIS_FREQ_HZ = 5.0
 STEADY_SPEED_STDDEV_KMH = 2.0
 STEADY_SPEED_RANGE_KMH = 8.0
 
