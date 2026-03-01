@@ -132,7 +132,11 @@ def tire_circumference_m_from_spec(
     # Under vehicle weight the effective rolling circumference is shorter
     # than the unloaded specification diameter, which shifts all predicted
     # rotational-order frequencies upward to match reality.
-    if deflection_factor is not None and isfinite(deflection_factor) and deflection_factor > 0:
+    if (
+        deflection_factor is not None
+        and isfinite(deflection_factor)
+        and 0 < deflection_factor <= 1.0
+    ):
         circumference *= deflection_factor
     return circumference
 
