@@ -58,7 +58,8 @@ from .api_models import (
     UpdateStatusResponse,
 )
 from .locations import all_locations, label_for_code
-from .protocol import client_id_mac, parse_client_id
+from .domain_models import normalize_sensor_id
+from .protocol import client_id_mac
 from .report.pdf_builder import build_report_pdf
 from .runlog import bounded_sample as _bounded_sample  # noqa: F401  # re-exported for tests
 
@@ -154,7 +155,7 @@ def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
 
 def _normalize_client_id_or_400(client_id: str) -> str:
     try:
-        return parse_client_id(client_id).hex()
+        return normalize_sensor_id(client_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid client_id") from exc
 
@@ -694,7 +695,7 @@ def create_router(state: RuntimeState) -> APIRouter:
         selected = ws.query_params.get("client_id")
         if selected is not None:
             try:
-                selected = parse_client_id(selected).hex()
+                selected = normalize_sensor_id(selected)
             except ValueError:
                 selected = None
         await ws.accept()
@@ -713,7 +714,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                         if value is None:
                             await state.ws_hub.update_selected_client(ws, None)
                         elif isinstance(value, str):
-                            normalized = parse_client_id(value).hex()
+                            normalized = normalize_sensor_id(value)
                             await state.ws_hub.update_selected_client(ws, normalized)
                     except ValueError:
                         continue
