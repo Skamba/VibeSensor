@@ -43,7 +43,14 @@ def main() -> int:
 
     out_pdf = args.output or args.input.with_name(f"{args.input.stem}_report.pdf")
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
-    out_pdf.write_bytes(build_report_pdf(map_summary(summary)))
+    try:
+        out_pdf.write_bytes(build_report_pdf(map_summary(summary)))
+    except Exception as exc:
+        print(
+            f"Error: PDF generation failed: {exc}",
+            file=__import__("sys").stderr,
+        )
+        return 1
     print(f"wrote report: {out_pdf}")
 
     if args.summary_json is not None:

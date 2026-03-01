@@ -210,7 +210,9 @@ class WebSocketHub:
         interval = 1.0 / max(1, hz)
         _consecutive_failures = 0
         _MAX_CONSECUTIVE_FAILURES = 10
+        loop = asyncio.get_running_loop()
         while True:
+            tick_start = loop.time()
             try:
                 if on_tick is not None:
                     on_tick()
@@ -227,4 +229,5 @@ class WebSocketHub:
                     await asyncio.sleep(interval * 5)
                 else:
                     LOGGER.warning("WebSocket broadcast tick failed; will retry.", exc_info=True)
-            await asyncio.sleep(interval)
+            elapsed = loop.time() - tick_start
+            await asyncio.sleep(max(0, interval - elapsed))

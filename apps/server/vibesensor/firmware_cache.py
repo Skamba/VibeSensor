@@ -255,9 +255,11 @@ class GitHubReleaseFetcher:
             tmp_fd, tmp_path = tempfile.mkstemp(
                 dir=str(dest.parent), suffix=".dl_tmp"
             )
+            fdopen_ok = False
             try:
                 total = 0
                 with os.fdopen(tmp_fd, "wb") as tmp_f:
+                    fdopen_ok = True
                     while True:
                         chunk = resp.read(1024 * 1024)  # 1 MB at a time
                         if not chunk:
@@ -271,6 +273,13 @@ class GitHubReleaseFetcher:
                         tmp_f.write(chunk)
                 os.replace(tmp_path, str(dest))
             except BaseException:
+                # If os.fdopen() failed, the raw fd is still open; close it.
+                # Once os.fdopen() succeeds it owns the fd (closed by `with`).
+                if not fdopen_ok:
+                    try:
+                        os.close(tmp_fd)
+                    except OSError:
+                        pass
                 # Clean up partial temp file on any failure
                 try:
                     os.unlink(tmp_path)
@@ -423,6 +432,8 @@ class FirmwareCache:
         # Download to a temporary directory
         self._cache_dir.mkdir(parents=True, exist_ok=True)
         staging_dir = Path(tempfile.mkdtemp(prefix="fw-staging-", dir=str(self._cache_dir)))
+        target = self.current_dir
+        old_current: Path | None = None
         try:
             extract_dir = fetcher.download_bundle(asset, staging_dir)
 
@@ -445,8 +456,8 @@ class FirmwareCache:
             _write_meta(extract_dir, meta)
 
             # Atomic activation: rename staging → current
-            target = self.current_dir
-            old_current = None
+            # NOTE: target/old_current initialised before try (line above)
+            # so the except handler can always reference them safely.
             if target.exists():
                 old_current = target.with_name("current.old")
                 if old_current.exists():

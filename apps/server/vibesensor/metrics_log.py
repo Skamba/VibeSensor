@@ -954,10 +954,14 @@ class MetricsLogger:
         while True:
             try:
                 timestamp_utc = utc_now_iso()
-                live_t_s = max(0.0, time.monotonic() - self._live_start_mono_s)
+                # Snapshot mutable session state under lock to prevent
+                # TOCTOU with concurrent start_logging / stop_logging.
+                with self._lock:
+                    _live_start = self._live_start_mono_s
+                    run_id_for_live = self._run_id or "live"
+                live_t_s = max(0.0, time.monotonic() - _live_start)
                 # Build sample records off the event loop to avoid blocking
                 # it during lock acquisition and per-client iteration.
-                run_id_for_live = self._run_id or "live"
                 live_rows = await asyncio.to_thread(
                     self._build_sample_records,
                     run_id=run_id_for_live,

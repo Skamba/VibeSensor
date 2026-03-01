@@ -619,6 +619,15 @@ def create_router(state: RuntimeState) -> APIRouter:
         run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
         run = await _async_require_run(run_id)
+        if run.get("status") == "analyzing":
+            raise HTTPException(
+                status_code=409, detail="Analysis is still in progress"
+            )
+        if run.get("status") == "error":
+            raise HTTPException(
+                status_code=422,
+                detail=run.get("error_message", "Analysis failed"),
+            )
         analysis = run.get("analysis")
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
@@ -722,16 +731,28 @@ def create_router(state: RuntimeState) -> APIRouter:
                         run_details["analysis"] = {
                             k: v for k, v in analysis.items() if not k.startswith("_")
                         }
-                    archive.writestr(
-                        f"{safe_name}.json",
-                        json.dumps(
+                    try:
+                        details_json = json.dumps(
                             run_details,
                             ensure_ascii=False,
                             indent=2,
                             sort_keys=True,
                             allow_nan=False,
-                        ),
-                    )
+                        )
+                    except ValueError:
+                        # Analysis data may contain NaN/Inf floats;
+                        # fall back so the export still succeeds.
+                        LOGGER.warning(
+                            "Export run %s: analysis contains non-finite floats", run_id
+                        )
+                        details_json = json.dumps(
+                            run_details,
+                            ensure_ascii=False,
+                            indent=2,
+                            sort_keys=True,
+                            allow_nan=True,
+                        )
+                    archive.writestr(f"{safe_name}.json", details_json)
 
                 spool.seek(0)
             except BaseException:

@@ -213,7 +213,7 @@ def _spectrogram_from_peaks(
                 if len(effective_amps) >= 2
                 else effective_amps[-1]
             )
-            presence_ratio = len(effective_amps) / max(1, x_sample_counts.get(x_key, 1))
+            presence_ratio = min(1.0, len(effective_amps) / max(1, x_sample_counts.get(x_key, 1)))
             val = (presence_ratio**2) * p95_amp
         else:
             val = max(amp for amp, _floor in amp_floor_pairs)
@@ -314,7 +314,7 @@ def _top_peaks_table_rows(
         amps = sorted(bucket["amps"])
         floor_amps = sorted(float(v) for v in bucket.get("floor_amps", []))
         count = len(amps)
-        presence_ratio = count / max(1, n_samples)
+        presence_ratio = min(1.0, count / max(1, n_samples))
         median_amp = percentile(amps, 0.50) if count >= 2 else (amps[0] if amps else 0.0)
         p95_amp = percentile(amps, 0.95) if count >= 2 else (amps[-1] if amps else 0.0)
         max_amp = amps[-1] if amps else 0.0
