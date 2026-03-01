@@ -38,7 +38,10 @@ class TestValidateUrl:
 
 
 class TestReleaseFetcherConfig:
-    def test_defaults(self) -> None:
+    def test_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("VIBESENSOR_SERVER_REPO", raising=False)
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        monkeypatch.delenv("VIBESENSOR_ROLLBACK_DIR", raising=False)
         config = ReleaseFetcherConfig()
         assert config.server_repo == "Skamba/VibeSensor"
         assert config.github_token == ""
@@ -201,7 +204,8 @@ class TestServerReleaseFetcher:
         assert path.read_bytes() == wheel_content
         assert release.sha256  # Should be populated after download
 
-    def test_api_headers_without_token(self) -> None:
+    def test_api_headers_without_token(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
         config = ReleaseFetcherConfig(server_repo="a/b", github_token="")
         fetcher = ServerReleaseFetcher(config)
         headers = fetcher._api_headers()

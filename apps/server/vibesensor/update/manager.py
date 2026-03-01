@@ -196,10 +196,7 @@ class UpdateManager:
         the job was interrupted by a crash/restart.  Mark it failed and
         attempt best-effort network cleanup.
         """
-        if (
-            self._status.state != UpdateState.running
-            or self._status.finished_at is not None
-        ):
+        if self._status.state != UpdateState.running or self._status.finished_at is not None:
             return
 
         LOGGER.warning("Detected interrupted update job; marking as failed and cleaning up")
