@@ -15,7 +15,6 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +44,7 @@ from .live_diagnostics import LiveDiagnosticsEngine
 from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
 from .registry import ClientRegistry
+from .runlog import utc_now_iso
 from .settings_store import SettingsStore
 from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
@@ -288,7 +288,7 @@ class RuntimeState:
         speed_mps = resolution.speed_mps
         payload: dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,
-            "server_time": datetime.now(UTC).isoformat(),
+            "server_time": utc_now_iso(),
             "speed_mps": speed_mps,
             "clients": clients,
             "selected_client_id": active,

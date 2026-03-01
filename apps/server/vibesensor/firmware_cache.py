@@ -439,12 +439,12 @@ class FirmwareCache:
             validate_bundle(extract_dir)
 
             # Write metadata
-            import datetime
+            from .runlog import utc_now_iso
 
             meta = BundleMeta(
                 tag=tag,
                 asset=asset_name,
-                timestamp=datetime.datetime.now(datetime.UTC).isoformat(),
+                timestamp=utc_now_iso(),
                 sha256=sha,
                 source="downloaded",
             )

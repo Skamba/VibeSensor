@@ -18,12 +18,13 @@ import math
 import sqlite3
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import UTC, datetime
 from pathlib import Path
 from threading import RLock
 from typing import Any
 
 from .domain_models import SensorFrame
+from .json_utils import sanitize_value
+from .runlog import utc_now_iso
 
 LOGGER = logging.getLogger(__name__)
 
@@ -261,23 +262,11 @@ class HistoryDB:
 
     @staticmethod
     def _sanitize_for_json(value: Any) -> Any:
-        # Numpy array → Python list (check ndim to distinguish from scalars).
-        if hasattr(value, "tolist") and hasattr(value, "ndim"):
-            value = value.tolist()
-        # Numpy scalar → native Python type via .item().
-        elif hasattr(value, "item"):
-            value = value.item()
-        if isinstance(value, float):
-            return value if math.isfinite(value) else None
-        if isinstance(value, dict):
-            return {k: HistoryDB._sanitize_for_json(v) for k, v in value.items()}
-        if isinstance(value, (list, tuple)):
-            return [HistoryDB._sanitize_for_json(v) for v in value]
-        return value
+        return sanitize_value(value)
 
     @classmethod
     def _safe_json_dumps(cls, value: Any) -> str:
-        return json.dumps(cls._sanitize_for_json(value), ensure_ascii=False, allow_nan=False)
+        return json.dumps(sanitize_value(value), ensure_ascii=False, allow_nan=False)
 
     @staticmethod
     def _safe_json_loads(value: str | None, *, context: str) -> Any | None:
@@ -339,7 +328,7 @@ class HistoryDB:
         start_time_utc: str,
         metadata: dict[str, Any],
     ) -> None:
-        now = datetime.now(UTC).isoformat()
+        now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
@@ -441,7 +430,7 @@ class HistoryDB:
         return d
 
     def finalize_run(self, run_id: str, end_time_utc: str) -> None:
-        now = datetime.now(UTC).isoformat()
+        now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'analyzing', end_time_utc = ?, "
@@ -472,7 +461,7 @@ class HistoryDB:
         single transaction so that a crash between the two cannot leave the
         run in an inconsistent state.
         """
-        now = datetime.now(UTC).isoformat()
+        now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ?, status = 'analyzing', "
@@ -507,7 +496,7 @@ class HistoryDB:
             return cur.rowcount > 0, None
 
     def store_analysis(self, run_id: str, analysis: dict[str, Any]) -> None:
-        now = datetime.now(UTC).isoformat()
+        now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'complete', analysis_json = ?, "
@@ -530,7 +519,7 @@ class HistoryDB:
                     )
 
     def store_analysis_error(self, run_id: str, error: str) -> None:
-        now = datetime.now(UTC).isoformat()
+        now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ?, "
@@ -812,7 +801,7 @@ class HistoryDB:
         return self._safe_json_loads(row[0], context=f"setting {key}")
 
     def set_setting(self, key: str, value: Any) -> None:
-        now = datetime.now(UTC).isoformat()
+        now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?) "
@@ -836,7 +825,7 @@ class HistoryDB:
         return {row[0]: row[1] for row in rows}
 
     def upsert_client_name(self, client_id: str, name: str) -> None:
-        now = datetime.now(UTC).isoformat()
+        now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
                 "INSERT INTO client_names (client_id, name, updated_at) VALUES (?, ?, ?) "

@@ -3,52 +3,17 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import math
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
 
 from fastapi import WebSocket
+
+from .json_utils import sanitize_for_json  # noqa: F401 – re-exported for backwards compat
 
 LOGGER = logging.getLogger(__name__)
 
 _WS_DEBUG = os.environ.get("VIBESENSOR_WS_DEBUG", "0") == "1"
-
-
-def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
-    """Recursively replace non-finite floats (NaN, Inf, -Inf) with ``None``.
-
-    This ensures the resulting structure can be serialised with
-    ``json.dumps(allow_nan=False)`` and produces RFC-8259 compliant JSON that
-    any standard ``JSON.parse()`` implementation can consume.
-
-    Returns the sanitised object and a boolean flag indicating whether any
-    non-finite value was encountered.
-    """
-    found_non_finite = False
-
-    def _walk(v: Any) -> Any:
-        nonlocal found_non_finite
-        # Numpy array → Python list (check ndim to distinguish from scalars).
-        if hasattr(v, "tolist") and hasattr(v, "ndim"):
-            v = v.tolist()
-        # Numpy scalar → native Python type via .item().
-        elif hasattr(v, "item"):
-            v = v.item()
-        if isinstance(v, float):
-            if math.isfinite(v):
-                return v
-            found_non_finite = True
-            return None
-        if isinstance(v, dict):
-            return {k: _walk(val) for k, val in v.items()}
-        if isinstance(v, (list, tuple)):
-            return [_walk(item) for item in v]
-        return v
-
-    cleaned = _walk(obj)
-    return cleaned, found_non_finite
 
 
 # Timing constants for WebSocket broadcast
@@ -191,7 +156,7 @@ class WebSocketHub:
                             if isinstance(cs, dict) and cs.get("freq"):
                                 has_per_client_freq = True
                                 break
-                except Exception:
+                except Exception:  # best-effort debug parsing; never block broadcast
                     pass
                 LOGGER.debug(
                     "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",

@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.runlog import as_float_or_none
+
 # ------------------------------------------------------------------
 # 1. pdf_builder confidence guard (integration-level)
 # ------------------------------------------------------------------
@@ -161,34 +163,22 @@ class TestDriveshaftHz:
 
 
 class TestAsFloatOrNone:
-    """_as_float_or_none must reject NaN and Inf."""
+    """as_float_or_none must reject NaN and Inf."""
 
     def test_nan_returns_none(self) -> None:
-        from vibesensor.domain_models import _as_float_or_none
-
-        assert _as_float_or_none(float("nan")) is None
+        assert as_float_or_none(float("nan")) is None
 
     def test_inf_returns_none(self) -> None:
-        from vibesensor.domain_models import _as_float_or_none
-
-        assert _as_float_or_none(float("inf")) is None
+        assert as_float_or_none(float("inf")) is None
 
     def test_valid_float(self) -> None:
-        from vibesensor.domain_models import _as_float_or_none
-
-        assert _as_float_or_none(3.14) == pytest.approx(3.14)
+        assert as_float_or_none(3.14) == pytest.approx(3.14)
 
     def test_string_number(self) -> None:
-        from vibesensor.domain_models import _as_float_or_none
-
-        assert _as_float_or_none("42.0") == pytest.approx(42.0)
+        assert as_float_or_none("42.0") == pytest.approx(42.0)
 
     def test_none_returns_none(self) -> None:
-        from vibesensor.domain_models import _as_float_or_none
-
-        assert _as_float_or_none(None) is None
+        assert as_float_or_none(None) is None
 
     def test_non_numeric_string(self) -> None:
-        from vibesensor.domain_models import _as_float_or_none
-
-        assert _as_float_or_none("hello") is None
+        assert as_float_or_none("hello") is None
