@@ -12,9 +12,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 _WRAPPER_SCRIPT = (
-    Path(__file__).resolve().parent.parent.parent
-    / "scripts"
-    / "vibesensor_update_sudo.sh"
+    Path(__file__).resolve().parent.parent.parent / "scripts" / "vibesensor_update_sudo.sh"
 )
 
 

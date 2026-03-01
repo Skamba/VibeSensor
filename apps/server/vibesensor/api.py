@@ -689,9 +689,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                 max_size=_EXPORT_SPOOL_THRESHOLD
             )
             try:
-                with zipfile.ZipFile(
-                    spool, mode="w", compression=zipfile.ZIP_DEFLATED
-                ) as archive:
+                with zipfile.ZipFile(spool, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
                     # Write CSV with fixed column schema (single pass).
                     with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
                         raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")

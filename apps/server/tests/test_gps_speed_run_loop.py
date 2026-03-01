@@ -141,6 +141,7 @@ async def test_run_reconnects_on_connection_failure(
 @pytest.mark.asyncio
 async def test_run_does_not_swallow_processing_programming_errors() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
+
     def _raise_bug(payload: dict[str, object]) -> int:
         raise RuntimeError("bug")
 
