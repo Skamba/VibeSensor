@@ -147,94 +147,9 @@ def _safe_filename(name: str) -> str:
 
 def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
     """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
-    import dataclasses
+    from .report.report_data import ReportTemplateData
 
-    from .report.report_data import (
-        CarMeta,
-        DataTrustItem,
-        NextStep,
-        ObservedSignature,
-        PartSuggestion,
-        PatternEvidence,
-        PeakRow,
-        ReportTemplateData,
-        SystemFindingCard,
-    )
-
-    def _filter_fields(cls: type, raw: dict) -> dict:
-        """Keep only keys that match declared dataclass fields."""
-        valid = {f.name for f in dataclasses.fields(cls)}
-        return {k: v for k, v in raw.items() if k in valid}
-
-    car = d.get("car") or {}
-    obs = d.get("observed") or {}
-    pe = d.get("pattern_evidence") or {}
-    return ReportTemplateData(
-        title=d.get("title", ""),
-        run_datetime=d.get("run_datetime"),
-        run_id=d.get("run_id"),
-        duration_text=d.get("duration_text"),
-        start_time_utc=d.get("start_time_utc"),
-        end_time_utc=d.get("end_time_utc"),
-        sample_rate_hz=d.get("sample_rate_hz"),
-        tire_spec_text=d.get("tire_spec_text"),
-        sample_count=d.get("sample_count", 0),
-        sensor_count=d.get("sensor_count", 0),
-        sensor_locations=d.get("sensor_locations", []),
-        sensor_model=d.get("sensor_model"),
-        firmware_version=d.get("firmware_version"),
-        car=(CarMeta(**_filter_fields(CarMeta, car)) if isinstance(car, dict) else CarMeta()),
-        observed=(
-            ObservedSignature(**_filter_fields(ObservedSignature, obs))
-            if isinstance(obs, dict)
-            else ObservedSignature()
-        ),
-        system_cards=[
-            SystemFindingCard(
-                **{
-                    **_filter_fields(SystemFindingCard, c),
-                    "parts": [
-                        (
-                            PartSuggestion(**_filter_fields(PartSuggestion, p))
-                            if isinstance(p, dict)
-                            else PartSuggestion(name=str(p))
-                        )
-                        for p in (c.get("parts") or [])
-                    ],
-                }
-            )
-            for c in d.get("system_cards", [])
-            if isinstance(c, dict)
-        ],
-        next_steps=[
-            NextStep(**_filter_fields(NextStep, s))
-            for s in d.get("next_steps", [])
-            if isinstance(s, dict)
-        ],
-        data_trust=[
-            DataTrustItem(**_filter_fields(DataTrustItem, t))
-            for t in d.get("data_trust", [])
-            if isinstance(t, dict)
-        ],
-        pattern_evidence=(
-            PatternEvidence(**_filter_fields(PatternEvidence, pe))
-            if isinstance(pe, dict)
-            else PatternEvidence()
-        ),
-        peak_rows=[
-            PeakRow(**_filter_fields(PeakRow, r))
-            for r in d.get("peak_rows", [])
-            if isinstance(r, dict)
-        ],
-        phase_info=d.get("phase_info"),
-        version_marker=d.get("version_marker", ""),
-        lang=d.get("lang", "en"),
-        certainty_tier_key=d.get("certainty_tier_key", "C"),
-        findings=d.get("findings", []),
-        top_causes=d.get("top_causes", []),
-        sensor_intensity_by_location=d.get("sensor_intensity_by_location", []),
-        location_hotspot_rows=d.get("location_hotspot_rows", []),
-    )
+    return ReportTemplateData.from_dict(d)
 
 
 def _normalize_client_id_or_400(client_id: str) -> str:
