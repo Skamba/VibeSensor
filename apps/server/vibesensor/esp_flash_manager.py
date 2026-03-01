@@ -199,6 +199,7 @@ class EspFlashManager:
         self._cancel_event = asyncio.Event()
         self._job_counter = 0
         self._logs: list[str] = []
+        self._max_log_lines = 2000
         self._history: list[EspFlashHistoryEntry] = []
 
     @property
@@ -242,6 +243,8 @@ class EspFlashManager:
 
     def _append_log(self, line: str) -> None:
         self._logs.append(line)
+        if len(self._logs) > self._max_log_lines:
+            self._logs = self._logs[-1000:]
         self._status.log_count = len(self._logs)
         LOGGER.debug("esp flash log line recorded")
 
@@ -434,7 +437,7 @@ class EspFlashManager:
                 return
             self._status.phase = "done"
             self._finalize(state=EspFlashState.success)
-        except (OSError, ValueError) as exc:
+        except Exception as exc:
             self._status.exit_code = 1
             self._append_log(str(exc))
             self._finalize(state=EspFlashState.failed, error=f"Flash failed: {exc}")

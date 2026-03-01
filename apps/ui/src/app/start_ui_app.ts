@@ -171,7 +171,7 @@ export function startUiApp(): void {
     document.documentElement.lang = state.lang;
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
-      if (key) el.innerHTML = t(key);
+      if (key) el.textContent = t(key);
     });
     if (els.languageSelect) els.languageSelect.value = state.lang;
     if (els.speedUnitSelect) els.speedUnitSelect.value = state.speedUnit;

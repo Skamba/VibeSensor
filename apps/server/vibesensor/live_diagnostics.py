@@ -54,7 +54,10 @@ def _copy_matrix(
 def _combine_amplitude_strength_db(values_db: list[float]) -> float:
     if not values_db:
         return SILENCE_DB
-    linear = [10.0 ** (float(value) / 20.0) for value in values_db]
+    linear = [
+        10.0 ** (max(-60.0, min(200.0, float(value))) / 20.0)
+        for value in values_db
+    ]
     mean_linear = sum(linear) / max(1, len(linear))
     if mean_linear <= 0.0:
         return SILENCE_DB
@@ -89,6 +92,7 @@ class _TrackerLevelState:
     last_sensor_location: str = ""
     last_emitted_ms: int = 0
     severity_state: dict[str, Any] | None = None
+    _silence_ticks: int = 0
 
 
 @dataclass(slots=True)
@@ -110,8 +114,8 @@ class _MatrixSecondsEvent:
 class LiveDiagnosticsEngine:
     def __init__(self) -> None:
         self._matrix = _new_matrix()
-        self._matrix_count_events: deque[_MatrixCountEvent] = deque(maxlen=100_000)
-        self._matrix_seconds_events: deque[_MatrixSecondsEvent] = deque(maxlen=100_000)
+        self._matrix_count_events: deque[_MatrixCountEvent] = deque(maxlen=10_000)
+        self._matrix_seconds_events: deque[_MatrixSecondsEvent] = deque(maxlen=10_000)
         self._sensor_trackers: dict[str, _TrackerLevelState] = {}
         self._combined_trackers: dict[str, _TrackerLevelState] = {}
         self._multi_sync_window_ms = 800
@@ -124,7 +128,9 @@ class LiveDiagnosticsEngine:
         self._active_levels_by_location: dict[str, dict[str, Any]] = {}
         self._last_update_ts_ms: int | None = None
         self._last_error: str | None = None
-        self._phase_speed_history: list[tuple[float, float | None]] = []
+        self._phase_speed_history: deque[tuple[float, float | None]] = deque(
+            maxlen=_PHASE_HISTORY_MAX
+        )
         self._current_phase: str = DrivingPhase.IDLE.value
         self._diagnostics_sequence: int = 0
         self._next_event_id: int = 0
@@ -142,7 +148,7 @@ class LiveDiagnosticsEngine:
         self._active_levels_by_location = {}
         self._last_update_ts_ms = None
         self._last_error = None
-        self._phase_speed_history = []
+        self._phase_speed_history = deque(maxlen=_PHASE_HISTORY_MAX)
         self._current_phase = DrivingPhase.IDLE.value
         self._diagnostics_sequence = 0
         self._next_event_id = 0
@@ -360,8 +366,6 @@ class LiveDiagnosticsEngine:
         """Classify the current driving phase from a rolling speed window."""
         speed_kmh: float | None = speed_mps * MPS_TO_KMH if speed_mps is not None else None
         self._phase_speed_history.append((now_s, speed_kmh))
-        if len(self._phase_speed_history) > _PHASE_HISTORY_MAX:
-            self._phase_speed_history = self._phase_speed_history[-_PHASE_HISTORY_MAX:]
         deriv: float | None = None
         valid = [(t, s) for t, s in self._phase_speed_history if s is not None]
         if len(valid) >= 2:
@@ -422,7 +426,7 @@ class LiveDiagnosticsEngine:
                     samples=finding_samples,
                     lang=language,
                 )
-            except ValueError as exc:
+            except Exception as exc:
                 LOGGER.warning("Live diagnostics findings unavailable: %s", exc)
                 self._latest_findings = []
 
@@ -451,7 +455,7 @@ class LiveDiagnosticsEngine:
                 settings=settings or {},
             )
             self._last_error = None
-        except ValueError as exc:
+        except Exception as exc:
             LOGGER.warning(
                 "Live diagnostics update skipped due to invalid spectra payload: %s",
                 exc,
@@ -584,9 +588,15 @@ class LiveDiagnosticsEngine:
         return self.snapshot()
 
     def _decay_unseen_sensor_trackers(self, seen_keys: set[str]) -> None:
-        """Apply silence decay to sensor trackers not seen in the current tick."""
+        """Apply silence decay to sensor trackers not seen in the current tick.
+
+        Trackers that have been at silence for a long time are pruned to
+        prevent unbounded growth of the dict when sensors connect/disconnect.
+        """
+        _PRUNE_SILENCE_TICKS = 60
         for tracker_key, tracker in list(self._sensor_trackers.items()):
             if tracker_key in seen_keys:
+                tracker._silence_ticks = 0
                 continue
             self._apply_severity_to_tracker(
                 tracker,
@@ -594,6 +604,9 @@ class LiveDiagnosticsEngine:
                 sensor_count=1,
                 fallback_db=SILENCE_DB,
             )
+            tracker._silence_ticks += 1
+            if tracker._silence_ticks >= _PRUNE_SILENCE_TICKS:
+                del self._sensor_trackers[tracker_key]
 
     def _collect_active_levels_from_trackers(
         self,

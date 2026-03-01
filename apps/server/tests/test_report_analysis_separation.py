@@ -90,11 +90,12 @@ def test_report_package_imports_without_analysis() -> None:
     analysis_modules_after = {
         name for name in sys.modules if name.startswith("vibesensor.analysis")
     }
-    # Filter out modules that were loaded before this test.
-    # Allow lazy imports inside functions (they only fire at call time).
-    # Static-level imports are caught by the AST test above.
-    # So this test is informational — the AST test is the enforcer.
-    _ = analysis_modules_after - analysis_modules_before
+    # Statically-enforced by the AST test above.  This runtime check catches
+    # module-level side-effect imports that the AST scan cannot detect.
+    new_analysis = analysis_modules_after - analysis_modules_before
+    assert not new_analysis, (
+        f"Importing report modules pulled in analysis modules: {new_analysis}"
+    )
 
 
 # ---------------------------------------------------------------------------

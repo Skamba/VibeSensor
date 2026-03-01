@@ -18,28 +18,6 @@ if TYPE_CHECKING:
 # ── Pure helpers (no external deps) ──────────────────────────────────────
 
 
-def _hex_to_rgb(value: str) -> tuple[int, int, int]:
-    txt = value.strip().lstrip("#")
-    return (int(txt[0:2], 16), int(txt[2:4], 16), int(txt[4:6], 16))
-
-
-def _rgb_to_hex(rgb: tuple[int, int, int]) -> str:
-    return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
-
-
-def color_blend(a: str, b: str, t: float) -> str:
-    t_clamped = max(0.0, min(1.0, t))
-    ar, ag, ab = _hex_to_rgb(a)
-    br, bg, bb = _hex_to_rgb(b)
-    return _rgb_to_hex(
-        (
-            int(round(ar + ((br - ar) * t_clamped))),
-            int(round(ag + ((bg - ag) * t_clamped))),
-            int(round(ab + ((bb - ab) * t_clamped))),
-        )
-    )
-
-
 def _canonical_location(raw: object) -> str:
     token = str(raw or "").strip().lower().replace("_", "-")
     compact = "".join(ch for ch in token if ch.isalnum())

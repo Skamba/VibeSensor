@@ -139,7 +139,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     const band = state.strengthBands.find((b) => b.key === severityKey);
     const cell = state.eventMatrix[sourceKey]?.[severityKey];
     if (!cell || cell.count === 0) return `${t(source?.labelKey || sourceKey)} / ${t(band?.labelKey || severityKey)}\n${t("tooltip.no_events")}`;
-    const parts = [`${t(source?.labelKey || sourceKey)} / ${t(band?.labelKey || severityKey)}`, t("tooltip.total_events", { count: cell.count }), `Seconds: ${fmt(cell.seconds || 0, 1)}`];
+    const parts = [`${t(source?.labelKey || sourceKey)} / ${t(band?.labelKey || severityKey)}`, t("tooltip.total_events", { count: cell.count }), `${t("tooltip.seconds")}: ${fmt(cell.seconds || 0, 1)}`];
     const entries = Object.entries(cell.contributors).sort((a, b) => b[1] - a[1]);
     if (entries.length) {
       parts.push(t("tooltip.by_sensor_scope"));

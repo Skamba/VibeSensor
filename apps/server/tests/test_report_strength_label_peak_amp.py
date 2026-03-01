@@ -66,14 +66,20 @@ def test_map_summary_strength_label_falls_back_to_db_only_without_peak_amp() -> 
     assert data.pattern_evidence.strength_peak_db == 22.0
 
 
-def test_strength_with_peak_appends_only_when_label_lacks_peak_text() -> None:
+def test_strength_with_peak_appends_only_when_label_lacks_db_text() -> None:
+    # Label already contains "dB" → peak suffix should NOT be appended (avoids duplication)
     assert (
         _strength_with_peak("Moderate (22.0 dB)", 0.032, fallback="N/A")
-        == "Moderate (22.0 dB) · 0.0 dB peak"
+        == "Moderate (22.0 dB)"
     )
     assert (
         _strength_with_peak("Moderate (22.0 dB · 0.0 dB peak)", 0.032, fallback="N/A")
         == "Moderate (22.0 dB · 0.0 dB peak)"
+    )
+    # Label without "dB" → peak suffix should be appended
+    assert (
+        _strength_with_peak("Moderate", 15.3, fallback="N/A")
+        == "Moderate · 15.3 dB peak"
     )
 
 

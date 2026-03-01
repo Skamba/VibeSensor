@@ -33,7 +33,8 @@ def _make_processor(**kwargs) -> SignalProcessor:
 
 def test_flush_client_buffer_resets_count_and_write_idx() -> None:
     proc = _make_processor()
-    samples = np.random.randn(500, 3).astype(np.float32)
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((500, 3)).astype(np.float32)
     proc.ingest("c1", samples, sample_rate_hz=800)
 
     buf = proc._buffers["c1"]
@@ -63,7 +64,8 @@ def test_fft_waits_for_new_samples_after_flush() -> None:
     proc = _make_processor(fft_n=fft_n)
 
     # Ingest enough for FFT
-    samples = np.random.randn(fft_n, 3).astype(np.float32)
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((fft_n, 3)).astype(np.float32)
     proc.ingest("c1", samples, sample_rate_hz=800)
     metrics = proc.compute_metrics("c1", sample_rate_hz=800)
     # Should have spectrum data
@@ -73,7 +75,7 @@ def test_fft_waits_for_new_samples_after_flush() -> None:
     proc.flush_client_buffer("c1")
 
     # Ingest fewer than fft_n samples
-    partial = np.random.randn(fft_n // 2, 3).astype(np.float32)
+    partial = np.random.default_rng(43).standard_normal((fft_n // 2, 3)).astype(np.float32)
     proc.ingest("c1", partial, sample_rate_hz=800)
     proc.compute_metrics("c1", sample_rate_hz=800)
     buf = proc._buffers["c1"]

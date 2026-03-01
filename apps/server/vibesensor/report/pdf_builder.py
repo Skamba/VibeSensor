@@ -65,6 +65,7 @@ EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.50
 DISCLAIMER_Y_OFFSET = 5.5 * mm
 DATA_TRUST_LINE_STEP = 3.9 * mm
 CAR_PANEL_TITLE_RESERVE = 18 * mm
+PANEL_HEADER_H = 10.5 * mm
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +90,7 @@ def _strength_with_peak(
     base = _safe(strength_label, fallback)
     if peak_db is None:
         return base
-    if "db peak" in base.lower():
+    if "db" in base.lower():
         return base
     return f"{base} · {peak_db:.1f} dB peak"
 
@@ -120,19 +121,6 @@ def _wrap_lines(text: str, width_pt: float, font_size: int) -> list[str]:
     for paragraph in text.split("\n"):
         lines.extend(textwrap.wrap(paragraph, width=max_chars) or [""])
     return lines
-
-
-def _measure_text_height(
-    text: str,
-    width_pt: float,
-    font_size: int,
-    leading: float | None = None,
-) -> float:
-    """Return the total height consumed by wrapped text."""
-    if leading is None:
-        leading = font_size + 2
-    lines = _wrap_lines(text, width_pt, font_size)
-    return max(len(lines), 1) * leading
 
 
 def _draw_text(
@@ -419,13 +407,13 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
         obs_rows += 1
     obs_step = 4.2 * mm
     obs_content_h = obs_rows * obs_step + 6 * mm  # content + disclaimer reserve
-    obs_h = max(32 * mm, 10.5 * mm + obs_content_h + 4 * mm)
+    obs_h = max(32 * mm, PANEL_HEADER_H + obs_content_h + 4 * mm)
     obs_y = y_cursor - obs_h
     lw = OBSERVED_LABEL_W
 
     _draw_panel(c, m, obs_y, W, obs_h, tr("OBSERVED_SIGNATURE"))
     ox = m + 4 * mm
-    oy = obs_y + obs_h - 10.5 * mm
+    oy = obs_y + obs_h - PANEL_HEADER_H
 
     _draw_kv(c, ox, oy, tr("PRIMARY_SYSTEM"), _safe(data.observed.primary_system, na), label_w=lw)
     oy -= obs_step
@@ -498,7 +486,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
 
     inner_x = m + 4 * mm
     inner_w = W - 8 * mm
-    inner_top = cards_y + cards_h - 10.5 * mm
+    inner_top = cards_y + cards_h - PANEL_HEADER_H
 
     if data.certainty_tier_key == "A" or not cards:
         # Tier A or empty: show neutral message instead of system cards
@@ -547,7 +535,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
     trust_x = m + next_w + GAP
     _draw_panel(c, trust_x, next_y, trust_w, next_h, tr("DATA_TRUST"))
     tx = trust_x + 4 * mm
-    ty = next_y + next_h - 10.5 * mm
+    ty = next_y + next_h - PANEL_HEADER_H
     trust_val_w = trust_w - 8 * mm - DATA_TRUST_LABEL_W
     if data.data_trust:
         for item in data.data_trust[:6]:
@@ -865,7 +853,7 @@ def _draw_pattern_evidence(
     _draw_panel(c, x, y, w, h, tr("PATTERN_EVIDENCE"))
 
     rx = x + 4 * mm
-    ry = y + h - 10.5 * mm
+    ry = y + h - PANEL_HEADER_H
     lw = 28 * mm
     val_w = w - 8 * mm - lw
 

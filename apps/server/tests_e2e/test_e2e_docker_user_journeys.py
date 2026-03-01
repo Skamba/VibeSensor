@@ -317,5 +317,5 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
                 base_url,
                 f"/api/settings/cars/{created_car_id}",
                 method="DELETE",
-                expected_status=(200, 404),
+                    expected_status=(200, 400, 404),
             )

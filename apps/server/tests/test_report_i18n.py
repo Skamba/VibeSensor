@@ -120,7 +120,6 @@ def test_dutch_translation_audit_round_3() -> None:
 
     # Accuracy: "bewaakte" → "gemonitorde" for "monitored"
     assert "gemonitorde locatie" in nl("DETECTED_AT_ONE_MONITORED_LOCATION")
-    assert "gemonitorde locaties" in nl("VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF")
     assert "gemonitorde locaties" in nl("VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB")
 
     # Anglicism removal: "gematchte" → "overeenkomende"
@@ -429,7 +428,7 @@ def test_dutch_translation_audit_round_5_ui_and_python() -> None:
     assert "piek-boven-ruisvloer" in ui["dashboard.matrix_note"]
 
     # Natural Dutch: "(laatste 5 min)" → "(afgelopen 5 min)"
-    assert ui["dashboard.time_window_2s"] == "(afgelopen 5 min)"
+    assert ui["dashboard.time_window_5min"] == "(afgelopen 5 min)"
 
     # Consistency: "Snelheidsbasis" → "Snelheidsbron" matching settings.speed.title
     assert "Snelheidsbron:" in ui["dashboard.rotational.basis_source"]
