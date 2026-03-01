@@ -292,6 +292,52 @@ def test_compute_overlap_empty_lists() -> None:
     assert result.aligned is False
 
 
+def test_compute_overlap_mismatched_lengths() -> None:
+    """_compute_overlap returns zero-overlap when starts/ends lengths differ."""
+    from vibesensor.processing import _compute_overlap
+
+    result = _compute_overlap([1.0, 2.0], [3.0])
+    assert result.overlap_ratio == 0.0
+    assert result.aligned is False
+    assert result.overlap_s == 0.0
+
+
+def test_compute_overlap_single_range() -> None:
+    """_compute_overlap handles a single time range correctly."""
+    from vibesensor.processing import _compute_overlap
+
+    result = _compute_overlap([0.0], [10.0])
+    assert result.overlap_ratio == 1.0
+    assert result.aligned is True
+    assert result.shared_start == 0.0
+    assert result.shared_end == 10.0
+    assert result.overlap_s == 10.0
+
+
+def test_compute_overlap_partial_overlap() -> None:
+    """_compute_overlap correctly computes partial overlap between two ranges."""
+    from vibesensor.processing import _compute_overlap
+
+    result = _compute_overlap([0.0, 5.0], [10.0, 15.0])
+    # Shared: max(0,5)=5 to min(10,15)=10 => 5s overlap
+    # Union: min(0,5)=0 to max(10,15)=15 => 15s
+    assert abs(result.overlap_ratio - 5.0 / 15.0) < 1e-9
+    assert result.shared_start == 5.0
+    assert result.shared_end == 10.0
+    assert result.overlap_s == 5.0
+
+
+def test_compute_overlap_no_overlap() -> None:
+    """_compute_overlap returns zero overlap for disjoint ranges."""
+    from vibesensor.processing import _compute_overlap
+
+    result = _compute_overlap([0.0, 20.0], [10.0, 30.0])
+    # Shared: max(0,20)=20 to min(10,30)=10 => negative => 0
+    assert result.overlap_ratio == 0.0
+    assert result.aligned is False
+    assert result.overlap_s == 0.0
+
+
 def test_metrics_rms_p2p_always_finite() -> None:
     """compute_metrics must return finite rms/p2p even for extreme inputs."""
     sample_rate_hz = 800

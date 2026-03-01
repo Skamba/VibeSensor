@@ -534,16 +534,28 @@ def create_app(config_path: Path | None = None) -> FastAPI:
                 analysis_timeout_s,
             )
 
-        runtime.control_plane.close()
-        if runtime.data_transport is not None:
-            runtime.data_transport.close()
-            runtime.data_transport = None
+        try:
+            runtime.control_plane.close()
+        except Exception:
+            LOGGER.warning("Error closing control plane", exc_info=True)
+        try:
+            if runtime.data_transport is not None:
+                runtime.data_transport.close()
+                runtime.data_transport = None
+        except Exception:
+            LOGGER.warning("Error closing data transport", exc_info=True)
         if runtime.data_consumer_task is not None:
             runtime.data_consumer_task.cancel()
             await asyncio.gather(runtime.data_consumer_task, return_exceptions=True)
             runtime.data_consumer_task = None
-        worker_pool.shutdown(wait=True)
-        runtime.history_db.close()
+        try:
+            await asyncio.to_thread(worker_pool.shutdown, True)
+        except Exception:
+            LOGGER.warning("Error shutting down worker pool", exc_info=True)
+        try:
+            runtime.history_db.close()
+        except Exception:
+            LOGGER.warning("Error closing history DB", exc_info=True)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):

@@ -126,3 +126,26 @@ async def test_duplicate_data_still_sends_ack_but_skips_ingest() -> None:
     assert processor.ingest.call_count == 1
     # ACK should be sent for both (2 DATA_ACK packets)
     assert len(transport.sent) == 2
+
+
+@pytest.mark.asyncio
+async def test_process_datagram_logs_client_id_on_error() -> None:
+    """Exception in processing should log the client ID without crashing."""
+    registry = Mock()
+    registry.update_from_data.side_effect = RuntimeError("boom")
+    processor = Mock()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(_FakeTransport())
+
+    cid = bytes.fromhex("aabbccddeeff")
+    pkt = pack_data(cid, seq=1, t0_us=100, samples=np.zeros((4, 3), dtype=np.int16))
+
+    proto.datagram_received(pkt, ("127.0.0.1", 12345))
+
+    consumer = asyncio.create_task(proto.process_queue())
+    await asyncio.wait_for(proto._queue.join(), timeout=1.0)
+    consumer.cancel()
+    await asyncio.gather(consumer, return_exceptions=True)
+
+    # Should not crash – the error is caught and logged
+    assert processor.ingest.call_count == 0
