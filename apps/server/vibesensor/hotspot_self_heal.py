@@ -197,10 +197,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
     if conflict:
         issues.append("port53_conflict")
 
-    if issues:
-        last_error = issues[-1]
-    else:
-        last_error = "none"
+    last_error = issues[-1] if issues else "none"
 
     return HealthState(
         nm_running=nm_running,

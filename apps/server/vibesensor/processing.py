@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 import time
 from dataclasses import dataclass, field
 from functools import wraps
@@ -42,6 +43,14 @@ def _compute_overlap(starts: list[float], ends: list[float]) -> _OverlapResult:
     Returns an :class:`_OverlapResult` with the overlap ratio, alignment flag,
     and the shared window boundaries.
     """
+    if not starts or not ends:
+        return _OverlapResult(
+            overlap_ratio=0.0,
+            aligned=False,
+            shared_start=0.0,
+            shared_end=0.0,
+            overlap_s=0.0,
+        )
     shared_start = max(starts)
     shared_end = min(ends)
     overlap = max(0.0, shared_end - shared_start)
@@ -328,6 +337,8 @@ class SignalProcessor:
             return []
         smoothed = cls._smooth_spectrum(amps, bins=smoothing_bins)
         floor_amp = cls._noise_floor(smoothed)
+        if not math.isfinite(floor_amp) or floor_amp < 0:
+            floor_amp = 0.0
         threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + STRENGTH_EPSILON_MIN_G)
 
         peak_idx: list[int] = []
@@ -416,6 +427,10 @@ class SignalProcessor:
                 continue
             rms = float(np.sqrt(np.mean(np.square(axis_data), dtype=np.float64)))
             p2p = float(np.max(axis_data) - np.min(axis_data))
+            if not math.isfinite(rms):
+                rms = 0.0
+            if not math.isfinite(p2p):
+                p2p = 0.0
             metrics[axis] = {
                 "rms": rms,
                 "p2p": p2p,
@@ -426,6 +441,10 @@ class SignalProcessor:
             vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
             vib_mag_rms = float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64)))
             vib_mag_p2p = float(np.max(vib_mag) - np.min(vib_mag))
+            if not math.isfinite(vib_mag_rms):
+                vib_mag_rms = 0.0
+            if not math.isfinite(vib_mag_p2p):
+                vib_mag_p2p = 0.0
         else:
             vib_mag_rms = 0.0
             vib_mag_p2p = 0.0
@@ -886,9 +905,7 @@ class SignalProcessor:
 
     @_synchronized
     def evict_clients(self, keep_client_ids: set[str]) -> None:
-        stale_ids = [
-            client_id for client_id in self._buffers.keys() if client_id not in keep_client_ids
-        ]
+        stale_ids = [client_id for client_id in self._buffers if client_id not in keep_client_ids]
         for client_id in stale_ids:
             self._buffers.pop(client_id, None)
 
