@@ -24,6 +24,9 @@ AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = 4096
 _ALIGNMENT_MIN_OVERLAP = 0.5  # shared window must cover ≥50 % of the union
+_FFT_CACHE_MAXSIZE = 64
+"""Maximum number of cached FFT plans.  Bounds memory while avoiding
+repeated plan recomputation for common (sample_rate, fft_size) pairs."""
 
 
 class _OverlapResult(NamedTuple):
@@ -143,7 +146,7 @@ class SignalProcessor:
         self._fft_window = np.hanning(self.fft_n).astype(np.float32)
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
-        self._fft_cache_maxsize = 64
+        self._fft_cache_maxsize = _FFT_CACHE_MAXSIZE
         self._fft_cache_lock = RLock()
         self._spike_filter_enabled = True
         self._lock = RLock()

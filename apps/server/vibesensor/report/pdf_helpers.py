@@ -14,6 +14,10 @@ from .theme import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+_PEAK_RATIO_LOCALIZATION_THRESHOLD = 1.15
+"""When the strongest sensor reads ≥1.15× the second-strongest, the report
+attributes the vibration source to the wheel at that location."""
+
 
 # ── Pure helpers (no external deps) ──────────────────────────────────────
 
@@ -140,7 +144,10 @@ def location_hotspots(
     ):
         if len(hotspot_rows) >= 2:
             second_peak = float(hotspot_rows[1]["peak_value"])
-            if second_peak > 0 and (strongest_peak / second_peak) >= 1.15:
+            if (
+                second_peak > 0
+                and (strongest_peak / second_peak) >= _PEAK_RATIO_LOCALIZATION_THRESHOLD
+            ):
                 summary_text += tr(
                     "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST",
                     strongest_loc=strongest_loc,
