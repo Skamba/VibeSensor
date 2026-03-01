@@ -632,3 +632,20 @@ def test_sanitize_for_json_handles_nested_numpy(tmp_path: Path) -> None:
     assert result == {"a": 1.0, "b": [2, None]}
     # Verify the result is JSON-serializable
     json.dumps(result)
+
+
+def test_sanitize_for_json_handles_numpy_arrays() -> None:
+    """_sanitize_for_json converts numpy arrays to Python lists."""
+    import numpy as np
+
+    arr = np.array([1.0, 2.0, float("nan")])
+    result = HistoryDB._sanitize_for_json(arr)
+    assert result == [1.0, 2.0, None]
+    # Verify JSON-serializable
+    json.dumps(result)
+
+    # 2D array
+    arr2d = np.array([[1.0, 2.0], [3.0, 4.0]])
+    result2d = HistoryDB._sanitize_for_json(arr2d)
+    assert result2d == [[1.0, 2.0], [3.0, 4.0]]
+    json.dumps(result2d)

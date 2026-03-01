@@ -344,6 +344,14 @@ class TestSanitizeForJson:
         assert cleaned["c"] is None
         assert had is True
 
+    def test_numpy_arrays_converted(self) -> None:
+        import numpy as np
+
+        data = {"arr": np.array([1.0, float("nan"), 3.0])}
+        cleaned, had = sanitize_for_json(data)
+        assert cleaned["arr"] == [1.0, None, 3.0]
+        assert had is True
+
 
 # ── Integration: broadcast with NaN sanitisation ─────────────────────────────
 

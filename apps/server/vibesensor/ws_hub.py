@@ -30,8 +30,11 @@ def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
 
     def _walk(v: Any) -> Any:
         nonlocal found_non_finite
+        # Convert numpy arrays to Python lists.
+        if hasattr(v, "tolist") and hasattr(v, "ndim"):
+            v = v.tolist()
         # Convert numpy scalars to native Python types.
-        if hasattr(v, "item"):
+        elif hasattr(v, "item"):
             v = v.item()
         if isinstance(v, float):
             if math.isfinite(v):
