@@ -208,11 +208,23 @@ class WebSocketHub:
         on_tick: Callable[[], None] | None = None,
     ) -> None:
         interval = 1.0 / max(1, hz)
+        _consecutive_failures = 0
+        _MAX_CONSECUTIVE_FAILURES = 10
         while True:
             try:
                 if on_tick is not None:
                     on_tick()
                 await self.broadcast(payload_builder)
+                _consecutive_failures = 0
             except Exception:
-                LOGGER.warning("WebSocket broadcast tick failed; will retry.", exc_info=True)
+                _consecutive_failures += 1
+                if _consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                    LOGGER.error(
+                        "WebSocket broadcast tick failed %d consecutive times; backing off.",
+                        _consecutive_failures,
+                        exc_info=True,
+                    )
+                    await asyncio.sleep(interval * 5)
+                else:
+                    LOGGER.warning("WebSocket broadcast tick failed; will retry.", exc_info=True)
             await asyncio.sleep(interval)

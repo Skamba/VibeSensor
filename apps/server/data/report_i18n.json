@@ -1187,6 +1187,10 @@
     "en": "Strength (dB)",
     "nl": "Sterkte (dB)"
   },
+  "STRENGTH_PEAK_SUFFIX": {
+    "en": "peak",
+    "nl": "piek"
+  },
   "STRONGEST_AT_LOCATION_IN_SPEED_RANGE": {
     "en": "Strongest at {location} in {speed_range} (~{dominance}x vs next location in that speed bin{weak_note}).",
     "nl": "Sterkst bij {location} in {speed_range} (~{dominance}x t.o.v. volgende locatie in die snelheidsband{weak_note})."

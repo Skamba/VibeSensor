@@ -618,6 +618,10 @@ class HistoryDB:
             parsed_analysis = self._safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if isinstance(parsed_analysis, dict):
                 entry["analysis"] = parsed_analysis
+            else:
+                # Non-empty JSON that failed to parse or isn't a dict — flag
+                # so callers can detect and re-queue analysis.
+                entry["analysis_corrupt"] = True
         if error:
             entry["error_message"] = error
         if analysis_ver is not None:

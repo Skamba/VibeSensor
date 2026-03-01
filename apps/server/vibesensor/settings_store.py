@@ -144,8 +144,13 @@ class SettingsStore:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
+            old_active = self._active_car_id
             self._active_car_id = car_id
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                self._active_car_id = old_active
+                raise
             return self.get_cars()
 
     def add_car(self, car_data: dict[str, Any]) -> dict[str, Any]:
@@ -153,7 +158,11 @@ class SettingsStore:
             car_data["id"] = _new_car_id()
             car = CarConfig.from_dict(car_data)
             self._cars.append(car)
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                self._cars.pop()  # rollback in-memory append
+                raise
             return self.get_cars()
 
     def update_car(self, car_id: str, car_data: dict[str, Any]) -> dict[str, Any]:
@@ -161,6 +170,10 @@ class SettingsStore:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
+            # Snapshot for rollback
+            old_name, old_type = car.name, car.type
+            old_aspects = dict(car.aspects)
+            old_variant = car.variant
             if "name" in car_data:
                 raw_name = car_data["name"]
                 if isinstance(raw_name, str):
@@ -178,7 +191,13 @@ class SettingsStore:
             if "variant" in car_data:
                 raw = car_data["variant"]
                 car.variant = str(raw).strip()[:64] if isinstance(raw, str) and raw else None
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                car.name, car.type = old_name, old_type
+                car.aspects = old_aspects
+                car.variant = old_variant
+                raise
             return self.get_cars()
 
     def update_active_car_aspects(self, aspects: dict[str, Any]) -> dict[str, Any]:
@@ -197,10 +216,17 @@ class SettingsStore:
                 raise ValueError(f"Unknown car id: {car_id}")
             if len(self._cars) <= 1:
                 raise ValueError("Cannot delete the last car")
+            old_cars = list(self._cars)
+            old_active = self._active_car_id
             self._cars = [c for c in self._cars if c.id != car_id]
             if self._active_car_id == car_id:
                 self._active_car_id = self._cars[0].id if self._cars else None
-            self._persist()
+            try:
+                self._persist()
+            except PersistenceError:
+                self._cars = old_cars
+                self._active_car_id = old_active
+                raise
             return self.get_cars()
 
     # -- speed source ----------------------------------------------------------

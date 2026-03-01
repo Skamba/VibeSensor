@@ -140,6 +140,9 @@ def _flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
             out[k] = json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
         else:
             extras[k] = v
+    # Ensure record_type and schema_version are always populated.
+    out.setdefault("record_type", "sample")
+    out.setdefault("schema_version", "2")
     if extras:
         out["extras"] = json.dumps(extras, ensure_ascii=False)
     return out
@@ -152,6 +155,8 @@ def _safe_filename(name: str) -> str:
 
 def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
     """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
+    import dataclasses
+
     from .report.report_data import (
         CarMeta,
         DataTrustItem,
@@ -163,6 +168,11 @@ def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
         ReportTemplateData,
         SystemFindingCard,
     )
+
+    def _filter_fields(cls: type, raw: dict) -> dict:
+        """Keep only keys that match declared dataclass fields."""
+        valid = {f.name for f in dataclasses.fields(cls)}
+        return {k: v for k, v in raw.items() if k in valid}
 
     car = d.get("car") or {}
     obs = d.get("observed") or {}
@@ -181,14 +191,24 @@ def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
         sensor_locations=d.get("sensor_locations", []),
         sensor_model=d.get("sensor_model"),
         firmware_version=d.get("firmware_version"),
-        car=CarMeta(**car) if isinstance(car, dict) else CarMeta(),
-        observed=ObservedSignature(**obs) if isinstance(obs, dict) else ObservedSignature(),
+        car=(
+            CarMeta(**_filter_fields(CarMeta, car))
+            if isinstance(car, dict) else CarMeta()
+        ),
+        observed=(
+            ObservedSignature(**_filter_fields(ObservedSignature, obs))
+            if isinstance(obs, dict) else ObservedSignature()
+        ),
         system_cards=[
             SystemFindingCard(
                 **{
-                    **c,
+                    **_filter_fields(SystemFindingCard, c),
                     "parts": [
-                        PartSuggestion(**p) if isinstance(p, dict) else PartSuggestion(name=str(p))
+                        (
+                            PartSuggestion(**_filter_fields(PartSuggestion, p))
+                            if isinstance(p, dict)
+                            else PartSuggestion(name=str(p))
+                        )
                         for p in (c.get("parts") or [])
                     ],
                 }
@@ -196,10 +216,22 @@ def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
             for c in d.get("system_cards", [])
             if isinstance(c, dict)
         ],
-        next_steps=[NextStep(**s) for s in d.get("next_steps", []) if isinstance(s, dict)],
-        data_trust=[DataTrustItem(**t) for t in d.get("data_trust", []) if isinstance(t, dict)],
-        pattern_evidence=(PatternEvidence(**pe) if isinstance(pe, dict) else PatternEvidence()),
-        peak_rows=[PeakRow(**r) for r in d.get("peak_rows", []) if isinstance(r, dict)],
+        next_steps=[
+            NextStep(**_filter_fields(NextStep, s))
+            for s in d.get("next_steps", []) if isinstance(s, dict)
+        ],
+        data_trust=[
+            DataTrustItem(**_filter_fields(DataTrustItem, t))
+            for t in d.get("data_trust", []) if isinstance(t, dict)
+        ],
+        pattern_evidence=(
+            PatternEvidence(**_filter_fields(PatternEvidence, pe))
+            if isinstance(pe, dict) else PatternEvidence()
+        ),
+        peak_rows=[
+            PeakRow(**_filter_fields(PeakRow, r))
+            for r in d.get("peak_rows", []) if isinstance(r, dict)
+        ],
         phase_info=d.get("phase_info"),
         version_marker=d.get("version_marker", ""),
         lang=d.get("lang", "en"),

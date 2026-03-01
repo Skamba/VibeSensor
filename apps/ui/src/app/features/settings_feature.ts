@@ -150,7 +150,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     };
     try {
       await setAnalysisSettings(payload);
-    } catch (_err) { /* ignore */ }
+    } catch (_err) {
+      console.warn("Failed to save analysis settings", _err);
+    }
   }
 
   async function loadAnalysisSettingsFromServer(): Promise<void> {
@@ -200,7 +202,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
           syncActiveCarToInputs();
           renderCarList();
           ctx.renderSpectrum();
-        } catch (_err) { /* ignore */ }
+        } catch (_err) {
+          window.alert(t("settings.car.activate_failed"));
+        }
       });
     });
 
@@ -217,7 +221,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
           syncActiveCarToInputs();
           renderCarList();
           ctx.renderSpectrum();
-        } catch (_err) { /* ignore */ }
+        } catch (_err) {
+          window.alert(t("settings.car.delete_failed"));
+        }
       });
     });
   }

@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from math import sqrt
@@ -429,6 +430,11 @@ def _build_phase_timeline(
         phase_val = seg.phase.value if hasattr(seg, "phase") else str(seg.get("phase", ""))
         start_t = seg.start_t_s if hasattr(seg, "start_t_s") else float(seg.get("start_t_s", 0))
         end_t = seg.end_t_s if hasattr(seg, "end_t_s") else float(seg.get("end_t_s", 0))
+        # Convert NaN sentinels (unknown time) to None for JSON safety.
+        if isinstance(start_t, float) and math.isnan(start_t):
+            start_t = None
+        if isinstance(end_t, float) and math.isnan(end_t):
+            end_t = None
         speed_min = seg.speed_min_kmh if hasattr(seg, "speed_min_kmh") else seg.get("speed_min_kmh")
         speed_max = seg.speed_max_kmh if hasattr(seg, "speed_max_kmh") else seg.get("speed_max_kmh")
         has_fault_evidence = phase_val in finding_phases
@@ -871,8 +877,14 @@ def summarize_run_data(
                 "phase": seg.phase.value,
                 "start_idx": seg.start_idx,
                 "end_idx": seg.end_idx,
-                "start_t_s": seg.start_t_s,
-                "end_t_s": seg.end_t_s,
+                "start_t_s": (
+                    None if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
+                    else seg.start_t_s
+                ),
+                "end_t_s": (
+                    None if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s)
+                    else seg.end_t_s
+                ),
                 "speed_min_kmh": seg.speed_min_kmh,
                 "speed_max_kmh": seg.speed_max_kmh,
                 "sample_count": seg.sample_count,

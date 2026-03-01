@@ -143,7 +143,6 @@ class SignalProcessor:
         # Worker pool for parallel per-client FFT.  Owned externally when
         # injected, otherwise a private pool is created.
         self._worker_pool = worker_pool
-        self._owns_pool = worker_pool is None
         # Lightweight intake/analysis metrics for observability.
         self._total_ingested_samples: int = 0
         self._total_compute_calls: int = 0
