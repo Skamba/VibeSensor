@@ -14,7 +14,11 @@ from typing import Any
 
 
 def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
-    """Keep only keys that match declared dataclass fields."""
+    """Keep only keys that match declared dataclass fields.
+
+    All dataclass fields in this module use defaults so that ``from_dict()``
+    tolerates missing keys when reconstructing from older persisted data.
+    """
     valid = {f.name for f in dataclasses.fields(cls)}
     return {k: v for k, v in raw.items() if k in valid}
 
