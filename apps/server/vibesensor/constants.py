@@ -35,6 +35,44 @@ considered weak (i.e., the strongest location is less than 1.2x the
 next-strongest, so the confidence in location attribution is low)."""
 
 # ---------------------------------------------------------------------------
+# Sensor / noise-floor
+# ---------------------------------------------------------------------------
+MEMS_NOISE_FLOOR_G: Final[float] = 0.001
+"""Minimum realistic MEMS accelerometer noise floor (~0.001 g).
+
+Used as the lower bound for SNR computations to prevent ratio blow-up
+when the measured floor is near zero (sensor artifact / perfectly clean
+signal)."""
+
+# ---------------------------------------------------------------------------
+# Road-surface resonance
+# ---------------------------------------------------------------------------
+ROAD_RESONANCE_MIN_HZ: Final[float] = 0.5
+"""Lower bound of the road-surface resonance frequency range (Hz).
+
+Covers body/suspension modes (~0.5–3 Hz); the primary low-frequency cutoff
+is ``spectrum_min_hz`` in the processing config."""
+
+ROAD_RESONANCE_MAX_HZ: Final[float] = 12.0
+"""Upper bound of the road-surface resonance frequency range (Hz)."""
+
+# ---------------------------------------------------------------------------
+# Multi-sensor corroboration
+# ---------------------------------------------------------------------------
+MULTI_SENSOR_CORROBORATION_DB: Final[float] = 3.0
+"""Bonus dB added when ≥2 sensors agree on a finding, boosting effective
+confidence in the detected vibration."""
+
+# ---------------------------------------------------------------------------
+# Analysis frequency
+# ---------------------------------------------------------------------------
+MIN_ANALYSIS_FREQ_HZ: Final[float] = 5.0
+"""Minimum frequency for analysis peaks.  Sub-road-resonance content
+(body sway, suspension heave) is not actionable for drivetrain diagnostics
+and dilutes findings.  Protects the report pipeline against old recorded
+runs that lack the FFT-level ``spectrum_min_hz`` filter."""
+
+# ---------------------------------------------------------------------------
 # Rotational-order analysis
 # ---------------------------------------------------------------------------
 SECONDS_PER_MINUTE: Final[float] = 60.0
