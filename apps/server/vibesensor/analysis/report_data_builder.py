@@ -100,7 +100,7 @@ def _order_label_human(lang: str, label: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _human_source(source: object, *, tr) -> str:  # type: ignore[type-arg]
+def _human_source(source: object, *, tr: Callable[[str], str]) -> str:
     raw = str(source or "").strip().lower()
     mapping = {
         "wheel/tire": tr("SOURCE_WHEEL_TIRE"),
@@ -552,9 +552,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     # entries are still included.
     raw_peaks = [r for r in (plots.get("peaks_table", []) or []) if isinstance(r, dict)]
     above_noise = [
-        r
-        for r in raw_peaks
-        if _as_float(r.get("strength_db")) is None or _as_float(r.get("strength_db")) > 0  # type: ignore[operator]
+        r for r in raw_peaks if ((_sdb := _as_float(r.get("strength_db"))) is None or _sdb > 0)
     ]
     for row in above_noise[:8]:
         rank_val = _as_float(row.get("rank"))
