@@ -263,7 +263,10 @@ def create_router(state: RuntimeState) -> APIRouter:
         while len(report_pdf_cache) > _REPORT_PDF_CACHE_MAX_ENTRIES:
             evicted_key, _ = report_pdf_cache.popitem(last=False)
             report_pdf_locks.pop(evicted_key, None)
-        # Prune stale locks that no longer have a cache entry or active holder
+        _prune_stale_pdf_locks()
+
+    def _prune_stale_pdf_locks() -> None:
+        """Remove locks that have no cache entry and are not currently held."""
         if len(report_pdf_locks) > _REPORT_PDF_CACHE_MAX_ENTRIES * 2:
             stale_keys = [
                 k
@@ -282,13 +285,6 @@ def create_router(state: RuntimeState) -> APIRouter:
             if isinstance(value, str) and value.strip():
                 return value.strip().lower()
         return "en"
-
-    def _require_run(run_id: str) -> dict[str, Any]:
-        """Fetch a history run or raise 404."""
-        run = state.history_db.get_run(run_id)
-        if run is None:
-            raise HTTPException(status_code=404, detail="Run not found")
-        return run
 
     async def _async_require_run(run_id: str) -> dict[str, Any]:
         """Fetch a history run in a thread or raise 404."""
@@ -482,9 +478,10 @@ def create_router(state: RuntimeState) -> APIRouter:
 
             for row in state.registry.snapshot_for_api():
                 if row["id"] != normalized_client_id and row.get("location") == code:
+                    other_name = row.get("name") or "another sensor"
                     raise HTTPException(
                         status_code=409,
-                        detail=f"Location already assigned to client {row['id']}",
+                        detail=f"Location already assigned to {other_name}",
                     )
 
             updated = state.registry.set_name(normalized_client_id, label)
@@ -552,9 +549,9 @@ def create_router(state: RuntimeState) -> APIRouter:
             from .history_db import ANALYSIS_SCHEMA_VERSION
 
             try:
-                analysis["_analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+                analysis["analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
             except (TypeError, ValueError):
-                analysis["_analysis_is_current"] = False
+                analysis["analysis_is_current"] = False
 
         # Keep /insights read-only: return persisted post-stop analysis as-is.
         # The optional lang query is accepted for compatibility but does not
@@ -582,7 +579,7 @@ def create_router(state: RuntimeState) -> APIRouter:
                     status_code=409,
                     detail="Cannot delete run while analysis is in progress",
                 )
-            raise HTTPException(status_code=409, detail=f"Cannot delete run: {reason}")
+            raise HTTPException(status_code=409, detail="Cannot delete run at this time")
         return {"run_id": run_id, "status": "deleted"}
 
     @router.get("/api/history/{run_id}/report.pdf")
@@ -640,9 +637,11 @@ def create_router(state: RuntimeState) -> APIRouter:
                 pdf = await asyncio.to_thread(_build_pdf)
             except Exception as exc:
                 LOGGER.warning("PDF generation failed for run %s", run_id, exc_info=True)
+                # Prune stale locks even on failure to prevent unbounded growth
+                _prune_stale_pdf_locks()
                 raise HTTPException(
                     status_code=422,
-                    detail=f"PDF generation failed: {exc}",
+                    detail="PDF generation failed. Please try again or re-analyze this run.",
                 ) from exc
             _cache_put(cache_key, pdf)
         return Response(
@@ -682,11 +681,24 @@ def create_router(state: RuntimeState) -> APIRouter:
                         raw_csv_text.flush()
 
                     # Write run metadata as JSON (after CSV so sample_count is known).
+                    # Strip internal-only fields (prefixed with _) from analysis
+                    # to avoid leaking implementation details into exported data.
                     run_details = dict(run)
                     run_details["sample_count"] = sample_count
+                    analysis = run_details.get("analysis")
+                    if isinstance(analysis, dict):
+                        run_details["analysis"] = {
+                            k: v for k, v in analysis.items() if not k.startswith("_")
+                        }
                     archive.writestr(
                         f"{safe_name}.json",
-                        json.dumps(run_details, ensure_ascii=False, indent=2, sort_keys=True),
+                        json.dumps(
+                            run_details,
+                            ensure_ascii=False,
+                            indent=2,
+                            sort_keys=True,
+                            allow_nan=False,
+                        ),
                     )
 
                 spool.seek(0)

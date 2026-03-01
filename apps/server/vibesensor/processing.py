@@ -137,6 +137,7 @@ class SignalProcessor:
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
         self._fft_cache_maxsize = 64
+        self._fft_cache_lock = RLock()
         self._spike_filter_enabled = True
         self._lock = RLock()
         # Worker pool for parallel per-client FFT.  Owned externally when
@@ -190,6 +191,7 @@ class SignalProcessor:
         buf.cached_spectrum_payload_generation = -1
         buf.cached_selected_payload = None
         buf.cached_selected_payload_key = None
+        buf.ingest_generation += 1
         LOGGER.info("Flushed signal buffer for client %s after sensor reset", client_id)
 
     def _get_or_create(self, client_id: str) -> ClientBuffer:
@@ -371,27 +373,31 @@ class SignalProcessor:
                 {
                     "hz": float(freqs[idx]),
                     "amp": raw_amp,
-                    "snr_ratio": (raw_amp + 1e-9) / (floor_amp + 1e-9),
+                    "snr_ratio": (
+                        (raw_amp + STRENGTH_EPSILON_MIN_G)
+                        / (floor_amp + STRENGTH_EPSILON_MIN_G)
+                    ),
                 }
             )
         return peaks
 
     def _fft_params(self, sample_rate_hz: int) -> tuple[np.ndarray, np.ndarray]:
-        cached = self._fft_cache.get(sample_rate_hz)
-        if cached is not None:
-            return cached
-        if sample_rate_hz <= 0:
-            empty = np.empty(0, dtype=np.float32)
-            return empty, np.empty(0, dtype=np.intp)
-        freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
-        valid = (freqs >= self.spectrum_min_hz) & (freqs <= self.spectrum_max_hz)
-        freq_slice = freqs[valid].astype(np.float32)
-        valid_idx = np.flatnonzero(valid)
-        self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
-        if len(self._fft_cache) > self._fft_cache_maxsize:
-            oldest = next(iter(self._fft_cache))
-            del self._fft_cache[oldest]
-        return freq_slice, valid_idx
+        with self._fft_cache_lock:
+            cached = self._fft_cache.get(sample_rate_hz)
+            if cached is not None:
+                return cached
+            if sample_rate_hz <= 0:
+                empty = np.empty(0, dtype=np.float32)
+                return empty, np.empty(0, dtype=np.intp)
+            freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
+            valid = (freqs >= self.spectrum_min_hz) & (freqs <= self.spectrum_max_hz)
+            freq_slice = freqs[valid].astype(np.float32)
+            valid_idx = np.flatnonzero(valid)
+            self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
+            if len(self._fft_cache) > self._fft_cache_maxsize:
+                oldest = next(iter(self._fft_cache))
+                del self._fft_cache[oldest]
+            return freq_slice, valid_idx
 
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
         t0 = time.monotonic()
@@ -583,10 +589,19 @@ class SignalProcessor:
         if len(client_ids) <= 1 or self._worker_pool is None:
             # Fast path: single client or no pool – avoid thread overhead.
             t0 = time.monotonic()
-            result = {
-                client_id: self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
-                for client_id in client_ids
-            }
+            result: dict[str, dict[str, Any]] = {}
+            for client_id in client_ids:
+                try:
+                    result[client_id] = self.compute_metrics(
+                        client_id,
+                        sample_rate_hz=rates.get(client_id),
+                    )
+                except Exception:
+                    LOGGER.warning(
+                        "compute_metrics failed for %s; skipping.",
+                        client_id,
+                        exc_info=True,
+                    )
             self._last_compute_all_duration_s = time.monotonic() - t0
             return result
 

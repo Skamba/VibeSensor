@@ -108,17 +108,18 @@ def test_store_add_and_delete_car() -> None:
     store.set_active_car(first_car["id"])
     store.delete_car(first_car["id"])
     assert len(store.snapshot()["cars"]) == 1
-    assert store.snapshot()["activeCarId"] is None
+    # Active car auto-selects the remaining car after deletion.
+    remaining_id = store.snapshot()["cars"][0]["id"]
+    assert store.snapshot()["activeCarId"] == remaining_id
 
 
-def test_store_can_delete_last_car() -> None:
+def test_store_cannot_delete_last_car() -> None:
     store = SettingsStore()
     created = store.add_car({"name": "Temporary"})
     car_id = created["cars"][0]["id"]
     store.set_active_car(car_id)
-    result = store.delete_car(car_id)
-    assert result["cars"] == []
-    assert result["activeCarId"] is None
+    with pytest.raises(ValueError, match="Cannot delete the last car"):
+        store.delete_car(car_id)
 
 
 def test_store_update_car_aspects() -> None:
@@ -280,7 +281,7 @@ def test_store_update_car_unknown_raises() -> None:
         store.update_car("nonexistent", {"name": "X"})
 
 
-def test_store_delete_selected_car_clears_active_without_auto_select() -> None:
+def test_store_delete_selected_car_auto_selects_remaining() -> None:
     store = SettingsStore()
     store.add_car({"name": "First"})
     added = store.add_car({"name": "Second"})
@@ -288,7 +289,8 @@ def test_store_delete_selected_car_clears_active_without_auto_select() -> None:
     store.set_active_car(car_ids[1])
     result = store.delete_car(car_ids[1])
     assert len(result["cars"]) == 1
-    assert result["activeCarId"] is None
+    # Auto-selects remaining car instead of clearing to None.
+    assert result["activeCarId"] == car_ids[0]
 
 
 def test_store_delete_car_unknown_raises() -> None:

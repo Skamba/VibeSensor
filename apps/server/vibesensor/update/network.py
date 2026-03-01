@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
 from pathlib import Path
 
 from .models import UpdateIssue
@@ -107,27 +106,3 @@ async def restore_hotspot(
             await asyncio.sleep(HOTSPOT_RESTORE_DELAY_S)
 
     return False
-
-
-async def wait_for_dns_ready(runner: CommandRunner) -> tuple[bool, str]:
-    """Wait for uplink DNS resolution.  Returns (success, last_error)."""
-    probe_cmd = [
-        "python3",
-        "-c",
-        (f"import socket; socket.getaddrinfo('{DNS_PROBE_HOST}', 443, proto=socket.IPPROTO_TCP)"),
-    ]
-    deadline = time.monotonic() + DNS_READY_MIN_WAIT_S
-    last_error = ""
-    attempt = 0
-
-    while True:
-        attempt += 1
-        rc, stdout, stderr = await runner.run(probe_cmd, timeout=5)
-        if rc == 0:
-            return True, ""
-        last_error = (stderr or stdout or f"exit {rc}").strip()
-        if time.monotonic() >= deadline:
-            break
-        await asyncio.sleep(DNS_RETRY_INTERVAL_S)
-
-    return False, last_error

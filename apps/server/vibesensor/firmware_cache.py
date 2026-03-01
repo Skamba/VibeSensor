@@ -46,6 +46,7 @@ _DEFAULT_CACHE_DIR = "/var/lib/vibesensor/firmware"
 _DEFAULT_FIRMWARE_REPO = "Skamba/VibeSensor"
 _META_FILE = "_meta.json"
 _MANIFEST_FILE = "flash.json"
+_MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024  # 100 MB hard limit for firmware assets
 
 
 def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
@@ -197,9 +198,26 @@ def read_meta(bundle_dir: Path) -> BundleMeta | None:
 
 
 def _write_meta(bundle_dir: Path, meta: BundleMeta) -> None:
-    (bundle_dir / _META_FILE).write_text(
-        json.dumps(meta.to_dict(), indent=2) + "\n", encoding="utf-8"
+    """Atomically write metadata to the bundle directory.
+
+    Uses a temp-file + ``os.replace`` so a crash mid-write never leaves
+    a truncated ``_meta.json``.
+    """
+    meta_path = bundle_dir / _META_FILE
+    payload = json.dumps(meta.to_dict(), indent=2) + "\n"
+    import tempfile
+
+    fd, tmp = tempfile.mkstemp(
+        dir=str(bundle_dir),
+        prefix="._meta_",
+        suffix=".tmp",
     )
+    try:
+        os.write(fd, payload.encode("utf-8"))
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+    os.replace(tmp, str(meta_path))
 
 
 class GitHubReleaseFetcher:
@@ -231,7 +249,22 @@ class GitHubReleaseFetcher:
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)
         with urlopen(req, timeout=120) as resp:  # noqa: S310
-            dest.write_bytes(resp.read())
+            # Read in chunks with a hard size limit to prevent OOM on
+            # memory-constrained devices (Pi 3A+ has only 512 MB RAM).
+            chunks: list[bytes] = []
+            total = 0
+            while True:
+                chunk = resp.read(1024 * 1024)  # 1 MB at a time
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > _MAX_DOWNLOAD_BYTES:
+                    raise ValueError(
+                        f"Firmware asset exceeds {_MAX_DOWNLOAD_BYTES // (1024 * 1024)} MB "
+                        f"size limit; aborting download to prevent OOM."
+                    )
+                chunks.append(chunk)
+            dest.write_bytes(b"".join(chunks))
 
     def find_release(self) -> dict[str, Any]:
         """Find the target release based on config (pinned tag, channel)."""
@@ -455,42 +488,13 @@ def _dir_sha256(directory: Path) -> str:
     for fpath in sorted(directory.rglob("*")):
         if fpath.is_file():
             h.update(str(fpath.relative_to(directory)).encode())
-            h.update(fpath.read_bytes())
+            with open(fpath, "rb") as f:
+                while True:
+                    chunk = f.read(65536)
+                    if not chunk:
+                        break
+                    h.update(chunk)
     return h.hexdigest()
-
-
-def install_baseline(source_dir: Path, cache_dir: Path) -> None:
-    """Install a firmware bundle as the baseline in the cache.
-
-    Used during Pi image build to embed a flashable baseline.
-    """
-    baseline_target = Path(cache_dir) / "baseline"
-    if baseline_target.exists():
-        shutil.rmtree(baseline_target)
-    baseline_target.parent.mkdir(parents=True, exist_ok=True)
-
-    # Validate source first
-    validate_bundle(source_dir)
-
-    # Copy entire bundle
-    shutil.copytree(source_dir, baseline_target)
-
-    # Write or update metadata
-    meta = read_meta(baseline_target)
-    if meta is None:
-        import datetime
-
-        meta = BundleMeta(
-            tag="baseline",
-            asset="embedded",
-            timestamp=datetime.datetime.now(datetime.UTC).isoformat(),
-            sha256=_dir_sha256(baseline_target),
-            source="baseline",
-        )
-    else:
-        meta.source = "baseline"
-    _write_meta(baseline_target, meta)
-    LOGGER.info("Baseline firmware installed at %s", baseline_target)
 
 
 def refresh_cache_cli() -> None:

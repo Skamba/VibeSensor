@@ -67,6 +67,11 @@ class _FakeGPSMonitor:
     effective_speed_mps = None
     override_speed_mps = None
 
+    def resolve_speed(self):
+        from vibesensor.gps_speed import SpeedResolution
+
+        return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
+
 
 class _FakeProcessor:
     def latest_sample_xyz(self, client_id: str):

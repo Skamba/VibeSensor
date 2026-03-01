@@ -76,15 +76,6 @@ UPDATE_SERVICE_NAME = "vibesensor.service"
 SERVICE_ENV_DROPIN = "/etc/systemd/system/vibesensor.service.d/10-contracts-dir.conf"
 SERVICE_CONTRACTS_DIR = "/opt/VibeSensor/libs/shared/contracts"
 DEFAULT_REBUILD_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-TRANSIENT_REBUILD_ERROR_MARKERS = (
-    "eai_again",
-    "enotfound",
-    "econnreset",
-    "etimedout",
-    "network timeout",
-    "temporary failure in name resolution",
-    "registry.npmjs.org",
-)
 
 
 def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
@@ -97,7 +88,12 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
             continue
         hasher.update(str(relative.as_posix()).encode("utf-8"))
         hasher.update(b"\0")
-        hasher.update(path.read_bytes())
+        with open(path, "rb") as fh:
+            while True:
+                chunk = fh.read(65536)
+                if not chunk:
+                    break
+                hasher.update(chunk)
         hasher.update(b"\0")
     return hasher.hexdigest()
 
@@ -453,7 +449,10 @@ class UpdateManager:
                 self._status.phase = UpdatePhase.done
             # Clear secrets from memory
             self._redact_secrets.clear()
-            self._status.runtime = self._collect_runtime_details()
+            try:
+                self._status.runtime = self._collect_runtime_details()
+            except Exception:
+                LOGGER.warning("Failed to collect runtime details", exc_info=True)
 
             # Parse diagnostics
             try:
@@ -767,88 +766,85 @@ class UpdateManager:
             shutil.rmtree(staging_dir, ignore_errors=True)
             return
 
-        self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
+        try:
+            self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
 
-        # Refresh ESP firmware from the same GitHub release as the server wheel.
-        await self._refresh_esp_firmware(pinned_tag=release.tag)
+            # Refresh ESP firmware from the same GitHub release as the server wheel.
+            await self._refresh_esp_firmware(pinned_tag=release.tag)
 
-        if self._cancel_event.is_set():
-            shutil.rmtree(staging_dir, ignore_errors=True)
-            return
+            if self._cancel_event.is_set():
+                return
 
-        # --- Phase: Install ---
-        self._status.phase = UpdatePhase.installing
-        self._persist_status("phase:installing")
-        self._log("Installing update...")
+            # --- Phase: Install ---
+            self._status.phase = UpdatePhase.installing
+            self._persist_status("phase:installing")
+            self._log("Installing update...")
 
-        # Snapshot current version for rollback
-        rollback_ok = await self._snapshot_for_rollback()
-        if not rollback_ok:
-            self._log("WARNING: Could not create rollback snapshot; proceeding anyway")
+            # Snapshot current version for rollback
+            rollback_ok = await self._snapshot_for_rollback()
+            if not rollback_ok:
+                self._log("WARNING: Could not create rollback snapshot; proceeding anyway")
 
-        repo = Path(self._repo_path)
-        venv_python = self._reinstall_python_executable(repo)
-        if not Path(venv_python).is_file():
-            # Fall back to system python in venv
-            venv_python = str(
-                Path(self._repo_path) / "apps" / "server" / ".venv" / "bin" / "python3"
+            repo = Path(self._repo_path)
+            venv_python = self._reinstall_python_executable(repo)
+            if not Path(venv_python).is_file():
+                # Fall back to system python in venv
+                venv_python = str(
+                    Path(self._repo_path) / "apps" / "server" / ".venv" / "bin" / "python3"
+                )
+
+            # Install the new wheel
+            install_cmd = [
+                venv_python,
+                "-m",
+                "pip",
+                "install",
+                "--force-reinstall",
+                "--no-deps",
+                str(wheel_path),
+            ]
+            rc, _, stderr = await self._run_cmd(
+                install_cmd,
+                phase="installing",
+                timeout=REINSTALL_OP_TIMEOUT_S,
+                sudo=False,
             )
+            if rc != 0:
+                self._add_issue("installing", f"Wheel install failed (exit {rc})", stderr)
+                self._log("Attempting rollback...")
+                await self._rollback()
+                self._status.state = UpdateState.failed
+                return
 
-        # Install the new wheel
-        install_cmd = [
-            venv_python,
-            "-m",
-            "pip",
-            "install",
-            "--force-reinstall",
-            "--no-deps",
-            str(wheel_path),
-        ]
-        rc, _, stderr = await self._run_cmd(
-            install_cmd,
-            phase="installing",
-            timeout=REINSTALL_OP_TIMEOUT_S,
-            sudo=False,
-        )
-        if rc != 0:
-            self._add_issue("installing", f"Wheel install failed (exit {rc})", stderr)
-            self._log("Attempting rollback...")
-            await self._rollback()
-            self._status.state = UpdateState.failed
-            shutil.rmtree(staging_dir, ignore_errors=True)
-            return
+            self._log(f"Installed vibesensor {release.version}")
 
-        self._log(f"Installed vibesensor {release.version}")
-
-        # Verify the installed package can be imported
-        verify_cmd = [
-            venv_python,
-            "-c",
-            "from vibesensor import __version__; print(__version__)",
-        ]
-        rc, stdout, stderr = await self._run_cmd(
-            verify_cmd,
-            phase="installing",
-            timeout=30,
-            sudo=False,
-        )
-        if rc != 0:
-            self._add_issue(
-                "installing",
-                f"Post-install verification failed (exit {rc})",
-                stderr,
+            # Verify the installed package can be imported
+            verify_cmd = [
+                venv_python,
+                "-c",
+                "from vibesensor import __version__; print(__version__)",
+            ]
+            rc, stdout, stderr = await self._run_cmd(
+                verify_cmd,
+                phase="installing",
+                timeout=30,
+                sudo=False,
             )
-            self._log("Attempting rollback...")
-            await self._rollback()
-            self._status.state = UpdateState.failed
+            if rc != 0:
+                self._add_issue(
+                    "installing",
+                    f"Post-install verification failed (exit {rc})",
+                    stderr,
+                )
+                self._log("Attempting rollback...")
+                await self._rollback()
+                self._status.state = UpdateState.failed
+                return
+
+            installed_version = stdout.strip()
+            self._log(f"Verified installed version: {installed_version}")
+        finally:
             shutil.rmtree(staging_dir, ignore_errors=True)
-            return
-
-        installed_version = stdout.strip()
-        self._log(f"Verified installed version: {installed_version}")
-
-        # Clean up staging
-        shutil.rmtree(staging_dir, ignore_errors=True)
 
         runtime_details = self._collect_runtime_details()
         self._status.runtime = runtime_details
@@ -999,96 +995,6 @@ class UpdateManager:
         return True
 
     @staticmethod
-    def _backend_install_target(repo: Path) -> Path:
-        server_pkg = repo / "apps" / "server"
-        if (server_pkg / "pyproject.toml").is_file():
-            return server_pkg
-        return repo
-
-    @staticmethod
-    def _is_transient_rebuild_failure(stderr: str) -> bool:
-        normalized = stderr.lower()
-        return any(marker in normalized for marker in TRANSIENT_REBUILD_ERROR_MARKERS)
-
-    async def _ensure_backend_venv(self, repo: Path) -> str | None:
-        venv_python = Path(self._reinstall_python_executable(repo))
-        venv_dir = venv_python.parent.parent
-        if not self._is_reinstall_venv_ready(repo):
-            self._log("Backend virtualenv missing or incomplete; creating it")
-            rc, _, stderr = await self._run_cmd(
-                ["python3", "-m", "venv", str(venv_dir)],
-                phase="updating",
-                timeout=120,
-                sudo=True,
-            )
-            if rc != 0:
-                self._add_issue(
-                    "updating",
-                    f"Backend virtualenv creation failed (exit {rc})",
-                    stderr,
-                )
-                return None
-
-        # Verify this interpreter is an actual virtualenv interpreter. A broken
-        # symlink to system python triggers PEP 668 externally-managed failures.
-        rc, _, stderr = await self._run_cmd(
-            [
-                str(venv_python),
-                "-c",
-                "import sys; raise SystemExit(0 if sys.prefix != sys.base_prefix else 1)",
-            ],
-            phase="updating",
-            timeout=30,
-            sudo=True,
-        )
-        if rc != 0:
-            self._add_issue(
-                "updating",
-                "Backend virtualenv is invalid",
-                stderr or f"{venv_python} is not running inside a virtualenv",
-            )
-            return None
-
-        rc, _, stderr = await self._run_cmd(
-            [str(venv_python), "-m", "pip", "--version"],
-            phase="updating",
-            timeout=30,
-            sudo=True,
-        )
-        if rc == 0:
-            return str(venv_python)
-
-        self._log("pip missing in backend virtualenv; bootstrapping via ensurepip")
-        rc, _, stderr = await self._run_cmd(
-            [str(venv_python), "-m", "ensurepip", "--upgrade"],
-            phase="updating",
-            timeout=60,
-            sudo=True,
-        )
-        if rc != 0:
-            self._add_issue(
-                "updating",
-                f"Backend virtualenv pip bootstrap failed (exit {rc})",
-                stderr,
-            )
-            return None
-
-        rc, _, stderr = await self._run_cmd(
-            [str(venv_python), "-m", "pip", "--version"],
-            phase="updating",
-            timeout=30,
-            sudo=True,
-        )
-        if rc != 0:
-            self._add_issue(
-                "updating",
-                f"Backend virtualenv pip verification failed (exit {rc})",
-                stderr,
-            )
-            return None
-        return str(venv_python)
-
-    @staticmethod
     def _reinstall_venv_python_path(repo: Path) -> Path:
         return repo / "apps" / "server" / ".venv" / "bin" / "python3"
 
@@ -1199,6 +1105,7 @@ class UpdateManager:
                     check=False,
                     capture_output=True,
                     text=True,
+                    timeout=10,
                 )
                 if proc.returncode == 0:
                     commit = proc.stdout.strip()
@@ -1247,30 +1154,3 @@ class UpdateManager:
             "assets_verified": assets_verified,
             "has_packaged_static": has_packaged_static,
         }
-
-    def _bootstrap_runtime_metadata_if_missing(self) -> None:
-        metadata_path = (
-            Path(self._repo_path) / "apps" / "server" / "public" / UI_BUILD_METADATA_FILE
-        )
-        if metadata_path.exists():
-            return
-        details = self._collect_runtime_details()
-        if not details.get("ui_source_hash") or not details.get("public_assets_hash"):
-            return
-        metadata_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            metadata_path.write_text(
-                json.dumps(
-                    {
-                        "ui_source_hash": details["ui_source_hash"],
-                        "public_assets_hash": details["public_assets_hash"],
-                        "git_commit": details["commit"],
-                    },
-                    sort_keys=True,
-                )
-                + "\n",
-                encoding="utf-8",
-            )
-            self._log("Generated runtime UI build metadata for update verification")
-        except OSError as exc:
-            self._log(f"Failed to write runtime metadata: {exc}")

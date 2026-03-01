@@ -81,7 +81,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
 
   function metricFromLocationStat(row: Record<string, any>): number | null {
     if (!row || typeof row !== "object") return null;
-    const value = Number(row.p95_intensity_db ?? row.p95_intensity_g ?? row.p95 ?? row.mean_intensity_db ?? row.max_intensity_db);
+    const value = Number(row.p95_intensity_db ?? row.p95 ?? row.mean_intensity_db ?? row.max_intensity_db);
     return Number.isFinite(value) ? value : null;
   }
 
@@ -140,10 +140,10 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       .map((row: Record<string, any>) => {
         const dropped = row?.dropped_frames_delta ?? row?.frames_dropped_delta;
         const overflow = row?.queue_overflow_drops_delta;
-        return `\n          <tr>\n            <td>${escapeHtml(row.location || "--")}</td>\n            <td class="numeric">${fmt(row.p50_intensity_db ?? row.p50_intensity_g ?? row.p50, 1)}</td>\n            <td class="numeric">${fmt(row.p95_intensity_db ?? row.p95_intensity_g ?? row.p95, 1)}</td>\n            <td class="numeric">${fmt(row.max_intensity_db ?? row.max_intensity_g, 1)}</td>\n            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>\n            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>\n            <td class="numeric">${formatInt(row.sample_count ?? row.samples)}</td>\n          </tr>`;
+        return `\n          <tr>\n            <td>${escapeHtml(row.location || "--")}</td>\n            <td class="numeric">${fmt(row.p50_intensity_db ?? row.p50, 1)}</td>\n            <td class="numeric">${fmt(row.p95_intensity_db ?? row.p95, 1)}</td>\n            <td class="numeric">${fmt(row.max_intensity_db, 1)}</td>\n            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>\n            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>\n            <td class="numeric">${formatInt(row.sample_count ?? row.samples)}</td>\n          </tr>`;
       })
       .join("");
-    return `\n      <div class="history-preview-stats">\n        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>\n        <table class="history-preview-table">\n          <thead>\n            <tr>\n              <th>${escapeHtml(t("history.table.location"))}</th>\n              <th class="numeric">p50</th>\n              <th class="numeric">p95</th>\n              <th class="numeric">max</th>\n              <th class="numeric">${escapeHtml(t("history.table.dropped_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.overflow_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.samples"))}</th>\n            </tr>\n          </thead>\n          <tbody>${body}</tbody>\n        </table>\n      </div>\n    `;
+    return `\n      <div class="history-preview-stats">\n        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>\n        <table class="history-preview-table">\n          <thead>\n            <tr>\n              <th>${escapeHtml(t("history.table.location"))}</th>\n              <th class="numeric">p50 (dB)</th>\n              <th class="numeric">p95 (dB)</th>\n              <th class="numeric">max (dB)</th>\n              <th class="numeric">${escapeHtml(t("history.table.dropped_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.overflow_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.samples"))}</th>\n            </tr>\n          </thead>\n          <tbody>${body}</tbody>\n        </table>\n      </div>\n    `;
   }
 
   function renderInsightsBlock(detail: Record<string, any>): string {

@@ -14,6 +14,10 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from statistics import mean as _mean
 
+from vibesensor_core.vibration_strength import (
+    vibration_strength_db_scalar as canonical_vibration_db,
+)
+
 from .. import __version__
 from ..report.report_data import (
     CarMeta,
@@ -29,7 +33,6 @@ from ..report.report_data import (
 from ..report_i18n import normalize_lang
 from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
-from .db_units import canonical_vibration_db
 from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
@@ -205,7 +208,7 @@ def _peak_classification_text(value: object, tr: Callable[..., str]) -> str:
         return tr("CLASSIFICATION_BASELINE_NOISE")
     if not normalized:
         return tr("UNKNOWN")
-    return tr("CLASSIFICATION_PERSISTENT")
+    return str(value).replace("_", " ").title()
 
 
 def _has_relevant_reference_gap(findings: list[dict], primary_source: object) -> bool:

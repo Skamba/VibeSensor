@@ -117,6 +117,7 @@ class RuntimeState:
     update_manager: UpdateManager
     esp_flash_manager: EspFlashManager
     tasks: list[asyncio.Task] = field(default_factory=list)
+    managed_jobs: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     data_consumer_task: asyncio.Task | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
@@ -521,6 +522,22 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             task.cancel()
         await asyncio.gather(*runtime.tasks, return_exceptions=True)
         runtime.tasks.clear()
+
+        # Cancel any in-progress update or flash jobs so cleanup
+        # (e.g. hotspot restore) can run before shutdown completes.
+        managed = [
+            runtime.update_manager._task,
+            runtime.esp_flash_manager._task,
+        ]
+        for task in managed:
+            if task is not None and not task.done():
+                task.cancel()
+        for task in managed:
+            if task is not None and not task.done():
+                try:
+                    await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
+                except (asyncio.CancelledError, TimeoutError, Exception):
+                    pass
 
         runtime.metrics_logger.stop_logging()
         analysis_timeout_s = config.logging.shutdown_analysis_timeout_s

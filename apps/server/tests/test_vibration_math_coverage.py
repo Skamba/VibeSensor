@@ -74,6 +74,57 @@ def test_strength_db_negative_inputs_clamped() -> None:
     assert abs(result - zero_result) < 1e-9
 
 
+def test_strength_db_epsilon_dominated_regime() -> None:
+    """When both band and floor are at epsilon scale, result should be ~0 dB."""
+    result = vibration_strength_db_scalar(
+        peak_band_rms_amp_g=1e-10,
+        floor_amp_g=0.0,
+    )
+    # Both numerator and denominator are dominated by eps (~1e-9),
+    # so the ratio is ~1.0 and result is ~0 dB.
+    assert abs(result) < 1.0
+
+
+def test_strength_db_very_large_signal_above_floor() -> None:
+    """Very large signal with tiny floor should produce high dB."""
+    result = vibration_strength_db_scalar(
+        peak_band_rms_amp_g=100.0,
+        floor_amp_g=1e-12,
+    )
+    # 20 * log10(100 / eps) should be very large
+    assert result > 80.0
+
+
+def test_strength_db_explicit_epsilon_override() -> None:
+    """Optional epsilon_g parameter should override the default calculation."""
+    custom_eps = 0.01
+    result = vibration_strength_db_scalar(
+        peak_band_rms_amp_g=1.0,
+        floor_amp_g=0.1,
+        epsilon_g=custom_eps,
+    )
+    expected = 20.0 * log10((1.0 + custom_eps) / (0.1 + custom_eps))
+    assert abs(result - expected) < 1e-9
+
+
+def test_strength_db_equal_band_and_floor_near_zero() -> None:
+    """When band == floor, result should be near 0 dB regardless of amplitude."""
+    result = vibration_strength_db_scalar(
+        peak_band_rms_amp_g=1e-5,
+        floor_amp_g=1e-5,
+    )
+    assert abs(result) < 1.0
+
+
+def test_strength_db_floor_greater_than_band_is_negative() -> None:
+    """When floor > band, result should be negative dB (unusual but valid)."""
+    result = vibration_strength_db_scalar(
+        peak_band_rms_amp_g=0.01,
+        floor_amp_g=0.1,
+    )
+    assert result < 0.0
+
+
 # -- combined_spectrum_amp_g -------------------------------------------------
 
 

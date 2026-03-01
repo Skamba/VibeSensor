@@ -14,6 +14,11 @@ def test_compute_strength_returns_absolute_amplitude_fields() -> None:
     assert "noise_floor_amp_g" in result
     assert isinstance(result["peak_amp_g"], float)
     assert isinstance(result["noise_floor_amp_g"], float)
+    # All-zeros: values must be near-zero and non-negative.
+    peak = result["peak_amp_g"]
+    floor = result["noise_floor_amp_g"]
+    assert 0.0 <= peak < 0.01, f"near-zero peak expected, got {peak}"
+    assert 0.0 <= floor < 0.01, f"near-zero floor expected, got {floor}"
 
 
 def test_near_zero_db_with_meaningful_peak_is_still_labeled_in_db() -> None:

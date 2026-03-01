@@ -6,11 +6,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal
 
 from ..runlog import as_float_or_none as _as_float
-from .pdf_helpers import _canonical_location, _source_color, color_blend
+from .pdf_helpers import _canonical_location, _source_color
 from .theme import (
-    HEAT_HIGH,
-    HEAT_LOW,
-    HEAT_MID,
     REPORT_COLORS,
 )
 
@@ -43,17 +40,6 @@ class LabelRenderPlan:
     color: str
     font_size: float
     bbox: tuple[float, float, float, float]
-
-
-def _amp_heat_color(norm: float) -> str:
-    if norm <= 0.5:
-        return color_blend(HEAT_LOW, HEAT_MID, norm * 2.0)
-    return color_blend(HEAT_MID, HEAT_HIGH, (norm - 0.5) * 2.0)
-
-
-def _format_db(value: float) -> str:
-    """Format an intensity value in decibels."""
-    return f"{value:.1f} dB"
 
 
 def _estimate_text_width(text: str, *, font_size: float) -> float:
@@ -476,9 +462,9 @@ def car_location_diagram(
     from .theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
 
     src_legend_items = [
-        (text_fn("Wheel", "Wiel"), FINDING_SOURCE_COLORS["wheel/tire"]),
-        (text_fn("Driveline", "Aandrijflijn"), FINDING_SOURCE_COLORS["driveline"]),
-        (text_fn("Engine", "Motor"), FINDING_SOURCE_COLORS["engine"]),
+        (tr("SOURCE_WHEEL_TIRE"), FINDING_SOURCE_COLORS["wheel/tire"]),
+        (tr("SOURCE_DRIVELINE"), FINDING_SOURCE_COLORS["driveline"]),
+        (tr("SOURCE_ENGINE"), FINDING_SOURCE_COLORS["engine"]),
     ]
     src_legend_x = 8.0
     # Keep source legend anchored low to avoid overlap with the car/rear label.

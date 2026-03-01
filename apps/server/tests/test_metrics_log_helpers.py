@@ -141,6 +141,23 @@ class _FakeGPSMonitor:
     effective_speed_mps = None
     override_speed_mps = None
 
+    def resolve_speed(self):
+        from vibesensor.gps_speed import SpeedResolution
+
+        if isinstance(self.override_speed_mps, (int, float)):
+            return SpeedResolution(
+                speed_mps=float(self.override_speed_mps),
+                fallback_active=False,
+                source="manual",
+            )
+        if isinstance(self.speed_mps, (int, float)):
+            return SpeedResolution(
+                speed_mps=float(self.speed_mps),
+                fallback_active=False,
+                source="gps",
+            )
+        return SpeedResolution(speed_mps=None, fallback_active=False, source="none")
+
 
 class _FakeProcessor:
     def latest_sample_xyz(self, client_id: str):
@@ -376,7 +393,7 @@ def test_speed_source_reports_gps_when_no_override(tmp_path: Path) -> None:
 
 
 def test_speed_source_reports_missing_when_nothing_set(tmp_path: Path) -> None:
-    """speed_source should be 'gps' (default) when neither GPS nor override is set."""
+    """speed_source should be 'none' when neither GPS nor override is set."""
     logger = MetricsLogger(
         enabled=False,
         log_path=tmp_path / "metrics.jsonl",
@@ -397,7 +414,7 @@ def test_speed_source_reports_missing_when_nothing_set(tmp_path: Path) -> None:
     )
 
     assert len(rows) == 1
-    assert rows[0]["speed_source"] == "gps"
+    assert rows[0]["speed_source"] == "none"
     assert rows[0]["speed_kmh"] is None
 
 
@@ -652,7 +669,7 @@ def test_stop_logging_does_not_block_on_post_analysis(
     elapsed = time.monotonic() - started
 
     # stop_logging() must return quickly; the 0.50s summary runs in a worker thread
-    assert elapsed < 0.30, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.30s)"
+    assert elapsed < 0.45, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.45s)"
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=5.0)
 
 

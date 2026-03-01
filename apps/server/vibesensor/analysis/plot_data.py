@@ -9,9 +9,11 @@ from statistics import mean
 from typing import Any, Literal
 
 from vibesensor_core.vibration_strength import percentile
+from vibesensor_core.vibration_strength import (
+    vibration_strength_db_scalar as canonical_vibration_db,
+)
 
 from ..runlog import as_float_or_none as _as_float
-from .db_units import canonical_vibration_db
 from .findings import _classify_peak_type, _speed_bin_label
 from .helpers import (
     MEMS_NOISE_FLOOR_G,

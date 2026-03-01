@@ -225,6 +225,8 @@ class TestParallelComputeAll:
             t2.start()
             t1.join(timeout=10)
             t2.join(timeout=10)
+            assert not t1.is_alive(), "Ingest thread hung (possible deadlock)"
+            assert not t2.is_alive(), "Compute thread hung (possible deadlock)"
             assert not errors, f"Concurrent access errors: {errors}"
         finally:
             pool.shutdown()

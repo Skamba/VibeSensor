@@ -40,6 +40,13 @@ _MAX_POST_ANALYSIS_SAMPLES = 12_000
 _LIVE_SAMPLE_WINDOW_S = 2.0
 _MAX_HISTORY_CREATE_RETRIES = 5
 
+_SPEED_SOURCE_MAP = {
+    "manual": "manual",
+    "gps": "gps",
+    "fallback_manual": "manual",
+    "none": "none",
+}
+
 
 class MetricsLogger:
     def __init__(
@@ -99,7 +106,7 @@ class MetricsLogger:
         self._live_samples: deque[dict[str, object]] = deque(maxlen=20_000)
         self._live_sample_window_s = float(_LIVE_SAMPLE_WINDOW_S)
         self._analysis_thread: Thread | None = None
-        self._analysis_queue: deque[str] = deque()
+        self._analysis_queue: deque[str] = deque(maxlen=100)
         self._analysis_enqueued_run_ids: set[str] = set()
         self._analysis_active_run_id: str | None = None
         if self.enabled:
@@ -392,7 +399,6 @@ class MetricsLogger:
         gear_ratio = settings.get("current_gear_ratio")
         gps_speed_mps = self.gps_monitor.speed_mps
         effective_speed_mps = self.gps_monitor.effective_speed_mps
-        override_speed_mps = self.gps_monitor.override_speed_mps
         gps_speed_kmh = (
             (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, (int, float)) else None
         )
@@ -401,16 +407,9 @@ class MetricsLogger:
             if isinstance(effective_speed_mps, (int, float))
             else None
         )
-        if hasattr(self.gps_monitor, "resolve_speed"):
-            _resolve_source = self.gps_monitor.resolve_speed().source
-        else:
-            _resolve_source = (
-                "manual"
-                if isinstance(override_speed_mps, (int, float))
-                else ("gps" if gps_speed_kmh is not None else "none")
-            )
-        _SOURCE_MAP = {"manual": "manual", "gps": "gps", "fallback_manual": "manual", "none": "gps"}
-        speed_source = _SOURCE_MAP.get(_resolve_source, "gps")
+        speed_source = _SPEED_SOURCE_MAP.get(
+            self.gps_monitor.resolve_speed().source, "none"
+        )
         engine_rpm_estimated = None
         if (
             speed_kmh is not None
@@ -767,6 +766,20 @@ class MetricsLogger:
         with self._lock:
             if run_id in self._analysis_enqueued_run_ids or run_id == self._analysis_active_run_id:
                 return
+            # If the deque is at capacity, the oldest item will be silently
+            # evicted.  Remove it from the tracking set so it can be
+            # re-queued later (e.g. via the stale-analyzing recovery path).
+            if (
+                self._analysis_queue.maxlen is not None
+                and len(self._analysis_queue) >= self._analysis_queue.maxlen
+            ):
+                evicted_id = self._analysis_queue[0]
+                self._analysis_enqueued_run_ids.discard(evicted_id)
+                LOGGER.warning(
+                    "Analysis queue full; evicting run %s to make room for %s",
+                    evicted_id,
+                    run_id,
+                )
             self._analysis_queue.append(run_id)
             self._analysis_enqueued_run_ids.add(run_id)
             self._ensure_analysis_worker_running()

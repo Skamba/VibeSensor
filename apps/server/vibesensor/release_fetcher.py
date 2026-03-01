@@ -87,13 +87,35 @@ class ServerReleaseFetcher:
         with urlopen(req, timeout=30) as resp:  # noqa: S310
             return json.loads(resp.read().decode("utf-8"))
 
+    _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
+
     def _download_asset(self, url: str, dest: Path) -> None:
         _validate_url(url)
         headers = self._api_headers()
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)
-        with urlopen(req, timeout=300) as resp:  # noqa: S310
-            dest.write_bytes(resp.read())
+        tmp = dest.with_suffix(".tmp")
+        try:
+            with urlopen(req, timeout=300) as resp:  # noqa: S310
+                total = 0
+                with open(tmp, "wb") as f:
+                    while True:
+                        chunk = resp.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > self._MAX_DOWNLOAD_BYTES:
+                            max_mb = self._MAX_DOWNLOAD_BYTES // (1024 * 1024)
+                            raise ValueError(
+                                f"Asset exceeds {max_mb} MB limit"
+                            )
+                        f.write(chunk)
+                    f.flush()
+                    os.fsync(f.fileno())
+            os.replace(tmp, dest)
+        except BaseException:
+            tmp.unlink(missing_ok=True)
+            raise
 
     def find_latest_release(self) -> ReleaseInfo:
         """Find the latest server release (tag matching ``server-v*``).
@@ -158,7 +180,11 @@ class ServerReleaseFetcher:
         LOGGER.info("Downloading %s", release.asset_name)
         self._download_asset(release.asset_url, dest)
 
-        sha = hashlib.sha256(dest.read_bytes()).hexdigest()
+        h = hashlib.sha256()
+        with open(dest, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                h.update(chunk)
+        sha = h.hexdigest()
         release.sha256 = sha
         LOGGER.info("Downloaded %s (sha256=%s)", release.asset_name, sha)
         return dest

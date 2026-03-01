@@ -492,8 +492,8 @@
     "nl": "Frequentiebetrouwbaarheid verbetert zodra metadata van de bemonsteringsfrequentie aanwezig is."
   },
   "FREQUENCY_HZ": {
-    "en": "frequency (Hz)",
-    "nl": "frequentie (Hz)"
+    "en": "Frequency (Hz)",
+    "nl": "Frequentie (Hz)"
   },
   "FREQUENCY_SCALES_CLEARLY_WITH_WHEEL_OR_ENGINE_REFERENCES": {
     "en": "Frequency scales clearly with wheel or engine references.",
@@ -1131,16 +1131,12 @@
     "en": "Wheel / Tire",
     "nl": "Wiel / Band"
   },
-  "SPATIAL_PATTERN_SIGNATURE_WAS_DISTRIBUTION_TEXT_WITH_THE": {
-    "en": " Spatial pattern: signature was {distribution_text}, with the strongest peak at {strongest_location} ({strongest_peak:.4f} g).",
-    "nl": " Ruimtelijk patroon: signatuur was {distribution_text}, met de sterkste piek bij {strongest_location} ({strongest_peak:.4f} g)."
-  },
   "SPEED": {
     "en": "Speed",
     "nl": "Snelheid"
   },
   "SPEED_BAND": {
-    "en": "Speed band",
+    "en": "Speed Band",
     "nl": "Snelheidsband"
   },
   "SPEED_BINNED_ANALYSIS": {
@@ -1407,10 +1403,6 @@
     "en": "VibeSensor NVH Report",
     "nl": "VibeSensor NVH-rapport"
   },
-  "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF": {
-    "en": "Vibration signature was detected at {active_count} of {monitored_count} monitored locations. Highest peak was at {strongest_loc} ({strongest_peak:.4f} g).",
-    "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} gemonitorde locaties. Hoogste piek was bij {strongest_loc} ({strongest_peak:.4f} g)."
-  },
   "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB": {
     "en": "Vibration signature was detected at {active_count} of {monitored_count} monitored locations. Highest intensity was at {strongest_loc} ({strongest_peak:.1f} dB).",
     "nl": "Trillingssignatuur is gedetecteerd op {active_count} van {monitored_count} gemonitorde locaties. Hoogste intensiteit was bij {strongest_loc} ({strongest_peak:.1f} dB)."
@@ -1498,9 +1490,5 @@
   "WORKSHOP_SUMMARY": {
     "en": "Workshop Summary",
     "nl": "Werkplaatsoverzicht"
-  },
-  "ORDER_MATCHED_COMPARISON_SUMMARY": {
-    "en": "Order-matched comparison: strongest response is at {strongest_loc} ({strongest_peak:.4f} g).",
-    "nl": "Op orde gematchte vergelijking: sterkste respons zit bij {strongest_loc} ({strongest_peak:.4f} g)."
   }
 }
