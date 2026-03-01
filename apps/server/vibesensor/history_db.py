@@ -256,8 +256,11 @@ class HistoryDB:
 
     @staticmethod
     def _sanitize_for_json(value: Any) -> Any:
-        # Convert numpy scalars to native Python types first.
-        if hasattr(value, "item"):
+        # Convert numpy arrays to Python lists for JSON serialization.
+        if hasattr(value, "tolist") and hasattr(value, "ndim"):
+            value = value.tolist()
+        # Convert numpy scalars to native Python types.
+        elif hasattr(value, "item"):
             value = value.item()
         if isinstance(value, float):
             return value if math.isfinite(value) else None
