@@ -144,8 +144,12 @@ def vibration_strength_db_scalar(
     floor_amp_g: float,
     epsilon_g: float | None = None,
 ) -> float:
-    floor = max(0.0, float(floor_amp_g))
-    band = max(0.0, float(peak_band_rms_amp_g))
+    _floor_raw = float(floor_amp_g)
+    _band_raw = float(peak_band_rms_amp_g)
+    # Guard against NaN inputs: max(0.0, NaN) returns NaN in CPython.
+    from math import isfinite
+    floor = max(0.0, _floor_raw) if isfinite(_floor_raw) else 0.0
+    band = max(0.0, _band_raw) if isfinite(_band_raw) else 0.0
     eps = (
         max(STRENGTH_EPSILON_MIN_G, floor * STRENGTH_EPSILON_FLOOR_RATIO)
         if epsilon_g is None

@@ -218,7 +218,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       state.runs = Array.isArray(payload.runs) ? payload.runs : [];
       renderHistoryTable();
     } catch (_err) {
-      state.runs = [];
+      // Keep stale data on transient errors — do not wipe the run list.
       renderHistoryTable();
     }
   }

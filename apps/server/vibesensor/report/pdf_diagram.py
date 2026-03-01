@@ -146,7 +146,10 @@ def _choose_label_plan(
         if best is None or score < best[0]:
             best = (score, candidate)
 
-    assert best is not None
+    if best is None:
+        raise ValueError(
+            f"No valid label placement found for {name!r} in diagram"
+        )
     return best[1]
 
 
@@ -268,13 +271,14 @@ def car_location_diagram(
     x0 = (d_width - car_w) / 2.0
     y0 = 54.0
 
-    # Aspect-ratio preservation assertion: the rendered car rectangle must
+    # Aspect-ratio preservation check: the rendered car rectangle must
     # match the source BMW body ratio within 2 % tolerance.
     rendered_ratio = car_h / car_w if car_w > 0 else 0.0
-    assert abs(rendered_ratio - length_width_ratio) / length_width_ratio < 0.02, (
-        f"Car visual aspect ratio violated: rendered {rendered_ratio:.4f} "
-        f"vs source {length_width_ratio:.4f}"
-    )
+    if abs(rendered_ratio - length_width_ratio) / length_width_ratio >= 0.02:
+        raise ValueError(
+            f"Car visual aspect ratio violated: rendered {rendered_ratio:.4f} "
+            f"vs source {length_width_ratio:.4f}"
+        )
 
     cx = x0 + (car_w / 2)
     cy = y0 + (car_h / 2)
@@ -474,9 +478,7 @@ def car_location_diagram(
         String(
             src_legend_x,
             src_title_y,
-            tr("SOURCE_LEGEND_TITLE")
-            if tr("SOURCE_LEGEND_TITLE") != "SOURCE_LEGEND_TITLE"
-            else "Finding source:",
+            tr("SOURCE_LEGEND_TITLE"),
             fontName="Helvetica-Bold",
             fontSize=6,
             fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),

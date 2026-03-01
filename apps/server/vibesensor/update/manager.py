@@ -299,6 +299,8 @@ class UpdateManager:
 
     @staticmethod
     def _ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
+        import re as _re
+
         modes: set[str] = set()
         target = ssid.strip()
         if not target:
@@ -307,7 +309,12 @@ class UpdateManager:
             raw = line.strip()
             if not raw or ":" not in raw:
                 continue
-            candidate_ssid, security = raw.split(":", 1)
+            # nmcli escapes colons inside SSIDs as ``\:``.  Split on the
+            # first *unescaped* colon to separate SSID from security mode.
+            _split = _re.split(r"(?<!\\):", raw, maxsplit=1)
+            if len(_split) != 2:
+                continue
+            candidate_ssid, security = _split[0].replace("\\:", ":"), _split[1]
             if candidate_ssid.strip() != target:
                 continue
             sec = security.strip()
@@ -433,35 +440,48 @@ class UpdateManager:
             self._add_issue("cancelled", "Update was cancelled")
             self._log("Update cancelled")
             self._status.state = UpdateState.failed
+            raise  # re-raise so the event loop knows the task was cancelled
         except Exception as exc:
             self._add_issue("unexpected", f"Unexpected error: {exc}")
             LOGGER.exception("update: unexpected error")
             self._status.state = UpdateState.failed
         finally:
-            # Always try to restore the hotspot
-            if self._status.phase not in (UpdatePhase.idle, UpdatePhase.done):
-                await self._restore_hotspot()
-            self._status.finished_at = time.time()
-            if self._status.state == UpdateState.running:
-                # If we reach here still "running", something went wrong
-                self._status.state = UpdateState.failed
-            if self._status.state != UpdateState.failed:
-                self._status.phase = UpdatePhase.done
-            # Clear secrets from memory
-            self._redact_secrets.clear()
+            # Shield cleanup from CancelledError so hotspot restore,
+            # status persistence, and secret clearing always complete.
             try:
-                self._status.runtime = self._collect_runtime_details()
-            except Exception:
-                LOGGER.warning("Failed to collect runtime details", exc_info=True)
+                # Always try to restore the hotspot
+                if self._status.phase not in (UpdatePhase.idle, UpdatePhase.done):
+                    await asyncio.shield(self._restore_hotspot())
+                self._status.finished_at = time.time()
+                if self._status.state == UpdateState.running:
+                    # If we reach here still "running", something went wrong
+                    self._status.state = UpdateState.failed
+                if self._status.state != UpdateState.failed:
+                    self._status.phase = UpdatePhase.done
+                # Clear secrets from memory
+                self._redact_secrets.clear()
+                try:
+                    self._status.runtime = self._collect_runtime_details()
+                except Exception:
+                    LOGGER.warning("Failed to collect runtime details", exc_info=True)
 
-            # Parse diagnostics
-            try:
-                diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
-                self._status.issues.extend(diag_issues)
-            except Exception:
-                LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
+                # Parse diagnostics
+                try:
+                    diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
+                    self._status.issues.extend(diag_issues)
+                except Exception:
+                    LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
 
-            self._persist_status("job_end")
+                self._persist_status("job_end")
+            except (asyncio.CancelledError, Exception):
+                # Last-resort: ensure secrets are cleared and status is persisted
+                # even if cleanup itself is interrupted.
+                self._redact_secrets.clear()
+                self._status.finished_at = self._status.finished_at or time.time()
+                if self._status.state == UpdateState.running:
+                    self._status.state = UpdateState.failed
+                self._persist_status("job_end")
+                LOGGER.warning("Update cleanup interrupted", exc_info=True)
 
     async def _run_update_inner(self, ssid: str, password: str) -> None:
         # --- Phase: Validate ---
@@ -1041,13 +1061,12 @@ class UpdateManager:
             return
 
         dropin_path = Path(SERVICE_ENV_DROPIN)
-        dropin_body = f"[Service]\\nEnvironment=VIBESENSOR_CONTRACTS_DIR={contracts_dir}\\n"
-        escaped_body = dropin_body.replace("\\", "\\\\").replace("'", "\\'")
+        dropin_body = f"[Service]\nEnvironment=VIBESENSOR_CONTRACTS_DIR={contracts_dir}\n"
         script = (
             "from pathlib import Path; "
-            f"p=Path('{dropin_path}'); "
+            f"p=Path({repr(str(dropin_path))}); "
             "p.parent.mkdir(parents=True, exist_ok=True); "
-            f"content='{escaped_body}'; "
+            f"content={repr(dropin_body)}; "
             "changed=(not p.exists()) or (p.read_text(encoding='utf-8')!=content); "
             "p.write_text(content, encoding='utf-8'); "
             "print('changed' if changed else 'unchanged')"
