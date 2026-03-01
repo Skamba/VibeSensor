@@ -168,3 +168,24 @@ class TestWorkerPoolDeterministic:
 
         source = inspect.getsource(mod)
         assert "np.random.seed" not in source, "Must use np.random.default_rng, not np.random.seed"
+
+
+class TestNoUnseededRandomInTests:
+    """Guardrail: all test files must use np.random.default_rng(seed), never
+    the unseeded global PRNG functions like np.random.randn or np.random.rand."""
+
+    def test_no_unseeded_randn_in_processing_tests(self) -> None:
+        import tests.test_processing_extended as mod
+
+        source = inspect.getsource(mod)
+        assert "np.random.randn" not in source, (
+            "Use np.random.default_rng(seed).standard_normal() instead of np.random.randn()"
+        )
+
+    def test_no_unseeded_randn_in_buffer_flush_tests(self) -> None:
+        import tests.test_reset_buffer_flush as mod
+
+        source = inspect.getsource(mod)
+        assert "np.random.randn" not in source, (
+            "Use np.random.default_rng(seed).standard_normal() instead of np.random.randn()"
+        )

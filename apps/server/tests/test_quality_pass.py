@@ -54,6 +54,7 @@ class TestDiagnosticsSkipsBadClients:
         )
         # The good client is still processed; the bad one is silently skipped
         assert isinstance(events, list)
+        assert len(events) >= 1, "Good client events should still be produced"
 
     def test_missing_top_peaks_is_skipped(self) -> None:
         engine = self._engine()

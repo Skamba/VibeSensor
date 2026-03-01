@@ -327,39 +327,6 @@ class ClientRegistry:
             record.location = clean
             return record
 
-    def validate_locations(self, now: float | None = None) -> list[str]:
-        """Return a list of warning strings for location-related issues.
-
-        Checks:
-        * Active sensors without an assigned location.
-        * Multiple active sensors sharing the same non-empty location.
-
-        Returns an empty list when all checks pass.
-        """
-        warnings: list[str] = []
-        with self._lock:
-            now_mono = self._resolve_now_mono(now)
-            active = [
-                record
-                for record in self._clients.values()
-                if record.last_seen_mono
-                and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
-            ]
-            loc_to_ids: dict[str, list[str]] = {}
-            for record in active:
-                if not record.location:
-                    warnings.append(
-                        f"Sensor {record.name} ({record.client_id}) has no location assigned."
-                    )
-                else:
-                    loc_to_ids.setdefault(record.location, []).append(record.name)
-            for loc, names in loc_to_ids.items():
-                if len(names) > 1:
-                    warnings.append(
-                        f"Location '{loc}' assigned to multiple sensors: {', '.join(names)}."
-                    )
-        return warnings
-
     def remove_client(self, client_id: str) -> bool:
         try:
             normalized = _normalize_client_id(client_id)

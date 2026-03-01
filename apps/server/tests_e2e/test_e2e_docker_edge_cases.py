@@ -395,10 +395,10 @@ def test_car_crud_edge_cases_e2e(e2e_env: dict[str, str]) -> None:
             api_json(base, f"/api/settings/cars/{victim}", method="DELETE")
         lone = api_json(base, "/api/settings/cars")
         lone_car_id = str(lone["cars"][0]["id"])
-        api_json(base, f"/api/settings/cars/{lone_car_id}", method="DELETE", expected_status=200)
+        api_json(base, f"/api/settings/cars/{lone_car_id}", method="DELETE", expected_status=400)
         final_state = api_json(base, "/api/settings/cars")
-        assert final_state["cars"] == []
-        assert final_state["activeCarId"] is None
+        assert len(final_state["cars"]) == 1
+        assert final_state["activeCarId"] == lone_car_id
     finally:
         current = api_json(base, "/api/settings/cars")
         remaining_ids = {str(c["id"]) for c in current["cars"]}

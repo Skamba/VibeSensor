@@ -248,6 +248,25 @@ class ProcessingConfig:
             )
             object.__setattr__(self, "spectrum_max_hz", clamped)
 
+        # --- buffer memory bound: sample_rate_hz * waveform_seconds ----------------
+        # Each client allocates a 3×capacity float32 buffer.  Cap the per-client
+        # buffer at ~2 MB (524288 samples × 3 × 4 bytes = 6 MB) to avoid OOM on
+        # memory-constrained devices like the Pi 3A+ (512 MB).
+        _MAX_BUFFER_SAMPLES = 524_288
+        buffer_samples = self.sample_rate_hz * self.waveform_seconds
+        if buffer_samples > _MAX_BUFFER_SAMPLES:
+            clamped_seconds = max(1, _MAX_BUFFER_SAMPLES // self.sample_rate_hz)
+            _cfg_logger.warning(
+                "processing.sample_rate_hz=%s × waveform_seconds=%s = %s samples "
+                "exceeds per-client buffer limit (%s) — clamping waveform_seconds to %s",
+                self.sample_rate_hz,
+                self.waveform_seconds,
+                buffer_samples,
+                _MAX_BUFFER_SAMPLES,
+                clamped_seconds,
+            )
+            object.__setattr__(self, "waveform_seconds", clamped_seconds)
+
 
 @dataclass(slots=True)
 class LoggingConfig:

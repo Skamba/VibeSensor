@@ -58,7 +58,8 @@ def test_ingest_applies_accel_scale() -> None:
 def test_ingest_wraparound_buffer() -> None:
     proc = _make_processor(sample_rate_hz=10, waveform_seconds=1)
     # Buffer holds 10 samples, push 15
-    chunk1 = np.random.randn(15, 3).astype(np.float32)
+    _rng = np.random.default_rng(42)
+    chunk1 = _rng.standard_normal((15, 3)).astype(np.float32)
     proc.ingest("client1", chunk1)
     xyz = proc.latest_sample_xyz("client1")
     assert xyz is not None
@@ -78,7 +79,8 @@ def test_ingest_with_sample_rate() -> None:
 
 def test_ingest_clamps_excessive_sample_rate() -> None:
     proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-    samples = np.random.randn(10, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((10, 3)).astype(np.float32) * 0.01
     proc.ingest("client1", samples, sample_rate_hz=250_000)
     assert proc.latest_sample_rate_hz("client1") == MAX_CLIENT_SAMPLE_RATE_HZ
     assert proc._buffers["client1"].capacity == MAX_CLIENT_SAMPLE_RATE_HZ * 2
@@ -140,7 +142,8 @@ def test_spectrum_payload_has_vibration_strength_db() -> None:
 
 def test_spectrum_payload_reuses_cached_conversion(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = _make_processor(sample_rate_hz=400, fft_n=128, spectrum_max_hz=150)
-    samples = np.random.randn(300, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((300, 3)).astype(np.float32) * 0.01
     proc.ingest("client1", samples, sample_rate_hz=400)
     proc.compute_metrics("client1")
     first = proc.spectrum_payload("client1")
@@ -165,7 +168,8 @@ def test_multi_spectrum_payload_empty() -> None:
 
 def test_multi_spectrum_payload_returns_per_client_freq_on_mismatch() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
-    samples = np.random.randn(300, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((300, 3)).astype(np.float32) * 0.01
 
     proc.ingest("c1", samples, sample_rate_hz=200)
     proc.ingest("c2", samples, sample_rate_hz=320)
@@ -185,7 +189,8 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
-    samples = np.random.randn(300, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((300, 3)).astype(np.float32) * 0.01
 
     proc.ingest("c1", samples, sample_rate_hz=200)
     proc.ingest("c2", samples, sample_rate_hz=200)
@@ -222,7 +227,8 @@ def test_selected_payload_waveform_respects_configured_window() -> None:
     before decimation so UI time spans stay consistent.
     """
     proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
-    samples = np.random.randn(400, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((400, 3)).astype(np.float32) * 0.01
     proc.ingest("client1", samples, sample_rate_hz=50)
 
     result = proc.selected_payload("client1")
@@ -238,7 +244,8 @@ def test_selected_payload_waveform_respects_configured_window() -> None:
 
 def test_selected_payload_reuses_cached_conversion(monkeypatch: pytest.MonkeyPatch) -> None:
     proc = _make_processor(sample_rate_hz=200, waveform_seconds=2, waveform_display_hz=50)
-    samples = np.random.randn(500, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((500, 3)).astype(np.float32) * 0.01
     proc.ingest("client1", samples, sample_rate_hz=200)
     proc.compute_metrics("client1")
     first = proc.selected_payload("client1")
@@ -253,8 +260,9 @@ def test_selected_payload_reuses_cached_conversion(monkeypatch: pytest.MonkeyPat
 
 def test_waveform_window_respects_seconds_for_each_client_sample_rate() -> None:
     proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
-    low_sr = np.random.randn(400, 3).astype(np.float32) * 0.01
-    high_sr = np.random.randn(1200, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    low_sr = _rng.standard_normal((400, 3)).astype(np.float32) * 0.01
+    high_sr = _rng.standard_normal((1200, 3)).astype(np.float32) * 0.01
     proc.ingest("c-low", low_sr, sample_rate_hz=50)
     proc.ingest("c-high", high_sr, sample_rate_hz=300)
 
@@ -281,7 +289,8 @@ def test_compute_metrics_missing_client() -> None:
 def test_compute_metrics_with_data() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=64)
     # Push enough samples for FFT
-    samples = np.random.randn(100, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((100, 3)).astype(np.float32) * 0.01
     proc.ingest("client1", samples)
     metrics = proc.compute_metrics("client1")
     assert "x" in metrics
@@ -383,7 +392,8 @@ def test_top_peaks_dominant_frequency_aligns_with_strength_metrics() -> None:
 
 def test_compute_all() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=64)
-    samples = np.random.randn(100, 3).astype(np.float32) * 0.01
+    _rng = np.random.default_rng(42)
+    samples = _rng.standard_normal((100, 3)).astype(np.float32) * 0.01
     proc.ingest("c1", samples)
     proc.ingest("c2", samples)
     result = proc.compute_all(["c1", "c2"])
