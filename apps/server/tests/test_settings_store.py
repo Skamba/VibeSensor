@@ -414,3 +414,53 @@ def test_persist_failure_logs_error(tmp_path: Path, caplog: pytest.LogCaptureFix
     assert any(
         "Failed to persist" in rec.message and rec.levelname == "ERROR" for rec in caplog.records
     )
+
+
+# ---------------------------------------------------------------------------
+# Additional edge-case tests
+# ---------------------------------------------------------------------------
+
+
+def test_store_speed_unit_roundtrip(tmp_path: Path) -> None:
+    """set_speed_unit() persists and reloads correctly."""
+    db = HistoryDB(tmp_path / "history.db")
+    store = SettingsStore(db=db)
+    assert store.speed_unit == "kmh"
+
+    store.set_speed_unit("mps")
+    assert store.speed_unit == "mps"
+
+    store2 = SettingsStore(db=db)
+    assert store2.speed_unit == "mps"
+
+
+def test_store_speed_unit_invalid_raises() -> None:
+    """set_speed_unit() rejects unknown units."""
+    store = SettingsStore()
+    with pytest.raises(ValueError, match="speed_unit"):
+        store.set_speed_unit("mph")
+
+
+def test_store_language_invalid_raises() -> None:
+    """set_language() rejects unknown language codes."""
+    store = SettingsStore()
+    with pytest.raises(ValueError, match="language"):
+        store.set_language("fr")
+
+
+def test_store_active_car_aspects_no_active_car() -> None:
+    """active_car_aspects() returns None when no car is active."""
+    store = SettingsStore()
+    assert store.active_car_aspects() is None
+
+
+def test_store_active_car_aspects_with_active_car() -> None:
+    """active_car_aspects() returns aspects dict for active car."""
+    store = SettingsStore()
+    result = store.add_car({"name": "Test", "type": "sedan"})
+    car_id = result["cars"][0]["id"]
+    store.set_active_car(car_id)
+    aspects = store.active_car_aspects()
+    assert aspects is not None
+    assert isinstance(aspects, dict)
+    assert aspects == DEFAULT_CAR_ASPECTS
