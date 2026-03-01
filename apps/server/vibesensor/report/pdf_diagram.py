@@ -461,7 +461,7 @@ def car_location_diagram(
         )
 
     # -- Source highlight legend (explains marker colors on the circles) --
-    from .theme import FINDING_SOURCE_COLORS  # noqa: F811 – re-import for clarity
+    from .theme import FINDING_SOURCE_COLORS
 
     src_legend_items = [
         (tr("SOURCE_WHEEL_TIRE"), FINDING_SOURCE_COLORS["wheel/tire"]),

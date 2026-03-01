@@ -205,8 +205,6 @@ def _write_meta(bundle_dir: Path, meta: BundleMeta) -> None:
     """
     meta_path = bundle_dir / _META_FILE
     payload = json.dumps(meta.to_dict(), indent=2) + "\n"
-    import tempfile
-
     fd, tmp = tempfile.mkstemp(
         dir=str(bundle_dir),
         prefix="._meta_",
@@ -240,7 +238,7 @@ class GitHubReleaseFetcher:
     def _api_get(self, url: str) -> Any:
         self._validate_url(url)
         req = Request(url, headers=self._api_headers())
-        with urlopen(req, timeout=30) as resp:  # noqa: S310
+        with urlopen(req, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
     def _download_asset(self, url: str, dest: Path) -> None:
@@ -248,11 +246,9 @@ class GitHubReleaseFetcher:
         headers = self._api_headers()
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)
-        with urlopen(req, timeout=120) as resp:  # noqa: S310
+        with urlopen(req, timeout=120) as resp:
             # Stream directly to a temp file to avoid buffering the entire
             # firmware binary in memory (Pi 3A+ has only 512 MB RAM).
-            import tempfile
-
             tmp_fd, tmp_path = tempfile.mkstemp(dir=str(dest.parent), suffix=".dl_tmp")
             fdopen_ok = False
             try:

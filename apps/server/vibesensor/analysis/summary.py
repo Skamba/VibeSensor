@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Output / aggregation: summaries, confidence labels, plot data, and public entry points."""
 
 from __future__ import annotations
