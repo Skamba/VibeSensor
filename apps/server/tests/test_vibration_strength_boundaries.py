@@ -105,3 +105,45 @@ class TestComputeVibrationStrengthBoundaries:
         )
         assert result["vibration_strength_db"] > 0.0
         assert len(result["top_peaks"]) >= 1
+
+
+# -- vibration_strength_db_scalar direct tests --------------------------------
+
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
+
+
+class TestVibrationStrengthDbScalar:
+    """Direct unit tests for the dB scalar computation."""
+
+    def test_equal_peak_and_floor_returns_near_zero(self) -> None:
+        """When peak == floor, dB should be ~0."""
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.01, floor_amp_g=0.01)
+        assert abs(db) < 0.5
+
+    def test_large_peak_gives_positive_db(self) -> None:
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=1.0, floor_amp_g=0.001)
+        assert db > 30.0
+
+    def test_zero_floor_zero_peak_returns_finite(self) -> None:
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.0, floor_amp_g=0.0)
+        assert math.isfinite(db)
+        assert abs(db) < 0.01
+
+    def test_nan_peak_returns_finite(self) -> None:
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=float("nan"), floor_amp_g=0.01)
+        assert math.isfinite(db)
+
+    def test_nan_floor_returns_finite(self) -> None:
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.01, floor_amp_g=float("nan"))
+        assert math.isfinite(db)
+
+    def test_negative_inputs_treated_as_zero(self) -> None:
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=-0.5, floor_amp_g=-0.3)
+        assert math.isfinite(db)
+
+    def test_custom_epsilon(self) -> None:
+        db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=0.0, floor_amp_g=0.0, epsilon_g=1e-6
+        )
+        assert math.isfinite(db)
+        assert abs(db) < 0.01
