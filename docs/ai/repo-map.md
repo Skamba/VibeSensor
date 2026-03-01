@@ -24,6 +24,12 @@
 4. UI reads server payloads and renders diagnostics using shared keys.
 5. Reports/export consume same metric contracts.
 
+## Key server modules
+- Shared constants: apps/server/vibesensor/constants.py (single source of truth)
+- JSON utilities: apps/server/vibesensor/json_utils.py (sanitisation, safe dumps/loads)
+- Report rendering: apps/server/vibesensor/report/pdf_builder.py (layout helpers in pdf_layout.py)
+- Module boundaries: apps/server/vibesensor/BOUNDARIES.md
+
 ## Path policy
 Use canonical paths only: `apps/server`, `apps/ui`, `apps/simulator`,
 `firmware/esp`, `infra/pi-image/pi-gen`, `docs`, and `libs`.
