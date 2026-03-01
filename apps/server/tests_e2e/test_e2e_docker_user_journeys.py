@@ -265,7 +265,8 @@ def test_e2e_docker_user_journeys(journey_group: str) -> None:
             text_nl = pdf_text(pdf_nl.body)
             text_en = pdf_text(pdf_en.body)
             assert "diagnostisch werkformulier" in text_nl
-            assert "diagnostic worksheet" in text_en
+            assert "diagnostisch werkformulier" in text_en
+            assert "diagnostic worksheet" not in text_en
 
     finally:
         for run_id in list(created_run_ids):

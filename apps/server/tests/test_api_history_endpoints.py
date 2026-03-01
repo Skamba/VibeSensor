@@ -243,12 +243,18 @@ async def test_report_pdf_respects_lang_query() -> None:
 
 @pytest.mark.asyncio
 async def test_report_pdf_respects_lang_query_with_persisted_report_template_data() -> None:
-    """When analysis was run in NL, requesting ?lang=en still returns English PDF."""
+    """When template data is persisted in NL, PDF rendering keeps persisted language."""
+    from dataclasses import asdict
     from io import BytesIO
 
     from pypdf import PdfReader
 
-    router, _ = _make_router_and_state(language="nl")
+    from vibesensor.analysis.report_data_builder import map_summary
+
+    router, state = _make_router_and_state(language="nl")
+    state.history_db.analysis["_report_template_data"] = asdict(
+        map_summary(state.history_db.analysis)
+    )
     endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
     nl = await endpoint("run-1", "nl")
@@ -262,13 +268,13 @@ async def test_report_pdf_respects_lang_query_with_persisted_report_template_dat
     nl_text = "\n".join(page.extract_text() or "" for page in nl_reader.pages).lower()
     en_text = "\n".join(page.extract_text() or "" for page in en_reader.pages).lower()
     assert "diagnostisch werkformulier" in nl_text
-    assert "diagnostic worksheet" in en_text
+    assert "diagnostisch werkformulier" in en_text
+    assert "diagnostic worksheet" not in en_text
 
 
 @pytest.mark.asyncio
 async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
-    """When _report_template_data is persisted in NL, requesting ?lang=en must
-    rebuild the PDF in English (not serve the cached NL template)."""
+    """Persisted template data should avoid report-time map_summary rebuilds."""
     from dataclasses import asdict
     from io import BytesIO
 
@@ -299,8 +305,12 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     app.include_router(router)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
-    nl = await endpoint("run-1", "nl")
-    en = await endpoint("run-1", "en")
+    with patch(
+        "vibesensor.analysis.map_summary",
+        side_effect=AssertionError("map_summary should not run when template data exists"),
+    ):
+        nl = await endpoint("run-1", "nl")
+        en = await endpoint("run-1", "en")
 
     assert nl.body.startswith(b"%PDF")
     assert en.body.startswith(b"%PDF")
@@ -311,7 +321,8 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
         (page.extract_text() or "") for page in PdfReader(BytesIO(en.body)).pages
     ).lower()
     assert "diagnostisch werkformulier" in nl_text
-    assert "diagnostic worksheet" in en_text
+    assert "diagnostisch werkformulier" in en_text
+    assert "diagnostic worksheet" not in en_text
 
 
 @pytest.mark.asyncio
@@ -331,6 +342,32 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_versi
 
     assert call_count == 1
     assert first.body == second.body == b"%PDF-cached"
+
+
+@pytest.mark.asyncio
+async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persisted() -> None:
+    from dataclasses import asdict
+
+    from vibesensor.analysis.report_data_builder import map_summary
+
+    router, state = _make_router_and_state(language="nl")
+    state.history_db.analysis["_report_template_data"] = asdict(
+        map_summary(state.history_db.analysis)
+    )
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
+    call_count = 0
+
+    def _fake_pdf(_data) -> bytes:
+        nonlocal call_count
+        call_count += 1
+        return b"%PDF-cached-cross-lang"
+
+    with patch("vibesensor.api.build_report_pdf", side_effect=_fake_pdf):
+        first = await endpoint("run-1", "en")
+        second = await endpoint("run-1", "nl")
+
+    assert call_count == 1
+    assert first.body == second.body == b"%PDF-cached-cross-lang"
 
 
 @pytest.mark.asyncio

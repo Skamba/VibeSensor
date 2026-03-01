@@ -320,6 +320,16 @@ def map_summary(summary: dict) -> ReportTemplateData:
     if origin_location.lower() == "unknown":
         origin_location = ""
 
+    sensor_locations_all = summary.get("sensor_locations", [])
+    if not isinstance(sensor_locations_all, list):
+        sensor_locations_all = []
+    connected_locations = summary.get("sensor_locations_connected_throughout", [])
+    if not isinstance(connected_locations, list):
+        connected_locations = []
+    sensor_locations_active = [str(loc) for loc in connected_locations if str(loc).strip()]
+    if not sensor_locations_active:
+        sensor_locations_active = [str(loc) for loc in sensor_locations_all if str(loc).strip()]
+
     # -- Phase info --
     raw_phase_info = summary.get("phase_info")
     phase_info = dict(raw_phase_info) if isinstance(raw_phase_info, dict) else None
@@ -360,7 +370,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
     weak_spatial = bool(
         primary_candidate.get("weak_spatial_separation") if primary_candidate else False
     )
-    sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
+    sensor_count = len(sensor_locations_active)
+    if sensor_count <= 0:
+        sensor_count = int(_as_float(summary.get("sensor_count_used")) or 0)
     has_ref_gaps = _has_relevant_reference_gap(findings, primary_source)
 
     _strength_band_key = strength_label(db_val)[0] if db_val is not None else None
@@ -620,18 +632,24 @@ def map_summary(summary: dict) -> ReportTemplateData:
         tire_spec_text = f"{tire_width_mm:g}/{tire_aspect_pct:g}R{rim_in:g}"
 
     sample_count = int(_as_float(summary.get("rows")) or 0)
-    sensor_locations_list = summary.get("sensor_locations", [])
-    if not isinstance(sensor_locations_list, list):
-        sensor_locations_list = []
-    sensor_count_used = int(_as_float(summary.get("sensor_count_used")) or 0)
+    sensor_count_used = sensor_count
     sensor_model_val = str(summary.get("sensor_model") or "").strip() or None
     firmware_version_val = str(summary.get("firmware_version") or "").strip() or None
 
     # -- Rendering context (pre-computed for the PDF renderer) --
     raw_findings = [f for f in summary.get("findings", []) if isinstance(f, dict)]
-    raw_sensor_intensity = summary.get("sensor_intensity_by_location", [])
-    if not isinstance(raw_sensor_intensity, list):
-        raw_sensor_intensity = []
+    raw_sensor_intensity_all = summary.get("sensor_intensity_by_location", [])
+    if not isinstance(raw_sensor_intensity_all, list):
+        raw_sensor_intensity_all = []
+    active_locations = set(sensor_locations_active)
+    if active_locations:
+        raw_sensor_intensity = [
+            row
+            for row in raw_sensor_intensity_all
+            if isinstance(row, dict) and str(row.get("location") or "") in active_locations
+        ]
+    else:
+        raw_sensor_intensity = [row for row in raw_sensor_intensity_all if isinstance(row, dict)]
 
     # Pre-compute location hotspot rows from findings matched_points
     # so the PDF renderer never reads raw samples.
@@ -648,7 +666,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         tire_spec_text=tire_spec_text,
         sample_count=sample_count,
         sensor_count=sensor_count_used,
-        sensor_locations=[str(loc) for loc in sensor_locations_list],
+        sensor_locations=sensor_locations_active,
         sensor_model=sensor_model_val,
         firmware_version=firmware_version_val,
         car=CarMeta(name=car_name, car_type=car_type),
