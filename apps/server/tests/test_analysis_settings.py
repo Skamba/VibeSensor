@@ -210,3 +210,47 @@ def test_sanitize_keeps_valid_tire_params_unchanged() -> None:
     assert out["tire_width_mm"] == 225.0
     assert out["tire_aspect_pct"] == 45.0
     assert out["rim_in"] == 18.0
+
+
+# -- wheel_hz_from_speed_kmh --------------------------------------------------
+
+from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+
+
+def test_wheel_hz_from_speed_kmh_typical_value() -> None:
+    """100 km/h with 2m circumference → ~13.9 Hz."""
+    result = wheel_hz_from_speed_kmh(100.0, 2.0)
+    assert result is not None
+    assert abs(result - (100.0 / 3.6 / 2.0)) < 1e-9
+
+
+def test_wheel_hz_from_speed_kmh_zero_speed_returns_none() -> None:
+    result = wheel_hz_from_speed_kmh(0.0, 2.0)
+    assert result is None
+
+
+def test_wheel_hz_from_speed_kmh_negative_speed_returns_none() -> None:
+    result = wheel_hz_from_speed_kmh(-50.0, 2.0)
+    assert result is None
+
+
+def test_wheel_hz_from_speed_kmh_zero_circumference_returns_none() -> None:
+    result = wheel_hz_from_speed_kmh(100.0, 0.0)
+    assert result is None
+
+
+def test_wheel_hz_from_speed_kmh_non_finite_returns_none() -> None:
+    assert wheel_hz_from_speed_kmh(nan, 2.0) is None
+    assert wheel_hz_from_speed_kmh(100.0, inf) is None
+    assert wheel_hz_from_speed_kmh(inf, 2.0) is None
+
+
+# -- engine_rpm_from_wheel_hz -------------------------------------------------
+
+from vibesensor.analysis_settings import engine_rpm_from_wheel_hz
+
+
+def test_engine_rpm_from_wheel_hz_basic() -> None:
+    """10 Hz wheel × 3.08 final × 0.64 gear × 60 = 1182.72 RPM."""
+    result = engine_rpm_from_wheel_hz(10.0, 3.08, 0.64)
+    assert abs(result - 10.0 * 3.08 * 0.64 * 60.0) < 1e-6
