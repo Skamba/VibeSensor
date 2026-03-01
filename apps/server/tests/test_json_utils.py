@@ -6,7 +6,12 @@ import json
 
 import numpy as np
 
-from vibesensor.json_utils import safe_json_dumps, safe_json_loads, sanitize_for_json, sanitize_value
+from vibesensor.json_utils import (
+    safe_json_dumps,
+    safe_json_loads,
+    sanitize_for_json,
+    sanitize_value,
+)
 
 # ── sanitize_for_json ────────────────────────────────────────────────────────
 

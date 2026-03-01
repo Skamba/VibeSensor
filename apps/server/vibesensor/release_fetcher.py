@@ -70,6 +70,20 @@ def validate_https_url(url: str, *, context: str = "operation") -> None:
         raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
 
 
+def github_api_headers(token: str = "") -> dict[str, str]:
+    """Build standard GitHub REST API request headers.
+
+    If *token* is non-empty it is included as a Bearer authorization header.
+    Used by both :class:`ServerReleaseFetcher` and
+    :class:`~vibesensor.firmware_cache.GitHubReleaseFetcher` so that the
+    header construction lives in one place.
+    """
+    headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
 class ServerReleaseFetcher:
     """Fetch server wheel releases from GitHub Releases."""
 
@@ -77,10 +91,7 @@ class ServerReleaseFetcher:
         self._config = config or ReleaseFetcherConfig()
 
     def _api_headers(self) -> dict[str, str]:
-        headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
-        if self._config.github_token:
-            headers["Authorization"] = f"Bearer {self._config.github_token}"
-        return headers
+        return github_api_headers(self._config.github_token)
 
     def _api_get(self, url: str) -> Any:
         validate_https_url(url, context="release")
