@@ -334,6 +334,18 @@ def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
     return out
 
 
+def _corr_abs_clamped(x: list[float], y: list[float]) -> float | None:
+    """Absolute Pearson correlation, clamped to [0, 1].
+
+    Delegates to ``_corr_abs`` and clamps the result to handle
+    floating-point overshoot (e.g. 1.0000000000000002).
+    """
+    raw = _corr_abs(x, y)
+    if raw is None:
+        return None
+    return min(1.0, raw)
+
+
 def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
     """Estimate per-sample floor amplitude.
 

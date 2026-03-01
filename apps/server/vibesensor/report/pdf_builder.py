@@ -86,13 +86,14 @@ def _strength_with_peak(
     peak_db: float | None,
     *,
     fallback: str,
+    peak_suffix: str = "peak",
 ) -> str:
     base = _safe(strength_label, fallback)
     if peak_db is None:
         return base
     if "db" in base.lower():
         return base
-    return f"{base} · {peak_db:.1f} dB peak"
+    return f"{base} · {peak_db:.1f} dB {peak_suffix}"
 
 
 def _draw_panel(
@@ -434,7 +435,8 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
         oy,
         tr("STRENGTH"),
         _strength_with_peak(
-            data.observed.strength_label, data.observed.strength_peak_db, fallback=na
+            data.observed.strength_label, data.observed.strength_peak_db, fallback=na,
+            peak_suffix=tr("STRENGTH_PEAK_SUFFIX"),
         ),
         label_w=lw,
     )
@@ -871,7 +873,8 @@ def _draw_pattern_evidence(
         rx,
         ry,
         tr("STRENGTH"),
-        _strength_with_peak(ev.strength_label, ev.strength_peak_db, fallback=na),
+        _strength_with_peak(ev.strength_label, ev.strength_peak_db, fallback=na,
+                           peak_suffix=tr("STRENGTH_PEAK_SUFFIX")),
         label_w=lw,
         fs=7,
         value_w=val_w,

@@ -15,6 +15,7 @@ GPS dropouts do not silently discard valid vibration data (issue #287).
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
@@ -247,8 +248,8 @@ def segment_run_phases(
             start_t = segments[-1].end_t_s
             end_t = start_t
         else:
-            start_t = float(seg_start)
-            end_t = float(seg_end)
+            start_t = math.nan
+            end_t = math.nan
         segments.append(
             PhaseSegment(
                 phase=per_sample[seg_start],

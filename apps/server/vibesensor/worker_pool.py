@@ -14,6 +14,7 @@ Usage::
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from collections.abc import Callable
 from concurrent.futures import Future, ThreadPoolExecutor
@@ -51,6 +52,7 @@ class WorkerPool:
         )
         self._total_tasks: int = 0
         self._total_wait_s: float = 0.0
+        self._metrics_lock = threading.Lock()
         self._alive = True
 
     # -- Public API -----------------------------------------------------------
@@ -59,7 +61,8 @@ class WorkerPool:
         """Submit a single callable; returns a ``Future``."""
         if not self._alive:
             raise RuntimeError("WorkerPool is shut down")
-        self._total_tasks += 1
+        with self._metrics_lock:
+            self._total_tasks += 1
         return self._executor.submit(fn, *args, **kwargs)
 
     def map_unordered(
@@ -77,7 +80,8 @@ class WorkerPool:
         t0 = time.monotonic()
         futures: dict[Future[R], T] = {}
         for item in items:
-            self._total_tasks += 1
+            with self._metrics_lock:
+                self._total_tasks += 1
             fut = self._executor.submit(fn, item)
             futures[fut] = item
 
@@ -92,7 +96,8 @@ class WorkerPool:
                     exc_info=True,
                 )
         elapsed = time.monotonic() - t0
-        self._total_wait_s += elapsed
+        with self._metrics_lock:
+            self._total_wait_s += elapsed
         return results
 
     def shutdown(self, wait: bool = True) -> None:

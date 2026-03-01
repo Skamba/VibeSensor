@@ -25,7 +25,7 @@ from .helpers import (
     ORDER_TOLERANCE_REL,
     SPEED_COVERAGE_MIN_PCT,
     _amplitude_weighted_speed_window,
-    _corr_abs,
+    _corr_abs_clamped,
     _effective_baseline_floor,
     _effective_engine_rpm,
     _estimate_strength_floor_amp_g,
@@ -37,6 +37,7 @@ from .helpers import (
     _speed_bin_label,
     _speed_bin_sort_key,
     _tire_reference_from_metadata,
+    _weighted_percentile,
 )
 from .order_analysis import (
     _finding_actions_for_source,
@@ -92,16 +93,6 @@ def _phase_to_str(phase: object) -> str | None:
     if phase is None:
         return None
     return phase.value if hasattr(phase, "value") else str(phase)
-
-
-def _weighted_percentile(
-    pairs: list[tuple[float, float]],
-    q: float,
-) -> float | None:
-    # Re-export from helpers to preserve existing call sites.
-    from .helpers import _weighted_percentile as _wp
-
-    return _wp(pairs, q)
 
 
 def _speed_profile_from_points(
@@ -813,7 +804,7 @@ def _build_order_findings(
         mean_amp = mean(matched_amp) if matched_amp else 0.0
         mean_floor = mean(matched_floor) if matched_floor else 0.0
         mean_rel_err = mean(rel_errors) if rel_errors else 1.0
-        corr = _corr_abs(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+        corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
         # When speed is constant, predicted Hz never varies so correlation
         # is degenerate (undefined or misleading).  Zero it out.
         if constant_speed:
@@ -825,22 +816,13 @@ def _build_order_findings(
         # localize within that same speed band to avoid low-speed road-noise
         # bins dominating strongest-location selection.
         relevant_speed_bins = [focused_speed_band] if focused_speed_band else None
-        try:
-            location_line, location_hotspot = _location_speedbin_summary(
-                matched_points,
-                lang=lang,
-                relevant_speed_bins=relevant_speed_bins,
-                connected_locations=connected_locations,
-                suspected_source=hypothesis.suspected_source,
-            )
-        except TypeError as exc:
-            if "connected_locations" not in str(exc):
-                raise
-            location_line, location_hotspot = _location_speedbin_summary(
-                matched_points,
-                lang=lang,
-                relevant_speed_bins=relevant_speed_bins,
-            )
+        location_line, location_hotspot = _location_speedbin_summary(
+            matched_points,
+            lang=lang,
+            relevant_speed_bins=relevant_speed_bins,
+            connected_locations=connected_locations,
+            suspected_source=hypothesis.suspected_source,
+        )
         weak_spatial_separation = (
             bool(location_hotspot.get("weak_spatial_separation"))
             if isinstance(location_hotspot, dict)
@@ -1562,14 +1544,14 @@ def _build_findings(
     else:
         _per_sample_phases, _ = segment_run_phases(samples)
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
-    diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=False) if keep]
+    diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=True) if keep]
     # Fall back to all samples if phase filtering removes too many (< 5 remaining)
     use_filtered_samples = len(diagnostic_samples) >= 5
     analysis_samples = diagnostic_samples if use_filtered_samples else samples
     # Compute per-sample phases aligned with analysis_samples for phase-evidence tracking.
     if analysis_samples is diagnostic_samples:
         analysis_phases: list = [
-            p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=False) if keep
+            p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=True) if keep
         ]
     else:
         analysis_phases = list(_per_sample_phases)

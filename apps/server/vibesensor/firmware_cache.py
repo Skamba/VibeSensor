@@ -249,22 +249,34 @@ class GitHubReleaseFetcher:
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)
         with urlopen(req, timeout=120) as resp:  # noqa: S310
-            # Read in chunks with a hard size limit to prevent OOM on
-            # memory-constrained devices (Pi 3A+ has only 512 MB RAM).
-            chunks: list[bytes] = []
-            total = 0
-            while True:
-                chunk = resp.read(1024 * 1024)  # 1 MB at a time
-                if not chunk:
-                    break
-                total += len(chunk)
-                if total > _MAX_DOWNLOAD_BYTES:
-                    raise ValueError(
-                        f"Firmware asset exceeds {_MAX_DOWNLOAD_BYTES // (1024 * 1024)} MB "
-                        f"size limit; aborting download to prevent OOM."
-                    )
-                chunks.append(chunk)
-            dest.write_bytes(b"".join(chunks))
+            # Stream directly to a temp file to avoid buffering the entire
+            # firmware binary in memory (Pi 3A+ has only 512 MB RAM).
+            import tempfile
+            tmp_fd, tmp_path = tempfile.mkstemp(
+                dir=str(dest.parent), suffix=".dl_tmp"
+            )
+            try:
+                total = 0
+                with os.fdopen(tmp_fd, "wb") as tmp_f:
+                    while True:
+                        chunk = resp.read(1024 * 1024)  # 1 MB at a time
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > _MAX_DOWNLOAD_BYTES:
+                            raise ValueError(
+                                f"Firmware asset exceeds {_MAX_DOWNLOAD_BYTES // (1024 * 1024)} MB "
+                                f"size limit; aborting download to prevent OOM."
+                            )
+                        tmp_f.write(chunk)
+                os.replace(tmp_path, str(dest))
+            except BaseException:
+                # Clean up partial temp file on any failure
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+                raise
 
     def find_release(self) -> dict[str, Any]:
         """Find the target release based on config (pinned tag, channel)."""
@@ -449,7 +461,14 @@ class FirmwareCache:
             LOGGER.info("Firmware cache updated: tag=%s, asset=%s", tag, asset_name)
             return meta
         except Exception:
-            # Clean up staging on failure, leave existing cache intact
+            # Restore previous cache if we moved it aside
+            if old_current and old_current.exists() and not target.exists():
+                try:
+                    old_current.rename(target)
+                    LOGGER.info("Restored previous firmware cache after activation failure")
+                except Exception:
+                    LOGGER.warning("Failed to restore previous firmware cache", exc_info=True)
+            # Clean up staging on failure
             if staging_dir.exists():
                 shutil.rmtree(staging_dir)
             raise
@@ -488,6 +507,7 @@ def _dir_sha256(directory: Path) -> str:
     for fpath in sorted(directory.rglob("*")):
         if fpath.is_file():
             h.update(str(fpath.relative_to(directory)).encode())
+            h.update(b"\0")  # separator between path and content
             with open(fpath, "rb") as f:
                 while True:
                     chunk = f.read(65536)

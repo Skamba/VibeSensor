@@ -437,6 +437,13 @@ class EspFlashManager:
                 return
             self._status.phase = "done"
             self._finalize(state=EspFlashState.success)
+        except asyncio.CancelledError:
+            self._status.exit_code = 130
+            self._finalize(
+                state=EspFlashState.cancelled,
+                error="Flash cancelled (server shutdown)",
+            )
+            raise
         except Exception as exc:
             self._status.exit_code = 1
             self._append_log(str(exc))
