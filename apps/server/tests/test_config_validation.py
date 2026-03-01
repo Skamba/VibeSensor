@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.config import ProcessingConfig, load_config
+from vibesensor.config import ProcessingConfig, ServerConfig, UDPConfig, load_config
 
 
 def _write_config(path: Path, payload: dict) -> None:
@@ -193,3 +193,69 @@ class TestLoadConfigValidation:
         assert cfg.processing.waveform_seconds == 8
         assert cfg.processing.spectrum_min_hz == 5.0
         assert cfg.processing.spectrum_max_hz == 200
+
+
+# ---------------------------------------------------------------------------
+# ServerConfig.__post_init__ validation
+# ---------------------------------------------------------------------------
+
+
+class TestServerConfigValidation:
+    """ServerConfig.port must be 1–65535."""
+
+    def test_valid_port(self) -> None:
+        cfg = ServerConfig(host="0.0.0.0", port=8000)
+        assert cfg.port == 8000
+
+    @pytest.mark.parametrize("bad_port", [0, -1, 65536, 100_000])
+    def test_invalid_port_rejected(self, bad_port: int) -> None:
+        with pytest.raises(ValueError, match="port"):
+            ServerConfig(host="0.0.0.0", port=bad_port)
+
+    def test_boundary_ports_accepted(self) -> None:
+        assert ServerConfig(host="0.0.0.0", port=1).port == 1
+        assert ServerConfig(host="0.0.0.0", port=65535).port == 65535
+
+
+# ---------------------------------------------------------------------------
+# UDPConfig.__post_init__ validation
+# ---------------------------------------------------------------------------
+
+
+class TestUDPConfigValidation:
+    """UDPConfig port and queue size validation."""
+
+    def test_valid_config(self) -> None:
+        cfg = UDPConfig(
+            data_host="0.0.0.0",
+            data_port=9000,
+            control_host="0.0.0.0",
+            control_port=9001,
+            data_queue_maxsize=1024,
+        )
+        assert cfg.data_port == 9000
+
+    @pytest.mark.parametrize("field", ["data_port", "control_port"])
+    @pytest.mark.parametrize("bad_value", [0, -1, 65536])
+    def test_invalid_port_rejected(self, field: str, bad_value: int) -> None:
+        kwargs = dict(
+            data_host="0.0.0.0",
+            data_port=9000,
+            control_host="0.0.0.0",
+            control_port=9001,
+            data_queue_maxsize=1024,
+        )
+        kwargs[field] = bad_value
+        with pytest.raises(ValueError, match=field):
+            UDPConfig(**kwargs)
+
+    @pytest.mark.parametrize("bad_value", [0, -1])
+    def test_invalid_queue_maxsize_rejected(self, bad_value: int) -> None:
+        with pytest.raises(ValueError, match="data_queue_maxsize"):
+            UDPConfig(
+                data_host="0.0.0.0",
+                data_port=9000,
+                control_host="0.0.0.0",
+                control_port=9001,
+                data_queue_maxsize=bad_value,
+            )

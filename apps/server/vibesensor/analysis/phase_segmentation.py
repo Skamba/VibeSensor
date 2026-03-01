@@ -179,10 +179,10 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
 
         if left_moving and right_moving:
             fill = DrivingPhase.CRUISE
-        elif left_moving:
-            fill = left  # type: ignore[assignment]
-        elif right_moving:
-            fill = right  # type: ignore[assignment]
+        elif left_moving and left is not None:
+            fill = left
+        elif right_moving and right is not None:
+            fill = right
         else:
             # Both sides IDLE or run edges — leave as SPEED_UNKNOWN
             i = j
