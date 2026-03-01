@@ -326,13 +326,9 @@ def _read_config_file(path: Path) -> dict[str, Any]:
         with path.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     except PermissionError:
-        raise ValueError(
-            f"Cannot read config file {path}: permission denied"
-        ) from None
+        raise ValueError(f"Cannot read config file {path}: permission denied") from None
     except yaml.YAMLError as exc:
-        raise ValueError(
-            f"Config file {path} contains invalid YAML: {exc}"
-        ) from None
+        raise ValueError(f"Config file {path} contains invalid YAML: {exc}") from None
     if not isinstance(data, dict):
         raise ValueError(f"{path} must contain a YAML object at the top level.")
     return data

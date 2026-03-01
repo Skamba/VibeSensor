@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Output / aggregation: summaries, confidence labels, plot data, and public entry points."""
 
 from __future__ import annotations
@@ -871,11 +870,13 @@ def summarize_run_data(
                 "start_idx": seg.start_idx,
                 "end_idx": seg.end_idx,
                 "start_t_s": (
-                    None if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
+                    None
+                    if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
                     else seg.start_t_s
                 ),
                 "end_t_s": (
-                    None if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s)
+                    None
+                    if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s)
                     else seg.end_t_s
                 ),
                 "speed_min_kmh": seg.speed_min_kmh,

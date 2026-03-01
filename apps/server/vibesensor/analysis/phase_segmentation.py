@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Driving-phase segmentation for diagnostic runs.
 
 Classifies each sample in a run into one of:

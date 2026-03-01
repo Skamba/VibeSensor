@@ -21,6 +21,7 @@ import pytest
 # 1. Burstiness for near-zero median
 # ------------------------------------------------------------------
 
+
 class TestBurstinessNearZeroMedian:
     """When median_amp ≤ 1e-9, burstiness defaults to 0.0 to avoid inf."""
 
@@ -41,6 +42,7 @@ class TestBurstinessNearZeroMedian:
 # ------------------------------------------------------------------
 # 2. _compute_effective_match_rate — iterates all speed bins
 # ------------------------------------------------------------------
+
 
 class TestComputeEffectiveMatchRateAllBins:
     """Should try highest-speed bin first for focused rescue."""
@@ -85,6 +87,7 @@ class TestComputeEffectiveMatchRateAllBins:
 # 3. phase_segmentation — math.isfinite guard for t_s=0.0
 # ------------------------------------------------------------------
 
+
 class TestPhaseSegmentationFiniteGuard:
     """end_t_s == 0.0 is a valid time and must not be treated as falsy."""
 
@@ -96,6 +99,7 @@ class TestPhaseSegmentationFiniteGuard:
 # ------------------------------------------------------------------
 # 4. _speed_bin_label — negative and NaN handling
 # ------------------------------------------------------------------
+
 
 class TestSpeedBinLabelEdgeCases:
     """_speed_bin_label must handle NaN, Inf, negative values gracefully."""
@@ -134,6 +138,7 @@ class TestSpeedBinLabelEdgeCases:
 # ------------------------------------------------------------------
 # 5. _hash_tree — survives file deletion mid-scan
 # ------------------------------------------------------------------
+
 
 class TestHashTreeFileDeletedMidScan:
     """_hash_tree must not crash if a file is deleted between rglob and open."""
@@ -181,6 +186,7 @@ class TestHashTreeFileDeletedMidScan:
 # ------------------------------------------------------------------
 # 6. metrics_log.run() — session-state lock snapshot
 # ------------------------------------------------------------------
+
 
 class TestMetricsLogLockSnapshot:
     """Verify that _live_start_mono_s is read under lock in the run loop.

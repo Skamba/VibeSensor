@@ -16,6 +16,7 @@ import pytest
 # 1. _combine_amplitude_strength_db — NaN guard
 # ------------------------------------------------------------------
 
+
 class TestCombineAmplitudeNanGuard:
     """NaN values in dB list must be skipped, not mapped to 200 dB."""
 
@@ -52,6 +53,7 @@ class TestCombineAmplitudeNanGuard:
 # 2. strength_label — NaN guard
 # ------------------------------------------------------------------
 
+
 class TestStrengthLabelNanGuard:
     """NaN dB value should return 'unknown', not 'negligible'."""
 
@@ -85,6 +87,7 @@ class TestStrengthLabelNanGuard:
 # 3. certainty_label — NaN confidence guard
 # ------------------------------------------------------------------
 
+
 class TestCertaintyLabelNanGuard:
     """NaN confidence must be clamped to 0, producing 'low' + '0%'."""
 
@@ -113,6 +116,7 @@ class TestCertaintyLabelNanGuard:
 # 4. ws_hub.run() — drift compensation (source verification)
 # ------------------------------------------------------------------
 
+
 class TestWsHubDriftCompensation:
     """run() should subtract elapsed time from sleep to maintain tick rate."""
 
@@ -130,6 +134,7 @@ class TestWsHubDriftCompensation:
 # ------------------------------------------------------------------
 # 5. _effective_baseline_floor — edge cases
 # ------------------------------------------------------------------
+
 
 class TestEffectiveBaselineFloor:
     """Test the baseline floor helper for edge cases."""
@@ -163,6 +168,7 @@ class TestEffectiveBaselineFloor:
 # 6. _validate_required_strength_metrics — edge cases
 # ------------------------------------------------------------------
 
+
 class TestValidateRequiredStrengthMetrics:
     """Test the validation helper for required strength metrics."""
 
@@ -188,6 +194,7 @@ class TestValidateRequiredStrengthMetrics:
 # ------------------------------------------------------------------
 # 7. _select_reason_key — priority ordering
 # ------------------------------------------------------------------
+
 
 class TestSelectReasonKey:
     """Test reason key selection priority ordering."""

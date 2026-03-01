@@ -254,7 +254,7 @@ def assert_aspect_preserved(
 # ---------------------------------------------------------------------------
 
 
-def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
+def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:
     """Render the full page-1 worksheet layout."""
     m = MARGIN
     W = PAGE_W - 2 * m
@@ -435,7 +435,9 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:  # noqa: C901
         oy,
         tr("STRENGTH"),
         _strength_with_peak(
-            data.observed.strength_label, data.observed.strength_peak_db, fallback=na,
+            data.observed.strength_label,
+            data.observed.strength_peak_db,
+            fallback=na,
             peak_suffix=tr("STRENGTH_PEAK_SUFFIX"),
         ),
         label_w=lw,
@@ -717,7 +719,7 @@ _BMW_LENGTH_MM = 5007.0
 _BMW_WIDTH_MM = 1894.0
 
 
-def _page2(  # noqa: C901
+def _page2(
     c: Canvas,
     data: ReportTemplateData,
     *,
@@ -873,8 +875,12 @@ def _draw_pattern_evidence(
         rx,
         ry,
         tr("STRENGTH"),
-        _strength_with_peak(ev.strength_label, ev.strength_peak_db, fallback=na,
-                           peak_suffix=tr("STRENGTH_PEAK_SUFFIX")),
+        _strength_with_peak(
+            ev.strength_label,
+            ev.strength_peak_db,
+            fallback=na,
+            peak_suffix=tr("STRENGTH_PEAK_SUFFIX"),
+        ),
         label_w=lw,
         fs=7,
         value_w=val_w,

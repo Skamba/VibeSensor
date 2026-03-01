@@ -93,9 +93,7 @@ def test_report_package_imports_without_analysis() -> None:
     # Statically-enforced by the AST test above.  This runtime check catches
     # module-level side-effect imports that the AST scan cannot detect.
     new_analysis = analysis_modules_after - analysis_modules_before
-    assert not new_analysis, (
-        f"Importing report modules pulled in analysis modules: {new_analysis}"
-    )
+    assert not new_analysis, f"Importing report modules pulled in analysis modules: {new_analysis}"
 
 
 # ---------------------------------------------------------------------------
