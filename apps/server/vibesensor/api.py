@@ -732,16 +732,21 @@ def create_router(state: RuntimeState) -> APIRouter:
                     continue
                 if isinstance(payload, dict) and "client_id" in payload:
                     value = payload["client_id"]
-                    if value is None:
-                        await state.ws_hub.update_selected_client(ws, None)
-                    elif isinstance(value, str):
-                        try:
+                    try:
+                        if value is None:
+                            await state.ws_hub.update_selected_client(ws, None)
+                        elif isinstance(value, str):
                             normalized = parse_client_id(value).hex()
-                        except ValueError:
-                            continue
-                        await state.ws_hub.update_selected_client(ws, normalized)
+                            await state.ws_hub.update_selected_client(ws, normalized)
+                    except ValueError:
+                        continue
+                    except Exception:
+                        LOGGER.debug("Error processing WS message", exc_info=True)
+                        continue
         except WebSocketDisconnect:
             LOGGER.debug("WebSocket client disconnected")
+        except Exception:
+            LOGGER.warning("WebSocket handler error", exc_info=True)
         finally:
             await state.ws_hub.remove(ws)
 

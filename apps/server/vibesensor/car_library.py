@@ -8,17 +8,24 @@ exposes lightweight query helpers used by the API layer.
 from __future__ import annotations
 
 import json
+import logging
 from functools import lru_cache
 from pathlib import Path
+
+LOGGER = logging.getLogger(__name__)
 
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json"
 
 
 @lru_cache(maxsize=1)
 def _load_library() -> list[dict]:
-    with open(_DATA_FILE) as fh:
-        data: list[dict] = json.load(fh)
-    return data
+    try:
+        with open(_DATA_FILE) as fh:
+            data: list[dict] = json.load(fh)
+        return data
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        LOGGER.warning("Could not load car library from %s: %s", _DATA_FILE, exc)
+        return []
 
 
 # Module-level alias keeps existing ``from vibesensor.car_library import CAR_LIBRARY`` working.

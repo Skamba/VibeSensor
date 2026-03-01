@@ -94,11 +94,9 @@ def is_wheel_location(label_or_code: str) -> bool:
         ):
             return True
     # Also match labels that end in "wheel" and start with a direction
-    if "wheel" in normalised and any(
+    return "wheel" in normalised and any(
         normalised.startswith(d) for d in ("front", "rear", "fl", "fr", "rl", "rr")
-    ):
-        return True
-    return False
+    )
 
 
 def has_any_wheel_location(locations: Iterable[str]) -> bool:

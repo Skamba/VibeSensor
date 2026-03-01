@@ -509,9 +509,11 @@ def create_app(config_path: Path | None = None) -> FastAPI:
             asyncio.create_task(runtime.gps_monitor.run(), name="gps-speed"),
         ]
         # Recover interrupted update jobs (best-effort, must not crash server)
-        asyncio.create_task(
-            runtime.update_manager.startup_recover(),
-            name="update-startup-recover",
+        runtime.tasks.append(
+            asyncio.create_task(
+                runtime.update_manager.startup_recover(),
+                name="update-startup-recover",
+            )
         )
 
     async def stop_runtime() -> None:

@@ -297,6 +297,10 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     accel_scale_raw = merged["processing"].get("accel_scale_g_per_lsb")
     accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, (int, float)) else None
     if accel_scale is not None and accel_scale <= 0:
+        LOGGER.warning(
+            "processing.accel_scale_g_per_lsb=%s is not positive — using auto-detection",
+            accel_scale_raw,
+        )
         accel_scale = None
 
     ap_channel = int(merged["ap"]["channel"])

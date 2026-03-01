@@ -105,6 +105,18 @@ class TestCarConfig:
         # Invalid aspect should be overridden by default
         assert isinstance(car.aspects.get("tire_width_mm"), (int, float))
 
+    def test_whitespace_only_name_falls_back(self) -> None:
+        car = CarConfig.from_dict({"name": "   "})
+        assert car.name == "Unnamed Car"
+
+    def test_empty_string_name_falls_back(self) -> None:
+        car = CarConfig.from_dict({"name": ""})
+        assert car.name == "Unnamed Car"
+
+    def test_whitespace_only_type_falls_back(self) -> None:
+        car = CarConfig.from_dict({"type": "   "})
+        assert car.type == "sedan"
+
 
 # ---------------------------------------------------------------------------
 # SensorConfig

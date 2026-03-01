@@ -105,6 +105,19 @@ def test_load_config_negative_accel_scale(tmp_path: Path) -> None:
     assert result.processing.accel_scale_g_per_lsb is None
 
 
+def test_load_config_zero_accel_scale(tmp_path: Path) -> None:
+    """accel_scale_g_per_lsb=0 should be treated as auto-detection (None)."""
+    cfg = {
+        "processing": {"accel_scale_g_per_lsb": 0},
+        "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
+    }
+    cfg_path = tmp_path / "config.yaml"
+    with cfg_path.open("w") as f:
+        yaml.safe_dump(cfg, f)
+    result = load_config(cfg_path)
+    assert result.processing.accel_scale_g_per_lsb is None
+
+
 def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
     cfg = {
         "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},

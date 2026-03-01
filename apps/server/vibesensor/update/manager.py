@@ -460,7 +460,7 @@ class UpdateManager:
                 diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
                 self._status.issues.extend(diag_issues)
             except Exception:
-                pass
+                LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
 
             self._persist_status("job_end")
 
@@ -753,8 +753,7 @@ class UpdateManager:
         except Exception as exc:
             self._add_issue("downloading", f"Failed to download release: {exc}")
             self._status.state = UpdateState.failed
-            if staging_dir.exists():
-                shutil.rmtree(staging_dir, ignore_errors=True)
+            shutil.rmtree(staging_dir, ignore_errors=True)
             return
 
         self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
@@ -763,8 +762,7 @@ class UpdateManager:
         await self._refresh_esp_firmware()
 
         if self._cancel_event.is_set():
-            if staging_dir.exists():
-                shutil.rmtree(staging_dir, ignore_errors=True)
+            shutil.rmtree(staging_dir, ignore_errors=True)
             return
 
         # --- Phase: Install ---
@@ -806,8 +804,7 @@ class UpdateManager:
             self._log("Attempting rollback...")
             await self._rollback()
             self._status.state = UpdateState.failed
-            if staging_dir.exists():
-                shutil.rmtree(staging_dir, ignore_errors=True)
+            shutil.rmtree(staging_dir, ignore_errors=True)
             return
 
         self._log(f"Installed vibesensor {release.version}")
@@ -833,16 +830,14 @@ class UpdateManager:
             self._log("Attempting rollback...")
             await self._rollback()
             self._status.state = UpdateState.failed
-            if staging_dir.exists():
-                shutil.rmtree(staging_dir, ignore_errors=True)
+            shutil.rmtree(staging_dir, ignore_errors=True)
             return
 
         installed_version = stdout.strip()
         self._log(f"Verified installed version: {installed_version}")
 
         # Clean up staging
-        if staging_dir.exists():
-            shutil.rmtree(staging_dir, ignore_errors=True)
+        shutil.rmtree(staging_dir, ignore_errors=True)
 
         runtime_details = self._collect_runtime_details()
         self._status.runtime = runtime_details

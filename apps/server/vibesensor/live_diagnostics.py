@@ -110,8 +110,8 @@ class _MatrixSecondsEvent:
 class LiveDiagnosticsEngine:
     def __init__(self) -> None:
         self._matrix = _new_matrix()
-        self._matrix_count_events: deque[_MatrixCountEvent] = deque()
-        self._matrix_seconds_events: deque[_MatrixSecondsEvent] = deque()
+        self._matrix_count_events: deque[_MatrixCountEvent] = deque(maxlen=100_000)
+        self._matrix_seconds_events: deque[_MatrixSecondsEvent] = deque(maxlen=100_000)
         self._sensor_trackers: dict[str, _TrackerLevelState] = {}
         self._combined_trackers: dict[str, _TrackerLevelState] = {}
         self._multi_sync_window_ms = 800

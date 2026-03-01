@@ -98,8 +98,8 @@ class CarConfig:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CarConfig:
         car_id = str(data.get("id") or _new_car_id())
-        name = str(data.get("name") or "Unnamed Car").strip()[:64]
-        car_type = str(data.get("type") or "sedan").strip()[:32]
+        name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"
+        car_type = str(data.get("type") or "sedan").strip()[:32] or "sedan"
         raw_aspects = data.get("aspects") or {}
         aspects = dict(DEFAULT_CAR_ASPECTS)
         if isinstance(raw_aspects, dict):
@@ -110,8 +110,8 @@ class CarConfig:
         )
         return cls(
             id=car_id,
-            name=name or "Unnamed Car",
-            type=car_type or "sedan",
+            name=name,
+            type=car_type,
             aspects=aspects,
             variant=variant or None,
         )
