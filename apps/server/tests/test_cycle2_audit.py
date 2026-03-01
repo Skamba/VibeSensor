@@ -302,10 +302,10 @@ class TestFinding6_CombinedSpectrumInheritsZeroedBin:
 
 
 class TestFinding7_PhaseSegmentIndexAsSeconds:
-    """Phase segmentation uses sample indices as seconds when time is missing."""
+    """Phase segmentation uses NaN sentinel when time is missing."""
 
-    def test_indices_used_as_seconds(self):
-        # Samples with no t_s → time falls back to sample indices
+    def test_missing_time_uses_nan_sentinel(self):
+        # Samples with no t_s → time falls back to NaN sentinel
         samples = [
             {"speed_kmh": 80.0}  # no t_s
             for _ in range(20)
@@ -313,10 +313,11 @@ class TestFinding7_PhaseSegmentIndexAsSeconds:
         per_sample_phases, segments = segment_run_phases(samples)
         assert len(segments) > 0
         seg = segments[0]
-        # Bug: start_t_s and end_t_s are sample indices, not real time
-        assert seg.start_t_s == 0.0
-        assert seg.end_t_s == float(seg.end_idx)
-        # For 20 samples at say 100 Hz, this shows 19 seconds instead of 0.2s
+        # Fixed: start_t_s and end_t_s are NaN (unknown), not sample indices
+        import math
+
+        assert math.isnan(seg.start_t_s)
+        assert math.isnan(seg.end_t_s)
 
 
 # =====================================================================

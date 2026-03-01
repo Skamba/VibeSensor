@@ -221,7 +221,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
             return 5.0, "speed_kmh"
 
     monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
@@ -293,7 +293,7 @@ def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
             return 5.0, "speed_kmh"
 
     monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
@@ -364,7 +364,7 @@ def test_build_order_findings_dominant_phase_none_without_phases(
             return 5.0, "speed_kmh"
 
     monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(findings_module, "_corr_abs", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
         findings_module,
         "_location_speedbin_summary",
