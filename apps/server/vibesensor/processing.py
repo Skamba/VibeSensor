@@ -905,9 +905,7 @@ class SignalProcessor:
 
     @_synchronized
     def evict_clients(self, keep_client_ids: set[str]) -> None:
-        stale_ids = [
-            client_id for client_id in self._buffers.keys() if client_id not in keep_client_ids
-        ]
+        stale_ids = [client_id for client_id in self._buffers if client_id not in keep_client_ids]
         for client_id in stale_ids:
             self._buffers.pop(client_id, None)
 

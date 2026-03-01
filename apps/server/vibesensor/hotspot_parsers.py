@@ -73,9 +73,7 @@ def parse_iw_info(iw_output: str) -> tuple[bool, str | None]:
 def parse_rfkill_blocked(output: str) -> bool:
     """Return True if rfkill reports any block."""
     lowered = output.lower()
-    if "soft blocked: yes" in lowered or "hard blocked: yes" in lowered:
-        return True
-    return False
+    return "soft blocked: yes" in lowered or "hard blocked: yes" in lowered
 
 
 def nm_log_signals(log_excerpt: str) -> tuple[str | None, str | None]:
