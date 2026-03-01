@@ -40,7 +40,7 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
-from .release_fetcher import validate_https_url
+from .release_fetcher import github_api_headers, validate_https_url
 
 LOGGER = logging.getLogger(__name__)
 
@@ -227,10 +227,7 @@ class GitHubReleaseFetcher:
         self._config = config
 
     def _api_headers(self) -> dict[str, str]:
-        headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
-        if self._config.github_token:
-            headers["Authorization"] = f"Bearer {self._config.github_token}"
-        return headers
+        return github_api_headers(self._config.github_token)
 
     def _api_get(self, url: str) -> Any:
         validate_https_url(url, context="firmware")

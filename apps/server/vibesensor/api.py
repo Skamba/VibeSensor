@@ -57,8 +57,8 @@ from .api_models import (
     UpdateStartResponse,
     UpdateStatusResponse,
 )
-from .locations import all_locations, label_for_code
 from .domain_models import normalize_sensor_id
+from .locations import all_locations, label_for_code
 from .protocol import client_id_mac
 from .report.pdf_builder import build_report_pdf
 from .runlog import bounded_sample as _bounded_sample  # noqa: F401  # re-exported for tests
