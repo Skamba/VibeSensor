@@ -17,6 +17,14 @@ Use this when changing backend code without scanning the whole package.
 - `processing.py` orchestrates calls into core computation.
 - Rule: do not move algorithm details into `app.py`.
 
+## Shared Utilities
+- `json_utils.py`: single source of truth for numpy-aware JSON sanitisation.
+  Both `ws_hub.py` and `history_db.py` delegate to it.
+- `runlog.py`: canonical `utc_now_iso()` helper — prefer over inline
+  `datetime.now(UTC).isoformat()` everywhere.
+- `report/report_data.py`: all report dataclasses expose `from_dict()`
+  for dict→dataclass reconstruction; avoid manual field-by-field unpacking.
+
 ## API Surface
 - `api.py` is the HTTP boundary.
 - Keep response keys stable.
