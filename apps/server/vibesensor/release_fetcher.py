@@ -64,9 +64,10 @@ class ReleaseInfo:
         }
 
 
-def _validate_url(url: str) -> None:
+def validate_https_url(url: str, *, context: str = "operation") -> None:
+    """Raise ``ValueError`` if *url* does not use the HTTPS scheme."""
     if not url.startswith("https://"):
-        raise ValueError(f"Refusing non-HTTPS URL for release operation: {url}")
+        raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
 
 
 class ServerReleaseFetcher:
@@ -82,7 +83,7 @@ class ServerReleaseFetcher:
         return headers
 
     def _api_get(self, url: str) -> Any:
-        _validate_url(url)
+        validate_https_url(url, context="release")
         req = Request(url, headers=self._api_headers())
         with urlopen(req, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
@@ -90,7 +91,7 @@ class ServerReleaseFetcher:
     _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
 
     def _download_asset(self, url: str, dest: Path) -> None:
-        _validate_url(url)
+        validate_https_url(url, context="release")
         headers = self._api_headers()
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)

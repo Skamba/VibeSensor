@@ -11,7 +11,7 @@ from vibesensor.release_fetcher import (
     ReleaseFetcherConfig,
     ReleaseInfo,
     ServerReleaseFetcher,
-    _validate_url,
+    validate_https_url,
 )
 
 # ---------------------------------------------------------------------------
@@ -21,15 +21,15 @@ from vibesensor.release_fetcher import (
 
 class TestValidateUrl:
     def test_https_accepted(self) -> None:
-        _validate_url("https://api.github.com/repos/owner/repo")
+        validate_https_url("https://api.github.com/repos/owner/repo")
 
     def test_http_rejected(self) -> None:
         with pytest.raises(ValueError, match="non-HTTPS"):
-            _validate_url("http://example.com/release.whl")
+            validate_https_url("http://example.com/release.whl")
 
     def test_ftp_rejected(self) -> None:
         with pytest.raises(ValueError, match="non-HTTPS"):
-            _validate_url("ftp://example.com/release.whl")
+            validate_https_url("ftp://example.com/release.whl")
 
 
 # ---------------------------------------------------------------------------
