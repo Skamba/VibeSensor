@@ -88,12 +88,15 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
             continue
         hasher.update(str(relative.as_posix()).encode("utf-8"))
         hasher.update(b"\0")
-        with open(path, "rb") as fh:
-            while True:
-                chunk = fh.read(65536)
-                if not chunk:
-                    break
-                hasher.update(chunk)
+        try:
+            with open(path, "rb") as fh:
+                while True:
+                    chunk = fh.read(65536)
+                    if not chunk:
+                        break
+                    hasher.update(chunk)
+        except OSError:
+            continue  # file deleted/moved since listing
         hasher.update(b"\0")
     return hasher.hexdigest()
 

@@ -288,7 +288,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # -- Date --
     report_date = summary.get("report_date") or datetime.now(UTC).isoformat()
-    date_str = str(report_date)[:19].replace("T", " ")
+    date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
     # -- Top causes and findings --
     findings = [f for f in summary.get("findings", []) if isinstance(f, dict)]

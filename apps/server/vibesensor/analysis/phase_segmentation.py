@@ -244,7 +244,7 @@ def segment_run_phases(
         if seg_times:
             start_t = min(seg_times)
             end_t = max(seg_times)
-        elif segments and segments[-1].end_t_s > 0:
+        elif segments and math.isfinite(segments[-1].end_t_s):
             start_t = segments[-1].end_t_s
             end_t = start_t
         else:
