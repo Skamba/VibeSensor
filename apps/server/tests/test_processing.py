@@ -281,3 +281,40 @@ def test_top_peaks_handles_nan_noise_floor() -> None:
         assert math.isfinite(p["snr_ratio"]), f"snr_ratio is not finite: {p['snr_ratio']}"
         assert math.isfinite(p["hz"])
         assert math.isfinite(p["amp"])
+
+
+def test_compute_overlap_empty_lists() -> None:
+    """_compute_overlap must not crash on empty input lists."""
+    from vibesensor.processing import _compute_overlap
+
+    result = _compute_overlap([], [])
+    assert result.overlap_ratio == 0.0
+    assert result.aligned is False
+
+
+def test_metrics_rms_p2p_always_finite() -> None:
+    """compute_metrics must return finite rms/p2p even for extreme inputs."""
+    sample_rate_hz = 800
+    fft_n = 256
+    proc = SignalProcessor(
+        sample_rate_hz=sample_rate_hz,
+        waveform_seconds=1,
+        waveform_display_hz=100,
+        fft_n=fft_n,
+        spectrum_max_hz=200,
+        accel_scale_g_per_lsb=1.0,
+    )
+    # Normal small signal
+    t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
+    x = (0.01 * np.sin(2.0 * pi * 50.0 * t)).astype(np.float32)
+    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    proc.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
+    metrics = proc.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
+    import math
+
+    for axis in ("x", "y", "z"):
+        if axis in metrics:
+            assert math.isfinite(metrics[axis]["rms"])
+            assert math.isfinite(metrics[axis]["p2p"])
+    assert math.isfinite(metrics["combined"]["vib_mag_rms"])
+    assert math.isfinite(metrics["combined"]["vib_mag_p2p"])

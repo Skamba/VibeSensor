@@ -43,6 +43,14 @@ def _compute_overlap(starts: list[float], ends: list[float]) -> _OverlapResult:
     Returns an :class:`_OverlapResult` with the overlap ratio, alignment flag,
     and the shared window boundaries.
     """
+    if not starts or not ends:
+        return _OverlapResult(
+            overlap_ratio=0.0,
+            aligned=False,
+            shared_start=0.0,
+            shared_end=0.0,
+            overlap_s=0.0,
+        )
     shared_start = max(starts)
     shared_end = min(ends)
     overlap = max(0.0, shared_end - shared_start)
@@ -419,6 +427,10 @@ class SignalProcessor:
                 continue
             rms = float(np.sqrt(np.mean(np.square(axis_data), dtype=np.float64)))
             p2p = float(np.max(axis_data) - np.min(axis_data))
+            if not math.isfinite(rms):
+                rms = 0.0
+            if not math.isfinite(p2p):
+                p2p = 0.0
             metrics[axis] = {
                 "rms": rms,
                 "p2p": p2p,
@@ -431,6 +443,10 @@ class SignalProcessor:
             vib_mag_p2p = float(np.max(vib_mag) - np.min(vib_mag))
         else:
             vib_mag_rms = 0.0
+            vib_mag_p2p = 0.0
+        if not math.isfinite(vib_mag_rms):
+            vib_mag_rms = 0.0
+        if not math.isfinite(vib_mag_p2p):
             vib_mag_p2p = 0.0
 
         metrics["combined"] = {
