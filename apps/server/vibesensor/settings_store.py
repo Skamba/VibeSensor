@@ -17,6 +17,12 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+VALID_LANGUAGES: frozenset[str] = frozenset({"en", "nl"})
+"""Supported UI languages."""
+
+VALID_SPEED_UNITS: frozenset[str] = frozenset({"kmh", "mps"})
+"""Supported speed display units."""
+
 
 class PersistenceError(RuntimeError):
     """Raised when settings fail to persist to the database."""
@@ -74,10 +80,10 @@ class SettingsStore:
                 }
             )
             language = str(raw.get("language") or "en").strip().lower()
-            self._language = language if language in {"en", "nl"} else "en"
+            self._language = language if language in VALID_LANGUAGES else "en"
 
             speed_unit = str(raw.get("speedUnit") or "kmh").strip().lower()
-            self._speed_unit = speed_unit if speed_unit in {"kmh", "mps"} else "kmh"
+            self._speed_unit = speed_unit if speed_unit in VALID_SPEED_UNITS else "kmh"
 
             # Sensors
             sensors = raw.get("sensorsByMac")
@@ -260,9 +266,9 @@ class SettingsStore:
     def set_sensor(self, mac: str, data: dict[str, Any]) -> dict[str, Any]:
         sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            old_sensor = self._sensors.get(sensor_id)
             existing = self._sensors.get(sensor_id)
-            if existing is None:
+            is_new = existing is None
+            if is_new:
                 existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
             old_name, old_location = existing.name, existing.location
             if "name" in data:
@@ -274,7 +280,7 @@ class SettingsStore:
             try:
                 self._persist()
             except PersistenceError:
-                if old_sensor is None:
+                if is_new:
                     self._sensors.pop(sensor_id, None)
                 else:
                     existing.name, existing.location = old_name, old_location
@@ -296,8 +302,8 @@ class SettingsStore:
 
     def set_language(self, value: str) -> str:
         language = str(value).strip().lower()
-        if language not in {"en", "nl"}:
-            raise ValueError("language must be 'en' or 'nl'")
+        if language not in VALID_LANGUAGES:
+            raise ValueError(f"language must be one of {sorted(VALID_LANGUAGES)}")
         with self._lock:
             old_language = self._language
             self._language = language
@@ -315,8 +321,8 @@ class SettingsStore:
 
     def set_speed_unit(self, value: str) -> str:
         unit = str(value).strip().lower()
-        if unit not in {"kmh", "mps"}:
-            raise ValueError("speed_unit must be 'kmh' or 'mps'")
+        if unit not in VALID_SPEED_UNITS:
+            raise ValueError(f"speed_unit must be one of {sorted(VALID_SPEED_UNITS)}")
         with self._lock:
             old_unit = self._speed_unit
             self._speed_unit = unit
