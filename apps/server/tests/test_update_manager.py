@@ -451,6 +451,13 @@ class TestUpdateManagerAsync:
         ]
         assert len(restore_calls) > 0
 
+        firmware_refresh_calls = [
+            c[0] for c in runner.calls if "vibesensor.firmware_cache" in " ".join(c[0])
+        ]
+        assert firmware_refresh_calls
+        assert "--tag" in firmware_refresh_calls[0]
+        assert "server-v2025.6.15" in firmware_refresh_calls[0]
+
         # Verify service restart was scheduled
         restart_cmd = (
             "systemd-run --unit vibesensor-post-update-restart --on-active=2s "
@@ -481,6 +488,9 @@ class TestUpdateManagerAsync:
         ):
             mock_fetcher_inst = MockFetcher.return_value
             mock_fetcher_inst.check_update_available.return_value = None
+            latest_release = MagicMock()
+            latest_release.tag = "server-v2025.6.15"
+            mock_fetcher_inst.find_latest_release.return_value = latest_release
 
             mgr.start("TestNet", "pass123")
             assert mgr._task is not None
@@ -497,6 +507,13 @@ class TestUpdateManagerAsync:
             and "force-reinstall" in " ".join(c[0])
         ]
         assert not pip_install_calls, "Should not install when already up-to-date"
+
+        firmware_refresh_calls = [
+            c[0] for c in runner.calls if "vibesensor.firmware_cache" in " ".join(c[0])
+        ]
+        assert firmware_refresh_calls
+        assert "--tag" in firmware_refresh_calls[0]
+        assert "server-v2025.6.15" in firmware_refresh_calls[0]
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
         """When sudo is unavailable, update fails with clear issue."""

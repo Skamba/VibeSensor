@@ -542,3 +542,7 @@ def cache_info_cli() -> None:
     info = cache.info()
     for key, val in info.items():
         print(f"{key}: {val}")
+
+
+if __name__ == "__main__":
+    refresh_cache_cli()

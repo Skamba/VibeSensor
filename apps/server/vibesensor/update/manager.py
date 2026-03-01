@@ -718,8 +718,19 @@ class UpdateManager:
 
         if release is None:
             self._log(f"Already up-to-date (version={current_version})")
+            latest_release_tag = ""
+            try:
+                latest_release = await asyncio.to_thread(fetcher.find_latest_release)
+                if isinstance(latest_release.tag, str):
+                    latest_release_tag = latest_release.tag
+            except Exception as exc:
+                self._log(
+                    "Could not resolve the latest release tag for ESP firmware sync: "
+                    f"{sanitize_log_line(str(exc))}"
+                )
+
             # Still refresh ESP firmware cache
-            await self._refresh_esp_firmware()
+            await self._refresh_esp_firmware(pinned_tag=latest_release_tag)
 
             if self._cancel_event.is_set():
                 return
@@ -758,8 +769,8 @@ class UpdateManager:
 
         self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
 
-        # Also refresh ESP firmware
-        await self._refresh_esp_firmware()
+        # Refresh ESP firmware from the same GitHub release as the server wheel.
+        await self._refresh_esp_firmware(pinned_tag=release.tag)
 
         if self._cancel_event.is_set():
             shutil.rmtree(staging_dir, ignore_errors=True)
@@ -866,20 +877,25 @@ class UpdateManager:
             )
             self._log("Automatic backend restart scheduling failed")
 
-    async def _refresh_esp_firmware(self) -> None:
+    async def _refresh_esp_firmware(self, pinned_tag: str = "") -> None:
         """Refresh the ESP firmware cache.  Non-fatal on failure."""
         self._log("Refreshing ESP firmware cache...")
         repo = Path(self._repo_path)
         venv_python = self._reinstall_python_executable(repo)
         refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
+        refresh_args = [
+            "--cache-dir",
+            "/var/lib/vibesensor/firmware",
+        ]
+        if pinned_tag:
+            refresh_args.extend(["--tag", pinned_tag])
         # Fall back to module invocation if the entry point doesn't exist
         if not Path(refresh_exe).is_file():
-            refresh_cmd = [venv_python, "-m", "vibesensor.firmware_cache"]
+            refresh_cmd = [venv_python, "-m", "vibesensor.firmware_cache", *refresh_args]
         else:
             refresh_cmd = [
                 refresh_exe,
-                "--cache-dir",
-                "/var/lib/vibesensor/firmware",
+                *refresh_args,
             ]
         rc, _, stderr = await self._run_cmd(
             refresh_cmd,
