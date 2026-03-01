@@ -6,7 +6,7 @@ from collections import defaultdict
 from math import ceil, floor, log1p, pow
 from statistics import mean
 
-from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
+from ..constants import MULTI_SENSOR_CORROBORATION_DB
 from ..locations import has_any_wheel_location, is_wheel_location
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
