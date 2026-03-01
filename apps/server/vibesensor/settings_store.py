@@ -195,9 +195,11 @@ class SettingsStore:
             car = self._find_car(car_id)
             if car is None:
                 raise ValueError(f"Unknown car id: {car_id}")
+            if len(self._cars) <= 1:
+                raise ValueError("Cannot delete the last car")
             self._cars = [c for c in self._cars if c.id != car_id]
             if self._active_car_id == car_id:
-                self._active_car_id = None
+                self._active_car_id = self._cars[0].id if self._cars else None
             self._persist()
             return self.get_cars()
 

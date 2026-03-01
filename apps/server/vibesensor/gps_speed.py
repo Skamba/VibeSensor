@@ -325,7 +325,13 @@ class GPSSpeedMonitor:
                     writer_closed = True
                 self.speed_mps = None
                 raise
-            except (OSError, TimeoutError, ConnectionError) as exc:
+            except (
+                OSError,
+                TimeoutError,
+                ConnectionError,
+                EOFError,
+                json.JSONDecodeError,
+            ) as exc:
                 self.speed_mps = None
                 self.connection_state = "disconnected"
                 self.last_error = str(exc) or type(exc).__name__

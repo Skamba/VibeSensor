@@ -306,10 +306,25 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function bindSettingsTabs(): void {
-    els.settingsTabs.forEach((tab) => {
+    const activateTabByIndex = (index: number): void => {
+      if (!els.settingsTabs.length) return;
+      const safeIndex = ((index % els.settingsTabs.length) + els.settingsTabs.length) % els.settingsTabs.length;
+      const btn = els.settingsTabs[safeIndex];
+      const tabId = btn.getAttribute("data-settings-tab");
+      if (tabId) setActiveSettingsTab(tabId);
+      btn.focus();
+    };
+    els.settingsTabs.forEach((tab, idx) => {
       tab.addEventListener("click", () => {
         const tabId = tab.getAttribute("data-settings-tab");
         if (tabId) setActiveSettingsTab(tabId);
+      });
+      tab.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tab.click(); return; }
+        if (ev.key === "ArrowRight") { ev.preventDefault(); activateTabByIndex(idx + 1); return; }
+        if (ev.key === "ArrowLeft") { ev.preventDefault(); activateTabByIndex(idx - 1); return; }
+        if (ev.key === "Home") { ev.preventDefault(); activateTabByIndex(0); return; }
+        if (ev.key === "End") { ev.preventDefault(); activateTabByIndex(els.settingsTabs.length - 1); }
       });
     });
   }

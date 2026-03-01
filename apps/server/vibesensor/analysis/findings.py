@@ -9,9 +9,11 @@ from statistics import mean
 from typing import Any
 
 from vibesensor_core.vibration_strength import percentile
+from vibesensor_core.vibration_strength import (
+    vibration_strength_db_scalar as canonical_vibration_db,
+)
 
 from ..runlog import as_float_or_none as _as_float
-from .db_units import canonical_vibration_db
 from .helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
     MEMS_NOISE_FLOOR_G,
@@ -55,6 +57,9 @@ _LIGHT_STRENGTH_MAX_DB = (
 # Kept as an alias for existing in-module references.
 _MEMS_NOISE_FLOOR_G = MEMS_NOISE_FLOOR_G
 
+# Minimum order-finding confidence to suppress a matching persistent-peak.
+_ORDER_SUPPRESS_PERSISTENT_MIN_CONF = 0.40
+
 # ── Diffuse excitation detection constants ──────────────────────────────
 # If one sensor's amplitude is more than this ratio above the weakest,
 # the vibration is localized (not diffuse), even if match rates are uniform.
@@ -73,6 +78,14 @@ _DIFFUSE_PENALTY_FLOOR = 0.65
 _SINGLE_SENSOR_CONFIDENCE_SCALE = 0.85
 _DUAL_SENSOR_CONFIDENCE_SCALE = 0.92
 
+# ── SNR and confidence scoring constants ────────────────────────────────
+# Divisor for log1p(SNR) normalisation to [0, 1].
+_SNR_LOG_DIVISOR = 2.5
+# Clamp bounds for computed confidence so no finding is ever shown as
+# perfectly certain or completely dismissed.
+_CONFIDENCE_FLOOR = 0.08
+_CONFIDENCE_CEILING = 0.97
+
 
 def _phase_to_str(phase: object) -> str | None:
     """Return the string value for a phase object (DrivingPhase or str)."""
@@ -85,23 +98,10 @@ def _weighted_percentile(
     pairs: list[tuple[float, float]],
     q: float,
 ) -> float | None:
-    if not pairs:
-        return None
-    q_clamped = max(0.0, min(1.0, q))
-    filtered = [(value, weight) for value, weight in pairs if weight > 0]
-    if not filtered:
-        return None
-    ordered = sorted(filtered, key=lambda item: item[0])
-    total_weight = sum(weight for _, weight in ordered)
-    if total_weight <= 0:
-        return None
-    threshold = q_clamped * total_weight
-    cumulative = 0.0
-    for value, weight in ordered:
-        cumulative += weight
-        if cumulative >= threshold:
-            return value
-    return ordered[-1][0]
+    # Re-export from helpers to preserve existing call sites.
+    from .helpers import _weighted_percentile as _wp
+
+    return _wp(pairs, q)
 
 
 def _speed_profile_from_points(
@@ -603,7 +603,7 @@ def _compute_order_confidence(
         confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
     elif n_connected_locations == 2 and localization_confidence >= 0.30:
         confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
-    return max(0.08, min(0.97, confidence))
+    return max(_CONFIDENCE_FLOOR, min(_CONFIDENCE_CEILING, confidence))
 
 
 def _suppress_engine_aliases(
@@ -909,7 +909,7 @@ def _build_order_findings(
         compliance = getattr(hypothesis, "path_compliance", 1.0)
         error_denominator = 0.25 * compliance
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
-        snr_score = min(1.0, log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor)) / 2.5)
+        snr_score = min(1.0, log1p(mean_amp / max(_MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR)
         # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
         if mean_amp <= 2 * _MEMS_NOISE_FLOOR_G:
             snr_score = min(snr_score, 0.40)
@@ -1320,7 +1320,7 @@ def _build_persistent_peak_findings(
             speed_uniformity=speed_uniformity,
         )
 
-        snr_score = min(1.0, log1p(raw_snr) / 2.5)
+        snr_score = min(1.0, log1p(raw_snr) / _SNR_LOG_DIVISOR)
         location_counts = bin_location_counts.get(bin_center, {})
         spatial_concentration = (
             max(location_counts.values()) / count if location_counts and count > 0 else 1.0
@@ -1595,7 +1595,6 @@ def _build_findings(
     # order finding has moderate confidence — a marginal order match
     # (e.g. single-sensor constant-speed with conf ≈ 0.27) should not
     # mask a more confident persistent-peak interpretation.
-    _ORDER_SUPPRESS_PERSISTENT_MIN_CONF = 0.40
     order_freqs: set[float] = set()
     for of in order_findings:
         if float(of.get("confidence_0_to_1", 0)) < _ORDER_SUPPRESS_PERSISTENT_MIN_CONF:

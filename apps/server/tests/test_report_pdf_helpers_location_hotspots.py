@@ -9,15 +9,8 @@ def _tr(key: str, **kwargs: object) -> str:
         "UNLABELED_SENSOR": "Unlabeled sensor",
         "LOCATION_ANALYSIS_UNAVAILABLE": "Unavailable",
         "NO_USABLE_AMPLITUDE_BY_LOCATION_DATA_WAS_FOUND": "No data",
-        "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF": (
-            "Peak at {strongest_loc} ({strongest_peak:.4f} g)."
-        ),
         "VIBRATION_SIGNATURE_WAS_DETECTED_AT_ACTIVE_COUNT_OF_DB": (
             "Peak at {strongest_loc} ({strongest_peak:.1f} dB)."
-        ),
-        "ORDER_MATCHED_COMPARISON_SUMMARY": (
-            "Order-matched comparison: strongest response is at "
-            "{strongest_loc} ({strongest_peak:.4f} g)."
         ),
         "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST": "",
     }

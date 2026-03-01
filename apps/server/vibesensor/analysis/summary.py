@@ -10,10 +10,13 @@ from pathlib import Path
 from statistics import median as _median
 from typing import Any
 
+from vibesensor_core.vibration_strength import (
+    vibration_strength_db_scalar as canonical_vibration_db,
+)
+
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601
-from .db_units import canonical_vibration_db
 from .findings import (
     _build_findings,
     _phase_speed_breakdown,

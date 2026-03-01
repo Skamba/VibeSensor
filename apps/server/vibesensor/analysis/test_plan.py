@@ -10,7 +10,7 @@ from statistics import mean
 from ..diagnostics_shared import MULTI_SENSOR_CORROBORATION_DB
 from ..locations import has_any_wheel_location, is_wheel_location
 from ..runlog import as_float_or_none as _as_float
-from .helpers import _speed_bin_label, weak_spatial_dominance_threshold
+from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_dominance_threshold
 from .order_analysis import _finding_actions_for_source, _i18n_ref
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
@@ -20,20 +20,9 @@ def _weighted_percentile_speed(
     speed_weight_pairs: list[tuple[float, float]],
     percentile_0_to_1: float,
 ) -> float | None:
-    valid = [(speed, weight) for speed, weight in speed_weight_pairs if speed > 0 and weight > 0]
-    if not valid:
-        return None
-    ordered = sorted(valid, key=lambda item: item[0])
-    total_weight = sum(weight for _, weight in ordered)
-    if total_weight <= 0:
-        return None
-    target = max(0.0, min(1.0, percentile_0_to_1)) * total_weight
-    cumulative = 0.0
-    for speed, weight in ordered:
-        cumulative += weight
-        if cumulative >= target:
-            return speed
-    return ordered[-1][0]
+    # Filter out non-positive speeds before delegating to the generic helper.
+    valid = [(speed, weight) for speed, weight in speed_weight_pairs if speed > 0]
+    return _weighted_percentile(valid, percentile_0_to_1)
 
 
 def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) -> str | None:

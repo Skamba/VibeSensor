@@ -461,3 +461,31 @@ def _locations_connected_throughout_run(
                 connected.add(location)
 
     return connected
+
+
+def _weighted_percentile(
+    pairs: list[tuple[float, float]],
+    q: float,
+) -> float | None:
+    """Return the *q*-th weighted percentile from *(value, weight)* pairs.
+
+    *q* is clamped to [0, 1].  Pairs with non-positive weights are ignored.
+    Returns ``None`` when no valid pairs remain.
+    """
+    if not pairs:
+        return None
+    q_clamped = max(0.0, min(1.0, q))
+    filtered = [(value, weight) for value, weight in pairs if weight > 0]
+    if not filtered:
+        return None
+    ordered = sorted(filtered, key=lambda item: item[0])
+    total_weight = sum(weight for _, weight in ordered)
+    if total_weight <= 0:
+        return None
+    threshold = q_clamped * total_weight
+    cumulative = 0.0
+    for value, weight in ordered:
+        cumulative += weight
+        if cumulative >= threshold:
+            return value
+    return ordered[-1][0]
