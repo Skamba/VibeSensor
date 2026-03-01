@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from pypdf import PdfReader
 
+from vibesensor.analysis import map_summary
 from vibesensor.analysis_settings import (
     DEFAULT_ANALYSIS_SETTINGS,
     AnalysisSettingsStore,
@@ -182,7 +183,7 @@ def test_multi_sensor_udp_to_report_pipeline(tmp_path: Path) -> None:
         assert set(by_location) >= {loc for _, loc, _ in sensors}
         assert max(by_location, key=by_location.get) == "front-left"
 
-        pdf_bytes = build_report_pdf(analysis)
+        pdf_bytes = build_report_pdf(map_summary(analysis))
         assert pdf_bytes.startswith(b"%PDF-")
         assert len(pdf_bytes) > 1000
         pdf_text = "\n".join(

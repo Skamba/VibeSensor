@@ -9,13 +9,11 @@ import re
 import tempfile
 import zipfile
 from collections import OrderedDict
-from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import Response, StreamingResponse
 
-from .analysis import summarize_run_data
 from .api_models import (  # noqa: F401
     ActiveCarRequest,
     AnalysisSettingsRequest,
@@ -70,14 +68,13 @@ from .api_models import (  # noqa: F401
 from .locations import all_locations, label_for_code
 from .protocol import client_id_mac, parse_client_id
 from .report.pdf_builder import build_report_pdf
-from .runlog import bounded_sample as _bounded_sample
+from .runlog import bounded_sample as _bounded_sample  # noqa: F401 - compatibility export
 
 if TYPE_CHECKING:
     from .app import RuntimeState
     from .report.report_data import ReportTemplateData
 
 LOGGER = logging.getLogger(__name__)
-_MAX_REPORT_SAMPLES = 12_000
 _EXPORT_BATCH_SIZE = 2048
 _EXPORT_SPOOL_THRESHOLD = 4 * 1024 * 1024  # 4 MB before spilling to disk
 _EXPORT_STREAM_CHUNK = 1024 * 1024  # 1 MB read chunks when streaming
@@ -275,13 +272,6 @@ def create_router(state: RuntimeState) -> APIRouter:
             if isinstance(value, str) and value.strip():
                 return value.strip().lower()
         return "en"
-
-    def _iter_normalized_samples(run_id: str, *, batch_size: int = 1000) -> Iterator[dict]:
-        from .runlog import normalize_sample_record
-
-        for batch in state.history_db.iter_run_samples(run_id, batch_size=batch_size):
-            for sample in batch:
-                yield normalize_sample_record(sample)
 
     def _require_run(run_id: str) -> dict[str, Any]:
         """Fetch a history run or raise 404."""
@@ -556,40 +546,10 @@ def create_router(state: RuntimeState) -> APIRouter:
             except (TypeError, ValueError):
                 analysis["_analysis_is_current"] = False
 
-        # Re-run analysis only when a *different* language is explicitly
-        # requested.  The post-stop pipeline is the single source of truth;
-        # on-demand re-computation is reserved for language variants only.
-        from .report_i18n import normalize_lang as _norm_lang
-
-        requested_lang = _norm_lang(lang) if lang is not None else None
-        persisted_lang = _norm_lang(analysis.get("lang")) if isinstance(analysis, dict) else None
-        if requested_lang is not None and requested_lang != persisted_lang:
-
-            def _recompute() -> dict:
-                samples, total_samples, stride = _bounded_sample(
-                    _iter_normalized_samples(run_id),
-                    max_items=_MAX_REPORT_SAMPLES,
-                )
-                metadata = run.get("metadata", {})
-                result = summarize_run_data(
-                    metadata,
-                    samples,
-                    lang=requested_lang,
-                    file_name=run_id,
-                    include_samples=False,
-                )
-                if stride > 1 and isinstance(result, dict):
-                    result["sampling"] = {
-                        "total_samples": total_samples,
-                        "analyzed_samples": len(samples),
-                        "method": f"stride_{stride}",
-                    }
-                return result
-
-            try:
-                analysis = await asyncio.to_thread(_recompute)
-            except ValueError as exc:
-                raise HTTPException(status_code=422, detail=str(exc)) from exc
+        # Keep /insights read-only: return persisted post-stop analysis as-is.
+        # The optional lang query is accepted for compatibility but does not
+        # trigger on-demand analysis recomputation.
+        _ = lang
 
         # Strip internal renderer-only fields before returning
         if isinstance(analysis, dict):
