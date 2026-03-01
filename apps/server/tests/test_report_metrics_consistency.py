@@ -508,8 +508,11 @@ class TestScenario5SparseSensors:
 
     def test_sensor_count_accurate(self, scenario):
         summary, rd = scenario
-        # The sensor_count in report should reflect analysis output
-        assert rd.sensor_count == int(summary.get("sensor_count_used", 0))
+        # The report should reflect sensors that stayed connected for evidence.
+        connected = summary.get("sensor_locations_connected_throughout") or summary.get(
+            "sensor_locations"
+        )
+        assert rd.sensor_count == len(connected or [])
 
     def test_no_false_precision(self, scenario):
         _, rd = scenario

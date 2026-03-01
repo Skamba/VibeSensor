@@ -360,6 +360,34 @@ def test_map_summary_no_top_causes() -> None:
     assert len(data.next_steps) >= 1
 
 
+def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
+    summary: dict = {
+        "lang": "en",
+        "sensor_count_used": 4,
+        "sensor_locations": ["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        "sensor_locations_connected_throughout": ["Front Left", "Rear Left"],
+        "sensor_intensity_by_location": [
+            {"location": "Front Left", "p95_intensity_db": 10.0},
+            {"location": "Rear Left", "p95_intensity_db": 9.0},
+            {"location": "Front Right", "p95_intensity_db": 18.0},
+        ],
+        "top_causes": [],
+        "findings": [],
+        "speed_stats": {},
+        "test_plan": [],
+        "run_suitability": [],
+        "plots": {},
+    }
+
+    data = map_summary(summary)
+    assert data.sensor_count == 2
+    assert data.sensor_locations == ["Front Left", "Rear Left"]
+    assert [row["location"] for row in data.sensor_intensity_by_location] == [
+        "Front Left",
+        "Rear Left",
+    ]
+
+
 def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> None:
     from vibesensor.analysis.summary import _most_likely_origin_summary
 
