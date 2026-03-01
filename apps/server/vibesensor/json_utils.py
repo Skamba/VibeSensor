@@ -80,6 +80,10 @@ def safe_json_loads(value: str | None, *, context: str) -> Any | None:
 
     Logs a warning (with traceback) instead of raising on malformed JSON,
     making it safe for reading persisted data that may have been corrupted.
+
+    *context* is included in the warning message to identify the source::
+
+        safe_json_loads(raw, context="run abc123 metadata")
     """
     if not value:
         return None
