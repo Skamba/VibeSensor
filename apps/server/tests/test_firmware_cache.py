@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
 
 
@@ -86,11 +88,10 @@ def test_find_release_raises_when_no_firmware_assets() -> None:
         raise AssertionError("Expected ValueError when no firmware assets are present")
 
 
-def test_safe_extractall_rejects_path_traversal(tmp_path: "Path") -> None:
+def test_safe_extractall_rejects_path_traversal(tmp_path: Path) -> None:
     """Zip entries with ``../`` segments must be rejected."""
     import io
     import zipfile
-    from pathlib import Path
 
     from vibesensor.firmware_cache import _safe_extractall
 
@@ -110,11 +111,10 @@ def test_safe_extractall_rejects_path_traversal(tmp_path: "Path") -> None:
             raise AssertionError("Expected ValueError for path traversal zip entry")
 
 
-def test_safe_extractall_allows_normal_entries(tmp_path: "Path") -> None:
+def test_safe_extractall_allows_normal_entries(tmp_path: Path) -> None:
     """Normal zip entries must extract without error."""
     import io
     import zipfile
-    from pathlib import Path
 
     from vibesensor.firmware_cache import _safe_extractall
 

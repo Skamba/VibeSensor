@@ -188,7 +188,7 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
     vmin = min(speed_values)
     vmax = max(speed_values)
     vmean, var = _mean_variance(speed_values)
-    stddev = sqrt(var)
+    stddev = sqrt(var) if var is not None else 0.0
     vrange = max(0.0, vmax - vmin)
     return {
         "min_kmh": vmin,
