@@ -267,7 +267,7 @@ class SettingsStore:
         sensor_id = normalize_sensor_id(mac)
         with self._lock:
             existing = self._sensors.get(sensor_id)
-            is_new = existing is None
+            is_new = existing is None  # track for rollback on persist failure
             if is_new:
                 existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
             old_name, old_location = existing.name, existing.location
