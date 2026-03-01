@@ -240,6 +240,16 @@ def create_router(state: RuntimeState) -> APIRouter:
             _metadata_cache_token(run.get("metadata", {})),
         )
 
+    def _report_pdf_cache_lang(run: dict[str, Any], requested_lang: str) -> str:
+        analysis = run.get("analysis")
+        if isinstance(analysis, dict):
+            report_data_dict = analysis.get("_report_template_data")
+            if isinstance(report_data_dict, dict):
+                persisted_lang = str(report_data_dict.get("lang") or "").strip().lower()
+                if persisted_lang:
+                    return persisted_lang
+        return requested_lang
+
     def _cache_get(cache_key: tuple[object, ...]) -> bytes | None:
         cached_pdf = report_pdf_cache.get(cache_key)
         if cached_pdf is None:
@@ -584,7 +594,7 @@ def create_router(state: RuntimeState) -> APIRouter:
         if analysis is None:
             raise HTTPException(status_code=422, detail="No analysis available for this run")
         requested_lang = _analysis_language(run, lang)
-        cache_key = _report_pdf_cache_key(run, run_id, requested_lang)
+        cache_key = _report_pdf_cache_key(run, run_id, _report_pdf_cache_lang(run, requested_lang))
         pdf_name = f"{_safe_filename(run_id)}_report.pdf"
         pdf_headers = {
             "Content-Disposition": f'attachment; filename="{pdf_name}"',
@@ -598,20 +608,18 @@ def create_router(state: RuntimeState) -> APIRouter:
             )
 
         def _build_pdf() -> bytes:
-            # Prefer pre-built ReportTemplateData from analysis when the
-            # language matches.  If the caller requested a different language,
-            # fall through to rebuild via map_summary().
+            # Prefer pre-built ReportTemplateData from post-stop analysis.
+            # Keep report generation rendering-only: do not re-run analysis
+            # mapping when persisted template data is available.
             report_data_dict = (
                 analysis.get("_report_template_data") if isinstance(analysis, dict) else None
             )
             if isinstance(report_data_dict, dict):
-                persisted_lang = str(report_data_dict.get("lang") or "en").strip().lower()
-                if persisted_lang == requested_lang:
-                    data = _reconstruct_report_template_data(report_data_dict)
-                    return build_report_pdf(data)
+                data = _reconstruct_report_template_data(report_data_dict)
+                return build_report_pdf(data)
 
-            # Rebuild from persisted summary (language mismatch or data
-            # without _report_template_data).
+            # Rebuild from persisted summary only for legacy runs without
+            # persisted _report_template_data.
             from .analysis import map_summary
 
             summary = dict(analysis) if isinstance(analysis, dict) else {}
