@@ -608,52 +608,58 @@ def test_operations_after_close_raise(tmp_path: Path) -> None:
         db.create_run("run-x", "2026-01-01T00:00:00Z", {})
 
 
-def test_sanitize_for_json_handles_numpy_scalars() -> None:
-    """_sanitize_for_json must convert numpy scalars to native Python types."""
+def test_sanitize_value_handles_numpy_scalars() -> None:
+    """sanitize_value must convert numpy scalars to native Python types."""
     import numpy as np
 
-    assert HistoryDB._sanitize_for_json(np.float32(1.5)) == 1.5
-    assert isinstance(HistoryDB._sanitize_for_json(np.float32(1.5)), float)
+    from vibesensor.json_utils import sanitize_value
 
-    assert HistoryDB._sanitize_for_json(np.float64(2.5)) == 2.5
-    assert isinstance(HistoryDB._sanitize_for_json(np.float64(2.5)), float)
+    assert sanitize_value(np.float32(1.5)) == 1.5
+    assert isinstance(sanitize_value(np.float32(1.5)), float)
 
-    assert HistoryDB._sanitize_for_json(np.int32(42)) == 42
-    assert isinstance(HistoryDB._sanitize_for_json(np.int32(42)), int)
+    assert sanitize_value(np.float64(2.5)) == 2.5
+    assert isinstance(sanitize_value(np.float64(2.5)), float)
 
-    assert HistoryDB._sanitize_for_json(np.int64(99)) == 99
-    assert isinstance(HistoryDB._sanitize_for_json(np.int64(99)), int)
+    assert sanitize_value(np.int32(42)) == 42
+    assert isinstance(sanitize_value(np.int32(42)), int)
+
+    assert sanitize_value(np.int64(99)) == 99
+    assert isinstance(sanitize_value(np.int64(99)), int)
 
     # NaN numpy scalar → None
-    assert HistoryDB._sanitize_for_json(np.float64(float("nan"))) is None
+    assert sanitize_value(np.float64(float("nan"))) is None
 
     # Inf numpy scalar → None
-    assert HistoryDB._sanitize_for_json(np.float32(float("inf"))) is None
+    assert sanitize_value(np.float32(float("inf"))) is None
 
 
-def test_sanitize_for_json_handles_nested_numpy(tmp_path: Path) -> None:
-    """_sanitize_for_json recurses into dicts/lists with numpy values."""
+def test_sanitize_value_handles_nested_numpy(tmp_path: Path) -> None:
+    """sanitize_value recurses into dicts/lists with numpy values."""
     import numpy as np
 
+    from vibesensor.json_utils import sanitize_value
+
     data = {"a": np.float32(1.0), "b": [np.int64(2), np.float64(float("nan"))]}
-    result = HistoryDB._sanitize_for_json(data)
+    result = sanitize_value(data)
     assert result == {"a": 1.0, "b": [2, None]}
     # Verify the result is JSON-serializable
     json.dumps(result)
 
 
-def test_sanitize_for_json_handles_numpy_arrays() -> None:
-    """_sanitize_for_json converts numpy arrays to Python lists."""
+def test_sanitize_value_handles_numpy_arrays() -> None:
+    """sanitize_value converts numpy arrays to Python lists."""
     import numpy as np
 
+    from vibesensor.json_utils import sanitize_value
+
     arr = np.array([1.0, 2.0, float("nan")])
-    result = HistoryDB._sanitize_for_json(arr)
+    result = sanitize_value(arr)
     assert result == [1.0, 2.0, None]
     # Verify JSON-serializable
     json.dumps(result)
 
     # 2D array
     arr2d = np.array([[1.0, 2.0], [3.0, 4.0]])
-    result2d = HistoryDB._sanitize_for_json(arr2d)
+    result2d = sanitize_value(arr2d)
     assert result2d == [[1.0, 2.0], [3.0, 4.0]]
     json.dumps(result2d)
