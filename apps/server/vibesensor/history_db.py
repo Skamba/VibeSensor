@@ -243,7 +243,7 @@ class HistoryDB:
                 cur.close()
 
     @contextmanager
-    def read_transaction(self):
+    def read_transaction(self) -> Iterator[None]:
         """Hold a single read transaction across multi-step read operations."""
         with self._lock:
             if self._conn is None:
