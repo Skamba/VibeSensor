@@ -177,7 +177,6 @@ class ProcessingConfig:
     accel_scale_g_per_lsb: float | None
 
     def __post_init__(self) -> None:
-        _cfg_logger = logging.getLogger(__name__)
         # --- positive-integer guards ------------------------------------------------
         _POS_FIELDS: dict[str, int] = {
             "sample_rate_hz": 1,
@@ -193,7 +192,7 @@ class ProcessingConfig:
             val = getattr(self, field_name)
             if val < minimum:
                 clamped = minimum
-                _cfg_logger.warning(
+                LOGGER.warning(
                     "processing.%s=%s is below minimum %s — clamped to %s",
                     field_name,
                     val,
@@ -204,7 +203,7 @@ class ProcessingConfig:
 
         # --- fft_n must be >= 16 and a power of 2 ----------------------------------
         if self.fft_n < 16:
-            _cfg_logger.warning(
+            LOGGER.warning(
                 "processing.fft_n=%s is below minimum 16 — clamped to 16",
                 self.fft_n,
             )
@@ -212,7 +211,7 @@ class ProcessingConfig:
         elif self.fft_n & (self.fft_n - 1) != 0:
             # Round up to next power of 2
             next_pow2 = 1 << (self.fft_n - 1).bit_length()
-            _cfg_logger.warning(
+            LOGGER.warning(
                 "processing.fft_n=%s is not a power of 2 — rounded up to %s",
                 self.fft_n,
                 next_pow2,
@@ -221,7 +220,7 @@ class ProcessingConfig:
 
         _MAX_FFT_N = 65536
         if self.fft_n > _MAX_FFT_N:
-            _cfg_logger.warning(
+            LOGGER.warning(
                 "processing.fft_n=%s exceeds maximum %s — clamped",
                 self.fft_n,
                 _MAX_FFT_N,
@@ -230,7 +229,7 @@ class ProcessingConfig:
 
         # --- spectrum_min_hz must be non-negative ----------------------------------
         if self.spectrum_min_hz < 0:
-            _cfg_logger.warning(
+            LOGGER.warning(
                 "processing.spectrum_min_hz=%s is negative — clamped to 0",
                 self.spectrum_min_hz,
             )
@@ -240,7 +239,7 @@ class ProcessingConfig:
         nyquist = self.sample_rate_hz // 2
         if nyquist > 0 and self.spectrum_max_hz >= nyquist:
             clamped = nyquist - 1 if nyquist > 1 else 1
-            _cfg_logger.warning(
+            LOGGER.warning(
                 "processing.spectrum_max_hz=%s >= Nyquist (%s) — clamped to %s",
                 self.spectrum_max_hz,
                 nyquist,
@@ -250,7 +249,7 @@ class ProcessingConfig:
 
         # --- spectrum_min_hz must be < spectrum_max_hz --------------------------
         if self.spectrum_min_hz >= self.spectrum_max_hz:
-            _cfg_logger.warning(
+            LOGGER.warning(
                 "processing.spectrum_min_hz=%s >= spectrum_max_hz=%s — "
                 "clamping spectrum_min_hz to 0",
                 self.spectrum_min_hz,
@@ -266,7 +265,7 @@ class ProcessingConfig:
         buffer_samples = self.sample_rate_hz * self.waveform_seconds
         if buffer_samples > _MAX_BUFFER_SAMPLES:
             clamped_seconds = max(1, _MAX_BUFFER_SAMPLES // self.sample_rate_hz)
-            _cfg_logger.warning(
+            LOGGER.warning(
                 "processing.sample_rate_hz=%s × waveform_seconds=%s = %s samples "
                 "exceeds per-client buffer limit (%s) — clamping waveform_seconds to %s",
                 self.sample_rate_hz,
