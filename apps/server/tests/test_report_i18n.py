@@ -59,7 +59,9 @@ def test_all_source_referenced_keys_exist_in_json() -> None:
 
 
 def test_variants_returns_both_languages() -> None:
-    en_text, nl_text = report_i18n.variants("REPORT_DATE")
+    data = report_i18n._load_translations()
+    en_text = data["REPORT_DATE"].get("en", "")
+    nl_text = data["REPORT_DATE"].get("nl", "")
     assert isinstance(en_text, str) and en_text.strip()
     assert isinstance(nl_text, str) and nl_text.strip()
     assert en_text != nl_text

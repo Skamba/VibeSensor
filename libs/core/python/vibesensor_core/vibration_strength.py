@@ -177,7 +177,10 @@ def compute_vibration_strength_db(
         }
 
     freq = [float(v) for v in freq_hz[:n]]
-    combined = [max(0.0, float(v)) for v in combined_spectrum_amp_g_values[:n]]
+    combined = [
+        max(0.0, v) if isfinite(v := float(val)) else 0.0
+        for val in combined_spectrum_amp_g_values[:n]
+    ]
     floor_p20 = noise_floor_amp_p20_g(combined_spectrum_amp_g=combined)
     threshold = max(
         floor_p20 * PEAK_THRESHOLD_FLOOR_RATIO,
@@ -231,11 +234,7 @@ def compute_vibration_strength_db(
             }
         )
     candidates.sort(
-        key=lambda item: float(
-            item["vibration_strength_db"]
-            if item["vibration_strength_db"] is not None
-            else -1e9
-        ),
+        key=lambda item: item["vibration_strength_db"],
         reverse=True,
     )
 
@@ -252,8 +251,14 @@ def compute_vibration_strength_db(
         chosen.append(candidate)
 
     top_peak = chosen[0] if chosen else None
-    top_db = float((top_peak or {}).get("vibration_strength_db") or 0.0)
-    peak_amp_g = float((top_peak or {}).get("amp") or 0.0)
+    if top_peak is not None:
+        _db_val = top_peak.get("vibration_strength_db")
+        top_db = float(_db_val) if _db_val is not None else 0.0
+        _amp_val = top_peak.get("amp")
+        peak_amp_g = float(_amp_val) if _amp_val is not None else 0.0
+    else:
+        top_db = 0.0
+        peak_amp_g = 0.0
 
     return {
         "combined_spectrum_amp_g": combined,

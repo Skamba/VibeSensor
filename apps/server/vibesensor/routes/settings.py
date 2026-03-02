@@ -115,9 +115,9 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
                 mac,
                 payload,
             )
-            return _sensors_response()
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return _sensors_response()
 
     @router.delete("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def delete_sensor(mac: str) -> SensorsResponse:

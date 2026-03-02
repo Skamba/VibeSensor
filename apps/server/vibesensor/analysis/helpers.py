@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import defaultdict
 from math import isfinite, sqrt
 from pathlib import Path
-from statistics import mean
 from typing import Any
 
 from vibesensor_core.vibration_strength import percentile
@@ -88,13 +87,15 @@ def _percent_missing(samples: list[dict[str, Any]], key: str) -> float:
 def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
     if not values:
         return None, None
-    m = mean(values)
     n = len(values)
-    var = sum((v - m) ** 2 for v in values) / max(1, n - 1)
+    m = sum(values) / n
+    if n < 2:
+        return m, 0.0
+    var = sum((v - m) ** 2 for v in values) / (n - 1)
     return m, var
 
 
-def _outlier_summary(values: list[float]) -> dict[str, object]:
+def _outlier_summary(values: list[float]) -> dict[str, Any]:
     if not values:
         return {
             "count": 0,
@@ -163,7 +164,7 @@ def _amplitude_weighted_speed_window(
     return (low_kmh, low_kmh + float(SPEED_BIN_WIDTH_KMH))
 
 
-def _speed_stats(speed_values: list[float]) -> dict[str, float | None]:
+def _speed_stats(speed_values: list[float]) -> dict[str, float | bool | None]:
     if not speed_values:
         return {
             "min_kmh": None,
@@ -255,7 +256,8 @@ def _effective_engine_rpm(
     final_drive_ratio = _as_float(sample.get("final_drive_ratio")) or _as_float(
         metadata.get("final_drive_ratio")
     )
-    gear_ratio = _as_float(sample.get("gear")) or _as_float(metadata.get("current_gear_ratio"))
+    gear_val = _as_float(sample.get("gear"))
+    gear_ratio = gear_val if gear_val is not None else _as_float(metadata.get("current_gear_ratio"))
     if (
         speed_kmh is None
         or speed_kmh <= 0
@@ -292,8 +294,8 @@ def _primary_vibration_strength_db(sample: dict[str, Any]) -> float | None:
 def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
     if len(x_vals) != len(y_vals) or len(x_vals) < 3:
         return None
-    mx = mean(x_vals)
-    my = mean(y_vals)
+    mx = sum(x_vals) / len(x_vals)
+    my = sum(y_vals) / len(y_vals)
     cov = sum((x - mx) * (y - my) for x, y in zip(x_vals, y_vals, strict=False))
     sx = sqrt(sum((x - mx) ** 2 for x in x_vals))
     sy = sqrt(sum((y - my) ** 2 for y in y_vals))
@@ -384,7 +386,7 @@ def _effective_baseline_floor(
     return max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g or extra_fallback or 0.0)
 
 
-def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
+def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
     """Return a stable language-neutral location label for the sample.
 
     NOTE: This is used as a **grouping key** across the data pipeline, so it
@@ -392,7 +394,7 @@ def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
     render time in the PDF builder / template layer.
     """
     # Prefer structured location code (from SensorConfig) if available
-    from ..locations import label_for_code as _label_for_code  # local to avoid circular import
+    from ..locations import label_for_code as _label_for_code
 
     location_code = str(sample.get("location") or "").strip()
     if location_code:
@@ -412,7 +414,7 @@ def _location_label(sample: dict[str, Any], *, lang: object = "en") -> str:
 
 
 def _locations_connected_throughout_run(
-    samples: list[dict[str, Any]], *, lang: object = "en"
+    samples: list[dict[str, Any]], *, lang: str = "en"
 ) -> set[str]:
     by_location_times: dict[str, set[float]] = defaultdict(set)
     all_times: list[float] = []

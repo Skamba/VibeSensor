@@ -51,6 +51,7 @@ class UpdateStateStore:
         """Persist *status* atomically (temp-file + ``os.replace``)."""
         data = status.to_dict()
         payload = json.dumps(data, indent=2, default=str) + "\n"
+        tmp: str | None = None
         try:
             self._path.parent.mkdir(parents=True, exist_ok=True)
             fd, tmp = tempfile.mkstemp(
@@ -66,3 +67,8 @@ class UpdateStateStore:
             os.replace(tmp, str(self._path))
         except OSError as exc:
             LOGGER.warning("Failed to persist update state to %s: %s", self._path, exc)
+            if tmp is not None:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass

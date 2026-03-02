@@ -103,11 +103,11 @@ def _build_persistent_peak_findings(
     samples: list[dict[str, Any]],
     order_finding_freqs: set[float],
     accel_units: str,
-    lang: object,
+    lang: str,
     freq_bin_hz: float = 2.0,
     per_sample_phases: list | None = None,
     run_noise_baseline_g: float | None = None,
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     """Build findings for non-order persistent frequency peaks.
 
     Uses the same confidence-style scoring as order findings (presence_ratio,
@@ -175,8 +175,8 @@ def _build_persistent_peak_findings(
     if run_noise_baseline_g is None:
         run_noise_baseline_g = _run_noise_baseline_g(samples)
 
-    persistent_findings: list[tuple[float, dict[str, object]]] = []
-    transient_findings: list[tuple[float, dict[str, object]]] = []
+    persistent_findings: list[tuple[float, dict[str, Any]]] = []
+    transient_findings: list[tuple[float, dict[str, Any]]] = []
 
     for bin_center, amps in bin_amps.items():
         # Skip bins already claimed by order findings
@@ -289,7 +289,7 @@ def _build_persistent_peak_findings(
         phases_in_bin = bin_phase_counts.get(bin_center, {})
         _total_phase_hits = sum(phases_in_bin.values())
         _cruise_hits = phases_in_bin.get(_cruise_phase_val, 0)
-        peak_phase_evidence: dict[str, object] = {
+        peak_phase_evidence: dict[str, Any] = {
             "cruise_fraction": _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0,
             "phases_detected": sorted(k for k, v in phases_in_bin.items() if v > 0),
         }
@@ -301,7 +301,7 @@ def _build_persistent_peak_findings(
                 if phase_hits > 0
             }
 
-        finding: dict[str, object] = {
+        finding: dict[str, Any] = {
             "finding_id": "F_PEAK",
             "finding_key": f"peak_{bin_center:.0f}hz",
             "severity": "info" if peak_type == "transient" else "diagnostic",
@@ -373,7 +373,7 @@ def _build_persistent_peak_findings(
     persistent_findings.sort(key=lambda item: item[0], reverse=True)
     transient_findings.sort(key=lambda item: item[0], reverse=True)
 
-    results: list[dict[str, object]] = []
+    results: list[dict[str, Any]] = []
     for _score, finding in persistent_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:
         results.append(finding)
     for _score, finding in transient_findings[:PERSISTENT_PEAK_MAX_FINDINGS]:

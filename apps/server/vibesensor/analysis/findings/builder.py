@@ -28,14 +28,14 @@ def _build_findings(
     speed_stddev_kmh: float | None,
     speed_non_null_pct: float,
     raw_sample_rate_hz: float | None,
-    lang: object = "en",
+    lang: str = "en",
     per_sample_phases: list | None = None,
     run_noise_baseline_g: float | None = None,
-) -> list[dict[str, object]]:
-    findings: list[dict[str, object]] = []
+) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
     units_obj = metadata.get("units")
-    accel_units = str(units_obj.get("accel_x_g")) if isinstance(units_obj, dict) else "g"
+    accel_units = str(units_obj.get("accel_x_g") or "g") if isinstance(units_obj, dict) else "g"
 
     if not speed_sufficient:
         findings.append(

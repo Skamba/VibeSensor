@@ -114,7 +114,7 @@ def _detect_diffuse_excitation(
     connected_locations: set[str],
     possible_by_location: dict[str, int],
     matched_by_location: dict[str, int],
-    matched_points: list[dict[str, object]],
+    matched_points: list[dict[str, Any]],
 ) -> tuple[bool, float]:
     """Detect diffuse (non-localized) excitation across multiple sensors.
 
@@ -266,8 +266,8 @@ def _compute_order_confidence(
 
 
 def _suppress_engine_aliases(
-    findings: list[tuple[float, dict[str, object]]],
-) -> list[dict[str, object]]:
+    findings: list[tuple[float, dict[str, Any]]],
+) -> list[dict[str, Any]]:
     """Suppress engine findings that are likely harmonic aliases of wheel findings.
 
     Sorts by ranking score, filters below minimum confidence, and returns the top 3.
@@ -317,9 +317,9 @@ def _build_order_findings(
     raw_sample_rate_hz: float | None,
     accel_units: str,
     connected_locations: set[str],
-    lang: object,
+    lang: str,
     per_sample_phases: list | None = None,
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []
 
@@ -327,7 +327,7 @@ def _build_order_findings(
     # loop does not redundantly call _sample_top_peaks() for each hypothesis.
     cached_peaks: list[list[tuple[float, float]]] = [_sample_top_peaks(s) for s in samples]
 
-    findings: list[tuple[float, dict[str, object]]] = []
+    findings: list[tuple[float, dict[str, Any]]] = []
     for hypothesis in _order_hypotheses():
         if hypothesis.key.startswith(("wheel_", "driveshaft_")) and (
             not speed_sufficient or tire_circumference_m is None or tire_circumference_m <= 0
@@ -343,7 +343,7 @@ def _build_order_findings(
         rel_errors: list[float] = []
         predicted_vals: list[float] = []
         measured_vals: list[float] = []
-        matched_points: list[dict[str, object]] = []
+        matched_points: list[dict[str, Any]] = []
         ref_sources: set[str] = set()
         possible_by_speed_bin: dict[str, int] = defaultdict(int)
         matched_by_speed_bin: dict[str, int] = defaultdict(int)
@@ -619,7 +619,7 @@ def _build_order_findings(
         ref_text = ", ".join(sorted(ref_sources))
         evidence = _i18n_ref(
             "EVIDENCE_ORDER_TRACKED",
-            order_label=_order_label(lang, hypothesis.order, hypothesis.order_label_base),
+            order_label=_order_label(hypothesis.order, hypothesis.order_label_base),
             matched=matched,
             possible=possible,
             match_rate=effective_match_rate,
@@ -686,7 +686,7 @@ def _build_order_findings(
             str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")
         ]
         _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_phase_val)
-        phase_evidence: dict[str, object] = {
+        phase_evidence: dict[str, Any] = {
             "cruise_fraction": _cruise_matched / len(matched_phase_strs)
             if matched_phase_strs
             else 0.0,
@@ -712,9 +712,7 @@ def _build_order_findings(
             "finding_key": hypothesis.key,
             "suspected_source": hypothesis.suspected_source,
             "evidence_summary": evidence,
-            "frequency_hz_or_order": _order_label(
-                lang, hypothesis.order, hypothesis.order_label_base
-            ),
+            "frequency_hz_or_order": _order_label(hypothesis.order, hypothesis.order_label_base),
             "amplitude_metric": {
                 "name": "vibration_strength_db",
                 "value": absolute_strength_db,

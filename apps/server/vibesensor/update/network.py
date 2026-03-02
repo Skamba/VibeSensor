@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 from pathlib import Path
 
 from .models import UpdateIssue
 from .runner import CommandRunner, _sudo_prefix, sanitize_log_line
-
-LOGGER = logging.getLogger(__name__)
 
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
 UPLINK_CONNECT_WAIT_S = 30
