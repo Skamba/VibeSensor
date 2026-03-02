@@ -20,7 +20,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 1. UDP ingress (`udp_data_rx.py`) updates registry + processor buffers.
 2. Processing (`processing.py`) computes spectra/metrics.
 3. Runtime loop (`app.py`) composes WS payloads and diagnostics.
-4. Logging/history (`metrics_log.py`, `history_db.py`) persists run samples.
+4. Logging/history (`metrics_log/`, `history_db.py`) persists run samples.
 5. API/router (`api.py`) exposes health, client state, settings, reports.
 
 ## Where to Change What

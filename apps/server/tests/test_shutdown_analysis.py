@@ -96,7 +96,7 @@ def test_wait_returns_true_when_analysis_finishes(tmp_path: Path, monkeypatch) -
         time.sleep(0.1)
         completed.append(run_id)
 
-    monkeypatch.setattr(logger, "_run_post_analysis", _slow_analysis)
+    monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _slow_analysis)
     logger._schedule_post_analysis("run-a")
 
     result = logger.wait_for_post_analysis(timeout_s=5.0)
@@ -113,7 +113,7 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
         started.set()
         time.sleep(1.0)  # Just needs to outlive the 0.3s wait timeout
 
-    monkeypatch.setattr(logger, "_run_post_analysis", _very_slow_analysis)
+    monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _very_slow_analysis)
     logger._schedule_post_analysis("run-slow")
 
     # Wait until the analysis thread has actually started

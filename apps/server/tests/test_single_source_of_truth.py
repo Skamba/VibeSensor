@@ -208,7 +208,8 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
 
     root = Path(__file__).resolve().parents[1]
     files_to_check = [
-        root / "vibesensor" / "metrics_log.py",
+        root / "vibesensor" / "metrics_log" / "sample_builder.py",
+        root / "vibesensor" / "metrics_log" / "logger.py",
         root / "vibesensor" / "analysis" / "helpers.py",
         root / "vibesensor" / "analysis" / "summary.py",
     ]
