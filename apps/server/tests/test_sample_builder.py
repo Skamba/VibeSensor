@@ -170,8 +170,7 @@ class TestResolveSpeedContext:
     def test_gps_speed(self) -> None:
         gps = MagicMock()
         gps.speed_mps = 10.0
-        gps.effective_speed_mps = 10.0
-        gps.resolve_speed.return_value = MagicMock(source="gps")
+        gps.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
         settings = {
             "tire_width_mm": 205.0,
             "tire_aspect_pct": 55.0,

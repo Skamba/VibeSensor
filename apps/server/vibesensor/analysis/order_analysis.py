@@ -42,20 +42,9 @@ def _engine_hz(
     return rpm / 60.0, src
 
 
-def _order_label(*args: object) -> str:
-    """Return a language-neutral order label like ``'1x wheel'``.
-
-    Supports both signatures for compatibility during refactors:
-    - ``_order_label(order, base)``
-    - ``_order_label(lang, order, base)`` (legacy callers)
-    """
-    if len(args) == 2:
-        order, base = args
-    elif len(args) == 3:
-        _, order, base = args
-    else:
-        raise TypeError("_order_label() expects 2 or 3 positional arguments")
-    return f"{int(order)}x {str(base)}"
+def _order_label(order: int | object, base: str | object) -> str:
+    """Return a language-neutral order label like ``'1x wheel'``."""
+    return f"{int(order)}x {base!s}"  # type: ignore[arg-type]
 
 
 @dataclass(slots=True)
@@ -127,9 +116,9 @@ def _wheel_focus_from_location(location: str) -> dict[str, str]:
     return {"_i18n_key": "WHEEL_FOCUS_ALL"}
 
 
-def _i18n_ref(key: str, **params: object) -> dict[str, object]:
+def _i18n_ref(key: str, **params: object) -> dict[str, Any]:
     """Build a language-neutral i18n reference dict."""
-    ref: dict[str, object] = {"_i18n_key": key}
+    ref: dict[str, Any] = {"_i18n_key": key}
     if params:
         ref.update(params)
     return ref
@@ -142,7 +131,7 @@ def _finding_actions_for_source(
     strongest_location: str = "",
     strongest_speed_band: str = "",
     weak_spatial_separation: bool = False,
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     """Return language-neutral action plan dicts with i18n references.
 
     Each ``what``, ``why``, ``confirm``, ``falsify`` field is an i18n reference

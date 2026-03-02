@@ -583,8 +583,5 @@ class TestAllFiveScenariosPass:
     def test_all_five_generate_pdfs(self):
         scenarios = self._build_scenarios()
         for name, _, rd in scenarios:
-            try:
-                pdf = _assert_pdf_generates(rd)
-                assert len(pdf) > 500, f"Scenario '{name}' PDF too small: {len(pdf)} bytes"
-            except Exception as e:
-                pytest.fail(f"Scenario '{name}' PDF generation failed: {e}")
+            pdf = _assert_pdf_generates(rd)
+            assert len(pdf) > 500, f"Scenario '{name}' PDF too small: {len(pdf)} bytes"

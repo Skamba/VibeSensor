@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
 
 
@@ -84,13 +86,8 @@ def test_find_release_raises_when_no_firmware_assets() -> None:
 
     fetcher._api_get = lambda _url: releases  # type: ignore[method-assign]
 
-    try:
+    with pytest.raises(ValueError, match="No eligible firmware release found"):
         fetcher.find_release()
-    except ValueError as exc:
-        msg = str(exc)
-        assert "No eligible firmware release found" in msg
-    else:
-        raise AssertionError("Expected ValueError when no firmware assets are present")
 
 
 def test_safe_extractall_rejects_path_traversal(tmp_path: Path) -> None:
@@ -108,12 +105,8 @@ def test_safe_extractall_rejects_path_traversal(tmp_path: Path) -> None:
     dest = tmp_path / "extract"
     dest.mkdir()
     with zipfile.ZipFile(buf) as zf:
-        try:
+        with pytest.raises(ValueError, match="outside the target directory"):
             _safe_extractall(zf, dest)
-        except ValueError as exc:
-            assert "outside the target directory" in str(exc)
-        else:
-            raise AssertionError("Expected ValueError for path traversal zip entry")
 
 
 def test_safe_extractall_allows_normal_entries(tmp_path: Path) -> None:

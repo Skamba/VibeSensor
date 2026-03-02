@@ -26,7 +26,8 @@ def normalize_client_id_or_400(client_id: str) -> str:
 
 def safe_filename(name: str) -> str:
     """Sanitize *name* for use in Content-Disposition headers and zip entry names."""
-    return _SAFE_FILENAME_RE.sub("_", name)[:200] or "download"
+    cleaned = _SAFE_FILENAME_RE.sub("_", name)[:200].lstrip(".")
+    return cleaned or "download"
 
 
 async def async_require_run(history_db: HistoryDB, run_id: str) -> dict[str, Any]:

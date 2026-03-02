@@ -21,7 +21,7 @@ from ..helpers import (
 def _phase_speed_breakdown(
     samples: list[dict[str, Any]],
     per_sample_phases: list,
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     """Group vibration statistics by driving phase (temporal context).
 
     Unlike ``_speed_breakdown`` which bins by speed magnitude, this function
@@ -49,7 +49,7 @@ def _phase_speed_breakdown(
 
     # Output in a canonical phase order
     phase_order = [p.value for p in DrivingPhase]
-    rows: list[dict[str, object]] = []
+    rows: list[dict[str, Any]] = []
     for phase_key in [*phase_order, *sorted(k for k in counts if k not in phase_order)]:
         if phase_key not in counts:
             continue
@@ -68,7 +68,7 @@ def _phase_speed_breakdown(
     return rows
 
 
-def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
+def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
     for sample in samples:
@@ -81,7 +81,7 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, object]]:
         if amp is not None:
             grouped[label].append(amp)
 
-    rows: list[dict[str, object]] = []
+    rows: list[dict[str, Any]] = []
     for label in sorted(counts.keys(), key=_speed_bin_sort_key):
         values = grouped.get(label, [])
         rows.append(
@@ -99,10 +99,10 @@ def _sensor_intensity_by_location(
     samples: list[dict[str, Any]],
     include_locations: set[str] | None = None,
     *,
-    lang: object = "en",
+    lang: str = "en",
     connected_locations: set[str] | None = None,
     per_sample_phases: list | None = None,
-) -> list[dict[str, float | str | int | bool]]:
+) -> list[dict[str, Any]]:
     """Compute per-location vibration intensity statistics.
 
     When ``per_sample_phases`` is provided, also computes per-phase intensity
@@ -115,7 +115,7 @@ def _sensor_intensity_by_location(
     dropped_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     overflow_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
-        lambda: {f"l{idx}": 0 for idx in range(0, 6)}
+        lambda: {f"l{idx}": 0 for idx in range(6)}
     )
     strength_bucket_totals: dict[str, int] = defaultdict(int)
     # Per-phase intensity: {location: {phase_key: [amp_values]}}
@@ -158,7 +158,7 @@ def _sensor_intensity_by_location(
             )
             strength_bucket_totals[location] += 1
 
-    rows: list[dict[str, float | str | int | bool]] = []
+    rows: list[dict[str, Any]] = []
     target_locations = set(sample_counts.keys())
     if include_locations is not None:
         target_locations |= set(include_locations)
@@ -183,13 +183,13 @@ def _sensor_intensity_by_location(
         overflow_vals = overflow_totals.get(location, [])
         dropped_delta = _counter_delta(dropped_vals)
         overflow_delta = _counter_delta(overflow_vals)
-        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(0, 6)})
+        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(6)})
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
         bucket_distribution: dict[str, float | int] = {
             "total": bucket_total,
             "counts": dict(bucket_counts),
         }
-        for idx in range(0, 6):
+        for idx in range(6):
             key = f"l{idx}"
             bucket_distribution[f"percent_time_{key}"] = (
                 (bucket_counts.get(key, 0) / bucket_total * 100.0) if bucket_total > 0 else 0.0
@@ -201,7 +201,7 @@ def _sensor_intensity_by_location(
             connected_locations is not None and location not in connected_locations
         )
         # Per-phase intensity summary for this location (issue #192)
-        location_phase_intensity: dict[str, object] | None = None
+        location_phase_intensity: dict[str, Any] | None = None
         if has_phases:
             loc_phases = phase_amp.get(location, {})
             location_phase_intensity = {

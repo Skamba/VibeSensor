@@ -68,8 +68,8 @@ def extract_strength_data(
     root_strength_metrics = metrics.get("strength_metrics")
     if isinstance(root_strength_metrics, dict):
         strength_metrics = root_strength_metrics
-    elif isinstance(metrics.get("combined"), dict):
-        nested_strength_metrics = metrics.get("combined", {}).get("strength_metrics")
+    elif isinstance((combined := metrics.get("combined")), dict):
+        nested_strength_metrics = combined.get("strength_metrics")
         if isinstance(nested_strength_metrics, dict):
             strength_metrics = nested_strength_metrics
 
@@ -191,7 +191,8 @@ def resolve_speed_context(
     final_drive_ratio = settings.get("final_drive_ratio")
     gear_ratio = settings.get("current_gear_ratio")
     gps_speed_mps = gps_monitor.speed_mps
-    effective_speed_mps = gps_monitor.effective_speed_mps
+    resolution = gps_monitor.resolve_speed()
+    effective_speed_mps = resolution.speed_mps
     gps_speed_kmh = (
         (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, (int, float)) else None
     )
@@ -200,7 +201,7 @@ def resolve_speed_context(
         if isinstance(effective_speed_mps, (int, float))
         else None
     )
-    speed_source = _SPEED_SOURCE_MAP.get(gps_monitor.resolve_speed().source, "none")
+    speed_source = _SPEED_SOURCE_MAP.get(resolution.source, "none")
     engine_rpm_estimated = None
     if (
         speed_kmh is not None

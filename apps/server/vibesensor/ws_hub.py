@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from fastapi import WebSocket
 
-from .json_utils import sanitize_for_json  # noqa: F401 – re-exported for backwards compat
+from .json_utils import sanitize_for_json
 
 LOGGER = logging.getLogger(__name__)
 
@@ -156,8 +156,8 @@ class WebSocketHub:
                             if isinstance(cs, dict) and cs.get("freq"):
                                 has_per_client_freq = True
                                 break
-                except Exception:  # best-effort debug parsing; never block broadcast
-                    pass
+                except Exception:
+                    LOGGER.debug("Debug payload parsing failed", exc_info=True)
                 LOGGER.debug(
                     "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
                     sel_id,
@@ -192,6 +192,7 @@ class WebSocketHub:
                         exc_info=True,
                     )
                     await asyncio.sleep(interval * 5)
+                    _consecutive_failures = 0
                 else:
                     LOGGER.warning("WebSocket broadcast tick failed; will retry.", exc_info=True)
             elapsed = loop.time() - tick_start

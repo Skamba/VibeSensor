@@ -105,7 +105,7 @@ class TestResizeBuffer:
         proc = _make_processor(sample_rate_hz=100, waveform_seconds=1)
         buf = proc._get_or_create("test-client")
         # Ingest 10 samples
-        samples = np.random.randn(10, 3).astype(np.float32)
+        samples = np.random.default_rng(42).standard_normal((10, 3)).astype(np.float32)
         proc.ingest("test-client", samples)
         return proc, buf
 

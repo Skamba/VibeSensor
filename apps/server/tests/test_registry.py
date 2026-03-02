@@ -153,11 +153,11 @@ def test_registry_evicts_stale_clients(tmp_path: Path) -> None:
         name="stale",
         firmware_version="fw",
     )
-    registry.update_from_hello(stale, ("10.4.0.2", 9000), now=1.0)
-    registry.update_from_hello(fresh, ("10.4.0.3", 9001), now=3.0)
+    registry.update_from_hello(stale, ("10.4.0.2", 9000), now=1.0, now_mono=1.0)
+    registry.update_from_hello(fresh, ("10.4.0.3", 9001), now=3.0, now_mono=3.0)
 
-    assert set(registry.active_client_ids(now=3.1)) == {"001122334455"}
-    evicted = registry.evict_stale(now=3.1)
+    assert set(registry.active_client_ids(now_mono=3.1)) == {"001122334455"}
+    evicted = registry.evict_stale(now_mono=3.1)
     assert evicted == ["aabbccddeeff"]
     assert registry.get("aabbccddeeff") is None
 

@@ -170,6 +170,14 @@ class PostAnalysisWorker:
             metadata = self._history_db.get_run_metadata(run_id)
             if metadata is None:
                 LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
+                try:
+                    self._history_db.store_analysis_error(
+                        run_id, "Metadata not found or corrupt; cannot analyse"
+                    )
+                except Exception:
+                    LOGGER.warning(
+                        "Failed to store analysis error for run %s", run_id, exc_info=True
+                    )
                 return
             language = str(metadata.get("language") or "en")
 

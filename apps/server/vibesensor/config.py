@@ -90,6 +90,13 @@ def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any
     for key, value in override.items():
         if isinstance(value, dict) and isinstance(merged.get(key), dict):
             merged[key] = _deep_merge(merged[key], value)
+        elif value is None and isinstance(merged.get(key), dict):
+            # YAML `key:` with no value produces None — preserve defaults
+            LOGGER.warning(
+                "Config key %r is null; keeping default section. "
+                "Did you mean to leave the section empty?",
+                key,
+            )
         else:
             merged[key] = value
     return merged
@@ -336,6 +343,8 @@ def _read_config_file(path: Path) -> dict[str, Any]:
 def load_config(config_path: Path | None = None) -> AppConfig:
     path = config_path or (SERVER_DIR / "config.yaml")
     path = path.resolve()
+    if config_path is not None and not path.exists():
+        raise FileNotFoundError(f"Explicitly specified config file does not exist: {path}")
     override = _read_config_file(path)
     merged = _deep_merge(DEFAULT_CONFIG, override)
     logging_cfg = merged.get("logging", {})

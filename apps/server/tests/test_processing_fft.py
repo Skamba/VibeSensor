@@ -70,7 +70,7 @@ class TestSmoothSpectrum:
     def test_output_same_length(self) -> None:
         from vibesensor.processing.fft import smooth_spectrum
 
-        amps = np.random.rand(100).astype(np.float32)
+        amps = np.random.default_rng(42).random(100).astype(np.float32)
         result = smooth_spectrum(amps, bins=5)
         assert result.shape == amps.shape
 
@@ -210,7 +210,7 @@ class TestComputeFftSpectrum:
 
         sr = 256
         fft_n = 256
-        block = np.random.randn(3, fft_n).astype(np.float32) * 0.01
+        block = np.random.default_rng(42).standard_normal((3, fft_n)).astype(np.float32) * 0.01
         block[0, 128] = 100.0  # spike
 
         window = np.hanning(fft_n).astype(np.float32)
@@ -249,7 +249,7 @@ class TestComputeFftSpectrum:
 
         sr = 256
         fft_n = 256
-        block = np.random.randn(3, fft_n).astype(np.float32) * 0.01
+        block = np.random.default_rng(42).standard_normal((3, fft_n)).astype(np.float32) * 0.01
 
         window = np.hanning(fft_n).astype(np.float32)
         scale = float(2.0 / max(1.0, float(np.sum(window))))

@@ -64,7 +64,6 @@ DATA_TRUST_WIDTH_RATIO = 0.32
 DATA_TRUST_LABEL_W = 27 * mm
 EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.50
 DISCLAIMER_Y_OFFSET = 5.5 * mm
-DATA_TRUST_LINE_STEP = 3.9 * mm
 CAR_PANEL_TITLE_RESERVE = 18 * mm
 PANEL_HEADER_H = 10.5 * mm
 
@@ -717,7 +716,7 @@ def _page2(
     # The car is taller than wide (top-down view, length > width)
     src_w = _BMW_WIDTH_MM
     src_h = _BMW_LENGTH_MM
-    dx, dy, dw, dh = fit_rect_preserve_aspect(src_w, src_h, box_x, box_y, box_w, box_h)
+    _dx, _dy, dw, dh = fit_rect_preserve_aspect(src_w, src_h, box_x, box_y, box_w, box_h)
 
     # Assert aspect ratio is preserved
     assert_aspect_preserved(src_w, src_h, dw, dh, tolerance=0.03)
