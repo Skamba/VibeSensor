@@ -30,7 +30,6 @@ _GPS_CONNECT_TIMEOUT_S: float = 3.0
 _GPS_READ_TIMEOUT_S: float = 3.0
 _GPS_RECONNECT_MAX_DELAY_S: float = 15.0
 _GPS_MAX_EPH_M: float = 40.0
-_GPS_MAX_EPS_MPS: float = 1.5
 _GPS_ZERO_DROP_PREV_THRESHOLD_MPS: float = 0.5
 _GPS_ZERO_CONFIRM_SAMPLES: int = 3
 
@@ -55,7 +54,9 @@ class GPSSpeedMonitor:
 
         # --- status tracking ---
         self.connection_state: str = "disabled" if not gps_enabled else "disconnected"
-        self.last_update_ts: float | None = None
+        # Atomic (speed, timestamp) snapshot: both fields are always written
+        # together so cross-thread readers never see a torn state.
+        self._speed_snapshot: tuple[float | None, float | None] = (None, None)
         self.last_error: str | None = None
         self.current_reconnect_delay: float = _GPS_RECONNECT_DELAY_S
         self.device_info: str | None = None
@@ -118,6 +119,16 @@ class GPSSpeedMonitor:
         """
         return self.resolve_speed().fallback_active
 
+    @property
+    def last_update_ts(self) -> float | None:
+        """Read timestamp from the atomic snapshot."""
+        return self._speed_snapshot[1]
+
+    @last_update_ts.setter
+    def last_update_ts(self, value: float | None) -> None:
+        """Write timestamp via legacy setter — preserves current speed."""
+        self._speed_snapshot = (self._speed_snapshot[0], value)
+
     def _effective_connection_state(self) -> str:
         """Return the effective connection state **without** mutating ``self``."""
         if self.gps_enabled and self.connection_state == "connected" and self._is_gps_stale():
@@ -126,7 +137,7 @@ class GPSSpeedMonitor:
 
     def _is_gps_stale(self) -> bool:
         """Check if the last GPS update is older than the configured stale timeout."""
-        ts = self.last_update_ts  # snapshot to avoid TOCTOU
+        _speed, ts = self._speed_snapshot  # atomic tuple read
         if ts is None:
             return True
         age = time.monotonic() - ts
@@ -209,6 +220,18 @@ class GPSSpeedMonitor:
         self._zero_speed_streak = 0
         return True
 
+    def _reset_fix_metadata(self) -> None:
+        """Clear stale fix-quality fields when GPS disconnects.
+
+        Prevents the status dict from showing contradictory state like
+        connection_state="disconnected" + fix_dimension="3d".
+        """
+        self.last_fix_mode = None
+        self.last_epx_m = None
+        self.last_epy_m = None
+        self.last_epv_m = None
+        self._zero_speed_streak = 0
+
     def status_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable status snapshot — **no side effects**."""
         now = time.monotonic()
@@ -282,6 +305,7 @@ class GPSSpeedMonitor:
                     if not line:
                         self.speed_mps = None
                         self.connection_state = "disconnected"
+                        self._reset_fix_metadata()
                         break
                     try:
                         payload: dict[str, Any] = json.loads(line.decode("utf-8", errors="replace"))
@@ -311,8 +335,8 @@ class GPSSpeedMonitor:
                     ):
                         speed_mps = float(speed)
                         if self._accept_speed_sample(speed_mps):
+                            self._speed_snapshot = (speed_mps, time.monotonic())
                             self.speed_mps = speed_mps
-                            self.last_update_ts = time.monotonic()
                     else:
                         self._zero_speed_streak = 0
                     # Extract device from TPV
@@ -336,6 +360,7 @@ class GPSSpeedMonitor:
             ) as exc:
                 self.speed_mps = None
                 self.connection_state = "disconnected"
+                self._reset_fix_metadata()
                 self.last_error = str(exc) or type(exc).__name__
                 self.current_reconnect_delay = reconnect_delay
                 LOGGER.warning("GPS connection lost, retrying in %gs", reconnect_delay)

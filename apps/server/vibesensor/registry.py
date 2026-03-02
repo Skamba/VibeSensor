@@ -36,7 +36,13 @@ def _sanitize_name(name: str) -> str:
     clean = clean.strip()
     if not clean:
         return ""
-    return clean.encode("utf-8", errors="ignore")[:32].decode("utf-8", errors="ignore")
+    # Truncate to at most 32 UTF-8 bytes without splitting multi-byte characters
+    encoded = clean.encode("utf-8", errors="ignore")
+    if len(encoded) <= 32:
+        return clean
+    truncated = encoded[:32]
+    # Backtrack to the last complete UTF-8 character boundary
+    return truncated.decode("utf-8", errors="ignore")
 
 
 def _normalize_client_id(client_id: str) -> str:
@@ -130,9 +136,14 @@ class ClientRegistry:
         return time.time() if now is None else now
 
     @staticmethod
-    def _resolve_now_mono(now: float | None) -> float:
-        """Return monotonic ``now`` if wall time is not injected."""
-        return time.monotonic() if now is None else now
+    def _resolve_now_mono(now_mono: float | None) -> float:
+        """Return monotonic ``now_mono`` if provided, else ``time.monotonic()``.
+
+        Callers **must not** pass a wall-clock value here — the monotonic
+        and wall-clock domains are intentionally separate to avoid eviction
+        bugs when system time jumps.
+        """
+        return time.monotonic() if now_mono is None else now_mono
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
         normalized = _normalize_client_id(client_id)
@@ -148,14 +159,16 @@ class ClientRegistry:
         hello: HelloMessage,
         addr: tuple[str, int],
         now: float | None = None,
+        *,
+        now_mono: float | None = None,
     ) -> None:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
-            now_mono = self._resolve_now_mono(now)
+            mono = self._resolve_now_mono(now_mono)
             client_id = client_id_hex(hello.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
-            record.last_seen_mono = now_mono
+            record.last_seen_mono = mono
             hello_port = int(hello.control_port)
             record.control_addr = (addr[0], hello_port if hello_port > 0 else addr[1])
             record.sample_rate_hz = hello.sample_rate_hz
@@ -181,6 +194,8 @@ class ClientRegistry:
         data_msg: DataMessage,
         addr: tuple[str, int],
         now: float | None = None,
+        *,
+        now_mono: float | None = None,
     ) -> DataUpdateResult:
         """Update bookkeeping from a DATA message.
 
@@ -190,11 +205,11 @@ class ClientRegistry:
         """
         with self._lock:
             now_ts = self._resolve_now_wall(now)
-            now_mono = self._resolve_now_mono(now)
+            mono = self._resolve_now_mono(now_mono)
             client_id = client_id_hex(data_msg.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
-            record.last_seen_mono = now_mono
+            record.last_seen_mono = mono
             record.data_addr = (addr[0], addr[1])
 
             # --- Deduplication check ---
@@ -271,14 +286,20 @@ class ClientRegistry:
             record.last_t0_us = data_msg.t0_us
             return DataUpdateResult(reset_detected=reset_detected)
 
-    def update_from_ack(self, ack: AckMessage, now: float | None = None) -> None:
+    def update_from_ack(
+        self,
+        ack: AckMessage,
+        now: float | None = None,
+        *,
+        now_mono: float | None = None,
+    ) -> None:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
-            now_mono = self._resolve_now_mono(now)
+            mono = self._resolve_now_mono(now_mono)
             client_id = client_id_hex(ack.client_id)
             record = self._get_or_create(client_id)
             record.last_seen = now_ts
-            record.last_seen_mono = now_mono
+            record.last_seen_mono = mono
             record.last_ack_cmd_seq = ack.cmd_seq
             record.last_ack_status = ack.status
 
@@ -359,9 +380,11 @@ class ClientRegistry:
         with self._lock:
             return self._clients.get(normalized)
 
-    def active_client_ids(self, now: float | None = None) -> list[str]:
+    def active_client_ids(
+        self, now: float | None = None, *, now_mono: float | None = None
+    ) -> list[str]:
         with self._lock:
-            now_mono = self._resolve_now_mono(now)
+            now_mono = self._resolve_now_mono(now_mono)
             return [
                 record.client_id
                 for record in self._clients.values()
@@ -369,9 +392,9 @@ class ClientRegistry:
                 and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
             ]
 
-    def evict_stale(self, now: float | None = None) -> list[str]:
+    def evict_stale(self, now: float | None = None, *, now_mono: float | None = None) -> list[str]:
         with self._lock:
-            now_mono = self._resolve_now_mono(now)
+            now_mono = self._resolve_now_mono(now_mono)
             stale_ids = [
                 client_id
                 for client_id, record in self._clients.items()
@@ -388,10 +411,12 @@ class ClientRegistry:
             record.last_ack_cmd_seq = cmd_seq
             record.last_ack_status = None
 
-    def snapshot_for_api(self, now: float | None = None) -> list[dict[str, Any]]:
+    def snapshot_for_api(
+        self, now: float | None = None, *, now_mono: float | None = None
+    ) -> list[dict[str, Any]]:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
-            now_mono = self._resolve_now_mono(now)
+            now_mono = self._resolve_now_mono(now_mono)
             rows: list[dict[str, Any]] = []
             all_client_ids = sorted(set(self._clients.keys()) | set(self._user_names.keys()))
             for client_id in all_client_ids:

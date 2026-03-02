@@ -38,7 +38,6 @@ _IDLE_SPEED_KMH = 3.0  # below this → IDLE
 _ACCEL_THRESHOLD_KMH_S = 1.5  # positive speed derivative
 _DECEL_THRESHOLD_KMH_S = -1.5  # negative speed derivative
 _COAST_DOWN_MAX_KMH = 15.0  # deceleration below this speed → coast-down
-_MIN_PHASE_SAMPLES = 2  # minimum samples to form a phase segment
 
 
 @dataclass(slots=True)
@@ -179,9 +178,9 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
 
         if left_moving and right_moving:
             fill = DrivingPhase.CRUISE
-        elif left_moving and left is not None:
+        elif left_moving:
             fill = left
-        elif right_moving and right is not None:
+        elif right_moving:
             fill = right
         else:
             # Both sides IDLE or run edges — leave as SPEED_UNKNOWN

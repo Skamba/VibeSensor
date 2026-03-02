@@ -47,20 +47,8 @@ LOGGER = logging.getLogger(__name__)
 UPDATE_TIMEOUT_S = 600
 """Hard timeout for the entire update job (seconds)."""
 
-GIT_OP_TIMEOUT_S = 120
-"""Per-git-operation timeout."""
-
-REBUILD_OP_TIMEOUT_S = 300
-"""Per-rebuild-operation timeout."""
-
-REBUILD_RETRY_DELAY_S = 3
-"""Delay before retrying transient rebuild failures."""
-
 REINSTALL_OP_TIMEOUT_S = 180
 """Per-backend-reinstall timeout."""
-
-DOWNLOAD_TIMEOUT_S = 300
-"""Timeout for downloading a release wheel."""
 
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 """Per-online ESP firmware cache refresh timeout."""
@@ -75,7 +63,6 @@ UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
 SERVICE_ENV_DROPIN = "/etc/systemd/system/vibesensor.service.d/10-contracts-dir.conf"
 SERVICE_CONTRACTS_DIR = "/opt/VibeSensor/libs/shared/contracts"
-DEFAULT_REBUILD_PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 
 def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:

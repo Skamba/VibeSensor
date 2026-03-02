@@ -51,7 +51,7 @@ def _aggregate_fft_spectrum(
             if hz <= 0 or amp <= 0:
                 continue
             bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
-            bin_center = bin_low + (freq_bin_hz / 2.0)
+            bin_center = round(bin_low + (freq_bin_hz / 2.0), 4)
             bin_amps.setdefault(bin_center, []).append(amp)
     if not bin_amps:
         return []
@@ -400,47 +400,27 @@ def _top_peaks_table_rows(
             if low_speed is not None and high_speed is not None
             else "-"
         )
+        presence_ratio = float(item.get("presence_ratio", 0.0))
+        burstiness = float(item.get("burstiness", 0.0))
         rows.append(
             {
                 "rank": idx,
-                "frequency_hz": float(item.get("frequency_hz") or 0.0),
+                "frequency_hz": float(item.get("frequency_hz", 0.0)),
                 "order_label": "",
                 "max_intensity_db": _as_float(item.get("max_intensity_db")),
                 "median_intensity_db": _as_float(item.get("median_intensity_db")),
                 "p95_intensity_db": _as_float(item.get("p95_intensity_db")),
                 "run_noise_baseline_db": _as_float(item.get("run_noise_baseline_db")),
-                "median_vs_run_noise_ratio": float(
-                    item.get("median_vs_run_noise_ratio")
-                    if item.get("median_vs_run_noise_ratio") is not None
-                    else 0.0
-                ),
-                "p95_vs_run_noise_ratio": float(
-                    item.get("p95_vs_run_noise_ratio")
-                    if item.get("p95_vs_run_noise_ratio") is not None
-                    else 0.0
-                ),
+                "median_vs_run_noise_ratio": float(item.get("median_vs_run_noise_ratio", 0.0)),
+                "p95_vs_run_noise_ratio": float(item.get("p95_vs_run_noise_ratio", 0.0)),
                 "strength_floor_db": _as_float(item.get("strength_floor_db")),
                 "strength_db": _as_float(item.get("strength_db")),
-                "presence_ratio": float(
-                    item.get("presence_ratio") if item.get("presence_ratio") is not None else 0.0
-                ),
-                "burstiness": float(
-                    item.get("burstiness") if item.get("burstiness") is not None else 0.0
-                ),
-                "persistence_score": float(
-                    item.get("persistence_score")
-                    if item.get("persistence_score") is not None
-                    else 0.0
-                ),
+                "presence_ratio": presence_ratio,
+                "burstiness": burstiness,
+                "persistence_score": float(item.get("persistence_score", 0.0)),
                 "peak_classification": _classify_peak_type(
-                    presence_ratio=float(
-                        item.get("presence_ratio")
-                        if item.get("presence_ratio") is not None
-                        else 0.0
-                    ),
-                    burstiness=float(
-                        item.get("burstiness") if item.get("burstiness") is not None else 0.0
-                    ),
+                    presence_ratio=presence_ratio,
+                    burstiness=burstiness,
                     snr=_as_float(item.get("p95_vs_run_noise_ratio")),
                     spatial_uniformity=_as_float(item.get("spatial_uniformity")),
                     speed_uniformity=_as_float(item.get("speed_uniformity")),
@@ -463,8 +443,8 @@ def _plot_data(
     vib_mag_points: list[tuple[float, float, str]] = []  # (t_s, vib_db, phase_label)
     dominant_freq_points: list[tuple[float, float]] = []
     speed_amp_points: list[tuple[float, float]] = []
-    matched_by_finding: list[dict[str, object]] = []
-    freq_vs_speed_by_finding: list[dict[str, object]] = []
+    matched_by_finding: list[dict[str, Any]] = []
+    freq_vs_speed_by_finding: list[dict[str, Any]] = []
     steady_speed_distribution: dict[str, float] | None = None
 
     if per_sample_phases is not None and phase_segments is not None:
@@ -565,7 +545,7 @@ def _plot_data(
     # Build amp_vs_phase from phase_speed_breakdown (temporal phase context).
     # Complements amp_vs_speed (magnitude bins) by grouping by driving phase
     # instead of speed range, addressing issue #189.
-    amp_vs_phase: list[dict[str, object]] = []
+    amp_vs_phase: list[dict[str, Any]] = []
     for row in summary.get("phase_speed_breakdown", []):
         if not isinstance(row, dict):
             continue

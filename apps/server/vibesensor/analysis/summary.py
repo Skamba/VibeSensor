@@ -5,7 +5,6 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
-from math import sqrt
 from pathlib import Path
 from statistics import median as _median
 from typing import Any
@@ -114,13 +113,7 @@ def _annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
         ]
         if not matched_freqs:
             continue
-        matched_freqs.sort()
-        n = len(matched_freqs)
-        median_hz = (
-            matched_freqs[n // 2]
-            if n % 2 == 1
-            else (matched_freqs[n // 2 - 1] + matched_freqs[n // 2]) / 2.0
-        )
+        median_hz = _median(matched_freqs)
         order_annotations.append((median_hz, label))
 
     if not order_annotations:
@@ -155,7 +148,7 @@ def _annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
 
 
 def confidence_label(
-    conf_0_to_1: float,
+    conf_0_to_1: float | None,
     *,
     strength_band_key: str | None = None,
 ) -> tuple[str, str, str]:
@@ -167,14 +160,16 @@ def confidence_label(
 
     Parameters
     ----------
+    conf_0_to_1:
+        Confidence value in [0, 1].  ``None`` is treated as ``0.0``.
     strength_band_key:
         Optional vibration-strength band key.  When set to ``"negligible"``,
         high confidence is capped to medium as a defensive label guard —
         mirrors the guard in :func:`certainty_label`.
     """
-    pct = max(0.0, min(100.0, (conf_0_to_1 or 0.0) * 100.0))
+    conf = float(conf_0_to_1) if conf_0_to_1 is not None else 0.0
+    pct = max(0.0, min(100.0, conf * 100.0))
     pct_text = f"{pct:.0f}%"
-    conf = conf_0_to_1 if conf_0_to_1 is not None else 0.0
     if conf >= CONFIDENCE_HIGH_THRESHOLD:
         label_key, tone = "CONFIDENCE_HIGH", "success"
     elif conf >= CONFIDENCE_MEDIUM_THRESHOLD:
@@ -191,7 +186,7 @@ def confidence_label(
 # ---------------------------------------------------------------------------
 
 
-def _phase_ranking_score(finding: dict[str, object]) -> float:
+def _phase_ranking_score(finding: dict[str, Any]) -> float:
     """Compute phase-adjusted ranking score for top-cause selection.
 
     Boosts findings with strong CRUISE-phase evidence (steady driving provides
@@ -209,12 +204,12 @@ def _phase_ranking_score(finding: dict[str, object]) -> float:
 
 
 def select_top_causes(
-    findings: list[dict[str, object]],
+    findings: list[dict[str, Any]],
     *,
     drop_off_points: float = 15.0,
     max_causes: int = 3,
     strength_band_key: str | None = None,
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     """Group findings by suspected_source, keep best per group, apply drop-off.
 
     Ranking uses a phase-adjusted score that boosts findings whose evidence
@@ -234,13 +229,13 @@ def select_top_causes(
         return []
 
     # Group by suspected_source
-    groups: dict[str, list[dict[str, object]]] = defaultdict(list)
+    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for f in diag_findings:
         src = str(f.get("suspected_source") or "unknown").strip().lower()
         groups[src].append(f)
 
     # For each group, pick the highest-phase-adjusted-score finding as representative
-    group_reps: list[dict[str, object]] = []
+    group_reps: list[dict[str, Any]] = []
     for members in groups.values():
         members_sorted = sorted(
             members,
@@ -264,7 +259,7 @@ def select_top_causes(
     # Apply drop-off rule using phase-adjusted scores
     best_score_pct = _phase_ranking_score(group_reps[0]) * 100.0
     threshold_pct = best_score_pct - drop_off_points
-    selected: list[dict[str, object]] = []
+    selected: list[dict[str, Any]] = []
     for rep in group_reps:
         score_pct = _phase_ranking_score(rep) * 100.0
         if score_pct >= threshold_pct or not selected:
@@ -273,7 +268,7 @@ def select_top_causes(
             break
 
     # Build output in the format expected by the PDF
-    result: list[dict[str, object]] = []
+    result: list[dict[str, Any]] = []
     for rep in selected:
         label_key, tone, pct_text = confidence_label(
             _as_float(rep.get("confidence_0_to_1")) or 0,
@@ -302,9 +297,7 @@ def select_top_causes(
     return result
 
 
-def _most_likely_origin_summary(
-    findings: list[dict[str, object]], lang: object
-) -> dict[str, object]:
+def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> dict[str, Any]:
     if not findings:
         return {
             "location": _UNKNOWN,
@@ -412,9 +405,9 @@ def _most_likely_origin_summary(
 
 def _build_phase_timeline(
     phase_segments: list,
-    findings: list[dict[str, object]],
-    lang: object,
-) -> list[dict[str, object]]:
+    findings: list[dict[str, Any]],
+    lang: str,
+) -> list[dict[str, Any]]:
     """Build a simple timeline summary: what changed when.
 
     Returns a list of timeline entries with phase, time window, speed range,
@@ -438,7 +431,7 @@ def _build_phase_timeline(
             for p in phase_ev.get("phases_detected", []):
                 finding_phases.add(str(p))
 
-    entries: list[dict[str, object]] = []
+    entries: list[dict[str, Any]] = []
     for seg in phase_segments:
         phase_val = seg.phase.value if hasattr(seg, "phase") else str(seg.get("phase", ""))
         start_t = seg.start_t_s if hasattr(seg, "start_t_s") else float(seg.get("start_t_s", 0))
@@ -467,7 +460,7 @@ def _build_phase_timeline(
 
 def _prepare_speed_and_phases(
     samples: list[dict[str, Any]],
-) -> tuple[list[float], dict, float, bool, list, list]:
+) -> tuple[list[float], dict[str, Any], float, bool, list[Any], list[Any]]:
     """Compute speed stats and phase segmentation shared by multiple entry points.
 
     Returns ``(speed_values, speed_stats, speed_non_null_pct,
@@ -499,7 +492,7 @@ def build_findings_for_samples(
     metadata: dict[str, Any],
     samples: list[dict[str, Any]],
     lang: str | None = None,
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     language = _normalize_lang(lang)
     rows = list(samples) if isinstance(samples, list) else []
     _validate_required_strength_metrics(rows)
@@ -565,7 +558,7 @@ def _compute_accel_statistics(
         if value is not None
     ]
     accel_mag_vals = [
-        sqrt((sample["x"] ** 2) + (sample["y"] ** 2) + (sample["z"] ** 2))
+        math.sqrt((sample["x"] ** 2) + (sample["y"] ** 2) + (sample["z"] ** 2))
         for sample in (
             {
                 "x": _as_float(row.get("accel_x_g")),
@@ -628,7 +621,7 @@ def _build_run_suitability_checks(
     reference_complete: bool,
     sat_count: int,
     samples: list[dict[str, Any]],
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     """Construct the run-suitability checklist (speed, sensors, reference, saturation, frames).
 
     Output is language-neutral: ``check`` stores the i18n key directly and
@@ -636,7 +629,7 @@ def _build_run_suitability_checks(
     """
     sensor_count_sufficient = len(sensor_ids) >= 3
     speed_variation_ok = speed_sufficient and not steady_speed
-    run_suitability: list[dict[str, object]] = [
+    run_suitability: list[dict[str, Any]] = [
         {
             "check": "SUITABILITY_CHECK_SPEED_VARIATION",
             "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
@@ -725,7 +718,7 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Analyse pre-loaded run data and return the full summary dict.
 
     This is the single computation path used by both the History UI and the
@@ -735,7 +728,7 @@ def summarize_run_data(
     _validate_required_strength_metrics(samples)
 
     # --- Timing ---
-    run_id, start_ts, end_ts, duration_s = _compute_run_timing(metadata, samples, file_name)
+    run_id, _start_ts, _end_ts, duration_s = _compute_run_timing(metadata, samples, file_name)
 
     # --- Speed & phase (shared computation) ---
     (
@@ -966,7 +959,7 @@ def summarize_run_data(
 
 def summarize_log(
     log_path: Path, lang: str | None = None, include_samples: bool = True
-) -> dict[str, object]:
+) -> dict[str, Any]:
     """Reads a JSONL run file and analyses it."""
     metadata, samples, _warnings = _load_run(log_path)
     return summarize_run_data(

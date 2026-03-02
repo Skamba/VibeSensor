@@ -7,7 +7,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from vibesensor.ws_hub import WebSocketHub, WSConnection, sanitize_for_json
+from vibesensor.json_utils import sanitize_for_json
+from vibesensor.ws_hub import WebSocketHub, WSConnection
 
 
 def _make_ws() -> AsyncMock:
@@ -45,6 +46,9 @@ async def test_update_selected_client_missing_ws() -> None:
     ws = _make_ws()
     # Should not raise even though ws was never added
     await hub.update_selected_client(ws, "abc123")
+    # Verify no connections were created as a side effect
+    conns = await hub._snapshot()
+    assert len(conns) == 0
 
 
 @pytest.mark.asyncio
@@ -92,6 +96,9 @@ async def test_remove_nonexistent_is_noop() -> None:
     ws = _make_ws()
     # Should not raise
     await hub.remove(ws)
+    # Verify hub is still empty
+    conns = await hub._snapshot()
+    assert len(conns) == 0
 
 
 @pytest.mark.asyncio

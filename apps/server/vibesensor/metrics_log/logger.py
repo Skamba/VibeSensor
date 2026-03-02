@@ -304,20 +304,6 @@ class MetricsLogger:
 
         return extract_strength_data(metrics)
 
-    @staticmethod
-    def _extract_axis_top_peaks(metrics: dict[str, object], axis: str) -> list[dict[str, object]]:
-        from .sample_builder import extract_axis_top_peaks
-
-        return extract_axis_top_peaks(metrics, axis)
-
-    @staticmethod
-    def _dominant_hz_from_strength(
-        strength_metrics: dict[str, object],
-    ) -> float | None:
-        from .sample_builder import dominant_hz_from_strength
-
-        return dominant_hz_from_strength(strength_metrics)
-
     def _resolve_speed_context(
         self,
     ) -> tuple[float | None, float | None, str, float | None, float | None, float | None]:

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Self
 
 
 def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
@@ -31,7 +31,7 @@ class _FromDictMixin:
     """
 
     @classmethod
-    def from_dict(cls, d: Any):  # type: ignore[misc]
+    def from_dict(cls, d: Any) -> Self:
         if not isinstance(d, dict):
             return cls()
         return cls(**_filter_fields(cls, d))
@@ -67,7 +67,7 @@ class PartSuggestion:
     why_shown: str | None = None
 
     @classmethod
-    def from_dict(cls, d: Any) -> PartSuggestion:
+    def from_dict(cls, d: Any) -> Self:
         if isinstance(d, str):
             return cls(name=d)
         if not isinstance(d, dict):
@@ -84,7 +84,7 @@ class SystemFindingCard:
     tone: str = "neutral"
 
     @classmethod
-    def from_dict(cls, d: Any) -> SystemFindingCard:
+    def from_dict(cls, d: Any) -> Self:
         if not isinstance(d, dict):
             return cls()
         filtered = _filter_fields(cls, d)
@@ -159,17 +159,17 @@ class ReportTemplateData:
     data_trust: list[DataTrustItem] = field(default_factory=list)
     pattern_evidence: PatternEvidence = field(default_factory=PatternEvidence)
     peak_rows: list[PeakRow] = field(default_factory=list)
-    phase_info: dict | None = None
+    phase_info: dict[str, Any] | None = None
     version_marker: str = ""
     lang: str = "en"
     certainty_tier_key: str = "C"
 
     # Rendering context — pre-computed during analysis so the report
     # renderer never needs to read raw samples or call analysis code.
-    findings: list[dict] = field(default_factory=list)
-    top_causes: list[dict] = field(default_factory=list)
-    sensor_intensity_by_location: list[dict] = field(default_factory=list)
-    location_hotspot_rows: list[dict] = field(default_factory=list)
+    findings: list[dict[str, Any]] = field(default_factory=list)
+    top_causes: list[dict[str, Any]] = field(default_factory=list)
+    sensor_intensity_by_location: list[dict[str, Any]] = field(default_factory=list)
+    location_hotspot_rows: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> ReportTemplateData:

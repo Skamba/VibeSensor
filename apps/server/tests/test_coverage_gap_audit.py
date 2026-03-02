@@ -755,8 +755,7 @@ class TestResolveSpeedContext:
     def test_gps_speed_available(self) -> None:
         logger, gps_mock = self._make_logger()
         gps_mock.speed_mps = 10.0  # 36 km/h
-        gps_mock.effective_speed_mps = 10.0
-        gps_mock.resolve_speed.return_value = MagicMock(source="gps")
+        gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
         speed_kmh, gps_speed, source, rpm, _, _ = logger._resolve_speed_context()
         assert speed_kmh == pytest.approx(36.0, rel=0.01)
         assert gps_speed == pytest.approx(36.0, rel=0.01)
@@ -766,16 +765,14 @@ class TestResolveSpeedContext:
     def test_manual_override(self) -> None:
         logger, gps_mock = self._make_logger()
         gps_mock.override_speed_mps = 20.0  # 72 km/h
-        gps_mock.effective_speed_mps = 20.0
-        gps_mock.resolve_speed.return_value = MagicMock(source="manual")
+        gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
         speed_kmh, _, source, _, _, _ = logger._resolve_speed_context()
         assert speed_kmh == pytest.approx(72.0, rel=0.01)
         assert source == "manual"
 
     def test_no_gear_ratio_skips_rpm(self) -> None:
         logger, gps_mock = self._make_logger()
-        gps_mock.effective_speed_mps = 15.0
-        gps_mock.resolve_speed.return_value = MagicMock(source="gps")
+        gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
         # Remove gear ratio from settings
         logger.analysis_settings.snapshot.return_value = {
             "tire_width_mm": 205,

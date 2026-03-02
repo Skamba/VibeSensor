@@ -91,6 +91,8 @@ def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     for k, v in row.items():
         if k in _EXPORT_CSV_COLUMN_SET:
             out[k] = json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
+        elif k == "extras" and isinstance(v, dict):
+            extras.update(v)
         else:
             extras[k] = v
     # Ensure record_type and schema_version are always populated.
@@ -101,7 +103,7 @@ def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _reconstruct_report_template_data(data: dict) -> ReportTemplateData:
+def _reconstruct_report_template_data(data: dict[str, Any]) -> ReportTemplateData:
     """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
     from ..report.report_data import ReportTemplateData
 
@@ -166,7 +168,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
             for k in stale_keys:
                 report_pdf_locks.pop(k, None)
 
-    def _analysis_language(run: dict, requested: str | None) -> str:
+    def _analysis_language(run: dict[str, Any], requested: str | None) -> str:
         if isinstance(requested, str) and requested.strip():
             return requested.strip().lower()
         metadata = run.get("metadata", {})

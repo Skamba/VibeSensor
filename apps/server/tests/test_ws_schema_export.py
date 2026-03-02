@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from vibesensor.ws_schema_export import export_schema
 
 
@@ -49,7 +51,7 @@ def test_export_schema_matches_committed_schema() -> None:
         / "ws_payload_schema.json"
     )
     if not committed_path.exists():
-        return  # Skip if UI contracts not available
+        pytest.skip("UI contracts not available")
     generated = export_schema()
     committed = committed_path.read_text()
     assert committed == generated, (

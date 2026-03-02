@@ -12,6 +12,7 @@ import os
 from collections import defaultdict
 from collections.abc import Callable
 from statistics import mean as _mean
+from typing import Any
 
 from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
@@ -61,7 +62,7 @@ def _resolve_i18n(lang: str, value: object) -> str:
     suffix = str(value.get("_suffix", ""))
     params = {k: v for k, v in value.items() if k not in ("_i18n_key", "_suffix")}
     # Recursively resolve any nested i18n refs in params
-    resolved_params: dict[str, object] = {}
+    resolved_params: dict[str, Any] = {}
     for pk, pv in params.items():
         if _is_i18n_ref(pv):
             resolved_params[pk] = _resolve_i18n(lang, pv)
@@ -379,7 +380,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     has_ref_gaps = _has_relevant_reference_gap(findings, primary_source)
 
     _strength_band_key = strength_label(db_val)[0] if db_val is not None else None
-    cert_key, cert_label_text, cert_pct, cert_reason = certainty_label(
+    _cert_key, cert_label_text, cert_pct, cert_reason = certainty_label(
         conf,
         lang=lang,
         steady_speed=steady,

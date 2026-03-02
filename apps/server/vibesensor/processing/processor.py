@@ -14,9 +14,10 @@ from __future__ import annotations
 import logging
 import math
 import time
+from collections.abc import Callable
 from functools import wraps
 from threading import RLock
-from typing import Any
+from typing import Any, ParamSpec, TypeVar
 
 import numpy as np
 
@@ -27,6 +28,8 @@ from .fft import (
     compute_fft_spectrum,
     float_list,
     medfilt3,
+    noise_floor,
+    smooth_spectrum,
     top_peaks,
 )
 from .time_align import (
@@ -36,18 +39,30 @@ from .time_align import (
 
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = 4096
+
+_P = ParamSpec("_P")
+_R = TypeVar("_R")
+
+
+def _finite_or_zero(v: float) -> float:
+    """Return *v* if finite, else ``0.0``."""
+    return v if math.isfinite(v) else 0.0
+
+
+_EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
+"""Immutable-by-convention empty float32 array used as `.get()` default."""
 _FFT_CACHE_MAXSIZE = 64
 """Maximum number of cached FFT plans.  Bounds memory while avoiding
 repeated plan recomputation for common (sample_rate, fft_size) pairs."""
 
 
-def _synchronized(method):
+def _synchronized(method: Callable[_P, _R]) -> Callable[_P, _R]:
     @wraps(method)
-    def _wrapped(self: SignalProcessor, *args, **kwargs):
+    def _wrapped(self: SignalProcessor, *args: Any, **kwargs: Any) -> _R:
         with self._lock:
             return method(self, *args, **kwargs)
 
-    return _wrapped
+    return _wrapped  # type: ignore[return-value]
 
 
 class SignalProcessor:
@@ -58,7 +73,7 @@ class SignalProcessor:
         waveform_display_hz: int,
         fft_n: int,
         spectrum_min_hz: float = 0.0,
-        spectrum_max_hz: int = 200,
+        spectrum_max_hz: float = 200.0,
         accel_scale_g_per_lsb: float | None = None,
         worker_pool: WorkerPool | None = None,
     ):
@@ -101,14 +116,10 @@ class SignalProcessor:
 
     @staticmethod
     def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
-        from .fft import smooth_spectrum
-
         return smooth_spectrum(amps, bins=bins)
 
     @staticmethod
     def _noise_floor(amps: np.ndarray) -> float:
-        from .fft import noise_floor
-
         return noise_floor(amps)
 
     @staticmethod
@@ -261,8 +272,7 @@ class SignalProcessor:
             if cached is not None:
                 return cached
             if sample_rate_hz <= 0:
-                empty = np.empty(0, dtype=np.float32)
-                return empty, np.empty(0, dtype=np.intp)
+                return _EMPTY_F32, np.empty(0, dtype=np.intp)
             freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
             valid = (freqs >= self.spectrum_min_hz) & (freqs <= self.spectrum_max_hz)
             freq_slice = freqs[valid].astype(np.float32)
@@ -326,12 +336,8 @@ class SignalProcessor:
             axis_data = time_window_detrended[axis_idx]
             if axis_data.size == 0:
                 continue
-            rms = float(np.sqrt(np.mean(np.square(axis_data), dtype=np.float64)))
-            p2p = float(np.max(axis_data) - np.min(axis_data))
-            if not math.isfinite(rms):
-                rms = 0.0
-            if not math.isfinite(p2p):
-                p2p = 0.0
+            rms = _finite_or_zero(float(np.sqrt(np.mean(np.square(axis_data), dtype=np.float64))))
+            p2p = _finite_or_zero(float(np.max(axis_data) - np.min(axis_data)))
             metrics[axis] = {
                 "rms": rms,
                 "p2p": p2p,
@@ -340,12 +346,10 @@ class SignalProcessor:
 
         if time_window_detrended.size > 0:
             vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
-            vib_mag_rms = float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64)))
-            vib_mag_p2p = float(np.max(vib_mag) - np.min(vib_mag))
-            if not math.isfinite(vib_mag_rms):
-                vib_mag_rms = 0.0
-            if not math.isfinite(vib_mag_p2p):
-                vib_mag_p2p = 0.0
+            vib_mag_rms = _finite_or_zero(
+                float(np.sqrt(np.mean(np.square(vib_mag), dtype=np.float64)))
+            )
+            vib_mag_p2p = _finite_or_zero(float(np.max(vib_mag) - np.min(vib_mag)))
         else:
             vib_mag_rms = 0.0
             vib_mag_p2p = 0.0
@@ -394,8 +398,10 @@ class SignalProcessor:
                     buf.latest_strength_metrics = {}
                 buf.spectrum_generation += 1
                 buf.invalidate_caches()
-        self._last_compute_duration_s = time.monotonic() - t0
-        self._total_compute_calls += 1
+            # Update observability counters inside lock to avoid lost-update
+            # race when multiple worker-pool threads finish concurrently.
+            self._last_compute_duration_s = time.monotonic() - t0
+            self._total_compute_calls += 1
         return metrics
 
     def compute_all(
@@ -451,13 +457,12 @@ class SignalProcessor:
             and buf.cached_spectrum_payload_generation == buf.spectrum_generation
         ):
             return buf.cached_spectrum_payload
-        _empty = np.array([], dtype=np.float32)
         payload = {
-            "x": float_list(buf.latest_spectrum.get("x", {}).get("amp", _empty)),
-            "y": float_list(buf.latest_spectrum.get("y", {}).get("amp", _empty)),
-            "z": float_list(buf.latest_spectrum.get("z", {}).get("amp", _empty)),
+            "x": float_list(buf.latest_spectrum.get("x", {}).get("amp", _EMPTY_F32)),
+            "y": float_list(buf.latest_spectrum.get("y", {}).get("amp", _EMPTY_F32)),
+            "z": float_list(buf.latest_spectrum.get("z", {}).get("amp", _EMPTY_F32)),
             "combined_spectrum_amp_g": (
-                float_list(buf.latest_spectrum.get("combined", {}).get("amp", _empty))
+                float_list(buf.latest_spectrum.get("combined", {}).get("amp", _EMPTY_F32))
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
@@ -587,12 +592,11 @@ class SignalProcessor:
         spectrum: dict[str, Any] = {}
         if buf.latest_spectrum:
             x_axis = buf.latest_spectrum.get("x", {})
-            freq = x_axis.get("freq", np.array([], dtype=np.float32))
+            freq = x_axis.get("freq", _EMPTY_F32)
             spectrum["freq"] = float_list(freq)
             for axis in AXES:
                 axis_data = buf.latest_spectrum.get(axis, {})
-                _empty = np.array([], dtype=np.float32)
-                spectrum[axis] = float_list(axis_data.get("amp", _empty))
+                spectrum[axis] = float_list(axis_data.get("amp", _EMPTY_F32))
             combined = buf.latest_spectrum.get("combined")
             spectrum["combined_spectrum_amp_g"] = (
                 float_list(combined["amp"])
