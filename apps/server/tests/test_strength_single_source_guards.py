@@ -35,10 +35,12 @@ def _has_log10_call(text: str) -> bool:
 
 # Lightweight smoke tests: string guards intentionally enforce "no local reimplementation" patterns.
 def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
-    text = _read(Path(__file__).resolve().parents[1] / "vibesensor" / "live_diagnostics.py")
-    assert "strength_db_above_floor(" not in text
-    assert "compute_floor_rms(" not in text
-    assert "compute_band_rms(" not in text
+    pkg_dir = Path(__file__).resolve().parents[1] / "vibesensor" / "live_diagnostics"
+    for py_file in sorted(pkg_dir.rglob("*.py")):
+        text = _read(py_file)
+        assert "strength_db_above_floor(" not in text, f"found in {py_file.name}"
+        assert "compute_floor_rms(" not in text, f"found in {py_file.name}"
+        assert "compute_band_rms(" not in text, f"found in {py_file.name}"
 
 
 def test_report_modules_use_shared_strength_math() -> None:
