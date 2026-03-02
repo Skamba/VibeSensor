@@ -6,10 +6,19 @@ sanitisation used by both the WebSocket hub and the history database.
 
 from __future__ import annotations
 
+import json
+import logging
 import math
 from typing import Any
 
-__all__ = ["sanitize_for_json", "sanitize_value"]
+__all__ = [
+    "safe_json_dumps",
+    "safe_json_loads",
+    "sanitize_for_json",
+    "sanitize_value",
+]
+
+LOGGER = logging.getLogger(__name__)
 
 
 def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
@@ -55,3 +64,31 @@ def sanitize_value(value: Any) -> Any:
     """
     cleaned, _ = sanitize_for_json(value)
     return cleaned
+
+
+def safe_json_dumps(value: Any) -> str:
+    """Sanitise *value* and serialise to a compact JSON string.
+
+    Combines :func:`sanitize_value` with ``json.dumps`` using safe
+    defaults (``allow_nan=False``, ``ensure_ascii=False``).
+    """
+    return json.dumps(sanitize_value(value), ensure_ascii=False, allow_nan=False)
+
+
+def safe_json_loads(value: str | None, *, context: str) -> Any | None:
+    """Deserialise a JSON string, returning ``None`` on empty/invalid input.
+
+    Logs a warning (with traceback) instead of raising on malformed JSON,
+    making it safe for reading persisted data that may have been corrupted.
+
+    *context* is included in the warning message to identify the source::
+
+        safe_json_loads(raw, context="run abc123 metadata")
+    """
+    if not value:
+        return None
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        LOGGER.warning("Skipping invalid JSON payload while reading %s", context, exc_info=True)
+        return None

@@ -6,7 +6,12 @@ import json
 
 import numpy as np
 
-from vibesensor.json_utils import sanitize_for_json, sanitize_value
+from vibesensor.json_utils import (
+    safe_json_dumps,
+    safe_json_loads,
+    sanitize_for_json,
+    sanitize_value,
+)
 
 # ── sanitize_for_json ────────────────────────────────────────────────────────
 
@@ -130,3 +135,67 @@ class TestSanitizeValue:
     def test_numpy_array_converted(self) -> None:
         result = sanitize_value(np.array([1.0, 2.0, float("nan")]))
         assert result == [1.0, 2.0, None]
+
+
+# ── safe_json_dumps ──────────────────────────────────────────────────────────
+
+
+class TestSafeJsonDumps:
+    """Tests for :func:`safe_json_dumps`."""
+
+    def test_plain_dict(self) -> None:
+        result = safe_json_dumps({"key": "value", "num": 42})
+        parsed = json.loads(result)
+        assert parsed == {"key": "value", "num": 42}
+
+    def test_sanitises_nan(self) -> None:
+        result = safe_json_dumps({"val": float("nan")})
+        parsed = json.loads(result)
+        assert parsed["val"] is None
+
+    def test_sanitises_inf(self) -> None:
+        result = safe_json_dumps({"val": float("inf")})
+        parsed = json.loads(result)
+        assert parsed["val"] is None
+
+    def test_numpy_values(self) -> None:
+        result = safe_json_dumps({"a": np.float32(1.5), "b": np.int64(42)})
+        parsed = json.loads(result)
+        assert parsed == {"a": 1.5, "b": 42}
+
+    def test_unicode_preserved(self) -> None:
+        result = safe_json_dumps({"text": "Ünïcödé"})
+        assert "Ünïcödé" in result
+
+    def test_always_returns_str(self) -> None:
+        assert isinstance(safe_json_dumps(None), str)
+        assert isinstance(safe_json_dumps([1, 2, 3]), str)
+
+
+# ── safe_json_loads ──────────────────────────────────────────────────────────
+
+
+class TestSafeJsonLoads:
+    """Tests for :func:`safe_json_loads`."""
+
+    def test_valid_json(self) -> None:
+        result = safe_json_loads('{"key": "value"}', context="test")
+        assert result == {"key": "value"}
+
+    def test_none_input(self) -> None:
+        assert safe_json_loads(None, context="test") is None
+
+    def test_empty_string(self) -> None:
+        assert safe_json_loads("", context="test") is None
+
+    def test_invalid_json_returns_none(self) -> None:
+        result = safe_json_loads("{invalid json", context="test-field")
+        assert result is None
+
+    def test_array_json(self) -> None:
+        result = safe_json_loads("[1, 2, 3]", context="test")
+        assert result == [1, 2, 3]
+
+    def test_scalar_json(self) -> None:
+        result = safe_json_loads("42", context="test")
+        assert result == 42
