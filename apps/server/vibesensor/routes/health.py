@@ -9,7 +9,7 @@ from fastapi import APIRouter
 from ..api_models import HealthResponse
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
+    from ..runtime import RuntimeState
 
 
 def create_health_routes(state: RuntimeState) -> APIRouter:
