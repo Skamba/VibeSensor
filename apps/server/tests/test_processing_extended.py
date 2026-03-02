@@ -200,7 +200,7 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     def _fail_asarray(*args, **kwargs):  # type: ignore[no-untyped-def]
         raise AssertionError("np.asarray should not be used in multi_spectrum_payload")
 
-    monkeypatch.setattr("vibesensor.processing.np.asarray", _fail_asarray)
+    monkeypatch.setattr("vibesensor.processing.processor.np.asarray", _fail_asarray)
 
     result = proc.multi_spectrum_payload(["c1", "c2"])
     assert sorted(result["clients"]) == ["c1", "c2"]

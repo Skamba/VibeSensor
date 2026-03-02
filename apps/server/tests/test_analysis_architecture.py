@@ -184,10 +184,26 @@ def test_no_analysis_files_outside_analysis_folder() -> None:
 # 5. processing.py (live signal processing) does not import analysis
 # ---------------------------------------------------------------------------
 
-_LIVE_PROCESSING_FILES = [
-    "processing.py",
-    "udp_data_rx.py",
-]
+
+def _live_processing_files() -> list[str]:
+    """Collect live signal-processing files to check.
+
+    ``processing`` is now a package; scan all ``.py`` files inside it plus
+    the standalone ``udp_data_rx.py`` module.
+    """
+    files: list[str] = []
+    processing_dir = _SERVER_PKG / "processing"
+    if processing_dir.is_dir():
+        for p in sorted(processing_dir.glob("*.py")):
+            files.append(f"processing/{p.name}")
+    else:
+        # Fallback for legacy single-file layout.
+        files.append("processing.py")
+    files.append("udp_data_rx.py")
+    return files
+
+
+_LIVE_PROCESSING_FILES = _live_processing_files()
 
 
 @pytest.mark.parametrize("filename", _LIVE_PROCESSING_FILES)
