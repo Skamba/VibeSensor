@@ -130,14 +130,14 @@ class TestIdentifyClientNormalized:
     """Regression: identify_client must normalize client_id before use."""
 
     def test_normalize_call_in_source(self) -> None:
-        from vibesensor.api import create_router
+        from vibesensor.routes.clients import create_client_routes
 
-        source = inspect.getsource(create_router)
+        source = inspect.getsource(create_client_routes)
         # Find the identify_client function body
         idx = source.index("identify_client")
         snippet = source[idx : idx + 500]
-        assert "_normalize_client_id_or_400" in snippet, (
-            "identify_client must call _normalize_client_id_or_400"
+        assert "normalize_client_id_or_400" in snippet, (
+            "identify_client must call normalize_client_id_or_400"
         )
 
 

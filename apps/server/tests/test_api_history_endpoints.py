@@ -336,7 +336,7 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_versi
         call_count += 1
         return b"%PDF-cached"
 
-    with patch("vibesensor.api.build_report_pdf", side_effect=_fake_pdf):
+    with patch("vibesensor.routes.history.build_report_pdf", side_effect=_fake_pdf):
         first = await endpoint("run-1", "en")
         second = await endpoint("run-1", "en")
 
@@ -362,7 +362,7 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
         call_count += 1
         return b"%PDF-cached-cross-lang"
 
-    with patch("vibesensor.api.build_report_pdf", side_effect=_fake_pdf):
+    with patch("vibesensor.routes.history.build_report_pdf", side_effect=_fake_pdf):
         first = await endpoint("run-1", "en")
         second = await endpoint("run-1", "nl")
 
@@ -408,7 +408,7 @@ async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> N
         call_count += 1
         return b"%PDF-versioned"
 
-    with patch("vibesensor.api.build_report_pdf", side_effect=_fake_pdf):
+    with patch("vibesensor.routes.history.build_report_pdf", side_effect=_fake_pdf):
         await endpoint("run-1", "en")
         await endpoint("run-1", "en")
 
