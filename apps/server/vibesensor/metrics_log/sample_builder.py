@@ -321,14 +321,10 @@ def build_sample_records(
             speed_source=speed_source,
             engine_rpm=engine_rpm_estimated,
             engine_rpm_source=(
-                "estimated_from_speed_and_ratios"
-                if engine_rpm_estimated is not None
-                else "missing"
+                "estimated_from_speed_and_ratios" if engine_rpm_estimated is not None else "missing"
             ),
             gear=gear_ratio if isinstance(gear_ratio, float) else None,
-            final_drive_ratio=final_drive_ratio
-            if isinstance(final_drive_ratio, float)
-            else None,
+            final_drive_ratio=final_drive_ratio if isinstance(final_drive_ratio, float) else None,
             accel_x_g=accel_x_g,
             accel_y_g=accel_y_g,
             accel_z_g=accel_z_g,
@@ -379,9 +375,7 @@ def build_run_metadata(
         firmware_version=firmware_version,
         raw_sample_rate_hz=raw_sample_rate_hz,
         feature_interval_s=feature_interval_s,
-        fft_window_size_samples=fft_window_size_samples
-        if fft_window_size_samples > 0
-        else None,
+        fft_window_size_samples=fft_window_size_samples if fft_window_size_samples > 0 else None,
         fft_window_type=fft_window_type or None,
         peak_picker_method=peak_picker_method,
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,

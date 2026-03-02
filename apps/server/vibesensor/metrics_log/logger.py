@@ -305,9 +305,7 @@ class MetricsLogger:
         return extract_strength_data(metrics)
 
     @staticmethod
-    def _extract_axis_top_peaks(
-        metrics: dict[str, object], axis: str
-    ) -> list[dict[str, object]]:
+    def _extract_axis_top_peaks(metrics: dict[str, object], axis: str) -> list[dict[str, object]]:
         from .sample_builder import extract_axis_top_peaks
 
         return extract_axis_top_peaks(metrics, axis)
