@@ -21,6 +21,7 @@ from ..api_models import (
     HistoryListResponse,
     HistoryRunResponse,
 )
+from ..history_db import RunStatus
 from ..report.pdf_builder import build_report_pdf
 from ._helpers import async_require_run, safe_filename
 
@@ -195,9 +196,9 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
         lang: str | None = Query(default=None),
     ) -> HistoryInsightsResponse:
         run = await async_require_run(state.history_db, run_id)
-        if run["status"] == "analyzing":
-            return {"run_id": run_id, "status": "analyzing"}
-        if run["status"] == "error":
+        if run["status"] == RunStatus.ANALYZING:
+            return {"run_id": run_id, "status": RunStatus.ANALYZING}
+        if run["status"] == RunStatus.ERROR:
             raise HTTPException(status_code=422, detail=run.get("error_message", "Analysis failed"))
         analysis = run.get("analysis")
         if analysis is None:
@@ -234,7 +235,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                     status_code=409,
                     detail="Cannot delete the active run; stop recording first",
                 )
-            if reason == "analyzing":
+            if reason == RunStatus.ANALYZING:
                 raise HTTPException(
                     status_code=409,
                     detail="Cannot delete run while analysis is in progress",
@@ -249,9 +250,9 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
         run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
         run = await async_require_run(state.history_db, run_id)
-        if run.get("status") == "analyzing":
+        if run.get("status") == RunStatus.ANALYZING:
             raise HTTPException(status_code=409, detail="Analysis is still in progress")
-        if run.get("status") == "error":
+        if run.get("status") == RunStatus.ERROR:
             raise HTTPException(
                 status_code=422,
                 detail=run.get("error_message", "Analysis failed"),

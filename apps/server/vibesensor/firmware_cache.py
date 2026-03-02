@@ -40,7 +40,11 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
-from .release_fetcher import github_api_headers, validate_https_url
+from .release_fetcher import (
+    DOWNLOAD_CHUNK_BYTES,
+    GitHubAPIClient,
+    validate_https_url,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -220,20 +224,13 @@ def _write_meta(bundle_dir: Path, meta: BundleMeta) -> None:
     os.replace(tmp, str(meta_path))
 
 
-class GitHubReleaseFetcher:
+class GitHubReleaseFetcher(GitHubAPIClient):
     """Fetch firmware bundles from GitHub Releases."""
 
     def __init__(self, config: FirmwareCacheConfig) -> None:
         self._config = config
-
-    def _api_headers(self) -> dict[str, str]:
-        return github_api_headers(self._config.github_token)
-
-    def _api_get(self, url: str) -> Any:
-        validate_https_url(url, context="firmware")
-        req = Request(url, headers=self._api_headers())
-        with urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        self._github_token = config.github_token
+        self._api_context = "firmware"
 
     def _download_asset(self, url: str, dest: Path) -> None:
         validate_https_url(url, context="firmware")
@@ -250,7 +247,7 @@ class GitHubReleaseFetcher:
                 with os.fdopen(tmp_fd, "wb") as tmp_f:
                     fdopen_ok = True
                     while True:
-                        chunk = resp.read(1024 * 1024)  # 1 MB at a time
+                        chunk = resp.read(DOWNLOAD_CHUNK_BYTES)
                         if not chunk:
                             break
                         total += len(chunk)
