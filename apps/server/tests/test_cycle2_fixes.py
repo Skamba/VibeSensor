@@ -44,9 +44,9 @@ class TestCombinedSpectrumNotZeroed:
         to axis_amp_slices."""
         import re
 
-        from vibesensor.processing import SignalProcessor
+        from vibesensor.processing.fft import compute_fft_spectrum
 
-        src = inspect.getsource(SignalProcessor._compute_fft_spectrum)
+        src = inspect.getsource(compute_fft_spectrum)
         # Find the line that appends to axis_amp_slices
         match = re.search(r"axis_amp_slices\.append\((\w+)\)", src)
         assert match is not None, "axis_amp_slices.append() not found"
