@@ -140,8 +140,8 @@ class TestNormalizeLangArchitecturalBoundary:
 # ---------------------------------------------------------------------------
 class TestExportZipFiltersInternals:
     def test_underscore_fields_stripped_in_source(self) -> None:
-        """api.py must filter _-prefixed keys from analysis before export."""
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "api.py"
+        """history route module must filter _-prefixed keys from analysis before export."""
+        src = Path(__file__).resolve().parent.parent / "vibesensor" / "routes" / "history.py"
         text = src.read_text()
         assert 'not k.startswith("_")' in text
 

@@ -142,7 +142,7 @@ def test_live_diagnostics_entries_type_annotation() -> None:
 
 def test_set_location_uses_stripped_code() -> None:
     """Verify the stripped code is passed to registry.set_location."""
-    src_path = Path(__file__).resolve().parent.parent / "vibesensor" / "api.py"
+    src_path = Path(__file__).resolve().parent.parent / "vibesensor" / "routes" / "clients.py"
     source = src_path.read_text()
     # The registry.set_location call should use 'code' (stripped), not
     # 'req.location_code' (raw).
