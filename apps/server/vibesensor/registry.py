@@ -261,7 +261,13 @@ class ClientRegistry:
                         gap = (data_msg.seq - expected) & 0xFFFFFFFF
                         if gap < 0x80000000:
                             record.frames_dropped += gap
-            record.last_seq = data_msg.seq
+            # Only advance last_seq forward to prevent out-of-order UDP
+            # packets from regressing the counter and inflating frames_dropped.
+            if (
+                record.last_seq is None
+                or ((data_msg.seq - record.last_seq) & 0xFFFFFFFF) < 0x80000000
+            ):
+                record.last_seq = data_msg.seq
             record.last_t0_us = data_msg.t0_us
             return DataUpdateResult(reset_detected=reset_detected)
 

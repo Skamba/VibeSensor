@@ -261,19 +261,9 @@ class HistoryDB:
 
     @staticmethod
     def _sanitize_for_json(value: Any) -> Any:
-        # Numpy array → Python list (check ndim to distinguish from scalars).
-        if hasattr(value, "tolist") and hasattr(value, "ndim"):
-            value = value.tolist()
-        # Numpy scalar → native Python type via .item().
-        elif hasattr(value, "item"):
-            value = value.item()
-        if isinstance(value, float):
-            return value if math.isfinite(value) else None
-        if isinstance(value, dict):
-            return {k: HistoryDB._sanitize_for_json(v) for k, v in value.items()}
-        if isinstance(value, (list, tuple)):
-            return [HistoryDB._sanitize_for_json(v) for v in value]
-        return value
+        from .json_utils import sanitize_for_json
+
+        return sanitize_for_json(value)
 
     @classmethod
     def _safe_json_dumps(cls, value: Any) -> str:

@@ -142,7 +142,9 @@ def run_benchmark(
             "compute_p95_ms": round(_p95(par_compute_ms), 3),
         },
         "speedup_compute_median": round(
-            statistics.median(seq_compute_ms) / max(0.001, statistics.median(par_compute_ms)), 2
+            statistics.median(seq_compute_ms)
+            / max(0.001, statistics.median(par_compute_ms)),
+            2,
         ),
         "output_equivalent": output_match,
     }
@@ -150,8 +152,12 @@ def run_benchmark(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Pipeline throughput benchmark")
-    parser.add_argument("--sensors", type=int, default=4, help="Number of simulated sensors")
-    parser.add_argument("--rounds", type=int, default=10, help="Number of benchmark rounds")
+    parser.add_argument(
+        "--sensors", type=int, default=4, help="Number of simulated sensors"
+    )
+    parser.add_argument(
+        "--rounds", type=int, default=10, help="Number of benchmark rounds"
+    )
     args = parser.parse_args()
 
     print(f"Benchmarking with {args.sensors} sensors, {args.rounds} rounds ...\n")
@@ -162,13 +168,23 @@ def main() -> None:
     print("=" * 60)
     print(f"  {'Metric':<30} {'Sequential':>12} {'Parallel':>12}")
     print("-" * 60)
-    print(f"  {'Ingest median (ms)':<30} {seq['ingest_median_ms']:>12.3f} {par['ingest_median_ms']:>12.3f}")
-    print(f"  {'Ingest P95 (ms)':<30} {seq['ingest_p95_ms']:>12.3f} {par['ingest_p95_ms']:>12.3f}")
-    print(f"  {'Compute median (ms)':<30} {seq['compute_median_ms']:>12.3f} {par['compute_median_ms']:>12.3f}")
-    print(f"  {'Compute P95 (ms)':<30} {seq['compute_p95_ms']:>12.3f} {par['compute_p95_ms']:>12.3f}")
+    print(
+        f"  {'Ingest median (ms)':<30} {seq['ingest_median_ms']:>12.3f} {par['ingest_median_ms']:>12.3f}"
+    )
+    print(
+        f"  {'Ingest P95 (ms)':<30} {seq['ingest_p95_ms']:>12.3f} {par['ingest_p95_ms']:>12.3f}"
+    )
+    print(
+        f"  {'Compute median (ms)':<30} {seq['compute_median_ms']:>12.3f} {par['compute_median_ms']:>12.3f}"
+    )
+    print(
+        f"  {'Compute P95 (ms)':<30} {seq['compute_p95_ms']:>12.3f} {par['compute_p95_ms']:>12.3f}"
+    )
     print("-" * 60)
     print(f"  {'Compute speedup':<30} {results['speedup_compute_median']:>12.2f}x")
-    print(f"  {'Output equivalent':<30} {'YES' if results['output_equivalent'] else 'NO':>12}")
+    print(
+        f"  {'Output equivalent':<30} {'YES' if results['output_equivalent'] else 'NO':>12}"
+    )
     print("=" * 60)
 
 

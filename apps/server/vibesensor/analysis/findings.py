@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Findings engine – order tracking, reference checks, and action plans."""
 
 from __future__ import annotations
@@ -798,7 +797,9 @@ def _build_order_findings(
         mean_amp = mean(matched_amp) if matched_amp else 0.0
         mean_floor = mean(matched_floor) if matched_floor else 0.0
         mean_rel_err = mean(rel_errors) if rel_errors else 1.0
-        corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+        corr = (
+            _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+        )
         # When speed is constant, predicted Hz never varies so correlation
         # is degenerate (undefined or misleading).  Zero it out.
         if constant_speed:
@@ -885,7 +886,9 @@ def _build_order_findings(
         compliance = getattr(hypothesis, "path_compliance", 1.0)
         error_denominator = 0.25 * compliance
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
-        snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR)
+        snr_score = min(
+            1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR
+        )
         # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
         if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
             snr_score = min(snr_score, 0.40)
@@ -1106,10 +1109,13 @@ def _classify_peak_type(
     spatial_uniformity: float | None = None,
     speed_uniformity: float | None = None,
 ) -> str:
-    """Classify a frequency peak as ``patterned``, ``persistent``, ``transient``, or ``baseline_noise``.
+    """Classify a frequency peak by persistence pattern.
 
-    * **patterned**: high presence and low burstiness → likely a fault vibration.
-    * **persistent**: moderate presence → unknown but repeated resonance.
+    Categories: ``patterned``, ``persistent``, ``transient``,
+    or ``baseline_noise``.
+
+    * **patterned**: high presence + low burstiness → fault vibration.
+    * **persistent**: moderate presence → repeated resonance.
     * **transient**: low presence or very high burstiness → one-off impact/thud.
     * **baseline_noise**: low SNR → consistent with measurement noise floor.
 

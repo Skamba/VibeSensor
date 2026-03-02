@@ -27,6 +27,7 @@ _BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
 
 
 def bucket_for_strength(vibration_strength_db: float) -> str | None:
+    """Return the strength-band key (e.g. 'l0'–'l5') for a dB value."""
     selected: str | None = "l0"  # default to negligible for sub-zero dB
     for band in BANDS:
         if vibration_strength_db >= band["min_db"]:
@@ -35,8 +36,10 @@ def bucket_for_strength(vibration_strength_db: float) -> str | None:
 
 
 def band_by_key(key: str) -> StrengthBand | None:
+    """Look up a strength band by its key.  Returns None if not found."""
     return _BAND_BY_KEY.get(key)
 
 
 def band_rank(key: str) -> int:
+    """Return the ordinal rank (0-based) of a band key, or -1 if unknown."""
     return _BAND_RANK.get(key, -1)

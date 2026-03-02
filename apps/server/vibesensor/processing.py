@@ -14,7 +14,6 @@ from vibesensor_core.vibration_strength import (
     STRENGTH_EPSILON_MIN_G,
     combined_spectrum_amp_g,
     compute_vibration_strength_db,
-    noise_floor_amp_p20_g,
 )
 
 from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
@@ -188,6 +187,7 @@ class SignalProcessor:
         buf.write_idx = 0
         buf.count = 0
         buf.first_ingest_mono_s = 0.0
+        buf.last_ingest_mono_s = 0.0
         buf.last_t0_us = 0
         buf.samples_since_t0 = 0
         buf.latest_metrics = {}
@@ -311,15 +311,23 @@ class SignalProcessor:
 
     @staticmethod
     def _noise_floor(amps: np.ndarray) -> float:
-        """P20 noise floor delegating to the canonical core-lib implementation."""
+        """P20 noise floor for per-axis peak detection.
+
+        The caller already provides the analysis-band slice with DC
+        excluded/zeroed.  We compute P20 directly on the non-negative
+        finite values rather than delegating to ``noise_floor_amp_p20_g``
+        (which additionally skips ``[1:]`` to remove DC — that would
+        double-skip when DC is already excluded).
+        """
         if amps.size == 0:
             return 0.0
         finite = amps[np.isfinite(amps)]
         if finite.size == 0:
             return 0.0
-        return noise_floor_amp_p20_g(
-            combined_spectrum_amp_g=sorted(float(v) for v in finite if v >= 0.0)
-        )
+        non_neg = finite[finite >= 0.0]
+        if non_neg.size == 0:
+            return 0.0
+        return float(np.percentile(non_neg, 20))
 
     @staticmethod
     def _float_list(values: np.ndarray | list[float]) -> list[float]:
@@ -376,8 +384,7 @@ class SignalProcessor:
                     "hz": float(freqs[idx]),
                     "amp": raw_amp,
                     "snr_ratio": (
-                        (raw_amp + STRENGTH_EPSILON_MIN_G)
-                        / (floor_amp + STRENGTH_EPSILON_MIN_G)
+                        (raw_amp + STRENGTH_EPSILON_MIN_G) / (floor_amp + STRENGTH_EPSILON_MIN_G)
                     ),
                 }
             )
@@ -502,8 +509,8 @@ class SignalProcessor:
                     buf.latest_strength_metrics = {}
                 buf.spectrum_generation += 1
                 buf.invalidate_caches()
-        self._last_compute_duration_s = time.monotonic() - t0
-        self._total_compute_calls += 1
+            self._last_compute_duration_s = time.monotonic() - t0
+            self._total_compute_calls += 1
         return metrics
 
     def _compute_fft_spectrum(

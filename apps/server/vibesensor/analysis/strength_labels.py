@@ -12,6 +12,15 @@ import math
 from vibesensor_core.strength_bands import BANDS
 
 # ---------------------------------------------------------------------------
+# Confidence tier thresholds for high/medium/low classification
+# ---------------------------------------------------------------------------
+# These are the boundaries used to classify analysis confidence into
+# high/medium/low for user-facing labels and report section gating.
+# 0.70+ = high, 0.40–0.70 = medium, <0.40 = low.
+CONFIDENCE_HIGH_THRESHOLD = 0.70
+CONFIDENCE_MEDIUM_THRESHOLD = 0.40
+
+# ---------------------------------------------------------------------------
 # Strength labels  (vibration_strength_db → natural-language band)
 # ---------------------------------------------------------------------------
 
@@ -134,11 +143,11 @@ def _select_reason_key(
         return "single_sensor"
     if steady_speed:
         return "narrow_speed_range"
-    if confidence >= 0.70:
+    if confidence >= CONFIDENCE_HIGH_THRESHOLD:
         if weak_spatial:
             return "weak_spatial_separation"
         return "strong_order_match"
-    if confidence >= 0.40:
+    if confidence >= CONFIDENCE_MEDIUM_THRESHOLD:
         if weak_spatial:
             return "weak_spatial_separation"
         return "moderate_order_match"
@@ -182,9 +191,9 @@ def certainty_label(
         confidence_0_to_1 = 0.0
         pct_text = "0%"
 
-    if confidence_0_to_1 >= 0.70:
+    if confidence_0_to_1 >= CONFIDENCE_HIGH_THRESHOLD:
         level_key, label_en, label_nl = "high", "High", "Hoog"
-    elif confidence_0_to_1 >= 0.40:
+    elif confidence_0_to_1 >= CONFIDENCE_MEDIUM_THRESHOLD:
         level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
     else:
         level_key, label_en, label_nl = "low", "Low", "Laag"

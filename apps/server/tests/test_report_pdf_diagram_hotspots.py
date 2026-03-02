@@ -180,8 +180,11 @@ def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() 
     source_labels = [
         item
         for item in text_items
-        if str(getattr(item, "text", "")) in {
-            "SOURCE_WHEEL_TIRE", "SOURCE_DRIVELINE", "SOURCE_ENGINE",
+        if str(getattr(item, "text", ""))
+        in {
+            "SOURCE_WHEEL_TIRE",
+            "SOURCE_DRIVELINE",
+            "SOURCE_ENGINE",
         }
     ]
     assert len(source_labels) == 3

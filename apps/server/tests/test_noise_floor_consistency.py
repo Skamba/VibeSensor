@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from vibesensor_core.vibration_strength import noise_floor_amp_p20_g
 
 from vibesensor.processing import SignalProcessor
 
@@ -18,16 +17,21 @@ from vibesensor.processing import SignalProcessor
 
 
 def _core_noise_floor_from_array(arr: np.ndarray) -> float:
-    """Replicate the band/finite filtering that _noise_floor does, then call
-    the core lib — used as the expected-value oracle."""
+    """Compute the same P20 percentile that _noise_floor computes.
+
+    _noise_floor now uses np.percentile directly on non-negative finite
+    values (without delegating to noise_floor_amp_p20_g which additionally
+    skips the DC bin).
+    """
     if arr.size == 0:
         return 0.0
     finite = arr[np.isfinite(arr)]
     if finite.size == 0:
         return 0.0
-    return noise_floor_amp_p20_g(
-        combined_spectrum_amp_g=sorted(float(v) for v in finite if v >= 0.0),
-    )
+    non_neg = finite[finite >= 0.0]
+    if non_neg.size == 0:
+        return 0.0
+    return float(np.percentile(non_neg, 20))
 
 
 # ---------------------------------------------------------------------------

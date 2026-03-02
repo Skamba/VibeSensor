@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Report internationalisation – re-export from canonical module.
 
 The implementation stays in ``vibesensor.report_i18n`` so that existing

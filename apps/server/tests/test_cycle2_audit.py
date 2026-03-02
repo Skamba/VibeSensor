@@ -22,7 +22,6 @@ import pytest
 from vibesensor_core.strength_bands import bucket_for_strength
 from vibesensor_core.vibration_strength import (
     compute_vibration_strength_db,
-    noise_floor_amp_p20_g,
 )
 
 from vibesensor.analysis.helpers import _speed_stats
@@ -107,26 +106,28 @@ class TestFinding1_FirstValidBinZeroed:
 
 
 class TestFinding2_DoubleBinRemoval:
-    """Demonstrate that _noise_floor removes two bins instead of one."""
+    """_noise_floor uses np.percentile directly, avoiding the DC-bin
+    skip that noise_floor_amp_p20_g performs (since the caller already
+    provides DC-excluded data)."""
 
-    def test_double_skip_in_noise_floor(self):
-        """_noise_floor must NOT skip amps[0] before passing to
-        noise_floor_amp_p20_g — the caller already provides the
-        analysis-band slice (DC excluded by spectrum_min_hz).
+    def test_noise_floor_includes_all_bins(self):
+        """_noise_floor must include ALL bins in the P20 computation.
 
-        FIXED: amps[1:] removed; all bins now included.
+        Unlike noise_floor_amp_p20_g (which skips [1:] to remove DC),
+        _noise_floor receives pre-processed data where DC is already
+        excluded/zeroed, so it computes P20 on all input values.
         """
         amps = np.array(
             [5.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0],
             dtype=np.float32,
         )
 
-        correct_floor = noise_floor_amp_p20_g(combined_spectrum_amp_g=[float(v) for v in amps])
         actual_floor = SignalProcessor._noise_floor(amps)
+        # P20 of all 10 values via numpy
+        expected = float(np.percentile(amps, 20))
 
-        # After fix: both should agree exactly
-        assert actual_floor == pytest.approx(correct_floor, abs=1e-6), (
-            f"Noise floor mismatch: actual={actual_floor:.4f} vs correct={correct_floor:.4f}"
+        assert actual_floor == pytest.approx(expected, abs=1e-6), (
+            f"Noise floor mismatch: actual={actual_floor:.4f} vs expected={expected:.4f}"
         )
 
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from types import MethodType
 
 import pytest
@@ -284,12 +283,12 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
     )
 
 
-def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch) -> None:
-    """Averaging dB values directly is mathematically wrong for amplitude-derived metrics.
+def test_combined_multi_sensor_strength_averages_in_db_domain(monkeypatch) -> None:
+    """Combined multi-sensor strength should be the mean of per-sensor dB values.
 
-    For amplitude dB values, each sensor must be converted to a linear amplitude ratio before
-    combining. The correct combined dB is `20*log10(mean(10**(db/20)))`, not `mean(db)`.
-    This test fixes the contract for combined multi-sensor diagnostics strength.
+    Averaging directly in the dB domain preserves the per-sensor scale
+    (peak-vs-noise-floor), unlike the previous approach of converting to
+    linear amplitude and recomputing dB against a synthetic 1.0 g floor.
     """
     now_s = 250.0
     monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now_s)
@@ -347,7 +346,8 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
 
     assert engine._combined_trackers
     combined_tracker = next(iter(engine._combined_trackers.values()))
-    expected_db = 20.0 * math.log10((10 ** (10.0 / 20.0) + 10 ** (20.0 / 20.0)) / 2.0)
+    # Simple dB-domain mean: (10.0 + 20.0) / 2 = 15.0
+    expected_db = (10.0 + 20.0) / 2.0
     assert combined_tracker.last_strength_db == pytest.approx(expected_db, abs=1e-6)
 
 

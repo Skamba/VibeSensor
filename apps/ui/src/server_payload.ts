@@ -88,7 +88,12 @@ export type AdaptedPayload = {
 };
 
 function asNumberArray(value: unknown): number[] {
-  return Array.isArray(value) ? value.map((v) => Number(v)).filter((v) => Number.isFinite(v)) : [];
+  // Replace non-finite values with 0 instead of filtering, to preserve
+  // array length parity with freq arrays (which are always finite).
+  return Array.isArray(value) ? value.map((v) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }) : [];
 }
 
 function adaptRotationalSpeedValue(value: unknown): RotationalSpeedValue {

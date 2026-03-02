@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Output / aggregation: summaries, confidence labels, plot data, and public entry points."""
 
 from __future__ import annotations
@@ -53,8 +52,18 @@ from .phase_segmentation import (
     segment_run_phases as _segment_run_phases,
 )
 from .plot_data import _plot_data
-from .strength_labels import strength_label as _strength_label
+from .strength_labels import (
+    CONFIDENCE_HIGH_THRESHOLD,
+    CONFIDENCE_MEDIUM_THRESHOLD,
+)
+from .strength_labels import (
+    strength_label as _strength_label,
+)
 from .test_plan import _merge_test_plan
+
+# Fraction of sensor ADC limit above which a sample is considered clipping.
+# 2% headroom accounts for quantization effects near the ADC rail.
+_SATURATION_FRACTION = 0.98
 
 
 def _normalize_lang(lang: object) -> str:
@@ -166,9 +175,9 @@ def confidence_label(
     pct = max(0.0, min(100.0, (conf_0_to_1 or 0.0) * 100.0))
     pct_text = f"{pct:.0f}%"
     conf = conf_0_to_1 if conf_0_to_1 is not None else 0.0
-    if conf >= 0.70:
+    if conf >= CONFIDENCE_HIGH_THRESHOLD:
         label_key, tone = "CONFIDENCE_HIGH", "success"
-    elif conf >= 0.40:
+    elif conf >= CONFIDENCE_MEDIUM_THRESHOLD:
         label_key, tone = "CONFIDENCE_MEDIUM", "warn"
     else:
         label_key, tone = "CONFIDENCE_LOW", "neutral"
@@ -575,7 +584,8 @@ def _compute_accel_statistics(
 
     sat_count = 0
     if sensor_limit is not None:
-        sat_threshold = sensor_limit * 0.98
+        # 2% headroom from ADC rail for quantization effects near saturation.
+        sat_threshold = sensor_limit * _SATURATION_FRACTION
         sat_count = sum(
             1
             for sample in samples
@@ -871,11 +881,13 @@ def summarize_run_data(
                 "start_idx": seg.start_idx,
                 "end_idx": seg.end_idx,
                 "start_t_s": (
-                    None if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
+                    None
+                    if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
                     else seg.start_t_s
                 ),
                 "end_t_s": (
-                    None if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s)
+                    None
+                    if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s)
                     else seg.end_t_s
                 ),
                 "speed_min_kmh": seg.speed_min_kmh,

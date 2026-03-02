@@ -26,28 +26,28 @@ def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
     Returns the sanitised object and a boolean flag indicating whether any
     non-finite value was encountered.
     """
+    from .json_utils import sanitize_for_json as _sanitize
+
     found_non_finite = False
 
-    def _walk(v: Any) -> Any:
-        nonlocal found_non_finite
-        # Numpy array → Python list (check ndim to distinguish from scalars).
-        if hasattr(v, "tolist") and hasattr(v, "ndim"):
-            v = v.tolist()
-        # Numpy scalar → native Python type via .item().
-        elif hasattr(v, "item"):
-            v = v.item()
+    def _check_non_finite(v: Any) -> bool:
+        """Check if value tree contains any non-finite floats."""
         if isinstance(v, float):
-            if math.isfinite(v):
-                return v
-            found_non_finite = True
-            return None
+            return not math.isfinite(v)
+        # Numpy array → convert to list then check recursively.
+        if hasattr(v, "tolist") and hasattr(v, "ndim"):
+            return _check_non_finite(v.tolist())
+        # Numpy scalar → extract native value.
+        elif hasattr(v, "item"):
+            return _check_non_finite(v.item())
         if isinstance(v, dict):
-            return {k: _walk(val) for k, val in v.items()}
+            return any(_check_non_finite(val) for val in v.values())
         if isinstance(v, (list, tuple)):
-            return [_walk(item) for item in v]
-        return v
+            return any(_check_non_finite(item) for item in v)
+        return False
 
-    cleaned = _walk(obj)
+    found_non_finite = _check_non_finite(obj)
+    cleaned = _sanitize(obj)
     return cleaned, found_non_finite
 
 

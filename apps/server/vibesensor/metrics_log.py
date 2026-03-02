@@ -407,9 +407,7 @@ class MetricsLogger:
             if isinstance(effective_speed_mps, (int, float))
             else None
         )
-        speed_source = _SPEED_SOURCE_MAP.get(
-            self.gps_monitor.resolve_speed().source, "none"
-        )
+        speed_source = _SPEED_SOURCE_MAP.get(self.gps_monitor.resolve_speed().source, "none")
         engine_rpm_estimated = None
         if (
             speed_kmh is not None

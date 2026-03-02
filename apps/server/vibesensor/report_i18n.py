@@ -1,4 +1,3 @@
-# ruff: noqa: E501
 """Report internationalisation helpers.
 
 Translation data is loaded from ``apps/server/data/report_i18n.json``.

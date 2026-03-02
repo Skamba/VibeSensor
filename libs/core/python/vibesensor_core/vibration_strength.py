@@ -14,6 +14,7 @@ PEAK_THRESHOLD_FLOOR_RATIO = 2.6
 
 
 def median(values: list[float]) -> float:
+    """Return the median of a list of floats.  Returns 0.0 for empty input."""
     if not values:
         return 0.0
     ordered = sorted(values)
@@ -25,6 +26,10 @@ def median(values: list[float]) -> float:
 
 
 def percentile(sorted_values: list[float], q: float) -> float:
+    """Linearly-interpolated percentile on a pre-sorted list.
+
+    *q* is a fraction in [0, 1].  Returns 0.0 for empty input.
+    """
     if not sorted_values:
         return 0.0
     if len(sorted_values) == 1:
@@ -70,6 +75,11 @@ def combined_spectrum_amp_g(
 
 
 def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
+    """Return the 20th-percentile amplitude as the noise floor estimate.
+
+    Expects frequency-ordered input; skips the DC bin (index 0) before
+    computing the percentile.
+    """
     if not combined_spectrum_amp_g:
         return 0.0
     band = (
@@ -90,6 +100,11 @@ def strength_floor_amp_g(
     min_hz: float,
     max_hz: float,
 ) -> float:
+    """Median amplitude of non-peak bins as the strength reference floor.
+
+    Bins within *exclusion_hz* of any peak center are excluded.  Falls back
+    to the P20 noise floor when all bins are within peak zones.
+    """
     if not freq_hz or not combined_spectrum_amp_g:
         return 0.0
     n = min(len(freq_hz), len(combined_spectrum_amp_g))
@@ -122,6 +137,7 @@ def peak_band_rms_amp_g(
     center_idx: int,
     bandwidth_hz: float,
 ) -> float:
+    """RMS amplitude of spectrum bins within *bandwidth_hz* of a peak center."""
     n = min(len(freq_hz), len(combined_spectrum_amp_g))
     if not (0 <= center_idx < n):
         return 0.0
@@ -144,10 +160,20 @@ def vibration_strength_db_scalar(
     floor_amp_g: float,
     epsilon_g: float | None = None,
 ) -> float:
+    """Canonical vibration strength in dB.
+
+    Computes ``20 * log10((peak + eps) / (floor + eps))`` where
+    ``eps = max(1e-9, floor * 0.05)``.
+
+    This is the project-wide source-of-truth dB definition.  All
+    user-facing vibration strength/intensity values must ultimately
+    derive from this function.
+    """
     _floor_raw = float(floor_amp_g)
     _band_raw = float(peak_band_rms_amp_g)
     # Guard against NaN inputs: max(0.0, NaN) returns NaN in CPython.
     from math import isfinite
+
     floor = max(0.0, _floor_raw) if isfinite(_floor_raw) else 0.0
     band = max(0.0, _band_raw) if isfinite(_band_raw) else 0.0
     eps = (

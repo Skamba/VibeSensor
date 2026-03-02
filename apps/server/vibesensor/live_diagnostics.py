@@ -8,7 +8,6 @@ from time import monotonic
 from typing import Any
 
 from vibesensor_core.strength_bands import BANDS, band_rank
-from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from .analysis import DrivingPhase, build_findings_for_samples, classify_sample_phase
 from .constants import MPS_TO_KMH, SILENCE_DB
@@ -53,24 +52,19 @@ def _copy_matrix(
 
 
 def _combine_amplitude_strength_db(values_db: list[float]) -> float:
+    """Combine multiple per-sensor dB values into a single representative dB.
+
+    Averages directly in the dB domain to preserve the original per-sensor
+    scale (peak-vs-noise-floor).  Previous implementation converted to linear,
+    averaged, then recomputed dB against a synthetic 1.0 g floor — producing
+    values on a completely different scale from the per-sensor inputs.
+    """
     if not values_db:
         return SILENCE_DB
-    linear = []
-    for value in values_db:
-        v = float(value)
-        if not math.isfinite(v):
-            continue  # skip NaN/Inf — they would poison the mean
-        linear.append(10.0 ** (max(-60.0, min(200.0, v)) / 20.0))
-    if not linear:
+    valid = [float(v) for v in values_db if math.isfinite(v)]
+    if not valid:
         return SILENCE_DB
-    mean_linear = sum(linear) / len(linear)
-    if mean_linear <= 0.0:
-        return SILENCE_DB
-    return vibration_strength_db_scalar(
-        peak_band_rms_amp_g=mean_linear,
-        floor_amp_g=1.0,
-        epsilon_g=1e-9,
-    )
+    return sum(valid) / len(valid)
 
 
 @dataclass(slots=True)
