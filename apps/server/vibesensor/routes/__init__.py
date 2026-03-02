@@ -27,7 +27,7 @@ from .updates import create_update_routes
 from .websocket import create_websocket_routes
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
+    from ..runtime import RuntimeState
 
 
 def create_router(state: RuntimeState) -> APIRouter:
