@@ -50,7 +50,7 @@ def _fill_sensor(
     signal = 0.01 * np.sin(2 * np.pi * freq_hz * t)
     samples = np.column_stack([signal, signal, signal])
     if mono_time is not None:
-        with patch("vibesensor.processing.processor.time") as mock_time:
+        with patch("vibesensor.processing.time") as mock_time:
             mock_time.monotonic.return_value = mono_time
             proc.ingest(client_id, samples, sample_rate_hz=sample_rate_hz, t0_us=t0_us)
     else:
