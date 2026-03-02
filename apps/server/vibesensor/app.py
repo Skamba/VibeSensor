@@ -41,7 +41,10 @@ from .ws_hub import WebSocketHub
 __all__ = ["RuntimeState", "create_app", "main"]
 
 LOGGER = logging.getLogger(__name__)
+
 BACKUP_SERVER_PORT = 8000
+"""Fallback HTTP port when the configured port is unavailable (e.g. EACCES
+on port 80).  Chosen to be a common unprivileged alternative."""
 
 
 def create_app(config_path: Path | None = None) -> FastAPI:
