@@ -5,7 +5,7 @@
 - `apps/server/vibesensor/api.py` - HTTP endpoints and request/response surface.
 - `apps/server/vibesensor/processing.py` - signal buffers, FFT, metrics, freshness filtering.
 - `apps/server/vibesensor/metrics_log/` - run/session logging and history integration.
-- `apps/server/vibesensor/live_diagnostics.py` - event detection engine logic.
+- `apps/server/vibesensor/live_diagnostics/` - event detection engine (package: engine, tracker, matrix, detector, phase).
 - `apps/server/vibesensor/config.py` - config defaults, schema mapping, typed dataclasses.
 - `apps/server/vibesensor/history_db.py` - persisted run DB interfaces.
 - `apps/server/vibesensor/report/pdf_builder.py` - report generation pipeline.
@@ -24,7 +24,7 @@
 
 ## Module Boundaries
 - **Acquisition**: `udp_data_rx.py`, `registry.py`.
-- **Computation**: `processing.py`, `libs/core/python/vibesensor_core/*`, `live_diagnostics.py`.
+- **Computation**: `processing.py`, `libs/core/python/vibesensor_core/*`, `live_diagnostics/`.
 - **Delivery**: `app.py`, `api.py`, `ws_hub.py`, `apps/ui/src/*`.
 - **Persistence**: `metrics_log/`, `history_db.py`, `runlog.py`.
 - **Device Ops**: `apps/server/scripts/*`, `apps/server/systemd/*`, `infra/pi-image/pi-gen/*`.
