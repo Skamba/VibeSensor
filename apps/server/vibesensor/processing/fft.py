@@ -58,15 +58,22 @@ def smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
 
 
 def noise_floor(amps: np.ndarray) -> float:
-    """P20 noise floor delegating to the canonical core-lib implementation."""
+    """Compute the P20 noise floor, filtering non-finite and negative values.
+
+    Returns ``0.0`` for empty or all-invalid inputs.  Delegates the
+    actual percentile computation to
+    :func:`~vibesensor_core.vibration_strength.noise_floor_amp_p20_g`.
+    """
     if amps.size == 0:
         return 0.0
     finite = amps[np.isfinite(amps)]
     if finite.size == 0:
         return 0.0
-    return noise_floor_amp_p20_g(
-        combined_spectrum_amp_g=sorted(float(v) for v in finite if v >= 0.0)
-    )
+    non_neg = finite[finite >= 0.0]
+    if non_neg.size == 0:
+        return 0.0
+    # noise_floor_amp_p20_g expects sorted input (strips [1:] for DC bin).
+    return noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted(non_neg.tolist()))
 
 
 def float_list(values: np.ndarray | list[float]) -> list[float]:

@@ -238,7 +238,7 @@ class TestMultiSpectrumFreqDedup:
         import numpy as np
 
         freq = list(np.linspace(5, 200, 512))
-        amp = list(np.random.rand(512) * 0.1)
+        amp = list(np.random.default_rng(42).random(512) * 0.1)
         proc = self._make_processor_with_clients(
             {
                 "aaa": {"freq": freq, "amp": amp},

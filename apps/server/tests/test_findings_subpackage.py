@@ -43,7 +43,7 @@ class TestFindingsSubpackageStructure:
             assert hasattr(findings, name), f"findings package missing re-export: {name}"
 
     def test_submodules_importable_independently(self) -> None:
-        """Each submodule must be directly importable."""
+        """Each submodule must be directly importable with expected symbols."""
         from vibesensor.analysis.findings import (  # noqa: F401
             _constants,
             builder,
@@ -54,9 +54,17 @@ class TestFindingsSubpackageStructure:
             speed_profile,
         )
 
+        # Verify key symbols exist in each submodule
+        assert hasattr(builder, "_build_findings")
+        assert hasattr(intensity, "_sensor_intensity_by_location")
+        assert hasattr(order_findings, "_order_label")
+        assert hasattr(speed_profile, "_speed_profile_from_points")
+        assert hasattr(reference_checks, "_reference_missing_finding")
+        assert hasattr(persistent_findings, "_build_persistent_peak_findings")
+
     def test_backward_compat_imports_via_analysis_findings(self) -> None:
         """Imports that worked with the old monolithic file must still work."""
-        from vibesensor.analysis.findings import (  # noqa: F401
+        from vibesensor.analysis.findings import (
             _build_findings,
             _classify_peak_type,
             _compute_effective_match_rate,
@@ -64,6 +72,14 @@ class TestFindingsSubpackageStructure:
             _speed_breakdown,
             _weighted_percentile,
         )
+
+        # Verify they are callable
+        assert callable(_build_findings)
+        assert callable(_classify_peak_type)
+        assert callable(_compute_effective_match_rate)
+        assert callable(_sensor_intensity_by_location)
+        assert callable(_speed_breakdown)
+        assert callable(_weighted_percentile)
 
 
 # ── speed_profile tests ─────────────────────────────────────────────────

@@ -169,7 +169,7 @@ def _build_sensor_render_plan(
     min_amp = min(amp_by_location.values()) if amp_by_location else None
     max_amp = max(amp_by_location.values()) if amp_by_location else None
     active_count = sum(1 for value in states.values() if value == "connected-active")
-    single_sensor = active_count <= 1 and (min_amp is None or min_amp == max_amp)
+    single_sensor = active_count == 1 and (min_amp is None or min_amp == max_amp)
 
     markers: list[MarkerRenderPlan] = []
     occupied_boxes: list[tuple[float, float, float, float]] = []

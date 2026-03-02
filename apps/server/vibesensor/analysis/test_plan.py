@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from math import ceil, floor, log1p, pow
 from statistics import mean
+from typing import Any
 
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
 from ..locations import has_any_wheel_location, is_wheel_location
@@ -29,8 +30,8 @@ def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) 
     p90 = _weighted_percentile_speed(speed_weight_pairs, 0.90)
     if p10 is None or p90 is None:
         return None
-    low = int(floor(min(p10, p90)))
-    high = int(ceil(max(p10, p90)))
+    low = floor(min(p10, p90))
+    high = ceil(max(p10, p90))
     if high < low:
         high = low
     if low == high:
@@ -52,9 +53,9 @@ def _localization_confidence(
 
 
 def _merge_test_plan(
-    findings: list[dict[str, object]],
-    lang: object,
-) -> list[dict[str, object]]:
+    findings: list[dict[str, Any]],
+    lang: str,
+) -> list[dict[str, Any]]:
     # Priority ordering: inspection/visual first, then balance/runout, then deeper
     ACTION_PRIORITY = {
         "wheel_tire_condition": 1,  # visual inspection – least invasive
@@ -65,7 +66,7 @@ def _merge_test_plan(
         "engine_combustion_quality": 5,
         "general_mechanical_inspection": 6,
     }
-    steps: list[dict[str, object]] = []
+    steps: list[dict[str, Any]] = []
     for finding in findings:
         if not isinstance(finding, dict):
             continue
@@ -103,8 +104,8 @@ def _merge_test_plan(
                 enriched_step.setdefault("frequency_hz_or_order", finding_frequency)
             steps.append(enriched_step)
 
-    dedup: dict[str, dict[str, object]] = {}
-    ordered: list[dict[str, object]] = []
+    dedup: dict[str, dict[str, Any]] = {}
+    ordered: list[dict[str, Any]] = []
     for step in steps:
         action_id = str(step.get("action_id") or "").strip().lower()
         if not action_id:
@@ -138,12 +139,12 @@ def _merge_test_plan(
 
 
 def _location_speedbin_summary(
-    matches: list[dict[str, object]],
-    lang: object,
+    matches: list[dict[str, Any]],
+    lang: str,
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
     connected_locations: set[str] | None = None,
     suspected_source: str | None = None,
-) -> tuple[str, dict[str, object] | None]:
+) -> tuple[str, dict[str, Any] | None]:
     """Return strongest location summary, optionally restricted to specific speed bins.
 
     When ``relevant_speed_bins`` is provided, location ranking is computed only
@@ -161,7 +162,7 @@ def _location_speedbin_summary(
         for bin_label in (relevant_speed_bins or [])
         if str(bin_label).strip()
     }
-    grouped: dict[str, list[dict[str, object]]] = defaultdict(list)
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in matches:
         speed = _as_float(row.get("speed_kmh"))
         amp = _as_float(row.get("amp"))
@@ -184,8 +185,8 @@ def _location_speedbin_summary(
     if not grouped:
         return "", None
 
-    per_bin_results: list[dict[str, object]] = []
-    best: dict[str, object] | None = None
+    per_bin_results: list[dict[str, Any]] = []
+    best: dict[str, Any] | None = None
     corroboration_amp_multiplier = pow(10.0, MULTI_SENSOR_CORROBORATION_DB / 20.0)
     for bin_label, rows in grouped.items():
         if not rows:

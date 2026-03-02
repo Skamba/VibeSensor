@@ -88,23 +88,25 @@ class TestOrderLabel:
 
         assert _order_label(3, "engine") == "3x engine"
 
-    def test_three_arg_legacy(self) -> None:
+    def test_three_arg_legacy_removed(self) -> None:
+        """Legacy 3-arg form (_order_label(lang, order, base)) has been removed;
+        calling with exactly 2 positional args is the only supported form."""
         from vibesensor.analysis.order_analysis import _order_label
 
-        result = _order_label("en", 2, "driveline")
+        result = _order_label(2, "driveline")
         assert result == "2x driveline"
 
     def test_wrong_arg_count_raises(self) -> None:
         from vibesensor.analysis.order_analysis import _order_label
 
         with pytest.raises(TypeError):
-            _order_label()
+            _order_label()  # type: ignore[call-arg]
 
         with pytest.raises(TypeError):
-            _order_label(1)
+            _order_label(1)  # type: ignore[call-arg]
 
         with pytest.raises(TypeError):
-            _order_label(1, 2, 3, 4)
+            _order_label(1, 2, 3, 4)  # type: ignore[call-arg]
 
 
 # ------------------------------------------------------------------

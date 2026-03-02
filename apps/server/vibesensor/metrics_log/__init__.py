@@ -25,7 +25,6 @@ from .post_analysis import (
     PostAnalysisWorker,  # noqa: F401
 )
 from .sample_builder import (  # noqa: F401
-    _LIVE_SAMPLE_WINDOW_S,
     build_run_metadata,
     build_sample_records,
     dominant_hz_from_strength,
@@ -41,7 +40,6 @@ __all__ = [
     "PostAnalysisWorker",
     "_MAX_HISTORY_CREATE_RETRIES",
     "_MAX_POST_ANALYSIS_SAMPLES",
-    "_LIVE_SAMPLE_WINDOW_S",
     "build_run_metadata",
     "build_sample_records",
     "dominant_hz_from_strength",

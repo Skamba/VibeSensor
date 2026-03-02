@@ -42,10 +42,3 @@ def tr(lang: object, key: str, **kwargs: Any) -> str:
         return template.format(**kwargs)
     except (KeyError, IndexError):
         return template
-
-
-def variants(key: str) -> tuple[str, str]:
-    values = _load_translations().get(key)
-    if values is None:
-        return key, key
-    return values.get("en", key), values.get("nl", key)

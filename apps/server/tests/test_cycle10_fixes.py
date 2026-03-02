@@ -91,7 +91,7 @@ class TestComputeMetricsGenerationGuard:
         )
         client = "test-client"
         # Ingest enough samples to compute
-        chunk = np.random.randn(512, 3).astype(np.float32) * 0.01
+        chunk = np.random.default_rng(42).standard_normal((512, 3)).astype(np.float32) * 0.01
         sp.ingest(client, chunk, sample_rate_hz=1000)
 
         # First compute

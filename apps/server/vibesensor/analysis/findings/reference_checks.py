@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..order_analysis import _i18n_ref
 
 
@@ -11,8 +13,8 @@ def _reference_missing_finding(
     suspected_source: str,
     evidence_summary: object,
     quick_checks: list[object],
-    lang: object = "en",
-) -> dict[str, object]:
+    lang: str = "en",
+) -> dict[str, Any]:
     return {
         "finding_id": finding_id,
         "finding_type": "reference",

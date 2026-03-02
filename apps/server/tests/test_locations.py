@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from pydantic import ValidationError
 
 from vibesensor.locations import LOCATION_OPTIONS, all_locations, label_for_code
@@ -39,8 +40,5 @@ class TestSetLocationRequestAcceptsEmptyCode:
     def test_too_long_rejected(self) -> None:
         from vibesensor.api import SetLocationRequest
 
-        try:
+        with pytest.raises(ValidationError):
             SetLocationRequest(location_code="x" * 65)
-            raise AssertionError("Should have raised ValidationError")
-        except ValidationError:
-            pass

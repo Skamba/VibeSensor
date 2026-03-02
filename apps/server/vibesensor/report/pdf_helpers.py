@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from statistics import mean
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..runlog import as_float_or_none as _as_float
 from .theme import (
@@ -78,7 +78,7 @@ def location_hotspots(
     *,
     tr: Callable[..., str],
     text_fn: Callable[..., str],
-) -> tuple[list[dict[str, object]], str, int, int]:
+) -> tuple[list[dict[str, Any]], str, int, int]:
     if not isinstance(samples_obj, list):
         return [], tr("LOCATION_ANALYSIS_UNAVAILABLE"), 0, 0
     all_locations: set[str] = set()
@@ -100,19 +100,19 @@ def location_hotspots(
             amp_by_location[location].append(amp)
 
     amp_unit = "db"
-    hotspot_rows: list[dict[str, object]] = []
+    hotspot_rows: list[dict[str, Any]] = []
     for location, amps in amp_by_location.items():
         peak_val = max(amps)
         mean_val = mean(amps)
-        row: dict[str, object] = {
+        row: dict[str, Any] = {
             "location": location,
             "count": len(amps),
             "unit": amp_unit,
             "peak_value": peak_val,
             "mean_value": mean_val,
+            "peak_db": peak_val,
+            "mean_db": mean_val,
         }
-        row["peak_db"] = peak_val
-        row["mean_db"] = mean_val
         hotspot_rows.append(row)
     hotspot_rows.sort(
         key=lambda row: (float(row["peak_value"]), float(row["mean_value"])), reverse=True
