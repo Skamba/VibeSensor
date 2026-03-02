@@ -7,6 +7,8 @@ import pytest
 from vibesensor.analysis import build_findings_for_samples, summarize_log
 from vibesensor.analysis import findings as findings_module
 from vibesensor.analysis.findings import _speed_breakdown
+from vibesensor.analysis.findings import builder as findings_builder_module
+from vibesensor.analysis.findings import order_findings as order_findings_module
 from vibesensor.analysis.plot_data import _top_peaks_table_rows
 from vibesensor.runlog import (
     append_jsonl_records,
@@ -132,9 +134,9 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
             }
         ]
 
-    monkeypatch.setattr(findings_module, "_build_order_findings", _fake_order_findings)
+    monkeypatch.setattr(findings_builder_module, "_build_order_findings", _fake_order_findings)
     monkeypatch.setattr(
-        findings_module,
+        findings_builder_module,
         "_build_persistent_peak_findings",
         _fake_persistent_peaks,
     )
@@ -220,10 +222,10 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
         ) -> tuple[float, str]:
             return 5.0, "speed_kmh"
 
-    monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
+    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
-        findings_module,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda _points, **_kwargs: (
             "",
@@ -234,8 +236,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
             },
         ),
     )
-    monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
-
+    monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
     samples: list[dict] = []
     for idx in range(16):
         matched = idx < 4
@@ -292,10 +293,10 @@ def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
         ) -> tuple[float, str]:
             return 5.0, "speed_kmh"
 
-    monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
+    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
-        findings_module,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda _points, **_kwargs: (
             "",
@@ -306,7 +307,7 @@ def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
             },
         ),
     )
-    monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
+    monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
 
     from vibesensor.analysis.phase_segmentation import DrivingPhase
 
@@ -363,10 +364,10 @@ def test_build_order_findings_dominant_phase_none_without_phases(
         ) -> tuple[float, str]:
             return 5.0, "speed_kmh"
 
-    monkeypatch.setattr(findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
+    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
     monkeypatch.setattr(
-        findings_module,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda _points, **_kwargs: (
             "",
@@ -377,7 +378,7 @@ def test_build_order_findings_dominant_phase_none_without_phases(
             },
         ),
     )
-    monkeypatch.setattr(findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
+    monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
 
     n = 20
     samples: list[dict] = [
@@ -793,7 +794,7 @@ def test_location_speedbin_summary_prefers_connected_throughout_locations() -> N
 def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis import findings as findings_module
+    from vibesensor.analysis.findings import order_findings as order_findings_mod
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     metadata = {
@@ -816,7 +817,7 @@ def test_build_findings_penalizes_low_localization_confidence(
         )
 
     monkeypatch.setattr(
-        findings_module,
+        order_findings_mod,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
@@ -837,7 +838,7 @@ def test_build_findings_penalizes_low_localization_confidence(
     )
 
     monkeypatch.setattr(
-        findings_module,
+        order_findings_mod,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "ambiguous location",
@@ -863,7 +864,7 @@ def test_build_findings_penalizes_low_localization_confidence(
 def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis import findings as findings_module
+    from vibesensor.analysis.findings import order_findings as order_findings_mod
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     metadata = {
@@ -893,7 +894,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
         )
 
     monkeypatch.setattr(
-        findings_module,
+        order_findings_mod,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
@@ -911,7 +912,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     )
 
     monkeypatch.setattr(
-        findings_module,
+        order_findings_mod,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "weak location",
@@ -927,7 +928,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     weak_conf = _max_conf(build_findings_for_samples(metadata=metadata, samples=samples, lang="en"))
 
     monkeypatch.setattr(
-        findings_module,
+        order_findings_mod,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "near tie location",
@@ -952,7 +953,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
 def test_build_findings_passes_focused_speed_band_to_location_summary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis import findings as findings_module
+    from vibesensor.analysis.findings import order_findings as order_findings_mod
     from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 
     metadata = {
@@ -983,7 +984,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             },
         )
 
-    monkeypatch.setattr(findings_module, "_location_speedbin_summary", _fake_location_summary)
+    monkeypatch.setattr(order_findings_mod, "_location_speedbin_summary", _fake_location_summary)
 
     samples = []
     for idx in range(30):
@@ -1337,7 +1338,7 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
         return original_segment_run_phases(s)
 
     with patch(
-        "vibesensor.analysis.findings.segment_run_phases",
+        "vibesensor.analysis.findings.builder.segment_run_phases",
         side_effect=_patched_segment_run_phases,
     ):
         findings_module._build_findings(
@@ -1389,7 +1390,7 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
         recompute_calls.append(1)
         return original_srp(s)
 
-    with patch("vibesensor.analysis.findings.segment_run_phases", side_effect=_patched_srp):
+    with patch("vibesensor.analysis.findings.builder.segment_run_phases", side_effect=_patched_srp):
         summary = summarize_run_data(metadata, samples, include_samples=False)
 
     assert "findings" in summary
