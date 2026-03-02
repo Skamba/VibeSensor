@@ -57,7 +57,7 @@ class TestNegligibleCapAligned:
     TIER_B_CEILING (0.40)."""
 
     def test_cap_value_in_source(self) -> None:
-        import vibesensor.analysis.findings as fmod
+        import vibesensor.analysis.findings.order_findings as fmod
 
         src = inspect.getsource(fmod)
         # The line that applies the negligible cap must use 0.40
