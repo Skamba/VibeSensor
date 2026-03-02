@@ -151,6 +151,7 @@ def _make_state(
         history_db=_SENTINEL,  # type: ignore[arg-type]
         update_manager=_SENTINEL,  # type: ignore[arg-type]
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
+        worker_pool=_SENTINEL,  # type: ignore[arg-type]
         ws_include_heavy=ws_include_heavy,
     )
 
