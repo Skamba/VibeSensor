@@ -101,11 +101,11 @@ def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _reconstruct_report_template_data(d: dict) -> ReportTemplateData:
+def _reconstruct_report_template_data(data: dict) -> ReportTemplateData:
     """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
     from ..report.report_data import ReportTemplateData
 
-    return ReportTemplateData.from_dict(d)
+    return ReportTemplateData.from_dict(data)
 
 
 def create_history_routes(state: RuntimeState) -> APIRouter:
