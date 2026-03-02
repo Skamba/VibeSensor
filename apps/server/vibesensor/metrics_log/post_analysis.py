@@ -250,9 +250,5 @@ class PostAnalysisWorker:
             try:
                 self._history_db.store_analysis_error(run_id, str(exc))
             except Exception as store_exc:
-                self._error_cb(
-                    f"history store_analysis_error failed for run {run_id}: {store_exc}"
-                )
-                LOGGER.warning(
-                    "Failed to store analysis error for run %s", run_id, exc_info=True
-                )
+                self._error_cb(f"history store_analysis_error failed for run {run_id}: {store_exc}")
+                LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)
