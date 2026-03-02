@@ -51,7 +51,7 @@ def _make_spectra(peak_idx: int = 320, peak_amp: float = 150.0) -> dict:
 
 def test_diagnostics_sequence_increments_on_heavy_ticks(monkeypatch) -> None:
     now = {"value": 100.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
     engine = LiveDiagnosticsEngine()
     spectra = _make_spectra()
     clients = [{"id": "c1", "name": "front"}]
@@ -69,7 +69,7 @@ def test_diagnostics_sequence_increments_on_heavy_ticks(monkeypatch) -> None:
 
 def test_diagnostics_sequence_stable_on_light_ticks(monkeypatch) -> None:
     now = {"value": 100.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
     engine = LiveDiagnosticsEngine()
     spectra = _make_spectra()
     clients = [{"id": "c1", "name": "front"}]
@@ -101,7 +101,7 @@ def test_diagnostics_sequence_resets_on_engine_reset() -> None:
 
 def test_events_have_event_id(monkeypatch) -> None:
     now = {"value": 100.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
     engine = LiveDiagnosticsEngine()
     spectra = _make_spectra()
     clients = [{"id": "c1", "name": "front"}]
@@ -128,7 +128,7 @@ def test_events_have_event_id(monkeypatch) -> None:
 def test_matrix_dwell_seconds_accumulate_on_light_ticks(monkeypatch) -> None:
     """Dwell seconds should increase even when spectra is None (light ticks)."""
     now = {"value": 100.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
     engine = LiveDiagnosticsEngine()
     spectra = _make_spectra()
     clients = [{"id": "c1", "name": "front"}]

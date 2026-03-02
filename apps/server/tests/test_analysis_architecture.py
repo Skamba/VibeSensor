@@ -23,7 +23,11 @@ _SERVER_PKG = Path(__file__).resolve().parents[1] / "vibesensor"
 _ANALYSIS_PKG = _SERVER_PKG / "analysis"
 
 # All Python files in vibesensor/ that are NOT inside analysis/
-_EXTERNAL_MODULES = [p for p in _SERVER_PKG.glob("*.py") if p.name != "__init__.py"]
+_EXTERNAL_MODULES = [
+    p
+    for p in _SERVER_PKG.rglob("*.py")
+    if p.name != "__init__.py" and _ANALYSIS_PKG not in p.parents
+]
 
 
 # ---------------------------------------------------------------------------

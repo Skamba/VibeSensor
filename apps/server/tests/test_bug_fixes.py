@@ -129,7 +129,8 @@ class TestProcessingZeroSampleRate:
 
 def test_live_diagnostics_entries_type_annotation() -> None:
     """The entries type should be a 4-tuple matching the actual append."""
-    src_path = Path(__file__).resolve().parent.parent / "vibesensor" / "live_diagnostics.py"
+    pkg = Path(__file__).resolve().parent.parent / "vibesensor"
+    src_path = pkg / "live_diagnostics" / "event_detector.py"
     source = src_path.read_text()
     # Find the type annotation line for entries
     assert "tuple[str, str, str, list[dict[str, Any]]]" in source, (

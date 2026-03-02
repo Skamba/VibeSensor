@@ -150,7 +150,7 @@ def test_findings_language_is_forwarded(monkeypatch) -> None:
         return []
 
     monkeypatch.setattr(
-        "vibesensor.live_diagnostics.build_findings_for_samples",
+        "vibesensor.live_diagnostics.engine.build_findings_for_samples",
         _fake_build_findings_for_samples,
     )
     engine.update(
@@ -182,7 +182,7 @@ def test_initial_driving_phase_is_idle() -> None:
 
 def test_driving_phase_idle_when_speed_zero(monkeypatch) -> None:
     t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
     for i in range(3):
         t["value"] = float(i)
@@ -193,7 +193,7 @@ def test_driving_phase_idle_when_speed_zero(monkeypatch) -> None:
 
 def test_driving_phase_speed_unknown_when_speed_none(monkeypatch) -> None:
     t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
     for i in range(3):
         t["value"] = float(i)
@@ -204,7 +204,7 @@ def test_driving_phase_speed_unknown_when_speed_none(monkeypatch) -> None:
 
 def test_driving_phase_cruise_at_constant_speed(monkeypatch) -> None:
     t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
     # Constant 50 km/h → cruise
     speed_mps = 50.0 / 3.6
@@ -217,7 +217,7 @@ def test_driving_phase_cruise_at_constant_speed(monkeypatch) -> None:
 
 def test_driving_phase_acceleration_detected(monkeypatch) -> None:
     t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
     # Speed ramps from 30 → 60 km/h over 5 seconds = +6 km/h/s, well above 1.5 threshold
     speeds_kmh = [30.0, 36.0, 42.0, 48.0, 54.0, 60.0]
@@ -230,7 +230,7 @@ def test_driving_phase_acceleration_detected(monkeypatch) -> None:
 
 def test_driving_phase_deceleration_detected(monkeypatch) -> None:
     t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
     # Speed drops from 80 → 50 km/h over 5 seconds = -6 km/h/s, well below -1.5 threshold
     speeds_kmh = [80.0, 74.0, 68.0, 62.0, 56.0, 50.0]
@@ -243,7 +243,7 @@ def test_driving_phase_deceleration_detected(monkeypatch) -> None:
 
 def test_driving_phase_reset_clears_to_idle(monkeypatch) -> None:
     t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
     speed_mps = 50.0 / 3.6
     for i in range(5):
@@ -257,7 +257,7 @@ def test_driving_phase_reset_clears_to_idle(monkeypatch) -> None:
 def test_driving_phase_tracked_on_spectra_none_path(monkeypatch) -> None:
     """Phase update must occur even on the light-tick spectra=None path."""
     t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["value"])
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
     engine = LiveDiagnosticsEngine()
     speed_mps = 50.0 / 3.6
     for i in range(5):
