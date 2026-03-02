@@ -63,7 +63,7 @@ functions but does not replace or duplicate the post-stop pipeline.
 ## Trigger Flow
 
 ```
-stop_recording()                       # metrics_log.py
+stop_recording()                       # metrics_log/
   └─ _schedule_post_analysis(run_id)   # enqueue to background thread
        └─ _analysis_worker_loop()      # daemon thread
             └─ _run_post_analysis(run_id)
@@ -99,7 +99,7 @@ in order.  Each step runs exactly once per analysis invocation.
 ## Persisted Outputs
 
 After `summarize_run_data()` returns, the orchestrator in
-`metrics_log.py`:
+`metrics_log/`:
 
 1. Adds `analysis_metadata` (sample count, stride info).
 2. Calls `map_summary()` to convert the summary dict into a

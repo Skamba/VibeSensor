@@ -11,7 +11,7 @@ and generates PDF diagnostic reports.
                                                          │
                   UDP 9001 ◄── udp_control_tx.py         ├──► ws_hub.py ──► Browser
                                                          │
-                                                         ├──► metrics_log.py ──► JSONL + SQLite
+                                                         ├──► metrics_log/ ──► JSONL + SQLite
                                                          │
                                                          └──► live_diagnostics.py (events)
 ```
@@ -28,7 +28,7 @@ Key modules in `vibesensor/`:
 | `api_models.py` | Pydantic request/response models for the HTTP API |
 | `protocol.py` | UDP wire protocol parser (HELLO, DATA, CMD, ACK) |
 | `processing.py` | FFT, waveform, RMS/P2P, peak detection, spike filtering |
-| `metrics_log.py` | Run recording to JSONL with auto-start/stop on silence |
+| `metrics_log/` | Run recording to JSONL with auto-start/stop on silence |
 | `history_db.py` | SQLite storage for run metadata and analysis results |
 | `live_diagnostics.py` | Real-time vibration event detection and severity tracking |
 | `ws_hub.py` | WebSocket connection management and broadcast |

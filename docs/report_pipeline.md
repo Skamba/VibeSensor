@@ -14,7 +14,7 @@ The report generation pipeline has two distinct phases:
 Recording stops
   │
   ▼
-_run_post_analysis()          [vibesensor.metrics_log]
+_run_post_analysis()          [vibesensor.metrics_log.post_analysis]
   ├─ summarize_run_data()     [vibesensor.analysis.summary]
   │    ├─ phase segmentation  [vibesensor.analysis.phase_segmentation]
   │    ├─ findings builder    [vibesensor.analysis.findings]
