@@ -12,7 +12,6 @@ read transparently for old runs that have not been migrated.
 
 from __future__ import annotations
 
-import json
 import logging
 import math
 import sqlite3
@@ -23,7 +22,7 @@ from threading import RLock
 from typing import Any
 
 from .domain_models import SensorFrame
-from .json_utils import sanitize_value
+from .json_utils import safe_json_dumps, safe_json_loads
 from .runlog import utc_now_iso
 
 LOGGER = logging.getLogger(__name__)
@@ -260,24 +259,6 @@ class HistoryDB:
             finally:
                 cur.close()
 
-    @staticmethod
-    def _sanitize_for_json(value: Any) -> Any:
-        return sanitize_value(value)
-
-    @classmethod
-    def _safe_json_dumps(cls, value: Any) -> str:
-        return json.dumps(sanitize_value(value), ensure_ascii=False, allow_nan=False)
-
-    @staticmethod
-    def _safe_json_loads(value: str | None, *, context: str) -> Any | None:
-        if not value:
-            return None
-        try:
-            return json.loads(value)
-        except json.JSONDecodeError:
-            LOGGER.warning("Skipping invalid JSON payload while reading %s", context, exc_info=True)
-            return None
-
     def _ensure_schema(self) -> None:
         with self._cursor() as cur:
             cur.executescript(_SCHEMA_SQL)
@@ -337,7 +318,7 @@ class HistoryDB:
             cur.execute(
                 "INSERT INTO runs (run_id, status, start_time_utc, metadata_json, created_at) "
                 "VALUES (?, 'recording', ?, ?, ?)",
-                (run_id, start_time_utc, self._safe_json_dumps(metadata), now),
+                (run_id, start_time_utc, safe_json_dumps(metadata), now),
             )
 
     def append_samples(
@@ -379,22 +360,14 @@ class HistoryDB:
         for col in _V2_PEAK_COLS:
             raw = d.get(col)
             if raw:
-                peak_vals.append(
-                    json.dumps(
-                        cls._sanitize_for_json(raw),
-                        ensure_ascii=False,
-                        allow_nan=False,
-                    )
-                )
+                peak_vals.append(safe_json_dumps(raw))
             else:
                 peak_vals.append(None)
 
         extra = {k: v for k, v in d.items() if k not in _V2_KNOWN_KEYS}
         extra_json: str | None = None
         if extra:
-            extra_json = json.dumps(
-                cls._sanitize_for_json(extra), ensure_ascii=False, allow_nan=False
-            )
+            extra_json = safe_json_dumps(extra)
 
         return tuple(typed_vals) + tuple(peak_vals) + (extra_json,)
 
@@ -416,14 +389,14 @@ class HistoryDB:
         for i, col in enumerate(_V2_PEAK_COLS):
             raw = row[offset + i]
             if raw:
-                parsed = cls._safe_json_loads(raw, context=f"peak column {col}")
+                parsed = safe_json_loads(raw, context=f"peak column {col}")
                 d[col] = parsed if isinstance(parsed, list) else []
             else:
                 d[col] = []
 
         extra_json = row[offset + len(_V2_PEAK_COLS)]
         if extra_json:
-            extra = cls._safe_json_loads(extra_json, context="extra_json")
+            extra = safe_json_loads(extra_json, context="extra_json")
             if isinstance(extra, dict):
                 d.update(extra)
 
@@ -448,7 +421,7 @@ class HistoryDB:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
-                (self._safe_json_dumps(metadata), run_id),
+                (safe_json_dumps(metadata), run_id),
             )
             return cur.rowcount > 0
 
@@ -467,7 +440,7 @@ class HistoryDB:
                 "UPDATE runs SET metadata_json = ?, status = 'analyzing', "
                 "end_time_utc = ?, analysis_started_at = ? "
                 "WHERE run_id = ? AND status = 'recording'",
-                (self._safe_json_dumps(metadata), end_time_utc, now, run_id),
+                (safe_json_dumps(metadata), end_time_utc, now, run_id),
             )
             if cur.rowcount == 0:
                 LOGGER.warning(
@@ -503,7 +476,7 @@ class HistoryDB:
                 "analysis_version = ?, analysis_completed_at = ? "
                 "WHERE run_id = ? AND status NOT IN ('complete')",
                 (
-                    self._safe_json_dumps(analysis),
+                    safe_json_dumps(analysis),
                     ANALYSIS_SCHEMA_VERSION,
                     now,
                     run_id,
@@ -599,12 +572,12 @@ class HistoryDB:
             "status": status,
             "start_time_utc": start,
             "end_time_utc": end,
-            "metadata": self._safe_json_loads(meta_json, context=f"run {run_id} metadata") or {},
+            "metadata": safe_json_loads(meta_json, context=f"run {run_id} metadata") or {},
             "created_at": created,
             "sample_count": sample_count,
         }
         if analysis_json:
-            parsed_analysis = self._safe_json_loads(analysis_json, context=f"run {run_id} analysis")
+            parsed_analysis = safe_json_loads(analysis_json, context=f"run {run_id} analysis")
             if isinstance(parsed_analysis, dict):
                 entry["analysis"] = parsed_analysis
             else:
@@ -722,7 +695,7 @@ class HistoryDB:
             last_id = batch_rows[-1][0]
             parsed_batch: list[dict[str, Any]] = []
             for sample_id, sample_json in batch_rows:
-                parsed = self._safe_json_loads(sample_json, context=f"sample {sample_id}")
+                parsed = safe_json_loads(sample_json, context=f"sample {sample_id}")
                 if isinstance(parsed, dict):
                     parsed_batch.append(parsed)
             if parsed_batch:
@@ -734,7 +707,7 @@ class HistoryDB:
             row = cur.fetchone()
         if row is None:
             return None
-        parsed = self._safe_json_loads(row[0], context=f"run {run_id} metadata")
+        parsed = safe_json_loads(row[0], context=f"run {run_id} metadata")
         return parsed if isinstance(parsed, dict) else None
 
     def get_run_analysis(self, run_id: str) -> dict[str, Any] | None:
@@ -746,7 +719,7 @@ class HistoryDB:
             row = cur.fetchone()
         if row is None:
             return None
-        parsed = self._safe_json_loads(row[0], context=f"run {run_id} analysis")
+        parsed = safe_json_loads(row[0], context=f"run {run_id} analysis")
         return parsed if isinstance(parsed, dict) else None
 
     def get_run_status(self, run_id: str) -> str | None:
@@ -798,7 +771,7 @@ class HistoryDB:
             row = cur.fetchone()
         if row is None:
             return None
-        return self._safe_json_loads(row[0], context=f"setting {key}")
+        return safe_json_loads(row[0], context=f"setting {key}")
 
     def set_setting(self, key: str, value: Any) -> None:
         now = utc_now_iso()
@@ -807,7 +780,7 @@ class HistoryDB:
                 "INSERT INTO settings_kv (key, value_json, updated_at) VALUES (?, ?, ?) "
                 "ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, "
                 "updated_at = excluded.updated_at",
-                (key, self._safe_json_dumps(value), now),
+                (key, safe_json_dumps(value), now),
             )
 
     def get_settings_snapshot(self) -> dict[str, Any] | None:

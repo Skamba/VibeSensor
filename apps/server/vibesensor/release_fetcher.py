@@ -64,9 +64,24 @@ class ReleaseInfo:
         }
 
 
-def _validate_url(url: str) -> None:
+def validate_https_url(url: str, *, context: str = "operation") -> None:
+    """Raise ``ValueError`` if *url* does not use the HTTPS scheme."""
     if not url.startswith("https://"):
-        raise ValueError(f"Refusing non-HTTPS URL for release operation: {url}")
+        raise ValueError(f"Refusing non-HTTPS URL for {context}: {url}")
+
+
+def github_api_headers(token: str = "") -> dict[str, str]:
+    """Build standard GitHub REST API request headers.
+
+    If *token* is non-empty it is included as a Bearer authorization header.
+    Used by both :class:`ServerReleaseFetcher` and
+    :class:`~vibesensor.firmware_cache.GitHubReleaseFetcher` so that the
+    header construction lives in one place.
+    """
+    headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
 
 
 class ServerReleaseFetcher:
@@ -76,13 +91,10 @@ class ServerReleaseFetcher:
         self._config = config or ReleaseFetcherConfig()
 
     def _api_headers(self) -> dict[str, str]:
-        headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
-        if self._config.github_token:
-            headers["Authorization"] = f"Bearer {self._config.github_token}"
-        return headers
+        return github_api_headers(self._config.github_token)
 
     def _api_get(self, url: str) -> Any:
-        _validate_url(url)
+        validate_https_url(url, context="release")
         req = Request(url, headers=self._api_headers())
         with urlopen(req, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
@@ -90,7 +102,7 @@ class ServerReleaseFetcher:
     _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
 
     def _download_asset(self, url: str, dest: Path) -> None:
-        _validate_url(url)
+        validate_https_url(url, context="release")
         headers = self._api_headers()
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)

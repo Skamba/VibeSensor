@@ -40,6 +40,8 @@ from pathlib import Path
 from typing import Any
 from urllib.request import Request, urlopen
 
+from .release_fetcher import github_api_headers, validate_https_url
+
 LOGGER = logging.getLogger(__name__)
 
 _DEFAULT_CACHE_DIR = "/var/lib/vibesensor/firmware"
@@ -225,24 +227,16 @@ class GitHubReleaseFetcher:
         self._config = config
 
     def _api_headers(self) -> dict[str, str]:
-        headers: dict[str, str] = {"Accept": "application/vnd.github+json"}
-        if self._config.github_token:
-            headers["Authorization"] = f"Bearer {self._config.github_token}"
-        return headers
-
-    def _validate_url(self, url: str) -> None:
-        """Ensure URL uses HTTPS to prevent insecure firmware downloads."""
-        if not url.startswith("https://"):
-            raise ValueError(f"Refusing non-HTTPS URL for firmware operation: {url}")
+        return github_api_headers(self._config.github_token)
 
     def _api_get(self, url: str) -> Any:
-        self._validate_url(url)
+        validate_https_url(url, context="firmware")
         req = Request(url, headers=self._api_headers())
         with urlopen(req, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8"))
 
     def _download_asset(self, url: str, dest: Path) -> None:
-        self._validate_url(url)
+        validate_https_url(url, context="firmware")
         headers = self._api_headers()
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)

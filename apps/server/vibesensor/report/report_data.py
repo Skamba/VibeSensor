@@ -23,25 +23,33 @@ def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in raw.items() if k in valid}
 
 
+class _FromDictMixin:
+    """Shared ``from_dict()`` class-method for simple report dataclasses.
+
+    Subclasses that need custom deserialization (e.g. nested dataclass
+    fields) should override ``from_dict`` directly.
+    """
+
+    @classmethod
+    def from_dict(cls, d: Any):  # type: ignore[misc]
+        if not isinstance(d, dict):
+            return cls()
+        return cls(**_filter_fields(cls, d))
+
+
 # ---------------------------------------------------------------------------
 # Data model
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class CarMeta:
+class CarMeta(_FromDictMixin):
     name: str | None = None
     car_type: str | None = None
 
-    @classmethod
-    def from_dict(cls, d: Any) -> CarMeta:
-        if not isinstance(d, dict):
-            return cls()
-        return cls(**_filter_fields(cls, d))
-
 
 @dataclass
-class ObservedSignature:
+class ObservedSignature(_FromDictMixin):
     primary_system: str | None = None
     strongest_sensor_location: str | None = None
     speed_band: str | None = None
@@ -51,12 +59,6 @@ class ObservedSignature:
     certainty_label: str | None = None
     certainty_pct: str | None = None
     certainty_reason: str | None = None
-
-    @classmethod
-    def from_dict(cls, d: Any) -> ObservedSignature:
-        if not isinstance(d, dict):
-            return cls()
-        return cls(**_filter_fields(cls, d))
 
 
 @dataclass
@@ -91,7 +93,7 @@ class SystemFindingCard:
 
 
 @dataclass
-class NextStep:
+class NextStep(_FromDictMixin):
     action: str = ""
     why: str | None = None
     rank: int = 999
@@ -100,28 +102,16 @@ class NextStep:
     falsify: str | None = None
     eta: str | None = None
 
-    @classmethod
-    def from_dict(cls, d: Any) -> NextStep:
-        if not isinstance(d, dict):
-            return cls()
-        return cls(**_filter_fields(cls, d))
-
 
 @dataclass
-class DataTrustItem:
+class DataTrustItem(_FromDictMixin):
     check: str = ""
     state: str = "pass"
     detail: str | None = None
 
-    @classmethod
-    def from_dict(cls, d: Any) -> DataTrustItem:
-        if not isinstance(d, dict):
-            return cls()
-        return cls(**_filter_fields(cls, d))
-
 
 @dataclass
-class PatternEvidence:
+class PatternEvidence(_FromDictMixin):
     matched_systems: list[str] = field(default_factory=list)
     strongest_location: str | None = None
     speed_band: str | None = None
@@ -134,15 +124,9 @@ class PatternEvidence:
     interpretation: str | None = None
     why_parts_text: str | None = None
 
-    @classmethod
-    def from_dict(cls, d: Any) -> PatternEvidence:
-        if not isinstance(d, dict):
-            return cls()
-        return cls(**_filter_fields(cls, d))
-
 
 @dataclass
-class PeakRow:
+class PeakRow(_FromDictMixin):
     rank: str = ""
     system: str = ""
     freq_hz: str = ""
@@ -151,12 +135,6 @@ class PeakRow:
     strength_db: str = ""
     speed_band: str = ""
     relevance: str = ""
-
-    @classmethod
-    def from_dict(cls, d: Any) -> PeakRow:
-        if not isinstance(d, dict):
-            return cls()
-        return cls(**_filter_fields(cls, d))
 
 
 @dataclass

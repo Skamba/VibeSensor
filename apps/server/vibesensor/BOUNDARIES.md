@@ -19,11 +19,20 @@ Use this when changing backend code without scanning the whole package.
 
 ## Shared Utilities
 - `json_utils.py`: single source of truth for numpy-aware JSON sanitisation.
-  Both `ws_hub.py` and `history_db.py` delegate to it.
+  Both `ws_hub.py` and `history_db.py` delegate to it.  Also provides
+  `safe_json_dumps()` and `safe_json_loads()` for consistent
+  serialisation/deserialisation with error handling.
+- `constants.py`: single source of truth for physical and analysis constants
+  (noise floors, resonance bands, corroboration bonuses, etc.).  Modules
+  should import constants from here rather than defining them locally.
+- `domain_models.py`: canonical `normalize_sensor_id()` for client/sensor
+  ID normalisation — all other modules delegate to it.
 - `runlog.py`: canonical `utc_now_iso()` helper — prefer over inline
   `datetime.now(UTC).isoformat()` everywhere.
 - `report/report_data.py`: all report dataclasses expose `from_dict()`
   for dict→dataclass reconstruction; avoid manual field-by-field unpacking.
+- `report/pdf_layout.py`: aspect-ratio geometry helpers for PDF layout,
+  separated from content rendering in `pdf_builder.py`.
 
 ## API Surface
 - `api.py` is the HTTP boundary.

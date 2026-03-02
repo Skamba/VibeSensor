@@ -18,18 +18,15 @@ from .analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_mps,
 )
-from .constants import FREQUENCY_EPSILON_HZ, HARMONIC_2X, MIN_OVERLAP_TOLERANCE
+from .constants import (
+    FREQUENCY_EPSILON_HZ,
+    HARMONIC_2X,
+    MIN_OVERLAP_TOLERANCE,
+    MULTI_SENSOR_CORROBORATION_DB,
+    ROAD_RESONANCE_MAX_HZ,
+    ROAD_RESONANCE_MIN_HZ,
+)
 from .runlog import as_float_or_none as _as_float
-
-# Road-surface resonance frequency range (Hz).
-# The lower bound covers body/suspension modes (~0.5–3 Hz); the primary
-# low-frequency cutoff is ``spectrum_min_hz`` in the processing config which
-# prevents sub-cutoff peaks from entering the pipeline in the first place.
-ROAD_RESONANCE_MIN_HZ = 0.5
-ROAD_RESONANCE_MAX_HZ = 12.0
-
-# Multi-sensor corroboration bonus: when ≥2 sensors agree, boost effective dB
-MULTI_SENSOR_CORROBORATION_DB = 3.0
 
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
