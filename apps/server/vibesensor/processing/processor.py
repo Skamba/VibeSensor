@@ -1,73 +1,44 @@
+"""Signal processor — buffer management, metric computation, and payload formatting.
+
+``SignalProcessor`` is the stateful coordinator that manages per-client
+circular buffers, dispatches FFT computation to the pure functions in
+:mod:`~vibesensor.processing.fft`, and assembles API/WebSocket payloads.
+
+Thread-safety is maintained through an internal :class:`threading.RLock`;
+the ``@_synchronized`` decorator is applied to methods that read or
+mutate shared buffer state.
+"""
+
 from __future__ import annotations
 
 import logging
 import math
 import time
-from dataclasses import dataclass, field
 from functools import wraps
 from threading import RLock
-from typing import Any, NamedTuple
+from typing import Any
 
 import numpy as np
-from vibesensor_core.vibration_strength import (
-    PEAK_THRESHOLD_FLOOR_RATIO,
-    STRENGTH_EPSILON_MIN_G,
-    combined_spectrum_amp_g,
-    compute_vibration_strength_db,
-    noise_floor_amp_p20_g,
+
+from ..worker_pool import WorkerPool
+from .buffers import ClientBuffer
+from .fft import (
+    AXES,
+    compute_fft_spectrum,
+    float_list,
+    medfilt3,
+    top_peaks,
+)
+from .time_align import (
+    analysis_time_range,
+    compute_overlap,
 )
 
-from .constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
-from .worker_pool import WorkerPool
-
-AXES = ("x", "y", "z")
 LOGGER = logging.getLogger(__name__)
 MAX_CLIENT_SAMPLE_RATE_HZ = 4096
-_ALIGNMENT_MIN_OVERLAP = 0.5  # shared window must cover ≥50 % of the union
 _FFT_CACHE_MAXSIZE = 64
 """Maximum number of cached FFT plans.  Bounds memory while avoiding
 repeated plan recomputation for common (sample_rate, fft_size) pairs."""
-
-
-class _OverlapResult(NamedTuple):
-    """Computed overlap between multiple sensor time-ranges."""
-
-    overlap_ratio: float
-    aligned: bool
-    shared_start: float
-    shared_end: float
-    overlap_s: float
-
-
-def _compute_overlap(starts: list[float], ends: list[float]) -> _OverlapResult:
-    """Compute the intersection-over-union overlap for a set of time ranges.
-
-    Each pair ``(starts[i], ends[i])`` defines one sensor's active window.
-    Returns an :class:`_OverlapResult` with the overlap ratio, alignment flag,
-    and the shared window boundaries.
-    """
-    if not starts or not ends or len(starts) != len(ends):
-        return _OverlapResult(
-            overlap_ratio=0.0,
-            aligned=False,
-            shared_start=0.0,
-            shared_end=0.0,
-            overlap_s=0.0,
-        )
-    shared_start = max(starts)
-    shared_end = min(ends)
-    overlap = max(0.0, shared_end - shared_start)
-    union_start = min(starts)
-    union_end = max(ends)
-    union = max(1e-9, union_end - union_start)
-    overlap_ratio = overlap / union
-    return _OverlapResult(
-        overlap_ratio=overlap_ratio,
-        aligned=overlap_ratio >= _ALIGNMENT_MIN_OVERLAP,
-        shared_start=shared_start,
-        shared_end=shared_end,
-        overlap_s=overlap,
-    )
 
 
 def _synchronized(method):
@@ -77,44 +48,6 @@ def _synchronized(method):
             return method(self, *args, **kwargs)
 
     return _wrapped
-
-
-@dataclass(slots=True)
-class ClientBuffer:
-    data: np.ndarray
-    capacity: int
-    write_idx: int = 0
-    count: int = 0
-    sample_rate_hz: int = 0
-    latest_metrics: dict[str, Any] = field(default_factory=dict)
-    latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
-    latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
-    last_ingest_mono_s: float = 0.0
-    first_ingest_mono_s: float = 0.0
-    # Sensor-clock timestamp (µs) of the most recent ingested frame.
-    # After CMD_SYNC_CLOCK this is server-relative and comparable across sensors.
-    last_t0_us: int = 0
-    # Number of samples ingested since last_t0_us was recorded.  Used to
-    # back-compute the timestamp of the oldest sample in the analysis window.
-    samples_since_t0: int = 0
-    # Generation counters: ingest_generation increments on new samples,
-    # compute_generation marks which ingest generation metrics reflect, and
-    # spectrum_generation marks spectrum snapshot updates for payload caching.
-    ingest_generation: int = 0
-    compute_generation: int = -1
-    compute_sample_rate_hz: int = 0
-    spectrum_generation: int = 0
-    cached_spectrum_payload: dict[str, Any] | None = None
-    cached_spectrum_payload_generation: int = -1
-    cached_selected_payload: dict[str, Any] | None = None
-    cached_selected_payload_key: tuple[int, int, int] | None = None
-
-    def invalidate_caches(self) -> None:
-        """Reset all cached payload fields to force recomputation."""
-        self.cached_spectrum_payload = None
-        self.cached_spectrum_payload_generation = -1
-        self.cached_selected_payload = None
-        self.cached_selected_payload_key = None
 
 
 class SignalProcessor:
@@ -160,20 +93,44 @@ class SignalProcessor:
         self._last_compute_all_duration_s: float = 0.0
         self._last_ingest_duration_s: float = 0.0
 
+    # -- static / pure helpers (delegate to fft module) -----------------------
+
     @staticmethod
     def _medfilt3(block: np.ndarray) -> np.ndarray:
-        """Apply a 3-point median filter per-row (per-axis).
+        return medfilt3(block)
 
-        Eliminates isolated single-sample spikes caused by I2C bus
-        glitches while preserving genuine vibration signal content.
-        Edge samples are left unchanged.
-        """
-        if block.shape[-1] < 3:
-            return block
-        stacked = np.stack([block[:, :-2], block[:, 1:-1], block[:, 2:]], axis=0)
-        filtered = block.copy()
-        filtered[:, 1:-1] = np.nanmedian(stacked, axis=0)
-        return filtered
+    @staticmethod
+    def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
+        from .fft import smooth_spectrum
+
+        return smooth_spectrum(amps, bins=bins)
+
+    @staticmethod
+    def _noise_floor(amps: np.ndarray) -> float:
+        from .fft import noise_floor
+
+        return noise_floor(amps)
+
+    @staticmethod
+    def _float_list(values: np.ndarray | list[float]) -> list[float]:
+        return float_list(values)
+
+    @classmethod
+    def _top_peaks(
+        cls,
+        freqs: np.ndarray,
+        amps: np.ndarray,
+        *,
+        top_n: int = 5,
+        floor_ratio: float = ...,  # type: ignore[assignment]
+        smoothing_bins: int = 5,
+    ) -> list[dict[str, float]]:
+        kwargs: dict[str, Any] = {"top_n": top_n, "smoothing_bins": smoothing_bins}
+        if floor_ratio is not ...:
+            kwargs["floor_ratio"] = floor_ratio
+        return top_peaks(freqs, amps, **kwargs)
+
+    # -- Buffer management ----------------------------------------------------
 
     @_synchronized
     def flush_client_buffer(self, client_id: str) -> None:
@@ -296,94 +253,7 @@ class SignalProcessor:
         first = buf.capacity - start
         return np.concatenate((buf.data[:, start:], buf.data[:, : n - first]), axis=1)
 
-    @staticmethod
-    def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
-        if amps.size == 0:
-            return amps
-        width = max(1, int(bins))
-        if width <= 1:
-            return amps.astype(np.float32, copy=True)
-        if (width % 2) == 0:
-            width += 1
-        if amps.size < width:
-            return amps.astype(np.float32, copy=True)
-        kernel = np.ones(width, dtype=np.float32) / np.float32(width)
-        half = width // 2
-        padded = np.pad(amps, (half, half), mode="edge")
-        return np.convolve(padded, kernel, mode="valid").astype(np.float32)
-
-    @staticmethod
-    def _noise_floor(amps: np.ndarray) -> float:
-        """P20 noise floor delegating to the canonical core-lib implementation."""
-        if amps.size == 0:
-            return 0.0
-        finite = amps[np.isfinite(amps)]
-        if finite.size == 0:
-            return 0.0
-        return noise_floor_amp_p20_g(
-            combined_spectrum_amp_g=sorted(float(v) for v in finite if v >= 0.0)
-        )
-
-    @staticmethod
-    def _float_list(values: np.ndarray | list[float]) -> list[float]:
-        if isinstance(values, np.ndarray):
-            return values.ravel().tolist()
-        return [float(v) for v in values]
-
-    @classmethod
-    def _top_peaks(
-        cls,
-        freqs: np.ndarray,
-        amps: np.ndarray,
-        *,
-        top_n: int = 5,
-        floor_ratio: float = PEAK_THRESHOLD_FLOOR_RATIO,
-        smoothing_bins: int = 5,
-    ) -> list[dict[str, float]]:
-        if freqs.size == 0 or amps.size == 0:
-            return []
-        smoothed = cls._smooth_spectrum(amps, bins=smoothing_bins)
-        floor_amp = cls._noise_floor(smoothed)
-        if not math.isfinite(floor_amp) or floor_amp < 0:
-            floor_amp = 0.0
-        threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + STRENGTH_EPSILON_MIN_G)
-
-        peak_idx: list[int] = []
-        for idx in range(1, smoothed.size - 1):
-            amp = float(smoothed[idx])
-            if amp < threshold:
-                continue
-            if amp > float(smoothed[idx - 1]) and amp >= float(smoothed[idx + 1]):
-                peak_idx.append(idx)
-        # Boundary check: last bin can be a peak if it exceeds its left neighbor.
-        if smoothed.size > 1:
-            last = smoothed.size - 1
-            amp_last = float(smoothed[last])
-            if amp_last >= threshold and amp_last > float(smoothed[last - 1]):
-                peak_idx.append(last)
-
-        if not peak_idx:
-            if smoothed.size > 1:
-                candidate = int(np.argmax(smoothed[1:]) + 1)
-            else:
-                candidate = int(np.argmax(smoothed))
-            if candidate >= 0 and float(smoothed[candidate]) > 0:
-                peak_idx = [candidate]
-
-        peak_idx.sort(key=lambda idx: float(smoothed[idx]), reverse=True)
-        peaks: list[dict[str, float]] = []
-        for idx in peak_idx[:top_n]:
-            raw_amp = float(amps[idx])
-            peaks.append(
-                {
-                    "hz": float(freqs[idx]),
-                    "amp": raw_amp,
-                    "snr_ratio": (
-                        (raw_amp + STRENGTH_EPSILON_MIN_G) / (floor_amp + STRENGTH_EPSILON_MIN_G)
-                    ),
-                }
-            )
-        return peaks
+    # -- FFT / metric computation ---------------------------------------------
 
     def _fft_params(self, sample_rate_hz: int) -> tuple[np.ndarray, np.ndarray]:
         with self._fft_cache_lock:
@@ -402,6 +272,27 @@ class SignalProcessor:
                 oldest = next(iter(self._fft_cache))
                 del self._fft_cache[oldest]
             return freq_slice, valid_idx
+
+    def _compute_fft_spectrum(
+        self,
+        fft_block: np.ndarray,
+        sample_rate_hz: int,
+    ) -> dict[str, Any]:
+        """Shared FFT spectrum computation used by both compute_metrics and debug_spectrum.
+
+        Delegates to the pure :func:`~vibesensor.processing.fft.compute_fft_spectrum`
+        function, passing processor configuration as parameters.
+        """
+        freq_slice, valid_idx = self._fft_params(sample_rate_hz)
+        return compute_fft_spectrum(
+            fft_block,
+            sample_rate_hz,
+            fft_window=self._fft_window,
+            fft_scale=self._fft_scale,
+            freq_slice=freq_slice,
+            valid_idx=valid_idx,
+            spike_filter_enabled=self._spike_filter_enabled,
+        )
 
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
         t0 = time.monotonic()
@@ -427,7 +318,7 @@ class SignalProcessor:
 
         # --- Phase 2: heavy computation (no lock held) -----------------------
         if self._spike_filter_enabled:
-            time_window = self._medfilt3(time_window)
+            time_window = medfilt3(time_window)
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
         metrics: dict[str, Any] = {}
@@ -471,13 +362,12 @@ class SignalProcessor:
             fft_result = self._compute_fft_spectrum(fft_block, sr)
             freq_slice = fft_result["freq_slice"]
             spectrum_by_axis = fft_result["spectrum_by_axis"]
-            axis_amp_slices = fft_result["axis_amp_slices"]
 
             for axis in fft_result["axis_peaks"]:
                 metrics.setdefault(axis, {"rms": 0.0, "p2p": 0.0, "peaks": []})
                 metrics[axis]["peaks"] = fft_result["axis_peaks"][axis]
 
-            if axis_amp_slices:
+            if fft_result["axis_amp_slices"]:
                 combined_amp = fft_result["combined_amp"]
                 strength_metrics = fft_result["strength_metrics"]
                 metrics["combined"]["peaks"] = list(strength_metrics["top_peaks"])
@@ -507,79 +397,6 @@ class SignalProcessor:
         self._last_compute_duration_s = time.monotonic() - t0
         self._total_compute_calls += 1
         return metrics
-
-    def _compute_fft_spectrum(
-        self,
-        fft_block: np.ndarray,
-        sample_rate_hz: int,
-    ) -> dict[str, Any]:
-        """Shared FFT spectrum computation used by both compute_metrics and debug_spectrum.
-
-        Returns a dict with keys: freq_slice, valid_idx, spectrum_by_axis,
-        axis_amp_slices, axis_amps, combined_amp, strength_metrics, axis_peaks.
-        """
-        if self._spike_filter_enabled:
-            fft_block = self._medfilt3(fft_block)
-        fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
-        freq_slice, valid_idx = self._fft_params(sample_rate_hz)
-        spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
-        axis_amp_slices: list[np.ndarray] = []
-        axis_amps: dict[str, np.ndarray] = {}
-        axis_peaks: dict[str, list] = {}
-
-        for axis_idx, axis in enumerate(AXES):
-            windowed = fft_block[axis_idx] * self._fft_window
-            spec = np.abs(np.fft.rfft(windowed)).astype(np.float32)
-            spec *= self._fft_scale
-            if spec.size > 0:
-                spec[0] *= 0.5
-            if (self.fft_n % 2) == 0 and spec.size > 1:
-                spec[-1] *= 0.5
-            amp_slice = spec[valid_idx]
-            amp_for_peaks = amp_slice.copy()
-            if amp_for_peaks.size > 1 and freq_slice.size > 0 and freq_slice[0] < 0.5:
-                amp_for_peaks[0] = 0.0
-            axis_peaks[axis] = self._top_peaks(
-                freq_slice,
-                amp_for_peaks,
-                top_n=3,
-                smoothing_bins=3,
-            )
-            spectrum_by_axis[axis] = {
-                "freq": freq_slice,
-                "amp": amp_slice,
-            }
-            axis_amps[axis] = amp_slice
-            axis_amp_slices.append(amp_slice)
-
-        combined_amp = np.empty(0, dtype=np.float32)
-        strength_metrics: dict[str, Any] = {}
-        if axis_amp_slices:
-            combined_amp = np.asarray(
-                combined_spectrum_amp_g(
-                    axis_spectra_amp_g=axis_amp_slices,  # type: ignore[arg-type]
-                    axis_count_for_mean=len(axis_amp_slices),
-                ),
-                dtype=np.float32,
-            )
-            strength_metrics = compute_vibration_strength_db(
-                freq_hz=self._float_list(freq_slice),
-                combined_spectrum_amp_g_values=self._float_list(combined_amp),
-                peak_bandwidth_hz=PEAK_BANDWIDTH_HZ,
-                peak_separation_hz=PEAK_SEPARATION_HZ,
-                top_n=8,
-            )
-
-        return {
-            "freq_slice": freq_slice,
-            "valid_idx": valid_idx,
-            "spectrum_by_axis": spectrum_by_axis,
-            "axis_amp_slices": axis_amp_slices,
-            "axis_amps": axis_amps,
-            "combined_amp": combined_amp,
-            "strength_metrics": strength_metrics,
-            "axis_peaks": axis_peaks,
-        }
 
     def compute_all(
         self,
@@ -616,6 +433,8 @@ class SignalProcessor:
         self._last_compute_all_duration_s = time.monotonic() - t0
         return result
 
+    # -- Payload formatting ---------------------------------------------------
+
     @_synchronized
     def spectrum_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
@@ -634,11 +453,11 @@ class SignalProcessor:
             return buf.cached_spectrum_payload
         _empty = np.array([], dtype=np.float32)
         payload = {
-            "x": self._float_list(buf.latest_spectrum.get("x", {}).get("amp", _empty)),
-            "y": self._float_list(buf.latest_spectrum.get("y", {}).get("amp", _empty)),
-            "z": self._float_list(buf.latest_spectrum.get("z", {}).get("amp", _empty)),
+            "x": float_list(buf.latest_spectrum.get("x", {}).get("amp", _empty)),
+            "y": float_list(buf.latest_spectrum.get("y", {}).get("amp", _empty)),
+            "z": float_list(buf.latest_spectrum.get("z", {}).get("amp", _empty)),
             "combined_spectrum_amp_g": (
-                self._float_list(buf.latest_spectrum.get("combined", {}).get("amp", _empty))
+                float_list(buf.latest_spectrum.get("combined", {}).get("amp", _empty))
             ),
             "strength_metrics": dict(buf.latest_strength_metrics),
         }
@@ -691,11 +510,11 @@ class SignalProcessor:
         if mismatch_ids:
             # Axes differ: include per-client freq and clear shared.
             for cid, freq_arr in per_client_freq.items():
-                clients[cid]["freq"] = self._float_list(freq_arr)
+                clients[cid]["freq"] = float_list(freq_arr)
             shared_freq_list: list[float] = []
         else:
             # All axes match: shared freq only, no per-client duplication.
-            shared_freq_list = self._float_list(shared_freq) if shared_freq is not None else []
+            shared_freq_list = float_list(shared_freq) if shared_freq is not None else []
 
         payload: dict[str, Any] = {
             "freq": shared_freq_list,
@@ -710,7 +529,7 @@ class SignalProcessor:
 
         # --- Alignment metadata ----------------------------------------------
         if len(ranges) >= 2:
-            ov = _compute_overlap(
+            ov = compute_overlap(
                 [s for _, s, _ in ranges],
                 [e for _, _, e in ranges],
             )
@@ -761,22 +580,22 @@ class SignalProcessor:
         points = decimated.shape[1]
         x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
 
-        waveform = {"t": self._float_list(x)}
+        waveform = {"t": float_list(x)}
         for axis_idx, axis in enumerate(AXES):
-            waveform[axis] = self._float_list(decimated[axis_idx])
+            waveform[axis] = float_list(decimated[axis_idx])
 
         spectrum: dict[str, Any] = {}
         if buf.latest_spectrum:
             x_axis = buf.latest_spectrum.get("x", {})
             freq = x_axis.get("freq", np.array([], dtype=np.float32))
-            spectrum["freq"] = self._float_list(freq)
+            spectrum["freq"] = float_list(freq)
             for axis in AXES:
                 axis_data = buf.latest_spectrum.get(axis, {})
                 _empty = np.array([], dtype=np.float32)
-                spectrum[axis] = self._float_list(axis_data.get("amp", _empty))
+                spectrum[axis] = float_list(axis_data.get("amp", _empty))
             combined = buf.latest_spectrum.get("combined")
             spectrum["combined_spectrum_amp_g"] = (
-                self._float_list(combined["amp"])
+                float_list(combined["amp"])
                 if isinstance(combined, dict) and "amp" in combined
                 else []
             )
@@ -801,6 +620,8 @@ class SignalProcessor:
         buf.cached_selected_payload = payload
         buf.cached_selected_payload_key = selected_cache_key
         return payload
+
+    # -- Accessors & debug ----------------------------------------------------
 
     @_synchronized
     def latest_sample_xyz(self, client_id: str) -> tuple[float, float, float] | None:
@@ -901,9 +722,9 @@ class SignalProcessor:
             "client_id": client_id,
             "sample_rate_hz": sr,
             "n_samples": n,
-            "x": self._float_list(block[0]),
-            "y": self._float_list(block[1]),
-            "z": self._float_list(block[2]),
+            "x": float_list(block[0]),
+            "y": float_list(block[1]),
+            "z": float_list(block[2]),
         }
 
     @_synchronized
@@ -943,39 +764,19 @@ class SignalProcessor:
     def _analysis_time_range(self, buf: ClientBuffer) -> tuple[float, float, bool] | None:
         """Return ``(start_s, end_s, synced)`` for the current analysis window.
 
-        When the sensor has reported a ``t0_us`` (set by ``CMD_SYNC_CLOCK``),
-        the range is derived from the *sensor* timestamp which is already in
-        server-relative microseconds — this is precise.  Otherwise the range
-        is estimated from the server-side ``last_ingest_mono_s``.
-
-        The third element *synced* is ``True`` when ``t0_us``-based alignment
-        is in use.
-
-        Returns ``None`` when the buffer has no data or no timing information.
+        Delegates to the pure :func:`~vibesensor.processing.time_align.analysis_time_range`
+        function.
         """
-        if buf.count == 0 or buf.last_ingest_mono_s <= 0:
-            return None
         sr = buf.sample_rate_hz or self.sample_rate_hz
-        if sr <= 0:
-            return None
-        desired = int(max(1, float(sr) * float(self.waveform_seconds)))
-        n_window = min(buf.count, buf.capacity, desired)
-        duration_s = float(n_window) / float(sr)
-
-        if buf.last_t0_us > 0:
-            # Sensor-clock path (precise, after CMD_SYNC_CLOCK).
-            # last_t0_us marks the *first sample* in the most recently
-            # ingested frame.  Advance by the samples in that frame to
-            # approximate the newest sample time.
-            end_us = buf.last_t0_us + (buf.samples_since_t0 * 1_000_000) // max(1, sr)
-            end_s = float(end_us) / 1_000_000.0
-            start_s = end_s - duration_s
-            return (start_s, end_s, True)
-
-        # Fallback: server arrival time.
-        end = buf.last_ingest_mono_s
-        start = end - duration_s
-        return (start, end, False)
+        return analysis_time_range(
+            count=buf.count,
+            last_ingest_mono_s=buf.last_ingest_mono_s,
+            sample_rate_hz=sr,
+            waveform_seconds=self.waveform_seconds,
+            capacity=buf.capacity,
+            last_t0_us=buf.last_t0_us,
+            samples_since_t0=buf.samples_since_t0,
+        )
 
     @_synchronized
     def time_alignment_info(self, client_ids: list[str]) -> dict[str, Any]:
@@ -1028,7 +829,7 @@ class SignalProcessor:
                 "sensors_excluded": excluded,
             }
 
-        ov = _compute_overlap(
+        ov = compute_overlap(
             [s for s, _ in ranges],
             [e for _, e in ranges],
         )
