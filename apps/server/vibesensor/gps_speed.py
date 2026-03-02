@@ -20,6 +20,8 @@ class SpeedResolution(NamedTuple):
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["GPSSpeedMonitor", "SpeedResolution"]
+
 _GPS_DISABLED_POLL_S: float = 5.0
 """Sleep interval when GPS is disabled."""
 

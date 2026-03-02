@@ -7,11 +7,21 @@ exposes lightweight query helpers used by the API layer.
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
+
+__all__ = [
+    "CAR_LIBRARY",
+    "get_brands",
+    "get_models_for_brand_type",
+    "get_types_for_brand",
+    "get_variants_for_model",
+    "resolve_variant",
+]
 
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json"
 
@@ -76,8 +86,6 @@ def resolve_variant(
     deep copy of the base entry so callers cannot corrupt the cached
     library data.
     """
-    import copy
-
     result = copy.deepcopy(base_entry)
     if not variant_name:
         return result

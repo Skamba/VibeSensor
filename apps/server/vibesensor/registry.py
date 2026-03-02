@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["ClientRecord", "ClientRegistry", "DataUpdateResult"]
+
 # Maximum number of recent sequence numbers tracked per client for
 # deduplication.  Bounds memory while covering the largest realistic
 # retransmit / out-of-order window on a local Wi-Fi link.
@@ -43,18 +45,20 @@ effective window."""
 
 
 def _sanitize_name(name: str) -> str:
+    """Sanitize a client name: strip control chars, enforce 32 UTF-8 byte limit."""
     # Strip control characters (U+0000–U+001F, U+007F) except common whitespace
     clean = "".join(c for c in name if ord(c) >= 0x20 and ord(c) != 0x7F)
     clean = clean.strip()
     if not clean:
         return ""
-    # Truncate to at most 32 UTF-8 bytes without splitting multi-byte characters
+    # Truncate to at most 32 UTF-8 bytes without splitting multi-byte characters.
+    # We slice at 32 bytes and decode with errors="ignore" which drops any
+    # incomplete trailing byte sequence — this is safe because the source is
+    # valid UTF-8 from ``str.encode()``.
     encoded = clean.encode("utf-8", errors="ignore")
     if len(encoded) <= 32:
         return clean
-    truncated = encoded[:32]
-    # Backtrack to the last complete UTF-8 character boundary
-    return truncated.decode("utf-8", errors="ignore")
+    return encoded[:32].decode("utf-8", errors="ignore")
 
 
 def _normalize_client_id(client_id: str) -> str:

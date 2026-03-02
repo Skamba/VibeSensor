@@ -22,6 +22,8 @@ from typing import Any, TypeVar
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["WorkerPool"]
+
 T = TypeVar("T")
 R = TypeVar("R")
 
@@ -58,12 +60,26 @@ class WorkerPool:
     # -- Public API -----------------------------------------------------------
 
     def submit(self, fn: Callable[..., R], *args: Any, **kwargs: Any) -> Future[R]:
-        """Submit a single callable; returns a ``Future``."""
+        """Submit a single callable; returns a ``Future``.
+
+        Task execution time is tracked in ``_total_wait_s`` for parity
+        with :meth:`map_unordered`.
+        """
         if not self._alive:
             raise RuntimeError("WorkerPool is shut down")
         with self._metrics_lock:
             self._total_tasks += 1
-        return self._executor.submit(fn, *args, **kwargs)
+
+        def _timed() -> R:
+            t0 = time.monotonic()
+            try:
+                return fn(*args, **kwargs)
+            finally:
+                elapsed = time.monotonic() - t0
+                with self._metrics_lock:
+                    self._total_wait_s += elapsed
+
+        return self._executor.submit(_timed)
 
     def map_unordered(
         self,

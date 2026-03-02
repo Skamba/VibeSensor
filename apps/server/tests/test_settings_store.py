@@ -9,13 +9,16 @@ from vibesensor.domain_models import (
     CarConfig,
     SensorConfig,
     _parse_manual_speed,
+    sanitize_aspects,
 )
 from vibesensor.history_db import HistoryDB
 from vibesensor.settings_store import (
     PersistenceError,
     SettingsStore,
-    _sanitize_aspects,
 )
+
+# Backward compat alias used by tests below
+_sanitize_aspects = sanitize_aspects
 
 # -- _sanitize_aspects --------------------------------------------------------
 
