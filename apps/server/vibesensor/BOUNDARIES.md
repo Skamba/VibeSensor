@@ -39,7 +39,7 @@ Use this when changing backend code without scanning the whole package.
 - Keep response keys stable.
 
 ## Persistence Surface
-- `metrics_log.py` and `history_db.py` own session persistence semantics.
+- `metrics_log/` package and `history_db.py` own session persistence semantics.
 - Rule: logging flow should only ingest fresh client data.
 
 ## Device/Ops Surface
