@@ -76,7 +76,7 @@ def test_live_matrix_seconds_use_recent_window_during_throttled_emission(monkeyp
     def fake_monotonic() -> float:
         return current_s["value"]
 
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", fake_monotonic)
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", fake_monotonic)
 
     engine = LiveDiagnosticsEngine()
     settings = {}
@@ -139,7 +139,7 @@ def test_events_persist_when_spectra_is_none(monkeypatch) -> None:
     def fake_monotonic() -> float:
         return current_s["value"]
 
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", fake_monotonic)
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", fake_monotonic)
 
     engine = LiveDiagnosticsEngine()
     freq = [idx * 0.1 for idx in range(1, 1200)]
@@ -214,7 +214,7 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
     def fake_monotonic() -> float:
         return current_s["value"]
 
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", fake_monotonic)
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", fake_monotonic)
 
     engine = LiveDiagnosticsEngine()
     freq = [idx * 0.1 for idx in range(1, 1200)]
@@ -292,7 +292,7 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
     This test fixes the contract for combined multi-sensor diagnostics strength.
     """
     now_s = 250.0
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now_s)
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now_s)
     engine = LiveDiagnosticsEngine()
 
     def fake_apply(
@@ -353,7 +353,7 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
 
 def test_levels_by_location_includes_confidence_boost_for_agreement(monkeypatch) -> None:
     now_s = 300.0
-    monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: now_s)
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now_s)
     engine = LiveDiagnosticsEngine()
 
     def fake_apply(

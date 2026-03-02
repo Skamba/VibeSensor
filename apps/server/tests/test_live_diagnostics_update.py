@@ -70,7 +70,7 @@ class TestUpdateSnapshotContract:
 
     def test_snapshot_keys_present(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         spectra = _make_spectra(["c1"])
@@ -98,7 +98,7 @@ class TestUpdateSnapshotContract:
 
     def test_matrix_has_expected_sources_and_severities(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         snap = engine.update(
@@ -120,7 +120,7 @@ class TestUpdateSnapshotContract:
 
     def test_levels_has_expected_sub_dicts(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         snap = engine.update(
@@ -141,7 +141,7 @@ class TestSingleSensorEventEmission:
 
     def test_events_emitted_after_persistence(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         spectra = _make_spectra(["c1"], peak_amp=150.0)
@@ -171,7 +171,7 @@ class TestSingleSensorEventEmission:
 
     def test_sequence_increments_per_tick(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         spectra = _make_spectra(["c1"])
@@ -196,7 +196,7 @@ class TestTrackerDecay:
 
     def test_tracker_decays_after_peak_disappears(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         strong_spectra = _make_spectra(["c1"], peak_amp=150.0)
@@ -237,7 +237,7 @@ class TestLightTickBehavior:
 
     def test_light_tick_accumulates_dwell_seconds(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         spectra = _make_spectra(["c1"], peak_amp=150.0)
@@ -274,7 +274,7 @@ class TestLightTickBehavior:
 
     def test_light_tick_does_not_clear_matrix_counts(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         spectra = _make_spectra(["c1"], peak_amp=150.0)
@@ -313,7 +313,7 @@ class TestMalformedSpectra:
 
     def test_missing_clients_key_returns_snapshot_without_crash(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         # spectra without 'clients' key — should not crash
@@ -328,7 +328,7 @@ class TestMalformedSpectra:
 
     def test_clients_not_dict_returns_snapshot_without_crash(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         snap = engine.update(
@@ -342,7 +342,7 @@ class TestMalformedSpectra:
 
     def test_missing_strength_metrics_returns_snapshot_without_crash(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         snap = engine.update(
@@ -363,7 +363,7 @@ class TestMultiSensorGrouping:
 
     def test_combined_events_emitted_for_two_sensors(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         # Same peak for both sensors
@@ -391,7 +391,7 @@ class TestDrivingPhase:
 
     def test_phase_is_speed_unknown_without_speed(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         snap = engine.update(
@@ -404,7 +404,7 @@ class TestDrivingPhase:
 
     def test_phase_reflects_speed_at_steady_speed(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         for _ in range(6):
@@ -424,7 +424,7 @@ class TestResetClearsState:
 
     def test_reset_zeroes_matrix_and_events(self, monkeypatch) -> None:
         t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.monotonic", lambda: t["now"])
+        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
 
         engine = LiveDiagnosticsEngine()
         spectra = _make_spectra(["c1"], peak_amp=150.0)

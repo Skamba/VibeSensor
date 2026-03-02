@@ -45,7 +45,7 @@ duplication.
 
 ### Live Diagnostics Preview
 
-The `live_diagnostics.py` module calls `build_findings_for_samples()`
+The `live_diagnostics/` package calls `build_findings_for_samples()`
 and `classify_sample_phase()` *during* recording to generate
 real-time diagnostic feedback for the UI.  This is intentional code
 reuse — the same analysis functions serve as a library for both

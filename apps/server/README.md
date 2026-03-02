@@ -13,7 +13,7 @@ and generates PDF diagnostic reports.
                                                          │
                                                          ├──► metrics_log/ ──► JSONL + SQLite
                                                          │
-                                                         └──► live_diagnostics.py (events)
+                                                         └──► live_diagnostics/ (events)
 ```
 
 Authoritative protocol/ports/payload field contract: `docs/protocol.md`
@@ -30,7 +30,7 @@ Key modules in `vibesensor/`:
 | `processing.py` | FFT, waveform, RMS/P2P, peak detection, spike filtering |
 | `metrics_log/` | Run recording to JSONL with auto-start/stop on silence |
 | `history_db.py` | SQLite storage for run metadata and analysis results |
-| `live_diagnostics.py` | Real-time vibration event detection and severity tracking |
+| `live_diagnostics/` | Real-time vibration event detection and severity tracking |
 | `ws_hub.py` | WebSocket connection management and broadcast |
 | `udp_data_rx.py` | UDP data listener (port 9000) |
 | `udp_control_tx.py` | UDP control sender (port 9001, identify command) |
