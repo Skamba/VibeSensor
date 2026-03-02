@@ -25,8 +25,8 @@ from ..report.pdf_builder import build_report_pdf
 from ._helpers import async_require_run, safe_filename
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
     from ..report.report_data import ReportTemplateData
+    from ..runtime import RuntimeState
 
 LOGGER = logging.getLogger(__name__)
 
