@@ -617,7 +617,7 @@ def test_append_records_does_not_timeout_on_brief_gap(
     snapshot = logger._session_snapshot()
     assert snapshot is not None
     run_id, start_time_utc, start_mono, generation = snapshot
-    monkeypatch.setattr("vibesensor.metrics_log.time.monotonic", lambda: 100.0)
+    monkeypatch.setattr("vibesensor.metrics_log.logger.time.monotonic", lambda: 100.0)
     logger._last_data_progress_mono_s = 95.0
 
     timed_out = logger._append_records(
@@ -740,7 +740,7 @@ def test_post_analysis_burst_uses_single_daemon_worker(
         with state_lock:
             active -= 1
 
-    monkeypatch.setattr(logger, "_run_post_analysis", _slow_post_analysis)
+    monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _slow_post_analysis)
 
     for idx in range(12):
         logger._schedule_post_analysis(f"run-{idx}")
@@ -751,8 +751,8 @@ def test_post_analysis_burst_uses_single_daemon_worker(
     assert len(seen) == 12
     # After all work completes, the worker thread should have exited and
     # been cleared to allow a fresh thread on the next scheduling call.
-    with logger._lock:
-        worker = logger._analysis_thread
+    with logger._post_analysis._lock:
+        worker = logger._post_analysis._analysis_thread
     assert worker is None
 
 
@@ -927,7 +927,7 @@ def test_post_analysis_caps_sample_count_and_stores_sampling_metadata(
 ) -> None:
     # Reduce the cap so we only need ~250 iterations instead of 13 000 (28 s → <1 s).
     cap = 200
-    monkeypatch.setattr("vibesensor.metrics_log._MAX_POST_ANALYSIS_SAMPLES", cap)
+    monkeypatch.setattr("vibesensor.metrics_log.post_analysis._MAX_POST_ANALYSIS_SAMPLES", cap)
 
     history_db = HistoryDB(tmp_path / "history.db")
     logger = MetricsLogger(
@@ -994,8 +994,8 @@ async def test_run_offloads_append_records_with_to_thread(
     async def _cancel_sleep(_interval: float) -> None:
         raise asyncio.CancelledError()
 
-    monkeypatch.setattr("vibesensor.metrics_log.asyncio.to_thread", _fake_to_thread)
-    monkeypatch.setattr("vibesensor.metrics_log.asyncio.sleep", _cancel_sleep)
+    monkeypatch.setattr("vibesensor.metrics_log.logger.asyncio.to_thread", _fake_to_thread)
+    monkeypatch.setattr("vibesensor.metrics_log.logger.asyncio.sleep", _cancel_sleep)
 
     with pytest.raises(asyncio.CancelledError):
         await logger.run()

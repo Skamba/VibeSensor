@@ -166,13 +166,13 @@ class TestWorkerThreadRace:
         def _mock_analysis(run_id):
             seen.append(run_id)
 
-        logger._run_post_analysis = _mock_analysis  # type: ignore[assignment]
+        logger._post_analysis._run_post_analysis = _mock_analysis  # type: ignore[assignment]
         logger._schedule_post_analysis("run-1")
         logger.wait_for_post_analysis(timeout_s=2.0)
 
         # Thread should be cleared after completion
-        with logger._lock:
-            assert logger._analysis_thread is None
+        with logger._post_analysis._lock:
+            assert logger._post_analysis._analysis_thread is None
 
         # Should be able to schedule again without issues
         logger._schedule_post_analysis("run-2")
