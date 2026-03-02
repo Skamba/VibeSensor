@@ -122,11 +122,11 @@ class SignalProcessor:
         amps: np.ndarray,
         *,
         top_n: int = 5,
-        floor_ratio: float = ...,  # type: ignore[assignment]
+        floor_ratio: float | None = None,
         smoothing_bins: int = 5,
     ) -> list[dict[str, float]]:
         kwargs: dict[str, Any] = {"top_n": top_n, "smoothing_bins": smoothing_bins}
-        if floor_ratio is not ...:
+        if floor_ratio is not None:
             kwargs["floor_ratio"] = floor_ratio
         return top_peaks(freqs, amps, **kwargs)
 
