@@ -11,6 +11,11 @@ This package contains the core vibration signal processing pipeline:
 All public symbols are re-exported here so that existing
 ``from vibesensor.processing import SignalProcessor`` (and similar) imports
 continue to work without changes.
+
+The underscore-prefixed names (``_OverlapResult``, ``_compute_overlap``,
+``_ALIGNMENT_MIN_OVERLAP``, ``_FFT_CACHE_MAXSIZE``) are retained for
+backward compatibility — they were module-level names in the original
+single-file ``processing.py`` and are imported by existing test code.
 """
 
 from .buffers import ClientBuffer  # noqa: F401
