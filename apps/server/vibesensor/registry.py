@@ -6,13 +6,13 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import TYPE_CHECKING, Any
 
-from .domain_models import normalize_sensor_id
 from .protocol import (
     AckMessage,
     DataMessage,
     HelloMessage,
     client_id_hex,
     client_id_mac,
+    parse_client_id,
 )
 
 if TYPE_CHECKING:
@@ -37,6 +37,10 @@ def _sanitize_name(name: str) -> str:
     if not clean:
         return ""
     return clean.encode("utf-8", errors="ignore")[:32].decode("utf-8", errors="ignore")
+
+
+def _normalize_client_id(client_id: str) -> str:
+    return parse_client_id(client_id).hex()
 
 
 @dataclass(slots=True)
@@ -131,7 +135,7 @@ class ClientRegistry:
         return time.monotonic() if now is None else now
 
     def _get_or_create(self, client_id: str) -> ClientRecord:
-        normalized = normalize_sensor_id(client_id)
+        normalized = _normalize_client_id(client_id)
         record = self._clients.get(normalized)
         if record is None:
             default_name = self._user_names.get(normalized, f"client-{normalized[-4:]}")
@@ -257,7 +261,13 @@ class ClientRegistry:
                         gap = (data_msg.seq - expected) & 0xFFFFFFFF
                         if gap < 0x80000000:
                             record.frames_dropped += gap
-            record.last_seq = data_msg.seq
+            # Only advance last_seq forward to prevent out-of-order UDP
+            # packets from regressing the counter and inflating frames_dropped.
+            if (
+                record.last_seq is None
+                or ((data_msg.seq - record.last_seq) & 0xFFFFFFFF) < 0x80000000
+            ):
+                record.last_seq = data_msg.seq
             record.last_t0_us = data_msg.t0_us
             return DataUpdateResult(reset_detected=reset_detected)
 
@@ -276,7 +286,7 @@ class ClientRegistry:
         if not client_id:
             return
         try:
-            normalized = normalize_sensor_id(client_id)
+            normalized = _normalize_client_id(client_id)
         except ValueError:
             return
         with self._lock:
@@ -287,7 +297,7 @@ class ClientRegistry:
         if not client_id:
             return
         try:
-            normalized = normalize_sensor_id(client_id)
+            normalized = _normalize_client_id(client_id)
         except ValueError:
             return
         with self._lock:
@@ -325,7 +335,7 @@ class ClientRegistry:
 
     def remove_client(self, client_id: str) -> bool:
         try:
-            normalized = normalize_sensor_id(client_id)
+            normalized = _normalize_client_id(client_id)
         except ValueError:
             return False
         with self._lock:
@@ -343,7 +353,7 @@ class ClientRegistry:
 
     def get(self, client_id: str) -> ClientRecord | None:
         try:
-            normalized = normalize_sensor_id(client_id)
+            normalized = _normalize_client_id(client_id)
         except ValueError:
             return None
         with self._lock:
