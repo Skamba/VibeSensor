@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from _paths import REPO_ROOT, SERVER_ROOT
 
 # ── 1. EspFlashManager CancelledError ────────────────────────────────────
 
@@ -296,7 +297,7 @@ class TestCarErrorI18nKeys:
     )
     def test_en_key_exists(self, key):
         en_path = (
-            Path(__file__).resolve().parent.parent
+            SERVER_ROOT
             / "vibesensor"
             / ".."
             / ".."
@@ -307,7 +308,7 @@ class TestCarErrorI18nKeys:
             / "en.json"
         )
         # Use the known workspace layout
-        repo_root = Path(__file__).resolve().parent.parent.parent.parent
+        repo_root = REPO_ROOT
         en_path = repo_root / "apps" / "ui" / "src" / "i18n" / "catalogs" / "en.json"
         catalog = json.loads(en_path.read_text(encoding="utf-8"))
         assert key in catalog, f"Missing i18n key {key!r} in en.json"
@@ -321,7 +322,7 @@ class TestCarErrorI18nKeys:
         ],
     )
     def test_nl_key_exists(self, key):
-        repo_root = Path(__file__).resolve().parent.parent.parent.parent
+        repo_root = REPO_ROOT
         nl_path = repo_root / "apps" / "ui" / "src" / "i18n" / "catalogs" / "nl.json"
         catalog = json.loads(nl_path.read_text(encoding="utf-8"))
         assert key in catalog, f"Missing i18n key {key!r} in nl.json"

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections import deque
 from pathlib import Path
+from _paths import SERVER_ROOT
 
 
 # ---------------------------------------------------------------------------
@@ -98,22 +99,22 @@ class TestSensorTrackersPruning:
 # ---------------------------------------------------------------------------
 class TestDeadFunctionsRemoved:
     def test_no_measure_text_height(self) -> None:
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "report" / "pdf_builder.py"
+        src = SERVER_ROOT / "vibesensor" / "report" / "pdf_builder.py"
         text = src.read_text()
         assert "_measure_text_height" not in text
 
     def test_no_amp_heat_color(self) -> None:
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "report" / "pdf_diagram.py"
+        src = SERVER_ROOT / "vibesensor" / "report" / "pdf_diagram.py"
         text = src.read_text()
         assert "_amp_heat_color" not in text
 
     def test_no_format_db_in_diagram(self) -> None:
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "report" / "pdf_diagram.py"
+        src = SERVER_ROOT / "vibesensor" / "report" / "pdf_diagram.py"
         text = src.read_text()
         assert "def _format_db" not in text
 
     def test_no_install_baseline(self) -> None:
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "firmware_cache.py"
+        src = SERVER_ROOT / "vibesensor" / "firmware_cache.py"
         text = src.read_text()
         assert "def install_baseline" not in text
 
@@ -124,13 +125,13 @@ class TestDeadFunctionsRemoved:
 class TestNormalizeLangArchitecturalBoundary:
     def test_summary_does_not_import_report_i18n(self) -> None:
         """summary.py must NOT import from report_i18n (i18n separation constraint)."""
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "analysis" / "summary.py"
+        src = SERVER_ROOT / "vibesensor" / "analysis" / "summary.py"
         text = src.read_text()
         assert "from ..report_i18n import" not in text
 
     def test_summary_has_inline_normalize_lang(self) -> None:
         """summary.py must define its own _normalize_lang (avoiding report_i18n dep)."""
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "analysis" / "summary.py"
+        src = SERVER_ROOT / "vibesensor" / "analysis" / "summary.py"
         text = src.read_text()
         assert "def _normalize_lang" in text
 
@@ -141,7 +142,7 @@ class TestNormalizeLangArchitecturalBoundary:
 class TestExportZipFiltersInternals:
     def test_underscore_fields_stripped_in_source(self) -> None:
         """history route module must filter _-prefixed keys from analysis before export."""
-        src = Path(__file__).resolve().parent.parent / "vibesensor" / "routes" / "history.py"
+        src = SERVER_ROOT / "vibesensor" / "routes" / "history.py"
         text = src.read_text()
         assert 'not k.startswith("_")' in text
 
@@ -176,7 +177,7 @@ class TestAnalysisQueueMaxlen:
     def test_analysis_queue_has_maxlen(self) -> None:
         """PostAnalysisWorker._analysis_queue must have a bounded maxlen."""
         src = (
-            Path(__file__).resolve().parent.parent
+            SERVER_ROOT
             / "vibesensor"
             / "metrics_log"
             / "post_analysis.py"

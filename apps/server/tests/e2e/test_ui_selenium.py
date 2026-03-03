@@ -19,6 +19,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from _paths import SERVER_ROOT
 
 pytestmark = pytest.mark.selenium
 
@@ -43,7 +44,7 @@ def _wait_http_ok(url: str, timeout_s: float = 20.0) -> None:
 
 @pytest.fixture(scope="module")
 def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
-    pi_dir = Path(__file__).resolve().parents[1]
+    pi_dir = SERVER_ROOT
     if not (pi_dir / "public" / "index.html").exists():
         pytest.skip("Selenium UI tests require built apps/server/public assets")
     tmp_dir = tmp_path_factory.mktemp("selenium-ui")

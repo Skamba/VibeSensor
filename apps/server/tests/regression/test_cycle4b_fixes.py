@@ -12,6 +12,7 @@ from __future__ import annotations
 import inspect
 import json
 from pathlib import Path
+from _paths import SERVER_ROOT
 
 
 class TestNextStepNumberingContinuation:
@@ -118,7 +119,7 @@ class TestOrphanI18nKeysRemoved:
     ]
 
     def test_orphan_keys_absent(self) -> None:
-        i18n_path = Path(__file__).resolve().parents[1] / "data" / "report_i18n.json"
+        i18n_path = SERVER_ROOT / "data" / "report_i18n.json"
         data = json.loads(i18n_path.read_text())
         for key in self.ORPHAN_KEYS:
             assert key not in data, f"Orphan key {key!r} should have been removed"
@@ -128,7 +129,7 @@ class TestNoGlobalRandomSeed:
     """Regression: test files must not use global random.seed()."""
 
     def test_i18n_separation_no_global_seed(self) -> None:
-        import tests.test_i18n_separation as mod
+        import tests.report.test_i18n_separation as mod
 
         src = inspect.getsource(mod)
         assert "random.seed(" not in src, "Must use random.Random(seed) instead of random.seed()"
@@ -138,7 +139,7 @@ class TestNoMutableClassDefault:
     """Regression: _FakeRecord must not use mutable class-level default."""
 
     def test_shutdown_analysis_fake_record(self) -> None:
-        import tests.test_shutdown_analysis as mod
+        import tests.analysis.test_shutdown_analysis as mod
 
         src = inspect.getsource(mod)
         # Should not have `latest_metrics: dict = {}` as class-level
