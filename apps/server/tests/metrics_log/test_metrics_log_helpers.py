@@ -14,41 +14,26 @@ from vibesensor.metrics_log import MetricsLogger
 # -- MetricsLogger._safe_metric ------------------------------------------------
 
 
-@pytest.mark.smoke
-def test_safe_metric_valid() -> None:
-    metrics = {"x": {"rms": 0.05, "p2p": 0.12}}
-    result = MetricsLogger._safe_metric(metrics, "x", "rms")
-    assert result == 0.05
-
-
-def test_safe_metric_missing_axis() -> None:
-    metrics = {"x": {"rms": 0.05}}
-    assert MetricsLogger._safe_metric(metrics, "y", "rms") is None
-
-
-def test_safe_metric_missing_key() -> None:
-    metrics = {"x": {"rms": 0.05}}
-    assert MetricsLogger._safe_metric(metrics, "x", "p2p") is None
-
-
-def test_safe_metric_nan_returns_none() -> None:
-    metrics = {"x": {"rms": float("nan")}}
-    assert MetricsLogger._safe_metric(metrics, "x", "rms") is None
-
-
-def test_safe_metric_inf_returns_none() -> None:
-    metrics = {"x": {"rms": float("inf")}}
-    assert MetricsLogger._safe_metric(metrics, "x", "rms") is None
-
-
-def test_safe_metric_axis_not_dict_returns_none() -> None:
-    metrics = {"x": "not_a_dict"}
-    assert MetricsLogger._safe_metric(metrics, "x", "rms") is None
-
-
-def test_safe_metric_non_numeric_returns_none() -> None:
-    metrics = {"x": {"rms": "abc"}}
-    assert MetricsLogger._safe_metric(metrics, "x", "rms") is None
+@pytest.mark.parametrize(
+    ("metrics", "axis", "key", "expected"),
+    [
+        pytest.param(
+            {"x": {"rms": 0.05, "p2p": 0.12}},
+            "x",
+            "rms",
+            0.05,
+            marks=pytest.mark.smoke,
+        ),
+        ({"x": {"rms": 0.05}}, "y", "rms", None),
+        ({"x": {"rms": 0.05}}, "x", "p2p", None),
+        ({"x": {"rms": float("nan")}}, "x", "rms", None),
+        ({"x": {"rms": float("inf")}}, "x", "rms", None),
+        ({"x": "not_a_dict"}, "x", "rms", None),
+        ({"x": {"rms": "abc"}}, "x", "rms", None),
+    ],
+)
+def test_safe_metric(metrics: dict, axis: str, key: str, expected: float | None) -> None:
+    assert MetricsLogger._safe_metric(metrics, axis, key) == expected
 
 
 @dataclass(slots=True)
@@ -330,12 +315,28 @@ def test_build_sample_records_caps_combined_and_axis_peak_lists(tmp_path: Path) 
     assert len(rows[0]["top_peaks_x"]) == 3
 
 
-def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None:
-    """speed_source should be 'manual' when override_speed_mps is set."""
+@pytest.mark.parametrize(
+    ("gps_speed_mps", "override_speed_mps", "expected_source", "expected_speed_kmh"),
+    [
+        (10.0, 20.0, "manual", 20.0 * 3.6),
+        (10.0, None, "gps", 10.0 * 3.6),
+        (None, None, "none", None),
+    ],
+)
+def test_speed_source_reports(
+    tmp_path: Path,
+    gps_speed_mps: float | None,
+    override_speed_mps: float | None,
+    expected_source: str,
+    expected_speed_kmh: float | None,
+) -> None:
+    """speed_source should reflect manual override, GPS, or missing speed state."""
     gps = _FakeGPSMonitor()
-    gps.speed_mps = 10.0  # GPS available
-    gps.override_speed_mps = 20.0  # Override active
-    gps.effective_speed_mps = 20.0  # Override takes priority
+    gps.speed_mps = gps_speed_mps
+    gps.override_speed_mps = override_speed_mps
+    gps.effective_speed_mps = (
+        override_speed_mps if override_speed_mps is not None else gps_speed_mps
+    )
 
     logger = MetricsLogger(
         enabled=False,
@@ -357,65 +358,11 @@ def test_speed_source_reports_override_when_override_set(tmp_path: Path) -> None
     )
 
     assert len(rows) == 1
-    assert rows[0]["speed_source"] == "manual"
-    assert rows[0]["speed_kmh"] == pytest.approx(20.0 * 3.6, abs=0.01)
-
-
-def test_speed_source_reports_gps_when_no_override(tmp_path: Path) -> None:
-    """speed_source should be 'gps' when GPS is available and no override."""
-    gps = _FakeGPSMonitor()
-    gps.speed_mps = 10.0
-    gps.override_speed_mps = None
-    gps.effective_speed_mps = 10.0
-
-    logger = MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=2,
-        registry=_FakeRegistry(),
-        gps_monitor=gps,
-        processor=_FakeProcessor(),
-        analysis_settings=_FakeAnalysisSettings(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=1024,
-    )
-
-    rows = logger._build_sample_records(
-        run_id="run-1",
-        t_s=1.0,
-        timestamp_utc="2026-02-16T12:00:00+00:00",
-    )
-
-    assert len(rows) == 1
-    assert rows[0]["speed_source"] == "gps"
-    assert rows[0]["speed_kmh"] == pytest.approx(10.0 * 3.6, abs=0.01)
-
-
-def test_speed_source_reports_missing_when_nothing_set(tmp_path: Path) -> None:
-    """speed_source should be 'none' when neither GPS nor override is set."""
-    logger = MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=2,
-        registry=_FakeRegistry(),
-        gps_monitor=_FakeGPSMonitor(),
-        processor=_FakeProcessor(),
-        analysis_settings=_FakeAnalysisSettings(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=1024,
-    )
-
-    rows = logger._build_sample_records(
-        run_id="run-1",
-        t_s=1.0,
-        timestamp_utc="2026-02-16T12:00:00+00:00",
-    )
-
-    assert len(rows) == 1
-    assert rows[0]["speed_source"] == "none"
-    assert rows[0]["speed_kmh"] is None
+    assert rows[0]["speed_source"] == expected_source
+    if expected_speed_kmh is None:
+        assert rows[0]["speed_kmh"] is None
+    else:
+        assert rows[0]["speed_kmh"] == pytest.approx(expected_speed_kmh, abs=0.01)
 
 
 def test_stop_without_samples_does_not_persist_history_run(tmp_path: Path) -> None:
@@ -659,8 +606,12 @@ def test_stop_logging_does_not_block_on_post_analysis(
     run_id, start_time_utc, start_mono, generation = snapshot
     logger._append_records(run_id, start_time_utc, start_mono, session_generation=generation)
 
+    summary_started = threading.Event()
+    allow_summary_finish = threading.Event()
+
     def _slow_summary(*args, **kwargs):
-        time.sleep(0.50)
+        summary_started.set()
+        allow_summary_finish.wait(timeout=5.0)
         return {"summary": "ok"}
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _slow_summary)
@@ -668,8 +619,10 @@ def test_stop_logging_does_not_block_on_post_analysis(
     logger.stop_logging()
     elapsed = time.monotonic() - started
 
-    # stop_logging() must return quickly; the 0.50s summary runs in a worker thread
+    # stop_logging() must return quickly; summary runs in a worker thread
     assert elapsed < 0.45, f"stop_logging() blocked for {elapsed:.2f}s (expected < 0.45s)"
+    assert summary_started.wait(timeout=2.0)
+    allow_summary_finish.set()
     assert _wait_until(lambda: history_db.get_run_status(run_id) == "complete", timeout_s=5.0)
 
 
