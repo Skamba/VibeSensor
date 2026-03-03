@@ -308,3 +308,35 @@ class TestSettingsStoreRollbackSafety:
         with store._lock:
             car = store._find_car(car_id)
             assert id(car.aspects) == original_aspects_id
+
+
+# ------------------------------------------------------------------
+# 7. json_utils — depth limit prevents infinite recursion
+# ------------------------------------------------------------------
+
+
+class TestJsonSanitizeDepthLimit:
+    """sanitize_for_json must not crash on deeply nested or circular structures."""
+
+    def test_deeply_nested_dict_truncated(self) -> None:
+        from vibesensor.json_utils import sanitize_for_json
+
+        # Build a dict nested 200 levels deep (exceeds default 128 limit)
+        obj: dict = {}
+        current = obj
+        for _i in range(200):
+            current["child"] = {}
+            current = current["child"]
+        current["value"] = 42.0
+
+        result, _ = sanitize_for_json(obj)
+        # Should not crash; deeply nested values should be truncated to None
+        assert result is not None
+
+    def test_normal_depth_preserved(self) -> None:
+        from vibesensor.json_utils import sanitize_for_json
+
+        obj = {"a": {"b": {"c": 1.5}}}
+        result, found = sanitize_for_json(obj)
+        assert result == {"a": {"b": {"c": 1.5}}}
+        assert not found
