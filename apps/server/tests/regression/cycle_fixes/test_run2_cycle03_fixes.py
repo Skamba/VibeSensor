@@ -5,6 +5,7 @@ Covers:
   2. pdf_diagram.py — next() with default for marker lookup
   3. pdf_builder.py — confidence NaN/Inf guard
   4. persistent_findings.py — type hint list[str] (compile-time only)
+  5. api_models.py — input validation bounds on request models
 """
 
 from __future__ import annotations
@@ -12,7 +13,6 @@ from __future__ import annotations
 import math
 
 import pytest
-
 
 # ------------------------------------------------------------------
 # 1. _corr_abs — NaN propagation guard
@@ -152,3 +152,79 @@ class TestConfidenceNanGuard:
         if not math.isfinite(confidence):
             confidence = 0.0
         assert abs(confidence - 0.75) < 1e-6
+
+
+# ------------------------------------------------------------------
+# 4. api_models — input validation bounds
+# ------------------------------------------------------------------
+
+
+class TestApiModelValidationBounds:
+    """Request models must reject out-of-bounds values."""
+
+    def test_car_upsert_name_too_long_rejected(self) -> None:
+        from pydantic import ValidationError
+
+        from vibesensor.api_models import CarUpsertRequest
+
+        with pytest.raises(ValidationError):
+            CarUpsertRequest(name="x" * 65)
+
+    def test_car_upsert_name_within_limit_ok(self) -> None:
+        from vibesensor.api_models import CarUpsertRequest
+
+        req = CarUpsertRequest(name="x" * 64)
+        assert req.name == "x" * 64
+
+    def test_speed_source_manual_speed_negative_rejected(self) -> None:
+        from pydantic import ValidationError
+
+        from vibesensor.api_models import SpeedSourceRequest
+
+        with pytest.raises(ValidationError):
+            SpeedSourceRequest(manualSpeedKph=-10)
+
+    def test_speed_source_manual_speed_too_high_rejected(self) -> None:
+        from pydantic import ValidationError
+
+        from vibesensor.api_models import SpeedSourceRequest
+
+        with pytest.raises(ValidationError):
+            SpeedSourceRequest(manualSpeedKph=501)
+
+    def test_speed_source_valid_speed_ok(self) -> None:
+        from vibesensor.api_models import SpeedSourceRequest
+
+        req = SpeedSourceRequest(manualSpeedKph=120)
+        assert req.manualSpeedKph == 120
+
+    def test_speed_source_stale_timeout_too_high_rejected(self) -> None:
+        from pydantic import ValidationError
+
+        from vibesensor.api_models import SpeedSourceRequest
+
+        with pytest.raises(ValidationError):
+            SpeedSourceRequest(staleTimeoutS=301)
+
+    def test_sensor_request_name_too_long_rejected(self) -> None:
+        from pydantic import ValidationError
+
+        from vibesensor.api_models import SensorRequest
+
+        with pytest.raises(ValidationError):
+            SensorRequest(name="x" * 65)
+
+    def test_sensor_request_location_too_long_rejected(self) -> None:
+        from pydantic import ValidationError
+
+        from vibesensor.api_models import SensorRequest
+
+        with pytest.raises(ValidationError):
+            SensorRequest(location="x" * 65)
+
+    def test_sensor_request_valid_ok(self) -> None:
+        from vibesensor.api_models import SensorRequest
+
+        req = SensorRequest(name="MySensor", location="front_left")
+        assert req.name == "MySensor"
+        assert req.location == "front_left"
