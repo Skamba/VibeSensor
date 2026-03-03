@@ -7,6 +7,8 @@ importable and testable.
 
 from __future__ import annotations
 
+import pytest
+
 # ── Subpackage structure tests ──────────────────────────────────────────
 
 
@@ -119,6 +121,8 @@ class TestSpeedProfileFromPoints:
 
         peak, window, band = _speed_profile_from_points([(60.0, 0.05)])
         assert peak == 60.0
+        assert window is not None
+        assert band == "60-70 km/h"
 
     def test_multiple_points_peak_is_highest_amplitude(self) -> None:
         from vibesensor.analysis.findings.speed_profile import _speed_profile_from_points
@@ -194,35 +198,36 @@ class TestSharedConstants:
 class TestClassifyPeakType:
     """Test _classify_peak_type classification logic."""
 
-    def test_low_snr_is_baseline_noise(self) -> None:
+    @pytest.mark.parametrize(
+        ("presence_ratio", "burstiness", "snr", "spatial_uniformity", "expected"),
+        [
+            (0.5, 2.0, 1.0, None, "baseline_noise"),
+            (0.05, 2.0, 5.0, None, "transient"),
+            (0.30, 6.0, 5.0, None, "transient"),
+            (0.50, 2.0, 5.0, None, "patterned"),
+            (0.25, 3.5, 5.0, None, "persistent"),
+            (0.70, 1.5, 5.0, 0.90, "baseline_noise"),
+        ],
+    )
+    def test_classification_cases(
+        self,
+        presence_ratio: float,
+        burstiness: float,
+        snr: float,
+        spatial_uniformity: float | None,
+        expected: str,
+    ) -> None:
         from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
 
-        assert _classify_peak_type(0.5, 2.0, snr=1.0) == "baseline_noise"
-
-    def test_low_presence_is_transient(self) -> None:
-        from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-
-        assert _classify_peak_type(0.05, 2.0, snr=5.0) == "transient"
-
-    def test_high_burstiness_is_transient(self) -> None:
-        from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-
-        assert _classify_peak_type(0.30, 6.0, snr=5.0) == "transient"
-
-    def test_high_presence_low_burst_is_patterned(self) -> None:
-        from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-
-        assert _classify_peak_type(0.50, 2.0, snr=5.0) == "patterned"
-
-    def test_moderate_presence_is_persistent(self) -> None:
-        from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-
-        assert _classify_peak_type(0.25, 3.5, snr=5.0) == "persistent"
-
-    def test_high_spatial_uniformity_is_baseline_noise(self) -> None:
-        from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-
-        assert _classify_peak_type(0.70, 1.5, snr=5.0, spatial_uniformity=0.90) == "baseline_noise"
+        assert (
+            _classify_peak_type(
+                presence_ratio,
+                burstiness,
+                snr=snr,
+                spatial_uniformity=spatial_uniformity,
+            )
+            == expected
+        )
 
 
 # ── order_findings tests ────────────────────────────────────────────────
