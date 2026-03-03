@@ -254,6 +254,8 @@ def main() -> int:
                 "-m",
                 "pytest",
                 "-q",
+                "-n",
+                "0",
                 "-m",
                 e2e_marker_expr,
                 *pytest_targets,
