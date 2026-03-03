@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
 from typing import Any
@@ -15,7 +15,7 @@ from vibesensor_core.vibration_strength import (
 
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
-from ..runlog import parse_iso8601
+from ..runlog import parse_iso8601, utc_now_iso
 from .findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -852,7 +852,7 @@ def summarize_run_data(
         "duration_s": duration_s,
         "record_length": _format_duration(duration_s),
         "lang": language,
-        "report_date": metadata.get("end_time_utc") or datetime.now(UTC).isoformat(),
+        "report_date": metadata.get("end_time_utc") or utc_now_iso(),
         "start_time_utc": metadata.get("start_time_utc"),
         "end_time_utc": metadata.get("end_time_utc"),
         "sensor_model": metadata.get("sensor_model"),
@@ -862,7 +862,7 @@ def summarize_run_data(
         "fft_window_size_samples": metadata.get("fft_window_size_samples"),
         "fft_window_type": metadata.get("fft_window_type"),
         "peak_picker_method": metadata.get("peak_picker_method"),
-        "accel_scale_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
+        "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
         "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
         "metadata": metadata,
         "warnings": [],

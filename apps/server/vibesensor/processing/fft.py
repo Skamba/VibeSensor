@@ -72,7 +72,9 @@ def noise_floor(amps: np.ndarray) -> float:
     non_neg = finite[finite >= 0.0]
     if non_neg.size == 0:
         return 0.0
-    # noise_floor_amp_p20_g expects sorted input (strips [1:] for DC bin).
+    # noise_floor_amp_p20_g strips [1:] and sorts internally; pre-sorting
+    # here ensures the stripped element is the global minimum amplitude,
+    # yielding a slightly more conservative (higher) floor estimate.
     return noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted(non_neg.tolist()))
 
 

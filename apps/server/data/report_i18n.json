@@ -205,7 +205,7 @@
   },
   "COMMON_PARTS": {
     "en": "Common associated parts",
-    "nl": "Veelvoorkomende onderdelen"
+    "nl": "Veelvoorkomende gerelateerde onderdelen"
   },
   "COMPARE_UNDER_LOAD_VS_NO_LOAD_AT_MATCHED": {
     "en": "Compare under load vs no-load at matched RPM.",
@@ -717,7 +717,7 @@
   },
   "NEXT_SENSOR_MOVE_DEFAULT": {
     "en": "Inspect the highest-ranked hotspot path first.",
-    "nl": "Controleer eerst het pad met de hoogste piekwaarde."
+    "nl": "Controleer eerst het pad met de hoogst gerangschikte hotspot."
   },
   "NEXT_STEPS": {
     "en": "Next steps",
@@ -1388,8 +1388,8 @@
     "nl": "Waarde"
   },
   "VARIANCE_G_2": {
-    "en": "Variance (g^2)",
-    "nl": "Variantie (g^2)"
+    "en": "Variance (g²)",
+    "nl": "Variantie (g²)"
   },
   "VEHICLE_SPEED_COVERAGE_IS_SPEED_NON_NULL_PCT": {
     "en": "Vehicle speed coverage is {speed_non_null_pct:.1f}%, below the {threshold:.1f}% minimum needed for speed/order analysis.",

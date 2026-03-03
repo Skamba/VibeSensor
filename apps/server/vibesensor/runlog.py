@@ -146,7 +146,7 @@ def bounded_sample(
         number of items consumed from the iterator, and *final_stride*
         is the stride factor that was applied.
     """
-    stride: int = max(1, total_hint // max_items) if total_hint > max_items else 1
+    stride: int = max(1, -(-total_hint // max_items)) if total_hint > max_items else 1
     kept: list[dict] = []
     total = 0
     for sample in samples:

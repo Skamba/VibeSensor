@@ -191,7 +191,7 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | bool | None]:
 
 def _speed_stats_by_phase(
     samples: list[dict[str, Any]],
-    per_sample_phases: list[Any],
+    per_sample_phases: list[str],
 ) -> dict[str, dict[str, Any]]:
     """Compute speed statistics broken down by driving phase.
 
@@ -383,7 +383,12 @@ def _effective_baseline_floor(
     Resolution order: *run_noise_baseline_g* → *extra_fallback* → 0.0,
     clamped to at least :data:`MEMS_NOISE_FLOOR_G`.
     """
-    return max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g or extra_fallback or 0.0)
+    val = (
+        run_noise_baseline_g
+        if run_noise_baseline_g is not None
+        else (extra_fallback if extra_fallback is not None else 0.0)
+    )
+    return max(MEMS_NOISE_FLOOR_G, val)
 
 
 def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
