@@ -385,21 +385,21 @@ def test_protocol_docs_match_generated_contract_reference() -> None:
 
 
 def test_sanitize_settings_is_single_source() -> None:
-    """settings_store._sanitize_aspects must use the canonical sanitize_settings."""
+    """domain_models.sanitize_aspects must use the canonical sanitize_settings."""
     import inspect
 
     from vibesensor.analysis_settings import sanitize_settings
-    from vibesensor.settings_store import _sanitize_aspects
+    from vibesensor.domain_models import sanitize_aspects
 
     # The function should delegate to sanitize_settings (check source contains the call)
-    source = inspect.getsource(_sanitize_aspects)
+    source = inspect.getsource(sanitize_aspects)
     assert "sanitize_settings" in source, (
-        "_sanitize_aspects must delegate to sanitize_settings from analysis_settings"
+        "sanitize_aspects must delegate to sanitize_settings from analysis_settings"
     )
 
     # Both must use the same validation logic — verify on a known-invalid input
     bad = {"tire_width_mm": -1.0, "rim_in": 21.0}
-    assert sanitize_settings(bad) == _sanitize_aspects(bad)
+    assert sanitize_settings(bad) == sanitize_aspects(bad)
 
 
 def test_sanitize_settings_rejects_invalid() -> None:
