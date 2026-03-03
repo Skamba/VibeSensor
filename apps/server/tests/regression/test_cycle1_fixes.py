@@ -127,7 +127,6 @@ class TestEvidencePeakPresentFormat:
 
     def test_dB_format_is_one_decimal(self) -> None:
         import json
-        from pathlib import Path
 
         i18n_path = SERVER_ROOT / "data" / "report_i18n.json"
         with open(i18n_path) as f:

@@ -5,13 +5,13 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
 from vibesensor.analysis import confidence_label, map_summary, select_top_causes, summarize_log
 from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
-from _paths import SERVER_ROOT
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 

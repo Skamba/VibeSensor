@@ -37,7 +37,7 @@
 
 ## Safe Change Areas
 - New focused backend helpers: `apps/server/vibesensor/` modules or `libs/core/python/vibesensor_core/*` for shared vibration math.
-- Test additions: `apps/server/tests/test_*` with narrow scope.
+- Test additions: `apps/server/tests/<module>/test_*` with narrow scope.
 - AI docs/runbooks: `docs/ai/*`.
 - Simulator-only enhancements: `apps/simulator/*`.
 

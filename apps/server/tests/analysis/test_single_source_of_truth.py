@@ -13,14 +13,13 @@ These tests prevent regression of the consolidation work by verifying:
 from __future__ import annotations
 
 import importlib
-from pathlib import Path
 
 import pytest
 import yaml
+from _paths import REPO_ROOT, SERVER_ROOT
 
 from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
 from vibesensor.diagnostics_shared import DEFAULT_DIAGNOSTIC_SETTINGS
-from _paths import REPO_ROOT, SERVER_ROOT
 
 
 def test_diagnostic_settings_is_analysis_settings() -> None:
@@ -193,7 +192,6 @@ def test_silence_db_constant() -> None:
 
 def test_config_preflight_no_removed_fields() -> None:
     """config_preflight.summarize must not reference removed config fields."""
-    from pathlib import Path
 
     root = REPO_ROOT
     preflight_path = root / "tools" / "config" / "vibesensor_tools_config" / "config_preflight.py"
@@ -205,7 +203,6 @@ def test_config_preflight_no_removed_fields() -> None:
 
 def test_wheel_hz_and_engine_rpm_single_source() -> None:
     """wheel_hz and engine_rpm formulas must not be inlined in consumers."""
-    from pathlib import Path
 
     root = SERVER_ROOT
     files_to_check = [
@@ -223,7 +220,6 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
 
 def test_simulator_defaults_match_analysis_settings() -> None:
     """Simulator vehicle defaults must be imported from the canonical source."""
-    from pathlib import Path
 
     root = REPO_ROOT
     # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
@@ -245,7 +241,6 @@ def test_simulator_defaults_match_analysis_settings() -> None:
 
 def test_simulator_no_production_asserts() -> None:
     """Simulator module-level and standalone functions must not use bare assert."""
-    from pathlib import Path
 
     root = REPO_ROOT
     sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
@@ -270,7 +265,6 @@ def test_simulator_no_production_asserts() -> None:
 def test_esp_protocol_constants_match_python() -> None:
     """ESP C++ protocol constants must match the Python protocol module."""
     import re
-    from pathlib import Path
 
     from vibesensor.protocol import (
         ACK_BYTES,
@@ -339,7 +333,6 @@ def test_esp_protocol_constants_match_python() -> None:
 def test_protocol_docs_byte_sizes_match() -> None:
     """docs/protocol.md byte sizes must match the Python protocol module."""
     import re
-    from pathlib import Path
 
     from vibesensor.protocol import (
         ACK_BYTES,
@@ -443,7 +436,6 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
     """Network port defaults must come from shared contracts across runtime layers."""
     import re
     import sys
-    from pathlib import Path
 
     from vibesensor_shared.contracts import NETWORK_PORTS
     from vibesensor_simulator.sim_sender import parse_args

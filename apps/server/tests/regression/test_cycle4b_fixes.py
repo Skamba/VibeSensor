@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import inspect
 import json
-from pathlib import Path
+
 from _paths import SERVER_ROOT
 
 

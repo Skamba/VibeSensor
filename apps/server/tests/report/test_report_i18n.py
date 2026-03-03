@@ -5,9 +5,9 @@ import re
 from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 
 from vibesensor import report_i18n
-from _paths import SERVER_ROOT
 
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 _SOURCE_ROOT = SERVER_ROOT / "vibesensor"
@@ -278,14 +278,7 @@ def test_dutch_translation_audit_round_4() -> None:
 def test_dutch_translation_audit_round_4_ui_and_python() -> None:
     """Verify Dutch translation improvements in nl.json (UI) and Python files."""
     # --- nl.json UI translations ---
-    ui_json = (
-        SERVER_ROOT.parent
-        / "ui"
-        / "src"
-        / "i18n"
-        / "catalogs"
-        / "nl.json"
-    )
+    ui_json = SERVER_ROOT.parent / "ui" / "src" / "i18n" / "catalogs" / "nl.json"
     ui = json.loads(ui_json.read_text(encoding="utf-8"))
 
     # Natural Dutch: "Autoschaal" → "Automatisch schalen"
@@ -414,14 +407,7 @@ def test_dutch_translation_audit_round_5() -> None:
 def test_dutch_translation_audit_round_5_ui_and_python() -> None:
     """Verify Dutch translation improvements in nl.json and Python files (round 5)."""
     # --- nl.json UI translations ---
-    ui_json = (
-        SERVER_ROOT.parent
-        / "ui"
-        / "src"
-        / "i18n"
-        / "catalogs"
-        / "nl.json"
-    )
+    ui_json = SERVER_ROOT.parent / "ui" / "src" / "i18n" / "catalogs" / "nl.json"
     ui = json.loads(ui_json.read_text(encoding="utf-8"))
 
     # Natural Dutch: "Live trillingsteller" → "Actuele trillingsteller"

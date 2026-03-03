@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from _paths import REPO_ROOT, SERVER_ROOT
 
 from vibesensor.api import create_router
-from _paths import REPO_ROOT, SERVER_ROOT
 
 
 @pytest.mark.smoke

@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 
 from vibesensor.ws_schema_export import export_schema
-from _paths import SERVER_ROOT
 
 
 def test_export_schema_returns_valid_json() -> None:
@@ -44,12 +44,7 @@ def test_export_schema_creates_parent_dirs(tmp_path: Path) -> None:
 def test_export_schema_matches_committed_schema() -> None:
     """Generated schema must match the committed contract file."""
     committed_path = (
-        SERVER_ROOT.parent
-        / "apps"
-        / "ui"
-        / "src"
-        / "contracts"
-        / "ws_payload_schema.json"
+        SERVER_ROOT.parent / "apps" / "ui" / "src" / "contracts" / "ws_payload_schema.json"
     )
     if not committed_path.exists():
         pytest.skip("UI contracts not available")
