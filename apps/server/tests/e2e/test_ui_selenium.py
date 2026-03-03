@@ -6,7 +6,6 @@ import socket
 import subprocess
 import sys
 import time
-from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
 
@@ -15,11 +14,11 @@ import yaml
 
 pytest.importorskip("selenium", reason="selenium is not installed")
 
+from _paths import SERVER_ROOT
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from _paths import SERVER_ROOT
 
 pytestmark = pytest.mark.selenium
 

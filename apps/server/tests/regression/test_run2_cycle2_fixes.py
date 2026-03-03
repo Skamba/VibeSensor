@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections import deque
 from pathlib import Path
+
 from _paths import SERVER_ROOT
 
 
@@ -176,11 +177,6 @@ class TestWeightedPercentileDedup:
 class TestAnalysisQueueMaxlen:
     def test_analysis_queue_has_maxlen(self) -> None:
         """PostAnalysisWorker._analysis_queue must have a bounded maxlen."""
-        src = (
-            SERVER_ROOT
-            / "vibesensor"
-            / "metrics_log"
-            / "post_analysis.py"
-        )
+        src = SERVER_ROOT / "vibesensor" / "metrics_log" / "post_analysis.py"
         text = src.read_text()
         assert "_analysis_queue: deque[str] = deque(maxlen=" in text

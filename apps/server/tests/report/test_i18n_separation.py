@@ -14,10 +14,10 @@ import ast
 from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 
 from vibesensor.analysis import map_summary, summarize_run_data
 from vibesensor.analysis.report_data_builder import _is_i18n_ref, _resolve_i18n
-from _paths import SERVER_ROOT
 
 _SERVER_PKG = SERVER_ROOT / "vibesensor"
 _ANALYSIS_PKG = _SERVER_PKG / "analysis"

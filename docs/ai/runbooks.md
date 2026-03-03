@@ -23,7 +23,7 @@ make ai-check
 ## Targeted tests
 ```bash
 # pass pytest args after --
-scripts/ai/task ai:test -- apps/server/tests/test_config.py -k self_heal -q
+scripts/ai/task ai:test -- apps/server/tests/config/test_config.py -k self_heal -q
 # or
 make ai-test
 # or quicker backend loop with progress output

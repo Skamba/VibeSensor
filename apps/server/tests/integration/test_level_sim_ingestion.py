@@ -20,11 +20,10 @@ import os
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 import pytest
-from pypdf import PdfReader
 from _paths import SERVER_ROOT
+from pypdf import PdfReader
 
 ROOT = SERVER_ROOT.parent
 

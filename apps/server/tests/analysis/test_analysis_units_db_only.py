@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 
-from vibesensor.analysis.summary import summarize_run_data
 from _paths import SERVER_ROOT
+
+from vibesensor.analysis.summary import summarize_run_data
 
 
 def _metadata() -> dict[str, Any]:
