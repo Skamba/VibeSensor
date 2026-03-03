@@ -51,6 +51,24 @@ _BOUNDS: dict[str, tuple[float, float]] = {
     "tire_deflection_factor": (0.85, 1.0),
 }
 
+DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
+    "tire_width_mm": 285.0,
+    "tire_aspect_pct": 30.0,
+    "rim_in": 21.0,
+    "final_drive_ratio": 3.08,
+    "current_gear_ratio": 0.64,
+    "wheel_bandwidth_pct": 5.0,
+    "driveshaft_bandwidth_pct": 4.5,
+    "engine_bandwidth_pct": 5.2,
+    "speed_uncertainty_pct": 1.0,
+    "tire_diameter_uncertainty_pct": 1.0,
+    "final_drive_uncertainty_pct": 0.1,
+    "gear_uncertainty_pct": 0.2,
+    "min_abs_band_hz": 0.2,
+    "max_band_half_width_pct": 6.0,
+    "tire_deflection_factor": 0.97,
+}
+
 
 def sanitize_settings(
     payload: dict[str, object],
@@ -89,25 +107,6 @@ def sanitize_settings(
             value = bounded
         out[key] = value
     return out
-
-
-DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
-    "tire_width_mm": 285.0,
-    "tire_aspect_pct": 30.0,
-    "rim_in": 21.0,
-    "final_drive_ratio": 3.08,
-    "current_gear_ratio": 0.64,
-    "wheel_bandwidth_pct": 5.0,
-    "driveshaft_bandwidth_pct": 4.5,
-    "engine_bandwidth_pct": 5.2,
-    "speed_uncertainty_pct": 1.0,
-    "tire_diameter_uncertainty_pct": 1.0,
-    "final_drive_uncertainty_pct": 0.1,
-    "gear_uncertainty_pct": 0.2,
-    "min_abs_band_hz": 0.2,
-    "max_band_half_width_pct": 6.0,
-    "tire_deflection_factor": 0.97,
-}
 
 
 def tire_circumference_m_from_spec(

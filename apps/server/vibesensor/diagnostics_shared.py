@@ -26,7 +26,7 @@ from .constants import (
     ROAD_RESONANCE_MAX_HZ,
     ROAD_RESONANCE_MIN_HZ,
 )
-from .runlog import as_float_or_none as _as_float
+from .runlog import as_float_or_none
 
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
@@ -36,7 +36,7 @@ def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dic
     if not overrides:
         return out
     for key in DEFAULT_ANALYSIS_SETTINGS:
-        parsed = _as_float(overrides.get(key))
+        parsed = as_float_or_none(overrides.get(key))
         if parsed is not None:
             out[key] = parsed
     return out
@@ -150,15 +150,15 @@ def vehicle_orders_hz(
         return None
     spec_settings = build_diagnostic_settings(settings)
     circumference = tire_circumference_m_from_spec(
-        _as_float(spec_settings.get("tire_width_mm")),
-        _as_float(spec_settings.get("tire_aspect_pct")),
-        _as_float(spec_settings.get("rim_in")),
-        deflection_factor=_as_float(spec_settings.get("tire_deflection_factor")),
+        as_float_or_none(spec_settings.get("tire_width_mm")),
+        as_float_or_none(spec_settings.get("tire_aspect_pct")),
+        as_float_or_none(spec_settings.get("rim_in")),
+        deflection_factor=as_float_or_none(spec_settings.get("tire_deflection_factor")),
     )
     if circumference is None or circumference <= 0:
         return None
-    final_drive_ratio = _as_float(spec_settings.get("final_drive_ratio"))
-    gear_ratio = _as_float(spec_settings.get("current_gear_ratio"))
+    final_drive_ratio = as_float_or_none(spec_settings.get("final_drive_ratio"))
+    gear_ratio = as_float_or_none(spec_settings.get("current_gear_ratio"))
     if (
         final_drive_ratio is None
         or not isfinite(final_drive_ratio)
@@ -366,15 +366,15 @@ def severity_from_peak(
     candidate_bucket_raw = bucket_for_strength(adjusted_db)
     candidate_bucket = None if candidate_bucket_raw == "l0" else candidate_bucket_raw
     current_bucket = state.get("current_bucket")
-    peak_hz_value = _as_float(peak_hz)
-    freq_bin_hz = _as_float(persistence_freq_bin_hz)
+    peak_hz_value = as_float_or_none(peak_hz)
+    freq_bin_hz = as_float_or_none(persistence_freq_bin_hz)
     freq_guard_enabled = peak_hz_value is not None and freq_bin_hz is not None and freq_bin_hz > 0
 
     def _advance_pending(candidate: str) -> None:
         pending = state.get("pending_bucket")
         if pending == candidate:
             if freq_guard_enabled:
-                last_confirmed_hz = _as_float(state.get("last_confirmed_hz"))
+                last_confirmed_hz = as_float_or_none(state.get("last_confirmed_hz"))
                 if last_confirmed_hz is not None and abs(
                     float(peak_hz_value) - last_confirmed_hz
                 ) > float(freq_bin_hz):
