@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -416,8 +416,6 @@ async def test_broadcast_send_timeout_removes_connection() -> None:
 @pytest.mark.asyncio
 async def test_send_error_logging_is_rate_limited(caplog) -> None:
     hub = WebSocketHub()
-    hub._send_error_log_interval_s = 1000.0
-    hub._last_send_error_log_ts = -1_000_000.0
     ws1 = _make_ws()
     ws2 = _make_ws()
     ws1.send_text = AsyncMock(side_effect=ConnectionError("boom-1"))
@@ -425,8 +423,11 @@ async def test_send_error_logging_is_rate_limited(caplog) -> None:
     await hub.add(ws1, "c1")
     await hub.add(ws2, "c2")
 
-    with caplog.at_level(logging.WARNING, logger="vibesensor.ws_hub"):
-        await hub.broadcast(lambda _: {"ok": True})
+    fake_loop = MagicMock()
+    fake_loop.time.side_effect = [1000.0, 1001.0]
+    with patch("vibesensor.ws_hub.asyncio.get_running_loop", return_value=fake_loop):
+        with caplog.at_level(logging.WARNING, logger="vibesensor.ws_hub"):
+            await hub.broadcast(lambda _: {"ok": True})
 
     send_fail_logs = [r for r in caplog.records if "broadcast send failed" in r.message]
     assert len(send_fail_logs) == 1

@@ -11,6 +11,7 @@ from vibesensor.protocol import (
     CMD_SYNC_CLOCK,
     DATA_ACK_BYTES,
     DATA_HEADER_BYTES,
+    HELLO_BASE,
     HELLO_FIXED_BYTES,
     MSG_DATA,
     MSG_DATA_ACK,
@@ -186,7 +187,6 @@ def test_parse_hello_missing_name() -> None:
 def test_parse_hello_firmware_length_out_of_range() -> None:
     client_id = bytes.fromhex("aabbccddeeff")
     pkt = bytearray(pack_hello(client_id, 9000, 800, "test", firmware_version=""))
-    from vibesensor.protocol import HELLO_BASE
 
     fw_len_offset = HELLO_BASE.size + len("test")
     pkt[fw_len_offset] = 10
