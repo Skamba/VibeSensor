@@ -650,3 +650,249 @@ async def test_delete_analyzing_run_returns_409() -> None:
     with pytest.raises(HTTPException) as exc_info:
         await delete_endpoint("run-1")
     assert exc_info.value.status_code == 409
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("path", "lang"),
+    [
+        ("/api/history/{run_id}/insights", None),
+        ("/api/history/{run_id}/report.pdf", "en"),
+        ("/api/history/{run_id}/export", None),
+    ],
+)
+async def test_history_endpoints_return_404_for_unknown_run(path: str, lang: str | None) -> None:
+    router, _ = _make_router_and_state(language="en")
+    endpoint = _route_endpoint(router, path)
+
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as exc_info:
+        if lang is None:
+            await endpoint("missing-run")
+        else:
+            await endpoint("missing-run", lang)
+    assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("status", "analysis", "expected_status", "expected_detail"),
+    [
+        ("analyzing", {"status": "analyzing"}, 200, None),
+        ("error", {"status": "error"}, 422, "Analysis failed"),
+        ("complete", None, 422, "No analysis available for this run"),
+    ],
+)
+async def test_history_insights_status_and_analysis_errors(
+    status: str,
+    analysis: dict[str, Any] | None,
+    expected_status: int,
+    expected_detail: str | None,
+) -> None:
+    @dataclass
+    class _StatusDB(_FakeHistoryDB):
+        run_status: str = "complete"
+        run_analysis: dict[str, Any] | None = field(default_factory=dict)
+
+        def get_run(self, run_id: str) -> dict[str, Any] | None:
+            if run_id != "run-1":
+                return None
+            return {
+                "run_id": run_id,
+                "status": self.run_status,
+                "analysis": self.run_analysis,
+                "analysis_version": 1,
+            }
+
+    metadata = {"language": "en"}
+    samples = [_sample(0)]
+    db = _StatusDB(metadata, samples, analysis or {}, run_status=status, run_analysis=analysis)
+    router = create_router(_FakeState(db, _FakeWsHub()))
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
+
+    from fastapi import HTTPException
+
+    if expected_status == 200:
+        payload = await endpoint("run-1", "en")
+        assert payload["status"] == "analyzing"
+        return
+    with pytest.raises(HTTPException) as exc_info:
+        await endpoint("run-1", "en")
+    assert exc_info.value.status_code == expected_status
+    assert exc_info.value.detail == expected_detail
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("status", "analysis", "expected_status", "expected_detail"),
+    [
+        ("analyzing", {"status": "analyzing"}, 409, "Analysis is still in progress"),
+        ("error", {"status": "error"}, 422, "Analysis failed"),
+        ("complete", None, 422, "No analysis available for this run"),
+    ],
+)
+async def test_report_pdf_status_and_analysis_errors(
+    status: str,
+    analysis: dict[str, Any] | None,
+    expected_status: int,
+    expected_detail: str,
+) -> None:
+    @dataclass
+    class _StatusDB(_FakeHistoryDB):
+        run_status: str = "complete"
+        run_analysis: dict[str, Any] | None = field(default_factory=dict)
+
+        def get_run(self, run_id: str) -> dict[str, Any] | None:
+            if run_id != "run-1":
+                return None
+            payload = {
+                "run_id": run_id,
+                "status": self.run_status,
+                "analysis": self.run_analysis,
+                "analysis_version": 1,
+            }
+            if self.run_status == "error":
+                payload["error_message"] = "Analysis failed"
+            return payload
+
+    metadata = {"language": "en"}
+    samples = [_sample(0)]
+    db = _StatusDB(metadata, samples, analysis or {}, run_status=status, run_analysis=analysis)
+    router = create_router(_FakeState(db, _FakeWsHub()))
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
+
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as exc_info:
+        await endpoint("run-1", "en")
+    assert exc_info.value.status_code == expected_status
+    assert exc_info.value.detail == expected_detail
+
+
+@pytest.mark.asyncio
+async def test_history_export_strips_internal_analysis_fields_from_json() -> None:
+    router, state = _make_router_and_state(language="en", sample_count=3)
+    state.history_db.analysis["_internal"] = {"keep": "private"}
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
+    response = await endpoint("run-1")
+    body = await _read_streaming_body(response)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
+        metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
+    assert "_internal" not in metadata.get("analysis", {})
+
+
+@pytest.mark.asyncio
+async def test_history_export_sanitizes_filename_from_run_id() -> None:
+    run_id = "../bad:name*id"
+    metadata = {
+        "run_id": run_id,
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "end_time_utc": "2026-01-01T00:00:20Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "en",
+    }
+    samples = [_sample(i) for i in range(2)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+
+    @dataclass
+    class _NamedRunDB(_FakeHistoryDB):
+        accepted_run_id: str = run_id
+
+        def get_run(self, queried_run_id: str) -> dict[str, Any] | None:
+            if queried_run_id != self.accepted_run_id:
+                return None
+            result = super().get_run("run-1")
+            assert result is not None
+            result["run_id"] = queried_run_id
+            return result
+
+        def iter_run_samples(self, queried_run_id: str, batch_size: int = 1000):
+            if queried_run_id != self.accepted_run_id:
+                return
+            yield from super().iter_run_samples("run-1", batch_size=batch_size)
+
+    db = _NamedRunDB(metadata, samples, analysis)
+    router = create_router(_FakeState(db, _FakeWsHub()))
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
+    response = await endpoint(run_id)
+    body = await _read_streaming_body(response)
+    with zipfile.ZipFile(io.BytesIO(body), "r") as archive:
+        assert set(archive.namelist()) == {"_bad_name_id.json", "_bad_name_id_raw.csv"}
+
+
+@pytest.mark.asyncio
+async def test_delete_run_returns_404_for_not_found_reason() -> None:
+    router, _ = _make_router_and_state(language="en")
+    delete_endpoint = None
+    for route in router.routes:
+        if getattr(route, "path", "") == "/api/history/{run_id}" and "DELETE" in getattr(
+            route, "methods", set()
+        ):
+            delete_endpoint = route.endpoint
+            break
+    assert delete_endpoint is not None
+
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_endpoint("missing-run")
+    assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
+    @dataclass
+    class _LockedDB(_FakeHistoryDB):
+        def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+            if run_id == "run-1":
+                return False, "locked"
+            return False, "not_found"
+
+    metadata = {
+        "run_id": "run-1",
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "end_time_utc": "2026-01-01T00:00:20Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "en",
+    }
+    samples = [_sample(i) for i in range(5)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    router = create_router(_FakeState(_LockedDB(metadata, samples, analysis), _FakeWsHub()))
+    delete_endpoint = None
+    for route in router.routes:
+        if getattr(route, "path", "") == "/api/history/{run_id}" and "DELETE" in getattr(
+            route, "methods", set()
+        ):
+            delete_endpoint = route.endpoint
+            break
+    assert delete_endpoint is not None
+
+    from fastapi import HTTPException
+
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_endpoint("run-1")
+    assert exc_info.value.status_code == 409
+    assert exc_info.value.detail == "Cannot delete run at this time"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "messages",
+    [
+        ['{"client_id":123}'],
+        ['{"foo":"bar"}'],
+        ["not-json"],
+        ['{"client_id":"not-a-mac"}'],
+    ],
+)
+async def test_ws_ignores_invalid_client_selection_messages(messages: list[str]) -> None:
+    router, state = _make_router_and_state(language="en")
+    endpoint = _route_endpoint(router, "/ws")
+    ws = _FakeWs(messages=messages)
+    await endpoint(ws)
+    assert state.ws_hub.selected_updates == [None]
