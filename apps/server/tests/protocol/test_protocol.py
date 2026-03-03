@@ -8,8 +8,10 @@ from vibesensor.protocol import (
     CMD_HEADER_BYTES,
     CMD_IDENTIFY,
     CMD_IDENTIFY_BYTES,
+    CMD_SYNC_CLOCK,
     DATA_ACK_BYTES,
     DATA_HEADER_BYTES,
+    HELLO_BASE,
     HELLO_FIXED_BYTES,
     MSG_DATA,
     MSG_DATA_ACK,
@@ -20,6 +22,7 @@ from vibesensor.protocol import (
     extract_client_id_hex,
     pack_ack,
     pack_cmd_identify,
+    pack_cmd_sync_clock,
     pack_data,
     pack_data_ack,
     pack_hello,
@@ -76,11 +79,31 @@ def test_parse_identify_cmd() -> None:
     assert int.from_bytes(parsed.params[:2], "little") == 1500
 
 
+def test_pack_cmd_identify_clamps_duration_bounds() -> None:
+    client_id = bytes.fromhex("112233445566")
+    low = parse_cmd(pack_cmd_identify(client_id, cmd_seq=1, duration_ms=0))
+    high = parse_cmd(pack_cmd_identify(client_id, cmd_seq=2, duration_ms=999999))
+    assert int.from_bytes(low.params[:2], "little") == 1
+    assert int.from_bytes(high.params[:2], "little") == 60_000
+
+
+def test_pack_cmd_sync_clock_clamps_negative_server_time() -> None:
+    client_id = bytes.fromhex("112233445566")
+    parsed = parse_cmd(pack_cmd_sync_clock(client_id, cmd_seq=7, server_time_us=-123))
+    assert parsed.cmd_id == CMD_SYNC_CLOCK
+    assert parsed.cmd_seq == 7
+    assert int.from_bytes(parsed.params[:8], "little") == 0
+
+
 def test_client_id_mac_roundtrip() -> None:
     client_id = bytes.fromhex("d05a01020304")
     mac = client_id_mac(client_id)
     assert mac == "d0:5a:01:02:03:04"
     assert parse_client_id(mac) == client_id
+
+
+def test_parse_client_id_accepts_colon_separated_uppercase_hex() -> None:
+    assert parse_client_id("AA:BB:CC:DD:EE:FF") == bytes.fromhex("aabbccddeeff")
 
 
 def test_protocol_layout_constants_match_esp_side() -> None:
@@ -159,6 +182,24 @@ def test_parse_hello_missing_name() -> None:
     truncated = truncated[:-1] + b"\xff"
     with pytest.raises(ProtocolError, match="HELLO missing name"):
         parse_hello(truncated)
+
+
+def test_parse_hello_firmware_length_out_of_range() -> None:
+    client_id = bytes.fromhex("aabbccddeeff")
+    pkt = bytearray(pack_hello(client_id, 9000, 800, "test", firmware_version=""))
+
+    fw_len_offset = HELLO_BASE.size + len("test")
+    pkt[fw_len_offset] = 10
+    truncated_fw = bytes(pkt[: fw_len_offset + 2])
+    with pytest.raises(ProtocolError, match="firmware length out of range"):
+        parse_hello(truncated_fw)
+
+
+def test_pack_hello_truncates_name_and_firmware_to_32_bytes() -> None:
+    client_id = bytes.fromhex("010203040506")
+    decoded = parse_hello(pack_hello(client_id, 9000, 800, "n" * 64, firmware_version="f" * 64))
+    assert decoded.name == "n" * 32
+    assert decoded.firmware_version == "f" * 32
 
 
 def test_parse_data_too_short() -> None:
