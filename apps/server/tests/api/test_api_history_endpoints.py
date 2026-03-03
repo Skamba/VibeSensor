@@ -212,6 +212,42 @@ def _route_endpoint(router, path: str):
     raise AssertionError(f"Route not found: {path}")
 
 
+def _route_endpoint_with_method(router, path: str, method: str):
+    for route in router.routes:
+        if getattr(route, "path", "") != path:
+            continue
+        if method.upper() in getattr(route, "methods", set()):
+            return route.endpoint
+    raise AssertionError(f"Route not found: {method.upper()} {path}")
+
+
+def _make_status_router(
+    *, status: str, analysis: dict[str, Any] | None, include_error_message: bool
+):
+    @dataclass
+    class _StatusDB(_FakeHistoryDB):
+        run_status: str = "complete"
+        run_analysis: dict[str, Any] | None = None
+
+        def get_run(self, run_id: str) -> dict[str, Any] | None:
+            if run_id != "run-1":
+                return None
+            payload = {
+                "run_id": run_id,
+                "status": self.run_status,
+                "analysis": self.run_analysis,
+                "analysis_version": 1,
+            }
+            if include_error_message and self.run_status == "error":
+                payload["error_message"] = "Analysis failed"
+            return payload
+
+    metadata = {"language": "en"}
+    samples = [_sample(0)]
+    db = _StatusDB(metadata, samples, {}, run_status=status, run_analysis=analysis)
+    return create_router(_FakeState(db, _FakeWsHub()))
+
+
 @pytest.mark.asyncio
 async def test_history_insights_respects_lang_query() -> None:
     router, _ = _make_router_and_state(language="en")
@@ -590,14 +626,7 @@ async def test_delete_active_run_returns_409() -> None:
     router = create_router(state)
     app.include_router(router)
 
-    # Find the DELETE endpoint specifically
-    delete_endpoint = None
-    for route in router.routes:
-        if getattr(route, "path", "") == "/api/history/{run_id}":
-            if "DELETE" in getattr(route, "methods", set()):
-                delete_endpoint = route.endpoint
-                break
-    assert delete_endpoint is not None
+    delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
 
     from fastapi import HTTPException
 
@@ -636,14 +665,7 @@ async def test_delete_analyzing_run_returns_409() -> None:
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     db = _AnalyzingDB(metadata, samples, analysis)
     router = create_router(_FakeState(db, _FakeWsHub()))
-    delete_endpoint = None
-    for route in router.routes:
-        if getattr(route, "path", "") == "/api/history/{run_id}" and "DELETE" in getattr(
-            route, "methods", set()
-        ):
-            delete_endpoint = route.endpoint
-            break
-    assert delete_endpoint is not None
+    delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
 
     from fastapi import HTTPException
 
@@ -690,25 +712,7 @@ async def test_history_insights_status_and_analysis_errors(
     expected_status: int,
     expected_detail: str | None,
 ) -> None:
-    @dataclass
-    class _StatusDB(_FakeHistoryDB):
-        run_status: str = "complete"
-        run_analysis: dict[str, Any] | None = field(default_factory=dict)
-
-        def get_run(self, run_id: str) -> dict[str, Any] | None:
-            if run_id != "run-1":
-                return None
-            return {
-                "run_id": run_id,
-                "status": self.run_status,
-                "analysis": self.run_analysis,
-                "analysis_version": 1,
-            }
-
-    metadata = {"language": "en"}
-    samples = [_sample(0)]
-    db = _StatusDB(metadata, samples, analysis or {}, run_status=status, run_analysis=analysis)
-    router = create_router(_FakeState(db, _FakeWsHub()))
+    router = _make_status_router(status=status, analysis=analysis, include_error_message=False)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
 
     from fastapi import HTTPException
@@ -738,28 +742,7 @@ async def test_report_pdf_status_and_analysis_errors(
     expected_status: int,
     expected_detail: str,
 ) -> None:
-    @dataclass
-    class _StatusDB(_FakeHistoryDB):
-        run_status: str = "complete"
-        run_analysis: dict[str, Any] | None = field(default_factory=dict)
-
-        def get_run(self, run_id: str) -> dict[str, Any] | None:
-            if run_id != "run-1":
-                return None
-            payload = {
-                "run_id": run_id,
-                "status": self.run_status,
-                "analysis": self.run_analysis,
-                "analysis_version": 1,
-            }
-            if self.run_status == "error":
-                payload["error_message"] = "Analysis failed"
-            return payload
-
-    metadata = {"language": "en"}
-    samples = [_sample(0)]
-    db = _StatusDB(metadata, samples, analysis or {}, run_status=status, run_analysis=analysis)
-    router = create_router(_FakeState(db, _FakeWsHub()))
+    router = _make_status_router(status=status, analysis=analysis, include_error_message=True)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
     from fastapi import HTTPException
@@ -826,14 +809,7 @@ async def test_history_export_sanitizes_filename_from_run_id() -> None:
 @pytest.mark.asyncio
 async def test_delete_run_returns_404_for_not_found_reason() -> None:
     router, _ = _make_router_and_state(language="en")
-    delete_endpoint = None
-    for route in router.routes:
-        if getattr(route, "path", "") == "/api/history/{run_id}" and "DELETE" in getattr(
-            route, "methods", set()
-        ):
-            delete_endpoint = route.endpoint
-            break
-    assert delete_endpoint is not None
+    delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
 
     from fastapi import HTTPException
 
@@ -863,14 +839,7 @@ async def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
     samples = [_sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     router = create_router(_FakeState(_LockedDB(metadata, samples, analysis), _FakeWsHub()))
-    delete_endpoint = None
-    for route in router.routes:
-        if getattr(route, "path", "") == "/api/history/{run_id}" and "DELETE" in getattr(
-            route, "methods", set()
-        ):
-            delete_endpoint = route.endpoint
-            break
-    assert delete_endpoint is not None
+    delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
 
     from fastapi import HTTPException
 
