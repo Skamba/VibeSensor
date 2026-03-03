@@ -5,6 +5,30 @@ from dataclasses import dataclass
 
 import numpy as np
 
+__all__ = [
+    "AckMessage",
+    "CmdMessage",
+    "DataAckMessage",
+    "DataMessage",
+    "HelloMessage",
+    "ProtocolError",
+    "client_id_hex",
+    "client_id_mac",
+    "extract_client_id_hex",
+    "pack_ack",
+    "pack_cmd_identify",
+    "pack_cmd_sync_clock",
+    "pack_data",
+    "pack_data_ack",
+    "pack_hello",
+    "parse_ack",
+    "parse_client_id",
+    "parse_cmd",
+    "parse_data",
+    "parse_data_ack",
+    "parse_hello",
+]
+
 VERSION = 1
 CLIENT_ID_BYTES = 6
 CLIENT_ID_OFFSET = 2  # Byte offset of the client_id field in all message types.

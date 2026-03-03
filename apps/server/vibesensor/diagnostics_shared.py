@@ -73,7 +73,7 @@ def order_tolerances(
 ) -> tuple[float, float, float]:
     """Compute (wheel_tol, drive_tol, engine_tol) for the given order frequencies.
 
-    Both callers (_build_order_bands in app.py and classify_peak_hz here) need
+    Both callers (build_order_bands and classify_peak_hz) need
     the same trio of tolerance values.  Centralising the computation here avoids
     repeating the five-parameter call pattern three times per site.
     """
@@ -100,6 +100,45 @@ def order_tolerances(
         **common,
     )
     return wheel_tol, drive_tol, engine_tol
+
+
+def build_order_bands(
+    orders_hz: dict[str, Any],
+    analysis_settings: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Pre-compute order tolerance bands so the frontend doesn't duplicate this math.
+
+    This is a pure function that depends only on the order frequencies and
+    analysis settings — no runtime state required.
+    """
+    resolved = build_diagnostic_settings(analysis_settings)
+    wheel_hz = float(orders_hz["wheel_hz"])
+    drive_hz = float(orders_hz["drive_hz"])
+    engine_hz = float(orders_hz["engine_hz"])
+    wheel_tol, drive_tol, engine_tol = order_tolerances(orders_hz, resolved)
+    bands: list[dict[str, Any]] = [
+        {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
+        {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
+    ]
+    overlap_tol = max(
+        MIN_OVERLAP_TOLERANCE,
+        orders_hz["drive_uncertainty_pct"] + orders_hz["engine_uncertainty_pct"],
+    )
+    if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
+        bands.append(
+            {
+                "key": "driveshaft_engine_1x",
+                "center_hz": drive_hz,
+                "tolerance": max(drive_tol, engine_tol),
+            }
+        )
+    else:
+        bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
+        bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
+    bands.append(
+        {"key": "engine_2x", "center_hz": engine_hz * HARMONIC_2X, "tolerance": engine_tol}
+    )
+    return bands
 
 
 def vehicle_orders_hz(
@@ -315,7 +354,7 @@ def severity_from_peak(
     prior_state: dict[str, Any] | None = None,
     peak_hz: float | None = None,
     persistence_freq_bin_hz: float | None = None,
-) -> dict[str, float | str | dict[str, Any]] | None:
+) -> dict[str, float | str | dict[str, Any]]:
     state = dict(prior_state or {})
     state.setdefault("current_bucket", None)
     state.setdefault("pending_bucket", None)
