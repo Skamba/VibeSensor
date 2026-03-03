@@ -12,12 +12,13 @@ import sys
 from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 
 # ---------------------------------------------------------------------------
 # 1.  Static import guard — report modules must not import analysis modules
 # ---------------------------------------------------------------------------
 
-_REPORT_DIR = Path(__file__).resolve().parents[1] / "vibesensor" / "report"
+_REPORT_DIR = SERVER_ROOT / "vibesensor" / "report"
 _ANALYSIS_PKG = "vibesensor.analysis"
 
 # Modules in the report package that should be checked.

@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from vibesensor_core.strength_bands import BANDS, band_by_key, band_rank, bucket_for_strength
+from _paths import REPO_ROOT
 
 # -- bucket_for_strength -------------------------------------------------------
 
@@ -71,7 +72,7 @@ def test_band_rank_unknown_returns_neg1() -> None:
 # -- UI i18n severity labels match core BANDS -----------------------------------
 
 _UI_CATALOGS_DIR = (
-    Path(__file__).resolve().parent.parent.parent.parent
+    REPO_ROOT
     / "apps"
     / "ui"
     / "src"

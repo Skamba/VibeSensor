@@ -20,6 +20,7 @@ import yaml
 
 from vibesensor.analysis_settings import DEFAULT_ANALYSIS_SETTINGS
 from vibesensor.diagnostics_shared import DEFAULT_DIAGNOSTIC_SETTINGS
+from _paths import REPO_ROOT, SERVER_ROOT
 
 
 def test_diagnostic_settings_is_analysis_settings() -> None:
@@ -194,7 +195,7 @@ def test_config_preflight_no_removed_fields() -> None:
     """config_preflight.summarize must not reference removed config fields."""
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     preflight_path = root / "tools" / "config" / "vibesensor_tools_config" / "config_preflight.py"
     source = preflight_path.read_text(encoding="utf-8")
     assert "metrics_csv_path" not in source, (
@@ -206,7 +207,7 @@ def test_wheel_hz_and_engine_rpm_single_source() -> None:
     """wheel_hz and engine_rpm formulas must not be inlined in consumers."""
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[1]
+    root = SERVER_ROOT
     files_to_check = [
         root / "vibesensor" / "metrics_log" / "sample_builder.py",
         root / "vibesensor" / "metrics_log" / "logger.py",
@@ -224,7 +225,7 @@ def test_simulator_defaults_match_analysis_settings() -> None:
     """Simulator vehicle defaults must be imported from the canonical source."""
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     # Read the simulator source to verify it doesn't hardcode tire/vehicle constants
     sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
         encoding="utf-8"
@@ -246,7 +247,7 @@ def test_simulator_no_production_asserts() -> None:
     """Simulator module-level and standalone functions must not use bare assert."""
     from pathlib import Path
 
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     sim_source = (root / "apps" / "simulator" / "vibesensor_simulator" / "sim_sender.py").read_text(
         encoding="utf-8"
     )
@@ -287,7 +288,7 @@ def test_esp_protocol_constants_match_python() -> None:
         VERSION,
     )
 
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     proto_h = root / "firmware" / "esp" / "lib" / "vibesensor_proto" / "vibesensor_proto.h"
     header = proto_h.read_text(encoding="utf-8")
 
@@ -349,7 +350,7 @@ def test_protocol_docs_byte_sizes_match() -> None:
         HELLO_FIXED_BYTES,
     )
 
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     doc = (root / "docs" / "protocol.md").read_text(encoding="utf-8")
 
     expected = {
@@ -374,7 +375,7 @@ def test_protocol_docs_match_generated_contract_reference() -> None:
     """docs/protocol.md must match the generated authoritative contract doc."""
     from vibesensor.contract_reference_doc import render_contract_reference_markdown
 
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     doc_path = root / "docs" / "protocol.md"
     observed = doc_path.read_text(encoding="utf-8")
     expected = render_contract_reference_markdown()
@@ -449,7 +450,7 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
 
     from vibesensor.config import DEFAULT_CONFIG
 
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     expected_data = int(NETWORK_PORTS["server_udp_data"])
     expected_control = int(NETWORK_PORTS["server_udp_control"])
     expected_fw_base = int(NETWORK_PORTS["firmware_control_port_base"])
@@ -480,7 +481,7 @@ def test_network_ports_single_source_of_truth(monkeypatch: pytest.MonkeyPatch) -
 
 def test_config_example_matches_documented_defaults() -> None:
     """config.example.yaml must be derived from canonical runtime defaults."""
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     config_example = root / "apps" / "server" / "config.example.yaml"
 
     observed = yaml.safe_load(config_example.read_text(encoding="utf-8"))
@@ -492,7 +493,7 @@ def test_config_example_matches_documented_defaults() -> None:
 
 
 def test_server_dockerfile_is_real_build_recipe() -> None:
-    root = Path(__file__).resolve().parents[3]
+    root = REPO_ROOT
     dockerfile = root / "apps" / "server" / "Dockerfile"
     content = dockerfile.read_text(encoding="utf-8")
     first_line = content.splitlines()[0].strip()

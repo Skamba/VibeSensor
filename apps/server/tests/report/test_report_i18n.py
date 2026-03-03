@@ -7,9 +7,10 @@ from pathlib import Path
 import pytest
 
 from vibesensor import report_i18n
+from _paths import SERVER_ROOT
 
-_I18N_JSON = Path(__file__).resolve().parent.parent / "data" / "report_i18n.json"
-_SOURCE_ROOT = Path(__file__).resolve().parent.parent / "vibesensor"
+_I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
+_SOURCE_ROOT = SERVER_ROOT / "vibesensor"
 
 
 def test_translation_loads_and_translates() -> None:
@@ -278,7 +279,7 @@ def test_dutch_translation_audit_round_4_ui_and_python() -> None:
     """Verify Dutch translation improvements in nl.json (UI) and Python files."""
     # --- nl.json UI translations ---
     ui_json = (
-        Path(__file__).resolve().parent.parent.parent
+        SERVER_ROOT.parent
         / "ui"
         / "src"
         / "i18n"
@@ -414,7 +415,7 @@ def test_dutch_translation_audit_round_5_ui_and_python() -> None:
     """Verify Dutch translation improvements in nl.json and Python files (round 5)."""
     # --- nl.json UI translations ---
     ui_json = (
-        Path(__file__).resolve().parent.parent.parent
+        SERVER_ROOT.parent
         / "ui"
         / "src"
         / "i18n"
