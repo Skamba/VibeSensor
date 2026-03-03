@@ -58,6 +58,19 @@ _WHEEL_LABEL_TOKENS: tuple[str, ...] = (
     "rr wheel",
 )
 
+# Labels that exclude a sensor from wheel/corner classification.
+_NON_WHEEL_TOKENS: tuple[str, ...] = (
+    "seat",
+    "passenger",
+    "cabin",
+    "trunk",
+    "engine",
+    "subframe",
+    "transmission",
+    "driveshaft",
+    "tunnel",
+)
+
 
 def is_wheel_location(label_or_code: str) -> bool:
     """Return True if *label_or_code* identifies a wheel/corner sensor.
@@ -68,19 +81,7 @@ def is_wheel_location(label_or_code: str) -> bool:
     if not label_or_code:
         return False
     normalised = label_or_code.strip().lower().replace("_", " ").replace("-", " ")
-    # Reject labels containing seat/cabin/passenger identifiers
-    _non_wheel_tokens = (
-        "seat",
-        "passenger",
-        "cabin",
-        "trunk",
-        "engine",
-        "subframe",
-        "transmission",
-        "driveshaft",
-        "tunnel",
-    )
-    for exclude in _non_wheel_tokens:
+    for exclude in _NON_WHEEL_TOKENS:
         if exclude in normalised:
             return False
     if label_or_code.strip().lower().replace(" ", "_") in WHEEL_LOCATION_CODES:

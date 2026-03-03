@@ -290,10 +290,15 @@ class SettingsStore:
     def remove_sensor(self, mac: str) -> bool:
         sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            removed = self._sensors.pop(sensor_id, None) is not None
-            if removed:
+            old_sensor = self._sensors.pop(sensor_id, None)
+            if old_sensor is None:
+                return False
+            try:
                 self._persist()
-            return removed
+            except PersistenceError:
+                self._sensors[sensor_id] = old_sensor
+                raise
+            return True
 
     @property
     def language(self) -> str:

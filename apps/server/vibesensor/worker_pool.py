@@ -65,9 +65,9 @@ class WorkerPool:
         Task execution time is tracked in ``_total_wait_s`` for parity
         with :meth:`map_unordered`.
         """
-        if not self._alive:
-            raise RuntimeError("WorkerPool is shut down")
         with self._metrics_lock:
+            if not self._alive:
+                raise RuntimeError("WorkerPool is shut down")
             self._total_tasks += 1
 
         def _timed() -> R:
@@ -118,7 +118,8 @@ class WorkerPool:
 
     def shutdown(self, wait: bool = True) -> None:
         """Shut down the pool.  Safe to call multiple times."""
-        self._alive = False
+        with self._metrics_lock:
+            self._alive = False
         self._executor.shutdown(wait=wait)
 
     # -- Observability --------------------------------------------------------

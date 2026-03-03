@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from vibesensor.diagnostics_shared import (
-    _as_float,
     _order_label_for_class_key,
+    as_float_or_none,
     build_diagnostic_settings,
     classify_peak_hz,
     combined_relative_uncertainty,
@@ -17,20 +17,20 @@ from vibesensor.diagnostics_shared import (
 
 
 def test_as_float_nan_returns_none() -> None:
-    assert _as_float(float("nan")) is None
+    assert as_float_or_none(float("nan")) is None
 
 
 def test_as_float_inf_returns_none() -> None:
     # Canonical as_float_or_none rejects both NaN and Inf.
-    result = _as_float(float("inf"))
+    result = as_float_or_none(float("inf"))
     assert result is None
-    result_neg = _as_float(float("-inf"))
+    result_neg = as_float_or_none(float("-inf"))
     assert result_neg is None
 
 
 def test_as_float_non_convertible() -> None:
-    assert _as_float(object()) is None
-    assert _as_float([1, 2]) is None
+    assert as_float_or_none(object()) is None
+    assert as_float_or_none([1, 2]) is None
 
 
 # -- build_diagnostic_settings ------------------------------------------------
