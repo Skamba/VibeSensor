@@ -611,7 +611,7 @@ def test_stop_logging_does_not_block_on_post_analysis(
 
     def _slow_summary(*args, **kwargs):
         summary_started.set()
-        allow_summary_finish.wait(timeout=5.0)
+        assert allow_summary_finish.wait(timeout=5.0)
         return {"summary": "ok"}
 
     monkeypatch.setattr("vibesensor.analysis.summarize_run_data", _slow_summary)

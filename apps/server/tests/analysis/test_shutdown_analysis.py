@@ -116,7 +116,7 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
 
     def _very_slow_analysis(run_id: str) -> None:
         started.set()
-        finish.wait(timeout=2.0)  # Just needs to outlive the 0.3s wait timeout
+        finish.wait(timeout=2.0)  # Keep blocked long enough for timeout-path assertion.
 
     monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _very_slow_analysis)
     logger._schedule_post_analysis("run-slow")
