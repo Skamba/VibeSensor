@@ -21,7 +21,7 @@ __all__ = [
 LOGGER = logging.getLogger(__name__)
 
 
-def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
+def sanitize_for_json(obj: Any, *, _max_depth: int = 128) -> tuple[Any, bool]:
     """Recursively replace non-finite floats (NaN, Inf, -Inf) with ``None``.
 
     Numpy arrays are converted to Python lists and numpy scalars to native
@@ -33,8 +33,10 @@ def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
     """
     found_non_finite = False
 
-    def _walk(v: Any) -> Any:
+    def _walk(v: Any, depth: int = 0) -> Any:
         nonlocal found_non_finite
+        if depth > _max_depth:
+            return None
         # Numpy array → Python list (check ndim to distinguish from scalars).
         if hasattr(v, "tolist") and hasattr(v, "ndim"):
             v = v.tolist()
@@ -47,9 +49,9 @@ def sanitize_for_json(obj: Any) -> tuple[Any, bool]:
             found_non_finite = True
             return None
         if isinstance(v, dict):
-            return {k: _walk(val) for k, val in v.items()}
+            return {k: _walk(val, depth + 1) for k, val in v.items()}
         if isinstance(v, (list, tuple)):
-            return [_walk(item) for item in v]
+            return [_walk(item, depth + 1) for item in v]
         return v
 
     cleaned = _walk(obj)
