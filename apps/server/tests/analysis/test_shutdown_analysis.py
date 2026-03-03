@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import threading
-import time
 from pathlib import Path
 
 import pytest
@@ -91,13 +90,18 @@ def test_wait_returns_true_when_analysis_finishes(tmp_path: Path, monkeypatch) -
     """Analysis finishes within timeout → returns True."""
     logger = _make_logger(tmp_path, history_db=object())
     completed: list[str] = []
+    started = threading.Event()
+    finish = threading.Event()
 
     def _slow_analysis(run_id: str) -> None:
-        time.sleep(0.1)
+        started.set()
+        finish.wait(timeout=2.0)
         completed.append(run_id)
 
     monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _slow_analysis)
     logger._schedule_post_analysis("run-a")
+    assert started.wait(timeout=2.0)
+    finish.set()
 
     result = logger.wait_for_post_analysis(timeout_s=5.0)
     assert result is True
@@ -108,10 +112,11 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
     """Analysis does NOT finish within timeout → returns False."""
     logger = _make_logger(tmp_path, history_db=object())
     started = threading.Event()
+    finish = threading.Event()
 
     def _very_slow_analysis(run_id: str) -> None:
         started.set()
-        time.sleep(1.0)  # Just needs to outlive the 0.3s wait timeout
+        finish.wait(timeout=2.0)  # Keep blocked long enough for timeout-path assertion.
 
     monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _very_slow_analysis)
     logger._schedule_post_analysis("run-slow")
@@ -121,6 +126,8 @@ def test_wait_returns_false_on_timeout(tmp_path: Path, monkeypatch) -> None:
 
     result = logger.wait_for_post_analysis(timeout_s=0.3)
     assert result is False
+    finish.set()
+    assert logger.wait_for_post_analysis(timeout_s=2.0) is True
 
 
 # ---------------------------------------------------------------------------
