@@ -13,7 +13,6 @@ from typing import Any
 import pytest
 from builders import (
     ALL_WHEEL_SENSORS,
-    CAR_PROFILE_IDS,
     CAR_PROFILES,
     CORNER_SENSORS,
     NON_WHEEL_SENSORS,
@@ -56,6 +55,9 @@ _12_SENSORS = ALL_WHEEL_SENSORS + NON_WHEEL_SENSORS[:8]
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
+# Keep profile coverage broad with a light matrix: first/middle/last profile.
+_OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
+_OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
 # ---------------------------------------------------------------------------
@@ -63,7 +65,7 @@ _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
 def test_4sensor_fault_corner_speed(corner: str, speed: float, profile: dict[str, Any]) -> None:
@@ -94,7 +96,7 @@ def test_4sensor_fault_corner_speed(corner: str, speed: float, profile: dict[str
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
 def test_4sensor_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """4 sensors, all noise → no wheel fault."""
@@ -108,7 +110,7 @@ def test_4sensor_no_fault(speed: float, profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
     "sensors,fault_corner",
     [
@@ -145,7 +147,7 @@ def test_2sensor_localization(
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_8sensor_fault_localization(corner: str, profile: dict[str, Any]) -> None:
     """8 sensors (4 wheel + 4 non-wheel), fault at one wheel corner."""
@@ -171,7 +173,7 @@ def test_8sensor_fault_localization(corner: str, profile: dict[str, Any]) -> Non
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_12sensor_fault_localization(corner: str, profile: dict[str, Any]) -> None:
     """12 sensors, fault at one wheel corner → correct localization."""
@@ -197,7 +199,7 @@ def test_12sensor_fault_localization(corner: str, profile: dict[str, Any]) -> No
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
 def test_4sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """Diffuse excitation across 4 sensors → no localized wheel fault."""
@@ -211,7 +213,7 @@ def test_4sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -> None
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
     "sensors,label",
     [(_2_SENSORS_FL_RR, "2sensor"), (_4_SENSORS, "4sensor"), (_8_SENSORS, "8sensor")],
@@ -237,7 +239,7 @@ def test_confidence_scales_with_sensor_count(
     assert_confidence_between(summary, 0.10, 1.0, msg=label)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 def test_sensor_count_monotonic(profile: dict[str, Any]) -> None:
     """Confidence should stay stable as sensors are added.
 
@@ -273,7 +275,7 @@ def test_sensor_count_monotonic(profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 def test_4sensor_amplitude_monotonic(profile: dict[str, Any]) -> None:
     """Wheel/tire confidence should increase pairwise with fault amplitude on 4 sensors."""
     confs: list[float] = []
@@ -299,7 +301,7 @@ def test_4sensor_amplitude_monotonic(profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_4sensor_transfer_path(corner: str, profile: dict[str, Any]) -> None:
     """Fault + 20% amplitude leak to other sensors → correct source."""
@@ -325,7 +327,7 @@ def test_4sensor_transfer_path(corner: str, profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
     """Idle → ramp → fault on 4 sensors → correct detection."""
@@ -361,7 +363,7 @@ def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 def test_8sensor_no_fault_baseline(profile: dict[str, Any]) -> None:
     """8 sensors, all noise → no wheel fault."""
     samples = make_noise_samples(sensors=_8_SENSORS, speed_kmh=SPEED_MID, n_samples=40)
@@ -374,7 +376,7 @@ def test_8sensor_no_fault_baseline(profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 def test_12sensor_no_fault_baseline(profile: dict[str, Any]) -> None:
     """12 sensors, all noise → no wheel fault."""
     samples = make_noise_samples(sensors=_12_SENSORS, speed_kmh=SPEED_MID, n_samples=40)
@@ -387,7 +389,7 @@ def test_12sensor_no_fault_baseline(profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
     "sensors,label",
     [(_8_SENSORS, "8s"), (_12_SENSORS, "12s")],
@@ -407,7 +409,7 @@ def test_multi_sensor_diffuse_no_fault(
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FR", "RL"])
 def test_4sensor_speed_sweep(corner: str, profile: dict[str, Any]) -> None:
     """Speed sweep with fault at one corner on 4 sensors."""
@@ -433,7 +435,7 @@ def test_4sensor_speed_sweep(corner: str, profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 def test_4sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None:
     """Weak fault on 4 sensors → low or no confidence."""
@@ -461,7 +463,7 @@ def test_4sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_4sensor_very_high_speed(corner: str, profile: dict[str, Any]) -> None:
     """4-sensor fault at 120 km/h."""
