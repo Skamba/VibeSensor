@@ -220,7 +220,9 @@ def _build_sensor_render_plan(
         labeled_names, key=lambda value: (location_points[value][1], location_points[value][0])
     ):
         px, py = location_points[name]
-        marker = next(item for item in markers if item.name == name)
+        marker = next((item for item in markers if item.name == name), None)
+        if marker is None:
+            continue
         if marker.state == "connected-active":
             color = REPORT_COLORS["ink"]
         elif marker.state == "connected-inactive":

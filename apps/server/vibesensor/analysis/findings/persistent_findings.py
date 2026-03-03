@@ -105,7 +105,7 @@ def _build_persistent_peak_findings(
     accel_units: str,
     lang: str,
     freq_bin_hz: float = 2.0,
-    per_sample_phases: list | None = None,
+    per_sample_phases: list[str] | None = None,
     run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, Any]]:
     """Build findings for non-order persistent frequency peaks.
