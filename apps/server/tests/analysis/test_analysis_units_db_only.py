@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
+
+from _paths import SERVER_ROOT
 
 from vibesensor.analysis.summary import summarize_run_data
 
@@ -101,7 +102,7 @@ def test_post_analysis_summary_has_no_g_unit_strings() -> None:
 def test_analysis_modules_use_canonical_db_helper() -> None:
     """Analysis modules must import vibration_strength_db_scalar as canonical_vibration_db
     and call it via the alias, not directly as vibration_strength_db_scalar()."""
-    analysis_root = Path(__file__).resolve().parents[1] / "vibesensor" / "analysis"
+    analysis_root = SERVER_ROOT / "vibesensor" / "analysis"
 
     direct_users: list[str] = []
     for py_file in sorted(analysis_root.rglob("*.py")):

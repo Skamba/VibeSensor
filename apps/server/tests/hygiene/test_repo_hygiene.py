@@ -4,9 +4,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+from _paths import REPO_ROOT
+
 
 def _run_check_script(cwd: Path) -> subprocess.CompletedProcess[str]:
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = REPO_ROOT
     script = repo_root / "tools" / "dev" / "check_no_pycache.py"
     return subprocess.run(
         [sys.executable, str(script)],
@@ -18,7 +20,7 @@ def _run_check_script(cwd: Path) -> subprocess.CompletedProcess[str]:
 
 
 def test_no_tracked_pycache_or_pyc() -> None:
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = REPO_ROOT
     completed = _run_check_script(repo_root)
     assert completed.returncode == 0, completed.stdout + completed.stderr
 

@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 import pytest
+from _paths import REPO_ROOT, SERVER_ROOT
 
 
 def _read(path: Path) -> str:
@@ -35,7 +36,7 @@ def _has_log10_call(text: str) -> bool:
 
 # Lightweight smoke tests: string guards intentionally enforce "no local reimplementation" patterns.
 def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
-    pkg_dir = Path(__file__).resolve().parents[1] / "vibesensor" / "live_diagnostics"
+    pkg_dir = SERVER_ROOT / "vibesensor" / "live_diagnostics"
     for py_file in sorted(pkg_dir.rglob("*.py")):
         text = _read(py_file)
         assert "strength_db_above_floor(" not in text, f"found in {py_file.name}"
@@ -44,7 +45,7 @@ def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
 
 
 def test_report_modules_use_shared_strength_math() -> None:
-    report_dir = Path(__file__).resolve().parents[1] / "vibesensor" / "report"
+    report_dir = SERVER_ROOT / "vibesensor" / "report"
     for py_file in sorted(report_dir.rglob("*.py")):
         text = _read(py_file)
         assert "Math.log10" not in text, f"Math.log10 found in {py_file.name}"
@@ -55,7 +56,7 @@ def test_report_modules_use_shared_strength_math() -> None:
 
 
 def test_client_assets_do_not_compute_strength_metrics() -> None:
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = REPO_ROOT
     candidate_dirs = [repo_root / "apps" / "ui" / "dist", repo_root / "apps" / "server" / "public"]
     forbidden_patterns = [
         re.compile(r"Math\.log10\([^)]*/[^)]*\)|log10\([^)]*/[^)]*\)"),
@@ -82,7 +83,7 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
 
 
 def test_strength_metric_definition_is_centralized() -> None:
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = REPO_ROOT
     server_root = repo_root / "apps" / "server" / "vibesensor"
     core_vibration_math = (
         repo_root / "libs" / "core" / "python" / "vibesensor_core" / "vibration_strength.py"
@@ -99,7 +100,7 @@ def test_strength_metric_definition_is_centralized() -> None:
 
 
 def test_server_no_local_vibration_strength_module() -> None:
-    path = Path(__file__).resolve().parents[1] / "vibesensor" / "analysis" / "vibration_strength.py"
+    path = SERVER_ROOT / "vibesensor" / "analysis" / "vibration_strength.py"
     assert not path.exists(), f"Server-local vibration strength module should be removed: {path}"
 
 
@@ -108,7 +109,7 @@ def test_typescript_any_type_budget() -> None:
 
     Only the demo cleanup window hook is allowed.
     """
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = REPO_ROOT
     ui_src = repo_root / "apps" / "ui" / "src"
     any_pattern = re.compile(r"\bas\s+any\b|:\s*any\b")
     # Allowlist: window test hook and large untyped state bags in main.ts

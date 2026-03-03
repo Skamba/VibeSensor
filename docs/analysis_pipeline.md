@@ -141,5 +141,5 @@ vibesensor/analysis/
    `report_data_builder.py:map_summary()` and the
    `ReportTemplateData` dataclass.
 4. Export any new public symbol from `analysis/__init__.py`.
-5. Run `pytest apps/server/tests/test_analysis_architecture.py` to
+5. Run `pytest apps/server/tests/analysis/test_analysis_architecture.py` to
    verify architectural guardrails still pass.

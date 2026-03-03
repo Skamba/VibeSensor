@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 
 import numpy as np
+from _paths import SERVER_ROOT
 
 from vibesensor.api import _safe_filename
 from vibesensor.history_db import HistoryDB
@@ -129,7 +130,7 @@ class TestProcessingZeroSampleRate:
 
 def test_live_diagnostics_entries_type_annotation() -> None:
     """The entries type should be a 4-tuple matching the actual append."""
-    pkg = Path(__file__).resolve().parent.parent / "vibesensor"
+    pkg = SERVER_ROOT / "vibesensor"
     src_path = pkg / "live_diagnostics" / "event_detector.py"
     source = src_path.read_text()
     # Find the type annotation line for entries
@@ -143,7 +144,7 @@ def test_live_diagnostics_entries_type_annotation() -> None:
 
 def test_set_location_uses_stripped_code() -> None:
     """Verify the stripped code is passed to registry.set_location."""
-    src_path = Path(__file__).resolve().parent.parent / "vibesensor" / "routes" / "clients.py"
+    src_path = SERVER_ROOT / "vibesensor" / "routes" / "clients.py"
     source = src_path.read_text()
     # The registry.set_location call should use 'code' (stripped), not
     # 'req.location_code' (raw).

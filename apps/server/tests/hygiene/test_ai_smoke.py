@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from _paths import REPO_ROOT, SERVER_ROOT
 
 from vibesensor.api import create_router
 
@@ -19,14 +19,14 @@ def test_smoke_health_route_registered() -> None:
 
 @pytest.mark.smoke
 def test_smoke_hotspot_script_has_no_runtime_apt_get() -> None:
-    script = Path(__file__).resolve().parents[1] / "scripts" / "hotspot_nmcli.sh"
+    script = SERVER_ROOT / "scripts" / "hotspot_nmcli.sh"
     text = script.read_text(encoding="utf-8")
     assert "apt-get" not in text, "hotspot script must not install packages at runtime"
 
 
 @pytest.mark.smoke
 def test_smoke_hotspot_script_only_reactivates_ap_after_uplink_session() -> None:
-    script = Path(__file__).resolve().parents[1] / "scripts" / "hotspot_nmcli.sh"
+    script = SERVER_ROOT / "scripts" / "hotspot_nmcli.sh"
     text = script.read_text(encoding="utf-8")
     assert 'if [ "${UPLINK_SESSION_USED:-0}" = "1" ]; then' in text, (
         "hotspot script must not re-activate AP connection unconditionally"
@@ -35,7 +35,7 @@ def test_smoke_hotspot_script_only_reactivates_ap_after_uplink_session() -> None
 
 @pytest.mark.smoke
 def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
-    build_sh = Path(__file__).resolve().parents[3] / "infra" / "pi-image" / "pi-gen" / "build.sh"
+    build_sh = REPO_ROOT / "infra" / "pi-image" / "pi-gen" / "build.sh"
     text = build_sh.read_text(encoding="utf-8")
     assert "BUILD_MODE" in text, "build wrapper must support split app/image build modes"
     assert "BUILD_MODE=app" in text, "build wrapper must support app-only artifact builds"
@@ -62,7 +62,7 @@ def test_smoke_build_wrapper_asserts_hotspot_requirements() -> None:
 @pytest.mark.smoke
 def test_smoke_install_pi_installs_core_toolchain() -> None:
     """Verify install_pi.sh installs required packages and sets up rollback dir."""
-    script = Path(__file__).resolve().parents[1] / "scripts" / "install_pi.sh"
+    script = SERVER_ROOT / "scripts" / "install_pi.sh"
     text = script.read_text(encoding="utf-8")
     assert "python3" in text, "Pi install script must install python3"
     assert 'chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PI_DIR}"' in text, (
@@ -79,7 +79,7 @@ def test_smoke_install_pi_installs_core_toolchain() -> None:
 
 @pytest.mark.smoke
 def test_smoke_server_pyproject_includes_esptool_for_esp_flash() -> None:
-    pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+    pyproject = SERVER_ROOT / "pyproject.toml"
     text = pyproject.read_text(encoding="utf-8")
     assert "esptool" in text, "Server dependencies must include esptool for offline ESP flash"
     assert "vibesensor-fw-refresh" in text, (
@@ -90,7 +90,7 @@ def test_smoke_server_pyproject_includes_esptool_for_esp_flash() -> None:
 
 @pytest.mark.smoke
 def test_smoke_systemd_service_sets_contracts_dir_env() -> None:
-    service_template = Path(__file__).resolve().parents[1] / "systemd" / "vibesensor.service"
+    service_template = SERVER_ROOT / "systemd" / "vibesensor.service"
     text = service_template.read_text(encoding="utf-8")
     assert "VIBESENSOR_CONTRACTS_DIR" in text, (
         "systemd service must set shared contracts directory for wheel-based runtime"
@@ -99,7 +99,7 @@ def test_smoke_systemd_service_sets_contracts_dir_env() -> None:
 
 @pytest.mark.smoke
 def test_smoke_firmware_uses_vendored_neopixel_library_for_offline_builds() -> None:
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = REPO_ROOT
     platformio_ini = repo_root / "firmware" / "esp" / "platformio.ini"
     text = platformio_ini.read_text(encoding="utf-8")
     assert "${PROJECT_DIR}/lib/Adafruit_NeoPixel" in text, (
