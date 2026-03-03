@@ -289,7 +289,19 @@ class HistoryDB:
                     ("version", str(_SCHEMA_VERSION)),
                 )
                 return
-            version = int(str(row[0]))
+            try:
+                version = int(str(row[0]))
+            except (ValueError, TypeError):
+                LOGGER.error(
+                    "Corrupted schema_meta version value %r; resetting to %s",
+                    row[0],
+                    _SCHEMA_VERSION,
+                )
+                cur.execute(
+                    "UPDATE schema_meta SET value = ? WHERE key = 'version'",
+                    (str(_SCHEMA_VERSION),),
+                )
+                return
             if version == _SCHEMA_VERSION:
                 return
             if version == 4:

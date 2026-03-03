@@ -201,7 +201,8 @@ class SettingsStore:
                 self._persist()
             except PersistenceError:
                 car.name, car.type = old_name, old_type
-                car.aspects = old_aspects
+                car.aspects.clear()
+                car.aspects.update(old_aspects)
                 car.variant = old_variant
                 raise
             return self.get_cars()

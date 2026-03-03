@@ -228,3 +228,83 @@ class TestApiModelValidationBounds:
         req = SensorRequest(name="MySensor", location="front_left")
         assert req.name == "MySensor"
         assert req.location == "front_left"
+
+
+# ------------------------------------------------------------------
+# 5. history_db — corrupted schema version recovery
+# ------------------------------------------------------------------
+
+
+class TestHistoryDbCorruptedSchemaVersion:
+    """_ensure_schema must not crash on corrupted version metadata."""
+
+    def test_corrupted_version_string_recovers(self, tmp_path) -> None:
+        import sqlite3
+
+        from vibesensor.history_db import HistoryDB
+
+        db_path = tmp_path / "test.db"
+        # Create a DB with a corrupted version value
+        conn = sqlite3.connect(str(db_path))
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT)"
+        )
+        conn.execute(
+            "INSERT INTO schema_meta (key, value) VALUES ('version', 'CORRUPT')"
+        )
+        conn.commit()
+        conn.close()
+
+        # Should not crash — should recover
+        db = HistoryDB(db_path)
+        assert db is not None
+
+    def test_valid_version_still_works(self, tmp_path) -> None:
+        from vibesensor.history_db import HistoryDB
+
+        db_path = tmp_path / "test.db"
+        db = HistoryDB(db_path)
+        # Normal creation should work fine
+        assert db is not None
+
+
+# ------------------------------------------------------------------
+# 6. settings_store — dict rollback safety
+# ------------------------------------------------------------------
+
+
+class TestSettingsStoreRollbackSafety:
+    """Car aspects rollback must use clear/update, not reassignment."""
+
+    def test_rollback_preserves_dict_identity(self) -> None:
+        """After a failed persist, the car.aspects dict object
+        should still be the same object (not replaced)."""
+        from unittest.mock import patch
+
+        from vibesensor.settings_store import SettingsStore
+
+        store = SettingsStore(db=None)
+        car_data = store.add_car({"name": "TestCar", "type": "sedan"})
+        car_id = car_data["cars"][0]["id"]
+
+        # Set as active so _find_car works
+        store.set_active_car(car_id)
+
+        # Get the aspects dict reference before update
+        with store._lock:
+            car = store._find_car(car_id)
+            original_aspects_id = id(car.aspects)
+
+        # Force persist to fail
+        with patch.object(store, "_persist", side_effect=Exception("disk full")):
+            try:
+                store.update_car(
+                    car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}}
+                )
+            except Exception:
+                pass
+
+        # The aspects dict should still be the SAME object
+        with store._lock:
+            car = store._find_car(car_id)
+            assert id(car.aspects) == original_aspects_id
