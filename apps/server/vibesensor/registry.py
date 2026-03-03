@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["ClientRecord", "ClientRegistry", "DataUpdateResult"]
+
 # Maximum number of recent sequence numbers tracked per client for
 # deduplication.  Bounds memory while covering the largest realistic
 # retransmit / out-of-order window on a local Wi-Fi link.
@@ -29,20 +31,34 @@ _DEDUP_WINDOW = 128
 # treated as a client restart so that the dedup window is cleared.
 _DEDUP_RESTART_GAP = 4
 
+# Magic-number extraction: sequence gap that indicates a client restarted
+# its firmware (as opposed to a minor out-of-order retransmit).
+_RESTART_SEQ_GAP = 1000
+"""If a DATA message's seq is more than this many steps behind last_seq,
+the client is assumed to have rebooted and counters are reset."""
+
+# EMA smoothing factor for timing jitter tracking.
+_JITTER_EMA_ALPHA = 0.2
+"""Exponential moving-average smoothing factor (0–1) for per-client
+timing jitter estimates.  Smaller values smooth more; 0.2 gives ~5-sample
+effective window."""
+
 
 def _sanitize_name(name: str) -> str:
+    """Sanitize a client name: strip control chars, enforce 32 UTF-8 byte limit."""
     # Strip control characters (U+0000–U+001F, U+007F) except common whitespace
     clean = "".join(c for c in name if ord(c) >= 0x20 and ord(c) != 0x7F)
     clean = clean.strip()
     if not clean:
         return ""
-    # Truncate to at most 32 UTF-8 bytes without splitting multi-byte characters
+    # Truncate to at most 32 UTF-8 bytes without splitting multi-byte characters.
+    # We slice at 32 bytes and decode with errors="ignore" which drops any
+    # incomplete trailing byte sequence — this is safe because the source is
+    # valid UTF-8 from ``str.encode()``.
     encoded = clean.encode("utf-8", errors="ignore")
     if len(encoded) <= 32:
         return clean
-    truncated = encoded[:32]
-    # Backtrack to the last complete UTF-8 character boundary
-    return truncated.decode("utf-8", errors="ignore")
+    return encoded[:32].decode("utf-8", errors="ignore")
 
 
 def _normalize_client_id(client_id: str) -> str:
@@ -255,13 +271,16 @@ class ClientRegistry:
                 ) * 1_000_000.0
                 actual_delta_us = float(data_msg.t0_us - record.last_t0_us)
                 jitter_us = actual_delta_us - expected_delta_us
-                alpha = 0.2
+                alpha = _JITTER_EMA_ALPHA
                 record.timing_jitter_us_ema = (1.0 - alpha) * record.timing_jitter_us_ema + (
                     alpha * jitter_us
                 )
                 record.timing_drift_us_total += jitter_us
             if record.last_seq is not None:
-                if data_msg.seq < record.last_seq and (record.last_seq - data_msg.seq) > 1000:
+                if (
+                    data_msg.seq < record.last_seq
+                    and (record.last_seq - data_msg.seq) > _RESTART_SEQ_GAP
+                ):
                     record.reset_count += 1
                     record.last_reset_time = now_ts
                     record.last_t0_us = None
@@ -412,6 +431,63 @@ class ClientRegistry:
             record.last_ack_cmd_seq = cmd_seq
             record.last_ack_status = None
 
+    @staticmethod
+    def _client_api_row(
+        client_id: str,
+        *,
+        name: str,
+        connected: bool,
+        location: str = "",
+        firmware_version: str = "",
+        sample_rate_hz: int = 0,
+        frame_samples: int = 0,
+        last_seen_age_ms: int | None = None,
+        data_addr: tuple[str, int] | None = None,
+        control_addr: tuple[str, int] | None = None,
+        frames_total: int = 0,
+        dropped_frames: int = 0,
+        duplicates_received: int = 0,
+        queue_overflow_drops: int = 0,
+        parse_errors: int = 0,
+        server_queue_drops: int = 0,
+        latest_metrics: dict[str, Any] | None = None,
+        last_ack_cmd_seq: int | None = None,
+        last_ack_status: int | None = None,
+        reset_count: int = 0,
+        last_reset_time: float | None = None,
+        timing_health: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Build a single client row for the API snapshot.
+
+        Centralises the dict shape so both connected and disconnected
+        branches produce identical key sets.
+        """
+        return {
+            "id": client_id,
+            "mac_address": client_id_mac(client_id),
+            "name": name,
+            "connected": connected,
+            "location": location,
+            "firmware_version": firmware_version,
+            "sample_rate_hz": sample_rate_hz,
+            "frame_samples": frame_samples,
+            "last_seen_age_ms": last_seen_age_ms,
+            "data_addr": data_addr,
+            "control_addr": control_addr,
+            "frames_total": frames_total,
+            "dropped_frames": dropped_frames,
+            "duplicates_received": duplicates_received,
+            "queue_overflow_drops": queue_overflow_drops,
+            "parse_errors": parse_errors,
+            "server_queue_drops": server_queue_drops,
+            "latest_metrics": latest_metrics if latest_metrics is not None else {},
+            "last_ack_cmd_seq": last_ack_cmd_seq,
+            "last_ack_status": last_ack_status,
+            "reset_count": reset_count,
+            "last_reset_time": last_reset_time,
+            "timing_health": timing_health if timing_health is not None else {},
+        }
+
     def snapshot_for_api(
         self, now: float | None = None, *, now_mono: float | None = None
     ) -> list[dict[str, Any]]:
@@ -424,31 +500,11 @@ class ClientRegistry:
                 record = self._clients.get(client_id)
                 if record is None:
                     rows.append(
-                        {
-                            "id": client_id,
-                            "mac_address": client_id_mac(client_id),
-                            "name": self._user_names.get(client_id, f"client-{client_id[-4:]}"),
-                            "connected": False,
-                            "location": "",
-                            "firmware_version": "",
-                            "sample_rate_hz": 0,
-                            "frame_samples": 0,
-                            "last_seen_age_ms": None,
-                            "data_addr": None,
-                            "control_addr": None,
-                            "frames_total": 0,
-                            "dropped_frames": 0,
-                            "duplicates_received": 0,
-                            "queue_overflow_drops": 0,
-                            "parse_errors": 0,
-                            "server_queue_drops": 0,
-                            "latest_metrics": {},
-                            "last_ack_cmd_seq": None,
-                            "last_ack_status": None,
-                            "reset_count": 0,
-                            "last_reset_time": None,
-                            "timing_health": {},
-                        }
+                        self._client_api_row(
+                            client_id,
+                            name=self._user_names.get(client_id, f"client-{client_id[-4:]}"),
+                            connected=False,
+                        )
                     )
                     continue
                 age_ms = (
@@ -459,34 +515,33 @@ class ClientRegistry:
                     and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
                 )
                 rows.append(
-                    {
-                        "id": record.client_id,
-                        "mac_address": client_id_mac(record.client_id),
-                        "name": record.name,
-                        "connected": connected,
-                        "location": record.location,
-                        "firmware_version": record.firmware_version,
-                        "sample_rate_hz": record.sample_rate_hz,
-                        "frame_samples": record.frame_samples,
-                        "last_seen_age_ms": age_ms,
-                        "data_addr": record.data_addr,
-                        "control_addr": record.control_addr,
-                        "frames_total": record.frames_total,
-                        "dropped_frames": record.frames_dropped,
-                        "duplicates_received": record.duplicates_received,
-                        "queue_overflow_drops": record.queue_overflow_drops,
-                        "parse_errors": record.parse_errors,
-                        "server_queue_drops": record.server_queue_drops,
-                        "latest_metrics": record.latest_metrics,
-                        "last_ack_cmd_seq": record.last_ack_cmd_seq,
-                        "last_ack_status": record.last_ack_status,
-                        "reset_count": record.reset_count,
-                        "last_reset_time": record.last_reset_time,
-                        "timing_health": {
+                    self._client_api_row(
+                        record.client_id,
+                        name=record.name,
+                        connected=connected,
+                        location=record.location,
+                        firmware_version=record.firmware_version,
+                        sample_rate_hz=record.sample_rate_hz,
+                        frame_samples=record.frame_samples,
+                        last_seen_age_ms=age_ms,
+                        data_addr=record.data_addr,
+                        control_addr=record.control_addr,
+                        frames_total=record.frames_total,
+                        dropped_frames=record.frames_dropped,
+                        duplicates_received=record.duplicates_received,
+                        queue_overflow_drops=record.queue_overflow_drops,
+                        parse_errors=record.parse_errors,
+                        server_queue_drops=record.server_queue_drops,
+                        latest_metrics=record.latest_metrics,
+                        last_ack_cmd_seq=record.last_ack_cmd_seq,
+                        last_ack_status=record.last_ack_status,
+                        reset_count=record.reset_count,
+                        last_reset_time=record.last_reset_time,
+                        timing_health={
                             "jitter_us_ema": record.timing_jitter_us_ema,
                             "drift_us_total": record.timing_drift_us_total,
                             "last_t0_us": record.last_t0_us,
                         },
-                    }
+                    )
                 )
             return rows

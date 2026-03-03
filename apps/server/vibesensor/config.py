@@ -250,9 +250,9 @@ class ProcessingConfig:
             object.__setattr__(self, "spectrum_min_hz", 0.0)
 
         # --- spectrum_max_hz must be below Nyquist (sample_rate_hz / 2) -------------
-        nyquist = self.sample_rate_hz // 2
+        nyquist = self.sample_rate_hz / 2
         if nyquist > 0 and self.spectrum_max_hz >= nyquist:
-            clamped = nyquist - 1 if nyquist > 1 else 1
+            clamped = int(nyquist - 1) if nyquist > 1 else 1
             LOGGER.warning(
                 "processing.spectrum_max_hz=%s >= Nyquist (%s) — clamped to %s",
                 self.spectrum_max_hz,

@@ -20,6 +20,8 @@ class SpeedResolution(NamedTuple):
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["GPSSpeedMonitor", "SpeedResolution"]
+
 _GPS_DISABLED_POLL_S: float = 5.0
 """Sleep interval when GPS is disabled."""
 
@@ -44,7 +46,6 @@ DEFAULT_FALLBACK_MODE: str = "manual"
 class GPSSpeedMonitor:
     def __init__(self, gps_enabled: bool):
         self.gps_enabled = gps_enabled
-        self.speed_mps: float | None = None
         self.override_speed_mps: float | None = None
         # None keeps legacy behavior (override has top priority) for backwards
         # compatibility in isolated monitor usage/tests.
@@ -56,6 +57,8 @@ class GPSSpeedMonitor:
         self.connection_state: str = "disabled" if not gps_enabled else "disconnected"
         # Atomic (speed, timestamp) snapshot: both fields are always written
         # together so cross-thread readers never see a torn state.
+        # The ``speed_mps`` property reads/writes this tuple so the two
+        # representations can never diverge.
         self._speed_snapshot: tuple[float | None, float | None] = (None, None)
         self.last_error: str | None = None
         self.current_reconnect_delay: float = _GPS_RECONNECT_DELAY_S
@@ -69,6 +72,16 @@ class GPSSpeedMonitor:
         # --- fallback ---
         self.stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S
         self.fallback_mode: str = DEFAULT_FALLBACK_MODE
+
+    @property
+    def speed_mps(self) -> float | None:
+        """Current GPS speed from the atomic snapshot."""
+        return self._speed_snapshot[0]
+
+    @speed_mps.setter
+    def speed_mps(self, value: float | None) -> None:
+        """Set GPS speed, preserving the existing timestamp."""
+        self._speed_snapshot = (value, self._speed_snapshot[1])
 
     # ------------------------------------------------------------------
     # Speed resolution — pure computation, no side effects
@@ -90,8 +103,9 @@ class GPSSpeedMonitor:
                 return SpeedResolution(float(self.override_speed_mps), False, "manual")
             # Manual selected but no override set → fall through to GPS
 
-        # Snapshot GPS speed to avoid TOCTOU race with concurrent updates.
-        _speed = self.speed_mps
+        # Read from the atomic (speed, timestamp) snapshot so the speed value
+        # and the staleness check are always consistent with each other.
+        _speed, _ts = self._speed_snapshot
         if isinstance(_speed, (int, float)):
             if self._is_gps_stale():
                 fb = self._fallback_speed_value()
