@@ -94,6 +94,19 @@ def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
     assert warning_log.call_args_list[1].args[-1] == 2
 
 
+def test_datagram_received_ignores_empty_and_non_data_packets() -> None:
+    registry = Mock()
+    processor = Mock()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=4)
+
+    proto.datagram_received(b"", ("127.0.0.1", 10001))
+    proto.datagram_received(b"\x01not-data", ("127.0.0.1", 10001))
+
+    assert proto._queue.qsize() == 0
+    registry.note_server_queue_drop.assert_not_called()
+    registry.note_parse_error.assert_not_called()
+
+
 @pytest.mark.asyncio
 async def test_duplicate_data_still_sends_ack_but_skips_ingest() -> None:
     """A duplicate DATA frame should be ACKed but NOT ingested."""
@@ -149,3 +162,39 @@ async def test_process_datagram_logs_client_id_on_error() -> None:
 
     # Should not crash – the error is caught and logged
     assert processor.ingest.call_count == 0
+
+
+def test_process_datagram_parse_error_marks_registry_and_skips_ack() -> None:
+    registry = Mock()
+    processor = Mock()
+    transport = _FakeTransport()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(transport)
+
+    proto._process_datagram(b"\x02\x01", ("127.0.0.1", 12345))
+
+    registry.note_parse_error.assert_called_once()
+    registry.update_from_data.assert_not_called()
+    assert transport.sent == []
+
+
+def test_process_datagram_reset_detected_flushes_buffer_before_ingest() -> None:
+    registry = Mock()
+    registry.update_from_data.return_value = DataUpdateResult(reset_detected=True)
+    registry.get.return_value = SimpleNamespace(sample_rate_hz=1600)
+    processor = Mock()
+    transport = _FakeTransport()
+    proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
+    proto.connection_made(transport)
+
+    pkt = pack_data(
+        bytes.fromhex("010203040506"),
+        seq=10,
+        t0_us=321,
+        samples=np.zeros((2, 3), dtype=np.int16),
+    )
+    proto._process_datagram(pkt, ("127.0.0.1", 12345))
+
+    processor.flush_client_buffer.assert_called_once_with("010203040506")
+    processor.ingest.assert_called_once()
+    assert len(transport.sent) == 1
