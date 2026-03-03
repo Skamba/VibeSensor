@@ -22,6 +22,7 @@ dependencies = [
 dev = [
   "pytest>=8,<9",
   "pytest-asyncio>=0.23,<1",
+  "pytest-xdist>=3.6,<4",
   "pypdf>=5,<6",
   "pypdfium2>=4.30,<5",
   "rapidocr-onnxruntime>=1.4,<2",
@@ -67,6 +68,7 @@ include = [
 ]
 
 [tool.pytest.ini_options]
+addopts = "-n auto --dist worksteal"
 asyncio_mode = "auto"
 pythonpath = [".", "tests"]
 testpaths = ["tests"]

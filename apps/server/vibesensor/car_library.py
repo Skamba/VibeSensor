@@ -7,11 +7,21 @@ exposes lightweight query helpers used by the API layer.
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
+
+__all__ = [
+    "CAR_LIBRARY",
+    "get_brands",
+    "get_models_for_brand_type",
+    "get_types_for_brand",
+    "get_variants_for_model",
+    "resolve_variant",
+]
 
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json"
 
@@ -53,15 +63,25 @@ def get_types_for_brand(brand: str) -> list[str]:
 
 
 def get_models_for_brand_type(brand: str, car_type: str) -> list[dict]:
-    """Return all library entries matching *brand* and *car_type*."""
-    return [e for e in CAR_LIBRARY if e.get("brand") == brand and e.get("type") == car_type]
+    """Return all library entries matching *brand* and *car_type*.
+
+    Returns deep copies so callers cannot corrupt the cached library.
+    """
+    return [
+        copy.deepcopy(e)
+        for e in CAR_LIBRARY
+        if e.get("brand") == brand and e.get("type") == car_type
+    ]
 
 
 def get_variants_for_model(brand: str, car_type: str, model: str) -> list[dict]:
-    """Return the variants list for a specific model, or [] if none."""
+    """Return the variants list for a specific model, or [] if none.
+
+    Returns deep copies so callers cannot corrupt the cached library.
+    """
     for e in CAR_LIBRARY:
         if e.get("brand") == brand and e.get("type") == car_type and e.get("model") == model:
-            return list(e.get("variants") or [])
+            return copy.deepcopy(list(e.get("variants") or []))
     return []
 
 
@@ -76,8 +96,6 @@ def resolve_variant(
     deep copy of the base entry so callers cannot corrupt the cached
     library data.
     """
-    import copy
-
     result = copy.deepcopy(base_entry)
     if not variant_name:
         return result

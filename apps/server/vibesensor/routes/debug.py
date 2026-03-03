@@ -9,7 +9,7 @@ from fastapi import APIRouter, Query
 from ._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
+    from ..runtime import RuntimeState
 
 
 def create_debug_routes(state: RuntimeState) -> APIRouter:

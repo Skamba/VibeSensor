@@ -38,6 +38,8 @@ Validation (always required)
 - CI-parity suite (same command groups as `.github/workflows/ci.yml`, run in parallel locally): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
 - Optional CI-parity subset jobs for faster loops: `python3 tools/tests/run_ci_parallel.py --job preflight --job tests`.
 - Optional focused backend pytest: `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.
+- Run a single feature area: `pytest -q apps/server/tests/<module>/` (e.g., `tests/analysis/`, `tests/report/`).
+- Test layout: feature-based subdirectories mirror source modules; see `docs/testing.md`.
 - Run lint (`ruff check`) before pushing changes.
 - After any backend or frontend change, rebuild and test via Docker before considering the work done:
   1. `docker compose build --pull`

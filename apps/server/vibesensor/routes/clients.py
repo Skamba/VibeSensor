@@ -21,7 +21,7 @@ from ..protocol import client_id_mac
 from ._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
+    from ..runtime import RuntimeState
 
 
 def create_client_routes(state: RuntimeState) -> APIRouter:
