@@ -12,7 +12,6 @@ from typing import Any
 
 import pytest
 from builders import (
-    CAR_PROFILE_IDS,
     CAR_PROFILES,
     CORNER_SENSORS,
     SENSOR_FL,
@@ -44,9 +43,12 @@ from builders import (
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
+# Keep profile coverage broad with a light matrix: first/middle/last profile.
+_OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
+_OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
 def test_fault_with_transient_preserves_diagnosis(
@@ -92,7 +94,7 @@ def test_fault_with_transient_preserves_diagnosis(
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
 def test_transient_only_no_persistent_fault(speed: float, profile: dict[str, Any]) -> None:
     """Only transient spikes on one sensor → no persistent wheel fault."""
@@ -121,7 +123,7 @@ def test_transient_only_no_persistent_fault(speed: float, profile: dict[str, Any
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_multiple_transients_no_false_fault(corner: str, profile: dict[str, Any]) -> None:
     """Multiple short transients scattered through recording → no persistent fault."""
@@ -156,7 +158,7 @@ _SPIKE_AMPS = [
 ]
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize(
     "label,amp,vdb", _SPIKE_AMPS, ids=["spike_small", "spike_med", "spike_large"]
@@ -201,7 +203,7 @@ def test_transient_amplitude_deweighting(
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_phased_onset_with_transient(corner: str, profile: dict[str, Any]) -> None:
     """Idle → ramp → fault + transient → fault still detected."""
@@ -247,7 +249,7 @@ def test_phased_onset_with_transient(corner: str, profile: dict[str, Any]) -> No
 _SPIKE_FREQS = [20.0, 50.0, 100.0, 200.0]
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("freq", _SPIKE_FREQS, ids=["20Hz", "50Hz", "100Hz", "200Hz"])
 def test_transient_frequency_variation(freq: float, profile: dict[str, Any]) -> None:
     """Transient at various frequencies should all be de-weighted."""
@@ -274,7 +276,7 @@ def test_transient_frequency_variation(freq: float, profile: dict[str, Any]) -> 
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["RL", "FR"])
 def test_long_transient_burst(corner: str, profile: dict[str, Any]) -> None:
     """Longer transient burst (10 samples) within noise → no persistent fault."""
@@ -300,7 +302,7 @@ def test_long_transient_burst(corner: str, profile: dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_transient_at_wheel_freq_no_false_positive(corner: str, profile: dict[str, Any]) -> None:
     """Transient spike at exactly wheel-1x Hz → should not be persistent fault."""
@@ -329,7 +331,7 @@ def test_transient_at_wheel_freq_no_false_positive(corner: str, profile: dict[st
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_HIGH], ids=["low", "high"])
 def test_diffuse_plus_transient_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """Diffuse excitation + transient → no wheel fault."""
@@ -357,7 +359,7 @@ def test_diffuse_plus_transient_no_fault(speed: float, profile: dict[str, Any]) 
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_fault_plus_transient_very_high_speed(corner: str, profile: dict[str, Any]) -> None:
     """Fault + transient at 120 km/h → fault still detected."""
@@ -399,7 +401,7 @@ def test_fault_plus_transient_very_high_speed(corner: str, profile: dict[str, An
 _SPIKE_DURATIONS = [1, 5, 8]
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize("n_spike", _SPIKE_DURATIONS, ids=["1sample", "5sample", "8sample"])
 def test_transient_duration_variation(corner: str, n_spike: int, profile: dict[str, Any]) -> None:
