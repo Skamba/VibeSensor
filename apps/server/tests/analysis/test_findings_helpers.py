@@ -29,17 +29,18 @@ class TestWeightedPercentile:
         assert result is not None
         assert result == 20.0
 
-    def test_q_zero(self) -> None:
+    @pytest.mark.parametrize(
+        ("quantile", "expected"),
+        [
+            (0.0, 10.0),
+            (1.0, 30.0),
+        ],
+    )
+    def test_quantile_boundary_values(self, quantile: float, expected: float) -> None:
         pairs = [(10.0, 1.0), (20.0, 1.0), (30.0, 1.0)]
-        result = _weighted_percentile(pairs, 0.0)
+        result = _weighted_percentile(pairs, quantile)
         assert result is not None
-        assert result == 10.0
-
-    def test_q_one(self) -> None:
-        pairs = [(10.0, 1.0), (20.0, 1.0), (30.0, 1.0)]
-        result = _weighted_percentile(pairs, 1.0)
-        assert result is not None
-        assert result == 30.0
+        assert result == expected
 
     def test_heavy_weight_pulls_percentile(self) -> None:
         # High weight on 10.0 → median should be pulled toward 10
@@ -56,13 +57,18 @@ class TestWeightedPercentile:
     def test_all_zero_weights(self) -> None:
         assert _weighted_percentile([(10.0, 0.0), (20.0, 0.0)], 0.5) is None
 
-    def test_q_clamped_negative(self) -> None:
-        result = _weighted_percentile([(10.0, 1.0), (20.0, 1.0)], -0.5)
-        assert result == 10.0
-
-    def test_q_clamped_above_one(self) -> None:
-        result = _weighted_percentile([(10.0, 1.0), (20.0, 1.0)], 1.5)
-        assert result == 20.0
+    @pytest.mark.parametrize(
+        ("quantile", "expected"),
+        [
+            (-0.5, 10.0),
+            (1.5, 20.0),
+        ],
+    )
+    def test_quantile_is_clamped_to_supported_range(
+        self, quantile: float, expected: float
+    ) -> None:
+        result = _weighted_percentile([(10.0, 1.0), (20.0, 1.0)], quantile)
+        assert result == expected
 
     def test_unsorted_input(self) -> None:
         # Should handle unsorted input correctly (sorts internally)
@@ -81,13 +87,13 @@ class TestSpeedProfileFromPoints:
         peak_speed, band, label = _speed_profile_from_points([])
         assert peak_speed is None
         assert band is None
+        assert label is None
 
     @pytest.mark.smoke
-    def test_basic(self) -> None:
+    def test_peak_speed_uses_highest_amplitude_point(self) -> None:
         points = [(80.0, 0.06), (90.0, 0.08), (100.0, 0.04)]
         peak_speed, band, label = _speed_profile_from_points(points)
         assert peak_speed is not None
-        # Peak speed should be the highest-amplitude speed
         assert peak_speed == 90.0
 
     def test_zero_speed_filtered(self) -> None:

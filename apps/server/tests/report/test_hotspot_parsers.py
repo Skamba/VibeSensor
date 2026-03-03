@@ -94,17 +94,19 @@ class TestParseIp:
 
 
 class TestExpectedIpMatch:
-    def test_match(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", "192.168.4.1/24") is True
-
-    def test_ip_only_match(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", "192.168.4.1/16") is True
-
-    def test_mismatch(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", "10.0.0.1/24") is False
-
-    def test_none(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", None) is False
+    @pytest.mark.parametrize(
+        ("expected_cidr", "actual_cidr", "is_match"),
+        [
+            ("192.168.4.1/24", "192.168.4.1/24", True),
+            ("192.168.4.1/24", "192.168.4.1/16", True),
+            ("192.168.4.1/24", "10.0.0.1/24", False),
+            ("192.168.4.1/24", None, False),
+        ],
+    )
+    def test_compares_ip_part_only(
+        self, expected_cidr: str, actual_cidr: str | None, is_match: bool
+    ) -> None:
+        assert expected_ip_match(expected_cidr, actual_cidr) is is_match
 
 
 # ---------------------------------------------------------------------------
