@@ -26,7 +26,11 @@ tests/
 ├── metrics_log/             # vibesensor/metrics_log/*
 ├── processing/              # vibesensor/processing/* — FFT, buffers, time-align
 ├── protocol/                # vibesensor/protocol.py, UDP tx/rx
-├── regression/              # Bug-fix & cycle-fix regression tests
+├── regression/              # Bug-fix regressions grouped by intent:
+│   ├── audits/              # Coverage and report audits
+│   ├── bugfix_batches/      # PR/batch-level bug-fix packs
+│   ├── cycle_fixes/         # Numbered cycle regression packs
+│   └── review_fixes/        # Review-driven regression packs
 ├── report/                  # vibesensor/report/* — PDF, i18n, hotspots
 ├── update/                  # vibesensor/update/*, firmware_cache, esp_flash
 └── websocket/               # vibesensor/ws_hub.py, ws_models, schema export
@@ -74,7 +78,7 @@ tests/
 | Category          | Directory            | Description                                |
 |-------------------|----------------------|--------------------------------------------|
 | Integration       | `tests/integration/` | Multi-module scenarios, level tests        |
-| Regression        | `tests/regression/`  | Bug-fix & cycle-fix regression tests       |
+| Regression        | `tests/regression/`  | Bug-fix regressions grouped into `audits/`, `bugfix_batches/`, `cycle_fixes/`, `review_fixes/` |
 | Architecture      | `tests/hygiene/`     | Repo hygiene, architecture guards, smoke   |
 | End-to-end        | `tests/e2e/`         | Selenium browser tests                     |
 
@@ -113,10 +117,14 @@ make test-all
    `_paths` instead of using fragile `Path(__file__).parents[N]` chains.
 6. **For cross-cutting tests** that span multiple modules, use
    `tests/integration/` (scenarios) or `tests/regression/` (bug fixes).
+   Under regression, place files in the matching intent folder:
+   `audits/`, `bugfix_batches/`, `cycle_fixes/`, or `review_fixes/`.
 
 ## Naming conventions
 
 - **Test files**: `test_<feature_or_module>.py`
+- **Regression file names**: prefer descriptive names (for example
+  `test_analysis_pipeline_fixes.py`) over ad-hoc run labels.
 - **Test classes**: `Test<FeatureName>` (group related tests)
 - **Test functions**: `test_<behavior_under_test>`
 - **Fixtures/builders**: in `conftest.py` (fixtures) or `builders.py` (data generators)
