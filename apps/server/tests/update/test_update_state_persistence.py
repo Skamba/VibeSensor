@@ -351,7 +351,11 @@ class TestStartupRecovery:
             state_store=store,
         )
 
-        await mgr.startup_recover()
+        with (
+            patch("vibesensor.update.network.HOTSPOT_RESTORE_RETRIES", 1),
+            patch("vibesensor.update.network.HOTSPOT_RESTORE_DELAY_S", 0),
+        ):
+            await mgr.startup_recover()
 
         # Should still be marked as failed (not crash)
         assert mgr.status.state == UpdateState.failed
