@@ -192,6 +192,7 @@ class ClientRegistry:
             if record.firmware_version and hello.firmware_version != record.firmware_version:
                 record.reset_count += 1
                 record.last_reset_time = now_ts
+                self._clear_dedup(record)
             record.firmware_version = hello.firmware_version
             record.queue_overflow_drops = hello.queue_overflow_drops
             if client_id not in self._user_names:

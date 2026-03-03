@@ -338,7 +338,7 @@ class TestGPSFallbackSettings:
 
 class TestGPSReconnectBackoff:
     @pytest.mark.asyncio
-    async def test_reconnect_delay_doubles_and_caps(self) -> None:
+    async def test_reconnect_delay_doubles_and_caps(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from vibesensor.gps_speed import (
             _GPS_RECONNECT_DELAY_S,
             _GPS_RECONNECT_MAX_DELAY_S,
@@ -358,21 +358,16 @@ class TestGPSReconnectBackoff:
                 raise asyncio.CancelledError()
             raise ConnectionRefusedError("test")
 
-        original = asyncio.open_connection
-        asyncio.open_connection = _mock_open_connection  # type: ignore[assignment]
-        # Patch sleep to avoid real delays
         original_sleep = asyncio.sleep
 
         async def _fast_sleep(delay):
             await original_sleep(0)
 
-        asyncio.sleep = _fast_sleep  # type: ignore[assignment]
-        try:
-            with pytest.raises(asyncio.CancelledError):
-                await m.run(host="127.0.0.1", port=29470)
-        finally:
-            asyncio.open_connection = original  # type: ignore[assignment]
-            asyncio.sleep = original_sleep  # type: ignore[assignment]
+        monkeypatch.setattr(asyncio, "open_connection", _mock_open_connection)
+        monkeypatch.setattr(asyncio, "sleep", _fast_sleep)
+
+        with pytest.raises(asyncio.CancelledError):
+            await m.run(host="127.0.0.1", port=29470)
 
         # First reconnect_delay should be the base delay
         assert delays_seen[0] == _GPS_RECONNECT_DELAY_S
@@ -411,8 +406,8 @@ class TestGPSReconnectBackoff:
         await server.wait_closed()
 
         assert m.device_info is not None
-        # Device info should contain either "gpsd 3.25" or the device from TPV
-        assert "3.25" in (m.device_info or "") or m.device_info is not None
+        # Device info should contain the gpsd version string
+        assert "3.25" in m.device_info
 
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -21,7 +21,7 @@ def normalize_client_id_or_400(client_id: str) -> str:
     try:
         return normalize_sensor_id(client_id)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid client_id") from exc
+        raise HTTPException(status_code=400, detail="Invalid sensor identifier") from exc
 
 
 def safe_filename(name: str) -> str:

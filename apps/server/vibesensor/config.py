@@ -179,7 +179,7 @@ class ProcessingConfig:
     fft_update_hz: int
     fft_n: int
     spectrum_min_hz: float
-    spectrum_max_hz: int
+    spectrum_max_hz: float
     client_ttl_seconds: int
     accel_scale_g_per_lsb: float | None
 
@@ -192,7 +192,6 @@ class ProcessingConfig:
             "ui_push_hz": 1,
             "ui_heavy_push_hz": 1,
             "fft_update_hz": 1,
-            "spectrum_max_hz": 1,
             "client_ttl_seconds": 1,
         }
         for field_name, minimum in _POS_FIELDS.items():
@@ -207,6 +206,14 @@ class ProcessingConfig:
                     clamped,
                 )
                 object.__setattr__(self, field_name, clamped)
+
+        # --- spectrum_max_hz positive float guard -----------------------------------
+        if self.spectrum_max_hz < 1.0:
+            LOGGER.warning(
+                "processing.spectrum_max_hz=%s is below minimum 1.0 — clamped to 1.0",
+                self.spectrum_max_hz,
+            )
+            object.__setattr__(self, "spectrum_max_hz", 1.0)
 
         # --- fft_n must be >= 16 and a power of 2 ----------------------------------
         if self.fft_n < 16:

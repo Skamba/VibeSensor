@@ -245,6 +245,7 @@ class GPSSpeedMonitor:
         self.last_epy_m = None
         self.last_epv_m = None
         self._zero_speed_streak = 0
+        self._speed_snapshot = (None, None)
 
     def status_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable status snapshot — **no side effects**."""

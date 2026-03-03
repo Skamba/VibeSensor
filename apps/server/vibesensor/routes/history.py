@@ -310,8 +310,11 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                 # Prune stale locks even on failure to prevent unbounded growth
                 _prune_stale_pdf_locks()
                 raise HTTPException(
-                    status_code=422,
-                    detail="PDF generation failed. Please try again or re-analyze this run.",
+                    status_code=500,
+                    detail=(
+                        "PDF generation failed due to an internal error."
+                        " Please try again or re-analyze this run."
+                    ),
                 ) from exc
             _cache_put(cache_key, pdf)
         return Response(

@@ -34,7 +34,7 @@ def _load_library() -> list[dict]:
     disable the library for the lifetime of the process.
     """
     try:
-        with open(_DATA_FILE) as fh:
+        with open(_DATA_FILE, encoding="utf-8") as fh:
             data: list[dict] = json.load(fh)
         return data
     except (FileNotFoundError, json.JSONDecodeError, PermissionError, OSError) as exc:

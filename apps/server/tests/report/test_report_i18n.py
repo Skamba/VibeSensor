@@ -184,8 +184,8 @@ def test_dutch_translation_audit_round_4() -> None:
     # Compound: "orde-tracking" → "ordetracking"
     assert "ordetracking" in nl("SUITABILITY_SPEED_VARIATION_PASS")
 
-    # Natural Dutch: remove "hotspot-pad"
-    assert "piekwaarde" in nl("NEXT_SENSOR_MOVE_DEFAULT")
+    # Natural Dutch: convey ranking semantics, not just peak amplitude
+    assert "hoogst gerangschikte" in nl("NEXT_SENSOR_MOVE_DEFAULT")
 
     # Anglicism removal: "patroontracking" → "patroonherkenning"
     assert "patroonherkenning" in nl("TIER_A_CAPTURE_WIDER_SPEED")

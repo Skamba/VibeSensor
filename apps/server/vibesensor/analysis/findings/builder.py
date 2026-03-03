@@ -29,7 +29,7 @@ def _build_findings(
     speed_non_null_pct: float,
     raw_sample_rate_hz: float | None,
     lang: str = "en",
-    per_sample_phases: list | None = None,
+    per_sample_phases: list[str] | None = None,
     run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
