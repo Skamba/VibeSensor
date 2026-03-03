@@ -113,13 +113,13 @@ def test_metrics_log_no_old_field_names() -> None:
 
 
 def test_as_float_single_source_of_truth() -> None:
-    """diagnostics_shared._as_float must be the canonical as_float_or_none
+    """diagnostics_shared.as_float_or_none must be the canonical as_float_or_none
     from runlog, not a local re-definition."""
-    from vibesensor.diagnostics_shared import _as_float as diag_as_float
+    from vibesensor.diagnostics_shared import as_float_or_none as diag_as_float
     from vibesensor.runlog import as_float_or_none
 
     assert diag_as_float is as_float_or_none, (
-        "diagnostics_shared._as_float must be imported from runlog.as_float_or_none"
+        "diagnostics_shared.as_float_or_none must be imported from runlog.as_float_or_none"
     )
 
 
