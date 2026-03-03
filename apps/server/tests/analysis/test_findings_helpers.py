@@ -64,9 +64,7 @@ class TestWeightedPercentile:
             (1.5, 20.0),
         ],
     )
-    def test_quantile_is_clamped_to_supported_range(
-        self, quantile: float, expected: float
-    ) -> None:
+    def test_quantile_is_clamped_to_supported_range(self, quantile: float, expected: float) -> None:
         result = _weighted_percentile([(10.0, 1.0), (20.0, 1.0)], quantile)
         assert result == expected
 
