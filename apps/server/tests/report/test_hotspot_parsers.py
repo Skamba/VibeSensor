@@ -24,20 +24,22 @@ from vibesensor.hotspot_parsers import (
 
 
 class TestParseActiveConnectionNames:
-    def test_basic(self) -> None:
+    def test_parses_non_empty_lines_in_order(self) -> None:
         assert parse_active_connection_names("Wired connection 1\nHotspot\n") == [
             "Wired connection 1",
             "Hotspot",
         ]
 
-    def test_empty(self) -> None:
-        assert parse_active_connection_names("") == []
-
-    def test_whitespace_lines(self) -> None:
-        assert parse_active_connection_names("  \n  \n") == []
-
-    def test_trailing_newlines(self) -> None:
-        assert parse_active_connection_names("foo\n\n\n") == ["foo"]
+    @pytest.mark.parametrize(
+        ("stdout", "expected"),
+        [
+            ("", []),
+            ("  \n  \n", []),
+            ("foo\n\n\n", ["foo"]),
+        ],
+    )
+    def test_ignores_blank_lines(self, stdout: str, expected: list[str]) -> None:
+        assert parse_active_connection_names(stdout) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -75,7 +77,7 @@ class TestParseActiveConnDevice:
 
 class TestParseIp:
     @pytest.mark.smoke
-    def test_basic(self) -> None:
+    def test_extracts_first_inet_cidr(self) -> None:
         output = "    inet 192.168.4.1/24 brd 192.168.4.255 scope global wlan0\n"
         assert parse_ip(output) == "192.168.4.1/24"
 
@@ -92,17 +94,19 @@ class TestParseIp:
 
 
 class TestExpectedIpMatch:
-    def test_match(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", "192.168.4.1/24") is True
-
-    def test_ip_only_match(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", "192.168.4.1/16") is True
-
-    def test_mismatch(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", "10.0.0.1/24") is False
-
-    def test_none(self) -> None:
-        assert expected_ip_match("192.168.4.1/24", None) is False
+    @pytest.mark.parametrize(
+        ("expected_cidr", "actual_cidr", "is_match"),
+        [
+            ("192.168.4.1/24", "192.168.4.1/24", True),
+            ("192.168.4.1/24", "192.168.4.1/16", True),
+            ("192.168.4.1/24", "10.0.0.1/24", False),
+            ("192.168.4.1/24", None, False),
+        ],
+    )
+    def test_compares_ip_part_only(
+        self, expected_cidr: str, actual_cidr: str | None, is_match: bool
+    ) -> None:
+        assert expected_ip_match(expected_cidr, actual_cidr) is is_match
 
 
 # ---------------------------------------------------------------------------
@@ -135,17 +139,17 @@ class TestParseIwInfo:
 
 
 class TestParseRfkillBlocked:
-    def test_soft_blocked(self) -> None:
-        assert parse_rfkill_blocked("Soft blocked: yes\nHard blocked: no\n") is True
-
-    def test_hard_blocked(self) -> None:
-        assert parse_rfkill_blocked("Soft blocked: no\nHard blocked: yes\n") is True
-
-    def test_not_blocked(self) -> None:
-        assert parse_rfkill_blocked("Soft blocked: no\nHard blocked: no\n") is False
-
-    def test_empty(self) -> None:
-        assert parse_rfkill_blocked("") is False
+    @pytest.mark.parametrize(
+        ("output", "expected"),
+        [
+            ("Soft blocked: yes\nHard blocked: no\n", True),
+            ("Soft blocked: no\nHard blocked: yes\n", True),
+            ("Soft blocked: no\nHard blocked: no\n", False),
+            ("", False),
+        ],
+    )
+    def test_reports_blocked_state(self, output: str, expected: bool) -> None:
+        assert parse_rfkill_blocked(output) is expected
 
 
 # ---------------------------------------------------------------------------
@@ -157,14 +161,17 @@ class TestNmLogSignals:
     def test_dhcp_no_range(self) -> None:
         sig, detail = nm_log_signals("dhcp: no address range available for subnet\n")
         assert sig == "dhcp_no_range"
+        assert detail is None
 
     def test_dnsmasq_start_failed(self) -> None:
-        sig, _ = nm_log_signals("failed to start dnsmasq process\n")
+        sig, detail = nm_log_signals("failed to start dnsmasq process\n")
         assert sig == "dhcp_dnsmasq_start_failed"
+        assert detail is None
 
     def test_port53_conflict(self) -> None:
-        sig, _ = nm_log_signals("address already in use on port 53\n")
+        sig, detail = nm_log_signals("address already in use on port 53\n")
         assert sig == "port53_conflict"
+        assert detail is None
 
     def test_no_signal(self) -> None:
         sig, detail = nm_log_signals("everything is fine\n")
@@ -202,6 +209,14 @@ class TestParsePort53Conflict:
     def test_no_users_field(self) -> None:
         output = "LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*\n"
         assert parse_port53_conflict(output) is None
+
+    def test_multiple_processes_are_sorted_and_deduplicated(self) -> None:
+        output = (
+            'LISTEN 0 0 *:53 *:* users:(("zproc",pid=1,fd=2))\n'
+            'LISTEN 0 0 *:53 *:* users:(("aproc",pid=3,fd=4))\n'
+            'LISTEN 0 0 *:53 *:* users:(("zproc",pid=5,fd=6))\n'
+        )
+        assert parse_port53_conflict(output) == "aproc,zproc"
 
 
 # ---------------------------------------------------------------------------
