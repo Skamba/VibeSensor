@@ -70,6 +70,16 @@ def _history_run_ids() -> set[str]:
     return {str(r["run_id"]) for r in data.get("runs", [])}
 
 
+def _wait_for_run_persisted(run_id: str, *, timeout_s: float = 15.0) -> None:
+    """Poll history every 0.25s until run ID appears or raise AssertionError."""
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        if run_id in _history_run_ids():
+            return
+        time.sleep(0.25)
+    raise AssertionError(f"Run {run_id} not persisted within {timeout_s}s")
+
+
 def _wait_for_analysis(run_id: str, *, timeout_s: float = 120.0) -> dict:
     """Poll until run reaches 'complete' status."""
     deadline = time.monotonic() + timeout_s
@@ -148,8 +158,8 @@ class TestSimulatorIngestion:
         # Finalize immediately so analysis can start without waiting for no-data timeout.
         _api_post_json("/api/logging/stop")
 
-        # Wait briefly for server to finalize the run
-        time.sleep(3)
+        # Wait for server to persist the run ID before continuing.
+        _wait_for_run_persisted(started_run_id)
 
         # Prefer the explicit started run id; fallback to history diff if needed.
         post_runs = _history_run_ids()

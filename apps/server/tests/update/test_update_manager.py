@@ -7,7 +7,7 @@ import json
 import os
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -596,6 +596,7 @@ class TestUpdateManagerAsync:
 
         with (
             patch("shutil.which", _mock_which),
+            patch("vibesensor.update.manager.asyncio.sleep", new=AsyncMock(return_value=None)),
             patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
             patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
@@ -905,8 +906,9 @@ class TestUpdateManagerAsync:
         original_run = runner.run
 
         async def slow_run(args, *, timeout=30, env=None):
-            # Make the Wi-Fi connect step hang to trigger the update timeout.
-            if "connection up" in " ".join(args):
+            # Only hang uplink connect; hotspot restore must stay fast so this
+            # test exercises update timeout behavior (not cleanup delays).
+            if "connection up VibeSensor-Uplink" in " ".join(args):
                 await asyncio.sleep(300)
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
@@ -922,13 +924,11 @@ class TestUpdateManagerAsync:
         with (
             patch("shutil.which", _mock_which),
             patch("vibesensor.update.manager.UPDATE_TIMEOUT_S", 0.5),
+            patch("vibesensor.update.manager.HOTSPOT_RESTORE_RETRIES", 1),
         ):
             mgr.start("TestNet", "pass")
             assert mgr._task is not None
-            try:
-                await asyncio.wait_for(mgr._task, timeout=10)
-            except (TimeoutError, asyncio.CancelledError):
-                pass
+            await asyncio.wait_for(mgr._task, timeout=3)
 
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
