@@ -6,6 +6,7 @@ from __future__ import annotations
 import math
 
 import pytest
+from _paths import SERVER_ROOT
 from vibesensor_core.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,
@@ -126,9 +127,8 @@ class TestEvidencePeakPresentFormat:
 
     def test_dB_format_is_one_decimal(self) -> None:
         import json
-        from pathlib import Path
 
-        i18n_path = Path(__file__).parent.parent / "data" / "report_i18n.json"
+        i18n_path = SERVER_ROOT / "data" / "report_i18n.json"
         with open(i18n_path) as f:
             data = json.load(f)
 

@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 
+from _paths import REPO_ROOT
 from vibesensor_core.strength_bands import BANDS, band_by_key, band_rank, bucket_for_strength
 
 # -- bucket_for_strength -------------------------------------------------------
@@ -70,14 +71,7 @@ def test_band_rank_unknown_returns_neg1() -> None:
 
 # -- UI i18n severity labels match core BANDS -----------------------------------
 
-_UI_CATALOGS_DIR = (
-    Path(__file__).resolve().parent.parent.parent.parent
-    / "apps"
-    / "ui"
-    / "src"
-    / "i18n"
-    / "catalogs"
-)
+_UI_CATALOGS_DIR = REPO_ROOT / "apps" / "ui" / "src" / "i18n" / "catalogs"
 
 # Build expected thresholds: each band's range is [min_db, next_band.min_db)
 _EXPECTED: dict[str, tuple[float, float | None]] = {}

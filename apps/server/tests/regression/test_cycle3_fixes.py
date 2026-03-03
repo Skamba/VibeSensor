@@ -168,7 +168,7 @@ class TestWorkerPoolDeterministic:
     not np.random.seed (global state mutation)."""
 
     def test_no_global_seed_in_source(self) -> None:
-        import tests.test_worker_pool as mod
+        import tests.app.test_worker_pool as mod
 
         source = inspect.getsource(mod)
         assert "np.random.seed" not in source, "Must use np.random.default_rng, not np.random.seed"
@@ -179,7 +179,7 @@ class TestNoUnseededRandomInTests:
     the unseeded global PRNG functions like np.random.randn or np.random.rand."""
 
     def test_no_unseeded_randn_in_processing_tests(self) -> None:
-        import tests.test_processing_extended as mod
+        import tests.processing.test_processing_extended as mod
 
         source = inspect.getsource(mod)
         assert "np.random.randn" not in source, (
@@ -187,7 +187,7 @@ class TestNoUnseededRandomInTests:
         )
 
     def test_no_unseeded_randn_in_buffer_flush_tests(self) -> None:
-        import tests.test_reset_buffer_flush as mod
+        import tests.protocol.test_reset_buffer_flush as mod
 
         source = inspect.getsource(mod)
         assert "np.random.randn" not in source, (

@@ -14,12 +14,13 @@ import ast
 from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 
-_SERVER_PKG = Path(__file__).resolve().parents[1] / "vibesensor"
+_SERVER_PKG = SERVER_ROOT / "vibesensor"
 _ANALYSIS_PKG = _SERVER_PKG / "analysis"
 
 # All Python files in vibesensor/ that are NOT inside analysis/

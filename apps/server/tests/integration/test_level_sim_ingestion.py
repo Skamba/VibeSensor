@@ -20,12 +20,12 @@ import os
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 import pytest
+from _paths import SERVER_ROOT
 from pypdf import PdfReader
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = SERVER_ROOT.parent
 
 # Default server settings (can be overridden via env vars for Docker)
 BASE_URL = os.environ.get("VIBESENSOR_TEST_BASE_URL", "http://127.0.0.1:8000")
