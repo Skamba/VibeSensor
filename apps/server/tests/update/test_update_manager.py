@@ -7,7 +7,7 @@ import json
 import os
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -594,12 +594,9 @@ class TestUpdateManagerAsync:
 
         runner.run = run_with_retry  # type: ignore[assignment]
 
-        async def _no_sleep(_delay: float) -> None:
-            return None
-
         with (
             patch("shutil.which", _mock_which),
-            patch("vibesensor.update.manager.asyncio.sleep", side_effect=_no_sleep),
+            patch("vibesensor.update.manager.asyncio.sleep", new=AsyncMock(return_value=None)),
             patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
             patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
@@ -909,7 +906,8 @@ class TestUpdateManagerAsync:
         original_run = runner.run
 
         async def slow_run(args, *, timeout=30, env=None):
-            # Make the Wi-Fi connect step hang to trigger the update timeout.
+            # Only hang uplink connect; hotspot restore must stay fast so this
+            # test exercises update timeout behavior (not cleanup delays).
             if "connection up VibeSensor-Uplink" in " ".join(args):
                 await asyncio.sleep(300)
                 return (0, "", "")
