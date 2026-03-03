@@ -12,6 +12,7 @@ ReportLab Canvas API for pixel-precise positioning.
 from __future__ import annotations
 
 import logging
+import math
 import textwrap
 from io import BytesIO
 
@@ -977,6 +978,8 @@ def _draw_additional_observations(
         try:
             confidence = float(finding.get("confidence_0_to_1") or 0.0)
         except (ValueError, TypeError):
+            confidence = 0.0
+        if not math.isfinite(confidence):
             confidence = 0.0
         line = f"• {order_label} ({confidence * 100.0:.0f}%)"
         c.drawString(x + 4 * mm, y_cursor, line)
