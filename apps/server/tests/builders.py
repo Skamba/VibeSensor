@@ -23,6 +23,7 @@ Public API
 from __future__ import annotations
 
 import hashlib
+from functools import cache
 from typing import Any
 
 from vibesensor_core.strength_bands import bucket_for_strength
@@ -190,16 +191,31 @@ def _fault_transfer_fraction(
     return _corner_transfer_fraction(fault_sensor, sink_sensor) * 0.58
 
 
-def profile_circ(profile: dict[str, Any]) -> float:
-    """Compute tire circumference for a car profile."""
+@cache
+def _profile_circ_cached(
+    tire_width_mm: int,
+    tire_aspect_pct: int,
+    rim_in: int,
+    tire_deflection_factor: float | None,
+) -> float:
     circ = tire_circumference_m_from_spec(
-        profile["tire_width_mm"],
-        profile["tire_aspect_pct"],
-        profile["rim_in"],
-        deflection_factor=profile.get("tire_deflection_factor"),
+        tire_width_mm,
+        tire_aspect_pct,
+        rim_in,
+        deflection_factor=tire_deflection_factor,
     )
     assert circ is not None and circ > 0
     return circ
+
+
+def profile_circ(profile: dict[str, Any]) -> float:
+    """Compute tire circumference for a car profile."""
+    return _profile_circ_cached(
+        profile["tire_width_mm"],
+        profile["tire_aspect_pct"],
+        profile["rim_in"],
+        profile.get("tire_deflection_factor"),
+    )
 
 
 def profile_wheel_hz(profile: dict[str, Any], speed_kmh: float) -> float:
@@ -210,13 +226,40 @@ def profile_wheel_hz(profile: dict[str, Any], speed_kmh: float) -> float:
     return hz
 
 
+@cache
+def _profile_metadata_base(
+    tire_width_mm: int,
+    tire_aspect_pct: int,
+    rim_in: int,
+    tire_deflection_factor: float | None,
+    final_drive_ratio: float,
+    current_gear_ratio: float,
+) -> tuple[tuple[str, Any], ...]:
+    return tuple(
+        standard_metadata(
+            tire_circumference_m=_profile_circ_cached(
+                tire_width_mm,
+                tire_aspect_pct,
+                rim_in,
+                tire_deflection_factor,
+            ),
+            final_drive_ratio=final_drive_ratio,
+            current_gear_ratio=current_gear_ratio,
+        ).items()
+    )
+
+
 def profile_metadata(profile: dict[str, Any], **overrides: Any) -> dict[str, Any]:
     """Build run metadata for a specific car profile."""
-    circ = profile_circ(profile)
-    meta = standard_metadata(
-        tire_circumference_m=circ,
-        final_drive_ratio=profile["final_drive_ratio"],
-        current_gear_ratio=profile["current_gear_ratio"],
+    meta = dict(
+        _profile_metadata_base(
+            profile["tire_width_mm"],
+            profile["tire_aspect_pct"],
+            profile["rim_in"],
+            profile.get("tire_deflection_factor"),
+            profile["final_drive_ratio"],
+            profile["current_gear_ratio"],
+        )
     )
     meta.update(overrides)
     return meta
