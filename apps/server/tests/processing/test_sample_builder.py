@@ -214,6 +214,17 @@ class TestFirmwareVersionForRun:
         reg.get.side_effect = _get
         assert firmware_version_for_run(reg) == "1.0.0, 2.0.0"
 
+    def test_blank_and_missing_versions_are_ignored(self) -> None:
+        def _get(cid: str):
+            m = MagicMock()
+            m.firmware_version = {"c1": " ", "c2": None}.get(cid)
+            return m
+
+        reg = MagicMock()
+        reg.active_client_ids.return_value = ["c1", "c2"]
+        reg.get.side_effect = _get
+        assert firmware_version_for_run(reg) is None
+
 
 # ---------------------------------------------------------------------------
 # build_run_metadata
@@ -221,7 +232,7 @@ class TestFirmwareVersionForRun:
 
 
 class TestBuildRunMetadata:
-    def test_basic(self) -> None:
+    def test_includes_core_fields_and_tire_spec(self) -> None:
         meta = build_run_metadata(
             run_id="test-run",
             start_time_utc="2026-01-01T00:00:00Z",
@@ -242,6 +253,8 @@ class TestBuildRunMetadata:
         assert meta["run_id"] == "test-run"
         assert meta["sensor_model"] == "ADXL345"
         assert meta["tire_width_mm"] == 205.0
+        assert meta["tire_aspect_pct"] == 55.0
+        assert meta["rim_in"] == 16.0
 
     def test_with_language(self) -> None:
         meta = build_run_metadata(
@@ -259,6 +272,23 @@ class TestBuildRunMetadata:
             language_provider=lambda: "fi",
         )
         assert meta["language"] == "fi"
+
+    def test_language_provider_defaults_to_en_when_blank(self) -> None:
+        meta = build_run_metadata(
+            run_id="run-lang-default",
+            start_time_utc="2026-01-01T00:00:00Z",
+            analysis_settings_snapshot={},
+            sensor_model="test",
+            firmware_version=None,
+            default_sample_rate_hz=800,
+            metrics_log_hz=4,
+            fft_window_size_samples=512,
+            fft_window_type="hann",
+            peak_picker_method="test",
+            accel_scale_g_per_lsb=None,
+            language_provider=lambda: "   ",
+        )
+        assert meta["language"] == "en"
 
 
 # ---------------------------------------------------------------------------
