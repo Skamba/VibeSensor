@@ -37,7 +37,7 @@ class WSConnection:
 
 
 class WebSocketHub:
-    def __init__(self):
+    def __init__(self) -> None:
         self._connections: dict[int, WSConnection] = {}
         self._lock = asyncio.Lock()
         self._send_timeout_s = _SEND_TIMEOUT_S

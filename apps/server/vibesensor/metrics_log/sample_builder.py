@@ -109,6 +109,7 @@ def extract_strength_data(
                 and not math.isinf(hz)
                 and not math.isinf(amp)
                 and hz > 0
+                and amp > 0
             ):
                 peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
                 peak_db = safe_metric(
