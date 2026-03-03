@@ -68,7 +68,7 @@ include = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-n auto --dist loadscope"
+addopts = "-n auto --dist worksteal"
 asyncio_mode = "auto"
 pythonpath = [".", "tests"]
 testpaths = ["tests"]
