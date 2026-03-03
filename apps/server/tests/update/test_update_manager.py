@@ -594,8 +594,12 @@ class TestUpdateManagerAsync:
 
         runner.run = run_with_retry  # type: ignore[assignment]
 
+        async def _no_sleep(_delay: float) -> None:
+            return None
+
         with (
             patch("shutil.which", _mock_which),
+            patch("vibesensor.update.manager.asyncio.sleep", side_effect=_no_sleep),
             patch("vibesensor.release_fetcher.ServerReleaseFetcher") as MockFetcher,
             patch("vibesensor.release_fetcher.ReleaseFetcherConfig"),
             patch("vibesensor._version.__version__", "2025.6.15"),
@@ -906,7 +910,7 @@ class TestUpdateManagerAsync:
 
         async def slow_run(args, *, timeout=30, env=None):
             # Make the Wi-Fi connect step hang to trigger the update timeout.
-            if "connection up" in " ".join(args):
+            if "connection up VibeSensor-Uplink" in " ".join(args):
                 await asyncio.sleep(300)
                 return (0, "", "")
             return await original_run(args, timeout=timeout, env=env)
@@ -922,13 +926,11 @@ class TestUpdateManagerAsync:
         with (
             patch("shutil.which", _mock_which),
             patch("vibesensor.update.manager.UPDATE_TIMEOUT_S", 0.5),
+            patch("vibesensor.update.manager.HOTSPOT_RESTORE_RETRIES", 1),
         ):
             mgr.start("TestNet", "pass")
             assert mgr._task is not None
-            try:
-                await asyncio.wait_for(mgr._task, timeout=10)
-            except (TimeoutError, asyncio.CancelledError):
-                pass
+            await asyncio.wait_for(mgr._task, timeout=3)
 
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message for i in mgr.status.issues).lower()
