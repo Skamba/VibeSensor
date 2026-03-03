@@ -71,7 +71,7 @@ def _history_run_ids() -> set[str]:
 
 
 def _wait_for_run_persisted(run_id: str, *, timeout_s: float = 15.0) -> None:
-    """Wait until run ID is visible in history."""
+    """Poll history every 0.25s until run ID appears or raise AssertionError."""
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         if run_id in _history_run_ids():
