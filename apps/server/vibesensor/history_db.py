@@ -211,11 +211,15 @@ class HistoryDB:
         self._lock = RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA wal_autocheckpoint=500")
-        self._conn.execute("PRAGMA foreign_keys=ON")
-        self._conn.execute("PRAGMA busy_timeout=5000")
-        self._ensure_schema()
+        try:
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA wal_autocheckpoint=500")
+            self._conn.execute("PRAGMA foreign_keys=ON")
+            self._conn.execute("PRAGMA busy_timeout=5000")
+            self._ensure_schema()
+        except Exception:
+            self._conn.close()
+            raise
         self._has_legacy_samples: bool = self._table_exists("samples")
 
     # -- lifecycle ------------------------------------------------------------

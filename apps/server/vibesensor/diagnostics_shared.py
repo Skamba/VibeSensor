@@ -380,6 +380,7 @@ def severity_from_peak(
     current_rank = band_rank(str(current_bucket))
     candidate_rank = band_rank(str(candidate_bucket))
     if candidate_rank > current_rank:
+        state["consecutive_down"] = 0
         _advance_pending(candidate_bucket)
         if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
             state["current_bucket"] = candidate_bucket

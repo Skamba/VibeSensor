@@ -145,11 +145,13 @@ class TestEffectiveBaselineFloor:
         result = _effective_baseline_floor(None)
         assert result == MEMS_NOISE_FLOOR_G
 
-    def test_zero_baseline_uses_fallback(self) -> None:
+    def test_zero_baseline_uses_measured_zero(self) -> None:
         from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G, _effective_baseline_floor
 
+        # 0.0 is a valid measured value — should be clamped to MEMS_NOISE_FLOOR_G,
+        # not fall through to extra_fallback.
         result = _effective_baseline_floor(0.0, extra_fallback=0.005)
-        assert result >= MEMS_NOISE_FLOOR_G
+        assert result == MEMS_NOISE_FLOOR_G
 
     def test_negative_clamped(self) -> None:
         from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G, _effective_baseline_floor
