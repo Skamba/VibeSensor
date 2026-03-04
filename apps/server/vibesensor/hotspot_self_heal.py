@@ -189,13 +189,10 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
     dhcp_log_signal, _ = nm_log_signals(nm_logs.stdout)
 
     pgrep_dnsmasq = runner.run(["pgrep", "-af", "dnsmasq"], timeout_s=5)
-    nm_dnsmasq_running = False
-    if pgrep_dnsmasq.returncode == 0:
-        for line in pgrep_dnsmasq.stdout.splitlines():
-            lowered = line.lower()
-            if "networkmanager" in lowered and "dnsmasq" in lowered:
-                nm_dnsmasq_running = True
-                break
+    nm_dnsmasq_running = pgrep_dnsmasq.returncode == 0 and any(
+        "networkmanager" in line.lower() and "dnsmasq" in line.lower()
+        for line in pgrep_dnsmasq.stdout.splitlines()
+    )
     dhcp_ok = nm_dnsmasq_running and dhcp_log_signal not in _DHCP_BAD_SIGNALS
     if not dhcp_ok:
         issues.append("dhcp_unhealthy")
@@ -309,7 +306,7 @@ def _handle_port53_conflict(
         runner.run(["systemctl", "disable", "--now", "dnsmasq.service"], timeout_s=10)
         return "stopped standalone dnsmasq service"
 
-    if "systemd-resolved" in lowered or "systemd-resolve" in lowered:
+    if "systemd-resolve" in lowered:
         if self_heal.allow_disable_resolved_stub_listener:
             runner.run(
                 [
@@ -571,9 +568,7 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    if args.mode == "diagnostics":
-        raise SystemExit(run_self_heal(args.config, diagnostics_only=True))
-    raise SystemExit(run_self_heal(args.config, diagnostics_only=False))
+    raise SystemExit(run_self_heal(args.config, diagnostics_only=args.mode == "diagnostics"))
 
 
 if __name__ == "__main__":
