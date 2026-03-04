@@ -24,6 +24,30 @@ from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 from vibesensor.processing import SignalProcessor
 from vibesensor.settings_store import SettingsStore
 
+# -- shared helpers ----------------------------------------------------------
+
+def _make_history_db(tmp_path: Path, name: str = "history.db") -> HistoryDB:
+    return HistoryDB(tmp_path / name)
+
+
+def _seeded_history_db(
+    tmp_path: Path, run_id: str, n_samples: int, *, name: str = "history.db"
+) -> HistoryDB:
+    """Create a HistoryDB with one run containing *n_samples* rows."""
+    db = _make_history_db(tmp_path, name)
+    db.create_run(run_id, "2026-01-01T00:00:00Z", {"src": "test"})
+    db.append_samples(run_id, [{"i": i} for i in range(n_samples)])
+    return db
+
+
+def _make_tone_chunk(freq_hz: float, n_samples: int, sample_rate_hz: int) -> np.ndarray:
+    """Return an (N, 3) float32 chunk with a sine tone on the X axis."""
+    t = np.arange(n_samples, dtype=np.float64) / sample_rate_hz
+    x = (0.5 * np.sin(2 * pi * freq_hz * t)).astype(np.float32)
+    zeros = np.zeros_like(x)
+    return np.stack([x, zeros, zeros], axis=1)
+
+
 # ---------------------------------------------------------------------------
 # Issue 19 – _detect_sensor_events skips bad clients rather than crashing
 # ---------------------------------------------------------------------------
@@ -90,18 +114,16 @@ def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
     )
 
     # Phase 1 – fill with a 10 Hz tone (2400 samples → wraps at 1600)
-    n1 = 2400
-    t1 = np.arange(n1, dtype=np.float64) / sample_rate_hz
-    x1 = (0.5 * np.sin(2 * pi * 10.0 * t1)).astype(np.float32)
-    chunk1 = np.stack([x1, np.zeros_like(x1), np.zeros_like(x1)], axis=1)
-    processor.ingest("c1", chunk1, sample_rate_hz=sample_rate_hz)
+    processor.ingest(
+        "c1", _make_tone_chunk(10.0, 2400, sample_rate_hz),
+        sample_rate_hz=sample_rate_hz,
+    )
 
     # Phase 2 – overwrite with a 50 Hz tone (another 2400 samples)
-    n2 = 2400
-    t2 = np.arange(n2, dtype=np.float64) / sample_rate_hz
-    x2 = (0.5 * np.sin(2 * pi * 50.0 * t2)).astype(np.float32)
-    chunk2 = np.stack([x2, np.zeros_like(x2), np.zeros_like(x2)], axis=1)
-    processor.ingest("c1", chunk2, sample_rate_hz=sample_rate_hz)
+    processor.ingest(
+        "c1", _make_tone_chunk(50.0, 2400, sample_rate_hz),
+        sample_rate_hz=sample_rate_hz,
+    )
 
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
     peaks = metrics["combined"]["peaks"]
@@ -117,18 +139,32 @@ def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
 
 
 class TestBoundedSample:
-    def test_small_input_no_halving(self) -> None:
-        items = [{"i": i} for i in range(5)]
-        kept, total, stride = _bounded_sample(iter(items), max_items=100)
-        assert total == 5
-        assert stride == 1
-        assert len(kept) == 5
-
-    def test_exact_limit(self) -> None:
-        items = [{"i": i} for i in range(10)]
-        kept, total, stride = _bounded_sample(iter(items), max_items=10)
-        assert total == 10
-        assert len(kept) == 10
+    @pytest.mark.parametrize(
+        "n_items, max_items, total_hint, exp_total, exp_len, exp_stride",
+        [
+            pytest.param(5, 100, None, 5, 5, 1, id="small_input_no_halving"),
+            pytest.param(10, 10, None, 10, 10, None, id="exact_limit"),
+            pytest.param(0, 10, None, 0, 0, None, id="empty_input"),
+        ],
+    )
+    def test_bounded_sample_basic(
+        self,
+        n_items: int,
+        max_items: int,
+        total_hint: int | None,
+        exp_total: int,
+        exp_len: int,
+        exp_stride: int | None,
+    ) -> None:
+        items = [{"i": i} for i in range(n_items)]
+        kwargs: dict = {"max_items": max_items}
+        if total_hint is not None:
+            kwargs["total_hint"] = total_hint
+        kept, total, stride = _bounded_sample(iter(items), **kwargs)
+        assert total == exp_total
+        assert len(kept) == exp_len
+        if exp_stride is not None:
+            assert stride == exp_stride
 
     def test_halving_reduces_count(self) -> None:
         items = [{"i": i} for i in range(200)]
@@ -145,11 +181,6 @@ class TestBoundedSample:
         assert stride == 4
         assert len(kept) == 50
 
-    def test_empty_input(self) -> None:
-        kept, total, stride = _bounded_sample(iter([]), max_items=10)
-        assert total == 0
-        assert kept == []
-
 
 # ---------------------------------------------------------------------------
 # Issue 22 – speed_unit persistence round-trip
@@ -157,7 +188,7 @@ class TestBoundedSample:
 
 
 def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "settings.db")
+    db = _make_history_db(tmp_path, "settings.db")
     store = SettingsStore(db)
 
     # Default
@@ -182,10 +213,8 @@ def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
 
 
 def test_iter_run_samples_returns_all_rows(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r1", "2026-01-01T00:00:00Z", {"src": "test"})
     total = 37
-    db.append_samples("r1", [{"i": i} for i in range(total)])
+    db = _seeded_history_db(tmp_path, "r1", total)
 
     all_rows: list[dict] = []
     for batch in db.iter_run_samples("r1", batch_size=10):
@@ -195,9 +224,7 @@ def test_iter_run_samples_returns_all_rows(tmp_path: Path) -> None:
 
 
 def test_iter_run_samples_offset(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("r2", "2026-01-01T00:00:00Z", {"src": "test"})
-    db.append_samples("r2", [{"i": i} for i in range(20)])
+    db = _seeded_history_db(tmp_path, "r2", 20)
 
     all_rows: list[dict] = []
     for batch in db.iter_run_samples("r2", batch_size=5, offset=10):

@@ -141,17 +141,44 @@ class TestSensorIntensityByLocation:
         [
             pytest.param(
                 [
-                    {"client_name": "front-left", "t_s": 10.0, "queue_overflow_drops": 9.0, "frames_dropped_total": 11.0},
-                    {"client_name": "front-left", "t_s": 0.0, "queue_overflow_drops": 1.0, "frames_dropped_total": 2.0},
-                    {"client_name": "front-left", "t_s": 5.0, "queue_overflow_drops": 4.0, "frames_dropped_total": 7.0},
+                    {
+                        "client_name": "front-left",
+                        "t_s": 10.0,
+                        "queue_overflow_drops": 9.0,
+                        "frames_dropped_total": 11.0,
+                    },
+                    {
+                        "client_name": "front-left",
+                        "t_s": 0.0,
+                        "queue_overflow_drops": 1.0,
+                        "frames_dropped_total": 2.0,
+                    },
+                    {
+                        "client_name": "front-left",
+                        "t_s": 5.0,
+                        "queue_overflow_drops": 4.0,
+                        "frames_dropped_total": 7.0,
+                    },
                 ],
                 id="sorted_by_timestamp",
             ),
             pytest.param(
                 [
-                    {"client_name": "front-left", "queue_overflow_drops": 1.0, "frames_dropped_total": 2.0},
-                    {"client_name": "front-left", "queue_overflow_drops": 4.0, "frames_dropped_total": 7.0},
-                    {"client_name": "front-left", "queue_overflow_drops": 9.0, "frames_dropped_total": 11.0},
+                    {
+                        "client_name": "front-left",
+                        "queue_overflow_drops": 1.0,
+                        "frames_dropped_total": 2.0,
+                    },
+                    {
+                        "client_name": "front-left",
+                        "queue_overflow_drops": 4.0,
+                        "frames_dropped_total": 7.0,
+                    },
+                    {
+                        "client_name": "front-left",
+                        "queue_overflow_drops": 9.0,
+                        "frames_dropped_total": 11.0,
+                    },
                 ],
                 id="without_timestamps_input_order",
             ),

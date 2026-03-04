@@ -1,39 +1,36 @@
 from __future__ import annotations
 
+from _report_helpers import minimal_summary
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.analysis.report_data_builder import map_summary
 
+_ORDER_TOP_CAUSE: dict = {
+    "finding_id": "F_ORDER",
+    "suspected_source": "wheel/tire",
+    "strongest_location": "front-left",
+    "strongest_speed_band": "40-60 km/h",
+    "confidence_0_to_1": 0.8,
+    "signatures_observed": ["1x wheel order"],
+}
+
+_BASE_ORDER_FINDING: dict = {
+    "finding_id": "F_ORDER",
+    "amplitude_metric": {"value": 0.015, "units": "g"},
+    "evidence_metrics": {"vibration_strength_db": 23.4},
+}
+
 
 def _summary_with_top_order(finding: dict, *, sensor_rows: list[dict] | None = None) -> dict:
-    return {
-        "top_causes": [
-            {
-                "finding_id": "F_ORDER",
-                "suspected_source": "wheel/tire",
-                "strongest_location": "front-left",
-                "strongest_speed_band": "40-60 km/h",
-                "confidence_0_to_1": 0.8,
-                "signatures_observed": ["1x wheel order"],
-            }
-        ],
-        "findings": [finding],
-        "sensor_intensity_by_location": sensor_rows or [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
+    return minimal_summary(
+        top_causes=[_ORDER_TOP_CAUSE],
+        findings=[finding],
+        sensor_intensity_by_location=sensor_rows or [],
+    )
 
 
 def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -> None:
-    summary = _summary_with_top_order(
-        {
-            "finding_id": "F_ORDER",
-            "amplitude_metric": {"value": 0.015, "units": "g"},
-            "evidence_metrics": {"vibration_strength_db": 23.4},
-        }
-    )
+    summary = _summary_with_top_order(_BASE_ORDER_FINDING)
 
     data = map_summary(summary)
 
@@ -62,13 +59,7 @@ def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> N
 
 
 def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
-    summary = _summary_with_top_order(
-        {
-            "finding_id": "F_ORDER",
-            "amplitude_metric": {"value": 0.015, "units": "g"},
-            "evidence_metrics": {"vibration_strength_db": 23.4},
-        }
-    )
+    summary = _summary_with_top_order(_BASE_ORDER_FINDING)
     summary["top_causes"] = [
         {
             "finding_id": "REF_GAP_1",
@@ -96,12 +87,10 @@ def test_map_summary_prefers_non_ref_top_cause_for_observed_location() -> None:
 def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeholder() -> None:
     summary = _summary_with_top_order(
         {
-            "finding_id": "F_ORDER",
+            **_BASE_ORDER_FINDING,
             "suspected_source": "wheel/tire",
             "strongest_location": "rear-left",
             "strongest_speed_band": "40-60 km/h",
-            "amplitude_metric": {"value": 0.015, "units": "g"},
-            "evidence_metrics": {"vibration_strength_db": 23.4},
         }
     )
     summary["top_causes"] = [
@@ -121,13 +110,11 @@ def test_map_summary_falls_back_to_actionable_findings_when_top_cause_is_placeho
 def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() -> None:
     summary = _summary_with_top_order(
         {
-            "finding_id": "F_ORDER",
+            **_BASE_ORDER_FINDING,
             "source": "wheel/tire",
             "strongest_location": "rear-left",
             "strongest_speed_band": "40-60 km/h",
             "signatures_observed": ["1x wheel order"],
-            "amplitude_metric": {"value": 0.015, "units": "g"},
-            "evidence_metrics": {"vibration_strength_db": 23.4},
         }
     )
     summary["top_causes"] = [
@@ -152,13 +139,8 @@ def test_map_summary_pattern_evidence_uses_same_primary_candidate_as_observed() 
 
 
 def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
-    summary = {
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {
+    summary = minimal_summary(
+        plots={
             "peaks_table": [
                 {
                     "order_label": "",
@@ -167,7 +149,7 @@ def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
                 }
             ]
         },
-    }
+    )
 
     data = map_summary(summary)
 
@@ -179,14 +161,9 @@ def test_map_summary_peak_rows_render_missing_values_as_dashes() -> None:
 
 
 def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
-    summary = {
-        "lang": "en",
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {
+    summary = minimal_summary(
+        lang="en",
+        plots={
             "peaks_table": [
                 {
                     "rank": 1,
@@ -202,7 +179,7 @@ def test_map_summary_peak_rows_use_source_hint_for_system_label() -> None:
                 }
             ]
         },
-    }
+    )
 
     data = map_summary(summary)
 

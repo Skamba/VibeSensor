@@ -9,10 +9,20 @@ from __future__ import annotations
 import ast
 import importlib
 import sys
+from io import BytesIO
 from pathlib import Path
 
 import pytest
 from _paths import SERVER_ROOT
+from pypdf import PdfReader
+
+from vibesensor.report.pdf_builder import build_report_pdf
+from vibesensor.report.report_data import (
+    ObservedSignature,
+    PatternEvidence,
+    ReportTemplateData,
+    SystemFindingCard,
+)
 
 # ---------------------------------------------------------------------------
 # 1.  Static import guard — report modules must not import analysis modules
@@ -104,9 +114,6 @@ def test_report_package_imports_without_analysis() -> None:
 
 def test_build_report_pdf_accepts_report_template_data() -> None:
     """build_report_pdf must accept a ReportTemplateData directly."""
-    from vibesensor.report.pdf_builder import build_report_pdf
-    from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
-
     data = ReportTemplateData(
         title="Test Report",
         pattern_evidence=PatternEvidence(),
@@ -123,18 +130,6 @@ def test_build_report_pdf_accepts_report_template_data() -> None:
 
 def test_report_output_matches_template_data() -> None:
     """Key facts from ReportTemplateData appear in the rendered PDF text."""
-    from io import BytesIO
-
-    from pypdf import PdfReader
-
-    from vibesensor.report.pdf_builder import build_report_pdf
-    from vibesensor.report.report_data import (
-        ObservedSignature,
-        PatternEvidence,
-        ReportTemplateData,
-        SystemFindingCard,
-    )
-
     data = ReportTemplateData(
         title="Diagnostic Worksheet",
         run_datetime="2026-01-15 10:30:00",

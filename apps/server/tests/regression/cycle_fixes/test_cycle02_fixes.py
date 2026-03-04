@@ -9,29 +9,34 @@
 from __future__ import annotations
 
 import inspect
+import re
 
 import numpy as np
+import pytest
 from vibesensor_core.strength_bands import bucket_for_strength
+
+from vibesensor.analysis.helpers import ORDER_TOLERANCE_MIN_HZ, ORDER_TOLERANCE_REL
+from vibesensor.analysis.report_data_builder import _top_strength_values
+from vibesensor.processing import SignalProcessor
+from vibesensor.processing.fft import compute_fft_spectrum
 
 
 class TestBucketForStrengthNegativeDB:
     """Regression: bucket_for_strength must return 'l0' for negative dB,
     not None."""
 
-    def test_negative_db_returns_l0(self) -> None:
-        assert bucket_for_strength(-5.0) == "l0"
-
-    def test_zero_db_returns_l0(self) -> None:
-        assert bucket_for_strength(0.0) == "l0"
-
-    def test_positive_below_l1_returns_l0(self) -> None:
-        assert bucket_for_strength(7.9) == "l0"
-
-    def test_l1_boundary(self) -> None:
-        assert bucket_for_strength(8.0) == "l1"
-
-    def test_high_value(self) -> None:
-        assert bucket_for_strength(50.0) == "l5"
+    @pytest.mark.parametrize(
+        "db_val, expected",
+        [
+            pytest.param(-5.0, "l0", id="negative"),
+            pytest.param(0.0, "l0", id="zero"),
+            pytest.param(7.9, "l0", id="below_l1"),
+            pytest.param(8.0, "l1", id="l1_boundary"),
+            pytest.param(50.0, "l5", id="high"),
+        ],
+    )
+    def test_bucket_boundaries(self, db_val: float, expected: str) -> None:
+        assert bucket_for_strength(db_val) == expected
 
 
 class TestCombinedSpectrumNotZeroed:
@@ -42,10 +47,6 @@ class TestCombinedSpectrumNotZeroed:
     def test_amp_slice_used_not_amp_for_peaks(self) -> None:
         """Verify source code appends amp_slice (not amp_for_peaks)
         to axis_amp_slices."""
-        import re
-
-        from vibesensor.processing.fft import compute_fft_spectrum
-
         src = inspect.getsource(compute_fft_spectrum)
         # Find the line that appends to axis_amp_slices
         match = re.search(r"axis_amp_slices\.append\((\w+)\)", src)
@@ -63,8 +64,6 @@ class TestNoiseFloorNoDoubleRemoval:
     analysis-band slice (DC already removed)."""
 
     def test_all_bins_included(self) -> None:
-        from vibesensor.processing import SignalProcessor
-
         amps = np.array([0.010, 0.012, 0.009, 0.011, 0.013], dtype=np.float32)
         floor = SignalProcessor._noise_floor(amps)
         # All 5 bins should be considered. If amps[1:] were used,
@@ -85,11 +84,6 @@ class TestOrderToleranceScalesWithCompliance:
     wheel hypotheses (compliance=1.5) get a wider matching window."""
 
     def test_compliance_1_baseline(self) -> None:
-        from vibesensor.analysis.helpers import (
-            ORDER_TOLERANCE_MIN_HZ,
-            ORDER_TOLERANCE_REL,
-        )
-
         predicted_hz = 20.0
         compliance = 1.0
         tolerance = max(
@@ -100,11 +94,6 @@ class TestOrderToleranceScalesWithCompliance:
         assert abs(tolerance - expected) < 1e-9
 
     def test_compliance_1_5_wider(self) -> None:
-        from vibesensor.analysis.helpers import (
-            ORDER_TOLERANCE_MIN_HZ,
-            ORDER_TOLERANCE_REL,
-        )
-
         predicted_hz = 20.0
         tol_1 = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL * 1.0**0.5)
         tol_15 = max(ORDER_TOLERANCE_MIN_HZ, predicted_hz * ORDER_TOLERANCE_REL * 1.5**0.5)
@@ -121,8 +110,6 @@ class TestDeadDbValueRemoved:
     variable."""
 
     def test_no_db_value_in_source(self) -> None:
-        from vibesensor.analysis.report_data_builder import _top_strength_values
-
         source = inspect.getsource(_top_strength_values)
         assert "db_value" not in source, (
             "Dead variable db_value still present in _top_strength_values"

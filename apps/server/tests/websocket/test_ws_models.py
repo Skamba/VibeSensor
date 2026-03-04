@@ -9,14 +9,17 @@ os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
 
 from typing import Any
 
+import numpy as np
 import pytest
 
+from vibesensor.processing import ClientBuffer, SignalProcessor
 from vibesensor.ws_models import (
     SCHEMA_VERSION,
     LiveWsPayload,
     SpectraPayload,
     SpectrumSeries,
 )
+from vibesensor.ws_schema_export import export_schema
 
 # ---------------------------------------------------------------------------
 # ws_models.py – Pydantic model tests
@@ -101,8 +104,6 @@ class TestLiveWsPayloadModel:
 
 def test_schema_export_check_passes() -> None:
     """Verify the committed schema matches what the export generates."""
-    from vibesensor.ws_schema_export import export_schema
-
     generated = export_schema()
     assert len(generated) > 100, "Schema should be non-trivial"
     parsed = json.loads(generated)
@@ -146,10 +147,6 @@ class TestMultiSpectrumFreqDedup:
         client_data: dict[str, dict[str, Any]],
     ) -> Any:
         """Create a SignalProcessor and inject fake spectrum data."""
-        import numpy as np
-
-        from vibesensor.processing import ClientBuffer, SignalProcessor
-
         proc = SignalProcessor(
             sample_rate_hz=800,
             waveform_seconds=8,
@@ -235,8 +232,6 @@ class TestMultiSpectrumFreqDedup:
 
     def test_payload_size_reduction(self) -> None:
         """Verify the optimized payload is smaller than old-style duplicated."""
-        import numpy as np
-
         freq = list(np.linspace(5, 200, 512))
         amp = list(np.random.default_rng(42).random(512) * 0.1)
         proc = self._make_processor_with_clients(

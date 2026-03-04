@@ -91,7 +91,9 @@ _EXPECTED_PUBLIC_SYMBOLS = [
 
 @pytest.mark.parametrize("symbol", _EXPECTED_PUBLIC_SYMBOLS)
 def test_analysis_init_exports_core_symbol(symbol: str) -> None:
-    """Each expected symbol must be importable from ``vibesensor.analysis`` and listed in ``__all__``."""
+    """Each expected symbol must be importable from
+    ``vibesensor.analysis`` and listed in ``__all__``.
+    """
     from vibesensor import analysis
 
     assert hasattr(analysis, symbol), f"vibesensor.analysis.__init__ must export '{symbol}'"

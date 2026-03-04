@@ -35,8 +35,6 @@ from builders import (
     top_confidence,
 )
 
-_CORNERS = ["FL", "FR", "RL", "RR"]
-
 
 def _profile_engine_hz(profile: dict[str, Any], speed_kmh: float) -> float:
     """Compute engine-1x Hz for a profile at a given speed."""
@@ -49,7 +47,7 @@ def _profile_engine_hz(profile: dict[str, Any], speed_kmh: float) -> float:
 # 5 profiles × 4 corners = 20 cases
 # ===================================================================
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
+@pytest.mark.parametrize("corner", list(CORNER_SENSORS))
 def test_fault_detected_across_profiles(profile: dict[str, Any], corner: str) -> None:
     """Wheel fault must be detected with correct profile-specific wheel Hz."""
     sensor = CORNER_SENSORS[corner]

@@ -6,11 +6,14 @@ import re
 from pathlib import Path
 
 import numpy as np
+import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor.api import _safe_filename
 from vibesensor.history_db import HistoryDB
 from vibesensor.processing import SignalProcessor
+
+_SAFE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
 
 # --- Bug 1 & 2: Content-Disposition / zip filename sanitisation -----------
 
@@ -21,19 +24,19 @@ class TestSafeFilename:
     def test_normal_run_id_unchanged(self) -> None:
         assert _safe_filename("run-2026-01-15_12-30") == "run-2026-01-15_12-30"
 
-    def test_double_quotes_stripped(self) -> None:
-        result = _safe_filename('run"injected')
-        assert '"' not in result
-
-    def test_crlf_stripped(self) -> None:
-        result = _safe_filename("run\r\nX-Injected: yes")
-        assert "\r" not in result
-        assert "\n" not in result
-
-    def test_path_separators_stripped(self) -> None:
-        result = _safe_filename("../../etc/passwd")
-        assert "/" not in result
-        assert "\\" not in result
+    @pytest.mark.parametrize(
+        "raw,forbidden",
+        [
+            ('run"injected', ['"']),
+            ("run\r\nX-Injected: yes", ["\r", "\n"]),
+            ("../../etc/passwd", ["/", "\\"]),
+        ],
+        ids=["double-quotes", "crlf", "path-separators"],
+    )
+    def test_dangerous_chars_stripped(self, raw: str, forbidden: list[str]) -> None:
+        result = _safe_filename(raw)
+        for ch in forbidden:
+            assert ch not in result
 
     def test_empty_input_returns_download(self) -> None:
         assert _safe_filename("") == "download"
@@ -45,44 +48,43 @@ class TestSafeFilename:
         assert "/" not in result
 
     def test_long_input_truncated(self) -> None:
-        long_name = "a" * 300
-        result = _safe_filename(long_name)
-        assert len(result) <= 200
+        assert len(_safe_filename("a" * 300)) <= 200
 
-    def test_result_matches_safe_pattern(self) -> None:
-        safe_re = re.compile(r"^[a-zA-Z0-9._-]+$")
-        for raw in ["normal-run", "run 123", "run<script>", "run;echo hi"]:
-            result = _safe_filename(raw)
-            assert safe_re.match(result), f"Unsafe chars in result: {result!r}"
+    @pytest.mark.parametrize("raw", ["normal-run", "run 123", "run<script>", "run;echo hi"])
+    def test_result_matches_safe_pattern(self, raw: str) -> None:
+        result = _safe_filename(raw)
+        assert _SAFE_RE.match(result), f"Unsafe chars in result: {result!r}"
 
 
 # --- Bug 3: history_db analysis type validation ---------------------------
 
 
-def test_history_db_rejects_non_dict_analysis(tmp_path: Path) -> None:
-    """Analysis stored as non-dict JSON should not appear in get_run()."""
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-1", "2026-01-01T00:00:00Z", {"source": "test"})
-    # Manually store a JSON list instead of a dict
-    with db._cursor() as cur:
-        cur.execute(
-            "UPDATE runs SET status='complete', analysis_json=? WHERE run_id=?",
-            ("[1,2,3]", "run-1"),
-        )
-    run = db.get_run("run-1")
-    assert run is not None
-    # The non-dict value must not appear as 'analysis'
-    assert "analysis" not in run
+class TestHistoryDBAnalysisValidation:
+    """Analysis stored in history must be type-checked as dict."""
 
+    @staticmethod
+    def _make_db(tmp_path: Path) -> HistoryDB:
+        db = HistoryDB(tmp_path / "history.db")
+        db.create_run("run-1", "2026-01-01T00:00:00Z", {"source": "test"})
+        return db
 
-def test_history_db_accepts_dict_analysis(tmp_path: Path) -> None:
-    """A proper dict analysis should be returned."""
-    db = HistoryDB(tmp_path / "history.db")
-    db.create_run("run-1", "2026-01-01T00:00:00Z", {"source": "test"})
-    db.store_analysis("run-1", {"findings": []})
-    run = db.get_run("run-1")
-    assert run is not None
-    assert isinstance(run.get("analysis"), dict)
+    def test_rejects_non_dict_analysis(self, tmp_path: Path) -> None:
+        db = self._make_db(tmp_path)
+        with db._cursor() as cur:
+            cur.execute(
+                "UPDATE runs SET status='complete', analysis_json=? WHERE run_id=?",
+                ("[1,2,3]", "run-1"),
+            )
+        run = db.get_run("run-1")
+        assert run is not None
+        assert "analysis" not in run
+
+    def test_accepts_dict_analysis(self, tmp_path: Path) -> None:
+        db = self._make_db(tmp_path)
+        db.store_analysis("run-1", {"findings": []})
+        run = db.get_run("run-1")
+        assert run is not None
+        assert isinstance(run.get("analysis"), dict)
 
 
 # --- Bug 9: Division by zero when sample_rate_hz == 0 --------------------
@@ -112,17 +114,16 @@ class TestProcessingZeroSampleRate:
         # Must return without crash; waveform/spectrum/metrics empty
         assert result.get("waveform") == {} or result.get("metrics") == {}
 
-    def test_fft_params_returns_empty_on_zero_sr(self) -> None:
+    @pytest.mark.parametrize("sr,expect_empty", [(0, True), (800, False)], ids=["zero", "normal"])
+    def test_fft_params(self, sr: int, *, expect_empty: bool) -> None:
         proc = self._make_processor(800)
-        freq_slice, valid_idx = proc._fft_params(0)
-        assert len(freq_slice) == 0
-        assert len(valid_idx) == 0
-
-    def test_fft_params_normal_sr_still_works(self) -> None:
-        proc = self._make_processor(800)
-        freq_slice, valid_idx = proc._fft_params(800)
-        assert len(freq_slice) > 0
-        assert len(valid_idx) > 0
+        freq_slice, valid_idx = proc._fft_params(sr)
+        if expect_empty:
+            assert len(freq_slice) == 0
+            assert len(valid_idx) == 0
+        else:
+            assert len(freq_slice) > 0
+            assert len(valid_idx) > 0
 
 
 # --- Bug 5: live_diagnostics type annotation (compile-time) ---------------
@@ -130,13 +131,7 @@ class TestProcessingZeroSampleRate:
 
 def test_live_diagnostics_entries_type_annotation() -> None:
     """Verify event_detector properly extracts label and location per client."""
-    pkg = SERVER_ROOT / "vibesensor"
-    src_path = pkg / "live_diagnostics" / "event_detector.py"
-    source = src_path.read_text()
-    # The original bug was that entries lacked proper type annotations.
-    # The optimization merged the two-pass approach into a single-pass,
-    # so the intermediate entries list no longer exists.  Guard the invariant
-    # that client_map and client_location_map are still built and used.
+    source = (SERVER_ROOT / "vibesensor" / "live_diagnostics" / "event_detector.py").read_text()
     assert "client_map" in source, "client_map lookup must exist"
     assert "client_location_map" in source, "client_location_map lookup must exist"
 
@@ -146,9 +141,6 @@ def test_live_diagnostics_entries_type_annotation() -> None:
 
 def test_set_location_uses_stripped_code() -> None:
     """Verify the stripped code is passed to registry.set_location."""
-    src_path = SERVER_ROOT / "vibesensor" / "routes" / "clients.py"
-    source = src_path.read_text()
-    # The registry.set_location call should use 'code' (stripped), not
-    # 'req.location_code' (raw).
+    source = (SERVER_ROOT / "vibesensor" / "routes" / "clients.py").read_text()
     assert "set_location(normalized_client_id, code)" in source
     assert "set_location(normalized_client_id, req.location_code)" not in source

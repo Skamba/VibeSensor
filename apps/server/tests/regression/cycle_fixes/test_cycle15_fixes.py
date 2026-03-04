@@ -129,13 +129,9 @@ class TestResizeBuffer:
         assert buf.capacity == 5
         assert buf.count <= 5
 
-    def test_zero_clamped_to_one(self) -> None:
+    @pytest.mark.parametrize("new_cap", [0, -10], ids=["zero", "negative"])
+    def test_non_positive_clamped_to_one(self, new_cap: int) -> None:
         proc, buf = self._make_proc_with_buffer()
-        proc._resize_buffer(buf, 0)
+        proc._resize_buffer(buf, new_cap)
         assert buf.capacity == 1
         assert buf.count <= 1
-
-    def test_negative_clamped_to_one(self) -> None:
-        proc, buf = self._make_proc_with_buffer()
-        proc._resize_buffer(buf, -10)
-        assert buf.capacity == 1

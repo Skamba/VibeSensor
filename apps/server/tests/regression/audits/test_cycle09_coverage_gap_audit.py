@@ -30,11 +30,11 @@ import pytest
 
 from vibesensor.api import _flatten_for_csv, _safe_filename
 from vibesensor.gps_speed import (
+    _GPS_RECONNECT_DELAY_S,
+    _GPS_RECONNECT_MAX_DELAY_S,
     DEFAULT_FALLBACK_MODE,
     MAX_STALE_TIMEOUT_S,
     MIN_STALE_TIMEOUT_S,
-    _GPS_RECONNECT_DELAY_S,
-    _GPS_RECONNECT_MAX_DELAY_S,
     GPSSpeedMonitor,
 )
 from vibesensor.history_db import HistoryDB
@@ -460,7 +460,9 @@ class TestHistoryDBFinalizeNoOp:
         # Should not raise
         history_db.finalize_run("nonexistent", "2026-01-01T00:00:00Z")
 
-    def test_finalize_run_with_metadata_noop_when_not_recording(self, history_db: HistoryDB) -> None:
+    def test_finalize_run_with_metadata_noop_when_not_recording(
+        self, history_db: HistoryDB,
+    ) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", {"v": 1})
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")
         # Now analyzing — finalize_run_with_metadata should no-op

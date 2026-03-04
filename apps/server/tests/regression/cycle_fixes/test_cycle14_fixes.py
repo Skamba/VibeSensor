@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import pytest
 
+from vibesensor.analysis.order_analysis import _driveshaft_hz, _order_label
 from vibesensor.runlog import as_float_or_none
 
 # ------------------------------------------------------------------
@@ -67,29 +68,21 @@ class TestSummaryFrequencyGuard:
 
 
 class TestOrderLabel:
-    """_order_label should handle 2-arg and 3-arg signatures."""
+    """_order_label should handle 2-arg signatures."""
 
-    def test_two_arg_basic(self) -> None:
-        from vibesensor.analysis.order_analysis import _order_label
-
-        assert _order_label(1, "wheel") == "1x wheel"
-
-    def test_two_arg_higher_order(self) -> None:
-        from vibesensor.analysis.order_analysis import _order_label
-
-        assert _order_label(3, "engine") == "3x engine"
-
-    def test_three_arg_legacy_removed(self) -> None:
-        """Legacy 3-arg form (_order_label(lang, order, base)) has been removed;
-        calling with exactly 2 positional args is the only supported form."""
-        from vibesensor.analysis.order_analysis import _order_label
-
-        result = _order_label(2, "driveline")
-        assert result == "2x driveline"
+    @pytest.mark.parametrize(
+        "order, base, expected",
+        [
+            (1, "wheel", "1x wheel"),
+            (3, "engine", "3x engine"),
+            (2, "driveline", "2x driveline"),
+        ],
+        ids=["basic", "higher-order", "legacy-two-arg"],
+    )
+    def test_two_arg(self, order: int, base: str, expected: str) -> None:
+        assert _order_label(order, base) == expected
 
     def test_wrong_arg_count_raises(self) -> None:
-        from vibesensor.analysis.order_analysis import _order_label
-
         with pytest.raises(TypeError):
             _order_label()  # type: ignore[call-arg]
 
@@ -108,29 +101,21 @@ class TestOrderLabel:
 class TestDriveshaftHz:
     """_driveshaft_hz must handle missing/zero/negative inputs gracefully."""
 
-    def test_no_tire_circumference_returns_none(self) -> None:
-        from vibesensor.analysis.order_analysis import _driveshaft_hz
-
-        result = _driveshaft_hz(
-            {"speed_kmh": 80.0},
-            {"final_drive_ratio": 3.5},
-            tire_circumference_m=None,
-        )
-        assert result is None
-
-    def test_zero_final_drive_returns_none(self) -> None:
-        from vibesensor.analysis.order_analysis import _driveshaft_hz
-
-        result = _driveshaft_hz(
-            {"speed_kmh": 80.0, "final_drive_ratio": 0.0},
-            {},
-            tire_circumference_m=2.0,
-        )
-        assert result is None
+    @pytest.mark.parametrize(
+        "sample, overrides, tire_m",
+        [
+            ({"speed_kmh": 80.0}, {"final_drive_ratio": 3.5}, None),
+            ({"speed_kmh": 80.0, "final_drive_ratio": 0.0}, {}, 2.0),
+            ({"speed_kmh": 80.0, "final_drive_ratio": -1.0}, {}, 2.0),
+        ],
+        ids=["no-tire-circ", "zero-final-drive", "negative-final-drive"],
+    )
+    def test_returns_none(
+        self, sample: dict, overrides: dict, tire_m: float | None
+    ) -> None:
+        assert _driveshaft_hz(sample, overrides, tire_circumference_m=tire_m) is None
 
     def test_valid_inputs(self) -> None:
-        from vibesensor.analysis.order_analysis import _driveshaft_hz
-
         result = _driveshaft_hz(
             {"speed_kmh": 72.0, "final_drive_ratio": 3.5},
             {},
@@ -138,16 +123,6 @@ class TestDriveshaftHz:
         )
         assert result is not None
         assert result > 0
-
-    def test_negative_final_drive_returns_none(self) -> None:
-        from vibesensor.analysis.order_analysis import _driveshaft_hz
-
-        result = _driveshaft_hz(
-            {"speed_kmh": 80.0, "final_drive_ratio": -1.0},
-            {},
-            tire_circumference_m=2.0,
-        )
-        assert result is None
 
 
 # ------------------------------------------------------------------

@@ -44,7 +44,6 @@ from pypdf import PdfReader
 from vibesensor.analysis import map_summary
 from vibesensor.report.pdf_builder import build_report_pdf
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

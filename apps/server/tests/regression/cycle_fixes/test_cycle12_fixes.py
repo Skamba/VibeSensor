@@ -11,15 +11,25 @@ Covers:
 
 from __future__ import annotations
 
+import inspect
 import math
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
+from vibesensor.analysis.findings import _compute_effective_match_rate
+from vibesensor.analysis.helpers import _speed_bin_label
+from vibesensor.metrics_log import MetricsLogger
+from vibesensor.update.manager import _hash_tree
+
 # ------------------------------------------------------------------
 # 1. Burstiness for near-zero median
 # ------------------------------------------------------------------
+
+
+def _burstiness(median_amp: float, max_amp: float) -> float:
+    return (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
 
 class TestBurstinessNearZeroMedian:
@@ -27,16 +37,10 @@ class TestBurstinessNearZeroMedian:
 
     def test_near_zero_median_gives_zero(self) -> None:
         """Near-zero median with any max returns 0.0 (safe sentinel)."""
-        median_amp = 0.0
-        max_amp = 1.0
-        burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
-        assert burstiness == 0.0
+        assert _burstiness(0.0, 1.0) == 0.0
 
     def test_normal_burstiness_ratio(self) -> None:
-        median_amp = 1.0
-        max_amp = 3.0
-        burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
-        assert burstiness == pytest.approx(3.0)
+        assert _burstiness(1.0, 3.0) == pytest.approx(3.0)
 
 
 # ------------------------------------------------------------------
@@ -48,8 +52,6 @@ class TestComputeEffectiveMatchRateAllBins:
     """Should try highest-speed bin first for focused rescue."""
 
     def test_high_speed_bin_qualifies(self) -> None:
-        from vibesensor.analysis.findings import _compute_effective_match_rate
-
         possible = {"50-60 km/h": 20, "100-110 km/h": 20}
         matched = {"50-60 km/h": 16, "100-110 km/h": 16}
 
@@ -61,13 +63,10 @@ class TestComputeEffectiveMatchRateAllBins:
             possible_by_location={},
             matched_by_location={},
         )
-        # The highest bin (100-110) should be selected
         assert band == "100-110 km/h"
         assert rate >= 0.5
 
     def test_no_qualifying_bin_returns_original(self) -> None:
-        from vibesensor.analysis.findings import _compute_effective_match_rate
-
         possible = {"50-60 km/h": 5, "100-110 km/h": 5}
         matched = {"50-60 km/h": 1, "100-110 km/h": 1}
 
@@ -92,7 +91,6 @@ class TestPhaseSegmentationFiniteGuard:
     """end_t_s == 0.0 is a valid time and must not be treated as falsy."""
 
     def test_zero_time_propagates_to_next_segment(self) -> None:
-        # Directly test that the helper handles t_s=0.0 as valid
         assert math.isfinite(0.0) is True
 
 
@@ -104,35 +102,19 @@ class TestPhaseSegmentationFiniteGuard:
 class TestSpeedBinLabelEdgeCases:
     """_speed_bin_label must handle NaN, Inf, negative values gracefully."""
 
-    def test_nan_maps_to_lowest_bin(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
-        label = _speed_bin_label(float("nan"))
-        assert label == "0-10 km/h"
-
-    def test_inf_maps_to_lowest_bin(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
-        label = _speed_bin_label(float("inf"))
-        assert label == "0-10 km/h"
-
-    def test_negative_maps_to_lowest_bin(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
-        label = _speed_bin_label(-5.0)
-        assert label == "0-10 km/h"
-
-    def test_normal_value(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
-        label = _speed_bin_label(55.0)
-        assert label == "50-60 km/h"
-
-    def test_zero_value(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
-        label = _speed_bin_label(0.0)
-        assert label == "0-10 km/h"
+    @pytest.mark.parametrize(
+        "kmh, expected",
+        [
+            (float("nan"), "0-10 km/h"),
+            (float("inf"), "0-10 km/h"),
+            (-5.0, "0-10 km/h"),
+            (0.0, "0-10 km/h"),
+            (55.0, "50-60 km/h"),
+        ],
+        ids=["nan", "inf", "negative", "zero", "normal"],
+    )
+    def test_edge_cases(self, kmh: float, expected: str) -> None:
+        assert _speed_bin_label(kmh) == expected
 
 
 # ------------------------------------------------------------------
@@ -144,17 +126,12 @@ class TestHashTreeFileDeletedMidScan:
     """_hash_tree must not crash if a file is deleted between rglob and open."""
 
     def test_deleted_file_skipped_gracefully(self, tmp_path: Path) -> None:
-        from vibesensor.update.manager import _hash_tree
-
-        # Create some files
         (tmp_path / "a.txt").write_text("hello")
         (tmp_path / "b.txt").write_text("world")
 
-        # First call should succeed
         h1 = _hash_tree(tmp_path, ignore_names=set())
         assert len(h1) == 64  # SHA256 hex digest
 
-        # Patch open to fail for one specific file, simulating deletion
         original_open = open
 
         def failing_open(path, *args, **kwargs):
@@ -163,22 +140,15 @@ class TestHashTreeFileDeletedMidScan:
             return original_open(path, *args, **kwargs)
 
         with patch("builtins.open", side_effect=failing_open):
-            # Should not crash
             h2 = _hash_tree(tmp_path, ignore_names=set())
             assert len(h2) == 64
-            # Hash should differ since b.txt was skipped
             assert h2 != h1
 
     def test_empty_dir_returns_empty(self, tmp_path: Path) -> None:
-        from vibesensor.update.manager import _hash_tree
-
         result = _hash_tree(tmp_path, ignore_names=set())
-        # Empty dir returns the hash of no input
         assert isinstance(result, str)
 
     def test_nonexistent_dir_returns_empty_string(self, tmp_path: Path) -> None:
-        from vibesensor.update.manager import _hash_tree
-
         result = _hash_tree(tmp_path / "nonexistent", ignore_names=set())
         assert result == ""
 
@@ -196,15 +166,8 @@ class TestMetricsLogLockSnapshot:
     """
 
     def test_live_start_read_is_under_lock(self) -> None:
-        import inspect
-
-        from vibesensor.metrics_log import MetricsLogger
-
         source = inspect.getsource(MetricsLogger.run)
-        # Find the lock acquisition
         assert "with self._lock:" in source
-        # The _live_start_mono_s read should appear after a lock acquisition
-        # and before the build_sample_records call
         lock_idx = source.index("with self._lock:")
         live_start_idx = source.index("_live_start_mono_s")
         build_idx = source.index("_build_sample_records")

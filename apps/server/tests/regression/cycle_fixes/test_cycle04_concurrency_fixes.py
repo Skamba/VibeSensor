@@ -13,7 +13,41 @@ from pathlib import Path
 
 import pytest
 
+from vibesensor.analysis_settings import AnalysisSettingsStore
+from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.history_db import HistoryDB
+from vibesensor.metrics_log import MetricsLogger
+from vibesensor.processing import SignalProcessor
+from vibesensor.registry import ClientRegistry
+
+
+def _make_logger(tmp_path: Path, **overrides):
+    """Create a minimal MetricsLogger + HistoryDB for concurrency tests."""
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+    defaults = dict(
+        enabled=False,
+        log_path=tmp_path / "metrics.jsonl",
+        metrics_log_hz=10,
+        registry=registry,
+        gps_monitor=GPSSpeedMonitor(gps_enabled=False),
+        processor=SignalProcessor(
+            sample_rate_hz=800,
+            waveform_seconds=5,
+            waveform_display_hz=60,
+            fft_n=256,
+            spectrum_max_hz=200,
+        ),
+        analysis_settings=AnalysisSettingsStore(),
+        sensor_model="ADXL345",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=256,
+        history_db=db,
+        persist_history_db=False,
+    )
+    defaults.update(overrides)
+    return MetricsLogger(**defaults), db
+
 
 # ---------------------------------------------------------------------------
 # 1. Auto-stop generation guard
@@ -24,38 +58,8 @@ class TestAutoStopGenerationGuard:
     """stop_logging(_only_if_generation=N) must be a no-op when session has
     already advanced past generation N."""
 
-    def _make_logger(self, tmp_path: Path):
-        from vibesensor.analysis_settings import AnalysisSettingsStore
-        from vibesensor.gps_speed import GPSSpeedMonitor
-        from vibesensor.metrics_log import MetricsLogger
-        from vibesensor.processing import SignalProcessor
-        from vibesensor.registry import ClientRegistry
-
-        db = HistoryDB(tmp_path / "history.db")
-        registry = ClientRegistry(db=db)
-        return MetricsLogger(
-            enabled=False,
-            log_path=tmp_path / "metrics.jsonl",
-            metrics_log_hz=10,
-            registry=registry,
-            gps_monitor=GPSSpeedMonitor(gps_enabled=False),
-            processor=SignalProcessor(
-                sample_rate_hz=800,
-                waveform_seconds=5,
-                waveform_display_hz=60,
-                fft_n=256,
-                spectrum_max_hz=200,
-            ),
-            analysis_settings=AnalysisSettingsStore(),
-            sensor_model="ADXL345",
-            default_sample_rate_hz=800,
-            fft_window_size_samples=256,
-            history_db=db,
-            persist_history_db=False,
-        ), db
-
     def test_stale_generation_does_not_stop_new_session(self, tmp_path: Path) -> None:
-        logger, db = self._make_logger(tmp_path)
+        logger, db = _make_logger(tmp_path)
         logger.start_logging()
         old_gen = logger._session_generation
         old_run_id = logger._run_id
@@ -77,7 +81,7 @@ class TestAutoStopGenerationGuard:
         db.close()
 
     def test_matching_generation_does_stop(self, tmp_path: Path) -> None:
-        logger, db = self._make_logger(tmp_path)
+        logger, db = _make_logger(tmp_path)
         logger.start_logging()
         gen = logger._session_generation
 
@@ -182,32 +186,8 @@ class TestFinalizeReturnGatesAnalysis:
     def test_analysis_not_scheduled_when_finalize_fails(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from vibesensor.analysis_settings import AnalysisSettingsStore
-        from vibesensor.gps_speed import GPSSpeedMonitor
-        from vibesensor.metrics_log import MetricsLogger
-        from vibesensor.processing import SignalProcessor
-        from vibesensor.registry import ClientRegistry
-
-        db = HistoryDB(tmp_path / "h.db")
-        registry = ClientRegistry(db=db)
-        logger = MetricsLogger(
-            enabled=False,
-            log_path=tmp_path / "metrics.jsonl",
-            metrics_log_hz=10,
-            registry=registry,
-            gps_monitor=GPSSpeedMonitor(gps_enabled=False),
-            processor=SignalProcessor(
-                sample_rate_hz=800,
-                waveform_seconds=5,
-                waveform_display_hz=60,
-                fft_n=256,
-                spectrum_max_hz=200,
-            ),
-            analysis_settings=AnalysisSettingsStore(),
-            sensor_model="ADXL345",
-            default_sample_rate_hz=800,
-            fft_window_size_samples=256,
-            history_db=db,
+        logger, db = _make_logger(
+            tmp_path,
             persist_history_db=True,
             language_provider=lambda: "en",
         )
