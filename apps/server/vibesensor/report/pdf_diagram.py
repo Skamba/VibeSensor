@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from ..runlog import as_float_or_none as _as_float
 from .pdf_helpers import _canonical_location, _source_color
 from .theme import (
+    FINDING_SOURCE_COLORS,
     REPORT_COLORS,
 )
 
@@ -102,6 +103,21 @@ def _resolve_marker_states(
     return states
 
 
+# Label placement candidate offsets (dx, dy, anchor), by preference order.
+_LABEL_CANDIDATES_RIGHT: tuple[tuple[float, float, str], ...] = (
+    (10.0, -2.0, "start"),
+    (-10.0, -2.0, "end"),
+    (0.0, 9.0, "middle"),
+    (0.0, -11.0, "middle"),
+)
+_LABEL_CANDIDATES_LEFT: tuple[tuple[float, float, str], ...] = (
+    (-10.0, -2.0, "end"),
+    (10.0, -2.0, "start"),
+    (0.0, 9.0, "middle"),
+    (0.0, -11.0, "middle"),
+)
+
+
 def _choose_label_plan(
     *,
     name: str,
@@ -113,16 +129,8 @@ def _choose_label_plan(
     font_size: float,
     color: str,
 ) -> LabelRenderPlan:
-    prefer_right = px < (width * 0.5)
     ordered_candidates = (
-        [(10.0, -2.0, "start"), (-10.0, -2.0, "end"), (0.0, 9.0, "middle"), (0.0, -11.0, "middle")]
-        if prefer_right
-        else [
-            (-10.0, -2.0, "end"),
-            (10.0, -2.0, "start"),
-            (0.0, 9.0, "middle"),
-            (0.0, -11.0, "middle"),
-        ]
+        _LABEL_CANDIDATES_RIGHT if px < (width * 0.5) else _LABEL_CANDIDATES_LEFT
     )
 
     best: tuple[float, LabelRenderPlan] | None = None
@@ -210,17 +218,19 @@ def _build_sensor_render_plan(
             (px - radius - 1.0, py - radius - 1.0, px + radius + 1.0, py + radius + 1.0)
         )
 
+    # Build a name -> marker dict for O(1) lookup in label loop.
+    marker_by_name: dict[str, MarkerRenderPlan] = {m.name: m for m in markers}
+
     labels: list[LabelRenderPlan] = []
+    _label_states = frozenset({"connected-active", "connected-inactive"})
     labeled_names = {
-        marker.name
-        for marker in markers
-        if marker.state in {"connected-active", "connected-inactive"} or marker.name in highlight
+        m.name for m in markers if m.state in _label_states or m.name in highlight
     }
     for name in sorted(
         labeled_names, key=lambda value: (location_points[value][1], location_points[value][0])
     ):
         px, py = location_points[name]
-        marker = next((item for item in markers if item.name == name), None)
+        marker = marker_by_name.get(name)
         if marker is None:
             continue
         if marker.state == "connected-active":
@@ -259,6 +269,9 @@ def car_location_diagram(
     from reportlab.graphics.shapes import Circle, Drawing, Line, Rect, String
     from reportlab.lib import colors
 
+    # Local-bind HexColor to avoid repeated attribute lookup.
+    _HexColor = colors.HexColor
+
     d_width = diagram_width if diagram_width is not None else content_width * 0.44
     bmw_length_mm = 5007.0
     bmw_width_mm = 1894.0
@@ -283,6 +296,12 @@ def car_location_diagram(
     cx = x0 + (car_w / 2)
     cy = y0 + (car_h / 2)
 
+    # Pre-resolve commonly used HexColor objects to avoid repeated construction.
+    _color_surface = _HexColor(REPORT_COLORS["surface"])
+    _color_border = _HexColor(REPORT_COLORS["border"])
+    _color_row_border = _HexColor(REPORT_COLORS["table_row_border"])
+    _color_text_primary = _HexColor(REPORT_COLORS["text_primary"])
+
     # Outer body
     drawing.add(
         Rect(
@@ -292,8 +311,8 @@ def car_location_diagram(
             car_h,
             rx=24,
             ry=24,
-            fillColor=colors.HexColor(REPORT_COLORS["surface"]),
-            strokeColor=colors.HexColor(REPORT_COLORS["border"]),
+            fillColor=_color_surface,
+            strokeColor=_color_border,
             strokeWidth=1.4,
         )
     )
@@ -306,8 +325,8 @@ def car_location_diagram(
             car_h * 0.80,
             rx=16,
             ry=16,
-            fillColor=colors.HexColor("#ffffff"),
-            strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
+            fillColor=_HexColor("#ffffff"),
+            strokeColor=_color_row_border,
             strokeWidth=0.7,
         )
     )
@@ -318,7 +337,7 @@ def car_location_diagram(
             y0 + 18,
             cx,
             y0 + car_h - 18,
-            strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
+            strokeColor=_color_row_border,
             strokeWidth=0.8,
         )
     )
@@ -331,7 +350,7 @@ def car_location_diagram(
             front_axle_y,
             x0 + (car_w * 0.86),
             front_axle_y,
-            strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
+            strokeColor=_color_row_border,
             strokeWidth=0.6,
         )
     )
@@ -341,13 +360,13 @@ def car_location_diagram(
             rear_axle_y,
             x0 + (car_w * 0.86),
             rear_axle_y,
-            strokeColor=colors.HexColor(REPORT_COLORS["table_row_border"]),
+            strokeColor=_color_row_border,
             strokeWidth=0.6,
         )
     )
     # Wheel circles
-    wheel_fill = colors.HexColor("#f8fbff")
-    wheel_stroke = colors.HexColor(REPORT_COLORS["axis"])
+    wheel_fill = _HexColor("#f8fbff")
+    wheel_stroke = _HexColor(REPORT_COLORS["axis"])
     wheel_x_left = x0 + (car_w * 0.14)
     wheel_x_right = x0 + (car_w * 0.86)
     for wx, wy in [
@@ -368,7 +387,7 @@ def car_location_diagram(
             tr("DIAGRAM_LABEL_FRONT"),
             fontName="Helvetica-Bold",
             fontSize=8,
-            fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
+            fillColor=_color_text_primary,
         )
     )
     drawing.add(
@@ -378,7 +397,7 @@ def car_location_diagram(
             tr("DIAGRAM_LABEL_REAR"),
             fontName="Helvetica-Bold",
             fontSize=8,
-            fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
+            fillColor=_color_text_primary,
         )
     )
 
@@ -444,8 +463,8 @@ def car_location_diagram(
                 marker.x,
                 marker.y,
                 marker.radius,
-                fillColor=colors.HexColor(marker.fill),
-                strokeColor=colors.HexColor(marker.stroke),
+                fillColor=_HexColor(marker.fill),
+                strokeColor=_HexColor(marker.stroke),
                 strokeWidth=marker.stroke_width,
             )
         )
@@ -458,13 +477,11 @@ def car_location_diagram(
                 label.text,
                 fontSize=label.font_size,
                 textAnchor=label.anchor,
-                fillColor=colors.HexColor(label.color),
+                fillColor=_HexColor(label.color),
             )
         )
 
     # -- Source highlight legend (explains marker colors on the circles) --
-    from .theme import FINDING_SOURCE_COLORS
-
     src_legend_items = [
         (tr("SOURCE_WHEEL_TIRE"), FINDING_SOURCE_COLORS["wheel/tire"]),
         (tr("SOURCE_DRIVELINE"), FINDING_SOURCE_COLORS["driveline"]),
@@ -481,7 +498,7 @@ def car_location_diagram(
             tr("SOURCE_LEGEND_TITLE"),
             fontName="Helvetica-Bold",
             fontSize=6,
-            fillColor=colors.HexColor(REPORT_COLORS["text_primary"]),
+            fillColor=_color_text_primary,
         )
     )
     if single_sensor:
@@ -492,7 +509,7 @@ def car_location_diagram(
                 tr("ONE_SENSOR_NOTE"),
                 fontName="Helvetica",
                 fontSize=6,
-                fillColor=colors.HexColor(REPORT_COLORS["text_muted"]),
+                fillColor=_HexColor(REPORT_COLORS["text_muted"]),
             )
         )
     src_max_x = d_width - 8.0
@@ -508,13 +525,14 @@ def car_location_diagram(
         lx = cursor_x
         ly = src_swatch_y - (row * row_gap)
         # Color swatch
+        _swatch_color = _HexColor(color_hex)
         drawing.add(
             Circle(
                 lx + 4,
                 ly,
                 3,
-                fillColor=colors.HexColor(color_hex),
-                strokeColor=colors.HexColor(color_hex),
+                fillColor=_swatch_color,
+                strokeColor=_swatch_color,
                 strokeWidth=0.8,
             )
         )
@@ -525,7 +543,7 @@ def car_location_diagram(
                 label,
                 fontName="Helvetica",
                 fontSize=5.5,
-                fillColor=colors.HexColor(REPORT_COLORS["text_secondary"]),
+                fillColor=_HexColor(REPORT_COLORS["text_secondary"]),
             )
         )
         cursor_x += item_w
