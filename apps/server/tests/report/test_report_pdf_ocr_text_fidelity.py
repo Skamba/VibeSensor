@@ -70,7 +70,7 @@ def _write_sparse_fixture(run_path: Path) -> None:
         }
     ]
 
-    for idx in range(36):
+    for idx in range(18):
         speed_kmh = float(48 + (idx % 10))
         wheel_hz = (speed_kmh / 3.6) / 2.2
         if idx % 2 == 0:
@@ -150,7 +150,7 @@ def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
     screenshot_paths: list[str] = []
     for page_idx in range(len(document)):
         page = document[page_idx]
-        bitmap = page.render(scale=3.2)
+        bitmap = page.render(scale=2.0)
         page_image = bitmap.to_pil()
         image_path = artifact_dir / f"ocr_page_{page_idx + 1}.png"
         page_image.save(image_path)

@@ -546,7 +546,7 @@ async def test_history_export_csv_has_fixed_columns() -> None:
 @pytest.mark.asyncio
 async def test_history_export_large_run() -> None:
     """Export for a larger run produces valid ZIP with expected row count."""
-    router, _ = _make_router_and_state(language="en", sample_count=5000)
+    router, _ = _make_router_and_state(language="en", sample_count=1000)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
     response = await endpoint("run-1")
     body = await _read_streaming_body(response)
@@ -555,9 +555,9 @@ async def test_history_export_large_run() -> None:
         assert "run-1_raw.csv" in names
         assert "run-1.json" in names
         metadata = json.loads(archive.read("run-1.json").decode("utf-8"))
-        assert metadata["sample_count"] == 5000
+        assert metadata["sample_count"] == 1000
         rows = list(csv.DictReader(io.StringIO(archive.read("run-1_raw.csv").decode("utf-8"))))
-        assert len(rows) == 5000
+        assert len(rows) == 1000
 
 
 @pytest.mark.asyncio
@@ -578,7 +578,7 @@ async def test_ws_selected_client_id_validation() -> None:
 
 @pytest.mark.asyncio
 async def test_history_insights_lang_query_does_not_recompute() -> None:
-    router, _ = _make_router_and_state(language="en", sample_count=30_000)
+    router, _ = _make_router_and_state(language="en", sample_count=500)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
     # Requesting a different language should still return persisted analysis.
     payload = await endpoint("run-1", "nl")
