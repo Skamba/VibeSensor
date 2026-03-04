@@ -492,6 +492,7 @@ def _plot_data(
         points_raw = finding.get("matched_points")
         if not isinstance(points_raw, list):
             continue
+        finding_label = str(finding.get("frequency_hz_or_order") or finding.get("finding_id"))
         points: list[tuple[float, float]] = []
         for row in points_raw:
             if not isinstance(row, dict):
@@ -504,7 +505,7 @@ def _plot_data(
         if points:
             matched_by_finding.append(
                 {
-                    "label": str(finding.get("frequency_hz_or_order") or finding.get("finding_id")),
+                    "label": finding_label,
                     "points": points,
                 }
             )
@@ -525,7 +526,7 @@ def _plot_data(
         if freq_points:
             freq_vs_speed_by_finding.append(
                 {
-                    "label": str(finding.get("frequency_hz_or_order") or finding.get("finding_id")),
+                    "label": finding_label,
                     "matched": freq_points,
                     "predicted": pred_points,
                 }

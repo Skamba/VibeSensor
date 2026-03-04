@@ -828,7 +828,7 @@ class SignalProcessor:
                 "shared_window": None,
                 "overlap_ratio": 1.0 if len(ranges) == 1 else 0.0,
                 "aligned": True,
-                "clock_synced": all_synced and len(included) > 0,
+                "clock_synced": all_synced and bool(included),
                 "sensors_included": included,
                 "sensors_excluded": excluded,
             }
