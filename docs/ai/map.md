@@ -3,7 +3,7 @@
 ## Key Entry Points (canonical)
 - `apps/server/vibesensor/app.py` - app factory, runtime loop, WS payload assembly.
 - `apps/server/vibesensor/api.py` - HTTP endpoints and request/response surface.
-- `apps/server/vibesensor/processing.py` - signal buffers, FFT, metrics, freshness filtering.
+- `apps/server/vibesensor/processing/` - signal buffers, FFT, metrics, freshness filtering.
 - `apps/server/vibesensor/metrics_log/` - run/session logging and history integration.
 - `apps/server/vibesensor/live_diagnostics/` - event detection engine (package: engine, tracker, matrix, detector, phase).
 - `apps/server/vibesensor/config.py` - config defaults, schema mapping, typed dataclasses.
@@ -24,7 +24,7 @@
 
 ## Module Boundaries
 - **Acquisition**: `udp_data_rx.py`, `registry.py`.
-- **Computation**: `processing.py`, `libs/core/python/vibesensor_core/*`, `live_diagnostics/`.
+- **Computation**: `processing/`, `libs/core/python/vibesensor_core/*`, `live_diagnostics/`.
 - **Delivery**: `app.py`, `api.py`, `ws_hub.py`, `apps/ui/src/*`.
 - **Persistence**: `metrics_log/`, `history_db.py`, `runlog.py`.
 - **Device Ops**: `apps/server/scripts/*`, `apps/server/systemd/*`, `infra/pi-image/pi-gen/*`.
@@ -37,7 +37,7 @@
 
 ## Safe Change Areas
 - New focused backend helpers: `apps/server/vibesensor/` modules or `libs/core/python/vibesensor_core/*` for shared vibration math.
-- Test additions: `apps/server/tests/test_*` with narrow scope.
+- Test additions: `apps/server/tests/<module>/test_*` with narrow scope.
 - AI docs/runbooks: `docs/ai/*`.
 - Simulator-only enhancements: `apps/simulator/*`.
 

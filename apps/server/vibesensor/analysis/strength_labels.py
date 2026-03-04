@@ -137,14 +137,14 @@ def _select_reason_key(
         return "single_sensor"
     if steady_speed:
         return "narrow_speed_range"
-    if confidence >= CONFIDENCE_HIGH_THRESHOLD:
-        if weak_spatial:
-            return "weak_spatial_separation"
-        return "strong_order_match"
     if confidence >= CONFIDENCE_MEDIUM_THRESHOLD:
         if weak_spatial:
             return "weak_spatial_separation"
-        return "moderate_order_match"
+        return (
+            "strong_order_match"
+            if confidence >= CONFIDENCE_HIGH_THRESHOLD
+            else "moderate_order_match"
+        )
     return "weak_order_match"
 
 

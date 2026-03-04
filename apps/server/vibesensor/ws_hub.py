@@ -13,7 +13,10 @@ from .json_utils import sanitize_for_json
 
 LOGGER = logging.getLogger(__name__)
 
-_WS_DEBUG = os.environ.get("VIBESENSOR_WS_DEBUG", "0") == "1"
+
+def _ws_debug_enabled() -> bool:
+    """Check WS debug flag at call time so it can be toggled at runtime."""
+    return os.environ.get("VIBESENSOR_WS_DEBUG", "0") == "1"
 
 
 # Timing constants for WebSocket broadcast
@@ -37,7 +40,7 @@ class WSConnection:
 
 
 class WebSocketHub:
-    def __init__(self):
+    def __init__(self) -> None:
         self._connections: dict[int, WSConnection] = {}
         self._lock = asyncio.Lock()
         self._send_timeout_s = _SEND_TIMEOUT_S
@@ -145,7 +148,7 @@ class WebSocketHub:
             )
 
         # Dev-only instrumentation: log payload sizes when VIBESENSOR_WS_DEBUG=1.
-        if _WS_DEBUG and payload_cache:
+        if _ws_debug_enabled() and payload_cache:
             for sel_id, text in payload_cache.items():
                 has_per_client_freq = False
                 try:

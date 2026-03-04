@@ -17,13 +17,13 @@ its entrypoint, ordered steps, outputs, and architectural rules.
 5. **Renderer-only report package** — `vibesensor.report` must not
    import from `vibesensor.analysis` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
-   (`processing.py`) must not import from `analysis/`.
+   (`processing/`) must not import from `analysis/`.
 
 ## Live Processing vs Post-Stop Analysis
 
 The system has two distinct computational pipelines:
 
-| | Live Processing (`processing.py`) | Post-Stop Analysis (`analysis/`) |
+| | Live Processing (`processing/`) | Post-Stop Analysis (`analysis/`) |
 |-|-----------------------------------|----------------------------------|
 | **When** | Continuously during recording (5–10 Hz) | Once, after recording stops |
 | **Input** | Raw accelerometer frames from UDP | Stored sample records from history DB |
@@ -31,7 +31,7 @@ The system has two distinct computational pipelines:
 | **Purpose** | Data acquisition — transform raw signals into structured metrics | Diagnostic reasoning — classify, rank, and explain vibration causes |
 | **Stateless?** | Yes — each tick processes the current rolling window | Yes — processes all stored samples in one pass |
 
-`processing.py` computes FFT spectra, peak detection, and vibration
+`processing/` computes FFT spectra, peak detection, and vibration
 strength metrics in real time.  These are **measurement steps** that
 produce the sample records stored during recording.  The analysis
 pipeline then reads those stored records and applies diagnostic
@@ -141,5 +141,5 @@ vibesensor/analysis/
    `report_data_builder.py:map_summary()` and the
    `ReportTemplateData` dataclass.
 4. Export any new public symbol from `analysis/__init__.py`.
-5. Run `pytest apps/server/tests/test_analysis_architecture.py` to
+5. Run `pytest apps/server/tests/analysis/test_analysis_architecture.py` to
    verify architectural guardrails still pass.

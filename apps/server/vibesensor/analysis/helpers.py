@@ -191,7 +191,7 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | bool | None]:
 
 def _speed_stats_by_phase(
     samples: list[dict[str, Any]],
-    per_sample_phases: list[Any],
+    per_sample_phases: list[str],
 ) -> dict[str, dict[str, Any]]:
     """Compute speed statistics broken down by driving phase.
 
@@ -301,7 +301,8 @@ def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
     sy = sqrt(sum((y - my) ** 2 for y in y_vals))
     if sx <= 1e-9 or sy <= 1e-9:
         return None
-    return abs(cov / (sx * sy))
+    result = abs(cov / (sx * sy))
+    return result if isfinite(result) else None
 
 
 def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:
@@ -346,7 +347,7 @@ def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
     """
     floor_amp = _as_float(sample.get("strength_floor_amp_g"))
     if floor_amp is not None and floor_amp > 0:
-        return float(floor_amp)
+        return floor_amp
     peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
     if len(peak_amps) < 3:
         return None
@@ -383,7 +384,12 @@ def _effective_baseline_floor(
     Resolution order: *run_noise_baseline_g* → *extra_fallback* → 0.0,
     clamped to at least :data:`MEMS_NOISE_FLOOR_G`.
     """
-    return max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g or extra_fallback or 0.0)
+    val = (
+        run_noise_baseline_g
+        if run_noise_baseline_g is not None
+        else (extra_fallback if extra_fallback is not None else 0.0)
+    )
+    return max(MEMS_NOISE_FLOOR_G, val)
 
 
 def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
@@ -441,8 +447,7 @@ def _locations_connected_throughout_run(
     run_duration = max(0.0, run_end - run_start)
     edge_tolerance_s = max(0.75, min(3.0, run_duration * 0.08))
 
-    counts_by_location = {location: len(times) for location, times in by_location_times.items()}
-    max_count = max(counts_by_location.values()) if counts_by_location else 0
+    max_count = max((len(times) for times in by_location_times.values()), default=0)
     min_required_count = int(max_count * 0.80) if max_count >= 5 else 1
 
     connected: set[str] = set()
@@ -480,7 +485,7 @@ def _weighted_percentile(
     filtered = [(value, weight) for value, weight in pairs if weight > 0]
     if not filtered:
         return None
-    ordered = sorted(filtered, key=lambda item: item[0])
+    ordered = sorted(filtered)
     total_weight = sum(weight for _, weight in ordered)
     if total_weight <= 0:
         return None

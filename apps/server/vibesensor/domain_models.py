@@ -14,7 +14,28 @@ from typing import Any
 from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
 
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
+from .constants import NUMERIC_TYPES
 from .protocol import parse_client_id
+
+__all__ = [
+    "RUN_END_TYPE",
+    "RUN_METADATA_TYPE",
+    "RUN_SAMPLE_TYPE",
+    "RUN_SCHEMA_VERSION",
+    "VALID_FALLBACK_MODES",
+    "VALID_SPEED_SOURCES",
+    "DEFAULT_CAR_ASPECTS",
+    "CarConfig",
+    "RunMetadata",
+    "SensorConfig",
+    "SensorFrame",
+    "SpeedSourceConfig",
+    "as_float_or_none",
+    "as_int_or_none",
+    "new_car_id",
+    "normalize_sensor_id",
+    "sanitize_aspects",
+]
 
 # ---------------------------------------------------------------------------
 # Shared helpers (previously inlined in runlog / metrics_log)
@@ -31,28 +52,38 @@ VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 DEFAULT_CAR_ASPECTS: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
 
 
-def _as_float_or_none(value: object) -> float | None:
+def as_float_or_none(value: object) -> float | None:
+    """Return *value* as a finite float, or ``None`` for non-numeric / non-finite input."""
     if value in (None, ""):
         return None
     try:
         out = float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
-    if math.isnan(out) or math.isinf(out):
+    if not math.isfinite(out):
         return None
     return out
 
 
-def _as_int_or_none(value: object) -> int | None:
-    out = _as_float_or_none(value)
+# Backward-compat alias — existing imports of the private name keep working.
+_as_float_or_none = as_float_or_none
+
+
+def as_int_or_none(value: object) -> int | None:
+    """Return *value* as a rounded int, or ``None`` for non-numeric / non-finite input."""
+    out = as_float_or_none(value)
     if out is None:
         return None
     return int(round(out))
 
 
+# Backward-compat alias.
+_as_int_or_none = as_int_or_none
+
+
 def _parse_manual_speed(value: Any) -> float | None:
     """Return a positive, finite float speed (≤500 km/h) or None."""
-    if isinstance(value, (int, float)):
+    if isinstance(value, NUMERIC_TYPES):
         f = float(value)
         if math.isfinite(f) and 0 < f <= 500:
             return f
@@ -61,14 +92,18 @@ def _parse_manual_speed(value: Any) -> float | None:
 
 def _parse_stale_timeout(value: Any) -> float:
     """Return a stale-timeout value clamped to [3, 120], default 10."""
-    if isinstance(value, (int, float)):
+    if isinstance(value, NUMERIC_TYPES):
         return max(3.0, min(120.0, float(value)))
     return 10.0
 
 
-def _sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
+def sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
     """Sanitize car aspects using the canonical validation from analysis_settings."""
     return sanitize_settings(raw, allowed_keys=DEFAULT_CAR_ASPECTS)
+
+
+# Backward-compat alias.
+_sanitize_aspects = sanitize_aspects
 
 
 def normalize_sensor_id(sensor_id: str) -> str:
@@ -81,8 +116,13 @@ def normalize_sensor_id(sensor_id: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _new_car_id() -> str:
+def new_car_id() -> str:
+    """Generate a new unique car configuration ID."""
     return str(uuid.uuid4())
+
+
+# Backward-compat alias.
+_new_car_id = new_car_id
 
 
 @dataclass(slots=True)

@@ -24,6 +24,12 @@ LOGGER = logging.getLogger(__name__)
 _DEFAULT_REPO = "Skamba/VibeSensor"
 _DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 
+# Shared download constants used by both server and firmware fetchers.
+DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
+"""Chunk size for streaming downloads.  Shared between
+:class:`ServerReleaseFetcher` and
+:class:`~vibesensor.firmware_cache.GitHubReleaseFetcher`."""
+
 
 @dataclass
 class ReleaseFetcherConfig:
@@ -84,20 +90,34 @@ def github_api_headers(token: str = "") -> dict[str, str]:
     return headers
 
 
-class ServerReleaseFetcher:
+class GitHubAPIClient:
+    """Shared base for classes that call the GitHub REST API.
+
+    Subclasses must set ``_github_token`` and ``_api_context`` before
+    calling any API methods.
+    """
+
+    _github_token: str = ""
+    _api_context: str = "github"
+
+    def _api_headers(self) -> dict[str, str]:
+        return github_api_headers(self._github_token)
+
+    def _api_get(self, url: str) -> Any:
+        """GET *url* and return the parsed JSON response."""
+        validate_https_url(url, context=self._api_context)
+        req = Request(url, headers=self._api_headers())
+        with urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+
+
+class ServerReleaseFetcher(GitHubAPIClient):
     """Fetch server wheel releases from GitHub Releases."""
 
     def __init__(self, config: ReleaseFetcherConfig | None = None) -> None:
         self._config = config or ReleaseFetcherConfig()
-
-    def _api_headers(self) -> dict[str, str]:
-        return github_api_headers(self._config.github_token)
-
-    def _api_get(self, url: str) -> Any:
-        validate_https_url(url, context="release")
-        req = Request(url, headers=self._api_headers())
-        with urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+        self._github_token = self._config.github_token
+        self._api_context = "release"
 
     _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
 
@@ -112,7 +132,7 @@ class ServerReleaseFetcher:
                 total = 0
                 with open(tmp, "wb") as f:
                     while True:
-                        chunk = resp.read(1024 * 1024)
+                        chunk = resp.read(DOWNLOAD_CHUNK_BYTES)
                         if not chunk:
                             break
                         total += len(chunk)
@@ -225,7 +245,12 @@ class ServerReleaseFetcher:
         except Exception:
             # If packaging is unavailable or versions are unparseable,
             # fall through and treat any difference as an update.
-            pass
+            LOGGER.warning(
+                "Could not compare versions %r vs %r; treating as update",
+                release.version,
+                current_version,
+                exc_info=True,
+            )
         LOGGER.info(
             "Update available: %s → %s",
             current_version,

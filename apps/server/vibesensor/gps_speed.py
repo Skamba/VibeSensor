@@ -7,7 +7,7 @@ import math
 import time
 from typing import Any, NamedTuple
 
-from .constants import KMH_TO_MPS, MPS_TO_KMH
+from .constants import KMH_TO_MPS, MPS_TO_KMH, NUMERIC_TYPES
 
 
 class SpeedResolution(NamedTuple):
@@ -19,6 +19,8 @@ class SpeedResolution(NamedTuple):
 
 
 LOGGER = logging.getLogger(__name__)
+
+__all__ = ["GPSSpeedMonitor", "SpeedResolution"]
 
 _GPS_DISABLED_POLL_S: float = 5.0
 """Sleep interval when GPS is disabled."""
@@ -41,10 +43,14 @@ VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 DEFAULT_FALLBACK_MODE: str = "manual"
 
 
+def _is_numeric(value: object) -> bool:
+    """Return True if *value* is int/float but **not** bool (bool ⊂ int)."""
+    return isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool)
+
+
 class GPSSpeedMonitor:
     def __init__(self, gps_enabled: bool):
         self.gps_enabled = gps_enabled
-        self.speed_mps: float | None = None
         self.override_speed_mps: float | None = None
         # None keeps legacy behavior (override has top priority) for backwards
         # compatibility in isolated monitor usage/tests.
@@ -56,6 +62,8 @@ class GPSSpeedMonitor:
         self.connection_state: str = "disabled" if not gps_enabled else "disconnected"
         # Atomic (speed, timestamp) snapshot: both fields are always written
         # together so cross-thread readers never see a torn state.
+        # The ``speed_mps`` property reads/writes this tuple so the two
+        # representations can never diverge.
         self._speed_snapshot: tuple[float | None, float | None] = (None, None)
         self.last_error: str | None = None
         self.current_reconnect_delay: float = _GPS_RECONNECT_DELAY_S
@@ -70,6 +78,16 @@ class GPSSpeedMonitor:
         self.stale_timeout_s: float = DEFAULT_STALE_TIMEOUT_S
         self.fallback_mode: str = DEFAULT_FALLBACK_MODE
 
+    @property
+    def speed_mps(self) -> float | None:
+        """Current GPS speed from the atomic snapshot."""
+        return self._speed_snapshot[0]
+
+    @speed_mps.setter
+    def speed_mps(self, value: float | None) -> None:
+        """Set GPS speed, preserving the existing timestamp."""
+        self._speed_snapshot = (value, self._speed_snapshot[1])
+
     # ------------------------------------------------------------------
     # Speed resolution — pure computation, no side effects
     # ------------------------------------------------------------------
@@ -81,18 +99,16 @@ class GPSSpeedMonitor:
         consumers should prefer this over reading ``effective_speed_mps``
         and ``fallback_active`` separately when they need both values.
         """
-        if self.manual_source_selected is None:
-            # Legacy path: override has top priority
-            if isinstance(self.override_speed_mps, (int, float)):
-                return SpeedResolution(float(self.override_speed_mps), False, "manual")
-        elif self.manual_source_selected is True:
-            if isinstance(self.override_speed_mps, (int, float)):
+        if self.manual_source_selected in (None, True):
+            # Legacy path (None) or explicitly selected manual source
+            if isinstance(self.override_speed_mps, NUMERIC_TYPES):
                 return SpeedResolution(float(self.override_speed_mps), False, "manual")
             # Manual selected but no override set → fall through to GPS
 
-        # Snapshot GPS speed to avoid TOCTOU race with concurrent updates.
-        _speed = self.speed_mps
-        if isinstance(_speed, (int, float)):
+        # Read from the atomic (speed, timestamp) snapshot so the speed value
+        # and the staleness check are always consistent with each other.
+        _speed, _ts = self._speed_snapshot
+        if isinstance(_speed, NUMERIC_TYPES):
             if self._is_gps_stale():
                 fb = self._fallback_speed_value()
                 return SpeedResolution(fb, True, "fallback_manual" if fb is not None else "none")
@@ -145,7 +161,7 @@ class GPSSpeedMonitor:
 
     def _fallback_speed_value(self) -> float | None:
         """Return fallback speed if available — **no side effects**."""
-        if self.fallback_mode == "manual" and isinstance(self.override_speed_mps, (int, float)):
+        if self.fallback_mode == "manual" and isinstance(self.override_speed_mps, NUMERIC_TYPES):
             return float(self.override_speed_mps)
         return None
 
@@ -180,12 +196,7 @@ class GPSSpeedMonitor:
     @staticmethod
     def _read_non_negative_metric(payload: dict[str, Any], field: str) -> float | None:
         value = payload.get(field)
-        if (
-            isinstance(value, (int, float))
-            and not isinstance(value, bool)
-            and math.isfinite(value)
-            and value >= 0
-        ):
+        if _is_numeric(value) and math.isfinite(value) and value >= 0:
             return float(value)
         return None
 
@@ -212,7 +223,7 @@ class GPSSpeedMonitor:
         if speed_mps == 0.0:
             prev_speed = self.speed_mps
             if (
-                isinstance(prev_speed, (int, float))
+                isinstance(prev_speed, NUMERIC_TYPES)
                 and prev_speed > _GPS_ZERO_DROP_PREV_THRESHOLD_MPS
             ):
                 self._zero_speed_streak += 1
@@ -231,6 +242,7 @@ class GPSSpeedMonitor:
         self.last_epy_m = None
         self.last_epv_m = None
         self._zero_speed_streak = 0
+        self._speed_snapshot = (None, None)
 
     def status_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable status snapshot — **no side effects**."""
@@ -244,12 +256,12 @@ class GPSSpeedMonitor:
             last_update_age_s = round(now - self.last_update_ts, 2)
 
         raw_speed_kmh: float | None = None
-        if isinstance(self.speed_mps, (int, float)):
-            raw_speed_kmh = round(float(self.speed_mps) * MPS_TO_KMH, 2)
+        if isinstance(self.speed_mps, NUMERIC_TYPES):
+            raw_speed_kmh = round(self.speed_mps * MPS_TO_KMH, 2)
 
         effective_speed_kmh: float | None = None
-        if isinstance(resolution.speed_mps, (int, float)):
-            effective_speed_kmh = round(float(resolution.speed_mps) * MPS_TO_KMH, 2)
+        if isinstance(resolution.speed_mps, NUMERIC_TYPES):
+            effective_speed_kmh = round(resolution.speed_mps * MPS_TO_KMH, 2)
 
         return {
             "gps_enabled": self.gps_enabled,
@@ -328,15 +340,13 @@ class GPSSpeedMonitor:
                     if (
                         isinstance(mode, int)
                         and mode >= 2
-                        and isinstance(speed, (int, float))
-                        and not isinstance(speed, bool)
+                        and _is_numeric(speed)
                         and math.isfinite(speed)
                         and speed >= 0
                     ):
                         speed_mps = float(speed)
                         if self._accept_speed_sample(speed_mps):
                             self._speed_snapshot = (speed_mps, time.monotonic())
-                            self.speed_mps = speed_mps
                     else:
                         self._zero_speed_streak = 0
                     # Extract device from TPV

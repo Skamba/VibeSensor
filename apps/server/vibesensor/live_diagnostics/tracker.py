@@ -27,9 +27,9 @@ def apply_severity_to_tracker(
         peak_hz=tracker.last_peak_hz if tracker.last_peak_hz > 0 else None,
         persistence_freq_bin_hz=freq_bin_hz,
     )
-    tracker.severity_state = dict((severity or {}).get("state") or tracker.severity_state or {})
-    tracker.current_bucket_key = str(severity["key"]) if severity and severity.get("key") else None
-    _sev_db = (severity or {}).get("db")
+    tracker.severity_state = dict(severity.get("state") or tracker.severity_state or {})
+    tracker.current_bucket_key = str(severity["key"]) if severity.get("key") else None
+    _sev_db = severity.get("db")
     tracker.last_strength_db = float(
         _sev_db
         if _sev_db is not None
