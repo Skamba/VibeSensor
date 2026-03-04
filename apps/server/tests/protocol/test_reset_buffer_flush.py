@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import asyncio
 from types import SimpleNamespace
 from unittest.mock import Mock
 
 import numpy as np
 import pytest
 
+from vibesensor.history_db import HistoryDB
 from vibesensor.processing import SignalProcessor
 from vibesensor.protocol import DataMessage, pack_data
 from vibesensor.registry import ClientRegistry, DataUpdateResult, HelloMessage
@@ -120,81 +120,59 @@ def test_no_pre_reset_samples_contaminate_post_reset_fft() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Shared constants / fixtures for registry reset tests
+# ---------------------------------------------------------------------------
+
+_CLIENT_ID = bytes.fromhex("aabbccddeeff")
+_SAMPLES = np.zeros((200, 3), dtype=np.int16)
+_ADDR = ("10.4.0.2", 50000)
+
+
+def _data_msg(seq: int, t0_us: int) -> DataMessage:
+    return DataMessage(
+        client_id=_CLIENT_ID,
+        seq=seq,
+        t0_us=t0_us,
+        sample_count=200,
+        samples=_SAMPLES,
+    )
+
+
+@pytest.fixture
+def registry_ctx(tmp_path):
+    """Registry pre-registered with a single client."""
+    db = HistoryDB(tmp_path / "history.db")
+    registry = ClientRegistry(db=db)
+    registry.update_from_hello(
+        HelloMessage(
+            client_id=_CLIENT_ID,
+            control_port=9010,
+            sample_rate_hz=800,
+            name="node",
+            firmware_version="fw",
+        ),
+        ("10.4.0.2", 9010),
+        now=1.0,
+    )
+    return registry
+
+
+# ---------------------------------------------------------------------------
 # Unit: registry.update_from_data returns reset flag
 # ---------------------------------------------------------------------------
 
 
-def test_registry_update_from_data_returns_true_on_reset(tmp_path) -> None:
-    from vibesensor.history_db import HistoryDB
-
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
-    client_id = bytes.fromhex("aabbccddeeff")
-    hello = HelloMessage(
-        client_id=client_id,
-        control_port=9010,
-        sample_rate_hz=800,
-        name="node",
-        firmware_version="fw",
-    )
-    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
-    samples = np.zeros((200, 3), dtype=np.int16)
-
-    # First data message — no reset
-    result1 = registry.update_from_data(
-        DataMessage(
-            client_id=client_id,
-            seq=5000,
-            t0_us=1_000_000,
-            sample_count=200,
-            samples=samples,
-        ),
-        ("10.4.0.2", 50000),
-        now=2.0,
-    )
+def test_registry_update_from_data_returns_true_on_reset(registry_ctx) -> None:
+    result1 = registry_ctx.update_from_data(_data_msg(5000, 1_000_000), _ADDR, now=2.0)
     assert result1.reset_detected is False
 
-    # Second data message with large backward seq jump — reset
-    result2 = registry.update_from_data(
-        DataMessage(
-            client_id=client_id,
-            seq=10,
-            t0_us=1_250_000,
-            sample_count=200,
-            samples=samples,
-        ),
-        ("10.4.0.2", 50000),
-        now=3.0,
-    )
+    result2 = registry_ctx.update_from_data(_data_msg(10, 1_250_000), _ADDR, now=3.0)
     assert result2.reset_detected is True
 
 
-def test_registry_update_from_data_returns_false_on_normal_seq(tmp_path) -> None:
-    from vibesensor.history_db import HistoryDB
-
-    db = HistoryDB(tmp_path / "history.db")
-    registry = ClientRegistry(db=db)
-    client_id = bytes.fromhex("aabbccddeeff")
-    hello = HelloMessage(
-        client_id=client_id,
-        control_port=9010,
-        sample_rate_hz=800,
-        name="node",
-        firmware_version="fw",
-    )
-    registry.update_from_hello(hello, ("10.4.0.2", 9010), now=1.0)
-    samples = np.zeros((200, 3), dtype=np.int16)
-
-    r1 = registry.update_from_data(
-        DataMessage(client_id=client_id, seq=100, t0_us=100_000, sample_count=200, samples=samples),
-        ("10.4.0.2", 50000),
-        now=2.0,
-    )
-    r2 = registry.update_from_data(
-        DataMessage(client_id=client_id, seq=101, t0_us=200_000, sample_count=200, samples=samples),
-        ("10.4.0.2", 50000),
-        now=3.0,
-    )
+def test_registry_update_from_data_returns_false_on_normal_seq(registry_ctx) -> None:
+    r1 = registry_ctx.update_from_data(_data_msg(100, 100_000), _ADDR, now=2.0)
+    r2 = registry_ctx.update_from_data(_data_msg(101, 200_000), _ADDR, now=3.0)
     assert r1.reset_detected is False
     assert r2.reset_detected is False
 
@@ -204,16 +182,8 @@ def test_registry_update_from_data_returns_false_on_normal_seq(tmp_path) -> None
 # ---------------------------------------------------------------------------
 
 
-class _FakeTransport:
-    def __init__(self) -> None:
-        self.sent: list[tuple[bytes, tuple[str, int]]] = []
-
-    def sendto(self, data: bytes, addr: tuple[str, int]) -> None:
-        self.sent.append((data, addr))
-
-
 @pytest.mark.asyncio
-async def test_udp_handler_flushes_buffer_on_sensor_reset() -> None:
+async def test_udp_handler_flushes_buffer_on_sensor_reset(fake_transport, drain_queue) -> None:
     """Integration: when registry detects reset, processor buffer is flushed."""
     registry = Mock()
     processor = Mock()
@@ -226,7 +196,7 @@ async def test_udp_handler_flushes_buffer_on_sensor_reset() -> None:
     registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
 
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(_FakeTransport())
+    proto.connection_made(fake_transport)
 
     cid = bytes.fromhex("010203040506")
     pkt1 = pack_data(cid, seq=5000, t0_us=100_000, samples=np.zeros((4, 3), dtype=np.int16))
@@ -235,10 +205,7 @@ async def test_udp_handler_flushes_buffer_on_sensor_reset() -> None:
     proto.datagram_received(pkt1, ("127.0.0.1", 12345))
     proto.datagram_received(pkt2, ("127.0.0.1", 12345))
 
-    consumer = asyncio.create_task(proto.process_queue())
-    await asyncio.wait_for(proto._queue.join(), timeout=2.0)
-    consumer.cancel()
-    await asyncio.gather(consumer, return_exceptions=True)
+    await drain_queue(proto)
 
     # processor.ingest called twice
     assert processor.ingest.call_count == 2
@@ -249,7 +216,7 @@ async def test_udp_handler_flushes_buffer_on_sensor_reset() -> None:
 
 
 @pytest.mark.asyncio
-async def test_udp_handler_no_flush_on_normal_data() -> None:
+async def test_udp_handler_no_flush_on_normal_data(fake_transport, drain_queue) -> None:
     """No buffer flush when there is no reset."""
     registry = Mock()
     processor = Mock()
@@ -257,16 +224,13 @@ async def test_udp_handler_no_flush_on_normal_data() -> None:
     registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
 
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(_FakeTransport())
+    proto.connection_made(fake_transport)
 
     cid = bytes.fromhex("010203040506")
     pkt = pack_data(cid, seq=100, t0_us=100_000, samples=np.zeros((4, 3), dtype=np.int16))
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
 
-    consumer = asyncio.create_task(proto.process_queue())
-    await asyncio.wait_for(proto._queue.join(), timeout=2.0)
-    consumer.cancel()
-    await asyncio.gather(consumer, return_exceptions=True)
+    await drain_queue(proto)
 
     assert processor.ingest.call_count == 1
     assert processor.flush_client_buffer.call_count == 0
