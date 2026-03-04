@@ -39,6 +39,34 @@ from .pattern_parts import parts_for_pattern, why_parts_listed
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
 # ---------------------------------------------------------------------------
+# Module-level constant mappings (hoisted out of per-call functions)
+# ---------------------------------------------------------------------------
+
+_PHASE_I18N_KEYS: dict[str, str] = {
+    "acceleration": "DRIVING_PHASE_ACCELERATION",
+    "deceleration": "DRIVING_PHASE_DECELERATION",
+    "coast_down": "DRIVING_PHASE_COAST_DOWN",
+}
+
+_ORDER_LABEL_NAMES_NL: dict[str, str] = {
+    "wheel": "wielorde",
+    "engine": "motororde",
+    "driveshaft": "aandrijfasorde",
+}
+_ORDER_LABEL_NAMES_DEFAULT: dict[str, str] = {
+    "wheel": "wheel order",
+    "engine": "engine order",
+    "driveshaft": "driveshaft order",
+}
+
+_CLASSIFICATION_I18N_KEYS: dict[str, str] = {
+    "patterned": "CLASSIFICATION_PATTERNED",
+    "persistent": "CLASSIFICATION_PERSISTENT",
+    "transient": "CLASSIFICATION_TRANSIENT",
+    "baseline_noise": "CLASSIFICATION_BASELINE_NOISE",
+}
+
+# ---------------------------------------------------------------------------
 # i18n resolution helpers
 # ---------------------------------------------------------------------------
 
@@ -72,12 +100,7 @@ def _resolve_i18n(lang: str, value: object) -> str:
             resolved_params[pk] = _human_source(pv, tr=lambda k, **kw: _tr(lang, k, **kw))
         elif pk == "phase" and isinstance(pv, str):
             # Translate phase codes to human-readable form
-            _phase_map = {
-                "acceleration": "DRIVING_PHASE_ACCELERATION",
-                "deceleration": "DRIVING_PHASE_DECELERATION",
-                "coast_down": "DRIVING_PHASE_COAST_DOWN",
-            }
-            i18n_key = _phase_map.get(pv)
+            i18n_key = _PHASE_I18N_KEYS.get(pv)
             resolved_params[pk] = _tr(lang, i18n_key) if i18n_key else pv
         else:
             resolved_params[pk] = pv
@@ -87,10 +110,7 @@ def _resolve_i18n(lang: str, value: object) -> str:
 
 def _order_label_human(lang: str, label: str) -> str:
     """Translate a language-neutral order label like ``'1x wheel'`` to localized form."""
-    if lang == "nl":
-        names = {"wheel": "wielorde", "engine": "motororde", "driveshaft": "aandrijfasorde"}
-    else:
-        names = {"wheel": "wheel order", "engine": "engine order", "driveshaft": "driveshaft order"}
+    names = _ORDER_LABEL_NAMES_NL if lang == "nl" else _ORDER_LABEL_NAMES_DEFAULT
     # Parse "Nx base" format
     parts = label.split(" ", 1)
     if len(parts) == 2:
@@ -201,14 +221,9 @@ def _dominant_phase(phase_info: dict | None) -> str | None:
 
 def _peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     normalized = str(value or "").strip().lower()
-    if normalized == "patterned":
-        return tr("CLASSIFICATION_PATTERNED")
-    if normalized == "persistent":
-        return tr("CLASSIFICATION_PERSISTENT")
-    if normalized == "transient":
-        return tr("CLASSIFICATION_TRANSIENT")
-    if normalized == "baseline_noise":
-        return tr("CLASSIFICATION_BASELINE_NOISE")
+    i18n_key = _CLASSIFICATION_I18N_KEYS.get(normalized)
+    if i18n_key:
+        return tr(i18n_key)
     if not normalized:
         return tr("UNKNOWN")
     return str(value).replace("_", " ").title()
