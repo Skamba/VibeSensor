@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from math import sqrt
 
+import pytest
 from vibesensor_core.vibration_strength import (
     median,
     peak_band_rms_amp_g,
@@ -12,30 +13,19 @@ from vibesensor_core.vibration_strength import (
 # -- median ------------------------------------------------------------------
 
 
-def test_median_empty_returns_zero() -> None:
-    assert median([]) == 0.0
-
-
-def test_median_single_element() -> None:
-    assert median([7.0]) == 7.0
-
-
-def test_median_odd_count() -> None:
-    assert median([3.0, 1.0, 2.0]) == 2.0
-
-
-def test_median_even_count_uses_true_median() -> None:
-    # For even-length lists, median is the average of the two middle elements.
-    result = median([1.0, 2.0, 3.0, 4.0])
-    assert result == 2.5  # (sorted[1] + sorted[2]) / 2
-
-
-def test_median_two_elements() -> None:
-    assert median([1.0, 3.0]) == 2.0
-
-
-def test_median_even_unsorted() -> None:
-    assert median([4.0, 1.0, 3.0, 2.0]) == 2.5
+@pytest.mark.parametrize(
+    ("values", "expected"),
+    [
+        pytest.param([], 0.0, id="empty_returns_zero"),
+        pytest.param([7.0], 7.0, id="single_element"),
+        pytest.param([3.0, 1.0, 2.0], 2.0, id="odd_count"),
+        pytest.param([1.0, 2.0, 3.0, 4.0], 2.5, id="even_count_true_median"),
+        pytest.param([1.0, 3.0], 2.0, id="two_elements"),
+        pytest.param([4.0, 1.0, 3.0, 2.0], 2.5, id="even_unsorted"),
+    ],
+)
+def test_median(values: list[float], expected: float) -> None:
+    assert median(values) == expected
 
 
 # -- strength_floor_amp_g ----------------------------------------------------
@@ -68,7 +58,7 @@ def test_floor_rms_excludes_peak_region() -> None:
         max_hz=100,
     )
     # Remaining values: [0.1, 0.2, 0.3, 0.4] → median = (0.2+0.3)/2 = 0.25
-    assert abs(result - 0.25) < 1e-9
+    assert result == pytest.approx(0.25)
 
 
 def test_floor_rms_respects_min_max_hz() -> None:
@@ -84,7 +74,7 @@ def test_floor_rms_respects_min_max_hz() -> None:
         max_hz=40,
     )
     # Remaining: [2.0, 3.0, 4.0] → median = sorted[1] = 3.0
-    assert abs(result - 3.0) < 1e-9
+    assert result == pytest.approx(3.0)
 
 
 def test_floor_rms_peak_index_out_of_range_ignored() -> None:
@@ -124,7 +114,7 @@ def test_band_rms_single_bin() -> None:
         center_idx=0,
         bandwidth_hz=0.5,
     )
-    assert abs(result - 3.0) < 1e-9
+    assert result == pytest.approx(3.0)
 
 
 def test_band_rms_multiple_bins() -> None:
@@ -138,7 +128,7 @@ def test_band_rms_multiple_bins() -> None:
     )
     # Center 10 Hz ± 1.5 Hz → bins 9, 10, 11 → values 1.0, 2.0, 1.0
     expected = sqrt((1.0 + 4.0 + 1.0) / 3)
-    assert abs(result - expected) < 1e-9
+    assert result == pytest.approx(expected)
 
 
 # -- vibration_strength_db_scalar --------------------------------------------
