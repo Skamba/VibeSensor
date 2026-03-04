@@ -1,4 +1,39 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+type FakeWebSocketOptions = {
+  payload?: Record<string, unknown>;
+  confirmResult?: boolean;
+};
+
+async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = {}): Promise<void> {
+  await page.addInitScript(({ payload, confirmResult }) => {
+    class FakeWebSocket {
+      static OPEN = 1;
+      readyState = 1;
+      onopen: ((event: Event) => void) | null = null;
+      onmessage: ((event: MessageEvent<string>) => void) | null = null;
+      onclose: ((event: CloseEvent) => void) | null = null;
+      onerror: ((event: Event) => void) | null = null;
+      constructor() {
+        queueMicrotask(() => this.onopen?.(new Event("open")));
+        if (payload) {
+          queueMicrotask(() =>
+            this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
+          );
+        }
+      }
+      send() {}
+      close() {
+        this.readyState = 3;
+        this.onclose?.(new CloseEvent("close"));
+      }
+    }
+    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    if (typeof confirmResult === "boolean") {
+      window.confirm = () => confirmResult;
+    }
+  }, options);
+}
 
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
   let startCalls = 0;
@@ -65,8 +100,8 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
     });
   });
 
-  await page.addInitScript(() => {
-    const payload = {
+  await installFakeWebSocket(page, {
+    payload: {
       server_time: new Date().toISOString(),
       clients: [
         {
@@ -89,27 +124,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
           },
         },
       },
-    };
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-        queueMicrotask(() =>
-          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
-        );
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    },
   });
 
   await page.goto("/");
@@ -172,25 +187,7 @@ test("shows header warning and blocks car-dependent analysis save when no car is
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
+  await installFakeWebSocket(page);
 
   await page.goto("/");
   await expect(page.locator("#carSelectionBanner")).toBeVisible();
@@ -242,25 +239,7 @@ test("hides header warning when a valid selected car exists", async ({ page }) =
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
+  await installFakeWebSocket(page);
 
   await page.goto("/");
   await expect(page.locator("#carSelectionBanner")).toBeHidden();
@@ -349,26 +328,7 @@ test("shows warning for invalid persisted selection and after deleting selected 
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-    window.confirm = () => true;
-  });
+  await installFakeWebSocket(page, { confirmResult: true });
 
   await page.goto("/");
   await expect(page.locator("#carSelectionBanner")).toBeVisible();
@@ -448,25 +408,7 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
+  await installFakeWebSocket(page);
 
   await page.goto("/");
   await page.locator("#tab-settings").click();
@@ -543,34 +485,14 @@ test("gps status polling does not override websocket speed readout", async ({ pa
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.addInitScript(() => {
-    const payload = {
+  await installFakeWebSocket(page, {
+    payload: {
       server_time: new Date().toISOString(),
       speed_mps: 20,
       clients: [],
       diagnostics: { strength_bands: [{ key: "wheel", label: "Wheel", color: "#2f80ed" }], events: [] },
       spectra: { clients: {} },
-    };
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-        queueMicrotask(() =>
-          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
-        );
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    },
   });
 
   await page.goto("/");
@@ -654,25 +576,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
     });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
+  await installFakeWebSocket(page);
 
   await page.goto("/");
   await page.locator("#tab-history").click();
@@ -760,8 +664,8 @@ test("spectrum title updates when switching language", async ({ page }) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.addInitScript(() => {
-    const payload = {
+  await installFakeWebSocket(page, {
+    payload: {
       server_time: new Date().toISOString(),
       speed_mps: 20,
       clients: [{ id: "c1", name: "Front Left", connected: true, frames_total: 100, dropped_frames: 0 }],
@@ -778,27 +682,7 @@ test("spectrum title updates when switching language", async ({ page }) => {
         },
       },
       spectra: { clients: {} },
-    };
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-        queueMicrotask(() =>
-          this.onmessage?.(new MessageEvent("message", { data: JSON.stringify(payload) })),
-        );
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+    },
   });
 
   await page.goto("/");
@@ -861,25 +745,7 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
     await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ detail: "missing" }) });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
+  await installFakeWebSocket(page);
 
   await page.goto("/");
   await page.locator("#tab-settings").click();
@@ -954,25 +820,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
     });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
+  await installFakeWebSocket(page);
 
   await page.goto("/");
   await page.locator("#tab-settings").click();
@@ -1073,24 +921,8 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
         globalState.__revokeCallCount = (globalState.__revokeCallCount ?? 0) + 1;
       }) as typeof URL.revokeObjectURL;
 
-      class FakeWebSocket {
-        static OPEN = 1;
-        readyState = 1;
-        onopen: ((event: Event) => void) | null = null;
-        onmessage: ((event: MessageEvent<string>) => void) | null = null;
-        onclose: ((event: CloseEvent) => void) | null = null;
-        onerror: ((event: Event) => void) | null = null;
-        constructor() {
-          queueMicrotask(() => this.onopen?.(new Event("open")));
-        }
-        send() {}
-        close() {
-          this.readyState = 3;
-          this.onclose?.(new CloseEvent("close"));
-        }
-      }
-      window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
     });
+    await installFakeWebSocket(page);
 
     await page.goto("/");
     await page.locator("#tab-history").click();
@@ -1176,25 +1008,7 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
   });
 
-  await page.addInitScript(() => {
-    class FakeWebSocket {
-      static OPEN = 1;
-      readyState = 1;
-      onopen: ((event: Event) => void) | null = null;
-      onmessage: ((event: MessageEvent<string>) => void) | null = null;
-      onclose: ((event: CloseEvent) => void) | null = null;
-      onerror: ((event: Event) => void) | null = null;
-      constructor() {
-        queueMicrotask(() => this.onopen?.(new Event("open")));
-      }
-      send() {}
-      close() {
-        this.readyState = 3;
-        this.onclose?.(new CloseEvent("close"));
-      }
-    }
-    window.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
-  });
+  await installFakeWebSocket(page);
 
   await page.goto("/");
   await page.locator("#tab-settings").click();
