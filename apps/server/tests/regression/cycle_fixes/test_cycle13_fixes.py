@@ -181,19 +181,35 @@ class TestSelectReasonKey:
         "kwargs, expected",
         [
             (
-                dict(confidence=0.9, steady_speed=False, weak_spatial=False, sensor_count=4, has_reference_gaps=True),
+                dict(
+                    confidence=0.9, steady_speed=False,
+                    weak_spatial=False, sensor_count=4,
+                    has_reference_gaps=True,
+                ),
                 "reference_gaps",
             ),
             (
-                dict(confidence=0.9, steady_speed=False, weak_spatial=False, sensor_count=1, has_reference_gaps=False),
+                dict(
+                    confidence=0.9, steady_speed=False,
+                    weak_spatial=False, sensor_count=1,
+                    has_reference_gaps=False,
+                ),
                 "single_sensor",
             ),
             (
-                dict(confidence=0.9, steady_speed=False, weak_spatial=False, sensor_count=4, has_reference_gaps=False),
+                dict(
+                    confidence=0.9, steady_speed=False,
+                    weak_spatial=False, sensor_count=4,
+                    has_reference_gaps=False,
+                ),
                 "strong_order_match",
             ),
             (
-                dict(confidence=0.2, steady_speed=False, weak_spatial=False, sensor_count=4, has_reference_gaps=False),
+                dict(
+                    confidence=0.2, steady_speed=False,
+                    weak_spatial=False, sensor_count=4,
+                    has_reference_gaps=False,
+                ),
                 "weak_order_match",
             ),
         ],

@@ -17,7 +17,6 @@ Scenarios
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import Tuple
 
 import pytest
 from builders import (
@@ -45,7 +44,7 @@ from vibesensor.report.report_data import ReportTemplateData
 # Type alias
 # ---------------------------------------------------------------------------
 
-ScenarioPair = Tuple[dict, ReportTemplateData]
+ScenarioPair = tuple[dict, ReportTemplateData]
 
 # ---------------------------------------------------------------------------
 # Helpers

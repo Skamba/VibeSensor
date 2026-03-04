@@ -16,8 +16,8 @@ import math
 from typing import Any
 
 import pytest
-from builders import make_sample
 from _test_helpers import assert_summary_sections
+from builders import make_sample
 
 from vibesensor.analysis.summary import summarize_run_data
 from vibesensor.analysis_settings import (

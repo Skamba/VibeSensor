@@ -24,7 +24,6 @@ from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 from vibesensor.processing import SignalProcessor
 from vibesensor.settings_store import SettingsStore
 
-
 # -- shared helpers ----------------------------------------------------------
 
 def _make_history_db(tmp_path: Path, name: str = "history.db") -> HistoryDB:
@@ -115,10 +114,16 @@ def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
     )
 
     # Phase 1 – fill with a 10 Hz tone (2400 samples → wraps at 1600)
-    processor.ingest("c1", _make_tone_chunk(10.0, 2400, sample_rate_hz), sample_rate_hz=sample_rate_hz)
+    processor.ingest(
+        "c1", _make_tone_chunk(10.0, 2400, sample_rate_hz),
+        sample_rate_hz=sample_rate_hz,
+    )
 
     # Phase 2 – overwrite with a 50 Hz tone (another 2400 samples)
-    processor.ingest("c1", _make_tone_chunk(50.0, 2400, sample_rate_hz), sample_rate_hz=sample_rate_hz)
+    processor.ingest(
+        "c1", _make_tone_chunk(50.0, 2400, sample_rate_hz),
+        sample_rate_hz=sample_rate_hz,
+    )
 
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
     peaks = metrics["combined"]["peaks"]

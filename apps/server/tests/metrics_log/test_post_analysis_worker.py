@@ -13,7 +13,6 @@ import pytest
 
 from vibesensor.metrics_log.post_analysis import PostAnalysisWorker
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -23,7 +22,9 @@ from vibesensor.metrics_log.post_analysis import PostAnalysisWorker
 def make_worker():
     """Factory for PostAnalysisWorker with an optional mock ``_run_post_analysis``."""
 
-    def _factory(*, run_fn=None, history_db=object(), **kwargs):
+    _sentinel = object()
+
+    def _factory(*, run_fn=None, history_db=_sentinel, **kwargs):
         worker = PostAnalysisWorker(history_db=history_db, **kwargs)
         if run_fn is not None:
             worker._run_post_analysis = run_fn  # type: ignore[assignment]

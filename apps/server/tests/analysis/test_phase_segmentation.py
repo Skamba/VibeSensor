@@ -82,7 +82,12 @@ class TestClassifySamplePhase:
             pytest.param(80.0, None, DrivingPhase.CRUISE, id="cruise_none_derivative"),
         ],
     )
-    def test_classify(self, speed: float | None, deriv: float | None, expected: DrivingPhase) -> None:
+    def test_classify(
+        self,
+        speed: float | None,
+        deriv: float | None,
+        expected: DrivingPhase,
+    ) -> None:
         assert classify_sample_phase(speed, deriv) == expected
 
 

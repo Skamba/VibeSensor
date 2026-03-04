@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 from vibesensor.analysis.strength_labels import strength_text

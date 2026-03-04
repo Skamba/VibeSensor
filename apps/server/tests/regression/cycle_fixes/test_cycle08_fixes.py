@@ -11,9 +11,10 @@ import math
 from unittest.mock import MagicMock, patch
 
 import pytest
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
-from vibesensor.analysis.helpers import _corr_abs_clamped
 from vibesensor.analysis.findings import _weighted_percentile
+from vibesensor.analysis.helpers import _corr_abs_clamped
 from vibesensor.analysis.summary import _normalize_lang
 from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
 from vibesensor.report.pdf_builder import _strength_with_peak
@@ -21,7 +22,6 @@ from vibesensor.report.pdf_helpers import _canonical_location
 from vibesensor.report_i18n import tr
 from vibesensor.settings_store import PersistenceError, SettingsStore
 from vibesensor.update.manager import UpdateManager, UpdateState
-from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 # ── 1. NaN guard in vibration_strength_db_scalar ─────────────────────────
 
