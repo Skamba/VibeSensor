@@ -20,6 +20,7 @@ def _valid_field_names(cls: type) -> frozenset[str]:
     return frozenset(f.name for f in dataclasses.fields(cls))
 
 
+
 def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
     """Keep only keys that match declared dataclass fields.
 
