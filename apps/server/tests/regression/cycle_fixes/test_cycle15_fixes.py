@@ -35,7 +35,6 @@ class TestMedfilt3NanResilience:
     """_medfilt3 must not propagate NaN to neighbors of a single NaN sample."""
 
     def test_single_nan_not_spread(self) -> None:
-        proc = _make_processor()
         # 3 axes, 5 samples. One spike at index 2 (a NaN).
         arr = np.array(
             [
@@ -51,13 +50,11 @@ class TestMedfilt3NanResilience:
         assert result[0, 2] == pytest.approx(1.0)
 
     def test_short_block_unchanged(self) -> None:
-        proc = _make_processor()
         arr = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], dtype=np.float32)
         result = medfilt3(arr)
         np.testing.assert_array_equal(result, arr)
 
     def test_edges_preserved(self) -> None:
-        proc = _make_processor()
         arr = np.array(
             [
                 [10.0, 1.0, 1.0, 1.0, 20.0],
@@ -72,8 +69,6 @@ class TestMedfilt3NanResilience:
         assert result[0, -1] == 20.0
 
     def test_spike_removal(self) -> None:
-        proc = _make_processor()
-        # Normal values with a spike at index 2
         arr = np.array(
             [
                 [1.0, 1.0, 100.0, 1.0, 1.0],
@@ -87,7 +82,6 @@ class TestMedfilt3NanResilience:
         assert result[0, 2] == pytest.approx(1.0)
 
     def test_all_nan_row_no_crash(self) -> None:
-        proc = _make_processor()
         arr = np.full((3, 5), float("nan"), dtype=np.float32)
         result = medfilt3(arr)
         # Should not crash — result is still all NaN but no exception
