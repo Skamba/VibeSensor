@@ -58,20 +58,13 @@ from builders import (
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Shared constants
+# Shared constants & reusable parametrize decorators
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # Confidence threshold for "medium-or-higher" findings.  Used by most negative
 # assertions to distinguish incidental low-confidence noise from a real
 # false-positive.
 _MEDIUM_CONFIDENCE = 0.55
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# Section 1: NO-FAULT BASELINES across sensor counts × speed bands
-#
-# Pure noise/idle/ramp with no injected fault → must produce no fault above
-# threshold.  Sensor counts: 1, 4, 8, 12.
-# ═══════════════════════════════════════════════════════════════════════════════
 
 _SENSOR_CONFIGS = {
     "1-sensor": [SENSOR_FL],
@@ -82,15 +75,29 @@ _SENSOR_CONFIGS = {
 
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
 _SPEED_IDS = ["low", "mid", "high"]
+_CORNERS = ["FL", "FR", "RL", "RR"]
 
-
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize(
+# Reusable parametrize markers – avoids repeating the same decorator 17+ times.
+_param_profile = pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+_param_speed = pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
+_param_corner = pytest.mark.parametrize("corner", _CORNERS)
+_param_sensor_config = pytest.mark.parametrize(
     "config_name,sensors",
     list(_SENSOR_CONFIGS.items()),
     ids=lambda x: x if isinstance(x, str) else "",
 )
-@pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 1: NO-FAULT BASELINES across sensor counts × speed bands
+#
+# Pure noise/idle/ramp with no injected fault → must produce no fault above
+# threshold.  Sensor counts: 1, 4, 8, 12.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+@_param_profile
+@_param_sensor_config
+@_param_speed
 def test_no_fault_noise_baseline(
     profile: dict[str, Any], config_name: str, sensors: list[str], speed: float
 ) -> None:
@@ -104,12 +111,8 @@ def test_no_fault_noise_baseline(
     assert_no_persistent_fault(summary, msg=f"{config_name}@{speed}")
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize(
-    "config_name,sensors",
-    list(_SENSOR_CONFIGS.items()),
-    ids=lambda x: x if isinstance(x, str) else "",
-)
+@_param_profile
+@_param_sensor_config
 def test_no_fault_idle_baseline(
     profile: dict[str, Any], config_name: str, sensors: list[str]
 ) -> None:
@@ -122,12 +125,8 @@ def test_no_fault_idle_baseline(
     assert_strict_no_fault(summary, msg=f"idle-{config_name}")
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize(
-    "config_name,sensors",
-    list(_SENSOR_CONFIGS.items()),
-    ids=lambda x: x if isinstance(x, str) else "",
-)
+@_param_profile
+@_param_sensor_config
 def test_no_fault_ramp_baseline(
     profile: dict[str, Any], config_name: str, sensors: list[str]
 ) -> None:
@@ -147,12 +146,9 @@ def test_no_fault_ramp_baseline(
 # wheel, but engine/driveline should NOT appear at medium+ confidence.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-_CORNERS = ["FL", "FR", "RL", "RR"]
-
-
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
+@_param_profile
+@_param_corner
+@_param_speed
 def test_single_wheel_fault_no_engine(profile: dict[str, Any], corner: str, speed: float) -> None:
     """Single wheel fault → engine must NOT appear at confidence ≥0.40.
 
@@ -191,8 +187,8 @@ def test_single_wheel_fault_no_engine(profile: dict[str, Any], corner: str, spee
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
+@_param_profile
+@_param_speed
 def test_transient_only_single_sensor(profile: dict[str, Any], speed: float) -> None:
     """Transient spike on noise baseline (1 sensor) → no persistent fault.
 
@@ -213,8 +209,8 @@ def test_transient_only_single_sensor(profile: dict[str, Any], speed: float) -> 
     assert_tolerant_no_fault(summary, msg=f"transient-1s@{speed}")
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
+@_param_profile
+@_param_speed
 def test_transient_only_four_sensors(profile: dict[str, Any], speed: float) -> None:
     """Transient spikes on all 4 wheel sensors (simultaneous pothole) → no persistent fault.
 
@@ -236,8 +232,8 @@ def test_transient_only_four_sensors(profile: dict[str, Any], speed: float) -> N
     assert_tolerant_no_fault(summary, msg=f"transient-4s@{speed}")
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
+@_param_profile
+@_param_corner
 def test_transient_on_one_corner_no_localization(profile: dict[str, Any], corner: str) -> None:
     """A single transient on one corner amid noise → must not localize a wheel fault.
 
@@ -266,8 +262,8 @@ def test_transient_on_one_corner_no_localization(profile: dict[str, Any], corner
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
+@_param_profile
+@_param_speed
 def test_diffuse_excitation_not_localized(profile: dict[str, Any], speed: float) -> None:
     """Uniform vibration on all 4 sensors → must not localize to a single wheel.
 
@@ -284,7 +280,7 @@ def test_diffuse_excitation_not_localized(profile: dict[str, Any], speed: float)
     assert_no_localized_wheel(summary, confidence_threshold=0.50, msg=f"diffuse@{speed}")
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 @pytest.mark.parametrize(
     "config_name,sensors",
     [
@@ -311,7 +307,7 @@ def test_diffuse_excitation_many_sensors(
     assert_no_localized_wheel(summary, confidence_threshold=0.50, msg=f"diffuse-{config_name}")
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 def test_diffuse_at_wheel_frequency_no_localization(profile: dict[str, Any]) -> None:
     """Diffuse vibration at wheel-order frequency → must not localize.
 
@@ -338,8 +334,8 @@ def test_diffuse_at_wheel_frequency_no_localization(profile: dict[str, Any]) -> 
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
+@_param_profile
+@_param_corner
 def test_fault_late_onset_clean_early_phase(profile: dict[str, Any], corner: str) -> None:
     """Clean cruise for 25s, then fault for 15s.  Early phase alone → no fault.
 
@@ -385,7 +381,7 @@ def test_fault_late_onset_clean_early_phase(profile: dict[str, Any], corner: str
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 @pytest.mark.parametrize(
     "amp,vib_db,label",
     [
@@ -420,7 +416,7 @@ def test_weak_fault_stays_guarded(
     )
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 def test_ambiguous_dual_frequency_low_confidence(profile: dict[str, Any]) -> None:
     """Two competing frequencies at similar amplitude → confidence should be modest.
 
@@ -462,31 +458,28 @@ def test_ambiguous_dual_frequency_low_confidence(profile: dict[str, Any]) -> Non
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-def test_non_wheel_sensors_only_noise_no_wheel_fault(profile: dict[str, Any]) -> None:
-    """4 non-wheel sensors with noise only → no wheel fault.
+@_param_profile
+@pytest.mark.parametrize(
+    "sensors,label",
+    [
+        (NON_WHEEL_SENSORS[:4], "non-wheel-noise"),
+        (ALL_WHEEL_SENSORS + NON_WHEEL_SENSORS[:4], "mixed-8s-noise"),
+    ],
+    ids=["4-non-wheel", "4-wheel+4-non-wheel"],
+)
+def test_noise_only_no_wheel_fault(
+    profile: dict[str, Any], sensors: list[str], label: str
+) -> None:
+    """Noise-only on non-wheel or mixed sensor sets → no wheel fault.
 
-    1 scenario
+    2 scenarios (previously two separate test functions)
     """
-    sensors = NON_WHEEL_SENSORS[:4]
     samples = make_noise_samples(sensors=sensors, speed_kmh=SPEED_MID, n_samples=40)
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_no_wheel_fault(summary, msg="non-wheel-noise")
+    assert_no_wheel_fault(summary, msg=label)
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-def test_mixed_sensors_noise_only_no_wheel_fault(profile: dict[str, Any]) -> None:
-    """4 wheel + 4 non-wheel sensors all with noise → no wheel fault.
-
-    1 scenario
-    """
-    sensors = ALL_WHEEL_SENSORS + NON_WHEEL_SENSORS[:4]
-    samples = make_noise_samples(sensors=sensors, speed_kmh=SPEED_MID, n_samples=40)
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_no_wheel_fault(summary, msg="mixed-8s-noise")
-
-
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 def test_non_wheel_high_vibration_no_wheel_fault(profile: dict[str, Any]) -> None:
     """Non-wheel sensors with elevated (but non-wheel-order) vibration → no wheel fault.
 
@@ -505,7 +498,7 @@ def test_non_wheel_high_vibration_no_wheel_fault(profile: dict[str, Any]) -> Non
     assert_no_wheel_fault(summary, msg="non-wheel-elevated")
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 def test_engine_vibration_not_reported_as_wheel(profile: dict[str, Any]) -> None:
     """Engine-order harmonics on all sensors → must not be reported as wheel/tire.
 
@@ -538,8 +531,8 @@ def test_engine_vibration_not_reported_as_wheel(profile: dict[str, Any]) -> None
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
+@_param_profile
+@_param_corner
 def test_wheel_fault_with_engine_noise_no_engine_overreport(
     profile: dict[str, Any], corner: str
 ) -> None:
@@ -578,7 +571,7 @@ def test_wheel_fault_with_engine_noise_no_engine_overreport(
     )
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 def test_wheel_fault_with_road_phase_noise(profile: dict[str, Any]) -> None:
     """Wheel fault + road surface phase changes → forbidden systems stay suppressed.
 
@@ -610,7 +603,7 @@ def test_wheel_fault_with_road_phase_noise(profile: dict[str, Any]) -> None:
     )
 
 
-@pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
+@_param_profile
 def test_engine_order_with_transient_no_wheel(profile: dict[str, Any]) -> None:
     """Engine vibration + transient spike → must not become a wheel fault.
 

@@ -136,8 +136,8 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
 
         final_1 = _wait_complete(base, run_1)
         final_2 = _wait_complete(base, run_2)
-        assert final_1["status"] == "complete"
-        assert final_2["status"] == "complete"
+        assert final_1["status"] == "complete", f"rollover run_1 status: {final_1['status']}"
+        assert final_2["status"] == "complete", f"rollover run_2 status: {final_2['status']}"
 
         for run_id in (run_1, run_2):
             insights = api_json(base, f"/api/history/{run_id}/insights")
@@ -152,9 +152,9 @@ def test_logging_stop_when_idle_noop(e2e_env: dict[str, str]) -> None:
     base = e2e_env["base_url"]
     before = history_run_ids(base)
     stopped = api_json(base, "/api/logging/stop", method="POST")
-    assert stopped["enabled"] is False
-    assert stopped["run_id"] is None
-    assert history_run_ids(base) == before
+    assert stopped["enabled"] is False, "stop-when-idle should report enabled=False"
+    assert stopped["run_id"] is None, "stop-when-idle should report run_id=None"
+    assert history_run_ids(base) == before, "stop-when-idle should not create a run"
 
 
 def test_delete_active_run_returns_409_e2e(e2e_env: dict[str, str]) -> None:
@@ -193,9 +193,9 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
             assert "analysis" in str(immediate.get("detail", "")).lower()
 
         complete = _wait_complete(base, run_id)
-        assert complete["status"] == "complete"
+        assert complete["status"] == "complete", f"run {run_id} status: {complete['status']}"
         insights = api_json(base, f"/api/history/{run_id}/insights")
-        assert insights.get("findings")
+        assert insights.get("findings"), f"expected findings for run {run_id}"
     finally:
         api_json(base, "/api/logging/stop", method="POST")
         _cleanup_run(base, run_id)
@@ -594,14 +594,14 @@ def test_reduced_sensor_count_run_still_reports(e2e_env: dict[str, str]) -> None
         _simulate(e2e_env, duration=3.0, count=2, names="front-left,rear-left")
         api_json(base, "/api/logging/stop", method="POST")
         run = _wait_complete(base, run_id)
-        assert run["status"] == "complete"
+        assert run["status"] == "complete", f"reduced-sensor run status: {run['status']}"
 
         insights = api_json(base, f"/api/history/{run_id}/insights")
-        assert insights.get("findings")
+        assert insights.get("findings"), "reduced-sensor run produced no findings"
 
         export_resp = api_bytes(base, f"/api/history/{run_id}/export")
         _, rows, _ = parse_export_zip(export_resp.body)
-        assert rows
+        assert rows, "reduced-sensor export has no rows"
 
         pdf_resp = api_bytes(base, f"/api/history/{run_id}/report.pdf")
         text = pdf_text(pdf_resp.body)
@@ -633,15 +633,19 @@ def test_export_history_consistency_e2e(e2e_env: dict[str, str]) -> None:
         assert int(summary.get("sample_count", -1)) == len(rows)
         assert int(detail.get("sample_count", -1)) == len(rows)
 
-        assert rows
+        assert rows, "export contains no rows"
         expected_columns = {"timestamp_utc", "t_s", "client_id", "speed_kmh"}
-        assert expected_columns.issubset(set(rows[0].keys()))
+        assert expected_columns.issubset(set(rows[0].keys())), (
+            f"missing columns: {expected_columns - set(rows[0].keys())}"
+        )
 
         parsed = []
         for row in rows:
             ts = str(row["timestamp_utc"]).replace("Z", "+00:00")
             parsed.append(datetime.fromisoformat(ts))
-        assert all(parsed[i] <= parsed[i + 1] for i in range(len(parsed) - 1))
+        assert all(parsed[i] <= parsed[i + 1] for i in range(len(parsed) - 1)), (
+            "export timestamps are not sorted chronologically"
+        )
     finally:
         api_json(base, "/api/logging/stop", method="POST")
         _cleanup_run(base, run_id)
@@ -685,7 +689,7 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
             for f in insights.get("findings", [])
             if not str(f.get("finding_id", "")).startswith("REF_")
         ]
-        assert findings
+        assert findings, "20s run produced no non-reference findings"
         primary = findings[0]
         primary_source = str(primary.get("suspected_source") or "").replace("/", " / ").lower()
         source_label = {
@@ -708,7 +712,7 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
             )
 
         top_causes = [c for c in insights.get("top_causes", []) if isinstance(c, dict)]
-        assert top_causes
+        assert top_causes, "20s run produced no top_causes"
         top_source = str(top_causes[0].get("source") or "").lower()
         top_source_label = {
             "wheel/tire": "wheel / tire",
@@ -722,8 +726,10 @@ def test_full_pdf_report_20s_accuracy_e2e(e2e_env: dict[str, str]) -> None:
         sensor_rows = [
             r for r in analysis.get("sensor_intensity_by_location", []) if isinstance(r, dict)
         ]
-        assert sensor_rows
-        assert len(rows) == int(export_json.get("sample_count", -1))
+        assert sensor_rows, "sensor_intensity_by_location is empty"
+        assert len(rows) == int(export_json.get("sample_count", -1)), (
+            f"export row count {len(rows)} != sample_count {export_json.get('sample_count')}"
+        )
 
         # The PDF renders frequencies from the persistence-ranked peaks_table, not
         # from the raw fft_spectrum top amplitude (which may be a transient spike).

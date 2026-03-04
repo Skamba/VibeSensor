@@ -231,24 +231,37 @@ class TestFirmwareVersionForRun:
 # ---------------------------------------------------------------------------
 
 
+def _default_run_metadata_kwargs(**overrides) -> dict:
+    """Return default kwargs for ``build_run_metadata``, merging *overrides*."""
+    defaults: dict = {
+        "run_id": "test-run",
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "analysis_settings_snapshot": {},
+        "sensor_model": "test",
+        "firmware_version": None,
+        "default_sample_rate_hz": 800,
+        "metrics_log_hz": 4,
+        "fft_window_size_samples": 512,
+        "fft_window_type": "hann",
+        "peak_picker_method": "canonical",
+        "accel_scale_g_per_lsb": None,
+    }
+    defaults.update(overrides)
+    return defaults
+
+
 class TestBuildRunMetadata:
     def test_includes_core_fields_and_tire_spec(self) -> None:
         meta = build_run_metadata(
-            run_id="test-run",
-            start_time_utc="2026-01-01T00:00:00Z",
-            analysis_settings_snapshot={
-                "tire_width_mm": 205.0,
-                "tire_aspect_pct": 55.0,
-                "rim_in": 16.0,
-            },
-            sensor_model="ADXL345",
-            firmware_version=None,
-            default_sample_rate_hz=800,
-            metrics_log_hz=4,
-            fft_window_size_samples=1024,
-            fft_window_type="hann",
-            peak_picker_method="canonical",
-            accel_scale_g_per_lsb=None,
+            **_default_run_metadata_kwargs(
+                sensor_model="ADXL345",
+                fft_window_size_samples=1024,
+                analysis_settings_snapshot={
+                    "tire_width_mm": 205.0,
+                    "tire_aspect_pct": 55.0,
+                    "rim_in": 16.0,
+                },
+            )
         )
         assert meta["run_id"] == "test-run"
         assert meta["sensor_model"] == "ADXL345"
@@ -258,35 +271,19 @@ class TestBuildRunMetadata:
 
     def test_with_language(self) -> None:
         meta = build_run_metadata(
-            run_id="run-lang",
-            start_time_utc="2026-01-01T00:00:00Z",
-            analysis_settings_snapshot={},
-            sensor_model="test",
-            firmware_version=None,
-            default_sample_rate_hz=800,
-            metrics_log_hz=4,
-            fft_window_size_samples=512,
-            fft_window_type="hann",
-            peak_picker_method="test",
-            accel_scale_g_per_lsb=None,
-            language_provider=lambda: "fi",
+            **_default_run_metadata_kwargs(
+                run_id="run-lang",
+                language_provider=lambda: "fi",
+            )
         )
         assert meta["language"] == "fi"
 
     def test_language_provider_defaults_to_en_when_blank(self) -> None:
         meta = build_run_metadata(
-            run_id="run-lang-default",
-            start_time_utc="2026-01-01T00:00:00Z",
-            analysis_settings_snapshot={},
-            sensor_model="test",
-            firmware_version=None,
-            default_sample_rate_hz=800,
-            metrics_log_hz=4,
-            fft_window_size_samples=512,
-            fft_window_type="hann",
-            peak_picker_method="test",
-            accel_scale_g_per_lsb=None,
-            language_provider=lambda: "   ",
+            **_default_run_metadata_kwargs(
+                run_id="run-lang-default",
+                language_provider=lambda: "   ",
+            )
         )
         assert meta["language"] == "en"
 

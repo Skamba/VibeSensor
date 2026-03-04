@@ -18,6 +18,7 @@ Tests the analysis pipeline's robustness when peak amplitudes are clipped
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import pytest
@@ -37,9 +38,11 @@ from builders import (
     make_fault_samples,
     make_noise_samples,
     make_profile_fault_samples,
+    make_sample,
     profile_metadata,
     run_analysis,
     top_confidence,
+    wheel_hz,
 )
 
 # ---------------------------------------------------------------------------
@@ -203,8 +206,6 @@ def test_extreme_clipping_no_crash(corner: str, cfg_name: str, sensor_fn: Any) -
     assert isinstance(summary, dict)
     for tc in summary.get("top_causes", []):
         conf = float(tc.get("confidence", 0))
-        import math
-
         assert not math.isnan(conf), "NaN confidence from extreme clipping"
 
 
@@ -228,8 +229,6 @@ _SPEED_VARIANTS = [
 @pytest.mark.parametrize("clip_amp", [0.04, 0.02], ids=["clip04", "clip02"])
 def test_clipping_with_speed_variants(speed_name: str, speed_fn: Any, clip_amp: float) -> None:
     """Clipping combined with various speed patterns should not crash."""
-    from builders import make_sample, wheel_hz
-
     samples: list[dict[str, Any]] = []
     for i in range(30):
         t = float(i)

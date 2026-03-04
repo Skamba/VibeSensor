@@ -165,6 +165,28 @@ _TWO_CLIENTS = [
     {"id": "bbb", "name": "rear-right"},
 ]
 
+_ROTATIONAL_KEYS = ("wheel", "driveshaft", "engine")
+
+
+def _assert_rotational(
+    rotational: dict,
+    *,
+    source: str = "gps",
+    mode: str = "calculated",
+    reason: str | None = None,
+    rpm_positive: bool = False,
+) -> None:
+    """Validate rotational_speeds sub-dict for all drivetrain components."""
+    assert rotational["basis_speed_source"] == source
+    for key in _ROTATIONAL_KEYS:
+        assert rotational[key]["mode"] == mode
+        assert rotational[key]["reason"] == reason
+        if rpm_positive:
+            assert isinstance(rotational[key]["rpm"], float)
+            assert rotational[key]["rpm"] > 0
+        else:
+            assert rotational[key]["rpm"] is None
+
 
 def test_build_ws_payload_returns_required_keys() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
@@ -181,13 +203,7 @@ def test_build_ws_payload_returns_required_keys() -> None:
     assert payload["speed_mps"] == 12.5
     assert payload["selected_client_id"] == "aaa"
     assert len(payload["clients"]) == 2
-    rotational = payload["rotational_speeds"]
-    assert rotational["basis_speed_source"] == "gps"
-    for key in ("wheel", "driveshaft", "engine"):
-        assert rotational[key]["mode"] == "calculated"
-        assert rotational[key]["reason"] is None
-        assert isinstance(rotational[key]["rpm"], float)
-        assert rotational[key]["rpm"] > 0
+    _assert_rotational(payload["rotational_speeds"], rpm_positive=True)
 
 
 def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
@@ -275,10 +291,6 @@ def test_build_ws_payload_rotational_speeds_include_reason_when_speed_unavailabl
     gps.effective_speed_mps = None
 
     payload = state.build_ws_payload(selected_client="aaa")
-    rotational = payload["rotational_speeds"]
-
-    assert rotational["basis_speed_source"] == "gps"
-    for key in ("wheel", "driveshaft", "engine"):
-        assert rotational[key]["rpm"] is None
-        assert rotational[key]["mode"] == "calculated"
-        assert rotational[key]["reason"] == "speed_unavailable"
+    _assert_rotational(
+        payload["rotational_speeds"], reason="speed_unavailable"
+    )

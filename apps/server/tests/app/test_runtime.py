@@ -136,8 +136,32 @@ def _make_runtime(**overrides: Any):
 
 
 # ---------------------------------------------------------------------------
-# processing_loop tests
+# processing_loop helpers & tests
 # ---------------------------------------------------------------------------
+
+
+async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
+    """Run *rt*.processing_loop() for *max_ticks* iterations, then cancel.
+
+    Temporarily replaces ``asyncio.sleep`` with a counting stub so the loop
+    completes deterministically without real delays.
+    """
+    tick_count = 0
+    original_sleep = asyncio.sleep
+
+    async def _counting_sleep(delay: float) -> None:
+        nonlocal tick_count
+        tick_count += 1
+        if tick_count >= max_ticks:
+            raise asyncio.CancelledError
+        await original_sleep(0)
+
+    asyncio.sleep = _counting_sleep
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            await rt.processing_loop()
+    finally:
+        asyncio.sleep = original_sleep
 
 
 @pytest.mark.asyncio
@@ -146,24 +170,7 @@ async def test_processing_loop_runs_one_tick_and_resets_state() -> None:
     rt = _make_runtime()
     rt.processing_state = "degraded"
 
-    tick_count = 0
-
-    original_sleep = asyncio.sleep
-
-    async def _counting_sleep(delay: float) -> None:
-        nonlocal tick_count
-        tick_count += 1
-        if tick_count >= 1:
-            raise asyncio.CancelledError
-        await original_sleep(0)
-
-    original_asyncio_sleep = asyncio.sleep
-    asyncio.sleep = _counting_sleep
-    try:
-        with pytest.raises(asyncio.CancelledError):
-            await rt.processing_loop()
-    finally:
-        asyncio.sleep = original_asyncio_sleep
+    await _run_processing_loop(rt, max_ticks=1)
 
     assert rt.processing_state == "ok"
 
@@ -179,22 +186,7 @@ async def test_processing_loop_handles_failure_gracefully() -> None:
     processor.compute_all = _failing_compute
     rt = _make_runtime(processor=processor)
 
-    tick_count = 0
-    original_sleep = asyncio.sleep
-
-    async def _counting_sleep(delay: float) -> None:
-        nonlocal tick_count
-        tick_count += 1
-        if tick_count >= 1:
-            raise asyncio.CancelledError
-        await original_sleep(0)
-
-    asyncio.sleep = _counting_sleep
-    try:
-        with pytest.raises(asyncio.CancelledError):
-            await rt.processing_loop()
-    finally:
-        asyncio.sleep = original_sleep
+    await _run_processing_loop(rt, max_ticks=1)
 
     assert rt.processing_failure_count >= 1
     assert rt.processing_state in ("degraded", "fatal")
@@ -212,22 +204,7 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
         control_plane=control_plane,
     )
 
-    tick_count = 0
-    original_sleep = asyncio.sleep
-
-    async def _counting_sleep(delay: float) -> None:
-        nonlocal tick_count
-        tick_count += 1
-        if tick_count >= 6:
-            raise asyncio.CancelledError
-        await original_sleep(0)
-
-    asyncio.sleep = _counting_sleep
-    try:
-        with pytest.raises(asyncio.CancelledError):
-            await rt.processing_loop()
-    finally:
-        asyncio.sleep = original_sleep
+    await _run_processing_loop(rt, max_ticks=6)
 
     assert control_plane.broadcast_sync_clock.called
 
@@ -341,12 +318,9 @@ def test_runtime_state_importable_from_app() -> None:
     assert FromApp is FromRuntime
 
 
-def test_runtime_state_importable_from_runtime() -> None:
-    """Canonical import path should be vibesensor.runtime.RuntimeState."""
+@pytest.mark.parametrize("attr", ["processing_loop", "start", "stop", "build_ws_payload"])
+def test_runtime_state_has_public_method(attr: str) -> None:
+    """Canonical import path should expose key public methods."""
     from vibesensor.runtime import RuntimeState
 
-    assert RuntimeState is not None
-    assert hasattr(RuntimeState, "processing_loop")
-    assert hasattr(RuntimeState, "start")
-    assert hasattr(RuntimeState, "stop")
-    assert hasattr(RuntimeState, "build_ws_payload")
+    assert hasattr(RuntimeState, attr), f"RuntimeState missing {attr}"

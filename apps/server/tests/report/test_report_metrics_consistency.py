@@ -17,6 +17,7 @@ Scenarios
 from __future__ import annotations
 
 from dataclasses import asdict
+from typing import Tuple
 
 import pytest
 from builders import (
@@ -36,11 +37,15 @@ from builders import (
 )
 
 from vibesensor.analysis import map_summary
-from vibesensor.analysis.strength_labels import (
-    certainty_tier,
-)
+from vibesensor.analysis.strength_labels import certainty_tier
 from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.report.report_data import ReportTemplateData
+
+# ---------------------------------------------------------------------------
+# Type alias
+# ---------------------------------------------------------------------------
+
+ScenarioPair = Tuple[dict, ReportTemplateData]
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -53,48 +58,114 @@ def _build_report_data(summary: dict) -> ReportTemplateData:
 
 
 def _roundtrip_report_data(rd: ReportTemplateData) -> ReportTemplateData:
-    """Simulate persistence round-trip (dict → ReportTemplateData)."""
-    d = asdict(rd)
-    return ReportTemplateData.from_dict(d)
+    """Simulate persistence round-trip (dict -> ReportTemplateData)."""
+    return ReportTemplateData.from_dict(asdict(rd))
+
+
+# ---------------------------------------------------------------------------
+# Scenario builders (reusable across individual + cross-scenario tests)
+# ---------------------------------------------------------------------------
+
+
+def _build_no_fault_baseline() -> ScenarioPair:
+    samples = make_noise_samples(sensors=ALL_WHEEL_SENSORS, speed_kmh=80.0, n_samples=30)
+    summary = run_analysis(samples, standard_metadata())
+    return summary, _build_report_data(summary)
+
+
+def _build_single_wheel_fault() -> ScenarioPair:
+    samples = make_fault_samples(
+        fault_sensor=SENSOR_FL,
+        sensors=ALL_WHEEL_SENSORS,
+        speed_kmh=80.0,
+        n_samples=40,
+        fault_amp=0.06,
+    )
+    summary = run_analysis(samples, standard_metadata())
+    return summary, _build_report_data(summary)
+
+
+def _build_high_speed_fault() -> ScenarioPair:
+    samples = make_noise_samples(
+        sensors=ALL_WHEEL_SENSORS, speed_kmh=40.0, n_samples=15, start_t_s=0.0
+    )
+    samples += make_fault_samples(
+        fault_sensor=SENSOR_FR,
+        sensors=ALL_WHEEL_SENSORS,
+        speed_kmh=110.0,
+        n_samples=30,
+        start_t_s=15.0,
+        fault_amp=0.07,
+    )
+    summary = run_analysis(samples, standard_metadata())
+    return summary, _build_report_data(summary)
+
+
+def _build_mixed_noise_fault() -> ScenarioPair:
+    sensors = ALL_WHEEL_SENSORS
+    samples = make_idle_samples(sensors=sensors, n_samples=5, start_t_s=0.0)
+    samples += make_ramp_samples(
+        sensors=sensors, speed_start=0.0, speed_end=80.0, n_samples=10, start_t_s=5.0
+    )
+    samples += make_fault_samples(
+        fault_sensor=SENSOR_RL,
+        sensors=sensors,
+        speed_kmh=80.0,
+        n_samples=30,
+        start_t_s=15.0,
+        fault_amp=0.05,
+    )
+    samples += make_transient_samples(
+        sensor=SENSOR_FL, speed_kmh=80.0, n_samples=3, start_t_s=45.0, spike_amp=0.12
+    )
+    samples += make_transient_samples(
+        sensor=SENSOR_RR, speed_kmh=80.0, n_samples=2, start_t_s=48.0, spike_amp=0.10
+    )
+    samples += make_ramp_samples(
+        sensors=sensors, speed_start=80.0, speed_end=0.0, n_samples=10, start_t_s=50.0
+    )
+    summary = run_analysis(samples, standard_metadata())
+    return summary, _build_report_data(summary)
+
+
+def _build_sparse_sensors() -> ScenarioPair:
+    sparse = [SENSOR_FL, SENSOR_ENGINE]
+    samples = make_fault_samples(
+        fault_sensor=SENSOR_FL,
+        sensors=sparse,
+        speed_kmh=70.0,
+        n_samples=30,
+        fault_amp=0.05,
+    )
+    summary = run_analysis(samples, standard_metadata())
+    return summary, _build_report_data(summary)
 
 
 # ---------------------------------------------------------------------------
 # Consistency assertion helpers
 # ---------------------------------------------------------------------------
 
+# (observed_attr, pattern_evidence_attr, label)
+_CROSS_SECTION_FIELDS: list[tuple[str, str, str]] = [
+    ("strength_label", "strength_label", "Strength label"),
+    ("strength_peak_db", "strength_peak_db", "Strength peak dB"),
+    ("certainty_label", "certainty_label", "Certainty label"),
+    ("certainty_pct", "certainty_pct", "Certainty pct"),
+    ("certainty_reason", "certainty_reason", "Certainty reason"),
+    ("strongest_sensor_location", "strongest_location", "Location"),
+    ("speed_band", "speed_band", "Speed band"),
+]
+
 
 def _assert_cross_section_consistency(rd: ReportTemplateData) -> None:
-    """Assert observed ↔ pattern_evidence values match exactly."""
-    obs = rd.observed
-    pe = rd.pattern_evidence
-
-    assert obs.strength_label == pe.strength_label, (
-        f"Strength label mismatch: observed='{obs.strength_label}' vs "
-        f"pattern_evidence='{pe.strength_label}'"
-    )
-    assert obs.strength_peak_db == pe.strength_peak_db, (
-        f"Strength peak dB mismatch: observed={obs.strength_peak_db} vs "
-        f"pattern_evidence={pe.strength_peak_db}"
-    )
-    assert obs.certainty_label == pe.certainty_label, (
-        f"Certainty label mismatch: observed='{obs.certainty_label}' vs "
-        f"pattern_evidence='{pe.certainty_label}'"
-    )
-    assert obs.certainty_pct == pe.certainty_pct, (
-        f"Certainty pct mismatch: observed='{obs.certainty_pct}' vs "
-        f"pattern_evidence='{pe.certainty_pct}'"
-    )
-    assert obs.certainty_reason == pe.certainty_reason, (
-        f"Certainty reason mismatch: observed='{obs.certainty_reason}' vs "
-        f"pattern_evidence='{pe.certainty_reason}'"
-    )
-    assert obs.strongest_sensor_location == pe.strongest_location, (
-        f"Location mismatch: observed='{obs.strongest_sensor_location}' vs "
-        f"pattern_evidence='{pe.strongest_location}'"
-    )
-    assert obs.speed_band == pe.speed_band, (
-        f"Speed band mismatch: observed='{obs.speed_band}' vs pattern_evidence='{pe.speed_band}'"
-    )
+    """Assert observed <-> pattern_evidence values match exactly."""
+    obs, pe = rd.observed, rd.pattern_evidence
+    for obs_attr, pe_attr, label in _CROSS_SECTION_FIELDS:
+        obs_val = getattr(obs, obs_attr)
+        pe_val = getattr(pe, pe_attr)
+        assert obs_val == pe_val, (
+            f"{label} mismatch: observed='{obs_val}' vs pattern_evidence='{pe_val}'"
+        )
 
 
 def _assert_tier_gating(rd: ReportTemplateData) -> None:
@@ -102,47 +173,37 @@ def _assert_tier_gating(rd: ReportTemplateData) -> None:
     tier = rd.certainty_tier_key
 
     if tier == "A":
-        # Tier A: no system cards, data-collection guidance in next steps
         assert len(rd.system_cards) == 0, (
             f"Tier A must suppress system cards, got {len(rd.system_cards)}"
         )
-        # Next steps should be present (guidance-oriented)
         assert len(rd.next_steps) > 0, "Tier A must have data-collection guidance steps"
     elif tier == "B":
-        # Tier B: system cards labelled as hypothesis, no repair parts
         for card in rd.system_cards:
             assert len(card.parts) == 0, (
                 f"Tier B card '{card.system_name}' must have no repair parts, got {len(card.parts)}"
             )
-    # Tier C: full cards allowed (no restrictions to check)
+
+
+def _assert_valid_float(value: str, field_name: str) -> None:
+    """Assert a non-dash value is a valid float string."""
+    if value != "\u2014":
+        try:
+            float(value)
+        except ValueError:
+            pytest.fail(f"Peak row {field_name} not a valid float: '{value}'")
 
 
 def _assert_unit_consistency(rd: ReportTemplateData) -> None:
     """Assert units are consistent across the report."""
-    # Strength label should contain "dB" if a dB value is present
     sl = rd.observed.strength_label or ""
     if "dB" in sl:
         assert " g" not in sl, f"Strength label must be dB-only: '{sl}'"
 
-    # Peak rows: all strength columns should be dB-formatted numeric strings
     for pr in rd.peak_rows:
-        if pr.peak_db != "\u2014":
-            try:
-                float(pr.peak_db)
-            except ValueError:
-                pytest.fail(f"Peak row peak_db not a valid float: '{pr.peak_db}'")
-        if pr.strength_db != "\u2014":
-            try:
-                float(pr.strength_db)
-            except ValueError:
-                pytest.fail(f"Peak row strength_db not a valid float: '{pr.strength_db}'")
-        if pr.freq_hz != "\u2014":
-            try:
-                float(pr.freq_hz)
-            except ValueError:
-                pytest.fail(f"Peak row freq_hz not a valid float: '{pr.freq_hz}'")
+        _assert_valid_float(pr.peak_db, "peak_db")
+        _assert_valid_float(pr.strength_db, "strength_db")
+        _assert_valid_float(pr.freq_hz, "freq_hz")
 
-    # Location hotspot rows: unit must be uniform
     units = {row.get("unit") for row in rd.location_hotspot_rows if isinstance(row, dict)}
     assert len(units) <= 1, f"Mixed units in location hotspot rows: {units}"
 
@@ -185,11 +246,9 @@ def _assert_certainty_tier_consistent(rd: ReportTemplateData, summary: dict) -> 
 
 def _assert_no_report_time_analysis(rd: ReportTemplateData) -> None:
     """Verify the report data is fully pre-computed (no analysis imports in report)."""
-    # All fields that should be pre-computed strings/values
     assert isinstance(rd.observed.strength_label, (str, type(None)))
     assert isinstance(rd.observed.certainty_label, (str, type(None)))
     assert isinstance(rd.observed.certainty_pct, (str, type(None)))
-    # Location hotspot rows should be pre-computed
     if rd.findings:
         assert isinstance(rd.location_hotspot_rows, list)
 
@@ -240,31 +299,24 @@ def _run_all_consistency_checks(
 
 
 class TestScenario1NoFaultBaseline:
-    """Clean noise-only scenario – should remain guarded, no overconfident claims."""
+    """Clean noise-only scenario -- should remain guarded, no overconfident claims."""
 
     @pytest.fixture()
-    def scenario(self):
-        sensors = ALL_WHEEL_SENSORS
-        samples = make_noise_samples(sensors=sensors, speed_kmh=80.0, n_samples=30)
-        metadata = standard_metadata()
-        summary = run_analysis(samples, metadata)
-        rd = _build_report_data(summary)
-        return summary, rd
+    def scenario(self) -> ScenarioPair:
+        return _build_no_fault_baseline()
 
-    def test_consistency(self, scenario):
+    def test_consistency(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
         _run_all_consistency_checks(summary, rd)
 
-    def test_no_overconfident_claims(self, scenario):
+    def test_no_overconfident_claims(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        # Should be tier A or B (no high-confidence fault)
         assert rd.certainty_tier_key in ("A", "B"), (
             f"No-fault baseline should be tier A or B, got '{rd.certainty_tier_key}'"
         )
 
-    def test_no_repair_actions(self, scenario):
+    def test_no_repair_actions(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        # Tier A/B: no repair-oriented parts in system cards
         for card in rd.system_cards:
             if rd.certainty_tier_key in ("A", "B"):
                 assert len(card.parts) == 0, (
@@ -278,48 +330,37 @@ class TestScenario1NoFaultBaseline:
 
 
 class TestScenario2SingleWheelFault:
-    """Clear wheel fault on FL – should localise correctly."""
+    """Clear wheel fault on FL -- should localise correctly."""
 
     @pytest.fixture()
-    def scenario(self):
-        sensors = ALL_WHEEL_SENSORS
-        samples = make_fault_samples(
-            fault_sensor=SENSOR_FL,
-            sensors=sensors,
-            speed_kmh=80.0,
-            n_samples=40,
-            fault_amp=0.06,
-        )
-        metadata = standard_metadata()
-        summary = run_analysis(samples, metadata)
-        rd = _build_report_data(summary)
-        return summary, rd
+    def scenario(self) -> ScenarioPair:
+        return _build_single_wheel_fault()
 
-    def test_consistency(self, scenario):
+    def test_consistency(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
         _run_all_consistency_checks(summary, rd)
 
-    def test_fl_localisation(self, scenario):
+    def test_fl_localisation(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
         loc = (rd.observed.strongest_sensor_location or "").lower()
         assert "front" in loc and "left" in loc, (
             f"Expected front-left localisation, got '{rd.observed.strongest_sensor_location}'"
         )
 
-    def test_wheel_source_identified(self, scenario):
+    def test_wheel_source_identified(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
         system = (rd.observed.primary_system or "").lower()
         assert "wheel" in system or "tire" in system, (
             f"Expected wheel/tire source, got '{rd.observed.primary_system}'"
         )
 
-    def test_strength_nonzero(self, scenario):
+    def test_strength_nonzero(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
         assert rd.observed.strength_label is not None
         assert rd.observed.strength_label != ""
         assert rd.observed.strength_label != "Unknown"
 
-    def test_peak_rows_present(self, scenario):
+    def test_peak_rows_present(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
         assert len(rd.peak_rows) > 0, "Single wheel fault should have peak rows"
 
@@ -330,40 +371,24 @@ class TestScenario2SingleWheelFault:
 
 
 class TestScenario3HighSpeedFault:
-    """Fault only at high speed – speed band must reflect high-speed condition."""
+    """Fault only at high speed -- speed band must reflect high-speed condition."""
 
     @pytest.fixture()
-    def scenario(self):
-        sensors = ALL_WHEEL_SENSORS
-        # Low-speed phase: noise only
-        samples = make_noise_samples(sensors=sensors, speed_kmh=40.0, n_samples=15, start_t_s=0.0)
-        # High-speed phase: fault emerges
-        samples += make_fault_samples(
-            fault_sensor=SENSOR_FR,
-            sensors=sensors,
-            speed_kmh=110.0,
-            n_samples=30,
-            start_t_s=15.0,
-            fault_amp=0.07,
-        )
-        metadata = standard_metadata()
-        summary = run_analysis(samples, metadata)
-        rd = _build_report_data(summary)
-        return summary, rd
+    def scenario(self) -> ScenarioPair:
+        return _build_high_speed_fault()
 
-    def test_consistency(self, scenario):
+    def test_consistency(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
         _run_all_consistency_checks(summary, rd)
 
-    def test_speed_band_reflects_high_speed(self, scenario):
+    def test_speed_band_reflects_high_speed(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
         band = (rd.observed.speed_band or "").lower()
-        # The speed band should mention high speed or contain a number >= 100
         assert band != "unknown" and band != "", (
             f"High-speed fault should have a specific speed band, got '{rd.observed.speed_band}'"
         )
 
-    def test_fr_localisation(self, scenario):
+    def test_fr_localisation(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
         loc = (rd.observed.strongest_sensor_location or "").lower()
         assert "front" in loc and "right" in loc, (
@@ -377,55 +402,23 @@ class TestScenario3HighSpeedFault:
 
 
 class TestScenario4MixedNoiseFault:
-    """Noise-heavy scenario with fault onset – robustness against noise."""
+    """Noise-heavy scenario with fault onset -- robustness against noise."""
 
     @pytest.fixture()
-    def scenario(self):
-        sensors = ALL_WHEEL_SENSORS
-        # Phase 1: idle
-        samples = make_idle_samples(sensors=sensors, n_samples=5, start_t_s=0.0)
-        # Phase 2: ramp up
-        samples += make_ramp_samples(
-            sensors=sensors, speed_start=0.0, speed_end=80.0, n_samples=10, start_t_s=5.0
-        )
-        # Phase 3: cruise with fault + transient noise
-        samples += make_fault_samples(
-            fault_sensor=SENSOR_RL,
-            sensors=sensors,
-            speed_kmh=80.0,
-            n_samples=30,
-            start_t_s=15.0,
-            fault_amp=0.05,
-        )
-        # Phase 4: transient impacts (road bumps)
-        samples += make_transient_samples(
-            sensor=SENSOR_FL, speed_kmh=80.0, n_samples=3, start_t_s=45.0, spike_amp=0.12
-        )
-        samples += make_transient_samples(
-            sensor=SENSOR_RR, speed_kmh=80.0, n_samples=2, start_t_s=48.0, spike_amp=0.10
-        )
-        # Phase 5: deceleration
-        samples += make_ramp_samples(
-            sensors=sensors, speed_start=80.0, speed_end=0.0, n_samples=10, start_t_s=50.0
-        )
-        metadata = standard_metadata()
-        summary = run_analysis(samples, metadata)
-        rd = _build_report_data(summary)
-        return summary, rd
+    def scenario(self) -> ScenarioPair:
+        return _build_mixed_noise_fault()
 
-    def test_consistency(self, scenario):
+    def test_consistency(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
         _run_all_consistency_checks(summary, rd)
 
-    def test_fault_not_masked_by_noise(self, scenario):
+    def test_fault_not_masked_by_noise(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        # The fault should still be detected despite noise
         assert rd.observed.primary_system is not None
         assert rd.observed.primary_system != "Unknown"
 
-    def test_data_trust_present(self, scenario):
+    def test_data_trust_present(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        # Should have data trust items
         assert isinstance(rd.data_trust, list)
 
 
@@ -435,153 +428,58 @@ class TestScenario4MixedNoiseFault:
 
 
 class TestScenario5SparseSensors:
-    """Only 2 sensors (non-standard mix) – should degrade granularity."""
+    """Only 2 sensors (non-standard mix) -- should degrade granularity."""
 
     @pytest.fixture()
-    def scenario(self):
-        sensors = [SENSOR_FL, SENSOR_ENGINE]
-        # Only FL and engine-bay sensors
-        samples = make_fault_samples(
-            fault_sensor=SENSOR_FL,
-            sensors=sensors,
-            speed_kmh=70.0,
-            n_samples=30,
-            fault_amp=0.05,
-        )
-        metadata = standard_metadata()
-        summary = run_analysis(samples, metadata)
-        rd = _build_report_data(summary)
-        return summary, rd
+    def scenario(self) -> ScenarioPair:
+        return _build_sparse_sensors()
 
-    def test_consistency(self, scenario):
+    def test_consistency(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
         _run_all_consistency_checks(summary, rd)
 
-    def test_sensor_count_accurate(self, scenario):
+    def test_sensor_count_accurate(self, scenario: ScenarioPair) -> None:
         summary, rd = scenario
-        # The report should reflect sensors that stayed connected for evidence.
         connected = summary.get("sensor_locations_connected_throughout") or summary.get(
             "sensor_locations"
         )
         assert rd.sensor_count == len(connected or [])
 
-    def test_no_false_precision(self, scenario):
+    def test_no_false_precision(self, scenario: ScenarioPair) -> None:
         _, rd = scenario
-        # With only 2 sensors, spatial precision is limited
-        # The certainty reason should reflect limited data
         assert rd.sensor_count <= 2
 
 
 # ---------------------------------------------------------------------------
-# Cross-scenario: verify all 5 at once
+# Cross-scenario: parametrized over all 5
 # ---------------------------------------------------------------------------
+
+_SCENARIO_BUILDERS = {
+    "no_fault_baseline": _build_no_fault_baseline,
+    "single_wheel_fault": _build_single_wheel_fault,
+    "high_speed_fault": _build_high_speed_fault,
+    "mixed_noise_fault": _build_mixed_noise_fault,
+    "sparse_sensors": _build_sparse_sensors,
+}
 
 
 class TestAllFiveScenariosPass:
     """Run all 5 scenarios and assert all consistency checks pass."""
 
-    def _build_scenarios(self):
-        """Return list of (name, summary, rd) tuples for all 5 scenarios."""
-        scenarios = []
+    @pytest.fixture(params=sorted(_SCENARIO_BUILDERS), scope="class")
+    def named_scenario(self, request: pytest.FixtureRequest) -> tuple[str, dict, ReportTemplateData]:
+        name: str = request.param
+        summary, rd = _SCENARIO_BUILDERS[name]()
+        return name, summary, rd
 
-        # 1. No-fault baseline
-        s1 = make_noise_samples(sensors=ALL_WHEEL_SENSORS, speed_kmh=80.0, n_samples=30)
-        m1 = standard_metadata()
-        sum1 = run_analysis(s1, m1)
-        rd1 = _build_report_data(sum1)
-        scenarios.append(("no_fault_baseline", sum1, rd1))
+    def test_consistency(self, named_scenario: tuple[str, dict, ReportTemplateData]) -> None:
+        name, summary, rd = named_scenario
+        try:
+            _run_all_consistency_checks(summary, rd)
+        except AssertionError as e:
+            pytest.fail(f"Scenario '{name}' failed consistency check: {e}")
 
-        # 2. Single wheel fault
-        s2 = make_fault_samples(
-            fault_sensor=SENSOR_FL,
-            sensors=ALL_WHEEL_SENSORS,
-            speed_kmh=80.0,
-            n_samples=40,
-            fault_amp=0.06,
-        )
-        m2 = standard_metadata()
-        sum2 = run_analysis(s2, m2)
-        rd2 = _build_report_data(sum2)
-        scenarios.append(("single_wheel_fault", sum2, rd2))
-
-        # 3. High-speed-only fault
-        s3 = make_noise_samples(sensors=ALL_WHEEL_SENSORS, speed_kmh=40.0, n_samples=15)
-        s3 += make_fault_samples(
-            fault_sensor=SENSOR_FR,
-            sensors=ALL_WHEEL_SENSORS,
-            speed_kmh=110.0,
-            n_samples=30,
-            start_t_s=15.0,
-            fault_amp=0.07,
-        )
-        m3 = standard_metadata()
-        sum3 = run_analysis(s3, m3)
-        rd3 = _build_report_data(sum3)
-        scenarios.append(("high_speed_fault", sum3, rd3))
-
-        # 4. Mixed noise + fault onset
-        s4 = make_idle_samples(sensors=ALL_WHEEL_SENSORS, n_samples=5)
-        s4 += make_ramp_samples(
-            sensors=ALL_WHEEL_SENSORS,
-            speed_start=0.0,
-            speed_end=80.0,
-            n_samples=10,
-            start_t_s=5.0,
-        )
-        s4 += make_fault_samples(
-            fault_sensor=SENSOR_RL,
-            sensors=ALL_WHEEL_SENSORS,
-            speed_kmh=80.0,
-            n_samples=30,
-            start_t_s=15.0,
-            fault_amp=0.05,
-        )
-        s4 += make_transient_samples(
-            sensor=SENSOR_FL,
-            speed_kmh=80.0,
-            n_samples=3,
-            start_t_s=45.0,
-        )
-        s4 += make_ramp_samples(
-            sensors=ALL_WHEEL_SENSORS,
-            speed_start=80.0,
-            speed_end=0.0,
-            n_samples=10,
-            start_t_s=50.0,
-        )
-        m4 = standard_metadata()
-        sum4 = run_analysis(s4, m4)
-        rd4 = _build_report_data(sum4)
-        scenarios.append(("mixed_noise_fault", sum4, rd4))
-
-        # 5. Sparse sensor coverage
-        sparse_sensors = [SENSOR_FL, SENSOR_ENGINE]
-        s5 = make_fault_samples(
-            fault_sensor=SENSOR_FL,
-            sensors=sparse_sensors,
-            speed_kmh=70.0,
-            n_samples=30,
-            fault_amp=0.05,
-        )
-        m5 = standard_metadata()
-        sum5 = run_analysis(s5, m5)
-        rd5 = _build_report_data(sum5)
-        scenarios.append(("sparse_sensors", sum5, rd5))
-
-        return scenarios
-
-    def test_all_five_pass(self):
-        scenarios = self._build_scenarios()
-        assert len(scenarios) == 5
-
-        for name, summary, rd in scenarios:
-            try:
-                _run_all_consistency_checks(summary, rd)
-            except AssertionError as e:
-                pytest.fail(f"Scenario '{name}' failed consistency check: {e}")
-
-    def test_all_five_generate_pdfs(self):
-        scenarios = self._build_scenarios()
-        for name, _, rd in scenarios:
-            pdf = _assert_pdf_generates(rd)
-            assert len(pdf) > 500, f"Scenario '{name}' PDF too small: {len(pdf)} bytes"
+    def test_pdf_generates(self, named_scenario: tuple[str, dict, ReportTemplateData]) -> None:
+        name, _, rd = named_scenario
+        pdf = _assert_pdf_generates(rd)
+        assert len(pdf) > 500, f"Scenario '{name}' PDF too small: {len(pdf)} bytes"

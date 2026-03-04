@@ -20,6 +20,7 @@ import os
 import subprocess
 import sys
 import time
+from urllib.request import Request, urlopen
 
 import pytest
 from _paths import SERVER_ROOT
@@ -36,16 +37,12 @@ SIM_CONTROL_PORT = os.environ.get("VIBESENSOR_TEST_SIM_CONTROL_PORT", "5006")
 
 def _api_json(path: str, *, timeout: int = 30) -> dict:
     """Simple HTTP GET returning JSON."""
-    from urllib.request import urlopen
-
     with urlopen(f"{BASE_URL}{path}", timeout=timeout) as resp:
         return json.loads(resp.read())
 
 
 def _api_post_json(path: str, *, timeout: int = 30) -> dict:
     """Simple HTTP POST returning JSON."""
-    from urllib.request import Request, urlopen
-
     req = Request(
         f"{BASE_URL}{path}",
         data=b"",
@@ -58,8 +55,6 @@ def _api_post_json(path: str, *, timeout: int = 30) -> dict:
 
 def _api_bytes(path: str, *, timeout: int = 30) -> bytes:
     """Simple HTTP GET returning raw bytes."""
-    from urllib.request import urlopen
-
     with urlopen(f"{BASE_URL}{path}", timeout=timeout) as resp:
         return resp.read()
 

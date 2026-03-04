@@ -9,40 +9,64 @@ from __future__ import annotations
 
 import pytest
 
-# ── Subpackage structure tests ──────────────────────────────────────────
+from vibesensor.analysis import findings
+from vibesensor.analysis.findings._constants import (
+    _CONFIDENCE_CEILING,
+    _CONFIDENCE_FLOOR,
+    _NEGLIGIBLE_STRENGTH_MAX_DB,
+)
+from vibesensor.analysis.findings.intensity import (
+    _phase_speed_breakdown,
+    _sensor_intensity_by_location,
+    _speed_breakdown,
+)
+from vibesensor.analysis.findings.order_findings import (
+    _compute_effective_match_rate,
+    _compute_order_confidence,
+    _detect_diffuse_excitation,
+    _suppress_engine_aliases,
+)
+from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
+from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
+from vibesensor.analysis.findings.speed_profile import (
+    _phase_to_str,
+    _speed_profile_from_points,
+)
+from vibesensor.analysis.phase_segmentation import DrivingPhase
+
+# -- Subpackage structure tests -----------------------------------------------
+
+_EXPECTED_PUBLIC_SYMBOLS = [
+    "_build_findings",
+    "_build_order_findings",
+    "_build_persistent_peak_findings",
+    "_classify_peak_type",
+    "_compute_effective_match_rate",
+    "_compute_order_confidence",
+    "_detect_diffuse_excitation",
+    "_phase_speed_breakdown",
+    "_phase_to_str",
+    "_reference_missing_finding",
+    "_sensor_intensity_by_location",
+    "_speed_bin_label",
+    "_speed_breakdown",
+    "_speed_profile_from_points",
+    "_suppress_engine_aliases",
+    "_weighted_percentile",
+    "BASELINE_NOISE_SNR_THRESHOLD",
+    "PERSISTENT_PEAK_MAX_FINDINGS",
+    "PERSISTENT_PEAK_MIN_PRESENCE",
+    "TRANSIENT_BURSTINESS_THRESHOLD",
+]
 
 
 class TestFindingsSubpackageStructure:
     """Verify the subpackage re-exports all expected symbols."""
 
-    def test_all_public_symbols_accessible_from_package(self) -> None:
+    @pytest.mark.parametrize("symbol", _EXPECTED_PUBLIC_SYMBOLS)
+    def test_public_symbol_accessible_from_package(self, symbol: str) -> None:
         """Every symbol previously available from findings.py must be accessible."""
-        from vibesensor.analysis import findings
-
-        expected = [
-            "_build_findings",
-            "_build_order_findings",
-            "_build_persistent_peak_findings",
-            "_classify_peak_type",
-            "_compute_effective_match_rate",
-            "_compute_order_confidence",
-            "_detect_diffuse_excitation",
-            "_phase_speed_breakdown",
-            "_phase_to_str",
-            "_reference_missing_finding",
-            "_sensor_intensity_by_location",
-            "_speed_bin_label",
-            "_speed_breakdown",
-            "_speed_profile_from_points",
-            "_suppress_engine_aliases",
-            "_weighted_percentile",
-            "BASELINE_NOISE_SNR_THRESHOLD",
-            "PERSISTENT_PEAK_MAX_FINDINGS",
-            "PERSISTENT_PEAK_MIN_PRESENCE",
-            "TRANSIENT_BURSTINESS_THRESHOLD",
-        ]
-        for name in expected:
-            assert hasattr(findings, name), f"findings package missing re-export: {name}"
+        assert hasattr(findings, symbol), f"findings package missing re-export: {symbol}"
 
     def test_submodules_importable_independently(self) -> None:
         """Each submodule must be directly importable with expected symbols."""
@@ -84,70 +108,54 @@ class TestFindingsSubpackageStructure:
         assert callable(_weighted_percentile)
 
 
-# ── speed_profile tests ─────────────────────────────────────────────────
+# -- speed_profile tests ------------------------------------------------------
 
 
 class TestPhaseToStr:
     """Test _phase_to_str helper."""
 
-    def test_none_returns_none(self) -> None:
-        from vibesensor.analysis.findings.speed_profile import _phase_to_str
-
-        assert _phase_to_str(None) is None
-
-    def test_enum_value(self) -> None:
-        from vibesensor.analysis.findings.speed_profile import _phase_to_str
-        from vibesensor.analysis.phase_segmentation import DrivingPhase
-
-        assert _phase_to_str(DrivingPhase.CRUISE) == "cruise"
-
-    def test_string_passthrough(self) -> None:
-        from vibesensor.analysis.findings.speed_profile import _phase_to_str
-
-        assert _phase_to_str("acceleration") == "acceleration"
+    @pytest.mark.parametrize(
+        ("input_val", "expected"),
+        [
+            pytest.param(None, None, id="none_returns_none"),
+            pytest.param(DrivingPhase.CRUISE, "cruise", id="enum_value"),
+            pytest.param("acceleration", "acceleration", id="string_passthrough"),
+        ],
+    )
+    def test_phase_to_str(self, input_val: object, expected: str | None) -> None:
+        assert _phase_to_str(input_val) == expected
 
 
 class TestSpeedProfileFromPoints:
     """Test _speed_profile_from_points."""
 
     def test_empty_returns_none_tuple(self) -> None:
-        from vibesensor.analysis.findings.speed_profile import _speed_profile_from_points
-
-        result = _speed_profile_from_points([])
-        assert result == (None, None, None)
+        assert _speed_profile_from_points([]) == (None, None, None)
 
     def test_single_point(self) -> None:
-        from vibesensor.analysis.findings.speed_profile import _speed_profile_from_points
-
         peak, window, band = _speed_profile_from_points([(60.0, 0.05)])
         assert peak == 60.0
         assert window is not None
         assert band == "60-70 km/h"
 
     def test_multiple_points_peak_is_highest_amplitude(self) -> None:
-        from vibesensor.analysis.findings.speed_profile import _speed_profile_from_points
-
         points = [(50.0, 0.01), (70.0, 0.05), (90.0, 0.02)]
         peak, window, band = _speed_profile_from_points(points)
         assert peak == 70.0
 
     def test_negative_speed_filtered(self) -> None:
-        from vibesensor.analysis.findings.speed_profile import _speed_profile_from_points
-
         points = [(-10.0, 0.05), (0.0, 0.03), (60.0, 0.02)]
         peak, _, _ = _speed_profile_from_points(points)
         assert peak == 60.0
 
 
-# ── reference_checks tests ──────────────────────────────────────────────
+# -- reference_checks tests ---------------------------------------------------
 
 
 class TestReferenceMissingFinding:
     """Test _reference_missing_finding builder."""
 
     def test_basic_structure(self) -> None:
-        from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
-
         finding = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
@@ -161,8 +169,6 @@ class TestReferenceMissingFinding:
         assert len(finding["quick_checks"]) <= 3
 
     def test_quick_checks_truncated_to_3(self) -> None:
-        from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
-
         finding = _reference_missing_finding(
             finding_id="REF_TEST",
             suspected_source="test",
@@ -172,27 +178,23 @@ class TestReferenceMissingFinding:
         assert len(finding["quick_checks"]) == 3
 
 
-# ── _constants tests ────────────────────────────────────────────────────
+# -- _constants tests ---------------------------------------------------------
 
 
 class TestSharedConstants:
     """Verify shared constants have expected values."""
 
     def test_negligible_strength_max_db(self) -> None:
-        from vibesensor.analysis.findings._constants import _NEGLIGIBLE_STRENGTH_MAX_DB
-
         assert isinstance(_NEGLIGIBLE_STRENGTH_MAX_DB, float)
         assert _NEGLIGIBLE_STRENGTH_MAX_DB > 0
 
     def test_confidence_bounds(self) -> None:
-        from vibesensor.analysis.findings._constants import _CONFIDENCE_CEILING, _CONFIDENCE_FLOOR
-
         assert _CONFIDENCE_FLOOR < _CONFIDENCE_CEILING
         assert _CONFIDENCE_FLOOR >= 0.0
         assert _CONFIDENCE_CEILING <= 1.0
 
 
-# ── classify_peak_type tests ────────────────────────────────────────────
+# -- classify_peak_type tests -------------------------------------------------
 
 
 class TestClassifyPeakType:
@@ -217,8 +219,6 @@ class TestClassifyPeakType:
         spatial_uniformity: float | None,
         expected: str,
     ) -> None:
-        from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-
         assert (
             _classify_peak_type(
                 presence_ratio,
@@ -230,23 +230,19 @@ class TestClassifyPeakType:
         )
 
 
-# ── order_findings tests ────────────────────────────────────────────────
+# -- order_findings tests -----------------------------------------------------
 
 
 class TestComputeEffectiveMatchRate:
     """Test _compute_effective_match_rate rescue logic."""
 
     def test_above_threshold_returns_original(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _compute_effective_match_rate
-
         rate, band, dominant = _compute_effective_match_rate(0.50, 0.25, {}, {}, {}, {})
         assert rate == 0.50
         assert band is None
         assert dominant is False
 
     def test_focused_speed_band_rescue(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _compute_effective_match_rate
-
         rate, band, dominant = _compute_effective_match_rate(
             0.10,  # below threshold
             0.25,
@@ -263,8 +259,6 @@ class TestDetectDiffuseExcitation:
     """Test _detect_diffuse_excitation."""
 
     def test_single_location_not_diffuse(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _detect_diffuse_excitation
-
         is_diffuse, penalty = _detect_diffuse_excitation(
             {"front_left"}, {"front_left": 10}, {"front_left": 5}, []
         )
@@ -272,8 +266,6 @@ class TestDetectDiffuseExcitation:
         assert penalty == 1.0
 
     def test_uniform_multi_sensor_is_diffuse(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _detect_diffuse_excitation
-
         locs = {"front_left", "front_right"}
         possible = {"front_left": 10, "front_right": 10}
         matched = {"front_left": 5, "front_right": 5}
@@ -290,8 +282,6 @@ class TestComputeOrderConfidence:
     """Test _compute_order_confidence clamping and modifiers."""
 
     def test_confidence_clamped_to_bounds(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _compute_order_confidence
-
         # Maximum possible inputs
         conf = _compute_order_confidence(
             effective_match_rate=1.0,
@@ -314,8 +304,6 @@ class TestComputeOrderConfidence:
         assert 0.08 <= conf <= 0.97
 
     def test_confidence_minimum_inputs(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _compute_order_confidence
-
         conf = _compute_order_confidence(
             effective_match_rate=0.0,
             error_score=0.0,
@@ -341,37 +329,29 @@ class TestSuppressEngineAliases:
     """Test _suppress_engine_aliases filtering."""
 
     def test_empty_findings(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _suppress_engine_aliases
-
         assert _suppress_engine_aliases([]) == []
 
     def test_engine_suppressed_when_wheel_stronger(self) -> None:
-        from vibesensor.analysis.findings.order_findings import _suppress_engine_aliases
-
-        findings = [
+        input_findings = [
             (0.5, {"suspected_source": "wheel/tire", "confidence_0_to_1": 0.60}),
             (0.4, {"suspected_source": "engine", "confidence_0_to_1": 0.50}),
         ]
-        result = _suppress_engine_aliases(findings)
+        result = _suppress_engine_aliases(input_findings)
         engine_results = [f for f in result if f["suspected_source"] == "engine"]
         if engine_results:
             assert engine_results[0]["confidence_0_to_1"] < 0.50
 
 
-# ── intensity tests ─────────────────────────────────────────────────────
+# -- intensity tests ----------------------------------------------------------
 
 
 class TestSpeedBreakdown:
     """Test _speed_breakdown."""
 
     def test_empty_samples(self) -> None:
-        from vibesensor.analysis.findings.intensity import _speed_breakdown
-
         assert _speed_breakdown([]) == []
 
     def test_single_speed_bin(self) -> None:
-        from vibesensor.analysis.findings.intensity import _speed_breakdown
-
         samples = [
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
             {"speed_kmh": 68.0, "vibration_strength_db": 22.0},
@@ -385,9 +365,6 @@ class TestPhaseSpeedBreakdown:
     """Test _phase_speed_breakdown."""
 
     def test_single_phase(self) -> None:
-        from vibesensor.analysis.findings.intensity import _phase_speed_breakdown
-        from vibesensor.analysis.phase_segmentation import DrivingPhase
-
         samples = [
             {"speed_kmh": 60.0, "vibration_strength_db": 18.0},
             {"speed_kmh": 65.0, "vibration_strength_db": 20.0},
@@ -403,13 +380,9 @@ class TestSensorIntensityByLocation:
     """Test _sensor_intensity_by_location."""
 
     def test_empty_samples(self) -> None:
-        from vibesensor.analysis.findings.intensity import _sensor_intensity_by_location
-
         assert _sensor_intensity_by_location([]) == []
 
     def test_single_location(self) -> None:
-        from vibesensor.analysis.findings.intensity import _sensor_intensity_by_location
-
         samples = [
             {"location": "front_left", "vibration_strength_db": 20.0},
             {"location": "front_left", "vibration_strength_db": 22.0},

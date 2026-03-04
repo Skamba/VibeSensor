@@ -270,6 +270,7 @@ def profile_metadata(profile: dict[str, Any], **overrides: Any) -> dict[str, Any
 # ---------------------------------------------------------------------------
 
 
+@cache
 def _stable_hash(s: str) -> int:
     """Return a stable positive integer derived from *s* (deterministic across runs)."""
     return int(hashlib.md5(s.encode()).hexdigest(), 16)
@@ -419,6 +420,7 @@ def make_fault_samples(
     add_wheel_2x: bool = True,
     add_wheel_3x: bool = False,
     transfer_fraction: float | None = None,
+    _wheel_hz_override: float | None = None,
 ) -> list[dict[str, Any]]:
     """Generate wheel-order fault on *fault_sensor* with noise on others.
 
@@ -427,9 +429,11 @@ def make_fault_samples(
     transfer_fraction:
         Explicit fraction of fault amplitude leaked to non-fault sensors
         (0.0–1.0). If ``None``, use deterministic corner/cabin coupling.
+    _wheel_hz_override:
+        Internal: pre-computed wheel Hz (used by profile variants).
     """
     samples: list[dict[str, Any]] = []
-    whz = wheel_hz(speed_kmh)
+    whz = _wheel_hz_override if _wheel_hz_override is not None else wheel_hz(speed_kmh)
     for i in range(n_samples):
         t = start_t_s + i * dt_s
         for sensor in sensors:
@@ -501,60 +505,23 @@ def make_profile_fault_samples(
 ) -> list[dict[str, Any]]:
     """Generate wheel-order fault samples using a specific car profile's wheel Hz.
 
-    Identical to :func:`make_fault_samples` but computes wheel frequency from
-    the given *profile* dict instead of the module-level default tire circumference.
+    Delegates to :func:`make_fault_samples` with pre-computed wheel frequency.
     """
-    whz = profile_wheel_hz(profile, speed_kmh)
-    samples: list[dict[str, Any]] = []
-    for i in range(n_samples):
-        t = start_t_s + i * dt_s
-        for sensor in sensors:
-            if sensor == fault_sensor:
-                peaks: list[dict[str, float]] = [{"hz": whz, "amp": fault_amp}]
-                if add_wheel_2x:
-                    peaks.append({"hz": whz * 2, "amp": fault_amp * 0.4})
-                peaks.append({"hz": 142.5, "amp": noise_amp})
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=fault_vib_db,
-                        strength_floor_amp_g=noise_amp,
-                    )
-                )
-            else:
-                transfer = _fault_transfer_fraction(
-                    fault_sensor,
-                    sensor,
-                    override=transfer_fraction,
-                )
-                other_peaks: list[dict[str, float]] = [
-                    {"hz": 142.5, "amp": noise_amp},
-                    {"hz": 87.3, "amp": noise_amp * 0.8},
-                ]
-                if transfer > 0:
-                    other_peaks.insert(
-                        0,
-                        {"hz": whz, "amp": fault_amp * transfer},
-                    )
-                    if add_wheel_2x:
-                        other_peaks.insert(
-                            1,
-                            {"hz": whz * 2, "amp": fault_amp * transfer * 0.24},
-                        )
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=other_peaks,
-                        vibration_strength_db=noise_vib_db,
-                        strength_floor_amp_g=noise_amp,
-                    )
-                )
-    return samples
+    return make_fault_samples(
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp=fault_amp,
+        noise_amp=noise_amp,
+        fault_vib_db=fault_vib_db,
+        noise_vib_db=noise_vib_db,
+        add_wheel_2x=add_wheel_2x,
+        transfer_fraction=transfer_fraction,
+        _wheel_hz_override=profile_wheel_hz(profile, speed_kmh),
+    )
 
 
 def make_transient_samples(
@@ -853,12 +820,13 @@ def make_engine_order_samples(
     engine_amp: float = 0.05,
     engine_vib_db: float = 24.0,
     noise_amp: float = 0.004,
+    _engine_hz_override: float | None = None,
 ) -> list[dict[str, Any]]:
     """Generate engine-order harmonics on all sensors (engine vibration).
 
     Produces 1x, 2x, and 0.5x engine order frequencies.
     """
-    ehz = engine_hz(speed_kmh)
+    ehz = _engine_hz_override if _engine_hz_override is not None else engine_hz(speed_kmh)
     samples: list[dict[str, Any]] = []
     for i in range(n_samples):
         t = start_t_s + i * dt_s
@@ -900,10 +868,11 @@ def make_dual_fault_samples(
     noise_amp: float = 0.004,
     noise_vib_db: float = 8.0,
     transfer_fraction: float | None = None,
+    _wheel_hz_override: float | None = None,
 ) -> list[dict[str, Any]]:
     """Generate samples with faults on TWO different sensors simultaneously."""
     samples: list[dict[str, Any]] = []
-    whz = wheel_hz(speed_kmh)
+    whz = _wheel_hz_override if _wheel_hz_override is not None else wheel_hz(speed_kmh)
     for i in range(n_samples):
         t = start_t_s + i * dt_s
         for sensor in sensors:
@@ -1122,85 +1091,27 @@ def make_profile_dual_fault_samples(
     noise_vib_db: float = 8.0,
     transfer_fraction: float | None = None,
 ) -> list[dict[str, Any]]:
-    """Profile-aware version of :func:`make_dual_fault_samples`."""
-    whz = profile_wheel_hz(profile, speed_kmh)
-    samples: list[dict[str, Any]] = []
-    for i in range(n_samples):
-        t = start_t_s + i * dt_s
-        for sensor in sensors:
-            if sensor == fault_sensor_1:
-                transfer_2 = _fault_transfer_fraction(
-                    fault_sensor_2,
-                    sensor,
-                    override=transfer_fraction,
-                )
-                peaks: list[dict[str, float]] = [
-                    {"hz": whz, "amp": fault_amp_1},
-                    {"hz": whz * 2, "amp": fault_amp_1 * 0.4},
-                    {"hz": 142.5, "amp": noise_amp},
-                ]
-                if transfer_2 > 0:
-                    peaks.append({"hz": whz, "amp": fault_amp_2 * transfer_2})
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=fault_vib_db_1,
-                        strength_floor_amp_g=noise_amp,
-                    )
-                )
-            elif sensor == fault_sensor_2:
-                transfer_1 = _fault_transfer_fraction(
-                    fault_sensor_1,
-                    sensor,
-                    override=transfer_fraction,
-                )
-                peaks = [
-                    {"hz": whz, "amp": fault_amp_2},
-                    {"hz": whz * 2, "amp": fault_amp_2 * 0.35},
-                    {"hz": 87.3, "amp": noise_amp},
-                ]
-                if transfer_1 > 0:
-                    peaks.append({"hz": whz, "amp": fault_amp_1 * transfer_1})
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=fault_vib_db_2,
-                        strength_floor_amp_g=noise_amp,
-                    )
-                )
-            else:
-                transfer_1 = _fault_transfer_fraction(
-                    fault_sensor_1,
-                    sensor,
-                    override=transfer_fraction,
-                )
-                transfer_2 = _fault_transfer_fraction(
-                    fault_sensor_2,
-                    sensor,
-                    override=transfer_fraction,
-                )
-                peaks = [{"hz": 142.5, "amp": noise_amp}, {"hz": 87.3, "amp": noise_amp * 0.8}]
-                if transfer_1 > 0:
-                    peaks.insert(0, {"hz": whz, "amp": fault_amp_1 * transfer_1})
-                if transfer_2 > 0:
-                    peaks.insert(1, {"hz": whz, "amp": fault_amp_2 * transfer_2})
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=noise_vib_db,
-                        strength_floor_amp_g=noise_amp,
-                    )
-                )
-    return samples
+    """Profile-aware version of :func:`make_dual_fault_samples`.
+
+    Delegates to :func:`make_dual_fault_samples` with pre-computed wheel frequency.
+    """
+    return make_dual_fault_samples(
+        fault_sensor_1=fault_sensor_1,
+        fault_sensor_2=fault_sensor_2,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp_1=fault_amp_1,
+        fault_amp_2=fault_amp_2,
+        fault_vib_db_1=fault_vib_db_1,
+        fault_vib_db_2=fault_vib_db_2,
+        noise_amp=noise_amp,
+        noise_vib_db=noise_vib_db,
+        transfer_fraction=transfer_fraction,
+        _wheel_hz_override=profile_wheel_hz(profile, speed_kmh),
+    )
 
 
 def make_profile_engine_order_samples(
@@ -1215,32 +1126,23 @@ def make_profile_engine_order_samples(
     engine_vib_db: float = 24.0,
     noise_amp: float = 0.004,
 ) -> list[dict[str, Any]]:
-    """Profile-aware version of :func:`make_engine_order_samples`."""
+    """Profile-aware version of :func:`make_engine_order_samples`.
+
+    Delegates to :func:`make_engine_order_samples` with pre-computed engine Hz.
+    """
     whz = profile_wheel_hz(profile, speed_kmh)
     ehz = whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
-    samples: list[dict[str, Any]] = []
-    for i in range(n_samples):
-        t = start_t_s + i * dt_s
-        for sensor in sensors:
-            jitter = (_stable_hash(sensor + str(i)) % 10) * 0.001
-            peaks = [
-                {"hz": ehz, "amp": engine_amp + jitter},
-                {"hz": ehz * 2, "amp": (engine_amp + jitter) * 0.5},
-                {"hz": ehz * 0.5, "amp": (engine_amp + jitter) * 0.3},
-                {"hz": 200.0, "amp": noise_amp},
-            ]
-            samples.append(
-                make_sample(
-                    t_s=t,
-                    speed_kmh=speed_kmh,
-                    client_name=sensor,
-                    top_peaks=peaks,
-                    vibration_strength_db=engine_vib_db,
-                    strength_floor_amp_g=noise_amp,
-                    engine_rpm=ehz * 60.0,
-                )
-            )
-    return samples
+    return make_engine_order_samples(
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        engine_amp=engine_amp,
+        engine_vib_db=engine_vib_db,
+        noise_amp=noise_amp,
+        _engine_hz_override=ehz,
+    )
 
 
 def make_profile_speed_sweep_fault_samples(
@@ -1376,18 +1278,20 @@ def has_no_fault(summary: dict[str, Any]) -> bool:
     return all(float(c.get("confidence", 0)) < 0.15 for c in causes)
 
 
+_CORNER_LABEL_TOKENS: dict[str, tuple[str, ...]] = {
+    "FL": ("front left", "front-left", "fl"),
+    "FR": ("front right", "front-right", "fr"),
+    "RL": ("rear left", "rear-left", "rl"),
+    "RR": ("rear right", "rear-right", "rr"),
+}
+
+
 def _corner_in_label(label: str | None, corner: str) -> bool:
     """Check if a corner code (FL/FR/RL/RR) or location matches the label."""
     if not label:
         return False
     label_lower = label.lower()
-    corner_map = {
-        "FL": ("front left", "front-left", "fl"),
-        "FR": ("front right", "front-right", "fr"),
-        "RL": ("rear left", "rear-left", "rl"),
-        "RR": ("rear right", "rear-right", "rr"),
-    }
-    tokens = corner_map.get(corner.upper(), ())
+    tokens = _CORNER_LABEL_TOKENS.get(corner.upper(), ())
     return any(t in label_lower for t in tokens)
 
 

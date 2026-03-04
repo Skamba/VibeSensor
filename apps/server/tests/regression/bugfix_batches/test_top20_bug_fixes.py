@@ -12,6 +12,30 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from vibesensor.analysis.findings import _sensor_intensity_by_location
+from vibesensor.analysis.helpers import _format_duration, _speed_bin_label
+from vibesensor.analysis.phase_segmentation import segment_run_phases
+from vibesensor.analysis.report_data_builder import _order_label_human, _resolve_i18n
+from vibesensor.analysis.summary import _compute_run_timing, confidence_label
+from vibesensor.analysis.test_plan import _weighted_speed_window_label
+from vibesensor.config import _split_host_port
+from vibesensor.domain_models import VALID_SPEED_SOURCES
+from vibesensor.live_diagnostics import LiveDiagnosticsEngine
+from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
+from vibesensor.report_i18n import tr
+from vibesensor.runlog import as_float_or_none, parse_iso8601
+
+
+def _make_release_info(version: str) -> ReleaseInfo:
+    """Build a ReleaseInfo stub for version comparison tests."""
+    return ReleaseInfo(
+        tag=f"server-v{version}",
+        version=version,
+        asset_name=f"vibesensor-{version}.whl",
+        asset_url=f"https://example.com/{version}.whl",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Bug 1: _compute_run_timing uses timedelta instead of fromtimestamp
 # ---------------------------------------------------------------------------
@@ -19,8 +43,6 @@ import pytest
 
 class TestBug01ComputeRunTimingTimedelta:
     def test_end_ts_from_samples_uses_timedelta(self) -> None:
-        from vibesensor.analysis.summary import _compute_run_timing
-
         meta = {"start_time_utc": "2024-01-01T12:00:00Z"}
         samples = [{"t_s": 0.0}, {"t_s": 300.0}]
         _, start, end, duration = _compute_run_timing(meta, samples, "test")
@@ -37,16 +59,12 @@ class TestBug01ComputeRunTimingTimedelta:
 
 class TestBug02TrMissingArgs:
     def test_tr_with_missing_format_args_returns_template(self) -> None:
-        from vibesensor.report_i18n import tr
-
         # tr() with a template that has {source} but no source arg
         result = tr("en", "ORIGIN_EXPLANATION_FINDING_1")
         # Should not crash; returns the raw template with placeholders
         assert isinstance(result, str)
 
     def test_tr_with_valid_args_formats_correctly(self) -> None:
-        from vibesensor.report_i18n import tr
-
         result = tr(
             "en",
             "ORIGIN_EXPLANATION_FINDING_1",
@@ -64,21 +82,11 @@ class TestBug02TrMissingArgs:
 
 
 class TestBug03FormatDurationNonFinite:
-    def test_inf_returns_zero(self) -> None:
-        from vibesensor.analysis.helpers import _format_duration
-
-        result = _format_duration(float("inf"))
-        assert result == "00:00.0"
-
-    def test_nan_returns_zero(self) -> None:
-        from vibesensor.analysis.helpers import _format_duration
-
-        result = _format_duration(float("nan"))
-        assert result == "00:00.0"
+    @pytest.mark.parametrize("value", [float("inf"), float("nan")])
+    def test_non_finite_returns_zero(self, value: float) -> None:
+        assert _format_duration(value) == "00:00.0"
 
     def test_normal_value_formats_correctly(self) -> None:
-        from vibesensor.analysis.helpers import _format_duration
-
         assert _format_duration(125.3) == "02:05.3"
 
 
@@ -88,21 +96,11 @@ class TestBug03FormatDurationNonFinite:
 
 
 class TestBug04SpeedBinLabelNonFinite:
-    def test_nan_returns_fallback(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
-        result = _speed_bin_label(float("nan"))
-        assert result == "0-10 km/h"
-
-    def test_inf_returns_fallback(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
-        result = _speed_bin_label(float("inf"))
-        assert result == "0-10 km/h"
+    @pytest.mark.parametrize("value", [float("nan"), float("inf")])
+    def test_non_finite_returns_fallback(self, value: float) -> None:
+        assert _speed_bin_label(value) == "0-10 km/h"
 
     def test_normal_value_works(self) -> None:
-        from vibesensor.analysis.helpers import _speed_bin_label
-
         assert _speed_bin_label(55.0) == "50-60 km/h"
 
 
@@ -113,30 +111,14 @@ class TestBug04SpeedBinLabelNonFinite:
 
 class TestBug05ReleaseVersionComparison:
     def test_downgrade_returns_none(self) -> None:
-        from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
-
         fetcher = ServerReleaseFetcher.__new__(ServerReleaseFetcher)
-        older = ReleaseInfo(
-            tag="server-v2024.1.0",
-            version="2024.1.0",
-            asset_name="vibesensor-2024.1.0.whl",
-            asset_url="https://example.com/old.whl",
-        )
-        fetcher.find_latest_release = MagicMock(return_value=older)
+        fetcher.find_latest_release = MagicMock(return_value=_make_release_info("2024.1.0"))
         result = fetcher.check_update_available("2025.6.0")
         assert result is None
 
     def test_upgrade_returns_release(self) -> None:
-        from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
-
         fetcher = ServerReleaseFetcher.__new__(ServerReleaseFetcher)
-        newer = ReleaseInfo(
-            tag="server-v2026.1.0",
-            version="2026.1.0",
-            asset_name="vibesensor-2026.1.0.whl",
-            asset_url="https://example.com/new.whl",
-        )
-        fetcher.find_latest_release = MagicMock(return_value=newer)
+        fetcher.find_latest_release = MagicMock(return_value=_make_release_info("2026.1.0"))
         result = fetcher.check_update_available("2025.6.0")
         assert result is not None
         assert result.version == "2026.1.0"
@@ -166,14 +148,10 @@ class TestBug06AnalysisVersionCast:
 
 class TestBug07SplitHostPort:
     def test_non_integer_port_raises_descriptive_error(self) -> None:
-        from vibesensor.config import _split_host_port
-
         with pytest.raises(ValueError, match="not an integer"):
             _split_host_port("host:abc")
 
     def test_valid_host_port(self) -> None:
-        from vibesensor.config import _split_host_port
-
         host, port = _split_host_port("127.0.0.1:8080")
         assert host == "127.0.0.1"
         assert port == 8080
@@ -187,8 +165,6 @@ class TestBug07SplitHostPort:
 class TestBug08SpeedSourceMapping:
     def test_speed_source_uses_valid_domain_values(self) -> None:
         """speed_source should be from VALID_SPEED_SOURCES, not 'override' or 'missing'."""
-        from vibesensor.domain_models import VALID_SPEED_SOURCES
-
         # These are the only valid values for speed_source in sample records
         assert "gps" in VALID_SPEED_SOURCES
         assert "manual" in VALID_SPEED_SOURCES
@@ -204,21 +180,17 @@ class TestBug08SpeedSourceMapping:
 
 class TestBug09HotspotP95FallbackOnZero:
     def test_zero_p95_not_treated_as_missing(self) -> None:
-        from vibesensor.runlog import as_float_or_none as _as_float
-
         # Simulating the fixed code path
         row = {"p95_intensity_db": 0.0, "mean_intensity_db": 5.0}
-        p95_val = _as_float(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
+        p95_val = as_float_or_none(row.get("p95_intensity_db"))
+        p95 = p95_val if p95_val is not None else as_float_or_none(row.get("mean_intensity_db"))
         # 0.0 should be used, not fall through to mean
         assert p95 == 0.0
 
     def test_none_p95_falls_through_to_mean(self) -> None:
-        from vibesensor.runlog import as_float_or_none as _as_float
-
         row = {"p95_intensity_db": None, "mean_intensity_db": 5.0}
-        p95_val = _as_float(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
+        p95_val = as_float_or_none(row.get("p95_intensity_db"))
+        p95 = p95_val if p95_val is not None else as_float_or_none(row.get("mean_intensity_db"))
         assert p95 == 5.0
 
 
@@ -229,16 +201,12 @@ class TestBug09HotspotP95FallbackOnZero:
 
 class TestBug10ConfidenceLabelNone:
     def test_none_confidence_returns_low(self) -> None:
-        from vibesensor.analysis.summary import confidence_label
-
         label_key, tone, pct_text = confidence_label(None)
         assert label_key == "CONFIDENCE_LOW"
         assert tone == "neutral"
         assert pct_text == "0%"
 
     def test_zero_confidence_returns_low(self) -> None:
-        from vibesensor.analysis.summary import confidence_label
-
         label_key, tone, pct_text = confidence_label(0.0)
         assert label_key == "CONFIDENCE_LOW"
 
@@ -249,16 +217,9 @@ class TestBug10ConfidenceLabelNone:
 
 
 class TestBug11OrderLabelCaseInsensitive:
-    def test_capitalized_base_matches(self) -> None:
-        from vibesensor.analysis.report_data_builder import _order_label_human
-
-        result = _order_label_human("en", "1x Wheel")
-        assert "order" in result.lower()  # Should match "wheel" → "wheel order"
-
-    def test_all_caps_matches(self) -> None:
-        from vibesensor.analysis.report_data_builder import _order_label_human
-
-        result = _order_label_human("en", "2x ENGINE")
+    @pytest.mark.parametrize("label", ["1x Wheel", "2x ENGINE"])
+    def test_case_insensitive_match(self, label: str) -> None:
+        result = _order_label_human("en", label)
         assert "order" in result.lower()
 
 
@@ -269,8 +230,6 @@ class TestBug11OrderLabelCaseInsensitive:
 
 class TestBug12PhaseSegmentTimestamps:
     def test_second_segment_no_zero_when_first_has_time(self) -> None:
-        from vibesensor.analysis.phase_segmentation import segment_run_phases
-
         samples = [
             {"t_s": 0.0, "speed_kmh": 0.0},
             {"t_s": 1.0, "speed_kmh": 0.0},
@@ -291,8 +250,6 @@ class TestBug12PhaseSegmentTimestamps:
 
 class TestBug13FreqBinDivision:
     def test_zero_freq_bin_hz_no_crash(self) -> None:
-        from vibesensor.live_diagnostics import LiveDiagnosticsEngine
-
         engine = LiveDiagnosticsEngine()
         # Even if _multi_freq_bin_hz were 0, the guard prevents division by zero
         old_val = engine._multi_freq_bin_hz
@@ -310,14 +267,10 @@ class TestBug13FreqBinDivision:
 
 class TestBug14UniformSpeedLabel:
     def test_uniform_speed_shows_single_value(self) -> None:
-        from vibesensor.analysis.test_plan import _weighted_speed_window_label
-
         result = _weighted_speed_window_label([(50.0, 1.0), (50.0, 1.0)])
         assert result == "50 km/h"
 
     def test_range_shows_range(self) -> None:
-        from vibesensor.analysis.test_plan import _weighted_speed_window_label
-
         result = _weighted_speed_window_label([(40.0, 1.0), (60.0, 1.0)])
         assert "-" in result
 
@@ -329,16 +282,12 @@ class TestBug14UniformSpeedLabel:
 
 class TestBug15StrideWarningI18n:
     def test_i18n_keys_exist(self) -> None:
-        from vibesensor.report_i18n import tr
-
         result_en = tr("en", "SUITABILITY_CHECK_ANALYSIS_SAMPLING")
         assert result_en == "Analysis sampling"
         result_nl = tr("nl", "SUITABILITY_CHECK_ANALYSIS_SAMPLING")
         assert result_nl == "Analysebemonstering"
 
     def test_stride_warning_i18n_key(self) -> None:
-        from vibesensor.report_i18n import tr
-
         result = tr("en", "SUITABILITY_ANALYSIS_SAMPLING_STRIDE_WARNING", stride="4")
         assert "stride 4" in result
 
@@ -350,8 +299,6 @@ class TestBug15StrideWarningI18n:
 
 class TestBug16DataTrustListResolve:
     def test_list_explanation_is_resolved(self) -> None:
-        from vibesensor.analysis.report_data_builder import _resolve_i18n
-
         # A list of i18n refs should be resolved, not stringified as "[{...}]"
         value = [
             {"_i18n_key": "SOURCE_WHEEL_TIRE"},
@@ -369,29 +316,21 @@ class TestBug16DataTrustListResolve:
 
 class TestBug17ParseIso8601Timezone:
     def test_naive_string_gets_utc(self) -> None:
-        from vibesensor.runlog import parse_iso8601
-
         dt = parse_iso8601("2024-01-01 12:00:00")
         assert dt is not None
         assert dt.tzinfo is not None  # Should NOT be naive
 
     def test_aware_string_keeps_timezone(self) -> None:
-        from vibesensor.runlog import parse_iso8601
-
         dt = parse_iso8601("2024-01-01T12:00:00+02:00")
         assert dt is not None
         assert dt.tzinfo is not None
 
     def test_z_suffix_parsed_as_utc(self) -> None:
-        from vibesensor.runlog import parse_iso8601
-
         dt = parse_iso8601("2024-01-01T12:00:00Z")
         assert dt is not None
         assert dt.tzinfo == UTC
 
     def test_naive_and_aware_can_be_subtracted(self) -> None:
-        from vibesensor.runlog import parse_iso8601
-
         dt1 = parse_iso8601("2024-01-01 12:00:00")
         dt2 = parse_iso8601("2024-01-01T13:00:00Z")
         assert dt1 is not None and dt2 is not None
@@ -407,8 +346,6 @@ class TestBug17ParseIso8601Timezone:
 
 class TestBug18IntensitySortZero:
     def test_zero_p95_preserved_in_sort(self) -> None:
-        from vibesensor.analysis.findings import _sensor_intensity_by_location
-
         samples = [
             {
                 "t_s": float(i),
@@ -430,10 +367,8 @@ class TestBug18IntensitySortZero:
 
 class TestBug19FloorAmpZero:
     def test_zero_floor_amp_preserved(self) -> None:
-        from vibesensor.runlog import as_float_or_none as _as_float
-
         sample = {"strength_floor_amp_g": 0.0}
-        _floor_raw = _as_float(sample.get("strength_floor_amp_g"))
+        _floor_raw = as_float_or_none(sample.get("strength_floor_amp_g"))
         floor_amp = _floor_raw if _floor_raw is not None else 0.0
         assert floor_amp == 0.0
         # Key: the value came from the sample, not the default

@@ -18,6 +18,16 @@ from vibesensor.diagnostics_shared import (
 )
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 
+_DEFAULT_SPEED_MPS = 27.7777777778  # 100 km/h
+
+
+def _default_settings_and_orders() -> tuple[dict, dict]:
+    """Return ``(settings, orders)`` at the default 100 km/h test speed."""
+    settings = build_diagnostic_settings({})
+    orders = vehicle_orders_hz(speed_mps=_DEFAULT_SPEED_MPS, settings=settings)
+    assert orders is not None
+    return settings, orders
+
 
 def test_tolerance_for_order_honors_floor_and_cap() -> None:
     rel = tolerance_for_order(
@@ -32,14 +42,11 @@ def test_tolerance_for_order_honors_floor_and_cap() -> None:
 
 
 def test_classify_peak_matches_wheel_order() -> None:
-    settings = build_diagnostic_settings({})
-    speed_mps = 27.7777777778  # 100 km/h
-    orders = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
-    assert orders is not None
+    settings, orders = _default_settings_and_orders()
 
     cls = classify_peak_hz(
         peak_hz=orders["wheel_hz"] * 1.02,
-        speed_mps=speed_mps,
+        speed_mps=_DEFAULT_SPEED_MPS,
         settings=settings,
     )
     assert cls["key"] == "wheel1"
@@ -47,14 +54,11 @@ def test_classify_peak_matches_wheel_order() -> None:
 
 
 def test_classify_peak_matches_engine_order() -> None:
-    settings = build_diagnostic_settings({})
-    speed_mps = 27.7777777778  # 100 km/h
-    orders = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
-    assert orders is not None
+    settings, orders = _default_settings_and_orders()
 
     cls = classify_peak_hz(
         peak_hz=orders["engine_hz"] * 0.99,
-        speed_mps=speed_mps,
+        speed_mps=_DEFAULT_SPEED_MPS,
         settings=settings,
     )
     assert cls["key"] in {"eng1", "shaft_eng1"}
@@ -114,11 +118,9 @@ def test_severity_from_peak_thresholds() -> None:
 
 
 def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
-    settings = build_diagnostic_settings({})
-    speed_mps = 27.7777777778
-    orders = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
-    assert orders is not None
+    settings, orders = _default_settings_and_orders()
     wheel_hz = orders["wheel_hz"]
+    speed_mps = _DEFAULT_SPEED_MPS
 
     # Live diagnostics path (websocket spectra).
     engine = LiveDiagnosticsEngine()
@@ -227,12 +229,9 @@ def test_live_and_report_paths_align_on_wheel_source(tmp_path: Path) -> None:
 
 
 def test_live_top_finding_uses_same_report_finding_logic() -> None:
-    settings = build_diagnostic_settings({})
-    speed_mps = 27.7777777778
-    orders = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
-    assert orders is not None
+    settings, orders = _default_settings_and_orders()
     wheel_hz = orders["wheel_hz"]
-    speed_kmh = speed_mps * MPS_TO_KMH
+    speed_kmh = _DEFAULT_SPEED_MPS * MPS_TO_KMH
 
     metadata = {
         "run_id": "live-run",
@@ -291,7 +290,7 @@ def test_live_top_finding_uses_same_report_finding_logic() -> None:
     )
 
     live = LiveDiagnosticsEngine().update(
-        speed_mps=speed_mps,
+        speed_mps=_DEFAULT_SPEED_MPS,
         clients=[],
         spectra=None,
         settings=settings,

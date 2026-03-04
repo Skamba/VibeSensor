@@ -46,7 +46,7 @@ Validation (always required)
   2. `docker compose up -d`
   3. `docker compose ps`
   4. `vibesensor-sim --count 5 --duration 10 --no-interactive`
-  5. confirm `http://127.0.0.1:8000` updates live while the simulator runs,
+  5. confirm `http://127.0.0.1` updates live while the simulator runs (`:80` default; if `:80` is not serving in the current config, try `http://127.0.0.1:8000` as the backup/dev port),
   6. verify updates stop after the simulator stops (no stale-data artifacts),
   7. check `docker compose logs --tail 50` if needed.
 - Breaking changes are generally allowed when intentional.

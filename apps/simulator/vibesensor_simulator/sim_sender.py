@@ -571,10 +571,13 @@ async def async_main(args: argparse.Namespace) -> None:
     )
     stop_event = asyncio.Event()
     tasks: list[asyncio.Task[Any]] = []
+    server_url = f"http://{args.server_host}"
+    if int(args.server_http_port) != 80:
+        server_url = f"{server_url}:{args.server_http_port}"
 
     print(
         f"Starting {len(clients)} simulated clients -> "
-        f"{args.server_host}:{args.server_data_port} (open http://{args.server_host}:8000) "
+        f"{args.server_host}:{args.server_data_port} (open {server_url}) "
         f"rate={args.sample_rate_hz}Hz frame={args.frame_samples} samples "
         f"({args.sample_rate_hz / max(1, args.frame_samples):.2f} fps)"
     )

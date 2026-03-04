@@ -16,46 +16,38 @@ from vibesensor_core.vibration_strength import (
 
 
 class TestMedian:
-    def test_empty_returns_zero(self) -> None:
-        assert median([]) == 0.0
-
-    def test_single_value(self) -> None:
-        assert median([42.0]) == 42.0
-
-    def test_odd_count(self) -> None:
-        assert median([1.0, 2.0, 3.0]) == 2.0
-
-    def test_even_count(self) -> None:
-        assert median([1.0, 2.0, 3.0, 4.0]) == 2.5
-
-    def test_unsorted_input(self) -> None:
-        assert median([3.0, 1.0, 2.0]) == 2.0
+    @pytest.mark.parametrize(
+        "values, expected",
+        [
+            pytest.param([], 0.0, id="empty"),
+            pytest.param([42.0], 42.0, id="single"),
+            pytest.param([1.0, 2.0, 3.0], 2.0, id="odd_count"),
+            pytest.param([1.0, 2.0, 3.0, 4.0], 2.5, id="even_count"),
+            pytest.param([3.0, 1.0, 2.0], 2.0, id="unsorted"),
+        ],
+    )
+    def test_median(self, values: list[float], expected: float) -> None:
+        assert median(values) == expected
 
 
 # -- percentile ---------------------------------------------------------------
 
 
 class TestPercentile:
-    def test_empty_returns_zero(self) -> None:
-        assert percentile([], 0.5) == 0.0
-
-    def test_single_value(self) -> None:
-        assert percentile([5.0], 0.5) == 5.0
-
-    def test_p0_returns_first(self) -> None:
-        assert percentile([1.0, 2.0, 3.0], 0.0) == 1.0
-
-    def test_p100_returns_last(self) -> None:
-        assert percentile([1.0, 2.0, 3.0], 1.0) == 3.0
-
-    def test_p50_returns_middle(self) -> None:
-        assert percentile([1.0, 2.0, 3.0], 0.5) == 2.0
-
-    def test_q_clamped_above_1(self) -> None:
-        assert percentile([1.0, 2.0, 3.0], 1.5) == 3.0
-
-    def test_q_clamped_below_0(self) -> None:
-        assert percentile([1.0, 2.0, 3.0], -0.5) == 1.0
+    @pytest.mark.parametrize(
+        "values, q, expected",
+        [
+            pytest.param([], 0.5, 0.0, id="empty"),
+            pytest.param([5.0], 0.5, 5.0, id="single"),
+            pytest.param([1.0, 2.0, 3.0], 0.0, 1.0, id="p0_first"),
+            pytest.param([1.0, 2.0, 3.0], 1.0, 3.0, id="p100_last"),
+            pytest.param([1.0, 2.0, 3.0], 0.5, 2.0, id="p50_middle"),
+            pytest.param([1.0, 2.0, 3.0], 1.5, 3.0, id="q_clamped_above_1"),
+            pytest.param([1.0, 2.0, 3.0], -0.5, 1.0, id="q_clamped_below_0"),
+        ],
+    )
+    def test_percentile(self, values: list[float], q: float, expected: float) -> None:
+        assert percentile(values, q) == expected
 
 
 # -- combined_spectrum_amp_g --------------------------------------------------
@@ -67,19 +59,15 @@ class TestCombinedSpectrumAmpG:
 
     def test_single_axis(self) -> None:
         result = combined_spectrum_amp_g(axis_spectra_amp_g=[[1.0, 2.0, 3.0]])
-        assert len(result) == 3
-        # sqrt(1^2 / 1) = 1.0, sqrt(4/1) = 2.0, sqrt(9/1) = 3.0
-        assert abs(result[0] - 1.0) < 1e-9
-        assert abs(result[1] - 2.0) < 1e-9
-        assert abs(result[2] - 3.0) < 1e-9
+        # sqrt(v^2 / 1) = v for a single axis
+        assert result == pytest.approx([1.0, 2.0, 3.0])
 
     def test_three_axes_rms(self) -> None:
         result = combined_spectrum_amp_g(
             axis_spectra_amp_g=[[3.0], [4.0], [0.0]],
         )
         # sqrt((9 + 16 + 0) / 3) = sqrt(25/3) ≈ 2.886
-        expected = math.sqrt(25.0 / 3.0)
-        assert abs(result[0] - expected) < 1e-9
+        assert result[0] == pytest.approx(math.sqrt(25.0 / 3.0))
 
     def test_mismatched_lengths_uses_minimum(self) -> None:
         result = combined_spectrum_amp_g(
@@ -93,8 +81,7 @@ class TestCombinedSpectrumAmpG:
             axis_count_for_mean=3,
         )
         # sqrt((9 + 16) / 3) = sqrt(25/3)
-        expected = math.sqrt(25.0 / 3.0)
-        assert abs(result[0] - expected) < 1e-9
+        assert result[0] == pytest.approx(math.sqrt(25.0 / 3.0))
 
     def test_empty_axis_array_returns_empty(self) -> None:
         result = combined_spectrum_amp_g(axis_spectra_amp_g=[[]])

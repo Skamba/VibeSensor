@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 import pytest
 
@@ -39,73 +41,77 @@ def _non_tpv_line() -> bytes:
     return json.dumps({"class": "VERSION", "release": "3.25"}).encode() + b"\n"
 
 
+@asynccontextmanager
+async def _gps_server_scenario(
+    *lines: bytes,
+    settle_s: float = 0.2,
+) -> AsyncIterator[GPSSpeedMonitor]:
+    """Start a mock gpsd that sends *lines*, yield the connected monitor, then tear down."""
+    monitor = GPSSpeedMonitor(gps_enabled=True)
+
+    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        await reader.readline()
+        for line in lines:
+            writer.write(line)
+        await writer.drain()
+        await asyncio.sleep(settle_s)
+        writer.close()
+        await writer.wait_closed()
+
+    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
+    host, port = server.sockets[0].getsockname()[:2]
+    task = asyncio.create_task(monitor.run(host=host, port=port))
+    try:
+        yield monitor
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        server.close()
+        await server.wait_closed()
+
+
+async def _await_speed(monitor: GPSSpeedMonitor, *, timeout_s: float = 2.5) -> None:
+    """Block until ``monitor.speed_mps`` is set or *timeout_s* elapses."""
+    for _ in range(int(timeout_s / 0.05)):
+        if monitor.speed_mps is not None:
+            return
+        await asyncio.sleep(0.05)
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_run_parses_tpv_and_updates_speed() -> None:
-    """TPV message with speed sets monitor.speed_mps."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        # Wait for the WATCH command from the client
-        await reader.readline()
-        writer.write(_tpv_line(25.5))
-        await writer.drain()
-        # Keep connection open briefly so the client can read
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-
-    # Wait until speed is set
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    assert monitor.speed_mps == 25.5
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+@pytest.mark.parametrize(
+    ("tpv_kwargs", "expected_speed"),
+    [
+        pytest.param({"speed": 25.5}, 25.5, id="default-3d-fix"),
+        pytest.param(
+            {"speed": 6.2, "mode": 3, "eph": 90.0, "eps": 3.2},
+            6.2,
+            id="poor-quality-3d-fix",
+        ),
+        pytest.param({"speed": 11.1, "mode": 2}, 11.1, id="2d-fix"),
+        pytest.param({"speed": 8.8, "lat": None, "lon": None}, 8.8, id="missing-lat-lon"),
+    ],
+)
+async def test_run_accepts_valid_tpv_speed(
+    tpv_kwargs: dict[str, object], expected_speed: float
+) -> None:
+    """TPV messages with valid fix mode and speed update monitor.speed_mps."""
+    async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as monitor:
+        await _await_speed(monitor)
+        assert monitor.speed_mps == expected_speed
 
 
 @pytest.mark.asyncio
 async def test_run_ignores_non_tpv_messages() -> None:
     """Non-TPV messages are skipped; only TPV updates speed."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_non_tpv_line())
-        writer.write(_tpv_line(12.3))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    assert monitor.speed_mps == 12.3
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+    async with _gps_server_scenario(_non_tpv_line(), _tpv_line(12.3)) as monitor:
+        await _await_speed(monitor)
+        assert monitor.speed_mps == 12.3
 
 
 @pytest.mark.asyncio
@@ -239,123 +245,38 @@ async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyP
 @pytest.mark.asyncio
 async def test_run_ignores_malformed_json() -> None:
     """Malformed JSON lines are skipped; subsequent valid TPV is processed."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(b"NOT VALID JSON\n")
-        writer.write(_tpv_line(7.77))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    assert monitor.speed_mps == 7.77
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+    async with _gps_server_scenario(b"NOT VALID JSON\n", _tpv_line(7.77)) as monitor:
+        await _await_speed(monitor)
+        assert monitor.speed_mps == 7.77
 
 
 @pytest.mark.asyncio
-async def test_run_ignores_tpv_speed_with_mode_below_2() -> None:
-    """TPV speeds with mode < 2 must not be used."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(8.8, mode=1))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.sleep(0.4)
-
-    assert monitor.speed_mps is None
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
-
-
-@pytest.mark.asyncio
-async def test_run_accepts_tpv_speed_with_poor_quality_3d_fix() -> None:
-    """3D fix with valid speed is still accepted even with poor quality metrics."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(6.2, mode=3, eph=90.0, eps=3.2))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    assert monitor.speed_mps == 6.2
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+@pytest.mark.parametrize(
+    "tpv_kwargs",
+    [
+        pytest.param({"speed": 8.8, "mode": 1}, id="mode-below-2"),
+        pytest.param({"speed": None, "mode": 3}, id="missing-speed"),
+        pytest.param({"speed": float("nan"), "mode": 3}, id="non-finite-speed"),
+    ],
+)
+async def test_run_rejects_invalid_tpv_speed(tpv_kwargs: dict[str, object]) -> None:
+    """TPV messages with invalid speed/mode must not update speed_mps."""
+    async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as monitor:
+        await asyncio.sleep(0.4)
+        assert monitor.speed_mps is None
 
 
 @pytest.mark.asyncio
 async def test_run_ignores_tpv_speed_with_zero_coordinates_and_keeps_last_update_ts() -> None:
     """mode=3 TPV with zero coordinates still updates speed."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(8.0, lat=54.6872, lon=25.2797))
-        await writer.drain()
-        await asyncio.sleep(0.05)
-        writer.write(_tpv_line(13.0, lat=0.0, lon=0.0))
-        await writer.drain()
+    async with _gps_server_scenario(
+        _tpv_line(8.0, lat=54.6872, lon=25.2797),
+        _tpv_line(13.0, lat=0.0, lon=0.0),
+    ) as monitor:
+        await _await_speed(monitor)
         await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-
-    for _ in range(50):
-        if monitor.speed_mps is not None and monitor.last_update_ts is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    await asyncio.sleep(0.2)
-
-    assert monitor.speed_mps == 13.0
-    assert monitor.last_update_ts is not None
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+        assert monitor.speed_mps == 13.0
+        assert monitor.last_update_ts is not None
 
 
 @pytest.mark.asyncio
@@ -365,192 +286,30 @@ async def test_run_ignores_tpv_speed_with_zero_coordinates_and_keeps_last_update
 )
 async def test_run_ignores_tpv_speed_with_negative_uncertainty(eph: float, eps: float) -> None:
     """mode=3 TPV with negative eph/eps still updates speed."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(8.8, mode=3, eph=eph, eps=eps))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    assert monitor.speed_mps == 8.8
-    assert monitor.last_update_ts is not None
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
-
-
-@pytest.mark.asyncio
-async def test_run_ignores_tpv_speed_missing_lat_lon() -> None:
-    """mode=3 TPV without lat/lon still updates speed."""
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(8.8, lat=None, lon=None))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    assert monitor.speed_mps == 8.8
-    assert monitor.last_update_ts is not None
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
-
-
-@pytest.mark.asyncio
-async def test_run_accepts_tpv_speed_with_2d_fix() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(11.1, mode=2))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-
-    for _ in range(50):
-        if monitor.speed_mps is not None:
-            break
-        await asyncio.sleep(0.05)
-
-    assert monitor.speed_mps == 11.1
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
-
-
-@pytest.mark.asyncio
-async def test_run_ignores_missing_tpv_speed() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(mode=3, speed=None))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.sleep(0.4)
-
-    assert monitor.speed_mps is None
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
-
-
-@pytest.mark.asyncio
-async def test_run_ignores_non_finite_tpv_speed() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(float("nan"), mode=3))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.sleep(0.4)
-
-    assert monitor.speed_mps is None
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+    async with _gps_server_scenario(_tpv_line(8.8, mode=3, eph=eph, eps=eps)) as monitor:
+        await _await_speed(monitor)
+        assert monitor.speed_mps == 8.8
+        assert monitor.last_update_ts is not None
 
 
 @pytest.mark.asyncio
 async def test_run_filters_single_zero_speed_drop() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(12.0, mode=2))
-        writer.write(_tpv_line(0.0, mode=2))
-        writer.write(_tpv_line(12.0, mode=2))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.sleep(0.4)
-
-    assert monitor.speed_mps == 12.0
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+    async with _gps_server_scenario(
+        _tpv_line(12.0, mode=2),
+        _tpv_line(0.0, mode=2),
+        _tpv_line(12.0, mode=2),
+    ) as monitor:
+        await asyncio.sleep(0.4)
+        assert monitor.speed_mps == 12.0
 
 
 @pytest.mark.asyncio
 async def test_run_accepts_three_consecutive_zero_speed_samples() -> None:
-    monitor = GPSSpeedMonitor(gps_enabled=True)
-
-    async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await reader.readline()
-        writer.write(_tpv_line(10.0, mode=2))
-        writer.write(_tpv_line(0.0, mode=2))
-        writer.write(_tpv_line(0.0, mode=2))
-        writer.write(_tpv_line(0.0, mode=2))
-        await writer.drain()
-        await asyncio.sleep(0.2)
-        writer.close()
-        await writer.wait_closed()
-
-    server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-    host, port = server.sockets[0].getsockname()[:2]
-    task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.sleep(0.4)
-
-    assert monitor.speed_mps == 0.0
-
-    task.cancel()
-    await asyncio.gather(task, return_exceptions=True)
-    server.close()
-    await server.wait_closed()
+    async with _gps_server_scenario(
+        _tpv_line(10.0, mode=2),
+        _tpv_line(0.0, mode=2),
+        _tpv_line(0.0, mode=2),
+        _tpv_line(0.0, mode=2),
+    ) as monitor:
+        await asyncio.sleep(0.4)
+        assert monitor.speed_mps == 0.0
