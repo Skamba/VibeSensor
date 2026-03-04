@@ -101,10 +101,12 @@ def sanitize_settings(
         bounds = _BOUNDS.get(key)
         if bounds is not None:
             lower, upper = bounds
-            bounded = min(max(value, lower), upper)
-            if bounded != value:
-                LOGGER.info("Clamped analysis setting %s from %r to %r", key, value, bounded)
-            value = bounded
+            if value < lower:
+                LOGGER.info("Clamped analysis setting %s from %r to %r", key, value, lower)
+                value = lower
+            elif value > upper:
+                LOGGER.info("Clamped analysis setting %s from %r to %r", key, value, upper)
+                value = upper
         out[key] = value
     return out
 
@@ -117,7 +119,7 @@ def tire_circumference_m_from_spec(
 ) -> float | None:
     if tire_width_mm is None or tire_aspect_pct is None or rim_in is None:
         return None
-    if not all(isfinite(v) for v in (tire_width_mm, tire_aspect_pct, rim_in)):
+    if not isfinite(tire_width_mm) or not isfinite(tire_aspect_pct) or not isfinite(rim_in):
         return None
     if tire_width_mm <= 0 or tire_aspect_pct <= 0 or rim_in <= 0:
         return None
@@ -180,5 +182,5 @@ class AnalysisSettingsStore:
 
     def update(self, payload: dict[str, float]) -> dict[str, float]:
         with self._lock:
-            self._values.update(self._sanitize(payload))
+            self._values.update(sanitize_settings(payload))
             return dict(self._values)

@@ -59,13 +59,14 @@ def combined_spectrum_amp_g(
         if axis_count_for_mean is not None
         else max(1.0, float(len(axis_spectra_amp_g)))
     )
+    _sqrt = sqrt  # local-bind for tight inner loop
     out: list[float] = [0.0] * target_len
     for idx in range(target_len):
         sq_sum = 0.0
         for axis_values in axis_spectra_amp_g:
             value = float(axis_values[idx])
             sq_sum += value * value
-        out[idx] = sqrt(sq_sum / divisor)
+        out[idx] = _sqrt(sq_sum / divisor)
     return out
 
 
@@ -96,15 +97,18 @@ def strength_floor_amp_g(
     if n <= 0:
         return 0.0
     peak_hz = [float(freq_hz[idx]) for idx in peak_indexes if 0 <= idx < n]
+    # Precompute exclusion intervals to avoid repeated abs() per bin.
+    _excl = [(c - exclusion_hz, c + exclusion_hz) for c in peak_hz]
+    _isfinite = isfinite  # local-bind
     selected: list[float] = []
     for idx in range(n):
         hz = float(freq_hz[idx])
         if hz < min_hz or hz > max_hz:
             continue
-        if any(abs(hz - center_hz) <= exclusion_hz for center_hz in peak_hz):
+        if any(lo <= hz <= hi for lo, hi in _excl):
             continue
         amp = float(combined_spectrum_amp_g[idx])
-        if amp >= 0.0 and isfinite(amp):
+        if amp >= 0.0 and _isfinite(amp):
             selected.append(amp)
     if not selected:
         # All bins fell within peak exclusion zones; fall back to P20 noise
@@ -199,7 +203,7 @@ def compute_vibration_strength_db(
         last_val = combined[n - 1]
         if last_val >= threshold and last_val > combined[n - 2]:
             local_maxima.append(n - 1)
-    local_maxima.sort(key=lambda idx: combined[idx], reverse=True)
+    local_maxima.sort(key=combined.__getitem__, reverse=True)
     peak_indexes = local_maxima[: max(1, top_n)]
 
     floor_strength = strength_floor_amp_g(

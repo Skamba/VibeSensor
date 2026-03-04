@@ -4,17 +4,25 @@ import asyncio
 import shlex
 from typing import Any
 
+_WHEEL_ALIASES: dict[str, str] = {
+    "fl": "front-left",
+    "fr": "front-right",
+    "rl": "rear-left",
+    "rr": "rear-right",
+}
+
+_DEFAULT_PROFILE_ORDER: tuple[str, ...] = (
+    "engine_idle",
+    "wheel_imbalance",
+    "rear_body",
+    "rough_road",
+)
+
 
 def _normalize_wheel_slot(name: str) -> str | None:
     normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
-    alias = {
-        "fl": "front-left",
-        "fr": "front-right",
-        "rl": "rear-left",
-        "rr": "rear-right",
-    }
-    if normalized in alias:
-        return alias[normalized]
+    if normalized in _WHEEL_ALIASES:
+        return _WHEEL_ALIASES[normalized]
     axle = (
         "front" if "front" in normalized else "rear" if "rear" in normalized else None
     )
@@ -50,8 +58,7 @@ def _cross_corner_coupling(fault_wheel: str, sensor_name: str) -> float:
 
 
 def choose_default_profile(index: int) -> str:
-    ordered = ("engine_idle", "wheel_imbalance", "rear_body", "rough_road")
-    return ordered[index % len(ordered)]
+    return _DEFAULT_PROFILE_ORDER[index % len(_DEFAULT_PROFILE_ORDER)]
 
 
 def apply_one_wheel_mild_scenario(clients: list[Any], fault_wheel: str) -> None:

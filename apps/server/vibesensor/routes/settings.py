@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, HTTPException
@@ -28,6 +30,15 @@ if TYPE_CHECKING:
     from ..runtime import RuntimeState
 
 
+@contextmanager
+def _value_error_to_http(status_code: int = 400) -> Iterator[None]:
+    """Translate :class:`ValueError` into an :class:`HTTPException`."""
+    try:
+        yield
+    except ValueError as exc:
+        raise HTTPException(status_code=status_code, detail=str(exc)) from exc
+
+
 def create_settings_routes(state: RuntimeState) -> APIRouter:
     router = APIRouter()
 
@@ -46,34 +57,28 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.put("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def update_car(car_id: str, req: CarUpsertRequest) -> CarsResponse:
-        try:
-            payload = req.model_dump(exclude_none=True)
+        payload = req.model_dump(exclude_none=True)
+        with _value_error_to_http(404):
             result = await asyncio.to_thread(
                 state.settings_store.update_car,
                 car_id,
                 payload,
             )
-        except ValueError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
         state.apply_car_settings()
         return result
 
     @router.delete("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def delete_car(car_id: str) -> CarsResponse:
-        try:
+        with _value_error_to_http():
             result = await asyncio.to_thread(state.settings_store.delete_car, car_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
         state.apply_car_settings()
         return result
 
     @router.post("/api/settings/cars/active", response_model=CarsResponse)
     async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
         car_id = req.carId
-        try:
+        with _value_error_to_http(404):
             result = await asyncio.to_thread(state.settings_store.set_active_car, car_id)
-        except ValueError as exc:
-            raise HTTPException(status_code=404, detail=str(exc)) from exc
         state.apply_car_settings()
         return result
 
@@ -108,23 +113,19 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:
-        try:
-            payload = req.model_dump(exclude_none=True)
+        payload = req.model_dump(exclude_none=True)
+        with _value_error_to_http():
             await asyncio.to_thread(
                 state.settings_store.set_sensor,
                 mac,
                 payload,
             )
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
         return _sensors_response()
 
     @router.delete("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def delete_sensor(mac: str) -> SensorsResponse:
-        try:
+        with _value_error_to_http():
             removed = await asyncio.to_thread(state.settings_store.remove_sensor, mac)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
         return _sensors_response()
@@ -137,10 +138,8 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/language", response_model=LanguageResponse)
     async def set_language(req: LanguageRequest) -> LanguageResponse:
-        try:
+        with _value_error_to_http():
             language = await asyncio.to_thread(state.settings_store.set_language, req.language)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"language": language}
 
     @router.get("/api/settings/speed-unit", response_model=SpeedUnitResponse)
@@ -149,10 +148,8 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
-        try:
+        with _value_error_to_http():
             unit = await asyncio.to_thread(state.settings_store.set_speed_unit, req.speedUnit)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
         return {"speedUnit": unit}
 
     # -- analysis settings -----------------------------------------------------
@@ -165,10 +162,8 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
         changes = req.model_dump(exclude_none=True)
         if changes:
-            try:
+            with _value_error_to_http():
                 await asyncio.to_thread(state.settings_store.update_active_car_aspects, changes)
-            except ValueError as exc:
-                raise HTTPException(status_code=400, detail=str(exc)) from exc
             state.apply_car_settings()
         return state.analysis_settings.snapshot()
 

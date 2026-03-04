@@ -23,6 +23,8 @@ DEFAULT_STATE_PATH = "/var/lib/vibesensor/update/update_status.json"
 class UpdateStateStore:
     """Load / save :class:`UpdateJobStatus` to a JSON file."""
 
+    __slots__ = ("_path",)
+
     def __init__(self, path: str | Path | None = None) -> None:
         self._path = Path(
             path or os.environ.get("VIBESENSOR_UPDATE_STATE_PATH", DEFAULT_STATE_PATH)

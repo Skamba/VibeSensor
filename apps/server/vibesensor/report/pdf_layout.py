@@ -6,6 +6,8 @@ focused on content rather than layout arithmetic.
 
 from __future__ import annotations
 
+__all__ = ["assert_aspect_preserved", "fit_rect_preserve_aspect"]
+
 
 def fit_rect_preserve_aspect(
     src_w: float,
@@ -43,10 +45,14 @@ def assert_aspect_preserved(
     """Raise if aspect ratio deviates more than *tolerance* (3 %)."""
     if src_w <= 0 or src_h <= 0 or drawn_w <= 0 or drawn_h <= 0:
         raise AssertionError("Invalid dimensions for aspect ratio check")
-    src_ratio = src_w / src_h
-    drawn_ratio = drawn_w / drawn_h
-    delta = abs(drawn_ratio - src_ratio) / src_ratio
-    if delta > tolerance:
+    # Cross-multiplication avoids three divisions on the happy path;
+    # ratios are only computed when the assertion fires (error path).
+    cross_src = src_w * drawn_h
+    cross_drawn = drawn_w * src_h
+    if abs(cross_drawn - cross_src) > tolerance * cross_src:
+        src_ratio = src_w / src_h
+        drawn_ratio = drawn_w / drawn_h
+        delta = abs(drawn_ratio - src_ratio) / src_ratio
         raise AssertionError(
             f"Car visual aspect ratio distorted. src={src_ratio:.4f}, "
             f"drawn={drawn_ratio:.4f}, delta={delta:.2%}"

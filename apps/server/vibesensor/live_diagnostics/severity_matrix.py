@@ -13,6 +13,10 @@ from ._types import (
     _MatrixSecondsEvent,
 )
 
+# Frozensets for O(1) membership checks (tuples are O(n)).
+_SOURCE_SET: frozenset[str] = frozenset(SOURCE_KEYS)
+_SEVERITY_SET: frozenset[str] = frozenset(SEVERITY_KEYS)
+
 
 def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
     return {
@@ -26,12 +30,13 @@ def _new_matrix() -> dict[str, dict[str, dict[str, Any]]]:
 def _copy_matrix(
     matrix: dict[str, dict[str, dict[str, Any]]],
 ) -> dict[str, dict[str, dict[str, Any]]]:
+    # Direct key access — keys are always present from _new_matrix().
     return {
         source: {
             severity: {
-                "count": int(cell.get("count", 0)),
-                "seconds": float(cell.get("seconds", 0.0)),
-                "contributors": dict(cell.get("contributors", {})),
+                "count": cell["count"],
+                "seconds": cell["seconds"],
+                "contributors": dict(cell["contributors"]),
             }
             for severity, cell in columns.items()
         }
@@ -68,7 +73,7 @@ class SeverityMatrix:
         severity_key: str,
         contributor_label: str,
     ) -> None:
-        if source_key not in SOURCE_KEYS or severity_key not in SEVERITY_KEYS:
+        if source_key not in _SOURCE_SET or severity_key not in _SEVERITY_SET:
             return
         self._count_events.append(
             _MatrixCountEvent(
@@ -86,8 +91,21 @@ class SeverityMatrix:
         severity_key: str,
         contributor_label: str,
     ) -> None:
+        if severity_key not in _SEVERITY_SET:
+            return
+        # Inline append to avoid per-iteration method-call overhead.
+        _append = self._count_events.append
+        _Event = _MatrixCountEvent
         for source_key in source_keys:
-            self.record_count(now_ms, source_key, severity_key, contributor_label)
+            if source_key in _SOURCE_SET:
+                _append(
+                    _Event(
+                        ts_ms=now_ms,
+                        source_key=source_key,
+                        severity_key=severity_key,
+                        contributor_label=contributor_label,
+                    )
+                )
 
     def accumulate_seconds(
         self,
@@ -97,12 +115,14 @@ class SeverityMatrix:
     ) -> None:
         if dt_seconds <= 0:
             return
+        _append = self._seconds_events.append
+        _Event = _MatrixSecondsEvent
         for source_key, level in active_levels_by_source.items():
-            bucket = str(level.get("bucket_key") or "")
-            if source_key not in SOURCE_KEYS or bucket not in SEVERITY_KEYS:
+            bucket = level.get("bucket_key") or ""
+            if source_key not in _SOURCE_SET or bucket not in _SEVERITY_SET:
                 continue
-            self._seconds_events.append(
-                _MatrixSecondsEvent(
+            _append(
+                _Event(
                     ts_ms=now_ms,
                     source_key=source_key,
                     severity_key=bucket,
@@ -120,14 +140,17 @@ class SeverityMatrix:
     def rebuild(self, now_ms: int) -> None:
         self._prune(now_ms)
         matrix = _new_matrix()
-        for event in self._count_events:
+        # Local-bind deques to avoid repeated self attribute access.
+        count_events = self._count_events
+        seconds_events = self._seconds_events
+        # Direct key access and += — cells are freshly initialised by _new_matrix().
+        for event in count_events:
             cell = matrix[event.source_key][event.severity_key]
-            cell["count"] = int(cell.get("count", 0)) + 1
+            cell["count"] += 1
             contributors = cell["contributors"]
             contributors[event.contributor_label] = (
-                int(contributors.get(event.contributor_label, 0)) + 1
+                contributors.get(event.contributor_label, 0) + 1
             )
-        for event in self._seconds_events:
-            cell = matrix[event.source_key][event.severity_key]
-            cell["seconds"] = float(cell.get("seconds", 0.0)) + event.dt_seconds
+        for event in seconds_events:
+            matrix[event.source_key][event.severity_key]["seconds"] += event.dt_seconds
         self._matrix = matrix

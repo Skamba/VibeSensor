@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__all__ = ["FINDING_SOURCE_COLORS", "REPORT_COLORS"]
+
 # Aligned with apps/ui/src/styles/app.css design tokens (purple accent, print-friendly light).
 REPORT_COLORS = {
     "ink": "#1a1c24",

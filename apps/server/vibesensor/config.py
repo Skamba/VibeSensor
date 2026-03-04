@@ -21,7 +21,20 @@ LOGGER = logging.getLogger(__name__)
 DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
 DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
 
-VALID_24GHZ_CHANNELS: set[int] = set(range(1, 15))  # 1-14
+# ProcessingConfig validation constants (hoisted to avoid per-instance allocation)
+_PROCESSING_POS_FIELDS: dict[str, int] = {
+    "sample_rate_hz": 1,
+    "waveform_seconds": 1,
+    "waveform_display_hz": 1,
+    "ui_push_hz": 1,
+    "ui_heavy_push_hz": 1,
+    "fft_update_hz": 1,
+    "client_ttl_seconds": 1,
+}
+_MAX_FFT_N: int = 65536
+_MAX_BUFFER_SAMPLES: int = 524_288
+
+VALID_24GHZ_CHANNELS: frozenset[int] = frozenset(range(1, 15))  # 1-14
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "ap": {
@@ -90,9 +103,10 @@ def documented_default_config() -> dict[str, Any]:
 def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     merged = dict(base)
     for key, value in override.items():
-        if isinstance(value, dict) and isinstance(merged.get(key), dict):
-            merged[key] = _deep_merge(merged[key], value)
-        elif value is None and isinstance(merged.get(key), dict):
+        existing = merged.get(key)
+        if isinstance(value, dict) and isinstance(existing, dict):
+            merged[key] = _deep_merge(existing, value)
+        elif value is None and isinstance(existing, dict):
             # YAML `key:` with no value produces None — preserve defaults
             LOGGER.warning(
                 "Config key %r is null; keeping default section. "
@@ -187,16 +201,7 @@ class ProcessingConfig:
 
     def __post_init__(self) -> None:
         # --- positive-integer guards ------------------------------------------------
-        _POS_FIELDS: dict[str, int] = {
-            "sample_rate_hz": 1,
-            "waveform_seconds": 1,
-            "waveform_display_hz": 1,
-            "ui_push_hz": 1,
-            "ui_heavy_push_hz": 1,
-            "fft_update_hz": 1,
-            "client_ttl_seconds": 1,
-        }
-        for field_name, minimum in _POS_FIELDS.items():
+        for field_name, minimum in _PROCESSING_POS_FIELDS.items():
             val = getattr(self, field_name)
             if val < minimum:
                 clamped = minimum
@@ -234,7 +239,6 @@ class ProcessingConfig:
             )
             object.__setattr__(self, "fft_n", next_pow2)
 
-        _MAX_FFT_N = 65536
         if self.fft_n > _MAX_FFT_N:
             LOGGER.warning(
                 "processing.fft_n=%s exceeds maximum %s — clamped",
@@ -277,7 +281,6 @@ class ProcessingConfig:
         # Each client allocates a 3×capacity float32 buffer.  Cap the per-client
         # buffer at ~2 MB (524288 samples × 3 × 4 bytes = 6 MB) to avoid OOM on
         # memory-constrained devices like the Pi 3A+ (512 MB).
-        _MAX_BUFFER_SAMPLES = 524_288
         buffer_samples = self.sample_rate_hz * self.waveform_seconds
         if buffer_samples > _MAX_BUFFER_SAMPLES:
             clamped_seconds = max(1, _MAX_BUFFER_SAMPLES // self.sample_rate_hz)

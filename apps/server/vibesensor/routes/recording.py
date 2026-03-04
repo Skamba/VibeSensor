@@ -11,6 +11,8 @@ from ..api_models import LoggingStatusResponse
 if TYPE_CHECKING:
     from ..runtime import RuntimeState
 
+__all__ = ["create_recording_routes"]
+
 
 def create_recording_routes(state: RuntimeState) -> APIRouter:
     router = APIRouter()

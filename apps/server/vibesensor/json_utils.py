@@ -32,19 +32,28 @@ def sanitize_for_json(obj: Any, *, _max_depth: int = 128) -> tuple[Any, bool]:
     non-finite value was encountered.
     """
     found_non_finite = False
+    _isfinite = math.isfinite  # local binding avoids module lookup per call
 
     def _walk(v: Any, depth: int = 0) -> Any:
         nonlocal found_non_finite
         if depth > _max_depth:
             return None
-        # Numpy array → Python list (check ndim to distinguish from scalars).
+        # Fast path: common leaf types that never need sanitisation.
+        # Exact-type checks avoid isinstance overhead and skip the hasattr
+        # probes below for the vast majority of values in typical payloads.
+        t = type(v)
+        if t is int or t is str or t is bool or v is None:
+            return v
+        # Numpy array -> Python list (check ndim to distinguish from scalars).
         if hasattr(v, "tolist") and hasattr(v, "ndim"):
             v = v.tolist()
-        # Numpy scalar → native Python type via .item().
+            t = type(v)
+        # Numpy scalar -> native Python type via .item().
         elif hasattr(v, "item"):
             v = v.item()
-        if isinstance(v, float):
-            if math.isfinite(v):
+            t = type(v)
+        if t is float:
+            if _isfinite(v):
                 return v
             found_non_finite = True
             return None

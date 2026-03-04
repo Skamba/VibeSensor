@@ -23,6 +23,7 @@ from ._types import (
 from .active_levels import (
     build_active_levels_by_location,
     collect_active_levels_from_trackers,
+    location_key,
     update_sensor_active_level,
     upsert_active_level,
 )
@@ -36,6 +37,9 @@ from .tracker import (
 )
 
 LOGGER = logging.getLogger(__name__)
+
+_BANDS_LIST: list[dict[str, Any]] = list(BANDS)
+_PRUNE_SILENCE_TICKS: int = 60
 
 
 class LiveDiagnosticsEngine:
@@ -132,8 +136,6 @@ class LiveDiagnosticsEngine:
 
     @staticmethod
     def _location_key(sensor_location: str) -> str | None:
-        from .active_levels import location_key
-
         return location_key(sensor_location)
 
     @property
@@ -162,7 +164,7 @@ class LiveDiagnosticsEngine:
             "diagnostics_sequence": self._diagnostics_sequence,
             "matrix": self._matrix.copy(),
             "events": list(self._latest_events),
-            "strength_bands": list(BANDS),
+            "strength_bands": _BANDS_LIST,
             "levels": {
                 "by_source": {
                     key: dict(value) for key, value in self._active_levels_by_source.items()
@@ -365,7 +367,6 @@ class LiveDiagnosticsEngine:
 
     def _decay_unseen_sensor_trackers(self, seen_keys: set[str]) -> None:
         """Apply silence decay to sensor trackers not seen in the current tick."""
-        _PRUNE_SILENCE_TICKS = 60
         for tracker_key, tracker in list(self._sensor_trackers.items()):
             if tracker_key in seen_keys:
                 tracker._silence_ticks = 0
@@ -377,7 +378,7 @@ class LiveDiagnosticsEngine:
                 fallback_db=SILENCE_DB,
             )
             tracker._silence_ticks += 1
-            if tracker._silence_ticks >= _PRUNE_SILENCE_TICKS:
+            if tracker._silence_ticks >= _PRUNE_SILENCE_TICKS:  # noqa: SLF001
                 del self._sensor_trackers[tracker_key]
 
     def _process_combined_groups(

@@ -20,9 +20,6 @@ export function areHeavyFramesCompatible(previous: SpectrumHeavyFrame | null, ne
   for (let i = 0; i < previous.values.length; i++) {
     if (previous.values[i].length !== next.values[i].length || previous.values[i].length !== previous.freq.length) return false;
   }
-  for (let i = 0; i < next.values.length; i++) {
-    if (next.values[i].length !== next.freq.length) return false;
-  }
   return true;
 }
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from statistics import mean
 from typing import Any
 
 from vibesensor_core.vibration_strength import percentile
@@ -16,6 +15,25 @@ from ..helpers import (
     _speed_bin_sort_key,
     counter_delta,
 )
+from ..phase_segmentation import DrivingPhase
+
+
+def _mean(vals: list[float]) -> float:
+    """Arithmetic mean for non-empty float lists (faster than statistics.mean)."""
+    return sum(vals) / len(vals)
+
+
+def _counter_sort_key(pair: tuple[float | None, float]) -> tuple[bool, float]:
+    return (pair[0] is None, pair[0] if pair[0] is not None else 0.0)
+
+
+def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
+    """Sort timestamped counter pairs and delegate to shared helper."""
+    if len(counter_values) < 2:
+        return 0
+    ordered = sorted(counter_values, key=_counter_sort_key)
+    return counter_delta([float(v) for _t, v in ordered])
+
 
 _EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
 
@@ -32,20 +50,21 @@ def _phase_speed_breakdown(
 
     Addresses issue #189: adds temporal phase context to speed breakdown.
     """
-    from ..phase_segmentation import DrivingPhase
-
     grouped_amp: dict[str, list[float]] = defaultdict(list)
     grouped_speeds: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
 
+    _as_float_local = _as_float
+    _vib_db = _primary_vibration_strength_db
+    n_phases = len(per_sample_phases)
     for idx, sample in enumerate(samples):
-        phase = per_sample_phases[idx] if idx < len(per_sample_phases) else "unknown"
+        phase = per_sample_phases[idx] if idx < n_phases else "unknown"
         phase_key = phase.value if isinstance(phase, DrivingPhase) else str(phase)
         counts[phase_key] += 1
-        speed = _as_float(sample.get("speed_kmh"))
+        speed = _as_float_local(sample.get("speed_kmh"))
         if speed is not None and speed > 0:
             grouped_speeds[phase_key].append(speed)
-        amp = _primary_vibration_strength_db(sample)
+        amp = _vib_db(sample)
         if amp is not None:
             grouped_amp[phase_key].append(amp)
 
@@ -62,9 +81,9 @@ def _phase_speed_breakdown(
             {
                 "phase": phase_key,
                 "count": counts[phase_key],
-                "mean_speed_kmh": mean(speed_vals) if speed_vals else None,
+                "mean_speed_kmh": _mean(speed_vals) if speed_vals else None,
                 "max_speed_kmh": max(speed_vals) if speed_vals else None,
-                "mean_vibration_strength_db": mean(amp_vals) if amp_vals else None,
+                "mean_vibration_strength_db": _mean(amp_vals) if amp_vals else None,
                 "max_vibration_strength_db": max(amp_vals) if amp_vals else None,
             }
         )
@@ -74,13 +93,16 @@ def _phase_speed_breakdown(
 def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
     grouped: dict[str, list[float]] = defaultdict(list)
     counts: dict[str, int] = defaultdict(int)
+    _as_float_local = _as_float
+    _vib_db = _primary_vibration_strength_db
+    _bin_label = _speed_bin_label
     for sample in samples:
-        speed = _as_float(sample.get("speed_kmh"))
+        speed = _as_float_local(sample.get("speed_kmh"))
         if speed is None or speed <= 0:
             continue
-        label = _speed_bin_label(speed)
+        label = _bin_label(speed)
         counts[label] += 1
-        amp = _primary_vibration_strength_db(sample)
+        amp = _vib_db(sample)
         if amp is not None:
             grouped[label].append(amp)
 
@@ -91,7 +113,7 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
             {
                 "speed_range": label,
                 "count": counts[label],
-                "mean_vibration_strength_db": mean(values) if values else None,
+                "mean_vibration_strength_db": _mean(values) if values else None,
                 "max_vibration_strength_db": max(values) if values else None,
             }
         )
@@ -123,34 +145,37 @@ def _sensor_intensity_by_location(
     phase_amp: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
     has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
+    _as_float_local = _as_float
+    _vib_db = _primary_vibration_strength_db
+    _loc_label = _location_label
     for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
             continue
-        location = _location_label(sample, lang=lang)
+        location = _loc_label(sample, lang=lang)
         if not location:
             continue
         if include_locations is not None and location not in include_locations:
             continue
         sample_counts[location] += 1
-        amp = _primary_vibration_strength_db(sample)
+        amp = _vib_db(sample)
         if amp is not None:
-            grouped_amp[location].append(float(amp))
+            grouped_amp[location].append(amp)
             if has_phases and per_sample_phases is not None:
+                phase_obj = per_sample_phases[i]
                 phase_key = str(
-                    per_sample_phases[i].value
-                    if hasattr(per_sample_phases[i], "value")
-                    else per_sample_phases[i]
+                    phase_obj.value if hasattr(phase_obj, "value") else phase_obj
                 )
-                phase_amp[location][phase_key].append(float(amp))
-        sample_t_s = _as_float(sample.get("t_s"))
-        dropped_total = _as_float(sample.get("frames_dropped_total"))
+                phase_amp[location][phase_key].append(amp)
+        _get = sample.get
+        sample_t_s = _as_float_local(_get("t_s"))
+        dropped_total = _as_float_local(_get("frames_dropped_total"))
         if dropped_total is not None:
             dropped_totals[location].append((sample_t_s, dropped_total))
-        overflow_total = _as_float(sample.get("queue_overflow_drops"))
+        overflow_total = _as_float_local(_get("queue_overflow_drops"))
         if overflow_total is not None:
             overflow_totals[location].append((sample_t_s, overflow_total))
-        vibration_strength_db = _as_float(sample.get("vibration_strength_db"))
-        bucket = str(sample.get("strength_bucket") or "")
+        vibration_strength_db = _as_float_local(_get("vibration_strength_db"))
+        bucket = str(_get("strength_bucket") or "")
         if vibration_strength_db is None:
             continue
         if bucket:
@@ -166,16 +191,6 @@ def _sensor_intensity_by_location(
     max_sample_count = max(
         (sample_counts.get(location, 0) for location in target_locations), default=0
     )
-
-    def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
-        """Sort timestamped counter pairs and delegate to shared helper."""
-        if len(counter_values) < 2:
-            return 0
-        ordered = sorted(
-            counter_values,
-            key=lambda pair: (pair[0] is None, pair[0] if pair[0] is not None else 0.0),
-        )
-        return counter_delta([float(v) for _t, v in ordered])
 
     for location in sorted(target_locations):
         values = grouped_amp.get(location, [])
@@ -208,7 +223,7 @@ def _sensor_intensity_by_location(
             location_phase_intensity = {
                 phase_key: {
                     "count": len(phase_vals),
-                    "mean_intensity_db": mean(phase_vals) if phase_vals else None,
+                    "mean_intensity_db": _mean(phase_vals) if phase_vals else None,
                     "max_intensity_db": max(phase_vals) if phase_vals else None,
                 }
                 for phase_key, phase_vals in loc_phases.items()
@@ -222,7 +237,7 @@ def _sensor_intensity_by_location(
                 "sample_count": sample_count,
                 "sample_coverage_ratio": sample_coverage_ratio,
                 "sample_coverage_warning": sample_coverage_warning,
-                "mean_intensity_db": mean(values) if values else None,
+                "mean_intensity_db": _mean(values) if values else None,
                 "p50_intensity_db": percentile(values_sorted, 0.50) if values else None,
                 "p95_intensity_db": percentile(values_sorted, 0.95) if values else None,
                 "max_intensity_db": max(values) if values else None,

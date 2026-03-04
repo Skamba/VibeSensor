@@ -128,9 +128,6 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
   const strengthBands = Array.isArray(diagnostics.strength_bands)
     ? (diagnostics.strength_bands as StrengthBand[])
     : [];
-  if (!strengthBands.length) {
-    // No strength bands yet — return payload with empty bands.
-  }
 
   const rawClients = Array.isArray(payload.clients) ? (payload.clients as Record<string, unknown>[]) : [];
   // Remap server field names to UI-internal field names

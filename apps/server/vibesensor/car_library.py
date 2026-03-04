@@ -24,6 +24,7 @@ __all__ = [
 ]
 
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json"
+_TIRE_OVERRIDE_KEYS = ("tire_width_mm", "tire_aspect_pct", "rim_in")
 
 
 def _load_library() -> list[dict]:
@@ -52,13 +53,13 @@ CAR_LIBRARY: list[dict] = _load_library()
 
 def get_brands() -> list[str]:
     """Return sorted list of unique brands in the library."""
-    return sorted({e.get("brand", "") for e in CAR_LIBRARY if e.get("brand")})
+    return sorted({b for e in CAR_LIBRARY if (b := e.get("brand"))})
 
 
 def get_types_for_brand(brand: str) -> list[str]:
     """Return sorted body types available for *brand*."""
     return sorted(
-        {e.get("type", "") for e in CAR_LIBRARY if e.get("brand") == brand and e.get("type")}
+        {t for e in CAR_LIBRARY if e.get("brand") == brand and (t := e.get("type"))}
     )
 
 
@@ -81,7 +82,7 @@ def get_variants_for_model(brand: str, car_type: str, model: str) -> list[dict]:
     """
     for e in CAR_LIBRARY:
         if e.get("brand") == brand and e.get("type") == car_type and e.get("model") == model:
-            return copy.deepcopy(list(e.get("variants") or []))
+            return copy.deepcopy(e.get("variants") or [])
     return []
 
 
@@ -105,7 +106,7 @@ def resolve_variant(
                 result["gearboxes"] = v["gearboxes"]
             if v.get("tire_options"):
                 result["tire_options"] = v["tire_options"]
-            for k in ("tire_width_mm", "tire_aspect_pct", "rim_in"):
+            for k in _TIRE_OVERRIDE_KEYS:
                 if v.get(k) is not None:
                     result[k] = v[k]
             break

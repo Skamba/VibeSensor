@@ -11,6 +11,8 @@ import math
 
 from vibesensor_core.strength_bands import BANDS
 
+_isfinite = math.isfinite  # local bind avoids repeated attribute lookup
+
 CONFIDENCE_HIGH_THRESHOLD = 0.70
 CONFIDENCE_MEDIUM_THRESHOLD = 0.40
 
@@ -28,14 +30,14 @@ _STRENGTH_LABELS_BY_BUCKET: dict[str, tuple[str, str, str]] = {
 }
 
 # Thresholds in dB for strength labels (ascending), derived from core bands.
-_STRENGTH_THRESHOLDS: list[tuple[float, str, str, str]] = [
+_STRENGTH_THRESHOLDS: tuple[tuple[float, str, str, str], ...] = tuple(
     # (min_db, label_key, en_label, nl_label)
     (
         float(band["min_db"]),
         *_STRENGTH_LABELS_BY_BUCKET.get(str(band["key"]), _STRENGTH_LABELS_BY_BUCKET["l5"]),
     )
     for band in BANDS
-]
+)
 
 
 def strength_label(db_value: float | None, *, lang: str = "en") -> tuple[str, str]:
@@ -53,7 +55,7 @@ def strength_label(db_value: float | None, *, lang: str = "en") -> tuple[str, st
     tuple[str, str]
         ``(band_key, human_label)`` — e.g. ``("moderate", "Moderate")``.
     """
-    if db_value is None or not math.isfinite(db_value):
+    if db_value is None or not _isfinite(db_value):
         return ("unknown", "Onbekend" if lang == "nl" else "Unknown")
     label_idx = 3 if lang == "nl" else 2
     result = _STRENGTH_THRESHOLDS[0]
@@ -80,6 +82,11 @@ def strength_text(
 # ---------------------------------------------------------------------------
 # Certainty labels  (confidence 0–1 → label + short reason)
 # ---------------------------------------------------------------------------
+
+def _is_negligible_band(key: str | None) -> bool:
+    """Return *True* when *key* denotes the negligible vibration band."""
+    return (key or "").strip().lower() == "negligible"
+
 
 # Controlled set of certainty reason phrases.
 _CERTAINTY_REASONS: dict[str, dict[str, str]] = {
@@ -181,7 +188,7 @@ def certainty_label(
     pct = max(0.0, min(100.0, confidence_0_to_1 * 100.0))
     pct_text = f"{pct:.0f}%"
     # Clamp non-finite confidence to zero to prevent silent misclassification.
-    if not math.isfinite(confidence_0_to_1):
+    if not _isfinite(confidence_0_to_1):
         confidence_0_to_1 = 0.0
         pct_text = "0%"
 
@@ -191,8 +198,7 @@ def certainty_label(
         level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
     else:
         level_key, label_en, label_nl = "low", "Low", "Laag"
-    normalized_strength_band = (strength_band_key or "").strip().lower()
-    if normalized_strength_band == "negligible" and level_key == "high":
+    if _is_negligible_band(strength_band_key) and level_key == "high":
         level_key, label_en, label_nl = "medium", "Medium", "Gemiddeld"
 
     label = label_nl if lang == "nl" else label_en
@@ -262,6 +268,6 @@ def certainty_tier(
         return "B"
     # Cap at B when the vibration strength is negligible — recommending
     # specific repairs for a barely-detectable signal is misleading.
-    if (strength_band_key or "").strip().lower() == "negligible":
+    if _is_negligible_band(strength_band_key):
         return "B"
     return "C"

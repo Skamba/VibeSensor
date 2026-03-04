@@ -10,6 +10,8 @@ from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["CommandRunner", "sanitize_log_line"]
+
 # ---------------------------------------------------------------------------
 # sudo wrapper helpers
 # ---------------------------------------------------------------------------
@@ -34,9 +36,12 @@ def _sudo_prefix() -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+_CREDENTIAL_RE = re.compile(r"(?i)(psk|password|secret|key)\s*[=:]\s*\S+")
+
+
 def sanitize_log_line(line: str) -> str:
     """Remove potential credential leaks from log lines."""
-    line = re.sub(r"(?i)(psk|password|secret|key)\s*[=:]\s*\S+", r"\1=***", line)
+    line = _CREDENTIAL_RE.sub(r"\1=***", line)
     return line[:500]
 
 
@@ -56,7 +61,7 @@ class CommandRunner:
         env: dict[str, str] | None = None,
     ) -> tuple[int, str, str]:
         """Return (returncode, stdout, stderr)."""
-        merged_env = {**os.environ, **(env or {})}
+        merged_env = {**os.environ, **env} if env else None
         try:
             proc = await asyncio.create_subprocess_exec(
                 *args,

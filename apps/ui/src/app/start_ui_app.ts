@@ -37,6 +37,7 @@ export function startUiApp(): void {
   const SPECTRUM_DB_REFERENCE_AMP_G = 1e-4;
   const SPECTRUM_MIN_RENDER_AMP_G = 1e-6;
   const SPECTRUM_TWEEN_DURATION_MS = 180;
+  const SPECTRUM_LOG10_REF = Math.log10(SPECTRUM_DB_REFERENCE_AMP_G);
 
   function t(key: string, vars?: Record<string, any>): string { return I18N.get(state.lang, key, vars); }
   function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
@@ -86,21 +87,22 @@ export function startUiApp(): void {
     };
   }
 
+  const WS_KEY_BY_STATE: Record<string, string> = { connecting: "ws.connecting", connected: "ws.connected", reconnecting: "ws.reconnecting", stale: "ws.stale", no_data: "ws.no_data" };
+  const WS_VARIANT_BY_STATE: Record<string, string> = { connecting: "muted", connected: "ok", reconnecting: "warn", stale: "bad", no_data: "muted" };
+  const WS_BANNER_CFG: Record<string, { key: string; cls: string }> = {
+    reconnecting: { key: "ws.banner.reconnecting", cls: "connection-banner--bad" },
+    stale: { key: "ws.banner.stale", cls: "connection-banner--warn" },
+    connecting: { key: "ws.banner.connecting", cls: "connection-banner--muted" },
+  };
+
   function renderWsState(): void {
     if (state.payloadError) return setPillState(els.linkState, "bad", "Payload error");
-    const keyByState: Record<string, string> = { connecting: "ws.connecting", connected: "ws.connected", reconnecting: "ws.reconnecting", stale: "ws.stale", no_data: "ws.no_data" };
-    const variantByState: Record<string, string> = { connecting: "muted", connected: "ok", reconnecting: "warn", stale: "bad", no_data: "muted" };
-    setPillState(els.linkState, variantByState[state.wsState] || "muted", t(keyByState[state.wsState] || "ws.connecting"));
+    setPillState(els.linkState, WS_VARIANT_BY_STATE[state.wsState] || "muted", t(WS_KEY_BY_STATE[state.wsState] || "ws.connecting"));
 
     // Connection status banner
     const banner = els.connectionBanner;
     if (banner) {
-      const bannerCfg: Record<string, { key: string; cls: string }> = {
-        reconnecting: { key: "ws.banner.reconnecting", cls: "connection-banner--bad" },
-        stale: { key: "ws.banner.stale", cls: "connection-banner--warn" },
-        connecting: { key: "ws.banner.connecting", cls: "connection-banner--muted" },
-      };
-      const cfg = bannerCfg[state.wsState];
+      const cfg = WS_BANNER_CFG[state.wsState];
       if (cfg) {
         banner.hidden = false;
         banner.textContent = t(cfg.key);
@@ -304,7 +306,7 @@ export function startUiApp(): void {
       const safeAmp = Number.isFinite(amp) && amp > 0
         ? Math.max(amp, SPECTRUM_MIN_RENDER_AMP_G)
         : SPECTRUM_MIN_RENDER_AMP_G;
-      const db = 20 * (Math.log10(safeAmp) - Math.log10(SPECTRUM_DB_REFERENCE_AMP_G));
+      const db = 20 * (Math.log10(safeAmp) - SPECTRUM_LOG10_REF);
       return Math.max(SPECTRUM_DB_MIN, Math.min(SPECTRUM_DB_MAX, db));
     };
     for (const entry of entries) entry.values = entry.values.map(toDbAbsolute);

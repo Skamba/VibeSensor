@@ -15,6 +15,7 @@ from ..analysis_settings import (
     wheel_hz_from_speed_kmh,
 )
 from ..constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ, WEAK_SPATIAL_DOMINANCE_THRESHOLD
+from ..locations import label_for_code as _label_for_code
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
 
@@ -110,11 +111,11 @@ def _outlier_summary(values: list[float]) -> dict[str, Any]:
     iqr = max(0.0, q3 - q1)
     low = q1 - (1.5 * iqr)
     high = q3 + (1.5 * iqr)
-    outliers = [v for v in sorted_vals if v < low or v > high]
+    outlier_count = sum(1 for v in sorted_vals if v < low or v > high)
     return {
         "count": len(sorted_vals),
-        "outlier_count": len(outliers),
-        "outlier_pct": (len(outliers) / len(sorted_vals)) * 100.0,
+        "outlier_count": outlier_count,
+        "outlier_pct": (outlier_count / len(sorted_vals)) * 100.0,
         "lower_bound": low,
         "upper_bound": high,
     }
@@ -294,11 +295,20 @@ def _primary_vibration_strength_db(sample: dict[str, Any]) -> float | None:
 def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
     if len(x_vals) != len(y_vals) or len(x_vals) < 3:
         return None
-    mx = sum(x_vals) / len(x_vals)
-    my = sum(y_vals) / len(y_vals)
-    cov = sum((x - mx) * (y - my) for x, y in zip(x_vals, y_vals, strict=False))
-    sx = sqrt(sum((x - mx) ** 2 for x in x_vals))
-    sy = sqrt(sum((y - my) ** 2 for y in y_vals))
+    n = len(x_vals)
+    mx = sum(x_vals) / n
+    my = sum(y_vals) / n
+    cov = 0.0
+    sx_sq = 0.0
+    sy_sq = 0.0
+    for x, y in zip(x_vals, y_vals, strict=False):
+        dx = x - mx
+        dy = y - my
+        cov += dx * dy
+        sx_sq += dx * dx
+        sy_sq += dy * dy
+    sx = sqrt(sx_sq)
+    sy = sqrt(sy_sq)
     if sx <= 1e-9 or sy <= 1e-9:
         return None
     result = abs(cov / (sx * sy))
@@ -400,8 +410,6 @@ def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
     render time in the PDF builder / template layer.
     """
     # Prefer structured location code (from SensorConfig) if available
-    from ..locations import label_for_code as _label_for_code
-
     location_code = str(sample.get("location") or "").strip()
     if location_code:
         human = _label_for_code(location_code)

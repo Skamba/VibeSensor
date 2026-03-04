@@ -20,56 +20,57 @@ def detect_sensor_events(
     settings: dict[str, float],
 ) -> list[_RecentEvent]:
     """Extract per-sensor vibration events from a WebSocket spectra payload."""
-    client_map = {
-        str(client.get("id")): str(client.get("name") or client.get("id") or "")
-        for client in clients
-        if isinstance(client, dict)
-    }
-    client_location_map = {
-        str(client.get("id")): str(client.get("location") or "")
-        for client in clients
-        if isinstance(client, dict)
-    }
+    # Single pass over clients to build both name and location lookups.
+    client_map: dict[str, str] = {}
+    client_location_map: dict[str, str] = {}
+    for client in clients:
+        if not isinstance(client, dict):
+            continue
+        cid = str(client.get("id"))
+        client_map[cid] = str(client.get("name") or client.get("id") or "")
+        client_location_map[cid] = str(client.get("location") or "")
+
     clients_payload = spectra.get("clients")
     if not isinstance(clients_payload, dict):
         return []
 
     settings_bundle = build_diagnostic_settings(settings)
-    entries: list[tuple[str, str, str, list[dict[str, Any]]]] = []
+    now_ms = int(monotonic() * 1000.0)
+    _classify = classify_peak_hz  # local bind for inner loop
+    _debug = LOGGER.debug
+
+    events: list[_RecentEvent] = []
+    _append = events.append
     for client_id, payload in clients_payload.items():
         if not isinstance(payload, dict):
             continue
         strength_metrics = payload.get("strength_metrics")
         if not isinstance(strength_metrics, dict):
-            LOGGER.debug("Skipping client %s: missing strength_metrics", client_id)
+            _debug("Skipping client %s: missing strength_metrics", client_id)
             continue
         peaks_raw = strength_metrics.get("top_peaks")
         if not isinstance(peaks_raw, list):
-            LOGGER.debug("Skipping client %s: missing top_peaks", client_id)
+            _debug("Skipping client %s: missing top_peaks", client_id)
             continue
-        label = client_map.get(str(client_id), str(client_id))
-        location = client_location_map.get(str(client_id), "")
-        entries.append((str(client_id), label, location, peaks_raw))
-
-    now_ms = int(monotonic() * 1000.0)
-    events: list[_RecentEvent] = []
-    for client_id, label, location, peaks_raw in entries:
+        label = client_map.get(client_id, client_id)
+        location = client_location_map.get(client_id, "")
         for peak in peaks_raw[:4]:
             if not isinstance(peak, dict):
                 continue
+            _get = peak.get
             try:
-                peak_hz = float(peak.get("hz"))
-                peak_amp = float(peak.get("amp"))
-                vibration_strength_db = float(peak.get("vibration_strength_db"))
+                peak_hz = float(_get("hz"))
+                peak_amp = float(_get("amp"))
+                vibration_strength_db = float(_get("vibration_strength_db"))
             except (TypeError, ValueError) as exc:
-                LOGGER.debug("Skipping invalid peak for %s: %s", client_id, exc)
+                _debug("Skipping invalid peak for %s: %s", client_id, exc)
                 continue
-            classification = classify_peak_hz(
+            classification = _classify(
                 peak_hz=peak_hz,
                 speed_mps=speed_mps,
                 settings=settings_bundle,
             )
-            events.append(
+            _append(
                 _RecentEvent(
                     ts_ms=now_ms,
                     sensor_id=client_id,

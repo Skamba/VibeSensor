@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__ = ["apply_severity_to_tracker", "matrix_transition_bucket", "should_emit_event"]
+
 from vibesensor_core.strength_bands import band_rank
 
 from ..diagnostics_shared import severity_from_peak
@@ -47,9 +49,9 @@ def should_emit_event(
 ) -> bool:
     if current_bucket is None:
         return False
-    prev_rank = band_rank(previous_bucket or "")
-    cur_rank = band_rank(current_bucket)
-    if previous_bucket is None or cur_rank > prev_rank:
+    _rank = band_rank
+    cur_rank = _rank(current_bucket)
+    if previous_bucket is None or cur_rank > _rank(previous_bucket or ""):
         return True
     return now_ms - tracker.last_emitted_ms >= heartbeat_ms
 

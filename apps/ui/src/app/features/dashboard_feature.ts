@@ -35,6 +35,8 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
   const { state, els, t, fmt, carMapPositions, carMapWindowMs, metricField } = ctx;
 
   // Track latest by_location diagnostics for confirmed car map intensity
+  const STRENGTH_KEYS = ["wheel", "driveshaft", "engine", "other"] as const;
+
   let latestByLocation: Record<string, Record<string, unknown>> = {};
   let _strengthResizeHandler: (() => void) | null = null;
   let _strengthVisibilityHandler: (() => void) | null = null;
@@ -287,7 +289,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     if (!state.strengthPlot) return;
     const now = Date.now() / 1000;
     state.strengthHistory.t.push(now);
-    for (const key of ["wheel", "driveshaft", "engine", "other"] as const) {
+    for (const key of STRENGTH_KEYS) {
       const val = bySource?.[key]?.strength_db;
       state.strengthHistory[key].push(typeof val === "number" && Number.isFinite(val) && val > 0 ? val : null);
     }
@@ -302,7 +304,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     const relT = state.strengthHistory.t.map((v) => v - t0);
     if (state.strengthChartAutoScale) {
       let maxDb = 10;
-      for (const key of ["wheel", "driveshaft", "engine", "other"] as const) {
+      for (const key of STRENGTH_KEYS) {
         for (const v of state.strengthHistory[key]) { if (typeof v === "number" && v > maxDb) maxDb = v; }
       }
       const ceiling = Math.ceil(maxDb / 10) * 10 + 5;

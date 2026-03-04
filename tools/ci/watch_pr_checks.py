@@ -9,20 +9,38 @@ import time
 from datetime import datetime, timezone
 
 SUCCESS_CONCLUSION = "SUCCESS"
+MERGE_ISSUE_STATES = {"DIRTY", "BEHIND", "BLOCKED", "UNKNOWN"}
 
 
 def _now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%H:%M:%S")
 
 
-def _fetch_checks(pr: str, repo: str | None) -> list[dict[str, object]]:
-    cmd = ["gh", "pr", "view", pr, "--json", "statusCheckRollup"]
+def _fetch_pr_status(
+    pr: str, repo: str | None
+) -> tuple[list[dict[str, object]], str, str]:
+    cmd = [
+        "gh",
+        "pr",
+        "view",
+        pr,
+        "--json",
+        "statusCheckRollup,mergeStateStatus,mergeable",
+    ]
     if repo:
         cmd.extend(["--repo", repo])
     raw = subprocess.check_output(cmd, text=True)
     payload = json.loads(raw)
     checks = payload.get("statusCheckRollup")
-    return checks if isinstance(checks, list) else []
+    merge_state = str(payload.get("mergeStateStatus") or "")
+    mergeable = str(payload.get("mergeable") or "")
+    return (checks if isinstance(checks, list) else [], merge_state, mergeable)
+
+
+def _has_merge_issues(merge_state: str, mergeable: str) -> bool:
+    merge_state_clean = merge_state.strip().upper()
+    mergeable_clean = mergeable.strip().upper()
+    return merge_state_clean in MERGE_ISSUE_STATES or mergeable_clean == "CONFLICTING"
 
 
 def _label(check: dict[str, object]) -> str:
@@ -67,8 +85,18 @@ def main() -> int:
         return 2
 
     while True:
-        checks = _fetch_checks(args.pr, args.repo)
-        print(f"[{_now_utc()}] PR {args.pr}: {len(checks)} checks")
+        checks, merge_state, mergeable = _fetch_pr_status(args.pr, args.repo)
+        print(
+            f"[{_now_utc()}] PR {args.pr}: {len(checks)} checks "
+            f"(merge_state={merge_state or 'UNKNOWN'}, mergeable={mergeable or 'UNKNOWN'})"
+        )
+
+        if _has_merge_issues(merge_state, mergeable):
+            print(
+                "RESULT=MERGE_ISSUES "
+                f"(merge_state={merge_state or 'UNKNOWN'}, mergeable={mergeable or 'UNKNOWN'})"
+            )
+            return 3
 
         if not checks:
             print("No checks found yet; waiting...")

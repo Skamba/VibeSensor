@@ -129,14 +129,16 @@ class TestProcessingZeroSampleRate:
 
 
 def test_live_diagnostics_entries_type_annotation() -> None:
-    """The entries type should be a 4-tuple matching the actual append."""
+    """Verify event_detector properly extracts label and location per client."""
     pkg = SERVER_ROOT / "vibesensor"
     src_path = pkg / "live_diagnostics" / "event_detector.py"
     source = src_path.read_text()
-    # Find the type annotation line for entries
-    assert "tuple[str, str, str, list[dict[str, Any]]]" in source, (
-        "entries type annotation should be a 4-tuple (client_id, label, location, peaks_raw)"
-    )
+    # The original bug was that entries lacked proper type annotations.
+    # The optimization merged the two-pass approach into a single-pass,
+    # so the intermediate entries list no longer exists.  Guard the invariant
+    # that client_map and client_location_map are still built and used.
+    assert "client_map" in source, "client_map lookup must exist"
+    assert "client_location_map" in source, "client_location_map lookup must exist"
 
 
 # --- Bug 10: location_code stripped before registry -----------------------
