@@ -34,6 +34,7 @@ from .udp_data_rx import start_udp_data_receiver
 from .update_manager import UpdateManager
 from .worker_pool import WorkerPool
 from .ws_hub import WebSocketHub
+from .ws_models import SCHEMA_VERSION
 
 LOGGER = logging.getLogger(__name__)
 
@@ -136,27 +137,36 @@ class RuntimeState:
         analysis_settings: dict[str, Any],
         resolution_source: str | None = None,
     ) -> dict[str, Any]:
+        basis = self._rotational_basis_speed_source(
+            resolution_source=resolution_source,
+        )
+
+        # Determine failure reason early to avoid closure allocation and
+        # full-dict construction on the common no-speed / invalid-settings paths.
+        if speed_mps is None or speed_mps <= 0:
+            reason: str | None = "speed_unavailable"
+            orders_hz = None
+        else:
+            orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
+            reason = "invalid_vehicle_settings" if orders_hz is None else None
+
+        if reason is not None:
+            _comp: dict[str, Any] = {"rpm": None, "mode": "calculated", "reason": reason}
+            return {
+                "basis_speed_source": basis,
+                "wheel": {**_comp},
+                "driveshaft": {**_comp},
+                "engine": {**_comp},
+                "order_bands": None,
+            }
+
         out: dict[str, Any] = {
-            "basis_speed_source": self._rotational_basis_speed_source(
-                resolution_source=resolution_source,
-            ),
+            "basis_speed_source": basis,
             "wheel": {"rpm": None, "mode": "calculated", "reason": None},
             "driveshaft": {"rpm": None, "mode": "calculated", "reason": None},
             "engine": {"rpm": None, "mode": "calculated", "reason": None},
             "order_bands": None,
         }
-
-        def _set_all_reasons(reason: str) -> dict[str, Any]:
-            for component in ("wheel", "driveshaft", "engine"):
-                out[component]["reason"] = reason
-            return out
-
-        if speed_mps is None or speed_mps <= 0:
-            return _set_all_reasons("speed_unavailable")
-
-        orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
-        if orders_hz is None:
-            return _set_all_reasons("invalid_vehicle_settings")
 
         out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
         out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
@@ -184,9 +194,9 @@ class RuntimeState:
         existing cache is reused if it was populated at least once.
         """
         need_refresh = (
-            self.ws_include_heavy
-            and (self.cached_analysis_tick != self.ws_tick or self.cached_analysis_metadata is None)
-        ) or self.cached_analysis_metadata is None
+            self.cached_analysis_metadata is None
+            or (self.ws_include_heavy and self.cached_analysis_tick != self.ws_tick)
+        )
         if need_refresh:
             metadata, samples = self.metrics_logger.analysis_snapshot()
             self.cached_analysis_metadata = metadata
@@ -227,8 +237,6 @@ class RuntimeState:
         return diagnostics
 
     def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
-        from .ws_models import SCHEMA_VERSION
-
         clients = self.registry.snapshot_for_api()
         active = selected_client
         if active is None and clients:
