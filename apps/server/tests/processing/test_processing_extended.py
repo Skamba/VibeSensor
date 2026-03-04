@@ -177,9 +177,11 @@ def test_payload_reuses_cached_conversion(
     first = payload_fn("client1")
 
     def _fail_float_list(*_a, **_kw):  # type: ignore[no-untyped-def]
-        raise AssertionError(f"_float_list should not be called for cached {method_name}")
+        raise AssertionError(f"float_list should not be called for cached {method_name}")
 
-    monkeypatch.setattr(proc, "_float_list", _fail_float_list)
+    monkeypatch.setattr(
+        "vibesensor.processing.processor.float_list", _fail_float_list,
+    )
     second = payload_fn("client1")
     assert second is first
 

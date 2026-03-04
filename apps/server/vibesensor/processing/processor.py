@@ -111,20 +111,12 @@ class SignalProcessor:
     # -- static / pure helpers (delegate to fft module) -----------------------
 
     @staticmethod
-    def _medfilt3(block: np.ndarray) -> np.ndarray:
-        return medfilt3(block)
-
-    @staticmethod
     def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
         return smooth_spectrum(amps, bins=bins)
 
     @staticmethod
     def _noise_floor(amps: np.ndarray) -> float:
         return noise_floor(amps)
-
-    @staticmethod
-    def _float_list(values: np.ndarray | list[float]) -> list[float]:
-        return float_list(values)
 
     @classmethod
     def _top_peaks(
@@ -562,17 +554,9 @@ class SignalProcessor:
     @_synchronized
     def selected_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
-        if buf is None or buf.count == 0:
-            return {
-                "client_id": client_id,
-                "sample_rate_hz": self.sample_rate_hz,
-                "waveform": {},
-                "spectrum": {},
-                "metrics": {},
-            }
-
-        sr = buf.sample_rate_hz or self.sample_rate_hz
-        if sr <= 0:
+        no_data = buf is None or buf.count == 0
+        sr = self.sample_rate_hz if no_data else (buf.sample_rate_hz or self.sample_rate_hz)
+        if no_data or sr <= 0:
             return {
                 "client_id": client_id,
                 "sample_rate_hz": sr,
@@ -672,11 +656,11 @@ class SignalProcessor:
         sr = buf.sample_rate_hz or self.sample_rate_hz
         fft_block = self._latest(buf, self.fft_n)  # _latest already copies
 
-        # Stats before filtering / mean removal
-        raw_mean = [float(fft_block[i].mean()) for i in range(3)]
-        raw_std = [float(fft_block[i].std()) for i in range(3)]
-        raw_min = [float(fft_block[i].min()) for i in range(3)]
-        raw_max = [float(fft_block[i].max()) for i in range(3)]
+        # Stats before filtering / mean removal (vectorised across axes)
+        raw_mean = fft_block.mean(axis=1).tolist()
+        raw_std = fft_block.std(axis=1).tolist()
+        raw_min = fft_block.min(axis=1).tolist()
+        raw_max = fft_block.max(axis=1).tolist()
 
         # Use shared FFT computation (same path as compute_metrics)
         fft_result = self._compute_fft_spectrum(fft_block, sr)
@@ -685,8 +669,8 @@ class SignalProcessor:
         combined_amp = fft_result["combined_amp"]
         sm = fft_result["strength_metrics"]
 
-        # Detrended std from the filtered block (approximate from axis amps)
-        detrended_std = [float(np.std(fft_block[i] - np.mean(fft_block[i]))) for i in range(3)]
+        # Detrended std from the filtered block (vectorised across axes)
+        detrended_std = (fft_block - fft_block.mean(axis=1, keepdims=True)).std(axis=1).tolist()
 
         # Top 10 bins by combined amplitude
         sorted_idx = np.argsort(combined_amp)[::-1]
