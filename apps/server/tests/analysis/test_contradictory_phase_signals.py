@@ -283,37 +283,31 @@ def test_equal_strength_two_corners(corner_a: str, corner_b: str) -> None:
     sensor_b = CORNER_SENSORS[corner_b]
     whz = wheel_hz(SPEED_MID)
 
+    fault_sensors = {sensor_a, sensor_b}
     samples: list[dict[str, Any]] = []
     for i in range(30):
         t = float(i)
         for s in ALL_WHEEL_SENSORS:
-            if s == sensor_a or s == sensor_b:
-                peaks = [
+            is_fault = s in fault_sensors
+            peaks = (
+                [
                     {"hz": whz, "amp": 0.06},
                     {"hz": whz * 2, "amp": 0.024},
                     {"hz": 142.5, "amp": 0.004},
                 ]
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=SPEED_MID,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=26.0,
-                        strength_floor_amp_g=0.004,
-                    )
+                if is_fault
+                else [{"hz": 142.5, "amp": 0.004}]
+            )
+            samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=SPEED_MID,
+                    client_name=s,
+                    top_peaks=peaks,
+                    vibration_strength_db=26.0 if is_fault else 8.0,
+                    strength_floor_amp_g=0.004,
                 )
-            else:
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=SPEED_MID,
-                        client_name=s,
-                        top_peaks=[{"hz": 142.5, "amp": 0.004}],
-                        vibration_strength_db=8.0,
-                        strength_floor_amp_g=0.004,
-                    )
-                )
+            )
 
     summary = run_analysis(samples)
     assert isinstance(summary, dict)
