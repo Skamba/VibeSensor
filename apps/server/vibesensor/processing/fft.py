@@ -102,13 +102,17 @@ def top_peaks(
         floor_amp = 0.0
     threshold = max(floor_amp * max(1.1, floor_ratio), floor_amp + STRENGTH_EPSILON_MIN_G)
 
-    peak_idx: list[int] = []
-    for idx in range(1, smoothed.size - 1):
-        amp = float(smoothed[idx])
-        if amp < threshold:
-            continue
-        if amp > float(smoothed[idx - 1]) and amp >= float(smoothed[idx + 1]):
-            peak_idx.append(idx)
+    # Vectorised interior-peak detection (replaces per-element Python loop).
+    if smoothed.size > 2:
+        interior = smoothed[1:-1]
+        mask = (
+            (interior >= threshold)
+            & (interior > smoothed[:-2])
+            & (interior >= smoothed[2:])
+        )
+        peak_idx: list[int] = (np.flatnonzero(mask) + 1).tolist()
+    else:
+        peak_idx = []
     # Boundary check: last bin can be a peak if it exceeds its left neighbor.
     if smoothed.size > 1:
         last = smoothed.size - 1
@@ -184,20 +188,22 @@ def compute_fft_spectrum(
     fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
     fft_n = fft_window.shape[0]
 
+    # Batch FFT: window and transform all axes in a single call instead of 3.
+    windowed_all = fft_block * fft_window  # broadcasts (3, N) * (N,)
+    specs_all = np.abs(np.fft.rfft(windowed_all, axis=1)).astype(np.float32)
+    specs_all *= fft_scale
+    if specs_all.shape[1] > 0:
+        specs_all[:, 0] *= 0.5
+    if (fft_n % 2) == 0 and specs_all.shape[1] > 1:
+        specs_all[:, -1] *= 0.5
+
     spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
     axis_amp_slices: list[np.ndarray] = []
     axis_amps: dict[str, np.ndarray] = {}
     axis_peaks: dict[str, list] = {}
 
     for axis_idx, axis in enumerate(AXES):
-        windowed = fft_block[axis_idx] * fft_window
-        spec = np.abs(np.fft.rfft(windowed)).astype(np.float32)
-        spec *= fft_scale
-        if spec.size > 0:
-            spec[0] *= 0.5
-        if (fft_n % 2) == 0 and spec.size > 1:
-            spec[-1] *= 0.5
-        amp_slice = spec[valid_idx]
+        amp_slice = specs_all[axis_idx, valid_idx]
         amp_for_peaks = amp_slice.copy()
         if amp_for_peaks.size > 1 and freq_slice.size > 0 and freq_slice[0] < 0.5:
             amp_for_peaks[0] = 0.0
