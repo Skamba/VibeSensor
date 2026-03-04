@@ -152,11 +152,15 @@ class TestSpectrumMinHz:
 class TestLoadConfigValidation:
     """load_config() integration: invalid YAML values are clamped."""
 
-    def test_zero_sample_rate_clamped(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize(
+        "field",
+        ["sample_rate_hz", "waveform_seconds", "fft_update_hz", "ui_push_hz"],
+    )
+    def test_zero_value_clamped_to_at_least_1(self, tmp_path: Path, field: str) -> None:
         config_path = tmp_path / "config.yaml"
-        _write_config(config_path, {"processing": {"sample_rate_hz": 0}})
+        _write_config(config_path, {"processing": {field: 0}})
         cfg = load_config(config_path)
-        assert cfg.processing.sample_rate_hz >= 1
+        assert getattr(cfg.processing, field) >= 1, f"{field} should be clamped to >= 1"
 
     def test_negative_fft_n_clamped(self, tmp_path: Path) -> None:
         config_path = tmp_path / "config.yaml"
@@ -164,24 +168,6 @@ class TestLoadConfigValidation:
         cfg = load_config(config_path)
         assert cfg.processing.fft_n >= 16
         assert cfg.processing.fft_n & (cfg.processing.fft_n - 1) == 0
-
-    def test_zero_waveform_seconds_clamped(self, tmp_path: Path) -> None:
-        config_path = tmp_path / "config.yaml"
-        _write_config(config_path, {"processing": {"waveform_seconds": 0}})
-        cfg = load_config(config_path)
-        assert cfg.processing.waveform_seconds >= 1
-
-    def test_zero_fft_update_hz_clamped(self, tmp_path: Path) -> None:
-        config_path = tmp_path / "config.yaml"
-        _write_config(config_path, {"processing": {"fft_update_hz": 0}})
-        cfg = load_config(config_path)
-        assert cfg.processing.fft_update_hz >= 1
-
-    def test_zero_ui_push_hz_clamped(self, tmp_path: Path) -> None:
-        config_path = tmp_path / "config.yaml"
-        _write_config(config_path, {"processing": {"ui_push_hz": 0}})
-        cfg = load_config(config_path)
-        assert cfg.processing.ui_push_hz >= 1
 
     def test_default_config_passes_validation(self, tmp_path: Path) -> None:
         """Empty override → defaults must all pass validation unchanged."""

@@ -90,43 +90,20 @@ def test_read_config_file_non_dict_raises(tmp_path: Path) -> None:
         _read_config_file(cfg_path)
 
 
-# -- load_config accel_scale negative ------------------------------------------
+# -- load_config: AP self-heal -------------------------------------------------
+# NOTE: accel_scale_g_per_lsb zero/negative tests live in
+# test_config_validation.py::TestAccelScaleValidation.
 
 
-def test_load_config_negative_accel_scale(tmp_path: Path) -> None:
-    cfg = {
-        "processing": {"accel_scale_g_per_lsb": -1.0},
-        "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
-    }
-    cfg_path = tmp_path / "config.yaml"
-    with cfg_path.open("w") as f:
-        yaml.safe_dump(cfg, f)
-    result = load_config(cfg_path)
-    assert result.processing.accel_scale_g_per_lsb is None
-
-
-def test_load_config_zero_accel_scale(tmp_path: Path) -> None:
-    """accel_scale_g_per_lsb=0 should be treated as auto-detection (None)."""
-    cfg = {
-        "processing": {"accel_scale_g_per_lsb": 0},
-        "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
-    }
-    cfg_path = tmp_path / "config.yaml"
-    with cfg_path.open("w") as f:
-        yaml.safe_dump(cfg, f)
-    result = load_config(cfg_path)
-    assert result.processing.accel_scale_g_per_lsb is None
+def _write_config(path: Path, payload: dict) -> None:
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
 
 def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
-    cfg = {
-        "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
-    }
-    cfg_path = tmp_path / "config.yaml"
-    with cfg_path.open("w") as f:
-        yaml.safe_dump(cfg, f)
+    config_path = tmp_path / "config.yaml"
+    _write_config(config_path, {"logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"}})
 
-    result = load_config(cfg_path)
+    result = load_config(config_path)
 
     assert result.ap.self_heal.enabled is True
     assert result.ap.self_heal.interval_seconds == 120
@@ -134,24 +111,25 @@ def test_load_config_ap_self_heal_defaults(tmp_path: Path) -> None:
 
 
 def test_load_config_ap_self_heal_override(tmp_path: Path) -> None:
-    cfg = {
-        "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
-        "ap": {
-            "self_heal": {
-                "enabled": True,
-                "interval_seconds": 180,
-                "diagnostics_lookback_minutes": 7,
-                "min_restart_interval_seconds": 240,
-                "allow_disable_resolved_stub_listener": True,
-                "state_file": "/tmp/hotspot-heal-state.json",
-            }
+    config_path = tmp_path / "config.yaml"
+    _write_config(
+        config_path,
+        {
+            "logging": {"metrics_log_path": "/tmp/test_metrics.jsonl"},
+            "ap": {
+                "self_heal": {
+                    "enabled": True,
+                    "interval_seconds": 180,
+                    "diagnostics_lookback_minutes": 7,
+                    "min_restart_interval_seconds": 240,
+                    "allow_disable_resolved_stub_listener": True,
+                    "state_file": "/tmp/hotspot-heal-state.json",
+                }
+            },
         },
-    }
-    cfg_path = tmp_path / "config.yaml"
-    with cfg_path.open("w") as f:
-        yaml.safe_dump(cfg, f)
+    )
 
-    result = load_config(cfg_path)
+    result = load_config(config_path)
 
     assert result.ap.self_heal.interval_seconds == 180
     assert result.ap.self_heal.diagnostics_lookback_minutes == 7
