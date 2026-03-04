@@ -10,7 +10,14 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import Any, Self
+
+
+@lru_cache(maxsize=16)
+def _valid_field_names(cls: type) -> frozenset[str]:
+    """Return declared dataclass field names for *cls* (cached per class)."""
+    return frozenset(f.name for f in dataclasses.fields(cls))
 
 
 def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
@@ -19,7 +26,7 @@ def _filter_fields(cls: type, raw: dict[str, Any]) -> dict[str, Any]:
     All dataclass fields in this module use defaults so that ``from_dict()``
     tolerates missing keys when reconstructing from older persisted data.
     """
-    valid = {f.name for f in dataclasses.fields(cls)}
+    valid = _valid_field_names(cls)
     return {k: v for k, v in raw.items() if k in valid}
 
 
