@@ -34,6 +34,7 @@ from .udp_data_rx import start_udp_data_receiver
 from .update_manager import UpdateManager
 from .worker_pool import WorkerPool
 from .ws_hub import WebSocketHub
+from .ws_models import SCHEMA_VERSION
 
 LOGGER = logging.getLogger(__name__)
 
@@ -193,9 +194,9 @@ class RuntimeState:
         existing cache is reused if it was populated at least once.
         """
         need_refresh = (
-            self.ws_include_heavy
-            and (self.cached_analysis_tick != self.ws_tick or self.cached_analysis_metadata is None)
-        ) or self.cached_analysis_metadata is None
+            self.cached_analysis_metadata is None
+            or (self.ws_include_heavy and self.cached_analysis_tick != self.ws_tick)
+        )
         if need_refresh:
             metadata, samples = self.metrics_logger.analysis_snapshot()
             self.cached_analysis_metadata = metadata
@@ -236,8 +237,6 @@ class RuntimeState:
         return diagnostics
 
     def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
-        from .ws_models import SCHEMA_VERSION
-
         clients = self.registry.snapshot_for_api()
         active = selected_client
         if active is None and clients:
