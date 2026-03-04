@@ -10,6 +10,8 @@ import numpy as np
 import pytest
 
 from vibesensor.analysis.helpers import counter_delta
+from vibesensor.processing import ClientBuffer, SignalProcessor
+from vibesensor.settings_store import PersistenceError, SettingsStore
 
 # ---------------------------------------------------------------------------
 # counter_delta shared helper
@@ -52,8 +54,6 @@ class TestClientBufferInvalidateCaches:
     """Verify the extracted invalidate_caches method works correctly."""
 
     def test_clears_all_cache_fields(self) -> None:
-        from vibesensor.processing import ClientBuffer
-
         buf = ClientBuffer(
             data=np.zeros((3, 100), dtype=np.float32),
             capacity=100,
@@ -81,8 +81,6 @@ class TestComputeMetricsGenerationGuard:
     """Phase 3 should not overwrite fresher results with stale ones."""
 
     def test_stale_generation_does_not_overwrite(self) -> None:
-        from vibesensor.processing import SignalProcessor
-
         sp = SignalProcessor(
             sample_rate_hz=1000,
             waveform_seconds=2,
@@ -122,16 +120,12 @@ class TestSettingsStoreRollback:
 
     @pytest.fixture
     def store(self) -> Any:
-        from vibesensor.settings_store import SettingsStore
-
         s = SettingsStore()
         s.add_car({"name": "Test Car", "type": "sedan"})
         s.set_active_car(s.get_cars()["cars"][0]["id"])
         return s
 
     def test_update_active_car_aspects_rollback(self, store: Any) -> None:
-        from vibesensor.settings_store import PersistenceError
-
         cars = store.get_cars()
         original_aspects = dict(cars["cars"][0].get("aspects", {}))
 
@@ -144,8 +138,6 @@ class TestSettingsStoreRollback:
         assert current["cars"][0].get("aspects", {}) == original_aspects
 
     def test_update_speed_source_rollback(self, store: Any) -> None:
-        from vibesensor.settings_store import PersistenceError
-
         original = store.get_speed_source()
 
         with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
@@ -156,8 +148,6 @@ class TestSettingsStoreRollback:
         assert store.get_speed_source() == original
 
     def test_set_language_rollback(self, store: Any) -> None:
-        from vibesensor.settings_store import PersistenceError
-
         original = store.language
 
         with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
@@ -168,8 +158,6 @@ class TestSettingsStoreRollback:
         assert store.language == original
 
     def test_set_speed_unit_rollback(self, store: Any) -> None:
-        from vibesensor.settings_store import PersistenceError
-
         original = store.speed_unit
 
         with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
@@ -180,8 +168,6 @@ class TestSettingsStoreRollback:
         assert store.speed_unit == original
 
     def test_set_sensor_rollback_new_sensor(self, store: Any) -> None:
-        from vibesensor.settings_store import PersistenceError
-
         mac = "AA:BB:CC:DD:EE:FF"
 
         with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
@@ -194,8 +180,6 @@ class TestSettingsStoreRollback:
         assert normalized not in sensors
 
     def test_set_sensor_rollback_existing_sensor(self, store: Any) -> None:
-        from vibesensor.settings_store import PersistenceError
-
         mac = "11:22:33:44:55:66"
         # First create a sensor successfully
         store.set_sensor(mac, {"name": "Original", "location": "rear"})

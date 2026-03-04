@@ -18,6 +18,31 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from vibesensor.analysis.report_data_builder import map_summary
+from vibesensor.firmware_cache import FirmwareCache, FirmwareCacheConfig, GitHubReleaseFetcher
+from vibesensor.gps_speed import GPSSpeedMonitor
+from vibesensor.report_cli import main as report_cli_main
+
+
+def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:
+    """Build a minimal summary dict for map_summary tests."""
+    base: dict[str, Any] = {
+        "lang": "en",
+        "report_date": report_date,
+        "metadata": {},
+        "findings": [],
+        "top_causes": [],
+        "speed_stats": {},
+        "most_likely_origin": {},
+        "sensor_intensity_by_location": [],
+        "run_suitability": [],
+        "phase_info": None,
+        "plots": {"peaks_table": []},
+        "test_plan": [],
+    }
+    base.update(overrides)
+    return base
+
 # ------------------------------------------------------------------
 # 1. firmware_cache.refresh() – UnboundLocalError guard
 # ------------------------------------------------------------------
@@ -29,8 +54,6 @@ class TestFirmwareCacheRefreshUnboundGuard:
 
     def test_exception_before_activation_does_not_raise_unbound(self, tmp_path: Path) -> None:
         """If download_bundle raises, the except block should not crash."""
-        from vibesensor.firmware_cache import FirmwareCache, FirmwareCacheConfig
-
         cfg = FirmwareCacheConfig(
             firmware_repo="test/repo",
             cache_dir=str(tmp_path / "fw"),
@@ -58,8 +81,6 @@ class TestDownloadAssetFdLeakGuard:
     """When os.fdopen fails, the raw fd must be closed."""
 
     def test_fd_closed_when_fdopen_fails(self, tmp_path: Path) -> None:
-        from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
-
         cfg = FirmwareCacheConfig(firmware_repo="test/repo")
         fetcher = GitHubReleaseFetcher(cfg)
 
@@ -92,8 +113,6 @@ class TestResolveSpeedTOCTOU:
     """resolve_speed must snapshot speed_mps to avoid read-between-lines races."""
 
     def test_speed_snapshot_used_for_gps_return(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
         mon = GPSSpeedMonitor(gps_enabled=True)
         mon.speed_mps = 10.5
         mon.last_update_ts = time.monotonic()
@@ -104,8 +123,6 @@ class TestResolveSpeedTOCTOU:
         assert result.source == "gps"
 
     def test_speed_none_after_stale(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
         mon = GPSSpeedMonitor(gps_enabled=True)
         mon.speed_mps = 5.0
         mon.last_update_ts = time.monotonic() - 999  # very stale
@@ -123,26 +140,23 @@ class TestResolveSpeedTOCTOU:
 class TestIsGpsStaleTOCTOU:
     """_is_gps_stale must snapshot last_update_ts."""
 
-    def test_none_ts_is_stale(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
+    @pytest.mark.parametrize(
+        "ts,expected",
+        [
+            pytest.param(None, True, id="none_ts"),
+            pytest.param("fresh", False, id="fresh_ts"),
+            pytest.param("old", True, id="old_ts"),
+        ],
+    )
+    def test_is_gps_stale(self, ts: Any, expected: bool) -> None:
         mon = GPSSpeedMonitor(gps_enabled=True)
-        mon.last_update_ts = None
-        assert mon._is_gps_stale() is True
-
-    def test_fresh_ts_not_stale(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        mon = GPSSpeedMonitor(gps_enabled=True)
-        mon.last_update_ts = time.monotonic()
-        assert mon._is_gps_stale() is False
-
-    def test_old_ts_is_stale(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        mon = GPSSpeedMonitor(gps_enabled=True)
-        mon.last_update_ts = time.monotonic() - 999
-        assert mon._is_gps_stale() is True
+        if ts == "fresh":
+            mon.last_update_ts = time.monotonic()
+        elif ts == "old":
+            mon.last_update_ts = time.monotonic() - 999
+        else:
+            mon.last_update_ts = None
+        assert mon._is_gps_stale() is expected
 
 
 # ------------------------------------------------------------------
@@ -154,8 +168,6 @@ class TestReportCliErrorHandling:
     """PDF generation failures should return exit code 1, not raise."""
 
     def test_pdf_build_failure_returns_1(self, tmp_path: Path) -> None:
-        from vibesensor.report_cli import main
-
         run_file = tmp_path / "test_run.jsonl"
         run_file.write_text('{"event": "meta"}\n')
 
@@ -171,12 +183,10 @@ class TestReportCliErrorHandling:
                 return_value=MagicMock(input=run_file, output=None, summary_json=None),
             ),
         ):
-            result = main()
+            result = report_cli_main()
             assert result == 1
 
     def test_pdf_build_success_returns_0(self, tmp_path: Path) -> None:
-        from vibesensor.report_cli import main
-
         run_file = tmp_path / "test_run.jsonl"
         run_file.write_text('{"event": "meta"}\n')
 
@@ -191,7 +201,7 @@ class TestReportCliErrorHandling:
                 ),
             ),
         ):
-            result = main()
+            result = report_cli_main()
             assert result == 0
             assert (tmp_path / "out.pdf").exists()
 
@@ -205,22 +215,10 @@ class TestReportDataBuilderUTCSuffix:
     """date_str in report data must end with ' UTC'."""
 
     def test_date_str_has_utc_suffix(self) -> None:
-        from vibesensor.analysis.report_data_builder import map_summary
-
-        summary: dict[str, Any] = {
-            "lang": "en",
-            "report_date": "2025-06-01T14:30:00Z",
-            "metadata": {"car_name": "TestCar"},
-            "findings": [],
-            "top_causes": [],
-            "speed_stats": {},
-            "most_likely_origin": {},
-            "sensor_intensity_by_location": [],
-            "run_suitability": [],
-            "phase_info": None,
-            "plots": {"peaks_table": []},
-            "test_plan": [],
-        }
+        summary = _make_summary(
+            "2025-06-01T14:30:00Z",
+            metadata={"car_name": "TestCar"},
+        )
         result = map_summary(summary)
         assert result.run_datetime is not None
         assert result.run_datetime.endswith(" UTC"), (
@@ -229,21 +227,6 @@ class TestReportDataBuilderUTCSuffix:
         assert "2025-06-01 14:30:00" in result.run_datetime
 
     def test_date_str_no_tz_input_still_has_utc(self) -> None:
-        from vibesensor.analysis.report_data_builder import map_summary
-
-        summary: dict[str, Any] = {
-            "lang": "en",
-            "report_date": "2025-03-15T09:45:22",
-            "metadata": {},
-            "findings": [],
-            "top_causes": [],
-            "speed_stats": {},
-            "most_likely_origin": {},
-            "sensor_intensity_by_location": [],
-            "run_suitability": [],
-            "phase_info": None,
-            "plots": {"peaks_table": []},
-            "test_plan": [],
-        }
+        summary = _make_summary("2025-03-15T09:45:22")
         result = map_summary(summary)
         assert result.run_datetime == "2025-03-15 09:45:22 UTC"
