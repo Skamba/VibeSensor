@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
 from fastapi import FastAPI
 
 from vibesensor.api import create_router
 
 
-def _openapi_schema() -> dict:
+@pytest.fixture(scope="module")
+def openapi_schema() -> dict:
+    """Build the OpenAPI schema once for all tests in this module."""
     app = FastAPI()
     app.include_router(create_router(MagicMock()))
     return app.openapi()
@@ -19,23 +22,25 @@ def _response_schema(openapi: dict, path: str, method: str = "get") -> dict:
     ]
 
 
-def test_openapi_uses_typed_response_models_for_core_settings_routes() -> None:
-    openapi = _openapi_schema()
+@pytest.mark.parametrize(
+    ("path", "model"),
+    [
+        ("/api/health", "HealthResponse"),
+        ("/api/settings/language", "LanguageResponse"),
+        ("/api/settings/cars", "CarsResponse"),
+        ("/api/settings/update/status", "UpdateStatusResponse"),
+    ],
+    ids=["health", "language", "cars", "update_status"],
+)
+def test_openapi_uses_typed_response_model(openapi_schema: dict, path: str, model: str) -> None:
+    schema = _response_schema(openapi_schema, path)
+    assert schema == {"$ref": f"#/components/schemas/{model}"}
 
-    health_schema = _response_schema(openapi, "/api/health")
-    language_schema = _response_schema(openapi, "/api/settings/language")
-    cars_schema = _response_schema(openapi, "/api/settings/cars")
-    update_status_schema = _response_schema(openapi, "/api/settings/update/status")
 
-    assert health_schema == {"$ref": "#/components/schemas/HealthResponse"}
-    assert language_schema == {"$ref": "#/components/schemas/LanguageResponse"}
-    assert cars_schema == {"$ref": "#/components/schemas/CarsResponse"}
-    assert update_status_schema == {"$ref": "#/components/schemas/UpdateStatusResponse"}
-
-
-def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses() -> None:
-    openapi = _openapi_schema()
-    components = openapi["components"]["schemas"]
+def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses(
+    openapi_schema: dict,
+) -> None:
+    components = openapi_schema["components"]["schemas"]
 
     assert components["HealthResponse"]["required"] == [
         "status",
