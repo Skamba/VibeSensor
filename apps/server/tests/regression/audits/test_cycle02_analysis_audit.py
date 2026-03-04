@@ -32,6 +32,25 @@ from vibesensor.analysis.phase_segmentation import (
 from vibesensor.analysis.strength_labels import strength_label
 from vibesensor.processing import SignalProcessor
 
+
+def _make_signal_processor(
+    sample_rate_hz: int = 512,
+    fft_n: int = 512,
+    *,
+    spectrum_min_hz: float = 5.0,
+    spectrum_max_hz: float = 200.0,
+) -> SignalProcessor:
+    """Create a SignalProcessor with common defaults for audit tests."""
+    return SignalProcessor(
+        sample_rate_hz=sample_rate_hz,
+        waveform_seconds=4,
+        waveform_display_hz=100,
+        fft_n=fft_n,
+        spectrum_min_hz=spectrum_min_hz,
+        spectrum_max_hz=spectrum_max_hz,
+    )
+
+
 # =====================================================================
 # FINDING 1 (KNOWN – CONFIRMED) — First valid freq bin zeroed
 # Severity: MEDIUM
@@ -58,14 +77,7 @@ class TestFinding1_FirstValidBinZeroed:
         """When spectrum_min_hz > 0, bin 0 of the sliced spectrum is a
         real analysis frequency, yet it is zeroed before being fed to
         combined_spectrum_amp_g."""
-        sp = SignalProcessor(
-            sample_rate_hz=512,
-            waveform_seconds=4,
-            waveform_display_hz=100,
-            fft_n=512,
-            spectrum_min_hz=5.0,
-            spectrum_max_hz=200,
-        )
+        sp = _make_signal_processor(sample_rate_hz=512, fft_n=512)
         # Inject a 6 Hz sinusoid — should appear in the first few bins
         t = np.arange(512, dtype=np.float32) / 512
         signal = 0.5 * np.sin(2 * np.pi * 6 * t)
@@ -260,14 +272,7 @@ class TestFinding6_CombinedSpectrumInheritsZeroedBin:
     def test_combined_spectrum_preserves_bin0(self):
         """FIXED: combined spectrum bin 0 should NOT be zeroed for
         broadband input because axis_amp_slices now uses amp_slice."""
-        sp = SignalProcessor(
-            sample_rate_hz=256,
-            waveform_seconds=4,
-            waveform_display_hz=100,
-            fft_n=256,
-            spectrum_min_hz=5.0,
-            spectrum_max_hz=200,
-        )
+        sp = _make_signal_processor(sample_rate_hz=256, fft_n=256)
         rng = np.random.default_rng(42)
         block = rng.standard_normal((3, 256)).astype(np.float32) * 0.1
 
