@@ -37,10 +37,8 @@ from builders import (
     run_analysis,
 )
 
-# ---------------------------------------------------------------------------
 # C.1 – Fault + transient at each corner × speed (4×3 = 12 cases)
 # Transient should NOT override persistent fault diagnosis
-# ---------------------------------------------------------------------------
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
@@ -49,9 +47,7 @@ _OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
 _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 
 
 def _build_fault_with_transient_samples(
@@ -112,9 +108,7 @@ def test_fault_with_transient_preserves_diagnosis(
     assert_has_warnings(summary, msg=f"{corner}@{speed} w/transient")
 
 
-# ---------------------------------------------------------------------------
 # C.2 – Transient only, no fault → no persistent wheel diagnosis (3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -141,9 +135,7 @@ def test_transient_only_no_persistent_fault(speed: float, profile: dict[str, Any
     assert_tolerant_no_fault(summary, msg=f"transient-only@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # C.3 – Multiple transients at different times (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -170,9 +162,7 @@ def test_multiple_transients_no_false_fault(corner: str, profile: dict[str, Any]
     assert_tolerant_no_fault(summary, msg=f"multi-transient {corner}")
 
 
-# ---------------------------------------------------------------------------
 # C.4 – Transient amplitude scaling (3 amps × 2 corners = 6 cases)
-# ---------------------------------------------------------------------------
 
 _SPIKE_AMPS = [
     ("small", 0.05, 25.0),
@@ -192,8 +182,13 @@ def test_transient_amplitude_deweighting(
     """Persistent fault + transient of varying size → fault still primary."""
     sensor = CORNER_SENSORS[corner]
     samples = _build_fault_with_transient_samples(
-        profile, sensor, SPEED_MID,
-        fault_amp=0.06, fault_vib_db=26.0, spike_amp=amp, spike_vib_db=vdb,
+        profile,
+        sensor,
+        SPEED_MID,
+        fault_amp=0.06,
+        fault_vib_db=26.0,
+        spike_amp=amp,
+        spike_vib_db=vdb,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
@@ -202,9 +197,7 @@ def test_transient_amplitude_deweighting(
     assert_confidence_label_valid(summary, msg=f"{corner} spike={label}")
 
 
-# ---------------------------------------------------------------------------
 # C.5 – Phased onset with transient (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -246,9 +239,7 @@ def test_phased_onset_with_transient(corner: str, profile: dict[str, Any]) -> No
     assert_confidence_label_valid(summary, msg=f"phased+transient {corner}")
 
 
-# ---------------------------------------------------------------------------
 # C.6 – Transient at different frequencies (4 freqs = 4 cases)
-# ---------------------------------------------------------------------------
 
 _SPIKE_FREQS = [20.0, 50.0, 100.0, 200.0]
 
@@ -275,9 +266,7 @@ def test_transient_frequency_variation(freq: float, profile: dict[str, Any]) -> 
     assert_tolerant_no_fault(summary, msg=f"transient@{freq}Hz")
 
 
-# ---------------------------------------------------------------------------
 # C.7 – Long transient burst (wider than typical) (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -301,9 +290,7 @@ def test_long_transient_burst(corner: str, profile: dict[str, Any]) -> None:
     assert_tolerant_no_fault(summary, msg=f"long-transient {corner}")
 
 
-# ---------------------------------------------------------------------------
 # C.8 – Transient coinciding with wheel frequency (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -330,9 +317,7 @@ def test_transient_at_wheel_freq_no_false_positive(corner: str, profile: dict[st
     assert_tolerant_no_fault(summary, msg=f"transient@wheel_hz {corner}")
 
 
-# ---------------------------------------------------------------------------
 # C.9 – Diffuse noise + transient → no fault (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -356,9 +341,7 @@ def test_diffuse_plus_transient_no_fault(speed: float, profile: dict[str, Any]) 
     assert_tolerant_no_fault(summary, msg=f"diffuse+transient@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # C.10 – Fault with transient at very high speed (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -367,8 +350,11 @@ def test_fault_plus_transient_very_high_speed(corner: str, profile: dict[str, An
     """Fault + transient at 120 km/h → fault still detected."""
     sensor = CORNER_SENSORS[corner]
     samples = _build_fault_with_transient_samples(
-        profile, sensor, SPEED_VERY_HIGH,
-        fault_amp=0.08, fault_vib_db=30.0,
+        profile,
+        sensor,
+        SPEED_VERY_HIGH,
+        fault_amp=0.08,
+        fault_vib_db=30.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
@@ -377,9 +363,7 @@ def test_fault_plus_transient_very_high_speed(corner: str, profile: dict[str, An
     assert_confidence_label_valid(summary, msg=f"{corner}@120+transient")
 
 
-# ---------------------------------------------------------------------------
 # C.11 – Transient duration variation (3 durations × 2 corners = 6 cases)
-# ---------------------------------------------------------------------------
 
 _SPIKE_DURATIONS = [1, 5, 8]
 
@@ -391,8 +375,12 @@ def test_transient_duration_variation(corner: str, n_spike: int, profile: dict[s
     """Transient of varying duration alongside persistent fault."""
     sensor = CORNER_SENSORS[corner]
     samples = _build_fault_with_transient_samples(
-        profile, sensor, SPEED_MID,
-        spike_n=n_spike, spike_amp=0.15, spike_vib_db=35.0,
+        profile,
+        sensor,
+        SPEED_MID,
+        spike_n=n_spike,
+        spike_amp=0.15,
+        spike_vib_db=35.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)

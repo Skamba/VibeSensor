@@ -54,9 +54,7 @@ _OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
 _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 
 
 def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
@@ -67,9 +65,7 @@ def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
     assert_strongest_location(summary, sensor, msg=msg)
 
 
-# ---------------------------------------------------------------------------
 # E.1 – 4-sensor fault + transient at each corner × speed (4×3 = 12 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -114,9 +110,7 @@ def test_4sensor_fault_with_transient(corner: str, speed: float, profile: dict[s
     )
 
 
-# ---------------------------------------------------------------------------
 # E.2 – 4-sensor transient on non-fault sensor (4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -152,9 +146,7 @@ def test_4sensor_transient_on_other_sensor(corner: str, profile: dict[str, Any])
     _assert_fault_at(summary, sensor, msg=f"4s other-t {corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.3 – 4-sensor no-fault + transient → no persistent fault (3 speeds = 3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -177,9 +169,7 @@ def test_4sensor_transient_only_no_fault(speed: float, profile: dict[str, Any]) 
     assert_tolerant_no_fault(summary, msg=f"4sensor transient-only@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # E.4 – 8-sensor fault + transient (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -215,9 +205,7 @@ def test_8sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> N
     assert_confidence_label_valid(summary, msg=f"8s+t {corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.5 – 12-sensor fault + transient (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -252,9 +240,7 @@ def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> 
     _assert_fault_at(summary, sensor, msg=f"12s+t {corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.6 – 2-sensor fault + transient (2 pairs × 2 faults = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -300,9 +286,7 @@ def test_2sensor_fault_with_transient(
     _assert_fault_at(summary, fault_sensor, msg=f"2s+t {fault_corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.7 – Diffuse + transient on 4 sensors (3 speeds = 3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -325,9 +309,7 @@ def test_4sensor_diffuse_transient_no_fault(speed: float, profile: dict[str, Any
     assert_tolerant_no_fault(summary, msg=f"4s-diffuse+transient@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # E.8 – Multiple transients on multiple sensors (4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -375,9 +357,7 @@ def test_4sensor_multi_transient_preserves_fault(corner: str, profile: dict[str,
     _assert_fault_at(summary, sensor, msg=f"multi-t {corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.9 – Phased onset + transient on 4 sensors (2 corners = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -416,9 +396,7 @@ def test_4sensor_phased_onset_with_transient(corner: str, profile: dict[str, Any
     _assert_fault_at(summary, sensor, msg=f"phased+t {corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.10 – Transfer path + transient (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -454,9 +432,7 @@ def test_4sensor_transfer_with_transient(corner: str, profile: dict[str, Any]) -
     _assert_fault_at(summary, sensor, msg=f"xfer+t {corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.11 – Very high speed + transient on 8 sensors (2 corners = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -491,9 +467,7 @@ def test_8sensor_vhigh_speed_transient(corner: str, profile: dict[str, Any]) -> 
     _assert_fault_at(summary, sensor, msg=f"8s vhigh+t {corner}")
 
 
-# ---------------------------------------------------------------------------
 # E.12 – 12-sensor no-fault + transient → no fault (2 speeds = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -516,9 +490,7 @@ def test_12sensor_transient_only_no_fault(speed: float, profile: dict[str, Any])
     assert_tolerant_no_fault(summary, msg=f"12sensor transient-only@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # E.13 – Speed sweep with transient on 4 sensors (2 corners = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)

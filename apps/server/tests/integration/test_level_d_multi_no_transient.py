@@ -43,9 +43,7 @@ from builders import (
     top_confidence,
 )
 
-# ---------------------------------------------------------------------------
 # Sensor set helpers
-# ---------------------------------------------------------------------------
 
 _2_SENSORS_FL_RR = [SENSOR_FL, SENSOR_RR]
 _2_SENSORS_FR_RL = [SENSOR_FR, SENSOR_RL]
@@ -60,9 +58,7 @@ _OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
 _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
-# ---------------------------------------------------------------------------
 # Helpers
-# ---------------------------------------------------------------------------
 
 
 def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
@@ -73,9 +69,7 @@ def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
     assert_strongest_location(summary, sensor, msg=msg)
 
 
-# ---------------------------------------------------------------------------
 # D.1 – 4-sensor fault at each corner × speed (4×3 = 12 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -104,9 +98,7 @@ def test_4sensor_fault_corner_speed(corner: str, speed: float, profile: dict[str
     )
 
 
-# ---------------------------------------------------------------------------
 # D.2 – 4-sensor no-fault baseline (3 speeds = 3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -118,9 +110,7 @@ def test_4sensor_no_fault(speed: float, profile: dict[str, Any]) -> None:
     assert_no_wheel_fault(summary, msg=f"4sensor-no-fault@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # D.3 – 2-sensor pairs with fault localization (4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -152,9 +142,7 @@ def test_2sensor_localization(
     _assert_fault_at(summary, fault_sensor, msg=f"2s {fault_corner}")
 
 
-# ---------------------------------------------------------------------------
 # D.4/D.5 – 8/12-sensor fault localization (4 corners × 2 sets = 8 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -182,9 +170,7 @@ def test_multi_sensor_fault_localization(
     _assert_fault_at(summary, sensor, msg=f"{label} {corner}")
 
 
-# ---------------------------------------------------------------------------
 # D.6 – Diffuse excitation on 4 sensors → no wheel fault (3 speeds = 3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -196,9 +182,7 @@ def test_4sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -> None
     assert_no_wheel_fault(summary, msg=f"4sensor-diffuse@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # D.7 – Confidence scales with sensor count (3 sensor counts = 3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -258,9 +242,7 @@ def test_sensor_count_monotonic(profile: dict[str, Any]) -> None:
     )
 
 
-# ---------------------------------------------------------------------------
 # D.7b – Amplitude monotonic with 4 sensors (1 case)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -284,9 +266,7 @@ def test_4sensor_amplitude_monotonic(profile: dict[str, Any]) -> None:
     assert_pairwise_monotonic(confs, tolerance=0.05, labels=labels, msg="amplitude")
 
 
-# ---------------------------------------------------------------------------
 # D.8 – Transfer path leakage (fault + small leak to other sensors) (4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -307,9 +287,7 @@ def test_4sensor_transfer_path(corner: str, profile: dict[str, Any]) -> None:
     _assert_fault_at(summary, sensor, msg=f"transfer {corner}")
 
 
-# ---------------------------------------------------------------------------
 # D.9 – Phased onset multi-sensor (2 corners = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -340,9 +318,7 @@ def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
     _assert_fault_at(summary, sensor, msg=f"phased 4s {corner}")
 
 
-# ---------------------------------------------------------------------------
 # D.10/D.11 – 8/12-sensor no-fault baseline (2 sensor sets = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -360,9 +336,7 @@ def test_multi_sensor_no_fault_baseline(
     assert_no_wheel_fault(summary, msg=f"{label}-no-fault")
 
 
-# ---------------------------------------------------------------------------
 # D.12 – Diffuse on 8 and 12 sensors (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -380,9 +354,7 @@ def test_multi_sensor_diffuse_no_fault(
     assert_no_wheel_fault(summary, msg=label)
 
 
-# ---------------------------------------------------------------------------
 # D.13 – Speed sweep with 4 sensors (2 corners = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -403,9 +375,7 @@ def test_4sensor_speed_sweep(corner: str, profile: dict[str, Any]) -> None:
     _assert_fault_at(summary, CORNER_SENSORS[corner], msg=f"sweep 4s {corner}")
 
 
-# ---------------------------------------------------------------------------
 # D.14 – Weak signal multi-sensor (2 corners = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -431,9 +401,7 @@ def test_4sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None:
         assert conf < 0.90, f"Weak signal → unexpectedly high conf={conf} for {corner}"
 
 
-# ---------------------------------------------------------------------------
 # D.15 – Very high speed 4-sensor (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
