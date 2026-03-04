@@ -14,8 +14,10 @@ import hashlib
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
+import tempfile
 import time
 from pathlib import Path
 from typing import Any
@@ -63,6 +65,16 @@ UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
 SERVICE_ENV_DROPIN = "/etc/systemd/system/vibesensor.service.d/10-contracts-dir.conf"
 SERVICE_CONTRACTS_DIR = "/opt/VibeSensor/libs/shared/contracts"
+
+_SENSITIVE_KEYS: frozenset[str] = frozenset({
+    "password",
+    "psk",
+    "secret",
+    "key",
+    "802-11-wireless-security.psk",
+})
+
+_PACKAGED_STATIC_DIR: Path = Path(__file__).resolve().parent.parent / "static"
 
 
 def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
@@ -123,6 +135,7 @@ class UpdateManager:
             rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR)
         )
         self._state_store = state_store or UpdateStateStore()
+        self._repo = Path(self._repo_path)
 
         # Try to load persisted state; fall back to fresh idle status
         loaded = self._state_store.load()
@@ -244,34 +257,28 @@ class UpdateManager:
 
     def _log(self, msg: str) -> None:
         sanitized = self._redact(sanitize_log_line(msg))
-        self._status.log_tail.append(sanitized)
-        if len(self._status.log_tail) > 200:
-            self._status.log_tail = self._status.log_tail[-100:]
+        log_tail = self._status.log_tail
+        log_tail.append(sanitized)
+        if len(log_tail) > 200:
+            del log_tail[:-100]
         LOGGER.debug("update event recorded")
 
     def _redacted_args_for_log(self, args: list[str]) -> list[str]:
         """Return command args with sensitive values replaced by *** for safe logging."""
         redacted: list[str] = []
         hide_next = False
-        sensitive_keys = {
-            "password",
-            "psk",
-            "secret",
-            "key",
-            "802-11-wireless-security.psk",
-        }
+        secrets = self._redact_secrets
         for raw_arg in args:
             arg = str(raw_arg)
-            lowered = arg.lower()
             if hide_next:
                 redacted.append("***")
                 hide_next = False
                 continue
-            if lowered in sensitive_keys:
+            if arg.lower() in _SENSITIVE_KEYS:
                 redacted.append(arg)
                 hide_next = True
                 continue
-            if any(secret and arg == secret for secret in self._redact_secrets):
+            if secrets and arg in secrets:
                 redacted.append("***")
                 continue
             redacted.append(arg)
@@ -289,22 +296,21 @@ class UpdateManager:
 
     @staticmethod
     def _ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
-        import re as _re
-
         modes: set[str] = set()
         target = ssid.strip()
         if not target:
             return modes
+        _split_re = re.compile(r"(?<!\\):")
         for line in scan_output.splitlines():
             raw = line.strip()
             if not raw or ":" not in raw:
                 continue
             # nmcli escapes colons inside SSIDs as ``\:``.  Split on the
             # first *unescaped* colon to separate SSID from security mode.
-            _split = _re.split(r"(?<!\\):", raw, maxsplit=1)
-            if len(_split) != 2:
+            parts = _split_re.split(raw, maxsplit=1)
+            if len(parts) != 2:
                 continue
-            candidate_ssid, security = _split[0].replace("\\:", ":"), _split[1]
+            candidate_ssid, security = parts[0].replace("\\:", ":"), parts[1]
             if candidate_ssid.strip() != target:
                 continue
             sec = security.strip()
@@ -328,10 +334,12 @@ class UpdateManager:
             cmd_for_log = f"{cmd_for_log[:497]}..."
         self._log(f"[{phase}] $ {cmd_for_log}")
         rc, stdout, stderr = await self._runner.run(args, timeout=timeout, env=env)
-        if stdout.strip():
-            self._log(f"[{phase}] stdout: {sanitize_log_line(stdout.strip()[:500])}")
-        if stderr.strip():
-            self._log(f"[{phase}] stderr: {sanitize_log_line(stderr.strip()[:500])}")
+        stdout_s = stdout.strip()
+        stderr_s = stderr.strip()
+        if stdout_s:
+            self._log(f"[{phase}] stdout: {sanitize_log_line(stdout_s[:500])}")
+        if stderr_s:
+            self._log(f"[{phase}] stderr: {sanitize_log_line(stderr_s[:500])}")
         if rc != 0:
             self._log(f"[{phase}] exit code: {rc}")
         return rc, stdout, stderr
@@ -713,10 +721,9 @@ class UpdateManager:
         from vibesensor import __version__ as current_version
         from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
 
-        fetcher_config = ReleaseFetcherConfig(
-            rollback_dir=str(self._rollback_dir),
+        fetcher = ServerReleaseFetcher(
+            ReleaseFetcherConfig(rollback_dir=str(self._rollback_dir)),
         )
-        fetcher = ServerReleaseFetcher(fetcher_config)
 
         try:
             release = await asyncio.to_thread(fetcher.check_update_available, current_version)
@@ -765,8 +772,6 @@ class UpdateManager:
         self._persist_status("phase:downloading")
         self._log(f"Downloading release {release.tag}...")
 
-        import tempfile
-
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
         try:
             wheel_path = await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
@@ -795,12 +800,11 @@ class UpdateManager:
             if not rollback_ok:
                 self._log("WARNING: Could not create rollback snapshot; proceeding anyway")
 
-            repo = Path(self._repo_path)
-            venv_python = self._reinstall_python_executable(repo)
+            venv_python = self._reinstall_python_executable(self._repo)
             if not Path(venv_python).is_file():
                 # Fall back to system python in venv
                 venv_python = str(
-                    Path(self._repo_path) / "apps" / "server" / ".venv" / "bin" / "python3"
+                    self._repo / "apps" / "server" / ".venv" / "bin" / "python3"
                 )
 
             # Install the new wheel
@@ -886,8 +890,7 @@ class UpdateManager:
     async def _refresh_esp_firmware(self, pinned_tag: str = "") -> None:
         """Refresh the ESP firmware cache.  Non-fatal on failure."""
         self._log("Refreshing ESP firmware cache...")
-        repo = Path(self._repo_path)
-        venv_python = self._reinstall_python_executable(repo)
+        venv_python = self._reinstall_python_executable(self._repo)
         refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
         refresh_args = [
             "--cache-dir",
@@ -925,8 +928,7 @@ class UpdateManager:
         Returns True on success, False on failure (non-fatal).
         """
         self._rollback_dir.mkdir(parents=True, exist_ok=True)
-        repo = Path(self._repo_path)
-        venv_python = self._reinstall_python_executable(repo)
+        venv_python = self._reinstall_python_executable(self._repo)
 
         # Use pip to download the currently installed version into rollback dir
         from vibesensor import __version__ as current_version
@@ -975,8 +977,7 @@ class UpdateManager:
             self._add_issue("installing", "No rollback wheel available")
             return False
 
-        repo = Path(self._repo_path)
-        venv_python = self._reinstall_python_executable(repo)
+        venv_python = self._reinstall_python_executable(self._repo)
         wheel = rollback_wheels[0]
 
         rc, _, stderr = await self._run_cmd(
@@ -1093,7 +1094,7 @@ class UpdateManager:
             self._log("Updated systemd drop-in for shared contracts directory")
 
     def _collect_runtime_details(self) -> dict[str, Any]:
-        repo = Path(self._repo_path)
+        repo = self._repo
         ui_root = repo / "apps" / "ui"
         public_root = repo / "apps" / "server" / "public"
         metadata_path = public_root / UI_BUILD_METADATA_FILE
@@ -1122,8 +1123,7 @@ class UpdateManager:
                 pass
 
         # Check for packaged static assets (wheel-based install)
-        packaged_static = Path(__file__).resolve().parent.parent / "static"
-        has_packaged_static = (packaged_static / "index.html").exists()
+        has_packaged_static = (_PACKAGED_STATIC_DIR / "index.html").exists()
 
         ui_source_hash = _hash_tree(
             ui_root,
