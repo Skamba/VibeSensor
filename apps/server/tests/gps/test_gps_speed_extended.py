@@ -47,26 +47,20 @@ def test_override_converts_kmh_to_mps() -> None:
     assert abs(m.override_speed_mps - 20.0) < 1e-9
 
 
-def test_override_none_clears() -> None:
+@pytest.mark.parametrize(
+    "clear_value, expected",
+    [
+        pytest.param(None, None, id="none_clears"),
+        pytest.param(0.0, 0.0, id="zero_sets_stationary"),
+        pytest.param(-10.0, None, id="negative_clears"),
+    ],
+)
+def test_override_boundary_values(clear_value: float | None, expected: float | None) -> None:
+    """Setting override after a valid value: None clears, 0 is stationary, negative clears."""
     m = GPSSpeedMonitor(gps_enabled=False)
     m.set_speed_override_kmh(90.0)
-    m.set_speed_override_kmh(None)
-    assert m.override_speed_mps is None
-
-
-def test_override_zero_sets_stationary() -> None:
-    m = GPSSpeedMonitor(gps_enabled=False)
-    m.set_speed_override_kmh(90.0)
-    # Zero is a valid speed (vehicle is stationary)
-    m.set_speed_override_kmh(0.0)
-    assert m.override_speed_mps == 0.0
-
-
-def test_override_negative_clears() -> None:
-    m = GPSSpeedMonitor(gps_enabled=False)
-    m.set_speed_override_kmh(90.0)
-    m.set_speed_override_kmh(-10.0)
-    assert m.override_speed_mps is None
+    m.set_speed_override_kmh(clear_value)
+    assert m.override_speed_mps == expected
 
 
 # -- integer speed_mps ---------------------------------------------------------
