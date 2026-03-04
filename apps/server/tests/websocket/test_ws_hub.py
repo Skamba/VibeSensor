@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -17,6 +18,11 @@ def _make_ws() -> AsyncMock:
     ws = AsyncMock()
     ws.send_text = AsyncMock()
     return ws
+
+
+def _sent_json(ws: AsyncMock) -> Any:
+    """Return the parsed JSON sent via ``ws.send_text``."""
+    return json.loads(ws.send_text.call_args[0][0])
 
 
 @pytest.mark.asyncio
@@ -61,10 +67,7 @@ async def test_broadcast_calls_send_json() -> None:
     await hub.broadcast(payload_builder)
     payload_builder.assert_called_once_with("client_a")
     ws.send_text.assert_awaited_once()
-    import json
-
-    sent_text = ws.send_text.call_args[0][0]
-    assert json.loads(sent_text) == {"data": "test"}
+    assert _sent_json(ws) == {"data": "test"}
 
 
 @pytest.mark.asyncio
@@ -127,8 +130,7 @@ async def test_broadcast_survives_payload_builder_exception() -> None:
     assert len(conns) == 1
     # Connection should receive the error payload instead of nothing
     ws.send_text.assert_awaited_once()
-    sent = json.loads(ws.send_text.call_args[0][0])
-    assert sent == {"error": "payload_build_failed"}
+    assert _sent_json(ws) == {"error": "payload_build_failed"}
 
 
 @pytest.mark.asyncio
@@ -166,13 +168,11 @@ async def test_payload_error_does_not_block_other_clients() -> None:
 
     # good_ws received normal payload
     good_ws.send_text.assert_awaited_once()
-    good_sent = json.loads(good_ws.send_text.call_args[0][0])
-    assert good_sent == {"status": "ok", "client": "good_client"}
+    assert _sent_json(good_ws) == {"status": "ok", "client": "good_client"}
 
     # bad_ws received error payload (not silently skipped)
     bad_ws.send_text.assert_awaited_once()
-    bad_sent = json.loads(bad_ws.send_text.call_args[0][0])
-    assert bad_sent == {"error": "payload_build_failed"}
+    assert _sent_json(bad_ws) == {"error": "payload_build_failed"}
 
     # Both connections are still alive
     conns = await hub._snapshot()
@@ -185,8 +185,6 @@ async def test_payload_error_logged_at_error_level(caplog) -> None:
     hub = WebSocketHub()
     ws = _make_ws()
     await hub.add(ws, "sensor_42")
-
-    import logging
 
     with caplog.at_level(logging.ERROR, logger="vibesensor.ws_hub"):
         await hub.broadcast(lambda _cid: (_ for _ in ()).throw(RuntimeError("boom")))
@@ -216,19 +214,15 @@ async def test_payload_error_affected_count_logged(caplog) -> None:
             raise RuntimeError("nope")
         return {"ok": True}
 
-    import logging
-
     with caplog.at_level(logging.ERROR, logger="vibesensor.ws_hub"):
         await hub.broadcast(builder)
 
     # ws3 (good) got normal payload
-    good_sent = json.loads(ws3.send_text.call_args[0][0])
-    assert good_sent == {"ok": True}
+    assert _sent_json(ws3) == {"ok": True}
 
     # Both bad connections got error payload
     for ws in (ws1, ws2):
-        sent = json.loads(ws.send_text.call_args[0][0])
-        assert sent == {"error": "payload_build_failed"}
+        assert _sent_json(ws) == {"error": "payload_build_failed"}
 
     # Summary log mentions 2 affected connections
     assert any("2 connection(s)" in r.message for r in caplog.records)
@@ -258,8 +252,7 @@ async def test_error_payload_is_cached_per_client_id() -> None:
     # Both connections still received the error payload
     for ws in (ws1, ws2):
         ws.send_text.assert_awaited_once()
-        sent = json.loads(ws.send_text.call_args[0][0])
-        assert sent == {"error": "payload_build_failed"}
+        assert _sent_json(ws) == {"error": "payload_build_failed"}
 
 
 # ── sanitize_for_json unit tests ─────────────────────────────────────────────
@@ -268,23 +261,16 @@ async def test_error_payload_is_cached_per_client_id() -> None:
 class TestSanitizeForJson:
     """Tests for the ``sanitize_for_json`` helper."""
 
-    def test_nan_replaced_with_none(self) -> None:
-        data = {"rpm": float("nan"), "ok": 42}
+    @pytest.mark.parametrize(
+        ("label", "value"),
+        [("nan", float("nan")), ("inf", float("inf")), ("-inf", float("-inf"))],
+        ids=["nan", "inf", "neg_inf"],
+    )
+    def test_non_finite_replaced_with_none(self, label: str, value: float) -> None:
+        data = {"val": value, "ok": 42}
         cleaned, had = sanitize_for_json(data)
-        assert cleaned["rpm"] is None
+        assert cleaned["val"] is None
         assert cleaned["ok"] == 42
-        assert had is True
-
-    def test_inf_replaced_with_none(self) -> None:
-        data = {"val": float("inf")}
-        cleaned, had = sanitize_for_json(data)
-        assert cleaned["val"] is None
-        assert had is True
-
-    def test_neg_inf_replaced_with_none(self) -> None:
-        data = {"val": float("-inf")}
-        cleaned, had = sanitize_for_json(data)
-        assert cleaned["val"] is None
         assert had is True
 
     def test_normal_floats_preserved(self) -> None:
@@ -311,12 +297,10 @@ class TestSanitizeForJson:
         assert cleaned == data
         assert had is False
 
-    def test_empty_structures(self) -> None:
-        cleaned, had = sanitize_for_json({})
-        assert cleaned == {}
-        assert had is False
-        cleaned, had = sanitize_for_json([])
-        assert cleaned == []
+    @pytest.mark.parametrize("empty", [{}, []], ids=["dict", "list"])
+    def test_empty_structures(self, empty: Any) -> None:
+        cleaned, had = sanitize_for_json(empty)
+        assert cleaned == empty
         assert had is False
 
     def test_output_is_valid_json(self) -> None:
@@ -379,8 +363,7 @@ async def test_broadcast_sanitizes_nan_to_null() -> None:
     await hub.broadcast(lambda _: payload_with_nan)
 
     ws.send_text.assert_awaited_once()
-    sent = ws.send_text.call_args[0][0]
-    parsed = json.loads(sent)  # Must not raise
+    parsed = _sent_json(ws)
     assert parsed["wheel"]["rpm"] is None
     assert parsed["speed"] is None
     assert parsed["ok"] == 42
@@ -392,8 +375,6 @@ async def test_broadcast_logs_warning_on_nan(caplog) -> None:
     hub = WebSocketHub()
     ws = _make_ws()
     await hub.add(ws, "sensor_1")
-
-    import logging
 
     with caplog.at_level(logging.WARNING, logger="vibesensor.ws_hub"):
         await hub.broadcast(lambda _: {"val": float("nan")})
