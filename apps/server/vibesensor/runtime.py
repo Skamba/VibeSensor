@@ -136,27 +136,36 @@ class RuntimeState:
         analysis_settings: dict[str, Any],
         resolution_source: str | None = None,
     ) -> dict[str, Any]:
+        basis = self._rotational_basis_speed_source(
+            resolution_source=resolution_source,
+        )
+
+        # Determine failure reason early to avoid closure allocation and
+        # full-dict construction on the common no-speed / invalid-settings paths.
+        if speed_mps is None or speed_mps <= 0:
+            reason: str | None = "speed_unavailable"
+            orders_hz = None
+        else:
+            orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
+            reason = "invalid_vehicle_settings" if orders_hz is None else None
+
+        if reason is not None:
+            _comp: dict[str, Any] = {"rpm": None, "mode": "calculated", "reason": reason}
+            return {
+                "basis_speed_source": basis,
+                "wheel": {**_comp},
+                "driveshaft": {**_comp},
+                "engine": {**_comp},
+                "order_bands": None,
+            }
+
         out: dict[str, Any] = {
-            "basis_speed_source": self._rotational_basis_speed_source(
-                resolution_source=resolution_source,
-            ),
+            "basis_speed_source": basis,
             "wheel": {"rpm": None, "mode": "calculated", "reason": None},
             "driveshaft": {"rpm": None, "mode": "calculated", "reason": None},
             "engine": {"rpm": None, "mode": "calculated", "reason": None},
             "order_bands": None,
         }
-
-        def _set_all_reasons(reason: str) -> dict[str, Any]:
-            for component in ("wheel", "driveshaft", "engine"):
-                out[component]["reason"] = reason
-            return out
-
-        if speed_mps is None or speed_mps <= 0:
-            return _set_all_reasons("speed_unavailable")
-
-        orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
-        if orders_hz is None:
-            return _set_all_reasons("invalid_vehicle_settings")
 
         out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
         out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
