@@ -48,14 +48,16 @@ def test_negative_returns_none(value: float) -> None:
     assert _parse_manual_speed(value) is None
 
 
-def test_zero_returns_none() -> None:
-    assert _parse_manual_speed(0) is None
-    assert _parse_manual_speed(0.0) is None
+@pytest.mark.parametrize("value", [0, 0.0], ids=["int-zero", "float-zero"])
+def test_zero_returns_none(value: object) -> None:
+    assert _parse_manual_speed(value) is None
 
 
-def test_above_upper_bound_returns_none() -> None:
-    assert _parse_manual_speed(500.1) is None
-    assert _parse_manual_speed(1000) is None
+@pytest.mark.parametrize(
+    "value", [500.1, 1000], ids=["just-above", "way-above"]
+)
+def test_above_upper_bound_returns_none(value: float) -> None:
+    assert _parse_manual_speed(value) is None
 
 
 @pytest.mark.parametrize(
