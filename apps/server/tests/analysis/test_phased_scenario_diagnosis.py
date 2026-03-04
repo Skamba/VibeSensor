@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
 from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis.findings import _classify_peak_type
@@ -234,6 +235,54 @@ def _extract_top_finding(summary: dict[str, Any]) -> dict[str, Any] | None:
     return max(non_ref, key=lambda f: float(f.get("confidence_0_to_1") or 0))
 
 
+def _assert_finding_location(
+    summary: dict[str, Any],
+    expected: str,
+    label: str = "",
+) -> dict[str, Any]:
+    """Assert that the top finding's strongest_location contains *expected*.
+
+    Returns the top finding for further assertions.
+    """
+    top = _extract_top_finding(summary)
+    assert top is not None, f"{label}: Should produce at least one diagnostic finding"
+    location = str(top.get("strongest_location") or "").lower()
+    assert expected in location, (
+        f"{label}: Expected '{expected}', got '{top.get('strongest_location')}'"
+    )
+    return top
+
+
+def _assert_finding_source(
+    summary: dict[str, Any],
+    expected_sources: tuple[str, ...] = ("wheel", "tire"),
+    label: str = "",
+) -> dict[str, Any]:
+    """Assert that the top finding's suspected_source contains one of *expected_sources*.
+
+    Returns the top finding for further assertions.
+    """
+    top = _extract_top_finding(summary)
+    assert top is not None, f"{label}: Should produce a finding"
+    source = str(top.get("suspected_source") or "").lower()
+    assert any(s in source for s in expected_sources), (
+        f"{label}: Expected one of {expected_sources}, got '{top.get('suspected_source')}'"
+    )
+    return top
+
+
+def _parse_speed_band(finding: dict[str, Any]) -> tuple[float, float]:
+    """Parse strongest_speed_band into (low, high) floats.  Returns (0, 0) on failure."""
+    speed_band = str(finding.get("strongest_speed_band") or "")
+    parts = speed_band.replace("km/h", "").strip().split("-")
+    try:
+        low = float(parts[0].strip())
+        high = float(parts[-1].strip()) if len(parts) > 1 else low
+    except (ValueError, IndexError):
+        low = high = 0.0
+    return low, high
+
+
 # ---------------------------------------------------------------------------
 # Scenario 1: Idle→100 km/h, fault appears only at sustained 100 km/h
 # Expected: front-right wheel fault at ~100 km/h
@@ -284,13 +333,7 @@ class TestScenario1IdleToSpeedUp:
         )
         all_samples = idle_samples + ramp_samples + fault_samples
         summary = summarize_run_data(meta, all_samples, include_samples=False)
-
-        top = _extract_top_finding(summary)
-        assert top is not None, "Should produce at least one diagnostic finding"
-        location = str(top.get("strongest_location") or "").lower()
-        assert "front-right" in location, (
-            f"Scenario 1: Expected front-right, got '{top.get('strongest_location')}'"
-        )
+        _assert_finding_location(summary, "front-right", "Scenario 1")
 
     def test_correct_system_identified(self) -> None:
         """The suspected source should be wheel/tire."""
@@ -304,12 +347,7 @@ class TestScenario1IdleToSpeedUp:
             fault_vib_db=24.0,
         )
         summary = summarize_run_data(meta, samples, include_samples=False)
-        top = _extract_top_finding(summary)
-        assert top is not None
-        source = str(top.get("suspected_source") or "").lower()
-        assert "wheel" in source or "tire" in source, (
-            f"Scenario 1: Expected wheel/tire, got '{top.get('suspected_source')}'"
-        )
+        _assert_finding_source(summary, label="Scenario 1")
 
     def test_correct_speed_band(self) -> None:
         """The speed band should include 100 km/h (90-100 or 100-110)."""
@@ -325,14 +363,8 @@ class TestScenario1IdleToSpeedUp:
         summary = summarize_run_data(meta, samples, include_samples=False)
         top = _extract_top_finding(summary)
         assert top is not None
-        speed_band = str(top.get("strongest_speed_band") or "")
-        # Parse numerically rather than fragile 'in' check
-        parts = speed_band.replace("km/h", "").strip().split("-")
-        try:
-            band_low = float(parts[0].strip())
-            band_high = float(parts[-1].strip()) if len(parts) > 1 else band_low
-        except (ValueError, IndexError):
-            band_low = band_high = 0
+        band_low, band_high = _parse_speed_band(top)
+        speed_band = top.get("strongest_speed_band", "")
         assert band_low >= 80.0 and band_high <= 130.0, (
             f"Scenario 1: Speed band should cover ~100 km/h, got '{speed_band}'"
         )
@@ -422,12 +454,7 @@ class TestScenario2StopGoIntermittent:
         samples.extend(fault_e)
 
         summary = summarize_run_data(meta, samples, include_samples=False)
-        top = _extract_top_finding(summary)
-        assert top is not None, "Should produce at least one finding"
-        location = str(top.get("strongest_location") or "").lower()
-        assert "rear-left" in location, (
-            f"Scenario 2: Expected rear-left, got '{top.get('strongest_location')}'"
-        )
+        _assert_finding_location(summary, "rear-left", "Scenario 2")
 
     def test_system_is_wheel_not_engine(self) -> None:
         """Source should be wheel/tire, not engine (common misclassification)."""
@@ -441,12 +468,7 @@ class TestScenario2StopGoIntermittent:
             fault_vib_db=22.0,
         )
         summary = summarize_run_data(meta, samples, include_samples=False)
-        top = _extract_top_finding(summary)
-        assert top is not None
-        source = str(top.get("suspected_source") or "").lower()
-        assert "wheel" in source or "tire" in source, (
-            f"Scenario 2: Expected wheel/tire, got '{top.get('suspected_source')}'"
-        )
+        _assert_finding_source(summary, label="Scenario 2")
 
     def test_speed_band_covers_50_60(self) -> None:
         """Speed band should be around 50-60 km/h, not 30-40."""
@@ -547,12 +569,7 @@ class TestScenario3HighwayRearRight:
         )
         all_samples = baseline_60 + baseline_90 + fault_120 + baseline_100
         summary = summarize_run_data(meta, all_samples, include_samples=False)
-        top = _extract_top_finding(summary)
-        assert top is not None, "Should produce at least one finding"
-        location = str(top.get("strongest_location") or "").lower()
-        assert "rear-right" in location, (
-            f"Scenario 3: Expected rear-right, got '{top.get('strongest_location')}'"
-        )
+        _assert_finding_location(summary, "rear-right", "Scenario 3")
 
     def test_speed_band_covers_120(self) -> None:
         """Speed band should be 110-120 or 120-130 km/h range."""
@@ -568,14 +585,8 @@ class TestScenario3HighwayRearRight:
         summary = summarize_run_data(meta, fault_120, include_samples=False)
         top = _extract_top_finding(summary)
         assert top is not None
-        speed_band = str(top.get("strongest_speed_band") or "")
-        # Parse numerically rather than fragile 'in' check
-        parts = speed_band.replace("km/h", "").strip().split("-")
-        try:
-            band_low = float(parts[0].strip())
-            band_high = float(parts[-1].strip()) if len(parts) > 1 else band_low
-        except (ValueError, IndexError):
-            band_low = band_high = 0
+        band_low, band_high = _parse_speed_band(top)
+        speed_band = top.get("strongest_speed_band", "")
         assert band_low >= 100.0 and band_high <= 140.0, (
             f"Scenario 3: Speed band should cover ~120 km/h, got '{speed_band}'"
         )
@@ -589,25 +600,24 @@ class TestScenario3HighwayRearRight:
 class TestScenario4CoastDownMidRange:
     """Scenario: Coast-down with front-left fault strongest at 70-90 km/h."""
 
-    def test_correct_corner_front_left(self) -> None:
-        """Front-left should be identified."""
-        meta = _standard_metadata()
-        # Speed sweep: 110→30 km/h coast-down, fault strongest at 70-90
+    @staticmethod
+    def _build_coast_down_samples(
+        *, add_harmonic: bool = True,
+    ) -> list[dict[str, Any]]:
+        """Generate a 110→30 km/h coast-down with front-left fault peaking at 70-90 km/h."""
         samples: list[dict[str, Any]] = []
         t = 0.0
         for i in range(50):
             speed = 110.0 - i * 1.6  # 110→30 km/h
             whz = _wheel_hz(speed)
-            # Fault amplitude peaks at 70-90 km/h
             mid_strength = max(0.0, 1.0 - abs(speed - 80.0) / 40.0)
             fault_amp = 0.01 + 0.06 * mid_strength
             fault_vib_db = 10.0 + 16.0 * mid_strength
 
-            fault_peaks = [
-                {"hz": whz, "amp": fault_amp},
-                {"hz": whz * 2, "amp": fault_amp * 0.3},
-                {"hz": 142.5, "amp": 0.003},
-            ]
+            fault_peaks: list[dict[str, float]] = [{"hz": whz, "amp": fault_amp}]
+            if add_harmonic:
+                fault_peaks.append({"hz": whz * 2, "amp": fault_amp * 0.3})
+            fault_peaks.append({"hz": 142.5, "amp": 0.003})
             samples.append(
                 _make_sample(
                     t_s=t,
@@ -630,49 +640,19 @@ class TestScenario4CoastDownMidRange:
                     )
                 )
             t += 1.0
+        return samples
 
+    def test_correct_corner_front_left(self) -> None:
+        """Front-left should be identified."""
+        meta = _standard_metadata()
+        samples = self._build_coast_down_samples(add_harmonic=True)
         summary = summarize_run_data(meta, samples, include_samples=False)
-        top = _extract_top_finding(summary)
-        assert top is not None, "Should produce at least one finding"
-        location = str(top.get("strongest_location") or "").lower()
-        assert "front-left" in location, (
-            f"Scenario 4: Expected front-left, got '{top.get('strongest_location')}'"
-        )
+        _assert_finding_location(summary, "front-left", "Scenario 4")
 
     def test_speed_band_emphasizes_midrange(self) -> None:
         """Speed band should emphasize mid-range (70-90) not extremes."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
-        t = 0.0
-        for i in range(50):
-            speed = 110.0 - i * 1.6
-            whz = _wheel_hz(speed)
-            mid_strength = max(0.0, 1.0 - abs(speed - 80.0) / 40.0)
-            fault_amp = 0.01 + 0.06 * mid_strength
-
-            samples.append(
-                _make_sample(
-                    t_s=t,
-                    speed_kmh=speed,
-                    client_name="front-left",
-                    top_peaks=[{"hz": whz, "amp": fault_amp}, {"hz": 142.5, "amp": 0.003}],
-                    vibration_strength_db=10.0 + 16.0 * mid_strength,
-                    strength_floor_amp_g=0.003,
-                )
-            )
-            for other in ["front-right", "rear-left", "rear-right"]:
-                samples.append(
-                    _make_sample(
-                        t_s=t,
-                        speed_kmh=speed,
-                        client_name=other,
-                        top_peaks=[{"hz": 142.5, "amp": 0.003}],
-                        vibration_strength_db=8.0,
-                        strength_floor_amp_g=0.003,
-                    )
-                )
-            t += 1.0
-
+        samples = self._build_coast_down_samples(add_harmonic=False)
         summary = summarize_run_data(meta, samples, include_samples=False)
         top = _extract_top_finding(summary)
         assert top is not None
@@ -718,12 +698,7 @@ class TestScenario5MixedNoiseThenFault:
             fault_vib_db=24.0,
         )
         summary = summarize_run_data(meta, noise_samples + fault, include_samples=False)
-        top = _extract_top_finding(summary)
-        assert top is not None
-        location = str(top.get("strongest_location") or "").lower()
-        assert "front-left" in location, (
-            f"Scenario 5: Expected front-left, got '{top.get('strongest_location')}'"
-        )
+        _assert_finding_location(summary, "front-left", "Scenario 5")
 
 
 # ---------------------------------------------------------------------------
@@ -921,58 +896,23 @@ class TestTransientDeWeighting:
 class TestLocalizationStability:
     """Verify left/right discrimination doesn't flip under slight amplitude changes."""
 
-    def test_left_right_stable_with_clear_dominance(self) -> None:
-        """Front-left vs front-right should be stable when amp ratio is >= 3x."""
-        meta = _standard_metadata()
-        for trial_fault in ["front-left", "front-right"]:
-            others = [
-                s
-                for s in ["front-left", "front-right", "rear-left", "rear-right"]
-                if s != trial_fault
-            ]
-            samples = _build_speed_sweep_fault_samples(
-                speed_start_kmh=50.0,
-                speed_end_kmh=100.0,
-                fault_sensor=trial_fault,
-                other_sensors=others,
-                n_samples=40,
-                fault_amp=0.06,
-                noise_amp=0.003,
-                fault_vib_db=24.0,
-                noise_vib_db=6.0,
-            )
-            summary = summarize_run_data(meta, samples, include_samples=False)
-            top = _extract_top_finding(summary)
-            assert top is not None, f"No finding for fault at {trial_fault}"
-            location = str(top.get("strongest_location") or "").lower()
-            assert trial_fault in location, (
-                f"Localization unstable: fault at {trial_fault}, got '{location}'"
-            )
+    _ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
-    def test_rear_left_vs_rear_right_discrimination(self) -> None:
-        """Rear-left vs rear-right should be correctly distinguished."""
+    @pytest.mark.parametrize("fault_sensor", _ALL_SENSORS)
+    def test_localization_stable_with_clear_dominance(self, fault_sensor: str) -> None:
+        """Each sensor should be correctly identified when amp ratio is >= 3x."""
         meta = _standard_metadata()
-        for trial_fault in ["rear-left", "rear-right"]:
-            others = [
-                s
-                for s in ["front-left", "front-right", "rear-left", "rear-right"]
-                if s != trial_fault
-            ]
-            samples = _build_speed_sweep_fault_samples(
-                speed_start_kmh=50.0,
-                speed_end_kmh=100.0,
-                fault_sensor=trial_fault,
-                other_sensors=others,
-                n_samples=40,
-                fault_amp=0.06,
-                noise_amp=0.003,
-                fault_vib_db=24.0,
-                noise_vib_db=6.0,
-            )
-            summary = summarize_run_data(meta, samples, include_samples=False)
-            top = _extract_top_finding(summary)
-            assert top is not None
-            location = str(top.get("strongest_location") or "").lower()
-            assert trial_fault in location, (
-                f"Localization failed: fault at {trial_fault}, got '{location}'"
-            )
+        others = [s for s in self._ALL_SENSORS if s != fault_sensor]
+        samples = _build_speed_sweep_fault_samples(
+            speed_start_kmh=50.0,
+            speed_end_kmh=100.0,
+            fault_sensor=fault_sensor,
+            other_sensors=others,
+            n_samples=40,
+            fault_amp=0.06,
+            noise_amp=0.003,
+            fault_vib_db=24.0,
+            noise_vib_db=6.0,
+        )
+        summary = summarize_run_data(meta, samples, include_samples=False)
+        _assert_finding_location(summary, fault_sensor, f"Localization({fault_sensor})")
