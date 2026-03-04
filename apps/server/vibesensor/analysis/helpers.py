@@ -301,7 +301,8 @@ def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
     sy = sqrt(sum((y - my) ** 2 for y in y_vals))
     if sx <= 1e-9 or sy <= 1e-9:
         return None
-    return abs(cov / (sx * sy))
+    result = abs(cov / (sx * sy))
+    return result if isfinite(result) else None
 
 
 def _sample_top_peaks(sample: dict[str, Any]) -> list[tuple[float, float]]:

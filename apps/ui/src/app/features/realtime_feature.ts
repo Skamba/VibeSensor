@@ -140,7 +140,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         const clientId = select.getAttribute("data-client-id");
         if (!clientId) return;
         const locationCode = select.value || "";
-        await setClientLocation(clientId, locationCode);
+        try {
+          await setClientLocation(clientId, locationCode);
+        } catch (_e) {
+          /* location update failed – UI reflects current server state on next refresh */
+        }
       });
     });
 
@@ -149,7 +153,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
         if ((btn as HTMLButtonElement).disabled) return;
         const clientId = btn.getAttribute("data-client-id");
         if (!clientId) return;
-        await identifyClient(clientId);
+        try {
+          await identifyClient(clientId);
+        } catch (_e) {
+          /* identify failed – non-critical */
+        }
       });
     });
 
@@ -157,7 +165,11 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       btn.addEventListener("click", async () => {
         const clientId = btn.getAttribute("data-client-id");
         if (!clientId) return;
-        await removeClient(clientId);
+        try {
+          await removeClient(clientId);
+        } catch (_e) {
+          /* remove failed – non-critical */
+        }
       });
     });
   }
