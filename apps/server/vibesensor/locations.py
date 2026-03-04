@@ -42,16 +42,13 @@ WHEEL_LOCATION_CODES: frozenset[str] = frozenset(
 
 # Human-readable label substrings that identify a wheel/corner sensor.
 # Used for fuzzy matching when the sample carries a display label rather
-# than a canonical location code.
+# than a canonical location code.  Pre-normalised (hyphens → spaces) so
+# is_wheel_location() needs no per-call normalisation of these tokens.
 _WHEEL_LABEL_TOKENS: tuple[str, ...] = (
     "front left",
     "front right",
     "rear left",
     "rear right",
-    "front-left",
-    "front-right",
-    "rear-left",
-    "rear-right",
     "fl wheel",
     "fr wheel",
     "rl wheel",
@@ -81,17 +78,15 @@ def is_wheel_location(label_or_code: str) -> bool:
     if not label_or_code:
         return False
     normalised = label_or_code.strip().lower().replace("_", " ").replace("-", " ")
-    for exclude in _NON_WHEEL_TOKENS:
-        if exclude in normalised:
-            return False
-    if label_or_code.strip().lower().replace(" ", "_") in WHEEL_LOCATION_CODES:
+    if any(tok in normalised for tok in _NON_WHEEL_TOKENS):
+        return False
+    if normalised.replace(" ", "_") in WHEEL_LOCATION_CODES:
         return True
     for token in _WHEEL_LABEL_TOKENS:
-        token_norm = token.replace("-", " ")
         if (
-            token_norm == normalised
-            or normalised.startswith(token_norm + " ")
-            or normalised == token_norm + " wheel"
+            token == normalised
+            or normalised.startswith(token + " ")
+            or normalised == token + " wheel"
         ):
             return True
     # Also match labels that end in "wheel" and start with a direction

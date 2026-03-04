@@ -14,11 +14,24 @@ from pydantic import BaseModel, ConfigDict
 # Bump this when the payload shape changes in a backwards-incompatible way.
 SCHEMA_VERSION: str = "1"
 
+__all__ = [
+    "SCHEMA_VERSION",
+    "AlignmentInfo",
+    "FrequencyWarning",
+    "LiveWsPayload",
+    "OrderBand",
+    "RotationalSpeedValue",
+    "RotationalSpeeds",
+    "SpectraPayload",
+    "SpectrumPeak",
+    "SpectrumSeries",
+]
+
 
 class SpectrumPeak(BaseModel):
     """A single spectral peak identified in the signal."""
 
-    model_config = ConfigDict(extra="allow")
+    model_config = ConfigDict(extra="allow", frozen=True)
 
     hz: float
     amp: float
@@ -38,6 +51,8 @@ class SpectrumSeries(BaseModel):
 
 
 class AlignmentInfo(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     overlap_ratio: float
     aligned: bool
     shared_window_s: float
@@ -46,6 +61,8 @@ class AlignmentInfo(BaseModel):
 
 
 class FrequencyWarning(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     code: str
     message: str
     client_ids: list[str]
@@ -63,12 +80,16 @@ class SpectraPayload(BaseModel):
 
 
 class RotationalSpeedValue(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     rpm: float | None = None
     mode: str | None = None
     reason: str | None = None
 
 
 class OrderBand(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     key: str
     center_hz: float
     tolerance: float

@@ -51,8 +51,9 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
         client_id: str,
         req: SetLocationRequest,
     ) -> SetClientLocationResponse:
+        registry = state.registry
         normalized_client_id = normalize_client_id_or_400(client_id)
-        if state.registry.get(normalized_client_id) is None:
+        if registry.get(normalized_client_id) is None:
             raise HTTPException(status_code=404, detail="Sensor not found")
 
         code = req.location_code.strip()
@@ -62,20 +63,24 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
             if label is None:
                 raise HTTPException(status_code=400, detail="Unknown location_code")
 
-            for row in state.registry.snapshot_for_api():
-                if row["id"] != normalized_client_id and row.get("location") == code:
-                    other_name = row.get("name") or "another sensor"
-                    raise HTTPException(
-                        status_code=409,
-                        detail=f"Location already assigned to {other_name}",
-                    )
+            conflict = next(
+                (row for row in registry.snapshot_for_api()
+                 if row["id"] != normalized_client_id and row.get("location") == code),
+                None,
+            )
+            if conflict is not None:
+                other_name = conflict.get("name") or "another sensor"
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Location already assigned to {other_name}",
+                )
 
-            updated = state.registry.set_name(normalized_client_id, label)
+            updated = registry.set_name(normalized_client_id, label)
         else:
             # Empty location_code → clear the assignment
-            updated = state.registry.clear_name(normalized_client_id)
+            updated = registry.clear_name(normalized_client_id)
 
-        state.registry.set_location(normalized_client_id, code)
+        registry.set_location(normalized_client_id, code)
         mac = client_id_mac(updated.client_id)
         await asyncio.to_thread(state.settings_store.set_sensor, mac, {"location": code})
         return {

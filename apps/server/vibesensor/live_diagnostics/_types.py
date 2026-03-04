@@ -26,18 +26,24 @@ _PHASE_HISTORY_MAX = 5
 _MATRIX_WINDOW_MS = 5 * 60 * 1000
 
 
+_isfinite = math.isfinite
+
+
 def _combine_amplitude_strength_db(values_db: list[float]) -> float:
     if not values_db:
         return SILENCE_DB
-    linear: list[float] = []
+    isfinite = _isfinite
+    total = 0.0
+    count = 0
     for value in values_db:
         v = float(value)
-        if not math.isfinite(v):
+        if not isfinite(v):
             continue  # skip NaN/Inf — they would poison the mean
-        linear.append(10.0 ** (max(-60.0, min(200.0, v)) / 20.0))
-    if not linear:
+        total += 10.0 ** (max(-60.0, min(200.0, v)) / 20.0)
+        count += 1
+    if count == 0:
         return SILENCE_DB
-    mean_linear = sum(linear) / len(linear)
+    mean_linear = total / count
     if mean_linear <= 0.0:
         return SILENCE_DB
     return vibration_strength_db_scalar(
