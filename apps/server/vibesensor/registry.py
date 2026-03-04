@@ -335,7 +335,8 @@ class ClientRegistry:
             record.last_ack_cmd_seq = ack.cmd_seq
             record.last_ack_status = ack.status
 
-    def note_parse_error(self, client_id: str | None) -> None:
+    def _note_client_counter(self, client_id: str | None, attr: str) -> None:
+        """Increment a counter attribute on a client record, creating it if needed."""
         if not client_id:
             return
         try:
@@ -344,18 +345,13 @@ class ClientRegistry:
             return
         with self._lock:
             record = self._get_or_create(normalized)
-            record.parse_errors += 1
+            setattr(record, attr, getattr(record, attr) + 1)
+
+    def note_parse_error(self, client_id: str | None) -> None:
+        self._note_client_counter(client_id, "parse_errors")
 
     def note_server_queue_drop(self, client_id: str | None) -> None:
-        if not client_id:
-            return
-        try:
-            normalized = _normalize_client_id(client_id)
-        except ValueError:
-            return
-        with self._lock:
-            record = self._get_or_create(normalized)
-            record.server_queue_drops += 1
+        self._note_client_counter(client_id, "server_queue_drops")
 
     def set_name(self, client_id: str, name: str) -> ClientRecord:
         clean = _sanitize_name(name)
