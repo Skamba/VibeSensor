@@ -76,8 +76,8 @@ def detect_sensor_events(
                     sensor_label=label,
                     sensor_location=location,
                     peak_hz=peak_hz,
-                    peak_amp=float(peak_amp),
-                    vibration_strength_db=float(vibration_strength_db),
+                    peak_amp=peak_amp,
+                    vibration_strength_db=vibration_strength_db,
                     class_key=str(classification["key"]),
                 )
             )

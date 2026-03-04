@@ -576,8 +576,8 @@ def map_summary(summary: dict) -> ReportTemplateData:
         strength_db_val = _as_float(row.get("strength_db"))
         strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "\u2014"
         speed = str(row.get("typical_speed_band") or "\u2014")
-        presence = float(_as_float(row.get("presence_ratio")) or 0.0)
-        score = float(_as_float(row.get("persistence_score")) or 0.0)
+        presence = _as_float(row.get("presence_ratio")) or 0.0
+        score = _as_float(row.get("persistence_score")) or 0.0
 
         order_lower = order.lower()
         source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()
