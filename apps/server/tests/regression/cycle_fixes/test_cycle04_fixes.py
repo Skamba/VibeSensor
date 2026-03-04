@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from vibesensor.processing import SignalProcessor
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 
@@ -19,8 +20,6 @@ class TestSmoothSpectrumEdgePadding:
 
     def test_constant_signal_unchanged(self) -> None:
         """A constant-amplitude spectrum must be unchanged after smoothing."""
-        from vibesensor.processing import SignalProcessor
-
         amps = np.full(20, 0.5, dtype=np.float32)
         smoothed = SignalProcessor._smooth_spectrum(amps, bins=5)
         np.testing.assert_allclose(smoothed, amps, atol=1e-6)
@@ -28,8 +27,6 @@ class TestSmoothSpectrumEdgePadding:
     def test_edge_not_attenuated(self) -> None:
         """First and last bins must not be reduced compared to the raw value
         when the signal is constant near the boundary."""
-        from vibesensor.processing import SignalProcessor
-
         amps = np.full(20, 1.0, dtype=np.float32)
         smoothed = SignalProcessor._smooth_spectrum(amps, bins=5)
         # With zero-padding the first bin would be ~0.6; with edge-pad it stays 1.0.
@@ -42,8 +39,6 @@ class TestSmoothSpectrumEdgePadding:
 
     def test_edge_peak_preserved(self) -> None:
         """A peak at the last bin must not be suppressed by zero-padding."""
-        from vibesensor.processing import SignalProcessor
-
         amps = np.full(20, 0.1, dtype=np.float32)
         amps[-1] = 1.0
         amps[-2] = 0.8
@@ -54,8 +49,6 @@ class TestSmoothSpectrumEdgePadding:
 
     def test_output_length_matches_input(self) -> None:
         """Smoothed output must have the same length as the input."""
-        from vibesensor.processing import SignalProcessor
-
         for n in (5, 10, 50, 200):
             amps = np.random.default_rng(42).random(n).astype(np.float32)
             smoothed = SignalProcessor._smooth_spectrum(amps, bins=5)
@@ -68,8 +61,6 @@ class TestTopPeaksLastBin:
 
     def test_peak_at_last_bin_detected(self) -> None:
         """A clear peak at the last frequency bin must appear in results."""
-        from vibesensor.processing import SignalProcessor
-
         n = 50
         freqs = np.arange(n, dtype=np.float32) * 4.0  # 0..196 Hz
         amps = np.full(n, 0.01, dtype=np.float32)
@@ -83,8 +74,6 @@ class TestTopPeaksLastBin:
 
     def test_last_bin_not_detected_when_lower_than_neighbor(self) -> None:
         """Last bin should NOT be reported if it's lower than its neighbor."""
-        from vibesensor.processing import SignalProcessor
-
         n = 50
         freqs = np.arange(n, dtype=np.float32) * 4.0
         amps = np.full(n, 0.01, dtype=np.float32)

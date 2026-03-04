@@ -12,23 +12,25 @@ from __future__ import annotations
 import inspect
 import json
 
+import pytest
 from _paths import SERVER_ROOT
+from vibesensor.report.pdf_builder import (
+    _draw_next_steps_table,
+    _draw_system_card,
+    _page2,
+)
 
 
 class TestNextStepNumberingContinuation:
     """Regression: next-step numbering must continue from page 1 count."""
 
     def test_draw_next_steps_table_accepts_start_number(self) -> None:
-        from vibesensor.report.pdf_builder import _draw_next_steps_table
-
         sig = inspect.signature(_draw_next_steps_table)
         assert "start_number" in sig.parameters, (
             "_draw_next_steps_table must accept start_number kwarg"
         )
 
     def test_page2_passes_start_number(self) -> None:
-        from vibesensor.report.pdf_builder import _page2
-
         src = inspect.getsource(_page2)
         assert "start_number=" in src, "_page2 must pass start_number to _draw_next_steps_table"
 
@@ -37,8 +39,6 @@ class TestSystemCardTone:
     """Regression: _draw_system_card must use card.tone for colors."""
 
     def test_tone_used_in_draw_system_card(self) -> None:
-        from vibesensor.report.pdf_builder import _draw_system_card
-
         src = inspect.getsource(_draw_system_card)
         assert "card.tone" in src, "Must reference card.tone"
         assert "card_neutral_bg" in src or "card_{card.tone}" in src, (
@@ -49,23 +49,10 @@ class TestSystemCardTone:
 class TestNextStepFieldsRendered:
     """Regression: confirm/falsify/eta must appear in rendered text."""
 
-    def test_confirm_rendered(self) -> None:
-        from vibesensor.report.pdf_builder import _draw_next_steps_table
-
+    @pytest.mark.parametrize("field_name", ["confirm", "falsify", "eta"])
+    def test_field_rendered(self, field_name: str) -> None:
         src = inspect.getsource(_draw_next_steps_table)
-        assert "step.confirm" in src, "confirm field must be checked"
-
-    def test_falsify_rendered(self) -> None:
-        from vibesensor.report.pdf_builder import _draw_next_steps_table
-
-        src = inspect.getsource(_draw_next_steps_table)
-        assert "step.falsify" in src, "falsify field must be checked"
-
-    def test_eta_rendered(self) -> None:
-        from vibesensor.report.pdf_builder import _draw_next_steps_table
-
-        src = inspect.getsource(_draw_next_steps_table)
-        assert "step.eta" in src, "eta field must be checked"
+        assert f"step.{field_name}" in src, f"{field_name} field must be checked"
 
 
 def _make_processing_config(**overrides):
@@ -92,17 +79,17 @@ def _make_processing_config(**overrides):
 class TestFftNUpperBound:
     """Regression: fft_n must be clamped to a max of 65536."""
 
-    def test_absurd_fft_n_clamped(self) -> None:
-        cfg = _make_processing_config(fft_n=2**20)
-        assert cfg.fft_n <= 65536, f"fft_n should be clamped but got {cfg.fft_n}"
-
-    def test_normal_fft_n_unchanged(self) -> None:
-        cfg = _make_processing_config(fft_n=4096)
-        assert cfg.fft_n == 4096
-
-    def test_max_boundary(self) -> None:
-        cfg = _make_processing_config(fft_n=65536)
-        assert cfg.fft_n == 65536
+    @pytest.mark.parametrize(
+        "fft_n, expected",
+        [
+            pytest.param(2**20, 65536, id="absurd_clamped"),
+            pytest.param(4096, 4096, id="normal_unchanged"),
+            pytest.param(65536, 65536, id="max_boundary"),
+        ],
+    )
+    def test_fft_n_clamping(self, fft_n: int, expected: int) -> None:
+        cfg = _make_processing_config(fft_n=fft_n)
+        assert cfg.fft_n == expected
 
 
 class TestOrphanI18nKeysRemoved:

@@ -3,10 +3,13 @@ store_analysis_error guard, and i18n formatting."""
 
 from __future__ import annotations
 
+import json
 import math
 
 import pytest
 from _paths import SERVER_ROOT
+from vibesensor.analysis.order_analysis import _wheel_focus_from_location
+from vibesensor.history_db import HistoryDB
 from vibesensor_core.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,
@@ -68,46 +71,35 @@ class TestWheelFocusFromLocation:
     """Regression: _wheel_focus_from_location must match label_for_code() outputs
     which use spaces (e.g. 'Front Left Wheel'), not hyphens."""
 
-    def test_space_separated_labels(self) -> None:
-        from vibesensor.analysis.order_analysis import _wheel_focus_from_location
-
-        wf = _wheel_focus_from_location
-        assert wf("Front Left Wheel") == {"_i18n_key": "WHEEL_FOCUS_FRONT_LEFT"}
-        assert wf("Front Right Wheel") == {"_i18n_key": "WHEEL_FOCUS_FRONT_RIGHT"}
-        assert wf("Rear Left Wheel") == {"_i18n_key": "WHEEL_FOCUS_REAR_LEFT"}
-        assert wf("Rear Right Wheel") == {"_i18n_key": "WHEEL_FOCUS_REAR_RIGHT"}
-
-    def test_hyphen_separated_labels_still_work(self) -> None:
-        from vibesensor.analysis.order_analysis import _wheel_focus_from_location
-
-        wf = _wheel_focus_from_location
-        assert wf("front-left wheel") == {"_i18n_key": "WHEEL_FOCUS_FRONT_LEFT"}
-        assert wf("rear-right wheel") == {"_i18n_key": "WHEEL_FOCUS_REAR_RIGHT"}
-
-    def test_underscore_separated_labels(self) -> None:
-        from vibesensor.analysis.order_analysis import _wheel_focus_from_location
-
-        wf = _wheel_focus_from_location
-        assert wf("front_left_wheel") == {"_i18n_key": "WHEEL_FOCUS_FRONT_LEFT"}
-        assert wf("rear_left_wheel") == {"_i18n_key": "WHEEL_FOCUS_REAR_LEFT"}
-
-    def test_generic_rear_and_front(self) -> None:
-        from vibesensor.analysis.order_analysis import _wheel_focus_from_location
-
-        assert _wheel_focus_from_location("Trunk") == {"_i18n_key": "WHEEL_FOCUS_REAR"}
-        assert _wheel_focus_from_location("Engine Bay") == {"_i18n_key": "WHEEL_FOCUS_FRONT"}
-        assert _wheel_focus_from_location("unknown location") == {"_i18n_key": "WHEEL_FOCUS_ALL"}
+    @pytest.mark.parametrize(
+        "label, expected_key",
+        [
+            # Space-separated (canonical)
+            ("Front Left Wheel", "WHEEL_FOCUS_FRONT_LEFT"),
+            ("Front Right Wheel", "WHEEL_FOCUS_FRONT_RIGHT"),
+            ("Rear Left Wheel", "WHEEL_FOCUS_REAR_LEFT"),
+            ("Rear Right Wheel", "WHEEL_FOCUS_REAR_RIGHT"),
+            # Hyphen-separated
+            ("front-left wheel", "WHEEL_FOCUS_FRONT_LEFT"),
+            ("rear-right wheel", "WHEEL_FOCUS_REAR_RIGHT"),
+            # Underscore-separated
+            ("front_left_wheel", "WHEEL_FOCUS_FRONT_LEFT"),
+            ("rear_left_wheel", "WHEEL_FOCUS_REAR_LEFT"),
+            # Generic locations
+            ("Trunk", "WHEEL_FOCUS_REAR"),
+            ("Engine Bay", "WHEEL_FOCUS_FRONT"),
+            ("unknown location", "WHEEL_FOCUS_ALL"),
+        ],
+    )
+    def test_location_to_wheel_focus(self, label: str, expected_key: str) -> None:
+        assert _wheel_focus_from_location(label) == {"_i18n_key": expected_key}
 
 
 class TestStoreAnalysisErrorGuard:
     """Regression: store_analysis_error must not overwrite a completed run."""
 
     def test_error_does_not_overwrite_complete(self, tmp_path: pytest.TempPathFactory) -> None:
-        from pathlib import Path
-
-        from vibesensor.history_db import HistoryDB
-
-        db = HistoryDB(Path(str(tmp_path)) / "test.db")
+        db = HistoryDB(tmp_path / "test.db")
         run_id = "test-run-001"
         db.create_run(run_id, "2024-01-01T00:00:00", {"test": True})
 
@@ -126,11 +118,8 @@ class TestEvidencePeakPresentFormat:
     """Regression: EVIDENCE_PEAK_PRESENT i18n template must use .1f for dB values."""
 
     def test_dB_format_is_one_decimal(self) -> None:
-        import json
-
         i18n_path = SERVER_ROOT / "data" / "report_i18n.json"
-        with open(i18n_path) as f:
-            data = json.load(f)
+        data = json.loads(i18n_path.read_text())
 
         en_template = data["EVIDENCE_PEAK_PRESENT"]["en"]
         nl_template = data["EVIDENCE_PEAK_PRESENT"]["nl"]

@@ -7,7 +7,16 @@
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
+
+import vibesensor.analysis.findings as fmod
+from vibesensor.analysis.findings import (
+    _build_order_findings,
+    _compute_order_confidence,
+    _suppress_engine_aliases,
+)
 
 # ---------------------------------------------------------------------------
 # Bug 1: ranking_score error denominator must use compliance
@@ -20,10 +29,6 @@ class TestRankingScoreErrorDenominator:
 
     def test_no_hardcoded_denominator_in_ranking(self) -> None:
         """Source must not hardcode 0.5 denominator for ranking error."""
-        import inspect
-
-        from vibesensor.analysis.findings import _build_order_findings
-
         src = inspect.getsource(_build_order_findings)
         # Old code had a hardcoded 0.5 denominator; new code derives from compliance.
         assert "mean_rel_err / 0.5" not in src, (
@@ -44,8 +49,6 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
     valid findings at position 6+ from being returned."""
 
     def test_valid_finding_not_lost_after_suppression(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         # Build 7 findings: 2 wheel, 3 engine (will be suppressed below
         # ORDER_MIN_CONFIDENCE), 2 driveshaft at end.
         findings: list[tuple[float, dict]] = [
@@ -115,8 +118,6 @@ class TestSuppressEngineAliasesFilterBeforeSlice:
         )
 
     def test_suppressed_engine_below_threshold_excluded(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         findings: list[tuple[float, dict]] = [
             (
                 1.0,
@@ -151,8 +152,6 @@ class TestSingleSensorNotTriplePenalised:
     localization_confidence + weak_spatial + sensor_count penalties."""
 
     def test_single_sensor_reasonable_confidence(self) -> None:
-        from vibesensor.analysis.findings import _compute_order_confidence
-
         # Good evidence on single sensor: high match rate, low error,
         # decent SNR, but single sensor -> forced low localization.
         conf = _compute_order_confidence(
@@ -183,8 +182,6 @@ class TestSingleSensorNotTriplePenalised:
     def test_sensor_scale_not_applied_when_localization_low(self) -> None:
         """When localization_confidence is very low (already heavily penalised),
         the explicit sensor-count scale should NOT stack on top."""
-        from vibesensor.analysis.findings import _compute_order_confidence
-
         # Call twice: once with n_connected=1, once with n_connected=3
         # (n_connected=3 avoids sensor scale entirely).
         kwargs = dict(
@@ -226,10 +223,6 @@ class TestPersistentPeakNegligibleCapAligned:
     frequency."""
 
     def test_cap_value_in_source(self) -> None:
-        import inspect
-
-        import vibesensor.analysis.findings as fmod
-
         src = inspect.getsource(fmod._build_persistent_peak_findings)
         # The negligible cap must be 0.40, not 0.35
         assert "min(confidence, 0.40)" in src, (
