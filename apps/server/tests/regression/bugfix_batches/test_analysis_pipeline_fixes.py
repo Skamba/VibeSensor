@@ -11,23 +11,30 @@ from typing import Any
 
 import pytest
 
+from vibesensor.analysis import build_findings_for_samples, map_summary, summarize_run_data
 from vibesensor.history_db import HistoryDB
+from vibesensor.metrics_log import MetricsLogger
+from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.runlog import bounded_sample, normalize_sample_record
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Helpers / Fixtures
 # ---------------------------------------------------------------------------
 
+_START = "2026-01-01T00:00:00Z"
+_END = "2026-01-01T00:05:00Z"
 
-def _make_db(tmp_path: Path) -> HistoryDB:
+
+@pytest.fixture()
+def db(tmp_path: Path) -> HistoryDB:
     return HistoryDB(tmp_path / "pipeline_test.db")
 
 
 def _simple_metadata(run_id: str = "test-run", lang: str = "en") -> dict[str, Any]:
     return {
         "run_id": run_id,
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:05:00Z",
+        "start_time_utc": _START,
+        "end_time_utc": _END,
         "sensor_model": "ADXL345",
         "language": lang,
     }
@@ -49,6 +56,15 @@ def _simple_samples(n: int = 20) -> list[dict[str, Any]]:
     ]
 
 
+def _summarize(**overrides: Any) -> dict[str, Any]:
+    """Shortcut: summarize_run_data with sensible defaults."""
+    kw: dict[str, Any] = {"include_samples": False}
+    kw.update(overrides)
+    meta = kw.pop("metadata", _simple_metadata())
+    samples = kw.pop("samples", _simple_samples())
+    return summarize_run_data(meta, samples, **kw)
+
+
 # ---------------------------------------------------------------------------
 # Fix 1: bounded_sample extracted to runlog.py
 # ---------------------------------------------------------------------------
@@ -57,31 +73,31 @@ def _simple_samples(n: int = 20) -> list[dict[str, Any]]:
 class TestBoundedSample:
     """Fix 1: The canonical bounded_sample lives in runlog, not duplicated."""
 
-    def test_basic_downsampling(self) -> None:
-        items = [{"i": i} for i in range(100)]
-        kept, total, stride = bounded_sample(iter(items), max_items=20)
-        assert total == 100
-        assert len(kept) <= 20
+    @pytest.mark.parametrize(
+        "n, max_items, total_hint, expect_total, expect_max_len",
+        [
+            pytest.param(100, 20, None, 100, 20, id="downsampling"),
+            pytest.param(5, 100, None, 5, 5, id="below-limit"),
+            pytest.param(1000, 50, 1000, 1000, 50, id="total-hint"),
+            pytest.param(0, 10, None, 0, 0, id="empty"),
+        ],
+    )
+    def test_bounded_sample(
+        self,
+        n: int,
+        max_items: int,
+        total_hint: int | None,
+        expect_total: int,
+        expect_max_len: int,
+    ) -> None:
+        items = [{"i": i} for i in range(n)]
+        kwargs: dict[str, Any] = {"max_items": max_items}
+        if total_hint is not None:
+            kwargs["total_hint"] = total_hint
+        kept, total, stride = bounded_sample(iter(items), **kwargs)
+        assert total == expect_total
+        assert len(kept) <= expect_max_len
         assert stride >= 1
-
-    def test_no_downsampling_when_below_limit(self) -> None:
-        items = [{"i": i} for i in range(5)]
-        kept, total, stride = bounded_sample(iter(items), max_items=100)
-        assert total == 5
-        assert len(kept) == 5
-        assert stride == 1
-
-    def test_total_hint_precomputes_stride(self) -> None:
-        items = [{"i": i} for i in range(1000)]
-        kept, total, stride = bounded_sample(iter(items), max_items=50, total_hint=1000)
-        assert total == 1000
-        assert len(kept) <= 50
-
-    def test_empty_input(self) -> None:
-        kept, total, stride = bounded_sample(iter([]), max_items=10)
-        assert total == 0
-        assert len(kept) == 0
-        assert stride == 1
 
 
 # ---------------------------------------------------------------------------
@@ -91,9 +107,7 @@ class TestBoundedSample:
 
 def test_no_sensor_statistics_alias() -> None:
     """Fix 2: summarize_run_data must not include the dead alias key."""
-    from vibesensor.analysis import summarize_run_data
-
-    summary = summarize_run_data(_simple_metadata(), _simple_samples(), include_samples=False)
+    summary = _summarize()
     assert "sensor_intensity_by_location" in summary
     assert "sensor_statistics_by_location" not in summary
 
@@ -105,16 +119,9 @@ def test_no_sensor_statistics_alias() -> None:
 
 def test_insights_lang_normalization() -> None:
     """Fix 3: summarize_run_data normalizes lang parameter consistently."""
-    from vibesensor.analysis import summarize_run_data
-
-    # Unnormalized "EN" should produce same result as "en"
-    summary_en = summarize_run_data(
-        _simple_metadata(), _simple_samples(), lang="EN", include_samples=False
-    )
-    summary_en2 = summarize_run_data(
-        _simple_metadata(), _simple_samples(), lang="en", include_samples=False
-    )
-    assert summary_en["lang"] == summary_en2["lang"] == "en"
+    summary_upper = _summarize(lang="EN")
+    summary_lower = _summarize(lang="en")
+    assert summary_upper["lang"] == summary_lower["lang"] == "en"
 
 
 # ---------------------------------------------------------------------------
@@ -126,8 +133,6 @@ class TestWorkerThreadRace:
     """Fix 5: _analysis_thread cleared on exit so new scheduling works."""
 
     def test_analysis_thread_cleared_on_completion(self, tmp_path: Path) -> None:
-        from vibesensor.metrics_log import MetricsLogger
-
         class FakeReg:
             def active_client_ids(self):
                 return []
@@ -160,21 +165,18 @@ class TestWorkerThreadRace:
             fft_window_size_samples=256,
         )
 
-        # Simulate analysis that completes immediately
-        seen = []
+        seen: list[str] = []
 
-        def _mock_analysis(run_id):
+        def _mock_analysis(run_id: str) -> None:
             seen.append(run_id)
 
         logger._post_analysis._run_post_analysis = _mock_analysis  # type: ignore[assignment]
         logger._schedule_post_analysis("run-1")
         logger.wait_for_post_analysis(timeout_s=2.0)
 
-        # Thread should be cleared after completion
         with logger._post_analysis._lock:
             assert logger._post_analysis._analysis_thread is None
 
-        # Should be able to schedule again without issues
         logger._schedule_post_analysis("run-2")
         logger.wait_for_post_analysis(timeout_s=2.0)
         assert seen == ["run-1", "run-2"]
@@ -185,20 +187,17 @@ class TestWorkerThreadRace:
 # ---------------------------------------------------------------------------
 
 
-def test_analysis_is_current(tmp_path: Path) -> None:
+def test_analysis_is_current(db: HistoryDB) -> None:
     """Fix 6: analysis_is_current returns True when version matches."""
-    db = _make_db(tmp_path)
-    db.create_run("r1", "2026-01-01T00:00:00Z", {})
-    db.finalize_run("r1", "2026-01-01T00:05:00Z")
+    db.create_run("r1", _START, {})
+    db.finalize_run("r1", _END)
     db.store_analysis("r1", {"findings": []})
-
     assert db.analysis_is_current("r1") is True
 
 
-def test_analysis_is_not_current_without_analysis(tmp_path: Path) -> None:
+def test_analysis_is_not_current_without_analysis(db: HistoryDB) -> None:
     """Fix 6: analysis_is_current returns False for unanalyzed run."""
-    db = _make_db(tmp_path)
-    db.create_run("r1", "2026-01-01T00:00:00Z", {})
+    db.create_run("r1", _START, {})
     assert db.analysis_is_current("r1") is False
 
 
@@ -207,25 +206,21 @@ def test_analysis_is_not_current_without_analysis(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_finalize_run_only_from_recording(tmp_path: Path) -> None:
+def test_finalize_run_only_from_recording(db: HistoryDB) -> None:
     """Fix 7: finalize_run only transitions from 'recording' state."""
-    db = _make_db(tmp_path)
-    db.create_run("r1", "2026-01-01T00:00:00Z", {})
-    db.finalize_run("r1", "2026-01-01T00:05:00Z")
-    status = db.get_run_status("r1")
-    assert status == "analyzing"
+    db.create_run("r1", _START, {})
+    db.finalize_run("r1", _END)
+    assert db.get_run_status("r1") == "analyzing"
 
     # Second finalize should be a no-op (already in 'analyzing')
     db.finalize_run("r1", "2026-01-01T00:10:00Z")
-    status = db.get_run_status("r1")
-    assert status == "analyzing"
+    assert db.get_run_status("r1") == "analyzing"
 
 
-def test_store_analysis_idempotent(tmp_path: Path) -> None:
+def test_store_analysis_idempotent(db: HistoryDB) -> None:
     """Fix 10: store_analysis skips already-complete runs."""
-    db = _make_db(tmp_path)
-    db.create_run("r1", "2026-01-01T00:00:00Z", {})
-    db.finalize_run("r1", "2026-01-01T00:05:00Z")
+    db.create_run("r1", _START, {})
+    db.finalize_run("r1", _END)
     db.store_analysis("r1", {"findings": [{"id": "first"}]})
 
     run = db.get_run("r1")
@@ -244,14 +239,10 @@ def test_store_analysis_idempotent(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_end_time_utc_in_metadata(tmp_path: Path) -> None:
+def test_end_time_utc_in_metadata() -> None:
     """Fix 9: metadata should contain end_time_utc from run data."""
-    from vibesensor.analysis import summarize_run_data
-
-    meta = _simple_metadata()
-    meta["end_time_utc"] = "2026-01-01T00:05:00Z"
-    summary = summarize_run_data(meta, _simple_samples(), include_samples=False)
-    assert summary.get("end_time_utc") == "2026-01-01T00:05:00Z"
+    summary = _summarize()
+    assert summary.get("end_time_utc") == _END
 
 
 # ---------------------------------------------------------------------------
@@ -261,22 +252,17 @@ def test_end_time_utc_in_metadata(tmp_path: Path) -> None:
 
 def test_report_date_deterministic() -> None:
     """Fix 11: report_date should use end_time_utc, not datetime.now()."""
-    from vibesensor.analysis import summarize_run_data
-
     meta = _simple_metadata()
     meta["end_time_utc"] = "2026-06-15T12:00:00Z"
-    summary = summarize_run_data(meta, _simple_samples(), include_samples=False)
+    summary = _summarize(metadata=meta)
     assert summary["report_date"] == "2026-06-15T12:00:00Z"
 
 
 def test_report_date_fallback_when_no_end_time() -> None:
     """Fix 11: Without end_time_utc, report_date falls back to datetime.now()."""
-    from vibesensor.analysis import summarize_run_data
-
     meta = _simple_metadata()
     meta.pop("end_time_utc", None)
-    summary = summarize_run_data(meta, _simple_samples(), include_samples=False)
-    # Should be a valid ISO timestamp (not None)
+    summary = _summarize(metadata=meta)
     assert summary["report_date"] is not None
     assert "T" in str(summary["report_date"])
 
@@ -288,14 +274,11 @@ def test_report_date_fallback_when_no_end_time() -> None:
 
 def test_build_findings_uses_shared_speed_prep() -> None:
     """Fix 12: build_findings_for_samples produces same speed analysis as summarize_run_data."""
-    from vibesensor.analysis import build_findings_for_samples, summarize_run_data
-
     meta = _simple_metadata()
     samples = _simple_samples(50)
     findings_standalone = build_findings_for_samples(metadata=meta, samples=samples, lang="en")
     summary = summarize_run_data(meta, samples, lang="en", include_samples=False)
 
-    # Both should produce the same set of finding IDs
     standalone_ids = {f.get("finding_id") for f in findings_standalone}
     summary_ids = {f.get("finding_id") for f in summary.get("findings", [])}
     assert standalone_ids == summary_ids
@@ -306,33 +289,23 @@ def test_build_findings_uses_shared_speed_prep() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_stale_analyzing_run_ids(tmp_path: Path) -> None:
+def _setup_stale_pair(db: HistoryDB) -> None:
+    """Shared setup: r1 finalized (analyzing), r2 still recording."""
+    db.create_run("r1", _START, {})
+    db.finalize_run("r1", _END)
+    db.create_run("r2", "2026-01-01T00:10:00Z", {})
+
+
+def test_stale_analyzing_run_ids(db: HistoryDB) -> None:
     """Fix 14: stale_analyzing_run_ids finds stuck runs."""
-    db = _make_db(tmp_path)
-    db.create_run("r1", "2026-01-01T00:00:00Z", {})
-    db.finalize_run("r1", "2026-01-01T00:05:00Z")
-    # r1 is now in 'analyzing' state
-
-    db.create_run("r2", "2026-01-01T00:10:00Z", {})
-    # r2 is in 'recording' state
-
-    stale = db.stale_analyzing_run_ids()
-    assert stale == ["r1"]
+    _setup_stale_pair(db)
+    assert db.stale_analyzing_run_ids() == ["r1"]
 
 
-def test_recover_stale_does_not_touch_analyzing(tmp_path: Path) -> None:
+def test_recover_stale_does_not_touch_analyzing(db: HistoryDB) -> None:
     """Fix 14: recover_stale_recording_runs leaves 'analyzing' runs alone."""
-    db = _make_db(tmp_path)
-    db.create_run("r1", "2026-01-01T00:00:00Z", {})
-    db.finalize_run("r1", "2026-01-01T00:05:00Z")
-    # r1 is 'analyzing'
-
-    db.create_run("r2", "2026-01-01T00:10:00Z", {})
-    # r2 is 'recording'
-
-    recovered = db.recover_stale_recording_runs()
-    assert recovered == 1  # only r2
-
+    _setup_stale_pair(db)
+    assert db.recover_stale_recording_runs() == 1  # only r2
     assert db.get_run_status("r1") == "analyzing"
     assert db.get_run_status("r2") == "error"
 
@@ -344,8 +317,6 @@ def test_recover_stale_does_not_touch_analyzing(tmp_path: Path) -> None:
 
 def test_build_report_pdf_rejects_invalid_type() -> None:
     """build_report_pdf raises TypeError for non-RTD input."""
-    from vibesensor.report.pdf_builder import build_report_pdf
-
     with pytest.raises(TypeError, match="expects ReportTemplateData"):
         build_report_pdf("not a valid input")  # type: ignore[arg-type]
 
@@ -380,11 +351,7 @@ def test_insights_strips_internal_fields() -> None:
 
 def test_report_cli_summary_excludes_samples_for_pdf() -> None:
     """Fix 19: CLI should not include samples unless summary JSON is requested."""
-    from vibesensor.analysis import summarize_run_data
-
-    meta = _simple_metadata()
-    samples = _simple_samples()
-    summary = summarize_run_data(meta, samples, include_samples=False)
+    summary = _summarize()
     assert "samples" not in summary
 
 
@@ -393,28 +360,19 @@ def test_report_cli_summary_excludes_samples_for_pdf() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_end_to_end_pipeline(tmp_path: Path) -> None:
+def test_end_to_end_pipeline(db: HistoryDB) -> None:
     """Full pipeline: create → record → finalize → analyze → persist → report."""
-    from vibesensor.analysis import map_summary, summarize_run_data
-    from vibesensor.report.pdf_builder import build_report_pdf
-
-    db = _make_db(tmp_path)
-
-    # 1. Create run
     run_id = "e2e-test-run"
     metadata = _simple_metadata(run_id)
-    db.create_run(run_id, "2026-01-01T00:00:00Z", metadata)
+    db.create_run(run_id, _START, metadata)
     assert db.get_run_status(run_id) == "recording"
 
-    # 2. Record samples
     samples = _simple_samples(30)
     db.append_samples(run_id, samples)
 
-    # 3. Finalize (stop recording)
-    db.finalize_run(run_id, "2026-01-01T00:05:00Z")
+    db.finalize_run(run_id, _END)
     assert db.get_run_status(run_id) == "analyzing"
 
-    # 4. Analyze
     read_samples = db.get_run_samples(run_id)
     normalized = [normalize_sample_record(s) for s in read_samples]
     summary = summarize_run_data(
@@ -426,33 +384,26 @@ def test_end_to_end_pipeline(tmp_path: Path) -> None:
     assert "run_suitability" in summary
     assert "samples" not in summary
 
-    # 5. Persist
     db.store_analysis(run_id, summary)
     assert db.get_run_status(run_id) == "complete"
     assert db.analysis_is_current(run_id)
 
-    # 6. Verify persisted analysis
     run = db.get_run(run_id)
     assert run is not None
     assert isinstance(run.get("analysis"), dict)
     analysis = run["analysis"]
 
-    # 7. Generate report from analysis
     report_data = map_summary(analysis)
     pdf_bytes = build_report_pdf(report_data)
     assert isinstance(pdf_bytes, bytes)
-    assert len(pdf_bytes) > 1000  # non-trivial PDF
+    assert len(pdf_bytes) > 1000
     assert pdf_bytes[:5] == b"%PDF-"
 
-    # 8. Verify idempotency — second store_analysis should be skipped
+    # Idempotency — second store_analysis should be skipped
     db.store_analysis(run_id, {"findings": [{"id": "should-not-overwrite"}]})
     run2 = db.get_run(run_id)
     assert run2 is not None
-    # Original analysis should be preserved
     assert run2["analysis"].get("run_id") == run_id
 
-    # 9. Verify no duplicated keys
     assert "sensor_statistics_by_location" not in analysis
-
-    # 10. Verify report_date is deterministic
-    assert analysis.get("report_date") == "2026-01-01T00:05:00Z"
+    assert analysis.get("report_date") == _END
