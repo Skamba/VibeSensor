@@ -7,6 +7,8 @@ when domain knowledge evolves — end users do not configure these rules.
 
 from __future__ import annotations
 
+from functools import lru_cache
+
 # ---------------------------------------------------------------------------
 # Static mapping tables
 # ---------------------------------------------------------------------------
@@ -86,12 +88,21 @@ _DEFAULT_PARTS: list[tuple[str, str, str]] = [
 
 
 # ---------------------------------------------------------------------------
-# Public API
+# Helpers
 # ---------------------------------------------------------------------------
 
 
+def _normalize_system(system: str | None) -> str:
+    """Lower-case and strip *system*, coalescing ``None`` to ``""``."""
+    return str(system or "").strip().lower()
+
+
+@lru_cache(maxsize=64)
 def _order_bucket(order_text: str) -> str:
-    """Normalise an order label like '1x wheel order' → '1x', '2x', 'higher'."""
+    """Normalise an order label like '1x wheel order' → '1x', '2x', 'higher'.
+
+    Results are cached because report generation often repeats the same labels.
+    """
     text = str(order_text or "").strip().lower()
     if "1x" in text or "1×" in text:
         return "1x"
@@ -100,10 +111,14 @@ def _order_bucket(order_text: str) -> str:
     # Any numeric > 2 or general "higher"
     for token in text.split():
         if token.endswith("x") and token[:-1].isdigit():
-            n = int(token[:-1])
-            if n > 2:
+            if int(token[:-1]) > 2:
                 return "higher"
     return "*"
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
 
 
 def parts_for_pattern(
@@ -129,10 +144,9 @@ def parts_for_pattern(
     list[str]
         Part descriptions in the requested language.
     """
-    src = str(system or "").strip().lower()
+    src = _normalize_system(system)
     bucket = _order_bucket(order_label or "")
-    key = (src, bucket)
-    entries = _SYSTEM_PARTS.get(key) or _SYSTEM_PARTS.get((src, "*")) or _DEFAULT_PARTS
+    entries = _SYSTEM_PARTS.get((src, bucket)) or _SYSTEM_PARTS.get((src, "*")) or _DEFAULT_PARTS
     idx = 2 if lang == "nl" else 1
     return [entry[idx] for entry in entries]
 
@@ -155,7 +169,7 @@ def why_parts_listed(
 
     The wording is deterministic and drawn from a controlled set.
     """
-    src = str(system or "").strip().lower()
+    src = _normalize_system(system)
     bucket = _order_bucket(order_label or "")
 
     base_en = "These parts are commonly associated with"
