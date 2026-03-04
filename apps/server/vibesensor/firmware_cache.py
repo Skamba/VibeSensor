@@ -54,6 +54,19 @@ _META_FILE = "_meta.json"
 _MANIFEST_FILE = "flash.json"
 _MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024  # 100 MB hard limit for firmware assets
 
+_FW_ASSET_PREFIX = "vibesensor-fw-"
+_FW_ASSET_SUFFIX = ".zip"
+
+
+def _is_firmware_asset_name(name: str) -> bool:
+    """Return True if *name* matches the firmware bundle naming convention."""
+    return name.startswith(_FW_ASSET_PREFIX) and name.endswith(_FW_ASSET_SUFFIX)
+
+
+def _read_json_file(path: Path) -> dict[str, Any]:
+    """Read and parse a JSON file. Raises JSONDecodeError or OSError on failure."""
+    return json.loads(path.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
+
 
 def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
     """Extract *zf* into *dest*, rejecting entries that escape the target directory."""
@@ -157,7 +170,7 @@ def validate_bundle(bundle_dir: Path) -> FlashManifest:
             "Run the updater while online or reinstall the Pi image."
         )
     try:
-        manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest_data = _read_json_file(manifest_path)
     except (json.JSONDecodeError, OSError) as exc:
         raise ValueError(f"Firmware manifest is corrupt in {bundle_dir}: {exc}") from exc
 
@@ -191,7 +204,7 @@ def read_meta(bundle_dir: Path) -> BundleMeta | None:
     if not meta_path.is_file():
         return None
     try:
-        data = json.loads(meta_path.read_text(encoding="utf-8"))
+        data = _read_json_file(meta_path)
     except (json.JSONDecodeError, OSError):
         return None
     return BundleMeta(
@@ -315,19 +328,15 @@ class GitHubReleaseFetcher(GitHubAPIClient):
 
     @staticmethod
     def _release_has_firmware_asset(release: dict[str, Any]) -> bool:
-        assets = release.get("assets", [])
-        for asset in assets:
-            name = str(asset.get("name", ""))
-            if name.startswith("vibesensor-fw-") and name.endswith(".zip"):
-                return True
-        return False
+        return any(
+            _is_firmware_asset_name(str(a.get("name", "")))
+            for a in release.get("assets", [])
+        )
 
     def find_firmware_asset(self, release: dict[str, Any]) -> dict[str, Any]:
         """Find the firmware bundle asset in a release."""
-        assets = release.get("assets", [])
-        for asset in assets:
-            name = asset.get("name", "")
-            if name.startswith("vibesensor-fw-") and name.endswith(".zip"):
+        for asset in release.get("assets", []):
+            if _is_firmware_asset_name(str(asset.get("name", ""))):
                 return asset
         raise ValueError(
             f"No firmware bundle asset found in release '{release.get('tag_name', '?')}'. "
@@ -501,16 +510,17 @@ class FirmwareCache:
 def _dir_sha256(directory: Path) -> str:
     """Compute a SHA256 hash over all files in a directory (sorted, deterministic)."""
     h = hashlib.sha256()
+    _update = h.update  # local-bind for the tight read loop
     for fpath in sorted(directory.rglob("*")):
         if fpath.is_file():
-            h.update(str(fpath.relative_to(directory)).encode())
-            h.update(b"\0")  # separator between path and content
+            _update(str(fpath.relative_to(directory)).encode())
+            _update(b"\0")  # separator between path and content
             with open(fpath, "rb") as f:
                 while True:
                     chunk = f.read(65536)
                     if not chunk:
                         break
-                    h.update(chunk)
+                    _update(chunk)
     return h.hexdigest()
 
 

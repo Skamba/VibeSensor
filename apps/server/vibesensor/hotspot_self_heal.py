@@ -21,6 +21,12 @@ from .hotspot_parsers import (
 
 LOGGER = logging.getLogger("vibesensor.hotspot.selfheal")
 
+_DHCP_BAD_SIGNALS: frozenset[str] = frozenset(
+    {"dhcp_no_range", "dhcp_dnsmasq_start_failed", "port53_conflict"}
+)
+
+_FALLBACK_CHANNELS: tuple[int, ...] = (1, 6, 11)
+
 
 @dataclass(slots=True)
 class CommandResult:
@@ -97,6 +103,20 @@ class HealthState:
         )
 
 
+def _journalctl_nm_args(lookback_minutes: int) -> list[str]:
+    """Build journalctl argv for NetworkManager log retrieval."""
+    return [
+        "journalctl",
+        "-u",
+        "NetworkManager",
+        "--since",
+        f"-{max(1, lookback_minutes)} min",
+        "--no-pager",
+        "-n",
+        "120",
+    ]
+
+
 def _find_port53_conflict(runner: CommandRunner) -> str | None:
     ss = runner.run(["ss", "-ltnup", "sport", "=", ":53"], timeout_s=5)
     if ss.returncode != 0:
@@ -163,16 +183,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
         issues.append("ip_mismatch")
 
     nm_logs = runner.run(
-        [
-            "journalctl",
-            "-u",
-            "NetworkManager",
-            "--since",
-            f"-{max(1, self_heal.diagnostics_lookback_minutes)} min",
-            "--no-pager",
-            "-n",
-            "120",
-        ],
+        _journalctl_nm_args(self_heal.diagnostics_lookback_minutes),
         timeout_s=8,
     )
     dhcp_log_signal, _ = nm_log_signals(nm_logs.stdout)
@@ -185,11 +196,7 @@ def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRun
             if "networkmanager" in lowered and "dnsmasq" in lowered:
                 nm_dnsmasq_running = True
                 break
-    dhcp_ok = nm_dnsmasq_running and dhcp_log_signal not in {
-        "dhcp_no_range",
-        "dhcp_dnsmasq_start_failed",
-        "port53_conflict",
-    }
+    dhcp_ok = nm_dnsmasq_running and dhcp_log_signal not in _DHCP_BAD_SIGNALS
     if not dhcp_ok:
         issues.append("dhcp_unhealthy")
 
@@ -339,16 +346,7 @@ def _emit_diagnostics(
         ["ip", "addr", "show", "dev", ap.ifname],
         ["iw", "dev", ap.ifname, "info"],
         ["rfkill", "list"],
-        [
-            "journalctl",
-            "-u",
-            "NetworkManager",
-            "--since",
-            f"-{max(1, lookback_minutes)} min",
-            "--no-pager",
-            "-n",
-            "120",
-        ],
+        _journalctl_nm_args(lookback_minutes),
     ]
 
     logger.warning("hotspot diagnostics begin")
@@ -456,7 +454,7 @@ def run_self_heal_once(
         if not ensured:
             ensured = _recreate_connection(ap, runner)
         if not ensured:
-            for fallback_channel in [1, 6, 11]:
+            for fallback_channel in _FALLBACK_CHANNELS:
                 if fallback_channel == ap.channel:
                     continue
                 if _ensure_ap_connection(ap, runner, channel=fallback_channel):

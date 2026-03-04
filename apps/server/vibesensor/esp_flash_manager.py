@@ -244,7 +244,7 @@ class EspFlashManager:
     def _append_log(self, line: str) -> None:
         self._logs.append(line)
         if len(self._logs) > self._max_log_lines:
-            self._logs = self._logs[-1000:]
+            del self._logs[: -1000]
         self._status.log_count = len(self._logs)
         LOGGER.debug("esp flash log line recorded")
 
@@ -287,6 +287,14 @@ class EspFlashManager:
             self._append_log(f"Command exited with code {rc}")
         return rc
 
+    def _check_cancelled(self) -> bool:
+        """Return *True* and finalize if the cancel event is set."""
+        if not self._cancel_event.is_set():
+            return False
+        self._status.exit_code = 130
+        self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+        return True
+
     def _finalize(self, *, state: EspFlashState, error: str | None = None) -> None:
         self._status.state = state
         self._status.error = error
@@ -307,7 +315,7 @@ class EspFlashManager:
             ),
         )
         if len(self._history) > _FLASH_HISTORY_LIMIT:
-            self._history = self._history[:_FLASH_HISTORY_LIMIT]
+            del self._history[_FLASH_HISTORY_LIMIT:]
 
     async def _run_flash_job(self) -> None:
         esptool_cmd = _esptool_base_cmd()
@@ -381,7 +389,7 @@ class EspFlashManager:
                 return
 
             self._status.selected_port = selected_port
-            erase_cmd = [
+            port_prefix = [
                 *esptool_cmd,
                 "--chip",
                 "esp32",
@@ -391,14 +399,13 @@ class EspFlashManager:
                 "default_reset",
                 "--after",
                 "hard_reset",
-                "erase_flash",
             ]
+
+            erase_cmd = [*port_prefix, "erase_flash"]
             erase_rc = await self._run_flash_step(
                 "erasing", erase_cmd, cwd=bundle_dir, timeout_s=45
             )
-            if self._cancel_event.is_set():
-                self._status.exit_code = 130
-                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+            if self._check_cancelled():
                 return
             if erase_rc != 0:
                 self._status.exit_code = erase_rc
@@ -406,15 +413,7 @@ class EspFlashManager:
                 return
 
             write_cmd = [
-                *esptool_cmd,
-                "--chip",
-                "esp32",
-                "--port",
-                selected_port,
-                "--before",
-                "default_reset",
-                "--after",
-                "hard_reset",
+                *port_prefix,
                 "--baud",
                 "115200",
                 "write_flash",
@@ -427,9 +426,7 @@ class EspFlashManager:
                 cwd=bundle_dir,
                 timeout_s=120,
             )
-            if self._cancel_event.is_set():
-                self._status.exit_code = 130
-                self._finalize(state=EspFlashState.cancelled, error="Flash cancelled by user")
+            if self._check_cancelled():
                 return
             self._status.exit_code = write_rc
             if write_rc != 0:
