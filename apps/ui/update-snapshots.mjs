@@ -13,6 +13,13 @@ const SERVER_TIMEOUT_MS = 25_000;
 const PAGE_TIMEOUT_MS = 15_000;
 const SNAPSHOT_DIR = "tests/snapshots/visual.spec.ts";
 
+const VIEWPORT_CONFIGS = [
+  ["laptop-light", { width: 1280, height: 800 }, "light"],
+  ["laptop-dark",  { width: 1280, height: 800 }, "dark"],
+  ["tablet-light", { width: 810, height: 1080 }, "light"],
+  ["tablet-dark",  { width: 810, height: 1080 }, "dark"],
+];
+
 async function startServer(cwd) {
   return new Promise((resolve, reject) => {
     const server = spawn(
@@ -57,12 +64,7 @@ async function main() {
 
     // ----- Snapshot: live-view (laptop-light) -----
     console.log("\nCapturing live-view snapshots...");
-    for (const [projectName, viewport, colorScheme] of [
-      ["laptop-light", { width: 1280, height: 800 }, "light"],
-      ["laptop-dark",  { width: 1280, height: 800 }, "dark"],
-      ["tablet-light", { width: 810, height: 1080 }, "light"],
-      ["tablet-dark",  { width: 810, height: 1080 }, "dark"],
-    ]) {
+    for (const [projectName, viewport, colorScheme] of VIEWPORT_CONFIGS) {
       const ctx = await browser.newContext({ viewport, colorScheme });
       const page = await ctx.newPage();
       await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, { timeout: PAGE_TIMEOUT_MS });
@@ -78,12 +80,7 @@ async function main() {
 
     // ----- Snapshot: settings-analysis -----
     console.log("\nCapturing settings-analysis snapshots...");
-    for (const [projectName, viewport, colorScheme] of [
-      ["laptop-light", { width: 1280, height: 800 }, "light"],
-      ["laptop-dark",  { width: 1280, height: 800 }, "dark"],
-      ["tablet-light", { width: 810, height: 1080 }, "light"],
-      ["tablet-dark",  { width: 810, height: 1080 }, "dark"],
-    ]) {
+    for (const [projectName, viewport, colorScheme] of VIEWPORT_CONFIGS) {
       const ctx = await browser.newContext({ viewport, colorScheme });
       const page = await ctx.newPage();
       await page.goto(`http://localhost:${SERVER_PORT}/?demo=1`, { timeout: PAGE_TIMEOUT_MS });
