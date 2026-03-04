@@ -76,6 +76,9 @@ _SENSITIVE_KEYS: frozenset[str] = frozenset({
 
 _PACKAGED_STATIC_DIR: Path = Path(__file__).resolve().parent.parent / "static"
 
+_UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
+"""Regex matching an unescaped colon — compiled once at module level."""
+
 
 def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     if not root.exists():
@@ -300,14 +303,13 @@ class UpdateManager:
         target = ssid.strip()
         if not target:
             return modes
-        _split_re = re.compile(r"(?<!\\):")
         for line in scan_output.splitlines():
             raw = line.strip()
             if not raw or ":" not in raw:
                 continue
             # nmcli escapes colons inside SSIDs as ``\:``.  Split on the
             # first *unescaped* colon to separate SSID from security mode.
-            parts = _split_re.split(raw, maxsplit=1)
+            parts = _UNESCAPED_COLON_RE.split(raw, maxsplit=1)
             if len(parts) != 2:
                 continue
             candidate_ssid, security = parts[0].replace("\\:", ":"), parts[1]
@@ -801,11 +803,6 @@ class UpdateManager:
                 self._log("WARNING: Could not create rollback snapshot; proceeding anyway")
 
             venv_python = self._reinstall_python_executable(self._repo)
-            if not Path(venv_python).is_file():
-                # Fall back to system python in venv
-                venv_python = str(
-                    self._repo / "apps" / "server" / ".venv" / "bin" / "python3"
-                )
 
             # Install the new wheel
             install_cmd = [
