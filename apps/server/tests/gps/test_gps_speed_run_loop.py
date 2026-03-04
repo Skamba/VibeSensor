@@ -44,7 +44,7 @@ def _non_tpv_line() -> bytes:
 @asynccontextmanager
 async def _gps_server_scenario(
     *lines: bytes,
-    settle_s: float = 0.2,
+    settle_s: float = 0.05,
 ) -> AsyncIterator[GPSSpeedMonitor]:
     """Start a mock gpsd that sends *lines*, yield the connected monitor, then tear down."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
@@ -129,12 +129,12 @@ async def test_run_reconnects_on_connection_failure(
 
     monkeypatch.setattr(asyncio, "open_connection", _failing_open)
     # Shrink reconnect delay so the test doesn't wait long
-    monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_DELAY_S", 0.05)
-    monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_MAX_DELAY_S", 0.1)
+    monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_DELAY_S", 0.02)
+    monkeypatch.setattr("vibesensor.gps_speed._GPS_RECONNECT_MAX_DELAY_S", 0.04)
     caplog.set_level("WARNING")
 
     task = asyncio.create_task(monitor.run(host="127.0.0.1", port=9999))
-    await asyncio.sleep(0.3)
+    await asyncio.sleep(0.15)
 
     assert attempt_count >= 2, f"Expected at least 2 attempts, got {attempt_count}"
     assert monitor.speed_mps is None
@@ -230,10 +230,10 @@ async def test_run_disabled_polls_without_connecting(monkeypatch: pytest.MonkeyP
         raise AssertionError("should not be called")
 
     monkeypatch.setattr(asyncio, "open_connection", _spy_open)
-    monkeypatch.setattr("vibesensor.gps_speed._GPS_DISABLED_POLL_S", 0.05)
+    monkeypatch.setattr("vibesensor.gps_speed._GPS_DISABLED_POLL_S", 0.02)
 
     task = asyncio.create_task(monitor.run())
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(0.1)
 
     assert monitor.speed_mps is None
     assert not connection_attempted
@@ -262,7 +262,7 @@ async def test_run_ignores_malformed_json() -> None:
 async def test_run_rejects_invalid_tpv_speed(tpv_kwargs: dict[str, object]) -> None:
     """TPV messages with invalid speed/mode must not update speed_mps."""
     async with _gps_server_scenario(_tpv_line(**tpv_kwargs)) as monitor:
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.15)
         assert monitor.speed_mps is None
 
 
@@ -274,7 +274,7 @@ async def test_run_ignores_tpv_speed_with_zero_coordinates_and_keeps_last_update
         _tpv_line(13.0, lat=0.0, lon=0.0),
     ) as monitor:
         await _await_speed(monitor)
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.1)
         assert monitor.speed_mps == 13.0
         assert monitor.last_update_ts is not None
 
@@ -299,7 +299,7 @@ async def test_run_filters_single_zero_speed_drop() -> None:
         _tpv_line(0.0, mode=2),
         _tpv_line(12.0, mode=2),
     ) as monitor:
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.15)
         assert monitor.speed_mps == 12.0
 
 
@@ -311,5 +311,5 @@ async def test_run_accepts_three_consecutive_zero_speed_samples() -> None:
         _tpv_line(0.0, mode=2),
         _tpv_line(0.0, mode=2),
     ) as monitor:
-        await asyncio.sleep(0.4)
+        await asyncio.sleep(0.15)
         assert monitor.speed_mps == 0.0

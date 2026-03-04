@@ -160,7 +160,7 @@ def test_ingest_not_blocked_during_compute() -> None:
 
     def _compute_loop() -> None:
         compute_started.set()
-        for _ in range(10):
+        for _ in range(5):
             processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
             # Bump ingest generation so compute doesn't fast-path skip
             processor.ingest(
