@@ -339,7 +339,7 @@ class RuntimeState:
                 is_fatal = consecutive_failures >= MAX_CONSECUTIVE_FAILURES
                 self.processing_state = "fatal" if is_fatal else "degraded"
                 LOGGER.warning("Processing loop tick failed; will retry.", exc_info=True)
-                if consecutive_failures >= MAX_CONSECUTIVE_FAILURES:
+                if is_fatal:
                     LOGGER.error(
                         "Processing loop hit %d failures; backing off %d s then resetting",
                         MAX_CONSECUTIVE_FAILURES,
@@ -400,7 +400,7 @@ class RuntimeState:
             self.esp_flash_manager._task,
         ]
         for task in managed:
-            if task is not None and not task.done():
+            if task is not None:
                 task.cancel()
         for task in managed:
             if task is not None and not task.done():
