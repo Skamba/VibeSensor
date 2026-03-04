@@ -495,7 +495,7 @@ class ClientRegistry:
             now_ts = self._resolve_now_wall(now)
             now_mono = self._resolve_now_mono(now_mono)
             rows: list[dict[str, Any]] = []
-            all_client_ids = sorted(set(self._clients.keys()) | set(self._user_names.keys()))
+            all_client_ids = sorted(set(self._clients) | set(self._user_names))
             for client_id in all_client_ids:
                 record = self._clients.get(client_id)
                 if record is None:

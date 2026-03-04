@@ -10,6 +10,8 @@ from typing import Any
 import yaml
 from vibesensor_shared.contracts import NETWORK_PORTS
 
+from .constants import NUMERIC_TYPES
+
 SERVER_DIR = Path(__file__).resolve().parents[1]
 """Root of the ``apps/server/`` package tree."""
 
@@ -305,10 +307,10 @@ class LoggingConfig:
     def __post_init__(self) -> None:
         if not isinstance(self.metrics_log_hz, int) or self.metrics_log_hz < 1:
             object.__setattr__(self, "metrics_log_hz", max(1, int(self.metrics_log_hz or 1)))
-        if not isinstance(self.no_data_timeout_s, (int, float)) or self.no_data_timeout_s < 0:
+        if not isinstance(self.no_data_timeout_s, NUMERIC_TYPES) or self.no_data_timeout_s < 0:
             object.__setattr__(self, "no_data_timeout_s", 15.0)
         if (
-            not isinstance(self.shutdown_analysis_timeout_s, (int, float))
+            not isinstance(self.shutdown_analysis_timeout_s, NUMERIC_TYPES)
             or self.shutdown_analysis_timeout_s < 0
         ):
             object.__setattr__(self, "shutdown_analysis_timeout_s", 30.0)
@@ -369,7 +371,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))
 
     accel_scale_raw = merged["processing"].get("accel_scale_g_per_lsb")
-    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, (int, float)) else None
+    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, NUMERIC_TYPES) else None
     if accel_scale is not None and accel_scale <= 0:
         LOGGER.warning(
             "processing.accel_scale_g_per_lsb=%s is not positive — using auto-detection",
