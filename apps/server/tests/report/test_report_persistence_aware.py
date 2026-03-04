@@ -7,6 +7,8 @@ above one-off transient spikes, and that findings are classified appropriately.
 
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.analysis.findings import (
     _build_persistent_peak_findings,
     _classify_peak_type,
@@ -90,33 +92,70 @@ def _sample(
     return sample
 
 
+def _uniform_samples(
+    n: int,
+    freq: float,
+    amp: float,
+    *,
+    speed: float = 80.0,
+    dt: float = 0.5,
+    **kwargs: object,
+) -> list[dict]:
+    """Generate *n* identical samples at the given frequency/amplitude."""
+    return [_sample(float(i) * dt, speed, [{"hz": freq, "amp": amp}], **kwargs) for i in range(n)]
+
+
+def _build_findings(
+    samples: list[dict],
+    *,
+    order_finding_freqs: set[float] | None = None,
+    per_sample_phases: list[DrivingPhase] | None = None,
+) -> list[dict]:
+    """Thin wrapper around ``_build_persistent_peak_findings`` with test defaults."""
+    return _build_persistent_peak_findings(
+        samples=samples,
+        order_finding_freqs=order_finding_freqs or set(),
+        accel_units="g",
+        lang="en",
+        per_sample_phases=per_sample_phases,
+    )
+
+
+def _findings_at_freq(findings: list[dict], *freq_strs: str) -> list[dict]:
+    """Return findings whose ``frequency_hz_or_order`` contains any of *freq_strs*."""
+    return [
+        f
+        for f in findings
+        if any(s in str(f.get("frequency_hz_or_order", "")) for s in freq_strs)
+    ]
+
+
+def _summarize(samples: list[dict], **meta_overrides: object) -> dict:
+    """``_make_metadata`` + ``summarize_run_data`` in one call."""
+    return summarize_run_data(_make_metadata(**meta_overrides), samples, lang="en")
+
+
 # ---------------------------------------------------------------------------
 # _classify_peak_type
 # ---------------------------------------------------------------------------
 
 
 class TestClassifyPeakType:
-    def test_high_presence_low_burstiness_is_patterned(self) -> None:
-        assert _classify_peak_type(presence_ratio=0.80, burstiness=1.5) == "patterned"
-
-    def test_moderate_presence_low_burstiness_is_patterned(self) -> None:
-        assert _classify_peak_type(presence_ratio=0.45, burstiness=2.5) == "patterned"
-
-    def test_moderate_presence_moderate_burstiness_is_persistent(self) -> None:
-        assert _classify_peak_type(presence_ratio=0.30, burstiness=3.5) == "persistent"
-
-    def test_low_presence_is_transient(self) -> None:
-        assert _classify_peak_type(presence_ratio=0.05, burstiness=1.0) == "transient"
-
-    def test_high_burstiness_is_transient(self) -> None:
-        assert _classify_peak_type(presence_ratio=0.30, burstiness=8.0) == "transient"
-
-    def test_boundary_patterned(self) -> None:
-        assert _classify_peak_type(presence_ratio=0.40, burstiness=2.9) == "patterned"
-
-    def test_boundary_persistent_not_patterned(self) -> None:
-        # presence >= 0.15 but < 0.40 → persistent if burstiness < 5
-        assert _classify_peak_type(presence_ratio=0.20, burstiness=4.0) == "persistent"
+    @pytest.mark.parametrize(
+        "presence_ratio, burstiness, expected",
+        [
+            pytest.param(0.80, 1.5, "patterned", id="high_presence_low_burstiness"),
+            pytest.param(0.45, 2.5, "patterned", id="moderate_presence_low_burstiness"),
+            pytest.param(0.30, 3.5, "persistent", id="moderate_presence_moderate_burstiness"),
+            pytest.param(0.05, 1.0, "transient", id="low_presence"),
+            pytest.param(0.30, 8.0, "transient", id="high_burstiness"),
+            pytest.param(0.40, 2.9, "patterned", id="boundary_patterned"),
+            # presence >= 0.15 but < 0.40 → persistent if burstiness < 5
+            pytest.param(0.20, 4.0, "persistent", id="boundary_persistent_not_patterned"),
+        ],
+    )
+    def test_classification(self, presence_ratio: float, burstiness: float, expected: str) -> None:
+        assert _classify_peak_type(presence_ratio=presence_ratio, burstiness=burstiness) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -169,24 +208,8 @@ class TestAggregateFFTSpectrum:
         assert _aggregate_fft_spectrum_raw([]) == []
 
     def test_persistence_spectrum_uses_run_noise_baseline(self) -> None:
-        low_noise_samples = [
-            _sample(
-                float(i),
-                80.0,
-                [{"hz": 30.0, "amp": 0.06}],
-                strength_floor_amp_g=0.01,
-            )
-            for i in range(20)
-        ]
-        high_noise_samples = [
-            _sample(
-                float(i),
-                80.0,
-                [{"hz": 30.0, "amp": 0.06}],
-                strength_floor_amp_g=0.05,
-            )
-            for i in range(20)
-        ]
+        low_noise_samples = _uniform_samples(20, 30.0, 0.06, dt=1.0, strength_floor_amp_g=0.01)
+        high_noise_samples = _uniform_samples(20, 30.0, 0.06, dt=1.0, strength_floor_amp_g=0.05)
 
         low_noise_score = dict(_aggregate_fft_spectrum(low_noise_samples)).get(31.0, 0.0)
         high_noise_score = dict(_aggregate_fft_spectrum(high_noise_samples)).get(31.0, 0.0)
@@ -215,16 +238,19 @@ class TestTopPeaksTableRows:
         assert rows[0]["presence_ratio"] > 0.5
 
     def test_persistence_metadata_present(self) -> None:
-        samples = [_sample(float(i), 80.0, [{"hz": 15.0, "amp": 0.05}]) for i in range(5)]
+        samples = _uniform_samples(5, 15.0, 0.05, dt=1.0)
         rows = _top_peaks_table_rows(samples)
         assert len(rows) == 1
         row = rows[0]
-        assert "presence_ratio" in row
-        assert "median_intensity_db" in row
-        assert "p95_intensity_db" in row
-        assert "burstiness" in row
-        assert "persistence_score" in row
-        assert "peak_classification" in row
+        for key in (
+            "presence_ratio",
+            "median_intensity_db",
+            "p95_intensity_db",
+            "burstiness",
+            "persistence_score",
+            "peak_classification",
+        ):
+            assert key in row, f"Missing key {key!r} in peak table row"
         assert row["presence_ratio"] == 1.0  # Present in all 5 samples
 
     def test_single_sample_still_works(self) -> None:
@@ -318,16 +344,8 @@ class TestTopPeaksTableRows:
         typical_speed_band = str(rows[0].get("typical_speed_band") or "")
         assert typical_speed_band == "100-110 km/h"
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        target = next(
-            (f for f in findings if "33" in str(f.get("frequency_hz_or_order", ""))),
-            None,
-        )
+        findings = _build_findings(samples)
+        target = next(iter(_findings_at_freq(findings, "33")), None)
         assert target is not None
         assert str(target.get("strongest_speed_band") or "") == typical_speed_band
 
@@ -340,13 +358,8 @@ class TestTopPeaksTableRows:
 class TestBuildPersistentPeakFindings:
     def test_persistent_peak_classified_correctly(self) -> None:
         """A peak in 80% of samples should be patterned, not transient."""
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        samples = _uniform_samples(20, 40.0, 0.06)
+        findings = _build_findings(samples)
         persistent = [f for f in findings if f.get("peak_classification") == "patterned"]
         transient = [f for f in findings if f.get("peak_classification") == "transient"]
         assert len(persistent) >= 1
@@ -356,29 +369,14 @@ class TestBuildPersistentPeakFindings:
         samples: list[dict] = []
         for i in range(20):
             peaks = [{"hz": 40.0, "amp": 0.06}] if i < 16 else []
-            samples.append(
-                _sample(
-                    float(i) * 0.5,
-                    80.0,
-                    peaks,
-                    client_name="Front Left",
-                )
-            )
+            samples.append(_sample(float(i) * 0.5, 80.0, peaks, client_name="Front Left"))
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        findings = _build_findings(samples)
         target = next(
             f
             for f in findings
             if f.get("peak_classification") == "patterned"
-            and (
-                "41.0" in str(f.get("frequency_hz_or_order", ""))
-                or "40.0" in str(f.get("frequency_hz_or_order", ""))
-            )
+            and _findings_at_freq([f], "41.0", "40.0")
         )
         assert float(target.get("confidence_0_to_1", 0.0)) >= 0.50
 
@@ -388,48 +386,21 @@ class TestBuildPersistentPeakFindings:
         for i in range(20):
             peaks = [{"hz": 40.0, "amp": 0.06}] if i < 16 else []
             samples.append(
-                _sample(
-                    float(i) * 0.5,
-                    80.0,
-                    peaks,
-                    client_name=locations[i % len(locations)],
-                )
+                _sample(float(i) * 0.5, 80.0, peaks, client_name=locations[i % len(locations)])
             )
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        candidates = [
-            f
-            for f in findings
-            if (
-                "41.0" in str(f.get("frequency_hz_or_order", ""))
-                or "40.0" in str(f.get("frequency_hz_or_order", ""))
-            )
-        ]
+        findings = _build_findings(samples)
+        candidates = _findings_at_freq(findings, "41.0", "40.0")
         assert candidates
         assert max(float(f.get("confidence_0_to_1", 0.0)) for f in candidates) <= 0.35
 
     def test_negligible_strength_persistent_peak_confidence_is_capped(self) -> None:
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.002}]) for i in range(20)]
-
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        samples = _uniform_samples(20, 40.0, 0.002)
+        findings = _build_findings(samples)
         candidates = [
             f
-            for f in findings
-            if (
-                "41.0" in str(f.get("frequency_hz_or_order", ""))
-                or "40.0" in str(f.get("frequency_hz_or_order", ""))
-            )
-            and str(f.get("peak_classification") or "") in {"patterned", "persistent"}
+            for f in _findings_at_freq(findings, "41.0", "40.0")
+            if str(f.get("peak_classification") or "") in {"patterned", "persistent"}
         ]
         assert candidates
         # Cap aligned with order-finding negligible cap (0.40) so that weak
@@ -445,13 +416,8 @@ class TestBuildPersistentPeakFindings:
                 peaks.append({"hz": 99.0, "amp": 1.0})  # one-off thud
             samples.append(_sample(float(i) * 0.5, 80.0, peaks))
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        thud_findings = [f for f in findings if "99" in str(f.get("frequency_hz_or_order", ""))]
+        findings = _build_findings(samples)
+        thud_findings = _findings_at_freq(findings, "99")
         assert len(thud_findings) >= 1
         assert thud_findings[0]["peak_classification"] == "transient"
         assert thud_findings[0]["suspected_source"] == "transient_impact"
@@ -465,31 +431,16 @@ class TestBuildPersistentPeakFindings:
                 peaks.append({"hz": 55.0, "amp": 2.0})
             samples.append(_sample(float(i) * 0.5, 80.0, peaks))
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        findings = _build_findings(samples)
         transient = [f for f in findings if f.get("peak_classification") == "transient"]
         for f in transient:
             assert float(f.get("confidence_0_to_1", 0)) <= 0.25
 
     def test_order_freqs_excluded(self) -> None:
         """Peaks already claimed by order findings should be excluded."""
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
-        findings_with = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs={40.0},
-            accel_units="g",
-            lang="en",
-        )
-        findings_without = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        samples = _uniform_samples(20, 40.0, 0.06)
+        findings_with = _build_findings(samples, order_finding_freqs={40.0})
+        findings_without = _build_findings(samples)
         # With the frequency excluded, there should be fewer findings
         assert len(findings_with) < len(findings_without)
 
@@ -504,12 +455,7 @@ class TestBuildPersistentPeakFindings:
                 peaks.append({"hz": impact_hz, "amp": 0.8})
             samples.append(_sample(float(i) * 0.5, 80.0, peaks))
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        findings = _build_findings(samples)
         # Impact frequencies are each unique (60, 85, 110, 135 Hz) —
         # each appears in only 1/20 samples → transient.
         impact_findings = [
@@ -530,49 +476,18 @@ class TestBuildPersistentPeakFindings:
             for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
         ]
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        findings = _build_findings(samples)
         finding = next(
             f for f in findings if str(f.get("frequency_hz_or_order") or "").startswith("31.0")
         )
         assert finding.get("strongest_speed_band") == "80-90 km/h"
 
     def test_run_noise_baseline_lowers_confidence_for_borderline_peak(self) -> None:
-        low_noise_samples = [
-            _sample(
-                float(i) * 0.5,
-                80.0,
-                [{"hz": 30.0, "amp": 0.06}],
-                strength_floor_amp_g=0.01,
-            )
-            for i in range(20)
-        ]
-        high_noise_samples = [
-            _sample(
-                float(i) * 0.5,
-                80.0,
-                [{"hz": 30.0, "amp": 0.06}],
-                strength_floor_amp_g=0.05,
-            )
-            for i in range(20)
-        ]
+        low_noise_samples = _uniform_samples(20, 30.0, 0.06, strength_floor_amp_g=0.01)
+        high_noise_samples = _uniform_samples(20, 30.0, 0.06, strength_floor_amp_g=0.05)
 
-        findings_low = _build_persistent_peak_findings(
-            samples=low_noise_samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        findings_high = _build_persistent_peak_findings(
-            samples=high_noise_samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        findings_low = _build_findings(low_noise_samples)
+        findings_high = _build_findings(high_noise_samples)
 
         confidence_low = max(float(f.get("confidence_0_to_1") or 0.0) for f in findings_low)
         confidence_high = max(float(f.get("confidence_0_to_1") or 0.0) for f in findings_high)
@@ -599,13 +514,8 @@ class TestBuildPersistentPeakFindings:
                         _sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
                     )
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        target = [f for f in findings if "25" in str(f.get("frequency_hz_or_order", ""))]
+        findings = _build_findings(samples)
+        target = _findings_at_freq(findings, "25")
         assert target
         assert target[0]["peak_classification"] == "baseline_noise"
 
@@ -632,13 +542,8 @@ class TestBuildPersistentPeakFindings:
                         _sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
                     )
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        target = [f for f in findings if "25" in str(f.get("frequency_hz_or_order", ""))]
+        findings = _build_findings(samples)
+        target = _findings_at_freq(findings, "25")
         assert target
         assert target[0]["peak_classification"] == "persistent"
 
@@ -655,16 +560,8 @@ class TestBuildPersistentPeakFindings:
                 )
             )
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
-        target = next(
-            (f for f in findings if "43" in str(f.get("frequency_hz_or_order", ""))),
-            None,
-        )
+        findings = _build_findings(samples)
+        target = next(iter(_findings_at_freq(findings, "43")), None)
 
         assert target is not None
         speed_band = str(target.get("strongest_speed_band") or "")
@@ -682,7 +579,6 @@ class TestSummarizeRunDataPersistence:
     def test_thud_does_not_become_top_finding(self) -> None:
         """In a mixed run with sustained vibration + a single thud, the thud
         should not be the top likely cause."""
-        metadata = _make_metadata()
         samples = []
         for i in range(30):
             # Sustained 15 Hz vibration (consistent with wheel order)
@@ -692,7 +588,7 @@ class TestSummarizeRunDataPersistence:
                 peaks.append({"hz": 120.0, "amp": 2.0})
             samples.append(_sample(float(i) * 0.5, 80.0 + i * 0.5, peaks))
 
-        summary = summarize_run_data(metadata, samples, lang="en")
+        summary = _summarize(samples)
         findings = summary.get("findings", [])
         # Filter to non-reference findings
         diag_findings = [f for f in findings if not str(f.get("finding_id", "")).startswith("REF_")]
@@ -706,12 +602,11 @@ class TestSummarizeRunDataPersistence:
 
     def test_persistent_signal_becomes_top_finding(self) -> None:
         """A signal present in all samples should rank as a top finding."""
-        metadata = _make_metadata()
         samples = [
             _sample(float(i) * 0.5, 80.0 + i * 0.3, [{"hz": 25.0, "amp": 0.06}]) for i in range(30)
         ]
 
-        summary = summarize_run_data(metadata, samples, lang="en")
+        summary = _summarize(samples)
         findings = summary.get("findings", [])
         diag_findings = [f for f in findings if not str(f.get("finding_id", "")).startswith("REF_")]
 
@@ -722,75 +617,50 @@ class TestSummarizeRunDataPersistence:
 
     def test_plots_contain_persistence_spectrum(self) -> None:
         """The plots dict should contain both diagnostic and raw FFT spectra."""
-        metadata = _make_metadata()
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 20.0, "amp": 0.04}]) for i in range(10)]
-        summary = summarize_run_data(metadata, samples, lang="en")
+        samples = _uniform_samples(10, 20.0, 0.04)
+        summary = _summarize(samples)
         plots = summary.get("plots", {})
         assert "fft_spectrum" in plots
         assert "fft_spectrum_raw" in plots
 
     def test_peaks_table_has_persistence_fields(self) -> None:
         """Peak table rows in plots should include persistence metrics."""
-        metadata = _make_metadata()
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 20.0, "amp": 0.04}]) for i in range(10)]
-        summary = summarize_run_data(metadata, samples, lang="en")
+        samples = _uniform_samples(10, 20.0, 0.04)
+        summary = _summarize(samples)
         peaks_table = summary.get("plots", {}).get("peaks_table", [])
         assert len(peaks_table) >= 1
         row = peaks_table[0]
-        assert "presence_ratio" in row
-        assert "persistence_score" in row
-        assert "burstiness" in row
-        assert "peak_classification" in row
+        for key in ("presence_ratio", "persistence_score", "burstiness", "peak_classification"):
+            assert key in row, f"Missing key {key!r} in peaks_table row"
 
     def test_summary_includes_run_noise_baseline(self) -> None:
-        metadata = _make_metadata()
-        samples = [
-            _sample(
-                float(i) * 0.5,
-                80.0,
-                [{"hz": 20.0, "amp": 0.04}],
-                strength_floor_amp_g=0.02,
-            )
-            for i in range(10)
-        ]
-        summary = summarize_run_data(metadata, samples, lang="en")
+        samples = _uniform_samples(10, 20.0, 0.04, strength_floor_amp_g=0.02)
+        summary = _summarize(samples)
         assert summary.get("run_noise_baseline_db") is not None
 
     def test_peaks_table_has_run_noise_relative_metrics(self) -> None:
-        metadata = _make_metadata()
-        samples = [
-            _sample(
-                float(i) * 0.5,
-                80.0,
-                [{"hz": 20.0, "amp": 0.04}],
-                strength_floor_amp_g=0.02,
-            )
-            for i in range(10)
-        ]
-        summary = summarize_run_data(metadata, samples, lang="en")
+        samples = _uniform_samples(10, 20.0, 0.04, strength_floor_amp_g=0.02)
+        summary = _summarize(samples)
         peaks_table = summary.get("plots", {}).get("peaks_table", [])
         assert len(peaks_table) >= 1
         row = peaks_table[0]
-        assert "run_noise_baseline_db" in row
-        assert "median_vs_run_noise_ratio" in row
-        assert "p95_vs_run_noise_ratio" in row
+        for key in ("run_noise_baseline_db", "median_vs_run_noise_ratio", "p95_vs_run_noise_ratio"):
+            assert key in row, f"Missing key {key!r} in peaks_table row"
 
     def test_plots_include_diagnostic_and_raw_spectrograms(self) -> None:
-        metadata = _make_metadata()
         samples = []
         for i in range(20):
             peaks = [{"hz": 25.0, "amp": 0.05}]
             if i == 10:
                 peaks.append({"hz": 80.0, "amp": 1.2})
             samples.append(_sample(float(i), 80.0, peaks))
-        summary = summarize_run_data(metadata, samples, lang="en")
+        summary = _summarize(samples)
         plots = summary.get("plots", {})
         assert "peaks_spectrogram" in plots
         assert "peaks_spectrogram_raw" in plots
 
     def test_plots_include_phase_boundaries(self) -> None:
         """plots dict should contain phase_boundaries with t_s, end_t_s, and phase keys."""
-        metadata = _make_metadata()
         # Idle samples (speed=0) then accelerating then cruising
         samples = (
             [_sample(float(i), 0.0, [{"hz": 20.0, "amp": 0.02}]) for i in range(5)]
@@ -800,7 +670,7 @@ class TestSummarizeRunDataPersistence:
             ]
             + [_sample(float(i + 10), 80.0, [{"hz": 20.0, "amp": 0.05}]) for i in range(10)]
         )
-        summary = summarize_run_data(metadata, samples, lang="en")
+        summary = _summarize(samples)
         plots = summary.get("plots", {})
         assert "phase_boundaries" in plots
         boundaries = plots["phase_boundaries"]
@@ -868,7 +738,6 @@ class TestRobustness:
     def test_schema_without_optional_fields(self) -> None:
         """Samples missing optional fields (vibration_strength_db on peaks)
         should still be processed gracefully."""
-        metadata = _make_metadata()
         samples = [
             {
                 "record_type": "sample",
@@ -885,21 +754,19 @@ class TestRobustness:
             }
             for i in range(10)
         ]
-        # Should not raise
-        summary = summarize_run_data(metadata, samples, lang="en")
+        summary = _summarize(samples)
         assert summary["rows"] == 10
 
     def test_peaks_table_has_max_intensity_db(self) -> None:
-        samples = [_sample(float(i), 80.0, [{"hz": 20.0, "amp": 0.05}]) for i in range(5)]
+        samples = _uniform_samples(5, 20.0, 0.05, dt=1.0)
         rows = _top_peaks_table_rows(samples)
         assert len(rows) >= 1
         assert "max_intensity_db" in rows[0]
 
     def test_build_findings_for_samples_works(self) -> None:
         """Public API build_findings_for_samples should still work."""
-        metadata = _make_metadata()
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 15.0, "amp": 0.02}]) for i in range(15)]
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+        samples = _uniform_samples(15, 15.0, 0.02)
+        findings = build_findings_for_samples(metadata=_make_metadata(), samples=samples, lang="en")
         assert isinstance(findings, list)
 
 
@@ -913,30 +780,18 @@ class TestPersistentPeakFindingsPhaseAwareness:
 
     def test_phase_presence_is_none_without_phases(self) -> None:
         """Without per_sample_phases the phase_presence field should be None."""
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-        )
+        samples = _uniform_samples(20, 40.0, 0.06)
+        findings = _build_findings(samples)
         assert findings
         for f in findings:
             assert f.get("phase_presence") is None
 
     def test_phase_presence_populated_when_phases_provided(self) -> None:
         """With per_sample_phases, phase_presence should be a dict with presence ratios."""
-        samples = [_sample(float(i) * 0.5, 60.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
-        per_sample_phases = [DrivingPhase.CRUISE] * 20
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-            per_sample_phases=per_sample_phases,
-        )
+        samples = _uniform_samples(20, 40.0, 0.06, speed=60.0)
+        findings = _build_findings(samples, per_sample_phases=[DrivingPhase.CRUISE] * 20)
         # bin_center for 40 Hz with freq_bin_hz=2.0 → 41.0 Hz
-        peak_findings = [f for f in findings if "41" in str(f.get("frequency_hz_or_order", ""))]
+        peak_findings = _findings_at_freq(findings, "41")
         assert peak_findings, "Expected at least one finding near 40 Hz (bin_center 41.0)"
         f = peak_findings[0]
         phase_presence = f.get("phase_presence")
@@ -956,18 +811,9 @@ class TestPersistentPeakFindingsPhaseAwareness:
             samples.append(_sample(float(12 + i) * 0.5, 60.0, [{"hz": 10.0, "amp": 0.02}]))
         per_sample_phases = [DrivingPhase.ACCELERATION] * 12 + [DrivingPhase.CRUISE] * 8
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-            per_sample_phases=per_sample_phases,
-        )
+        findings = _build_findings(samples, per_sample_phases=per_sample_phases)
         # bin_center for 50 Hz with freq_bin_hz=2.0 → 51.0 Hz
-        peak_finding = next(
-            (f for f in findings if "51" in str(f.get("frequency_hz_or_order", ""))),
-            None,
-        )
+        peak_finding = next(iter(_findings_at_freq(findings, "51")), None)
         assert peak_finding is not None, (
             f"Expected finding near 51.0 Hz; got: {[f.get('frequency_hz_or_order') for f in findings]}"
         )
@@ -996,18 +842,9 @@ class TestPersistentPeakFindingsPhaseAwareness:
             samples.append(_sample(float(14 + i) * 0.5, 70.0, [{"hz": 35.0, "amp": 0.05}]))
             phases.append(DrivingPhase.DECELERATION)
 
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-            per_sample_phases=phases,
-        )
+        findings = _build_findings(samples, per_sample_phases=phases)
         # bin_center for 35 Hz with freq_bin_hz=2.0 → floor(35/2)*2 + 1 = 34 + 1 = 35.0 Hz
-        peak_finding = next(
-            (f for f in findings if "35.0" in str(f.get("frequency_hz_or_order", ""))),
-            None,
-        )
+        peak_finding = next(iter(_findings_at_freq(findings, "35.0")), None)
         assert peak_finding is not None, (
             f"Expected finding at 35.0 Hz; got: {[f.get('frequency_hz_or_order') for f in findings]}"
         )
@@ -1019,19 +856,13 @@ class TestPersistentPeakFindingsPhaseAwareness:
 
     def test_phase_presence_values_are_ratios_between_0_and_1(self) -> None:
         """All phase_presence values must be in [0, 1]."""
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(20)]
+        samples = _uniform_samples(20, 40.0, 0.06)
         per_sample_phases = (
             [DrivingPhase.ACCELERATION] * 5
             + [DrivingPhase.CRUISE] * 10
             + [DrivingPhase.DECELERATION] * 5
         )
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-            per_sample_phases=per_sample_phases,
-        )
+        findings = _build_findings(samples, per_sample_phases=per_sample_phases)
         for f in findings:
             phase_presence = f.get("phase_presence")
             if phase_presence is not None:
@@ -1046,12 +877,11 @@ class TestPersistentPeakFindingsPhaseAwareness:
 
     def test_phase_presence_via_build_findings_integration(self) -> None:
         """build_findings_for_samples should produce findings with phase_presence populated."""
-        metadata = _make_metadata()
         # All CRUISE samples (speed=80 km/h, no acceleration) → segments → cruise phases
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(25)]
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+        samples = _uniform_samples(25, 40.0, 0.06)
+        findings = build_findings_for_samples(metadata=_make_metadata(), samples=samples, lang="en")
         # bin_center for 40 Hz with freq_bin_hz=2.0 → 41.0 Hz
-        peak_findings = [f for f in findings if "41" in str(f.get("frequency_hz_or_order", ""))]
+        peak_findings = _findings_at_freq(findings, "41")
         assert peak_findings, (
             "Expected at least one finding near 41.0 Hz (bin-center of 40 Hz input)"
         )
@@ -1064,16 +894,9 @@ class TestPersistentPeakFindingsPhaseAwareness:
 
     def test_phase_presence_ignored_when_length_mismatch(self) -> None:
         """If per_sample_phases has wrong length, phase_presence should be None (graceful fallback)."""
-        samples = [_sample(float(i) * 0.5, 80.0, [{"hz": 40.0, "amp": 0.06}]) for i in range(10)]
+        samples = _uniform_samples(10, 40.0, 0.06)
         # Pass phases with wrong length
-        per_sample_phases = [DrivingPhase.CRUISE] * 5  # too short
-        findings = _build_persistent_peak_findings(
-            samples=samples,
-            order_finding_freqs=set(),
-            accel_units="g",
-            lang="en",
-            per_sample_phases=per_sample_phases,
-        )
+        findings = _build_findings(samples, per_sample_phases=[DrivingPhase.CRUISE] * 5)
         assert findings
         for f in findings:
             assert f.get("phase_presence") is None, (
