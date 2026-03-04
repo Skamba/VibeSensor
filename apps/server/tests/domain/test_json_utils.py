@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 import numpy as np
+import pytest
 
 from vibesensor.json_utils import (
     safe_json_dumps,
@@ -19,20 +20,13 @@ from vibesensor.json_utils import (
 class TestSanitizeForJson:
     """Comprehensive tests for :func:`sanitize_for_json`."""
 
-    def test_nan_replaced_with_none(self) -> None:
-        cleaned, had = sanitize_for_json({"rpm": float("nan"), "ok": 42})
-        assert cleaned["rpm"] is None
-        assert cleaned["ok"] == 42
-        assert had is True
-
-    def test_inf_replaced_with_none(self) -> None:
-        cleaned, had = sanitize_for_json({"val": float("inf")})
-        assert cleaned["val"] is None
-        assert had is True
-
-    def test_neg_inf_replaced_with_none(self) -> None:
-        cleaned, had = sanitize_for_json({"val": float("-inf")})
-        assert cleaned["val"] is None
+    @pytest.mark.parametrize(
+        "value, label",
+        [(float("nan"), "nan"), (float("inf"), "inf"), (float("-inf"), "-inf")],
+    )
+    def test_non_finite_replaced_with_none(self, value: float, label: str) -> None:
+        cleaned, had = sanitize_for_json({"val": value})
+        assert cleaned["val"] is None, f"{label} should become None"
         assert had is True
 
     def test_normal_floats_preserved(self) -> None:
