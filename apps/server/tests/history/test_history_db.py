@@ -58,11 +58,12 @@ def test_history_db_thread_safe_appends(tmp_path: Path) -> None:
     assert len(db.get_run_samples("run-2")) == 400
 
 
-def test_schema_version_mismatch_fails_fast(tmp_path: Path) -> None:
+@pytest.mark.parametrize("bad_version", ["0", "99"], ids=["ancient", "future"])
+def test_schema_version_mismatch_fails_fast(tmp_path: Path, bad_version: str) -> None:
     db_path = tmp_path / "history.db"
     conn = sqlite3.connect(str(db_path))
     conn.execute("CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', '0')")
+    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', ?)", (bad_version,))
     conn.commit()
     conn.close()
 
@@ -119,18 +120,6 @@ def test_create_run_recovers_previous_recording(tmp_path: Path) -> None:
     new_run = db.get_run("run-new")
     assert old_run is not None and old_run["status"] == "error"
     assert new_run is not None and new_run["status"] == "recording"
-
-
-def test_future_schema_version_raises(tmp_path: Path) -> None:
-    db_path = tmp_path / "history.db"
-    conn = sqlite3.connect(str(db_path))
-    conn.execute("CREATE TABLE schema_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', '99')")
-    conn.commit()
-    conn.close()
-
-    with pytest.raises(RuntimeError, match="Unsupported history DB schema version"):
-        HistoryDB(db_path)
 
 
 def test_delete_run_cascades_samples(tmp_path: Path) -> None:
