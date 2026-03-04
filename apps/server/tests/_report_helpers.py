@@ -102,7 +102,10 @@ def report_sample(
     add_index_accel_offset: bool = False,
     include_secondary_peak: bool = False,
 ) -> dict[str, Any]:
-    """Return canonical report JSONL sample record with optional variants."""
+    """Return canonical report JSONL sample record with optional variants.
+
+    ``speed_kmh`` may be ``None`` for missing-speed scenarios.
+    """
     accel_scale = float(idx) if add_index_accel_offset else 0.0
     peaks = [
         {
