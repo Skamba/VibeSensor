@@ -30,6 +30,8 @@ DOWNLOAD_CHUNK_BYTES = 1024 * 1024  # 1 MB per read()
 :class:`ServerReleaseFetcher` and
 :class:`~vibesensor.firmware_cache.GitHubReleaseFetcher`."""
 
+_HASH_CHUNK_BYTES = 65536  # 64 KB per hash update
+
 
 @dataclass
 class ReleaseFetcherConfig:
@@ -120,6 +122,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
         self._api_context = "release"
 
     _MAX_DOWNLOAD_BYTES = 200 * 1024 * 1024  # 200 MB hard limit
+    _MAX_DOWNLOAD_MB = _MAX_DOWNLOAD_BYTES // (1024 * 1024)
 
     def _download_asset(self, url: str, dest: Path) -> None:
         validate_https_url(url, context="release")
@@ -127,18 +130,19 @@ class ServerReleaseFetcher(GitHubAPIClient):
         headers["Accept"] = "application/octet-stream"
         req = Request(url, headers=headers)
         tmp = dest.with_suffix(".tmp")
+        max_bytes = self._MAX_DOWNLOAD_BYTES
+        chunk_size = DOWNLOAD_CHUNK_BYTES
         try:
             with urlopen(req, timeout=300) as resp:
                 total = 0
                 with open(tmp, "wb") as f:
                     while True:
-                        chunk = resp.read(DOWNLOAD_CHUNK_BYTES)
+                        chunk = resp.read(chunk_size)
                         if not chunk:
                             break
                         total += len(chunk)
-                        if total > self._MAX_DOWNLOAD_BYTES:
-                            max_mb = self._MAX_DOWNLOAD_BYTES // (1024 * 1024)
-                            raise ValueError(f"Asset exceeds {max_mb} MB limit")
+                        if total > max_bytes:
+                            raise ValueError(f"Asset exceeds {self._MAX_DOWNLOAD_MB} MB limit")
                         f.write(chunk)
                     f.flush()
                     os.fsync(f.fileno())
@@ -212,7 +216,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
 
         h = hashlib.sha256()
         with open(dest, "rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
+            for chunk in iter(lambda: f.read(_HASH_CHUNK_BYTES), b""):
                 h.update(chunk)
         sha = h.hexdigest()
         release.sha256 = sha

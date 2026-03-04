@@ -32,6 +32,9 @@ _ERROR_PAYLOAD: str = json.dumps(
 )
 """Pre-serialised error payload sent to clients when their payload build fails."""
 
+_MAX_CONSECUTIVE_FAILURES: int = 10
+"""Back off after this many consecutive broadcast tick failures."""
+
 
 @dataclass(slots=True)
 class WSConnection:
@@ -76,6 +79,7 @@ class WebSocketHub:
         if not conns:
             return
         payload_cache: dict[str | None, str] = {}
+        _dumps = json.dumps  # local-bind for hot-path
         # Track which client IDs had build failures this tick so we can
         # report an accurate count without excessive per-connection logging.
         failed_client_ids: set[str | None] = set()
@@ -97,7 +101,7 @@ class WebSocketHub:
                         "values; replaced with null.",
                         selected_client_id,
                     )
-                text = json.dumps(
+                text = _dumps(
                     cleaned,
                     separators=(",", ":"),
                     allow_nan=False,
@@ -114,6 +118,8 @@ class WebSocketHub:
             payload_cache[selected_client_id] = text
             return text
 
+        _loop = asyncio.get_running_loop()  # cache for _send calls
+
         async def _send(conn: WSConnection) -> WebSocket | None:
             payload_text = _build_payload(conn.selected_client_id)
             try:
@@ -123,7 +129,7 @@ class WebSocketHub:
                 )
                 return None
             except Exception:
-                now = asyncio.get_running_loop().time()
+                now = _loop.time()
                 if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:
                     self._last_send_error_log_ts = now
                     LOGGER.warning(
@@ -177,7 +183,6 @@ class WebSocketHub:
     ) -> None:
         interval = 1.0 / max(1, hz)
         _consecutive_failures = 0
-        _MAX_CONSECUTIVE_FAILURES = 10
         loop = asyncio.get_running_loop()
         while True:
             tick_start = loop.time()
