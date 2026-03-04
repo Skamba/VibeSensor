@@ -158,25 +158,21 @@ def vehicle_orders_hz(
 ) -> dict[str, float] | None:
     if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
         return None
+    # build_diagnostic_settings guarantees all DEFAULT_ANALYSIS_SETTINGS keys
+    # are present as finite floats, so as_float_or_none / isfinite guards are
+    # unnecessary for those keys.
     spec_settings = build_diagnostic_settings(settings)
     circumference = tire_circumference_m_from_spec(
-        as_float_or_none(spec_settings.get("tire_width_mm")),
-        as_float_or_none(spec_settings.get("tire_aspect_pct")),
-        as_float_or_none(spec_settings.get("rim_in")),
-        deflection_factor=as_float_or_none(spec_settings.get("tire_deflection_factor")),
+        spec_settings["tire_width_mm"],
+        spec_settings["tire_aspect_pct"],
+        spec_settings["rim_in"],
+        deflection_factor=spec_settings["tire_deflection_factor"],
     )
     if circumference is None or circumference <= 0:
         return None
-    final_drive_ratio = as_float_or_none(spec_settings.get("final_drive_ratio"))
-    gear_ratio = as_float_or_none(spec_settings.get("current_gear_ratio"))
-    if (
-        final_drive_ratio is None
-        or not isfinite(final_drive_ratio)
-        or final_drive_ratio <= 0
-        or gear_ratio is None
-        or not isfinite(gear_ratio)
-        or gear_ratio <= 0
-    ):
+    final_drive_ratio = spec_settings["final_drive_ratio"]
+    gear_ratio = spec_settings["current_gear_ratio"]
+    if final_drive_ratio <= 0 or gear_ratio <= 0:
         return None
 
     whz = wheel_hz_from_speed_mps(speed_mps, circumference)
@@ -271,11 +267,7 @@ def classify_peak_hz(
         drive_hz = order_refs["drive_hz"]
         engine_hz = order_refs["engine_hz"]
         wheel_tol, drive_tol, engine_tol = order_tolerances(order_refs, resolved_settings)
-        candidates.extend(
-            [
-                {"hz": wheel_hz, "tol": wheel_tol, "key": "wheel1"},
-            ]
-        )
+        candidates.append({"hz": wheel_hz, "tol": wheel_tol, "key": "wheel1"})
         # Detect wheel_2x / engine_1x overlap: when 2×wheel_hz ≈ engine_hz,
         # merge them into a combined class to avoid misattribution.
         wheel_2x_hz = wheel_hz * HARMONIC_2X
@@ -393,6 +385,17 @@ def severity_from_peak(
         state["consecutive_up"] = 1
         state["last_confirmed_hz"] = peak_hz_value if freq_guard_enabled else None
 
+    def _try_promote(candidate: str) -> None:
+        """Advance pending bucket and promote if persistence threshold is met."""
+        state["consecutive_down"] = 0
+        _advance_pending(candidate)
+        if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
+            state["current_bucket"] = candidate
+            state["pending_bucket"] = None
+            state["consecutive_up"] = 0
+            if freq_guard_enabled:
+                state["last_confirmed_hz"] = peak_hz_value
+
     if candidate_bucket is None:
         if current_bucket is not None:
             current_band = band_by_key(str(current_bucket))
@@ -409,27 +412,13 @@ def severity_from_peak(
         return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}
 
     if current_bucket is None:
-        state["consecutive_down"] = 0
-        _advance_pending(candidate_bucket)
-        if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
-            state["current_bucket"] = candidate_bucket
-            state["pending_bucket"] = None
-            state["consecutive_up"] = 0
-            if freq_guard_enabled:
-                state["last_confirmed_hz"] = peak_hz_value
+        _try_promote(candidate_bucket)
         return {"key": state.get("current_bucket"), "db": adjusted_db, "state": state}
 
     current_rank = band_rank(str(current_bucket))
     candidate_rank = band_rank(str(candidate_bucket))
     if candidate_rank > current_rank:
-        state["consecutive_down"] = 0
-        _advance_pending(candidate_bucket)
-        if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
-            state["current_bucket"] = candidate_bucket
-            state["pending_bucket"] = None
-            state["consecutive_up"] = 0
-            if freq_guard_enabled:
-                state["last_confirmed_hz"] = peak_hz_value
+        _try_promote(candidate_bucket)
     elif candidate_rank < current_rank:
         current_band = band_by_key(str(current_bucket))
         if current_band and adjusted_db < float(current_band["min_db"]) - HYSTERESIS_DB:
