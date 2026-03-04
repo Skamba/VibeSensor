@@ -49,26 +49,18 @@ def weak_spatial_dominance_threshold(location_count: int | None) -> float:
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
-    valid_samples = 0
-    first_missing_index: int | None = None
-    first_missing_fields: list[str] = []
+    if not samples:
+        return
+    first_bad_idx: int | None = None
     for idx, sample in enumerate(samples):
-        missing: list[str] = []
-        if _as_float(sample.get("vibration_strength_db")) is None:
-            missing.append("vibration_strength_db")
-        if not missing:
-            valid_samples += 1
-            continue
-        if first_missing_index is None:
-            first_missing_index = idx
-            first_missing_fields = missing
-
-    if samples and valid_samples == 0:
-        fields = ", ".join(first_missing_fields)
-        idx = first_missing_index if first_missing_index is not None else 0
-        raise ValueError(
-            f"Missing required precomputed strength metrics in sample index {idx}: {fields}"
-        )
+        if _as_float(sample.get("vibration_strength_db")) is not None:
+            return  # at least one valid sample → OK
+        if first_bad_idx is None:
+            first_bad_idx = idx
+    raise ValueError(
+        f"Missing required precomputed strength metrics in sample index "
+        f"{first_bad_idx or 0}: vibration_strength_db"
+    )
 
 
 def _format_duration(seconds: float) -> str:
@@ -373,15 +365,12 @@ def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
     """
     floors: list[float] = []
     for sample in samples:
-        if not isinstance(sample, dict):
-            continue
         floor_amp = _estimate_strength_floor_amp_g(sample)
         if floor_amp is not None:
             floors.append(floor_amp)
     if not floors:
         return None
-    floors_sorted = sorted(floors)
-    return percentile(floors_sorted, 0.50) if len(floors_sorted) >= 2 else floors_sorted[0]
+    return percentile(sorted(floors), 0.50)
 
 
 def _effective_baseline_floor(
@@ -412,11 +401,7 @@ def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
     # Prefer structured location code (from SensorConfig) if available
     location_code = str(sample.get("location") or "").strip()
     if location_code:
-        human = _label_for_code(location_code)
-        if human:
-            return human
-        # If code is not in our table but non-empty, use it directly
-        return location_code
+        return _label_for_code(location_code) or location_code
 
     client_name_raw = str(sample.get("client_name") or "").strip()
     if client_name_raw:
