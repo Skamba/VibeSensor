@@ -50,9 +50,24 @@ Useful options:
 - `--names front-left,front-right,rear-left,rear-right,trunk`
 - `--duration 20` to auto-stop
 - `--server-data-port 9000 --server-control-port 9001`
+- `--server-http-port 80` when targeting the Pi HTTP API (`8000` only if the primary listener is unavailable)
 - `--sensor-noise-floor 3.5` to tune always-on baseline sensor noise
+- `--speed-kmh 0` to skip the pre-run speed-override HTTP call when you only need UDP traffic
 - `--interactive` force CLI mode
 - `--no-interactive` disable CLI mode
+
+Pi-targeted example:
+
+```bash
+vibesensor-sim \
+  --server-host 10.4.0.1 \
+  --server-http-port 80 \
+  --count 5 \
+  --duration 60 \
+  --speed-kmh 0 \
+  --no-interactive \
+  --no-auto-server
+```
 
 ## Scenarios
 
