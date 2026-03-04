@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 import pytest
-from conftest import wait_until
+from _test_helpers import wait_until
 
 from vibesensor.history_db import HistoryDB
 from vibesensor.metrics_log import MetricsLogger

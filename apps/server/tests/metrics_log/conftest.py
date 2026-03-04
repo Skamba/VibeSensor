@@ -7,7 +7,6 @@ fake collaborators used across multiple test modules.
 
 from __future__ import annotations
 
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,18 +14,6 @@ from typing import Any
 import pytest
 
 from vibesensor.metrics_log import MetricsLogger
-
-
-# Re-export wait_until so tests can ``from conftest import wait_until``
-# even though this local conftest shadows the root one.
-def wait_until(predicate, timeout_s: float = 2.0, step_s: float = 0.02) -> bool:
-    """Poll *predicate* until it returns truthy, or *timeout_s* expires."""
-    deadline = time.monotonic() + timeout_s
-    while time.monotonic() < deadline:
-        if predicate():
-            return True
-        time.sleep(step_s)
-    return False
 
 
 # ---------------------------------------------------------------------------

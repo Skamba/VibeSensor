@@ -8,7 +8,7 @@ non-standard sensor topologies (cabin-only, mixed, sparse).
 from __future__ import annotations
 
 import pytest
-from conftest import assert_summary_sections
+from _test_helpers import assert_summary_sections
 
 from tests.builders import (
     SENSOR_DRIVER_SEAT,
