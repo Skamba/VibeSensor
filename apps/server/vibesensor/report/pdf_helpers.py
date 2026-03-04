@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from statistics import mean
 from typing import TYPE_CHECKING, Any
 
 from ..runlog import as_float_or_none as _as_float
@@ -19,39 +18,27 @@ _PEAK_RATIO_LOCALIZATION_THRESHOLD = 1.15
 attributes the vibration source to the wheel at that location."""
 
 
+# ── Module-level constants ────────────────────────────────────────────────
+
+_FL_COMPACTS: frozenset[str] = frozenset({"frontleft", "frontleftwheel", "fl", "flwheel"})
+_FR_COMPACTS: frozenset[str] = frozenset({"frontright", "frontrightwheel", "fr", "frwheel"})
+_RL_COMPACTS: frozenset[str] = frozenset({"rearleft", "rearleftwheel", "rl", "rlwheel"})
+_RR_COMPACTS: frozenset[str] = frozenset({"rearright", "rearrightwheel", "rr", "rrwheel"})
+
+
 # ── Pure helpers (no external deps) ──────────────────────────────────────
 
 
 def _canonical_location(raw: object) -> str:
     token = str(raw or "").strip().lower().replace("_", "-")
     compact = "".join(ch for ch in token if ch.isalnum())
-    if ("front" in token and "left" in token and "wheel" in token) or compact in {
-        "frontleft",
-        "frontleftwheel",
-        "fl",
-        "flwheel",
-    }:
+    if ("front" in token and "left" in token and "wheel" in token) or compact in _FL_COMPACTS:
         return "front-left wheel"
-    if ("front" in token and "right" in token and "wheel" in token) or compact in {
-        "frontright",
-        "frontrightwheel",
-        "fr",
-        "frwheel",
-    }:
+    if ("front" in token and "right" in token and "wheel" in token) or compact in _FR_COMPACTS:
         return "front-right wheel"
-    if ("rear" in token and "left" in token and "wheel" in token) or compact in {
-        "rearleft",
-        "rearleftwheel",
-        "rl",
-        "rlwheel",
-    }:
+    if ("rear" in token and "left" in token and "wheel" in token) or compact in _RL_COMPACTS:
         return "rear-left wheel"
-    if ("rear" in token and "right" in token and "wheel" in token) or compact in {
-        "rearright",
-        "rearrightwheel",
-        "rr",
-        "rrwheel",
-    }:
+    if ("rear" in token and "right" in token and "wheel" in token) or compact in _RR_COMPACTS:
         return "rear-right wheel"
     if "trunk" in token:
         return "trunk"
@@ -84,6 +71,7 @@ def location_hotspots(
     all_locations: set[str] = set()
     amp_by_location: dict[str, list[float]] = defaultdict(list)
 
+    _float = _as_float  # local bind for hot loop
     for sample in samples_obj:
         if not isinstance(sample, dict):
             continue
@@ -95,7 +83,7 @@ def location_hotspots(
             else tr("UNLABELED_SENSOR")
         )
         all_locations.add(location)
-        amp = _as_float(sample.get("vibration_strength_db"))
+        amp = _float(sample.get("vibration_strength_db"))
         if amp is not None and amp > 0:
             amp_by_location[location].append(amp)
 
@@ -103,7 +91,7 @@ def location_hotspots(
     hotspot_rows: list[dict[str, Any]] = []
     for location, amps in amp_by_location.items():
         peak_val = max(amps)
-        mean_val = mean(amps)
+        mean_val = sum(amps) / len(amps)
         row: dict[str, Any] = {
             "location": location,
             "count": len(amps),
