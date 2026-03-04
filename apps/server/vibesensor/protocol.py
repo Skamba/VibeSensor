@@ -50,13 +50,16 @@ CMD_HEADER = struct.Struct("<BB6sBI")
 CMD_IDENTIFY_STRUCT = struct.Struct("<BB6sBIH")
 CMD_SYNC_CLOCK_STRUCT = struct.Struct("<BB6sBIQ")
 
-HELLO_FIXED_BYTES = 1 + 1 + CLIENT_ID_BYTES + 2 + 2 + 2 + 1 + 1 + 4
-DATA_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 8 + 2
-ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4 + 1
-DATA_ACK_BYTES = 1 + 1 + CLIENT_ID_BYTES + 4
-CMD_HEADER_BYTES = 1 + 1 + CLIENT_ID_BYTES + 1 + 4
-CMD_IDENTIFY_BYTES = CMD_HEADER_BYTES + 2
-CMD_SYNC_CLOCK_BYTES = CMD_HEADER_BYTES + 8
+HELLO_FIXED_BYTES = HELLO_BASE.size + 1 + 4  # +fw_len byte +overflow uint32
+DATA_HEADER_BYTES: int = DATA_HEADER.size
+ACK_BYTES: int = ACK_STRUCT.size
+DATA_ACK_BYTES: int = DATA_ACK_STRUCT.size
+CMD_HEADER_BYTES: int = CMD_HEADER.size
+CMD_IDENTIFY_BYTES: int = CMD_IDENTIFY_STRUCT.size
+CMD_SYNC_CLOCK_BYTES: int = CMD_SYNC_CLOCK_STRUCT.size
+
+# Pre-resolved dtype for the hot ingest path (parse_data / pack_data).
+_SAMPLE_DTYPE = np.dtype("<i2")
 
 
 class ProtocolError(ValueError):
@@ -206,19 +209,19 @@ def pack_hello(
 
 
 def parse_data(data: bytes) -> DataMessage:
-    if len(data) < DATA_HEADER.size:
+    if len(data) < DATA_HEADER_BYTES:
         raise ProtocolError("DATA too short")
     msg_type, version, client_id, seq, t0_us, sample_count = DATA_HEADER.unpack_from(data, 0)
     if msg_type != MSG_DATA or version != VERSION:
         raise ProtocolError("Invalid DATA header")
 
     payload_len = sample_count * 6
-    expected_len = DATA_HEADER.size + payload_len
+    expected_len = DATA_HEADER_BYTES + payload_len
     if len(data) != expected_len:
         raise ProtocolError(f"DATA payload size mismatch: expected {expected_len}, got {len(data)}")
 
-    payload = memoryview(data)[DATA_HEADER.size :]
-    samples = np.frombuffer(payload, dtype="<i2").reshape(sample_count, 3).copy()
+    payload = memoryview(data)[DATA_HEADER_BYTES:]
+    samples = np.frombuffer(payload, dtype=_SAMPLE_DTYPE).reshape(sample_count, 3).copy()
     return DataMessage(
         client_id=client_id,
         seq=seq,
@@ -229,7 +232,7 @@ def parse_data(data: bytes) -> DataMessage:
 
 
 def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> bytes:
-    samples_int16 = np.asarray(samples, dtype="<i2")
+    samples_int16 = np.asarray(samples, dtype=_SAMPLE_DTYPE)
     if samples_int16.ndim != 2 or samples_int16.shape[1] != 3:
         raise ValueError("samples must be shaped (N, 3)")
     sample_count = int(samples_int16.shape[0])
@@ -238,12 +241,12 @@ def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> by
 
 
 def parse_cmd(data: bytes) -> CmdMessage:
-    if len(data) < CMD_HEADER.size:
+    if len(data) < CMD_HEADER_BYTES:
         raise ProtocolError("CMD too short")
     msg_type, version, client_id, cmd_id, cmd_seq = CMD_HEADER.unpack_from(data, 0)
     if msg_type != MSG_CMD or version != VERSION:
         raise ProtocolError("Invalid CMD header")
-    params = data[CMD_HEADER.size :]
+    params = data[CMD_HEADER_BYTES:]
     return CmdMessage(client_id=client_id, cmd_id=cmd_id, cmd_seq=cmd_seq, params=params)
 
 
@@ -270,7 +273,7 @@ def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> 
 
 
 def parse_ack(data: bytes) -> AckMessage:
-    if len(data) != ACK_STRUCT.size:
+    if len(data) != ACK_BYTES:
         raise ProtocolError("ACK has unexpected size")
     msg_type, version, client_id, cmd_seq, status = ACK_STRUCT.unpack_from(data, 0)
     if msg_type != MSG_ACK or version != VERSION:
@@ -283,7 +286,7 @@ def pack_ack(client_id: bytes, cmd_seq: int, status: int = 0) -> bytes:
 
 
 def parse_data_ack(data: bytes) -> DataAckMessage:
-    if len(data) != DATA_ACK_STRUCT.size:
+    if len(data) != DATA_ACK_BYTES:
         raise ProtocolError("DATA_ACK has unexpected size")
     msg_type, version, client_id, last_seq_received = DATA_ACK_STRUCT.unpack_from(data, 0)
     if msg_type != MSG_DATA_ACK or version != VERSION:
