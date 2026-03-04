@@ -4,7 +4,6 @@ import asyncio
 import enum
 import importlib.util
 import logging
-import os
 import shutil
 import sys
 import time
@@ -156,7 +155,6 @@ class FlashCommandRunner:
             cwd=cwd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
-            env={**os.environ},
         )
         assert proc.stdout is not None
         started_at = time.monotonic()
@@ -355,14 +353,8 @@ class EspFlashManager:
             manifest = validate_bundle(bundle_dir)
 
             # Use first environment (typically m5stack_atom)
-            if not manifest.environments:
-                self._status.exit_code = 1
-                self._finalize(
-                    state=EspFlashState.failed,
-                    error="Firmware manifest has no environments",
-                )
-                return
-
+            # validate_bundle() already raises ValueError if environments is empty,
+            # so manifest.environments is guaranteed non-empty here.
             env = manifest.environments[0]
             self._append_log(f"Flashing environment: {env.name}")
 
