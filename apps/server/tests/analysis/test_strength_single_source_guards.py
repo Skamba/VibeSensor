@@ -34,40 +34,56 @@ def _has_log10_call(text: str) -> bool:
     return False
 
 
-# Lightweight smoke tests: string guards intentionally enforce "no local reimplementation" patterns.
+def _assert_no_forbidden_strings(
+    pkg_dir: Path, forbidden: list[str], *, suffix: str = "*.py",
+) -> None:
+    """Assert none of *forbidden* substrings appear in any *suffix* files under *pkg_dir*."""
+    for src_file in sorted(pkg_dir.rglob(suffix)):
+        text = _read(src_file)
+        for needle in forbidden:
+            assert needle not in text, f"{needle!r} found in {src_file.name}"
+
+
+# ---------------------------------------------------------------------------
+# Module-level compiled patterns (avoid per-test recompilation)
+# ---------------------------------------------------------------------------
+
+_FORBIDDEN_UI_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"Math\.log10\([^)]*/[^)]*\)|log10\([^)]*/[^)]*\)"),
+    re.compile(r"detectVibrationEvents"),
+    re.compile(
+        r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_db\s*&&\s*"
+        r"[A-Za-z_$][\w$]*\s*<\s*[A-Za-z_$][\w$]*\s*&&\s*"
+        r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_amp",
+    ),
+    re.compile(r"x\s*\*\s*x\s*\+\s*y\s*\*\s*y\s*\+\s*z\s*\*\s*z"),
+)
+
+_ANY_PATTERN: re.Pattern[str] = re.compile(r"\bas\s+any\b|:\s*any\b")
+
+
+# ---------------------------------------------------------------------------
+# Lightweight smoke tests: string guards enforce "no local reimplementation".
+# ---------------------------------------------------------------------------
+
+
 def test_live_diagnostics_avoids_strength_formula_reimplementation() -> None:
-    pkg_dir = SERVER_ROOT / "vibesensor" / "live_diagnostics"
-    for py_file in sorted(pkg_dir.rglob("*.py")):
-        text = _read(py_file)
-        assert "strength_db_above_floor(" not in text, f"found in {py_file.name}"
-        assert "compute_floor_rms(" not in text, f"found in {py_file.name}"
-        assert "compute_band_rms(" not in text, f"found in {py_file.name}"
+    _assert_no_forbidden_strings(
+        SERVER_ROOT / "vibesensor" / "live_diagnostics",
+        ["strength_db_above_floor(", "compute_floor_rms(", "compute_band_rms("],
+    )
 
 
 def test_report_modules_use_shared_strength_math() -> None:
-    report_dir = SERVER_ROOT / "vibesensor" / "report"
-    for py_file in sorted(report_dir.rglob("*.py")):
-        text = _read(py_file)
-        assert "Math.log10" not in text, f"Math.log10 found in {py_file.name}"
-        assert "20.0 * log10(" not in text, f"20.0 * log10() found in {py_file.name}"
-        assert "bucket_for_strength(" not in text, (
-            f"bucket_for_strength() call found in {py_file.name}"
-        )
+    _assert_no_forbidden_strings(
+        SERVER_ROOT / "vibesensor" / "report",
+        ["Math.log10", "20.0 * log10(", "bucket_for_strength("],
+    )
 
 
 def test_client_assets_do_not_compute_strength_metrics() -> None:
     repo_root = REPO_ROOT
     candidate_dirs = [repo_root / "apps" / "ui" / "dist", repo_root / "apps" / "server" / "public"]
-    forbidden_patterns = [
-        re.compile(r"Math\.log10\([^)]*/[^)]*\)|log10\([^)]*/[^)]*\)"),
-        re.compile(r"detectVibrationEvents"),
-        re.compile(
-            r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_db\s*&&\s*"
-            r"[A-Za-z_$][\w$]*\s*<\s*[A-Za-z_$][\w$]*\s*&&\s*"
-            r"[A-Za-z_$][\w$]*\s*>=\s*[A-Za-z_$][\w$]*\.min_amp"
-        ),
-        re.compile(r"x\s*\*\s*x\s*\+\s*y\s*\*\s*y\s*\+\s*z\s*\*\s*z"),
-    ]
     scanned = 0
     available_dirs = [d for d in candidate_dirs if d.exists()]
     if not available_dirs:
@@ -76,7 +92,7 @@ def test_client_assets_do_not_compute_strength_metrics() -> None:
         for js_file in asset_dir.rglob("*.js"):
             scanned += 1
             text = _read(js_file)
-            for pattern in forbidden_patterns:
+            for pattern in _FORBIDDEN_UI_PATTERNS:
                 snippet = _snippet(text, pattern)
                 assert not snippet, f"Forbidden UI metric logic in {js_file}: {snippet}"
     assert scanned > 0, "No generated JS assets found to validate."
@@ -111,7 +127,6 @@ def test_typescript_any_type_budget() -> None:
     """
     repo_root = REPO_ROOT
     ui_src = repo_root / "apps" / "ui" / "src"
-    any_pattern = re.compile(r"\bas\s+any\b|:\s*any\b")
     # Allowlist: window test hook and large untyped state bags in main.ts
     allowlist = {
         "main.ts": {
@@ -124,7 +139,7 @@ def test_typescript_any_type_budget() -> None:
     for ts_file in sorted(ui_src.rglob("*.ts")):
         allowed_set = allowlist.get(ts_file.name, set())
         for i, line in enumerate(ts_file.read_text(encoding="utf-8").splitlines(), 1):
-            if any_pattern.search(line):
+            if _ANY_PATTERN.search(line):
                 stripped = line.strip()
                 if any(allowed in stripped for allowed in allowed_set):
                     continue
