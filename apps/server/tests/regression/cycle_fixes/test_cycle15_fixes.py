@@ -1,9 +1,9 @@
 """Tests for Cycle 6 (session 3) fixes – a.k.a. cycle-15 in the global sequence.
 
 Covers:
-  1. processing._medfilt3 — NaN-safe median via np.nanmedian
+  1. processing.medfilt3 — NaN-safe median via np.nanmedian
   2. processing._resize_buffer — shrink/grow/same-size edge cases
-  3. processing._medfilt3 — edge preservation
+  3. processing.medfilt3 — edge preservation
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 
 from vibesensor.processing import SignalProcessor
+from vibesensor.processing.fft import medfilt3
 
 
 def _make_processor(**overrides) -> SignalProcessor:
@@ -44,7 +45,7 @@ class TestMedfilt3NanResilience:
             ],
             dtype=np.float32,
         )
-        result = proc._medfilt3(arr)
+        result = medfilt3(arr)
         # The NaN in axis0 index2 should be replaced by nanmedian of [1,nan,1]=1.0
         assert np.isfinite(result[0, 2]), f"NaN at [0,2] not cleaned: {result[0, 2]}"
         assert result[0, 2] == pytest.approx(1.0)
@@ -52,7 +53,7 @@ class TestMedfilt3NanResilience:
     def test_short_block_unchanged(self) -> None:
         proc = _make_processor()
         arr = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]], dtype=np.float32)
-        result = proc._medfilt3(arr)
+        result = medfilt3(arr)
         np.testing.assert_array_equal(result, arr)
 
     def test_edges_preserved(self) -> None:
@@ -65,7 +66,7 @@ class TestMedfilt3NanResilience:
             ],
             dtype=np.float32,
         )
-        result = proc._medfilt3(arr)
+        result = medfilt3(arr)
         # Edge values should be preserved
         assert result[0, 0] == 10.0
         assert result[0, -1] == 20.0
@@ -81,14 +82,14 @@ class TestMedfilt3NanResilience:
             ],
             dtype=np.float32,
         )
-        result = proc._medfilt3(arr)
+        result = medfilt3(arr)
         # Spike should be replaced by median of [1, 100, 1] = 1.0
         assert result[0, 2] == pytest.approx(1.0)
 
     def test_all_nan_row_no_crash(self) -> None:
         proc = _make_processor()
         arr = np.full((3, 5), float("nan"), dtype=np.float32)
-        result = proc._medfilt3(arr)
+        result = medfilt3(arr)
         # Should not crash — result is still all NaN but no exception
         assert result.shape == arr.shape
 
