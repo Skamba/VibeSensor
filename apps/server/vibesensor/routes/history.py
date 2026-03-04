@@ -21,7 +21,7 @@ from ..api_models import (
     HistoryListResponse,
     HistoryRunResponse,
 )
-from ..history_db import RunStatus
+from ..history_db import ANALYSIS_SCHEMA_VERSION, RunStatus
 from ..report.pdf_builder import build_report_pdf
 from ._helpers import async_require_run, safe_filename
 
@@ -77,6 +77,11 @@ EXPORT_CSV_COLUMNS: tuple[str, ...] = (
 _EXPORT_CSV_COLUMN_SET: frozenset[str] = frozenset(EXPORT_CSV_COLUMNS) - {"extras"}
 
 
+def _strip_internal_fields(analysis: dict[str, Any]) -> dict[str, Any]:
+    """Return *analysis* without implementation-internal ``_``-prefixed keys."""
+    return {k: v for k, v in analysis.items() if not k.startswith("_")}
+
+
 def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     """Convert nested/complex values to JSON strings for CSV export.
 
@@ -87,11 +92,13 @@ def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     Keys not in the fixed CSV column set are collected into an ``extras``
     column as a JSON object.
     """
+    _dumps = json.dumps
+    _columns = _EXPORT_CSV_COLUMN_SET
     out: dict[str, Any] = {}
     extras: dict[str, Any] = {}
     for k, v in row.items():
-        if k in _EXPORT_CSV_COLUMN_SET:
-            out[k] = json.dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
+        if k in _columns:
+            out[k] = _dumps(v, ensure_ascii=False) if isinstance(v, (dict, list)) else v
         elif k == "extras" and isinstance(v, dict):
             extras.update(v)
         else:
@@ -100,7 +107,7 @@ def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     out.setdefault("record_type", "sample")
     out.setdefault("schema_version", "2")
     if extras:
-        out["extras"] = json.dumps(extras, ensure_ascii=False)
+        out["extras"] = _dumps(extras, ensure_ascii=False)
     return out
 
 
@@ -207,8 +214,6 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
         # Expose staleness to callers so they can decide whether to re-request
         analysis_version = run.get("analysis_version")
         if isinstance(analysis, dict) and analysis_version is not None:
-            from ..history_db import ANALYSIS_SCHEMA_VERSION
-
             try:
                 analysis["analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
             except (TypeError, ValueError):
@@ -221,7 +226,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
 
         # Strip internal renderer-only fields before returning
         if isinstance(analysis, dict):
-            analysis = {k: v for k, v in analysis.items() if not k.startswith("_")}
+            analysis = _strip_internal_fields(analysis)
         return analysis
 
     @router.delete("/api/history/{run_id}", response_model=DeleteHistoryRunResponse)
@@ -362,9 +367,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                     run_details["sample_count"] = sample_count
                     analysis = run_details.get("analysis")
                     if isinstance(analysis, dict):
-                        run_details["analysis"] = {
-                            k: v for k, v in analysis.items() if not k.startswith("_")
-                        }
+                        run_details["analysis"] = _strip_internal_fields(analysis)
                     try:
                         details_json = json.dumps(
                             run_details,
