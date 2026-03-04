@@ -16,6 +16,13 @@ def _rectangles_overlap(
     return min(a[2], b[2]) > max(a[0], b[0]) and min(a[3], b[3]) > max(a[1], b[1])
 
 
+def _assert_no_pairwise_overlap(boxes: list[tuple[float, float, float, float]]) -> None:
+    """Assert that no pair of bounding boxes overlaps."""
+    for idx in range(len(boxes)):
+        for jdx in range(idx + 1, len(boxes)):
+            assert not _rectangles_overlap(boxes[idx], boxes[jdx])
+
+
 def test_sensor_state_mapping_connected_active_inactive_and_disconnected() -> None:
     states = _resolve_marker_states(
         ["front-left wheel", "front-right wheel", "engine bay"],
@@ -99,9 +106,7 @@ def test_label_placement_stays_in_bounds_and_avoids_overlap_for_dense_layout() -
             if marker_name != label.name:
                 assert not _rectangles_overlap(label.bbox, marker_box)
 
-    for idx in range(len(labels)):
-        for jdx in range(idx + 1, len(labels)):
-            assert not _rectangles_overlap(labels[idx].bbox, labels[jdx].bbox)
+    _assert_no_pairwise_overlap([label.bbox for label in labels])
 
 
 def test_sparse_layout_renders_only_connected_sensor_labels() -> None:
@@ -201,9 +206,7 @@ def test_legend_shows_diagnostic_source_only_and_source_labels_do_not_overlap() 
         assert box[0] >= 0.0
         assert box[2] <= float(diagram.width) + 0.1
 
-    for idx in range(len(boxes)):
-        for jdx in range(idx + 1, len(boxes)):
-            assert not _rectangles_overlap(boxes[idx], boxes[jdx])
+    _assert_no_pairwise_overlap(boxes)
 
 
 def test_render_plan_prefers_diagnosed_location_when_intensity_hotspot_differs() -> None:
