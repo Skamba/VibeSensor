@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import time
 from math import pi, sqrt
 from threading import Event, Thread
@@ -7,6 +8,11 @@ from threading import Event, Thread
 import numpy as np
 
 from vibesensor.processing import SignalProcessor
+
+
+def _make_3axis(x: np.ndarray) -> np.ndarray:
+    """Stack *x* into an (N, 3) array with y/z zeroed — common test helper."""
+    return np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
 
 
 def test_processing_scales_to_g_detrends_dc_and_tracks_peak() -> None:
@@ -31,7 +37,6 @@ def test_processing_scales_to_g_detrends_dc_and_tracks_peak() -> None:
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
     expected_rms = 0.05 / sqrt(2.0)
     assert abs(float(metrics["x"]["rms"]) - expected_rms) < 0.006
-
     combined = metrics["combined"]
     peaks = combined["peaks"]
     assert peaks
@@ -52,7 +57,7 @@ def test_processing_combined_strength_top_peaks_includes_eight_candidates() -> N
     t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
     freqs = [12.0, 20.0, 28.0, 36.0, 44.0, 52.0, 60.0, 68.0]
     x = sum(0.02 * np.sin(2.0 * pi * freq * t) for freq in freqs).astype(np.float32)
-    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    samples = _make_3axis(x)
     processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
 
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
@@ -76,7 +81,7 @@ def test_processing_window_seconds_uses_client_sample_rate() -> None:
     x = np.zeros(total_samples, dtype=np.float32)
     x[:1800] = (0.8 * np.sin(2.0 * pi * 6.0 * t[:1800])).astype(np.float32)
     x[1800:] = (0.1 * np.sin(2.0 * pi * 6.0 * t[1800:])).astype(np.float32)
-    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    samples = _make_3axis(x)
     processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
 
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
@@ -233,7 +238,7 @@ def test_spectrum_min_hz_excludes_low_frequency_bins() -> None:
     # Inject a strong 2 Hz signal (below spectrum_min_hz) + a 20 Hz signal.
     t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
     x = (0.1 * np.sin(2.0 * pi * 2.0 * t) + 0.05 * np.sin(2.0 * pi * 20.0 * t)).astype(np.float32)
-    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    samples = _make_3axis(x)
     processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
 
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
@@ -260,7 +265,7 @@ def test_spectrum_min_hz_zero_allows_all_frequencies() -> None:
 
     t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
     x = (0.1 * np.sin(2.0 * pi * 2.0 * t)).astype(np.float32)
-    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    samples = _make_3axis(x)
     processor.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
 
     metrics = processor.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
@@ -276,8 +281,6 @@ def test_top_peaks_handles_nan_noise_floor() -> None:
     peaks = SignalProcessor._top_peaks(freqs, amps, top_n=3)
     assert len(peaks) > 0
     for p in peaks:
-        import math
-
         assert math.isfinite(p["snr_ratio"]), f"snr_ratio is not finite: {p['snr_ratio']}"
         assert math.isfinite(p["hz"])
         assert math.isfinite(p["amp"])
@@ -353,11 +356,9 @@ def test_metrics_rms_p2p_always_finite() -> None:
     # Normal small signal
     t = np.arange(fft_n, dtype=np.float64) / sample_rate_hz
     x = (0.01 * np.sin(2.0 * pi * 50.0 * t)).astype(np.float32)
-    samples = np.stack([x, np.zeros_like(x), np.zeros_like(x)], axis=1)
+    samples = _make_3axis(x)
     proc.ingest("c1", samples, sample_rate_hz=sample_rate_hz)
     metrics = proc.compute_metrics("c1", sample_rate_hz=sample_rate_hz)
-    import math
-
     for axis in ("x", "y", "z"):
         if axis in metrics:
             assert math.isfinite(metrics[axis]["rms"])
