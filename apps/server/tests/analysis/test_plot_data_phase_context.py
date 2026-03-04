@@ -42,21 +42,28 @@ def _make_summary(samples: list[dict], raw_sample_rate_hz: int = 200) -> dict:
     }
 
 
+
+_VALID_PHASES = frozenset(p.value for p in DrivingPhase)
+_SEGMENT_REQUIRED_KEYS = {"phase", "start_t_s", "end_t_s"}
+
+
+@pytest.fixture()
+def cruise_plots() -> dict:
+    """Pre-computed _plot_data result for a simple 6-sample cruise run at 60 km/h."""
+    samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(6)]
+    return _plot_data(_make_summary(samples))
+
+
 class TestVibMagnitudePhaseAnnotation:
     """vib_magnitude points are 3-tuples (t_s, vib_db, phase_label)."""
 
-    def test_each_point_has_three_elements(self) -> None:
-        samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(5)]
-        plots = _plot_data(_make_summary(samples))
-        for point in plots["vib_magnitude"]:
-            assert len(point) == 3, f"Expected 3-tuple, got {len(point)}-tuple: {point}"
-
-    def test_phase_label_is_string(self) -> None:
-        samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(5)]
-        plots = _plot_data(_make_summary(samples))
-        for _t, _v, phase in plots["vib_magnitude"]:
+    def test_each_point_is_valid_three_tuple(self, cruise_plots: dict) -> None:
+        """Each point has three elements with correct types and a valid phase label."""
+        for t, v, phase in cruise_plots["vib_magnitude"]:
+            assert isinstance(t, float)
+            assert isinstance(v, float)
             assert isinstance(phase, str)
-            assert phase in {p.value for p in DrivingPhase}
+            assert phase in _VALID_PHASES
 
     def test_idle_samples_labelled_idle(self) -> None:
         """Samples with speed below idle threshold (3 km/h) should be labelled 'idle'."""
@@ -66,13 +73,10 @@ class TestVibMagnitudePhaseAnnotation:
         for _t, _v, phase in plots["vib_magnitude"]:
             assert phase == DrivingPhase.IDLE.value, f"Expected idle, got {phase!r}"
 
-    def test_cruise_samples_labelled_cruise(self) -> None:
+    def test_cruise_samples_labelled_cruise(self, cruise_plots: dict) -> None:
         """Steady-speed samples should be labelled cruise."""
-        # Constant speed → no derivative → cruise
-        samples = [_make_sample(t_s=float(i), speed_kmh=80.0) for i in range(6)]
-        plots = _plot_data(_make_summary(samples))
-        assert plots["vib_magnitude"]
-        for _t, _v, phase in plots["vib_magnitude"]:
+        assert cruise_plots["vib_magnitude"]
+        for _t, _v, phase in cruise_plots["vib_magnitude"]:
             assert phase == DrivingPhase.CRUISE.value, f"Expected cruise, got {phase!r}"
 
     def test_mixed_phases_present(self) -> None:
@@ -86,61 +90,32 @@ class TestVibMagnitudePhaseAnnotation:
         phases_seen = {phase for _t, _v, phase in plots["vib_magnitude"]}
         assert len(phases_seen) >= 2, f"Expected multiple phases, got: {phases_seen}"
 
-    def test_t_s_values_are_floats(self) -> None:
-        samples = [_make_sample(t_s=float(i) * 0.5, speed_kmh=60.0) for i in range(5)]
-        plots = _plot_data(_make_summary(samples))
-        for t, v, phase in plots["vib_magnitude"]:
-            assert isinstance(t, float)
-            assert isinstance(v, float)
-            assert isinstance(phase, str)
-
 
 class TestPhaseSegmentsOutput:
     """plots['phase_segments'] provides chart-annotation metadata."""
 
-    def test_phase_segments_key_present(self) -> None:
-        samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
-        plots = _plot_data(_make_summary(samples))
-        assert "phase_segments" in plots
+    def test_phase_segments_structure_and_validity(self, cruise_plots: dict) -> None:
+        """phase_segments is a list of dicts with required keys and valid phase values."""
+        segs = cruise_plots["phase_segments"]
+        assert isinstance(segs, list)
+        for seg in segs:
+            missing = _SEGMENT_REQUIRED_KEYS - seg.keys()
+            assert not missing, f"Missing keys: {missing}"
+            assert seg["phase"] in _VALID_PHASES, f"Unknown phase: {seg['phase']!r}"
 
-    def test_phase_segments_is_list(self) -> None:
-        samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
-        plots = _plot_data(_make_summary(samples))
-        assert isinstance(plots["phase_segments"], list)
-
-    def test_phase_segments_have_required_keys(self) -> None:
-        samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
-        plots = _plot_data(_make_summary(samples))
-        for seg in plots["phase_segments"]:
-            assert "phase" in seg
-            assert "start_t_s" in seg
-            assert "end_t_s" in seg
-
-    def test_phase_segment_phase_values_are_valid(self) -> None:
-        samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(4)]
-        plots = _plot_data(_make_summary(samples))
-        valid_phases = {p.value for p in DrivingPhase}
-        for seg in plots["phase_segments"]:
-            assert seg["phase"] in valid_phases, f"Unknown phase: {seg['phase']!r}"
-
-    def test_phase_segments_cover_run_time_range(self) -> None:
+    def test_phase_segments_cover_run_time_range(self, cruise_plots: dict) -> None:
         """Segments collectively cover the full time range of the samples."""
-        samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(6)]
-        plots = _plot_data(_make_summary(samples))
-        segs = plots["phase_segments"]
+        segs = cruise_plots["phase_segments"]
         assert segs, "Expected at least one segment"
         earliest = min(seg["start_t_s"] for seg in segs)
         latest = max(seg["end_t_s"] for seg in segs)
         assert earliest <= 0.0
         assert latest >= 5.0
 
-    def test_empty_samples_yields_empty_phase_segments(self) -> None:
+    @pytest.mark.parametrize("key", ["phase_segments", "vib_magnitude"])
+    def test_empty_samples_yields_empty_output(self, key: str) -> None:
         plots = _plot_data(_make_summary([]))
-        assert plots["phase_segments"] == []
-
-    def test_empty_samples_yields_empty_vib_magnitude(self) -> None:
-        plots = _plot_data(_make_summary([]))
-        assert plots["vib_magnitude"] == []
+        assert plots[key] == []
 
 
 def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.MonkeyPatch) -> None:
