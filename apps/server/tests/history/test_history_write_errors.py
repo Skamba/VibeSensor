@@ -29,6 +29,27 @@ class _FakeRecord:
     queue_overflow_drops: int = 0
 
 
+_FAKE_LATEST_METRICS: dict = {
+    "strength_metrics": {
+        "vibration_strength_db": 22.0,
+        "strength_bucket": "l2",
+        "top_peaks": [
+            {
+                "hz": 15.0,
+                "amp": 0.12,
+                "vibration_strength_db": 22.0,
+                "strength_bucket": "l2",
+            }
+        ],
+        "combined_spectrum_amp_g": [],
+    },
+    "combined": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
+    "x": {"rms": 0.04, "p2p": 0.11, "peaks": [{"hz": 15.0, "amp": 0.12}]},
+    "y": {"rms": 0.03, "p2p": 0.10, "peaks": [{"hz": 16.0, "amp": 0.08}]},
+    "z": {"rms": 0.02, "p2p": 0.09, "peaks": [{"hz": 14.0, "amp": 0.07}]},
+}
+
+
 class _FakeRegistry:
     def __init__(self) -> None:
         self._records = {
@@ -36,25 +57,7 @@ class _FakeRegistry:
                 client_id="active",
                 name="front-left",
                 sample_rate_hz=800,
-                latest_metrics={
-                    "strength_metrics": {
-                        "vibration_strength_db": 22.0,
-                        "strength_bucket": "l2",
-                        "top_peaks": [
-                            {
-                                "hz": 15.0,
-                                "amp": 0.12,
-                                "vibration_strength_db": 22.0,
-                                "strength_bucket": "l2",
-                            }
-                        ],
-                        "combined_spectrum_amp_g": [],
-                    },
-                    "combined": {"peaks": [{"hz": 15.0, "amp": 0.12}]},
-                    "x": {"rms": 0.04, "p2p": 0.11, "peaks": [{"hz": 15.0, "amp": 0.12}]},
-                    "y": {"rms": 0.03, "p2p": 0.10, "peaks": [{"hz": 16.0, "amp": 0.08}]},
-                    "z": {"rms": 0.02, "p2p": 0.09, "peaks": [{"hz": 14.0, "amp": 0.07}]},
-                },
+                latest_metrics=_FAKE_LATEST_METRICS,
             ),
         }
 
@@ -114,6 +117,14 @@ def _make_logger(history_db, tmp_path: Path) -> MetricsLogger:
     )
 
 
+def _start_and_snapshot(logger: MetricsLogger):
+    """Start logging and return (run_id, start_utc, start_mono, generation)."""
+    logger.start_logging()
+    snap = logger._session_snapshot()
+    assert snap is not None
+    return snap
+
+
 # -- Tests -------------------------------------------------------------------
 
 
@@ -125,10 +136,7 @@ class TestCreateRunFailureExposesWriteError:
         db.create_run.side_effect = OSError("disk full")
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
-        run_id, start_utc, start_mono, generation = snap
+        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
 
         logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
@@ -142,10 +150,7 @@ class TestCreateRunFailureExposesWriteError:
         db.create_run.side_effect = [OSError("first fail"), None]
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
-        run_id, start_utc, start_mono, generation = snap
+        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
 
         # First call fails
         logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
@@ -165,10 +170,7 @@ class TestPersistentCreateRunFailureStopsRetrying:
         db.create_run.side_effect = OSError("persistent failure")
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
-        run_id, start_utc, _start_mono, generation = snap
+        run_id, start_utc, _start_mono, generation = _start_and_snapshot(logger)
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES + 3):
             logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
@@ -184,12 +186,10 @@ class TestPersistentCreateRunFailureStopsRetrying:
         db.create_run.side_effect = OSError("fail")
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
+        run_id, start_utc, _, generation = _start_and_snapshot(logger)
 
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
-            logger._ensure_history_run_created(snap[0], snap[1], session_generation=snap[3])
+            logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
         assert logger._history_create_fail_count == _MAX_HISTORY_CREATE_RETRIES
 
@@ -208,10 +208,7 @@ class TestAppendSamplesFailureExposesError:
         db.append_samples.side_effect = OSError("write error")
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
-        run_id, start_utc, start_mono, generation = snap
+        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
 
         logger._append_records(run_id, start_utc, start_mono, session_generation=generation)
 
@@ -230,10 +227,7 @@ class TestDroppedSamplesLogged:
         db.create_run.side_effect = OSError("fail")
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
-        run_id, start_utc, start_mono, generation = snap
+        run_id, start_utc, start_mono, generation = _start_and_snapshot(logger)
 
         # Exhaust retries
         for _ in range(_MAX_HISTORY_CREATE_RETRIES):
@@ -265,10 +259,8 @@ class TestStatusAlwaysIncludesWriteError:
         db.create_run.side_effect = OSError("boom")
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
-        logger._ensure_history_run_created(snap[0], snap[1], session_generation=snap[3])
+        run_id, start_utc, _, generation = _start_and_snapshot(logger)
+        logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
 
         # Error persists across status calls
         assert logger.status()["write_error"] is not None
@@ -279,10 +271,8 @@ class TestStatusAlwaysIncludesWriteError:
         db.create_run.side_effect = OSError("boom")
         logger = _make_logger(db, tmp_path)
 
-        logger.start_logging()
-        snap = logger._session_snapshot()
-        assert snap is not None
-        logger._ensure_history_run_created(snap[0], snap[1], session_generation=snap[3])
+        run_id, start_utc, _, generation = _start_and_snapshot(logger)
+        logger._ensure_history_run_created(run_id, start_utc, session_generation=generation)
         assert logger.status()["write_error"] is not None
 
         logger.stop_logging()
