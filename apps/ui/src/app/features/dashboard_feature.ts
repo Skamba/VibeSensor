@@ -36,6 +36,8 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
 
   // Track latest by_location diagnostics for confirmed car map intensity
   let latestByLocation: Record<string, Record<string, unknown>> = {};
+  let _strengthResizeHandler: (() => void) | null = null;
+  let _strengthVisibilityHandler: (() => void) | null = null;
 
   function pushCarMapSample(byLocation: Record<string, number>): void {
     const now = Date.now();
@@ -273,8 +275,11 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
       if (!state.strengthPlot || !els.strengthChart) return;
       state.strengthPlot.setSize({ width: Math.max(320, Math.floor(els.strengthChart.getBoundingClientRect().width || 320)), height: 240 });
     };
+    const visibilityHandler = () => { if (!document.hidden) resize(); };
+    _strengthResizeHandler = resize;
+    _strengthVisibilityHandler = visibilityHandler;
     window.addEventListener("resize", resize);
-    document.addEventListener("visibilitychange", () => { if (!document.hidden) resize(); });
+    document.addEventListener("visibilitychange", visibilityHandler);
   }
 
   function pushStrengthSample(bySource: Record<string, Record<string, any>>): void {
@@ -358,6 +363,10 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
 
   function recreateStrengthChart(): void {
     if (state.strengthPlot) {
+      if (_strengthResizeHandler) window.removeEventListener("resize", _strengthResizeHandler);
+      if (_strengthVisibilityHandler) document.removeEventListener("visibilitychange", _strengthVisibilityHandler);
+      _strengthResizeHandler = null;
+      _strengthVisibilityHandler = null;
       state.strengthPlot.destroy();
       state.strengthPlot = null;
     }
