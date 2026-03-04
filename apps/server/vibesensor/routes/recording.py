@@ -17,22 +17,17 @@ __all__ = ["create_recording_routes"]
 def create_recording_routes(state: RuntimeState) -> APIRouter:
     router = APIRouter()
 
-    # Local-bind frequently accessed sub-objects so endpoint closures avoid
-    # repeated attribute lookups on *state* for every request.
-    _logger = state.metrics_logger
-    _diagnostics = state.live_diagnostics
-
     @router.get("/api/logging/status", response_model=LoggingStatusResponse)
     async def get_logging_status() -> LoggingStatusResponse:
-        return _logger.status()
+        return state.metrics_logger.status()
 
     @router.post("/api/logging/start", response_model=LoggingStatusResponse)
     async def start_logging() -> LoggingStatusResponse:
-        _diagnostics.reset()
-        return _logger.start_logging()
+        state.live_diagnostics.reset()
+        return state.metrics_logger.start_logging()
 
     @router.post("/api/logging/stop", response_model=LoggingStatusResponse)
     async def stop_logging() -> LoggingStatusResponse:
-        return _logger.stop_logging()
+        return state.metrics_logger.stop_logging()
 
     return router
