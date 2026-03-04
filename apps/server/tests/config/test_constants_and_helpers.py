@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from vibesensor.analysis_settings import (
     engine_rpm_from_wheel_hz,
     wheel_hz_from_speed_kmh,
@@ -49,28 +51,30 @@ def test_wheel_hz_from_speed_kmh_basic() -> None:
     assert abs(result - expected) < 1e-9
 
 
-def test_wheel_hz_from_speed_kmh_zero_speed() -> None:
-    assert wheel_hz_from_speed_kmh(0.0, 2.0) is None
-
-
-def test_wheel_hz_from_speed_kmh_zero_circumference() -> None:
-    assert wheel_hz_from_speed_kmh(100.0, 0.0) is None
-
-
-def test_wheel_hz_from_speed_kmh_negative() -> None:
-    assert wheel_hz_from_speed_kmh(-10.0, 2.0) is None
-    assert wheel_hz_from_speed_kmh(100.0, -1.0) is None
+@pytest.mark.parametrize(
+    ("speed", "circ", "func"),
+    [
+        (0.0, 2.0, "kmh"),
+        (100.0, 0.0, "kmh"),
+        (-10.0, 2.0, "kmh"),
+        (100.0, -1.0, "kmh"),
+        (0.0, 2.0, "mps"),
+        (10.0, 0.0, "mps"),
+    ],
+    ids=[
+        "kmh-zero-speed", "kmh-zero-circ", "kmh-neg-speed",
+        "kmh-neg-circ", "mps-zero-speed", "mps-zero-circ",
+    ],
+)
+def test_wheel_hz_returns_none_for_invalid_input(speed: float, circ: float, func: str) -> None:
+    fn = wheel_hz_from_speed_kmh if func == "kmh" else wheel_hz_from_speed_mps
+    assert fn(speed, circ) is None
 
 
 def test_wheel_hz_from_speed_mps_basic() -> None:
     result = wheel_hz_from_speed_mps(27.78, 2.0)
     assert result is not None
     assert abs(result - 27.78 / 2.0) < 1e-9
-
-
-def test_wheel_hz_from_speed_mps_zero() -> None:
-    assert wheel_hz_from_speed_mps(0.0, 2.0) is None
-    assert wheel_hz_from_speed_mps(10.0, 0.0) is None
 
 
 def test_wheel_hz_mps_kmh_consistency() -> None:

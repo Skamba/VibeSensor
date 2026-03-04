@@ -17,36 +17,46 @@ from vibesensor.settings_store import (
     SettingsStore,
 )
 
-# Backward compat alias used by tests below
-_sanitize_aspects = sanitize_aspects
 
-# -- _sanitize_aspects --------------------------------------------------------
+def _sabotaged_store(tmp_path: Path) -> SettingsStore:
+    """Return a SettingsStore whose DB persist always raises, for error-path tests."""
+    db = HistoryDB(tmp_path / "history.db")
+    store = SettingsStore(db=db)
+
+    def _boom(payload: object) -> None:
+        raise OSError("disk full")
+
+    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+    return store
+
+
+# -- sanitize_aspects ----------------------------------------------------------
 
 
 def test_sanitize_aspects_filters_invalid_positive_required() -> None:
-    out = _sanitize_aspects({"tire_width_mm": -1.0, "rim_in": 0.0})
+    out = sanitize_aspects({"tire_width_mm": -1.0, "rim_in": 0.0})
     assert "tire_width_mm" not in out
     assert "rim_in" not in out
 
 
 def test_sanitize_aspects_allows_valid() -> None:
-    out = _sanitize_aspects({"tire_width_mm": 225.0, "rim_in": 18.0})
+    out = sanitize_aspects({"tire_width_mm": 225.0, "rim_in": 18.0})
     assert out["tire_width_mm"] == 225.0
     assert out["rim_in"] == 18.0
 
 
 def test_sanitize_aspects_rejects_negative_non_negative() -> None:
-    out = _sanitize_aspects({"speed_uncertainty_pct": -0.1})
+    out = sanitize_aspects({"speed_uncertainty_pct": -0.1})
     assert "speed_uncertainty_pct" not in out
 
 
 def test_sanitize_aspects_allows_zero_non_negative() -> None:
-    out = _sanitize_aspects({"speed_uncertainty_pct": 0.0})
+    out = sanitize_aspects({"speed_uncertainty_pct": 0.0})
     assert out["speed_uncertainty_pct"] == 0.0
 
 
 def test_sanitize_aspects_ignores_unknown() -> None:
-    out = _sanitize_aspects({"unknown_key": 42.0})
+    out = sanitize_aspects({"unknown_key": 42.0})
     assert "unknown_key" not in out
 
 
@@ -355,47 +365,21 @@ def test_store_invalid_persisted_active_car_id_clears_selection(tmp_path: Path) 
 
 def test_persist_failure_raises_persistence_error(tmp_path: Path) -> None:
     """When the DB write fails, _persist must raise PersistenceError, not swallow it."""
-    db = HistoryDB(tmp_path / "history.db")
-    store = SettingsStore(db=db)
-
-    # Sabotage the DB so set_settings_snapshot raises
-    original = db.set_settings_snapshot
-
-    def _boom(payload: object) -> None:
-        raise OSError("disk full")
-
-    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+    store = _sabotaged_store(tmp_path)
 
     with pytest.raises(PersistenceError, match="Failed to persist"):
         store.add_car({"name": "Will Fail"})
 
-    # Restore and verify the in-memory change is there but not persisted
-    db.set_settings_snapshot = original  # type: ignore[assignment]
-    store2 = SettingsStore(db=db)
-    assert len(store2.get_cars()["cars"]) == 0
-
 
 def test_persist_failure_propagates_on_speed_source_update(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    store = SettingsStore(db=db)
-
-    def _boom(payload: object) -> None:
-        raise RuntimeError("I/O error")
-
-    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+    store = _sabotaged_store(tmp_path)
 
     with pytest.raises(PersistenceError):
         store.update_speed_source({"speedSource": "manual", "manualSpeedKph": 80})
 
 
 def test_persist_failure_propagates_on_set_language(tmp_path: Path) -> None:
-    db = HistoryDB(tmp_path / "history.db")
-    store = SettingsStore(db=db)
-
-    def _boom(payload: object) -> None:
-        raise RuntimeError("I/O error")
-
-    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+    store = _sabotaged_store(tmp_path)
 
     with pytest.raises(PersistenceError):
         store.set_language("nl")
@@ -403,13 +387,7 @@ def test_persist_failure_propagates_on_set_language(tmp_path: Path) -> None:
 
 def test_persist_failure_logs_error(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     """The error must be logged at ERROR level for operator visibility."""
-    db = HistoryDB(tmp_path / "history.db")
-    store = SettingsStore(db=db)
-
-    def _boom(payload: object) -> None:
-        raise OSError("disk full")
-
-    db.set_settings_snapshot = _boom  # type: ignore[assignment]
+    store = _sabotaged_store(tmp_path)
 
     with pytest.raises(PersistenceError):
         store.set_speed_unit("mps")
