@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import math
 import textwrap
+from functools import lru_cache
 from io import BytesIO
 
 from reportlab.lib import colors
@@ -74,12 +75,19 @@ PANEL_HEADER_H = 10.5 * mm
 # ---------------------------------------------------------------------------
 
 
+@lru_cache(maxsize=32)
 def _hex(c: str) -> colors.Color:
+    """Return a ReportLab ``Color`` for *c*.  Results are cached because the
+    same handful of theme colours are referenced dozens of times per PDF."""
     return colors.HexColor(c)
 
 
 def _safe(v: str | None, fallback: str = "—") -> str:
-    return str(v).strip() if v and str(v).strip() else fallback
+    if v:
+        s = str(v).strip()
+        if s:
+            return s
+    return fallback
 
 
 def _strength_with_peak(
@@ -92,7 +100,7 @@ def _strength_with_peak(
     base = _safe(strength_label, fallback)
     if peak_db is None:
         return base
-    if "db" in base.lower():
+    if "db" in base.casefold():
         return base
     return f"{base} · {peak_db:.1f} dB {peak_suffix}"
 
@@ -615,6 +623,13 @@ def _draw_next_steps_table(
     fs = 7
     leading = fs + 2
 
+    _soft_bg = _hex(SOFT_BG)
+    _panel_bg = _hex(PANEL_BG)
+    _line_clr = _hex(LINE_CLR)
+    _text_clr = _hex(TEXT_CLR)
+    _row_pad = 2 * mm
+    _num_y_off = 4.4 * mm
+
     y = y_top
     drawn = 0
     for idx, step in enumerate(steps, start=start_number):
@@ -631,19 +646,18 @@ def _draw_next_steps_table(
         # Measure how many lines this step needs
         lines = _wrap_lines(action_text, text_w, fs)
         n_lines = max(len(lines), 1)
-        row_h = max(min_row_h, n_lines * leading + 2 * mm)
+        row_h = max(min_row_h, n_lines * leading + _row_pad)
 
         if y - row_h < y_bottom:
             break
 
-        bg = SOFT_BG if idx % 2 == 0 else PANEL_BG
-        c.setFillColor(_hex(bg))
-        c.setStrokeColor(_hex(LINE_CLR))
+        c.setFillColor(_soft_bg if idx % 2 == 0 else _panel_bg)
+        c.setStrokeColor(_line_clr)
         c.rect(x, y - row_h, w, row_h, stroke=1, fill=1)
 
-        c.setFillColor(_hex(TEXT_CLR))
+        c.setFillColor(_text_clr)
         c.setFont(FONT_B, fs)
-        c.drawString(x + 2, y - 4.4 * mm, f"{idx}.")
+        c.drawString(x + 2, y - _num_y_off, f"{idx}.")
 
         _draw_text(
             c,
@@ -762,10 +776,10 @@ def _page2(
         finding
         for finding in findings
         if isinstance(finding, dict)
-        and str(finding.get("severity") or "").strip().lower() == "info"
+        and _norm(finding.get("severity")) == "info"
         and (
-            str(finding.get("suspected_source") or "").strip().lower() == "transient_impact"
-            or str(finding.get("peak_classification") or "").strip().lower() == "transient"
+            _norm(finding.get("suspected_source")) == "transient_impact"
+            or _norm(finding.get("peak_classification")) == "transient"
         )
     ]
     if transient_findings:
@@ -933,28 +947,32 @@ def _draw_peaks_table(
         c.drawString(x + 2, y - 4.2 * mm, "\u2014")
         return
 
+    _soft_bg = _hex(SOFT_BG)
+    _panel_bg = _hex(PANEL_BG)
+    _text_clr = _hex(TEXT_CLR)
+    _y_off = 4.2 * mm
     for idx, row in enumerate(rows, start=1):
         y -= row_h
         if y - row_h < y_bottom:
             break
-        bg = SOFT_BG if idx % 2 == 0 else PANEL_BG
-        c.setFillColor(_hex(bg))
+        c.setFillColor(_soft_bg if idx % 2 == 0 else _panel_bg)
         c.rect(x, y - row_h + 1, w, row_h, stroke=1, fill=1)
-        c.setFillColor(_hex(TEXT_CLR))
+        c.setFillColor(_text_clr)
         cx_off = x + 1.5
-        vals = [
-            row.rank,
-            row.system,
-            row.freq_hz,
-            row.order,
-            row.peak_db,
-            row.strength_db,
-            row.speed_band,
-            row.relevance,
-        ]
-        for val, (_, cw) in zip(vals, col_defs, strict=True):
-            c.drawString(cx_off, y - 4.2 * mm, val)
+        row_y = y - _y_off
+        for val, (_, cw) in zip(
+            (row.rank, row.system, row.freq_hz, row.order,
+             row.peak_db, row.strength_db, row.speed_band, row.relevance),
+            col_defs,
+            strict=True,
+        ):
+            c.drawString(cx_off, row_y, val)
             cx_off += cw
+
+
+def _norm(v: object) -> str:
+    """Normalise an optional string value for comparison."""
+    return str(v or "").strip().lower()
 
 
 def _draw_additional_observations(
@@ -970,6 +988,9 @@ def _draw_additional_observations(
     c.setFillColor(_hex(MUTED_CLR))
     c.setFont(FONT, 6.5)
 
+    _isfinite = math.isfinite
+    _x_pad = x + 4 * mm
+    _step = 3.5 * mm
     y_cursor = y + h - 10 * mm
     for finding in transient_findings[:3]:
         order_label = str(finding.get("frequency_hz_or_order") or "").strip()
@@ -979,11 +1000,10 @@ def _draw_additional_observations(
             confidence = float(finding.get("confidence_0_to_1") or 0.0)
         except (ValueError, TypeError):
             confidence = 0.0
-        if not math.isfinite(confidence):
+        if not _isfinite(confidence):
             confidence = 0.0
-        line = f"• {order_label} ({confidence * 100.0:.0f}%)"
-        c.drawString(x + 4 * mm, y_cursor, line)
-        y_cursor -= 3.5 * mm
+        c.drawString(_x_pad, y_cursor, f"• {order_label} ({confidence * 100.0:.0f}%)")
+        y_cursor -= _step
 
 
 # ---------------------------------------------------------------------------
