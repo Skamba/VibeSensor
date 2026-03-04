@@ -438,26 +438,19 @@ def _build_phase_timeline(
 
     entries: list[dict[str, Any]] = []
     for seg in phase_segments:
-        phase_val = seg.phase.value if hasattr(seg, "phase") else str(seg.get("phase", ""))
-        start_t = seg.start_t_s if hasattr(seg, "start_t_s") else float(seg.get("start_t_s", 0))
-        end_t = seg.end_t_s if hasattr(seg, "end_t_s") else float(seg.get("end_t_s", 0))
+        phase_val = seg.phase.value
         # Convert NaN sentinels (unknown time) to None for JSON safety.
-        if isinstance(start_t, float) and math.isnan(start_t):
-            start_t = None
-        if isinstance(end_t, float) and math.isnan(end_t):
-            end_t = None
-        speed_min = seg.speed_min_kmh if hasattr(seg, "speed_min_kmh") else seg.get("speed_min_kmh")
-        speed_max = seg.speed_max_kmh if hasattr(seg, "speed_max_kmh") else seg.get("speed_max_kmh")
-        has_fault_evidence = phase_val in finding_phases
+        start_t = None if math.isnan(seg.start_t_s) else seg.start_t_s
+        end_t = None if math.isnan(seg.end_t_s) else seg.end_t_s
 
         entries.append(
             {
                 "phase": phase_val,
                 "start_t_s": start_t,
                 "end_t_s": end_t,
-                "speed_min_kmh": speed_min,
-                "speed_max_kmh": speed_max,
-                "has_fault_evidence": has_fault_evidence,
+                "speed_min_kmh": seg.speed_min_kmh,
+                "speed_max_kmh": seg.speed_max_kmh,
+                "has_fault_evidence": phase_val in finding_phases,
             }
         )
     return entries
@@ -499,7 +492,7 @@ def build_findings_for_samples(
     lang: str | None = None,
 ) -> list[dict[str, Any]]:
     language = _normalize_lang(lang)
-    rows = list(samples) if isinstance(samples, list) else []
+    rows = list(samples)
     _validate_required_strength_metrics(rows)
     _, speed_stats, speed_non_null_pct, speed_sufficient, _per_sample_phases, _ = (
         _prepare_speed_and_phases(rows)
@@ -777,22 +770,21 @@ def summarize_run_data(
     phase_timeline = _build_phase_timeline(phase_segments, findings, language)
 
     # --- Reference completeness ---
-    metadata_dict = metadata if isinstance(metadata, dict) else {}
     reference_complete = bool(
-        _as_float(metadata_dict.get("raw_sample_rate_hz"))
+        _as_float(metadata.get("raw_sample_rate_hz"))
         and (
-            _as_float(metadata_dict.get("tire_circumference_m"))
+            _as_float(metadata.get("tire_circumference_m"))
             or tire_circumference_m_from_spec(
-                _as_float(metadata_dict.get("tire_width_mm")),
-                _as_float(metadata_dict.get("tire_aspect_pct")),
-                _as_float(metadata_dict.get("rim_in")),
+                _as_float(metadata.get("tire_width_mm")),
+                _as_float(metadata.get("tire_aspect_pct")),
+                _as_float(metadata.get("rim_in")),
             )
         )
         and (
-            _as_float(metadata_dict.get("engine_rpm"))
+            _as_float(metadata.get("engine_rpm"))
             or (
-                _as_float(metadata_dict.get("final_drive_ratio"))
-                and _as_float(metadata_dict.get("current_gear_ratio"))
+                _as_float(metadata.get("final_drive_ratio"))
+                and _as_float(metadata.get("current_gear_ratio"))
             )
         )
     )
