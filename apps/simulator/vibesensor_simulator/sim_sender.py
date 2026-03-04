@@ -41,6 +41,22 @@ from .server_http import (
 
 ROOT = Path(__file__).resolve().parents[3]
 
+_TWO_PI = 2.0 * np.pi
+
+_COMMON_TONES: tuple[tuple[float, tuple[float, float, float]], ...] = (
+    (DEFAULT_ORDER_HZ["wheel_1x"], (70.0, 58.0, 82.0)),
+    (DEFAULT_ORDER_HZ["wheel_2x"], (46.0, 38.0, 54.0)),
+    (DEFAULT_ORDER_HZ["shaft_1x"], (95.0, 76.0, 110.0)),
+    (DEFAULT_ORDER_HZ["engine_2x"], (64.0, 52.0, 78.0)),
+)
+
+_WHEEL_SLOT_ALIASES: dict[str, str] = {
+    "fl": "front-left",
+    "fr": "front-right",
+    "rl": "rear-left",
+    "rr": "rear-right",
+}
+
 
 @dataclass(slots=True)
 class SimClient:
@@ -125,7 +141,7 @@ class SimClient:
         t = self.phase_s + np.arange(self.frame_samples, dtype=np.float32) * dt
 
         modulation = 1.0 + profile.modulation_depth * np.sin(
-            2 * np.pi * profile.modulation_hz * t
+            _TWO_PI * profile.modulation_hz * t
         )
         signal = np.zeros((self.frame_samples, 3), dtype=np.float32)
 
@@ -136,14 +152,16 @@ class SimClient:
         if profile.reference_speed_kmh and profile.reference_speed_kmh > 0:
             speed_ratio = max(0.0, self.current_speed_kmh) / profile.reference_speed_kmh
 
+        _sin = np.sin
+        _phase = self.phase_offsets
         for freq_hz, amps_xyz in profile.tones:
             effective_hz = freq_hz * speed_ratio
             if effective_hz <= 0:
                 continue
-            omega_t = 2.0 * np.pi * effective_hz * t
-            signal[:, 0] += amps_xyz[0] * np.sin(omega_t + self.phase_offsets[0])
-            signal[:, 1] += amps_xyz[1] * np.sin(omega_t + self.phase_offsets[1])
-            signal[:, 2] += amps_xyz[2] * np.sin(omega_t + self.phase_offsets[2])
+            omega_t = _TWO_PI * effective_hz * t
+            signal[:, 0] += amps_xyz[0] * _sin(omega_t + _phase[0])
+            signal[:, 1] += amps_xyz[1] * _sin(omega_t + _phase[1])
+            signal[:, 2] += amps_xyz[2] * _sin(omega_t + _phase[2])
 
         if self.common_event_gain > 0:
             # Common order tones shared by all sensors.
@@ -153,24 +171,15 @@ class SimClient:
                 if DEFAULT_SPEED_KMH > 0
                 else 1.0
             )
-            common_tones = (
-                (DEFAULT_ORDER_HZ["wheel_1x"], (70.0, 58.0, 82.0)),
-                (DEFAULT_ORDER_HZ["wheel_2x"], (46.0, 38.0, 54.0)),
-                (DEFAULT_ORDER_HZ["shaft_1x"], (95.0, 76.0, 110.0)),
-                (DEFAULT_ORDER_HZ["engine_2x"], (64.0, 52.0, 78.0)),
-            )
-            for freq_hz, amps_xyz in common_tones:
+            _gain = self.common_event_gain
+            for freq_hz, amps_xyz in _COMMON_TONES:
                 effective_hz = freq_hz * common_speed_ratio
                 if effective_hz <= 0:
                     continue
-                omega_t = 2.0 * np.pi * effective_hz * t
-                signal[:, 0] += self.common_event_gain * amps_xyz[0] * np.sin(omega_t)
-                signal[:, 1] += (
-                    self.common_event_gain * amps_xyz[1] * np.sin(omega_t + 0.2)
-                )
-                signal[:, 2] += (
-                    self.common_event_gain * amps_xyz[2] * np.sin(omega_t + 0.4)
-                )
+                omega_t = _TWO_PI * effective_hz * t
+                signal[:, 0] += _gain * amps_xyz[0] * _sin(omega_t)
+                signal[:, 1] += _gain * amps_xyz[1] * _sin(omega_t + 0.2)
+                signal[:, 2] += _gain * amps_xyz[2] * _sin(omega_t + 0.4)
 
         signal *= modulation[:, None]
 
@@ -283,14 +292,8 @@ class RoadSceneController:
     @staticmethod
     def _normalize_wheel_slot(name: str) -> str | None:
         normalized = name.strip().lower().replace("_", "-").replace(" ", "-")
-        alias = {
-            "fl": "front-left",
-            "fr": "front-right",
-            "rl": "rear-left",
-            "rr": "rear-right",
-        }
-        if normalized in alias:
-            return alias[normalized]
+        if normalized in _WHEEL_SLOT_ALIASES:
+            return _WHEEL_SLOT_ALIASES[normalized]
         axle = (
             "front"
             if "front" in normalized
