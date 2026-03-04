@@ -10,7 +10,23 @@ Covers:
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
+
+from vibesensor.analysis.helpers import (
+    MEMS_NOISE_FLOOR_G,
+    _effective_baseline_floor,
+    _validate_required_strength_metrics,
+)
+from vibesensor.analysis.strength_labels import (
+    _select_reason_key,
+    certainty_label,
+    strength_label,
+)
+from vibesensor.constants import SILENCE_DB
+from vibesensor.live_diagnostics import _combine_amplitude_strength_db
+from vibesensor.ws_hub import WebSocketHub
 
 # ------------------------------------------------------------------
 # 1. _combine_amplitude_strength_db — NaN guard
@@ -20,33 +36,24 @@ import pytest
 class TestCombineAmplitudeNanGuard:
     """NaN values in dB list must be skipped, not mapped to 200 dB."""
 
-    def test_nan_skipped_returns_silence(self) -> None:
-        from vibesensor.constants import SILENCE_DB
-        from vibesensor.live_diagnostics import _combine_amplitude_strength_db
-
-        result = _combine_amplitude_strength_db([float("nan")])
-        assert result == SILENCE_DB
+    @pytest.mark.parametrize(
+        "values, expected_silence",
+        [
+            ([float("nan")], True),
+            ([float("inf")], True),
+            ([], True),
+        ],
+        ids=["nan", "inf", "empty"],
+    )
+    def test_invalid_returns_silence(
+        self, values: list[float], expected_silence: bool
+    ) -> None:
+        assert _combine_amplitude_strength_db(values) == SILENCE_DB
 
     def test_nan_mixed_with_valid(self) -> None:
-        from vibesensor.live_diagnostics import _combine_amplitude_strength_db
-
         result_clean = _combine_amplitude_strength_db([10.0, 20.0])
         result_with_nan = _combine_amplitude_strength_db([10.0, float("nan"), 20.0])
-        # With NaN skipped, should get same as clean
         assert result_with_nan == result_clean
-
-    def test_inf_skipped(self) -> None:
-        from vibesensor.constants import SILENCE_DB
-        from vibesensor.live_diagnostics import _combine_amplitude_strength_db
-
-        result = _combine_amplitude_strength_db([float("inf")])
-        assert result == SILENCE_DB
-
-    def test_empty_returns_silence(self) -> None:
-        from vibesensor.constants import SILENCE_DB
-        from vibesensor.live_diagnostics import _combine_amplitude_strength_db
-
-        assert _combine_amplitude_strength_db([]) == SILENCE_DB
 
 
 # ------------------------------------------------------------------
@@ -57,29 +64,19 @@ class TestCombineAmplitudeNanGuard:
 class TestStrengthLabelNanGuard:
     """NaN dB value should return 'unknown', not 'negligible'."""
 
-    def test_nan_returns_unknown(self) -> None:
-        from vibesensor.analysis.strength_labels import strength_label
-
-        key, label = strength_label(float("nan"))
+    @pytest.mark.parametrize(
+        "db_value",
+        [float("nan"), float("inf"), None],
+        ids=["nan", "inf", "none"],
+    )
+    def test_invalid_returns_unknown(self, db_value: object) -> None:
+        key, label = strength_label(db_value)
         assert key == "unknown"
-        assert "nknown" in label  # "Unknown" or "Onbekend"
-
-    def test_inf_returns_unknown(self) -> None:
-        from vibesensor.analysis.strength_labels import strength_label
-
-        key, label = strength_label(float("inf"))
-        assert key == "unknown"
-
-    def test_none_returns_unknown(self) -> None:
-        from vibesensor.analysis.strength_labels import strength_label
-
-        key, label = strength_label(None)
-        assert key == "unknown"
+        if db_value is not None or isinstance(db_value, float):
+            assert "nknown" in label  # "Unknown" or "Onbekend"
 
     def test_valid_db_returns_band(self) -> None:
-        from vibesensor.analysis.strength_labels import strength_label
-
-        key, label = strength_label(15.0)
+        key, _label = strength_label(15.0)
         assert key != "unknown"
 
 
@@ -92,9 +89,7 @@ class TestCertaintyLabelNanGuard:
     """NaN confidence must be clamped to 0, producing 'low' + '0%'."""
 
     def test_nan_confidence_returns_low(self) -> None:
-        from vibesensor.analysis.strength_labels import certainty_label
-
-        level, label, pct, reason = certainty_label(
+        level, _label, pct, _reason = certainty_label(
             float("nan"),
             strength_band_key="moderate",
         )
@@ -102,9 +97,7 @@ class TestCertaintyLabelNanGuard:
         assert pct == "0%"
 
     def test_normal_confidence(self) -> None:
-        from vibesensor.analysis.strength_labels import certainty_label
-
-        level, label, pct, reason = certainty_label(
+        level, _label, pct, _reason = certainty_label(
             0.85,
             strength_band_key="moderate",
         )
@@ -121,12 +114,7 @@ class TestWsHubDriftCompensation:
     """run() should subtract elapsed time from sleep to maintain tick rate."""
 
     def test_run_subtracts_elapsed(self) -> None:
-        import inspect
-
-        from vibesensor.ws_hub import WebSocketHub
-
         source = inspect.getsource(WebSocketHub.run)
-        # Verify the drift-compensation pattern exists
         assert "loop.time()" in source or "tick_start" in source
         assert "interval - elapsed" in source
 
@@ -139,31 +127,21 @@ class TestWsHubDriftCompensation:
 class TestEffectiveBaselineFloor:
     """Test the baseline floor helper for edge cases."""
 
-    def test_both_none_returns_mems_floor(self) -> None:
-        from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G, _effective_baseline_floor
-
-        result = _effective_baseline_floor(None)
-        assert result == MEMS_NOISE_FLOOR_G
-
-    def test_zero_baseline_uses_measured_zero(self) -> None:
-        from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G, _effective_baseline_floor
-
-        # 0.0 is a valid measured value — should be clamped to MEMS_NOISE_FLOOR_G,
-        # not fall through to extra_fallback.
-        result = _effective_baseline_floor(0.0, extra_fallback=0.005)
-        assert result == MEMS_NOISE_FLOOR_G
-
-    def test_negative_clamped(self) -> None:
-        from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G, _effective_baseline_floor
-
-        result = _effective_baseline_floor(-0.5)
-        assert result == MEMS_NOISE_FLOOR_G
-
-    def test_valid_baseline_used(self) -> None:
-        from vibesensor.analysis.helpers import _effective_baseline_floor
-
-        result = _effective_baseline_floor(0.01)
-        assert result == 0.01
+    @pytest.mark.parametrize(
+        "baseline, kwargs, expected",
+        [
+            (None, {}, MEMS_NOISE_FLOOR_G),
+            (0.0, {"extra_fallback": 0.005}, MEMS_NOISE_FLOOR_G),
+            (-0.5, {}, MEMS_NOISE_FLOOR_G),
+            (0.01, {}, 0.01),
+        ],
+        ids=["none", "zero-clamped", "negative-clamped", "valid"],
+    )
+    def test_baseline_floor(
+        self, baseline: float | None, kwargs: dict, expected: float
+    ) -> None:
+        result = _effective_baseline_floor(baseline, **kwargs)
+        assert result == expected
 
 
 # ------------------------------------------------------------------
@@ -174,20 +152,18 @@ class TestEffectiveBaselineFloor:
 class TestValidateRequiredStrengthMetrics:
     """Test the validation helper for required strength metrics."""
 
-    def test_empty_list_no_error(self) -> None:
-        from vibesensor.analysis.helpers import _validate_required_strength_metrics
-
-        _validate_required_strength_metrics([])  # should not raise
-
-    def test_all_valid_no_error(self) -> None:
-        from vibesensor.analysis.helpers import _validate_required_strength_metrics
-
-        samples = [{"vibration_strength_db": 10.0}, {"vibration_strength_db": 20.0}]
+    @pytest.mark.parametrize(
+        "samples",
+        [
+            [],
+            [{"vibration_strength_db": 10.0}, {"vibration_strength_db": 20.0}],
+        ],
+        ids=["empty", "all-valid"],
+    )
+    def test_valid_no_error(self, samples: list[dict]) -> None:
         _validate_required_strength_metrics(samples)  # should not raise
 
     def test_all_missing_raises(self) -> None:
-        from vibesensor.analysis.helpers import _validate_required_strength_metrics
-
         samples = [{"other_field": 1}, {"other_field": 2}]
         with pytest.raises(ValueError, match="vibration_strength_db"):
             _validate_required_strength_metrics(samples)
@@ -201,50 +177,34 @@ class TestValidateRequiredStrengthMetrics:
 class TestSelectReasonKey:
     """Test reason key selection priority ordering."""
 
-    def test_reference_gaps_takes_priority(self) -> None:
-        from vibesensor.analysis.strength_labels import _select_reason_key
-
+    @pytest.mark.parametrize(
+        "kwargs, expected",
+        [
+            (
+                dict(confidence=0.9, steady_speed=False, weak_spatial=False, sensor_count=4, has_reference_gaps=True),
+                "reference_gaps",
+            ),
+            (
+                dict(confidence=0.9, steady_speed=False, weak_spatial=False, sensor_count=1, has_reference_gaps=False),
+                "single_sensor",
+            ),
+            (
+                dict(confidence=0.9, steady_speed=False, weak_spatial=False, sensor_count=4, has_reference_gaps=False),
+                "strong_order_match",
+            ),
+            (
+                dict(confidence=0.2, steady_speed=False, weak_spatial=False, sensor_count=4, has_reference_gaps=False),
+                "weak_order_match",
+            ),
+        ],
+        ids=["reference-gaps", "single-sensor", "strong-match", "weak-match"],
+    )
+    def test_reason_priority(self, kwargs: dict, expected: str) -> None:
         result = _select_reason_key(
-            0.9,
-            steady_speed=False,
-            weak_spatial=False,
-            sensor_count=4,
-            has_reference_gaps=True,
+            kwargs["confidence"],
+            steady_speed=kwargs["steady_speed"],
+            weak_spatial=kwargs["weak_spatial"],
+            sensor_count=kwargs["sensor_count"],
+            has_reference_gaps=kwargs["has_reference_gaps"],
         )
-        assert result == "reference_gaps"
-
-    def test_single_sensor_second_priority(self) -> None:
-        from vibesensor.analysis.strength_labels import _select_reason_key
-
-        result = _select_reason_key(
-            0.9,
-            steady_speed=False,
-            weak_spatial=False,
-            sensor_count=1,
-            has_reference_gaps=False,
-        )
-        assert result == "single_sensor"
-
-    def test_high_confidence_strong_match(self) -> None:
-        from vibesensor.analysis.strength_labels import _select_reason_key
-
-        result = _select_reason_key(
-            0.9,
-            steady_speed=False,
-            weak_spatial=False,
-            sensor_count=4,
-            has_reference_gaps=False,
-        )
-        assert result == "strong_order_match"
-
-    def test_low_confidence(self) -> None:
-        from vibesensor.analysis.strength_labels import _select_reason_key
-
-        result = _select_reason_key(
-            0.2,
-            steady_speed=False,
-            weak_spatial=False,
-            sensor_count=4,
-            has_reference_gaps=False,
-        )
-        assert result == "weak_order_match"
+        assert result == expected
