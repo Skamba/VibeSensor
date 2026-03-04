@@ -13,8 +13,8 @@ from vibesensor.domain_models import (
     SensorConfig,
     SensorFrame,
     SpeedSourceConfig,
-    _as_float_or_none,
-    _as_int_or_none,
+    as_float_or_none,
+    as_int_or_none,
 )
 
 # ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ class TestAsFloatOrNone:
         ],
     )
     def test_as_float_or_none(self, value: Any, expected: float | None) -> None:
-        assert _as_float_or_none(value) == expected
+        assert as_float_or_none(value) == expected
 
 
 class TestAsIntOrNone:
@@ -52,7 +52,7 @@ class TestAsIntOrNone:
         ],
     )
     def test_as_int_or_none(self, value: Any, expected: int | None) -> None:
-        assert _as_int_or_none(value) == expected
+        assert as_int_or_none(value) == expected
 
 
 # ---------------------------------------------------------------------------

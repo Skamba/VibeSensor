@@ -190,18 +190,16 @@ def _build_sensor_render_plan(
             else:
                 fill = REPORT_COLORS["text_secondary"]
                 radius = 5.0
-            stroke = fill
             stroke_width = 0.8
         elif state == "connected-inactive":
             fill = REPORT_COLORS["surface_alt"]
             radius = 4.8
-            stroke = fill
             stroke_width = 0.8
         else:
             fill = "#e3e8f1"
             radius = 4.0
-            stroke = fill
             stroke_width = 0.6
+        stroke = fill
 
         marker = MarkerRenderPlan(
             name=name,
@@ -344,31 +342,23 @@ def car_location_diagram(
     # Axles
     front_axle_y = y0 + (car_h * 0.84)
     rear_axle_y = y0 + (car_h * 0.16)
-    drawing.add(
-        Line(
-            x0 + (car_w * 0.14),
-            front_axle_y,
-            x0 + (car_w * 0.86),
-            front_axle_y,
-            strokeColor=_color_row_border,
-            strokeWidth=0.6,
+    wheel_x_left = x0 + (car_w * 0.14)
+    wheel_x_right = x0 + (car_w * 0.86)
+    # Axles
+    for axle_y in (front_axle_y, rear_axle_y):
+        drawing.add(
+            Line(
+                wheel_x_left,
+                axle_y,
+                wheel_x_right,
+                axle_y,
+                strokeColor=_color_row_border,
+                strokeWidth=0.6,
+            )
         )
-    )
-    drawing.add(
-        Line(
-            x0 + (car_w * 0.14),
-            rear_axle_y,
-            x0 + (car_w * 0.86),
-            rear_axle_y,
-            strokeColor=_color_row_border,
-            strokeWidth=0.6,
-        )
-    )
     # Wheel circles
     wheel_fill = _HexColor("#f8fbff")
     wheel_stroke = _HexColor(REPORT_COLORS["axis"])
-    wheel_x_left = x0 + (car_w * 0.14)
-    wheel_x_right = x0 + (car_w * 0.86)
     for wx, wy in [
         (wheel_x_left, front_axle_y),
         (wheel_x_right, front_axle_y),

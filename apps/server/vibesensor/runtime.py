@@ -66,7 +66,6 @@ class RuntimeState:
     esp_flash_manager: EspFlashManager
     worker_pool: WorkerPool
     tasks: list[asyncio.Task] = field(default_factory=list)
-    managed_jobs: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     data_consumer_task: asyncio.Task | None = None
     sample_rate_mismatch_logged: set[str] = field(default_factory=set)
@@ -160,20 +159,17 @@ class RuntimeState:
                 "order_bands": None,
             }
 
-        out: dict[str, Any] = {
+        wheel_rpm = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
+        drive_rpm = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
+        engine_rpm = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE
+
+        return {
             "basis_speed_source": basis,
-            "wheel": {"rpm": None, "mode": "calculated", "reason": None},
-            "driveshaft": {"rpm": None, "mode": "calculated", "reason": None},
-            "engine": {"rpm": None, "mode": "calculated", "reason": None},
-            "order_bands": None,
+            "wheel": {"rpm": wheel_rpm, "mode": "calculated", "reason": None},
+            "driveshaft": {"rpm": drive_rpm, "mode": "calculated", "reason": None},
+            "engine": {"rpm": engine_rpm, "mode": "calculated", "reason": None},
+            "order_bands": build_order_bands(orders_hz, analysis_settings),
         }
-
-        out["wheel"]["rpm"] = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
-        out["driveshaft"]["rpm"] = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
-        out["engine"]["rpm"] = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE
-
-        out["order_bands"] = build_order_bands(orders_hz, analysis_settings)
-        return out
 
     # -- WS broadcast helpers -----------------------------------------------
 
@@ -414,7 +410,7 @@ class RuntimeState:
             if task is not None and not task.done():
                 try:
                     await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
-                except (asyncio.CancelledError, TimeoutError, Exception):
+                except (asyncio.CancelledError, Exception):
                     pass
 
         self.metrics_logger.stop_logging()

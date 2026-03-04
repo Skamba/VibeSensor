@@ -82,14 +82,14 @@ async def test_run_can_be_cancelled_while_gps_stream_hangs() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
 
     async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.15)
         writer.close()
         await writer.wait_closed()
 
     server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
     host, port = server.sockets[0].getsockname()[:2]
     task = asyncio.create_task(monitor.run(host=host, port=port))
-    await asyncio.sleep(0.2)
+    await asyncio.sleep(0.05)
     task.cancel()
     results = await asyncio.gather(task, return_exceptions=True)
     assert isinstance(results[0], asyncio.CancelledError)

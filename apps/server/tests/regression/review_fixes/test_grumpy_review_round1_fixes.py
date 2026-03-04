@@ -14,10 +14,6 @@ import pytest
 from vibesensor.config import ProcessingConfig
 from vibesensor.diagnostics_shared import build_order_bands, severity_from_peak
 from vibesensor.domain_models import (
-    _as_float_or_none,
-    _as_int_or_none,
-    _new_car_id,
-    _sanitize_aspects,
     as_float_or_none,
     as_int_or_none,
     new_car_id,
@@ -53,13 +49,6 @@ class TestDomainModelsPublicAPI:
     def test_new_car_id_importable(self) -> None:
         car_id = new_car_id()
         assert isinstance(car_id, str) and len(car_id) > 0
-
-    def test_backward_compat_aliases(self) -> None:
-        """Old underscore-prefixed names still resolve."""
-        assert _as_float_or_none is as_float_or_none
-        assert _as_int_or_none is as_int_or_none
-        assert _sanitize_aspects is sanitize_aspects
-        assert _new_car_id is new_car_id
 
     def test_domain_models_has_all(self) -> None:
         import vibesensor.domain_models as dm

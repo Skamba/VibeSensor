@@ -67,20 +67,12 @@ def as_float_or_none(value: object) -> float | None:
     return out
 
 
-# Backward-compat alias — existing imports of the private name keep working.
-_as_float_or_none = as_float_or_none
-
-
 def as_int_or_none(value: object) -> int | None:
     """Return *value* as a rounded int, or ``None`` for non-numeric / non-finite input."""
     out = as_float_or_none(value)
     if out is None:
         return None
     return int(round(out))
-
-
-# Backward-compat alias.
-_as_int_or_none = as_int_or_none
 
 
 def _parse_manual_speed(value: Any) -> float | None:
@@ -104,10 +96,6 @@ def sanitize_aspects(raw: dict[str, Any]) -> dict[str, float]:
     return sanitize_settings(raw, allowed_keys=DEFAULT_CAR_ASPECTS)
 
 
-# Backward-compat alias.
-_sanitize_aspects = sanitize_aspects
-
-
 def normalize_sensor_id(sensor_id: str) -> str:
     """Normalize a sensor MAC / hex string to canonical lowercase hex."""
     return parse_client_id(str(sensor_id)).hex()
@@ -123,10 +111,6 @@ def new_car_id() -> str:
     return str(uuid.uuid4())
 
 
-# Backward-compat alias.
-_new_car_id = new_car_id
-
-
 @dataclass(slots=True)
 class CarConfig:
     id: str
@@ -139,13 +123,13 @@ class CarConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CarConfig:
-        car_id = str(data.get("id") or _new_car_id())
+        car_id = str(data.get("id") or new_car_id())
         name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"
         car_type = str(data.get("type") or "sedan").strip()[:32] or "sedan"
         raw_aspects = data.get("aspects") or {}
         aspects = dict(DEFAULT_CAR_ASPECTS)
         if isinstance(raw_aspects, dict):
-            aspects.update(_sanitize_aspects(raw_aspects))
+            aspects.update(sanitize_aspects(raw_aspects))
         raw_variant = data.get("variant")
         variant = (
             str(raw_variant).strip()[:64] if isinstance(raw_variant, str) and raw_variant else None
@@ -314,20 +298,15 @@ def _default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[
     }
 
 
-_DEFAULT_PHASE_LABELS: tuple[str, ...] = (
-    "idle", "acceleration", "cruise", "deceleration", "coast_down",
-)
-_DEFAULT_PHASE_METADATA_TEMPLATE: dict[str, object] = {
-    "version": "v1",
-    "idle_speed_kmh_max": 3.0,
-    "acceleration_threshold_kmh_s": 1.5,
-    "deceleration_threshold_kmh_s": -1.5,
-    "coast_down_speed_kmh_max": 15.0,
-}
-
-
 def _default_phase_metadata() -> dict[str, object]:
-    return {**_DEFAULT_PHASE_METADATA_TEMPLATE, "labels": list(_DEFAULT_PHASE_LABELS)}
+    return {
+        "version": "v1",
+        "idle_speed_kmh_max": 3.0,
+        "acceleration_threshold_kmh_s": 1.5,
+        "deceleration_threshold_kmh_s": -1.5,
+        "coast_down_speed_kmh_max": 15.0,
+        "labels": ["idle", "acceleration", "cruise", "deceleration", "coast_down"],
+    }
 
 
 @dataclass(slots=True)
@@ -400,12 +379,12 @@ class RunMetadata:
             end_time_utc=data.get("end_time_utc"),
             sensor_model=str(data.get("sensor_model", "unknown")),
             firmware_version=(str(data.get("firmware_version", "")).strip() or None),
-            raw_sample_rate_hz=_as_int_or_none(data.get("raw_sample_rate_hz")),
-            feature_interval_s=_as_float_or_none(data.get("feature_interval_s")),
-            fft_window_size_samples=_as_int_or_none(data.get("fft_window_size_samples")),
+            raw_sample_rate_hz=as_int_or_none(data.get("raw_sample_rate_hz")),
+            feature_interval_s=as_float_or_none(data.get("feature_interval_s")),
+            fft_window_size_samples=as_int_or_none(data.get("fft_window_size_samples")),
             fft_window_type=data.get("fft_window_type"),
             peak_picker_method=str(data.get("peak_picker_method", "")),
-            accel_scale_g_per_lsb=_as_float_or_none(accel_scale),
+            accel_scale_g_per_lsb=as_float_or_none(accel_scale),
             units=data.get("units") or _default_units(accel_units=accel_units),
             amplitude_definitions=data.get("amplitude_definitions")
             or _default_amplitude_definitions(accel_units=accel_units),
@@ -455,12 +434,12 @@ def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str,
     for peak in peaks_raw[:max_items]:
         if not isinstance(peak, dict):
             continue
-        hz = _as_float_or_none(peak.get("hz"))
-        amp = _as_float_or_none(peak.get("amp"))
+        hz = as_float_or_none(peak.get("hz"))
+        amp = as_float_or_none(peak.get("amp"))
         if hz is None or amp is None or hz <= 0 or amp <= 0:
             continue
         normalized_peak: dict[str, object] = {"hz": hz, "amp": amp}
-        peak_db = _as_float_or_none(peak.get(_VSD_KEY))
+        peak_db = as_float_or_none(peak.get(_VSD_KEY))
         if peak_db is not None:
             normalized_peak[_VSD_KEY] = peak_db
         peak_bucket = peak.get(_BUCKET_KEY)
@@ -542,21 +521,21 @@ class SensorFrame:
     @classmethod
     def from_dict(cls, record: dict[str, Any]) -> SensorFrame:
         """Normalize a raw sample dict (e.g. from JSONL or DB) into a SensorFrame."""
-        t_s = _as_float_or_none(record.get("t_s"))
-        speed_kmh = _as_float_or_none(record.get("speed_kmh"))
-        gps_speed_kmh = _as_float_or_none(record.get("gps_speed_kmh"))
-        accel_x_g = _as_float_or_none(record.get("accel_x_g"))
-        accel_y_g = _as_float_or_none(record.get("accel_y_g"))
-        accel_z_g = _as_float_or_none(record.get("accel_z_g"))
-        engine_rpm = _as_float_or_none(record.get("engine_rpm"))
-        gear = _as_float_or_none(record.get("gear"))
-        dominant_freq_hz = _as_float_or_none(record.get(REPORT_FIELDS["dominant_freq_hz"]))
-        vibration_strength_db = _as_float_or_none(record.get(_VSD_KEY))
+        t_s = as_float_or_none(record.get("t_s"))
+        speed_kmh = as_float_or_none(record.get("speed_kmh"))
+        gps_speed_kmh = as_float_or_none(record.get("gps_speed_kmh"))
+        accel_x_g = as_float_or_none(record.get("accel_x_g"))
+        accel_y_g = as_float_or_none(record.get("accel_y_g"))
+        accel_z_g = as_float_or_none(record.get("accel_z_g"))
+        engine_rpm = as_float_or_none(record.get("engine_rpm"))
+        gear = as_float_or_none(record.get("gear"))
+        dominant_freq_hz = as_float_or_none(record.get(REPORT_FIELDS["dominant_freq_hz"]))
+        vibration_strength_db = as_float_or_none(record.get(_VSD_KEY))
         raw_bucket = record.get(_BUCKET_KEY)
         strength_bucket = str(raw_bucket) if raw_bucket not in (None, "") else None
-        strength_peak_amp_g = _as_float_or_none(record.get("strength_peak_amp_g"))
-        strength_floor_amp_g = _as_float_or_none(record.get("strength_floor_amp_g"))
-        sample_rate_hz = _as_int_or_none(record.get("sample_rate_hz"))
+        strength_peak_amp_g = as_float_or_none(record.get("strength_peak_amp_g"))
+        strength_floor_amp_g = as_float_or_none(record.get("strength_floor_amp_g"))
+        sample_rate_hz = as_int_or_none(record.get("sample_rate_hz"))
 
         normalized_peaks = _normalize_peak_list(record.get("top_peaks"), max_items=10)
         normalized_peaks_x = _normalize_peak_list(record.get("top_peaks_x"), max_items=3)
@@ -579,7 +558,7 @@ class SensorFrame:
             engine_rpm=engine_rpm,
             engine_rpm_source=str(record.get("engine_rpm_source", "")),
             gear=gear,
-            final_drive_ratio=_as_float_or_none(record.get("final_drive_ratio")),
+            final_drive_ratio=as_float_or_none(record.get("final_drive_ratio")),
             accel_x_g=accel_x_g,
             accel_y_g=accel_y_g,
             accel_z_g=accel_z_g,
@@ -593,6 +572,6 @@ class SensorFrame:
             strength_bucket=strength_bucket,
             strength_peak_amp_g=strength_peak_amp_g,
             strength_floor_amp_g=strength_floor_amp_g,
-            frames_dropped_total=_as_int_or_none(record.get("frames_dropped_total")) or 0,
-            queue_overflow_drops=_as_int_or_none(record.get("queue_overflow_drops")) or 0,
+            frames_dropped_total=as_int_or_none(record.get("frames_dropped_total")) or 0,
+            queue_overflow_drops=as_int_or_none(record.get("queue_overflow_drops")) or 0,
         )

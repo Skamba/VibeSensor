@@ -474,9 +474,7 @@ class FirmwareCache:
                     LOGGER.info("Restored previous firmware cache after activation failure")
                 except Exception:
                     LOGGER.warning("Failed to restore previous firmware cache", exc_info=True)
-            # Clean up staging on failure
-            if staging_dir.exists():
-                shutil.rmtree(staging_dir)
+            # Staging cleanup is handled by the finally block below.
             raise
         finally:
             # Clean up staging parent if still present

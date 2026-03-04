@@ -653,22 +653,31 @@ class HistoryDB:
             )
             return cur.fetchone() is not None
 
+    def _resolve_keyset_offset(
+        self, table: str, run_id: str, offset: int
+    ) -> int | None:
+        """Translate a row *offset* into a keyset-pagination ``last_id``.
+
+        Returns the ``id`` value to use as the keyset bound, or ``None``
+        when *offset* is past the last row (caller should stop iterating).
+        """
+        with self._cursor(commit=False) as cur:
+            cur.execute(
+                f"SELECT id FROM {table} WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
+                (run_id, offset - 1),
+            )
+            row = cur.fetchone()
+        return row[0] if row else None
+
     def _iter_v2_samples(
         self, run_id: str, batch_size: int = 1000, offset: int = 0
     ) -> Iterator[list[dict[str, Any]]]:
-        size = max(1, int(batch_size))
+        size = max(1, batch_size)
         last_id: int | None = None
         if offset > 0:
-            with self._cursor(commit=False) as cur:
-                cur.execute(
-                    "SELECT id FROM samples_v2 WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
-                    (run_id, max(0, int(offset)) - 1),
-                )
-                row = cur.fetchone()
-                if row:
-                    last_id = row[0]
-                else:
-                    return
+            last_id = self._resolve_keyset_offset("samples_v2", run_id, offset)
+            if last_id is None:
+                return
         while True:
             with self._cursor(commit=False) as cur:
                 if last_id is None:
@@ -700,19 +709,12 @@ class HistoryDB:
         self, run_id: str, batch_size: int = 1000, offset: int = 0
     ) -> Iterator[list[dict[str, Any]]]:
         """Read samples from the legacy v4 JSON-blob ``samples`` table."""
-        size = max(1, int(batch_size))
+        size = max(1, batch_size)
         last_id: int | None = None
         if offset > 0:
-            with self._cursor(commit=False) as cur:
-                cur.execute(
-                    "SELECT id FROM samples WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
-                    (run_id, max(0, int(offset)) - 1),
-                )
-                row = cur.fetchone()
-                if row:
-                    last_id = row[0]
-                else:
-                    return
+            last_id = self._resolve_keyset_offset("samples", run_id, offset)
+            if last_id is None:
+                return
         while True:
             with self._cursor(commit=False) as cur:
                 if last_id is None:
