@@ -14,10 +14,103 @@ Each class documents the gap, its severity, and provides working tests.
 from __future__ import annotations
 
 import math
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+
+from vibesensor.analysis.findings import (
+    _compute_order_confidence,
+    _detect_diffuse_excitation,
+    _suppress_engine_aliases,
+)
+from vibesensor.analysis.phase_segmentation import DrivingPhase
+from vibesensor.analysis.summary import (
+    _build_phase_timeline,
+    _build_run_suitability_checks,
+    _compute_accel_statistics,
+    _phase_ranking_score,
+    summarize_run_data,
+)
+from vibesensor.metrics_log import MetricsLogger
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+
+class _FakeSeg:
+    """Minimal driving-phase segment stub for timeline tests."""
+
+    def __init__(
+        self,
+        phase: DrivingPhase = DrivingPhase.CRUISE,
+        start: float = 0.0,
+        end: float = 10.0,
+        speed_min: float = 50.0,
+        speed_max: float = 60.0,
+    ) -> None:
+        self.phase = phase
+        self.start_t_s = start
+        self.end_t_s = end
+        self.speed_min_kmh = speed_min
+        self.speed_max_kmh = speed_max
+
+
+_SUITABILITY_DEFAULTS: dict[str, Any] = {
+    "language": "en",
+    "steady_speed": False,
+    "speed_sufficient": True,
+    "sensor_ids": {"s1", "s2", "s3"},
+    "reference_complete": True,
+    "sat_count": 0,
+    "samples": [],
+}
+
+
+def _suitability_checks(**overrides: Any) -> list[dict[str, Any]]:
+    """Call _build_run_suitability_checks with sensible defaults + overrides."""
+    kw = {**_SUITABILITY_DEFAULTS, **overrides}
+    return _build_run_suitability_checks(**kw)
+
+
+def _make_metrics_logger() -> tuple[MetricsLogger, MagicMock]:
+    """Build a minimal MetricsLogger with mocked dependencies."""
+    gps_mock = MagicMock()
+    gps_mock.speed_mps = None
+    gps_mock.effective_speed_mps = None
+    gps_mock.override_speed_mps = None
+    gps_mock.resolve_speed.return_value = MagicMock(source="none")
+
+    registry = MagicMock()
+    registry.active_client_ids.return_value = []
+
+    settings_mock = MagicMock()
+    settings_mock.snapshot.return_value = {
+        "tire_width_mm": 205,
+        "tire_aspect_pct": 55,
+        "rim_in": 16,
+        "final_drive_ratio": 3.73,
+        "current_gear_ratio": 1.0,
+        "tire_deflection_factor": None,
+    }
+
+    logger = MetricsLogger(
+        enabled=False,
+        log_path=Path("/tmp/test"),
+        metrics_log_hz=1,
+        registry=registry,
+        gps_monitor=gps_mock,
+        processor=MagicMock(),
+        analysis_settings=settings_mock,
+        sensor_model="test",
+        default_sample_rate_hz=800,
+        fft_window_size_samples=512,
+        persist_history_db=False,
+    )
+    return logger, gps_mock
+
 
 # ---------------------------------------------------------------------------
 # Finding 1: _compute_order_confidence  (findings.py:504)
@@ -31,32 +124,30 @@ import pytest
 class TestComputeOrderConfidence:
     """Direct unit tests for _compute_order_confidence."""
 
-    @staticmethod
-    def _call(**overrides: Any) -> float:
-        from vibesensor.analysis.findings import _compute_order_confidence
+    _DEFAULTS: dict[str, Any] = {
+        "effective_match_rate": 0.60,
+        "error_score": 0.80,
+        "corr_val": 0.50,
+        "snr_score": 0.60,
+        "absolute_strength_db": 20.0,
+        "localization_confidence": 0.70,
+        "weak_spatial_separation": False,
+        "dominance_ratio": 2.0,
+        "constant_speed": False,
+        "steady_speed": False,
+        "matched": 30,
+        "corroborating_locations": 2,
+        "phases_with_evidence": 2,
+        "is_diffuse_excitation": False,
+        "diffuse_penalty": 1.0,
+        "n_connected_locations": 3,
+        "no_wheel_sensors": False,
+        "path_compliance": 1.0,
+    }
 
-        defaults: dict[str, Any] = {
-            "effective_match_rate": 0.60,
-            "error_score": 0.80,
-            "corr_val": 0.50,
-            "snr_score": 0.60,
-            "absolute_strength_db": 20.0,
-            "localization_confidence": 0.70,
-            "weak_spatial_separation": False,
-            "dominance_ratio": 2.0,
-            "constant_speed": False,
-            "steady_speed": False,
-            "matched": 30,
-            "corroborating_locations": 2,
-            "phases_with_evidence": 2,
-            "is_diffuse_excitation": False,
-            "diffuse_penalty": 1.0,
-            "n_connected_locations": 3,
-            "no_wheel_sensors": False,
-            "path_compliance": 1.0,
-        }
-        defaults.update(overrides)
-        return _compute_order_confidence(**defaults)
+    @classmethod
+    def _call(cls, **overrides: Any) -> float:
+        return _compute_order_confidence(**{**cls._DEFAULTS, **overrides})
 
     def test_baseline_returns_moderate_confidence(self) -> None:
         conf = self._call()
@@ -97,25 +188,40 @@ class TestComputeOrderConfidence:
         conf = self._call(absolute_strength_db=5.0)
         assert conf <= 0.45 + 0.001
 
-    def test_weak_spatial_penalty_applied(self) -> None:
-        normal = self._call(weak_spatial_separation=False)
-        weak = self._call(weak_spatial_separation=True)
-        assert weak < normal, "weak_spatial_separation should reduce confidence"
-
-    def test_constant_speed_penalty(self) -> None:
-        normal = self._call(constant_speed=False)
-        const = self._call(constant_speed=True)
-        assert const < normal, "constant_speed should reduce confidence"
-
-    def test_diffuse_excitation_penalty(self) -> None:
-        normal = self._call(is_diffuse_excitation=False)
-        diffuse = self._call(is_diffuse_excitation=True, diffuse_penalty=0.75)
-        assert diffuse < normal, "diffuse_excitation should reduce confidence"
-
-    def test_single_sensor_scale(self) -> None:
-        multi = self._call(n_connected_locations=3)
-        single = self._call(n_connected_locations=1)
-        assert single < multi, "single sensor should scale down"
+    @pytest.mark.parametrize(
+        "normal_kw,penalty_kw",
+        [
+            pytest.param(
+                {"weak_spatial_separation": False},
+                {"weak_spatial_separation": True},
+                id="weak_spatial_separation",
+            ),
+            pytest.param(
+                {"constant_speed": False},
+                {"constant_speed": True},
+                id="constant_speed",
+            ),
+            pytest.param(
+                {"is_diffuse_excitation": False},
+                {"is_diffuse_excitation": True, "diffuse_penalty": 0.75},
+                id="diffuse_excitation",
+            ),
+            pytest.param(
+                {"n_connected_locations": 3},
+                {"n_connected_locations": 1},
+                id="single_sensor",
+            ),
+            pytest.param(
+                {"absolute_strength_db": 25.0},
+                {"absolute_strength_db": 12.0},
+                id="light_strength_band",
+            ),
+        ],
+    )
+    def test_penalty_reduces_confidence(
+        self, normal_kw: dict[str, Any], penalty_kw: dict[str, Any]
+    ) -> None:
+        assert self._call(**penalty_kw) < self._call(**normal_kw)
 
     def test_path_compliance_shifts_weights(self) -> None:
         """Higher path_compliance should shift weight from corr to match."""
@@ -127,12 +233,6 @@ class TestComputeOrderConfidence:
         base = self._call(corroborating_locations=1)
         boosted = self._call(corroborating_locations=3)
         assert boosted > base, "3+ corroborating locations should boost confidence"
-
-    def test_light_strength_penalty(self) -> None:
-        """absolute_strength_db in the 'light' band (8–16 dB) should apply 0.80 penalty."""
-        strong = self._call(absolute_strength_db=25.0)
-        light = self._call(absolute_strength_db=12.0)
-        assert light < strong, "Light-strength band should reduce confidence"
 
 
 # ---------------------------------------------------------------------------
@@ -148,8 +248,6 @@ class TestDetectDiffuseExcitation:
     """Direct unit tests for _detect_diffuse_excitation."""
 
     def test_single_sensor_returns_not_diffuse(self) -> None:
-        from vibesensor.analysis.findings import _detect_diffuse_excitation
-
         is_diff, penalty = _detect_diffuse_excitation(
             connected_locations={"front_left"},
             possible_by_location={"front_left": 20},
@@ -160,8 +258,6 @@ class TestDetectDiffuseExcitation:
         assert penalty == 1.0
 
     def test_uniform_rates_uniform_amplitude_is_diffuse(self) -> None:
-        from vibesensor.analysis.findings import _detect_diffuse_excitation
-
         locs = {"front_left", "front_right", "rear"}
         possible = {loc: 30 for loc in locs}
         matched = {loc: 20 for loc in locs}
@@ -171,8 +267,6 @@ class TestDetectDiffuseExcitation:
         assert penalty < 1.0
 
     def test_dominant_amplitude_is_not_diffuse(self) -> None:
-        from vibesensor.analysis.findings import _detect_diffuse_excitation
-
         locs = {"front_left", "rear"}
         possible = {"front_left": 20, "rear": 20}
         matched = {"front_left": 15, "rear": 14}
@@ -183,8 +277,6 @@ class TestDetectDiffuseExcitation:
         assert not is_diff, "Strong amplitude dominance should NOT be diffuse"
 
     def test_insufficient_samples_per_location(self) -> None:
-        from vibesensor.analysis.findings import _detect_diffuse_excitation
-
         locs = {"front_left", "rear"}
         possible = {"front_left": 2, "rear": 2}
         matched = {"front_left": 2, "rear": 2}
@@ -193,8 +285,6 @@ class TestDetectDiffuseExcitation:
         assert not is_diff, "Too few samples should not trigger diffuse"
 
     def test_empty_matched_points(self) -> None:
-        from vibesensor.analysis.findings import _detect_diffuse_excitation
-
         locs = {"a", "b"}
         is_diff, penalty = _detect_diffuse_excitation(
             locs, {"a": 20, "b": 20}, {"a": 15, "b": 15}, []
@@ -217,7 +307,7 @@ class TestSuppressEngineAliases:
     """Direct unit tests for _suppress_engine_aliases."""
 
     @staticmethod
-    def _make_finding(source: str, conf: float, rank: float = 1.0) -> dict[str, object]:
+    def _make_finding(source: str, conf: float) -> dict[str, object]:
         return {
             "suspected_source": source,
             "confidence_0_to_1": conf,
@@ -225,8 +315,6 @@ class TestSuppressEngineAliases:
         }
 
     def test_no_wheel_no_suppression(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         findings = [
             (1.0, self._make_finding("engine", 0.60)),
             (0.5, self._make_finding("driveshaft", 0.40)),
@@ -237,8 +325,6 @@ class TestSuppressEngineAliases:
         )
 
     def test_engine_suppressed_by_stronger_wheel(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         findings = [
             (1.0, self._make_finding("wheel/tire", 0.70)),
             (0.8, self._make_finding("engine", 0.65)),
@@ -249,8 +335,6 @@ class TestSuppressEngineAliases:
             assert float(engine_findings[0]["confidence_0_to_1"]) < 0.65
 
     def test_strong_engine_not_suppressed(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         findings = [
             (0.3, self._make_finding("wheel/tire", 0.30)),
             (1.0, self._make_finding("engine", 0.90)),
@@ -260,13 +344,9 @@ class TestSuppressEngineAliases:
         assert engine_findings, "Strong engine should survive weak wheel"
 
     def test_empty_input(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         assert _suppress_engine_aliases([]) == []
 
     def test_output_capped_at_5(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         findings = [(i, self._make_finding("wheel/tire", 0.50 + i * 0.05)) for i in range(7)]
         result = _suppress_engine_aliases(findings)
         assert len(result) <= 5
@@ -285,109 +365,50 @@ class TestBuildRunSuitabilityChecks:
     """Direct unit tests for _build_run_suitability_checks."""
 
     def test_all_pass(self) -> None:
-        from vibesensor.analysis.summary import _build_run_suitability_checks
-
-        checks = _build_run_suitability_checks(
-            language="en",
-            steady_speed=False,
-            speed_sufficient=True,
-            sensor_ids={"s1", "s2", "s3"},
-            reference_complete=True,
-            sat_count=0,
-            samples=[],
-        )
+        checks = _suitability_checks()
         assert all(c["state"] == "pass" for c in checks), (
             f"All checks should pass: {[c['check_key'] for c in checks if c['state'] != 'pass']}"
         )
 
-    def test_speed_variation_warn_when_steady(self) -> None:
-        from vibesensor.analysis.summary import _build_run_suitability_checks
-
-        checks = _build_run_suitability_checks(
-            language="en",
-            steady_speed=True,
-            speed_sufficient=True,
-            sensor_ids={"s1", "s2", "s3"},
-            reference_complete=True,
-            sat_count=0,
-            samples=[],
-        )
-        speed_check = next(
-            c for c in checks if c["check_key"] == "SUITABILITY_CHECK_SPEED_VARIATION"
-        )
-        assert speed_check["state"] == "warn"
-
-    def test_sensor_coverage_warn_below_3(self) -> None:
-        from vibesensor.analysis.summary import _build_run_suitability_checks
-
-        checks = _build_run_suitability_checks(
-            language="en",
-            steady_speed=False,
-            speed_sufficient=True,
-            sensor_ids={"s1"},
-            reference_complete=True,
-            sat_count=0,
-            samples=[],
-        )
-        sensor_check = next(
-            c for c in checks if c["check_key"] == "SUITABILITY_CHECK_SENSOR_COVERAGE"
-        )
-        assert sensor_check["state"] == "warn"
-
-    def test_saturation_warn(self) -> None:
-        from vibesensor.analysis.summary import _build_run_suitability_checks
-
-        checks = _build_run_suitability_checks(
-            language="en",
-            steady_speed=False,
-            speed_sufficient=True,
-            sensor_ids={"s1", "s2", "s3"},
-            reference_complete=True,
-            sat_count=5,
-            samples=[],
-        )
-        sat_check = next(
-            c for c in checks if c["check_key"] == "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"
-        )
-        assert sat_check["state"] == "warn"
-
-    def test_frame_integrity_with_dropped_frames(self) -> None:
-        from vibesensor.analysis.summary import _build_run_suitability_checks
-
-        samples: list[dict[str, Any]] = [
-            {"client_id": "c1", "frames_dropped_total": 0},
-            {"client_id": "c1", "frames_dropped_total": 10},
-        ]
-        checks = _build_run_suitability_checks(
-            language="en",
-            steady_speed=False,
-            speed_sufficient=True,
-            sensor_ids={"s1", "s2", "s3"},
-            reference_complete=True,
-            sat_count=0,
-            samples=samples,
-        )
-        frame_check = next(
-            c for c in checks if c["check_key"] == "SUITABILITY_CHECK_FRAME_INTEGRITY"
-        )
-        assert frame_check["state"] == "warn"
-
-    def test_reference_incomplete(self) -> None:
-        from vibesensor.analysis.summary import _build_run_suitability_checks
-
-        checks = _build_run_suitability_checks(
-            language="en",
-            steady_speed=False,
-            speed_sufficient=True,
-            sensor_ids={"s1", "s2", "s3"},
-            reference_complete=False,
-            sat_count=0,
-            samples=[],
-        )
-        ref_check = next(
-            c for c in checks if c["check_key"] == "SUITABILITY_CHECK_REFERENCE_COMPLETENESS"
-        )
-        assert ref_check["state"] == "warn"
+    @pytest.mark.parametrize(
+        "overrides,check_key",
+        [
+            pytest.param(
+                {"steady_speed": True},
+                "SUITABILITY_CHECK_SPEED_VARIATION",
+                id="speed_variation_steady",
+            ),
+            pytest.param(
+                {"sensor_ids": {"s1"}},
+                "SUITABILITY_CHECK_SENSOR_COVERAGE",
+                id="sensor_coverage_below_3",
+            ),
+            pytest.param(
+                {"sat_count": 5},
+                "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
+                id="saturation",
+            ),
+            pytest.param(
+                {
+                    "samples": [
+                        {"client_id": "c1", "frames_dropped_total": 0},
+                        {"client_id": "c1", "frames_dropped_total": 10},
+                    ]
+                },
+                "SUITABILITY_CHECK_FRAME_INTEGRITY",
+                id="frame_integrity_dropped",
+            ),
+            pytest.param(
+                {"reference_complete": False},
+                "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
+                id="reference_incomplete",
+            ),
+        ],
+    )
+    def test_warn_condition(self, overrides: dict[str, Any], check_key: str) -> None:
+        checks = _suitability_checks(**overrides)
+        check = next(c for c in checks if c["check_key"] == check_key)
+        assert check["state"] == "warn"
 
 
 # ---------------------------------------------------------------------------
@@ -402,25 +423,12 @@ class TestBuildPhaseTimeline:
     """Direct unit tests for _build_phase_timeline."""
 
     def test_empty_segments_returns_empty(self) -> None:
-        from vibesensor.analysis.summary import _build_phase_timeline
-
         assert _build_phase_timeline([], [], "en") == []
 
     def test_basic_segment_output(self) -> None:
-        from vibesensor.analysis.phase_segmentation import DrivingPhase
-        from vibesensor.analysis.summary import _build_phase_timeline
-
-        class FakeSeg:
-            def __init__(self, phase: DrivingPhase, start: float, end: float) -> None:
-                self.phase = phase
-                self.start_t_s = start
-                self.end_t_s = end
-                self.speed_min_kmh = 40.0
-                self.speed_max_kmh = 80.0
-
         segs = [
-            FakeSeg(DrivingPhase.CRUISE, 0.0, 30.0),
-            FakeSeg(DrivingPhase.ACCELERATION, 30.0, 45.0),
+            _FakeSeg(DrivingPhase.CRUISE, 0.0, 30.0, speed_min=40.0, speed_max=80.0),
+            _FakeSeg(DrivingPhase.ACCELERATION, 30.0, 45.0, speed_min=40.0, speed_max=80.0),
         ]
         findings: list[dict[str, object]] = [
             {
@@ -435,50 +443,30 @@ class TestBuildPhaseTimeline:
         assert entries[0]["has_fault_evidence"] is True
         assert entries[1]["has_fault_evidence"] is False
 
-    def test_ref_findings_ignored(self) -> None:
-        """REF_ findings should not mark phases as having fault evidence."""
-        from vibesensor.analysis.phase_segmentation import DrivingPhase
-        from vibesensor.analysis.summary import _build_phase_timeline
-
-        class FakeSeg:
-            def __init__(self) -> None:
-                self.phase = DrivingPhase.CRUISE
-                self.start_t_s = 0.0
-                self.end_t_s = 10.0
-                self.speed_min_kmh = 50.0
-                self.speed_max_kmh = 60.0
-
-        findings: list[dict[str, object]] = [
-            {
-                "finding_id": "REF_SPEED",
-                "confidence_0_to_1": 0.90,
-                "phase_evidence": {"phases_detected": ["cruise"]},
-            }
-        ]
-        entries = _build_phase_timeline([FakeSeg()], findings, "en")
-        assert entries[0]["has_fault_evidence"] is False
-
-    def test_low_confidence_finding_ignored(self) -> None:
-        """Findings below ORDER_MIN_CONFIDENCE should not contribute."""
-        from vibesensor.analysis.phase_segmentation import DrivingPhase
-        from vibesensor.analysis.summary import _build_phase_timeline
-
-        class FakeSeg:
-            def __init__(self) -> None:
-                self.phase = DrivingPhase.CRUISE
-                self.start_t_s = 0.0
-                self.end_t_s = 10.0
-                self.speed_min_kmh = 50.0
-                self.speed_max_kmh = 60.0
-
-        findings: list[dict[str, object]] = [
-            {
-                "finding_id": "F001",
-                "confidence_0_to_1": 0.01,  # below ORDER_MIN_CONFIDENCE
-                "phase_evidence": {"phases_detected": ["cruise"]},
-            }
-        ]
-        entries = _build_phase_timeline([FakeSeg()], findings, "en")
+    @pytest.mark.parametrize(
+        "finding",
+        [
+            pytest.param(
+                {
+                    "finding_id": "REF_SPEED",
+                    "confidence_0_to_1": 0.90,
+                    "phase_evidence": {"phases_detected": ["cruise"]},
+                },
+                id="ref_finding_ignored",
+            ),
+            pytest.param(
+                {
+                    "finding_id": "F001",
+                    "confidence_0_to_1": 0.01,
+                    "phase_evidence": {"phases_detected": ["cruise"]},
+                },
+                id="low_confidence_ignored",
+            ),
+        ],
+    )
+    def test_finding_does_not_mark_phase(self, finding: dict[str, object]) -> None:
+        """REF_ findings and below-threshold findings should not contribute."""
+        entries = _build_phase_timeline([_FakeSeg()], [finding], "en")
         assert entries[0]["has_fault_evidence"] is False
 
 
@@ -495,16 +483,12 @@ class TestComputeAccelStatistics:
     """Direct unit tests for _compute_accel_statistics."""
 
     def test_empty_samples(self) -> None:
-        from vibesensor.analysis.summary import _compute_accel_statistics
-
         result = _compute_accel_statistics([], "ADXL345")
         assert result["sat_count"] == 0
         assert result["accel_x_vals"] == []
         assert result["accel_mag_vals"] == []
 
     def test_basic_values(self) -> None:
-        from vibesensor.analysis.summary import _compute_accel_statistics
-
         samples: list[dict[str, Any]] = [
             {
                 "accel_x_g": 0.1,
@@ -521,8 +505,6 @@ class TestComputeAccelStatistics:
         assert result["accel_mag_vals"][0] == pytest.approx(expected_mag, rel=1e-3)
 
     def test_saturation_detected_near_limit(self) -> None:
-        from vibesensor.analysis.summary import _compute_accel_statistics
-
         # ADXL345 has ±16g limit; 98% threshold = 15.68g
         samples: list[dict[str, Any]] = [
             {"accel_x_g": 15.7, "accel_y_g": 0.0, "accel_z_g": 0.0},
@@ -531,8 +513,6 @@ class TestComputeAccelStatistics:
         assert result["sat_count"] >= 1, "Near-limit value should count as saturation"
 
     def test_missing_axes_handled(self) -> None:
-        from vibesensor.analysis.summary import _compute_accel_statistics
-
         samples: list[dict[str, Any]] = [{"accel_x_g": 0.5}]
         result = _compute_accel_statistics(samples, "unknown")
         assert len(result["accel_x_vals"]) == 1
@@ -541,8 +521,6 @@ class TestComputeAccelStatistics:
 
     def test_unknown_sensor_no_saturation_check(self) -> None:
         """When sensor_limit is None, no saturation counting should occur."""
-        from vibesensor.analysis.summary import _compute_accel_statistics
-
         samples: list[dict[str, Any]] = [
             {"accel_x_g": 999.0, "accel_y_g": 999.0, "accel_z_g": 999.0},
         ]
@@ -565,15 +543,11 @@ class TestPhaseRankingScore:
     """Direct unit tests for _phase_ranking_score."""
 
     def test_no_phase_evidence(self) -> None:
-        from vibesensor.analysis.summary import _phase_ranking_score
-
         score = _phase_ranking_score({"confidence_0_to_1": 0.80})
         # No phase_evidence → cruise_fraction=0 → multiplier=0.85
         assert score == pytest.approx(0.80 * 0.85, rel=1e-3)
 
     def test_full_cruise_phase(self) -> None:
-        from vibesensor.analysis.summary import _phase_ranking_score
-
         finding: dict[str, object] = {
             "confidence_0_to_1": 0.80,
             "phase_evidence": {"cruise_fraction": 1.0},
@@ -582,8 +556,6 @@ class TestPhaseRankingScore:
         assert score == pytest.approx(0.80 * 1.0, rel=1e-3)
 
     def test_half_cruise(self) -> None:
-        from vibesensor.analysis.summary import _phase_ranking_score
-
         finding: dict[str, object] = {
             "confidence_0_to_1": 0.80,
             "phase_evidence": {"cruise_fraction": 0.50},
@@ -592,17 +564,15 @@ class TestPhaseRankingScore:
         expected = 0.80 * (0.85 + 0.15 * 0.50)
         assert score == pytest.approx(expected, rel=1e-3)
 
-    def test_none_confidence(self) -> None:
-        from vibesensor.analysis.summary import _phase_ranking_score
-
-        score = _phase_ranking_score({"confidence_0_to_1": None})
-        assert score == 0.0
-
-    def test_missing_confidence_key(self) -> None:
-        from vibesensor.analysis.summary import _phase_ranking_score
-
-        score = _phase_ranking_score({})
-        assert score == 0.0
+    @pytest.mark.parametrize(
+        "finding",
+        [
+            pytest.param({"confidence_0_to_1": None}, id="none_confidence"),
+            pytest.param({}, id="missing_confidence_key"),
+        ],
+    )
+    def test_degenerate_confidence_returns_zero(self, finding: dict[str, object]) -> None:
+        assert _phase_ranking_score(finding) == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -618,8 +588,6 @@ class TestExtractStrengthData:
     """Direct unit tests for MetricsLogger._extract_strength_data."""
 
     def test_empty_metrics(self) -> None:
-        from vibesensor.metrics_log import MetricsLogger
-
         strength, db, bucket, peak, floor, peaks = MetricsLogger._extract_strength_data({})
         assert strength == {}
         assert db is None
@@ -627,8 +595,6 @@ class TestExtractStrengthData:
         assert peaks == []
 
     def test_top_level_strength_metrics(self) -> None:
-        from vibesensor.metrics_log import MetricsLogger
-
         metrics: dict[str, object] = {
             "strength_metrics": {
                 "vibration_strength_db": 18.5,
@@ -645,8 +611,6 @@ class TestExtractStrengthData:
         assert peaks[0]["hz"] == pytest.approx(45.0)
 
     def test_nested_combined_fallback(self) -> None:
-        from vibesensor.metrics_log import MetricsLogger
-
         metrics: dict[str, object] = {
             "combined": {
                 "strength_metrics": {
@@ -661,8 +625,6 @@ class TestExtractStrengthData:
         assert bucket == "l2"
 
     def test_invalid_peak_data_filtered(self) -> None:
-        from vibesensor.metrics_log import MetricsLogger
-
         metrics: dict[str, object] = {
             "strength_metrics": {
                 "vibration_strength_db": 10.0,
@@ -680,8 +642,6 @@ class TestExtractStrengthData:
         assert peaks[0]["hz"] == pytest.approx(50.0)
 
     def test_empty_bucket_treated_as_none(self) -> None:
-        from vibesensor.metrics_log import MetricsLogger
-
         metrics: dict[str, object] = {
             "strength_metrics": {
                 "vibration_strength_db": 5.0,
@@ -705,55 +665,14 @@ class TestExtractStrengthData:
 class TestResolveSpeedContext:
     """Tests for _resolve_speed_context via a minimal MetricsLogger setup."""
 
-    def _make_logger(self) -> tuple[Any, Any]:
-        from pathlib import Path
-
-        from vibesensor.metrics_log import MetricsLogger
-
-        gps_mock = MagicMock()
-        gps_mock.speed_mps = None
-        gps_mock.effective_speed_mps = None
-        gps_mock.override_speed_mps = None
-        gps_mock.resolve_speed.return_value = MagicMock(source="none")
-
-        registry = MagicMock()
-        registry.active_client_ids.return_value = []
-
-        settings_mock = MagicMock()
-        settings_mock.snapshot.return_value = {
-            "tire_width_mm": 205,
-            "tire_aspect_pct": 55,
-            "rim_in": 16,
-            "final_drive_ratio": 3.73,
-            "current_gear_ratio": 1.0,
-            "tire_deflection_factor": None,
-        }
-
-        processor = MagicMock()
-
-        logger = MetricsLogger(
-            enabled=False,
-            log_path=Path("/tmp/test"),
-            metrics_log_hz=1,
-            registry=registry,
-            gps_monitor=gps_mock,
-            processor=processor,
-            analysis_settings=settings_mock,
-            sensor_model="test",
-            default_sample_rate_hz=800,
-            fft_window_size_samples=512,
-            persist_history_db=False,
-        )
-        return logger, gps_mock
-
     def test_no_speed_available(self) -> None:
-        logger, _ = self._make_logger()
+        logger, _ = _make_metrics_logger()
         speed_kmh, gps_speed, source, rpm, fdr, gr = logger._resolve_speed_context()
         assert speed_kmh is None
         assert rpm is None
 
     def test_gps_speed_available(self) -> None:
-        logger, gps_mock = self._make_logger()
+        logger, gps_mock = _make_metrics_logger()
         gps_mock.speed_mps = 10.0  # 36 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=10.0)
         speed_kmh, gps_speed, source, rpm, _, _ = logger._resolve_speed_context()
@@ -763,7 +682,7 @@ class TestResolveSpeedContext:
         assert rpm is not None and rpm > 0
 
     def test_manual_override(self) -> None:
-        logger, gps_mock = self._make_logger()
+        logger, gps_mock = _make_metrics_logger()
         gps_mock.override_speed_mps = 20.0  # 72 km/h
         gps_mock.resolve_speed.return_value = MagicMock(source="manual", speed_mps=20.0)
         speed_kmh, _, source, _, _, _ = logger._resolve_speed_context()
@@ -771,7 +690,7 @@ class TestResolveSpeedContext:
         assert source == "manual"
 
     def test_no_gear_ratio_skips_rpm(self) -> None:
-        logger, gps_mock = self._make_logger()
+        logger, gps_mock = _make_metrics_logger()
         gps_mock.resolve_speed.return_value = MagicMock(source="gps", speed_mps=15.0)
         # Remove gear ratio from settings
         logger.analysis_settings.snapshot.return_value = {
@@ -798,26 +717,20 @@ class TestResolveSpeedContext:
 class TestSummarizeRunDataEdgeCases:
     """Integration edge cases for summarize_run_data."""
 
-    @staticmethod
-    def _minimal_metadata() -> dict[str, Any]:
-        return {
-            "run_id": "test-edge",
-            "start_time_utc": "2025-01-01T00:00:00Z",
-            "end_time_utc": "2025-01-01T00:01:00Z",
-            "sensor_model": "ADXL345",
-            "raw_sample_rate_hz": 800,
-        }
+    _MINIMAL_META: dict[str, Any] = {
+        "run_id": "test-edge",
+        "start_time_utc": "2025-01-01T00:00:00Z",
+        "end_time_utc": "2025-01-01T00:01:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+    }
 
     def test_empty_samples_no_crash(self) -> None:
-        from vibesensor.analysis.summary import summarize_run_data
-
-        summary = summarize_run_data(self._minimal_metadata(), [], lang="en")
+        summary = summarize_run_data(self._MINIMAL_META, [], lang="en")
         assert summary["rows"] == 0
         assert summary.get("run_suitability") is not None
 
     def test_samples_with_all_none_axes(self) -> None:
-        from vibesensor.analysis.summary import summarize_run_data
-
         samples: list[dict[str, Any]] = [
             {
                 "t_s": i,
@@ -828,14 +741,12 @@ class TestSummarizeRunDataEdgeCases:
             }
             for i in range(10)
         ]
-        summary = summarize_run_data(self._minimal_metadata(), samples, lang="en")
+        summary = summarize_run_data(self._MINIMAL_META, samples, lang="en")
         assert summary["rows"] == 10
         accel_sanity = summary.get("data_quality", {}).get("accel_sanity", {})
         assert accel_sanity.get("saturation_count") == 0
 
     def test_single_sample_no_crash(self) -> None:
-        from vibesensor.analysis.summary import summarize_run_data
-
         samples: list[dict[str, Any]] = [
             {
                 "t_s": 0,
@@ -848,19 +759,15 @@ class TestSummarizeRunDataEdgeCases:
                 "strength_bucket": "l1",
             }
         ]
-        summary = summarize_run_data(self._minimal_metadata(), samples, lang="en")
+        summary = summarize_run_data(self._MINIMAL_META, samples, lang="en")
         assert summary["rows"] == 1
         assert summary.get("findings") is not None
 
     def test_nl_lang_no_crash(self) -> None:
-        from vibesensor.analysis.summary import summarize_run_data
-
-        summary = summarize_run_data(self._minimal_metadata(), [], lang="nl")
+        summary = summarize_run_data(self._MINIMAL_META, [], lang="nl")
         assert summary["lang"] == "nl"
 
     def test_missing_metadata_fields(self) -> None:
         """Minimal metadata (only run_id) should not crash."""
-        from vibesensor.analysis.summary import summarize_run_data
-
         summary = summarize_run_data({"run_id": "minimal"}, [], lang="en")
         assert summary["run_id"] == "minimal"
