@@ -4,6 +4,7 @@ import json
 import re
 from pathlib import Path
 
+import pytest
 from _paths import REPO_ROOT
 from vibesensor_core.strength_bands import BANDS, band_by_key, band_rank, bucket_for_strength
 
@@ -32,27 +33,20 @@ def test_bucket_returns_highest_matching() -> None:
 # -- band_by_key ---------------------------------------------------------------
 
 
-def test_band_by_key_valid() -> None:
-    band = band_by_key("l1")
+@pytest.mark.parametrize(
+    ("key", "expected_min_db"),
+    [("l0", 0.0), ("l1", 8.0), ("l5", 46.0)],
+    ids=["l0", "l1", "l5"],
+)
+def test_band_by_key_valid(key: str, expected_min_db: float) -> None:
+    band = band_by_key(key)
     assert band is not None
-    assert band["min_db"] == 8.0
+    assert band["min_db"] == expected_min_db
 
 
-def test_band_by_key_l0() -> None:
-    band = band_by_key("l0")
-    assert band is not None
-    assert band["min_db"] == 0.0
-
-
-def test_band_by_key_l5() -> None:
-    band = band_by_key("l5")
-    assert band is not None
-    assert band["min_db"] == 46.0
-
-
-def test_band_by_key_unknown() -> None:
-    assert band_by_key("l99") is None
-    assert band_by_key("") is None
+@pytest.mark.parametrize("key", ["l99", ""], ids=["l99", "empty"])
+def test_band_by_key_unknown(key: str) -> None:
+    assert band_by_key(key) is None
 
 
 # -- band_rank -----------------------------------------------------------------
@@ -113,13 +107,8 @@ def _check_catalog(catalog_path: Path) -> None:
             )
 
 
-def test_ui_en_severity_labels_match_core_bands() -> None:
-    en_path = _UI_CATALOGS_DIR / "en.json"
-    assert en_path.exists(), f"en.json not found at {en_path}"
-    _check_catalog(en_path)
-
-
-def test_ui_nl_severity_labels_match_core_bands() -> None:
-    nl_path = _UI_CATALOGS_DIR / "nl.json"
-    assert nl_path.exists(), f"nl.json not found at {nl_path}"
-    _check_catalog(nl_path)
+@pytest.mark.parametrize("locale", ["en", "nl"])
+def test_ui_severity_labels_match_core_bands(locale: str) -> None:
+    catalog = _UI_CATALOGS_DIR / f"{locale}.json"
+    assert catalog.exists(), f"{locale}.json not found at {catalog}"
+    _check_catalog(catalog)
