@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from _report_helpers import write_jsonl
 from vibesensor.analysis import map_summary, summarize_log
 from vibesensor.report.pdf_builder import build_report_pdf
 
@@ -121,10 +122,7 @@ def _write_sparse_fixture(run_path: Path) -> None:
         }
     )
 
-    run_path.write_text(
-        "\n".join(json.dumps(record, separators=(",", ":")) for record in records) + "\n",
-        encoding="utf-8",
-    )
+    write_jsonl(run_path, records)
 
 
 def test_report_pdf_ocr_text_fidelity_all_pages(tmp_path: Path) -> None:
