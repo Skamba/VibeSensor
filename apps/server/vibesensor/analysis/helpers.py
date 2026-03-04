@@ -347,7 +347,7 @@ def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
     """
     floor_amp = _as_float(sample.get("strength_floor_amp_g"))
     if floor_amp is not None and floor_amp > 0:
-        return float(floor_amp)
+        return floor_amp
     peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
     if len(peak_amps) < 3:
         return None
