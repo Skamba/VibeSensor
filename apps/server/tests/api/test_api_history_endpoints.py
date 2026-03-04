@@ -10,10 +10,25 @@ from typing import Any
 from unittest.mock import patch
 
 import pytest
-from fastapi import FastAPI, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocketDisconnect
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.api import create_router
+
+
+def _make_metadata(**overrides: Any) -> dict[str, Any]:
+    """Return a default run metadata dict, with optional field overrides."""
+    base: dict[str, Any] = {
+        "run_id": "run-1",
+        "start_time_utc": "2026-01-01T00:00:00Z",
+        "end_time_utc": "2026-01-01T00:00:20Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 800,
+        "feature_interval_s": 1.0,
+        "language": "en",
+    }
+    base.update(overrides)
+    return base
 
 
 def _sample(i: int) -> dict[str, Any]:
@@ -187,15 +202,7 @@ class _FakeState:
 
 
 def _make_router_and_state(language: str = "en", sample_count: int = 20):
-    metadata = {
-        "run_id": "run-1",
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:00:20Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "language": language,
-    }
+    metadata = _make_metadata(language=language)
     samples = [_sample(i) for i in range(sample_count)]
     analysis = summarize_run_data(metadata, samples, lang=language, include_samples=False)
     state = _FakeState(_FakeHistoryDB(metadata, samples, analysis), _FakeWsHub())
@@ -319,15 +326,7 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
     from vibesensor.analysis.report_data_builder import map_summary
 
     # Create state with NL analysis + embedded _report_template_data
-    metadata = {
-        "run_id": "run-1",
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:00:20Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "language": "nl",
-    }
+    metadata = _make_metadata(language="nl")
     samples = [_sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="nl", include_samples=False)
     # Embed _report_template_data as the new post-analysis code does
@@ -408,15 +407,7 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> None:
-    metadata = {
-        "run_id": "run-1",
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:00:20Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "language": "en",
-    }
+    metadata = _make_metadata()
     samples = [_sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
 
@@ -609,15 +600,7 @@ async def test_delete_active_run_returns_409() -> None:
                 return False, "active"
             return False, "not_found"
 
-    metadata = {
-        "run_id": "run-1",
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:00:20Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "language": "en",
-    }
+    metadata = _make_metadata()
     samples = [_sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     db = _ActiveDB(metadata, samples, analysis)
@@ -627,8 +610,6 @@ async def test_delete_active_run_returns_409() -> None:
     app.include_router(router)
 
     delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
-
-    from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
         await delete_endpoint("run-1")
@@ -652,22 +633,12 @@ async def test_delete_analyzing_run_returns_409() -> None:
         def delete_run(self, run_id: str) -> bool:  # pragma: no cover - defensive
             raise AssertionError("delete_run should not be called for analyzing run")
 
-    metadata = {
-        "run_id": "run-1",
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:00:20Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "language": "en",
-    }
+    metadata = _make_metadata()
     samples = [_sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     db = _AnalyzingDB(metadata, samples, analysis)
     router = create_router(_FakeState(db, _FakeWsHub()))
     delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
-
-    from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
         await delete_endpoint("run-1")
@@ -686,8 +657,6 @@ async def test_delete_analyzing_run_returns_409() -> None:
 async def test_history_endpoints_return_404_for_unknown_run(path: str, lang: str | None) -> None:
     router, _ = _make_router_and_state(language="en")
     endpoint = _route_endpoint(router, path)
-
-    from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
         if lang is None:
@@ -714,8 +683,6 @@ async def test_history_insights_status_and_analysis_errors(
 ) -> None:
     router = _make_status_router(status=status, analysis=analysis, include_error_message=False)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
-
-    from fastapi import HTTPException
 
     if expected_status == 200:
         payload = await endpoint("run-1", "en")
@@ -745,8 +712,6 @@ async def test_report_pdf_status_and_analysis_errors(
     router = _make_status_router(status=status, analysis=analysis, include_error_message=True)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
 
-    from fastapi import HTTPException
-
     with pytest.raises(HTTPException) as exc_info:
         await endpoint("run-1", "en")
     assert exc_info.value.status_code == expected_status
@@ -768,15 +733,7 @@ async def test_history_export_strips_internal_analysis_fields_from_json() -> Non
 @pytest.mark.asyncio
 async def test_history_export_sanitizes_filename_from_run_id() -> None:
     run_id = "../bad:name*id"
-    metadata = {
-        "run_id": run_id,
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:00:20Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "language": "en",
-    }
+    metadata = _make_metadata(run_id=run_id)
     samples = [_sample(i) for i in range(2)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
 
@@ -811,8 +768,6 @@ async def test_delete_run_returns_404_for_not_found_reason() -> None:
     router, _ = _make_router_and_state(language="en")
     delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
 
-    from fastapi import HTTPException
-
     with pytest.raises(HTTPException) as exc_info:
         await delete_endpoint("missing-run")
     assert exc_info.value.status_code == 404
@@ -827,21 +782,11 @@ async def test_delete_run_returns_generic_409_for_unknown_reason() -> None:
                 return False, "locked"
             return False, "not_found"
 
-    metadata = {
-        "run_id": "run-1",
-        "start_time_utc": "2026-01-01T00:00:00Z",
-        "end_time_utc": "2026-01-01T00:00:20Z",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 1.0,
-        "language": "en",
-    }
+    metadata = _make_metadata()
     samples = [_sample(i) for i in range(5)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
     router = create_router(_FakeState(_LockedDB(metadata, samples, analysis), _FakeWsHub()))
     delete_endpoint = _route_endpoint_with_method(router, "/api/history/{run_id}", "DELETE")
-
-    from fastapi import HTTPException
 
     with pytest.raises(HTTPException) as exc_info:
         await delete_endpoint("run-1")
