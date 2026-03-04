@@ -19,6 +19,10 @@ def _make_processor(**kwargs) -> SignalProcessor:
     return SignalProcessor(**defaults)
 
 
+def _random_samples(n: int, *, seed: int = 42, scale: float = 0.01) -> np.ndarray:
+    return (np.random.default_rng(seed).standard_normal((n, 3)) * scale).astype(np.float32)
+
+
 # -- ingest: empty samples -----------------------------------------------------
 
 
@@ -79,8 +83,7 @@ def test_ingest_with_sample_rate() -> None:
 
 def test_ingest_clamps_excessive_sample_rate() -> None:
     proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((10, 3)).astype(np.float32) * 0.01
+    samples = _random_samples(10)
     proc.ingest("client1", samples, sample_rate_hz=250_000)
     assert proc.latest_sample_rate_hz("client1") == MAX_CLIENT_SAMPLE_RATE_HZ
     assert proc._buffers["client1"].capacity == MAX_CLIENT_SAMPLE_RATE_HZ * 2
@@ -140,19 +143,44 @@ def test_spectrum_payload_has_vibration_strength_db() -> None:
     assert -200.0 < db < 200.0
 
 
-def test_spectrum_payload_reuses_cached_conversion(monkeypatch: pytest.MonkeyPatch) -> None:
-    proc = _make_processor(sample_rate_hz=400, fft_n=128, spectrum_max_hz=150)
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((300, 3)).astype(np.float32) * 0.01
-    proc.ingest("client1", samples, sample_rate_hz=400)
+@pytest.mark.parametrize(
+    "proc_kw, method_name, n_samples, sr",
+    [
+        pytest.param(
+            dict(sample_rate_hz=400, fft_n=128, spectrum_max_hz=150),
+            "spectrum_payload",
+            300,
+            400,
+            id="spectrum",
+        ),
+        pytest.param(
+            dict(sample_rate_hz=200, waveform_seconds=2, waveform_display_hz=50),
+            "selected_payload",
+            500,
+            200,
+            id="selected",
+        ),
+    ],
+)
+def test_payload_reuses_cached_conversion(
+    monkeypatch: pytest.MonkeyPatch,
+    proc_kw: dict,
+    method_name: str,
+    n_samples: int,
+    sr: int,
+) -> None:
+    proc = _make_processor(**proc_kw)
+    samples = _random_samples(n_samples)
+    proc.ingest("client1", samples, sample_rate_hz=sr)
     proc.compute_metrics("client1")
-    first = proc.spectrum_payload("client1")
+    payload_fn = getattr(proc, method_name)
+    first = payload_fn("client1")
 
-    def _fail_float_list(*_args, **_kwargs):  # type: ignore[no-untyped-def]
-        raise AssertionError("_float_list should not be called for cached spectrum payload")
+    def _fail_float_list(*_a, **_kw):  # type: ignore[no-untyped-def]
+        raise AssertionError(f"_float_list should not be called for cached {method_name}")
 
     monkeypatch.setattr(proc, "_float_list", _fail_float_list)
-    second = proc.spectrum_payload("client1")
+    second = payload_fn("client1")
     assert second is first
 
 
@@ -168,8 +196,7 @@ def test_multi_spectrum_payload_empty() -> None:
 
 def test_multi_spectrum_payload_returns_per_client_freq_on_mismatch() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((300, 3)).astype(np.float32) * 0.01
+    samples = _random_samples(300)
 
     proc.ingest("c1", samples, sample_rate_hz=200)
     proc.ingest("c2", samples, sample_rate_hz=320)
@@ -189,8 +216,7 @@ def test_multi_spectrum_payload_compares_freq_axes_without_np_asarray(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=128, spectrum_max_hz=100)
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((300, 3)).astype(np.float32) * 0.01
+    samples = _random_samples(300)
 
     proc.ingest("c1", samples, sample_rate_hz=200)
     proc.ingest("c2", samples, sample_rate_hz=200)
@@ -227,8 +253,7 @@ def test_selected_payload_waveform_respects_configured_window() -> None:
     before decimation so UI time spans stay consistent.
     """
     proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((400, 3)).astype(np.float32) * 0.01
+    samples = _random_samples(400)
     proc.ingest("client1", samples, sample_rate_hz=50)
 
     result = proc.selected_payload("client1")
@@ -242,27 +267,10 @@ def test_selected_payload_waveform_respects_configured_window() -> None:
     assert waveform["t"][1] - waveform["t"][0] == pytest.approx(expected_step / 50.0)
 
 
-def test_selected_payload_reuses_cached_conversion(monkeypatch: pytest.MonkeyPatch) -> None:
-    proc = _make_processor(sample_rate_hz=200, waveform_seconds=2, waveform_display_hz=50)
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((500, 3)).astype(np.float32) * 0.01
-    proc.ingest("client1", samples, sample_rate_hz=200)
-    proc.compute_metrics("client1")
-    first = proc.selected_payload("client1")
-
-    def _fail_float_list(*_args, **_kwargs):  # type: ignore[no-untyped-def]
-        raise AssertionError("_float_list should not be called for cached selected payload")
-
-    monkeypatch.setattr(proc, "_float_list", _fail_float_list)
-    second = proc.selected_payload("client1")
-    assert second is first
-
-
 def test_waveform_window_respects_seconds_for_each_client_sample_rate() -> None:
     proc = _make_processor(sample_rate_hz=100, waveform_seconds=2, waveform_display_hz=25)
-    _rng = np.random.default_rng(42)
-    low_sr = _rng.standard_normal((400, 3)).astype(np.float32) * 0.01
-    high_sr = _rng.standard_normal((1200, 3)).astype(np.float32) * 0.01
+    low_sr = _random_samples(400)
+    high_sr = _random_samples(1200, seed=99)
     proc.ingest("c-low", low_sr, sample_rate_hz=50)
     proc.ingest("c-high", high_sr, sample_rate_hz=300)
 
@@ -289,8 +297,7 @@ def test_compute_metrics_missing_client() -> None:
 def test_compute_metrics_with_data() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=64)
     # Push enough samples for FFT
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((100, 3)).astype(np.float32) * 0.01
+    samples = _random_samples(100)
     proc.ingest("client1", samples)
     metrics = proc.compute_metrics("client1")
     assert "x" in metrics
@@ -324,18 +331,18 @@ def test_smooth_spectrum_single_bin() -> None:
 # -- _noise_floor edge cases ---------------------------------------------------
 
 
-def test_noise_floor_empty() -> None:
-    assert SignalProcessor._noise_floor(np.array([], dtype=np.float32)) == 0.0
-
-
-def test_noise_floor_all_nan() -> None:
-    arr = np.array([float("nan"), float("nan"), float("nan")], dtype=np.float32)
-    assert SignalProcessor._noise_floor(arr) == 0.0
-
-
-def test_noise_floor_single_element() -> None:
-    result = SignalProcessor._noise_floor(np.array([5.0], dtype=np.float32))
-    assert result == 5.0
+@pytest.mark.parametrize(
+    "arr, expected",
+    [
+        pytest.param(np.array([], dtype=np.float32), 0.0, id="empty"),
+        pytest.param(
+            np.array([float("nan")] * 3, dtype=np.float32), 0.0, id="all_nan"
+        ),
+        pytest.param(np.array([5.0], dtype=np.float32), 5.0, id="single_element"),
+    ],
+)
+def test_noise_floor_edge_cases(arr: np.ndarray, expected: float) -> None:
+    assert SignalProcessor._noise_floor(arr) == expected
 
 
 # -- evict_clients -------------------------------------------------------------
@@ -392,8 +399,7 @@ def test_top_peaks_dominant_frequency_aligns_with_strength_metrics() -> None:
 
 def test_compute_all() -> None:
     proc = _make_processor(sample_rate_hz=200, fft_n=64)
-    _rng = np.random.default_rng(42)
-    samples = _rng.standard_normal((100, 3)).astype(np.float32) * 0.01
+    samples = _random_samples(100)
     proc.ingest("c1", samples)
     proc.ingest("c2", samples)
     result = proc.compute_all(["c1", "c2"])
