@@ -16,8 +16,8 @@ import math
 from typing import Any
 
 import pytest
+from builders import make_sample
 from conftest import assert_summary_sections
-from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis.summary import summarize_run_data
 from vibesensor.analysis_settings import (
@@ -41,6 +41,23 @@ _GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 _ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
 
+def _assert_no_false_positives(
+    summary: dict[str, Any],
+    *,
+    label: str,
+    max_conf: float = 0.20,
+) -> None:
+    """Assert no non-REF finding exceeds *max_conf* confidence."""
+    for f in summary.get("findings", []):
+        if not isinstance(f, dict):
+            continue
+        fid = str(f.get("finding_id", ""))
+        if fid.startswith("REF_"):
+            continue
+        conf = float(f.get("confidence_0_to_1") or 0)
+        assert conf <= max_conf, f"False positive on {label}: {fid} conf={conf:.3f}"
+
+
 def _wheel_hz(speed_kmh: float) -> float:
     hz = wheel_hz_from_speed_kmh(speed_kmh, _TIRE_CIRC)
     assert hz is not None and hz > 0
@@ -58,30 +75,6 @@ def _standard_metadata(**overrides: Any) -> dict[str, Any]:
     }
     meta.update(overrides)
     return meta
-
-
-def _make_sample(
-    *,
-    t_s: float,
-    speed_kmh: float,
-    client_name: str,
-    top_peaks: list[dict[str, float]],
-    vibration_strength_db: float = 10.0,
-    strength_floor_amp_g: float = 0.003,
-) -> dict[str, Any]:
-    return {
-        "t_s": t_s,
-        "speed_kmh": speed_kmh,
-        "accel_x_g": 0.02,
-        "accel_y_g": 0.02,
-        "accel_z_g": 0.10,
-        "vibration_strength_db": vibration_strength_db,
-        "strength_bucket": bucket_for_strength(vibration_strength_db),
-        "strength_floor_amp_g": strength_floor_amp_g,
-        "client_name": client_name,
-        "client_id": f"sensor-{client_name}",
-        "top_peaks": top_peaks,
-    }
 
 
 # ===========================================================================
@@ -105,7 +98,7 @@ class TestHealthyVehicleNoFalsePositive:
                     {"hz": 287.3, "amp": 0.002},
                 ]
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=speed_kmh,
                         client_name=sensor,
@@ -123,15 +116,7 @@ class TestHealthyVehicleNoFalsePositive:
         summary = summarize_run_data(meta, samples, lang="en", file_name="healthy_steady")
 
         assert_summary_sections(summary)
-        # No non-REF finding should have confidence above 0.20
-        for f in summary.get("findings", []):
-            if not isinstance(f, dict):
-                continue
-            fid = str(f.get("finding_id", ""))
-            if fid.startswith("REF_"):
-                continue
-            conf = float(f.get("confidence_0_to_1") or 0)
-            assert conf <= 0.20, f"False positive: {fid} conf={conf:.3f} on healthy vehicle data"
+        _assert_no_false_positives(summary, label="healthy steady 80 km/h")
 
     def test_speed_sweep_clean_data_no_fault_findings(self) -> None:
         """Speed sweep 40–120 km/h with only road noise: no false positives."""
@@ -145,7 +130,7 @@ class TestHealthyVehicleNoFalsePositive:
                     {"hz": 287.3, "amp": 0.002},
                 ]
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=speed,
                         client_name=sensor,
@@ -157,14 +142,7 @@ class TestHealthyVehicleNoFalsePositive:
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="healthy_sweep")
         assert_summary_sections(summary)
-        for f in summary.get("findings", []):
-            if not isinstance(f, dict):
-                continue
-            fid = str(f.get("finding_id", ""))
-            if fid.startswith("REF_"):
-                continue
-            conf = float(f.get("confidence_0_to_1") or 0)
-            assert conf <= 0.20, f"False positive on speed sweep: {fid} conf={conf:.3f}"
+        _assert_no_false_positives(summary, label="speed sweep 40-120 km/h")
 
     def test_uniform_mild_vibration_no_fault_findings(self) -> None:
         """All four sensors at identical mild vibration: no corner flagged."""
@@ -176,7 +154,7 @@ class TestHealthyVehicleNoFalsePositive:
                 # Same mild peak on all sensors — no spatial separation
                 peaks = [{"hz": whz, "amp": 0.010}]
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=80.0,
                         client_name=sensor,
@@ -188,14 +166,7 @@ class TestHealthyVehicleNoFalsePositive:
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="uniform_mild")
         assert_summary_sections(summary)
-        for f in summary.get("findings", []):
-            if not isinstance(f, dict):
-                continue
-            fid = str(f.get("finding_id", ""))
-            if fid.startswith("REF_"):
-                continue
-            conf = float(f.get("confidence_0_to_1") or 0)
-            assert conf <= 0.25, f"False positive on uniform data: {fid} conf={conf:.3f}"
+        _assert_no_false_positives(summary, label="uniform mild", max_conf=0.25)
 
 
 # ===========================================================================
@@ -224,7 +195,7 @@ class TestEngineOrderFaultScenario:
                     {"hz": engine_hz * 2, "amp": 0.02},  # engine 2x harmonic
                 ]
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=80.0,
                         client_name=sensor,
@@ -281,7 +252,7 @@ class TestVeryShortRecording:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=80.0,
                         client_name=sensor,
@@ -311,7 +282,7 @@ class TestVeryShortRecording:
             for sensor in _ALL_SENSORS:
                 peaks = [{"hz": 142.5, "amp": 0.003}]
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=60.0,
                         client_name=sensor,
@@ -353,7 +324,7 @@ class TestGradualFaultOnset:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=80.0,
                         client_name=sensor,
@@ -412,7 +383,7 @@ class TestBorderlineTwoSourceOverlap:
                     ]
                     vib_db = 20.0
                 samples.append(
-                    _make_sample(
+                    make_sample(
                         t_s=float(i),
                         speed_kmh=80.0,
                         client_name=sensor,
