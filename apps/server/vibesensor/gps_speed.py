@@ -221,7 +221,7 @@ class GPSSpeedMonitor:
 
     def _accept_speed_sample(self, speed_mps: float) -> bool:
         if speed_mps == 0.0:
-            prev_speed = self.speed_mps
+            prev_speed = self._speed_snapshot[0]  # direct tuple read
             if (
                 isinstance(prev_speed, NUMERIC_TYPES)
                 and prev_speed > _GPS_ZERO_DROP_PREV_THRESHOLD_MPS
@@ -251,13 +251,16 @@ class GPSSpeedMonitor:
         resolution = self.resolve_speed()
         conn_state = self._effective_connection_state()
 
+        # Read the atomic snapshot once; avoids repeated property access.
+        raw_speed, last_ts = self._speed_snapshot
+
         last_update_age_s: float | None = None
-        if self.last_update_ts is not None:
-            last_update_age_s = round(now - self.last_update_ts, 2)
+        if last_ts is not None:
+            last_update_age_s = round(now - last_ts, 2)
 
         raw_speed_kmh: float | None = None
-        if isinstance(self.speed_mps, NUMERIC_TYPES):
-            raw_speed_kmh = round(self.speed_mps * MPS_TO_KMH, 2)
+        if isinstance(raw_speed, NUMERIC_TYPES):
+            raw_speed_kmh = round(raw_speed * MPS_TO_KMH, 2)
 
         effective_speed_kmh: float | None = None
         if isinstance(resolution.speed_mps, NUMERIC_TYPES):
@@ -292,6 +295,14 @@ class GPSSpeedMonitor:
         }
 
     async def run(self, host: str = "127.0.0.1", port: int = 2947) -> None:
+        # Local-bind hot-loop functions to avoid repeated attribute lookups.
+        _loads = json.loads
+        _isfinite = math.isfinite
+        _monotonic = time.monotonic
+        _is_num = _is_numeric
+        _read_metric = self._read_non_negative_metric
+        _tpv = self._tpv_mode
+
         reconnect_delay = _GPS_RECONNECT_DELAY_S
         while True:
             if not self.gps_enabled:
@@ -320,7 +331,7 @@ class GPSSpeedMonitor:
                         self._reset_fix_metadata()
                         break
                     try:
-                        payload: dict[str, Any] = json.loads(line.decode("utf-8", errors="replace"))
+                        payload: dict[str, Any] = _loads(line.decode("utf-8", errors="replace"))
                     except json.JSONDecodeError:
                         LOGGER.debug("Ignoring malformed GPS JSON line")
                         continue
@@ -331,22 +342,22 @@ class GPSSpeedMonitor:
                             if isinstance(rev, str):
                                 self.device_info = f"gpsd {rev}"
                         continue
-                    mode = self._tpv_mode(payload)
+                    mode = _tpv(payload)
                     self.last_fix_mode = mode
-                    self.last_epx_m = self._read_non_negative_metric(payload, "epx")
-                    self.last_epy_m = self._read_non_negative_metric(payload, "epy")
-                    self.last_epv_m = self._read_non_negative_metric(payload, "epv")
+                    self.last_epx_m = _read_metric(payload, "epx")
+                    self.last_epy_m = _read_metric(payload, "epy")
+                    self.last_epv_m = _read_metric(payload, "epv")
                     speed = payload.get("speed")
                     if (
                         isinstance(mode, int)
                         and mode >= 2
-                        and _is_numeric(speed)
-                        and math.isfinite(speed)
+                        and _is_num(speed)
+                        and _isfinite(speed)
                         and speed >= 0
                     ):
                         speed_mps = float(speed)
                         if self._accept_speed_sample(speed_mps):
-                            self._speed_snapshot = (speed_mps, time.monotonic())
+                            self._speed_snapshot = (speed_mps, _monotonic())
                     else:
                         self._zero_speed_streak = 0
                     # Extract device from TPV
