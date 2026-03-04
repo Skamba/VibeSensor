@@ -24,6 +24,11 @@ if TYPE_CHECKING:
     from ..processing import SignalProcessor
     from ..registry import ClientRegistry
 
+_isfinite = math.isfinite
+
+_VIB_STRENGTH_DB_KEY: str = METRIC_FIELDS["vibration_strength_db"]
+_STRENGTH_BUCKET_KEY: str = METRIC_FIELDS["strength_bucket"]
+
 _SPEED_SOURCE_MAP = {
     "manual": "manual",
     "gps": "gps",
@@ -32,21 +37,24 @@ _SPEED_SOURCE_MAP = {
 }
 
 
-def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
-    """Extract a single numeric metric, returning ``None`` for missing/invalid."""
-    axis_metrics = metrics.get(axis)
-    if not isinstance(axis_metrics, dict):
-        return None
-    raw = axis_metrics.get(key)
+def _safe_float(d: dict[str, object], key: str) -> float | None:
+    """Extract a finite float from *d[key]*, or ``None``."""
+    raw = d.get(key)
     if raw is None:
         return None
     try:
         out = float(raw)
     except (TypeError, ValueError):
         return None
-    if not math.isfinite(out):
+    return out if _isfinite(out) else None
+
+
+def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
+    """Extract a single numeric metric, returning ``None`` for missing/invalid."""
+    axis_metrics = metrics.get(axis)
+    if not isinstance(axis_metrics, dict):
         return None
-    return out
+    return _safe_float(axis_metrics, key)
 
 
 def extract_strength_data(
@@ -73,21 +81,11 @@ def extract_strength_data(
         if isinstance(nested_strength_metrics, dict):
             strength_metrics = nested_strength_metrics
 
-    vibration_strength_db = safe_metric(
-        {"combined": strength_metrics}, "combined", METRIC_FIELDS["vibration_strength_db"]
-    )
-    _bucket_val = strength_metrics.get(METRIC_FIELDS["strength_bucket"])
+    vibration_strength_db = _safe_float(strength_metrics, _VIB_STRENGTH_DB_KEY)
+    _bucket_val = strength_metrics.get(_STRENGTH_BUCKET_KEY)
     strength_bucket = str(_bucket_val) if _bucket_val not in (None, "") else None
-    strength_peak_amp_g = safe_metric(
-        {"combined": strength_metrics},
-        "combined",
-        "peak_amp_g",
-    )
-    strength_floor_amp_g = safe_metric(
-        {"combined": strength_metrics},
-        "combined",
-        "noise_floor_amp_g",
-    )
+    strength_peak_amp_g = _safe_float(strength_metrics, "peak_amp_g")
+    strength_floor_amp_g = _safe_float(strength_metrics, "noise_floor_amp_g")
 
     top_peaks_raw = strength_metrics.get("top_peaks")
     top_peaks: list[dict[str, object]] = []
@@ -100,18 +98,14 @@ def extract_strength_data(
                 amp = float(peak.get("amp"))
             except (TypeError, ValueError):
                 continue
-            if math.isfinite(hz) and math.isfinite(amp) and hz > 0 and amp > 0:
+            if _isfinite(hz) and _isfinite(amp) and hz > 0 and amp > 0:
                 peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
-                peak_db = safe_metric(
-                    {"combined": peak},
-                    "combined",
-                    METRIC_FIELDS["vibration_strength_db"],
-                )
+                peak_db = _safe_float(peak, _VIB_STRENGTH_DB_KEY)
                 if peak_db is not None:
-                    peak_payload[METRIC_FIELDS["vibration_strength_db"]] = peak_db
-                peak_bucket = peak.get(METRIC_FIELDS["strength_bucket"])
+                    peak_payload[_VIB_STRENGTH_DB_KEY] = peak_db
+                peak_bucket = peak.get(_STRENGTH_BUCKET_KEY)
                 if peak_bucket not in (None, ""):
-                    peak_payload[METRIC_FIELDS["strength_bucket"]] = str(peak_bucket)
+                    peak_payload[_STRENGTH_BUCKET_KEY] = str(peak_bucket)
                 top_peaks.append(peak_payload)
 
     return (
@@ -140,7 +134,7 @@ def extract_axis_top_peaks(metrics: dict[str, object], axis: str) -> list[dict[s
                 amp = float(peak.get("amp"))
             except (TypeError, ValueError):
                 continue
-            if math.isfinite(hz) and math.isfinite(amp) and hz > 0:
+            if _isfinite(hz) and _isfinite(amp) and hz > 0:
                 axis_peaks.append({"hz": hz, "amp": amp})
     return axis_peaks
 
@@ -153,7 +147,7 @@ def dominant_hz_from_strength(
     if isinstance(top_peaks_raw, list) and top_peaks_raw:
         first_peak = top_peaks_raw[0]
         if isinstance(first_peak, dict):
-            return safe_metric({"combined": first_peak}, "combined", "hz")
+            return _safe_float(first_peak, "hz")
     return None
 
 
