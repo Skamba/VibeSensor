@@ -23,6 +23,7 @@ Public API
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Iterator
 from functools import cache
 from typing import Any
 
@@ -1309,17 +1310,38 @@ def _cause_source(cause: dict[str, Any]) -> str:
     return (cause.get("source") or cause.get("suspected_source") or "").lower()
 
 
+def _cause_confidence(cause: dict[str, Any]) -> float:
+    return float(cause.get("confidence", 0))
+
+
+def _top_causes(summary: dict[str, Any]) -> list[dict[str, Any]]:
+    return summary.get("top_causes") or []
+
+
+def _top_cause_or_fail(summary: dict[str, Any], msg: str = "") -> dict[str, Any]:
+    top = extract_top(summary)
+    assert top is not None, f"No top cause found. {msg}"
+    return top
+
+
+def _iter_causes_at_or_above(
+    summary: dict[str, Any], confidence_threshold: float
+) -> Iterator[tuple[dict[str, Any], float]]:
+    for cause in _top_causes(summary):
+        confidence = _cause_confidence(cause)
+        if confidence >= confidence_threshold:
+            yield cause, confidence
+
+
 def assert_no_wheel_fault(summary: dict[str, Any], msg: str = "") -> None:
     """Assert no wheel/tire fault is diagnosed with medium+ confidence.
 
     Low-confidence matches (< 0.40) are tolerated because broadband noise
     can accidentally align with wheel-order frequencies at certain speeds.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
+    for c, conf in _iter_causes_at_or_above(summary, 0.40):
         src = _cause_source(c)
-        conf = float(c.get("confidence", 0))
-        if conf >= 0.40 and "wheel" in src:
+        if "wheel" in src:
             loc = c.get("strongest_location") or c.get("location_hotspot", "")
             raise AssertionError(f"Unexpected wheel fault: {src} @ {loc} conf={conf:.2f}. {msg}")
 
@@ -1331,17 +1353,13 @@ def assert_no_wheel_fault(summary: dict[str, Any], msg: str = "") -> None:
 
 def assert_wheel_source(summary: dict[str, Any], msg: str = "") -> None:
     """Assert the top cause identifies a wheel/tire source."""
-    top = extract_top(summary)
-    assert top is not None, f"No top cause found. {msg}"
-    src = _cause_source(top)
+    src = _cause_source(_top_cause_or_fail(summary, msg))
     assert "wheel" in src or "tire" in src, f"Expected wheel/tire source, got '{src}'. {msg}"
 
 
 def assert_source_is(summary: dict[str, Any], expected: str, msg: str = "") -> None:
     """Assert the top cause's source contains *expected* (case-insensitive)."""
-    top = extract_top(summary)
-    assert top is not None, f"No top cause found. {msg}"
-    src = _cause_source(top)
+    src = _cause_source(_top_cause_or_fail(summary, msg))
     assert expected.lower() in src, f"Expected '{expected}' in source, got '{src}'. {msg}"
 
 
@@ -1353,8 +1371,7 @@ def assert_confidence_between(summary: dict[str, Any], lo: float, hi: float, msg
 
 def assert_strongest_location(summary: dict[str, Any], expected_sensor: str, msg: str = "") -> None:
     """Assert the top cause's strongest_location matches *expected_sensor*."""
-    top = extract_top(summary)
-    assert top is not None, f"No top cause found. {msg}"
+    top = _top_cause_or_fail(summary, msg)
     loc = (top.get("strongest_location") or "").lower()
     assert loc == expected_sensor.lower(), (
         f"Expected strongest_location='{expected_sensor}', got '{loc}'. {msg}"
@@ -1371,9 +1388,8 @@ def assert_strict_no_fault(summary: dict[str, Any], msg: str = "") -> None:
 
     Use for known-clean scenarios (pure noise, idle-only, etc.).
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
-        conf = float(c.get("confidence", 0))
+    for c in _top_causes(summary):
+        conf = _cause_confidence(c)
         src = _cause_source(c)
         assert conf < 0.10, f"Strict no-fault violated: {src} conf={conf:.3f}. {msg}"
 
@@ -1384,11 +1400,9 @@ def assert_tolerant_no_fault(summary: dict[str, Any], msg: str = "") -> None:
     Allows low-confidence findings (< 0.50) since diffuse noise or transients
     can produce incidental matches.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
+    for c, conf in _iter_causes_at_or_above(summary, 0.50):
         src = _cause_source(c)
-        conf = float(c.get("confidence", 0))
-        if "wheel" in src and conf >= 0.50:
+        if "wheel" in src:
             loc = c.get("strongest_location") or ""
             raise AssertionError(
                 f"Tolerant no-fault violated: {src} @ {loc} conf={conf:.2f}. {msg}"
@@ -1402,8 +1416,7 @@ def assert_tolerant_no_fault(summary: dict[str, Any], msg: str = "") -> None:
 
 def assert_speed_band_present(summary: dict[str, Any], msg: str = "") -> None:
     """Assert the top cause has a strongest_speed_band field."""
-    top = extract_top(summary)
-    assert top is not None, f"No top cause found. {msg}"
+    top = _top_cause_or_fail(summary, msg)
     band = top.get("strongest_speed_band")
     assert band is not None and band != "", f"Missing strongest_speed_band in top cause. {msg}"
 
@@ -1416,8 +1429,7 @@ def assert_has_warnings(summary: dict[str, Any], msg: str = "") -> None:
 
 def assert_confidence_label_valid(summary: dict[str, Any], msg: str = "") -> None:
     """Assert the top cause has a valid confidence label key and tone."""
-    top = extract_top(summary)
-    assert top is not None, f"No top cause found. {msg}"
+    top = _top_cause_or_fail(summary, msg)
     label = top.get("confidence_label_key")
     assert label in ("CONFIDENCE_HIGH", "CONFIDENCE_MEDIUM", "CONFIDENCE_LOW"), (
         f"Bad confidence_label_key: {label}. {msg}"
@@ -1472,8 +1484,7 @@ def assert_diagnosis_contract(
     Checks: source classification, inferred location, confidence range,
     confidence label, speed band, and warnings presence.
     """
-    top = extract_top(summary)
-    assert top is not None, f"No top cause found. {msg}"
+    top = _top_cause_or_fail(summary, msg)
 
     # Source classification
     if expected_source:
@@ -1518,12 +1529,10 @@ def assert_forbidden_systems(
     Each entry in *forbidden* is matched case-insensitively against the source
     field of every top-cause.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
+    for c, conf in _iter_causes_at_or_above(summary, confidence_threshold):
         src = _cause_source(c)
-        conf = float(c.get("confidence", 0))
         for keyword in forbidden:
-            if keyword.lower() in src and conf >= confidence_threshold:
+            if keyword.lower() in src:
                 loc = c.get("strongest_location") or ""
                 raise AssertionError(
                     f"Forbidden system '{keyword}' found: {src} @ {loc} "
@@ -1543,12 +1552,8 @@ def assert_only_allowed_systems(
     Any source at/above threshold that does not match any allowed keyword triggers
     a failure.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
+    for c, conf in _iter_causes_at_or_above(summary, confidence_threshold):
         src = _cause_source(c)
-        conf = float(c.get("confidence", 0))
-        if conf < confidence_threshold:
-            continue
         if not any(kw.lower() in src for kw in allowed):
             loc = c.get("strongest_location") or ""
             raise AssertionError(
@@ -1567,16 +1572,13 @@ def assert_no_persistent_fault(
 
     Use for transient-only and no-fault scenarios.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
+    for c, conf in _iter_causes_at_or_above(summary, confidence_threshold):
         src = _cause_source(c)
-        conf = float(c.get("confidence", 0))
-        if conf >= confidence_threshold:
-            loc = c.get("strongest_location") or ""
-            raise AssertionError(
-                f"Unexpected persistent fault: {src} @ {loc} "
-                f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
-            )
+        loc = c.get("strongest_location") or ""
+        raise AssertionError(
+            f"Unexpected persistent fault: {src} @ {loc} "
+            f"conf={conf:.3f} (threshold={confidence_threshold}). {msg}"
+        )
 
 
 def assert_no_localized_wheel(
@@ -1590,11 +1592,9 @@ def assert_no_localized_wheel(
     Use for diffuse excitation scenarios where wheel-localization would be a
     false positive.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
+    for c, conf in _iter_causes_at_or_above(summary, confidence_threshold):
         src = _cause_source(c)
-        conf = float(c.get("confidence", 0))
-        if "wheel" in src and conf >= confidence_threshold:
+        if "wheel" in src:
             loc = c.get("strongest_location") or ""
             if loc:  # has a location → localized → false positive
                 raise AssertionError(
@@ -1634,11 +1634,7 @@ def assert_no_exact_corner_claim(
     exact-corner string (FL/FR/RL/RR) in ``strongest_location`` regardless of
     source classification.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
-        conf = float(c.get("confidence", 0))
-        if conf < confidence_threshold:
-            continue
+    for c, conf in _iter_causes_at_or_above(summary, confidence_threshold):
         loc = str(c.get("strongest_location") or "").lower()
         for token in _EXACT_CORNER_TOKENS:
             if token in loc:
@@ -1687,12 +1683,11 @@ def assert_max_wheel_confidence(
     Use for cabin-only / no-wheel-sensor topologies where wheel confidence
     should be naturally bounded.
     """
-    causes = summary.get("top_causes") or []
-    for c in causes:
+    for c in _top_causes(summary):
         src = _cause_source(c)
         if "wheel" not in src:
             continue
-        conf = float(c.get("confidence", 0))
+        conf = _cause_confidence(c)
         if conf > max_confidence:
             loc = c.get("strongest_location") or ""
             raise AssertionError(
