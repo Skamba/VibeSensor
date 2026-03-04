@@ -82,6 +82,26 @@ def _strip_internal_fields(analysis: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in analysis.items() if not k.startswith("_")}
 
 
+def _require_analysis_ready(run: dict[str, Any]) -> dict[str, Any]:
+    """Return the analysis dict or raise an appropriate HTTPException.
+
+    Shared guard for endpoints that need a completed analysis (insights,
+    report-PDF download).  Raises 409 when still analysing, 422 on error
+    or missing analysis.
+    """
+    if run.get("status") == RunStatus.ANALYZING:
+        raise HTTPException(status_code=409, detail="Analysis is still in progress")
+    if run.get("status") == RunStatus.ERROR:
+        raise HTTPException(
+            status_code=422,
+            detail=run.get("error_message", "Analysis failed"),
+        )
+    analysis = run.get("analysis")
+    if analysis is None:
+        raise HTTPException(status_code=422, detail="No analysis available for this run")
+    return analysis
+
+
 def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
     """Convert nested/complex values to JSON strings for CSV export.
 
@@ -200,16 +220,12 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
         run_id: str,
-        lang: str | None = Query(default=None),
+        lang: str | None = Query(default=None),  # noqa: ARG001 — kept for backward compat
     ) -> HistoryInsightsResponse:
         run = await async_require_run(state.history_db, run_id)
         if run["status"] == RunStatus.ANALYZING:
             return {"run_id": run_id, "status": RunStatus.ANALYZING}
-        if run["status"] == RunStatus.ERROR:
-            raise HTTPException(status_code=422, detail=run.get("error_message", "Analysis failed"))
-        analysis = run.get("analysis")
-        if analysis is None:
-            raise HTTPException(status_code=422, detail="No analysis available for this run")
+        analysis = _require_analysis_ready(run)
 
         # Expose staleness to callers so they can decide whether to re-request
         analysis_version = run.get("analysis_version")
@@ -218,11 +234,6 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                 analysis["analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
             except (TypeError, ValueError):
                 analysis["analysis_is_current"] = False
-
-        # Keep /insights read-only: return persisted post-stop analysis as-is.
-        # The optional lang query is accepted for compatibility but does not
-        # trigger on-demand analysis recomputation.
-        _ = lang
 
         # Strip internal renderer-only fields before returning
         if isinstance(analysis, dict):
@@ -255,16 +266,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
         run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
         run = await async_require_run(state.history_db, run_id)
-        if run.get("status") == RunStatus.ANALYZING:
-            raise HTTPException(status_code=409, detail="Analysis is still in progress")
-        if run.get("status") == RunStatus.ERROR:
-            raise HTTPException(
-                status_code=422,
-                detail=run.get("error_message", "Analysis failed"),
-            )
-        analysis = run.get("analysis")
-        if analysis is None:
-            raise HTTPException(status_code=422, detail="No analysis available for this run")
+        analysis = _require_analysis_ready(run)
         requested_lang = _analysis_language(run, lang)
         cache_key = _report_pdf_cache_key(run, run_id, _report_pdf_cache_lang(run, requested_lang))
         pdf_name = f"{safe_filename(run_id)}_report.pdf"
@@ -333,10 +335,10 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
     @router.get("/api/history/{run_id}/export")
     async def export_history_run(run_id: str) -> StreamingResponse:
         run = await async_require_run(state.history_db, run_id)
+        safe_name = safe_filename(run_id)
 
         def _build_zip_file() -> tempfile.SpooledTemporaryFile[bytes]:
             """Build the export ZIP into a spooled temp file (single-pass)."""
-            safe_name = safe_filename(run_id)
             sample_count = 0
 
             spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
@@ -409,7 +411,6 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
             finally:
                 spool.close()
 
-        safe_name = safe_filename(run_id)
         return StreamingResponse(
             content=_iter_spool(),
             media_type="application/zip",

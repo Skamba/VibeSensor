@@ -64,6 +64,14 @@ from .test_plan import _merge_test_plan
 # 2% headroom accounts for quantization effects near the ADC rail.
 _SATURATION_FRACTION = 0.98
 
+# Maps driving-phase keys to their i18n label keys (used by
+# _most_likely_origin_summary for phase-onset notes in the explanation).
+_PHASE_I18N_MAP: dict[str, str] = {
+    "acceleration": "DRIVING_PHASE_ACCELERATION",
+    "deceleration": "DRIVING_PHASE_DECELERATION",
+    "coast_down": "DRIVING_PHASE_COAST_DOWN",
+}
+
 
 def _normalize_lang(lang: object) -> str:
     """Minimal language normalization without importing report_i18n."""
@@ -331,10 +339,9 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
 
     source = str(top.get("suspected_source") or _UNKNOWN)
     dominance = _as_float(top.get("dominance_ratio"))
-    location_hotspot = top.get("location_hotspot")
     location_count = _as_float(top.get("location_count"))
-    if location_count is None and isinstance(location_hotspot, dict):
-        location_count = _as_float(location_hotspot.get("location_count"))
+    if location_count is None and isinstance(hotspot, dict):
+        location_count = _as_float(hotspot.get("location_count"))
     adaptive_weak_spatial_threshold = weak_spatial_dominance_threshold(
         int(location_count) if location_count else None
     )
@@ -386,12 +393,7 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
     if weak:
         explanation_parts.append(_i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
     dominant_phase = str(top.get("dominant_phase") or "").strip()
-    _phase_i18n_map = {
-        "acceleration": "DRIVING_PHASE_ACCELERATION",
-        "deceleration": "DRIVING_PHASE_DECELERATION",
-        "coast_down": "DRIVING_PHASE_COAST_DOWN",
-    }
-    if dominant_phase and dominant_phase in _phase_i18n_map:
+    if dominant_phase and dominant_phase in _PHASE_I18N_MAP:
         explanation_parts.append(_i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
     # Store explanation as structured i18n parts for render-time resolution.
     explanation = explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
@@ -438,26 +440,19 @@ def _build_phase_timeline(
 
     entries: list[dict[str, Any]] = []
     for seg in phase_segments:
-        phase_val = seg.phase.value if hasattr(seg, "phase") else str(seg.get("phase", ""))
-        start_t = seg.start_t_s if hasattr(seg, "start_t_s") else float(seg.get("start_t_s", 0))
-        end_t = seg.end_t_s if hasattr(seg, "end_t_s") else float(seg.get("end_t_s", 0))
+        phase_val = seg.phase.value
         # Convert NaN sentinels (unknown time) to None for JSON safety.
-        if isinstance(start_t, float) and math.isnan(start_t):
-            start_t = None
-        if isinstance(end_t, float) and math.isnan(end_t):
-            end_t = None
-        speed_min = seg.speed_min_kmh if hasattr(seg, "speed_min_kmh") else seg.get("speed_min_kmh")
-        speed_max = seg.speed_max_kmh if hasattr(seg, "speed_max_kmh") else seg.get("speed_max_kmh")
-        has_fault_evidence = phase_val in finding_phases
+        start_t = None if math.isnan(seg.start_t_s) else seg.start_t_s
+        end_t = None if math.isnan(seg.end_t_s) else seg.end_t_s
 
         entries.append(
             {
                 "phase": phase_val,
                 "start_t_s": start_t,
                 "end_t_s": end_t,
-                "speed_min_kmh": speed_min,
-                "speed_max_kmh": speed_max,
-                "has_fault_evidence": has_fault_evidence,
+                "speed_min_kmh": seg.speed_min_kmh,
+                "speed_max_kmh": seg.speed_max_kmh,
+                "has_fault_evidence": phase_val in finding_phases,
             }
         )
     return entries
@@ -499,7 +494,7 @@ def build_findings_for_samples(
     lang: str | None = None,
 ) -> list[dict[str, Any]]:
     language = _normalize_lang(lang)
-    rows = list(samples) if isinstance(samples, list) else []
+    rows = list(samples)
     _validate_required_strength_metrics(rows)
     _, speed_stats, speed_non_null_pct, speed_sufficient, _per_sample_phases, _ = (
         _prepare_speed_and_phases(rows)
@@ -673,8 +668,6 @@ def _build_run_suitability_checks(
     _per_client_dropped: dict[str, list[float]] = defaultdict(list)
     _per_client_overflow: dict[str, list[float]] = defaultdict(list)
     for s in samples:
-        if not isinstance(s, dict):
-            continue
         cid = str(s.get("client_id") or "")
         if not cid:
             continue
@@ -777,22 +770,21 @@ def summarize_run_data(
     phase_timeline = _build_phase_timeline(phase_segments, findings, language)
 
     # --- Reference completeness ---
-    metadata_dict = metadata if isinstance(metadata, dict) else {}
     reference_complete = bool(
-        _as_float(metadata_dict.get("raw_sample_rate_hz"))
+        _as_float(metadata.get("raw_sample_rate_hz"))
         and (
-            _as_float(metadata_dict.get("tire_circumference_m"))
+            _as_float(metadata.get("tire_circumference_m"))
             or tire_circumference_m_from_spec(
-                _as_float(metadata_dict.get("tire_width_mm")),
-                _as_float(metadata_dict.get("tire_aspect_pct")),
-                _as_float(metadata_dict.get("rim_in")),
+                _as_float(metadata.get("tire_width_mm")),
+                _as_float(metadata.get("tire_aspect_pct")),
+                _as_float(metadata.get("rim_in")),
             )
         )
         and (
-            _as_float(metadata_dict.get("engine_rpm"))
+            _as_float(metadata.get("engine_rpm"))
             or (
-                _as_float(metadata_dict.get("final_drive_ratio"))
-                and _as_float(metadata_dict.get("current_gear_ratio"))
+                _as_float(metadata.get("final_drive_ratio"))
+                and _as_float(metadata.get("current_gear_ratio"))
             )
         )
     )

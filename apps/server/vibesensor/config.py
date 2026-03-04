@@ -22,15 +22,16 @@ DEFAULT_UDP_DATA_PORT = int(NETWORK_PORTS["server_udp_data"])
 DEFAULT_UDP_CONTROL_PORT = int(NETWORK_PORTS["server_udp_control"])
 
 # ProcessingConfig validation constants (hoisted to avoid per-instance allocation)
-_PROCESSING_POS_FIELDS: dict[str, int] = {
-    "sample_rate_hz": 1,
-    "waveform_seconds": 1,
-    "waveform_display_hz": 1,
-    "ui_push_hz": 1,
-    "ui_heavy_push_hz": 1,
-    "fft_update_hz": 1,
-    "client_ttl_seconds": 1,
-}
+_PROCESSING_POS_FIELDS: tuple[str, ...] = (
+    "sample_rate_hz",
+    "waveform_seconds",
+    "waveform_display_hz",
+    "ui_push_hz",
+    "ui_heavy_push_hz",
+    "fft_update_hz",
+    "client_ttl_seconds",
+)
+_PROCESSING_POS_MIN: int = 1
 _MAX_FFT_N: int = 65536
 _MAX_BUFFER_SAMPLES: int = 524_288
 
@@ -201,18 +202,17 @@ class ProcessingConfig:
 
     def __post_init__(self) -> None:
         # --- positive-integer guards ------------------------------------------------
-        for field_name, minimum in _PROCESSING_POS_FIELDS.items():
+        for field_name in _PROCESSING_POS_FIELDS:
             val = getattr(self, field_name)
-            if val < minimum:
-                clamped = minimum
+            if val < _PROCESSING_POS_MIN:
                 LOGGER.warning(
                     "processing.%s=%s is below minimum %s — clamped to %s",
                     field_name,
                     val,
-                    minimum,
-                    clamped,
+                    _PROCESSING_POS_MIN,
+                    _PROCESSING_POS_MIN,
                 )
-                object.__setattr__(self, field_name, clamped)
+                object.__setattr__(self, field_name, _PROCESSING_POS_MIN)
 
         # --- spectrum_max_hz positive float guard -----------------------------------
         if self.spectrum_max_hz < 1.0:

@@ -373,6 +373,7 @@ def _build_order_findings(
         possible_by_location: dict[str, int] = defaultdict(int)
         matched_by_location: dict[str, int] = defaultdict(int)
         has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
+        compliance = getattr(hypothesis, "path_compliance", 1.0)
 
         for sample_idx, sample in enumerate(samples):
             peaks = cached_peaks[sample_idx]
@@ -404,7 +405,6 @@ def _build_order_findings(
                 phase_key = str(ph.value if hasattr(ph, "value") else ph)
                 possible_by_phase[phase_key] += 1
 
-            compliance = getattr(hypothesis, "path_compliance", 1.0)
             # Scale tolerance by sqrt(compliance) — a conservative widening
             # for mechanically compliant paths (wheel/bushing) without
             # inflating false-positive match rates excessively.
@@ -443,7 +443,7 @@ def _build_order_findings(
                     "matched_hz": best_hz,
                     "rel_error": delta_hz / max(1e-9, predicted_hz),
                     "amp": best_amp,
-                    "location": _location_label(sample, lang=lang),
+                    "location": sample_location,
                     "phase": sample_phase,
                 }
             )
@@ -577,7 +577,6 @@ def _build_order_findings(
         # Error score: compliant paths (wheel through suspension) produce
         # broader peaks that wander more across FFT bins, so we use a more
         # lenient denominator (0.25 * compliance) to avoid over-penalising.
-        compliance = getattr(hypothesis, "path_compliance", 1.0)
         error_denominator = 0.25 * compliance
         error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
         snr_score = min(
@@ -598,12 +597,6 @@ def _build_order_findings(
             matched_points,
         )
 
-        _no_wheel_sensors = (
-            bool(location_hotspot.get("no_wheel_sensors"))
-            if _hotspot_is_dict
-            else False
-        )
-
         confidence = _compute_order_confidence(
             effective_match_rate=effective_match_rate,
             error_score=error_score,
@@ -621,7 +614,7 @@ def _build_order_findings(
             is_diffuse_excitation=_diffuse_excitation,
             diffuse_penalty=_diffuse_penalty,
             n_connected_locations=len(connected_locations),
-            no_wheel_sensors=_no_wheel_sensors,
+            no_wheel_sensors=_no_wheel_override,
             path_compliance=compliance,
         )
 
