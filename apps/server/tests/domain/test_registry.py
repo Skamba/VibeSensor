@@ -374,11 +374,21 @@ def _make_registry_with_hello(tmp_path: Path, client_id_hex: str = "aabbccddeeff
     return registry, client_id
 
 
+def _data_msg(
+    client_id: bytes, seq: int, t0_us: int, *, sample_count: int = 100,
+) -> DataMessage:
+    """Build a :class:`DataMessage` with zero-filled samples."""
+    samples = np.zeros((sample_count, 3), dtype=np.int16)
+    return DataMessage(
+        client_id=client_id, seq=seq, t0_us=t0_us,
+        sample_count=sample_count, samples=samples,
+    )
+
+
 def test_duplicate_seq_is_detected(tmp_path: Path) -> None:
     """Sending the same seq twice should flag the second as a duplicate."""
     registry, client_id = _make_registry_with_hello(tmp_path)
-    samples = np.zeros((200, 3), dtype=np.int16)
-    msg = DataMessage(client_id=client_id, seq=0, t0_us=10, sample_count=200, samples=samples)
+    msg = _data_msg(client_id, 0, 10, sample_count=200)
 
     r1 = registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0)
     assert r1.is_duplicate is False
@@ -394,27 +404,14 @@ def test_duplicate_seq_is_detected(tmp_path: Path) -> None:
 def test_duplicate_does_not_inflate_frames_total(tmp_path: Path) -> None:
     """Duplicate retransmits must not inflate the frames_total counter."""
     registry, client_id = _make_registry_with_hello(tmp_path)
-    samples = np.zeros((100, 3), dtype=np.int16)
 
     for seq in range(5):
-        msg = DataMessage(
-            client_id=client_id,
-            seq=seq,
-            t0_us=seq * 10000,
-            sample_count=100,
-            samples=samples,
-        )
+        msg = _data_msg(client_id, seq, seq * 10000)
         registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0 + seq)
 
     # Retransmit seq=2 and seq=3
     for seq in (2, 3):
-        msg = DataMessage(
-            client_id=client_id,
-            seq=seq,
-            t0_us=seq * 10000,
-            sample_count=100,
-            samples=samples,
-        )
+        msg = _data_msg(client_id, seq, seq * 10000)
         registry.update_from_data(msg, ("10.4.0.2", 50000), now=10.0 + seq)
 
     row = registry.snapshot_for_api(now=15.0)[0]
@@ -426,20 +423,13 @@ def test_duplicate_does_not_inflate_frames_total(tmp_path: Path) -> None:
 def test_out_of_order_not_flagged_as_duplicate(tmp_path: Path) -> None:
     """A frame arriving out of order (but not yet seen) should be ingested."""
     registry, client_id = _make_registry_with_hello(tmp_path)
-    samples = np.zeros((100, 3), dtype=np.int16)
 
     # Send seq 0, 2 (skip 1), then 1 arrives late
     for seq in (0, 2):
-        msg = DataMessage(
-            client_id=client_id,
-            seq=seq,
-            t0_us=seq * 10000,
-            sample_count=100,
-            samples=samples,
-        )
+        msg = _data_msg(client_id, seq, seq * 10000)
         registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0 + seq)
 
-    msg1 = DataMessage(client_id=client_id, seq=1, t0_us=10000, sample_count=100, samples=samples)
+    msg1 = _data_msg(client_id, 1, 10000)
     r = registry.update_from_data(msg1, ("10.4.0.2", 50000), now=5.0)
     assert r.is_duplicate is False
 
@@ -451,38 +441,19 @@ def test_out_of_order_not_flagged_as_duplicate(tmp_path: Path) -> None:
 def test_reset_clears_seen_seqs(tmp_path: Path) -> None:
     """After a sensor reset, the same low seq numbers should be accepted again."""
     registry, client_id = _make_registry_with_hello(tmp_path)
-    samples = np.zeros((100, 3), dtype=np.int16)
 
     # First session: seq 5000
-    msg_high = DataMessage(
-        client_id=client_id,
-        seq=5000,
-        t0_us=1_000_000,
-        sample_count=100,
-        samples=samples,
-    )
+    msg_high = _data_msg(client_id, 5000, 1_000_000)
     registry.update_from_data(msg_high, ("10.4.0.2", 50000), now=2.0)
 
     # Reset: seq drops to 0
-    msg_low = DataMessage(
-        client_id=client_id,
-        seq=0,
-        t0_us=2_000_000,
-        sample_count=100,
-        samples=samples,
-    )
+    msg_low = _data_msg(client_id, 0, 2_000_000)
     r = registry.update_from_data(msg_low, ("10.4.0.2", 50000), now=3.0)
     assert r.reset_detected is True
     assert r.is_duplicate is False
 
     # seq 1 after reset should also be accepted
-    msg_1 = DataMessage(
-        client_id=client_id,
-        seq=1,
-        t0_us=2_010_000,
-        sample_count=100,
-        samples=samples,
-    )
+    msg_1 = _data_msg(client_id, 1, 2_010_000)
     r2 = registry.update_from_data(msg_1, ("10.4.0.2", 50000), now=4.0)
     assert r2.is_duplicate is False
 
@@ -498,17 +469,10 @@ def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
     client IDs but fewer than 1000 frames (below the hard-reset threshold).
     """
     registry, client_id = _make_registry_with_hello(tmp_path)
-    samples = np.zeros((100, 3), dtype=np.int16)
 
     # First session: seq 0..49 (a short E2E run)
     for seq in range(50):
-        msg = DataMessage(
-            client_id=client_id,
-            seq=seq,
-            t0_us=seq * 10000,
-            sample_count=100,
-            samples=samples,
-        )
+        msg = _data_msg(client_id, seq, seq * 10000)
         registry.update_from_data(msg, ("10.4.0.2", 50000), now=2.0 + seq * 0.01)
 
     row = registry.snapshot_for_api(now=3.0)[0]
@@ -517,13 +481,7 @@ def test_short_session_restart_not_flagged_as_duplicate(tmp_path: Path) -> None:
 
     # Second session: simulator restarts, seq goes back to 0
     for seq in range(50):
-        msg = DataMessage(
-            client_id=client_id,
-            seq=seq,
-            t0_us=100_000 + seq * 10000,
-            sample_count=100,
-            samples=samples,
-        )
+        msg = _data_msg(client_id, seq, 100_000 + seq * 10000)
         r = registry.update_from_data(msg, ("10.4.0.2", 50000), now=5.0 + seq * 0.01)
         assert r.is_duplicate is False, f"seq={seq} wrongly flagged as duplicate"
 

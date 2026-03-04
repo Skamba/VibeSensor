@@ -38,11 +38,7 @@ class TestAsFloatOrNone:
         ],
     )
     def test_as_float_or_none(self, value: Any, expected: float | None) -> None:
-        result = _as_float_or_none(value)
-        if expected is None:
-            assert result is None
-        else:
-            assert result == expected
+        assert _as_float_or_none(value) == expected
 
 
 class TestAsIntOrNone:
@@ -56,11 +52,7 @@ class TestAsIntOrNone:
         ],
     )
     def test_as_int_or_none(self, value: Any, expected: int | None) -> None:
-        result = _as_int_or_none(value)
-        if expected is None:
-            assert result is None
-        else:
-            assert result == expected
+        assert _as_int_or_none(value) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -103,17 +95,20 @@ class TestCarConfig:
         # Invalid aspect should be overridden by default
         assert isinstance(car.aspects.get("tire_width_mm"), (int, float))
 
-    def test_whitespace_only_name_falls_back(self) -> None:
-        car = CarConfig.from_dict({"name": "   "})
-        assert car.name == "Unnamed Car"
-
-    def test_empty_string_name_falls_back(self) -> None:
-        car = CarConfig.from_dict({"name": ""})
-        assert car.name == "Unnamed Car"
-
-    def test_whitespace_only_type_falls_back(self) -> None:
-        car = CarConfig.from_dict({"type": "   "})
-        assert car.type == "sedan"
+    @pytest.mark.parametrize(
+        "data, field, fallback",
+        [
+            ({"name": "   "}, "name", "Unnamed Car"),
+            ({"name": ""}, "name", "Unnamed Car"),
+            ({"type": "   "}, "type", "sedan"),
+        ],
+        ids=["whitespace-name", "empty-name", "whitespace-type"],
+    )
+    def test_blank_field_falls_back_to_default(
+        self, data: dict, field: str, fallback: str,
+    ) -> None:
+        car = CarConfig.from_dict(data)
+        assert getattr(car, field) == fallback
 
 
 # ---------------------------------------------------------------------------
