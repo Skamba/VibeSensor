@@ -25,20 +25,17 @@ def test_location_lookup_roundtrip() -> None:
 class TestSetLocationRequestAcceptsEmptyCode:
     """Verify that SetLocationRequest allows empty location_code for clearing."""
 
-    def test_empty_string_accepted(self) -> None:
-        from vibesensor.api import SetLocationRequest
+    from vibesensor.api import SetLocationRequest as _Req
 
-        req = SetLocationRequest(location_code="")
-        assert req.location_code == ""
-
-    def test_valid_code_accepted(self) -> None:
-        from vibesensor.api import SetLocationRequest
-
-        req = SetLocationRequest(location_code="front_left_wheel")
-        assert req.location_code == "front_left_wheel"
+    @pytest.mark.parametrize(
+        "code",
+        ["", "front_left_wheel"],
+        ids=["empty", "valid_code"],
+    )
+    def test_accepted_codes(self, code: str) -> None:
+        req = self._Req(location_code=code)
+        assert req.location_code == code
 
     def test_too_long_rejected(self) -> None:
-        from vibesensor.api import SetLocationRequest
-
         with pytest.raises(ValidationError):
-            SetLocationRequest(location_code="x" * 65)
+            self._Req(location_code="x" * 65)
