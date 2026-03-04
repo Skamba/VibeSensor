@@ -55,6 +55,19 @@ _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
+    """Common assertion: top finding exists at *sensor* with wheel source."""
+    top = extract_top(summary)
+    assert top is not None, f"{msg}: no finding"
+    assert_wheel_source(summary, msg=msg)
+    assert_strongest_location(summary, sensor, msg=msg)
+
+
+# ---------------------------------------------------------------------------
 # E.1 – 4-sensor fault + transient at each corner × speed (4×3 = 12 cases)
 # ---------------------------------------------------------------------------
 
@@ -136,10 +149,7 @@ def test_4sensor_transient_on_other_sensor(corner: str, profile: dict[str, Any])
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Lost fault when transient on other sensor {corner}"
-    assert_wheel_source(summary, msg=f"4s other-t {corner}")
-    assert_strongest_location(summary, sensor, msg=f"4s other-t {corner}")
+    _assert_fault_at(summary, sensor, msg=f"4s other-t {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -201,10 +211,7 @@ def test_8sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> N
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Lost 8sensor fault+transient {corner}"
-    assert_wheel_source(summary, msg=f"8s+t {corner}")
-    assert_strongest_location(summary, sensor, msg=f"8s+t {corner}")
+    _assert_fault_at(summary, sensor, msg=f"8s+t {corner}")
     assert_confidence_label_valid(summary, msg=f"8s+t {corner}")
 
 
@@ -242,10 +249,7 @@ def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> 
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Lost 12sensor fault+transient {corner}"
-    assert_wheel_source(summary, msg=f"12s+t {corner}")
-    assert_strongest_location(summary, sensor, msg=f"12s+t {corner}")
+    _assert_fault_at(summary, sensor, msg=f"12s+t {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -293,10 +297,7 @@ def test_2sensor_fault_with_transient(
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Lost 2sensor fault+transient {fault_corner}"
-    assert_wheel_source(summary, msg=f"2s+t {fault_corner}")
-    assert_strongest_location(summary, fault_sensor, msg=f"2s+t {fault_corner}")
+    _assert_fault_at(summary, fault_sensor, msg=f"2s+t {fault_corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -371,10 +372,7 @@ def test_4sensor_multi_transient_preserves_fault(corner: str, profile: dict[str,
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Multi-transient lost fault {corner}"
-    assert_wheel_source(summary, msg=f"multi-t {corner}")
-    assert_strongest_location(summary, sensor, msg=f"multi-t {corner}")
+    _assert_fault_at(summary, sensor, msg=f"multi-t {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -415,10 +413,7 @@ def test_4sensor_phased_onset_with_transient(corner: str, profile: dict[str, Any
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Phased+transient lost {corner}"
-    assert_wheel_source(summary, msg=f"phased+t {corner}")
-    assert_strongest_location(summary, sensor, msg=f"phased+t {corner}")
+    _assert_fault_at(summary, sensor, msg=f"phased+t {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -456,10 +451,7 @@ def test_4sensor_transfer_with_transient(corner: str, profile: dict[str, Any]) -
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Transfer+transient lost {corner}"
-    assert_wheel_source(summary, msg=f"xfer+t {corner}")
-    assert_strongest_location(summary, sensor, msg=f"xfer+t {corner}")
+    _assert_fault_at(summary, sensor, msg=f"xfer+t {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -496,10 +488,7 @@ def test_8sensor_vhigh_speed_transient(corner: str, profile: dict[str, Any]) -> 
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"8sensor vhigh+transient lost {corner}"
-    assert_wheel_source(summary, msg=f"8s vhigh+t {corner}")
-    assert_strongest_location(summary, sensor, msg=f"8s vhigh+t {corner}")
+    _assert_fault_at(summary, sensor, msg=f"8s vhigh+t {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -557,7 +546,4 @@ def test_4sensor_speed_sweep_with_transient(corner: str, profile: dict[str, Any]
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Speed sweep+transient lost {corner}"
-    assert_wheel_source(summary, msg=f"sweep+t {corner}")
-    assert_strongest_location(summary, CORNER_SENSORS[corner], msg=f"sweep+t {corner}")
+    _assert_fault_at(summary, CORNER_SENSORS[corner], msg=f"sweep+t {corner}")
