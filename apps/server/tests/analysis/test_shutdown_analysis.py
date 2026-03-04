@@ -15,20 +15,6 @@ from vibesensor.metrics_log import MetricsLogger
 # ---------------------------------------------------------------------------
 
 
-class _FakeRecord:
-    client_id: str = "c1"
-    name: str = "test"
-    sample_rate_hz: int = 800
-    latest_metrics: dict  # type: ignore[assignment]
-    location: str = ""
-    frames_total: int = 0
-    frames_dropped: int = 0
-    queue_overflow_drops: int = 0
-
-    def __init__(self) -> None:
-        self.latest_metrics = {}
-
-
 class _FakeRegistry:
     def active_client_ids(self) -> list[str]:
         return []
@@ -189,9 +175,9 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
         pass
 
     # The key assertion: analysis_wait_done must appear BEFORE db_close
-    assert "analysis_wait_done" in events
-    assert "db_close" in events
-    assert events.index("analysis_wait_done") < events.index("db_close")
+    assert events.index("analysis_wait_done") < events.index("db_close"), (
+        f"Expected analysis to finish before DB close, got: {events}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -199,40 +185,25 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 # ---------------------------------------------------------------------------
 
 
-def test_config_shutdown_analysis_timeout_default(tmp_path: Path) -> None:
-    """Default shutdown_analysis_timeout_s should be 30."""
+@pytest.mark.parametrize(
+    ("cfg_timeout", "expected"),
+    [
+        pytest.param(None, 30.0, id="default"),
+        pytest.param(60, 60.0, id="custom"),
+    ],
+)
+def test_config_shutdown_analysis_timeout(tmp_path: Path, cfg_timeout, expected) -> None:
+    """shutdown_analysis_timeout_s must default to 30 and accept overrides."""
     from vibesensor.config import load_config
+
+    logging_cfg: dict = {"metrics_log_path": str(tmp_path / "m.jsonl")}
+    if cfg_timeout is not None:
+        logging_cfg["shutdown_analysis_timeout_s"] = cfg_timeout
 
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text(
-        yaml.safe_dump(
-            {
-                "logging": {
-                    "metrics_log_path": str(tmp_path / "m.jsonl"),
-                },
-            }
-        ),
+        yaml.safe_dump({"logging": logging_cfg}),
         encoding="utf-8",
     )
     config = load_config(cfg_path)
-    assert config.logging.shutdown_analysis_timeout_s == 30.0
-
-
-def test_config_shutdown_analysis_timeout_custom(tmp_path: Path) -> None:
-    """Custom shutdown_analysis_timeout_s should be respected."""
-    from vibesensor.config import load_config
-
-    cfg_path = tmp_path / "config.yaml"
-    cfg_path.write_text(
-        yaml.safe_dump(
-            {
-                "logging": {
-                    "metrics_log_path": str(tmp_path / "m.jsonl"),
-                    "shutdown_analysis_timeout_s": 60,
-                },
-            }
-        ),
-        encoding="utf-8",
-    )
-    config = load_config(cfg_path)
-    assert config.logging.shutdown_analysis_timeout_s == 60.0
+    assert config.logging.shutdown_analysis_timeout_s == expected
