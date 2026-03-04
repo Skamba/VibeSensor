@@ -94,11 +94,8 @@ class GPSSpeedMonitor:
         consumers should prefer this over reading ``effective_speed_mps``
         and ``fallback_active`` separately when they need both values.
         """
-        if self.manual_source_selected is None:
-            # Legacy path: override has top priority
-            if isinstance(self.override_speed_mps, (int, float)):
-                return SpeedResolution(float(self.override_speed_mps), False, "manual")
-        elif self.manual_source_selected is True:
+        if self.manual_source_selected is not False:
+            # Legacy path (None) or explicitly selected manual source
             if isinstance(self.override_speed_mps, (int, float)):
                 return SpeedResolution(float(self.override_speed_mps), False, "manual")
             # Manual selected but no override set → fall through to GPS
@@ -260,11 +257,11 @@ class GPSSpeedMonitor:
 
         raw_speed_kmh: float | None = None
         if isinstance(self.speed_mps, (int, float)):
-            raw_speed_kmh = round(float(self.speed_mps) * MPS_TO_KMH, 2)
+            raw_speed_kmh = round(self.speed_mps * MPS_TO_KMH, 2)
 
         effective_speed_kmh: float | None = None
         if isinstance(resolution.speed_mps, (int, float)):
-            effective_speed_kmh = round(float(resolution.speed_mps) * MPS_TO_KMH, 2)
+            effective_speed_kmh = round(resolution.speed_mps * MPS_TO_KMH, 2)
 
         return {
             "gps_enabled": self.gps_enabled,
@@ -351,7 +348,6 @@ class GPSSpeedMonitor:
                         speed_mps = float(speed)
                         if self._accept_speed_sample(speed_mps):
                             self._speed_snapshot = (speed_mps, time.monotonic())
-                            self.speed_mps = speed_mps
                     else:
                         self._zero_speed_streak = 0
                     # Extract device from TPV
