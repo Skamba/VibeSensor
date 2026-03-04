@@ -145,7 +145,7 @@ def _sample(i: int) -> dict[str, Any]:
     }
 
 
-def _make_fake_state(history_db):
+def _make_fake_state(history_db: Any) -> Any:
     """Build a minimal fake ``RuntimeState``-alike for router tests.
 
     Provides the superset of attributes needed by PDF, insights, and export

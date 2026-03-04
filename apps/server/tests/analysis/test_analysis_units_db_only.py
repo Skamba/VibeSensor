@@ -3,9 +3,14 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import Any
 
+import pytest
 from _paths import SERVER_ROOT
 
 from vibesensor.analysis.summary import summarize_run_data
+
+_GUARDED_RAW_ROOTS = frozenset(
+    {"samples", "metadata", "analysis_metadata", "_report_template_data"}
+)
 
 
 def _metadata() -> dict[str, Any]:
@@ -20,27 +25,25 @@ def _metadata() -> dict[str, Any]:
 
 
 def _samples() -> list[dict[str, Any]]:
-    rows: list[dict[str, Any]] = []
-    for idx in range(24):
-        rows.append(
-            {
-                "t_s": float(idx) * 0.25,
-                "speed_kmh": 70.0 + (idx % 6),
-                "accel_x_g": 0.02,
-                "accel_y_g": 0.015,
-                "accel_z_g": 0.01,
-                "vibration_strength_db": 22.0 + (idx % 5),
-                "dominant_freq_hz": 30.0,
-                "top_peaks": [
-                    {"hz": 30.0, "amp": 0.08},
-                    {"hz": 60.0, "amp": 0.03},
-                    {"hz": 90.0, "amp": 0.02},
-                ],
-                "client_name": "rear-left wheel",
-                "strength_floor_amp_g": 0.01,
-            }
-        )
-    return rows
+    return [
+        {
+            "t_s": float(idx) * 0.25,
+            "speed_kmh": 70.0 + (idx % 6),
+            "accel_x_g": 0.02,
+            "accel_y_g": 0.015,
+            "accel_z_g": 0.01,
+            "vibration_strength_db": 22.0 + (idx % 5),
+            "dominant_freq_hz": 30.0,
+            "top_peaks": [
+                {"hz": 30.0, "amp": 0.08},
+                {"hz": 60.0, "amp": 0.03},
+                {"hz": 90.0, "amp": 0.02},
+            ],
+            "client_name": "rear-left wheel",
+            "strength_floor_amp_g": 0.01,
+        }
+        for idx in range(24)
+    ]
 
 
 def _walk(node: Any, *, path: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], Any]]:
@@ -59,22 +62,21 @@ def _walk(node: Any, *, path: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str,
 
 
 def _is_guarded_raw_path(path: tuple[str, ...]) -> bool:
-    if not path:
-        return False
-    return path[0] in {"samples", "metadata", "analysis_metadata", "_report_template_data"}
+    return bool(path) and path[0] in _GUARDED_RAW_ROOTS
 
 
-def test_post_analysis_summary_has_no_g_suffixed_output_fields() -> None:
-    metadata = _metadata()
-    samples = _samples()
-    summary = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+@pytest.fixture(scope="module")
+def _summary() -> dict[str, Any]:
+    """Run summarize_run_data once and share across the two units-policy tests."""
+    return summarize_run_data(_metadata(), _samples(), lang="en", include_samples=False)
 
-    offending_paths: list[str] = []
-    for path, _value in _walk(summary):
-        if _is_guarded_raw_path(path):
-            continue
-        if path and path[-1].endswith("_g"):
-            offending_paths.append(".".join(path))
+
+def test_post_analysis_summary_has_no_g_suffixed_output_fields(_summary: dict[str, Any]) -> None:
+    offending_paths = [
+        ".".join(path)
+        for path, _value in _walk(_summary)
+        if not _is_guarded_raw_path(path) and path and path[-1].endswith("_g")
+    ]
 
     assert not offending_paths, (
         "Post-stop analysis output contains g-suffixed fields: "
@@ -82,17 +84,12 @@ def test_post_analysis_summary_has_no_g_suffixed_output_fields() -> None:
     )
 
 
-def test_post_analysis_summary_has_no_g_unit_strings() -> None:
-    metadata = _metadata()
-    samples = _samples()
-    summary = summarize_run_data(metadata, samples, lang="en", include_samples=False)
-
-    offending_strings: list[str] = []
-    for path, value in _walk(summary):
-        if _is_guarded_raw_path(path):
-            continue
-        if isinstance(value, str) and " g" in value:
-            offending_strings.append(f"{'.'.join(path)}={value!r}")
+def test_post_analysis_summary_has_no_g_unit_strings(_summary: dict[str, Any]) -> None:
+    offending_strings = [
+        f"{'.'.join(path)}={value!r}"
+        for path, value in _walk(_summary)
+        if not _is_guarded_raw_path(path) and isinstance(value, str) and " g" in value
+    ]
 
     assert not offending_strings, (
         "Post-stop analysis output contains g-formatted strings: " + "; ".join(offending_strings)
@@ -104,11 +101,11 @@ def test_analysis_modules_use_canonical_db_helper() -> None:
     and call it via the alias, not directly as vibration_strength_db_scalar()."""
     analysis_root = SERVER_ROOT / "vibesensor" / "analysis"
 
-    direct_users: list[str] = []
-    for py_file in sorted(analysis_root.rglob("*.py")):
-        text = py_file.read_text(encoding="utf-8")
-        if "vibration_strength_db_scalar(" in text:
-            direct_users.append(str(py_file.relative_to(analysis_root)))
+    direct_users = [
+        str(py_file.relative_to(analysis_root))
+        for py_file in sorted(analysis_root.rglob("*.py"))
+        if "vibration_strength_db_scalar(" in py_file.read_text(encoding="utf-8")
+    ]
 
     assert not direct_users, (
         "Analysis modules must use canonical_vibration_db() (aliased import); "
