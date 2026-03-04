@@ -116,9 +116,7 @@ def _sensor_intensity_by_location(
     sample_counts: dict[str, int] = defaultdict(int)
     dropped_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     overflow_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
-    strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
-        lambda: dict(_EMPTY_BUCKET_COUNTS)
-    )
+    strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(_EMPTY_BUCKET_COUNTS.copy)
     strength_bucket_totals: dict[str, int] = defaultdict(int)
     # Per-phase intensity: {location: {phase_key: [amp_values]}}
     phase_amp: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
