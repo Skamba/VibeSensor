@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 
-from ..analysis.phase_segmentation import DrivingPhase, classify_sample_phase
+from ..analysis import DrivingPhase, classify_sample_phase
 from ..constants import MPS_TO_KMH
 from ._types import _PHASE_HISTORY_MAX
 
