@@ -70,41 +70,41 @@ def test_parse_iso8601_non_string_types() -> None:
 # -- as_float_or_none ---------------------------------------------------------
 
 
-def test_as_float_or_none_valid_numbers() -> None:
-    assert as_float_or_none(3.14) == 3.14
-    assert as_float_or_none(42) == 42.0
-    assert as_float_or_none("2.5") == 2.5
-    assert as_float_or_none(0) == 0.0
-
-
-def test_as_float_or_none_none_and_empty() -> None:
-    assert as_float_or_none(None) is None
-    assert as_float_or_none("") is None
-
-
-def test_as_float_or_none_nan_inf() -> None:
-    assert as_float_or_none(float("nan")) is None
-    assert as_float_or_none(float("inf")) is None
-    assert as_float_or_none(float("-inf")) is None
-
-
-def test_as_float_or_none_bad_string() -> None:
-    assert as_float_or_none("abc") is None
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (3.14, 3.14),
+        (42, 42.0),
+        ("2.5", 2.5),
+        (0, 0.0),
+        (None, None),
+        ("", None),
+        (float("nan"), None),
+        (float("inf"), None),
+        (float("-inf"), None),
+        ("abc", None),
+    ],
+)
+def test_as_float_or_none(value: object, expected: float | None) -> None:
+    assert as_float_or_none(value) is expected or as_float_or_none(value) == expected
 
 
 # -- as_int_or_none ------------------------------------------------------------
 
 
-def test_as_int_or_none_valid() -> None:
-    assert as_int_or_none(3.7) == 4
-    assert as_int_or_none(3.2) == 3
-    assert as_int_or_none(5) == 5
-
-
-def test_as_int_or_none_none_for_invalid() -> None:
-    assert as_int_or_none(None) is None
-    assert as_int_or_none("abc") is None
-    assert as_int_or_none(float("nan")) is None
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (3.7, 4),
+        (3.2, 3),
+        (5, 5),
+        (None, None),
+        ("abc", None),
+        (float("nan"), None),
+    ],
+)
+def test_as_int_or_none(value: object, expected: int | None) -> None:
+    assert as_int_or_none(value) is expected or as_int_or_none(value) == expected
 
 
 # -- normalize_sample_record ---------------------------------------------------

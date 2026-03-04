@@ -17,6 +17,8 @@ from ..helpers import (
     counter_delta,
 )
 
+_EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
+
 
 def _phase_speed_breakdown(
     samples: list[dict[str, Any]],
@@ -115,7 +117,7 @@ def _sensor_intensity_by_location(
     dropped_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     overflow_totals: dict[str, list[tuple[float | None, float]]] = defaultdict(list)
     strength_bucket_counts: dict[str, dict[str, int]] = defaultdict(
-        lambda: {f"l{idx}": 0 for idx in range(6)}
+        lambda: dict(_EMPTY_BUCKET_COUNTS)
     )
     strength_bucket_totals: dict[str, int] = defaultdict(int)
     # Per-phase intensity: {location: {phase_key: [amp_values]}}
@@ -183,7 +185,7 @@ def _sensor_intensity_by_location(
         overflow_vals = overflow_totals.get(location, [])
         dropped_delta = _counter_delta(dropped_vals)
         overflow_delta = _counter_delta(overflow_vals)
-        bucket_counts = strength_bucket_counts.get(location, {f"l{idx}": 0 for idx in range(6)})
+        bucket_counts = strength_bucket_counts.get(location, _EMPTY_BUCKET_COUNTS)
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
         bucket_distribution: dict[str, float | int] = {
             "total": bucket_total,

@@ -23,46 +23,44 @@ from vibesensor.domain_models import (
 
 
 class TestAsFloatOrNone:
-    def test_normal_float(self) -> None:
-        assert _as_float_or_none(3.14) == 3.14
-
-    def test_int(self) -> None:
-        assert _as_float_or_none(42) == 42.0
-
-    def test_string_number(self) -> None:
-        assert _as_float_or_none("3.14") == 3.14
-
-    def test_none(self) -> None:
-        assert _as_float_or_none(None) is None
-
-    def test_empty_string(self) -> None:
-        assert _as_float_or_none("") is None
-
-    def test_nan(self) -> None:
-        assert _as_float_or_none(float("nan")) is None
-
-    def test_inf(self) -> None:
-        assert _as_float_or_none(float("inf")) is None
-
-    def test_neg_inf(self) -> None:
-        assert _as_float_or_none(float("-inf")) is None
-
-    def test_non_numeric_string(self) -> None:
-        assert _as_float_or_none("abc") is None
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (3.14, 3.14),
+            (42, 42.0),
+            ("3.14", 3.14),
+            (None, None),
+            ("", None),
+            (float("nan"), None),
+            (float("inf"), None),
+            (float("-inf"), None),
+            ("abc", None),
+        ],
+    )
+    def test_as_float_or_none(self, value: Any, expected: float | None) -> None:
+        result = _as_float_or_none(value)
+        if expected is None:
+            assert result is None
+        else:
+            assert result == expected
 
 
 class TestAsIntOrNone:
-    def test_normal(self) -> None:
-        assert _as_int_or_none(42) == 42
-
-    def test_float_rounded(self) -> None:
-        assert _as_int_or_none(3.7) == 4
-
-    def test_nan(self) -> None:
-        assert _as_int_or_none(float("nan")) is None
-
-    def test_none(self) -> None:
-        assert _as_int_or_none(None) is None
+    @pytest.mark.parametrize(
+        "value, expected",
+        [
+            (42, 42),
+            (3.7, 4),
+            (float("nan"), None),
+            (None, None),
+        ],
+    )
+    def test_as_int_or_none(self, value: Any, expected: int | None) -> None:
+        result = _as_int_or_none(value)
+        if expected is None:
+            assert result is None
+        else:
+            assert result == expected
 
 
 # ---------------------------------------------------------------------------
