@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from math import ceil, floor, log1p, pow
-from statistics import mean
 from typing import Any
 
 from ..constants import MULTI_SENSOR_CORROBORATION_DB
@@ -14,6 +13,17 @@ from .helpers import _speed_bin_label, _weighted_percentile, weak_spatial_domina
 from .order_analysis import _finding_actions_for_source, _i18n_ref
 
 NEAR_TIE_DOMINANCE_THRESHOLD = 1.15
+
+# Least-invasive-first action priority (module-level to avoid per-call rebuild).
+_ACTION_PRIORITY: dict[str, int] = {
+    "wheel_tire_condition": 1,
+    "wheel_balance_and_runout": 2,
+    "engine_mounts_and_accessories": 3,
+    "driveline_mounts_and_fasteners": 3,
+    "driveline_inspection": 4,
+    "engine_combustion_quality": 5,
+    "general_mechanical_inspection": 6,
+}
 
 
 def _weighted_percentile_speed(
@@ -56,16 +66,6 @@ def _merge_test_plan(
     findings: list[dict[str, Any]],
     lang: str,
 ) -> list[dict[str, Any]]:
-    # Priority ordering: inspection/visual first, then balance/runout, then deeper
-    ACTION_PRIORITY = {
-        "wheel_tire_condition": 1,  # visual inspection – least invasive
-        "wheel_balance_and_runout": 2,  # balance/runout check
-        "engine_mounts_and_accessories": 3,
-        "driveline_mounts_and_fasteners": 3,
-        "driveline_inspection": 4,
-        "engine_combustion_quality": 5,
-        "general_mechanical_inspection": 6,
-    }
     steps: list[dict[str, Any]] = []
     for finding in findings:
         if not isinstance(finding, dict):
@@ -117,7 +117,7 @@ def _merge_test_plan(
 
     # Sort by priority (least-invasive first), then preserve original order as tiebreak
     ordered.sort(
-        key=lambda s: ACTION_PRIORITY.get(str(s.get("action_id") or "").strip().lower(), 99)
+        key=lambda s: _ACTION_PRIORITY.get(str(s.get("action_id") or "").strip().lower(), 99)
     )
 
     if ordered:
@@ -231,7 +231,11 @@ def _location_speedbin_summary(
             per_loc_corroborated_counts[location].append(corroborated_by_n_sensors)
 
         ranked = sorted(
-            ((loc, mean(vals)) for loc, vals in per_loc_scores.items() if vals),
+            (
+                (loc, sum(vals) / len(vals))
+                for loc, vals in per_loc_scores.items()
+                if vals
+            ),
             key=lambda item: item[1],
             reverse=True,
         )

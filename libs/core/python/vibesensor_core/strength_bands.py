@@ -27,11 +27,11 @@ _BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
 
 
 def bucket_for_strength(vibration_strength_db: float) -> str | None:
-    selected: str | None = "l0"  # default to negligible for sub-zero dB
-    for band in BANDS:
+    # Reverse-iterate sorted bands; first match is the highest qualifying band.
+    for band in reversed(BANDS):
         if vibration_strength_db >= band["min_db"]:
-            selected = band["key"]
-    return selected
+            return band["key"]
+    return "l0"  # sub-zero dB defaults to negligible
 
 
 def band_by_key(key: str) -> StrengthBand | None:

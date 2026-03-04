@@ -6,9 +6,8 @@ and engine orders; computes confidence scores; suppresses engine aliases.
 
 from __future__ import annotations
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from math import log1p
-from statistics import mean
 from typing import Any
 
 from vibesensor_core.vibration_strength import (
@@ -48,6 +47,23 @@ from ._constants import (
     _SNR_LOG_DIVISOR,
 )
 from .speed_profile import _phase_to_str, _speed_profile_from_points
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _mean(xs: list[float]) -> float:
+    """Arithmetic mean for non-empty float lists (avoids statistics.mean overhead)."""
+    return sum(xs) / len(xs)
+
+
+# Phase values used as constants across hypothesis iterations.
+_PHASE_ONSET_RELEVANT: frozenset[str] = frozenset({
+    DrivingPhase.ACCELERATION.value,
+    DrivingPhase.DECELERATION.value,
+    DrivingPhase.COAST_DOWN.value,
+})
 
 # ── Diffuse excitation detection constants ──────────────────────────────
 # If one sensor's amplitude is more than this ratio above the weakest,
@@ -124,23 +140,25 @@ def _detect_diffuse_excitation(
         return False, 1.0
     loc_rates: list[float] = []
     loc_mean_amps: dict[str, float] = {}
+    _min_loc_points = max(3, ORDER_MIN_MATCH_POINTS)
     for loc in connected_locations:
         loc_p = possible_by_location.get(loc, 0)
         loc_m = matched_by_location.get(loc, 0)
-        if loc_p >= max(3, ORDER_MIN_MATCH_POINTS):
+        if loc_p >= _min_loc_points:
             loc_rates.append(loc_m / max(1, loc_p))
-            loc_amps = [
-                _as_float(pt.get("amp")) or 0.0
-                for pt in matched_points
-                if str(pt.get("location") or "").strip() == loc
-                and (_as_float(pt.get("amp")) or 0.0) > 0
-            ]
+            loc_amps: list[float] = []
+            for pt in matched_points:
+                if str(pt.get("location") or "").strip() != loc:
+                    continue
+                amp_val = _as_float(pt.get("amp")) or 0.0
+                if amp_val > 0:
+                    loc_amps.append(amp_val)
             if loc_amps:
-                loc_mean_amps[loc] = mean(loc_amps)
+                loc_mean_amps[loc] = _mean(loc_amps)
     if len(loc_rates) < 2:
         return False, 1.0
     _rate_range = max(loc_rates) - min(loc_rates)
-    _mean_rate = mean(loc_rates)
+    _mean_rate = _mean(loc_rates)
     _amp_uniform = True
     if loc_mean_amps and len(loc_mean_amps) >= 2:
         _max_amp_loc = max(loc_mean_amps.values())
@@ -469,9 +487,9 @@ def _build_order_findings(
                 ):
                     phases_with_evidence += 1
 
-        mean_amp = mean(matched_amp) if matched_amp else 0.0
-        mean_floor = mean(matched_floor) if matched_floor else 0.0
-        mean_rel_err = mean(rel_errors) if rel_errors else 1.0
+        mean_amp = _mean(matched_amp) if matched_amp else 0.0
+        mean_floor = _mean(matched_floor) if matched_floor else 0.0
+        mean_rel_err = _mean(rel_errors) if rel_errors else 1.0
         corr = (
             _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
         )
@@ -493,19 +511,20 @@ def _build_order_findings(
             connected_locations=connected_locations,
             suspected_source=hypothesis.suspected_source,
         )
+        _hotspot_is_dict = isinstance(location_hotspot, dict)
         weak_spatial_separation = (
             bool(location_hotspot.get("weak_spatial_separation"))
-            if isinstance(location_hotspot, dict)
+            if _hotspot_is_dict
             else True
         )
         dominance_ratio = (
             _as_float(location_hotspot.get("dominance_ratio"))
-            if isinstance(location_hotspot, dict)
+            if _hotspot_is_dict
             else None
         )
         localization_confidence = (
             float(location_hotspot.get("localization_confidence"))
-            if isinstance(location_hotspot, dict)
+            if _hotspot_is_dict
             else 0.05
         )
 
@@ -525,7 +544,7 @@ def _build_order_findings(
         }
         _no_wheel_override = (
             bool(location_hotspot.get("no_wheel_sensors"))
-            if isinstance(location_hotspot, dict)
+            if _hotspot_is_dict
             else False
         )
         if (
@@ -581,7 +600,7 @@ def _build_order_findings(
 
         _no_wheel_sensors = (
             bool(location_hotspot.get("no_wheel_sensors"))
-            if isinstance(location_hotspot, dict)
+            if _hotspot_is_dict
             else False
         )
 
@@ -631,17 +650,14 @@ def _build_order_findings(
             evidence["_suffix"] = f" {location_line}"
 
         strongest_location = (
-            str(location_hotspot.get("location")) if isinstance(location_hotspot, dict) else ""
+            str(location_hotspot.get("location")) if _hotspot_is_dict else ""
         )
         hotspot_speed_band = (
-            str(location_hotspot.get("speed_range")) if isinstance(location_hotspot, dict) else ""
+            str(location_hotspot.get("speed_range")) if _hotspot_is_dict else ""
         )
         speed_points: list[tuple[float, float]] = []
         speed_phase_weights: list[float] = []
         _cruise_val = DrivingPhase.CRUISE.value
-        _accel_val = DrivingPhase.ACCELERATION.value
-        _decel_val = DrivingPhase.DECELERATION.value
-        _coast_val = DrivingPhase.COAST_DOWN.value
         for point in matched_points:
             point_speed = _as_float(point.get("speed_kmh"))
             point_amp = _as_float(point.get("amp"))
@@ -653,7 +669,7 @@ def _build_order_findings(
             ph = str(point.get("phase") or "")
             if ph == _cruise_val:
                 speed_phase_weights.append(3.0)
-            elif ph in (_accel_val, _decel_val, _coast_val):
+            elif ph in _PHASE_ONSET_RELEVANT:
                 speed_phase_weights.append(0.3)
             else:
                 speed_phase_weights.append(1.0)
@@ -681,11 +697,10 @@ def _build_order_findings(
 
         # Compute phase evidence: how much of the matched evidence came from CRUISE phase.
         # CRUISE (steady driving) provides the most reliable diagnostic signal.
-        _cruise_phase_val = DrivingPhase.CRUISE.value
         matched_phase_strs = [
             str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")
         ]
-        _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_phase_val)
+        _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_val)
         phase_evidence: dict[str, Any] = {
             "cruise_fraction": _cruise_matched / len(matched_phase_strs)
             if matched_phase_strs
@@ -693,17 +708,10 @@ def _build_order_findings(
             "phases_detected": sorted(set(matched_phase_strs)),
         }
         # Dominant non-cruise onset phase helps explain whether issue appears on transitions.
-        _phase_onset_relevant = {
-            DrivingPhase.ACCELERATION.value,
-            DrivingPhase.DECELERATION.value,
-            DrivingPhase.COAST_DOWN.value,
-        }
         dominant_phase: str | None = None
-        onset_phase_labels = [p for p in matched_phase_strs if p in _phase_onset_relevant]
+        onset_phase_labels = [p for p in matched_phase_strs if p in _PHASE_ONSET_RELEVANT]
         if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
-            from collections import Counter as _Counter
-
-            top_phase, top_count = _Counter(onset_phase_labels).most_common(1)[0]
+            top_phase, top_count = Counter(onset_phase_labels).most_common(1)[0]
             if top_count / len(matched_points) >= 0.50:
                 dominant_phase = top_phase
 
@@ -730,7 +738,7 @@ def _build_order_findings(
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "dominance_ratio": (
                 float(location_hotspot.get("dominance_ratio"))
-                if isinstance(location_hotspot, dict)
+                if _hotspot_is_dict
                 else None
             ),
             "localization_confidence": localization_confidence,

@@ -68,22 +68,19 @@ def maybe_start_server(
         )
         return None
 
+    srv_host = args.server_host
+    srv_port = args.server_http_port
+    check_timeout = args.server_check_timeout
+    health_url = server_health_url(srv_host, srv_port)
+
     for _ in range(5):
-        if check_server_running(
-            args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
-        ):
-            print(
-                f"Server already running at {server_health_url(args.server_host, args.server_http_port)}"
-            )
+        if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
+            print(f"Server already running at {health_url}")
             return None
         time.sleep(0.2)
 
-    if check_server_running(
-        args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
-    ):
-        print(
-            f"Server already running at {server_health_url(args.server_host, args.server_http_port)}"
-        )
+    if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
+        print(f"Server already running at {health_url}")
         return None
 
     config_path = Path(args.server_config)
@@ -94,25 +91,17 @@ def maybe_start_server(
     deadline = time.monotonic() + args.server_start_timeout
     while time.monotonic() < deadline:
         if proc.poll() is not None:
-            if check_server_running(
-                args.server_host,
-                args.server_http_port,
-                timeout_s=args.server_check_timeout,
-            ):
+            if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
                 print(
                     "Detected existing healthy server after auto-start race at "
-                    f"{server_health_url(args.server_host, args.server_http_port)}"
+                    f"{health_url}"
                 )
                 return None
             raise RuntimeError(
                 f"Auto-started server exited early with code {proc.returncode}"
             )
-        if check_server_running(
-            args.server_host, args.server_http_port, timeout_s=args.server_check_timeout
-        ):
-            print(
-                f"Server is now reachable at {server_health_url(args.server_host, args.server_http_port)}"
-            )
+        if check_server_running(srv_host, srv_port, timeout_s=check_timeout):
+            print(f"Server is now reachable at {health_url}")
             return proc
         time.sleep(0.3)
     proc.terminate()

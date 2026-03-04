@@ -24,6 +24,8 @@ from .domain_models import as_int_or_none as _as_int_or_none
 
 LOGGER = logging.getLogger(__name__)
 
+_JSONL_SEPARATORS = (",", ":")
+
 __all__ = [
     "RUN_SCHEMA_VERSION",
     "RUN_METADATA_TYPE",
@@ -173,11 +175,13 @@ def append_jsonl_records(
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     cadence = max(1, int(durable_every_records))
+    _dumps = json.dumps
+    _seps = _JSONL_SEPARATORS
     with path.open("a", encoding="utf-8") as f:
         for index, record in enumerate(records, start=1):
             try:
-                line = json.dumps(
-                    record, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+                line = _dumps(
+                    record, ensure_ascii=False, allow_nan=False, separators=_seps
                 )
             except ValueError:
                 # NaN/Inf values — fall back to default serialisation so we
@@ -186,7 +190,7 @@ def append_jsonl_records(
                     "Record %d contains non-finite float; serialising with allow_nan",
                     index,
                 )
-                line = json.dumps(record, ensure_ascii=False, allow_nan=True, separators=(",", ":"))
+                line = _dumps(record, ensure_ascii=False, allow_nan=True, separators=_seps)
             except TypeError as exc:
                 # Non-serialisable value (datetime, bytes, set, …). Coerce
                 # to string representation so we never silently drop a
@@ -196,11 +200,11 @@ def append_jsonl_records(
                     index,
                     exc,
                 )
-                line = json.dumps(
+                line = _dumps(
                     record,
                     ensure_ascii=False,
                     allow_nan=True,
-                    separators=(",", ":"),
+                    separators=_seps,
                     default=str,
                 )
             f.write(line)
@@ -221,13 +225,18 @@ def read_jsonl_run(path: Path) -> RunData:
     end_record: dict[str, Any] | None = None
     samples: list[dict[str, Any]] = []
     skipped = 0
+    _loads = json.loads
+    _meta_type = RUN_METADATA_TYPE
+    _sample_type = RUN_SAMPLE_TYPE
+    _end_type = RUN_END_TYPE
+    _normalize = normalize_sample_record
     with path.open("r", encoding="utf-8", errors="replace") as f:
         for line_no, line in enumerate(f, start=1):
             text = line.strip()
             if not text:
                 continue
             try:
-                payload = json.loads(text)
+                payload = _loads(text)
             except json.JSONDecodeError as exc:
                 LOGGER.warning(
                     "Skipping corrupt JSONL line %d in %s: %s",
@@ -240,11 +249,11 @@ def read_jsonl_run(path: Path) -> RunData:
             if not isinstance(payload, dict):
                 continue
             record_type = str(payload.get("record_type", ""))
-            if record_type == RUN_METADATA_TYPE and metadata is None:
+            if record_type == _meta_type and metadata is None:
                 metadata = payload
-            elif record_type == RUN_SAMPLE_TYPE:
+            elif record_type == _sample_type:
                 try:
-                    samples.append(normalize_sample_record(payload))
+                    samples.append(_normalize(payload))
                 except Exception as exc:
                     LOGGER.warning(
                         "Skipping malformed sample at line %d in %s: %s",
@@ -253,7 +262,7 @@ def read_jsonl_run(path: Path) -> RunData:
                         exc,
                     )
                     skipped += 1
-            elif record_type == RUN_END_TYPE:
+            elif record_type == _end_type:
                 end_record = payload
 
     if skipped:

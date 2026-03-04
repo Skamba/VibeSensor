@@ -18,6 +18,23 @@ from .order_findings import _build_order_findings
 from .persistent_findings import _build_persistent_peak_findings
 from .reference_checks import _reference_missing_finding
 
+_QUANTISE_STEP = 0.02
+_QUANTISE_INV = 1.0 / _QUANTISE_STEP  # avoid division in hot path
+
+
+def _finding_sort_key(item: dict) -> tuple[float, float]:
+    """Sort key: (quantised confidence, ranking_score) for deterministic ordering.
+
+    Confidence is quantised to 0.02 steps so that findings whose
+    confidence differs only due to noise/timing jitter are treated as
+    equal, allowing the ranking_score (which properly incorporates
+    signal amplitude) to break the tie.
+    """
+    conf = float(item.get("confidence_0_to_1", 0.0))
+    quantised = round(conf * _QUANTISE_INV) * _QUANTISE_STEP
+    rank = float(item.get("_ranking_score", 0.0))
+    return (quantised, rank)
+
 
 def _build_findings(
     *,
@@ -71,11 +88,10 @@ def _build_findings(
             )
         )
 
-    engine_ref_count = 0
-    for sample in samples:
-        rpm, _ = _effective_engine_rpm(sample, metadata, tire_circumference_m)
-        if rpm is not None and rpm > 0:
-            engine_ref_count += 1
+    _eff_rpm = _effective_engine_rpm  # local bind – called per sample
+    engine_ref_count = sum(
+        1 for s in samples if ((_eff_rpm(s, metadata, tire_circumference_m))[0] or 0) > 0
+    )
     engine_rpm_non_null_pct = (engine_ref_count / len(samples) * 100.0) if samples else 0.0
     engine_ref_sufficient = engine_rpm_non_null_pct >= SPEED_COVERAGE_MIN_PCT
     if not engine_ref_sufficient:
@@ -172,37 +188,18 @@ def _build_findings(
         )
     )
 
-    reference_findings = [
-        item for item in findings if str(item.get("finding_id", "")).startswith("REF_")
-    ]
-    non_reference_findings = [
-        item for item in findings if not str(item.get("finding_id", "")).startswith("REF_")
-    ]
-    informational_findings = [
-        item
-        for item in non_reference_findings
-        if str(item.get("severity") or "").strip().lower() == "info"
-    ]
-    diagnostic_findings = [
-        item
-        for item in non_reference_findings
-        if str(item.get("severity") or "").strip().lower() != "info"
-    ]
-
-    def _finding_sort_key(item: dict) -> tuple[float, float]:
-        """Sort key: (quantised confidence, ranking_score) for deterministic ordering.
-
-        Confidence is quantised to 0.02 steps so that findings whose
-        confidence differs only due to noise/timing jitter are treated as
-        equal, allowing the ranking_score (which properly incorporates
-        signal amplitude) to break the tie.
-        """
-        conf = float(item.get("confidence_0_to_1", 0.0))
-        # Quantise to 0.02 (50 bins across 0-1) so near-equal
-        # confidences compare as equal.
-        quantised = round(conf / 0.02) * 0.02
-        rank = float(item.get("_ranking_score", 0.0))
-        return (quantised, rank)
+    # Single-pass classification: reference → diagnostic → informational
+    reference_findings: list[dict[str, Any]] = []
+    diagnostic_findings: list[dict[str, Any]] = []
+    informational_findings: list[dict[str, Any]] = []
+    for item in findings:
+        fid = str(item.get("finding_id", ""))
+        if fid.startswith("REF_"):
+            reference_findings.append(item)
+        elif str(item.get("severity") or "").strip().lower() == "info":
+            informational_findings.append(item)
+        else:
+            diagnostic_findings.append(item)
 
     diagnostic_findings.sort(key=_finding_sort_key, reverse=True)
     informational_findings.sort(key=_finding_sort_key, reverse=True)

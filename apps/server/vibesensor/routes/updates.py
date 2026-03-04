@@ -23,6 +23,8 @@ from ..api_models import (
 if TYPE_CHECKING:
     from ..runtime import RuntimeState
 
+__all__ = ["create_update_routes"]
+
 
 def create_update_routes(state: RuntimeState) -> APIRouter:
     router = APIRouter()
@@ -45,8 +47,7 @@ def create_update_routes(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/update/cancel", response_model=UpdateCancelResponse)
     async def cancel_update() -> UpdateCancelResponse:
-        cancelled = state.update_manager.cancel()
-        return {"cancelled": cancelled}
+        return {"cancelled": state.update_manager.cancel()}
 
     # -- ESP flash -------------------------------------------------------------
 

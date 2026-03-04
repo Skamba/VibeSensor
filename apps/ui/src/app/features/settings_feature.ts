@@ -357,14 +357,16 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   // -- GPS status polling & rendering -----------------------------------------
 
+  const CONNECTION_STATE_I18N: Record<string, string> = {
+    disabled: "settings.speed.state_disabled",
+    disconnected: "settings.speed.state_disconnected",
+    connected: "settings.speed.state_connected",
+    stale: "settings.speed.state_stale",
+  };
+
   function connectionStateLabel(cs: string): string {
-    const map: Record<string, string> = {
-      disabled: t("settings.speed.state_disabled"),
-      disconnected: t("settings.speed.state_disconnected"),
-      connected: t("settings.speed.state_connected"),
-      stale: t("settings.speed.state_stale"),
-    };
-    return map[cs] ?? cs;
+    const key = CONNECTION_STATE_I18N[cs];
+    return key ? t(key) : cs;
   }
 
   function speedKmhInSelectedUnit(speedKmh: number | null): number | null {
@@ -377,10 +379,11 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function renderGpsStatus(status: SpeedSourceStatusPayload): void {
+    const unitLabel = selectedSpeedUnitLabel();
     if (els.headerGpsStatus) {
       const stateLabel = connectionStateLabel(status.connection_state);
       const speed = speedKmhInSelectedUnit(status.effective_speed_kmh);
-      const speedText = speed != null ? ` ${fmt(speed, 1)} ${selectedSpeedUnitLabel()}` : "";
+      const speedText = speed != null ? ` ${fmt(speed, 1)} ${unitLabel}` : "";
       els.headerGpsStatus.textContent = `GPS ${stateLabel}${speedText}`;
       const variant = status.connection_state === "connected"
         ? "ok"
@@ -401,12 +404,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     }
     if (els.gpsStatusRawSpeed) {
       const rawSpeed = speedKmhInSelectedUnit(status.raw_speed_kmh);
-      els.gpsStatusRawSpeed.textContent = rawSpeed != null ? `${fmt(rawSpeed, 1)} ${selectedSpeedUnitLabel()}` : "--";
+      els.gpsStatusRawSpeed.textContent = rawSpeed != null ? `${fmt(rawSpeed, 1)} ${unitLabel}` : "--";
     }
     if (els.gpsStatusEffectiveSpeed) {
       const effectiveSpeed = speedKmhInSelectedUnit(status.effective_speed_kmh);
       els.gpsStatusEffectiveSpeed.textContent = effectiveSpeed != null
-        ? `${fmt(effectiveSpeed, 1)} ${selectedSpeedUnitLabel()}`
+        ? `${fmt(effectiveSpeed, 1)} ${unitLabel}`
         : "--";
     }
     if (els.gpsStatusLastError) {

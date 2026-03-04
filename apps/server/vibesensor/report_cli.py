@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from .analysis import map_summary, summarize_log
@@ -29,16 +30,16 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     if not args.input.exists():
-        print(f"Error: input file not found: {args.input}", file=__import__("sys").stderr)
+        print(f"Error: input file not found: {args.input}", file=sys.stderr)
         return 1
     try:
         include_samples = args.summary_json is not None
         summary = summarize_log(args.input, include_samples=include_samples)
     except json.JSONDecodeError as exc:
-        print(f"Error: input file contains invalid JSON: {exc}", file=__import__("sys").stderr)
+        print(f"Error: input file contains invalid JSON: {exc}", file=sys.stderr)
         return 1
     except ValueError as exc:
-        print(f"Error: {exc}", file=__import__("sys").stderr)
+        print(f"Error: {exc}", file=sys.stderr)
         return 1
 
     out_pdf = args.output or args.input.with_name(f"{args.input.stem}_report.pdf")
@@ -48,7 +49,7 @@ def main() -> int:
     except Exception as exc:
         print(
             f"Error: PDF generation failed: {exc}",
-            file=__import__("sys").stderr,
+            file=sys.stderr,
         )
         return 1
     print(f"wrote report: {out_pdf}")

@@ -17,6 +17,8 @@ from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from .constants import NUMERIC_TYPES
 from .protocol import parse_client_id
 
+_isfinite = math.isfinite
+
 __all__ = [
     "RUN_END_TYPE",
     "RUN_METADATA_TYPE",
@@ -60,7 +62,7 @@ def as_float_or_none(value: object) -> float | None:
         out = float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
-    if not math.isfinite(out):
+    if not _isfinite(out):
         return None
     return out
 
@@ -85,7 +87,7 @@ def _parse_manual_speed(value: Any) -> float | None:
     """Return a positive, finite float speed (≤500 km/h) or None."""
     if isinstance(value, NUMERIC_TYPES):
         f = float(value)
-        if math.isfinite(f) and 0 < f <= 500:
+        if _isfinite(f) and 0 < f <= 500:
             return f
     return None
 
@@ -312,15 +314,20 @@ def _default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[
     }
 
 
+_DEFAULT_PHASE_LABELS: tuple[str, ...] = (
+    "idle", "acceleration", "cruise", "deceleration", "coast_down",
+)
+_DEFAULT_PHASE_METADATA_TEMPLATE: dict[str, object] = {
+    "version": "v1",
+    "idle_speed_kmh_max": 3.0,
+    "acceleration_threshold_kmh_s": 1.5,
+    "deceleration_threshold_kmh_s": -1.5,
+    "coast_down_speed_kmh_max": 15.0,
+}
+
+
 def _default_phase_metadata() -> dict[str, object]:
-    return {
-        "version": "v1",
-        "idle_speed_kmh_max": 3.0,
-        "acceleration_threshold_kmh_s": 1.5,
-        "deceleration_threshold_kmh_s": -1.5,
-        "coast_down_speed_kmh_max": 15.0,
-        "labels": ["idle", "acceleration", "cruise", "deceleration", "coast_down"],
-    }
+    return {**_DEFAULT_PHASE_METADATA_TEMPLATE, "labels": list(_DEFAULT_PHASE_LABELS)}
 
 
 @dataclass(slots=True)
@@ -440,6 +447,29 @@ _VSD_KEY: str = METRIC_FIELDS["vibration_strength_db"]
 _BUCKET_KEY: str = METRIC_FIELDS["strength_bucket"]
 
 
+def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str, object]]:
+    """Validate and normalise a raw peak list into canonical form."""
+    normalized: list[dict[str, object]] = []
+    if not isinstance(peaks_raw, list):
+        return normalized
+    for peak in peaks_raw[:max_items]:
+        if not isinstance(peak, dict):
+            continue
+        hz = _as_float_or_none(peak.get("hz"))
+        amp = _as_float_or_none(peak.get("amp"))
+        if hz is None or amp is None or hz <= 0 or amp <= 0:
+            continue
+        normalized_peak: dict[str, object] = {"hz": hz, "amp": amp}
+        peak_db = _as_float_or_none(peak.get(_VSD_KEY))
+        if peak_db is not None:
+            normalized_peak[_VSD_KEY] = peak_db
+        peak_bucket = peak.get(_BUCKET_KEY)
+        if peak_bucket not in (None, ""):
+            normalized_peak[_BUCKET_KEY] = str(peak_bucket)
+        normalized.append(normalized_peak)
+    return normalized
+
+
 @dataclass(slots=True)
 class SensorFrame:
     record_type: str
@@ -527,27 +557,6 @@ class SensorFrame:
         strength_peak_amp_g = _as_float_or_none(record.get("strength_peak_amp_g"))
         strength_floor_amp_g = _as_float_or_none(record.get("strength_floor_amp_g"))
         sample_rate_hz = _as_int_or_none(record.get("sample_rate_hz"))
-
-        def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str, object]]:
-            normalized: list[dict[str, object]] = []
-            if not isinstance(peaks_raw, list):
-                return normalized
-            for peak in peaks_raw[:max_items]:
-                if not isinstance(peak, dict):
-                    continue
-                hz = _as_float_or_none(peak.get("hz"))
-                amp = _as_float_or_none(peak.get("amp"))
-                if hz is None or amp is None or hz <= 0 or amp <= 0:
-                    continue
-                normalized_peak: dict[str, object] = {"hz": hz, "amp": amp}
-                peak_db = _as_float_or_none(peak.get(METRIC_FIELDS["vibration_strength_db"]))
-                if peak_db is not None:
-                    normalized_peak[METRIC_FIELDS["vibration_strength_db"]] = peak_db
-                peak_bucket = peak.get(METRIC_FIELDS["strength_bucket"])
-                if peak_bucket not in (None, ""):
-                    normalized_peak[METRIC_FIELDS["strength_bucket"]] = str(peak_bucket)
-                normalized.append(normalized_peak)
-            return normalized
 
         normalized_peaks = _normalize_peak_list(record.get("top_peaks"), max_items=10)
         normalized_peaks_x = _normalize_peak_list(record.get("top_peaks_x"), max_items=3)

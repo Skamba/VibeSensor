@@ -20,10 +20,10 @@ export function normalizeStrengthBands(input: unknown): StrengthBand[] {
         })
         .filter((band): band is StrengthBand => band !== null)
     : [];
-  const ascending = [...parsed].sort((a, b) => a.min_db - b.min_db);
-  return ascending.map((band, idx) => ({
+  parsed.sort((a, b) => a.min_db - b.min_db);
+  return parsed.map((band, idx) => ({
     ...band,
-    max_db: idx + 1 < ascending.length ? ascending[idx + 1].min_db : Number.POSITIVE_INFINITY,
+    max_db: idx + 1 < parsed.length ? parsed[idx + 1].min_db : Number.POSITIVE_INFINITY,
     labelKey: `matrix.severity.${band.key}`,
   }));
 }

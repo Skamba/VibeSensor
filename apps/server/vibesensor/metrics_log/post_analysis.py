@@ -12,6 +12,7 @@ import time
 from collections import deque
 from collections.abc import Callable
 from contextlib import nullcontext
+from dataclasses import asdict
 from threading import RLock, Thread
 from typing import TYPE_CHECKING
 
@@ -97,16 +98,18 @@ class PostAnalysisWorker:
 
         Returns ``True`` when all work finished, ``False`` on timeout.
         """
-        deadline = time.monotonic() + max(0.0, timeout_s)
+        _monotonic = time.monotonic
+        lock = self._lock
+        deadline = _monotonic() + max(0.0, timeout_s)
         while True:
-            with self._lock:
+            with lock:
                 worker = self._analysis_thread
                 queued = bool(self._analysis_queue)
                 active_run = self._analysis_active_run_id is not None
                 worker_alive = bool(worker and worker.is_alive())
             if not queued and not active_run and not worker_alive:
                 return True
-            remaining = deadline - time.monotonic()
+            remaining = deadline - _monotonic()
             if remaining <= 0:
                 LOGGER.warning(
                     "wait_for_post_analysis timed out after %.1fs "
@@ -159,7 +162,8 @@ class PostAnalysisWorker:
 
     def _run_post_analysis(self, run_id: str) -> None:
         """Run thorough post-run analysis and store results in history DB."""
-        if self._history_db is None:
+        db = self._history_db
+        if db is None:
             return
         analysis_start = time.monotonic()
         LOGGER.info("Analysis started for run %s", run_id)
@@ -167,11 +171,11 @@ class PostAnalysisWorker:
             from ..analysis import summarize_run_data
             from ..runlog import normalize_sample_record
 
-            metadata = self._history_db.get_run_metadata(run_id)
+            metadata = db.get_run_metadata(run_id)
             if metadata is None:
                 LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
                 try:
-                    self._history_db.store_analysis_error(
+                    db.store_analysis_error(
                         run_id, "Metadata not found or corrupt; cannot analyse"
                     )
                 except Exception:
@@ -181,12 +185,12 @@ class PostAnalysisWorker:
                 return
             language = str(metadata.get("language") or "en")
 
-            read_tx = getattr(self._history_db, "read_transaction", None)
+            read_tx = getattr(db, "read_transaction", None)
             tx_ctx = read_tx() if callable(read_tx) else nullcontext()
             with tx_ctx:
                 normalized_iter = (
                     normalize_sample_record(sample)
-                    for batch in self._history_db.iter_run_samples(run_id, batch_size=1024)
+                    for batch in db.iter_run_samples(run_id, batch_size=1024)
                     for sample in batch
                 )
                 samples, total_sample_count, stride = bounded_sample(
@@ -194,7 +198,7 @@ class PostAnalysisWorker:
                 )
             if not samples:
                 LOGGER.warning("Skipping post-analysis for run %s: no samples collected", run_id)
-                self._history_db.store_analysis_error(run_id, "No samples collected during run")
+                db.store_analysis_error(run_id, "No samples collected during run")
                 return
             summary = summarize_run_data(
                 metadata, samples, lang=language, file_name=run_id, include_samples=False
@@ -222,8 +226,6 @@ class PostAnalysisWorker:
                     }
                 )
             try:
-                from dataclasses import asdict
-
                 from ..analysis import map_summary
 
                 report_data = map_summary(summary)
@@ -236,7 +238,7 @@ class PostAnalysisWorker:
                     exc_info=True,
                 )
 
-            self._history_db.store_analysis(run_id, summary)
+            db.store_analysis(run_id, summary)
 
             duration_s = time.monotonic() - analysis_start
             LOGGER.info(
@@ -256,7 +258,7 @@ class PostAnalysisWorker:
                 exc_info=True,
             )
             try:
-                self._history_db.store_analysis_error(run_id, str(exc))
+                db.store_analysis_error(run_id, str(exc))
             except Exception as store_exc:
                 self._error_cb(f"history store_analysis_error failed for run {run_id}: {store_exc}")
                 LOGGER.warning("Failed to store analysis error for run %s", run_id, exc_info=True)

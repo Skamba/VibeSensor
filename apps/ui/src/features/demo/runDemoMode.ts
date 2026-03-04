@@ -27,8 +27,7 @@ export function runDemoMode(deps: DemoDeps): void {
   ];
 
   const freqCount = 256;
-  const freqArr: number[] = [];
-  for (let i = 0; i < freqCount; i++) freqArr.push((i / freqCount) * 250);
+  const freqArr = Array.from({ length: freqCount }, (_, i) => (i / freqCount) * 250);
 
   function sineSpectrum(baseAmps: number[], peakHz: number, peakAmp: number): number[] {
     return freqArr.map((hz, i) => {

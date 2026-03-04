@@ -18,6 +18,8 @@ NMCLI_TIMEOUT_S = 30
 HOTSPOT_RESTORE_RETRIES = 3
 HOTSPOT_RESTORE_DELAY_S = 2
 
+_FAILURE_MARKERS = ("failed", "error", "timeout")
+
 
 def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
     """Parse wifi diagnostic files into structured issues."""
@@ -36,7 +38,7 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
                 if not lower_line.startswith("status="):
                     continue
                 status_value = lower_line.split("=", 1)[1].strip()
-                if any(marker in status_value for marker in ("failed", "error", "timeout")):
+                if any(marker in status_value for marker in _FAILURE_MARKERS):
                     sanitized = sanitize_log_line(line)
                     issues.append(
                         UpdateIssue(
@@ -55,7 +57,7 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
             lines = text.splitlines()
             for line in lines[-100:]:
                 lower = line.lower()
-                if "error" in lower or "failed" in lower or "timeout" in lower:
+                if any(marker in lower for marker in _FAILURE_MARKERS):
                     sanitized = sanitize_log_line(line)
                     issues.append(
                         UpdateIssue(

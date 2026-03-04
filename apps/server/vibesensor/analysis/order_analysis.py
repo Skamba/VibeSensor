@@ -47,7 +47,7 @@ def _order_label(order: int | object, base: str | object) -> str:
     return f"{int(order)}x {base!s}"  # type: ignore[arg-type]
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, frozen=True)
 class _OrderHypothesis:
     key: str
     suspected_source: str
@@ -80,20 +80,36 @@ class _OrderHypothesis:
         return None, "missing"
 
 
-def _order_hypotheses() -> list[_OrderHypothesis]:
-    return [
-        # Wheel orders travel through tire sidewall → hub → knuckle → control
-        # arms → bushings → subframe → body → sensor.  Each rubber component
-        # broadens the peak and reduces tracking precision.
-        _OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1, path_compliance=1.5),
-        _OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2, path_compliance=1.5),
-        # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
-        _OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1, path_compliance=1.0),
-        _OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2, path_compliance=1.0),
-        # Engine is stiffly mounted on most vehicles.
-        _OrderHypothesis("engine_1x", "engine", "engine", 1, path_compliance=1.0),
-        _OrderHypothesis("engine_2x", "engine", "engine", 2, path_compliance=1.0),
-    ]
+# Pre-built hypothesis objects – avoids re-creating 6 frozen dataclass
+# instances on every call.  The thin wrapper function below is kept so that
+# test monkeypatches (which replace the callable) keep working.
+_ORDER_HYPOTHESES: tuple[_OrderHypothesis, ...] = (
+    # Wheel orders travel through tire sidewall → hub → knuckle → control
+    # arms → bushings → subframe → body → sensor.  Each rubber component
+    # broadens the peak and reduces tracking precision.
+    _OrderHypothesis("wheel_1x", "wheel/tire", "wheel", 1, path_compliance=1.5),
+    _OrderHypothesis("wheel_2x", "wheel/tire", "wheel", 2, path_compliance=1.5),
+    # Driveshaft has a shorter, stiffer path: shaft → diff → subframe → body.
+    _OrderHypothesis("driveshaft_1x", "driveline", "driveshaft", 1, path_compliance=1.0),
+    _OrderHypothesis("driveshaft_2x", "driveline", "driveshaft", 2, path_compliance=1.0),
+    # Engine is stiffly mounted on most vehicles.
+    _OrderHypothesis("engine_1x", "engine", "engine", 1, path_compliance=1.0),
+    _OrderHypothesis("engine_2x", "engine", "engine", 2, path_compliance=1.0),
+)
+
+
+def _order_hypotheses() -> tuple[_OrderHypothesis, ...]:
+    return _ORDER_HYPOTHESES
+
+
+# Ordered (token, i18n_key) pairs for wheel-focus resolution.
+# More-specific patterns come first so the first match wins.
+_WHEEL_FOCUS_RULES: tuple[tuple[str, str], ...] = (
+    ("front left wheel", "WHEEL_FOCUS_FRONT_LEFT"),
+    ("front right wheel", "WHEEL_FOCUS_FRONT_RIGHT"),
+    ("rear left wheel", "WHEEL_FOCUS_REAR_LEFT"),
+    ("rear right wheel", "WHEEL_FOCUS_REAR_RIGHT"),
+)
 
 
 def _wheel_focus_from_location(location: str) -> dict[str, str]:
@@ -101,14 +117,9 @@ def _wheel_focus_from_location(location: str) -> dict[str, str]:
     # Normalize hyphens/underscores to spaces for robust matching against
     # label_for_code() output which uses spaces (e.g. "Front Left Wheel").
     token = location.strip().lower().replace("-", " ").replace("_", " ")
-    if "front left wheel" in token:
-        return {"_i18n_key": "WHEEL_FOCUS_FRONT_LEFT"}
-    if "front right wheel" in token:
-        return {"_i18n_key": "WHEEL_FOCUS_FRONT_RIGHT"}
-    if "rear left wheel" in token:
-        return {"_i18n_key": "WHEEL_FOCUS_REAR_LEFT"}
-    if "rear right wheel" in token:
-        return {"_i18n_key": "WHEEL_FOCUS_REAR_RIGHT"}
+    for pattern, key in _WHEEL_FOCUS_RULES:
+        if pattern in token:
+            return {"_i18n_key": key}
     if "rear" in token or "trunk" in token:
         return {"_i18n_key": "WHEEL_FOCUS_REAR"}
     if "front" in token or "engine" in token:

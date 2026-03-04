@@ -16,15 +16,17 @@ LOGGER = logging.getLogger(__name__)
 
 _CHANNEL_RE = re.compile(r"channel\s+(\d+)")
 
+_NM_LOG_SIGNALS: tuple[tuple[str, str | None, str], ...] = (
+    ("no address range available", None, "dhcp_no_range"),
+    ("dnsmasq", "failed to start", "dhcp_dnsmasq_start_failed"),
+)
+
+_PORT53_DELIMITERS: tuple[str, ...] = ('users:(("', 'users:("')
+
 
 def parse_active_connection_names(stdout: str) -> list[str]:
     """Parse ``nmcli -t -f NAME connection show`` output into a list of names."""
-    rows = []
-    for line in stdout.splitlines():
-        line = line.strip()
-        if line:
-            rows.append(line)
-    return rows
+    return [stripped for line in stdout.splitlines() if (stripped := line.strip())]
 
 
 def parse_active_conn_device(con_name: str, stdout: str) -> tuple[bool, str | None]:
@@ -82,10 +84,9 @@ def parse_rfkill_blocked(output: str) -> bool:
 def nm_log_signals(log_excerpt: str) -> tuple[str | None, str | None]:
     """Extract diagnostic signals from NetworkManager journal output."""
     lower = log_excerpt.lower()
-    if "no address range available" in lower:
-        return "dhcp_no_range", None
-    if "failed to start" in lower and "dnsmasq" in lower:
-        return "dhcp_dnsmasq_start_failed", None
+    for needle, extra_needle, signal in _NM_LOG_SIGNALS:
+        if needle in lower and (extra_needle is None or extra_needle in lower):
+            return signal, None
     if "address already in use" in lower and (":53" in lower or "port 53" in lower):
         return "port53_conflict", None
     return None, None
@@ -93,21 +94,23 @@ def nm_log_signals(log_excerpt: str) -> tuple[str | None, str | None]:
 
 def parse_port53_conflict(ss_stdout: str) -> str | None:
     """Parse ``ss -ltnup sport = :53`` to find non-NM processes on port 53."""
-    lines = [line.strip() for line in ss_stdout.splitlines() if line.strip()]
     conflict_names: list[str] = []
-    for line in lines:
+    for raw_line in ss_stdout.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
         lowered = line.lower()
         if "dnsmasq" in lowered and "networkmanager" in lowered:
             continue
-        if "users:(" in lowered:
-            # Real ss output uses double-parens: users:(("name",pid=…))
-            # Older or alternative formats may use single-paren: users:("name",…)
-            for delimiter in ('users:(("', 'users:("'):
-                parts = line.split(delimiter, maxsplit=1)
-                if len(parts) == 2:
-                    proc = parts[1].split('"', maxsplit=1)[0]
-                    conflict_names.append(proc)
-                    break
+        if "users:(" not in lowered:
+            continue
+        # Real ss output uses double-parens: users:(("name",pid=…))
+        # Older or alternative formats may use single-paren: users:("name",…)
+        for delimiter in _PORT53_DELIMITERS:
+            parts = line.split(delimiter, maxsplit=1)
+            if len(parts) == 2:
+                conflict_names.append(parts[1].split('"', maxsplit=1)[0])
+                break
     if not conflict_names:
         return None
     return ",".join(sorted(set(conflict_names)))

@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..order_analysis import _i18n_ref
+# ---------------------------------------------------------------------------
+# Module-level i18n reference constants (hoisted; avoids per-call dict
+# construction and removes the cross-package import of order_analysis._i18n_ref).
+# ---------------------------------------------------------------------------
+
+_REF_MISSING: dict[str, str] = {"_i18n_key": "REFERENCE_MISSING"}
+_REF_MISSING_AMPLITUDE: dict[str, str] = {
+    "_i18n_key": "REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED",
+}
 
 
 def _reference_missing_finding(
@@ -20,12 +28,12 @@ def _reference_missing_finding(
         "finding_type": "reference",
         "suspected_source": suspected_source,
         "evidence_summary": evidence_summary,
-        "frequency_hz_or_order": _i18n_ref("REFERENCE_MISSING"),
+        "frequency_hz_or_order": {**_REF_MISSING},
         "amplitude_metric": {
             "name": "not_available",
             "value": None,
             "units": "n/a",
-            "definition": _i18n_ref("REFERENCE_MISSING_ORDER_SPECIFIC_AMPLITUDE_RANKING_SKIPPED"),
+            "definition": {**_REF_MISSING_AMPLITUDE},
         },
         "confidence_0_to_1": None,
         "quick_checks": quick_checks[:3],
