@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from math import floor, log1p
-from statistics import mean
+from math import floor as _math_floor
+from math import log1p
 from typing import Any
 
 from vibesensor_core.vibration_strength import percentile
@@ -31,6 +31,9 @@ from ._constants import (
 from .speed_profile import _phase_to_str, _speed_profile_from_points
 
 PERSISTENT_PEAK_MIN_PRESENCE = 0.15
+
+# Hoisted from per-bin loop to avoid repeated enum attribute access.
+_CRUISE_PHASE_VAL: str = DrivingPhase.CRUISE.value
 TRANSIENT_BURSTINESS_THRESHOLD = 5.0
 PERSISTENT_PEAK_MAX_FINDINGS = 3
 # Minimum SNR for a peak to be considered above baseline noise
@@ -122,42 +125,52 @@ def _build_persistent_peak_findings(
     """
     if freq_bin_hz <= 0:
         freq_bin_hz = 2.0
+    freq_bin_hz_half = freq_bin_hz * 0.5
 
+    _nested_int_dd = lambda: defaultdict(int)  # noqa: E731
     bin_amps: dict[float, list[float]] = defaultdict(list)
     bin_floors: dict[float, list[float]] = defaultdict(list)
     bin_speeds: dict[float, list[float]] = defaultdict(list)
     bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
-    bin_location_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
-    bin_phase_counts: dict[float, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    bin_location_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
+    bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
+    bin_phase_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
     total_speed_bin_counts: dict[str, int] = defaultdict(int)
     total_locations: set[str] = set()
     total_location_sample_counts: dict[str, int] = defaultdict(int)
     n_samples = 0
     has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
 
+    # Local-bind frequently called helpers to avoid repeated global lookups.
+    _local_as_float = _as_float
+    _local_speed_bin = _speed_bin_label
+    _local_location = _location_label
+    _local_top_peaks = _sample_top_peaks
+    _local_floor_est = _estimate_strength_floor_amp_g
+    _local_phase_str = _phase_to_str
+    _floor = _math_floor
+
     for i, sample in enumerate(samples):
         if not isinstance(sample, dict):
             continue
         n_samples += 1
-        speed = _as_float(sample.get("speed_kmh"))
-        sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
+        speed = _local_as_float(sample.get("speed_kmh"))
+        sample_speed_bin = _local_speed_bin(speed) if speed is not None and speed > 0 else None
         if sample_speed_bin is not None:
             total_speed_bin_counts[sample_speed_bin] += 1
-        _floor_raw = _estimate_strength_floor_amp_g(sample)
+        _floor_raw = _local_floor_est(sample)
         floor_amp = _floor_raw if _floor_raw is not None else 0.0
-        location = _location_label(sample, lang=lang)
+        location = _local_location(sample, lang=lang)
         if location:
             total_locations.add(location)
             total_location_sample_counts[location] += 1
         sample_phase: str | None = None
         if per_sample_phases is not None and i < len(per_sample_phases):
-            sample_phase = _phase_to_str(per_sample_phases[i])
-        for hz, amp in _sample_top_peaks(sample):
+            sample_phase = _local_phase_str(per_sample_phases[i])
+        for hz, amp in _local_top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
-            bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
-            bin_center = bin_low + (freq_bin_hz / 2.0)
+            bin_center = _floor(hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
             bin_amps[bin_center].append(amp)
             bin_floors[bin_center].append(max(0.0, floor_amp))
             if speed is not None and speed > 0:
@@ -206,28 +219,40 @@ def _build_persistent_peak_findings(
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
         mean_floor_vals = bin_floors.get(bin_center)
-        mean_floor = mean(mean_floor_vals) if mean_floor_vals else 0.0
+        mean_floor = (
+            sum(mean_floor_vals) / len(mean_floor_vals) if mean_floor_vals else 0.0
+        )
         effective_floor = _effective_baseline_floor(run_noise_baseline_g, extra_fallback=mean_floor)
         raw_snr = p95_amp / effective_floor
+
+        # Cache per-bin dict lookups used multiple times below.
+        loc_counts_for_bin = bin_location_counts.get(bin_center, {})
+        speed_bin_counts_for_bin = bin_speed_bin_counts.get(bin_center, {})
+        phases_for_bin = bin_phase_counts.get(bin_center, {})
+
         spatial_uniformity: float | None = None
-        if len(total_locations) >= 2:
-            spatial_uniformity = len(bin_location_counts.get(bin_center, {})) / len(total_locations)
+        n_total_locs = len(total_locations)
+        if n_total_locs >= 2:
+            spatial_uniformity = len(loc_counts_for_bin) / n_total_locs
 
         speed_uniformity: float | None = None
         if len(total_speed_bin_counts) >= 2:
-            hit_rates: list[float] = []
-            per_bin_hits = bin_speed_bin_counts.get(bin_center, {})
+            # Single-pass mean + variance to avoid two iterations.
+            hr_sum = 0.0
+            hr_sq_sum = 0.0
+            hr_n = 0
             for speed_bin, total_count in total_speed_bin_counts.items():
                 if total_count <= 0:
                     continue
-                hit_rates.append(float(per_bin_hits.get(speed_bin, 0)) / float(total_count))
-            if hit_rates:
-                hit_rate_mean = mean(hit_rates)
-                speed_uniformity = (
-                    mean([(rate - hit_rate_mean) ** 2 for rate in hit_rates]) ** 0.5
-                    if len(hit_rates) > 1
-                    else 0.0
-                )
+                rate = speed_bin_counts_for_bin.get(speed_bin, 0) / total_count
+                hr_sum += rate
+                hr_sq_sum += rate * rate
+                hr_n += 1
+            if hr_n > 1:
+                hr_mean = hr_sum / hr_n
+                speed_uniformity = ((hr_sq_sum / hr_n) - hr_mean * hr_mean) ** 0.5
+            elif hr_n == 1:
+                speed_uniformity = 0.0
 
         peak_type = _classify_peak_type(
             presence_ratio,
@@ -238,11 +263,12 @@ def _build_persistent_peak_findings(
         )
 
         snr_score = min(1.0, log1p(raw_snr) / _SNR_LOG_DIVISOR)
-        location_counts = bin_location_counts.get(bin_center, {})
         spatial_concentration = (
-            max(location_counts.values()) / count if location_counts and count > 0 else 1.0
+            max(loc_counts_for_bin.values()) / count
+            if loc_counts_for_bin and count > 0
+            else 1.0
         )
-        spatial_penalty = (0.35 + 0.65 * spatial_concentration) if location_counts else 1.0
+        spatial_penalty = (0.35 + 0.65 * spatial_concentration) if loc_counts_for_bin else 1.0
 
         # Confidence for persistent/patterned peaks (analogous to order confidence)
         peak_strength_db = canonical_vibration_db(
@@ -265,7 +291,7 @@ def _build_persistent_peak_findings(
                 ),
             )
             confidence = base_confidence * spatial_penalty
-            if location_counts and spatial_concentration <= 0.35:
+            if loc_counts_for_bin and spatial_concentration <= 0.35:
                 confidence = min(confidence, 0.35)
             if peak_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
                 confidence = min(confidence, 0.40)
@@ -286,19 +312,17 @@ def _build_persistent_peak_findings(
         )
 
         # Compute phase evidence for this frequency bin.
-        _cruise_phase_val = DrivingPhase.CRUISE.value
-        phases_in_bin = bin_phase_counts.get(bin_center, {})
-        _total_phase_hits = sum(phases_in_bin.values())
-        _cruise_hits = phases_in_bin.get(_cruise_phase_val, 0)
+        _total_phase_hits = sum(phases_for_bin.values())
+        _cruise_hits = phases_for_bin.get(_CRUISE_PHASE_VAL, 0)
         peak_phase_evidence: dict[str, Any] = {
             "cruise_fraction": _cruise_hits / _total_phase_hits if _total_phase_hits > 0 else 0.0,
-            "phases_detected": sorted(k for k, v in phases_in_bin.items() if v > 0),
+            "phases_detected": sorted(k for k, v in phases_for_bin.items() if v > 0),
         }
         phase_presence: dict[str, float] | None = None
         if has_phases and _total_phase_hits > 0:
             phase_presence = {
                 phase_key: phase_hits / _total_phase_hits
-                for phase_key, phase_hits in phases_in_bin.items()
+                for phase_key, phase_hits in phases_for_bin.items()
                 if phase_hits > 0
             }
 
