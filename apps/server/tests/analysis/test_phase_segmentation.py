@@ -70,30 +70,20 @@ class TestEstimateSpeedDerivative:
 
 
 class TestClassifySamplePhase:
-    def test_idle_zero_speed(self) -> None:
-        assert classify_sample_phase(0.0, 0.0) == DrivingPhase.IDLE
-
-    def test_idle_none_speed(self) -> None:
-        # None speed → SPEED_UNKNOWN (not IDLE), see issue #287
-        assert classify_sample_phase(None, None) == DrivingPhase.SPEED_UNKNOWN
-
-    @pytest.mark.smoke
-    def test_cruise(self) -> None:
-        assert classify_sample_phase(80.0, 0.0) == DrivingPhase.CRUISE
-
-    def test_acceleration(self) -> None:
-        assert classify_sample_phase(80.0, 5.0) == DrivingPhase.ACCELERATION
-
-    def test_deceleration(self) -> None:
-        assert classify_sample_phase(80.0, -5.0) == DrivingPhase.DECELERATION
-
-    def test_coast_down_low_speed(self) -> None:
-        # Low speed + deceleration → coast_down
-        assert classify_sample_phase(10.0, -5.0) == DrivingPhase.COAST_DOWN
-
-    def test_cruise_with_none_derivative(self) -> None:
-        # No derivative info → defaults to cruise if speed is above idle threshold
-        assert classify_sample_phase(80.0, None) == DrivingPhase.CRUISE
+    @pytest.mark.parametrize(
+        ("speed", "deriv", "expected"),
+        [
+            pytest.param(0.0, 0.0, DrivingPhase.IDLE, id="idle_zero_speed"),
+            pytest.param(None, None, DrivingPhase.SPEED_UNKNOWN, id="none_speed_is_unknown"),
+            pytest.param(80.0, 0.0, DrivingPhase.CRUISE, id="cruise", marks=pytest.mark.smoke),
+            pytest.param(80.0, 5.0, DrivingPhase.ACCELERATION, id="acceleration"),
+            pytest.param(80.0, -5.0, DrivingPhase.DECELERATION, id="deceleration"),
+            pytest.param(10.0, -5.0, DrivingPhase.COAST_DOWN, id="coast_down_low_speed"),
+            pytest.param(80.0, None, DrivingPhase.CRUISE, id="cruise_none_derivative"),
+        ],
+    )
+    def test_classify(self, speed: float | None, deriv: float | None, expected: DrivingPhase) -> None:
+        assert classify_sample_phase(speed, deriv) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -192,47 +182,30 @@ class TestSegmentRunPhases:
 # ---------------------------------------------------------------------------
 
 
+# Shorthand aliases for readability in parametrize tables
+_C = DrivingPhase.CRUISE
+_A = DrivingPhase.ACCELERATION
+_D = DrivingPhase.DECELERATION
+_I = DrivingPhase.IDLE
+_U = DrivingPhase.SPEED_UNKNOWN
+
+
 class TestInterpolateSpeedUnknown:
-    def test_gap_between_cruise_becomes_cruise(self) -> None:
-        phases = [
-            DrivingPhase.CRUISE,
-            DrivingPhase.SPEED_UNKNOWN,
-            DrivingPhase.SPEED_UNKNOWN,
-            DrivingPhase.CRUISE,
-        ]
-        _interpolate_speed_unknown(phases)
-        assert phases == [DrivingPhase.CRUISE] * 4
-
-    def test_gap_between_different_moving_phases_becomes_cruise(self) -> None:
-        phases = [DrivingPhase.ACCELERATION, DrivingPhase.SPEED_UNKNOWN, DrivingPhase.DECELERATION]
-        _interpolate_speed_unknown(phases)
-        assert phases[1] == DrivingPhase.CRUISE
-
-    def test_gap_between_idle_stays_unknown(self) -> None:
-        phases = [DrivingPhase.IDLE, DrivingPhase.SPEED_UNKNOWN, DrivingPhase.IDLE]
-        _interpolate_speed_unknown(phases)
-        assert phases[1] == DrivingPhase.SPEED_UNKNOWN
-
-    def test_gap_at_start_with_moving_after(self) -> None:
-        phases = [DrivingPhase.SPEED_UNKNOWN, DrivingPhase.SPEED_UNKNOWN, DrivingPhase.CRUISE]
-        _interpolate_speed_unknown(phases)
-        assert phases[0] == DrivingPhase.CRUISE
-        assert phases[1] == DrivingPhase.CRUISE
-
-    def test_gap_at_end_with_moving_before(self) -> None:
-        phases = [DrivingPhase.ACCELERATION, DrivingPhase.SPEED_UNKNOWN]
-        _interpolate_speed_unknown(phases)
-        assert phases[1] == DrivingPhase.ACCELERATION
-
-    def test_empty_list(self) -> None:
-        phases: list[DrivingPhase] = []
-        _interpolate_speed_unknown(phases)
-        assert phases == []
-
-    def test_no_unknowns(self) -> None:
-        phases = [DrivingPhase.CRUISE, DrivingPhase.IDLE, DrivingPhase.CRUISE]
-        _interpolate_speed_unknown(phases)
-        assert phases == [DrivingPhase.CRUISE, DrivingPhase.IDLE, DrivingPhase.CRUISE]
+    @pytest.mark.parametrize(
+        ("before", "expected"),
+        [
+            pytest.param([_C, _U, _U, _C], [_C, _C, _C, _C], id="gap_between_cruise"),
+            pytest.param([_A, _U, _D], [_A, _C, _D], id="gap_between_different_moving"),
+            pytest.param([_I, _U, _I], [_I, _U, _I], id="gap_between_idle_stays_unknown"),
+            pytest.param([_U, _U, _C], [_C, _C, _C], id="gap_at_start_with_moving"),
+            pytest.param([_A, _U], [_A, _A], id="gap_at_end_with_moving"),
+            pytest.param([], [], id="empty_list"),
+            pytest.param([_C, _I, _C], [_C, _I, _C], id="no_unknowns"),
+        ],
+    )
+    def test_interpolation(self, before: list[DrivingPhase], expected: list[DrivingPhase]) -> None:
+        _interpolate_speed_unknown(before)
+        assert before == expected
 
 
 # ---------------------------------------------------------------------------
