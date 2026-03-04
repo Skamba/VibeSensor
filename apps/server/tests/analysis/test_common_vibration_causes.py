@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from math import pi
 
 import pytest
@@ -33,6 +34,7 @@ class CauseCase:
     peak_hz: float
 
 
+@lru_cache(maxsize=1)
 def _default_orders() -> tuple[dict[str, float], dict[str, float]]:
     settings = build_diagnostic_settings({})
     orders = vehicle_orders_hz(speed_mps=SPEED_MPS, settings=settings)
@@ -100,7 +102,7 @@ def _common_cause_cases() -> list[CauseCase]:
 
 @pytest.mark.parametrize("case", _common_cause_cases(), ids=lambda c: c.cause)
 def test_common_vibration_causes_classify_as_expected(case: CauseCase) -> None:
-    settings = build_diagnostic_settings({})
+    settings, _ = _default_orders()
     cls = classify_peak_hz(
         peak_hz=case.peak_hz,
         speed_mps=SPEED_MPS,
