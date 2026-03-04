@@ -229,6 +229,14 @@ def _peak_classification_text(value: object, tr: Callable[..., str]) -> str:
     return str(value).replace("_", " ").title()
 
 
+def _extract_confidence(d: dict) -> float:
+    """Return the confidence value from a cause/finding dict, defaulting to 0.0."""
+    val = _as_float(d.get("confidence"))
+    if val is None:
+        val = _as_float(d.get("confidence_0_to_1"))
+    return val if val is not None else 0.0
+
+
 def _has_relevant_reference_gap(findings: list[dict], primary_source: object) -> bool:
     src = str(primary_source or "").strip().lower()
     for finding in findings:
@@ -243,43 +251,39 @@ def _has_relevant_reference_gap(findings: list[dict], primary_source: object) ->
 
 
 def _compute_location_hotspot_rows(
-    findings: list[dict],
     sensor_intensity: list[dict],
 ) -> list[dict]:
-    """Pre-compute location hotspot rows from findings matched_points.
+    """Pre-compute location hotspot rows from sensor intensity data.
 
-    Falls back to sensor_intensity_by_location when no matched_points
-    are available.  Never reads raw time-series samples.
+    Uses sensor_intensity_by_location rows.  Never reads raw time-series
+    samples.
     """
-    amp_by_location: dict[str, list[float]] = defaultdict(list)
-
-    if sensor_intensity:
-        for row in sensor_intensity:
-            if not isinstance(row, dict):
-                continue
-            location = str(row.get("location") or "").strip()
-            p95_val = _as_float(row.get("p95_intensity_db"))
-            p95 = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
-            if location and p95 is not None and p95 > 0:
-                amp_by_location[location].append(p95)
-        amp_unit = "db"
-    else:
+    if not sensor_intensity:
         return []
+
+    amp_by_location: dict[str, list[float]] = defaultdict(list)
+    for row in sensor_intensity:
+        if not isinstance(row, dict):
+            continue
+        location = str(row.get("location") or "").strip()
+        p95_val = _as_float(row.get("p95_intensity_db"))
+        p95 = p95_val if p95_val is not None else _as_float(row.get("mean_intensity_db"))
+        if location and p95 is not None and p95 > 0:
+            amp_by_location[location].append(p95)
 
     hotspot_rows: list[dict] = []
     for location, amps in amp_by_location.items():
         peak_val = max(amps)
         mean_val = _mean(amps)
-        row: dict = {
+        hotspot_rows.append({
             "location": location,
             "count": len(amps),
-            "unit": amp_unit,
+            "unit": "db",
             "peak_value": peak_val,
             "mean_value": mean_val,
-        }
-        row["peak_db"] = peak_val
-        row["mean_db"] = mean_val
-        hotspot_rows.append(row)
+            "peak_db": peak_val,
+            "mean_db": mean_val,
+        })
     hotspot_rows.sort(
         key=lambda r: (float(r["peak_value"]), float(r["mean_value"])),
         reverse=True,
@@ -375,10 +379,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
             or primary_candidate.get("dominant_speed_band")
             or tr("UNKNOWN")
         )
-        _conf_val = _as_float(primary_candidate.get("confidence"))
-        if _conf_val is None:
-            _conf_val = _as_float(primary_candidate.get("confidence_0_to_1"))
-        conf = _conf_val if _conf_val is not None else 0.0
+        conf = _extract_confidence(primary_candidate)
     else:
         primary_source = None
         primary_system = tr("UNKNOWN")
@@ -440,10 +441,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
             pattern_text = ", ".join(sigs_human) if sigs_human else tr("UNKNOWN")
             order_label = sigs_human[0] if sigs_human else None
             parts_list = parts_for_pattern(str(src), order_label, lang=lang)
-            _c_conf_val = _as_float(cause.get("confidence"))
-            if _c_conf_val is None:
-                _c_conf_val = _as_float(cause.get("confidence_0_to_1"))
-            c_conf = _c_conf_val if _c_conf_val is not None else 0.0
+            c_conf = _extract_confidence(cause)
             _ck, _cl, _cp, c_reason = certainty_label(c_conf, lang=lang)
             tone = cause.get("confidence_tone", "neutral")
 
@@ -660,7 +658,6 @@ def map_summary(summary: dict) -> ReportTemplateData:
     firmware_version_val = str(summary.get("firmware_version") or "").strip() or None
 
     # -- Rendering context (pre-computed for the PDF renderer) --
-    raw_findings = [f for f in summary.get("findings", []) if isinstance(f, dict)]
     raw_sensor_intensity_all = summary.get("sensor_intensity_by_location", [])
     if not isinstance(raw_sensor_intensity_all, list):
         raw_sensor_intensity_all = []
@@ -676,7 +673,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     # Pre-compute location hotspot rows from findings matched_points
     # so the PDF renderer never reads raw samples.
-    hotspot_rows = _compute_location_hotspot_rows(raw_findings, raw_sensor_intensity)
+    hotspot_rows = _compute_location_hotspot_rows(raw_sensor_intensity)
 
     return ReportTemplateData(
         title=tr("DIAGNOSTIC_WORKSHEET"),
@@ -703,7 +700,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
         version_marker=version_marker,
         lang=lang,
         certainty_tier_key=tier,
-        findings=raw_findings,
+        findings=findings,
         top_causes=top_causes,
         sensor_intensity_by_location=raw_sensor_intensity,
         location_hotspot_rows=hotspot_rows,
