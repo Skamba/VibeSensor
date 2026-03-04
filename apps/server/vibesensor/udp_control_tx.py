@@ -24,6 +24,8 @@ LOGGER = logging.getLogger(__name__)
 
 __all__ = ["UDPControlPlane"]
 
+_US_PER_SEC: int = 1_000_000
+
 
 class ControlDatagramProtocol(asyncio.DatagramProtocol):
     def __init__(self, registry: ClientRegistry):
@@ -38,21 +40,22 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
             return
         msg_type = data[0]
         now_ts = time.time()
+        registry = self.registry
 
         try:
             if msg_type == MSG_HELLO:
                 hello = parse_hello(data)
-                self.registry.update_from_hello(hello, addr, now_ts)
+                registry.update_from_hello(hello, addr, now_ts)
             elif msg_type == MSG_ACK:
                 ack = parse_ack(data)
                 LOGGER.info("ACK from %s: cmd_seq=%s status=%s", addr, ack.cmd_seq, ack.status)
-                self.registry.update_from_ack(ack, now_ts)
+                registry.update_from_ack(ack, now_ts)
             elif msg_type == MSG_DATA_ACK:
                 return
         except ProtocolError as exc:
             client_id = extract_client_id_hex(data)
             LOGGER.debug("Control parse error from %s (client=%s): %s", addr, client_id, exc)
-            self.registry.note_parse_error(client_id)
+            registry.note_parse_error(client_id)
 
 
 class UDPControlPlane:
@@ -107,20 +110,26 @@ class UDPControlPlane:
 
         Returns the number of sensors that received the message.
         """
-        if self.transport is None:
+        transport = self.transport
+        if transport is None:
             return 0
-        server_time_us = int(time.monotonic() * 1_000_000)
+        server_time_us = int(time.monotonic() * _US_PER_SEC)
+        registry = self.registry
+        _fromhex = bytes.fromhex
+        _next_seq = self._next_cmd_seq
+        _pack = pack_cmd_sync_clock
+        _sendto = transport.sendto
         sent = 0
-        for client_id in self.registry.active_client_ids():
-            record = self.registry.get(client_id)
+        for client_id in registry.active_client_ids():
+            record = registry.get(client_id)
             if record is None or record.control_addr is None:
                 continue
-            seq = self._next_cmd_seq()
-            payload = pack_cmd_sync_clock(
-                bytes.fromhex(record.client_id),
+            seq = _next_seq()
+            payload = _pack(
+                _fromhex(record.client_id),
                 seq,
                 server_time_us,
             )
-            self.transport.sendto(payload, record.control_addr)
+            _sendto(payload, record.control_addr)
             sent += 1
         return sent

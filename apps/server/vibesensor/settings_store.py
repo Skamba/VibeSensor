@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from threading import RLock
 from typing import TYPE_CHECKING, Any
 
 from .domain_models import (
@@ -28,6 +29,11 @@ class PersistenceError(RuntimeError):
     """Raised when settings fail to persist to the database."""
 
 
+def _clamp_str(value: object, maxlen: int) -> str:
+    """Strip and truncate *value* to *maxlen* characters."""
+    return str(value).strip()[:maxlen]
+
+
 class SettingsStore:
     """Holds the full app settings: cars, speed source, and sensors.
 
@@ -36,8 +42,6 @@ class SettingsStore:
     """
 
     def __init__(self, db: HistoryDB | None = None) -> None:
-        from threading import RLock
-
         self._lock = RLock()
         self._db = db
 
@@ -140,10 +144,7 @@ class SettingsStore:
     def _find_car(self, car_id: str | None) -> CarConfig | None:
         if not car_id:
             return None
-        for c in self._cars:
-            if c.id == car_id:
-                return c
-        return None
+        return next((c for c in self._cars if c.id == car_id), None)
 
     def set_active_car(self, car_id: str) -> dict[str, Any]:
         with self._lock:
@@ -183,20 +184,20 @@ class SettingsStore:
             if "name" in car_data:
                 raw_name = car_data["name"]
                 if isinstance(raw_name, str):
-                    name = raw_name.strip()[:64]
+                    name = _clamp_str(raw_name, 64)
                     if name:
                         car.name = name
             if "type" in car_data:
                 raw_type = car_data["type"]
                 if isinstance(raw_type, str):
-                    car_type = raw_type.strip()[:32]
+                    car_type = _clamp_str(raw_type, 32)
                     if car_type:
                         car.type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
                 car.aspects.update(sanitize_aspects(car_data["aspects"]))
             if "variant" in car_data:
                 raw = car_data["variant"]
-                car.variant = str(raw).strip()[:64] if isinstance(raw, str) and raw else None
+                car.variant = _clamp_str(raw, 64) or None if isinstance(raw, str) and raw else None
             try:
                 self._persist()
             except PersistenceError:
@@ -273,10 +274,10 @@ class SettingsStore:
                 existing = SensorConfig(sensor_id=sensor_id, name=sensor_id, location="")
             old_name, old_location = existing.name, existing.location
             if "name" in data:
-                name = str(data["name"]).strip()[:64]
+                name = _clamp_str(data["name"], 64)
                 existing.name = name if name else sensor_id
             if "location" in data:
-                existing.location = str(data["location"]).strip()[:64]
+                existing.location = _clamp_str(data["location"], 64)
             self._sensors[sensor_id] = existing
             try:
                 self._persist()

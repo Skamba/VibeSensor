@@ -14,6 +14,8 @@ _QUEUE_DROP_LOG_INTERVAL_S: float = 10.0
 
 
 class DataDatagramProtocol(asyncio.DatagramProtocol):
+    _MSG_DATA: int = MSG_DATA  # class-level cache avoids module-dict lookup per packet
+
     def __init__(
         self,
         registry: ClientRegistry,
@@ -37,7 +39,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         if not data:
             return
-        if data[0] != MSG_DATA:
+        if data[0] != self._MSG_DATA:
             return
         try:
             self._queue.put_nowait((data, addr))
@@ -92,24 +94,27 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             return
 
         client_id = msg.client_id.hex()
+        registry = self.registry
+        processor = self.processor
         try:
             now_ts = time.time()
-            result = self.registry.update_from_data(msg, addr, now_ts)
+            result = registry.update_from_data(msg, addr, now_ts)
             if not result.is_duplicate:
                 if result.reset_detected:
                     LOGGER.warning(
                         "Sensor reset detected for %s — flushing FFT buffer",
                         client_id,
                     )
-                    self.processor.flush_client_buffer(client_id)
-                record = self.registry.get(client_id)
+                    processor.flush_client_buffer(client_id)
+                record = registry.get(client_id)
                 sample_rate_hz = record.sample_rate_hz if record is not None else None
-                self.processor.ingest(
+                processor.ingest(
                     client_id, msg.samples, sample_rate_hz=sample_rate_hz, t0_us=msg.t0_us
                 )
-            if self.transport is not None:
+            transport = self.transport
+            if transport is not None:
                 ack_payload = pack_data_ack(msg.client_id, msg.seq)
-                self.transport.sendto(ack_payload, addr)
+                transport.sendto(ack_payload, addr)
         except Exception:
             LOGGER.warning(
                 "Error processing datagram from %s (client=%s)",

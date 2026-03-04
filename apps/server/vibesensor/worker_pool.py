@@ -42,6 +42,15 @@ class WorkerPool:
         Prefix for worker-thread names (aids debugging / profiling).
     """
 
+    __slots__ = (
+        "_alive",
+        "_executor",
+        "_max_workers",
+        "_metrics_lock",
+        "_total_tasks",
+        "_total_wait_s",
+    )
+
     def __init__(
         self,
         max_workers: int = DEFAULT_MAX_WORKERS,
@@ -94,12 +103,11 @@ class WorkerPool:
         if not items:
             return {}
         t0 = time.monotonic()
-        futures: dict[Future[R], T] = {}
-        for item in items:
-            with self._metrics_lock:
-                self._total_tasks += 1
-            fut = self._executor.submit(fn, item)
-            futures[fut] = item
+        with self._metrics_lock:
+            self._total_tasks += len(items)
+        futures: dict[Future[R], T] = {
+            self._executor.submit(fn, item): item for item in items
+        }
 
         results: dict[T, R] = {}
         for fut, item in futures.items():
@@ -129,9 +137,10 @@ class WorkerPool:
         return self._max_workers
 
     def stats(self) -> dict[str, Any]:
-        return {
-            "max_workers": self._max_workers,
-            "total_tasks": self._total_tasks,
-            "total_wait_s": round(self._total_wait_s, 4),
-            "alive": self._alive,
-        }
+        with self._metrics_lock:
+            return {
+                "max_workers": self._max_workers,
+                "total_tasks": self._total_tasks,
+                "total_wait_s": round(self._total_wait_s, 4),
+                "alive": self._alive,
+            }
