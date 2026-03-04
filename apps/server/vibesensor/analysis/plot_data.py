@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from math import floor
-from statistics import mean
 from typing import Any, Literal
 
 from vibesensor_core.vibration_strength import percentile
@@ -41,16 +40,18 @@ def _aggregate_fft_spectrum(
     """
     if freq_bin_hz <= 0:
         freq_bin_hz = 2.0
+    _floor = floor
+    _top_peaks = _sample_top_peaks
     bin_amps: defaultdict[float, list[float]] = defaultdict(list)
     n_samples = 0
     for sample in samples:
         if not isinstance(sample, dict):
             continue
         n_samples += 1
-        for hz, amp in _sample_top_peaks(sample):
+        for hz, amp in _top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
-            bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
+            bin_low = _floor(hz / freq_bin_hz) * freq_bin_hz
             bin_center = round(bin_low + (freq_bin_hz / 2.0), 4)
             bin_amps[bin_center].append(amp)
     if not bin_amps:
@@ -98,6 +99,10 @@ def _spectrogram_from_peaks(
       is SNR-gated/weighted against its sample noise floor (default, diagnostic view).
     - ``"max"``         – simple ``max(amplitude)`` per cell (raw/debug view).
     """
+    _float = _as_float
+    _top_peaks = _sample_top_peaks
+    _floor_amp_g = _estimate_strength_floor_amp_g
+    _floor = floor
     peak_rows: list[tuple[float, float, float, float | None]] = []
     time_values: list[float] = []
     speed_values: list[float] = []
@@ -105,16 +110,16 @@ def _spectrogram_from_peaks(
     for sample in samples:
         if not isinstance(sample, dict):
             continue
-        t_s = _as_float(sample.get("t_s"))
-        speed = _as_float(sample.get("speed_kmh"))
-        peaks = _sample_top_peaks(sample)
+        t_s = _float(sample.get("t_s"))
+        speed = _float(sample.get("speed_kmh"))
+        peaks = _top_peaks(sample)
         if t_s is not None and t_s >= 0:
             time_values.append(t_s)
         if speed is not None and speed > 0:
             speed_values.append(speed)
         if not peaks:
             continue
-        floor_amp = _estimate_strength_floor_amp_g(sample)
+        floor_amp = _floor_amp_g(sample)
         for hz, amp in peaks:
             if hz <= 0 or amp <= 0:
                 continue
@@ -163,14 +168,14 @@ def _spectrogram_from_peaks(
     x_sample_counts: defaultdict[float, int] = defaultdict(int)
     if aggregation == "persistence":
         for x_val in x_values:
-            x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
+            x_bin_low = _floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
             x_sample_counts[x_bin_low] += 1
 
     for x_val, hz, amp, floor_amp in peak_rows:
         if hz > freq_cap_hz:
             continue
-        x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
-        y_bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
+        x_bin_low = _floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
+        y_bin_low = _floor(hz / freq_bin_hz) * freq_bin_hz
         key = (x_bin_low, y_bin_low)
         cell_by_bin[key].append((amp, floor_amp))
 
@@ -266,6 +271,10 @@ def _top_peaks_table_rows(
     if freq_bin_hz <= 0:
         freq_bin_hz = 1.0
 
+    _float = _as_float
+    _top_peaks = _sample_top_peaks
+    _floor_amp_g = _estimate_strength_floor_amp_g
+    _floor = floor
     n_samples = 0
     if run_noise_baseline_g is None:
         run_noise_baseline_g = _run_noise_baseline_g(samples)
@@ -274,17 +283,17 @@ def _top_peaks_table_rows(
         if not isinstance(sample, dict):
             continue
         n_samples += 1
-        speed = _as_float(sample.get("speed_kmh"))
+        speed = _float(sample.get("speed_kmh"))
         sample_speed_bin = _speed_bin_label(speed) if speed is not None and speed > 0 else None
         if sample_speed_bin is not None:
             total_speed_bin_counts[sample_speed_bin] += 1
         location = _location_label(sample)
         if location:
             total_locations.add(location)
-        for hz, amp in _sample_top_peaks(sample):
+        for hz, amp in _top_peaks(sample):
             if hz <= 0 or amp <= 0:
                 continue
-            freq_key = floor(hz / freq_bin_hz) * freq_bin_hz
+            freq_key = _floor(hz / freq_bin_hz) * freq_bin_hz
             bucket = grouped.setdefault(
                 freq_key,
                 {
@@ -298,7 +307,7 @@ def _top_peaks_table_rows(
                 },
             )
             bucket["amps"].append(amp)
-            floor_amp = _estimate_strength_floor_amp_g(sample)
+            floor_amp = _floor_amp_g(sample)
             if floor_amp is not None:
                 bucket["floor_amps"].append(floor_amp)
             if speed is not None and speed > 0:
@@ -311,9 +320,19 @@ def _top_peaks_table_rows(
                 speed_counts = bucket["speed_bin_counts"]
                 speed_counts[sample_speed_bin] = int(speed_counts.get(sample_speed_bin, 0)) + 1
 
+    # Pre-compute run noise baseline dB once (invariant across buckets).
+    _run_noise_baseline_db: float | None = (
+        canonical_vibration_db(
+            peak_band_rms_amp_g=_effective_baseline_floor(run_noise_baseline_g),
+            floor_amp_g=MEMS_NOISE_FLOOR_G,
+        )
+        if run_noise_baseline_g is not None
+        else None
+    )
+
     for bucket in grouped.values():
         amps = sorted(bucket["amps"])
-        floor_amps = sorted(float(v) for v in bucket.get("floor_amps", []))
+        floor_amps = sorted(bucket.get("floor_amps", []))
         count = len(amps)
         presence_ratio = min(1.0, count / max(1, n_samples))
         median_amp = percentile(amps, 0.50) if count >= 2 else (amps[0] if amps else 0.0)
@@ -352,23 +371,16 @@ def _top_peaks_table_rows(
                     continue
                 hit_rates.append(float(per_bin_hits.get(speed_bin, 0)) / float(total_count))
             if hit_rates:
-                hit_rate_mean = mean(hit_rates)
+                hit_rate_mean = sum(hit_rates) / len(hit_rates)
                 speed_uniformity = (
-                    mean([(rate - hit_rate_mean) ** 2 for rate in hit_rates]) ** 0.5
+                    (sum((rate - hit_rate_mean) ** 2 for rate in hit_rates) / len(hit_rates)) ** 0.5
                     if len(hit_rates) > 1
                     else 0.0
                 )
         bucket["max_intensity_db"] = max_intensity_db
         bucket["median_intensity_db"] = median_intensity_db
         bucket["p95_intensity_db"] = p95_intensity_db
-        bucket["run_noise_baseline_db"] = (
-            canonical_vibration_db(
-                peak_band_rms_amp_g=_effective_baseline_floor(run_noise_baseline_g),
-                floor_amp_g=MEMS_NOISE_FLOOR_G,
-            )
-            if run_noise_baseline_g is not None
-            else None
-        )
+        bucket["run_noise_baseline_db"] = _run_noise_baseline_db
         bucket["median_vs_run_noise_ratio"] = median_amp / baseline_floor
         bucket["p95_vs_run_noise_ratio"] = p95_amp / baseline_floor
         bucket["strength_floor_db"] = (
