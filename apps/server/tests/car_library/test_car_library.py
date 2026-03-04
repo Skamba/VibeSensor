@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from vibesensor.car_library import (
     CAR_LIBRARY,
     get_brands,
@@ -147,26 +149,23 @@ def test_car_library_models_response_accepts_actual_data() -> None:
         assert m.rim_in > 0
 
 
-def test_load_library_handles_missing_file(tmp_path: Path) -> None:
-    """_load_library gracefully returns [] when the data file is missing."""
-    from unittest.mock import patch
-
-    from vibesensor.car_library import _load_library
-
-    fake_path = tmp_path / "nonexistent.json"
-    with patch("vibesensor.car_library._DATA_FILE", fake_path):
-        result = _load_library()
-    assert result == []
-
-
-def test_load_library_handles_invalid_json(tmp_path: Path) -> None:
-    """_load_library gracefully returns [] when the JSON is malformed."""
-    from unittest.mock import patch
-
-    from vibesensor.car_library import _load_library
-
+def _make_bad_data_file(tmp_path: Path, kind: str) -> Path:
+    """Return a path to a missing or malformed JSON data file."""
+    if kind == "missing":
+        return tmp_path / "nonexistent.json"
     bad_file = tmp_path / "bad.json"
     bad_file.write_text("not valid json {{{")
-    with patch("vibesensor.car_library._DATA_FILE", bad_file):
+    return bad_file
+
+
+@pytest.mark.parametrize("kind", ["missing", "invalid_json"])
+def test_load_library_handles_bad_data(tmp_path: Path, kind: str) -> None:
+    """_load_library gracefully returns [] when the data file is missing or malformed."""
+    from unittest.mock import patch
+
+    from vibesensor.car_library import _load_library
+
+    fake_path = _make_bad_data_file(tmp_path, kind)
+    with patch("vibesensor.car_library._DATA_FILE", fake_path):
         result = _load_library()
     assert result == []
