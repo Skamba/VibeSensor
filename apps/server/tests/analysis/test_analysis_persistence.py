@@ -145,6 +145,85 @@ def _sample(i: int) -> dict[str, Any]:
     }
 
 
+def _make_fake_state(history_db):
+    """Build a minimal fake ``RuntimeState``-alike for router tests.
+
+    Provides the superset of attributes needed by PDF, insights, and export
+    endpoint tests so each test only has to supply its own ``history_db``.
+    """
+
+    class _FakeState:
+        ws_hub = type(
+            "WH",
+            (),
+            {
+                "add": staticmethod(lambda ws, sel: None),
+                "remove": staticmethod(lambda ws: None),
+            },
+        )()
+        settings_store = type("S", (), {"language": "en", "set_language": lambda self, v: v})()
+        live_diagnostics = type("D", (), {"reset": lambda self: None})()
+        metrics_logger = type(
+            "M",
+            (),
+            {
+                "status": lambda self: {},
+                "start_logging": lambda self: {},
+                "stop_logging": lambda self: {},
+            },
+        )()
+        registry = type(
+            "R",
+            (),
+            {
+                "snapshot_for_api": lambda self: [],
+                "get": lambda self, _: None,
+                "set_name": lambda self, cid, name: type(
+                    "U", (), {"client_id": cid, "name": name}
+                )(),
+                "remove_client": lambda self, _: True,
+            },
+        )()
+        control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
+        gps_monitor = type(
+            "G",
+            (),
+            {
+                "effective_speed_mps": None,
+                "override_speed_mps": None,
+                "set_speed_override_kmh": lambda self, _: None,
+            },
+        )()
+        analysis_settings = type(
+            "A",
+            (),
+            {
+                "snapshot": lambda self: {},
+                "update": lambda self, payload: payload,
+            },
+        )()
+        processor = type(
+            "P",
+            (),
+            {
+                "debug_spectrum": lambda self, _id: {},
+                "raw_samples": lambda self, _id, n_samples=1: {},
+            },
+        )()
+
+    state = _FakeState()
+    state.history_db = history_db
+    return state
+
+
+def _find_endpoint(router, path: str):
+    """Return the endpoint callable for *path*, or ``pytest.fail``."""
+    for route in router.routes:
+        if getattr(route, "path", "") == path:
+            return route.endpoint
+    pytest.fail(f"Route {path!r} not found")
+
+
 def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) -> None:
     """Integration: stop_logging → post-analysis → analysis persisted in DB."""
     from vibesensor.analysis_settings import AnalysisSettingsStore
@@ -272,80 +351,12 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
         def delete_run(self, run_id):
             return False
 
-    # Minimal state object
-    class _State:
-        history_db = _FakeDB()
-        ws_hub = type(
-            "WH",
-            (),
-            {
-                "add": staticmethod(lambda ws, sel: None),
-                "remove": staticmethod(lambda ws: None),
-            },
-        )()
-        settings_store = type("S", (), {"language": "en", "set_language": lambda self, v: v})()
-        live_diagnostics = type("D", (), {"reset": lambda self: None})()
-        metrics_logger = type(
-            "M",
-            (),
-            {
-                "status": lambda self: {},
-                "start_logging": lambda self: {},
-                "stop_logging": lambda self: {},
-            },
-        )()
-        registry = type(
-            "R",
-            (),
-            {
-                "snapshot_for_api": lambda self: [],
-                "get": lambda self, _: None,
-                "set_name": lambda self, cid, name: type(
-                    "U", (), {"client_id": cid, "name": name}
-                )(),
-                "remove_client": lambda self, _: True,
-            },
-        )()
-        control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
-        gps_monitor = type(
-            "G",
-            (),
-            {
-                "effective_speed_mps": None,
-                "override_speed_mps": None,
-                "set_speed_override_kmh": lambda self, _: None,
-            },
-        )()
-        analysis_settings = type(
-            "A",
-            (),
-            {
-                "snapshot": lambda self: {},
-                "update": lambda self, payload: payload,
-            },
-        )()
-        processor = type(
-            "P",
-            (),
-            {
-                "debug_spectrum": lambda self, _id: {},
-                "raw_samples": lambda self, _id, n_samples=1: {},
-            },
-        )()
-
     app = FastAPI()
-    state = _State()
+    state = _make_fake_state(_FakeDB())
     router = create_router(state)
     app.include_router(router)
 
-    # Find PDF endpoint
-    for route in router.routes:
-        if getattr(route, "path", "") == "/api/history/{run_id}/report.pdf":
-            endpoint = route.endpoint
-            break
-    else:
-        pytest.fail("PDF route not found")
-
+    endpoint = _find_endpoint(router, "/api/history/{run_id}/report.pdf")
     result = await endpoint("run-pdf", "en")
     assert result.body.startswith(b"%PDF")
 
@@ -384,66 +395,12 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
                 "analysis": analysis,
             }
 
-    class _State:
-        history_db = _DB()
-        ws_hub = type(
-            "WH",
-            (),
-            {
-                "add": staticmethod(lambda ws, sel: None),
-                "remove": staticmethod(lambda ws: None),
-            },
-        )()
-        settings_store = type("S", (), {"language": "en"})()
-        live_diagnostics = type("D", (), {"reset": lambda self: None})()
-        metrics_logger = type(
-            "M",
-            (),
-            {
-                "status": lambda self: {},
-                "start_logging": lambda self: {},
-                "stop_logging": lambda self: {},
-            },
-        )()
-        registry = type(
-            "R",
-            (),
-            {
-                "snapshot_for_api": lambda self: [],
-                "get": lambda self, _: None,
-            },
-        )()
-        control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
-        gps_monitor = type(
-            "G",
-            (),
-            {
-                "effective_speed_mps": None,
-                "override_speed_mps": None,
-            },
-        )()
-        analysis_settings = type("A", (), {"snapshot": lambda self: {}})()
-        processor = type(
-            "P",
-            (),
-            {
-                "debug_spectrum": lambda self, _id: {},
-                "raw_samples": lambda self, _id, n_samples=1: {},
-            },
-        )()
-
     app = FastAPI()
-    state = _State()
+    state = _make_fake_state(_DB())
     router = create_router(state)
     app.include_router(router)
 
-    for route in router.routes:
-        if getattr(route, "path", "") == "/api/history/{run_id}/insights":
-            endpoint = route.endpoint
-            break
-    else:
-        pytest.fail("Insights route not found")
-
+    endpoint = _find_endpoint(router, "/api/history/{run_id}/insights")
     # Without lang param → returns persisted analysis directly (no recompute)
     result = await endpoint("run-ins", None)
     assert result["lang"] == "en"
@@ -474,51 +431,12 @@ async def test_export_offloaded_to_thread() -> None:
         def read_transaction(self):
             yield
 
-    class _State:
-        history_db = _DB()
-        ws_hub = type(
-            "WH",
-            (),
-            {
-                "add": staticmethod(lambda ws, sel: None),
-                "remove": staticmethod(lambda ws: None),
-            },
-        )()
-        settings_store = type("S", (), {"language": "en"})()
-        live_diagnostics = type("D", (), {"reset": lambda self: None})()
-        metrics_logger = type(
-            "M",
-            (),
-            {
-                "status": lambda self: {},
-                "start_logging": lambda self: {},
-                "stop_logging": lambda self: {},
-            },
-        )()
-        registry = type("R", (), {"snapshot_for_api": lambda self: []})()
-        control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
-        gps_monitor = type("G", (), {"effective_speed_mps": None, "override_speed_mps": None})()
-        analysis_settings = type("A", (), {"snapshot": lambda self: {}})()
-        processor = type(
-            "P",
-            (),
-            {
-                "debug_spectrum": lambda self, _id: {},
-                "raw_samples": lambda self, _id, n_samples=1: {},
-            },
-        )()
-
     app = FastAPI()
-    state = _State()
+    state = _make_fake_state(_DB())
     router = create_router(state)
     app.include_router(router)
 
-    for route in router.routes:
-        if getattr(route, "path", "") == "/api/history/{run_id}/export":
-            endpoint = route.endpoint
-            break
-    else:
-        pytest.fail("Export route not found")
+    endpoint = _find_endpoint(router, "/api/history/{run_id}/export")
 
     import io
     import zipfile
