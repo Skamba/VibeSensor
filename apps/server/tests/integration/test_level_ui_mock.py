@@ -8,7 +8,10 @@ and warnings.  No browser/Selenium needed.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 from builders import (
     SENSOR_FL,
