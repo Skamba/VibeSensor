@@ -7,11 +7,28 @@ CSV export record_type/schema_version population."""
 from __future__ import annotations
 
 import asyncio
+import inspect
 import json
 from unittest.mock import patch
 
 import pytest
-from _paths import REPO_ROOT, SERVER_ROOT
+from _paths import REPO_ROOT
+
+from vibesensor.api import _flatten_for_csv
+from vibesensor.esp_flash_manager import EspFlashManager
+from vibesensor.processing import SignalProcessor
+from vibesensor.report import pdf_diagram
+from vibesensor.report_cli import main as report_cli_main
+from vibesensor.ws_hub import WebSocketHub
+
+_PDF_DIAGRAM_SRC = inspect.getsource(pdf_diagram)
+_RUN_FLASH_JOB_SRC = inspect.getsource(EspFlashManager._run_flash_job)
+
+_I18N_ERROR_KEYS = [
+    "settings.car.delete_failed",
+    "settings.car.activate_failed",
+    "settings.car.save_failed",
+]
 
 # ── 1. EspFlashManager CancelledError ────────────────────────────────────
 
@@ -21,13 +38,8 @@ class TestEspFlashManagerCancelledError:
 
     def test_cancelled_error_handler_exists(self):
         """The except block for CancelledError must precede except Exception."""
-        import inspect
-
-        from vibesensor.esp_flash_manager import EspFlashManager
-
-        source = inspect.getsource(EspFlashManager._run_flash_job)
-        cancel_pos = source.find("except asyncio.CancelledError")
-        generic_pos = source.find("except Exception")
+        cancel_pos = _RUN_FLASH_JOB_SRC.find("except asyncio.CancelledError")
+        generic_pos = _RUN_FLASH_JOB_SRC.find("except Exception")
         assert cancel_pos != -1, "CancelledError handler not found in _run_flash_job"
         assert cancel_pos < generic_pos, (
             "CancelledError handler must appear before generic Exception handler"
@@ -35,15 +47,9 @@ class TestEspFlashManagerCancelledError:
 
     def test_cancelled_error_re_raises(self):
         """The CancelledError handler must re-raise."""
-        import inspect
-
-        from vibesensor.esp_flash_manager import EspFlashManager
-
-        source = inspect.getsource(EspFlashManager._run_flash_job)
-        # Find the CancelledError block and check it has 'raise' after it
-        cancel_block_start = source.find("except asyncio.CancelledError")
-        generic_block_start = source.find("except Exception")
-        cancel_block = source[cancel_block_start:generic_block_start]
+        cancel_block_start = _RUN_FLASH_JOB_SRC.find("except asyncio.CancelledError")
+        generic_block_start = _RUN_FLASH_JOB_SRC.find("except Exception")
+        cancel_block = _RUN_FLASH_JOB_SRC[cancel_block_start:generic_block_start]
         assert "raise" in cancel_block, "CancelledError handler must re-raise the exception"
 
 
@@ -55,27 +61,17 @@ class TestPdfDiagramDeadFallback:
 
     def test_no_inline_english_fallback(self):
         """pdf_diagram.py should not contain 'Finding source:' as a fallback."""
-        import inspect
-
-        from vibesensor.report import pdf_diagram
-
-        source = inspect.getsource(pdf_diagram)
-        assert 'else "Finding source:"' not in source, (
+        assert 'else "Finding source:"' not in _PDF_DIAGRAM_SRC, (
             "Dead English fallback 'Finding source:' should be removed"
         )
 
     def test_tr_called_directly(self):
         """tr('SOURCE_LEGEND_TITLE') should be called without a conditional guard."""
-        import inspect
-
-        from vibesensor.report import pdf_diagram
-
-        source = inspect.getsource(pdf_diagram)
-        assert 'tr("SOURCE_LEGEND_TITLE")' in source, (
+        assert 'tr("SOURCE_LEGEND_TITLE")' in _PDF_DIAGRAM_SRC, (
             "tr('SOURCE_LEGEND_TITLE') should remain as a direct call"
         )
         # The old pattern was: tr("SOURCE_LEGEND_TITLE") if tr("SOURCE_LEGEND_TITLE") != "SOURCE_LEGEND_TITLE"
-        assert source.count('tr("SOURCE_LEGEND_TITLE")') < 3, (
+        assert _PDF_DIAGRAM_SRC.count('tr("SOURCE_LEGEND_TITLE")') < 3, (
             "Should not have the old double-invocation conditional pattern"
         )
 
@@ -88,23 +84,13 @@ class TestPdfDiagramAssertReplacement:
 
     def test_no_bare_assert_best(self):
         """pdf_diagram.py should not use bare assert for best placement."""
-        import inspect
-
-        from vibesensor.report import pdf_diagram
-
-        source = inspect.getsource(pdf_diagram)
-        assert "assert best is not None" not in source, (
+        assert "assert best is not None" not in _PDF_DIAGRAM_SRC, (
             "Bare 'assert best is not None' should be replaced with ValueError"
         )
 
     def test_value_error_on_no_placement(self):
         """When no label placement is found, ValueError should be raised."""
-        import inspect
-
-        from vibesensor.report import pdf_diagram
-
-        source = inspect.getsource(pdf_diagram)
-        assert "raise ValueError" in source, (
+        assert "raise ValueError" in _PDF_DIAGRAM_SRC, (
             "Should raise ValueError when no valid label placement is found"
         )
 
@@ -117,10 +103,6 @@ class TestOwnsPoolRemoval:
 
     def test_no_owns_pool_attribute(self):
         """SignalProcessor should not have _owns_pool attribute."""
-        import inspect
-
-        from vibesensor.processing import SignalProcessor
-
         source = inspect.getsource(SignalProcessor.__init__)
         assert "_owns_pool" not in source, (
             "Dead _owns_pool flag should be removed from SignalProcessor.__init__"
@@ -128,8 +110,6 @@ class TestOwnsPoolRemoval:
 
     def test_constructor_still_works(self):
         """SignalProcessor can still be constructed with or without a pool."""
-        from vibesensor.processing import SignalProcessor
-
         proc = SignalProcessor(
             sample_rate_hz=200,
             waveform_seconds=5,
@@ -149,10 +129,8 @@ class TestReportCliErrorHandling:
 
     def test_missing_file_returns_1(self, capsys):
         """main() returns 1 with friendly message for missing input."""
-        from vibesensor.report_cli import main
-
         with patch("sys.argv", ["report_cli", "/nonexistent/path.jsonl"]):
-            rc = main()
+            rc = report_cli_main()
         assert rc == 1
         captured = capsys.readouterr()
         assert "not found" in captured.err.lower() or "error" in captured.err.lower()
@@ -161,10 +139,9 @@ class TestReportCliErrorHandling:
         """main() returns 1 with friendly message for corrupt JSON."""
         bad_file = tmp_path / "corrupt.jsonl"
         bad_file.write_text("{invalid json\n", encoding="utf-8")
-        from vibesensor.report_cli import main
 
         with patch("sys.argv", ["report_cli", str(bad_file)]):
-            rc = main()
+            rc = report_cli_main()
         assert rc == 1
         captured = capsys.readouterr()
         assert "error" in captured.err.lower()
@@ -176,35 +153,26 @@ class TestReportCliErrorHandling:
 class TestWebSocketHubCircuitBreaker:
     """Verify consecutive failure tracking in ws_hub.run()."""
 
+    _WS_HUB_RUN_SRC = inspect.getsource(WebSocketHub.run)
+
     def test_run_method_has_consecutive_failure_tracking(self):
         """ws_hub.run() should track consecutive failures."""
-        import inspect
-
-        from vibesensor.ws_hub import WebSocketHub
-
-        source = inspect.getsource(WebSocketHub.run)
-        assert "_consecutive_failures" in source, "run() should track consecutive failures"
-        assert "_MAX_CONSECUTIVE_FAILURES" in source, (
+        assert "_consecutive_failures" in self._WS_HUB_RUN_SRC, (
+            "run() should track consecutive failures"
+        )
+        assert "_MAX_CONSECUTIVE_FAILURES" in self._WS_HUB_RUN_SRC, (
             "run() should have a max consecutive failures threshold"
         )
 
     def test_failure_counter_resets_on_success(self):
         """After a successful tick, the failure counter should reset."""
-        import inspect
-
-        from vibesensor.ws_hub import WebSocketHub
-
-        source = inspect.getsource(WebSocketHub.run)
-        # The counter should be reset to 0 after a successful broadcast
-        assert "_consecutive_failures = 0" in source, (
+        assert "_consecutive_failures = 0" in self._WS_HUB_RUN_SRC, (
             "Failure counter should be reset to 0 on success"
         )
 
     @pytest.mark.asyncio
     async def test_run_tolerates_failures_and_continues(self):
         """run() should not crash on on_tick exceptions; it keeps retrying."""
-        from vibesensor.ws_hub import WebSocketHub
-
         hub = WebSocketHub()
         call_count = 0
 
@@ -247,24 +215,18 @@ class TestCsvExportFieldPopulation:
 
     def test_empty_row_gets_defaults(self):
         """A row with no record_type/schema_version gets them populated."""
-        from vibesensor.api import _flatten_for_csv
-
         result = _flatten_for_csv({"accel_x_g": 0.5, "t_s": 1.0})
         assert result["record_type"] == "sample"
         assert result["schema_version"] == "2"
 
     def test_existing_values_preserved(self):
         """If record_type/schema_version are already in the row, keep them."""
-        from vibesensor.api import _flatten_for_csv
-
         result = _flatten_for_csv({"record_type": "meta", "schema_version": "3"})
         assert result["record_type"] == "meta"
         assert result["schema_version"] == "3"
 
     def test_extras_still_work(self):
         """Non-column keys are still collected into extras."""
-        from vibesensor.api import _flatten_for_csv
-
         result = _flatten_for_csv({"accel_x_g": 0.5, "custom_field": "hello"})
         assert result["record_type"] == "sample"
         assert "extras" in result
@@ -273,8 +235,6 @@ class TestCsvExportFieldPopulation:
 
     def test_list_values_json_serialized(self):
         """List/dict values in known columns are JSON-serialized."""
-        from vibesensor.api import _flatten_for_csv
-
         result = _flatten_for_csv({"top_peaks": [1, 2, 3]})
         assert result["top_peaks"] == "[1, 2, 3]"
         assert result["record_type"] == "sample"
@@ -286,42 +246,9 @@ class TestCsvExportFieldPopulation:
 class TestCarErrorI18nKeys:
     """Verify i18n keys for car error feedback exist in both catalogs."""
 
-    @pytest.mark.parametrize(
-        "key",
-        [
-            "settings.car.delete_failed",
-            "settings.car.activate_failed",
-            "settings.car.save_failed",
-        ],
-    )
-    def test_en_key_exists(self, key):
-        en_path = (
-            SERVER_ROOT
-            / "vibesensor"
-            / ".."
-            / ".."
-            / "ui"
-            / "src"
-            / "i18n"
-            / "catalogs"
-            / "en.json"
-        )
-        # Use the known workspace layout
-        repo_root = REPO_ROOT
-        en_path = repo_root / "apps" / "ui" / "src" / "i18n" / "catalogs" / "en.json"
-        catalog = json.loads(en_path.read_text(encoding="utf-8"))
-        assert key in catalog, f"Missing i18n key {key!r} in en.json"
-
-    @pytest.mark.parametrize(
-        "key",
-        [
-            "settings.car.delete_failed",
-            "settings.car.activate_failed",
-            "settings.car.save_failed",
-        ],
-    )
-    def test_nl_key_exists(self, key):
-        repo_root = REPO_ROOT
-        nl_path = repo_root / "apps" / "ui" / "src" / "i18n" / "catalogs" / "nl.json"
-        catalog = json.loads(nl_path.read_text(encoding="utf-8"))
-        assert key in catalog, f"Missing i18n key {key!r} in nl.json"
+    @pytest.mark.parametrize("key", _I18N_ERROR_KEYS)
+    @pytest.mark.parametrize("lang", ["en", "nl"])
+    def test_i18n_key_exists(self, lang, key):
+        catalog_path = REPO_ROOT / "apps" / "ui" / "src" / "i18n" / "catalogs" / f"{lang}.json"
+        catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+        assert key in catalog, f"Missing i18n key {key!r} in {lang}.json"

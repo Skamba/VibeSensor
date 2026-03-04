@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
+import pytest
+
 from vibesensor.report.report_data import (
     CarMeta,
     DataTrustItem,
@@ -15,6 +17,47 @@ from vibesensor.report.report_data import (
     ReportTemplateData,
     SystemFindingCard,
 )
+
+# ---------------------------------------------------------------------------
+# Parametrized roundtrip tests — validates from_dict(asdict(x)) == x
+# ---------------------------------------------------------------------------
+
+_ROUNDTRIP_CASES = [
+    pytest.param(
+        ObservedSignature,
+        dict(
+            primary_system="wheel bearing",
+            strongest_sensor_location="front-left",
+            speed_band="80-120 km/h",
+        ),
+        id="ObservedSignature",
+    ),
+    pytest.param(
+        NextStep,
+        dict(action="Inspect", rank=1, speed_band="60-80 km/h"),
+        id="NextStep",
+    ),
+    pytest.param(
+        DataTrustItem,
+        dict(check="speed_coverage", state="pass", detail="OK"),
+        id="DataTrustItem",
+    ),
+    pytest.param(
+        PeakRow,
+        dict(
+            rank="1", system="wheel", freq_hz="42.3",
+            order="1x", peak_db="15.2", strength_db="12.0",
+            speed_band="80-100 km/h", relevance="high",
+        ),
+        id="PeakRow",
+    ),
+]
+
+
+@pytest.mark.parametrize("cls, kwargs", _ROUNDTRIP_CASES)
+def test_from_dict_roundtrip(cls, kwargs) -> None:  # type: ignore[type-arg]
+    original = cls(**kwargs)
+    assert cls.from_dict(asdict(original)) == original
 
 
 class TestCarMetaFromDict:
@@ -35,17 +78,6 @@ class TestCarMetaFromDict:
     def test_ignores_extra_keys(self) -> None:
         result = CarMeta.from_dict({"name": "BMW", "unknown_key": 42})
         assert result.name == "BMW"
-
-
-class TestObservedSignatureFromDict:
-    def test_roundtrip(self) -> None:
-        original = ObservedSignature(
-            primary_system="wheel bearing",
-            strongest_sensor_location="front-left",
-            speed_band="80-120 km/h",
-        )
-        result = ObservedSignature.from_dict(asdict(original))
-        assert result == original
 
 
 class TestPartSuggestionFromDict:
@@ -83,36 +115,6 @@ class TestSystemFindingCardFromDict:
     def test_from_none(self) -> None:
         result = SystemFindingCard.from_dict(None)
         assert result.system_name == ""
-
-
-class TestNextStepFromDict:
-    def test_roundtrip(self) -> None:
-        original = NextStep(action="Inspect", rank=1, speed_band="60-80 km/h")
-        result = NextStep.from_dict(asdict(original))
-        assert result == original
-
-
-class TestDataTrustItemFromDict:
-    def test_roundtrip(self) -> None:
-        original = DataTrustItem(check="speed_coverage", state="pass", detail="OK")
-        result = DataTrustItem.from_dict(asdict(original))
-        assert result == original
-
-
-class TestPeakRowFromDict:
-    def test_roundtrip(self) -> None:
-        original = PeakRow(
-            rank="1",
-            system="wheel",
-            freq_hz="42.3",
-            order="1x",
-            peak_db="15.2",
-            strength_db="12.0",
-            speed_band="80-100 km/h",
-            relevance="high",
-        )
-        result = PeakRow.from_dict(asdict(original))
-        assert result == original
 
 
 class TestReportTemplateDataFromDict:

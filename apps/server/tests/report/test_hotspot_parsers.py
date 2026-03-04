@@ -158,24 +158,29 @@ class TestParseRfkillBlocked:
 
 
 class TestNmLogSignals:
-    def test_dhcp_no_range(self) -> None:
-        sig, detail = nm_log_signals("dhcp: no address range available for subnet\n")
-        assert sig == "dhcp_no_range"
+    @pytest.mark.parametrize(
+        ("log_text", "expected_sig"),
+        [
+            pytest.param(
+                "dhcp: no address range available for subnet\n",
+                "dhcp_no_range", id="dhcp_no_range",
+            ),
+            pytest.param(
+                "failed to start dnsmasq process\n",
+                "dhcp_dnsmasq_start_failed",
+                id="dnsmasq_start_failed",
+            ),
+            pytest.param(
+                "address already in use on port 53\n",
+                "port53_conflict", id="port53_conflict",
+            ),
+            pytest.param("everything is fine\n", None, id="no_signal"),
+        ],
+    )
+    def test_detects_signal(self, log_text: str, expected_sig: str | None) -> None:
+        sig, detail = nm_log_signals(log_text)
+        assert sig == expected_sig
         assert detail is None
-
-    def test_dnsmasq_start_failed(self) -> None:
-        sig, detail = nm_log_signals("failed to start dnsmasq process\n")
-        assert sig == "dhcp_dnsmasq_start_failed"
-        assert detail is None
-
-    def test_port53_conflict(self) -> None:
-        sig, detail = nm_log_signals("address already in use on port 53\n")
-        assert sig == "port53_conflict"
-        assert detail is None
-
-    def test_no_signal(self) -> None:
-        sig, detail = nm_log_signals("everything is fine\n")
-        assert sig is None and detail is None
 
 
 # ---------------------------------------------------------------------------
@@ -184,39 +189,44 @@ class TestNmLogSignals:
 
 
 class TestParsePort53Conflict:
-    def test_conflict_found_double_paren(self) -> None:
-        # Real ss output uses double-paren format: users:(("name",pid=…,fd=…))
-        output = (
-            "LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*"
-            '  users:(("systemd-resolved",pid=571,fd=13))\n'
-        )
-        result = parse_port53_conflict(output)
-        assert result == "systemd-resolved"
-
-    def test_conflict_found_single_paren(self) -> None:
-        # Some ss versions may use single-paren format
-        output = 'LISTEN  0  0  *:53  *:*  users:("systemd-resolved",pid=123,fd=4)\n'
-        result = parse_port53_conflict(output)
-        assert result == "systemd-resolved"
-
-    def test_dnsmasq_nm_ignored(self) -> None:
-        output = 'LISTEN 0 0 *:53 *:* users:(("dnsmasq",pid=1,fd=2)) networkmanager dnsmasq\n'
-        assert parse_port53_conflict(output) is None
-
-    def test_empty(self) -> None:
-        assert parse_port53_conflict("") is None
-
-    def test_no_users_field(self) -> None:
-        output = "LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*\n"
-        assert parse_port53_conflict(output) is None
-
-    def test_multiple_processes_are_sorted_and_deduplicated(self) -> None:
-        output = (
-            'LISTEN 0 0 *:53 *:* users:(("zproc",pid=1,fd=2))\n'
-            'LISTEN 0 0 *:53 *:* users:(("aproc",pid=3,fd=4))\n'
-            'LISTEN 0 0 *:53 *:* users:(("zproc",pid=5,fd=6))\n'
-        )
-        assert parse_port53_conflict(output) == "aproc,zproc"
+    @pytest.mark.parametrize(
+        ("output", "expected"),
+        [
+            pytest.param(
+                # Real ss output uses double-paren format: users:(("name",pid=…,fd=…))
+                "LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*"
+                '  users:(("systemd-resolved",pid=571,fd=13))\n',
+                "systemd-resolved",
+                id="double_paren",
+            ),
+            pytest.param(
+                # Some ss versions may use single-paren format
+                'LISTEN  0  0  *:53  *:*  users:("systemd-resolved",pid=123,fd=4)\n',
+                "systemd-resolved",
+                id="single_paren",
+            ),
+            pytest.param(
+                'LISTEN 0 0 *:53 *:* users:(("dnsmasq",pid=1,fd=2)) networkmanager dnsmasq\n',
+                None,
+                id="dnsmasq_nm_ignored",
+            ),
+            pytest.param("", None, id="empty"),
+            pytest.param(
+                "LISTEN  0  128  127.0.0.53%lo:53  0.0.0.0:*\n",
+                None,
+                id="no_users_field",
+            ),
+            pytest.param(
+                'LISTEN 0 0 *:53 *:* users:(("zproc",pid=1,fd=2))\n'
+                'LISTEN 0 0 *:53 *:* users:(("aproc",pid=3,fd=4))\n'
+                'LISTEN 0 0 *:53 *:* users:(("zproc",pid=5,fd=6))\n',
+                "aproc,zproc",
+                id="sorted_deduped",
+            ),
+        ],
+    )
+    def test_parses(self, output: str, expected: str | None) -> None:
+        assert parse_port53_conflict(output) == expected
 
 
 # ---------------------------------------------------------------------------

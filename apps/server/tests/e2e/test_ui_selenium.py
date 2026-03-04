@@ -22,7 +22,21 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 pytestmark = pytest.mark.selenium
 
+# ---------------------------------------------------------------------------
+# Shared constants & JS snippets
+# ---------------------------------------------------------------------------
+_DEFAULT_WAIT_S = 10
+_DEL_RUN_SEL = '[data-run-action="delete-run"]'
+_JS_SELECTOR_COUNT = "return document.querySelectorAll(arguments[0]).length;"
+_JS_LOCATION_OPTIONS = (
+    "const s=document.querySelector('.row-location-select');"
+    "return s ? Array.from(s.options).map(o=>o.text.trim()) : [];"
+)
 
+
+# ---------------------------------------------------------------------------
+# Reusable helpers
+# ---------------------------------------------------------------------------
 def _free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
@@ -41,6 +55,34 @@ def _wait_http_ok(url: str, timeout_s: float = 20.0) -> None:
     raise RuntimeError(f"Server did not become ready: {url}")
 
 
+def _open_app(
+    driver: webdriver.Remote, live_server: dict[str, object]
+) -> WebDriverWait:
+    """Navigate to the live server root and return a ``WebDriverWait``."""
+    driver.get(f"{live_server['base_url']}/")
+    return WebDriverWait(driver, _DEFAULT_WAIT_S)
+
+
+def _do_recording_cycle(driver: webdriver.Remote, wait: WebDriverWait) -> None:
+    """Start a recording, wait for Running, stop, wait for Stopped."""
+    _activate_tab(driver, "tab-dashboard", "dashboardView")
+    wait.until(EC.element_to_be_clickable((By.ID, "startLoggingBtn"))).click()
+    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Running")
+    wait.until(EC.element_to_be_clickable((By.ID, "stopLoggingBtn"))).click()
+    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
+
+
+def _selector_count(driver: webdriver.Remote, css: str) -> int:
+    return int(driver.execute_script(_JS_SELECTOR_COUNT, css))
+
+
+def _wait_selector_min(wait: WebDriverWait, css: str, minimum: int = 1) -> None:
+    wait.until(lambda d: _selector_count(d, css) >= minimum)
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 @pytest.fixture(scope="module")
 def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
     pi_dir = SERVER_ROOT
@@ -138,8 +180,11 @@ def driver() -> webdriver.Remote:
     pytest.skip("No Selenium-compatible browser driver available: " + " | ".join(errors))
 
 
+# ---------------------------------------------------------------------------
+# Navigation helpers
+# ---------------------------------------------------------------------------
 def _activate_tab(driver: webdriver.Remote, tab_id: str, view_id: str) -> None:
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, _DEFAULT_WAIT_S)
     wait.until(EC.element_to_be_clickable((By.ID, tab_id))).click()
     script = (
         "const v=document.getElementById(arguments[0]); "
@@ -149,7 +194,7 @@ def _activate_tab(driver: webdriver.Remote, tab_id: str, view_id: str) -> None:
 
 
 def _activate_settings_subtab(driver: webdriver.Remote, tab_id: str) -> None:
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, _DEFAULT_WAIT_S)
     selector = f'[data-settings-tab="{tab_id}"]'
     wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector))).click()
     wait.until(
@@ -163,7 +208,7 @@ def _activate_settings_subtab(driver: webdriver.Remote, tab_id: str) -> None:
 
 
 def _set_language(driver: webdriver.Remote, lang: str) -> None:
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, _DEFAULT_WAIT_S)
     select = wait.until(EC.presence_of_element_located((By.ID, "languageSelect")))
     driver.execute_script(
         "arguments[0].value = arguments[1];"
@@ -190,10 +235,12 @@ def _seed_client_hello(control_port: int) -> None:
             time.sleep(0.1)
 
 
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
 def test_nav_tabs_switch_views(driver: webdriver.Remote, live_server: dict[str, object]) -> None:
-    base_url = str(live_server["base_url"])
-    driver.get(f"{base_url}/")
-    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "tab-dashboard")))
+    wait = _open_app(driver, live_server)
+    wait.until(EC.presence_of_element_located((By.ID, "tab-dashboard")))
 
     _activate_tab(driver, "tab-history", "historyView")
     _activate_tab(driver, "tab-settings", "settingsView")
@@ -231,9 +278,7 @@ def test_all_tabs_render_localized_texts(
     lang: str,
     labels: dict[str, object],
 ) -> None:
-    base_url = str(live_server["base_url"])
-    driver.get(f"{base_url}/")
-    wait = WebDriverWait(driver, 10)
+    wait = _open_app(driver, live_server)
     _set_language(driver, lang)
 
     nav_texts = driver.execute_script(
@@ -272,127 +317,57 @@ def test_logging_buttons_toggle_status_badge(
     driver: webdriver.Remote,
     live_server: dict[str, object],
 ) -> None:
-    base_url = str(live_server["base_url"])
-    driver.get(f"{base_url}/")
-    wait = WebDriverWait(driver, 10)
-    _activate_tab(driver, "tab-dashboard", "dashboardView")
-
-    wait.until(EC.element_to_be_clickable((By.ID, "startLoggingBtn"))).click()
-    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Running")
-
-    wait.until(EC.element_to_be_clickable((By.ID, "stopLoggingBtn"))).click()
-    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
+    wait = _open_app(driver, live_server)
+    _do_recording_cycle(driver, wait)
 
 
 def test_location_selector_has_vehicle_positions(
     driver: webdriver.Remote,
     live_server: dict[str, object],
 ) -> None:
-    base_url = str(live_server["base_url"])
     control_port = int(live_server["control_port"])
     _seed_client_hello(control_port)
-    driver.get(f"{base_url}/")
-    wait = WebDriverWait(driver, 10)
+    wait = _open_app(driver, live_server)
     _activate_tab(driver, "tab-settings", "settingsView")
     _activate_settings_subtab(driver, "sensorsTab")
 
     wait.until(EC.presence_of_element_located((By.CLASS_NAME, "row-location-select")))
-    wait.until(
-        lambda d: (
-            len(
-                d.execute_script(
-                    "const s=document.querySelector('.row-location-select');"
-                    "return s ? Array.from(s.options).map(o=>o.text.trim()) : [];",
-                ),
-            )
-            > 10
-        ),
-    )
-    labels = driver.execute_script(
-        "const s=document.querySelector('.row-location-select');"
-        "return s ? Array.from(s.options).map(o=>o.text.trim()) : [];",
-    )
-    assert "Front Left Wheel" in labels
-    assert "Transmission" in labels
-    assert "Driver Seat" in labels
-    assert "Trunk" in labels
+    wait.until(lambda d: len(d.execute_script(_JS_LOCATION_OPTIONS)) > 10)
+    labels = driver.execute_script(_JS_LOCATION_OPTIONS)
+    for expected in ("Front Left Wheel", "Transmission", "Driver Seat", "Trunk"):
+        assert expected in labels
 
 
 def test_logs_can_be_deleted_with_confirmation(
     driver: webdriver.Remote,
     live_server: dict[str, object],
 ) -> None:
-    base_url = str(live_server["base_url"])
-    driver.get(f"{base_url}/")
-    wait = WebDriverWait(driver, 10)
-    _activate_tab(driver, "tab-dashboard", "dashboardView")
-
-    wait.until(EC.element_to_be_clickable((By.ID, "startLoggingBtn"))).click()
-    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Running")
-    wait.until(EC.element_to_be_clickable((By.ID, "stopLoggingBtn"))).click()
-    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
+    wait = _open_app(driver, live_server)
+    _do_recording_cycle(driver, wait)
 
     _activate_tab(driver, "tab-history", "historyView")
-    del_sel = '[data-run-action="delete-run"]'
-    wait.until(
-        lambda d: (
-            d.execute_script(
-                "return document.querySelectorAll(arguments[0]).length;",
-                del_sel,
-            )
-            >= 1
-        )
-    )
-    before_count = int(
-        driver.execute_script(
-            "return document.querySelectorAll(arguments[0]).length;",
-            del_sel,
-        )
-    )
+    _wait_selector_min(wait, _DEL_RUN_SEL)
+    before_count = _selector_count(driver, _DEL_RUN_SEL)
     assert before_count >= 1
 
     driver.execute_script("window.confirm = () => true;")
     driver.execute_script(
         "const btn=document.querySelector(arguments[0]); if (btn) btn.click();",
-        del_sel,
+        _DEL_RUN_SEL,
     )
-    wait.until(
-        lambda d: (
-            d.execute_script(
-                "return document.querySelectorAll(arguments[0]).length;",
-                del_sel,
-            )
-            == max(0, before_count - 1)
-        )
-    )
+    wait.until(lambda d: _selector_count(d, _DEL_RUN_SEL) == max(0, before_count - 1))
 
 
 def test_dutch_logs_uses_domain_terms_not_literal_calque(
     driver: webdriver.Remote,
     live_server: dict[str, object],
 ) -> None:
-    base_url = str(live_server["base_url"])
-    wait = WebDriverWait(driver, 10)
-    driver.get(f"{base_url}/")
-    _activate_tab(driver, "tab-dashboard", "dashboardView")
-
-    wait.until(EC.element_to_be_clickable((By.ID, "startLoggingBtn"))).click()
-    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Running")
-    wait.until(EC.element_to_be_clickable((By.ID, "stopLoggingBtn"))).click()
-    wait.until(lambda d: d.find_element(By.ID, "loggingStatus").text.strip() == "Stopped")
+    wait = _open_app(driver, live_server)
+    _do_recording_cycle(driver, wait)
 
     _set_language(driver, "nl")
     _activate_tab(driver, "tab-history", "historyView")
-    del_sel = '[data-run-action="delete-run"]'
-    wait.until(
-        lambda d: (
-            d.execute_script(
-                "return document.querySelectorAll(arguments[0]).length;",
-                del_sel,
-            )
-            >= 1
-        )
-    )
+    _wait_selector_min(wait, _DEL_RUN_SEL)
 
     # The Dutch history table header should use "Meetrun" (domain term) not a literal calque.
     headers = driver.execute_script(
@@ -418,9 +393,7 @@ def test_offline_client_mac_set_location_and_remove(
     driver: webdriver.Remote,
     live_server: dict[str, object],
 ) -> None:
-    base_url = str(live_server["base_url"])
-    driver.get(f"{base_url}/")
-    wait = WebDriverWait(driver, 10)
+    wait = _open_app(driver, live_server)
     _activate_tab(driver, "tab-settings", "settingsView")
     _activate_settings_subtab(driver, "sensorsTab")
 

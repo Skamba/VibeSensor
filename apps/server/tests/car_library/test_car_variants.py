@@ -14,6 +14,7 @@ from vibesensor.car_library import (
 )
 from vibesensor.domain_models import CarConfig
 
+
 def _variant_label(entry: dict, variant: dict) -> str:
     """Short label for assertion messages: ``'3 Series (G20) / 320i'``."""
     return f"{entry['model']} / {variant.get('name', '?')}"

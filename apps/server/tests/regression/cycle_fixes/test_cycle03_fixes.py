@@ -15,14 +15,18 @@ from pathlib import Path
 
 import pytest
 
+import vibesensor.analysis.findings.order_findings as order_findings_mod
+from vibesensor.analysis.findings import _suppress_engine_aliases
+from vibesensor.analysis.helpers import _speed_stats
+from vibesensor.routes.clients import create_client_routes
+from vibesensor.runlog import append_jsonl_records
+
 
 class TestRankingScoreSyncAfterSuppression:
     """Regression: _suppress_engine_aliases must update _ranking_score
     in the finding dict when suppressing confidence."""
 
     def test_ranking_score_updated(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         findings = [
             (
                 0.8,
@@ -46,7 +50,6 @@ class TestRankingScoreSyncAfterSuppression:
         result = _suppress_engine_aliases(findings)
         engine_findings = [f for f in result if f.get("suspected_source") == "engine"]
         for f in engine_findings:
-            # _ranking_score must match suppressed tuple score
             assert f["_ranking_score"] == pytest.approx(0.7 * 0.60, abs=1e-9), (
                 "_ranking_score must be updated after suppression"
             )
@@ -57,10 +60,7 @@ class TestNegligibleCapAligned:
     TIER_B_CEILING (0.40)."""
 
     def test_cap_value_in_source(self) -> None:
-        import vibesensor.analysis.findings.order_findings as fmod
-
-        src = inspect.getsource(fmod)
-        # The line that applies the negligible cap must use 0.40
+        src = inspect.getsource(order_findings_mod)
         assert "min(confidence, 0.40)" in src, (
             "Negligible cap should be 0.40 (aligned with TIER_B_CEILING)"
         )
@@ -70,20 +70,14 @@ class TestSteadySpeedUsesAND:
     """Regression: steady_speed must require BOTH low stddev AND low range."""
 
     def test_high_stddev_low_range_not_steady(self) -> None:
-        from vibesensor.analysis.helpers import _speed_stats
-
-        # Alternating values: stddev > 2 but range could be small
-        # This produces stddev ~1.98*sqrt(n/(n-1)) ≈ 3.95
         speeds = [50.0 + (i % 2) * 7.9 for i in range(50)]
-        stats = _speed_stats(speeds)
-        assert not stats["steady_speed"], "High stddev should not be steady even with low range"
+        assert not _speed_stats(speeds)["steady_speed"], (
+            "High stddev should not be steady even with low range"
+        )
 
     def test_both_low_is_steady(self) -> None:
-        from vibesensor.analysis.helpers import _speed_stats
-
         speeds = [60.0 + 0.1 * (i % 3) for i in range(50)]
-        stats = _speed_stats(speeds)
-        assert stats["steady_speed"], "Both low stddev and range → steady"
+        assert _speed_stats(speeds)["steady_speed"], "Both low stddev and range → steady"
 
 
 class TestHistoryDbCloseLocked:
@@ -100,40 +94,26 @@ class TestHistoryDbCloseLocked:
 
 
 class TestJsonlHandlesNan:
-    """Regression: JSONL serialization must handle NaN/Infinity gracefully.
+    """Regression: JSONL serialization must handle NaN/Infinity gracefully."""
 
-    Instead of crashing mid-batch (which risks partial writes and data loss),
-    ``append_jsonl_records`` falls back to ``allow_nan=True`` so the record
-    is persisted with a warning.
-    """
-
-    def test_nan_falls_back(self, tmp_path: Path) -> None:
-        from vibesensor.runlog import append_jsonl_records
-
-        record = {"value": float("nan")}
+    @pytest.mark.parametrize(
+        "value, expected_text",
+        [
+            pytest.param(float("nan"), "NaN", id="nan"),
+            pytest.param(float("inf"), "Infinity", id="inf"),
+        ],
+    )
+    def test_non_finite_falls_back(self, tmp_path: Path, value: float, expected_text: str) -> None:
         out = tmp_path / "out.jsonl"
-        append_jsonl_records(path=out, records=[record])
-        text = out.read_text()
-        assert "NaN" in text, "NaN should be serialised with allow_nan fallback"
-
-    def test_inf_falls_back(self, tmp_path: Path) -> None:
-        from vibesensor.runlog import append_jsonl_records
-
-        record = {"value": float("inf")}
-        out = tmp_path / "out.jsonl"
-        append_jsonl_records(path=out, records=[record])
-        text = out.read_text()
-        assert "Infinity" in text, "Infinity should be serialised with allow_nan fallback"
+        append_jsonl_records(path=out, records=[{"value": value}])
+        assert expected_text in out.read_text()
 
 
 class TestIdentifyClientNormalized:
     """Regression: identify_client must normalize client_id before use."""
 
     def test_normalize_call_in_source(self) -> None:
-        from vibesensor.routes.clients import create_client_routes
-
         source = inspect.getsource(create_client_routes)
-        # Find the identify_client function body
         idx = source.index("identify_client")
         snippet = source[idx : idx + 500]
         assert "normalize_client_id_or_400" in snippet, (
@@ -145,8 +125,6 @@ class TestSuppressEngineAliasesCapRaised:
     """Regression: _suppress_engine_aliases cap should allow more than 3."""
 
     def test_cap_allows_4_findings(self) -> None:
-        from vibesensor.analysis.findings import _suppress_engine_aliases
-
         findings = [
             (
                 0.9 - i * 0.1,
@@ -174,21 +152,21 @@ class TestWorkerPoolDeterministic:
         assert "np.random.seed" not in source, "Must use np.random.default_rng, not np.random.seed"
 
 
+_UNSEEDED_RANDOM_MODULES = [
+    pytest.param("tests.processing.test_processing_extended", id="processing_extended"),
+    pytest.param("tests.protocol.test_reset_buffer_flush", id="reset_buffer_flush"),
+]
+
+
 class TestNoUnseededRandomInTests:
-    """Guardrail: all test files must use np.random.default_rng(seed), never
+    """Guardrail: test files must use np.random.default_rng(seed), never
     the unseeded global PRNG functions like np.random.randn or np.random.rand."""
 
-    def test_no_unseeded_randn_in_processing_tests(self) -> None:
-        import tests.processing.test_processing_extended as mod
+    @pytest.mark.parametrize("modpath", _UNSEEDED_RANDOM_MODULES)
+    def test_no_unseeded_randn(self, modpath: str) -> None:
+        import importlib
 
-        source = inspect.getsource(mod)
-        assert "np.random.randn" not in source, (
-            "Use np.random.default_rng(seed).standard_normal() instead of np.random.randn()"
-        )
-
-    def test_no_unseeded_randn_in_buffer_flush_tests(self) -> None:
-        import tests.protocol.test_reset_buffer_flush as mod
-
+        mod = importlib.import_module(modpath)
         source = inspect.getsource(mod)
         assert "np.random.randn" not in source, (
             "Use np.random.default_rng(seed).standard_normal() instead of np.random.randn()"

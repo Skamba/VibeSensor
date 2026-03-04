@@ -4,6 +4,7 @@ import pytest
 from vibesensor_core.vibration_strength import percentile
 
 from vibesensor.analysis.helpers import (
+    MIN_ANALYSIS_FREQ_HZ,
     _corr_abs,
     _effective_engine_rpm,
     _format_duration,
@@ -21,6 +22,7 @@ from vibesensor.analysis.helpers import (
     _speed_stats_by_phase,
 )
 from vibesensor.analysis.order_analysis import _wheel_hz
+from vibesensor.analysis.phase_segmentation import segment_run_phases
 from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report_i18n import normalize_lang
 from vibesensor.runlog import as_float_or_none as _as_float
@@ -82,18 +84,20 @@ def test_format_duration(seconds: float, expected: str) -> None:
 # -- _percent_missing ----------------------------------------------------------
 
 
-def test_percent_missing_all_present() -> None:
-    samples = [{"speed_kmh": 80}, {"speed_kmh": 90}]
-    assert _percent_missing(samples, "speed_kmh") == 0.0
-
-
-def test_percent_missing_some_missing() -> None:
-    samples = [{"speed_kmh": 80}, {"speed_kmh": None}, {}, {"speed_kmh": ""}]
-    assert abs(_percent_missing(samples, "speed_kmh") - 75.0) < 0.1
-
-
-def test_percent_missing_empty_list() -> None:
-    assert _percent_missing([], "speed_kmh") == 100.0
+@pytest.mark.parametrize(
+    ("samples", "expected"),
+    [
+        pytest.param([{"speed_kmh": 80}, {"speed_kmh": 90}], 0.0, id="all_present"),
+        pytest.param(
+            [{"speed_kmh": 80}, {"speed_kmh": None}, {}, {"speed_kmh": ""}],
+            75.0,
+            id="some_missing",
+        ),
+        pytest.param([], 100.0, id="empty_list"),
+    ],
+)
+def test_percent_missing(samples: list[dict], expected: float) -> None:
+    assert abs(_percent_missing(samples, "speed_kmh") - expected) < 0.1
 
 
 # -- _mean_variance ------------------------------------------------------------
@@ -264,8 +268,6 @@ def test_speed_stats_by_phase_excludes_zero_and_none_speed() -> None:
 
 
 def test_speed_stats_by_phase_sample_count_sums_to_total() -> None:
-    from vibesensor.analysis.phase_segmentation import segment_run_phases
-
     samples = [
         {"t_s": float(i), "speed_kmh": 0.5 if i < 5 else 60.0, "vibration_strength_db": 10.0}
         for i in range(10)
@@ -329,8 +331,6 @@ def test_sample_top_peaks_filters_invalid() -> None:
 
 def test_sample_top_peaks_filters_sub_min_analysis_freq() -> None:
     """Peaks below MIN_ANALYSIS_FREQ_HZ (5.0 Hz) should be excluded."""
-    from vibesensor.analysis.helpers import MIN_ANALYSIS_FREQ_HZ
-
     sample = {
         "top_peaks": [
             {"hz": 1.5, "amp": 0.2},  # below MIN_ANALYSIS_FREQ_HZ
@@ -415,14 +415,17 @@ def test_wheel_hz_basic() -> None:
     assert abs(result - expected) < 1e-9
 
 
-def test_wheel_hz_no_speed() -> None:
-    assert _wheel_hz({"speed_kmh": None}, 2.0) is None
-    assert _wheel_hz({"speed_kmh": 0}, 2.0) is None
-
-
-def test_wheel_hz_no_tire() -> None:
-    assert _wheel_hz({"speed_kmh": 90.0}, None) is None
-    assert _wheel_hz({"speed_kmh": 90.0}, 0.0) is None
+@pytest.mark.parametrize(
+    ("sample", "tire_circ"),
+    [
+        pytest.param({"speed_kmh": None}, 2.0, id="no_speed_none"),
+        pytest.param({"speed_kmh": 0}, 2.0, id="no_speed_zero"),
+        pytest.param({"speed_kmh": 90.0}, None, id="no_tire_none"),
+        pytest.param({"speed_kmh": 90.0}, 0.0, id="no_tire_zero"),
+    ],
+)
+def test_wheel_hz_returns_none(sample: dict, tire_circ: float | None) -> None:
+    assert _wheel_hz(sample, tire_circ) is None
 
 
 # -- _effective_engine_rpm -----------------------------------------------------
@@ -453,25 +456,25 @@ def test_effective_engine_rpm_missing() -> None:
 # -- _corr_abs -----------------------------------------------------------------
 
 
-def test_corr_abs_perfect_positive() -> None:
-    x = [1.0, 2.0, 3.0, 4.0, 5.0]
-    y = [2.0, 4.0, 6.0, 8.0, 10.0]
+@pytest.mark.parametrize(
+    ("x", "y"),
+    [
+        pytest.param([1.0, 2.0, 3.0, 4.0, 5.0], [2.0, 4.0, 6.0, 8.0, 10.0], id="positive"),
+        pytest.param([1.0, 2.0, 3.0, 4.0, 5.0], [10.0, 8.0, 6.0, 4.0, 2.0], id="negative"),
+    ],
+)
+def test_corr_abs_perfect_correlation(x: list[float], y: list[float]) -> None:
     result = _corr_abs(x, y)
     assert result is not None
     assert abs(result - 1.0) < 1e-9
 
 
-def test_corr_abs_perfect_negative() -> None:
-    x = [1.0, 2.0, 3.0, 4.0, 5.0]
-    y = [10.0, 8.0, 6.0, 4.0, 2.0]
-    result = _corr_abs(x, y)
-    assert result is not None
-    assert abs(result - 1.0) < 1e-9
-
-
-def test_corr_abs_too_few_points() -> None:
-    assert _corr_abs([1.0, 2.0], [3.0, 4.0]) is None
-
-
-def test_corr_abs_constant_returns_none() -> None:
-    assert _corr_abs([1.0, 1.0, 1.0], [2.0, 3.0, 4.0]) is None
+@pytest.mark.parametrize(
+    ("x", "y"),
+    [
+        pytest.param([1.0, 2.0], [3.0, 4.0], id="too_few_points"),
+        pytest.param([1.0, 1.0, 1.0], [2.0, 3.0, 4.0], id="constant_x"),
+    ],
+)
+def test_corr_abs_returns_none(x: list[float], y: list[float]) -> None:
+    assert _corr_abs(x, y) is None
