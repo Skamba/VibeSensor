@@ -27,7 +27,7 @@ from typing import Any
 
 import numpy as np
 import pytest
-from conftest import assert_summary_sections, assert_top_cause_contract
+from _test_helpers import assert_summary_sections, assert_top_cause_contract
 from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis.summary import summarize_run_data

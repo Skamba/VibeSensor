@@ -19,7 +19,7 @@ import math
 from typing import Any
 
 import pytest
-from conftest import (
+from _test_helpers import (
     assert_summary_sections,
     assert_top_cause_contract,
 )
@@ -824,7 +824,7 @@ class TestPdfContentForDiagnosedScenario:
         pdf_bytes = build_report_pdf(map_summary(summary))
 
         # Extract text
-        from conftest import extract_pdf_text
+        from _test_helpers import extract_pdf_text
 
         text = extract_pdf_text(pdf_bytes)
 
@@ -884,7 +884,7 @@ class TestPdfContentForDiagnosedScenario:
 
         pdf_bytes = build_report_pdf(map_summary(summary))
 
-        from conftest import extract_pdf_text
+        from _test_helpers import extract_pdf_text
 
         text = extract_pdf_text(pdf_bytes)
         text_lower = text.lower()
