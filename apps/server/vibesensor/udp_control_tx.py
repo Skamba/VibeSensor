@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import threading
 import time
 
 from .protocol import (
@@ -20,6 +21,8 @@ from .protocol import (
 from .registry import ClientRegistry
 
 LOGGER = logging.getLogger(__name__)
+
+__all__ = ["UDPControlPlane"]
 
 
 class ControlDatagramProtocol(asyncio.DatagramProtocol):
@@ -60,6 +63,13 @@ class UDPControlPlane:
         self.protocol = ControlDatagramProtocol(registry)
         self.transport: asyncio.DatagramTransport | None = None
         self._cmd_seq = random.randint(1, 1_000_000)
+        self._cmd_seq_lock = threading.Lock()
+
+    def _next_cmd_seq(self) -> int:
+        """Atomically increment and return the next command sequence number."""
+        with self._cmd_seq_lock:
+            self._cmd_seq = (self._cmd_seq + 1) & 0xFFFFFFFF
+            return self._cmd_seq
 
     async def start(self) -> None:
         loop = asyncio.get_running_loop()
@@ -86,11 +96,11 @@ class UDPControlPlane:
         if record is None or record.control_addr is None:
             return False, None
 
-        self._cmd_seq = (self._cmd_seq + 1) & 0xFFFFFFFF
-        payload = pack_cmd_identify(bytes.fromhex(record.client_id), self._cmd_seq, duration_ms)
+        seq = self._next_cmd_seq()
+        payload = pack_cmd_identify(bytes.fromhex(record.client_id), seq, duration_ms)
         self.transport.sendto(payload, record.control_addr)
-        self.registry.mark_cmd_sent(normalized_client_id, self._cmd_seq)
-        return True, self._cmd_seq
+        self.registry.mark_cmd_sent(normalized_client_id, seq)
+        return True, seq
 
     def broadcast_sync_clock(self) -> int:
         """Send a clock-sync command to every active sensor.
@@ -105,10 +115,10 @@ class UDPControlPlane:
             record = self.registry.get(client_id)
             if record is None or record.control_addr is None:
                 continue
-            self._cmd_seq = (self._cmd_seq + 1) & 0xFFFFFFFF
+            seq = self._next_cmd_seq()
             payload = pack_cmd_sync_clock(
                 bytes.fromhex(record.client_id),
-                self._cmd_seq,
+                seq,
                 server_time_us,
             )
             self.transport.sendto(payload, record.control_addr)

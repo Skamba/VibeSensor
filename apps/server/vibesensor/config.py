@@ -10,6 +10,8 @@ from typing import Any
 import yaml
 from vibesensor_shared.contracts import NETWORK_PORTS
 
+from .constants import NUMERIC_TYPES
+
 SERVER_DIR = Path(__file__).resolve().parents[1]
 """Root of the ``apps/server/`` package tree."""
 
@@ -179,7 +181,7 @@ class ProcessingConfig:
     fft_update_hz: int
     fft_n: int
     spectrum_min_hz: float
-    spectrum_max_hz: int
+    spectrum_max_hz: float
     client_ttl_seconds: int
     accel_scale_g_per_lsb: float | None
 
@@ -192,7 +194,6 @@ class ProcessingConfig:
             "ui_push_hz": 1,
             "ui_heavy_push_hz": 1,
             "fft_update_hz": 1,
-            "spectrum_max_hz": 1,
             "client_ttl_seconds": 1,
         }
         for field_name, minimum in _POS_FIELDS.items():
@@ -207,6 +208,14 @@ class ProcessingConfig:
                     clamped,
                 )
                 object.__setattr__(self, field_name, clamped)
+
+        # --- spectrum_max_hz positive float guard -----------------------------------
+        if self.spectrum_max_hz < 1.0:
+            LOGGER.warning(
+                "processing.spectrum_max_hz=%s is below minimum 1.0 — clamped to 1.0",
+                self.spectrum_max_hz,
+            )
+            object.__setattr__(self, "spectrum_max_hz", 1.0)
 
         # --- fft_n must be >= 16 and a power of 2 ----------------------------------
         if self.fft_n < 16:
@@ -243,9 +252,9 @@ class ProcessingConfig:
             object.__setattr__(self, "spectrum_min_hz", 0.0)
 
         # --- spectrum_max_hz must be below Nyquist (sample_rate_hz / 2) -------------
-        nyquist = self.sample_rate_hz // 2
+        nyquist = self.sample_rate_hz / 2
         if nyquist > 0 and self.spectrum_max_hz >= nyquist:
-            clamped = nyquist - 1 if nyquist > 1 else 1
+            clamped = int(nyquist - 1) if nyquist > 1 else 1
             LOGGER.warning(
                 "processing.spectrum_max_hz=%s >= Nyquist (%s) — clamped to %s",
                 self.spectrum_max_hz,
@@ -298,10 +307,10 @@ class LoggingConfig:
     def __post_init__(self) -> None:
         if not isinstance(self.metrics_log_hz, int) or self.metrics_log_hz < 1:
             object.__setattr__(self, "metrics_log_hz", max(1, int(self.metrics_log_hz or 1)))
-        if not isinstance(self.no_data_timeout_s, (int, float)) or self.no_data_timeout_s < 0:
+        if not isinstance(self.no_data_timeout_s, NUMERIC_TYPES) or self.no_data_timeout_s < 0:
             object.__setattr__(self, "no_data_timeout_s", 15.0)
         if (
-            not isinstance(self.shutdown_analysis_timeout_s, (int, float))
+            not isinstance(self.shutdown_analysis_timeout_s, NUMERIC_TYPES)
             or self.shutdown_analysis_timeout_s < 0
         ):
             object.__setattr__(self, "shutdown_analysis_timeout_s", 30.0)
@@ -362,7 +371,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
     control_host, control_port = _split_host_port(str(merged["udp"]["control_listen"]))
 
     accel_scale_raw = merged["processing"].get("accel_scale_g_per_lsb")
-    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, (int, float)) else None
+    accel_scale = float(accel_scale_raw) if isinstance(accel_scale_raw, NUMERIC_TYPES) else None
     if accel_scale is not None and accel_scale <= 0:
         LOGGER.warning(
             "processing.accel_scale_g_per_lsb=%s is not positive — using auto-detection",

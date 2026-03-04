@@ -106,7 +106,7 @@ class SeverityMatrix:
                     ts_ms=now_ms,
                     source_key=source_key,
                     severity_key=bucket,
-                    dt_seconds=float(dt_seconds),
+                    dt_seconds=dt_seconds,
                 )
             )
 
@@ -129,5 +129,5 @@ class SeverityMatrix:
             )
         for event in self._seconds_events:
             cell = matrix[event.source_key][event.severity_key]
-            cell["seconds"] = float(cell.get("seconds", 0.0)) + float(event.dt_seconds)
+            cell["seconds"] = float(cell.get("seconds", 0.0)) + event.dt_seconds
         self._matrix = matrix

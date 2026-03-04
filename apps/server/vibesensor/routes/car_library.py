@@ -13,7 +13,7 @@ from ..api_models import (
 )
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
+    from ..runtime import RuntimeState
 
 
 def create_car_library_routes(state: RuntimeState) -> APIRouter:

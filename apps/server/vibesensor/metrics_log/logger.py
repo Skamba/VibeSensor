@@ -22,6 +22,7 @@ from threading import RLock
 from typing import TYPE_CHECKING
 from uuid import uuid4
 
+from ..constants import NUMERIC_TYPES
 from ..runlog import utc_now_iso
 from .post_analysis import PostAnalysisWorker
 from .sample_builder import (
@@ -79,7 +80,7 @@ class MetricsLogger:
         self.peak_picker_method = peak_picker_method
         self.accel_scale_g_per_lsb = (
             float(accel_scale_g_per_lsb)
-            if isinstance(accel_scale_g_per_lsb, (int, float)) and accel_scale_g_per_lsb > 0
+            if isinstance(accel_scale_g_per_lsb, NUMERIC_TYPES) and accel_scale_g_per_lsb > 0
             else None
         )
         self._lock = RLock()
@@ -432,7 +433,7 @@ class MetricsLogger:
         while self._live_samples:
             oldest = self._live_samples[0]
             ts = oldest.get("t_s")
-            if not isinstance(ts, (int, float)):
+            if not isinstance(ts, NUMERIC_TYPES):
                 self._live_samples.popleft()
                 continue
             if float(ts) >= cutoff:

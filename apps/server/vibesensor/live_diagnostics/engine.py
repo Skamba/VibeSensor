@@ -264,8 +264,8 @@ class LiveDiagnosticsEngine:
             tracker.last_sensor_location = event.sensor_location
             self._sensor_trackers[tracker_key] = tracker
 
+            source_keys = source_keys_from_class_key(event.class_key)
             if tracker.current_bucket_key:
-                source_keys = source_keys_from_class_key(event.class_key)
                 upsert_active_level(
                     active_by_source=active_by_source,
                     source_keys=source_keys,
@@ -297,7 +297,6 @@ class LiveDiagnosticsEngine:
             if _should_emit and tracker.current_bucket_key:
                 _matrix_bucket = tracker.current_bucket_key
             if _matrix_bucket:
-                source_keys = source_keys_from_class_key(event.class_key)
                 self._matrix.record_many(
                     now_ms,
                     source_keys,
@@ -449,8 +448,8 @@ class LiveDiagnosticsEngine:
                 )
                 self._combined_trackers[combined_key] = tracker
 
+                source_keys = source_keys_from_class_key(class_key)
                 if tracker.current_bucket_key:
-                    source_keys = source_keys_from_class_key(class_key)
                     upsert_active_level(
                         active_by_source=active_by_source,
                         source_keys=source_keys,
@@ -474,7 +473,6 @@ class LiveDiagnosticsEngine:
                 if _should_emit and tracker.current_bucket_key:
                     _matrix_bucket = tracker.current_bucket_key
                 if _matrix_bucket:
-                    source_keys = source_keys_from_class_key(class_key)
                     self._matrix.record_many(
                         now_ms, source_keys, _matrix_bucket, tracker.last_sensor_label
                     )

@@ -26,7 +26,7 @@ from .constants import (
     ROAD_RESONANCE_MAX_HZ,
     ROAD_RESONANCE_MIN_HZ,
 )
-from .runlog import as_float_or_none as _as_float
+from .runlog import as_float_or_none
 
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
@@ -36,7 +36,7 @@ def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dic
     if not overrides:
         return out
     for key in DEFAULT_ANALYSIS_SETTINGS:
-        parsed = _as_float(overrides.get(key))
+        parsed = as_float_or_none(overrides.get(key))
         if parsed is not None:
             out[key] = parsed
     return out
@@ -73,7 +73,7 @@ def order_tolerances(
 ) -> tuple[float, float, float]:
     """Compute (wheel_tol, drive_tol, engine_tol) for the given order frequencies.
 
-    Both callers (_build_order_bands in app.py and classify_peak_hz here) need
+    Both callers (build_order_bands and classify_peak_hz) need
     the same trio of tolerance values.  Centralising the computation here avoids
     repeating the five-parameter call pattern three times per site.
     """
@@ -102,6 +102,45 @@ def order_tolerances(
     return wheel_tol, drive_tol, engine_tol
 
 
+def build_order_bands(
+    orders_hz: dict[str, Any],
+    analysis_settings: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Pre-compute order tolerance bands so the frontend doesn't duplicate this math.
+
+    This is a pure function that depends only on the order frequencies and
+    analysis settings — no runtime state required.
+    """
+    resolved = build_diagnostic_settings(analysis_settings)
+    wheel_hz = float(orders_hz["wheel_hz"])
+    drive_hz = float(orders_hz["drive_hz"])
+    engine_hz = float(orders_hz["engine_hz"])
+    wheel_tol, drive_tol, engine_tol = order_tolerances(orders_hz, resolved)
+    bands: list[dict[str, Any]] = [
+        {"key": "wheel_1x", "center_hz": wheel_hz, "tolerance": wheel_tol},
+        {"key": "wheel_2x", "center_hz": wheel_hz * HARMONIC_2X, "tolerance": wheel_tol},
+    ]
+    overlap_tol = max(
+        MIN_OVERLAP_TOLERANCE,
+        orders_hz["drive_uncertainty_pct"] + orders_hz["engine_uncertainty_pct"],
+    )
+    if abs(drive_hz - engine_hz) / max(FREQUENCY_EPSILON_HZ, engine_hz) < overlap_tol:
+        bands.append(
+            {
+                "key": "driveshaft_engine_1x",
+                "center_hz": drive_hz,
+                "tolerance": max(drive_tol, engine_tol),
+            }
+        )
+    else:
+        bands.append({"key": "driveshaft_1x", "center_hz": drive_hz, "tolerance": drive_tol})
+        bands.append({"key": "engine_1x", "center_hz": engine_hz, "tolerance": engine_tol})
+    bands.append(
+        {"key": "engine_2x", "center_hz": engine_hz * HARMONIC_2X, "tolerance": engine_tol}
+    )
+    return bands
+
+
 def vehicle_orders_hz(
     *,
     speed_mps: float | None,
@@ -111,15 +150,15 @@ def vehicle_orders_hz(
         return None
     spec_settings = build_diagnostic_settings(settings)
     circumference = tire_circumference_m_from_spec(
-        _as_float(spec_settings.get("tire_width_mm")),
-        _as_float(spec_settings.get("tire_aspect_pct")),
-        _as_float(spec_settings.get("rim_in")),
-        deflection_factor=_as_float(spec_settings.get("tire_deflection_factor")),
+        as_float_or_none(spec_settings.get("tire_width_mm")),
+        as_float_or_none(spec_settings.get("tire_aspect_pct")),
+        as_float_or_none(spec_settings.get("rim_in")),
+        deflection_factor=as_float_or_none(spec_settings.get("tire_deflection_factor")),
     )
     if circumference is None or circumference <= 0:
         return None
-    final_drive_ratio = _as_float(spec_settings.get("final_drive_ratio"))
-    gear_ratio = _as_float(spec_settings.get("current_gear_ratio"))
+    final_drive_ratio = as_float_or_none(spec_settings.get("final_drive_ratio"))
+    gear_ratio = as_float_or_none(spec_settings.get("current_gear_ratio"))
     if (
         final_drive_ratio is None
         or not isfinite(final_drive_ratio)
@@ -315,7 +354,7 @@ def severity_from_peak(
     prior_state: dict[str, Any] | None = None,
     peak_hz: float | None = None,
     persistence_freq_bin_hz: float | None = None,
-) -> dict[str, float | str | dict[str, Any]] | None:
+) -> dict[str, float | str | dict[str, Any]]:
     state = dict(prior_state or {})
     state.setdefault("current_bucket", None)
     state.setdefault("pending_bucket", None)
@@ -327,15 +366,15 @@ def severity_from_peak(
     candidate_bucket_raw = bucket_for_strength(adjusted_db)
     candidate_bucket = None if candidate_bucket_raw == "l0" else candidate_bucket_raw
     current_bucket = state.get("current_bucket")
-    peak_hz_value = _as_float(peak_hz)
-    freq_bin_hz = _as_float(persistence_freq_bin_hz)
+    peak_hz_value = as_float_or_none(peak_hz)
+    freq_bin_hz = as_float_or_none(persistence_freq_bin_hz)
     freq_guard_enabled = peak_hz_value is not None and freq_bin_hz is not None and freq_bin_hz > 0
 
     def _advance_pending(candidate: str) -> None:
         pending = state.get("pending_bucket")
         if pending == candidate:
             if freq_guard_enabled:
-                last_confirmed_hz = _as_float(state.get("last_confirmed_hz"))
+                last_confirmed_hz = as_float_or_none(state.get("last_confirmed_hz"))
                 if last_confirmed_hz is not None and abs(
                     float(peak_hz_value) - last_confirmed_hz
                 ) > float(freq_bin_hz):
@@ -380,6 +419,7 @@ def severity_from_peak(
     current_rank = band_rank(str(current_bucket))
     candidate_rank = band_rank(str(candidate_bucket))
     if candidate_rank > current_rank:
+        state["consecutive_down"] = 0
         _advance_pending(candidate_bucket)
         if int(state["consecutive_up"]) >= PERSISTENCE_TICKS:
             state["current_bucket"] = candidate_bucket

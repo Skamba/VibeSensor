@@ -243,7 +243,7 @@ def _location_speedbin_summary(
             if connected_locations is not None
             else ranked
         )
-        ranked_for_winner = eligible_ranked if eligible_ranked else ranked
+        ranked_for_winner = eligible_ranked or ranked
 
         # Source-aware localization: for wheel/tire diagnoses prefer wheel
         # sensors as the fault source.  Non-wheel sensors (cabin, chassis)

@@ -21,7 +21,7 @@ from ..protocol import client_id_mac
 from ._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
+    from ..runtime import RuntimeState
 
 
 def create_client_routes(state: RuntimeState) -> APIRouter:
@@ -40,7 +40,7 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
         normalized = normalize_client_id_or_400(client_id)
         ok, cmd_seq = state.control_plane.send_identify(normalized, req.duration_ms)
         if not ok:
-            raise HTTPException(status_code=404, detail="Client missing or no control address")
+            raise HTTPException(status_code=404, detail="Sensor is not connected or not reachable")
         return {"status": "sent", "cmd_seq": cmd_seq}
 
     @router.post(
@@ -53,7 +53,7 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
     ) -> SetClientLocationResponse:
         normalized_client_id = normalize_client_id_or_400(client_id)
         if state.registry.get(normalized_client_id) is None:
-            raise HTTPException(status_code=404, detail="Unknown client_id")
+            raise HTTPException(status_code=404, detail="Sensor not found")
 
         code = req.location_code.strip()
 
@@ -90,7 +90,7 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
         normalized_client_id = normalize_client_id_or_400(client_id)
         removed = state.registry.remove_client(normalized_client_id)
         if not removed:
-            raise HTTPException(status_code=404, detail="Unknown client_id")
+            raise HTTPException(status_code=404, detail="Sensor not found")
         return {"id": normalized_client_id, "status": "removed"}
 
     return router

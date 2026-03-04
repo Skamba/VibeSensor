@@ -36,9 +36,16 @@ Common commands
 - `make test-all` (CI-parity local suite: `preflight` + `tests` + `e2e` jobs in parallel)
 - `python3 tools/tests/run_ci_parallel.py --job preflight --job tests` (faster local subset)
 - `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`
+- `pytest -q apps/server/tests/<module>/` (run tests for a single feature area)
 - `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor`
 - `cd apps/ui && npm ci && npm run typecheck && npm run build`
 - `docker compose build --pull && docker compose up -d`
+
+Test layout
+- Tests are organized in feature-based subdirectories under `apps/server/tests/` mirroring source modules. See `docs/testing.md` for the full map.
+- Mapping rule: if you change `vibesensor/<module>/`, tests live in `tests/<module>/`.
+- Cross-cutting tests: `tests/integration/` (scenarios), `tests/regression/` (bug fixes), `tests/hygiene/` (architecture guards), `tests/e2e/` (browser).
+- Shared helpers: `conftest.py` (fixtures), `builders.py` (data generators), `_paths.py` (path constants — use `SERVER_ROOT`/`REPO_ROOT` instead of `Path(__file__).parents[N]`).
 
 Pi access defaults (prebuilt image)
 - Hotspot address: `10.4.0.1`

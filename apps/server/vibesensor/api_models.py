@@ -48,10 +48,10 @@ class SpeedUnitRequest(BaseModel):
 
 
 class CarUpsertRequest(BaseModel):
-    name: str | None = None
-    type: str | None = None
+    name: str | None = Field(default=None, max_length=64)
+    type: str | None = Field(default=None, max_length=64)
     aspects: dict[str, float] | None = None
-    variant: str | None = None
+    variant: str | None = Field(default=None, max_length=64)
 
 
 class ActiveCarRequest(BaseModel):
@@ -60,8 +60,8 @@ class ActiveCarRequest(BaseModel):
 
 class SpeedSourceRequest(BaseModel):
     speedSource: str | None = None
-    manualSpeedKph: float | None = None
-    staleTimeoutS: float | None = None
+    manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
+    staleTimeoutS: float | None = Field(default=None, ge=1, le=300)
     fallbackMode: str | None = None
 
 
@@ -76,8 +76,8 @@ class EspFlashStartRequest(BaseModel):
 
 
 class SensorRequest(BaseModel):
-    name: str | None = None
-    location: str | None = None
+    name: str | None = Field(default=None, max_length=64)
+    location: str | None = Field(default=None, max_length=64)
 
 
 # ---------------------------------------------------------------------------

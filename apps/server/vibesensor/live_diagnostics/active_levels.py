@@ -22,7 +22,7 @@ def upsert_active_level(
 ) -> None:
     for source_key in source_keys:
         existing = active_by_source.get(source_key)
-        if existing is None or strength_db > float(existing.get("strength_db", -1e9)):
+        if existing is None or strength_db > existing.get("strength_db", -1e9):
             active_by_source[source_key] = {
                 "bucket_key": bucket_key,
                 "strength_db": strength_db,
@@ -44,7 +44,7 @@ def update_sensor_active_level(
 ) -> None:
     """Keep only the strongest active level per sensor."""
     existing = active_by_sensor.get(sensor_id)
-    if existing is None or strength_db > float(existing.get("strength_db", -1e9)):
+    if existing is None or strength_db > existing.get("strength_db", -1e9):
         active_by_sensor[sensor_id] = {
             "bucket_key": bucket_key,
             "strength_db": strength_db,

@@ -7,9 +7,9 @@ from .domain_models import (
     CarConfig,
     SensorConfig,
     SpeedSourceConfig,
-    _new_car_id,
-    _sanitize_aspects,
+    new_car_id,
     normalize_sensor_id,
+    sanitize_aspects,
 )
 
 if TYPE_CHECKING:
@@ -161,7 +161,7 @@ class SettingsStore:
 
     def add_car(self, car_data: dict[str, Any]) -> dict[str, Any]:
         with self._lock:
-            car_data["id"] = _new_car_id()
+            car_data["id"] = new_car_id()
             car = CarConfig.from_dict(car_data)
             self._cars.append(car)
             try:
@@ -193,7 +193,7 @@ class SettingsStore:
                     if car_type:
                         car.type = car_type
             if "aspects" in car_data and isinstance(car_data["aspects"], dict):
-                car.aspects.update(_sanitize_aspects(car_data["aspects"]))
+                car.aspects.update(sanitize_aspects(car_data["aspects"]))
             if "variant" in car_data:
                 raw = car_data["variant"]
                 car.variant = str(raw).strip()[:64] if isinstance(raw, str) and raw else None
@@ -201,7 +201,8 @@ class SettingsStore:
                 self._persist()
             except PersistenceError:
                 car.name, car.type = old_name, old_type
-                car.aspects = old_aspects
+                car.aspects.clear()
+                car.aspects.update(old_aspects)
                 car.variant = old_variant
                 raise
             return self.get_cars()
@@ -212,7 +213,7 @@ class SettingsStore:
             if car is None:
                 raise ValueError("No active car configured")
             old_aspects = dict(car.aspects)
-            car.aspects.update(_sanitize_aspects(aspects))
+            car.aspects.update(sanitize_aspects(aspects))
             try:
                 self._persist()
             except PersistenceError:
@@ -290,10 +291,15 @@ class SettingsStore:
     def remove_sensor(self, mac: str) -> bool:
         sensor_id = normalize_sensor_id(mac)
         with self._lock:
-            removed = self._sensors.pop(sensor_id, None) is not None
-            if removed:
+            old_sensor = self._sensors.pop(sensor_id, None)
+            if old_sensor is None:
+                return False
+            try:
                 self._persist()
-            return removed
+            except PersistenceError:
+                self._sensors[sensor_id] = old_sensor
+                raise
+            return True
 
     @property
     def language(self) -> str:

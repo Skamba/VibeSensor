@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 from collections import defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import median as _median
 from typing import Any
@@ -15,7 +15,7 @@ from vibesensor_core.vibration_strength import (
 
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
-from ..runlog import parse_iso8601
+from ..runlog import parse_iso8601, utc_now_iso
 from .findings import (
     _build_findings,
     _phase_speed_breakdown,
@@ -244,11 +244,13 @@ def select_top_causes(
         )
         representative = dict(members_sorted[0])
         # Collect all signatures (frequency_hz_or_order) in this group
-        signatures = []
+        signatures: list[str] = []
+        seen_sigs: set[str] = set()
         for m in members_sorted:
             sig = str(m.get("frequency_hz_or_order") or "").strip()
-            if sig and sig not in signatures:
+            if sig and sig not in seen_sigs:
                 signatures.append(sig)
+                seen_sigs.add(sig)
         representative["signatures_observed"] = signatures
         representative["grouped_count"] = len(members_sorted)
         group_reps.append(representative)
@@ -557,18 +559,13 @@ def _compute_accel_statistics(
         for value in (_as_float(sample.get("accel_z_g")) for sample in samples)
         if value is not None
     ]
-    accel_mag_vals = [
-        math.sqrt((sample["x"] ** 2) + (sample["y"] ** 2) + (sample["z"] ** 2))
-        for sample in (
-            {
-                "x": _as_float(row.get("accel_x_g")),
-                "y": _as_float(row.get("accel_y_g")),
-                "z": _as_float(row.get("accel_z_g")),
-            }
-            for row in samples
-        )
-        if sample["x"] is not None and sample["y"] is not None and sample["z"] is not None
-    ]
+    accel_mag_vals: list[float] = []
+    for row in samples:
+        x = _as_float(row.get("accel_x_g"))
+        y = _as_float(row.get("accel_y_g"))
+        z = _as_float(row.get("accel_z_g"))
+        if x is not None and y is not None and z is not None:
+            accel_mag_vals.append(math.sqrt(x**2 + y**2 + z**2))
     amp_metric_values = [
         value
         for value in (_primary_vibration_strength_db(sample) for sample in samples)
@@ -579,18 +576,13 @@ def _compute_accel_statistics(
     if sensor_limit is not None:
         # 2% headroom from ADC rail for quantization effects near saturation.
         sat_threshold = sensor_limit * _SATURATION_FRACTION
-        sat_count = sum(
-            1
-            for sample in samples
-            if any(
-                abs(val) >= sat_threshold
-                for val in (
-                    _as_float(sample.get("accel_x_g")) or 0.0,
-                    _as_float(sample.get("accel_y_g")) or 0.0,
-                    _as_float(sample.get("accel_z_g")) or 0.0,
-                )
-            )
-        )
+        sat_count = 0
+        for sample in samples:
+            x = _as_float(sample.get("accel_x_g")) or 0.0
+            y = _as_float(sample.get("accel_y_g")) or 0.0
+            z = _as_float(sample.get("accel_z_g")) or 0.0
+            if abs(x) >= sat_threshold or abs(y) >= sat_threshold or abs(z) >= sat_threshold:
+                sat_count += 1
 
     x_mean, x_var = _mean_variance(accel_x_vals)
     y_mean, y_var = _mean_variance(accel_y_vals)
@@ -804,9 +796,7 @@ def summarize_run_data(
 
     # --- Run suitability checks ---
     steady_speed = bool(speed_stats.get("steady_speed"))
-    sensor_ids = {
-        str(s.get("client_id") or "") for s in samples if isinstance(s, dict) and s.get("client_id")
-    }
+    sensor_ids = {str(cid) for s in samples if isinstance(s, dict) and (cid := s.get("client_id"))}
     run_suitability = _build_run_suitability_checks(
         language=language,
         steady_speed=steady_speed,
@@ -828,9 +818,9 @@ def summarize_run_data(
     # --- Sensor analysis ---
     sensor_locations = sorted(
         {
-            _location_label(sample, lang=language)
+            label
             for sample in samples
-            if isinstance(sample, dict) and _location_label(sample, lang=language)
+            if isinstance(sample, dict) and (label := _location_label(sample, lang=language))
         }
     )
     # Mark and de-prioritize sensors not connected throughout the run,
@@ -852,7 +842,7 @@ def summarize_run_data(
         "duration_s": duration_s,
         "record_length": _format_duration(duration_s),
         "lang": language,
-        "report_date": metadata.get("end_time_utc") or datetime.now(UTC).isoformat(),
+        "report_date": metadata.get("end_time_utc") or utc_now_iso(),
         "start_time_utc": metadata.get("start_time_utc"),
         "end_time_utc": metadata.get("end_time_utc"),
         "sensor_model": metadata.get("sensor_model"),
@@ -862,7 +852,7 @@ def summarize_run_data(
         "fft_window_size_samples": metadata.get("fft_window_size_samples"),
         "fft_window_type": metadata.get("fft_window_type"),
         "peak_picker_method": metadata.get("peak_picker_method"),
-        "accel_scale_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
+        "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
         "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
         "metadata": metadata,
         "warnings": [],

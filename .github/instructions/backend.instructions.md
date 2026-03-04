@@ -5,6 +5,6 @@ Backend (python `apps/server/`)
 - Shared workflow/validation rules live in `.github/instructions/general.instructions.md`; this file only captures backend-specific deltas.
 - Entry points: `apps/server/vibesensor/app.py` for runtime, `apps/server/vibesensor/report/pdf_builder.py` for PDF generation, and `apps/server/vibesensor/api.py` for http endpoints.
 - Install: `python -m pip install -e "./apps/server[dev]"` (used by CI).
-- Tests: add unit tests under `apps/server/tests/` and prefer `-m "not selenium"` for fast runs.
+- Tests: add tests in the matching `tests/<module>/` subdirectory (see `docs/testing.md`); use `tests/integration/` for cross-cutting scenarios, `tests/regression/` for bug-fix regressions. Prefer `-m "not selenium"` for fast runs. Run a single area with `pytest -q apps/server/tests/<module>/`.
 - i18n: Add/modify keys in `apps/server/data/report_i18n.json` when changing user-facing strings.
 - Styling/lint: `ruff` is used in CI; follow existing `ruff` conventions.

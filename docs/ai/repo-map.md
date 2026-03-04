@@ -30,6 +30,13 @@
 - Report rendering: apps/server/vibesensor/report/pdf_builder.py (layout helpers in pdf_layout.py)
 - Module boundaries: apps/server/vibesensor/BOUNDARIES.md
 
+## Test layout
+- Tests live in `apps/server/tests/` in feature-based subdirectories (see `docs/testing.md`).
+- Subdirectories mirror source modules: `analysis/`, `report/`, `processing/`, `api/`, etc.
+- Cross-cutting tests: `integration/` (scenarios), `regression/` (bug fixes), `hygiene/` (guards), `e2e/`.
+- Shared helpers: `conftest.py` (fixtures), `builders.py` (data generators), `_paths.py` (path constants).
+- Mapping rule: if you change `vibesensor/<module>/`, look in `tests/<module>/` first.
+
 ## Path policy
 Use canonical paths only: `apps/server`, `apps/ui`, `apps/simulator`,
 `firmware/esp`, `infra/pi-image/pi-gen`, `docs`, and `libs`.

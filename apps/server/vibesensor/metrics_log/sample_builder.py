@@ -16,7 +16,7 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from ..constants import MPS_TO_KMH
+from ..constants import MPS_TO_KMH, NUMERIC_TYPES
 from ..domain_models import SensorFrame
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ def safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None
         out = float(raw)
     except (TypeError, ValueError):
         return None
-    if math.isnan(out) or math.isinf(out):
+    if not math.isfinite(out):
         return None
     return out
 
@@ -76,11 +76,8 @@ def extract_strength_data(
     vibration_strength_db = safe_metric(
         {"combined": strength_metrics}, "combined", METRIC_FIELDS["vibration_strength_db"]
     )
-    strength_bucket = (
-        str(strength_metrics.get(METRIC_FIELDS["strength_bucket"]))
-        if strength_metrics.get(METRIC_FIELDS["strength_bucket"]) not in (None, "")
-        else None
-    )
+    _bucket_val = strength_metrics.get(METRIC_FIELDS["strength_bucket"])
+    strength_bucket = str(_bucket_val) if _bucket_val not in (None, "") else None
     strength_peak_amp_g = safe_metric(
         {"combined": strength_metrics},
         "combined",
@@ -103,13 +100,7 @@ def extract_strength_data(
                 amp = float(peak.get("amp"))
             except (TypeError, ValueError):
                 continue
-            if (
-                not math.isnan(hz)
-                and not math.isnan(amp)
-                and not math.isinf(hz)
-                and not math.isinf(amp)
-                and hz > 0
-            ):
+            if math.isfinite(hz) and math.isfinite(amp) and hz > 0 and amp > 0:
                 peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
                 peak_db = safe_metric(
                     {"combined": peak},
@@ -149,13 +140,7 @@ def extract_axis_top_peaks(metrics: dict[str, object], axis: str) -> list[dict[s
                 amp = float(peak.get("amp"))
             except (TypeError, ValueError):
                 continue
-            if (
-                not math.isnan(hz)
-                and not math.isnan(amp)
-                and not math.isinf(hz)
-                and not math.isinf(amp)
-                and hz > 0
-            ):
+            if math.isfinite(hz) and math.isfinite(amp) and hz > 0:
                 axis_peaks.append({"hz": hz, "amp": amp})
     return axis_peaks
 
@@ -194,11 +179,11 @@ def resolve_speed_context(
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
     gps_speed_kmh = (
-        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, (int, float)) else None
+        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None
     )
     speed_kmh = (
         (float(effective_speed_mps) * MPS_TO_KMH)
-        if isinstance(effective_speed_mps, (int, float))
+        if isinstance(effective_speed_mps, NUMERIC_TYPES)
         else None
     )
     speed_source = _SPEED_SOURCE_MAP.get(resolution.source, "none")

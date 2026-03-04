@@ -16,11 +16,11 @@ from .domain_models import (
     RUN_SCHEMA_VERSION,
     RunMetadata,
     SensorFrame,
-    _as_float_or_none,
-    _as_int_or_none,
     _default_amplitude_definitions,
     _default_units,
 )
+from .domain_models import as_float_or_none as _as_float_or_none
+from .domain_models import as_int_or_none as _as_int_or_none
 
 LOGGER = logging.getLogger(__name__)
 
@@ -146,7 +146,7 @@ def bounded_sample(
         number of items consumed from the iterator, and *final_stride*
         is the stride factor that was applied.
     """
-    stride: int = max(1, total_hint // max_items) if total_hint > max_items else 1
+    stride: int = max(1, -(-total_hint // max_items)) if total_hint > max_items else 1
     kept: list[dict] = []
     total = 0
     for sample in samples:
@@ -157,6 +157,10 @@ def bounded_sample(
         if len(kept) > max_items:
             kept = kept[::2]
             stride *= 2
+    # Final trim: the halving loop can leave len(kept) == max_items + 1
+    # in edge cases (e.g. max_items=1).  Guarantee the contract.
+    if len(kept) > max_items:
+        kept = kept[:max_items]
     return kept, total, stride
 
 

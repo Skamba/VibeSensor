@@ -21,12 +21,13 @@ from ..api_models import (
     HistoryListResponse,
     HistoryRunResponse,
 )
+from ..history_db import RunStatus
 from ..report.pdf_builder import build_report_pdf
 from ._helpers import async_require_run, safe_filename
 
 if TYPE_CHECKING:
-    from ..app import RuntimeState
     from ..report.report_data import ReportTemplateData
+    from ..runtime import RuntimeState
 
 LOGGER = logging.getLogger(__name__)
 
@@ -195,9 +196,9 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
         lang: str | None = Query(default=None),
     ) -> HistoryInsightsResponse:
         run = await async_require_run(state.history_db, run_id)
-        if run["status"] == "analyzing":
-            return {"run_id": run_id, "status": "analyzing"}
-        if run["status"] == "error":
+        if run["status"] == RunStatus.ANALYZING:
+            return {"run_id": run_id, "status": RunStatus.ANALYZING}
+        if run["status"] == RunStatus.ERROR:
             raise HTTPException(status_code=422, detail=run.get("error_message", "Analysis failed"))
         analysis = run.get("analysis")
         if analysis is None:
@@ -234,7 +235,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                     status_code=409,
                     detail="Cannot delete the active run; stop recording first",
                 )
-            if reason == "analyzing":
+            if reason == RunStatus.ANALYZING:
                 raise HTTPException(
                     status_code=409,
                     detail="Cannot delete run while analysis is in progress",
@@ -249,9 +250,9 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
         run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
         run = await async_require_run(state.history_db, run_id)
-        if run.get("status") == "analyzing":
+        if run.get("status") == RunStatus.ANALYZING:
             raise HTTPException(status_code=409, detail="Analysis is still in progress")
-        if run.get("status") == "error":
+        if run.get("status") == RunStatus.ERROR:
             raise HTTPException(
                 status_code=422,
                 detail=run.get("error_message", "Analysis failed"),
@@ -309,8 +310,11 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                 # Prune stale locks even on failure to prevent unbounded growth
                 _prune_stale_pdf_locks()
                 raise HTTPException(
-                    status_code=422,
-                    detail="PDF generation failed. Please try again or re-analyze this run.",
+                    status_code=500,
+                    detail=(
+                        "PDF generation failed due to an internal error."
+                        " Please try again or re-analyze this run."
+                    ),
                 ) from exc
             _cache_put(cache_key, pdf)
         return Response(
@@ -348,7 +352,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                             run_id, batch_size=_EXPORT_BATCH_SIZE
                         ):
                             sample_count += len(batch)
-                            writer.writerows([flatten_for_csv(row) for row in batch])
+                            writer.writerows(flatten_for_csv(row) for row in batch)
                         raw_csv_text.flush()
 
                     # Write run metadata as JSON (after CSV so sample_count is known).

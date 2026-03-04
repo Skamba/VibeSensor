@@ -44,7 +44,7 @@ with explicit drop logging.
 | Component | Change |
 |-----------|--------|
 | `worker_pool.py` | New module: fixed-size thread pool with bounded task queue, error isolation, observability counters, clean shutdown |
-| `processing.py` | `compute_all()` dispatches per-client FFT in parallel; ingest/compute timing counters added |
+| `processing/` | `compute_all()` dispatches per-client FFT in parallel; ingest/compute timing counters added |
 | `app.py` | Creates shared `WorkerPool(max_workers=4)`, injects into `SignalProcessor`, shuts down on stop |
 | Tests | 14 new tests: pool correctness, parallel/sequential equivalence, concurrent ingest+compute safety |
 | Benchmark | `tools/tests/benchmark_pipeline.py` — repeatable throughput measurement |

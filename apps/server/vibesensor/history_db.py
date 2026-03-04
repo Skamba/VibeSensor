@@ -27,6 +27,20 @@ from .runlog import utc_now_iso
 
 LOGGER = logging.getLogger(__name__)
 
+# -- Run status constants -----------------------------------------------------
+# Centralised so that all code comparing/setting run status uses the same
+# literals and typos are caught by linters.
+
+
+class RunStatus:
+    """String constants for the ``runs.status`` column."""
+
+    RECORDING: str = "recording"
+    ANALYZING: str = "analyzing"
+    COMPLETE: str = "complete"
+    ERROR: str = "error"
+
+
 # -- Schema -------------------------------------------------------------------
 
 _SCHEMA_VERSION = 5
@@ -211,11 +225,15 @@ class HistoryDB:
         self._lock = RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(db_path), check_same_thread=False)
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA wal_autocheckpoint=500")
-        self._conn.execute("PRAGMA foreign_keys=ON")
-        self._conn.execute("PRAGMA busy_timeout=5000")
-        self._ensure_schema()
+        try:
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA wal_autocheckpoint=500")
+            self._conn.execute("PRAGMA foreign_keys=ON")
+            self._conn.execute("PRAGMA busy_timeout=5000")
+            self._ensure_schema()
+        except Exception:
+            self._conn.close()
+            raise
         self._has_legacy_samples: bool = self._table_exists("samples")
 
     # -- lifecycle ------------------------------------------------------------
@@ -227,7 +245,7 @@ class HistoryDB:
                 self._conn = None  # type: ignore[assignment]
 
     @contextmanager
-    def _cursor(self, *, commit: bool = True):
+    def _cursor(self, *, commit: bool = True) -> Iterator[sqlite3.Cursor]:
         with self._lock:
             if self._conn is None:
                 raise RuntimeError("HistoryDB is closed")
@@ -271,7 +289,19 @@ class HistoryDB:
                     ("version", str(_SCHEMA_VERSION)),
                 )
                 return
-            version = int(str(row[0]))
+            try:
+                version = int(str(row[0]))
+            except (ValueError, TypeError):
+                LOGGER.error(
+                    "Corrupted schema_meta version value %r; resetting to %s",
+                    row[0],
+                    _SCHEMA_VERSION,
+                )
+                cur.execute(
+                    "UPDATE schema_meta SET value = ? WHERE key = 'version'",
+                    (str(_SCHEMA_VERSION),),
+                )
+                return
             if version == _SCHEMA_VERSION:
                 return
             if version == 4:
@@ -461,10 +491,10 @@ class HistoryDB:
             if row is None:
                 return False, "not_found"
             status = row[0]
-            if status == "recording":
+            if status == RunStatus.RECORDING:
                 return False, "active"
-            if status == "analyzing":
-                return False, "analyzing"
+            if status == RunStatus.ANALYZING:
+                return False, RunStatus.ANALYZING
             cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
             return cur.rowcount > 0, None
 
@@ -485,7 +515,7 @@ class HistoryDB:
             if cur.rowcount == 0:
                 cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
                 row = cur.fetchone()
-                if row is not None and row[0] == "complete":
+                if row is not None and row[0] == RunStatus.COMPLETE:
                     LOGGER.warning(
                         "store_analysis for run %s: skipped — already complete",
                         run_id,

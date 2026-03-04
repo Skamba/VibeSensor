@@ -12,7 +12,7 @@
 | Area | Location | Runner | Count |
 |------|----------|--------|-------|
 | Server unit tests | `apps/server/tests/` | pytest, `-m "not selenium"` | 539 |
-| Selenium UI tests | `apps/server/tests/test_ui_selenium.py` | pytest, `-m selenium` | 8 |
+| Selenium UI tests | `apps/server/tests/e2e/test_ui_selenium.py` | pytest, `-m selenium` | 8 |
 | Docker E2E tests | `apps/server/tests_e2e/` | pytest via `tools/tests/run_full_suite.py` | 2 suites |
 | UI build checks | `apps/ui/` | npm run build, npm run typecheck | — |
 | Lint/format | Makefile | ruff check + ruff format | — |

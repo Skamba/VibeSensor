@@ -213,9 +213,17 @@ ruff format --check apps/server/vibesensor apps/server/tests apps/simulator
 
 ### Tests
 
+Tests are organized in feature-based subdirectories under `apps/server/tests/`
+mirroring source modules. See [docs/testing.md](docs/testing.md) for the full
+layout, mapping rules, and how to add new tests.
+
 ```bash
-# Fast run (excludes browser tests)
+# Full suite (excludes browser tests)
 pytest -q -m "not selenium" apps/server/tests
+
+# Single feature area
+pytest -q apps/server/tests/analysis/
+pytest -q apps/server/tests/report/
 
 # With live progress and ETA
 python3 tools/tests/pytest_progress.py -- -m "not selenium" apps/server/tests
