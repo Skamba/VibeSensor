@@ -11,6 +11,8 @@ from ._helpers import normalize_client_id_or_400
 if TYPE_CHECKING:
     from ..runtime import RuntimeState
 
+__all__ = ["create_debug_routes"]
+
 
 def create_debug_routes(state: RuntimeState) -> APIRouter:
     router = APIRouter()

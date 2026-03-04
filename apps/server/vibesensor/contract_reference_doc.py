@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+__all__ = ["render_contract_reference_markdown"]
+
 from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
 
 from vibesensor.config import DEFAULT_CONFIG

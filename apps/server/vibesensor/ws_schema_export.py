@@ -13,6 +13,15 @@ import json
 import sys
 from pathlib import Path
 
+_DEFAULT_OUT = (
+    Path(__file__).resolve().parents[3]
+    / "apps"
+    / "ui"
+    / "src"
+    / "contracts"
+    / "ws_payload_schema.json"
+)
+
 
 def export_schema(out_path: Path | None = None) -> str:
     """Return the JSON Schema string and optionally write it to *out_path*."""
@@ -27,16 +36,8 @@ def export_schema(out_path: Path | None = None) -> str:
 
 
 def main() -> None:
-    default_out = (
-        Path(__file__).resolve().parents[3]
-        / "apps"
-        / "ui"
-        / "src"
-        / "contracts"
-        / "ws_payload_schema.json"
-    )
     parser = argparse.ArgumentParser(description="Export WS payload JSON Schema")
-    parser.add_argument("--out", type=Path, default=default_out, help="Output file path")
+    parser.add_argument("--out", type=Path, default=_DEFAULT_OUT, help="Output file path")
     parser.add_argument("--check", action="store_true", help="Fail if committed schema differs")
     args = parser.parse_args()
 
