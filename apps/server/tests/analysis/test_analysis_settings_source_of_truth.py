@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from fastapi import FastAPI
@@ -16,10 +17,23 @@ from vibesensor.api import (
 from vibesensor.settings_store import SettingsStore
 
 
+def _noop(*_args, **_kwargs):  # noqa: ANN202
+    return None
+
+
 @dataclass
 class _State:
     settings_store: SettingsStore
     analysis_settings: AnalysisSettingsStore
+
+    live_diagnostics: object = field(init=False)
+    metrics_logger: object = field(init=False)
+    history_db: object = field(init=False)
+    registry: object = field(init=False)
+    control_plane: object = field(init=False)
+    gps_monitor: object = field(init=False)
+    ws_hub: object = field(init=False)
+    processor: object = field(init=False)
 
     def apply_car_settings(self) -> None:
         aspects = self.settings_store.active_car_aspects()
@@ -30,73 +44,41 @@ class _State:
         pass
 
     def __post_init__(self) -> None:
-        self.live_diagnostics = type("D", (), {"reset": lambda self: None})()
-        self.metrics_logger = type(
-            "M",
-            (),
-            {
-                "status": lambda self: {},
-                "start_logging": lambda self: {},
-                "stop_logging": lambda self: {},
-                "analysis_snapshot": lambda self: ({}, []),
-            },
-        )()
-        self.history_db = type(
-            "H",
-            (),
-            {
-                "list_runs": lambda self: [],
-                "get_run": lambda self, _run_id: None,
-                "iter_run_samples": lambda self, _run_id, batch_size=1000: iter(()),
-                "get_active_run_id": lambda self: None,
-                "delete_run": lambda self, _run_id: False,
-            },
-        )()
-        self.registry = type(
-            "R",
-            (),
-            {
-                "snapshot_for_api": lambda self: [],
-                "get": lambda self, _cid: None,
-                "set_name": lambda self, cid, name: type(
-                    "U",
-                    (),
-                    {"client_id": cid, "name": name},
-                )(),
-                "remove_client": lambda self, _cid: True,
-            },
-        )()
-        self.control_plane = type(
-            "C",
-            (),
-            {"send_identify": lambda self, _id, _dur: (False, None)},
-        )()
-        self.gps_monitor = type(
-            "G",
-            (),
-            {
-                "effective_speed_mps": None,
-                "override_speed_mps": None,
-                "set_speed_override_kmh": lambda self, _v: None,
-            },
-        )()
-        self.ws_hub = type(
-            "W",
-            (),
-            {
-                "add": lambda *args, **kwargs: None,
-                "remove": lambda *args, **kwargs: None,
-                "update_selected_client": lambda *args, **kwargs: None,
-            },
-        )()
-        self.processor = type(
-            "P",
-            (),
-            {
-                "debug_spectrum": lambda self, _id: {},
-                "raw_samples": lambda self, _id, n_samples=1: {},
-            },
-        )()
+        self.live_diagnostics = SimpleNamespace(reset=_noop)
+        self.metrics_logger = SimpleNamespace(
+            status=dict,
+            start_logging=_noop,
+            stop_logging=_noop,
+            analysis_snapshot=lambda: ({}, []),
+        )
+        self.history_db = SimpleNamespace(
+            list_runs=list,
+            get_run=_noop,
+            iter_run_samples=lambda *_a, **_kw: iter(()),
+            get_active_run_id=_noop,
+            delete_run=lambda _id: False,
+        )
+        self.registry = SimpleNamespace(
+            snapshot_for_api=list,
+            get=_noop,
+            set_name=lambda cid, name: SimpleNamespace(client_id=cid, name=name),
+            remove_client=lambda _cid: True,
+        )
+        self.control_plane = SimpleNamespace(
+            send_identify=lambda _id, _dur: (False, None),
+        )
+        self.gps_monitor = SimpleNamespace(
+            effective_speed_mps=None,
+            override_speed_mps=None,
+            set_speed_override_kmh=_noop,
+        )
+        self.ws_hub = SimpleNamespace(
+            add=_noop, remove=_noop, update_selected_client=_noop,
+        )
+        self.processor = SimpleNamespace(
+            debug_spectrum=lambda _id: {},
+            raw_samples=lambda _id, n_samples=1: {},
+        )
 
 
 def _route(router, path: str, method: str = "GET"):
@@ -108,8 +90,9 @@ def _route(router, path: str, method: str = "GET"):
     raise AssertionError(path)
 
 
-@pytest.mark.asyncio
-async def test_analysis_settings_endpoint_updates_active_car_aspects(tmp_path: Path) -> None:
+@pytest.fixture()
+def _wiring(tmp_path: Path):
+    """Provide a wired (state, router) pair with one active car named 'Primary'."""
     from vibesensor.history_db import HistoryDB
 
     db = HistoryDB(tmp_path / "test.db")
@@ -122,6 +105,14 @@ async def test_analysis_settings_endpoint_updates_active_car_aspects(tmp_path: P
     app = FastAPI()
     router = create_router(state)
     app.include_router(router)
+    return state, router
+
+
+@pytest.mark.asyncio
+async def test_analysis_settings_endpoint_updates_active_car_aspects(_wiring) -> None:
+    state, router = _wiring
+    settings_store = state.settings_store
+    analysis_settings = state.analysis_settings
 
     set_analysis = _route(router, "/api/analysis-settings", "POST")
     get_cars = _route(router, "/api/settings/cars", "GET")
