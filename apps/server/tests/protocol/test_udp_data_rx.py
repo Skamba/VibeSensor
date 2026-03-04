@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
@@ -12,22 +11,14 @@ from vibesensor.registry import DataUpdateResult
 from vibesensor.udp_data_rx import DataDatagramProtocol
 
 
-class _FakeTransport:
-    def __init__(self) -> None:
-        self.sent: list[tuple[bytes, tuple[str, int]]] = []
-
-    def sendto(self, data: bytes, addr: tuple[str, int]) -> None:
-        self.sent.append((data, addr))
-
-
 @pytest.mark.asyncio
-async def test_datagram_received_queues_work_before_processing() -> None:
+async def test_datagram_received_queues_work_before_processing(fake_transport, drain_queue) -> None:
     registry = Mock()
     registry.update_from_data.return_value = DataUpdateResult()
     registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
     processor = Mock()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(_FakeTransport())
+    proto.connection_made(fake_transport)
     pkt = pack_data(
         bytes.fromhex("010203040506"),
         seq=1,
@@ -38,10 +29,7 @@ async def test_datagram_received_queues_work_before_processing() -> None:
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
     assert processor.ingest.call_count == 0
 
-    consumer = asyncio.create_task(proto.process_queue())
-    await asyncio.wait_for(proto._queue.join(), timeout=1.0)
-    consumer.cancel()
-    await asyncio.gather(consumer, return_exceptions=True)
+    await drain_queue(proto, timeout=1.0)
     assert processor.ingest.call_count == 1
 
 
@@ -108,7 +96,7 @@ def test_datagram_received_ignores_empty_and_non_data_packets() -> None:
 
 
 @pytest.mark.asyncio
-async def test_duplicate_data_still_sends_ack_but_skips_ingest() -> None:
+async def test_duplicate_data_still_sends_ack_but_skips_ingest(fake_transport, drain_queue) -> None:
     """A duplicate DATA frame should be ACKed but NOT ingested."""
     registry = Mock()
     # First call: new frame; second call: duplicate
@@ -119,9 +107,8 @@ async def test_duplicate_data_still_sends_ack_but_skips_ingest() -> None:
     registry.get.return_value = SimpleNamespace(sample_rate_hz=800)
     processor = Mock()
 
-    transport = _FakeTransport()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(transport)
+    proto.connection_made(fake_transport)
 
     cid = bytes.fromhex("010203040506")
     pkt = pack_data(cid, seq=42, t0_us=100_000, samples=np.zeros((4, 3), dtype=np.int16))
@@ -130,62 +117,54 @@ async def test_duplicate_data_still_sends_ack_but_skips_ingest() -> None:
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
 
-    consumer = asyncio.create_task(proto.process_queue())
-    await asyncio.wait_for(proto._queue.join(), timeout=2.0)
-    consumer.cancel()
-    await asyncio.gather(consumer, return_exceptions=True)
+    await drain_queue(proto)
 
     # Ingest should be called only once (for the non-duplicate)
     assert processor.ingest.call_count == 1
     # ACK should be sent for both (2 DATA_ACK packets)
-    assert len(transport.sent) == 2
+    assert len(fake_transport.sent) == 2
 
 
 @pytest.mark.asyncio
-async def test_process_datagram_logs_client_id_on_error() -> None:
+async def test_process_datagram_logs_client_id_on_error(fake_transport, drain_queue) -> None:
     """Exception in processing should log the client ID without crashing."""
     registry = Mock()
     registry.update_from_data.side_effect = RuntimeError("boom")
     processor = Mock()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(_FakeTransport())
+    proto.connection_made(fake_transport)
 
     cid = bytes.fromhex("aabbccddeeff")
     pkt = pack_data(cid, seq=1, t0_us=100, samples=np.zeros((4, 3), dtype=np.int16))
 
     proto.datagram_received(pkt, ("127.0.0.1", 12345))
 
-    consumer = asyncio.create_task(proto.process_queue())
-    await asyncio.wait_for(proto._queue.join(), timeout=1.0)
-    consumer.cancel()
-    await asyncio.gather(consumer, return_exceptions=True)
+    await drain_queue(proto, timeout=1.0)
 
     # Should not crash – the error is caught and logged
     assert processor.ingest.call_count == 0
 
 
-def test_process_datagram_parse_error_marks_registry_and_skips_ack() -> None:
+def test_process_datagram_parse_error_marks_registry_and_skips_ack(fake_transport) -> None:
     registry = Mock()
     processor = Mock()
-    transport = _FakeTransport()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(transport)
+    proto.connection_made(fake_transport)
 
     proto._process_datagram(b"\x02\x01", ("127.0.0.1", 12345))
 
     registry.note_parse_error.assert_called_once()
     registry.update_from_data.assert_not_called()
-    assert transport.sent == []
+    assert fake_transport.sent == []
 
 
-def test_process_datagram_reset_detected_flushes_buffer_before_ingest() -> None:
+def test_process_datagram_reset_detected_flushes_buffer_before_ingest(fake_transport) -> None:
     registry = Mock()
     registry.update_from_data.return_value = DataUpdateResult(reset_detected=True)
     registry.get.return_value = SimpleNamespace(sample_rate_hz=1600)
     processor = Mock()
-    transport = _FakeTransport()
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=8)
-    proto.connection_made(transport)
+    proto.connection_made(fake_transport)
 
     pkt = pack_data(
         bytes.fromhex("010203040506"),
@@ -197,4 +176,4 @@ def test_process_datagram_reset_detected_flushes_buffer_before_ingest() -> None:
 
     processor.flush_client_buffer.assert_called_once_with("010203040506")
     processor.ingest.assert_called_once()
-    assert len(transport.sent) == 1
+    assert len(fake_transport.sent) == 1
