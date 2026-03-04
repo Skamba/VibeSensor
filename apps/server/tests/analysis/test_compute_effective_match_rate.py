@@ -20,23 +20,35 @@ def _bins(*specs: tuple[str, int, int]) -> tuple[dict[str, int], dict[str, int]]
     return possible, matched
 
 
+def _run_rescue(
+    match_rate: float,
+    speed_specs: tuple[tuple[str, int, int], ...],
+    *,
+    min_match_rate: float = 0.25,
+    possible_by_location: dict[str, int] | None = None,
+    matched_by_location: dict[str, int] | None = None,
+) -> tuple[float, str | None, bool]:
+    """Call ``_compute_effective_match_rate`` with common defaults."""
+    possible, matched = _bins(*speed_specs)
+    return _compute_effective_match_rate(
+        match_rate=match_rate,
+        min_match_rate=min_match_rate,
+        possible_by_speed_bin=possible,
+        matched_by_speed_bin=matched,
+        possible_by_location=possible_by_location or {},
+        matched_by_location=matched_by_location or {},
+    )
+
+
 # ---------------------------------------------------------------------------
 # 1. Happy path – highest bin qualifies (existing behaviour preserved)
 # ---------------------------------------------------------------------------
 
 
 def test_highest_bin_qualifies() -> None:
-    possible, matched = _bins(
-        ("30-40 km/h", 10, 2),
-        ("90-100 km/h", 10, 8),
-    )
-    eff, band, loc_dom = _compute_effective_match_rate(
-        match_rate=0.20,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible,
-        matched_by_speed_bin=matched,
-        possible_by_location={},
-        matched_by_location={},
+    eff, band, loc_dom = _run_rescue(
+        0.20,
+        (("30-40 km/h", 10, 2), ("90-100 km/h", 10, 8)),
     )
     assert band == "90-100 km/h"
     assert eff == 0.8
@@ -51,20 +63,15 @@ def test_highest_bin_qualifies() -> None:
 def test_low_speed_fault_not_rescued_when_highest_bin_poor() -> None:
     """Only the highest speed bin is evaluated; a lower bin with strong
     signal will not be rescued via speed-band path."""
-    possible, matched = _bins(
-        ("30-40 km/h", 10, 9),  # 90% match rate – strong signal but not highest
-        ("50-60 km/h", 6, 1),  # noise
-        ("90-100 km/h", 8, 1),  # noise at highest bin
+    eff, band, loc_dom = _run_rescue(
+        0.20,
+        (
+            ("30-40 km/h", 10, 9),  # 90% match rate – strong signal but not highest
+            ("50-60 km/h", 6, 1),   # noise
+            ("90-100 km/h", 8, 1),  # noise at highest bin
+        ),
     )
-    eff, band, loc_dom = _compute_effective_match_rate(
-        match_rate=0.20,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible,
-        matched_by_speed_bin=matched,
-        possible_by_location={},
-        matched_by_location={},
-    )
-    # Highest bin (90-100) doesn't qualify → no speed-band rescue
+    # Highest bin (90-100) doesn’t qualify → no speed-band rescue
     assert band is None
     assert eff == 0.20
     assert loc_dom is False
@@ -77,20 +84,15 @@ def test_low_speed_fault_not_rescued_when_highest_bin_poor() -> None:
 
 def test_second_highest_bin_not_considered() -> None:
     """Only the highest speed bin is checked; a strong second bin is ignored."""
-    possible, matched = _bins(
-        ("40-50 km/h", 10, 3),
-        ("70-80 km/h", 10, 8),  # strong but not highest
-        ("90-100 km/h", 6, 1),  # poor – highest
+    eff, band, _ = _run_rescue(
+        0.20,
+        (
+            ("40-50 km/h", 10, 3),
+            ("70-80 km/h", 10, 8),  # strong but not highest
+            ("90-100 km/h", 6, 1),  # poor – highest
+        ),
     )
-    eff, band, _ = _compute_effective_match_rate(
-        match_rate=0.20,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible,
-        matched_by_speed_bin=matched,
-        possible_by_location={},
-        matched_by_location={},
-    )
-    # Highest bin (90-100) doesn't qualify → no rescue
+    # Highest bin (90-100) doesn’t qualify → no rescue
     assert band is None
     assert eff == 0.20
 
@@ -103,18 +105,13 @@ def test_second_highest_bin_not_considered() -> None:
 def test_highest_bin_wins_even_when_lower_bin_has_better_rate() -> None:
     """The highest speed bin is always the rescue candidate, even if a lower
     bin has a better match rate."""
-    possible, matched = _bins(
-        ("60-70 km/h", 10, 7),  # 70%
-        ("80-90 km/h", 10, 9),  # 90% – best rate
-        ("90-100 km/h", 10, 8),  # 80% – highest bin
-    )
-    eff, band, _ = _compute_effective_match_rate(
-        match_rate=0.20,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible,
-        matched_by_speed_bin=matched,
-        possible_by_location={},
-        matched_by_location={},
+    eff, band, _ = _run_rescue(
+        0.20,
+        (
+            ("60-70 km/h", 10, 7),  # 70%
+            ("80-90 km/h", 10, 9),  # 90% – best rate
+            ("90-100 km/h", 10, 8),  # 80% – highest bin
+        ),
     )
     # Highest bin (90-100) qualifies → used for rescue (not 80-90)
     assert band == "90-100 km/h"
@@ -128,21 +125,16 @@ def test_highest_bin_wins_even_when_lower_bin_has_better_rate() -> None:
 
 def test_only_highest_bin_evaluated() -> None:
     """Only the highest speed bin is checked for rescue."""
-    possible, matched = _bins(
-        ("30-40 km/h", 10, 10),  # perfect — but not highest
-        ("60-70 km/h", 6, 1),  # noise
-        ("70-80 km/h", 6, 1),  # noise
-        ("90-100 km/h", 6, 1),  # noise – highest
+    eff, band, _ = _run_rescue(
+        0.20,
+        (
+            ("30-40 km/h", 10, 10),  # perfect — but not highest
+            ("60-70 km/h", 6, 1),    # noise
+            ("70-80 km/h", 6, 1),    # noise
+            ("90-100 km/h", 6, 1),   # noise – highest
+        ),
     )
-    eff, band, _ = _compute_effective_match_rate(
-        match_rate=0.20,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible,
-        matched_by_speed_bin=matched,
-        possible_by_location={},
-        matched_by_location={},
-    )
-    # Highest bin (90-100) doesn't qualify → no rescue
+    # Highest bin (90-100) doesn’t qualify → no rescue
     assert band is None
     assert eff == 0.20
 
@@ -153,16 +145,9 @@ def test_only_highest_bin_evaluated() -> None:
 
 
 def test_no_rescue_when_global_rate_sufficient() -> None:
-    possible, matched = _bins(
-        ("80-90 km/h", 10, 8),
-    )
-    eff, band, _ = _compute_effective_match_rate(
-        match_rate=0.50,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible,
-        matched_by_speed_bin=matched,
-        possible_by_location={},
-        matched_by_location={},
+    eff, band, _ = _run_rescue(
+        0.50,
+        (("80-90 km/h", 10, 8),),
     )
     assert band is None  # no rescue attempted
     assert eff == 0.50
@@ -174,14 +159,7 @@ def test_no_rescue_when_global_rate_sufficient() -> None:
 
 
 def test_empty_speed_bins_no_crash() -> None:
-    eff, band, loc_dom = _compute_effective_match_rate(
-        match_rate=0.10,
-        min_match_rate=0.25,
-        possible_by_speed_bin={},
-        matched_by_speed_bin={},
-        possible_by_location={},
-        matched_by_location={},
-    )
+    eff, band, loc_dom = _run_rescue(0.10, ())
     assert band is None
     assert eff == 0.10
     assert loc_dom is False
@@ -193,16 +171,9 @@ def test_empty_speed_bins_no_crash() -> None:
 
 
 def test_bin_with_too_few_samples_skipped() -> None:
-    possible, matched = _bins(
-        ("90-100 km/h", 2, 2),  # 100% rate but only 2 samples – below minimum
-    )
-    eff, band, _ = _compute_effective_match_rate(
-        match_rate=0.10,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible,
-        matched_by_speed_bin=matched,
-        possible_by_location={},
-        matched_by_location={},
+    eff, band, _ = _run_rescue(
+        0.10,
+        (("90-100 km/h", 2, 2),),  # 100% rate but only 2 samples – below minimum
     )
     assert band is None
     assert eff == 0.10
@@ -214,14 +185,9 @@ def test_bin_with_too_few_samples_skipped() -> None:
 
 
 def test_per_location_fallback_after_speed_rescue_fails() -> None:
-    possible_speed, matched_speed = _bins(
-        ("90-100 km/h", 6, 1),  # poor
-    )
-    eff, band, loc_dom = _compute_effective_match_rate(
-        match_rate=0.10,
-        min_match_rate=0.25,
-        possible_by_speed_bin=possible_speed,
-        matched_by_speed_bin=matched_speed,
+    eff, band, loc_dom = _run_rescue(
+        0.10,
+        (("90-100 km/h", 6, 1),),  # poor
         possible_by_location={"Front Left": 10},
         matched_by_location={"Front Left": 8},
     )
