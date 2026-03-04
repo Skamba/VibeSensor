@@ -297,39 +297,39 @@ class TestSyncedClockAlignment:
     """When sensors report CMD_SYNC_CLOCK-corrected t0_us, alignment uses
     the sensor-clock timestamps (more precise than arrival time)."""
 
-    def test_synced_flag_true_when_t0_us_provided(self) -> None:
+    @pytest.mark.parametrize(
+        "t0_us, expected",
+        [
+            pytest.param(100_000_000, True, id="with_t0_us"),
+            pytest.param(None, False, id="without_t0_us"),
+        ],
+    )
+    def test_synced_flag(self, t0_us: int | None, expected: bool) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=100_000_000)
+        _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=t0_us)
         info = proc.time_alignment_info(["s1"])
-        assert info["per_sensor"]["s1"]["synced"] is True
-        assert info["clock_synced"] is True
+        assert info["per_sensor"]["s1"]["synced"] is expected
+        assert info["clock_synced"] is expected
 
-    def test_synced_flag_false_without_t0_us(self) -> None:
+    @pytest.mark.parametrize(
+        "s1_t0, s2_mono, s2_t0, expected_aligned",
+        [
+            pytest.param(50_000_000, 100.1, 50_100_000, True, id="close_timestamps"),
+            pytest.param(50_000_000, 100.0, 60_000_000, False, id="large_t0_offset"),
+            pytest.param(10_000_000, 100.0, 15_000_000, False, id="same_arrival_diff_sensor_ts"),
+        ],
+    )
+    def test_synced_pair_alignment(
+        self, s1_t0: int, s2_mono: float, s2_t0: int, expected_aligned: bool
+    ) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0)
-        info = proc.time_alignment_info(["s1"])
-        assert info["per_sensor"]["s1"]["synced"] is False
-        assert info["clock_synced"] is False
-
-    def test_two_synced_sensors_aligned(self) -> None:
-        proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        # Both sensors report server-relative timestamps within same window
-        server_t = 50_000_000  # 50 s in µs
-        _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=server_t)
-        _fill_sensor(proc, "s2", n_samples=400, mono_time=100.1, t0_us=server_t + 100_000)
+        _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=s1_t0)
+        _fill_sensor(proc, "s2", n_samples=400, mono_time=s2_mono, t0_us=s2_t0)
         info = proc.time_alignment_info(["s1", "s2"])
-        assert info["aligned"] is True
+        assert info["aligned"] is expected_aligned
         assert info["clock_synced"] is True
-        assert info["overlap_ratio"] > 0.9
-
-    def test_synced_sensors_with_large_offset_misaligned(self) -> None:
-        proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        # Sensor timestamps 10 seconds apart → no overlap
-        _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=50_000_000)
-        _fill_sensor(proc, "s2", n_samples=400, mono_time=100.0, t0_us=60_000_000)
-        info = proc.time_alignment_info(["s1", "s2"])
-        assert info["aligned"] is False
-        assert info["clock_synced"] is True
+        if expected_aligned:
+            assert info["overlap_ratio"] > 0.9
 
     def test_mixed_synced_unsynced_not_clock_synced(self) -> None:
         proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
@@ -337,19 +337,6 @@ class TestSyncedClockAlignment:
         _fill_sensor(proc, "s2", n_samples=400, mono_time=100.0)  # no t0_us
         info = proc.time_alignment_info(["s1", "s2"])
         assert info["clock_synced"] is False
-
-    def test_synced_alignment_uses_sensor_timestamps_not_arrival_time(self) -> None:
-        """Even though both sensors arrive at the server at the same monotonic
-        time, the alignment should use the sensor-clock timestamps which may
-        differ."""
-        proc = _make_processor(sample_rate_hz=200, waveform_seconds=2)
-        # Same arrival time, but sensor timestamps 5 seconds apart
-        _fill_sensor(proc, "s1", n_samples=400, mono_time=100.0, t0_us=10_000_000)
-        _fill_sensor(proc, "s2", n_samples=400, mono_time=100.0, t0_us=15_000_000)
-        info = proc.time_alignment_info(["s1", "s2"])
-        # Sensor-clock says they don't overlap (5s gap, 2s windows)
-        assert info["aligned"] is False
-        assert info["clock_synced"] is True
 
     def test_t0_us_stored_in_buffer(self) -> None:
         proc = _make_processor()
