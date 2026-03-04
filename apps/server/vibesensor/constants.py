@@ -11,6 +11,25 @@ from typing import Final
 from vibesensor_core.vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ
 from vibesensor_core.vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
 
+__all__ = [
+    "FREQUENCY_EPSILON_HZ",
+    "HARMONIC_2X",
+    "KMH_TO_MPS",
+    "MEMS_NOISE_FLOOR_G",
+    "MIN_ANALYSIS_FREQ_HZ",
+    "MIN_OVERLAP_TOLERANCE",
+    "MPS_TO_KMH",
+    "MULTI_SENSOR_CORROBORATION_DB",
+    "NUMERIC_TYPES",
+    "PEAK_BANDWIDTH_HZ",
+    "PEAK_SEPARATION_HZ",
+    "ROAD_RESONANCE_MAX_HZ",
+    "ROAD_RESONANCE_MIN_HZ",
+    "SECONDS_PER_MINUTE",
+    "SILENCE_DB",
+    "WEAK_SPATIAL_DOMINANCE_THRESHOLD",
+]
+
 # ---------------------------------------------------------------------------
 # Unit conversion
 # ---------------------------------------------------------------------------
@@ -91,7 +110,7 @@ FREQUENCY_EPSILON_HZ: Final[float] = 1e-6
 # ---------------------------------------------------------------------------
 # Type-check helpers
 # ---------------------------------------------------------------------------
-NUMERIC_TYPES: tuple[type, ...] = (int, float)
+NUMERIC_TYPES: Final[tuple[type, ...]] = (int, float)
 """Cached type-tuple for ``isinstance`` checks against numeric types.
 
 Avoids creating a fresh ``(int, float)`` tuple on every call."""

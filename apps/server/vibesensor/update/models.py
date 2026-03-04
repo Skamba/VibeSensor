@@ -26,14 +26,17 @@ class UpdatePhase(enum.StrEnum):
     done = "done"
 
 
-@dataclass
+_LOG_TAIL_LIMIT: int = 50
+
+
+@dataclass(frozen=True, slots=True)
 class UpdateIssue:
     phase: str
     message: str
     detail: str = ""
 
 
-@dataclass
+@dataclass(slots=True)
 class UpdateJobStatus:
     state: UpdateState = UpdateState.idle
     phase: UpdatePhase = UpdatePhase.idle
@@ -57,7 +60,7 @@ class UpdateJobStatus:
             "issues": [
                 {"phase": i.phase, "message": i.message, "detail": i.detail} for i in self.issues
             ],
-            "log_tail": self.log_tail[-50:],
+            "log_tail": self.log_tail[-_LOG_TAIL_LIMIT:],
             "exit_code": self.exit_code,
             "runtime": self.runtime,
         }
