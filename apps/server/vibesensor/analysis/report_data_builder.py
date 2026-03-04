@@ -19,6 +19,7 @@ from vibesensor_core.vibration_strength import (
 )
 
 from .. import __version__
+from ..constants import NUMERIC_TYPES
 from ..report.report_data import (
     CarMeta,
     DataTrustItem,
@@ -192,7 +193,7 @@ def _dominant_phase(phase_info: dict | None) -> str | None:
     for phase_key, count in counts.items():
         if phase_key == _IDLE_KEY:
             continue
-        if isinstance(count, (int, float)) and count > best_count:
+        if isinstance(count, NUMERIC_TYPES) and count > best_count:
             best_count = int(count)
             best_phase = phase_key
     return best_phase

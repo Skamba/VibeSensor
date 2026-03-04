@@ -12,7 +12,7 @@ from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
 )
 
-from ..constants import MEMS_NOISE_FLOOR_G
+from ..constants import MEMS_NOISE_FLOOR_G, NUMERIC_TYPES
 from ..runlog import as_float_or_none as _as_float
 from .findings import _classify_peak_type, _speed_bin_label
 from .helpers import (
@@ -41,7 +41,7 @@ def _aggregate_fft_spectrum(
     """
     if freq_bin_hz <= 0:
         freq_bin_hz = 2.0
-    bin_amps: dict[float, list[float]] = {}
+    bin_amps: defaultdict[float, list[float]] = defaultdict(list)
     n_samples = 0
     for sample in samples:
         if not isinstance(sample, dict):
@@ -52,7 +52,7 @@ def _aggregate_fft_spectrum(
                 continue
             bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
             bin_center = round(bin_low + (freq_bin_hz / 2.0), 4)
-            bin_amps.setdefault(bin_center, []).append(amp)
+            bin_amps[bin_center].append(amp)
     if not bin_amps:
         return []
     if run_noise_baseline_g is None:
@@ -67,7 +67,7 @@ def _aggregate_fft_spectrum(
             sorted_amps = sorted(amps)
             p95 = percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
             result[bin_center] = (presence_ratio**2) * (p95 / baseline_floor)
-    return sorted(result.items(), key=lambda item: item[0])
+    return sorted(result.items())
 
 
 def _aggregate_fft_spectrum_raw(
@@ -157,12 +157,14 @@ def _spectrogram_from_peaks(
     freq_bin_hz = max(2.0, freq_cap_hz / 45.0)
 
     # Collect amplitudes per (x_bin, y_bin) cell.
-    cell_by_bin: dict[tuple[float, float], list[tuple[float, float | None]]] = {}
-    x_sample_counts: dict[float, int] = {}
+    cell_by_bin: defaultdict[tuple[float, float], list[tuple[float, float | None]]] = defaultdict(
+        list
+    )
+    x_sample_counts: defaultdict[float, int] = defaultdict(int)
     if aggregation == "persistence":
         for x_val in x_values:
             x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
-            x_sample_counts[x_bin_low] = x_sample_counts.get(x_bin_low, 0) + 1
+            x_sample_counts[x_bin_low] += 1
 
     for x_val, hz, amp, floor_amp in peak_rows:
         if hz > freq_cap_hz:
@@ -170,7 +172,7 @@ def _spectrogram_from_peaks(
         x_bin_low = floor((x_val - x_min) / x_bin_width) * x_bin_width + x_min
         y_bin_low = floor(hz / freq_bin_hz) * freq_bin_hz
         key = (x_bin_low, y_bin_low)
-        cell_by_bin.setdefault(key, []).append((amp, floor_amp))
+        cell_by_bin[key].append((amp, floor_amp))
 
     x_bins = sorted({x for x, _y in cell_by_bin})
     y_bins = sorted({y for _x, y in cell_by_bin})
@@ -392,8 +394,8 @@ def _top_peaks_table_rows(
 
     rows: list[dict[str, Any]] = []
     for idx, item in enumerate(ordered, start=1):
-        speeds = [float(v) for v in item.get("speeds", []) if isinstance(v, (int, float))]
-        speed_amps = [float(v) for v in item.get("speed_amps", []) if isinstance(v, (int, float))]
+        speeds = [float(v) for v in item.get("speeds", []) if isinstance(v, NUMERIC_TYPES)]
+        speed_amps = [float(v) for v in item.get("speed_amps", []) if isinstance(v, NUMERIC_TYPES)]
         low_speed, high_speed = _amplitude_weighted_speed_window(speeds, speed_amps)
         speed_band = (
             f"{low_speed:.0f}-{high_speed:.0f} km/h"

@@ -161,7 +161,7 @@ def _build_sensor_render_plan(
     highlight: dict[str, str],
 ) -> tuple[list[MarkerRenderPlan], list[LabelRenderPlan], bool]:
     states = _resolve_marker_states(
-        list(location_points.keys()),
+        list(location_points),
         connected_locations=connected_locations,
         amp_by_location=amp_by_location,
     )
