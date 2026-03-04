@@ -156,10 +156,11 @@ def _top_strength_values(
     as the primary system rather than a potentially-filtered raw top_cause.
     """
     causes = effective_causes if effective_causes is not None else summary.get("top_causes", [])
+    all_findings = summary.get("findings", [])
     for cause in causes:
         if not isinstance(cause, dict):
             continue
-        for finding in summary.get("findings", []):
+        for finding in all_findings:
             if not isinstance(finding, dict):
                 continue
             if finding.get("finding_id") != cause.get("finding_id"):
@@ -283,7 +284,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
         return _tr(lang, key, **kw)
 
     # -- Metadata --
-    meta = summary.get("metadata", {}) if isinstance(summary.get("metadata"), dict) else {}
+    meta = summary.get("metadata")
+    if not isinstance(meta, dict):
+        meta = {}
     car_name = str(meta.get("car_name") or "").strip() or None
     car_type = str(meta.get("car_type") or "").strip() or None
 
@@ -311,9 +314,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
         not in {"", "unknown", "not available", "n/a"}
     ]
     top_causes = top_causes_actionable or findings_non_ref or top_causes_non_ref or top_causes_all
-    speed_stats = (
-        summary.get("speed_stats", {}) if isinstance(summary.get("speed_stats"), dict) else {}
-    )
+    speed_stats = summary.get("speed_stats")
+    if not isinstance(speed_stats, dict):
+        speed_stats = {}
     origin = summary.get("most_likely_origin", {})
     if not isinstance(origin, dict):
         origin = {}
@@ -549,7 +552,9 @@ def map_summary(summary: dict) -> ReportTemplateData:
     )
 
     # -- Peak rows --
-    plots = summary.get("plots", {}) if isinstance(summary.get("plots"), dict) else {}
+    plots = summary.get("plots")
+    if not isinstance(plots, dict):
+        plots = {}
     peak_rows: list[PeakRow] = []
     # Filter out noise-floor peaks (≤ 0 dB) before taking the top 8.
     # Iterate over all peaks so that significant peaks beyond early noise

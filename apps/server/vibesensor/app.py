@@ -31,10 +31,10 @@ from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
 from .registry import ClientRegistry
 from .routes import create_router
-from .update.manager import UpdateManager
 from .runtime import RuntimeState
 from .settings_store import SettingsStore
 from .udp_control_tx import UDPControlPlane
+from .update.manager import UpdateManager
 from .worker_pool import WorkerPool
 from .ws_hub import WebSocketHub
 

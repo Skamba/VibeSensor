@@ -205,7 +205,8 @@ def _build_persistent_peak_findings(
         max_amp = sorted_amps[-1]
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
-        mean_floor = mean(bin_floors.get(bin_center, [0.0])) if bin_floors.get(bin_center) else 0.0
+        mean_floor_vals = bin_floors.get(bin_center)
+        mean_floor = mean(mean_floor_vals) if mean_floor_vals else 0.0
         effective_floor = _effective_baseline_floor(run_noise_baseline_g, extra_fallback=mean_floor)
         raw_snr = p95_amp / effective_floor
         spatial_uniformity: float | None = None

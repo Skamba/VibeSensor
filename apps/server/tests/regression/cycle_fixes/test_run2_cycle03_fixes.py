@@ -249,12 +249,8 @@ class TestHistoryDbCorruptedSchemaVersion:
         db_path = tmp_path / "test.db"
         # Create a DB with a corrupted version value
         conn = sqlite3.connect(str(db_path))
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT)"
-        )
-        conn.execute(
-            "INSERT INTO schema_meta (key, value) VALUES ('version', 'CORRUPT')"
-        )
+        conn.execute("CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT)")
+        conn.execute("INSERT INTO schema_meta (key, value) VALUES ('version', 'CORRUPT')")
         conn.commit()
         conn.close()
 
@@ -301,9 +297,7 @@ class TestSettingsStoreRollbackSafety:
         # Force persist to fail
         with patch.object(store, "_persist", side_effect=Exception("disk full")):
             try:
-                store.update_car(
-                    car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}}
-                )
+                store.update_car(car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}})
             except Exception:
                 pass
 
