@@ -44,6 +44,18 @@ from pypdf import PdfReader
 from vibesensor.analysis import map_summary
 from vibesensor.report.pdf_builder import build_report_pdf
 
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _extract_pdf_text(pdf_bytes: bytes) -> str:
+    """Extract lowercased text from all pages of a PDF."""
+    reader = PdfReader(io.BytesIO(pdf_bytes))
+    return "\n".join(filter(None, (page.extract_text() for page in reader.pages))).lower()
+
+
 # ---------------------------------------------------------------------------
 # Helper: build the full 120s multi-phase scenario
 # ---------------------------------------------------------------------------
@@ -161,11 +173,11 @@ def _build_full_ingestion_scenario() -> tuple[dict[str, Any], list[dict[str, Any
 class TestIngestionScenario:
     """Full multi-sensor ingestion scenario with thorough validation."""
 
-    @pytest.fixture(autouse=True)
-    def _run_scenario(self) -> None:
+    @pytest.fixture(autouse=True, scope="class")
+    def _run_scenario(self, request: pytest.FixtureRequest) -> None:
         meta, samples = _build_full_ingestion_scenario()
-        self.summary = run_analysis(samples, metadata=meta)
-        self.top = extract_top(self.summary)
+        request.cls.summary = run_analysis(samples, metadata=meta)
+        request.cls.top = extract_top(request.cls.summary)
 
     def test_summary_structure_complete(self) -> None:
         """All expected top-level keys are present."""
@@ -317,18 +329,13 @@ def _build_20s_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
 class TestPdfReportValidation:
     """Validate PDF report from a realistic 20-second scenario."""
 
-    @pytest.fixture(autouse=True)
-    def _run_and_generate(self) -> None:
+    @pytest.fixture(autouse=True, scope="class")
+    def _run_and_generate(self, request: pytest.FixtureRequest) -> None:
         meta, samples = _build_20s_scenario()
-        self.summary = run_analysis(samples, metadata=meta)
-        self.pdf_bytes = build_report_pdf(map_summary(self.summary))
-        self.pdf_text = self._extract_text(self.pdf_bytes)
-        self.top = extract_top(self.summary)
-
-    @staticmethod
-    def _extract_text(pdf_bytes: bytes) -> str:
-        reader = PdfReader(io.BytesIO(pdf_bytes))
-        return "\n".join(filter(None, (page.extract_text() for page in reader.pages))).lower()
+        request.cls.summary = run_analysis(samples, metadata=meta)
+        request.cls.pdf_bytes = build_report_pdf(map_summary(request.cls.summary))
+        request.cls.pdf_text = _extract_pdf_text(request.cls.pdf_bytes)
+        request.cls.top = extract_top(request.cls.summary)
 
     def test_pdf_is_generated(self) -> None:
         """PDF bytes are non-empty and start with the PDF magic number."""
@@ -397,7 +404,7 @@ class TestPdfReportValidation:
             rows[1]["p95_intensity_db"] = 37.2
             rows[1]["mean_intensity_db"] = 35.0
 
-        pdf_text = self._extract_text(build_report_pdf(map_summary(summary)))
+        pdf_text = _extract_pdf_text(build_report_pdf(map_summary(summary)))
         assert "diagnosed location source" in pdf_text
         assert "wheel" in pdf_text
         assert "driveline" in pdf_text
@@ -424,7 +431,7 @@ class TestPdfReportValidation:
         ]
         pdf_bytes = build_report_pdf(map_summary(summary))
         reader = PdfReader(io.BytesIO(pdf_bytes))
-        pdf_text = self._extract_text(pdf_bytes)
+        pdf_text = _extract_pdf_text(pdf_bytes)
 
         assert len(reader.pages) >= 2
         assert "…" not in pdf_text
@@ -443,7 +450,7 @@ class TestPdfReportValidation:
             "ADXL345 laboratory validation model with extended calibration metadata "
             "tailtoken-sensormodel-98765"
         )
-        pdf_text = self._extract_text(build_report_pdf(map_summary(summary)))
+        pdf_text = _extract_pdf_text(build_report_pdf(map_summary(summary)))
         assert "tailtoken-runid-12345" in pdf_text
         assert "tailtoken" in pdf_text and "sensormodel-98765" in pdf_text
 
@@ -457,21 +464,15 @@ class TestPdfReportValidation:
 class TestPdfLanguageParity:
     """Validate that EN and NL PDFs for the same scenario are structurally equivalent."""
 
-    @pytest.fixture(autouse=True)
-    def _run_both_languages(self) -> None:
+    @pytest.fixture(autouse=True, scope="class")
+    def _run_both_languages(self, request: pytest.FixtureRequest) -> None:
         meta_en, samples = _build_20s_scenario()
-        meta_nl, _ = _build_20s_scenario()
-        meta_nl["language"] = "nl"
+        meta_nl = standard_metadata(language="nl")
 
-        self.summary_en = run_analysis(samples, metadata=meta_en)
-        self.summary_nl = run_analysis(samples, metadata=meta_nl)
-        self.pdf_en = build_report_pdf(map_summary(self.summary_en))
-        self.pdf_nl = build_report_pdf(map_summary(self.summary_nl))
-
-    @staticmethod
-    def _extract_text(pdf_bytes: bytes) -> str:
-        reader = PdfReader(io.BytesIO(pdf_bytes))
-        return "\n".join(filter(None, (page.extract_text() for page in reader.pages))).lower()
+        request.cls.summary_en = run_analysis(samples, metadata=meta_en)
+        request.cls.summary_nl = run_analysis(samples, metadata=meta_nl)
+        request.cls.pdf_en = build_report_pdf(map_summary(request.cls.summary_en))
+        request.cls.pdf_nl = build_report_pdf(map_summary(request.cls.summary_nl))
 
     def test_both_pdfs_are_valid(self) -> None:
         """Both EN and NL PDFs are generated and valid."""
@@ -485,17 +486,12 @@ class TestPdfLanguageParity:
         nl_pages = len(PdfReader(io.BytesIO(self.pdf_nl)).pages)
         assert en_pages == nl_pages, f"Page count mismatch: EN={en_pages}, NL={nl_pages}"
 
-    def test_same_top_cause_count(self) -> None:
-        """Same number of top causes in EN and NL summaries."""
-        en_n = len(self.summary_en.get("top_causes") or [])
-        nl_n = len(self.summary_nl.get("top_causes") or [])
-        assert en_n == nl_n, f"Top cause count mismatch: EN={en_n}, NL={nl_n}"
-
-    def test_same_findings_count(self) -> None:
-        """Same number of findings in EN and NL summaries."""
-        en_n = len(self.summary_en.get("findings") or [])
-        nl_n = len(self.summary_nl.get("findings") or [])
-        assert en_n == nl_n, f"Findings count mismatch: EN={en_n}, NL={nl_n}"
+    @pytest.mark.parametrize("key", ["top_causes", "findings"])
+    def test_same_list_count(self, key: str) -> None:
+        """Same number of list items in EN and NL summaries."""
+        en_n = len(self.summary_en.get(key) or [])
+        nl_n = len(self.summary_nl.get(key) or [])
+        assert en_n == nl_n, f"{key} count mismatch: EN={en_n}, NL={nl_n}"
 
     def test_same_confidence_values(self) -> None:
         """EN and NL summaries should have identical confidence values."""
@@ -505,27 +501,19 @@ class TestPdfLanguageParity:
             f"Confidence mismatch: EN={en_conf:.4f}, NL={nl_conf:.4f}"
         )
 
-    def test_same_source_classification(self) -> None:
-        """EN and NL summaries should have the same source classification."""
+    @pytest.mark.parametrize("field", ["source", "strongest_location"])
+    def test_same_top_field(self, field: str) -> None:
+        """EN and NL summaries should have the same top-cause field value."""
         en_top = extract_top(self.summary_en)
         nl_top = extract_top(self.summary_nl)
         assert en_top is not None and nl_top is not None
-        en_src = en_top.get("source", "")
-        nl_src = nl_top.get("source", "")
-        assert en_src == nl_src, f"Source mismatch: EN='{en_src}', NL='{nl_src}'"
-
-    def test_same_location(self) -> None:
-        """EN and NL summaries should have the same strongest_location."""
-        en_top = extract_top(self.summary_en)
-        nl_top = extract_top(self.summary_nl)
-        assert en_top is not None and nl_top is not None
-        en_loc = en_top.get("strongest_location", "")
-        nl_loc = nl_top.get("strongest_location", "")
-        assert en_loc == nl_loc, f"Location mismatch: EN='{en_loc}', NL='{nl_loc}'"
+        en_val = en_top.get(field, "")
+        nl_val = nl_top.get(field, "")
+        assert en_val == nl_val, f"{field} mismatch: EN='{en_val}', NL='{nl_val}'"
 
     def test_nl_pdf_has_dutch_content(self) -> None:
         """NL PDF should contain Dutch-language content (not just English)."""
-        nl_text = self._extract_text(self.pdf_nl)
+        nl_text = _extract_pdf_text(self.pdf_nl)
         # Common Dutch terms that should appear in a diagnostic report
         dutch_markers = ["diagnos", "voertuig", "wiel", "band", "snelheid", "sensor"]
         found = sum(1 for m in dutch_markers if m in nl_text)

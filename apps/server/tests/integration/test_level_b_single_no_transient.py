@@ -48,6 +48,48 @@ _OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
 _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
+# ---------------------------------------------------------------------------
+# Shared helper: run single-sensor fault analysis
+# ---------------------------------------------------------------------------
+
+
+def _run_single_fault(
+    profile: dict[str, Any],
+    corner: str,
+    *,
+    speed_kmh: float = SPEED_MID,
+    n_samples: int = 40,
+    fault_amp: float = 0.07,
+    fault_vib_db: float = 28.0,
+    noise_amp: float | None = None,
+    noise_vib_db: float | None = None,
+    add_wheel_2x: bool = False,
+    start_t_s: float | None = None,
+) -> tuple[dict[str, Any], dict[str, Any] | None]:
+    """Create single-sensor fault samples, run analysis, return (summary, top)."""
+    sensor = CORNER_SENSORS[corner]
+    kwargs: dict[str, Any] = dict(
+        profile=profile,
+        fault_sensor=sensor,
+        sensors=[sensor],
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        fault_amp=fault_amp,
+        fault_vib_db=fault_vib_db,
+    )
+    if noise_amp is not None:
+        kwargs["noise_amp"] = noise_amp
+    if noise_vib_db is not None:
+        kwargs["noise_vib_db"] = noise_vib_db
+    if add_wheel_2x:
+        kwargs["add_wheel_2x"] = True
+    if start_t_s is not None:
+        kwargs["start_t_s"] = start_t_s
+    samples = make_profile_fault_samples(**kwargs)
+    summary = run_analysis(samples, metadata=profile_metadata(profile))
+    return summary, extract_top(summary)
+
+
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
@@ -55,18 +97,7 @@ def test_single_sensor_fault_corner_speed(
     corner: str, speed: float, profile: dict[str, Any]
 ) -> None:
     """Wheel fault on single sensor at each corner × speed band."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=speed,
-        n_samples=40,
-        fault_amp=0.07,
-        fault_vib_db=28.0,
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
+    summary, top = _run_single_fault(profile, corner, speed_kmh=speed)
     assert top is not None, f"No finding for {corner}@{speed}"
     assert_confidence_between(summary, 0.45, 1.0, msg=f"{corner}@{speed}")
     assert_confidence_label_valid(summary, msg=f"{corner}@{speed}")
@@ -108,18 +139,7 @@ def test_single_sensor_amplitude_scaling(
     corner: str, amp_label: str, fault_amp: float, vib_db: float, profile: dict[str, Any]
 ) -> None:
     """Confidence should scale with fault amplitude."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=SPEED_MID,
-        n_samples=40,
-        fault_amp=fault_amp,
-        fault_vib_db=vib_db,
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
+    summary, top = _run_single_fault(profile, corner, fault_amp=fault_amp, fault_vib_db=vib_db)
     if amp_label == "low":
         assert_tolerant_no_fault(
             summary,
@@ -135,7 +155,6 @@ def test_single_sensor_amplitude_scaling(
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 def test_single_sensor_amplitude_scaling_monotonic(corner: str, profile: dict[str, Any]) -> None:
     """Confidence should increase with amplitude (allowing tiny tolerated regressions)."""
-    sensor = CORNER_SENSORS[corner]
     monotonic_tiers = [
         ("low", 0.02, 16.0),
         ("med", 0.05, 24.0),
@@ -144,17 +163,9 @@ def test_single_sensor_amplitude_scaling_monotonic(corner: str, profile: dict[st
     confidences: list[float] = []
     labels: list[str] = []
     for amp_label, fault_amp, vib_db in monotonic_tiers:
-        samples = make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=[sensor],
-            speed_kmh=SPEED_MID,
-            n_samples=40,
-            fault_amp=fault_amp,
-            fault_vib_db=vib_db,
+        summary, top = _run_single_fault(
+            profile, corner, fault_amp=fault_amp, fault_vib_db=vib_db,
         )
-        summary = run_analysis(samples, metadata=profile_metadata(profile))
-        top = extract_top(summary)
         confidences.append(float(top.get("confidence", 0.0)) if top else 0.0)
         labels.append(amp_label)
     assert_pairwise_monotonic(
@@ -223,18 +234,9 @@ def test_single_sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_single_sensor_very_high_speed(corner: str, profile: dict[str, Any]) -> None:
     """Wheel fault at very high speed (120 km/h)."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=SPEED_VERY_HIGH,
-        n_samples=40,
-        fault_amp=0.08,
-        fault_vib_db=30.0,
+    summary, top = _run_single_fault(
+        profile, corner, speed_kmh=SPEED_VERY_HIGH, fault_amp=0.08, fault_vib_db=30.0,
     )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
     assert top is not None, f"No finding for {corner}@120"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120")
     assert_confidence_label_valid(summary, msg=f"{corner}@120")
@@ -275,21 +277,11 @@ def test_single_sensor_ramp_only_no_fault(profile: dict[str, Any]) -> None:
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_single_sensor_harmonics_1x_2x_3x(corner: str, profile: dict[str, Any]) -> None:
     """Strong fault with all three wheel harmonics."""
-    sensor = CORNER_SENSORS[corner]
     # Note: add_wheel_3x is not supported by make_profile_fault_samples;
     # profile-aware builder covers 1x + 2x harmonics.
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=SPEED_MID,
-        n_samples=40,
-        fault_amp=0.08,
-        fault_vib_db=28.0,
-        add_wheel_2x=True,
+    summary, top = _run_single_fault(
+        profile, corner, fault_amp=0.08, add_wheel_2x=True,
     )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
     assert top is not None, f"No finding for {corner} with 1x+2x+3x"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} 1x+2x+3x")
     assert_confidence_label_valid(summary, msg=f"{corner} 1x+2x+3x")
@@ -305,18 +297,10 @@ def test_single_sensor_harmonics_1x_2x_3x(corner: str, profile: dict[str, Any]) 
 @pytest.mark.parametrize("n_samples", [60, 100], ids=["60s", "100s"])
 def test_single_sensor_long_steady(corner: str, n_samples: int, profile: dict[str, Any]) -> None:
     """Longer recording durations should maintain or improve detection."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=SPEED_HIGH,
-        n_samples=n_samples,
-        fault_amp=0.06,
-        fault_vib_db=26.0,
+    summary, top = _run_single_fault(
+        profile, corner, speed_kmh=SPEED_HIGH, n_samples=n_samples,
+        fault_amp=0.06, fault_vib_db=26.0,
     )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
     assert top is not None, f"No finding for long {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"long {corner} n={n_samples}")
 
@@ -330,22 +314,12 @@ def test_single_sensor_long_steady(corner: str, n_samples: int, profile: dict[st
 @pytest.mark.parametrize("corner", _CORNERS)
 def test_single_sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None:
     """Very weak fault should produce low confidence or no finding."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=SPEED_MID,
-        n_samples=40,
-        fault_amp=0.008,
-        noise_amp=0.005,
-        fault_vib_db=12.0,
-        noise_vib_db=10.0,
+    summary, top = _run_single_fault(
+        profile, corner, fault_amp=0.008, noise_amp=0.005,
+        fault_vib_db=12.0, noise_vib_db=10.0,
     )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
     assert isinstance(summary, dict), f"Expected summary dict for weak {corner}"
     assert summary, f"Expected non-empty summary for weak {corner}"
-    top = extract_top(summary)
     if top:
         # If detected, confidence should be modest
         conf = float(top.get("confidence", 0))
@@ -393,18 +367,8 @@ def test_single_sensor_noise_floor_variation(
     corner: str, noise_amp: float, profile: dict[str, Any]
 ) -> None:
     """Fault detection at different noise floor levels."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=SPEED_MID,
-        n_samples=40,
-        fault_amp=0.06,
-        noise_amp=noise_amp,
-        fault_vib_db=26.0,
+    summary, top = _run_single_fault(
+        profile, corner, fault_amp=0.06, noise_amp=noise_amp, fault_vib_db=26.0,
     )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
     assert top is not None, f"No finding for {corner} noise={noise_amp}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} noise={noise_amp}")
