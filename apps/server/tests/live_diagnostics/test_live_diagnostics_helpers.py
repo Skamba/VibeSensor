@@ -6,6 +6,7 @@ from vibesensor.live_diagnostics import (
     LiveDiagnosticsEngine,
     _copy_matrix,
     _new_matrix,
+    _TrackerLevelState,
 )
 
 # -- _new_matrix ---------------------------------------------------------------
@@ -75,8 +76,6 @@ def test_engine_snapshot_has_expected_keys() -> None:
 
 
 def test_should_emit_on_new_bucket() -> None:
-    from vibesensor.live_diagnostics import _TrackerLevelState
-
     engine = LiveDiagnosticsEngine()
     tracker = _TrackerLevelState()
     assert (
@@ -88,8 +87,6 @@ def test_should_emit_on_new_bucket() -> None:
 
 
 def test_should_not_emit_on_no_bucket() -> None:
-    from vibesensor.live_diagnostics import _TrackerLevelState
-
     engine = LiveDiagnosticsEngine()
     tracker = _TrackerLevelState()
     assert (
@@ -101,8 +98,6 @@ def test_should_not_emit_on_no_bucket() -> None:
 
 
 def test_should_emit_on_escalation() -> None:
-    from vibesensor.live_diagnostics import _TrackerLevelState
-
     engine = LiveDiagnosticsEngine()
     tracker = _TrackerLevelState()
     assert (
@@ -168,6 +163,16 @@ def test_findings_language_is_forwarded(monkeypatch) -> None:
 # -- LiveDiagnosticsEngine driving phase tracking --------------------------------
 
 
+def _engine_with_clock(monkeypatch) -> tuple[LiveDiagnosticsEngine, dict[str, float]]:
+    """Return a *LiveDiagnosticsEngine* with a deterministic clock.
+
+    Returns ``(engine, t)`` where ``t["value"]`` controls monotonic().
+    """
+    t: dict[str, float] = {"value": 0.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
+    return LiveDiagnosticsEngine(), t
+
+
 def test_snapshot_includes_driving_phase_key() -> None:
     engine = LiveDiagnosticsEngine()
     snap = engine.snapshot()
@@ -181,9 +186,7 @@ def test_initial_driving_phase_is_idle() -> None:
 
 
 def test_driving_phase_idle_when_speed_zero(monkeypatch) -> None:
-    t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
-    engine = LiveDiagnosticsEngine()
+    engine, t = _engine_with_clock(monkeypatch)
     for i in range(3):
         t["value"] = float(i)
         engine.update(speed_mps=0.0, clients=[], spectra=None, settings={})
@@ -192,9 +195,7 @@ def test_driving_phase_idle_when_speed_zero(monkeypatch) -> None:
 
 
 def test_driving_phase_speed_unknown_when_speed_none(monkeypatch) -> None:
-    t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
-    engine = LiveDiagnosticsEngine()
+    engine, t = _engine_with_clock(monkeypatch)
     for i in range(3):
         t["value"] = float(i)
         engine.update(speed_mps=None, clients=[], spectra=None, settings={})
@@ -203,9 +204,7 @@ def test_driving_phase_speed_unknown_when_speed_none(monkeypatch) -> None:
 
 
 def test_driving_phase_cruise_at_constant_speed(monkeypatch) -> None:
-    t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
-    engine = LiveDiagnosticsEngine()
+    engine, t = _engine_with_clock(monkeypatch)
     # Constant 50 km/h → cruise
     speed_mps = 50.0 / 3.6
     for i in range(5):
@@ -216,9 +215,7 @@ def test_driving_phase_cruise_at_constant_speed(monkeypatch) -> None:
 
 
 def test_driving_phase_acceleration_detected(monkeypatch) -> None:
-    t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
-    engine = LiveDiagnosticsEngine()
+    engine, t = _engine_with_clock(monkeypatch)
     # Speed ramps from 30 → 60 km/h over 5 seconds = +6 km/h/s, well above 1.5 threshold
     speeds_kmh = [30.0, 36.0, 42.0, 48.0, 54.0, 60.0]
     for i, s in enumerate(speeds_kmh):
@@ -229,9 +226,7 @@ def test_driving_phase_acceleration_detected(monkeypatch) -> None:
 
 
 def test_driving_phase_deceleration_detected(monkeypatch) -> None:
-    t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
-    engine = LiveDiagnosticsEngine()
+    engine, t = _engine_with_clock(monkeypatch)
     # Speed drops from 80 → 50 km/h over 5 seconds = -6 km/h/s, well below -1.5 threshold
     speeds_kmh = [80.0, 74.0, 68.0, 62.0, 56.0, 50.0]
     for i, s in enumerate(speeds_kmh):
@@ -242,9 +237,7 @@ def test_driving_phase_deceleration_detected(monkeypatch) -> None:
 
 
 def test_driving_phase_reset_clears_to_idle(monkeypatch) -> None:
-    t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
-    engine = LiveDiagnosticsEngine()
+    engine, t = _engine_with_clock(monkeypatch)
     speed_mps = 50.0 / 3.6
     for i in range(5):
         t["value"] = float(i)
@@ -256,9 +249,7 @@ def test_driving_phase_reset_clears_to_idle(monkeypatch) -> None:
 
 def test_driving_phase_tracked_on_spectra_none_path(monkeypatch) -> None:
     """Phase update must occur even on the light-tick spectra=None path."""
-    t = {"value": 0.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["value"])
-    engine = LiveDiagnosticsEngine()
+    engine, t = _engine_with_clock(monkeypatch)
     speed_mps = 50.0 / 3.6
     for i in range(5):
         t["value"] = float(i)
