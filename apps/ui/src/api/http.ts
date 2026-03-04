@@ -1,12 +1,14 @@
 const DEFAULT_TIMEOUT_MS = 10000;
+const _NOOP = () => {};
+const _WHITESPACE_RE = /\s+/g;
 
 function composeSignal(
   timeoutSignal: AbortSignal,
   externalSignal?: AbortSignal,
 ): { signal: AbortSignal; cleanup: () => void } {
-  if (!externalSignal) return { signal: timeoutSignal, cleanup: () => {} };
+  if (!externalSignal) return { signal: timeoutSignal, cleanup: _NOOP };
   if ("any" in AbortSignal) {
-    return { signal: AbortSignal.any([timeoutSignal, externalSignal]), cleanup: () => {} };
+    return { signal: AbortSignal.any([timeoutSignal, externalSignal]), cleanup: _NOOP };
   }
 
   const controller = new AbortController();
@@ -26,7 +28,7 @@ function composeSignal(
 }
 
 function formatBodySnippet(text: string): string {
-  const compact = text.trim().replace(/\s+/g, " ");
+  const compact = text.trim().replace(_WHITESPACE_RE, " ");
   return compact.slice(0, 160);
 }
 

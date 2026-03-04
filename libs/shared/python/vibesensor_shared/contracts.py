@@ -21,8 +21,12 @@ def _contracts_dir() -> Path:
     )
 
 
+# Resolve once at import time instead of per-_load_json call.
+_CONTRACTS_DIR: Path = _contracts_dir()
+
+
 def _load_json(name: str) -> dict[str, Any]:
-    return json.loads((_contracts_dir() / name).read_text(encoding="utf-8"))
+    return json.loads((_CONTRACTS_DIR / name).read_text(encoding="utf-8"))
 
 
 METRIC_FIELDS: dict[str, str] = _load_json("metrics_fields.json")
