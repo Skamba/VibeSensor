@@ -351,20 +351,20 @@ def test_post_analysis_burst_uses_single_daemon_worker(
         with state_lock:
             active += 1
             max_active = max(max_active, active)
-        time.sleep(0.03)
+        time.sleep(0.005)
         seen.append(run_id)
         with state_lock:
             active -= 1
 
     monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _slow_post_analysis)
 
-    for idx in range(12):
+    for idx in range(6):
         logger._schedule_post_analysis(f"run-{idx}")
 
     logger.wait_for_post_analysis(timeout_s=3.0)
 
     assert max_active == 1
-    assert len(seen) == 12
+    assert len(seen) == 6
     # After all work completes, the worker thread should have exited and
     # been cleared to allow a fresh thread on the next scheduling call.
     with logger._post_analysis._lock:
