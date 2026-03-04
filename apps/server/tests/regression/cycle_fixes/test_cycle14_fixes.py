@@ -22,30 +22,21 @@ from vibesensor.runlog import as_float_or_none
 class TestPdfBuilderConfidenceGuard:
     """float() on confidence should not crash on non-numeric values."""
 
-    def test_non_numeric_confidence_defaults_to_zero(self) -> None:
-        """Simulates what pdf_builder does with a non-numeric confidence."""
-        finding = {"confidence_0_to_1": "unknown"}
+    @pytest.mark.parametrize(
+        "raw_value, expected",
+        [
+            ("unknown", 0.0),
+            (0.85, pytest.approx(0.85)),
+            (None, 0.0),
+        ],
+    )
+    def test_confidence_guard(self, raw_value: object, expected: object) -> None:
+        finding = {"confidence_0_to_1": raw_value}
         try:
             confidence = float(finding.get("confidence_0_to_1") or 0.0)
         except (ValueError, TypeError):
             confidence = 0.0
-        assert confidence == 0.0
-
-    def test_valid_confidence(self) -> None:
-        finding = {"confidence_0_to_1": 0.85}
-        try:
-            confidence = float(finding.get("confidence_0_to_1") or 0.0)
-        except (ValueError, TypeError):
-            confidence = 0.0
-        assert confidence == pytest.approx(0.85)
-
-    def test_none_confidence(self) -> None:
-        finding = {"confidence_0_to_1": None}
-        try:
-            confidence = float(finding.get("confidence_0_to_1") or 0.0)
-        except (ValueError, TypeError):
-            confidence = 0.0
-        assert confidence == 0.0
+        assert confidence == expected
 
 
 # ------------------------------------------------------------------
@@ -160,27 +151,25 @@ class TestDriveshaftHz:
 
 
 # ------------------------------------------------------------------
-# 5. _as_float_or_none — NaN handling
+# 5. _as_float_or_none — NaN handling (via parameterized test)
 # ------------------------------------------------------------------
 
 
-class TestAsFloatOrNone:
-    """as_float_or_none must reject NaN and Inf."""
-
-    def test_nan_returns_none(self) -> None:
-        assert as_float_or_none(float("nan")) is None
-
-    def test_inf_returns_none(self) -> None:
-        assert as_float_or_none(float("inf")) is None
-
-    def test_valid_float(self) -> None:
-        assert as_float_or_none(3.14) == pytest.approx(3.14)
-
-    def test_string_number(self) -> None:
-        assert as_float_or_none("42.0") == pytest.approx(42.0)
-
-    def test_none_returns_none(self) -> None:
-        assert as_float_or_none(None) is None
-
-    def test_non_numeric_string(self) -> None:
-        assert as_float_or_none("hello") is None
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        (float("nan"), None),
+        (float("inf"), None),
+        (3.14, pytest.approx(3.14)),
+        ("42.0", pytest.approx(42.0)),
+        (None, None),
+        ("hello", None),
+    ],
+)
+def test_as_float_or_none_regression(value: object, expected: object) -> None:
+    """as_float_or_none must reject NaN/Inf and accept valid numbers."""
+    result = as_float_or_none(value)
+    if expected is None:
+        assert result is None
+    else:
+        assert result == expected
