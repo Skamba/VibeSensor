@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import pytest
+
 from vibesensor.config import APConfig, APSelfHealConfig
 from vibesensor.hotspot_self_heal import (
     CommandResult,
@@ -175,104 +177,85 @@ def _healthy_responses(ap: APConfig) -> dict[tuple[str, ...], list[CommandResult
     }
 
 
-def test_collect_health_nm_stopped(tmp_path: Path) -> None:
+def _collect_health_for(
+    tmp_path: Path,
+    overrides: dict[tuple[str, ...], list[CommandResult]] | None = None,
+):
+    """Create default AP config, apply response overrides, return health state."""
     ap = _ap_cfg(tmp_path)
     responses = _healthy_responses(ap)
-    responses[("systemctl", "is-active", "NetworkManager")] = [_err("inactive")]
+    if overrides:
+        responses.update(overrides)
     runner = _FakeRunner(responses)
-
-    state = collect_health(ap, ap.self_heal, runner)
-
-    assert not state.nm_running
-    assert "networkmanager_down" in state.issues
+    return collect_health(ap, ap.self_heal, runner)
 
 
-def test_collect_health_wifi_radio_off(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path)
-    responses = _healthy_responses(ap)
-    responses[("nmcli", "-t", "-f", "WIFI", "general", "status")] = [_ok("disabled")]
-    runner = _FakeRunner(responses)
-
-    state = collect_health(ap, ap.self_heal, runner)
-
-    assert not state.wifi_radio_on
-    assert "wifi_radio_off" in state.issues
-
-
-def test_collect_health_rfkill_blocked(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path)
-    responses = _healthy_responses(ap)
-    responses[("rfkill", "list")] = [_ok("Soft blocked: yes\nHard blocked: no")]
-    runner = _FakeRunner(responses)
-
-    state = collect_health(ap, ap.self_heal, runner)
-
-    assert state.rfkill_blocked
-    assert "rfkill_blocked" in state.issues
-
-
-def test_collect_health_ap_connection_missing(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path)
-    responses = _healthy_responses(ap)
-    responses[("nmcli", "-t", "-f", "NAME", "connection", "show")] = [_ok("OtherConn\n")]
-    responses[("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active")] = [_ok("")]
-    runner = _FakeRunner(responses)
-
-    state = collect_health(ap, ap.self_heal, runner)
-
-    assert not state.ap_conn_exists
-    assert "ap_connection_missing" in state.issues
+@pytest.mark.parametrize(
+    ("overrides", "attr", "expected", "issue"),
+    [
+        pytest.param(
+            {("systemctl", "is-active", "NetworkManager"): [_err("inactive")]},
+            "nm_running", False, "networkmanager_down",
+            id="nm_stopped",
+        ),
+        pytest.param(
+            {("nmcli", "-t", "-f", "WIFI", "general", "status"): [_ok("disabled")]},
+            "wifi_radio_on", False, "wifi_radio_off",
+            id="wifi_radio_off",
+        ),
+        pytest.param(
+            {("rfkill", "list"): [_ok("Soft blocked: yes\nHard blocked: no")]},
+            "rfkill_blocked", True, "rfkill_blocked",
+            id="rfkill_blocked",
+        ),
+        pytest.param(
+            {
+                ("nmcli", "-t", "-f", "NAME", "connection", "show"): [_ok("OtherConn\n")],
+                ("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"): [_ok("")],
+            },
+            "ap_conn_exists", False, "ap_connection_missing",
+            id="ap_connection_missing",
+        ),
+        pytest.param(
+            {("ip", "link", "show", "dev", "wlan0"): [
+                _ok("2: wlan0: <BROADCAST,MULTICAST> mtu 1500 state DOWN"),
+            ]},
+            "iface_up", False, "iface_down",
+            id="iface_down",
+        ),
+    ],
+)
+def test_collect_health_single_fault(
+    tmp_path: Path,
+    overrides: dict,
+    attr: str,
+    expected: bool,
+    issue: str,
+) -> None:
+    state = _collect_health_for(tmp_path, overrides)
+    assert getattr(state, attr) is expected
+    assert issue in state.issues
 
 
 def test_collect_health_ap_present_but_inactive(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path)
-    responses = _healthy_responses(ap)
-    responses[("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active")] = [
-        _ok("uplink:wlan0\n")
-    ]
-    runner = _FakeRunner(responses)
-
-    state = collect_health(ap, ap.self_heal, runner)
-
+    state = _collect_health_for(tmp_path, {
+        ("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"): [
+            _ok("uplink:wlan0\n"),
+        ],
+    })
     assert state.ap_conn_exists
     assert not state.ap_conn_active
     assert "ap_connection_inactive" in state.issues
 
 
-def test_collect_health_ap_active_but_interface_down(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path)
-    responses = _healthy_responses(ap)
-    responses[("ip", "link", "show", "dev", ap.ifname)] = [
-        _ok("2: wlan0: <BROADCAST,MULTICAST> mtu 1500 state DOWN")
-    ]
-    runner = _FakeRunner(responses)
-
-    state = collect_health(ap, ap.self_heal, runner)
-
-    assert not state.iface_up
-    assert "iface_down" in state.issues
-
-
 def test_collect_health_dhcp_broken_signal(tmp_path: Path) -> None:
-    ap = _ap_cfg(tmp_path)
-    responses = _healthy_responses(ap)
-    responses[("pgrep", "-af", "dnsmasq")] = [_err(stderr="not found")]
-    responses[
+    state = _collect_health_for(tmp_path, {
+        ("pgrep", "-af", "dnsmasq"): [_err(stderr="not found")],
         (
-            "journalctl",
-            "-u",
-            "NetworkManager",
-            "--since",
-            "-5 min",
-            "--no-pager",
-            "-n",
-            "120",
-        )
-    ] = [_ok("dnsmasq failed to start: no address range available for DHCP request")]
-    runner = _FakeRunner(responses)
-
-    state = collect_health(ap, ap.self_heal, runner)
-
+            "journalctl", "-u", "NetworkManager",
+            "--since", "-5 min", "--no-pager", "-n", "120",
+        ): [_ok("dnsmasq failed to start: no address range available for DHCP request")],
+    })
     assert not state.dhcp_ok
     assert state.dhcp_log_signal == "dhcp_no_range"
 
