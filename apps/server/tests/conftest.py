@@ -64,6 +64,38 @@ _TOP_CAUSE_REQUIRED_FIELDS = (
 )
 
 
+# -- shared micro-validators used by both assertion functions ---------------
+
+
+def _assert_confidence_valid(
+    d: dict[str, Any], field: str, confidence_range: tuple[float, float],
+) -> None:
+    """Assert *field* in *d* is a finite number within *confidence_range*."""
+    conf = d.get(field, 0.0)
+    assert isinstance(conf, (int, float)), f"{field} is not numeric: {conf!r}"
+    assert not math.isnan(conf), f"{field} is NaN"
+    lo, hi = confidence_range
+    assert lo <= conf <= hi, f"{field} {conf:.3f} not in [{lo:.2f}, {hi:.2f}]"
+
+
+def _assert_source_contains(
+    d: dict[str, Any], field: str, expected: str,
+) -> None:
+    """Assert *field* in *d* contains *expected* (case-insensitive)."""
+    source = str(d.get(field, "")).lower()
+    assert expected.lower() in source, (
+        f"Expected source containing {expected!r}, got {source!r}"
+    )
+
+
+def _assert_location_contains(d: dict[str, Any], expected: str) -> None:
+    """Assert ``strongest_location`` in *d* contains *expected* (case-insensitive)."""
+    loc = str(d.get("strongest_location") or "").lower()
+    assert expected.lower() in loc, (
+        f"Expected location containing {expected!r}, got {loc!r}"
+    )
+
+
 def assert_finding_contract(
     finding: dict[str, Any],
     *,
@@ -87,27 +119,14 @@ def assert_finding_contract(
             f"Missing required field '{field_name}' in finding: {list(finding.keys())}"
         )
 
-    # Confidence type + range
-    conf = finding.get("confidence_0_to_1")
-    assert isinstance(conf, (int, float)), f"confidence_0_to_1 is not numeric: {conf!r}"
-    assert not math.isnan(conf), "confidence_0_to_1 is NaN"
-    assert confidence_range[0] <= conf <= confidence_range[1], (
-        f"confidence_0_to_1 {conf:.3f} not in"
-        f" [{confidence_range[0]:.2f}, {confidence_range[1]:.2f}]"
-    )
+    _assert_confidence_valid(finding, "confidence_0_to_1", confidence_range)
 
     # Semantic checks (only when arguments provided)
     if expected_source is not None:
-        source = str(finding.get("suspected_source", "")).lower()
-        assert expected_source.lower() in source, (
-            f"Expected source containing {expected_source!r}, got {source!r}"
-        )
+        _assert_source_contains(finding, "suspected_source", expected_source)
 
     if expected_location is not None:
-        loc = str(finding.get("strongest_location") or "").lower()
-        assert expected_location.lower() in loc, (
-            f"Expected location containing {expected_location!r}, got {loc!r}"
-        )
+        _assert_location_contains(finding, expected_location)
 
     if expected_speed_band_range is not None:
         band = str(finding.get("strongest_speed_band") or "")
@@ -146,25 +165,13 @@ def assert_top_cause_contract(
             f"Missing required field '{field_name}' in top_cause: {list(top_cause.keys())}"
         )
 
-    # Confidence type + range
-    conf = top_cause.get("confidence", 0.0)
-    assert isinstance(conf, (int, float)), f"confidence is not numeric: {conf!r}"
-    assert not math.isnan(conf), "confidence is NaN"
-    assert confidence_range[0] <= conf <= confidence_range[1], (
-        f"confidence {conf:.3f} not in [{confidence_range[0]:.2f}, {confidence_range[1]:.2f}]"
-    )
+    _assert_confidence_valid(top_cause, "confidence", confidence_range)
 
     if expected_source is not None:
-        source = str(top_cause.get("source", "")).lower()
-        assert expected_source.lower() in source, (
-            f"Expected source containing {expected_source!r}, got {source!r}"
-        )
+        _assert_source_contains(top_cause, "source", expected_source)
 
     if expected_location is not None:
-        loc = str(top_cause.get("strongest_location") or "").lower()
-        assert expected_location.lower() in loc, (
-            f"Expected location containing {expected_location!r}, got {loc!r}"
-        )
+        _assert_location_contains(top_cause, expected_location)
 
     if expected_speed_band_range is not None:
         band = str(top_cause.get("strongest_speed_band") or "")
