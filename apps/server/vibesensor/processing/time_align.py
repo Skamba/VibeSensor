@@ -38,12 +38,34 @@ def compute_overlap(starts: list[float], ends: list[float]) -> OverlapResult:
             shared_end=0.0,
             overlap_s=0.0,
         )
+
+    # Fast path: single range is trivially fully overlapping.
+    if len(starts) == 1:
+        s, e = starts[0], ends[0]
+        dur = max(0.0, e - s)
+        return OverlapResult(
+            overlap_ratio=1.0 if dur > 0 else 0.0,
+            aligned=dur > 0,
+            shared_start=s,
+            shared_end=e,
+            overlap_s=dur,
+        )
+
     shared_start = max(starts)
     shared_end = min(ends)
     overlap = max(0.0, shared_end - shared_start)
-    union_start = min(starts)
-    union_end = max(ends)
-    union = max(1e-9, union_end - union_start)
+
+    # Early exit when ranges don't intersect — skip union computation.
+    if overlap <= 0.0:
+        return OverlapResult(
+            overlap_ratio=0.0,
+            aligned=False,
+            shared_start=shared_start,
+            shared_end=shared_end,
+            overlap_s=0.0,
+        )
+
+    union = max(1e-9, max(ends) - min(starts))
     overlap_ratio = overlap / union
     return OverlapResult(
         overlap_ratio=overlap_ratio,
@@ -81,9 +103,9 @@ def analysis_time_range(
     sr = sample_rate_hz
     if sr <= 0:
         return None
-    desired = int(max(1, float(sr) * float(waveform_seconds)))
+    desired = max(1, sr * waveform_seconds)
     n_window = min(count, capacity, desired)
-    duration_s = float(n_window) / float(sr)
+    duration_s = n_window / sr
 
     if last_t0_us > 0:
         # Sensor-clock path (precise, after CMD_SYNC_CLOCK).
@@ -91,7 +113,7 @@ def analysis_time_range(
         # ingested frame.  Advance by the samples in that frame to
         # approximate the newest sample time.
         end_us = last_t0_us + (samples_since_t0 * 1_000_000) // max(1, sr)
-        end_s = float(end_us) / 1_000_000.0
+        end_s = end_us / 1_000_000
         start_s = end_s - duration_s
         return (start_s, end_s, True)
 
