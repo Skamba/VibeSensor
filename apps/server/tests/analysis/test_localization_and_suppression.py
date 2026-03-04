@@ -73,6 +73,54 @@ _MIXED_SENSORS = ["front-left", "front-right", "rear-left", "rear-right", "drive
 _CABIN_SENSORS = ["driver-seat", "front-passenger", "rear-left-seat"]
 
 
+def _build_fault_samples(
+    sensors: list[str],
+    fault_sensor: str,
+    n_samples: int = 30,
+) -> list[dict[str, Any]]:
+    """Build samples with a clear 1x-wheel fault on *fault_sensor*, baseline on others."""
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        speed = 50.0 + i * 1.5
+        whz = _wheel_hz(speed)
+        for s in sensors:
+            if s == fault_sensor:
+                peaks = [{"hz": whz, "amp": 0.08}, {"hz": whz * 2, "amp": 0.03}]
+                vib_db = 28.0
+            else:
+                peaks = [{"hz": 15.0, "amp": 0.005}]
+                vib_db = 10.0
+            samples.append(
+                _make_sample(
+                    t_s=float(i),
+                    speed_kmh=speed,
+                    client_name=s,
+                    top_peaks=peaks,
+                    vibration_strength_db=vib_db,
+                )
+            )
+    return samples
+
+
+def _wheel_findings(
+    findings: list[dict[str, Any]],
+    *,
+    exclude_ref: bool = False,
+) -> list[dict[str, Any]]:
+    """Return findings whose *finding_key* starts with ``wheel_``."""
+    return [
+        f
+        for f in findings
+        if (not exclude_ref or not str(f.get("finding_id", "")).startswith("REF_"))
+        and str(f.get("finding_key", "")).startswith("wheel_")
+    ]
+
+
+def _wheel_causes(top_causes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Return causes whose *source* is ``wheel/tire``."""
+    return [c for c in top_causes if str(c.get("source", "")) == "wheel/tire"]
+
+
 # ---------------------------------------------------------------------------
 # 1. Sensor-type classification tests
 # ---------------------------------------------------------------------------
@@ -283,12 +331,7 @@ class TestDiffuseExcitationDetection:
                 )
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        order_findings = [
-            f
-            for f in findings
-            if not str(f.get("finding_id", "")).startswith("REF_")
-            and str(f.get("finding_key", "")).startswith("wheel_")
-        ]
+        order_findings = _wheel_findings(findings, exclude_ref=True)
         # If any order finding exists, it should be flagged as diffuse
         for f in order_findings:
             assert f.get("diffuse_excitation") is True, (
@@ -297,35 +340,10 @@ class TestDiffuseExcitationDetection:
 
     def test_single_sensor_fault_not_flagged_diffuse(self) -> None:
         """When only one sensor has matching peaks, should NOT be flagged diffuse."""
-        sensors = _ALL_WHEEL_SENSORS
-        samples: list[dict[str, Any]] = []
-        for i in range(40):
-            speed = 50.0 + i * 1.5
-            whz = _wheel_hz(speed)
-            for s in sensors:
-                if s == "front-right":
-                    peaks = [{"hz": whz, "amp": 0.08}, {"hz": whz * 2, "amp": 0.03}]
-                    vib_db = 28.0
-                else:
-                    peaks = [{"hz": 15.0, "amp": 0.005}]
-                    vib_db = 10.0
-                samples.append(
-                    _make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=vib_db,
-                    )
-                )
+        samples = _build_fault_samples(_ALL_WHEEL_SENSORS, "front-right", n_samples=40)
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        order_findings = [
-            f
-            for f in findings
-            if not str(f.get("finding_id", "")).startswith("REF_")
-            and str(f.get("finding_key", "")).startswith("wheel_")
-        ]
+        order_findings = _wheel_findings(findings, exclude_ref=True)
         for f in order_findings:
             assert f.get("diffuse_excitation") is not True, (
                 "Single-sensor fault should NOT be flagged as diffuse"
@@ -360,9 +378,9 @@ class TestNoFaultSuppression:
         summary = summarize_run_data(metadata, samples, lang="en", file_name="idle_only")
         top_causes = summary.get("top_causes", [])
         # No wheel/tire diagnosis should appear for idle-only data
-        wheel_causes = [c for c in top_causes if str(c.get("source", "")) == "wheel/tire"]
-        assert len(wheel_causes) == 0, (
-            f"Idle-only scenario produced wheel diagnosis: {wheel_causes}"
+        wc = _wheel_causes(top_causes)
+        assert len(wc) == 0, (
+            f"Idle-only scenario produced wheel diagnosis: {wc}"
         )
 
     def test_road_noise_no_specific_fault(self) -> None:
@@ -389,9 +407,7 @@ class TestNoFaultSuppression:
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="road_noise")
-        top_causes = summary.get("top_causes", [])
-        for c in top_causes:
-            if str(c.get("source", "")) == "wheel/tire":
+        for c in _wheel_causes(summary.get("top_causes", [])):
                 conf = float(c.get("confidence", 0))
                 assert conf < 0.50, f"Road noise produced confident wheel diagnosis: {conf:.2f}"
 
@@ -404,52 +420,21 @@ class TestNoFaultSuppression:
 class TestConfidenceCalibration:
     """Confidence must be calibrated for 1-12 sensors."""
 
-    def _build_fault_samples(
-        self,
-        sensors: list[str],
-        fault_sensor: str,
-        n_samples: int = 30,
-    ) -> list[dict[str, Any]]:
-        """Build samples with a clear fault on one sensor."""
-        samples: list[dict[str, Any]] = []
-        for i in range(n_samples):
-            speed = 50.0 + i * 1.5
-            whz = _wheel_hz(speed)
-            for s in sensors:
-                if s == fault_sensor:
-                    peaks = [{"hz": whz, "amp": 0.08}, {"hz": whz * 2, "amp": 0.03}]
-                    vib_db = 28.0
-                else:
-                    peaks = [{"hz": 15.0, "amp": 0.005}]
-                    vib_db = 10.0
-                samples.append(
-                    _make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=vib_db,
-                    )
-                )
-        return samples
-
     def test_single_sensor_produces_finding(self) -> None:
         """A single sensor with a clear fault should still produce a finding."""
-        samples = self._build_fault_samples(["front-right"], "front-right")
+        samples = _build_fault_samples(["front-right"], "front-right")
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        wheel_findings = [f for f in findings if str(f.get("finding_key", "")).startswith("wheel_")]
-        assert len(wheel_findings) > 0, "Single sensor should produce a wheel finding"
+        assert len(_wheel_findings(findings)) > 0, "Single sensor should produce a wheel finding"
 
     def test_four_sensor_clear_fault(self) -> None:
         """4 sensors with a clear single-sensor fault should identify correct location."""
-        sensors = _ALL_WHEEL_SENSORS
-        samples = self._build_fault_samples(sensors, "front-right")
+        samples = _build_fault_samples(_ALL_WHEEL_SENSORS, "front-right")
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        wheel_findings = [f for f in findings if str(f.get("finding_key", "")).startswith("wheel_")]
-        assert len(wheel_findings) > 0, "4-sensor setup should produce a wheel finding"
-        top = wheel_findings[0]
+        wf = _wheel_findings(findings)
+        assert len(wf) > 0, "4-sensor setup should produce a wheel finding"
+        top = wf[0]
         strongest = str(top.get("strongest_location", "")).lower()
         assert "right" in strongest or "fr" in strongest, f"Expected front-right, got {strongest}"
 
@@ -465,12 +450,12 @@ class TestConfidenceCalibration:
             "engine-bay",
             "transmission",
         ]
-        samples = self._build_fault_samples(sensors, "rear-left")
+        samples = _build_fault_samples(sensors, "rear-left")
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        wheel_findings = [f for f in findings if str(f.get("finding_key", "")).startswith("wheel_")]
-        assert len(wheel_findings) > 0, "8-sensor setup should produce a wheel finding"
-        top = wheel_findings[0]
+        wf = _wheel_findings(findings)
+        assert len(wf) > 0, "8-sensor setup should produce a wheel finding"
+        top = wf[0]
         strongest = str(top.get("strongest_location", "")).lower()
         assert "rear" in strongest and "left" in strongest, f"Expected rear-left, got {strongest}"
 
@@ -483,64 +468,25 @@ class TestConfidenceCalibration:
 class TestUnitConsistency:
     """Amplitude units must be consistent end-to-end."""
 
-    def test_findings_amplitude_units_are_db(self) -> None:
-        """All finding amplitude_metric.units must be 'dB'."""
-        sensors = _ALL_WHEEL_SENSORS
-        samples: list[dict[str, Any]] = []
-        for i in range(30):
-            speed = 50.0 + i * 1.5
-            whz = _wheel_hz(speed)
-            for s in sensors:
-                if s == "front-right":
-                    peaks = [{"hz": whz, "amp": 0.08}]
-                    vib_db = 28.0
-                else:
-                    peaks = [{"hz": 15.0, "amp": 0.005}]
-                    vib_db = 10.0
-                samples.append(
-                    _make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=vib_db,
-                    )
-                )
+    @pytest.fixture()
+    def fault_findings(self) -> list[dict[str, Any]]:
+        """Shared findings from a single-sensor (front-right) fault scenario."""
+        samples = _build_fault_samples(_ALL_WHEEL_SENSORS, "front-right")
         metadata = _standard_metadata()
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        for f in findings:
+        return build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+
+    def test_findings_amplitude_units_are_db(self, fault_findings: list[dict[str, Any]]) -> None:
+        """All finding amplitude_metric.units must be 'dB'."""
+        for f in fault_findings:
             amp_metric = f.get("amplitude_metric")
             if isinstance(amp_metric, dict) and amp_metric.get("value") is not None:
                 assert amp_metric.get("units") == "dB", (
                     f"Expected 'dB' units, got {amp_metric.get('units')}"
                 )
 
-    def test_evidence_metrics_include_strength_db(self) -> None:
+    def test_evidence_metrics_include_strength_db(self, fault_findings: list[dict[str, Any]]) -> None:
         """Evidence metrics should include vibration_strength_db."""
-        sensors = _ALL_WHEEL_SENSORS
-        samples: list[dict[str, Any]] = []
-        for i in range(30):
-            speed = 50.0 + i * 1.5
-            whz = _wheel_hz(speed)
-            for s in sensors:
-                if s == "front-right":
-                    peaks = [{"hz": whz, "amp": 0.08}]
-                    vib_db = 28.0
-                else:
-                    peaks = [{"hz": 15.0, "amp": 0.005}]
-                    vib_db = 10.0
-                samples.append(
-                    _make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=vib_db,
-                    )
-                )
-        metadata = _standard_metadata()
-        findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        for f in findings:
+        for f in fault_findings:
             ev = f.get("evidence_metrics")
             if isinstance(ev, dict) and "vibration_strength_db" in ev:
                 db_val = ev["vibration_strength_db"]
@@ -654,10 +600,9 @@ class TestPhasedScenarios:
                 )
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="high_speed_fault")
-        top_causes = summary.get("top_causes", [])
-        wheel_causes = [c for c in top_causes if str(c.get("source", "")) == "wheel/tire"]
-        if wheel_causes:
-            speed_band = str(wheel_causes[0].get("strongest_speed_band", ""))
+        wc = _wheel_causes(summary.get("top_causes", []))
+        if wc:
+            speed_band = str(wc[0].get("strongest_speed_band", ""))
             # Should reference high-speed range, not 30 km/h
             if speed_band:
                 # Extract numbers from speed band
@@ -699,8 +644,7 @@ class TestPhasedScenarios:
                 )
         metadata = _standard_metadata()
         findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-        wheel_findings = [f for f in findings if str(f.get("finding_key", "")).startswith("wheel_")]
-        for f in wheel_findings:
+        for f in _wheel_findings(findings):
             strongest = str(f.get("strongest_location", ""))
             if strongest:
                 assert is_wheel_location(strongest), (
