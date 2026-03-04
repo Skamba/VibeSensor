@@ -16,6 +16,7 @@ from ..helpers import (
     counter_delta,
 )
 from ..phase_segmentation import DrivingPhase
+from .speed_profile import _phase_to_str
 
 
 def _mean(vals: list[float]) -> float:
@@ -23,15 +24,14 @@ def _mean(vals: list[float]) -> float:
     return sum(vals) / len(vals)
 
 
-def _counter_sort_key(pair: tuple[float | None, float]) -> tuple[bool, float]:
-    return (pair[0] is None, pair[0] if pair[0] is not None else 0.0)
-
-
 def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
     """Sort timestamped counter pairs and delegate to shared helper."""
     if len(counter_values) < 2:
         return 0
-    ordered = sorted(counter_values, key=_counter_sort_key)
+    ordered = sorted(
+        counter_values,
+        key=lambda pair: (pair[0] is None, pair[0] if pair[0] is not None else 0.0),
+    )
     return counter_delta([float(v) for _t, v in ordered])
 
 
@@ -59,7 +59,7 @@ def _phase_speed_breakdown(
     n_phases = len(per_sample_phases)
     for idx, sample in enumerate(samples):
         phase = per_sample_phases[idx] if idx < n_phases else "unknown"
-        phase_key = phase.value if isinstance(phase, DrivingPhase) else str(phase)
+        phase_key = _phase_to_str(phase) or "unknown"
         counts[phase_key] += 1
         speed = _as_float_local(sample.get("speed_kmh"))
         if speed is not None and speed > 0:
@@ -162,9 +162,7 @@ def _sensor_intensity_by_location(
             grouped_amp[location].append(amp)
             if has_phases and per_sample_phases is not None:
                 phase_obj = per_sample_phases[i]
-                phase_key = str(
-                    phase_obj.value if hasattr(phase_obj, "value") else phase_obj
-                )
+                phase_key = _phase_to_str(phase_obj) or "unknown"
                 phase_amp[location][phase_key].append(amp)
         _get = sample.get
         sample_t_s = _as_float_local(_get("t_s"))
