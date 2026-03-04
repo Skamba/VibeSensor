@@ -804,9 +804,7 @@ def summarize_run_data(
 
     # --- Run suitability checks ---
     steady_speed = bool(speed_stats.get("steady_speed"))
-    sensor_ids = {
-        str(s.get("client_id") or "") for s in samples if isinstance(s, dict) and s.get("client_id")
-    }
+    sensor_ids = {str(cid) for s in samples if isinstance(s, dict) and (cid := s.get("client_id"))}
     run_suitability = _build_run_suitability_checks(
         language=language,
         steady_speed=steady_speed,
@@ -828,9 +826,9 @@ def summarize_run_data(
     # --- Sensor analysis ---
     sensor_locations = sorted(
         {
-            _location_label(sample, lang=language)
+            label
             for sample in samples
-            if isinstance(sample, dict) and _location_label(sample, lang=language)
+            if isinstance(sample, dict) and (label := _location_label(sample, lang=language))
         }
     )
     # Mark and de-prioritize sensors not connected throughout the run,

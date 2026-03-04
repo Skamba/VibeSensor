@@ -59,7 +59,7 @@ def as_float_or_none(value: object) -> float | None:
         out = float(value)  # type: ignore[arg-type]
     except (TypeError, ValueError):
         return None
-    if math.isnan(out) or math.isinf(out):
+    if not math.isfinite(out):
         return None
     return out
 
