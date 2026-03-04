@@ -17,59 +17,69 @@ import pytest
 
 from vibesensor.gps_speed import GPSSpeedMonitor, SpeedResolution
 
+
+def _snapshot(m: GPSSpeedMonitor) -> dict:
+    """Capture all mutable public attributes."""
+    return {k: copy.deepcopy(v) for k, v in m.__dict__.items()}
+
+
 # ---------------------------------------------------------------------------
 # resolve_speed() is pure
 # ---------------------------------------------------------------------------
 
 
-class TestResolveSpeedPure:
+def _make_fresh_gps() -> GPSSpeedMonitor:
+    m = GPSSpeedMonitor(gps_enabled=True)
+    m.speed_mps = 10.0
+    m.last_update_ts = time.monotonic()
+    return m
+
+
+def _make_stale_gps() -> GPSSpeedMonitor:
+    m = GPSSpeedMonitor(gps_enabled=True)
+    m.speed_mps = 10.0
+    m.last_update_ts = time.monotonic() - 999
+    return m
+
+
+def _make_manual_override() -> GPSSpeedMonitor:
+    m = GPSSpeedMonitor(gps_enabled=True)
+    m.manual_source_selected = True
+    m.override_speed_mps = 25.0
+    return m
+
+
+def _make_disconnected() -> GPSSpeedMonitor:
+    m = GPSSpeedMonitor(gps_enabled=True)
+    m.connection_state = "disconnected"
+    return m
+
+
+def _make_override_plus_gps() -> GPSSpeedMonitor:
+    m = GPSSpeedMonitor(gps_enabled=True)
+    m.manual_source_selected = True
+    m.override_speed_mps = 25.0
+    m.speed_mps = 10.0
+    m.last_update_ts = time.monotonic()
+    return m
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [
+        pytest.param(_make_fresh_gps, id="fresh_gps"),
+        pytest.param(_make_stale_gps, id="stale_gps"),
+        pytest.param(_make_manual_override, id="manual_override"),
+        pytest.param(_make_disconnected, id="disconnected"),
+        pytest.param(_make_override_plus_gps, id="override_plus_gps"),
+    ],
+)
+def test_resolve_speed_no_mutation(factory) -> None:
     """resolve_speed() must never mutate the monitor."""
-
-    @staticmethod
-    def _snapshot(m: GPSSpeedMonitor) -> dict:
-        """Capture all mutable public attributes."""
-        return {k: copy.deepcopy(v) for k, v in m.__dict__.items()}
-
-    def test_fresh_gps_no_mutation(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
-        before = self._snapshot(m)
-        m.resolve_speed()
-        assert self._snapshot(m) == before
-
-    def test_stale_gps_no_mutation(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic() - 999
-        before = self._snapshot(m)
-        m.resolve_speed()
-        assert self._snapshot(m) == before
-
-    def test_manual_override_no_mutation(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = True
-        m.override_speed_mps = 25.0
-        before = self._snapshot(m)
-        m.resolve_speed()
-        assert self._snapshot(m) == before
-
-    def test_disconnected_no_mutation(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.connection_state = "disconnected"
-        before = self._snapshot(m)
-        m.resolve_speed()
-        assert self._snapshot(m) == before
-
-    def test_override_no_mutation(self) -> None:
-        m = GPSSpeedMonitor(gps_enabled=True)
-        m.manual_source_selected = True
-        m.override_speed_mps = 25.0
-        m.speed_mps = 10.0
-        m.last_update_ts = time.monotonic()
-        before = self._snapshot(m)
-        m.resolve_speed()
-        assert self._snapshot(m) == before
+    m = factory()
+    before = _snapshot(m)
+    m.resolve_speed()
+    assert _snapshot(m) == before
 
 
 # ---------------------------------------------------------------------------
@@ -78,25 +88,21 @@ class TestResolveSpeedPure:
 
 
 class TestEffectiveSpeedNoMutation:
-    @staticmethod
-    def _snapshot(m: GPSSpeedMonitor) -> dict:
-        return {k: copy.deepcopy(v) for k, v in m.__dict__.items()}
-
     def test_effective_speed_does_not_mutate(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
         m.last_update_ts = time.monotonic()
-        before = self._snapshot(m)
+        before = _snapshot(m)
         _ = m.effective_speed_mps
-        assert self._snapshot(m) == before
+        assert _snapshot(m) == before
 
     def test_effective_speed_stale_does_not_mutate(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
         m.speed_mps = 10.0
         m.last_update_ts = time.monotonic() - 999
-        before = self._snapshot(m)
+        before = _snapshot(m)
         _ = m.effective_speed_mps
-        assert self._snapshot(m) == before
+        assert _snapshot(m) == before
 
 
 # ---------------------------------------------------------------------------
