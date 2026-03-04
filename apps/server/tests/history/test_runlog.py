@@ -20,6 +20,26 @@ from vibesensor.runlog import (
     utc_now_iso,
 )
 
+# -- Helpers -------------------------------------------------------------------
+
+
+def _make_run_metadata(*, run_id: str = "r1", **overrides) -> dict:
+    """Build a ``create_run_metadata`` dict with sensible test defaults."""
+    defaults = dict(
+        run_id=run_id,
+        start_time_utc="2025-01-01T00:00:00Z",
+        sensor_model="ADXL345",
+        raw_sample_rate_hz=200,
+        feature_interval_s=0.5,
+        fft_window_size_samples=256,
+        fft_window_type="hann",
+        peak_picker_method="max_peak_amp_across_axes",
+        accel_scale_g_per_lsb=1.0 / 256.0,
+    )
+    defaults.update(overrides)
+    return create_run_metadata(**defaults)
+
+
 # -- utc_now_iso ---------------------------------------------------------------
 
 
@@ -49,22 +69,13 @@ def test_parse_iso8601_z_suffix() -> None:
     assert result.tzinfo is not None
 
 
-def test_parse_iso8601_none_returns_none() -> None:
-    assert parse_iso8601(None) is None
-
-
-def test_parse_iso8601_empty_string() -> None:
-    assert parse_iso8601("") is None
-    assert parse_iso8601("   ") is None
-
-
-def test_parse_iso8601_invalid_string() -> None:
-    assert parse_iso8601("not-a-date") is None
-
-
-def test_parse_iso8601_non_string_types() -> None:
-    assert parse_iso8601(12345) is None
-    assert parse_iso8601(3.14) is None
+@pytest.mark.parametrize(
+    "value",
+    [None, "", "   ", "not-a-date", 12345, 3.14],
+    ids=["none", "empty", "whitespace", "invalid-str", "int", "float"],
+)
+def test_parse_iso8601_returns_none_for_bad_input(value: object) -> None:
+    assert parse_iso8601(value) is None
 
 
 # -- as_float_or_none ---------------------------------------------------------
@@ -190,17 +201,7 @@ def test_normalize_sample_record_strength_amplitudes_default_to_none_for_old_run
 
 def test_append_and_read_roundtrip(tmp_path: Path) -> None:
     path = tmp_path / "test_run.jsonl"
-    metadata = create_run_metadata(
-        run_id="test-123",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    metadata = _make_run_metadata(run_id="test-123")
     sample = {
         "record_type": "sample",
         "t_s": 0.5,
@@ -234,17 +235,7 @@ def test_read_jsonl_run_file_not_found(tmp_path: Path) -> None:
 
 def test_read_jsonl_run_skips_blank_lines(tmp_path: Path) -> None:
     path = tmp_path / "blanks.jsonl"
-    metadata = create_run_metadata(
-        run_id="r1",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    metadata = _make_run_metadata(run_id="r1")
     lines = [json.dumps(metadata), "", "  ", json.dumps({"record_type": "sample", "t_s": 1.0})]
     path.write_text("\n".join(lines) + "\n")
     run_data = read_jsonl_run(path)
@@ -255,17 +246,7 @@ def test_read_jsonl_run_skips_blank_lines(tmp_path: Path) -> None:
 def test_read_jsonl_run_skips_corrupt_line_mid_file(tmp_path: Path) -> None:
     """A corrupt JSON line mid-file is skipped; surrounding samples are kept."""
     path = tmp_path / "corrupt_mid.jsonl"
-    metadata = create_run_metadata(
-        run_id="r2",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    metadata = _make_run_metadata(run_id="r2")
     lines = [
         json.dumps(metadata),
         json.dumps({"record_type": "sample", "t_s": 1.0}),
@@ -283,17 +264,7 @@ def test_read_jsonl_run_skips_corrupt_line_mid_file(tmp_path: Path) -> None:
 def test_read_jsonl_run_truncated_last_line(tmp_path: Path) -> None:
     """A truncated final line (simulating power loss) doesn't crash the reader."""
     path = tmp_path / "truncated.jsonl"
-    metadata = create_run_metadata(
-        run_id="r3",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    metadata = _make_run_metadata(run_id="r3")
     lines = [
         json.dumps(metadata),
         json.dumps({"record_type": "sample", "t_s": 1.0}),
@@ -312,17 +283,7 @@ def test_read_jsonl_run_logs_warning_for_corrupt_lines(
 ) -> None:
     """Warnings are logged for each corrupt line, including line numbers."""
     path = tmp_path / "warn.jsonl"
-    metadata = create_run_metadata(
-        run_id="r4",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    metadata = _make_run_metadata(run_id="r4")
     lines = [
         json.dumps(metadata),
         "NOT_JSON_AT_ALL",
@@ -341,64 +302,23 @@ def test_read_jsonl_run_logs_warning_for_corrupt_lines(
 
 
 def test_create_run_metadata_units_g_when_scale_provided() -> None:
-    meta = create_run_metadata(
-        run_id="r1",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    meta = _make_run_metadata()
     assert meta["units"]["accel_x_g"] == "g"
     assert meta["record_type"] == RUN_METADATA_TYPE
 
 
 def test_create_run_metadata_units_raw_when_no_scale() -> None:
-    meta = create_run_metadata(
-        run_id="r1",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="unknown",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=None,
-    )
+    meta = _make_run_metadata(sensor_model="unknown", accel_scale_g_per_lsb=None)
     assert meta["units"]["accel_x_g"] == "raw_lsb"
 
 
 def test_create_run_metadata_includes_firmware_version_when_provided() -> None:
-    meta = create_run_metadata(
-        run_id="r1",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        firmware_version="esp-fw-1.2.3",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    meta = _make_run_metadata(firmware_version="esp-fw-1.2.3")
     assert meta["firmware_version"] == "esp-fw-1.2.3"
 
 
 def test_create_run_metadata_includes_phase_metadata_defaults() -> None:
-    meta = create_run_metadata(
-        run_id="r1",
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    meta = _make_run_metadata()
     phase_meta = meta.get("phase_metadata")
     assert isinstance(phase_meta, dict)
     assert phase_meta["version"] == "v1"
