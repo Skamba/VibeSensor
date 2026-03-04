@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from pathlib import Path
+from typing import Callable
 from unittest.mock import patch
 
 import pytest
@@ -51,6 +52,40 @@ class FakeRunner(CommandRunner):
 
 
 # ---------------------------------------------------------------------------
+# Shared helpers / fixtures
+# ---------------------------------------------------------------------------
+
+
+def _mock_which(name: str) -> str | None:
+    """Fake ``shutil.which`` recognising only ``nmcli`` and ``python3``."""
+    return f"/usr/bin/{name}" if name in ("nmcli", "python3") else None
+
+
+@pytest.fixture()
+def update_env(
+    tmp_path: Path,
+) -> tuple[Path, UpdateStateStore, FakeRunner, Callable[..., UpdateManager]]:
+    """Provide ``(state_path, store, runner, make_mgr)`` for update-state tests.
+
+    ``make_mgr(**overrides)`` creates an ``UpdateManager`` wired to *store* and
+    *runner* (both reused across calls within the same test).
+    """
+    state_path = tmp_path / "state.json"
+    store = UpdateStateStore(path=state_path)
+    runner = FakeRunner()
+
+    def _make_mgr(**kw: object) -> UpdateManager:
+        return UpdateManager(
+            runner=kw.pop("runner", runner),  # type: ignore[arg-type]
+            repo_path=kw.pop("repo_path", str(tmp_path / "repo")),  # type: ignore[arg-type]
+            rollback_dir=kw.pop("rollback_dir", str(tmp_path / "rollback")),  # type: ignore[arg-type]
+            state_store=kw.pop("state_store", store),  # type: ignore[arg-type]
+        )
+
+    return state_path, store, runner, _make_mgr
+
+
+# ---------------------------------------------------------------------------
 # UpdateJobStatus round-trip (to_dict / from_dict)
 # ---------------------------------------------------------------------------
 
@@ -58,8 +93,7 @@ class FakeRunner(CommandRunner):
 class TestUpdateJobStatusRoundTrip:
     def test_idle_round_trip(self) -> None:
         status = UpdateJobStatus()
-        d = status.to_dict()
-        restored = UpdateJobStatus.from_dict(d)
+        restored = UpdateJobStatus.from_dict(status.to_dict())
         assert restored.state == UpdateState.idle
         assert restored.phase == UpdatePhase.idle
         assert restored.issues == []
@@ -81,8 +115,7 @@ class TestUpdateJobStatusRoundTrip:
             exit_code=1,
             runtime={"version": "1.0.0"},
         )
-        d = status.to_dict()
-        restored = UpdateJobStatus.from_dict(d)
+        restored = UpdateJobStatus.from_dict(status.to_dict())
         assert restored.state == UpdateState.failed
         assert restored.phase == UpdatePhase.installing
         assert restored.started_at == 1700000000.0
@@ -129,26 +162,21 @@ class TestUpdateStateStore:
         assert loaded.issues[0].message == "ok"
         assert loaded.log_tail == ["log entry 1"]
 
-    def test_load_missing_file_returns_none(self, tmp_path: Path) -> None:
-        store = UpdateStateStore(path=tmp_path / "nonexistent.json")
-        assert store.load() is None
-
-    def test_load_corrupted_json_returns_none(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize(
+        "file_content",
+        [
+            pytest.param(None, id="missing_file"),
+            pytest.param("{this is not valid json}", id="corrupted_json"),
+            pytest.param("", id="empty_file"),
+            pytest.param('{"state": "bogus", "phase": "idle"}', id="invalid_state"),
+        ],
+    )
+    def test_load_returns_none_for_bad_input(
+        self, tmp_path: Path, file_content: str | None
+    ) -> None:
         path = tmp_path / "state.json"
-        path.write_text("{this is not valid json}", encoding="utf-8")
-        store = UpdateStateStore(path=path)
-        loaded = store.load()
-        assert loaded is None
-
-    def test_load_empty_file_returns_none(self, tmp_path: Path) -> None:
-        path = tmp_path / "state.json"
-        path.write_text("", encoding="utf-8")
-        store = UpdateStateStore(path=path)
-        assert store.load() is None
-
-    def test_load_invalid_state_value_returns_none(self, tmp_path: Path) -> None:
-        path = tmp_path / "state.json"
-        path.write_text('{"state": "bogus", "phase": "idle"}', encoding="utf-8")
+        if file_content is not None:
+            path.write_text(file_content, encoding="utf-8")
         store = UpdateStateStore(path=path)
         assert store.load() is None
 
@@ -163,8 +191,7 @@ class TestUpdateStateStore:
         store = UpdateStateStore(path=path)
         store.save(UpdateJobStatus())
         # Only the final file should exist (no .tmp leftovers)
-        files = list(tmp_path.iterdir())
-        assert files == [path]
+        assert list(tmp_path.iterdir()) == [path]
 
 
 # ---------------------------------------------------------------------------
@@ -174,36 +201,22 @@ class TestUpdateStateStore:
 
 class TestNoSecretsInPersistedFile:
     @pytest.mark.asyncio
-    async def test_password_not_in_persisted_json(self, tmp_path: Path) -> None:
+    async def test_password_not_in_persisted_json(self, update_env) -> None:
         """Wi-Fi password must never appear in the persisted status file."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
-        runner = FakeRunner()
+        state_path, _, runner, make_mgr = update_env
         runner.set_response("sudo -n true", 0)
-
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
+        mgr = make_mgr()
 
         secret_password = "SuperSecret!WiFi#Password42"
-
-        # Start will persist the status. The password should NOT be in the file.
-        def _mock_which(n: str) -> str | None:
-            return f"/usr/bin/{n}" if n in ("nmcli", "python3") else None
 
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", secret_password)
             assert mgr._task is not None
-            # Wait for the task to complete (it will fail quickly - no real tools)
             try:
                 await asyncio.wait_for(mgr._task, timeout=15)
             except (TimeoutError, asyncio.CancelledError):
                 pass
 
-        # Check every persisted file for the password
         assert state_path.is_file(), "State file should have been created"
         contents = state_path.read_text(encoding="utf-8")
         assert secret_password not in contents, "Password leaked into persisted state file!"
@@ -216,140 +229,92 @@ class TestNoSecretsInPersistedFile:
 
 @pytest.mark.asyncio
 class TestStartupRecovery:
-    async def test_interrupted_running_job_becomes_failed(self, tmp_path: Path) -> None:
+    async def test_interrupted_running_job_becomes_failed(self, update_env) -> None:
         """A persisted running job (no finished_at) is marked failed on startup."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
+        state_path, store, _, make_mgr = update_env
 
-        # Simulate a crash: write state as "running" with no finished_at
-        interrupted = UpdateJobStatus(
-            state=UpdateState.running,
-            phase=UpdatePhase.installing,
-            started_at=time.time() - 60,
-            ssid="CrashNet",
-            log_tail=["some log"],
+        store.save(
+            UpdateJobStatus(
+                state=UpdateState.running,
+                phase=UpdatePhase.installing,
+                started_at=time.time() - 60,
+                ssid="CrashNet",
+                log_tail=["some log"],
+            )
         )
-        store.save(interrupted)
+        mgr = make_mgr()
 
-        runner = FakeRunner()
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
-
-        # Verify the status was loaded from disk
         assert mgr.status.state == UpdateState.running
-
-        # Run startup recovery
         await mgr.startup_recover()
 
-        # Now the status should be failed
         assert mgr.status.state == UpdateState.failed
         assert mgr.status.finished_at is not None
-        # Should have an interrupted issue
         issue_messages = [i.message for i in mgr.status.issues]
         assert any("interrupted" in m.lower() or "restart" in m.lower() for m in issue_messages)
 
-        # Verify the failed state was persisted
         reloaded = store.load()
         assert reloaded is not None
         assert reloaded.state == UpdateState.failed
         assert reloaded.finished_at is not None
 
-    async def test_idle_status_no_recovery_needed(self, tmp_path: Path) -> None:
+    async def test_idle_status_no_recovery_needed(self, update_env) -> None:
         """An idle persisted status should not trigger recovery."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
+        _, store, _, make_mgr = update_env
         store.save(UpdateJobStatus())
-
-        runner = FakeRunner()
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
+        mgr = make_mgr()
 
         await mgr.startup_recover()
         assert mgr.status.state == UpdateState.idle
         assert mgr.status.finished_at is None
 
-    async def test_finished_running_job_no_recovery(self, tmp_path: Path) -> None:
+    async def test_finished_running_job_no_recovery(self, update_env) -> None:
         """A running job WITH finished_at set does not trigger recovery."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
-        finished = UpdateJobStatus(
-            state=UpdateState.running,
-            phase=UpdatePhase.done,
-            started_at=time.time() - 60,
-            finished_at=time.time() - 30,
+        _, store, _, make_mgr = update_env
+        store.save(
+            UpdateJobStatus(
+                state=UpdateState.running,
+                phase=UpdatePhase.done,
+                started_at=time.time() - 60,
+                finished_at=time.time() - 30,
+            )
         )
-        store.save(finished)
-
-        runner = FakeRunner()
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
+        mgr = make_mgr()
 
         await mgr.startup_recover()
-        # Should NOT add an interrupted issue
         issue_messages = [i.message for i in mgr.status.issues]
         assert not any("interrupted" in m.lower() for m in issue_messages)
 
-    async def test_recovery_attempts_network_cleanup(self, tmp_path: Path) -> None:
+    async def test_recovery_attempts_network_cleanup(self, update_env) -> None:
         """Startup recovery attempts to clean up uplink and restore hotspot."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
-        interrupted = UpdateJobStatus(
-            state=UpdateState.running,
-            phase=UpdatePhase.connecting_wifi,
-            started_at=time.time() - 60,
+        _, store, runner, make_mgr = update_env
+        store.save(
+            UpdateJobStatus(
+                state=UpdateState.running,
+                phase=UpdatePhase.connecting_wifi,
+                started_at=time.time() - 60,
+            )
         )
-        store.save(interrupted)
-
-        runner = FakeRunner()
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
+        mgr = make_mgr()
 
         await mgr.startup_recover()
 
-        # Should have tried nmcli commands for cleanup
         all_args = [" ".join(c[0]) for c in runner.calls]
-        # cleanup_uplink does "connection down" and "connection delete"
         assert any("connection down" in a for a in all_args)
         assert any("connection delete" in a for a in all_args)
-        # restore_hotspot does "connection up"
         assert any("connection up" in a for a in all_args)
 
-    async def test_recovery_handles_nmcli_failure_gracefully(self, tmp_path: Path) -> None:
+    async def test_recovery_handles_nmcli_failure_gracefully(self, update_env) -> None:
         """If nmcli fails during recovery, it adds issues but doesn't crash."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
-        interrupted = UpdateJobStatus(
-            state=UpdateState.running,
-            phase=UpdatePhase.downloading,
-            started_at=time.time() - 60,
+        _, store, runner, make_mgr = update_env
+        store.save(
+            UpdateJobStatus(
+                state=UpdateState.running,
+                phase=UpdatePhase.downloading,
+                started_at=time.time() - 60,
+            )
         )
-        store.save(interrupted)
-
-        runner = FakeRunner()
-        # All nmcli commands fail
         runner.default_response = (1, "", "nmcli not found")
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
+        mgr = make_mgr()
 
         with (
             patch("vibesensor.update.network.HOTSPOT_RESTORE_RETRIES", 1),
@@ -357,7 +322,6 @@ class TestStartupRecovery:
         ):
             await mgr.startup_recover()
 
-        # Should still be marked as failed (not crash)
         assert mgr.status.state == UpdateState.failed
         assert mgr.status.finished_at is not None
 
@@ -369,50 +333,25 @@ class TestStartupRecovery:
 
 class TestPersistenceDuringLifecycle:
     @pytest.mark.asyncio
-    async def test_state_persisted_on_start(self, tmp_path: Path) -> None:
+    async def test_state_persisted_on_start(self, update_env) -> None:
         """Calling start() persists the initial running status."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
-        runner = FakeRunner()
+        _, store, runner, make_mgr = update_env
         runner.set_response("sudo -n true", 0)
-        # Make nmcli fail fast so the update ends quickly
         runner.set_response("nmcli", 1, "", "not available")
-
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
-
-        def _mock_which(n: str) -> str | None:
-            return f"/usr/bin/{n}" if n in ("nmcli", "python3") else None
+        mgr = make_mgr()
 
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", "")
-            # Status should be persisted immediately after start
             loaded = store.load()
             assert loaded is not None
             assert loaded.state == UpdateState.running
 
     @pytest.mark.asyncio
-    async def test_state_persisted_after_job_ends(self, tmp_path: Path) -> None:
+    async def test_state_persisted_after_job_ends(self, update_env) -> None:
         """After the update job finishes, the final state is persisted."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
-        runner = FakeRunner()
-        # No sudo available → validating will fail
+        _, store, runner, make_mgr = update_env
         runner.set_response("sudo -n true", 1, "", "no sudo")
-
-        mgr = UpdateManager(
-            runner=runner,
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
-
-        def _mock_which(n: str) -> str | None:
-            return f"/usr/bin/{n}" if n in ("nmcli", "python3") else None
+        mgr = make_mgr()
 
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", "")
@@ -425,30 +364,22 @@ class TestPersistenceDuringLifecycle:
         assert loaded.finished_at is not None
 
     @pytest.mark.asyncio
-    async def test_manager_loads_persisted_state_on_init(self, tmp_path: Path) -> None:
+    async def test_manager_loads_persisted_state_on_init(self, update_env) -> None:
         """A new UpdateManager instance loads previously persisted state."""
-        state_path = tmp_path / "state.json"
-        store = UpdateStateStore(path=state_path)
+        _, store, _, make_mgr = update_env
 
-        # Persist a success state
-        success_status = UpdateJobStatus(
-            state=UpdateState.success,
-            phase=UpdatePhase.done,
-            started_at=1700000000.0,
-            finished_at=1700000120.0,
-            last_success_at=1700000120.0,
-            ssid="DoneNet",
-            exit_code=0,
+        store.save(
+            UpdateJobStatus(
+                state=UpdateState.success,
+                phase=UpdatePhase.done,
+                started_at=1700000000.0,
+                finished_at=1700000120.0,
+                last_success_at=1700000120.0,
+                ssid="DoneNet",
+                exit_code=0,
+            )
         )
-        store.save(success_status)
-
-        # Create a new manager → should load the persisted state
-        mgr = UpdateManager(
-            runner=FakeRunner(),
-            repo_path=str(tmp_path / "repo"),
-            rollback_dir=str(tmp_path / "rollback"),
-            state_store=store,
-        )
+        mgr = make_mgr()
 
         assert mgr.status.state == UpdateState.success
         assert mgr.status.phase == UpdatePhase.done
