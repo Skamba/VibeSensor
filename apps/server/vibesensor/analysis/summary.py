@@ -244,11 +244,13 @@ def select_top_causes(
         )
         representative = dict(members_sorted[0])
         # Collect all signatures (frequency_hz_or_order) in this group
-        signatures = []
+        signatures: list[str] = []
+        seen_sigs: set[str] = set()
         for m in members_sorted:
             sig = str(m.get("frequency_hz_or_order") or "").strip()
-            if sig and sig not in signatures:
+            if sig and sig not in seen_sigs:
                 signatures.append(sig)
+                seen_sigs.add(sig)
         representative["signatures_observed"] = signatures
         representative["grouped_count"] = len(members_sorted)
         group_reps.append(representative)
@@ -557,18 +559,13 @@ def _compute_accel_statistics(
         for value in (_as_float(sample.get("accel_z_g")) for sample in samples)
         if value is not None
     ]
-    accel_mag_vals = [
-        math.sqrt((sample["x"] ** 2) + (sample["y"] ** 2) + (sample["z"] ** 2))
-        for sample in (
-            {
-                "x": _as_float(row.get("accel_x_g")),
-                "y": _as_float(row.get("accel_y_g")),
-                "z": _as_float(row.get("accel_z_g")),
-            }
-            for row in samples
-        )
-        if sample["x"] is not None and sample["y"] is not None and sample["z"] is not None
-    ]
+    accel_mag_vals: list[float] = []
+    for row in samples:
+        x = _as_float(row.get("accel_x_g"))
+        y = _as_float(row.get("accel_y_g"))
+        z = _as_float(row.get("accel_z_g"))
+        if x is not None and y is not None and z is not None:
+            accel_mag_vals.append(math.sqrt(x**2 + y**2 + z**2))
     amp_metric_values = [
         value
         for value in (_primary_vibration_strength_db(sample) for sample in samples)
@@ -579,18 +576,13 @@ def _compute_accel_statistics(
     if sensor_limit is not None:
         # 2% headroom from ADC rail for quantization effects near saturation.
         sat_threshold = sensor_limit * _SATURATION_FRACTION
-        sat_count = sum(
-            1
-            for sample in samples
-            if any(
-                abs(val) >= sat_threshold
-                for val in (
-                    _as_float(sample.get("accel_x_g")) or 0.0,
-                    _as_float(sample.get("accel_y_g")) or 0.0,
-                    _as_float(sample.get("accel_z_g")) or 0.0,
-                )
-            )
-        )
+        sat_count = 0
+        for sample in samples:
+            x = _as_float(sample.get("accel_x_g")) or 0.0
+            y = _as_float(sample.get("accel_y_g")) or 0.0
+            z = _as_float(sample.get("accel_z_g")) or 0.0
+            if abs(x) >= sat_threshold or abs(y) >= sat_threshold or abs(z) >= sat_threshold:
+                sat_count += 1
 
     x_mean, x_var = _mean_variance(accel_x_vals)
     y_mean, y_var = _mean_variance(accel_y_vals)

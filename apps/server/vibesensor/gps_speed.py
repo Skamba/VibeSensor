@@ -7,7 +7,7 @@ import math
 import time
 from typing import Any, NamedTuple
 
-from .constants import KMH_TO_MPS, MPS_TO_KMH
+from .constants import KMH_TO_MPS, MPS_TO_KMH, NUMERIC_TYPES
 
 
 class SpeedResolution(NamedTuple):
@@ -41,6 +41,11 @@ MIN_STALE_TIMEOUT_S: float = 3.0
 MAX_STALE_TIMEOUT_S: float = 120.0
 VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 DEFAULT_FALLBACK_MODE: str = "manual"
+
+
+def _is_numeric(value: object) -> bool:
+    """Return True if *value* is int/float but **not** bool (bool ⊂ int)."""
+    return isinstance(value, NUMERIC_TYPES) and not isinstance(value, bool)
 
 
 class GPSSpeedMonitor:
@@ -96,14 +101,14 @@ class GPSSpeedMonitor:
         """
         if self.manual_source_selected in (None, True):
             # Legacy path (None) or explicitly selected manual source
-            if isinstance(self.override_speed_mps, (int, float)):
+            if isinstance(self.override_speed_mps, NUMERIC_TYPES):
                 return SpeedResolution(float(self.override_speed_mps), False, "manual")
             # Manual selected but no override set → fall through to GPS
 
         # Read from the atomic (speed, timestamp) snapshot so the speed value
         # and the staleness check are always consistent with each other.
         _speed, _ts = self._speed_snapshot
-        if isinstance(_speed, (int, float)):
+        if isinstance(_speed, NUMERIC_TYPES):
             if self._is_gps_stale():
                 fb = self._fallback_speed_value()
                 return SpeedResolution(fb, True, "fallback_manual" if fb is not None else "none")
@@ -156,7 +161,7 @@ class GPSSpeedMonitor:
 
     def _fallback_speed_value(self) -> float | None:
         """Return fallback speed if available — **no side effects**."""
-        if self.fallback_mode == "manual" and isinstance(self.override_speed_mps, (int, float)):
+        if self.fallback_mode == "manual" and isinstance(self.override_speed_mps, NUMERIC_TYPES):
             return float(self.override_speed_mps)
         return None
 
@@ -191,12 +196,7 @@ class GPSSpeedMonitor:
     @staticmethod
     def _read_non_negative_metric(payload: dict[str, Any], field: str) -> float | None:
         value = payload.get(field)
-        if (
-            isinstance(value, (int, float))
-            and not isinstance(value, bool)
-            and math.isfinite(value)
-            and value >= 0
-        ):
+        if _is_numeric(value) and math.isfinite(value) and value >= 0:
             return float(value)
         return None
 
@@ -223,7 +223,7 @@ class GPSSpeedMonitor:
         if speed_mps == 0.0:
             prev_speed = self.speed_mps
             if (
-                isinstance(prev_speed, (int, float))
+                isinstance(prev_speed, NUMERIC_TYPES)
                 and prev_speed > _GPS_ZERO_DROP_PREV_THRESHOLD_MPS
             ):
                 self._zero_speed_streak += 1
@@ -256,11 +256,11 @@ class GPSSpeedMonitor:
             last_update_age_s = round(now - self.last_update_ts, 2)
 
         raw_speed_kmh: float | None = None
-        if isinstance(self.speed_mps, (int, float)):
+        if isinstance(self.speed_mps, NUMERIC_TYPES):
             raw_speed_kmh = round(self.speed_mps * MPS_TO_KMH, 2)
 
         effective_speed_kmh: float | None = None
-        if isinstance(resolution.speed_mps, (int, float)):
+        if isinstance(resolution.speed_mps, NUMERIC_TYPES):
             effective_speed_kmh = round(resolution.speed_mps * MPS_TO_KMH, 2)
 
         return {
@@ -340,8 +340,7 @@ class GPSSpeedMonitor:
                     if (
                         isinstance(mode, int)
                         and mode >= 2
-                        and isinstance(speed, (int, float))
-                        and not isinstance(speed, bool)
+                        and _is_numeric(speed)
                         and math.isfinite(speed)
                         and speed >= 0
                     ):

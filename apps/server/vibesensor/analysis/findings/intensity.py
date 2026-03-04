@@ -51,8 +51,9 @@ def _phase_speed_breakdown(
 
     # Output in a canonical phase order
     phase_order = [p.value for p in DrivingPhase]
+    phase_order_set = set(phase_order)
     rows: list[dict[str, Any]] = []
-    for phase_key in [*phase_order, *sorted(k for k in counts if k not in phase_order)]:
+    for phase_key in [*phase_order, *sorted(k for k in counts if k not in phase_order_set)]:
         if phase_key not in counts:
             continue
         amp_vals = grouped_amp.get(phase_key, [])
@@ -84,7 +85,7 @@ def _speed_breakdown(samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
             grouped[label].append(amp)
 
     rows: list[dict[str, Any]] = []
-    for label in sorted(counts.keys(), key=_speed_bin_sort_key):
+    for label in sorted(counts, key=_speed_bin_sort_key):
         values = grouped.get(label, [])
         rows.append(
             {

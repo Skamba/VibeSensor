@@ -14,6 +14,8 @@ from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 
+_CHANNEL_RE = re.compile(r"channel\s+(\d+)")
+
 
 def parse_active_connection_names(stdout: str) -> list[str]:
     """Parse ``nmcli -t -f NAME connection show`` output into a list of names."""
@@ -61,12 +63,11 @@ def parse_iw_info(iw_output: str) -> tuple[bool, str | None]:
     """Parse ``iw dev <ifname> info`` for AP mode and channel."""
     ap_mode = False
     channel = None
-    channel_re = re.compile(r"channel\s+(\d+)")
     for line in iw_output.splitlines():
         text = line.strip().lower()
         if text.startswith("type ") and " ap" in f" {text}":
             ap_mode = True
-        match = channel_re.search(text)
+        match = _CHANNEL_RE.search(text)
         if match:
             channel = match.group(1)
     return ap_mode, channel

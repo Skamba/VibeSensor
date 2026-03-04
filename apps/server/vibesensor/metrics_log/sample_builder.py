@@ -16,7 +16,7 @@ from ..analysis_settings import (
     tire_circumference_m_from_spec,
     wheel_hz_from_speed_kmh,
 )
-from ..constants import MPS_TO_KMH
+from ..constants import MPS_TO_KMH, NUMERIC_TYPES
 from ..domain_models import SensorFrame
 
 if TYPE_CHECKING:
@@ -179,11 +179,11 @@ def resolve_speed_context(
     resolution = gps_monitor.resolve_speed()
     effective_speed_mps = resolution.speed_mps
     gps_speed_kmh = (
-        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, (int, float)) else None
+        (float(gps_speed_mps) * MPS_TO_KMH) if isinstance(gps_speed_mps, NUMERIC_TYPES) else None
     )
     speed_kmh = (
         (float(effective_speed_mps) * MPS_TO_KMH)
-        if isinstance(effective_speed_mps, (int, float))
+        if isinstance(effective_speed_mps, NUMERIC_TYPES)
         else None
     )
     speed_source = _SPEED_SOURCE_MAP.get(resolution.source, "none")

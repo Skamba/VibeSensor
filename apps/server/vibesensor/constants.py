@@ -87,3 +87,11 @@ orders (e.g. driveshaft 1× and engine 1×) overlap in frequency."""
 
 FREQUENCY_EPSILON_HZ: Final[float] = 1e-6
 """Tiny guard value to prevent division-by-zero in frequency ratios."""
+
+# ---------------------------------------------------------------------------
+# Type-check helpers
+# ---------------------------------------------------------------------------
+NUMERIC_TYPES: tuple[type, ...] = (int, float)
+"""Cached type-tuple for ``isinstance`` checks against numeric types.
+
+Avoids creating a fresh ``(int, float)`` tuple on every call."""

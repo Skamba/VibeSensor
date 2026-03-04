@@ -485,7 +485,7 @@ def _weighted_percentile(
     filtered = [(value, weight) for value, weight in pairs if weight > 0]
     if not filtered:
         return None
-    ordered = sorted(filtered, key=lambda item: item[0])
+    ordered = sorted(filtered)
     total_weight = sum(weight for _, weight in ordered)
     if total_weight <= 0:
         return None
