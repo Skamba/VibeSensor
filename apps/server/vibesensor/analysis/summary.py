@@ -64,6 +64,14 @@ from .test_plan import _merge_test_plan
 # 2% headroom accounts for quantization effects near the ADC rail.
 _SATURATION_FRACTION = 0.98
 
+# Maps driving-phase keys to their i18n label keys (used by
+# _most_likely_origin_summary for phase-onset notes in the explanation).
+_PHASE_I18N_MAP: dict[str, str] = {
+    "acceleration": "DRIVING_PHASE_ACCELERATION",
+    "deceleration": "DRIVING_PHASE_DECELERATION",
+    "coast_down": "DRIVING_PHASE_COAST_DOWN",
+}
+
 
 def _normalize_lang(lang: object) -> str:
     """Minimal language normalization without importing report_i18n."""
@@ -331,10 +339,9 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
 
     source = str(top.get("suspected_source") or _UNKNOWN)
     dominance = _as_float(top.get("dominance_ratio"))
-    location_hotspot = top.get("location_hotspot")
     location_count = _as_float(top.get("location_count"))
-    if location_count is None and isinstance(location_hotspot, dict):
-        location_count = _as_float(location_hotspot.get("location_count"))
+    if location_count is None and isinstance(hotspot, dict):
+        location_count = _as_float(hotspot.get("location_count"))
     adaptive_weak_spatial_threshold = weak_spatial_dominance_threshold(
         int(location_count) if location_count else None
     )
@@ -386,12 +393,7 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
     if weak:
         explanation_parts.append(_i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
     dominant_phase = str(top.get("dominant_phase") or "").strip()
-    _phase_i18n_map = {
-        "acceleration": "DRIVING_PHASE_ACCELERATION",
-        "deceleration": "DRIVING_PHASE_DECELERATION",
-        "coast_down": "DRIVING_PHASE_COAST_DOWN",
-    }
-    if dominant_phase and dominant_phase in _phase_i18n_map:
+    if dominant_phase and dominant_phase in _PHASE_I18N_MAP:
         explanation_parts.append(_i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
     # Store explanation as structured i18n parts for render-time resolution.
     explanation = explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
@@ -666,8 +668,6 @@ def _build_run_suitability_checks(
     _per_client_dropped: dict[str, list[float]] = defaultdict(list)
     _per_client_overflow: dict[str, list[float]] = defaultdict(list)
     for s in samples:
-        if not isinstance(s, dict):
-            continue
         cid = str(s.get("client_id") or "")
         if not cid:
             continue
