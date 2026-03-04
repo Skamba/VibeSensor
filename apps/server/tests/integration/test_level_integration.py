@@ -45,7 +45,7 @@ def _build_full_scenario() -> tuple[dict[str, Any], list[dict[str, Any]]]:
      95-97s:  transient spike on RR (second impact)
     100-120s: idle (cooling down)
     """
-    sensors = ALL_WHEEL_SENSORS[:]
+    sensors = ALL_WHEEL_SENSORS
     samples: list[dict[str, Any]] = []
 
     # Phase 1: Idle (0-10s)

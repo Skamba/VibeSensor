@@ -44,10 +44,66 @@ from builders import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-_CORNERS = ["FL", "FR", "RL", "RR"]
+_CORNERS = list(CORNER_SENSORS)
 
 # Ratio of driveshaft order to wheel-1x order (prop shaft speed ≈ 2.5× wheel)
 _DRIVESHAFT_WHEEL_RATIO = 2.5
+
+# Reusable noise-peak sets appended to constructed spectra
+_NOISE_SINGLE: list[dict[str, float]] = [{"hz": 142.5, "amp": 0.004}]
+_NOISE_DOUBLE: list[dict[str, float]] = [{"hz": 142.5, "amp": 0.004}, {"hz": 87.3, "amp": 0.003}]
+
+
+def _make_overlap_samples(
+    *,
+    fault_sensor: str,
+    sensors: list[str],
+    speed_kmh: float,
+    n_samples: int = 30,
+    wheel_amp: float = 0.06,
+    bg_peaks: list[dict[str, float]],
+    fault_vib_db: float = 26.0,
+    noise_vib_db: float = 8.0,
+    engine_rpm: float | None = None,
+    fault_noise: list[dict[str, float]] | None = None,
+    bg_noise: list[dict[str, float]] | None = None,
+) -> list[dict[str, Any]]:
+    """Build samples with localized wheel fault + background peaks on all sensors.
+
+    *fault_noise* / *bg_noise* default to ``_NOISE_SINGLE`` / ``_NOISE_DOUBLE``
+    respectively when ``None``.
+    """
+    whz = wheel_hz(speed_kmh)
+    _fn = fault_noise if fault_noise is not None else _NOISE_SINGLE
+    _bn = bg_noise if bg_noise is not None else _NOISE_DOUBLE
+    extra_kw: dict[str, Any] = {}
+    if engine_rpm is not None:
+        extra_kw["engine_rpm"] = engine_rpm
+    samples: list[dict[str, Any]] = []
+    for i in range(n_samples):
+        t = float(i)
+        for sensor in sensors:
+            if sensor == fault_sensor:
+                peaks = [
+                    {"hz": whz, "amp": wheel_amp},
+                    {"hz": whz * 2, "amp": wheel_amp * 0.4},
+                ] + bg_peaks + _fn
+                vib_db = fault_vib_db
+            else:
+                peaks = bg_peaks + _bn
+                vib_db = noise_vib_db
+            samples.append(
+                make_sample(
+                    t_s=t,
+                    speed_kmh=speed_kmh,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=vib_db,
+                    strength_floor_amp_g=0.004,
+                    **extra_kw,
+                )
+            )
+    return samples
 
 
 def _make_engine_plus_wheel_samples(
@@ -62,56 +118,14 @@ def _make_engine_plus_wheel_samples(
     noise_vib_db: float = 8.0,
 ) -> list[dict[str, Any]]:
     """Build samples with both wheel fault (localized) and engine order (all sensors)."""
-    samples: list[dict[str, Any]] = []
-    whz = wheel_hz(speed_kmh)
     ehz = engine_hz(speed_kmh)
-    for i in range(n_samples):
-        t = float(i)
-        for sensor in sensors:
-            # Engine harmonics on all sensors
-            engine_peaks = [
-                {"hz": ehz, "amp": engine_amp},
-                {"hz": ehz * 2, "amp": engine_amp * 0.5},
-            ]
-            if sensor == fault_sensor:
-                # Wheel fault + engine on this sensor
-                peaks = (
-                    [
-                        {"hz": whz, "amp": wheel_amp},
-                        {"hz": whz * 2, "amp": wheel_amp * 0.4},
-                    ]
-                    + engine_peaks
-                    + [{"hz": 142.5, "amp": 0.004}]
-                )
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=wheel_vib_db,
-                        strength_floor_amp_g=0.004,
-                        engine_rpm=ehz * 60.0,
-                    )
-                )
-            else:
-                # Engine only + noise
-                peaks = engine_peaks + [
-                    {"hz": 142.5, "amp": 0.004},
-                    {"hz": 87.3, "amp": 0.003},
-                ]
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=noise_vib_db,
-                        strength_floor_amp_g=0.004,
-                        engine_rpm=ehz * 60.0,
-                    )
-                )
-    return samples
+    bg = [{"hz": ehz, "amp": engine_amp}, {"hz": ehz * 2, "amp": engine_amp * 0.5}]
+    return _make_overlap_samples(
+        fault_sensor=fault_sensor, sensors=sensors, speed_kmh=speed_kmh,
+        n_samples=n_samples, wheel_amp=wheel_amp, bg_peaks=bg,
+        fault_vib_db=wheel_vib_db, noise_vib_db=noise_vib_db,
+        engine_rpm=ehz * 60.0,
+    )
 
 
 def _make_driveshaft_plus_wheel_samples(
@@ -126,52 +140,14 @@ def _make_driveshaft_plus_wheel_samples(
     noise_vib_db: float = 8.0,
 ) -> list[dict[str, Any]]:
     """Build samples with wheel fault + driveshaft-order vibration."""
-    samples: list[dict[str, Any]] = []
-    whz = wheel_hz(speed_kmh)
-    # Driveshaft order is typically related to prop shaft speed
-    dshaft_hz = whz * _DRIVESHAFT_WHEEL_RATIO
-    for i in range(n_samples):
-        t = float(i)
-        for sensor in sensors:
-            dshaft_peaks = [
-                {"hz": dshaft_hz, "amp": driveshaft_amp},
-                {"hz": dshaft_hz * 2, "amp": driveshaft_amp * 0.4},
-            ]
-            if sensor == fault_sensor:
-                peaks = (
-                    [
-                        {"hz": whz, "amp": wheel_amp},
-                        {"hz": whz * 2, "amp": wheel_amp * 0.4},
-                    ]
-                    + dshaft_peaks
-                    + [{"hz": 142.5, "amp": 0.004}]
-                )
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=wheel_vib_db,
-                        strength_floor_amp_g=0.004,
-                    )
-                )
-            else:
-                peaks = dshaft_peaks + [
-                    {"hz": 142.5, "amp": 0.004},
-                    {"hz": 87.3, "amp": 0.003},
-                ]
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=noise_vib_db,
-                        strength_floor_amp_g=0.004,
-                    )
-                )
-    return samples
+    whz_val = wheel_hz(speed_kmh)
+    dshaft_hz = whz_val * _DRIVESHAFT_WHEEL_RATIO
+    bg = [{"hz": dshaft_hz, "amp": driveshaft_amp}, {"hz": dshaft_hz * 2, "amp": driveshaft_amp * 0.4}]
+    return _make_overlap_samples(
+        fault_sensor=fault_sensor, sensors=sensors, speed_kmh=speed_kmh,
+        n_samples=n_samples, wheel_amp=wheel_amp, bg_peaks=bg,
+        fault_vib_db=wheel_vib_db, noise_vib_db=noise_vib_db,
+    )
 
 
 # ===================================================================
@@ -259,48 +235,21 @@ def test_driveshaft_plus_wheel_overlap(corner: str, speed: float) -> None:
 def test_three_systems_simultaneous(corner: str, speed: float) -> None:
     """Pipeline should handle wheel + engine + driveshaft-like signals without crash."""
     sensor = CORNER_SENSORS[corner]
-    whz = wheel_hz(speed)
+    whz_val = wheel_hz(speed)
     ehz = engine_hz(speed)
-    dshaft_hz = whz * _DRIVESHAFT_WHEEL_RATIO
-
-    samples: list[dict[str, Any]] = []
-    for i in range(30):
-        t = float(i)
-        for s in ALL_WHEEL_SENSORS:
-            base_peaks = [
-                {"hz": ehz, "amp": 0.025},
-                {"hz": ehz * 2, "amp": 0.012},
-                {"hz": dshaft_hz, "amp": 0.02},
-            ]
-            if s == sensor:
-                peaks = [
-                    {"hz": whz, "amp": 0.06},
-                    {"hz": whz * 2, "amp": 0.024},
-                ] + base_peaks
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=26.0,
-                        strength_floor_amp_g=0.004,
-                        engine_rpm=ehz * 60.0,
-                    )
-                )
-            else:
-                peaks = base_peaks + [{"hz": 142.5, "amp": 0.004}]
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=speed,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=10.0,
-                        strength_floor_amp_g=0.004,
-                        engine_rpm=ehz * 60.0,
-                    )
-                )
+    dshaft_hz = whz_val * _DRIVESHAFT_WHEEL_RATIO
+    bg = [
+        {"hz": ehz, "amp": 0.025},
+        {"hz": ehz * 2, "amp": 0.012},
+        {"hz": dshaft_hz, "amp": 0.02},
+    ]
+    samples = _make_overlap_samples(
+        fault_sensor=sensor, sensors=ALL_WHEEL_SENSORS, speed_kmh=speed,
+        wheel_amp=0.06, bg_peaks=bg,
+        fault_vib_db=26.0, noise_vib_db=10.0,
+        engine_rpm=ehz * 60.0,
+        fault_noise=[], bg_noise=_NOISE_SINGLE,
+    )
 
     summary = run_analysis(samples)
     assert isinstance(summary, dict)
@@ -390,44 +339,13 @@ def test_profile_engine_plus_wheel(profile: dict[str, Any], corner: str) -> None
     sensor = CORNER_SENSORS[corner]
     whz = profile_wheel_hz(profile, SPEED_MID)
     ehz = whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
-
-    samples: list[dict[str, Any]] = []
-    for i in range(30):
-        t = float(i)
-        for s in ALL_WHEEL_SENSORS:
-            engine_peaks = [
-                {"hz": ehz, "amp": 0.03},
-                {"hz": ehz * 2, "amp": 0.015},
-            ]
-            if s == sensor:
-                peaks = [
-                    {"hz": whz, "amp": 0.06},
-                    {"hz": whz * 2, "amp": 0.024},
-                ] + engine_peaks
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=SPEED_MID,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=26.0,
-                        strength_floor_amp_g=0.004,
-                        engine_rpm=ehz * 60.0,
-                    )
-                )
-            else:
-                peaks = engine_peaks + [{"hz": 142.5, "amp": 0.004}]
-                samples.append(
-                    make_sample(
-                        t_s=t,
-                        speed_kmh=SPEED_MID,
-                        client_name=s,
-                        top_peaks=peaks,
-                        vibration_strength_db=8.0,
-                        strength_floor_amp_g=0.004,
-                        engine_rpm=ehz * 60.0,
-                    )
-                )
+    bg = [{"hz": ehz, "amp": 0.03}, {"hz": ehz * 2, "amp": 0.015}]
+    samples = _make_overlap_samples(
+        fault_sensor=sensor, sensors=ALL_WHEEL_SENSORS, speed_kmh=SPEED_MID,
+        wheel_amp=0.06, bg_peaks=bg,
+        engine_rpm=ehz * 60.0,
+        fault_noise=[], bg_noise=_NOISE_SINGLE,
+    )
 
     meta = profile_metadata(profile)
     summary = run_analysis(samples, metadata=meta)
