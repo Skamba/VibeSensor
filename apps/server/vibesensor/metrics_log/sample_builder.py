@@ -26,6 +26,21 @@ if TYPE_CHECKING:
 
 _isfinite = math.isfinite
 
+
+def _parse_peak(raw: object) -> tuple[float, float] | None:
+    """Validate and parse a peak dict into ``(hz, amp)`` or ``None``."""
+    if not isinstance(raw, dict):
+        return None
+    try:
+        hz = float(raw.get("hz"))
+        amp = float(raw.get("amp"))
+    except (TypeError, ValueError):
+        return None
+    if _isfinite(hz) and _isfinite(amp) and hz > 0:
+        return (hz, amp)
+    return None
+
+
 _VIB_STRENGTH_DB_KEY: str = METRIC_FIELDS["vibration_strength_db"]
 _STRENGTH_BUCKET_KEY: str = METRIC_FIELDS["strength_bucket"]
 
@@ -35,6 +50,24 @@ _SPEED_SOURCE_MAP = {
     "fallback_manual": "manual",
     "none": "none",
 }
+
+_SETTINGS_PASSTHROUGH_KEYS = (
+    "tire_width_mm",
+    "tire_aspect_pct",
+    "rim_in",
+    "final_drive_ratio",
+    "current_gear_ratio",
+    "wheel_bandwidth_pct",
+    "driveshaft_bandwidth_pct",
+    "engine_bandwidth_pct",
+    "speed_uncertainty_pct",
+    "tire_diameter_uncertainty_pct",
+    "final_drive_uncertainty_pct",
+    "gear_uncertainty_pct",
+    "min_abs_band_hz",
+    "max_band_half_width_pct",
+    "tire_deflection_factor",
+)
 
 
 def _safe_float(d: dict[str, object], key: str) -> float | None:
@@ -91,22 +124,18 @@ def extract_strength_data(
     top_peaks: list[dict[str, object]] = []
     if isinstance(top_peaks_raw, list):
         for peak in top_peaks_raw[:8]:
-            if not isinstance(peak, dict):
+            parsed = _parse_peak(peak)
+            if parsed is None or parsed[1] <= 0:
                 continue
-            try:
-                hz = float(peak.get("hz"))
-                amp = float(peak.get("amp"))
-            except (TypeError, ValueError):
-                continue
-            if _isfinite(hz) and _isfinite(amp) and hz > 0 and amp > 0:
-                peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
-                peak_db = _safe_float(peak, _VIB_STRENGTH_DB_KEY)
-                if peak_db is not None:
-                    peak_payload[_VIB_STRENGTH_DB_KEY] = peak_db
-                peak_bucket = peak.get(_STRENGTH_BUCKET_KEY)
-                if peak_bucket not in (None, ""):
-                    peak_payload[_STRENGTH_BUCKET_KEY] = str(peak_bucket)
-                top_peaks.append(peak_payload)
+            hz, amp = parsed
+            peak_payload: dict[str, object] = {"hz": hz, "amp": amp}
+            peak_db = _safe_float(peak, _VIB_STRENGTH_DB_KEY)
+            if peak_db is not None:
+                peak_payload[_VIB_STRENGTH_DB_KEY] = peak_db
+            peak_bucket = peak.get(_STRENGTH_BUCKET_KEY)
+            if peak_bucket not in (None, ""):
+                peak_payload[_STRENGTH_BUCKET_KEY] = str(peak_bucket)
+            top_peaks.append(peak_payload)
 
     return (
         strength_metrics,
@@ -127,15 +156,9 @@ def extract_axis_top_peaks(metrics: dict[str, object], axis: str) -> list[dict[s
     axis_peaks: list[dict[str, object]] = []
     if isinstance(axis_peaks_raw, list):
         for peak in axis_peaks_raw[:3]:
-            if not isinstance(peak, dict):
-                continue
-            try:
-                hz = float(peak.get("hz"))
-                amp = float(peak.get("amp"))
-            except (TypeError, ValueError):
-                continue
-            if _isfinite(hz) and _isfinite(amp) and hz > 0:
-                axis_peaks.append({"hz": hz, "amp": amp})
+            parsed = _parse_peak(peak)
+            if parsed is not None:
+                axis_peaks.append({"hz": parsed[0], "amp": parsed[1]})
     return axis_peaks
 
 
@@ -361,25 +384,8 @@ def build_run_metadata(
         accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         incomplete_for_order_analysis=incomplete,
     )
-    metadata.update(
-        {
-            "tire_width_mm": settings.get("tire_width_mm"),
-            "tire_aspect_pct": settings.get("tire_aspect_pct"),
-            "rim_in": settings.get("rim_in"),
-            "final_drive_ratio": settings.get("final_drive_ratio"),
-            "current_gear_ratio": settings.get("current_gear_ratio"),
-            "wheel_bandwidth_pct": settings.get("wheel_bandwidth_pct"),
-            "driveshaft_bandwidth_pct": settings.get("driveshaft_bandwidth_pct"),
-            "engine_bandwidth_pct": settings.get("engine_bandwidth_pct"),
-            "speed_uncertainty_pct": settings.get("speed_uncertainty_pct"),
-            "tire_diameter_uncertainty_pct": settings.get("tire_diameter_uncertainty_pct"),
-            "final_drive_uncertainty_pct": settings.get("final_drive_uncertainty_pct"),
-            "gear_uncertainty_pct": settings.get("gear_uncertainty_pct"),
-            "min_abs_band_hz": settings.get("min_abs_band_hz"),
-            "max_band_half_width_pct": settings.get("max_band_half_width_pct"),
-            "tire_deflection_factor": settings.get("tire_deflection_factor"),
-        }
-    )
+    for _key in _SETTINGS_PASSTHROUGH_KEYS:
+        metadata[_key] = settings.get(_key)
     metadata["tire_circumference_m"] = tire_circumference_m_from_spec(
         settings.get("tire_width_mm"),
         settings.get("tire_aspect_pct"),
