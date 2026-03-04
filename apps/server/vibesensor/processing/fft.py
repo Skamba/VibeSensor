@@ -75,7 +75,7 @@ def noise_floor(amps: np.ndarray) -> float:
     # noise_floor_amp_p20_g strips [1:] and sorts internally; pre-sorting
     # here ensures the stripped element is the global minimum amplitude,
     # yielding a slightly more conservative (higher) floor estimate.
-    return noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted(non_neg.tolist()))
+    return noise_floor_amp_p20_g(combined_spectrum_amp_g=np.sort(non_neg).tolist())
 
 
 def float_list(values: np.ndarray | list[float]) -> list[float]:

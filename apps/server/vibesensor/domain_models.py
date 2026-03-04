@@ -14,6 +14,7 @@ from typing import Any
 from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
 
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
+from .constants import NUMERIC_TYPES
 from .protocol import parse_client_id
 
 __all__ = [
@@ -82,7 +83,7 @@ _as_int_or_none = as_int_or_none
 
 def _parse_manual_speed(value: Any) -> float | None:
     """Return a positive, finite float speed (≤500 km/h) or None."""
-    if isinstance(value, (int, float)):
+    if isinstance(value, NUMERIC_TYPES):
         f = float(value)
         if math.isfinite(f) and 0 < f <= 500:
             return f
@@ -91,7 +92,7 @@ def _parse_manual_speed(value: Any) -> float | None:
 
 def _parse_stale_timeout(value: Any) -> float:
     """Return a stale-timeout value clamped to [3, 120], default 10."""
-    if isinstance(value, (int, float)):
+    if isinstance(value, NUMERIC_TYPES):
         return max(3.0, min(120.0, float(value)))
     return 10.0
 
