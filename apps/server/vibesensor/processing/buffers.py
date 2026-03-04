@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, eq=False, repr=False)
 class ClientBuffer:
     data: np.ndarray
     capacity: int
@@ -43,8 +43,21 @@ class ClientBuffer:
     cached_selected_payload: dict[str, Any] | None = None
     cached_selected_payload_key: tuple[int, int, int] | None = None
 
+    def __repr__(self) -> str:
+        """Compact repr that omits large numpy array data."""
+        return (
+            f"ClientBuffer(capacity={self.capacity}, count={self.count}, "
+            f"write_idx={self.write_idx}, sr={self.sample_rate_hz}Hz, "
+            f"igen={self.ingest_generation}, cgen={self.compute_generation})"
+        )
+
     def invalidate_caches(self) -> None:
         """Reset all cached payload fields to force recomputation."""
+        # Fast-path: skip redundant writes when caches are already clear.
+        # During rapid ingestion invalidate_caches is called every batch but
+        # compute runs less frequently, so most calls are no-ops.
+        if self.cached_spectrum_payload is None and self.cached_selected_payload is None:
+            return
         self.cached_spectrum_payload = None
         self.cached_spectrum_payload_generation = -1
         self.cached_selected_payload = None
