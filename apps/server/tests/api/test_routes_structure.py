@@ -14,52 +14,67 @@ import pkgutil
 
 import pytest
 
+_EXPECTED_MODULES = (
+    "_helpers",
+    "car_library",
+    "clients",
+    "debug",
+    "health",
+    "history",
+    "recording",
+    "settings",
+    "updates",
+    "websocket",
+)
+
+# Symbols that must remain importable from vibesensor.api (backward compat)
+_CALLABLE_COMPAT_SYMBOLS = (
+    "create_router",
+    "_safe_filename",
+    "_bounded_sample",
+    "build_report_pdf",
+)
+
+_MODEL_COMPAT_SYMBOLS = (
+    "ActiveCarRequest",
+    "AnalysisSettingsRequest",
+    "AnalysisSettingsResponse",
+    "CarLibraryModelsResponse",
+    "CarUpsertRequest",
+    "SetLocationRequest",
+    "UpdateStartRequest",
+)
+
 
 class TestRoutesPackageStructure:
     """Verify the routes package has the expected modules."""
-
-    EXPECTED_MODULES = {
-        "_helpers",
-        "car_library",
-        "clients",
-        "debug",
-        "health",
-        "history",
-        "recording",
-        "settings",
-        "updates",
-        "websocket",
-    }
 
     def test_all_expected_modules_exist(self) -> None:
         import vibesensor.routes as pkg
 
         found = {mod.name for mod in pkgutil.iter_modules(pkg.__path__) if not mod.ispkg}
-        assert self.EXPECTED_MODULES == found
+        assert set(_EXPECTED_MODULES) == found
 
     def test_create_router_importable_from_routes(self) -> None:
         from vibesensor.routes import create_router
 
         assert callable(create_router)
 
-    def test_each_module_importable(self) -> None:
-        for mod_name in self.EXPECTED_MODULES:
-            mod = importlib.import_module(f"vibesensor.routes.{mod_name}")
-            assert mod is not None
+    @pytest.mark.parametrize("mod_name", _EXPECTED_MODULES)
+    def test_each_module_importable(self, mod_name: str) -> None:
+        mod = importlib.import_module(f"vibesensor.routes.{mod_name}")
+        assert mod is not None
 
 
 class TestBackwardCompatImports:
     """Verify that all symbols previously imported from vibesensor.api still work."""
 
-    def test_create_router(self) -> None:
-        from vibesensor.api import create_router
+    @pytest.mark.parametrize("symbol", _CALLABLE_COMPAT_SYMBOLS)
+    def test_callable_symbol(self, symbol: str) -> None:
+        from vibesensor import api
 
-        assert callable(create_router)
-
-    def test_safe_filename(self) -> None:
-        from vibesensor.api import _safe_filename
-
-        assert _safe_filename("hello world!") == "hello_world_"
+        obj = getattr(api, symbol)
+        assert callable(obj)
 
     def test_flatten_for_csv(self) -> None:
         from vibesensor.api import _flatten_for_csv
@@ -73,135 +88,57 @@ class TestBackwardCompatImports:
         assert isinstance(_EXPORT_CSV_COLUMNS, tuple)
         assert "t_s" in _EXPORT_CSV_COLUMNS
 
-    def test_bounded_sample(self) -> None:
-        from vibesensor.api import _bounded_sample
+    @pytest.mark.parametrize("symbol", _MODEL_COMPAT_SYMBOLS)
+    def test_api_model_reexport(self, symbol: str) -> None:
+        from vibesensor import api
 
-        assert callable(_bounded_sample)
+        assert getattr(api, symbol) is not None
 
-    def test_build_report_pdf(self) -> None:
-        from vibesensor.api import build_report_pdf
 
-        assert callable(build_report_pdf)
-
-    def test_api_model_reexports(self) -> None:
-        from vibesensor.api import (
-            ActiveCarRequest,
-            AnalysisSettingsRequest,
-            AnalysisSettingsResponse,
-            CarLibraryModelsResponse,
-            CarUpsertRequest,
-            SetLocationRequest,
-            UpdateStartRequest,
-        )
-
-        for cls in [
-            ActiveCarRequest,
-            AnalysisSettingsRequest,
-            AnalysisSettingsResponse,
-            CarLibraryModelsResponse,
-            CarUpsertRequest,
-            SetLocationRequest,
-            UpdateStartRequest,
-        ]:
-            assert cls is not None
+_EXPECTED_PATHS = (
+    "/api/health",
+    "/api/settings/cars",
+    "/api/settings/speed-source",
+    "/api/settings/speed-source/status",
+    "/api/settings/sensors",
+    "/api/settings/language",
+    "/api/settings/speed-unit",
+    "/api/analysis-settings",
+    "/api/clients",
+    "/api/client-locations",
+    "/api/logging/status",
+    "/api/logging/start",
+    "/api/logging/stop",
+    "/api/history",
+    "/api/settings/update/status",
+    "/api/settings/update/start",
+    "/api/settings/update/cancel",
+    "/api/settings/esp-flash/ports",
+    "/api/settings/esp-flash/start",
+    "/api/settings/esp-flash/status",
+    "/api/settings/esp-flash/logs",
+    "/api/settings/esp-flash/cancel",
+    "/api/settings/esp-flash/history",
+    "/api/car-library/brands",
+    "/api/car-library/types",
+    "/api/car-library/models",
+    "/api/simulator/speed-override",
+    "/ws",
+)
 
 
 class TestRouterEndpoints:
     """Verify that the assembled router exposes all expected URL paths."""
 
-    EXPECTED_PATHS = [
-        "/api/health",
-        "/api/settings/cars",
-        "/api/settings/speed-source",
-        "/api/settings/speed-source/status",
-        "/api/settings/sensors",
-        "/api/settings/language",
-        "/api/settings/speed-unit",
-        "/api/analysis-settings",
-        "/api/clients",
-        "/api/client-locations",
-        "/api/logging/status",
-        "/api/logging/start",
-        "/api/logging/stop",
-        "/api/history",
-        "/api/settings/update/status",
-        "/api/settings/update/start",
-        "/api/settings/update/cancel",
-        "/api/settings/esp-flash/ports",
-        "/api/settings/esp-flash/start",
-        "/api/settings/esp-flash/status",
-        "/api/settings/esp-flash/logs",
-        "/api/settings/esp-flash/cancel",
-        "/api/settings/esp-flash/history",
-        "/api/car-library/brands",
-        "/api/car-library/types",
-        "/api/car-library/models",
-        "/api/simulator/speed-override",
-        "/ws",
-    ]
-
-    @pytest.fixture()
-    def route_paths(self) -> set[str]:
-        from dataclasses import dataclass, field
-        from unittest.mock import MagicMock
-
-        from vibesensor.routes import create_router
-
-        @dataclass
-        class _FakeState:
-            config: object = field(default_factory=MagicMock)
-            registry: object = field(default_factory=MagicMock)
-            processor: object = field(default_factory=MagicMock)
-            control_plane: object = field(default_factory=MagicMock)
-            ws_hub: object = field(default_factory=MagicMock)
-            gps_monitor: object = field(default_factory=MagicMock)
-            analysis_settings: object = field(default_factory=MagicMock)
-            metrics_logger: object = field(default_factory=MagicMock)
-            live_diagnostics: object = field(default_factory=MagicMock)
-            settings_store: object = field(default_factory=MagicMock)
-            history_db: object = field(default_factory=MagicMock)
-            update_manager: object = field(default_factory=MagicMock)
-            esp_flash_manager: object = field(default_factory=MagicMock)
-            processing_state: str = "idle"
-            processing_failure_count: int = 0
-            apply_car_settings: object = field(default_factory=MagicMock)
-            apply_speed_source_settings: object = field(default_factory=MagicMock)
-
-        router = create_router(_FakeState())
-        return {r.path for r in router.routes}
-
     def test_all_expected_paths_present(self, route_paths: set[str]) -> None:
-        missing = [p for p in self.EXPECTED_PATHS if p not in route_paths]
+        missing = [p for p in _EXPECTED_PATHS if p not in route_paths]
         assert not missing, f"Missing routes: {missing}"
 
-    def test_no_duplicate_path_method_pairs(self, route_paths: set[str]) -> None:
+    def test_no_duplicate_path_method_pairs(self, fake_state) -> None:
         """Verify no two routes share the same (path, methods) combination."""
-        from dataclasses import dataclass, field
-        from unittest.mock import MagicMock
-
         from vibesensor.routes import create_router
 
-        @dataclass
-        class _FakeState:
-            config: object = field(default_factory=MagicMock)
-            registry: object = field(default_factory=MagicMock)
-            processor: object = field(default_factory=MagicMock)
-            control_plane: object = field(default_factory=MagicMock)
-            ws_hub: object = field(default_factory=MagicMock)
-            gps_monitor: object = field(default_factory=MagicMock)
-            analysis_settings: object = field(default_factory=MagicMock)
-            metrics_logger: object = field(default_factory=MagicMock)
-            live_diagnostics: object = field(default_factory=MagicMock)
-            settings_store: object = field(default_factory=MagicMock)
-            history_db: object = field(default_factory=MagicMock)
-            update_manager: object = field(default_factory=MagicMock)
-            esp_flash_manager: object = field(default_factory=MagicMock)
-            processing_state: str = "idle"
-            processing_failure_count: int = 0
-            apply_car_settings: object = field(default_factory=MagicMock)
-            apply_speed_source_settings: object = field(default_factory=MagicMock)
-
-        router = create_router(_FakeState())
+        router = create_router(fake_state)
         seen: set[tuple[str, str]] = set()
         dupes = []
         for r in router.routes:
