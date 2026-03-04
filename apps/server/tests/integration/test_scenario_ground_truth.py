@@ -28,26 +28,21 @@ from typing import Any
 import numpy as np
 import pytest
 from _test_helpers import assert_summary_sections, assert_top_cause_contract
-from vibesensor_core.strength_bands import bucket_for_strength
+from builders import (
+    make_sample as _make_sample,
+)
+from builders import (
+    standard_metadata as _standard_metadata,
+)
+from builders import (
+    wheel_hz as _wheel_hz,
+)
 
 from vibesensor.analysis.summary import summarize_run_data
-from vibesensor.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_kmh,
-)
 
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
-
-_TIRE_CIRC = tire_circumference_m_from_spec(
-    DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
-    DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
-    DEFAULT_ANALYSIS_SETTINGS["rim_in"],
-)
-_FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
-_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
 
 _ALL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
 
@@ -57,55 +52,6 @@ def _sensor_offset(sensor: str, modulo: int) -> int:
     if sensor in _ALL_SENSORS:
         return _ALL_SENSORS.index(sensor) % modulo
     return sum(ord(ch) for ch in sensor) % modulo
-
-
-def _wheel_hz(speed_kmh: float) -> float:
-    """Compute wheel_1x Hz for a given speed."""
-    hz = wheel_hz_from_speed_kmh(speed_kmh, _TIRE_CIRC)
-    assert hz is not None and hz > 0
-    return hz
-
-
-def _standard_metadata(*, language: str = "en", **overrides: Any) -> dict[str, Any]:
-    meta: dict[str, Any] = {
-        "tire_circumference_m": _TIRE_CIRC,
-        "raw_sample_rate_hz": 800.0,
-        "final_drive_ratio": _FINAL_DRIVE,
-        "current_gear_ratio": _GEAR_RATIO,
-        "sensor_model": "ADXL345",
-        "units": {"accel_x_g": "g"},
-        "language": language,
-    }
-    meta.update(overrides)
-    return meta
-
-
-def _make_sample(
-    *,
-    t_s: float,
-    speed_kmh: float,
-    client_name: str,
-    top_peaks: list[dict[str, float]],
-    vibration_strength_db: float = 20.0,
-    strength_floor_amp_g: float = 0.003,
-    engine_rpm: float | None = None,
-) -> dict[str, Any]:
-    sample: dict[str, Any] = {
-        "t_s": t_s,
-        "speed_kmh": speed_kmh,
-        "accel_x_g": 0.02,
-        "accel_y_g": 0.02,
-        "accel_z_g": 0.10,
-        "vibration_strength_db": vibration_strength_db,
-        "strength_bucket": bucket_for_strength(vibration_strength_db),
-        "strength_floor_amp_g": strength_floor_amp_g,
-        "client_name": client_name,
-        "client_id": f"sensor-{client_name}",
-        "top_peaks": top_peaks,
-    }
-    if engine_rpm is not None:
-        sample["engine_rpm"] = engine_rpm
-    return sample
 
 
 # ---------------------------------------------------------------------------

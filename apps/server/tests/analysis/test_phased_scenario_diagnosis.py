@@ -22,76 +22,22 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from vibesensor_core.strength_bands import bucket_for_strength
+from builders import (
+    make_sample as _make_sample,
+)
+from builders import (
+    standard_metadata as _standard_metadata,
+)
+from builders import (
+    wheel_hz as _wheel_hz,
+)
 
 from vibesensor.analysis.findings import _classify_peak_type
 from vibesensor.analysis.summary import summarize_run_data
-from vibesensor.analysis_settings import (
-    DEFAULT_ANALYSIS_SETTINGS,
-    tire_circumference_m_from_spec,
-    wheel_hz_from_speed_kmh,
-)
 
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
-
-_TIRE_CIRC = tire_circumference_m_from_spec(
-    DEFAULT_ANALYSIS_SETTINGS["tire_width_mm"],
-    DEFAULT_ANALYSIS_SETTINGS["tire_aspect_pct"],
-    DEFAULT_ANALYSIS_SETTINGS["rim_in"],
-    deflection_factor=DEFAULT_ANALYSIS_SETTINGS.get("tire_deflection_factor"),
-)
-_FINAL_DRIVE = DEFAULT_ANALYSIS_SETTINGS["final_drive_ratio"]
-_GEAR_RATIO = DEFAULT_ANALYSIS_SETTINGS["current_gear_ratio"]
-
-
-def _wheel_hz(speed_kmh: float) -> float:
-    """Compute wheel_1x Hz for a given speed."""
-    hz = wheel_hz_from_speed_kmh(speed_kmh, _TIRE_CIRC)
-    assert hz is not None and hz > 0
-    return hz
-
-
-def _standard_metadata(**overrides: Any) -> dict[str, Any]:
-    meta: dict[str, Any] = {
-        "tire_circumference_m": _TIRE_CIRC,
-        "raw_sample_rate_hz": 800.0,
-        "final_drive_ratio": _FINAL_DRIVE,
-        "current_gear_ratio": _GEAR_RATIO,
-        "sensor_model": "ADXL345",
-        "units": {"accel_x_g": "g"},
-    }
-    meta.update(overrides)
-    return meta
-
-
-def _make_sample(
-    *,
-    t_s: float,
-    speed_kmh: float,
-    client_name: str,
-    top_peaks: list[dict[str, float]],
-    vibration_strength_db: float = 20.0,
-    strength_floor_amp_g: float = 0.003,
-    engine_rpm: float | None = None,
-) -> dict[str, Any]:
-    sample: dict[str, Any] = {
-        "t_s": t_s,
-        "speed_kmh": speed_kmh,
-        "accel_x_g": 0.02,
-        "accel_y_g": 0.02,
-        "accel_z_g": 0.10,
-        "vibration_strength_db": vibration_strength_db,
-        "strength_bucket": bucket_for_strength(vibration_strength_db),
-        "strength_floor_amp_g": strength_floor_amp_g,
-        "client_name": client_name,
-        "client_id": f"sensor-{client_name}",
-        "top_peaks": top_peaks,
-    }
-    if engine_rpm is not None:
-        sample["engine_rpm"] = engine_rpm
-    return sample
 
 
 def _build_fault_samples_at_speed(
