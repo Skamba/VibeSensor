@@ -11,6 +11,7 @@ These tests verify:
 from __future__ import annotations
 
 import ast
+import random
 from pathlib import Path
 
 import pytest
@@ -81,8 +82,6 @@ def _make_analysis_summary() -> dict:
         "raw_sample_rate_hz": 800,
         "sensor_model": "ADXL345",
     }
-    import random
-
     rng = random.Random(123)
     samples = []
     for i in range(40):
@@ -220,15 +219,19 @@ def test_i18n_refs_are_well_formed() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_report_renders_in_en_and_nl_from_same_analysis() -> None:
-    """The same analysis output must render correctly in both EN and NL."""
+def _render_en_nl():
+    """Build analysis summary and render reports in EN and NL."""
     summary = _make_analysis_summary()
-
     summary["lang"] = "en"
     report_en = map_summary(summary)
-
     summary["lang"] = "nl"
     report_nl = map_summary(summary)
+    return report_en, report_nl
+
+
+def test_report_renders_in_en_and_nl_from_same_analysis() -> None:
+    """The same analysis output must render correctly in both EN and NL."""
+    report_en, report_nl = _render_en_nl()
 
     # Both should produce valid report data
     assert report_en.title == "Diagnostic Worksheet"
@@ -250,12 +253,7 @@ def test_report_renders_in_en_and_nl_from_same_analysis() -> None:
 
 def test_data_trust_items_are_translated() -> None:
     """Data trust check labels must be translated for each language."""
-    summary = _make_analysis_summary()
-
-    summary["lang"] = "en"
-    report_en = map_summary(summary)
-    summary["lang"] = "nl"
-    report_nl = map_summary(summary)
+    report_en, report_nl = _render_en_nl()
 
     en_checks = [dt.check for dt in report_en.data_trust]
     nl_checks = [dt.check for dt in report_nl.data_trust]
@@ -268,12 +266,7 @@ def test_data_trust_items_are_translated() -> None:
 
 def test_next_steps_are_translated() -> None:
     """Next steps must be rendered in the correct language."""
-    summary = _make_analysis_summary()
-
-    summary["lang"] = "en"
-    report_en = map_summary(summary)
-    summary["lang"] = "nl"
-    report_nl = map_summary(summary)
+    report_en, report_nl = _render_en_nl()
 
     if report_en.next_steps and report_nl.next_steps:
         en_action = report_en.next_steps[0].action
@@ -291,21 +284,18 @@ def test_next_steps_are_translated() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_resolve_i18n_plain_string() -> None:
-    """Plain strings pass through unchanged."""
-    assert _resolve_i18n("en", "hello") == "hello"
-
-
-def test_resolve_i18n_none() -> None:
-    """None resolves to empty string."""
-    assert _resolve_i18n("en", None) == ""
-
-
-def test_resolve_i18n_ref_dict() -> None:
-    """i18n ref dicts are translated."""
-    ref = {"_i18n_key": "UNKNOWN"}
-    assert _resolve_i18n("en", ref) == "Unknown"
-    assert _resolve_i18n("nl", ref) == "Onbekend"
+@pytest.mark.parametrize(
+    ("lang", "value", "expected"),
+    [
+        pytest.param("en", "hello", "hello", id="plain_string"),
+        pytest.param("en", None, "", id="none"),
+        pytest.param("en", {"_i18n_key": "UNKNOWN"}, "Unknown", id="ref_en"),
+        pytest.param("nl", {"_i18n_key": "UNKNOWN"}, "Onbekend", id="ref_nl"),
+    ],
+)
+def test_resolve_i18n_simple(lang: str, value: object, expected: str) -> None:
+    """Plain strings, None, and i18n ref dicts resolve correctly."""
+    assert _resolve_i18n(lang, value) == expected
 
 
 def test_resolve_i18n_list_of_refs() -> None:
@@ -346,10 +336,16 @@ def test_resolve_i18n_source_translation() -> None:
     assert "Wiel / Band" in nl_result or "wiel" in nl_result.lower()
 
 
-def test_is_i18n_ref() -> None:
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ({"_i18n_key": "TEST"}, True),
+        ({"key": "TEST"}, False),
+        ("plain string", False),
+        (None, False),
+        (42, False),
+    ],
+)
+def test_is_i18n_ref(value: object, expected: bool) -> None:
     """_is_i18n_ref correctly identifies i18n reference dicts."""
-    assert _is_i18n_ref({"_i18n_key": "TEST"})
-    assert not _is_i18n_ref({"key": "TEST"})
-    assert not _is_i18n_ref("plain string")
-    assert not _is_i18n_ref(None)
-    assert not _is_i18n_ref(42)
+    assert _is_i18n_ref(value) is expected
