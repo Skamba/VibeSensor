@@ -26,6 +26,20 @@ from .helpers import (
 from .phase_segmentation import segment_run_phases as _segment_run_phases
 
 
+def _safe_percentile(sorted_vals: list[float], q: float, *, default: float = 0.0) -> float:
+    """Return ``percentile(sorted_vals, q)`` when len >= 2, else last item or *default*."""
+    if len(sorted_vals) >= 2:
+        return percentile(sorted_vals, q)
+    return sorted_vals[-1] if sorted_vals else default
+
+
+def _vibration_db_or_none(peak_amp: float | None, floor_amp: float | None) -> float | None:
+    """Return ``canonical_vibration_db(peak_amp, floor_amp)`` or *None* if either is *None*."""
+    if peak_amp is None or floor_amp is None:
+        return None
+    return canonical_vibration_db(peak_band_rms_amp_g=peak_amp, floor_amp_g=floor_amp)
+
+
 def _aggregate_fft_spectrum(
     samples: list[dict[str, Any]],
     *,
@@ -66,7 +80,7 @@ def _aggregate_fft_spectrum(
         else:
             presence_ratio = len(amps) / max(1, n_samples)
             sorted_amps = sorted(amps)
-            p95 = percentile(sorted_amps, 0.95) if len(sorted_amps) >= 2 else sorted_amps[-1]
+            p95 = _safe_percentile(sorted_amps, 0.95)
             result[bin_center] = (presence_ratio**2) * (p95 / baseline_floor)
     return sorted(result.items())
 
@@ -214,11 +228,7 @@ def _spectrogram_from_peaks(
                 effective_amps.append(amp * snr_weight)
             if not effective_amps:
                 continue
-            p95_amp = (
-                percentile(sorted(effective_amps), 0.95)
-                if len(effective_amps) >= 2
-                else effective_amps[-1]
-            )
+            p95_amp = _safe_percentile(sorted(effective_amps), 0.95)
             presence_ratio = min(1.0, len(effective_amps) / max(1, x_sample_counts.get(x_key, 1)))
             val = (presence_ratio**2) * p95_amp
         else:
@@ -335,29 +345,13 @@ def _top_peaks_table_rows(
         floor_amps = sorted(bucket.get("floor_amps", []))
         count = len(amps)
         presence_ratio = min(1.0, count / max(1, n_samples))
-        median_amp = percentile(amps, 0.50) if count >= 2 else (amps[0] if amps else 0.0)
-        p95_amp = percentile(amps, 0.95) if count >= 2 else (amps[-1] if amps else 0.0)
+        median_amp = _safe_percentile(amps, 0.50)
+        p95_amp = _safe_percentile(amps, 0.95)
         max_amp = amps[-1] if amps else 0.0
-        floor_amp = (
-            percentile(floor_amps, 0.50)
-            if len(floor_amps) >= 2
-            else (floor_amps[0] if floor_amps else None)
-        )
-        max_intensity_db = (
-            canonical_vibration_db(peak_band_rms_amp_g=max_amp, floor_amp_g=floor_amp)
-            if floor_amp is not None
-            else None
-        )
-        median_intensity_db = (
-            canonical_vibration_db(peak_band_rms_amp_g=median_amp, floor_amp_g=floor_amp)
-            if floor_amp is not None
-            else None
-        )
-        p95_intensity_db = (
-            canonical_vibration_db(peak_band_rms_amp_g=p95_amp, floor_amp_g=floor_amp)
-            if floor_amp is not None
-            else None
-        )
+        floor_amp = _safe_percentile(floor_amps, 0.50) if floor_amps else None
+        max_intensity_db = _vibration_db_or_none(max_amp, floor_amp)
+        median_intensity_db = _vibration_db_or_none(median_amp, floor_amp)
+        p95_intensity_db = _vibration_db_or_none(p95_amp, floor_amp)
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
         spatial_uniformity: float | None = None
         if len(total_locations) >= 2:
@@ -383,14 +377,7 @@ def _top_peaks_table_rows(
         bucket["run_noise_baseline_db"] = _run_noise_baseline_db
         bucket["median_vs_run_noise_ratio"] = median_amp / baseline_floor
         bucket["p95_vs_run_noise_ratio"] = p95_amp / baseline_floor
-        bucket["strength_floor_db"] = (
-            canonical_vibration_db(
-                peak_band_rms_amp_g=floor_amp,
-                floor_amp_g=MEMS_NOISE_FLOOR_G,
-            )
-            if floor_amp is not None
-            else None
-        )
+        bucket["strength_floor_db"] = _vibration_db_or_none(floor_amp, MEMS_NOISE_FLOOR_G)
         bucket["strength_db"] = p95_intensity_db
         bucket["presence_ratio"] = presence_ratio
         bucket["burstiness"] = burstiness
@@ -596,14 +583,12 @@ def _plot_data(
         run_noise_baseline_g=run_noise_baseline_g,
     )
 
-    phase_segments_out = [
-        {"phase": seg.phase.value, "start_t_s": seg.start_t_s, "end_t_s": seg.end_t_s}
-        for seg in phase_segs
-    ]
-    phase_boundaries: list[dict[str, Any]] = [
-        {"phase": seg.phase.value, "t_s": seg.start_t_s, "end_t_s": seg.end_t_s}
-        for seg in phase_segs
-    ]
+    phase_segments_out: list[dict[str, Any]] = []
+    phase_boundaries: list[dict[str, Any]] = []
+    for seg in phase_segs:
+        pv, st, et = seg.phase.value, seg.start_t_s, seg.end_t_s
+        phase_segments_out.append({"phase": pv, "start_t_s": st, "end_t_s": et})
+        phase_boundaries.append({"phase": pv, "t_s": st, "end_t_s": et})
 
     return {
         "vib_magnitude": vib_mag_points,
