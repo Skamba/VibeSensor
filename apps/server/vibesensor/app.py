@@ -42,9 +42,16 @@ __all__ = ["RuntimeState", "create_app", "main"]
 
 LOGGER = logging.getLogger(__name__)
 
+_PACKAGE_DIR = Path(__file__).resolve().parent
+"""Resolved directory containing this package, cached at import time to avoid
+repeated filesystem resolution in ``create_app()``."""
+
 BACKUP_SERVER_PORT = 8000
 """Fallback HTTP port when the configured port is unavailable (e.g. EACCES
 on port 80).  Chosen to be a common unprivileged alternative."""
+
+_BIND_ERROR_NUMBERS: frozenset[int] = frozenset({errno.EACCES, errno.EADDRINUSE, 10013, 10048})
+"""OS errno values indicating a port-bind failure (includes Windows equivalents)."""
 
 
 def create_app(config_path: Path | None = None) -> FastAPI:
@@ -151,7 +158,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         # Prefer packaged static assets (baked into the wheel by CI), then
         # fall back to the legacy ``apps/server/public/`` directory used by
         # Docker builds and local development.
-        packaged_static = Path(__file__).resolve().parent / "static"
+        packaged_static = _PACKAGE_DIR / "static"
         legacy_public = SERVER_DIR / "public"
         if (packaged_static / "index.html").exists():
             static_dir = packaged_static
@@ -198,11 +205,10 @@ def main() -> None:
             log_level="info",
         )
     except OSError as exc:
-        bind_error_numbers = {errno.EACCES, errno.EADDRINUSE, 10013, 10048}
         if port != 80:
             LOGGER.warning("Failed to bind to configured port %d.", port, exc_info=True)
             raise
-        if exc.errno not in bind_error_numbers:
+        if exc.errno not in _BIND_ERROR_NUMBERS:
             LOGGER.warning("Port 80 startup failed with non-bind OSError.", exc_info=True)
             raise
         LOGGER.warning(
