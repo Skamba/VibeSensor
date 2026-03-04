@@ -5,12 +5,44 @@ Each test group validates one of the hate-list items to prevent regression.
 
 from __future__ import annotations
 
+import inspect
 import os
 import threading
 import time
 from unittest.mock import patch
 
 import pytest
+
+import vibesensor.analysis_settings as analysis_settings_mod
+import vibesensor.diagnostics_shared as diagnostics_shared_mod
+import vibesensor.locations as locations_mod
+import vibesensor.udp_control_tx as udp_control_tx_mod
+from vibesensor.analysis_settings import sanitize_settings
+from vibesensor.car_library import CAR_LIBRARY, get_models_for_brand_type, get_variants_for_model
+from vibesensor.diagnostics_shared import as_float_or_none
+from vibesensor.gps_speed import GPSSpeedMonitor
+from vibesensor.locations import is_wheel_location
+from vibesensor.registry import ClientRegistry
+from vibesensor.settings_store import PersistenceError, SettingsStore
+from vibesensor.udp_control_tx import UDPControlPlane
+from vibesensor.worker_pool import WorkerPool
+from vibesensor.ws_hub import _ws_debug_enabled
+
+
+def _make_store_with_sensor() -> SettingsStore:
+    """Create a SettingsStore with one pre-registered sensor."""
+    store = SettingsStore(db=None)
+    store.set_sensor("aabbccddeeff", {"name": "Test", "location": "trunk"})
+    return store
+
+
+def _make_gps_monitor() -> GPSSpeedMonitor:
+    return GPSSpeedMonitor(gps_enabled=True)
+
+
+def _make_control_plane() -> UDPControlPlane:
+    return UDPControlPlane(ClientRegistry(), "127.0.0.1", 0)
+
 
 # ---------------------------------------------------------------------------
 # Item 1: remove_sensor persistence rollback
@@ -19,10 +51,7 @@ import pytest
 
 class TestRemoveSensorRollback:
     def test_remove_sensor_rolls_back_on_persist_failure(self) -> None:
-        from vibesensor.settings_store import PersistenceError, SettingsStore
-
-        store = SettingsStore(db=None)
-        store.set_sensor("aabbccddeeff", {"name": "Test", "location": "trunk"})
+        store = _make_store_with_sensor()
         assert "aabbccddeeff" in store.get_sensors()
 
         # Simulate persistence failure
@@ -34,16 +63,11 @@ class TestRemoveSensorRollback:
         assert "aabbccddeeff" in store.get_sensors()
 
     def test_remove_sensor_succeeds_normally(self) -> None:
-        from vibesensor.settings_store import SettingsStore
-
-        store = SettingsStore(db=None)
-        store.set_sensor("aabbccddeeff", {"name": "Test", "location": "trunk"})
+        store = _make_store_with_sensor()
         assert store.remove_sensor("aabbccddeeff") is True
         assert "aabbccddeeff" not in store.get_sensors()
 
     def test_remove_sensor_nonexistent_returns_false(self) -> None:
-        from vibesensor.settings_store import SettingsStore
-
         store = SettingsStore(db=None)
         assert store.remove_sensor("aabbccddeeff") is False
 
@@ -55,19 +79,21 @@ class TestRemoveSensorRollback:
 
 class TestNonWheelTokensModuleLevel:
     def test_non_wheel_tokens_is_module_constant(self) -> None:
-        import vibesensor.locations as loc
+        assert hasattr(locations_mod, "_NON_WHEEL_TOKENS")
+        assert isinstance(locations_mod._NON_WHEEL_TOKENS, tuple)
+        assert "seat" in locations_mod._NON_WHEEL_TOKENS
+        assert "trunk" in locations_mod._NON_WHEEL_TOKENS
 
-        assert hasattr(loc, "_NON_WHEEL_TOKENS")
-        assert isinstance(loc._NON_WHEEL_TOKENS, tuple)
-        assert "seat" in loc._NON_WHEEL_TOKENS
-        assert "trunk" in loc._NON_WHEEL_TOKENS
-
-    def test_is_wheel_location_still_excludes_non_wheel(self) -> None:
-        from vibesensor.locations import is_wheel_location
-
-        assert is_wheel_location("driver_seat") is False
-        assert is_wheel_location("transmission") is False
-        assert is_wheel_location("front_left_wheel") is True
+    @pytest.mark.parametrize(
+        "location, expected",
+        [
+            ("driver_seat", False),
+            ("transmission", False),
+            ("front_left_wheel", True),
+        ],
+    )
+    def test_is_wheel_location_classification(self, location: str, expected: bool) -> None:
+        assert is_wheel_location(location) is expected
 
 
 # ---------------------------------------------------------------------------
@@ -77,18 +103,14 @@ class TestNonWheelTokensModuleLevel:
 
 class TestResolveSpeedAtomicSnapshot:
     def test_speed_mps_property_reads_from_snapshot(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        m = GPSSpeedMonitor(gps_enabled=True)
+        m = _make_gps_monitor()
         assert m.speed_mps is None
         m.speed_mps = 10.0
         assert m.speed_mps == 10.0
         assert m._speed_snapshot[0] == 10.0
 
     def test_speed_mps_setter_preserves_timestamp(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        m = GPSSpeedMonitor(gps_enabled=True)
+        m = _make_gps_monitor()
         ts = time.monotonic()
         m._speed_snapshot = (5.0, ts)
         m.speed_mps = 10.0
@@ -96,9 +118,7 @@ class TestResolveSpeedAtomicSnapshot:
         assert m._speed_snapshot == (10.0, ts)
 
     def test_resolve_speed_uses_snapshot_speed(self) -> None:
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        m = GPSSpeedMonitor(gps_enabled=True)
+        m = _make_gps_monitor()
         # Write speed and timestamp atomically
         m._speed_snapshot = (10.0, time.monotonic())
         r = m.resolve_speed()
@@ -107,9 +127,7 @@ class TestResolveSpeedAtomicSnapshot:
 
     def test_resolve_speed_snapshot_consistency(self) -> None:
         """Setting speed_mps and last_update_ts both update the snapshot."""
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        m = GPSSpeedMonitor(gps_enabled=True)
+        m = _make_gps_monitor()
         m.speed_mps = 15.0
         m.last_update_ts = time.monotonic()
         r = m.resolve_speed()
@@ -124,8 +142,6 @@ class TestResolveSpeedAtomicSnapshot:
 
 class TestCarLibraryCopies:
     def test_get_models_returns_copies(self) -> None:
-        from vibesensor.car_library import CAR_LIBRARY, get_models_for_brand_type
-
         if not CAR_LIBRARY:
             pytest.skip("No car library data loaded")
         brand = CAR_LIBRARY[0].get("brand")
@@ -140,17 +156,12 @@ class TestCarLibraryCopies:
             assert "MUTATED" not in entry
 
     def test_get_variants_returns_copies(self) -> None:
-        from vibesensor.car_library import CAR_LIBRARY, get_variants_for_model
-
         if not CAR_LIBRARY:
             pytest.skip("No car library data loaded")
         for entry in CAR_LIBRARY:
             variants = entry.get("variants") or []
             if variants:
-                brand = entry["brand"]
-                car_type = entry["type"]
-                model = entry["model"]
-                result = get_variants_for_model(brand, car_type, model)
+                result = get_variants_for_model(entry["brand"], entry["type"], entry["model"])
                 if result:
                     result[0]["MUTATED"] = True
                     # Original should NOT be mutated
@@ -166,20 +177,12 @@ class TestCarLibraryCopies:
 
 class TestCmdSeqLock:
     def test_udp_control_plane_has_cmd_seq_lock(self) -> None:
-        from vibesensor.registry import ClientRegistry
-        from vibesensor.udp_control_tx import UDPControlPlane
-
-        reg = ClientRegistry()
-        cp = UDPControlPlane(reg, "127.0.0.1", 0)
+        cp = _make_control_plane()
         assert hasattr(cp, "_cmd_seq_lock")
         assert isinstance(cp._cmd_seq_lock, type(threading.Lock()))
 
     def test_next_cmd_seq_increments_atomically(self) -> None:
-        from vibesensor.registry import ClientRegistry
-        from vibesensor.udp_control_tx import UDPControlPlane
-
-        reg = ClientRegistry()
-        cp = UDPControlPlane(reg, "127.0.0.1", 0)
+        cp = _make_control_plane()
         initial = cp._cmd_seq
         seq1 = cp._next_cmd_seq()
         seq2 = cp._next_cmd_seq()
@@ -194,13 +197,9 @@ class TestCmdSeqLock:
 
 class TestWSDebugLazy:
     def test_ws_debug_function_exists(self) -> None:
-        from vibesensor.ws_hub import _ws_debug_enabled
-
         assert callable(_ws_debug_enabled)
 
     def test_ws_debug_toggleable_at_runtime(self) -> None:
-        from vibesensor.ws_hub import _ws_debug_enabled
-
         # Ensure it's off
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("VIBESENSOR_WS_DEBUG", None)
@@ -223,11 +222,7 @@ class TestWSDebugLazy:
 
 class TestAnalysisSettingsOrder:
     def test_default_settings_defined_before_sanitize(self) -> None:
-        import inspect
-
-        import vibesensor.analysis_settings as mod
-
-        source = inspect.getsource(mod)
+        source = inspect.getsource(analysis_settings_mod)
         # DEFAULT_ANALYSIS_SETTINGS must appear before def sanitize_settings
         defaults_pos = source.index("DEFAULT_ANALYSIS_SETTINGS: dict")
         sanitize_pos = source.index("def sanitize_settings(")
@@ -236,8 +231,6 @@ class TestAnalysisSettingsOrder:
         )
 
     def test_sanitize_settings_works_with_defaults(self) -> None:
-        from vibesensor.analysis_settings import sanitize_settings
-
         result = sanitize_settings({"tire_width_mm": 225.0})
         assert "tire_width_mm" in result
         assert result["tire_width_mm"] == 225.0
@@ -250,8 +243,6 @@ class TestAnalysisSettingsOrder:
 
 class TestWorkerPoolAliveProtection:
     def test_submit_checks_alive_under_lock(self) -> None:
-        from vibesensor.worker_pool import WorkerPool
-
         pool = WorkerPool(max_workers=1)
         pool.shutdown()
 
@@ -259,8 +250,6 @@ class TestWorkerPoolAliveProtection:
             pool.submit(lambda: None)
 
     def test_shutdown_sets_alive_under_lock(self) -> None:
-        from vibesensor.worker_pool import WorkerPool
-
         pool = WorkerPool(max_workers=1)
         assert pool._alive is True
         pool.shutdown()
@@ -275,19 +264,13 @@ class TestWorkerPoolAliveProtection:
 class TestAsFloatOrNoneImport:
     def test_diagnostics_shared_uses_full_name(self) -> None:
         """diagnostics_shared should import as_float_or_none, not _as_float."""
-        import inspect
-
-        import vibesensor.diagnostics_shared as ds
-
-        source = inspect.getsource(ds)
+        source = inspect.getsource(diagnostics_shared_mod)
         assert "as _as_float" not in source, (
             "diagnostics_shared should not alias as_float_or_none to _as_float"
         )
         assert "as_float_or_none" in source
 
     def test_as_float_or_none_accessible_from_diagnostics_shared(self) -> None:
-        from vibesensor.diagnostics_shared import as_float_or_none
-
         assert as_float_or_none(3.14) == 3.14
         assert as_float_or_none(None) is None
 
@@ -299,12 +282,8 @@ class TestAsFloatOrNoneImport:
 
 class TestUdpControlTxAll:
     def test_has_all_export(self) -> None:
-        import vibesensor.udp_control_tx as mod
-
-        assert hasattr(mod, "__all__")
-        assert "UDPControlPlane" in mod.__all__
+        assert hasattr(udp_control_tx_mod, "__all__")
+        assert "UDPControlPlane" in udp_control_tx_mod.__all__
 
     def test_internal_class_not_in_all(self) -> None:
-        import vibesensor.udp_control_tx as mod
-
-        assert "ControlDatagramProtocol" not in mod.__all__
+        assert "ControlDatagramProtocol" not in udp_control_tx_mod.__all__
