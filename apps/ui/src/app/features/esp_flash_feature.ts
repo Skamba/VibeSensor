@@ -24,6 +24,12 @@ export interface EspFlashFeature {
 const POLL_IDLE_MS = 4_000;
 const POLL_ACTIVE_MS = 1_000;
 
+const STATE_TO_VARIANT: Readonly<Record<string, string>> = {
+  success: "ok",
+  running: "warn",
+  failed: "bad",
+};
+
 export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature {
   const { els, t, escapeHtml } = ctx;
   let pollTimer: ReturnType<typeof setTimeout> | null = null;
@@ -49,7 +55,7 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       const stateLabel = t(`settings.esp_flash.state.${state}`);
       const extra = status.error ? ` — ${status.error}` : "";
       els.espFlashStatusBanner.textContent = `${stateLabel}${extra}`;
-      const variant = state === "success" ? "ok" : state === "running" ? "warn" : state === "failed" ? "bad" : "muted";
+      const variant = STATE_TO_VARIANT[state] || "muted";
       els.espFlashStatusBanner.className = `pill pill--${variant}`;
     }
     if (els.espFlashStartBtn) els.espFlashStartBtn.disabled = status.state === "running";

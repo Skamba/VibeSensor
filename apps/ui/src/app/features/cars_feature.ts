@@ -50,7 +50,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   };
   const WIZARD_STEP_COUNT = 5;
 
-  function openWizard(): void {
+  function resetWizardState(): void {
     wizState.step = 0;
     wizState.brand = "";
     wizState.carType = "";
@@ -59,6 +59,10 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     wizState.selectedVariant = null;
     wizState.selectedGearbox = null;
     wizState.selectedTire = null;
+  }
+
+  function openWizard(): void {
+    resetWizardState();
     if (els.addCarWizard) els.addCarWizard.hidden = false;
     loadWizardStep();
   }

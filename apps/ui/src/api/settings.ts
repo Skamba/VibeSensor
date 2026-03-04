@@ -9,6 +9,8 @@ import type {
   UpdateStatusPayload,
 } from "./types";
 
+const JSON_HEADERS: HeadersInit = { "Content-Type": "application/json" };
+
 export async function getSettingsLanguage(): Promise<{ language: string }> {
   return apiJson("/api/settings/language");
 }
@@ -16,7 +18,7 @@ export async function getSettingsLanguage(): Promise<{ language: string }> {
 export async function setSettingsLanguage(language: string): Promise<{ language: string }> {
   return apiJson("/api/settings/language", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify({ language }),
   });
 }
@@ -28,7 +30,7 @@ export async function getSettingsSpeedUnit(): Promise<{ speedUnit: string }> {
 export async function setSettingsSpeedUnit(speedUnit: string): Promise<{ speedUnit: string }> {
   return apiJson("/api/settings/speed-unit", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify({ speedUnit }),
   });
 }
@@ -40,7 +42,7 @@ export async function getAnalysisSettings(): Promise<Record<string, number>> {
 export async function setAnalysisSettings(payload: Record<string, number>): Promise<Record<string, number>> {
   return apiJson("/api/analysis-settings", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify(payload),
   });
 }
@@ -52,7 +54,7 @@ export async function getSettingsCars(): Promise<CarsPayload> {
 export async function addSettingsCar(car: Record<string, unknown>): Promise<CarsPayload> {
   return apiJson("/api/settings/cars", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify(car),
   });
 }
@@ -60,7 +62,7 @@ export async function addSettingsCar(car: Record<string, unknown>): Promise<Cars
 export async function updateSettingsCar(carId: string, car: Record<string, unknown>): Promise<CarsPayload> {
   return apiJson(`/api/settings/cars/${encodeURIComponent(carId)}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify(car),
   });
 }
@@ -74,7 +76,7 @@ export async function deleteSettingsCar(carId: string): Promise<CarsPayload> {
 export async function setActiveSettingsCar(carId: string): Promise<CarsPayload> {
   return apiJson("/api/settings/cars/active", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify({ carId }),
   });
 }
@@ -86,7 +88,7 @@ export async function getSettingsSpeedSource(): Promise<SpeedSourcePayload> {
 export async function updateSettingsSpeedSource(data: Record<string, unknown>): Promise<SpeedSourcePayload> {
   return apiJson("/api/settings/speed-source", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify(data),
   });
 }
@@ -102,7 +104,7 @@ export async function getSettingsSensors(): Promise<unknown> {
 export async function updateSettingsSensor(mac: string, data: Record<string, unknown>): Promise<unknown> {
   return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify(data),
   });
 }
@@ -120,7 +122,7 @@ export async function getUpdateStatus(): Promise<UpdateStatusPayload> {
 export async function startUpdate(ssid: string, password: string): Promise<{ status: string; ssid: string }> {
   return apiJson("/api/settings/update/start", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify({ ssid, password }),
   });
 }
@@ -138,7 +140,7 @@ export async function getEspFlashPorts(): Promise<{ ports: EspSerialPortPayload[
 export async function startEspFlash(port: string | null, auto_detect: boolean): Promise<{ status: string; job_id: number }> {
   return apiJson("/api/settings/esp-flash/start", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: JSON_HEADERS,
     body: JSON.stringify({ port, auto_detect }),
   });
 }

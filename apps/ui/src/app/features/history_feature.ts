@@ -32,6 +32,17 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   const { state, els, t, escapeHtml, fmt, fmtTs, formatInt } = ctx;
   const DOWNLOAD_REVOKE_DELAY_MS = 1000;
 
+  const HEATMAP_POSITIONS = [
+    { key: "front-left wheel", top: 23, left: 20 },
+    { key: "front-right wheel", top: 23, left: 80 },
+    { key: "rear-left wheel", top: 76, left: 20 },
+    { key: "rear-right wheel", top: 76, left: 80 },
+    { key: "engine bay", top: 30, left: 50 },
+    { key: "driveshaft tunnel", top: 51, left: 50 },
+    { key: "driver seat", top: 43, left: 40 },
+    { key: "trunk", top: 86, left: 50 },
+  ];
+
   function ensureRunDetail(runId: string) {
     if (!state.runDetailsById[runId]) {
       state.runDetailsById[runId] = {
@@ -86,16 +97,6 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   function renderPreviewHeatmap(summary: Record<string, any>): string {
-    const positions = [
-      { key: "front-left wheel", top: 23, left: 20 },
-      { key: "front-right wheel", top: 23, left: 80 },
-      { key: "rear-left wheel", top: 76, left: 20 },
-      { key: "rear-right wheel", top: 76, left: 80 },
-      { key: "engine bay", top: 30, left: 50 },
-      { key: "driveshaft tunnel", top: 51, left: 50 },
-      { key: "driver seat", top: 43, left: 40 },
-      { key: "trunk", top: 86, left: 50 },
-    ];
     const statsRows = Array.isArray(summary?.sensor_intensity_by_location)
       ? summary.sensor_intensity_by_location
       : [];
@@ -110,9 +111,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     const values = Object.values(metricByLocation).filter((value) => typeof value === "number");
     const min = values.length ? Math.min(...values) : null;
     const max = values.length ? Math.max(...values) : null;
-    const knownPositionKeys = new Set(positions.map((point) => point.key));
+    const knownPositionKeys = new Set(HEATMAP_POSITIONS.map((point) => point.key));
     const unmappedLocationKeys = Object.keys(metricByLocation).filter((key) => !knownPositionKeys.has(key));
-    const dots = positions
+    const dots = HEATMAP_POSITIONS
       .map((point) => {
         const value = metricByLocation[point.key];
         const hasValue = typeof value === "number" && Number.isFinite(value);
