@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-from io import BytesIO
 from pathlib import Path
 
 import pytest
 from _paths import SERVER_ROOT
-from pypdf import PdfReader
+from _report_helpers import RUN_END, write_jsonl
+from _test_helpers import extract_pdf_text
 
 from vibesensor.analysis import confidence_label, map_summary, select_top_causes, summarize_log
 from vibesensor.constants import KMH_TO_MPS
@@ -16,13 +16,6 @@ from vibesensor.report.report_data import PatternEvidence, ReportTemplateData
 _I18N_JSON = SERVER_ROOT / "data" / "report_i18n.json"
 
 # -- Fixtures reused from test_reports.py pattern ----------------------------
-
-
-def _write_jsonl(path: Path, records: list[dict]) -> None:
-    path.write_text(
-        "\n".join(json.dumps(record, separators=(",", ":")) for record in records) + "\n",
-        encoding="utf-8",
-    )
 
 
 def _run_metadata(run_id: str = "run-01", **kwargs) -> dict:
@@ -100,8 +93,8 @@ def _make_run_jsonl(tmp_path: Path, *, tire_circumference_m: float = 2.20) -> Pa
         records.append(
             _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
     return run_path
 
 
@@ -168,30 +161,24 @@ def test_select_top_causes_excludes_reference_findings() -> None:
     assert causes == []
 
 
-def test_select_top_causes_excludes_informational_transient_findings() -> None:
+@pytest.mark.parametrize(
+    ("confidence", "freq_hz"),
+    [
+        pytest.param(0.22, "92.0 Hz", id="low_confidence"),
+        pytest.param(0.99, "120.0 Hz", id="high_confidence"),
+    ],
+)
+def test_select_top_causes_excludes_informational_transient_findings(
+    confidence: float, freq_hz: str,
+) -> None:
     findings = [
         {
             "finding_id": "F007",
             "severity": "info",
             "suspected_source": "transient_impact",
             "peak_classification": "transient",
-            "confidence_0_to_1": 0.22,
-            "frequency_hz_or_order": "92.0 Hz",
-        }
-    ]
-    causes = select_top_causes(findings)
-    assert causes == []
-
-
-def test_select_top_causes_ignores_info_even_with_high_confidence() -> None:
-    findings = [
-        {
-            "finding_id": "F008",
-            "severity": "info",
-            "suspected_source": "transient_impact",
-            "peak_classification": "transient",
-            "confidence_0_to_1": 0.99,
-            "frequency_hz_or_order": "120.0 Hz",
+            "confidence_0_to_1": confidence,
+            "frequency_hz_or_order": freq_hz,
         }
     ]
     causes = select_top_causes(findings)
@@ -313,16 +300,19 @@ def test_confidence_label_negligible_strength_caps_high_to_medium() -> None:
     assert tone == "warn"
 
 
-def test_confidence_label_negligible_does_not_affect_medium() -> None:
-    """Medium confidence + negligible strength stays medium (no over-cap)."""
-    label_key, _, _ = confidence_label(0.55, strength_band_key="negligible")
-    assert label_key == "CONFIDENCE_MEDIUM"
-
-
-def test_confidence_label_negligible_does_not_affect_low() -> None:
-    """Low confidence + negligible strength stays low."""
-    label_key, _, _ = confidence_label(0.20, strength_band_key="negligible")
-    assert label_key == "CONFIDENCE_LOW"
+@pytest.mark.parametrize(
+    ("value", "expected_key"),
+    [
+        pytest.param(0.55, "CONFIDENCE_MEDIUM", id="medium_stays_medium"),
+        pytest.param(0.20, "CONFIDENCE_LOW", id="low_stays_low"),
+    ],
+)
+def test_confidence_label_negligible_does_not_affect_below_high(
+    value: float, expected_key: str,
+) -> None:
+    """Negligible strength does not alter labels already below high."""
+    label_key, _, _ = confidence_label(value, strength_band_key="negligible")
+    assert label_key == expected_key
 
 
 def test_confidence_label_non_negligible_allows_high() -> None:
@@ -352,51 +342,28 @@ _PEAK_TABLE_COLUMN_KEYS = [
 ]
 
 
-def _extract_pdf_text(pdf_bytes: bytes) -> str:
-    reader = PdfReader(BytesIO(pdf_bytes))
-    return "\n".join((page.extract_text() or "") for page in reader.pages)
-
-
-def test_pdf_section_headings_present(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    ("lang", "i18n_keys"),
+    [
+        pytest.param("en", _SECTION_HEADING_KEYS, id="en_section_headings"),
+        pytest.param("nl", _SECTION_HEADING_KEYS, id="nl_section_headings"),
+        pytest.param("en", _PEAK_TABLE_COLUMN_KEYS, id="en_peak_table_columns"),
+    ],
+)
+def test_pdf_contains_i18n_labels(
+    tmp_path: Path, lang: str, i18n_keys: list[str],
+) -> None:
     run_path = _make_run_jsonl(tmp_path)
-    summary = summarize_log(run_path, lang="en")
+    summary = summarize_log(run_path, lang=lang)
     pdf = build_report_pdf(map_summary(summary))
-    text = _extract_pdf_text(pdf)
+    text = extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     missing = []
-    for key in _SECTION_HEADING_KEYS:
-        heading = i18n[key]["en"]
-        if heading not in text:
-            missing.append(f"{key} ({heading!r})")
-    assert missing == [], f"Missing English headings in PDF: {missing}"
-
-
-def test_pdf_nl_contains_dutch_headings(tmp_path: Path) -> None:
-    run_path = _make_run_jsonl(tmp_path)
-    summary = summarize_log(run_path, lang="nl")
-    pdf = build_report_pdf(map_summary(summary))
-    text = _extract_pdf_text(pdf)
-    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
-    missing = []
-    for key in _SECTION_HEADING_KEYS:
-        heading = i18n[key]["nl"]
-        if heading not in text:
-            missing.append(f"{key} ({heading!r})")
-    assert missing == [], f"Missing Dutch headings in PDF: {missing}"
-
-
-def test_pdf_peaks_table_includes_peak_amp_and_strength_columns(tmp_path: Path) -> None:
-    run_path = _make_run_jsonl(tmp_path)
-    summary = summarize_log(run_path, lang="en")
-    pdf = build_report_pdf(map_summary(summary))
-    text = _extract_pdf_text(pdf)
-    i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
-    missing = []
-    for key in _PEAK_TABLE_COLUMN_KEYS:
-        label = i18n[key]["en"]
+    for key in i18n_keys:
+        label = i18n[key][lang]
         if label not in text:
             missing.append(f"{key} ({label!r})")
-    assert missing == [], f"Missing peak table columns in PDF: {missing}"
+    assert missing == [], f"Missing {lang} labels in PDF: {missing}"
 
 
 def test_pdf_additional_observations_heading_for_transient_findings() -> None:
@@ -424,6 +391,6 @@ def test_pdf_additional_observations_heading_for_transient_findings() -> None:
     )
 
     pdf = build_report_pdf(data)
-    text = _extract_pdf_text(pdf)
+    text = extract_pdf_text(pdf)
     i18n = json.loads(_I18N_JSON.read_text(encoding="utf-8"))
     assert i18n["ADDITIONAL_OBSERVATIONS"]["en"] in text
