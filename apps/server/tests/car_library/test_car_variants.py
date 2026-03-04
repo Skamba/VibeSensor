@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from vibesensor.car_library import (
     CAR_LIBRARY,
     get_models_for_brand_type,
@@ -11,6 +13,11 @@ from vibesensor.car_library import (
     resolve_variant,
 )
 from vibesensor.domain_models import CarConfig
+
+def _variant_label(entry: dict, variant: dict) -> str:
+    """Short label for assertion messages: ``'3 Series (G20) / 320i'``."""
+    return f"{entry['model']} / {variant.get('name', '?')}"
+
 
 # ---------------------------------------------------------------------------
 # Car library JSON structure tests
@@ -29,7 +36,7 @@ def test_every_variant_has_required_fields() -> None:
     """Each variant must have name and drivetrain."""
     for entry in CAR_LIBRARY:
         for v in entry["variants"]:
-            label = f"{entry['model']} / {v.get('name', '?')}"
+            label = _variant_label(entry, v)
             assert "name" in v, f"{label} missing name"
             assert isinstance(v["name"], str), f"{label} name not str"
             assert len(v["name"]) > 0, f"{label} empty name"
@@ -55,7 +62,7 @@ def test_variant_gearbox_overrides_valid() -> None:
             gbs = v.get("gearboxes")
             if not gbs:
                 continue
-            label = f"{entry['model']} / {v['name']}"
+            label = _variant_label(entry, v)
             assert isinstance(gbs, list), f"{label} gearboxes not list"
             assert len(gbs) > 0, f"{label} gearboxes empty"
             for gb in gbs:
@@ -68,16 +75,17 @@ def test_variant_tire_overrides_valid() -> None:
     """Variant tire overrides must be within reasonable bounds."""
     for entry in CAR_LIBRARY:
         for v in entry["variants"]:
+            label = _variant_label(entry, v)
             if "tire_width_mm" in v and v["tire_width_mm"] is not None:
                 assert 175 <= v["tire_width_mm"] <= 335, (
-                    f"{entry['model']} / {v['name']} tire width out of range"
+                    f"{label} tire width out of range"
                 )
             if "tire_aspect_pct" in v and v["tire_aspect_pct"] is not None:
                 assert 20 <= v["tire_aspect_pct"] <= 65, (
-                    f"{entry['model']} / {v['name']} aspect out of range"
+                    f"{label} aspect out of range"
                 )
             if "rim_in" in v and v["rim_in"] is not None:
-                assert 15 <= v["rim_in"] <= 22, f"{entry['model']} / {v['name']} rim out of range"
+                assert 15 <= v["rim_in"] <= 22, f"{label} rim out of range"
 
 
 # ---------------------------------------------------------------------------
@@ -169,11 +177,8 @@ def test_car_library_variant_entry_requires_drivetrain() -> None:
     assert v.drivetrain == "RWD"
 
     # Missing drivetrain
-    try:
+    with pytest.raises(ValidationError):
         CarLibraryVariantEntry(name="320i")  # type: ignore[call-arg]
-        raise AssertionError("Should have raised")
-    except ValidationError:
-        pass
 
 
 # ---------------------------------------------------------------------------
