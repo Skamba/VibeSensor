@@ -9,12 +9,15 @@ from ..helpers import (
     _weighted_percentile,
 )
 
+_SENTINEL = object()
+
 
 def _phase_to_str(phase: object) -> str | None:
     """Return the string value for a phase object (DrivingPhase or str)."""
     if phase is None:
         return None
-    return phase.value if hasattr(phase, "value") else str(phase)
+    val = getattr(phase, "value", _SENTINEL)
+    return val if val is not _SENTINEL else str(phase)
 
 
 def _speed_profile_from_points(
@@ -24,19 +27,32 @@ def _speed_profile_from_points(
     phase_weights: list[float] | None = None,
 ) -> tuple[float | None, tuple[float, float] | None, str | None]:
     allowed = set(allowed_speed_bins) if allowed_speed_bins is not None else None
-    indexed: list[tuple[float, float, float]] = []
+
+    # Local-bind helpers used in the hot loop
+    _bin_label = _speed_bin_label
+    _float_or_none = _as_float
+
+    # Single pass: build valid pairs, effective_amps, and speeds lists together,
+    # avoiding an intermediate 'indexed' list and redundant re-iterations.
+    valid: list[tuple[float, float]] = []
+    effective_amps: list[float] = []
+    speeds: list[float] = []
+    has_weights = phase_weights is not None
+    n_weights = len(phase_weights) if has_weights else 0
+
     for idx, (speed, amp) in enumerate(points):
         if speed <= 0 or amp <= 0:
             continue
-        if allowed is not None and _speed_bin_label(speed) not in allowed:
+        if allowed is not None and _bin_label(speed) not in allowed:
             continue
         phase_weight = 1.0
-        if phase_weights is not None and idx < len(phase_weights):
-            parsed_weight = _as_float(phase_weights[idx])
+        if has_weights and idx < n_weights:
+            parsed_weight = _float_or_none(phase_weights[idx])  # type: ignore[index]
             if parsed_weight is not None and parsed_weight > 0:
                 phase_weight = parsed_weight
-        indexed.append((speed, amp, phase_weight))
-    valid = [(speed, amp) for speed, amp, _phase_weight in indexed]
+        valid.append((speed, amp))
+        effective_amps.append(amp * phase_weight)
+        speeds.append(speed)
 
     if not valid:
         return None, None, None
@@ -50,13 +66,8 @@ def _speed_profile_from_points(
         low, high = high, low
     speed_window_kmh = (low, high)
 
-    # Apply phase weights: multiply amplitude by phase weight so CRUISE
-    # samples contribute more and ACCELERATION/ramp samples contribute less
-    # to speed-band selection.
-    effective_amps = [amp * phase_weight for _speed, amp, phase_weight in indexed]
-
     low_speed, high_speed = _amplitude_weighted_speed_window(
-        [speed_kmh for speed_kmh, _amp in valid],
+        speeds,
         effective_amps,
     )
     strongest_speed_band = (
