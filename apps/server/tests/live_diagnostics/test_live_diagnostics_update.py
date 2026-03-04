@@ -7,6 +7,8 @@ multiple ticks.
 
 from __future__ import annotations
 
+import pytest
+
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
@@ -14,6 +16,8 @@ from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+_DEFAULT_CLIENTS = [("c1", "front")]
 
 
 def _make_spectra(
@@ -60,6 +64,60 @@ def _make_clients(
     return [{"id": cid, "name": name, "location": loc.get(cid, "")} for cid, name in ids_names]
 
 
+def _matrix_total(snap: dict, field: str) -> int | float:
+    """Sum a numeric *field* across all matrix cells."""
+    return sum(cell[field] for cols in snap["matrix"].values() for cell in cols.values())
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture()
+def diag_env(monkeypatch):
+    """LiveDiagnosticsEngine with a controllable monotonic clock.
+
+    Attributes:
+        engine: the engine instance
+        t: mutable time dict – advance via ``t["now"] += dt``
+        tick(n, ...): run *n* update() calls, advancing *dt* each time
+    """
+    t = {"now": 10.0}
+    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
+    engine = LiveDiagnosticsEngine()
+
+    def tick(
+        n: int,
+        *,
+        dt: float = 1.0,
+        speed_mps: float = 27.8,
+        clients=None,
+        spectra=None,
+        settings=None,
+    ):
+        """Run *n* update ticks, return the last snapshot."""
+        snap = None
+        for _ in range(n):
+            t["now"] += dt
+            snap = engine.update(
+                speed_mps=speed_mps,
+                clients=clients if clients is not None else [],
+                spectra=spectra,
+                settings=settings or {},
+            )
+        return snap
+
+    class _Env:
+        pass
+
+    env = _Env()
+    env.t = t  # type: ignore[attr-defined]
+    env.engine = engine  # type: ignore[attr-defined]
+    env.tick = tick  # type: ignore[attr-defined]
+    return env
+
+
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
@@ -68,44 +126,23 @@ def _make_clients(
 class TestUpdateSnapshotContract:
     """Verify that update() returns the expected snapshot shape."""
 
-    def test_snapshot_keys_present(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
+    def test_snapshot_keys_present(self, diag_env) -> None:
         spectra = _make_spectra(["c1"])
-        clients = _make_clients([("c1", "front")])
+        clients = _make_clients(_DEFAULT_CLIENTS)
 
-        snap = engine.update(
-            speed_mps=20.0,
-            clients=clients,
-            spectra=spectra,
-            settings={},
+        snap = diag_env.engine.update(
+            speed_mps=20.0, clients=clients, spectra=spectra, settings={},
         )
 
         required_keys = {
-            "diagnostics_sequence",
-            "matrix",
-            "events",
-            "strength_bands",
-            "levels",
-            "findings",
-            "top_finding",
-            "driving_phase",
-            "error",
+            "diagnostics_sequence", "matrix", "events", "strength_bands",
+            "levels", "findings", "top_finding", "driving_phase", "error",
         }
         assert required_keys.issubset(snap.keys()), f"Missing: {required_keys - snap.keys()}"
 
-    def test_matrix_has_expected_sources_and_severities(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        snap = engine.update(
-            speed_mps=None,
-            clients=[],
-            spectra=None,
-            settings={},
+    def test_matrix_has_expected_sources_and_severities(self, diag_env) -> None:
+        snap = diag_env.engine.update(
+            speed_mps=None, clients=[], spectra=None, settings={},
         )
 
         expected_sources = {"engine", "driveshaft", "wheel", "other"}
@@ -118,73 +155,47 @@ class TestUpdateSnapshotContract:
                 assert "seconds" in cell
                 assert "contributors" in cell
 
-    def test_levels_has_expected_sub_dicts(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        snap = engine.update(
-            speed_mps=20.0,
-            clients=[],
-            spectra=None,
-            settings={},
+    def test_levels_has_expected_sub_dicts(self, diag_env) -> None:
+        snap = diag_env.engine.update(
+            speed_mps=20.0, clients=[], spectra=None, settings={},
         )
 
         assert "levels" in snap
-        assert "by_source" in snap["levels"]
-        assert "by_sensor" in snap["levels"]
-        assert "by_location" in snap["levels"]
+        for key in ("by_source", "by_sensor", "by_location"):
+            assert key in snap["levels"]
 
 
 class TestSingleSensorEventEmission:
     """Verify that a single sensor with a strong peak produces events after enough ticks."""
 
-    def test_events_emitted_after_persistence(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
+    def test_events_emitted_after_persistence(self, diag_env) -> None:
         spectra = _make_spectra(["c1"], peak_amp=150.0)
-        clients = _make_clients([("c1", "front")])
+        clients = _make_clients(_DEFAULT_CLIENTS)
 
-        # Several ticks to pass persistence threshold
         all_events: list[dict] = []
         for _ in range(10):
-            t["now"] += 1.0
-            snap = engine.update(
-                speed_mps=27.8,
-                clients=clients,
-                spectra=spectra,
-                settings={},
+            diag_env.t["now"] += 1.0
+            snap = diag_env.engine.update(
+                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
             )
             all_events.extend(snap.get("events", []))
 
         assert len(all_events) > 0, "Expected at least one event after persistence ticks"
         event = all_events[0]
-        assert "event_id" in event
-        assert "kind" in event
+        for key in ("event_id", "kind", "class_key", "peak_hz",
+                     "severity_key", "vibration_strength_db"):
+            assert key in event
         assert event["kind"] == "single"
-        assert "class_key" in event
-        assert "peak_hz" in event
-        assert "severity_key" in event
-        assert "vibration_strength_db" in event
 
-    def test_sequence_increments_per_tick(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
+    def test_sequence_increments_per_tick(self, diag_env) -> None:
         spectra = _make_spectra(["c1"])
-        clients = _make_clients([("c1", "front")])
+        clients = _make_clients(_DEFAULT_CLIENTS)
 
         seqs = []
         for _ in range(5):
-            t["now"] += 0.5
-            snap = engine.update(
-                speed_mps=20.0,
-                clients=clients,
-                spectra=spectra,
-                settings={},
+            diag_env.t["now"] += 0.5
+            snap = diag_env.engine.update(
+                speed_mps=20.0, clients=clients, spectra=spectra, settings={},
             )
             seqs.append(snap["diagnostics_sequence"])
 
@@ -194,38 +205,19 @@ class TestSingleSensorEventEmission:
 class TestTrackerDecay:
     """Verify that trackers decay to silence when spectra stop carrying peaks."""
 
-    def test_tracker_decays_after_peak_disappears(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
+    def test_tracker_decays_after_peak_disappears(self, diag_env) -> None:
         strong_spectra = _make_spectra(["c1"], peak_amp=150.0)
         weak_spectra = _make_spectra(["c1"], peak_amp=0.01, background=0.8)
-        clients = _make_clients([("c1", "front")])
+        clients = _make_clients(_DEFAULT_CLIENTS)
 
         # Build up tracker state with strong peaks
-        for _ in range(8):
-            t["now"] += 1.0
-            engine.update(
-                speed_mps=27.8,
-                clients=clients,
-                spectra=strong_spectra,
-                settings={},
-            )
+        diag_env.tick(8, clients=clients, spectra=strong_spectra)
 
         # Now send weak spectra for many ticks — tracker should eventually decay
-        for _ in range(30):
-            t["now"] += 1.0
-            snap = engine.update(
-                speed_mps=27.8,
-                clients=clients,
-                spectra=weak_spectra,
-                settings={},
-            )
+        snap = diag_env.tick(30, clients=clients, spectra=weak_spectra)
 
         # After enough silence ticks, the by_source levels should be empty or nil
         by_source = snap["levels"]["by_source"]
-        # Either empty or all have decayed to None bucket
         for source_state in by_source.values():
             if source_state.get("bucket_key") is not None:
                 # If still present, strength should be very low
@@ -235,123 +227,60 @@ class TestTrackerDecay:
 class TestLightTickBehavior:
     """Verify correct behavior when spectra=None (light ticks)."""
 
-    def test_light_tick_accumulates_dwell_seconds(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
+    def _build_state(self, diag_env, n=6):
+        """Feed *n* heavy ticks and return the clients list."""
         spectra = _make_spectra(["c1"], peak_amp=150.0)
-        clients = _make_clients([("c1", "front")])
+        clients = _make_clients(_DEFAULT_CLIENTS)
+        diag_env.tick(n, clients=clients, spectra=spectra)
+        return clients
 
-        # Build up state with heavy ticks
-        for _ in range(6):
-            t["now"] += 1.0
-            engine.update(
-                speed_mps=27.8,
-                clients=clients,
-                spectra=spectra,
-                settings={},
-            )
-
-        snap_before = engine.snapshot()
-        total_sec_before = sum(
-            cell["seconds"] for cols in snap_before["matrix"].values() for cell in cols.values()
-        )
+    def test_light_tick_accumulates_dwell_seconds(self, diag_env) -> None:
+        clients = self._build_state(diag_env)
+        total_before = _matrix_total(diag_env.engine.snapshot(), "seconds")
 
         # Light tick with dt=2 seconds — should still accumulate dwell
-        t["now"] += 2.0
-        snap_after = engine.update(
-            speed_mps=27.8,
-            clients=clients,
-            spectra=None,
-            settings={},
+        diag_env.t["now"] += 2.0
+        snap_after = diag_env.engine.update(
+            speed_mps=27.8, clients=clients, spectra=None, settings={},
         )
-        total_sec_after = sum(
-            cell["seconds"] for cols in snap_after["matrix"].values() for cell in cols.values()
-        )
-        # The total may grow if any source has an active bucket
-        assert total_sec_after >= total_sec_before
+        assert _matrix_total(snap_after, "seconds") >= total_before
 
-    def test_light_tick_does_not_clear_matrix_counts(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        spectra = _make_spectra(["c1"], peak_amp=150.0)
-        clients = _make_clients([("c1", "front")])
-
-        # Build up state
-        for _ in range(8):
-            t["now"] += 1.0
-            engine.update(
-                speed_mps=27.8,
-                clients=clients,
-                spectra=spectra,
-                settings={},
-            )
-
-        total_counts_before = sum(
-            cell["count"] for cols in engine.snapshot()["matrix"].values() for cell in cols.values()
-        )
+    def test_light_tick_does_not_clear_matrix_counts(self, diag_env) -> None:
+        clients = self._build_state(diag_env, n=8)
+        total_before = _matrix_total(diag_env.engine.snapshot(), "count")
 
         # Light tick
-        t["now"] += 0.1
-        snap = engine.update(
-            speed_mps=27.8,
-            clients=clients,
-            spectra=None,
-            settings={},
+        diag_env.t["now"] += 0.1
+        snap = diag_env.engine.update(
+            speed_mps=27.8, clients=clients, spectra=None, settings={},
         )
-        total_counts_after = sum(
-            cell["count"] for cols in snap["matrix"].values() for cell in cols.values()
-        )
-        assert total_counts_after >= total_counts_before
+        assert _matrix_total(snap, "count") >= total_before
 
 
 class TestMalformedSpectra:
     """Verify that malformed spectra payloads are handled gracefully."""
 
-    def test_missing_clients_key_returns_snapshot_without_crash(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        # spectra without 'clients' key — should not crash
-        snap = engine.update(
+    @pytest.mark.parametrize(
+        "spectra_payload",
+        [
+            pytest.param({"freq": [1.0]}, id="missing-clients-key"),
+            pytest.param({"freq": [1.0], "clients": "not_a_dict"}, id="clients-not-dict"),
+            pytest.param(
+                {
+                    "freq": [1.0],
+                    "clients": {"c1": {"freq": [1.0], "x": [0.1], "y": [0.1], "z": [0.1]}},
+                },
+                id="missing-strength-metrics",
+            ),
+        ],
+    )
+    def test_malformed_spectra_returns_snapshot_without_crash(
+        self, diag_env, spectra_payload,
+    ) -> None:
+        snap = diag_env.engine.update(
             speed_mps=20.0,
             clients=[{"id": "c1", "name": "front"}],
-            spectra={"freq": [1.0]},
-            settings={},
-        )
-        assert "matrix" in snap
-        assert snap["error"] is None
-
-    def test_clients_not_dict_returns_snapshot_without_crash(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        snap = engine.update(
-            speed_mps=20.0,
-            clients=[{"id": "c1", "name": "front"}],
-            spectra={"freq": [1.0], "clients": "not_a_dict"},
-            settings={},
-        )
-        assert "matrix" in snap
-        assert snap["error"] is None
-
-    def test_missing_strength_metrics_returns_snapshot_without_crash(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        snap = engine.update(
-            speed_mps=20.0,
-            clients=[{"id": "c1", "name": "front"}],
-            spectra={
-                "freq": [1.0],
-                "clients": {"c1": {"freq": [1.0], "x": [0.1], "y": [0.1], "z": [0.1]}},
-            },
+            spectra=spectra_payload,
             settings={},
         )
         assert "matrix" in snap
@@ -361,23 +290,15 @@ class TestMalformedSpectra:
 class TestMultiSensorGrouping:
     """Verify that multiple sensors seeing the same frequency form combined groups."""
 
-    def test_combined_events_emitted_for_two_sensors(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        # Same peak for both sensors
+    def test_combined_events_emitted_for_two_sensors(self, diag_env) -> None:
         spectra = _make_spectra(["s1", "s2"], peak_amp=150.0)
         clients = _make_clients([("s1", "front-left"), ("s2", "front-right")])
 
         all_events: list[dict] = []
         for _ in range(12):
-            t["now"] += 1.0
-            snap = engine.update(
-                speed_mps=27.8,
-                clients=clients,
-                spectra=spectra,
-                settings={},
+            diag_env.t["now"] += 1.0
+            snap = diag_env.engine.update(
+                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
             )
             all_events.extend(snap.get("events", []))
 
@@ -389,32 +310,14 @@ class TestMultiSensorGrouping:
 class TestDrivingPhase:
     """Verify driving phase classification via update()."""
 
-    def test_phase_is_speed_unknown_without_speed(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        snap = engine.update(
-            speed_mps=None,
-            clients=[],
-            spectra=None,
-            settings={},
+    def test_phase_is_speed_unknown_without_speed(self, diag_env) -> None:
+        snap = diag_env.engine.update(
+            speed_mps=None, clients=[], spectra=None, settings={},
         )
         assert snap["driving_phase"] == "speed_unknown"
 
-    def test_phase_reflects_speed_at_steady_speed(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
-        for _ in range(6):
-            t["now"] += 1.0
-            snap = engine.update(
-                speed_mps=25.0,
-                clients=[],
-                spectra=None,
-                settings={},
-            )
+    def test_phase_reflects_speed_at_steady_speed(self, diag_env) -> None:
+        snap = diag_env.tick(6, speed_mps=25.0)
         # After steady speed, phase should not be speed_unknown
         assert snap["driving_phase"] != "speed_unknown"
 
@@ -422,29 +325,15 @@ class TestDrivingPhase:
 class TestResetClearsState:
     """Verify that reset() clears all accumulated state."""
 
-    def test_reset_zeroes_matrix_and_events(self, monkeypatch) -> None:
-        t = {"now": 10.0}
-        monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: t["now"])
-
-        engine = LiveDiagnosticsEngine()
+    def test_reset_zeroes_matrix_and_events(self, diag_env) -> None:
         spectra = _make_spectra(["c1"], peak_amp=150.0)
-        clients = _make_clients([("c1", "front")])
+        clients = _make_clients(_DEFAULT_CLIENTS)
 
-        for _ in range(8):
-            t["now"] += 1.0
-            engine.update(
-                speed_mps=27.8,
-                clients=clients,
-                spectra=spectra,
-                settings={},
-            )
+        diag_env.tick(8, clients=clients, spectra=spectra)
 
-        engine.reset()
-        snap = engine.snapshot()
+        diag_env.engine.reset()
+        snap = diag_env.engine.snapshot()
 
-        total_counts = sum(
-            cell["count"] for cols in snap["matrix"].values() for cell in cols.values()
-        )
-        assert total_counts == 0
+        assert _matrix_total(snap, "count") == 0
         assert snap["events"] == []
         assert snap["diagnostics_sequence"] == 0
