@@ -447,8 +447,7 @@ def _locations_connected_throughout_run(
     run_duration = max(0.0, run_end - run_start)
     edge_tolerance_s = max(0.75, min(3.0, run_duration * 0.08))
 
-    counts_by_location = {location: len(times) for location, times in by_location_times.items()}
-    max_count = max(counts_by_location.values()) if counts_by_location else 0
+    max_count = max((len(times) for times in by_location_times.values()), default=0)
     min_required_count = int(max_count * 0.80) if max_count >= 5 else 1
 
     connected: set[str] = set()

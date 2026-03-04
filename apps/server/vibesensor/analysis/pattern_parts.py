@@ -137,6 +137,14 @@ def parts_for_pattern(
     return [entry[idx] for entry in entries]
 
 
+_SRC_PHRASES: dict[str, tuple[str, str, str, str]] = {
+    # (order_en, order_nl, general_en, general_nl_prefix)
+    "wheel/tire": ("wheel-order", "wielorde", "wheel/tire", "wiel-/band"),
+    "driveline": ("driveshaft-order", "cardanasorde", "driveline", "aandrijflijn"),
+    "engine": ("engine-order", "motororde", "engine", "motor"),
+}
+
+
 def why_parts_listed(
     system: str,
     order_label: str | None = None,
@@ -153,41 +161,19 @@ def why_parts_listed(
     base_en = "These parts are commonly associated with"
     base_nl = "Deze onderdelen worden vaak geassocieerd met"
 
-    if src == "wheel/tire":
+    phrases = _SRC_PHRASES.get(src)
+    if phrases:
+        order_en, order_nl, general_en, general_nl = phrases
         if bucket in ("1x", "2x"):
             return (
-                f"{base_en} a {bucket} wheel-order vibration pattern."
+                f"{base_en} a {bucket} {order_en} vibration pattern."
                 if lang != "nl"
-                else f"{base_nl} een {bucket} wielorde-trillingspatroon."
+                else f"{base_nl} een {bucket} {order_nl}-trillingspatroon."
             )
         return (
-            f"{base_en} wheel/tire vibration patterns."
+            f"{base_en} {general_en} vibration patterns."
             if lang != "nl"
-            else f"{base_nl} wiel-/bandtrillingspatronen."
-        )
-    if src == "driveline":
-        if bucket in ("1x", "2x"):
-            return (
-                f"{base_en} a {bucket} driveshaft-order vibration pattern."
-                if lang != "nl"
-                else f"{base_nl} een {bucket} cardanasorde-trillingspatroon."
-            )
-        return (
-            f"{base_en} driveline vibration patterns."
-            if lang != "nl"
-            else f"{base_nl} aandrijflijntrillingspatronen."
-        )
-    if src == "engine":
-        if bucket in ("1x", "2x"):
-            return (
-                f"{base_en} a {bucket} engine-order vibration pattern."
-                if lang != "nl"
-                else f"{base_nl} een {bucket} motororde-trillingspatroon."
-            )
-        return (
-            f"{base_en} engine vibration patterns."
-            if lang != "nl"
-            else f"{base_nl} motortrillingspatronen."
+            else f"{base_nl} {general_nl}trillingspatronen."
         )
 
     return (

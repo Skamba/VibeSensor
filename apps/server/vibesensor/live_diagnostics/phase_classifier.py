@@ -19,7 +19,7 @@ class PhaseClassifier:
         self._current_phase: str = DrivingPhase.IDLE.value
 
     def reset(self) -> None:
-        self._speed_history = deque(maxlen=_PHASE_HISTORY_MAX)
+        self._speed_history.clear()
         self._current_phase = DrivingPhase.IDLE.value
 
     @property
