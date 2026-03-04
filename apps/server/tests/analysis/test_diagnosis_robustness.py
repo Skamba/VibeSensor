@@ -726,22 +726,35 @@ class TestGpsSpeedValidation:
             + b"\n"
         )
 
-    def test_nan_speed_rejected_by_product_code(self) -> None:
-        """GPSSpeedMonitor.run() must reject NaN speed from gpsd TPV."""
+    @pytest.mark.parametrize(
+        "bad_speed,label",
+        [
+            (float("nan"), "NaN"),
+            (float("inf"), "Inf"),
+            (-5.0, "Negative"),
+            (None, "None"),
+            ("fast", "String"),
+        ],
+        ids=["nan", "inf", "negative", "none", "string"],
+    )
+    def test_invalid_speed_rejected_by_product_code(
+        self, bad_speed: object, label: str
+    ) -> None:
+        """GPSSpeedMonitor.run() must reject *bad_speed* from gpsd TPV."""
         import asyncio
 
         from vibesensor.gps_speed import GPSSpeedMonitor
 
         monitor = GPSSpeedMonitor(gps_enabled=True)
+        tpv_line = self._tpv_line
+        valid_tpv = self._valid_tpv_line
 
         async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
             await reader.readline()  # consume WATCH command
-            # First send a valid speed so we know the connection works
-            writer.write(self._valid_tpv_line(10.0))
+            writer.write(valid_tpv(10.0))
             await writer.drain()
             await asyncio.sleep(0.05)
-            # Now send NaN — product code must reject
-            writer.write(self._tpv_line(float("nan")))
+            writer.write(tpv_line(bad_speed))
             await writer.drain()
             await asyncio.sleep(0.3)
             writer.close()
@@ -751,173 +764,14 @@ class TestGpsSpeedValidation:
             server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
             host, port = server.sockets[0].getsockname()[:2]
             task = asyncio.create_task(monitor.run(host=host, port=port))
-            # Wait for valid speed to be accepted
             for _ in range(60):
                 if monitor.speed_mps is not None:
                     break
                 await asyncio.sleep(0.05)
             assert monitor.speed_mps == 10.0, "Valid speed should be accepted first"
-            # Give time for NaN payload to be processed
-            await asyncio.sleep(0.15)
-            # speed_mps must still be 10.0 (NaN rejected by product guard)
-            assert monitor.speed_mps == 10.0, (
-                f"NaN speed leaked into speed_mps: {monitor.speed_mps}"
-            )
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
-            server.close()
-            await server.wait_closed()
-
-        asyncio.run(_run())
-
-    def test_inf_speed_rejected_by_product_code(self) -> None:
-        """GPSSpeedMonitor.run() must reject Inf speed from gpsd TPV."""
-        import asyncio
-
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        monitor = GPSSpeedMonitor(gps_enabled=True)
-
-        async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-            await reader.readline()
-            writer.write(self._valid_tpv_line(10.0))
-            await writer.drain()
-            await asyncio.sleep(0.05)
-            writer.write(self._tpv_line(float("inf")))
-            await writer.drain()
-            await asyncio.sleep(0.3)
-            writer.close()
-            await writer.wait_closed()
-
-        async def _run() -> None:
-            server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-            host, port = server.sockets[0].getsockname()[:2]
-            task = asyncio.create_task(monitor.run(host=host, port=port))
-            for _ in range(60):
-                if monitor.speed_mps is not None:
-                    break
-                await asyncio.sleep(0.05)
-            assert monitor.speed_mps == 10.0
             await asyncio.sleep(0.15)
             assert monitor.speed_mps == 10.0, (
-                f"Inf speed leaked into speed_mps: {monitor.speed_mps}"
-            )
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
-            server.close()
-            await server.wait_closed()
-
-        asyncio.run(_run())
-
-    def test_negative_speed_rejected_by_product_code(self) -> None:
-        """GPSSpeedMonitor.run() must reject negative speed values from gpsd."""
-        import asyncio
-
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        monitor = GPSSpeedMonitor(gps_enabled=True)
-
-        async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-            await reader.readline()
-            writer.write(self._valid_tpv_line(10.0))
-            await writer.drain()
-            await asyncio.sleep(0.05)
-            writer.write(self._tpv_line(-5.0))
-            await writer.drain()
-            await asyncio.sleep(0.3)
-            writer.close()
-            await writer.wait_closed()
-
-        async def _run() -> None:
-            server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-            host, port = server.sockets[0].getsockname()[:2]
-            task = asyncio.create_task(monitor.run(host=host, port=port))
-            for _ in range(60):
-                if monitor.speed_mps is not None:
-                    break
-                await asyncio.sleep(0.05)
-            assert monitor.speed_mps == 10.0
-            await asyncio.sleep(0.15)
-            assert monitor.speed_mps == 10.0, (
-                f"Negative speed leaked into speed_mps: {monitor.speed_mps}"
-            )
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
-            server.close()
-            await server.wait_closed()
-
-        asyncio.run(_run())
-
-    def test_none_speed_rejected_by_product_code(self) -> None:
-        """GPSSpeedMonitor.run() must ignore TPV with speed=null."""
-        import asyncio
-
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        monitor = GPSSpeedMonitor(gps_enabled=True)
-
-        async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-            await reader.readline()
-            writer.write(self._valid_tpv_line(10.0))
-            await writer.drain()
-            await asyncio.sleep(0.05)
-            writer.write(self._tpv_line(None))
-            await writer.drain()
-            await asyncio.sleep(0.3)
-            writer.close()
-            await writer.wait_closed()
-
-        async def _run() -> None:
-            server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-            host, port = server.sockets[0].getsockname()[:2]
-            task = asyncio.create_task(monitor.run(host=host, port=port))
-            for _ in range(60):
-                if monitor.speed_mps is not None:
-                    break
-                await asyncio.sleep(0.05)
-            assert monitor.speed_mps == 10.0
-            await asyncio.sleep(0.15)
-            assert monitor.speed_mps == 10.0, (
-                f"None speed leaked into speed_mps: {monitor.speed_mps}"
-            )
-            task.cancel()
-            await asyncio.gather(task, return_exceptions=True)
-            server.close()
-            await server.wait_closed()
-
-        asyncio.run(_run())
-
-    def test_string_speed_rejected_by_product_code(self) -> None:
-        """GPSSpeedMonitor.run() must ignore TPV with speed as a string."""
-        import asyncio
-
-        from vibesensor.gps_speed import GPSSpeedMonitor
-
-        monitor = GPSSpeedMonitor(gps_enabled=True)
-
-        async def _handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-            await reader.readline()
-            writer.write(self._valid_tpv_line(10.0))
-            await writer.drain()
-            await asyncio.sleep(0.05)
-            writer.write(self._tpv_line("fast"))
-            await writer.drain()
-            await asyncio.sleep(0.3)
-            writer.close()
-            await writer.wait_closed()
-
-        async def _run() -> None:
-            server = await asyncio.start_server(_handler, host="127.0.0.1", port=0)
-            host, port = server.sockets[0].getsockname()[:2]
-            task = asyncio.create_task(monitor.run(host=host, port=port))
-            for _ in range(60):
-                if monitor.speed_mps is not None:
-                    break
-                await asyncio.sleep(0.05)
-            assert monitor.speed_mps == 10.0
-            await asyncio.sleep(0.15)
-            assert monitor.speed_mps == 10.0, (
-                f"String speed leaked into speed_mps: {monitor.speed_mps}"
+                f"{label} speed leaked into speed_mps: {monitor.speed_mps}"
             )
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)

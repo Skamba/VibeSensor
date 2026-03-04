@@ -72,6 +72,7 @@ def test_low_speed_fault_not_rescued_when_highest_bin_poor() -> None:
         ),
     )
     # Highest bin (90-100) doesn’t qualify → no speed-band rescue
+    # Highest bin (90-100) doesn't qualify → no speed-band rescue
     assert band is None
     assert eff == 0.20
     assert loc_dom is False
@@ -93,6 +94,7 @@ def test_second_highest_bin_not_considered() -> None:
         ),
     )
     # Highest bin (90-100) doesn’t qualify → no rescue
+    # Highest bin (90-100) doesn't qualify → no rescue
     assert band is None
     assert eff == 0.20
 
@@ -135,6 +137,7 @@ def test_only_highest_bin_evaluated() -> None:
         ),
     )
     # Highest bin (90-100) doesn’t qualify → no rescue
+    # Highest bin (90-100) doesn't qualify → no rescue
     assert band is None
     assert eff == 0.20
 
