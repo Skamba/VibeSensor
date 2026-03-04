@@ -32,6 +32,15 @@ def _normalize_location(s: str) -> str:
     return re.sub(r"[\s\-_]+", " ", str(s).strip().lower())
 
 
+def _non_ref_findings(data: dict) -> list[dict]:
+    """Return non-reference findings from a payload containing a 'findings' list."""
+    return [
+        f
+        for f in data.get("findings", [])
+        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
+    ]
+
+
 def _parse_csv_value(value: str) -> object:
     text = value.strip()
     if text == "":
@@ -254,16 +263,8 @@ def _validate_primary_finding_consistency(
     Asserts that suspected_source, strongest_location, and frequency_hz_or_order
     are identical in both payloads for the first non-reference finding.
     """
-    run_findings = [
-        f
-        for f in run_analysis.get("findings", [])
-        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
-    ]
-    ins_findings = [
-        f
-        for f in insights.get("findings", [])
-        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
-    ]
+    run_findings = _non_ref_findings(run_analysis)
+    ins_findings = _non_ref_findings(insights)
     assert run_findings, "[cross-source] run.analysis has no non-reference findings"
     assert ins_findings, "[cross-source] insights has no non-reference findings"
 
@@ -349,11 +350,7 @@ def _validate_bucket_distribution(
 
     strongest_by_p95 = max(p95_by_loc, key=lambda k: p95_by_loc[k])
 
-    run_findings = [
-        f
-        for f in run_analysis.get("findings", [])
-        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
-    ]
+    run_findings = _non_ref_findings(run_analysis)
     if run_findings:
         primary_location = str(run_findings[0].get("strongest_location") or "")
         assert _normalize_location(strongest_by_p95) == _normalize_location(primary_location), (
@@ -423,11 +420,7 @@ def _validate_primary_finding_vs_graph(run_analysis: dict) -> None:
     The top-amplitude spike in the peaks_table (or fft_spectrum as fallback) must be
     within max(1.0 Hz, 10% relative) of the median matched_hz in the primary finding.
     """
-    run_findings = [
-        f
-        for f in run_analysis.get("findings", [])
-        if isinstance(f, dict) and not str(f.get("finding_id", "")).startswith("REF_")
-    ]
+    run_findings = _non_ref_findings(run_analysis)
     if not run_findings:
         return
 
@@ -565,11 +558,7 @@ def test_e2e_docker_rear_left_wheel_fault() -> None:
     )
 
     insights = api_json(base_url, f"/api/history/{run_id}/insights")
-    findings = [
-        f
-        for f in insights.get("findings", [])
-        if not str(f.get("finding_id", "")).startswith("REF_")
-    ]
+    findings = _non_ref_findings(insights)
     assert findings, "Expected non-reference findings"
 
     primary = findings[0]
