@@ -18,30 +18,19 @@ import pytest
 class TestVibrationStrengthNanGuard:
     """Verify NaN inputs do not propagate through vibration_strength_db_scalar."""
 
-    def test_nan_floor_returns_finite(self):
+    @pytest.mark.parametrize(
+        "peak, floor",
+        [
+            (0.001, float("nan")),
+            (float("nan"), 0.001),
+            (float("nan"), float("nan")),
+            (0.001, float("inf")),
+        ],
+    )
+    def test_non_finite_input_returns_finite(self, peak: float, floor: float) -> None:
         from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
-        result = vibration_strength_db_scalar(peak_band_rms_amp_g=0.001, floor_amp_g=float("nan"))
-        assert math.isfinite(result), f"Expected finite, got {result}"
-
-    def test_nan_peak_returns_finite(self):
-        from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
-        result = vibration_strength_db_scalar(peak_band_rms_amp_g=float("nan"), floor_amp_g=0.001)
-        assert math.isfinite(result), f"Expected finite, got {result}"
-
-    def test_both_nan_returns_finite(self):
-        from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
-        result = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=float("nan"), floor_amp_g=float("nan")
-        )
-        assert math.isfinite(result), f"Expected finite, got {result}"
-
-    def test_inf_floor_returns_finite(self):
-        from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
-        result = vibration_strength_db_scalar(peak_band_rms_amp_g=0.001, floor_amp_g=float("inf"))
+        result = vibration_strength_db_scalar(peak_band_rms_amp_g=peak, floor_amp_g=floor)
         assert math.isfinite(result), f"Expected finite, got {result}"
 
     def test_normal_values_unchanged(self):
@@ -261,20 +250,22 @@ class TestUpdateManagerCancelledError:
 class TestNormalizeLangDedup:
     """Verify summary uses the canonical normalize_lang."""
 
-    def test_en_default(self):
+    @pytest.mark.parametrize(
+        "raw, expected",
+        [
+            ("en", "en"),
+            ("EN", "en"),
+            ("", "en"),
+            (None, "en"),
+            ("nl", "nl"),
+            ("NL", "nl"),
+            ("nl-BE", "nl"),
+        ],
+    )
+    def test_normalize_lang(self, raw: str | None, expected: str) -> None:
         from vibesensor.analysis.summary import _normalize_lang
 
-        assert _normalize_lang("en") == "en"
-        assert _normalize_lang("EN") == "en"
-        assert _normalize_lang("") == "en"
-        assert _normalize_lang(None) == "en"
-
-    def test_nl_detected(self):
-        from vibesensor.analysis.summary import _normalize_lang
-
-        assert _normalize_lang("nl") == "nl"
-        assert _normalize_lang("NL") == "nl"
-        assert _normalize_lang("nl-BE") == "nl"
+        assert _normalize_lang(raw) == expected
 
 
 # ── 7. _weighted_percentile direct import ─────────────────────────────────
