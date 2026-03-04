@@ -199,6 +199,56 @@ def _kv_consumed_height(value: str, *, fs: int = FS_BODY, value_w: float | None 
     return max(len(_wrap_lines(value, value_w, fs)), 1) * leading
 
 
+def _cert_display(label: str | None, pct: str | None, fallback: str) -> str:
+    """Format a certainty label with optional percentage."""
+    val = _safe(label, fallback)
+    if pct:
+        val = f"{val} ({pct})"
+    return val
+
+
+def _draw_kv_column(
+    c: Canvas,
+    x: float,
+    y_start: float,
+    rows: list[tuple[str, str, float]],
+    col_w: float,
+    row_gap: float,
+) -> float:
+    """Draw a column of label/value pairs.  Returns the y after the last row."""
+    y = y_start
+    for idx, (label, value, label_w) in enumerate(rows):
+        value_w = max(20 * mm, col_w - label_w)
+        y = _draw_kv(
+            c, x, y, label, value, label_w=label_w, fs=FS_BODY, value_w=value_w,
+        )
+        if idx < len(rows) - 1:
+            y -= row_gap
+    return y
+
+
+def _draw_section_block(
+    c: Canvas,
+    x: float,
+    y: float,
+    w: float,
+    title: str,
+    body: str,
+    *,
+    title_gap: float = 3.2 * mm,
+    body_gap: float = 1.5 * mm,
+    max_lines: int = 4,
+) -> float:
+    """Draw a bold title line followed by wrapped body text.  Returns y below."""
+    c.setFillColor(_hex(TEXT_CLR))
+    c.setFont(FONT_B, FS_SMALL)
+    c.drawString(x, y, title)
+    y -= title_gap
+    y = _draw_text(c, x, y, w, body, size=6, color=SUB_CLR, max_lines=max_lines)
+    y -= body_gap
+    return y
+
+
 def _draw_footer(c: Canvas, page_num: int, total: int, version: str) -> None:
     y = MARGIN - 4 * mm
     c.setFont(FONT, 6)
@@ -325,37 +375,9 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:
     c.setFont(FONT_B, FS_TITLE)
     c.drawString(m + 4 * mm, hdr_y + hdr_h - 6 * mm, data.title or tr("DIAGNOSTIC_WORKSHEET"))
 
-    y_left = hdr_y + hdr_h - meta_top_pad
-    for idx, (label, value, label_w) in enumerate(left_rows_with_width):
-        value_w = max(20 * mm, left_col_w - label_w)
-        y_left = _draw_kv(
-            c,
-            meta_x,
-            y_left,
-            label,
-            value,
-            label_w=label_w,
-            fs=FS_BODY,
-            value_w=value_w,
-        )
-        if idx < len(left_rows_with_width) - 1:
-            y_left -= meta_row_gap
-
-    y_right = hdr_y + hdr_h - meta_top_pad
-    for idx, (label, value, label_w) in enumerate(right_rows_with_width):
-        value_w = max(20 * mm, right_col_w - label_w)
-        y_right = _draw_kv(
-            c,
-            meta_right,
-            y_right,
-            label,
-            value,
-            label_w=label_w,
-            fs=FS_BODY,
-            value_w=value_w,
-        )
-        if idx < len(right_rows_with_width) - 1:
-            y_right -= meta_row_gap
+    meta_y0 = hdr_y + hdr_h - meta_top_pad
+    _draw_kv_column(c, meta_x, meta_y0, left_rows_with_width, left_col_w, meta_row_gap)
+    _draw_kv_column(c, meta_right, meta_y0, right_rows_with_width, right_col_w, meta_row_gap)
 
     y_cursor = hdr_y - GAP
 
@@ -402,9 +424,7 @@ def _page1(c: Canvas, data: ReportTemplateData) -> list[NextStep]:
     )
     oy -= obs_step
 
-    cert_val = _safe(data.observed.certainty_label, na)
-    if data.observed.certainty_pct:
-        cert_val = f"{cert_val} ({data.observed.certainty_pct})"
+    cert_val = _cert_display(data.observed.certainty_label, data.observed.certainty_pct, na)
     _draw_kv(c, ox, oy, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=lw)
     oy -= obs_step
     if data.observed.certainty_reason:
@@ -852,9 +872,7 @@ def _draw_pattern_evidence(
     ry -= 1.0 * mm
 
     # Certainty — split label/pct and reason to avoid overflow
-    cert_val = _safe(ev.certainty_label, na)
-    if ev.certainty_pct:
-        cert_val = f"{cert_val} ({ev.certainty_pct})"
+    cert_val = _cert_display(ev.certainty_label, ev.certainty_pct, na)
     ry = _draw_kv(c, rx, ry, tr("CERTAINTY_LABEL_FULL"), cert_val, label_w=lw, fs=7)
     ry -= 0.5 * mm
     if ev.certainty_reason:
@@ -880,22 +898,12 @@ def _draw_pattern_evidence(
         ry -= 1.5 * mm
 
     # Interpretation
-    c.setFillColor(_hex(TEXT_CLR))
-    c.setFont(FONT_B, FS_SMALL)
-    c.drawString(rx, ry, tr("INTERPRETATION"))
-    ry -= 3.2 * mm
-    ry = _draw_text(
-        c, rx, ry, w - 8 * mm, _safe(ev.interpretation, na), size=6, color=SUB_CLR, max_lines=4
-    )
-    ry -= 1.5 * mm
+    ry = _draw_section_block(c, rx, ry, w - 8 * mm, tr("INTERPRETATION"), _safe(ev.interpretation, na))
 
     # Why parts listed
-    c.setFillColor(_hex(TEXT_CLR))
-    c.setFont(FONT_B, FS_SMALL)
-    c.drawString(rx, ry, tr("WHY_PARTS_LISTED"))
-    ry -= 3.0 * mm
-    _draw_text(
-        c, rx, ry, w - 8 * mm, _safe(ev.why_parts_text, na), size=6, color=SUB_CLR, max_lines=4
+    _draw_section_block(
+        c, rx, ry, w - 8 * mm, tr("WHY_PARTS_LISTED"), _safe(ev.why_parts_text, na),
+        title_gap=3.0 * mm,
     )
 
 
