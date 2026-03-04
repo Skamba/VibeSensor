@@ -54,6 +54,18 @@ class PhaseSegment:
     sample_count: int = 0
 
 
+def _find_nearest_valid(
+    speeds: list[float | None],
+    times: list[float | None],
+    rng: range,
+) -> tuple[float | None, float | None]:
+    """Return the first (speed, time) pair where both are non-None in *rng*."""
+    for j in rng:
+        if speeds[j] is not None and times[j] is not None:
+            return speeds[j], times[j]
+    return None, None
+
+
 def _estimate_speed_derivative(
     speeds: list[float | None],
     times: list[float | None],
@@ -66,21 +78,12 @@ def _estimate_speed_derivative(
     if idx < 0 or idx >= n:
         return None
     # Look backward and forward for valid speed+time pairs
-    prev_speed: float | None = None
-    prev_time: float | None = None
-    for j in range(idx - 1, max(-1, idx - window - 1), -1):
-        if speeds[j] is not None and times[j] is not None:
-            prev_speed = speeds[j]
-            prev_time = times[j]
-            break
-
-    next_speed: float | None = None
-    next_time: float | None = None
-    for j in range(idx + 1, min(n, idx + window + 1)):
-        if speeds[j] is not None and times[j] is not None:
-            next_speed = speeds[j]
-            next_time = times[j]
-            break
+    prev_speed, prev_time = _find_nearest_valid(
+        speeds, times, range(idx - 1, max(-1, idx - window - 1), -1)
+    )
+    next_speed, next_time = _find_nearest_valid(
+        speeds, times, range(idx + 1, min(n, idx + window + 1))
+    )
 
     if (
         prev_speed is not None
