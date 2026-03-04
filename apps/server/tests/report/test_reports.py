@@ -5,7 +5,17 @@ from io import BytesIO
 from pathlib import Path
 
 import pytest
-from _report_helpers import RUN_END, suitability_by_key, write_jsonl
+from _report_helpers import (
+    RUN_END,
+    suitability_by_key,
+    write_jsonl,
+)
+from _report_helpers import (
+    report_run_metadata as _run_metadata,
+)
+from _report_helpers import (
+    report_sample as _base_sample,
+)
 from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
 
@@ -15,6 +25,23 @@ from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report.pdf_builder import _draw_system_card, build_report_pdf
 from vibesensor.report.pdf_diagram import car_location_diagram
 from vibesensor.report.report_data import PartSuggestion, SystemFindingCard
+
+
+def _sample(
+    idx: int,
+    *,
+    speed_kmh: float | None,
+    dominant_freq_hz: float,
+    peak_amp_g: float,
+) -> dict:
+    return _base_sample(
+        idx,
+        speed_kmh=speed_kmh,
+        dominant_freq_hz=dominant_freq_hz,
+        peak_amp_g=peak_amp_g,
+        add_index_accel_offset=True,
+        include_secondary_peak=True,
+    )
 
 
 def _assert_pdf_contains(pdf_bytes: bytes, text: str) -> None:
@@ -29,110 +56,6 @@ def _extract_media_box(pdf_bytes: bytes) -> tuple[float, float, float, float]:
     )
     assert match is not None
     return tuple(float(match.group(idx)) for idx in range(1, 5))
-
-
-def _run_metadata(
-    *,
-    run_id: str,
-    raw_sample_rate_hz: int | None,
-    firmware_version: str | None = None,
-    tire_circumference_m: float | None = None,
-    tire_width_mm: float | None = None,
-    tire_aspect_pct: float | None = None,
-    rim_in: float | None = None,
-    final_drive_ratio: float | None = None,
-    current_gear_ratio: float | None = None,
-    accel_scale_g_per_lsb: float | None = 1.0 / 256.0,
-) -> dict:
-    metadata = {
-        "record_type": "run_metadata",
-        "schema_version": "v2-jsonl",
-        "run_id": run_id,
-        "start_time_utc": "2026-02-15T12:00:00+00:00",
-        "end_time_utc": "2026-02-15T12:01:00+00:00",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": raw_sample_rate_hz,
-        "feature_interval_s": 0.5,
-        "fft_window_size_samples": 2048,
-        "fft_window_type": "hann",
-        "peak_picker_method": "max_peak_amp_across_axes",
-        "accel_scale_g_per_lsb": accel_scale_g_per_lsb,
-        "units": {
-            "t_s": "s",
-            "speed_kmh": "km/h",
-            "accel_x_g": "g",
-            "accel_y_g": "g",
-            "accel_z_g": "g",
-            "vibration_strength_db": "dB",
-        },
-        "amplitude_definitions": {
-            "vibration_strength_db": {
-                "statistic": "Peak band RMS vs noise floor",
-                "units": "dB",
-                "definition": "20*log10((peak_band_rms + eps) / (floor + eps))",
-            }
-        },
-        "incomplete_for_order_analysis": raw_sample_rate_hz is None,
-    }
-    if tire_circumference_m is not None:
-        metadata["tire_circumference_m"] = tire_circumference_m
-    if tire_width_mm is not None:
-        metadata["tire_width_mm"] = tire_width_mm
-    if tire_aspect_pct is not None:
-        metadata["tire_aspect_pct"] = tire_aspect_pct
-    if rim_in is not None:
-        metadata["rim_in"] = rim_in
-    if final_drive_ratio is not None:
-        metadata["final_drive_ratio"] = final_drive_ratio
-    if current_gear_ratio is not None:
-        metadata["current_gear_ratio"] = current_gear_ratio
-    if firmware_version:
-        metadata["firmware_version"] = firmware_version
-    return metadata
-
-
-def _sample(
-    idx: int,
-    *,
-    speed_kmh: float | None,
-    dominant_freq_hz: float,
-    peak_amp_g: float,
-) -> dict:
-    t_s = idx * 0.5
-    return {
-        "record_type": "sample",
-        "schema_version": "v2-jsonl",
-        "run_id": "run-01",
-        "timestamp_utc": f"2026-02-15T12:00:{idx:02d}+00:00",
-        "t_s": t_s,
-        "client_id": "c1",
-        "client_name": "front-left wheel",
-        "speed_kmh": speed_kmh,
-        "gps_speed_kmh": speed_kmh,
-        "engine_rpm": None,
-        "gear": None,
-        "accel_x_g": 0.03 + (idx * 0.0005),
-        "accel_y_g": 0.02 + (idx * 0.0003),
-        "accel_z_g": 0.01 + (idx * 0.0002),
-        "dominant_freq_hz": dominant_freq_hz,
-        "dominant_axis": "x",
-        "top_peaks": [
-            {
-                "hz": dominant_freq_hz,
-                "amp": peak_amp_g,
-                "vibration_strength_db": 22.0,
-                "strength_bucket": "l2",
-            },
-            {
-                "hz": dominant_freq_hz + 8.0,
-                "amp": peak_amp_g * 0.45,
-                "vibration_strength_db": 14.0,
-                "strength_bucket": None,
-            },
-        ],
-        "vibration_strength_db": 22.0,
-        "strength_bucket": "l2",
-    }
 
 
 def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:

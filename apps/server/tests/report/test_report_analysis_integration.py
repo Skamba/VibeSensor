@@ -4,6 +4,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from _report_helpers import analysis_metadata as _make_metadata
+from _report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import build_findings_for_samples, summarize_log
 from vibesensor.analysis import findings as findings_module
@@ -40,46 +42,6 @@ class _Hypothesis:
         _circumference: float | None,
     ) -> tuple[float, str]:
         return 5.0, "speed_kmh"
-
-
-def _make_metadata(**overrides) -> dict:
-    defaults = dict(
-        run_id="test-run",
-        start_time_utc="2025-01-01T00:00:00+00:00",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-        tire_width_mm=285.0,
-        tire_aspect_pct=30.0,
-        rim_in=21.0,
-        final_drive_ratio=3.08,
-        current_gear_ratio=0.64,
-    )
-    defaults.update(overrides)
-    valid_keys = create_run_metadata.__code__.co_varnames
-    return create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})
-
-
-def _make_sample(t_s: float, speed_kmh: float, amp: float = 0.01) -> dict:
-    return {
-        "record_type": "sample",
-        "t_s": t_s,
-        "speed_kmh": speed_kmh,
-        "accel_x_g": amp,
-        "accel_y_g": amp,
-        "accel_z_g": amp,
-        "dominant_freq_hz": 15.0,
-        "vibration_strength_db": 20.0,
-        "strength_bucket": "l2",
-        "top_peaks": [
-            {"hz": 15.0, "amp": amp, "vibration_strength_db": 20.0, "strength_bucket": "l2"},
-        ],
-        "client_name": "Front Left",
-    }
 
 
 def _wheel_metadata(**overrides: object) -> dict[str, object]:
@@ -273,9 +235,7 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
                 **_make_sample(float(idx), speed_kmh, 0.03 if high_speed_band else 0.01),
                 "strength_floor_amp_g": 0.003,
                 "top_peaks": [
-                    {"hz": wh, "amp": 0.03}
-                    if high_speed_band
-                    else {"hz": wh + 7.0, "amp": 0.01}
+                    {"hz": wh, "amp": 0.03} if high_speed_band else {"hz": wh + 7.0, "amp": 0.01}
                 ],
             }
         )
@@ -857,9 +817,7 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             **_make_sample(float(idx), speed_kmh, 0.03 if high_speed_band else 0.01),
             "strength_floor_amp_g": 0.003,
             "top_peaks": [
-                {"hz": wh, "amp": 0.03}
-                if high_speed_band
-                else {"hz": wh + 7.0, "amp": 0.01}
+                {"hz": wh, "amp": 0.03} if high_speed_band else {"hz": wh + 7.0, "amp": 0.01}
             ],
         }
         samples.append(sample)
@@ -1080,9 +1038,7 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
     single_findings = _call_build_order_findings(
         samples, per_sample_phases=phases_single, **_common
     )
-    multi_findings = _call_build_order_findings(
-        samples, per_sample_phases=phases_multi, **_common
-    )
+    multi_findings = _call_build_order_findings(samples, per_sample_phases=phases_multi, **_common)
 
     assert len(single_findings) >= 1, "single-phase case must yield a finding"
     assert len(multi_findings) >= 1, "multi-phase case must yield a finding"
