@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import json
 import re
 from io import BytesIO
 from pathlib import Path
 
 import pytest
+from _report_helpers import RUN_END, suitability_by_key, write_jsonl
 from pypdf import PdfReader
 from reportlab.pdfgen.canvas import Canvas
 
@@ -15,13 +15,6 @@ from vibesensor.constants import KMH_TO_MPS
 from vibesensor.report.pdf_builder import _draw_system_card, build_report_pdf
 from vibesensor.report.pdf_diagram import car_location_diagram
 from vibesensor.report.report_data import PartSuggestion, SystemFindingCard
-
-
-def _write_jsonl(path: Path, records: list[dict]) -> None:
-    path.write_text(
-        "\n".join(json.dumps(record, separators=(",", ":")) for record in records) + "\n",
-        encoding="utf-8",
-    )
 
 
 def _assert_pdf_contains(pdf_bytes: bytes, text: str) -> None:
@@ -163,8 +156,8 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
                 peak_amp_g=0.09 + (idx * 0.001),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     assert summary["rows"] == 30
@@ -208,8 +201,8 @@ def test_missing_speed_skips_speed_and_wheel_order(tmp_path: Path) -> None:
                 peak_amp_g=0.08,
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     # speed_breakdown_skipped_reason is now an i18n ref dict
@@ -249,21 +242,17 @@ def test_run_suitability_warns_for_degraded_scenario(tmp_path: Path) -> None:
         if idx in {0, 5, 10}:
             sample["accel_x_g"] = 15.9
         records.append(sample)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    suitability_by_key = {
-        str(item.get("check_key")): item
-        for item in summary["run_suitability"]
-        if isinstance(item, dict)
-    }
+    suit = suitability_by_key(summary)
 
-    assert suitability_by_key["SUITABILITY_CHECK_SPEED_VARIATION"]["state"] == "warn"
-    assert suitability_by_key["SUITABILITY_CHECK_SENSOR_COVERAGE"]["state"] == "warn"
-    assert suitability_by_key["SUITABILITY_CHECK_REFERENCE_COMPLETENESS"]["state"] == "warn"
-    assert suitability_by_key["SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"]["state"] == "warn"
-    assert suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]["state"] == "warn"
+    assert suit["SUITABILITY_CHECK_SPEED_VARIATION"]["state"] == "warn"
+    assert suit["SUITABILITY_CHECK_SENSOR_COVERAGE"]["state"] == "warn"
+    assert suit["SUITABILITY_CHECK_REFERENCE_COMPLETENESS"]["state"] == "warn"
+    assert suit["SUITABILITY_CHECK_SATURATION_AND_OUTLIERS"]["state"] == "warn"
+    assert suit["SUITABILITY_CHECK_FRAME_INTEGRITY"]["state"] == "warn"
 
 
 def test_frame_drop_per_sensor_delta_avoids_cross_sensor_overcount(tmp_path: Path) -> None:
@@ -286,16 +275,12 @@ def test_frame_drop_per_sensor_delta_avoids_cross_sensor_overcount(tmp_path: Pat
         sample_b["frames_dropped_total"] = 0 + (1 if idx >= 8 else 0)
         sample_b["queue_overflow_drops"] = 0
         records.append(sample_b)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    suitability_by_key = {
-        str(item.get("check_key")): item
-        for item in summary["run_suitability"]
-        if isinstance(item, dict)
-    }
-    fi = suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]
+    suit = suitability_by_key(summary)
+    fi = suit["SUITABILITY_CHECK_FRAME_INTEGRITY"]
     # Sensor A delta: 104-100 = 4, Sensor B delta: 1-0 = 1, total = 5
     # Should NOT be 104 (which was the old global max-min: 104 - 0)
     assert fi["state"] == "warn"
@@ -311,16 +296,12 @@ def test_frame_drop_delta_handles_counter_resets(tmp_path: Path) -> None:
         sample["frames_dropped_total"] = dropped_total
         sample["queue_overflow_drops"] = 0
         records.append(sample)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    suitability_by_key = {
-        str(item.get("check_key")): item
-        for item in summary["run_suitability"]
-        if isinstance(item, dict)
-    }
-    fi = suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]
+    suit = suitability_by_key(summary)
+    fi = suit["SUITABILITY_CHECK_FRAME_INTEGRITY"]
     assert fi["state"] == "warn"
     assert "2" in str(fi["explanation"])
 
@@ -334,16 +315,12 @@ def test_frame_drop_delta_ignores_samples_without_client_id(tmp_path: Path) -> N
         sample["frames_dropped_total"] = idx + 1
         sample["queue_overflow_drops"] = idx + 1
         records.append(sample)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
-    suitability_by_key = {
-        str(item.get("check_key")): item
-        for item in summary["run_suitability"]
-        if isinstance(item, dict)
-    }
-    fi = suitability_by_key["SUITABILITY_CHECK_FRAME_INTEGRITY"]
+    suit = suitability_by_key(summary)
+    fi = suit["SUITABILITY_CHECK_FRAME_INTEGRITY"]
     assert fi["state"] == "pass"
 
 
@@ -360,8 +337,8 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
                 peak_amp_g=0.06 + (idx * 0.0005),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     assert summary["raw_sample_rate_hz"] is None
@@ -384,8 +361,8 @@ def test_data_quality_outliers_include_zero_strength_values(tmp_path: Path) -> N
         sample = _sample(idx, speed_kmh=50.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.05)
         sample["vibration_strength_db"] = vib_db
         records.append(sample)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, include_samples=False)
     outliers = summary["data_quality"]["outliers"]["amplitude_metric"]
@@ -416,8 +393,8 @@ def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
                 peak_amp_g=0.08 + (idx * 0.0008),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     finding_ids = {str(f.get("finding_id")) for f in summary["findings"]}
@@ -446,8 +423,8 @@ def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
                 peak_amp_g=0.08 + (idx * 0.0006),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     assert summary["accel_scale_g_per_lsb"] == (1.0 / 256.0)
@@ -476,8 +453,8 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
                 peak_amp_g=0.08 + (idx * 0.0003),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     assert bool(summary["speed_stats"]["steady_speed"]) is True
@@ -506,8 +483,8 @@ def test_sensor_location_stats_include_percentiles_and_strength_distribution(
         sample["frames_dropped_total"] = idx * 2
         sample["queue_overflow_drops"] = idx
         records.append(sample)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, include_samples=False)
     assert "samples" not in summary
@@ -553,8 +530,8 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
             partial_sensor["client_name"] = "front-right wheel"
             records.append(partial_sensor)
 
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, include_samples=False)
     assert summary["sensor_locations"] == ["front-left wheel", "front-right wheel"]
@@ -575,8 +552,8 @@ def test_sensor_location_stats_handle_counter_reset_and_l0_percent(tmp_path: Pat
         sample["queue_overflow_drops"] = overflow[idx]
         sample["strength_bucket"] = buckets[idx]
         records.append(sample)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, include_samples=False)
     row = summary["sensor_intensity_by_location"][0]
@@ -616,8 +593,8 @@ def test_sensor_location_stats_warn_on_sparse_sensor_keeps_ranking_stable(
             sparse_sensor["vibration_strength_db"] = 40.0
             records.append(sparse_sensor)
 
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, include_samples=False)
     rows = summary["sensor_intensity_by_location"]
@@ -659,8 +636,8 @@ def test_sensor_location_stats_stay_stable_when_client_name_changes(tmp_path: Pa
     renamed_sample["location"] = "front_left_wheel"
     records.append(renamed_sample)
 
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, include_samples=False)
     assert summary["sensor_locations"] == ["Front Left Wheel"]
@@ -682,8 +659,8 @@ def test_report_pdf_uses_a4_portrait_media_box(tmp_path: Path) -> None:
                 peak_amp_g=0.07 + (idx * 0.0006),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     pdf = build_report_pdf(map_summary(summary))
@@ -709,8 +686,8 @@ def test_report_pdf_allows_samples_without_strength_bucket(tmp_path: Path) -> No
         if idx % 3 == 0:
             sample["strength_bucket"] = None
         records.append(sample)
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, include_samples=False)
     row = summary["sensor_intensity_by_location"][0]
@@ -737,8 +714,8 @@ def test_report_pdf_footer_contains_version_marker(
                 peak_amp_g=0.05 + (idx * 0.001),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     pdf = build_report_pdf(map_summary(summary))
@@ -770,8 +747,8 @@ def test_report_pdf_worksheet_has_single_next_steps_heading(tmp_path: Path) -> N
                 peak_amp_g=0.08 + (idx * 0.0005),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     pdf = build_report_pdf(map_summary(summary))
@@ -795,8 +772,8 @@ def test_report_pdf_nl_localizes_header_metadata_labels(tmp_path: Path) -> None:
                 "client_id": "client1234",
             }
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path, lang="nl")
     pdf = build_report_pdf(map_summary(summary))
@@ -824,8 +801,8 @@ def test_report_pdf_header_contains_firmware_version(tmp_path: Path) -> None:
                 peak_amp_g=0.06 + (idx * 0.0007),
             )
         )
-    records.append({"record_type": "run_end", "schema_version": "v2-jsonl", "run_id": "run-01"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     assert summary.get("firmware_version") == "esp-fw-1.2.3"
