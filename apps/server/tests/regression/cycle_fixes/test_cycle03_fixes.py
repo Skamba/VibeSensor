@@ -71,7 +71,9 @@ class TestSteadySpeedUsesAND:
 
     def test_high_stddev_low_range_not_steady(self) -> None:
         speeds = [50.0 + (i % 2) * 7.9 for i in range(50)]
-        assert not _speed_stats(speeds)["steady_speed"], "High stddev should not be steady even with low range"
+        assert not _speed_stats(speeds)["steady_speed"], (
+            "High stddev should not be steady even with low range"
+        )
 
     def test_both_low_is_steady(self) -> None:
         speeds = [60.0 + 0.1 * (i % 3) for i in range(50)]

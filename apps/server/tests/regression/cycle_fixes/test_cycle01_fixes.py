@@ -8,12 +8,13 @@ import math
 
 import pytest
 from _paths import SERVER_ROOT
-from vibesensor.analysis.order_analysis import _wheel_focus_from_location
-from vibesensor.history_db import HistoryDB
 from vibesensor_core.vibration_strength import (
     strength_floor_amp_g,
     vibration_strength_db_scalar,
 )
+
+from vibesensor.analysis.order_analysis import _wheel_focus_from_location
+from vibesensor.history_db import HistoryDB
 
 
 class TestStrengthFloorFallback:

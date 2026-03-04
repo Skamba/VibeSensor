@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import pytest
-
 from vibesensor_core.sensor_units import get_accel_scale_g_per_lsb
 
 

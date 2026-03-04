@@ -161,9 +161,19 @@ class TestNmLogSignals:
     @pytest.mark.parametrize(
         ("log_text", "expected_sig"),
         [
-            pytest.param("dhcp: no address range available for subnet\n", "dhcp_no_range", id="dhcp_no_range"),
-            pytest.param("failed to start dnsmasq process\n", "dhcp_dnsmasq_start_failed", id="dnsmasq_start_failed"),
-            pytest.param("address already in use on port 53\n", "port53_conflict", id="port53_conflict"),
+            pytest.param(
+                "dhcp: no address range available for subnet\n",
+                "dhcp_no_range", id="dhcp_no_range",
+            ),
+            pytest.param(
+                "failed to start dnsmasq process\n",
+                "dhcp_dnsmasq_start_failed",
+                id="dnsmasq_start_failed",
+            ),
+            pytest.param(
+                "address already in use on port 53\n",
+                "port53_conflict", id="port53_conflict",
+            ),
             pytest.param("everything is fine\n", None, id="no_signal"),
         ],
     )

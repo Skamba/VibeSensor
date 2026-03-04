@@ -14,6 +14,7 @@ import json
 
 import pytest
 from _paths import SERVER_ROOT
+
 from vibesensor.report.pdf_builder import (
     _draw_next_steps_table,
     _draw_system_card,

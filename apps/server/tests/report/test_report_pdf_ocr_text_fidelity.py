@@ -7,8 +7,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 import pytest
-
 from _report_helpers import write_jsonl
+
 from vibesensor.analysis import map_summary, summarize_log
 from vibesensor.report.pdf_builder import build_report_pdf
 

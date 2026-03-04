@@ -25,7 +25,11 @@ from vibesensor.report.report_data import (
 _ROUNDTRIP_CASES = [
     pytest.param(
         ObservedSignature,
-        dict(primary_system="wheel bearing", strongest_sensor_location="front-left", speed_band="80-120 km/h"),
+        dict(
+            primary_system="wheel bearing",
+            strongest_sensor_location="front-left",
+            speed_band="80-120 km/h",
+        ),
         id="ObservedSignature",
     ),
     pytest.param(
@@ -40,7 +44,11 @@ _ROUNDTRIP_CASES = [
     ),
     pytest.param(
         PeakRow,
-        dict(rank="1", system="wheel", freq_hz="42.3", order="1x", peak_db="15.2", strength_db="12.0", speed_band="80-100 km/h", relevance="high"),
+        dict(
+            rank="1", system="wheel", freq_hz="42.3",
+            order="1x", peak_db="15.2", strength_db="12.0",
+            speed_band="80-100 km/h", relevance="high",
+        ),
         id="PeakRow",
     ),
 ]

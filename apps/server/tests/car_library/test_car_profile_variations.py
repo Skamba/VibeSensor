@@ -35,6 +35,7 @@ from builders import (
     top_confidence,
 )
 
+
 def _profile_engine_hz(profile: dict[str, Any], speed_kmh: float) -> float:
     """Compute engine-1x Hz for a profile at a given speed."""
     whz = profile_wheel_hz(profile, speed_kmh)

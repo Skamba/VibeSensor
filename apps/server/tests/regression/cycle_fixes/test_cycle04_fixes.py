@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-from vibesensor.processing import SignalProcessor
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
+
+from vibesensor.processing import SignalProcessor
 
 
 class TestSmoothSpectrumEdgePadding:
