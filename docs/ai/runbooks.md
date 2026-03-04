@@ -13,6 +13,26 @@ vibesensor-server --config apps/server/config.dev.yaml
 vibesensor-sim --count 3 --duration 20 --server-host 127.0.0.1 --no-auto-server
 ```
 
+For the local UI/API, check `http://127.0.0.1` first (`:80` default). If the current config is using the backup/dev listener, use `http://127.0.0.1:8000`.
+
+## Run simulator against Pi
+```bash
+# Pi UI/API is normally on port 80; 8000 is the backup listener
+curl -sf http://10.4.0.1/api/clients || curl -sf http://10.4.0.1:8000/api/clients
+
+# Skip the pre-run speed-override POST if you only need UDP traffic
+vibesensor-sim \
+  --count 5 \
+  --duration 60 \
+  --server-host 10.4.0.1 \
+  --server-http-port 80 \
+  --speed-kmh 0 \
+  --no-interactive \
+  --no-auto-server
+```
+
+If you need the simulator to set speed over HTTP, keep `--server-http-port 80`. Only switch to `--server-http-port 8000` if the primary listener on port `80` is not answering.
+
 ## Fast check (quiet)
 ```bash
 scripts/ai/task ai:check

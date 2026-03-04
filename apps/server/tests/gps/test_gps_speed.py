@@ -3,6 +3,8 @@ from __future__ import annotations
 import math
 import time
 
+import pytest
+
 from vibesensor.gps_speed import GPSSpeedMonitor
 
 
@@ -30,8 +32,6 @@ def test_set_speed_override_zero_sets_stationary() -> None:
 
 def test_manual_selected_with_override_returns_override() -> None:
     """When manual source is selected and override is set, return override."""
-    import time
-
     monitor = GPSSpeedMonitor(gps_enabled=True)
     monitor.manual_source_selected = True
     monitor.override_speed_mps = 25.0
@@ -44,8 +44,6 @@ def test_manual_selected_with_override_returns_override() -> None:
 
 def test_manual_selected_no_override_falls_through_to_gps() -> None:
     """When manual source is selected but no override is set, fall through to GPS."""
-    import time
-
     monitor = GPSSpeedMonitor(gps_enabled=True)
     monitor.manual_source_selected = True
     # No override set
@@ -105,15 +103,10 @@ def test_set_fallback_settings_clamps_timeout_and_ignores_invalid_mode() -> None
     assert monitor.fallback_mode == "manual"
 
 
-def test_set_speed_override_rejects_negative_and_non_finite_values() -> None:
+@pytest.mark.parametrize("invalid_kmh", [-1.0, math.inf, math.nan], ids=["negative", "inf", "nan"])
+def test_set_speed_override_rejects_invalid_value(invalid_kmh: float) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
-    assert monitor.set_speed_override_kmh(-1.0) is None
-    assert monitor.override_speed_mps is None
-
-    assert monitor.set_speed_override_kmh(math.inf) is None
-    assert monitor.override_speed_mps is None
-
-    assert monitor.set_speed_override_kmh(math.nan) is None
+    assert monitor.set_speed_override_kmh(invalid_kmh) is None
     assert monitor.override_speed_mps is None
 
 

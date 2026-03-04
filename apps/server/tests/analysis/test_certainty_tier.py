@@ -110,21 +110,22 @@ def _make_summary(
 class TestTierAReportOutput:
     """Tier A (very low certainty): no specific systems, no repair steps."""
 
-    def test_tier_a_no_system_cards(self):
-        data = map_summary(_make_summary(confidence=0.06))
-        assert data.certainty_tier_key == "A"
-        assert data.system_cards == []
+    @pytest.fixture()
+    def tier_a_data(self):
+        return map_summary(_make_summary(confidence=0.06))
 
-    def test_tier_a_no_repair_actions(self):
-        data = map_summary(_make_summary(confidence=0.06))
-        for step in data.next_steps:
+    def test_tier_a_no_system_cards(self, tier_a_data):
+        assert tier_a_data.certainty_tier_key == "A"
+        assert tier_a_data.system_cards == []
+
+    def test_tier_a_no_repair_actions(self, tier_a_data):
+        for step in tier_a_data.next_steps:
             assert "balance" not in step.action.lower()
             assert "inspect" not in step.action.lower()
             assert "runout" not in step.action.lower()
 
-    def test_tier_a_shows_capture_guidance(self):
-        data = map_summary(_make_summary(confidence=0.06))
-        actions = [s.action for s in data.next_steps]
+    def test_tier_a_shows_capture_guidance(self, tier_a_data):
+        actions = [s.action for s in tier_a_data.next_steps]
         assert len(actions) >= 3
         assert any("speed sweep" in a.lower() or "speed" in a.lower() for a in actions)
         assert any("sensor" in a.lower() for a in actions)
@@ -135,16 +136,14 @@ class TestTierAReportOutput:
         assert data.certainty_tier_key == "A"
         assert data.system_cards == []
 
-    def test_tier_a_next_steps_not_empty(self):
+    def test_tier_a_next_steps_not_empty(self, tier_a_data):
         """The report should not be empty — it must guide the user."""
-        data = map_summary(_make_summary(confidence=0.06))
-        assert len(data.next_steps) > 0
+        assert len(tier_a_data.next_steps) > 0
 
-    def test_tier_a_observed_signature_still_present(self):
+    def test_tier_a_observed_signature_still_present(self, tier_a_data):
         """Observed signature should still show (pattern data, certainty label)."""
-        data = map_summary(_make_summary(confidence=0.06))
-        assert data.observed.certainty_label is not None
-        assert data.observed.certainty_pct is not None
+        assert tier_a_data.observed.certainty_label is not None
+        assert tier_a_data.observed.certainty_pct is not None
 
 
 # ---------------------------------------------------------------------------
@@ -155,28 +154,28 @@ class TestTierAReportOutput:
 class TestTierBReportOutput:
     """Tier B (guarded certainty): hypotheses only, no repair parts."""
 
-    def test_tier_b_system_cards_present(self):
-        data = map_summary(_make_summary(confidence=0.25))
-        assert data.certainty_tier_key == "B"
-        assert len(data.system_cards) > 0
+    @pytest.fixture()
+    def tier_b_data(self):
+        return map_summary(_make_summary(confidence=0.25))
 
-    def test_tier_b_cards_labeled_hypothesis(self):
-        data = map_summary(_make_summary(confidence=0.25))
-        for card in data.system_cards:
+    def test_tier_b_system_cards_present(self, tier_b_data):
+        assert tier_b_data.certainty_tier_key == "B"
+        assert len(tier_b_data.system_cards) > 0
+
+    def test_tier_b_cards_labeled_hypothesis(self, tier_b_data):
+        for card in tier_b_data.system_cards:
             assert (
                 "hypothesis" in card.system_name.lower() or "hypothese" in card.system_name.lower()
             )
 
-    def test_tier_b_no_repair_parts(self):
-        data = map_summary(_make_summary(confidence=0.25))
-        for card in data.system_cards:
+    def test_tier_b_no_repair_parts(self, tier_b_data):
+        for card in tier_b_data.system_cards:
             assert card.parts == [], f"Tier B cards should have no parts, got {card.parts}"
 
-    def test_tier_b_next_steps_from_test_plan(self):
+    def test_tier_b_next_steps_from_test_plan(self, tier_b_data):
         """Tier B should still pass through test_plan steps (verification)."""
-        data = map_summary(_make_summary(confidence=0.25))
-        assert len(data.next_steps) > 0
-        assert data.next_steps[0].action != ""
+        assert len(tier_b_data.next_steps) > 0
+        assert tier_b_data.next_steps[0].action != ""
 
 
 # ---------------------------------------------------------------------------
@@ -187,24 +186,24 @@ class TestTierBReportOutput:
 class TestTierCReportOutput:
     """Tier C (sufficient certainty): existing diagnostic behavior."""
 
-    def test_tier_c_system_cards_present(self):
-        data = map_summary(_make_summary(confidence=0.75))
-        assert data.certainty_tier_key == "C"
-        assert len(data.system_cards) > 0
+    @pytest.fixture()
+    def tier_c_data(self):
+        return map_summary(_make_summary(confidence=0.75))
 
-    def test_tier_c_cards_have_parts(self):
-        data = map_summary(_make_summary(confidence=0.75))
-        has_parts = any(card.parts for card in data.system_cards)
+    def test_tier_c_system_cards_present(self, tier_c_data):
+        assert tier_c_data.certainty_tier_key == "C"
+        assert len(tier_c_data.system_cards) > 0
+
+    def test_tier_c_cards_have_parts(self, tier_c_data):
+        has_parts = any(card.parts for card in tier_c_data.system_cards)
         assert has_parts, "Tier C cards should have repair-oriented parts"
 
-    def test_tier_c_cards_no_hypothesis_label(self):
-        data = map_summary(_make_summary(confidence=0.75))
-        for card in data.system_cards:
+    def test_tier_c_cards_no_hypothesis_label(self, tier_c_data):
+        for card in tier_c_data.system_cards:
             assert "hypothesis" not in card.system_name.lower()
 
-    def test_tier_c_next_steps_from_test_plan(self):
-        data = map_summary(_make_summary(confidence=0.75))
-        assert len(data.next_steps) > 0
+    def test_tier_c_next_steps_from_test_plan(self, tier_c_data):
+        assert len(tier_c_data.next_steps) > 0
 
 
 # ---------------------------------------------------------------------------
@@ -215,23 +214,20 @@ class TestTierCReportOutput:
 class TestLowCertaintyRegression:
     """Regression: at ~6% certainty the report must not suggest specific repairs."""
 
-    def test_six_percent_certainty_no_specific_systems(self):
-        """With ~6% certainty, the report should NOT list specific systems with findings."""
-        data = map_summary(_make_summary(confidence=0.06))
-        assert data.system_cards == [], "At 6% certainty, no system finding cards should be shown"
+    @pytest.fixture()
+    def low_cert_data(self):
+        return map_summary(_make_summary(confidence=0.06))
 
-    def test_six_percent_certainty_no_parts_to_inspect(self):
+    def test_six_percent_certainty_no_parts_to_inspect(self, low_cert_data):
         """With ~6% certainty, no parts inspection should be suggested."""
-        data = map_summary(_make_summary(confidence=0.06))
-        for step in data.next_steps:
+        for step in low_cert_data.next_steps:
             assert "tire" not in step.action.lower() or "tire size" in step.action.lower()
             assert "bearing" not in step.action.lower()
             assert "mount" not in step.action.lower()
 
-    def test_six_percent_certainty_provides_guidance(self):
+    def test_six_percent_certainty_provides_guidance(self, low_cert_data):
         """With ~6% certainty, guidance on how to improve data quality must be shown."""
-        data = map_summary(_make_summary(confidence=0.06))
-        actions_text = " ".join(s.action.lower() for s in data.next_steps)
+        actions_text = " ".join(s.action.lower() for s in low_cert_data.next_steps)
         assert "speed" in actions_text, "Should mention speed sweep guidance"
         assert "sensor" in actions_text, "Should mention sensor coverage guidance"
 

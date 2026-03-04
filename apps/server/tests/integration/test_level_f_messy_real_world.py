@@ -46,8 +46,8 @@ from builders import (
     top_confidence,
 )
 
-_4S = ALL_WHEEL_SENSORS[:]
-_CORNERS = ["FL", "FR", "RL", "RR"]
+_4S = ALL_WHEEL_SENSORS  # never mutated – no need to copy
+_CORNERS = list(CORNER_SENSORS)  # derive from single source of truth
 
 
 # ---------------------------------------------------------------------------
@@ -114,12 +114,10 @@ def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
         fault_vib_db=28.0,
     )
     # Add speed jitter: perturb the speed of each sample
-    jittered: list[dict] = []
-    for i, s in enumerate(fault):
-        h = _stable_hash(f"jitter-{i}")
-        jitter = 8.0 * ((h % 200) / 100.0 - 1.0)
-        s = {**s, "speed_kmh": max(5.0, s["speed_kmh"] + jitter)}
-        jittered.append(s)
+    jittered = [
+        {**s, "speed_kmh": max(5.0, s["speed_kmh"] + 8.0 * ((_stable_hash(f"jitter-{i}") % 200) / 100.0 - 1.0))}
+        for i, s in enumerate(fault)
+    ]
 
     summary = run_analysis(jittered, metadata=profile_metadata(profile))
     top = extract_top(summary)

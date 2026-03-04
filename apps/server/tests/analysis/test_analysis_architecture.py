@@ -49,11 +49,7 @@ def _analysis_submodule_imports(source: str, filename: str) -> list[str]:
         if level > 0:
             # Relative import: `from .analysis.xyz import …` is a violation;
             # `from .analysis import …` is fine.
-            if mod.startswith("analysis.") and "." in mod[len("analysis.") :]:
-                # e.g. "analysis.summary" → sub-module access
-                violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
-            elif mod.startswith("analysis."):
-                # "analysis.summary" with exactly one dot after "analysis"
+            if mod.startswith("analysis."):
                 violations.append(f"line {node.lineno}: from {'.' * level}{mod} import ...")
         else:
             # Absolute import: `from vibesensor.analysis.xyz import …`
@@ -81,27 +77,25 @@ def test_external_module_uses_analysis_public_api(module_path: Path) -> None:
 # 2. analysis/__init__.py exports all publicly used symbols
 # ---------------------------------------------------------------------------
 
+_EXPECTED_PUBLIC_SYMBOLS = [
+    "summarize_run_data",
+    "summarize_log",
+    "build_findings_for_samples",
+    "confidence_label",
+    "select_top_causes",
+    "map_summary",
+    "DrivingPhase",
+    "classify_sample_phase",
+]
 
-def test_analysis_init_exports_core_symbols() -> None:
-    """The analysis public API must export the key symbols used externally."""
+
+@pytest.mark.parametrize("symbol", _EXPECTED_PUBLIC_SYMBOLS)
+def test_analysis_init_exports_core_symbol(symbol: str) -> None:
+    """Each expected symbol must be importable from ``vibesensor.analysis`` and listed in ``__all__``."""
     from vibesensor import analysis
 
-    expected_names = [
-        "summarize_run_data",
-        "summarize_log",
-        "build_findings_for_samples",
-        "confidence_label",
-        "select_top_causes",
-        "map_summary",
-        "DrivingPhase",
-        "classify_sample_phase",
-    ]
-    for name in expected_names:
-        assert hasattr(analysis, name), f"vibesensor.analysis.__init__ must export '{name}'"
-    # __all__ must list them
-    assert set(expected_names) <= set(analysis.__all__), (
-        f"vibesensor.analysis.__all__ is missing: {set(expected_names) - set(analysis.__all__)}"
-    )
+    assert hasattr(analysis, symbol), f"vibesensor.analysis.__init__ must export '{symbol}'"
+    assert symbol in analysis.__all__, f"vibesensor.analysis.__all__ is missing '{symbol}'"
 
 
 # ---------------------------------------------------------------------------
@@ -160,28 +154,29 @@ def test_summarize_run_data_returns_expected_structure() -> None:
 # 4. No analysis module files exist outside the analysis folder
 # ---------------------------------------------------------------------------
 
+_ANALYSIS_ONLY_NAMES: frozenset[str] = frozenset({
+    "findings.py",
+    "order_analysis.py",
+    "phase_segmentation.py",
+    "plot_data.py",
+    "strength_labels.py",
+    "test_plan.py",
+    "pattern_parts.py",
+    "report_data_builder.py",
+})
+
 
 def test_no_analysis_files_outside_analysis_folder() -> None:
     """Core analysis module names must not appear outside the analysis/ folder."""
-    analysis_only_names = {
-        "findings.py",
-        "order_analysis.py",
-        "phase_segmentation.py",
-        "plot_data.py",
-        "strength_labels.py",
-        "test_plan.py",
-        "pattern_parts.py",
-        "report_data_builder.py",
-    }
     # Check vibesensor/ root
     root_files = {p.name for p in _SERVER_PKG.glob("*.py")}
-    unexpected = root_files & analysis_only_names
+    unexpected = root_files & _ANALYSIS_ONLY_NAMES
     assert not unexpected, f"Analysis files found outside analysis/ folder: {unexpected}"
     # Check report/ folder
     report_dir = _SERVER_PKG / "report"
     if report_dir.is_dir():
         report_files = {p.name for p in report_dir.glob("*.py")}
-        unexpected = report_files & analysis_only_names
+        unexpected = report_files & _ANALYSIS_ONLY_NAMES
         assert not unexpected, f"Analysis files found in report/ folder: {unexpected}"
 
 

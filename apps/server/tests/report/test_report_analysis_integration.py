@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -9,12 +10,36 @@ from vibesensor.analysis import findings as findings_module
 from vibesensor.analysis.findings import _speed_breakdown
 from vibesensor.analysis.findings import builder as findings_builder_module
 from vibesensor.analysis.findings import order_findings as order_findings_module
+from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.analysis.plot_data import _top_peaks_table_rows
+from vibesensor.analysis.summary import _most_likely_origin_summary, summarize_run_data
+from vibesensor.analysis.test_plan import _location_speedbin_summary
+from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
 from vibesensor.runlog import (
     append_jsonl_records,
     create_run_end_record,
     create_run_metadata,
 )
+
+# -- shared helpers & constants ------------------------------------------------
+
+
+class _Hypothesis:
+    """Stub hypothesis for monkeypatching order findings."""
+
+    key = "wheel_1x"
+    order = 1.0
+    order_label_base = "wheel order"
+    source = "wheel/tire"
+    suspected_source = "wheel/tire"
+
+    @staticmethod
+    def predicted_hz(
+        _sample: dict,
+        _metadata: dict,
+        _circumference: float | None,
+    ) -> tuple[float, str]:
+        return 5.0, "speed_kmh"
 
 
 def _make_metadata(**overrides) -> dict:
@@ -57,6 +82,80 @@ def _make_sample(t_s: float, speed_kmh: float, amp: float = 0.01) -> dict:
     }
 
 
+def _wheel_metadata(**overrides: object) -> dict[str, object]:
+    """Return a standard wheel-analysis metadata dict, optionally overridden."""
+    base: dict[str, object] = {
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200.0,
+        "tire_circumference_m": 2.036,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+        "units": {"accel_x_g": "g"},
+    }
+    base.update(overrides)
+    return base
+
+
+def _patch_order_hypothesis(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    dominance_ratio: float = 2.0,
+) -> None:
+    """Apply standard order-hypothesis stubs to *order_findings_module*."""
+    monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
+    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
+    monkeypatch.setattr(
+        order_findings_module,
+        "_location_speedbin_summary",
+        lambda _points, **_kwargs: (
+            "",
+            {
+                "weak_spatial_separation": False,
+                "localization_confidence": 1.0,
+                "dominance_ratio": dominance_ratio,
+            },
+        ),
+    )
+    monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
+
+
+def _call_build_order_findings(
+    samples: list[dict],
+    *,
+    per_sample_phases: list[DrivingPhase] | None = None,
+    speed_stddev_kmh: float = 12.0,
+    engine_ref_sufficient: bool = True,
+    **overrides: object,
+) -> list[dict]:
+    """Thin wrapper around ``_build_order_findings`` with sensible defaults."""
+    kwargs: dict[str, object] = {
+        "metadata": {"units": {"accel_x_g": "g"}},
+        "samples": samples,
+        "speed_sufficient": True,
+        "steady_speed": False,
+        "speed_stddev_kmh": speed_stddev_kmh,
+        "tire_circumference_m": 2.036,
+        "engine_ref_sufficient": engine_ref_sufficient,
+        "raw_sample_rate_hz": 200.0,
+        "accel_units": "g",
+        "connected_locations": {"front_left"},
+        "lang": "en",
+    }
+    if per_sample_phases is not None:
+        kwargs["per_sample_phases"] = per_sample_phases
+    kwargs.update(overrides)
+    return findings_module._build_order_findings(**kwargs)
+
+
+def _max_non_ref_confidence(findings: list[dict[str, object]]) -> float:
+    """Return the highest confidence among non-reference findings."""
+    return max(
+        float(f.get("confidence_0_to_1") or 0.0)
+        for f in findings
+        if not str(f.get("finding_id") or "").startswith("REF_")
+    )
+
+
 # -- _speed_breakdown ----------------------------------------------------------
 
 
@@ -88,9 +187,7 @@ def test_speed_breakdown_no_speed() -> None:
 def test_build_findings_empty_samples() -> None:
     metadata = _make_metadata()
     findings = build_findings_for_samples(metadata=metadata, samples=[], lang="en")
-    # Should return some reference/info findings even with no data
     assert isinstance(findings, list)
-    assert len(findings) >= 0  # empty input may legitimately produce zero findings
 
 
 def test_build_findings_with_speed_data() -> None:
@@ -165,29 +262,20 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
 
 
 def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
     samples = []
     for idx in range(30):
         speed_kmh = 40.0 + (2.0 * idx)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
         high_speed_band = speed_kmh >= 90.0
         samples.append(
             {
                 **_make_sample(float(idx), speed_kmh, 0.03 if high_speed_band else 0.01),
                 "strength_floor_amp_g": 0.003,
                 "top_peaks": [
-                    {"hz": wheel_hz, "amp": 0.03}
+                    {"hz": wh, "amp": 0.03}
                     if high_speed_band
-                    else {"hz": wheel_hz + 7.0, "amp": 0.01}
+                    else {"hz": wh + 7.0, "amp": 0.01}
                 ],
             }
         )
@@ -209,36 +297,8 @@ def test_build_findings_detects_sparse_high_speed_only_fault() -> None:
 def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    class _Hypothesis:
-        key = "wheel_1x"
-        order = 1.0
-        order_label_base = "wheel order"
-        source = "wheel/tire"
-        suspected_source = "wheel/tire"
+    _patch_order_hypothesis(monkeypatch, dominance_ratio=1.2)
 
-        @staticmethod
-        def predicted_hz(
-            _sample: dict,
-            _metadata: dict,
-            _circumference: float | None,
-        ) -> tuple[float, str]:
-            return 5.0, "speed_kmh"
-
-    monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
-    monkeypatch.setattr(
-        order_findings_module,
-        "_location_speedbin_summary",
-        lambda _points, **_kwargs: (
-            "",
-            {
-                "weak_spatial_separation": False,
-                "localization_confidence": 1.0,
-                "dominance_ratio": 1.2,
-            },
-        ),
-    )
-    monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
     samples: list[dict] = []
     for idx in range(16):
         matched = idx < 4
@@ -252,19 +312,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
             }
         )
 
-    findings = findings_module._build_order_findings(
-        metadata={"units": {"accel_x_g": "g"}},
-        samples=samples,
-        speed_sufficient=True,
-        steady_speed=False,
-        speed_stddev_kmh=12.0,
-        tire_circumference_m=2.036,
-        engine_ref_sufficient=True,
-        raw_sample_rate_hz=200.0,
-        accel_units="g",
-        connected_locations={"front_left"},
-        lang="en",
-    )
+    findings = _call_build_order_findings(samples)
 
     assert len(findings) == 1
     finding = findings[0]
@@ -275,46 +323,21 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
     assert confidence < 0.25
 
 
-def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
+@pytest.mark.parametrize(
+    "phases, expected_dominant_phase",
+    [
+        pytest.param([DrivingPhase.ACCELERATION] * 20, "acceleration", id="with_phases"),
+        pytest.param(None, None, id="without_phases"),
+    ],
+)
+def test_build_order_findings_dominant_phase(
     monkeypatch: pytest.MonkeyPatch,
+    phases: list[DrivingPhase] | None,
+    expected_dominant_phase: str | None,
 ) -> None:
-    """dominant_phase is populated when the majority of matched samples share a phase."""
+    """dominant_phase matches expectation based on whether phases are provided."""
+    _patch_order_hypothesis(monkeypatch)
 
-    class _Hypothesis:
-        key = "wheel_1x"
-        order = 1.0
-        order_label_base = "wheel order"
-        source = "wheel/tire"
-        suspected_source = "wheel/tire"
-
-        @staticmethod
-        def predicted_hz(
-            _sample: dict,
-            _metadata: dict,
-            _circumference: float | None,
-        ) -> tuple[float, str]:
-            return 5.0, "speed_kmh"
-
-    monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
-    monkeypatch.setattr(
-        order_findings_module,
-        "_location_speedbin_summary",
-        lambda _points, **_kwargs: (
-            "",
-            {
-                "weak_spatial_separation": False,
-                "localization_confidence": 1.0,
-                "dominance_ratio": 2.0,
-            },
-        ),
-    )
-    monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
-
-    from vibesensor.analysis.phase_segmentation import DrivingPhase
-
-    # 20 samples all in acceleration phase, all matching at 5.0 Hz
-    n = 20
     samples: list[dict] = [
         {
             "t_s": float(i),
@@ -323,116 +346,27 @@ def test_build_order_findings_dominant_phase_set_when_phase_onset_detected(
             "top_peaks": [{"hz": 5.0, "amp": 0.05}],
             "location": "front_left",
         }
-        for i in range(n)
-    ]
-    per_sample_phases = [DrivingPhase.ACCELERATION] * n
-
-    findings = findings_module._build_order_findings(
-        metadata={"units": {"accel_x_g": "g"}},
-        samples=samples,
-        speed_sufficient=True,
-        steady_speed=False,
-        speed_stddev_kmh=12.0,
-        tire_circumference_m=2.036,
-        engine_ref_sufficient=True,
-        raw_sample_rate_hz=200.0,
-        accel_units="g",
-        connected_locations={"front_left"},
-        lang="en",
-        per_sample_phases=per_sample_phases,
-    )
-
-    assert len(findings) == 1
-    assert findings[0].get("dominant_phase") == "acceleration"
-
-
-def test_build_order_findings_dominant_phase_none_without_phases(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """dominant_phase is None when per_sample_phases is not provided."""
-
-    class _Hypothesis:
-        key = "wheel_1x"
-        order = 1.0
-        order_label_base = "wheel order"
-        source = "wheel/tire"
-        suspected_source = "wheel/tire"
-
-        @staticmethod
-        def predicted_hz(
-            _sample: dict,
-            _metadata: dict,
-            _circumference: float | None,
-        ) -> tuple[float, str]:
-            return 5.0, "speed_kmh"
-
-    monkeypatch.setattr(order_findings_module, "_order_hypotheses", lambda: [_Hypothesis()])
-    monkeypatch.setattr(order_findings_module, "_corr_abs_clamped", lambda _pred, _meas: 0.0)
-    monkeypatch.setattr(
-        order_findings_module,
-        "_location_speedbin_summary",
-        lambda _points, **_kwargs: (
-            "",
-            {
-                "weak_spatial_separation": False,
-                "localization_confidence": 1.0,
-                "dominance_ratio": 2.0,
-            },
-        ),
-    )
-    monkeypatch.setattr(order_findings_module, "ORDER_MIN_CONFIDENCE", 0.0)
-
-    n = 20
-    samples: list[dict] = [
-        {
-            "t_s": float(i),
-            "speed_kmh": 40.0 + float(i),
-            "strength_floor_amp_g": 0.001,
-            "top_peaks": [{"hz": 5.0, "amp": 0.05}],
-            "location": "front_left",
-        }
-        for i in range(n)
+        for i in range(20)
     ]
 
-    findings = findings_module._build_order_findings(
-        metadata={"units": {"accel_x_g": "g"}},
-        samples=samples,
-        speed_sufficient=True,
-        steady_speed=False,
-        speed_stddev_kmh=12.0,
-        tire_circumference_m=2.036,
-        engine_ref_sufficient=True,
-        raw_sample_rate_hz=200.0,
-        accel_units="g",
-        connected_locations={"front_left"},
-        lang="en",
-    )
+    findings = _call_build_order_findings(samples, per_sample_phases=phases)
 
     assert len(findings) == 1
-    assert findings[0].get("dominant_phase") is None
+    assert findings[0].get("dominant_phase") == expected_dominant_phase
 
 
 def test_build_findings_order_exposes_structured_speed_profile() -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
     samples = []
     for idx in range(24):
         speed_kmh = 60.0 + float(idx)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
         amp = 0.01 + (0.0008 * idx)
         samples.append(
             {
                 **_make_sample(float(idx), speed_kmh, amp),
                 "strength_floor_amp_g": 0.002,
-                "top_peaks": [{"hz": wheel_hz, "amp": amp}],
+                "top_peaks": [{"hz": wh, "amp": amp}],
             }
         )
 
@@ -456,25 +390,17 @@ def test_build_findings_order_exposes_structured_speed_profile() -> None:
 
 
 def test_build_findings_detects_driveline_2x_order() -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = {k: v for k, v in _wheel_metadata().items() if k != "current_gear_ratio"}
     samples = []
     for idx in range(24):
         speed_kmh = 55.0 + (2.0 * idx)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
         samples.append(
             {
                 **_make_sample(float(idx), speed_kmh, 0.04),
                 "strength_floor_amp_g": 0.002,
                 "top_peaks": [
-                    {"hz": wheel_hz * 3.08 * 2.0, "amp": 0.04},
+                    {"hz": wh * 3.08 * 2.0, "amp": 0.04},
                 ],
             }
         )
@@ -491,7 +417,7 @@ def test_build_findings_detects_driveline_2x_order() -> None:
 
 
 def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> None:
-    metadata = {
+    metadata: dict[str, object] = {
         "sensor_model": "ADXL345",
         "raw_sample_rate_hz": 200.0,
         "units": {"accel_x_g": "g"},
@@ -528,28 +454,19 @@ def test_build_findings_persistent_peak_exposes_structured_speed_profile() -> No
 
 
 def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
 
     samples = []
     for idx, speed_kmh in enumerate(range(40, 121)):
         speed_val = float(speed_kmh)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_val, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed_val, 2.036) or 10.0
         amp = 0.08 if 75 <= speed_kmh <= 90 else 0.01
         samples.append(
             {
                 **_make_sample(float(idx), speed_val, amp),
                 "strength_floor_amp_g": 0.003,
                 "top_peaks": [
-                    {"hz": wheel_hz, "amp": amp},
+                    {"hz": wh, "amp": amp},
                     {"hz": 43.0, "amp": amp},
                 ],
             }
@@ -590,8 +507,6 @@ def test_speed_band_semantics_are_aligned_across_findings_and_peak_table() -> No
 
 
 def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> None:
-    from vibesensor.analysis.test_plan import _location_speedbin_summary
-
     matches = [
         {"speed_kmh": 85.0, "amp": 0.0110, "location": "Rear Right"},
         {"speed_kmh": 85.0, "amp": 0.0102, "location": "Rear Left"},
@@ -613,8 +528,6 @@ def test_location_speedbin_summary_reports_ambiguous_location_for_near_tie() -> 
 
 
 def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_count() -> None:
-    from vibesensor.analysis.test_plan import _location_speedbin_summary
-
     base_matches = [
         {"speed_kmh": 85.0, "amp": 1.30, "location": "Front Left"},
         {"speed_kmh": 85.0, "amp": 1.00, "location": "Front Right"},
@@ -636,8 +549,6 @@ def test_location_speedbin_summary_weak_spatial_threshold_adapts_to_location_cou
 
 
 def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> None:
-    from vibesensor.analysis.summary import _most_likely_origin_summary
-
     findings = [
         {
             "suspected_source": "wheel/tire",
@@ -655,8 +566,6 @@ def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> Non
 
 
 def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None:
-    from vibesensor.analysis.test_plan import _location_speedbin_summary
-
     matches = [
         {"speed_kmh": 65.0, "amp": 0.030, "location": "Rear Left"},
         {"speed_kmh": 66.0, "amp": 0.028, "location": "Rear Left"},
@@ -682,8 +591,6 @@ def test_location_speedbin_summary_can_restrict_to_relevant_speed_bins() -> None
 
 
 def test_location_speedbin_summary_reports_weighted_boundary_straddling_window() -> None:
-    from vibesensor.analysis.test_plan import _location_speedbin_summary
-
     matches = [
         {"speed_kmh": 74.0, "amp": 0.005, "location": "Front Left"},
         {"speed_kmh": 75.0, "amp": 0.005, "location": "Front Left"},
@@ -710,8 +617,6 @@ def test_location_speedbin_summary_reports_weighted_boundary_straddling_window()
 
 
 def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outlier_bin() -> None:
-    from vibesensor.analysis.test_plan import _location_speedbin_summary
-
     sparse_loud_bin = [
         {"speed_kmh": 85.0, "amp": 0.120, "location": "Rear Left"},
         {"speed_kmh": 86.0, "amp": 0.120, "location": "Rear Left"},
@@ -732,8 +637,6 @@ def test_location_speedbin_summary_prefers_better_sample_coverage_over_tiny_outl
 
 
 def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() -> None:
-    from vibesensor.analysis.test_plan import _location_speedbin_summary
-
     matches = [
         {
             "speed_kmh": 92.0,
@@ -773,8 +676,6 @@ def test_location_speedbin_summary_prefers_multi_sensor_corroborated_location() 
 
 
 def test_location_speedbin_summary_prefers_connected_throughout_locations() -> None:
-    from vibesensor.analysis.test_plan import _location_speedbin_summary
-
     matches = [
         {"speed_kmh": 85.0, "amp": 0.022, "location": "Front Left"},
         {"speed_kmh": 86.0, "amp": 0.023, "location": "Front Left"},
@@ -796,30 +697,20 @@ def test_location_speedbin_summary_prefers_connected_throughout_locations() -> N
 def test_build_findings_penalizes_low_localization_confidence(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis.findings import order_findings as order_findings_mod
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
     samples = []
     for idx in range(24):
         speed = 70.0 + idx
-        wheel_hz = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
         samples.append(
             {
                 **_make_sample(float(idx), speed, 0.03),
-                "top_peaks": [{"hz": wheel_hz, "amp": 0.03}],
+                "top_peaks": [{"hz": wh, "amp": 0.03}],
             }
         )
 
     monkeypatch.setattr(
-        order_findings_mod,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
@@ -832,15 +723,12 @@ def test_build_findings_penalizes_low_localization_confidence(
             },
         ),
     )
-    high_conf_findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-    high_conf = max(
-        float(f.get("confidence_0_to_1") or 0.0)
-        for f in high_conf_findings
-        if not str(f.get("finding_id") or "").startswith("REF_")
+    high_conf = _max_non_ref_confidence(
+        build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
     )
 
     monkeypatch.setattr(
-        order_findings_mod,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "ambiguous location",
@@ -853,11 +741,8 @@ def test_build_findings_penalizes_low_localization_confidence(
             },
         ),
     )
-    low_conf_findings = build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
-    low_conf = max(
-        float(f.get("confidence_0_to_1") or 0.0)
-        for f in low_conf_findings
-        if not str(f.get("finding_id") or "").startswith("REF_")
+    low_conf = _max_non_ref_confidence(
+        build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
     )
 
     assert low_conf < high_conf
@@ -866,37 +751,20 @@ def test_build_findings_penalizes_low_localization_confidence(
 def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis.findings import order_findings as order_findings_mod
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
     samples = []
     for idx in range(24):
         speed = 65.0 + idx
-        wheel_hz = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed, 2.036) or 10.0
         samples.append(
             {
                 **_make_sample(float(idx), speed, 0.03),
-                "top_peaks": [{"hz": wheel_hz, "amp": 0.03}],
+                "top_peaks": [{"hz": wh, "amp": 0.03}],
             }
         )
 
-    def _max_conf(findings: list[dict[str, object]]) -> float:
-        return max(
-            float(f.get("confidence_0_to_1") or 0.0)
-            for f in findings
-            if not str(f.get("finding_id") or "").startswith("REF_")
-        )
-
     monkeypatch.setattr(
-        order_findings_mod,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "strong location",
@@ -909,12 +777,12 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
             },
         ),
     )
-    baseline_conf = _max_conf(
+    baseline_conf = _max_non_ref_confidence(
         build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
     )
 
     monkeypatch.setattr(
-        order_findings_mod,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "weak location",
@@ -927,10 +795,12 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
             },
         ),
     )
-    weak_conf = _max_conf(build_findings_for_samples(metadata=metadata, samples=samples, lang="en"))
+    weak_conf = _max_non_ref_confidence(
+        build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
+    )
 
     monkeypatch.setattr(
-        order_findings_mod,
+        order_findings_module,
         "_location_speedbin_summary",
         lambda matched_points, lang, relevant_speed_bins=None, connected_locations=None, **_kw: (
             "near tie location",
@@ -943,7 +813,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
             },
         ),
     )
-    near_tie_conf = _max_conf(
+    near_tie_conf = _max_non_ref_confidence(
         build_findings_for_samples(metadata=metadata, samples=samples, lang="en")
     )
 
@@ -955,17 +825,7 @@ def test_build_findings_penalizes_weak_spatial_separation_by_dominance_ratio(
 def test_build_findings_passes_focused_speed_band_to_location_summary(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from vibesensor.analysis.findings import order_findings as order_findings_mod
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
 
     seen_relevant_speed_bins: list[str] = []
 
@@ -986,20 +846,20 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
             },
         )
 
-    monkeypatch.setattr(order_findings_mod, "_location_speedbin_summary", _fake_location_summary)
+    monkeypatch.setattr(order_findings_module, "_location_speedbin_summary", _fake_location_summary)
 
     samples = []
     for idx in range(30):
         speed_kmh = 40.0 + (2.0 * idx)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
         high_speed_band = speed_kmh >= 90.0
         sample = {
             **_make_sample(float(idx), speed_kmh, 0.03 if high_speed_band else 0.01),
             "strength_floor_amp_g": 0.003,
             "top_peaks": [
-                {"hz": wheel_hz, "amp": 0.03}
+                {"hz": wh, "amp": 0.03}
                 if high_speed_band
-                else {"hz": wheel_hz + 7.0, "amp": 0.01}
+                else {"hz": wh + 7.0, "amp": 0.01}
             ],
         }
         samples.append(sample)
@@ -1017,27 +877,18 @@ def test_build_findings_passes_focused_speed_band_to_location_summary(
 
 
 def test_build_findings_excludes_partial_coverage_sensor_from_strongest_location() -> None:
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
 
     samples: list[dict[str, object]] = []
     for idx in range(20):
         speed_kmh = 70.0 + idx
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
 
         full_sensor = {
             **_make_sample(float(idx), speed_kmh, 0.02),
             "client_name": "Front Left",
             "strength_floor_amp_g": 0.002,
-            "top_peaks": [{"hz": wheel_hz, "amp": 0.02}],
+            "top_peaks": [{"hz": wh, "amp": 0.02}],
         }
         samples.append(full_sensor)
 
@@ -1046,7 +897,7 @@ def test_build_findings_excludes_partial_coverage_sensor_from_strongest_location
                 **_make_sample(float(idx), speed_kmh, 0.05),
                 "client_name": "Rear Right",
                 "strength_floor_amp_g": 0.002,
-                "top_peaks": [{"hz": wheel_hz, "amp": 0.05}],
+                "top_peaks": [{"hz": wh, "amp": 0.05}],
             }
             samples.append(partial_sensor)
 
@@ -1171,27 +1022,16 @@ def _make_order_finding_samples(
 
 def test_build_order_findings_per_phase_confidence_key_present() -> None:
     """per_phase_confidence must appear in evidence_metrics when phases are provided."""
-    from vibesensor.analysis.phase_segmentation import DrivingPhase
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
     speed_kmh = 70.0
-    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
-    samples = _make_order_finding_samples(20, speed_kmh, wheel_hz)
+    wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    samples = _make_order_finding_samples(20, speed_kmh, wh)
     phases = [DrivingPhase.CRUISE] * 20
 
-    findings = findings_module._build_order_findings(
-        metadata={"units": {"accel_x_g": "g"}},
-        samples=samples,
-        speed_sufficient=True,
-        steady_speed=False,
-        speed_stddev_kmh=5.0,
-        tire_circumference_m=2.036,
-        engine_ref_sufficient=False,
-        raw_sample_rate_hz=200.0,
-        accel_units="g",
-        connected_locations={"front_left"},
-        lang="en",
+    findings = _call_build_order_findings(
+        samples,
         per_sample_phases=phases,
+        speed_stddev_kmh=5.0,
+        engine_ref_sufficient=False,
     )
     assert len(findings) >= 1, "Expected at least one order finding"
     finding = findings[0]
@@ -1206,24 +1046,14 @@ def test_build_order_findings_per_phase_confidence_key_present() -> None:
 
 def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> None:
     """When per_sample_phases is not provided, per_phase_confidence must be None."""
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
     speed_kmh = 70.0
-    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
-    samples = _make_order_finding_samples(20, speed_kmh, wheel_hz)
+    wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    samples = _make_order_finding_samples(20, speed_kmh, wh)
 
-    findings = findings_module._build_order_findings(
-        metadata={"units": {"accel_x_g": "g"}},
-        samples=samples,
-        speed_sufficient=True,
-        steady_speed=False,
+    findings = _call_build_order_findings(
+        samples,
         speed_stddev_kmh=5.0,
-        tire_circumference_m=2.036,
         engine_ref_sufficient=False,
-        raw_sample_rate_hz=200.0,
-        accel_units="g",
-        connected_locations={"front_left"},
-        lang="en",
     )
     assert len(findings) >= 1
     finding = findings[0]
@@ -1234,36 +1064,24 @@ def test_build_order_findings_no_phases_leaves_per_phase_confidence_none() -> No
 
 def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() -> None:
     """Multi-phase evidence must produce >= confidence vs identical single-phase evidence."""
-    from vibesensor.analysis.phase_segmentation import DrivingPhase
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
     speed_kmh = 70.0
-    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+    wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
     # 20 samples: same peaks, same match rate — only phase labels differ
-    samples = _make_order_finding_samples(20, speed_kmh, wheel_hz)
+    samples = _make_order_finding_samples(20, speed_kmh, wh)
 
     phases_single = [DrivingPhase.CRUISE] * 20
     # Spread across two phases so both report high match rates
     phases_multi = [DrivingPhase.CRUISE] * 10 + [DrivingPhase.ACCELERATION] * 10
 
-    _common = dict(
-        metadata={"units": {"accel_x_g": "g"}},
-        samples=samples,
-        speed_sufficient=True,
-        steady_speed=False,
+    _common: dict[str, object] = dict(
         speed_stddev_kmh=5.0,
-        tire_circumference_m=2.036,
         engine_ref_sufficient=False,
-        raw_sample_rate_hz=200.0,
-        accel_units="g",
-        connected_locations={"front_left"},
-        lang="en",
     )
-    single_findings = findings_module._build_order_findings(
-        **_common, per_sample_phases=phases_single
+    single_findings = _call_build_order_findings(
+        samples, per_sample_phases=phases_single, **_common
     )
-    multi_findings = findings_module._build_order_findings(
-        **_common, per_sample_phases=phases_multi
+    multi_findings = _call_build_order_findings(
+        samples, per_sample_phases=phases_multi, **_common
     )
 
     assert len(single_findings) >= 1, "single-phase case must yield a finding"
@@ -1282,28 +1100,18 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
 
 def test_build_findings_per_phase_confidence_flows_through_pipeline() -> None:
     """End-to-end: per_phase_confidence appears in order findings via summarize_run_data."""
-    from vibesensor.analysis.summary import summarize_run_data
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
-    metadata = {
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 200.0,
-        "tire_circumference_m": 2.036,
-        "final_drive_ratio": 3.08,
-        "current_gear_ratio": 0.64,
-        "units": {"accel_x_g": "g"},
-    }
+    metadata = _wheel_metadata()
     samples = []
     for idx in range(30):
         speed_kmh = 50.0 + float(idx)
-        wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
+        wh = wheel_hz_from_speed_kmh(speed_kmh, 2.036) or 10.0
         samples.append(
             {
                 "t_s": float(idx),
                 "speed_kmh": speed_kmh,
                 "vibration_strength_db": 30.0,
                 "strength_floor_amp_g": 0.002,
-                "top_peaks": [{"hz": wheel_hz, "amp": 0.05}],
+                "top_peaks": [{"hz": wh, "amp": 0.05}],
                 "location": "front_left",
             }
         )
@@ -1324,20 +1132,14 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
     This ensures phase data flows from the caller (summarize_run_data) downstream
     into the findings engine without redundant recomputation (TODO 7 fix).
     """
-    from unittest.mock import patch
-
-    from vibesensor.analysis.phase_segmentation import segment_run_phases
-
     samples = [_make_sample(float(i) * 0.5, 60.0, 0.02) for i in range(20)]
     pre_computed_phases, _ = segment_run_phases(samples)
 
     recompute_calls: list[int] = []
 
-    original_segment_run_phases = segment_run_phases
-
     def _patched_segment_run_phases(s):
         recompute_calls.append(1)
-        return original_segment_run_phases(s)
+        return segment_run_phases(s)
 
     with patch(
         "vibesensor.analysis.findings.builder.segment_run_phases",
@@ -1367,10 +1169,6 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
     Validates that phases computed during phase segmentation flow into the
     findings engine without redundant recomputation (TODO 7 fix).
     """
-    from unittest.mock import patch
-
-    from vibesensor.analysis.summary import summarize_run_data
-
     metadata = _make_metadata()
     samples = [
         {
@@ -1386,11 +1184,10 @@ def test_summarize_run_data_passes_phases_to_build_findings() -> None:
     ]
 
     recompute_calls: list[int] = []
-    from vibesensor.analysis.phase_segmentation import segment_run_phases as original_srp
 
     def _patched_srp(s):
         recompute_calls.append(1)
-        return original_srp(s)
+        return segment_run_phases(s)
 
     with patch("vibesensor.analysis.findings.builder.segment_run_phases", side_effect=_patched_srp):
         summary = summarize_run_data(metadata, samples, include_samples=False)

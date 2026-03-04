@@ -61,6 +61,19 @@ _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _assert_fault_at(summary: dict[str, Any], sensor: str, msg: str) -> None:
+    """Common assertion: top finding exists at *sensor* with wheel source."""
+    top = extract_top(summary)
+    assert top is not None, f"{msg}: no finding"
+    assert_wheel_source(summary, msg=msg)
+    assert_strongest_location(summary, sensor, msg=msg)
+
+
+# ---------------------------------------------------------------------------
 # D.1 – 4-sensor fault at each corner × speed (4×3 = 12 cases)
 # ---------------------------------------------------------------------------
 
@@ -136,62 +149,37 @@ def test_2sensor_localization(
         fault_vib_db=28.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for 2-sensor {fault_corner}"
-    assert_wheel_source(summary, msg=f"2s {fault_corner}")
-    assert_strongest_location(summary, fault_sensor, msg=f"2s {fault_corner}")
+    _assert_fault_at(summary, fault_sensor, msg=f"2s {fault_corner}")
 
 
 # ---------------------------------------------------------------------------
-# D.4 – 8-sensor fault localization (4 corners = 4 cases)
+# D.4/D.5 – 8/12-sensor fault localization (4 corners × 2 sets = 8 cases)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
+@pytest.mark.parametrize(
+    "sensors,label",
+    [(_8_SENSORS, "8s"), (_12_SENSORS, "12s")],
+    ids=["8s", "12s"],
+)
 @pytest.mark.parametrize("corner", _CORNERS)
-def test_8sensor_fault_localization(corner: str, profile: dict[str, Any]) -> None:
-    """8 sensors (4 wheel + 4 non-wheel), fault at one wheel corner."""
+def test_multi_sensor_fault_localization(
+    corner: str, sensors: list[str], label: str, profile: dict[str, Any]
+) -> None:
+    """8 or 12 sensors, fault at one wheel corner → correct localization."""
     sensor = CORNER_SENSORS[corner]
     samples = make_profile_fault_samples(
         profile=profile,
         fault_sensor=sensor,
-        sensors=_8_SENSORS,
+        sensors=sensors,
         speed_kmh=SPEED_HIGH,
         n_samples=35,
         fault_amp=0.07,
         fault_vib_db=28.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for 8-sensor {corner}"
-    assert_wheel_source(summary, msg=f"8s {corner}")
-    assert_strongest_location(summary, sensor, msg=f"8s {corner}")
-
-
-# ---------------------------------------------------------------------------
-# D.5 – 12-sensor fault localization (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-@pytest.mark.parametrize("corner", _CORNERS)
-def test_12sensor_fault_localization(corner: str, profile: dict[str, Any]) -> None:
-    """12 sensors, fault at one wheel corner → correct localization."""
-    sensor = CORNER_SENSORS[corner]
-    samples = make_profile_fault_samples(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=_12_SENSORS,
-        speed_kmh=SPEED_HIGH,
-        n_samples=35,
-        fault_amp=0.07,
-        fault_vib_db=28.0,
-    )
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for 12-sensor {corner}"
-    assert_wheel_source(summary, msg=f"12s {corner}")
-    assert_strongest_location(summary, sensor, msg=f"12s {corner}")
+    _assert_fault_at(summary, sensor, msg=f"{label} {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -316,10 +304,7 @@ def test_4sensor_transfer_path(corner: str, profile: dict[str, Any]) -> None:
         transfer_fraction=0.2,
     )
     summary = run_analysis(samples)
-    top = extract_top(summary)
-    assert top is not None, f"No finding for transfer-path {corner}"
-    assert_wheel_source(summary, msg=f"transfer {corner}")
-    assert_strongest_location(summary, sensor, msg=f"transfer {corner}")
+    _assert_fault_at(summary, sensor, msg=f"transfer {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -352,36 +337,27 @@ def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
         )
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"Phased 4sensor lost {corner}"
-    assert_wheel_source(summary, msg=f"phased 4s {corner}")
-    assert_strongest_location(summary, sensor, msg=f"phased 4s {corner}")
+    _assert_fault_at(summary, sensor, msg=f"phased 4s {corner}")
 
 
 # ---------------------------------------------------------------------------
-# D.10 – 8-sensor no-fault baseline (1 case)
+# D.10/D.11 – 8/12-sensor no-fault baseline (2 sensor sets = 2 cases)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-def test_8sensor_no_fault_baseline(profile: dict[str, Any]) -> None:
-    """8 sensors, all noise → no wheel fault."""
-    samples = make_noise_samples(sensors=_8_SENSORS, speed_kmh=SPEED_MID, n_samples=40)
+@pytest.mark.parametrize(
+    "sensors,label",
+    [(_8_SENSORS, "8sensor"), (_12_SENSORS, "12sensor")],
+    ids=["8s", "12s"],
+)
+def test_multi_sensor_no_fault_baseline(
+    sensors: list[str], label: str, profile: dict[str, Any]
+) -> None:
+    """8 or 12 sensors, all noise → no wheel fault."""
+    samples = make_noise_samples(sensors=sensors, speed_kmh=SPEED_MID, n_samples=40)
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_no_wheel_fault(summary, msg="8sensor-no-fault")
-
-
-# ---------------------------------------------------------------------------
-# D.11 – 12-sensor no-fault baseline (1 case)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
-def test_12sensor_no_fault_baseline(profile: dict[str, Any]) -> None:
-    """12 sensors, all noise → no wheel fault."""
-    samples = make_noise_samples(sensors=_12_SENSORS, speed_kmh=SPEED_MID, n_samples=40)
-    summary = run_analysis(samples, metadata=profile_metadata(profile))
-    assert_no_wheel_fault(summary, msg="12sensor-no-fault")
+    assert_no_wheel_fault(summary, msg=f"{label}-no-fault")
 
 
 # ---------------------------------------------------------------------------
@@ -424,10 +400,7 @@ def test_4sensor_speed_sweep(corner: str, profile: dict[str, Any]) -> None:
         samples_per_step=8,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for 4sensor sweep {corner}"
-    assert_wheel_source(summary, msg=f"sweep 4s {corner}")
-    assert_strongest_location(summary, CORNER_SENSORS[corner], msg=f"sweep 4s {corner}")
+    _assert_fault_at(summary, CORNER_SENSORS[corner], msg=f"sweep 4s {corner}")
 
 
 # ---------------------------------------------------------------------------
@@ -478,7 +451,4 @@ def test_4sensor_very_high_speed(corner: str, profile: dict[str, Any]) -> None:
         fault_vib_db=30.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
-    top = extract_top(summary)
-    assert top is not None, f"No finding for 4sensor {corner}@120"
-    assert_wheel_source(summary, msg=f"4s {corner}@120")
-    assert_strongest_location(summary, sensor, msg=f"4s {corner}@120")
+    _assert_fault_at(summary, sensor, msg=f"4s {corner}@120")

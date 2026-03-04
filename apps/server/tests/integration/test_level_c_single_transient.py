@@ -26,6 +26,7 @@ from builders import (
     assert_has_warnings,
     assert_tolerant_no_fault,
     extract_top,
+    make_diffuse_samples,
     make_idle_samples,
     make_noise_samples,
     make_profile_fault_samples,
@@ -48,6 +49,52 @@ _OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
 _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _build_fault_with_transient_samples(
+    profile: dict[str, Any],
+    sensor: str,
+    speed_kmh: float,
+    *,
+    fault_n: int = 35,
+    fault_start_t: float = 0,
+    fault_amp: float = 0.07,
+    fault_vib_db: float = 28.0,
+    spike_n: int = 3,
+    spike_start_t: float = 15,
+    spike_amp: float = 0.20,
+    spike_vib_db: float = 38.0,
+) -> list[dict]:
+    """Assemble fault + transient sample list (DRY helper for C.1/C.4/C.10/C.11)."""
+    samples: list[dict] = []
+    samples.extend(
+        make_profile_fault_samples(
+            profile=profile,
+            fault_sensor=sensor,
+            sensors=[sensor],
+            speed_kmh=speed_kmh,
+            n_samples=fault_n,
+            start_t_s=fault_start_t,
+            fault_amp=fault_amp,
+            fault_vib_db=fault_vib_db,
+        )
+    )
+    samples.extend(
+        make_transient_samples(
+            sensor=sensor,
+            speed_kmh=speed_kmh,
+            n_samples=spike_n,
+            start_t_s=spike_start_t,
+            spike_amp=spike_amp,
+            spike_vib_db=spike_vib_db,
+        )
+    )
+    return samples
+
+
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize("speed", _SPEEDS, ids=["low", "mid", "high"])
@@ -56,31 +103,7 @@ def test_fault_with_transient_preserves_diagnosis(
 ) -> None:
     """Persistent wheel fault + short transient → fault still detected."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
-    # Persistent fault
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=[sensor],
-            speed_kmh=speed,
-            n_samples=35,
-            start_t_s=0,
-            fault_amp=0.07,
-            fault_vib_db=28.0,
-        )
-    )
-    # Short transient spike mid-run
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=speed,
-            n_samples=3,
-            start_t_s=15,
-            spike_amp=0.20,
-            spike_vib_db=38.0,
-        )
-    )
+    samples = _build_fault_with_transient_samples(profile, sensor, speed)
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
     assert top is not None, f"Lost diagnosis for {corner}@{speed} with transient"
@@ -168,28 +191,9 @@ def test_transient_amplitude_deweighting(
 ) -> None:
     """Persistent fault + transient of varying size → fault still primary."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=[sensor],
-            speed_kmh=SPEED_MID,
-            n_samples=35,
-            start_t_s=0,
-            fault_amp=0.06,
-            fault_vib_db=26.0,
-        )
-    )
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=SPEED_MID,
-            n_samples=3,
-            start_t_s=15,
-            spike_amp=amp,
-            spike_vib_db=vdb,
-        )
+    samples = _build_fault_with_transient_samples(
+        profile, sensor, SPEED_MID,
+        fault_amp=0.06, fault_vib_db=26.0, spike_amp=amp, spike_vib_db=vdb,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
@@ -335,8 +339,6 @@ def test_transient_at_wheel_freq_no_false_positive(corner: str, profile: dict[st
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_HIGH], ids=["low", "high"])
 def test_diffuse_plus_transient_no_fault(speed: float, profile: dict[str, Any]) -> None:
     """Diffuse excitation + transient → no wheel fault."""
-    from builders import make_diffuse_samples
-
     sensor = SENSOR_RR
     samples: list[dict] = []
     samples.extend(make_diffuse_samples(sensors=[sensor], speed_kmh=speed, n_samples=35))
@@ -364,28 +366,9 @@ def test_diffuse_plus_transient_no_fault(speed: float, profile: dict[str, Any]) 
 def test_fault_plus_transient_very_high_speed(corner: str, profile: dict[str, Any]) -> None:
     """Fault + transient at 120 km/h → fault still detected."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=[sensor],
-            speed_kmh=SPEED_VERY_HIGH,
-            n_samples=35,
-            start_t_s=0,
-            fault_amp=0.08,
-            fault_vib_db=30.0,
-        )
-    )
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=SPEED_VERY_HIGH,
-            n_samples=3,
-            start_t_s=15,
-            spike_amp=0.20,
-            spike_vib_db=38.0,
-        )
+    samples = _build_fault_with_transient_samples(
+        profile, sensor, SPEED_VERY_HIGH,
+        fault_amp=0.08, fault_vib_db=30.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)
@@ -407,28 +390,9 @@ _SPIKE_DURATIONS = [1, 5, 8]
 def test_transient_duration_variation(corner: str, n_spike: int, profile: dict[str, Any]) -> None:
     """Transient of varying duration alongside persistent fault."""
     sensor = CORNER_SENSORS[corner]
-    samples: list[dict] = []
-    samples.extend(
-        make_profile_fault_samples(
-            profile=profile,
-            fault_sensor=sensor,
-            sensors=[sensor],
-            speed_kmh=SPEED_MID,
-            n_samples=35,
-            start_t_s=0,
-            fault_amp=0.07,
-            fault_vib_db=28.0,
-        )
-    )
-    samples.extend(
-        make_transient_samples(
-            sensor=sensor,
-            speed_kmh=SPEED_MID,
-            n_samples=n_spike,
-            start_t_s=15,
-            spike_amp=0.15,
-            spike_vib_db=35.0,
-        )
+    samples = _build_fault_with_transient_samples(
+        profile, sensor, SPEED_MID,
+        spike_n=n_spike, spike_amp=0.15, spike_vib_db=35.0,
     )
     summary = run_analysis(samples, metadata=profile_metadata(profile))
     top = extract_top(summary)

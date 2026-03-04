@@ -9,7 +9,6 @@ from __future__ import annotations
 import math
 import os
 import re
-from pathlib import Path
 
 import pytest
 
@@ -22,7 +21,6 @@ from .e2e_helpers import (
     wait_run_status,
 )
 
-ROOT = Path(__file__).resolve().parents[3]
 pytestmark = pytest.mark.e2e
 
 MAC_RE = re.compile(r"^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")

@@ -7,6 +7,23 @@ PDF pipeline.  Each test class corresponds to one audit finding.
 
 from __future__ import annotations
 
+import inspect
+
+from vibesensor.analysis.report_data_builder import (
+    _finding_strength_values,
+    _peak_classification_text,
+    _top_strength_values,
+    map_summary,
+)
+from vibesensor.report import pdf_builder
+from vibesensor.report.pdf_builder import (
+    _draw_next_steps_table,
+    _draw_peaks_table,
+    _draw_system_card,
+    _page1,
+)
+from vibesensor.report_i18n import tr
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -69,6 +86,11 @@ def _make_peaks_table_row(
     }
 
 
+def _en_tr(key: str, **kw: object) -> str:
+    """English translation shortcut used by multiple test classes."""
+    return tr("en", key, **kw)
+
+
 # ===================================================================
 # Finding 1 (KNOWN-C1, confirmed still present):
 #   Peaks table "Peak (dB)" and "Strength (dB)" columns always show
@@ -88,8 +110,6 @@ class TestPeakDbEqualsStrengthDb:
 
     def test_strength_db_equals_p95_intensity_db_in_source(self) -> None:
         """Confirm the assignment in plot_data produces identical values."""
-        from vibesensor.analysis.report_data_builder import map_summary
-
         row = _make_peaks_table_row(p95_intensity_db=22.3, strength_db=22.3)
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": [row]}})
         data = map_summary(summary)
@@ -102,8 +122,6 @@ class TestPeakDbEqualsStrengthDb:
 
     def test_different_strength_db_would_show_distinct_columns(self) -> None:
         """If strength_db were computed differently, columns would differ."""
-        from vibesensor.analysis.report_data_builder import map_summary
-
         # Simulate a hypothetical fix where strength_db ≠ p95_intensity_db
         row = _make_peaks_table_row(p95_intensity_db=22.3, strength_db=15.1)
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": [row]}})
@@ -131,8 +149,6 @@ class TestNextStepFieldsNotRendered:
 
     def test_nextstep_fields_populated_by_builder(self) -> None:
         """Verify the builder does populate these fields."""
-        from vibesensor.analysis.report_data_builder import map_summary
-
         step = {
             "what": "Inspect front-left wheel bearing",
             "why": "Dominant order in front-left sensor",
@@ -179,10 +195,6 @@ class TestNextStepFieldsNotRendered:
 
     def test_pdf_renderer_renders_confirm_falsify_eta(self) -> None:
         """After fix: renderer now accesses .action, .why, and optional fields."""
-        import inspect
-
-        from vibesensor.report.pdf_builder import _draw_next_steps_table
-
         source = inspect.getsource(_draw_next_steps_table)
         assert "step.action" in source
         assert "step.why" in source
@@ -210,8 +222,6 @@ class TestTopCausesFallbackBypassesPersistenceRanking:
 
     def test_fallback_to_findings_non_ref_skips_ranking(self) -> None:
         """When actionable causes are empty, raw findings are used unranked."""
-        from vibesensor.analysis.report_data_builder import map_summary
-
         # Create findings with NO top_causes — forces fallback
         findings = [
             {
@@ -261,25 +271,13 @@ class TestPeakClassificationFallback:
     """
 
     def test_unrecognized_maps_to_title_case(self) -> None:
-        from vibesensor.analysis.report_data_builder import _peak_classification_text
-        from vibesensor.report_i18n import tr
-
-        def en_tr(key: str, **kw: object) -> str:
-            return tr("en", key, **kw)
-
-        result = _peak_classification_text("totally_new_type", en_tr)
+        result = _peak_classification_text("totally_new_type", _en_tr)
         # Unrecognised types are title-cased from the raw value
         assert result == "Totally New Type"
 
     def test_empty_maps_to_unknown(self) -> None:
-        from vibesensor.analysis.report_data_builder import _peak_classification_text
-        from vibesensor.report_i18n import tr
-
-        def en_tr(key: str, **kw: object) -> str:
-            return tr("en", key, **kw)
-
-        result = _peak_classification_text("", en_tr)
-        assert result == en_tr("UNKNOWN")
+        result = _peak_classification_text("", _en_tr)
+        assert result == _en_tr("UNKNOWN")
 
 
 # ===================================================================
@@ -296,10 +294,6 @@ class TestDeadDbValueVariable:
 
     def test_db_value_removed(self) -> None:
         """After fix: db_value variable should no longer exist in source."""
-        import inspect
-
-        from vibesensor.analysis.report_data_builder import _top_strength_values
-
         source = inspect.getsource(_top_strength_values)
         assert "db_value" not in source, "Dead db_value variable should have been removed"
 
@@ -321,16 +315,10 @@ class TestSystemFindingCardToneUnused:
 
     def test_tone_referenced_in_renderer(self) -> None:
         """After fix: _draw_system_card uses card.tone for colors."""
-        import inspect
-
-        from vibesensor.report.pdf_builder import _draw_system_card
-
         source = inspect.getsource(_draw_system_card)
         assert "card.tone" in source, "_draw_system_card must reference card.tone for theme colors"
 
     def test_tone_is_populated_by_builder(self) -> None:
-        from vibesensor.analysis.report_data_builder import map_summary
-
         finding = {
             "finding_id": "F_ORDER",
             "suspected_source": "wheel/tire",
@@ -379,8 +367,6 @@ class TestPhaseFieldsNeverRendered:
     """
 
     def test_observed_phase_populated(self) -> None:
-        from vibesensor.analysis.report_data_builder import map_summary
-
         summary = _make_minimal_summary(
             overrides={
                 "phase_info": {
@@ -402,10 +388,6 @@ class TestPhaseFieldsNeverRendered:
         assert "phase_counts" in data.phase_info
 
     def test_phase_not_in_pdf_renderer_source(self) -> None:
-        import inspect
-
-        from vibesensor.report import pdf_builder
-
         source = inspect.getsource(pdf_builder)
         # The word 'phase' appears nowhere in the PDF builder
         # (except possibly in comment strings or variable names like
@@ -435,10 +417,6 @@ class TestDataTrustPanelOverflow:
     def test_data_trust_panel_renders(self) -> None:
         """Verify that the data-trust section renders without crashing,
         even with many items."""
-        import inspect
-
-        from vibesensor.report.pdf_builder import _page1
-
         source = inspect.getsource(_page1)
         # The data-trust section exists in _page1.
         assert "Data Trust" in source
@@ -463,28 +441,18 @@ class TestPeaksTableFixedHeight:
 
     def test_peaks_table_rows_cap_at_six(self) -> None:
         """Verify the renderer caps peak rows at 6 regardless of input."""
-        import inspect
-
-        from vibesensor.report.pdf_builder import _draw_peaks_table
-
         source = inspect.getsource(_draw_peaks_table)
         assert "peak_rows[:6]" in source
 
     def test_fixed_height_with_many_rows(self) -> None:
         """Eight peaks in data but only 6 rendered, and the panel height
         is fixed regardless."""
-        from vibesensor.analysis.report_data_builder import map_summary
-
         rows = [_make_peaks_table_row(rank=i, frequency_hz=20.0 + i * 5) for i in range(1, 9)]
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": rows}})
         data = map_summary(summary)
         # Builder forwards up to 8 above-noise peaks
         assert len(data.peak_rows) == 8
         # But the renderer only draws 6 — documented via source inspection
-        import inspect
-
-        from vibesensor.report.pdf_builder import _draw_peaks_table
-
         source = inspect.getsource(_draw_peaks_table)
         assert "[:6]" in source
 
@@ -508,8 +476,6 @@ class TestFindingStrengthValuesWastedComputation:
     """
 
     def test_early_return_with_db_present(self) -> None:
-        from vibesensor.analysis.report_data_builder import _finding_strength_values
-
         finding = {
             "amplitude_metric": {"value": 0.123},
             "evidence_metrics": {"vibration_strength_db": 25.0},
@@ -519,8 +485,6 @@ class TestFindingStrengthValuesWastedComputation:
         assert result == 25.0
 
     def test_fallback_uses_peak_amp_and_noise_floor(self) -> None:
-        from vibesensor.analysis.report_data_builder import _finding_strength_values
-
         finding = {
             "amplitude_metric": {"value": 0.05},
             "evidence_metrics": {
@@ -534,7 +498,5 @@ class TestFindingStrengthValuesWastedComputation:
         assert result > 0
 
     def test_returns_none_when_no_metrics(self) -> None:
-        from vibesensor.analysis.report_data_builder import _finding_strength_values
-
         result = _finding_strength_values({})
         assert result is None

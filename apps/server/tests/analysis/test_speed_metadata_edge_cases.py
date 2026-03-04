@@ -93,6 +93,13 @@ _CORNERS_AND_SENSORS = [
 ]
 
 
+def _assert_no_nan_confidence(summary: dict[str, Any], *, msg: str = "") -> None:
+    """Assert no top_cause entry has NaN confidence."""
+    for tc in summary.get("top_causes", []):
+        conf = float(tc.get("confidence", 0))
+        assert not math.isnan(conf), f"NaN confidence{' from ' + msg if msg else ''}"
+
+
 # ===================================================================
 # S1 – Frozen speed: same speed for entire run (constant speed penalty)
 # 4 corners × 3 speeds = 12 cases
@@ -141,10 +148,7 @@ def test_speed_oscillation_at_boundary(base_speed: float, jitter_amp: float) -> 
     summary = run_analysis(samples)
     assert isinstance(summary, dict)
     assert "top_causes" in summary
-    # No NaN in confidence
-    for tc in summary.get("top_causes", []):
-        conf = tc.get("confidence", 0)
-        assert not math.isnan(float(conf)), "NaN confidence from speed oscillation"
+    _assert_no_nan_confidence(summary, msg="speed oscillation")
 
 
 # ===================================================================
@@ -242,10 +246,7 @@ def test_mixed_valid_invalid_speed(name: str, speed_fn: Any, fault_sensor: str) 
     summary = run_analysis(samples)
     assert isinstance(summary, dict)
     assert "top_causes" in summary
-    # No NaN propagation
-    for tc in summary.get("top_causes", []):
-        conf_val = float(tc.get("confidence", 0))
-        assert not math.isnan(conf_val), f"NaN confidence from {name}"
+    _assert_no_nan_confidence(summary, msg=name)
 
 
 # ===================================================================
@@ -310,8 +311,7 @@ def test_speed_step_change(name: str, before: float, after: float) -> None:
     )
     summary = run_analysis(samples)
     assert isinstance(summary, dict)
-    for tc in summary.get("top_causes", []):
-        assert not math.isnan(float(tc.get("confidence", 0))), f"NaN from step {name}"
+    _assert_no_nan_confidence(summary, msg=f"step {name}")
 
 
 # ===================================================================

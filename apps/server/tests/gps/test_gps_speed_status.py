@@ -6,6 +6,7 @@ import time
 
 import pytest
 
+from vibesensor.domain_models import SpeedSourceConfig
 from vibesensor.gps_speed import (
     DEFAULT_FALLBACK_MODE,
     DEFAULT_STALE_TIMEOUT_S,
@@ -254,15 +255,11 @@ class TestIsGpsStale:
 
 class TestSpeedSourceConfigFallback:
     def test_default_has_fallback_fields(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.default()
         assert cfg.stale_timeout_s == 10.0
         assert cfg.fallback_mode == "manual"
 
     def test_from_dict_camel_case(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.from_dict(
             {"speedSource": "gps", "staleTimeoutS": 30, "fallbackMode": "manual"}
         )
@@ -270,22 +267,16 @@ class TestSpeedSourceConfigFallback:
         assert cfg.fallback_mode == "manual"
 
     def test_from_dict_clamps_timeout(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.from_dict({"staleTimeoutS": 0.1})
         assert cfg.stale_timeout_s == 3.0
         cfg = SpeedSourceConfig.from_dict({"staleTimeoutS": 999})
         assert cfg.stale_timeout_s == 120.0
 
     def test_from_dict_invalid_fallback_mode_defaults(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.from_dict({"fallbackMode": "obd2"})
         assert cfg.fallback_mode == "manual"
 
     def test_to_dict_includes_fallback_fields(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.default()
         d = cfg.to_dict()
         assert "staleTimeoutS" in d
@@ -294,22 +285,16 @@ class TestSpeedSourceConfigFallback:
         assert d["fallbackMode"] == "manual"
 
     def test_apply_update_stale_timeout(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.default()
         cfg.apply_update({"staleTimeoutS": 45})
         assert cfg.stale_timeout_s == 45.0
 
     def test_apply_update_fallback_mode(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.default()
         cfg.apply_update({"fallbackMode": "manual"})
         assert cfg.fallback_mode == "manual"
 
     def test_apply_update_ignores_invalid_fallback_mode(self) -> None:
-        from vibesensor.domain_models import SpeedSourceConfig
-
         cfg = SpeedSourceConfig.default()
         cfg.apply_update({"fallbackMode": "obd2"})
         assert cfg.fallback_mode == "manual"

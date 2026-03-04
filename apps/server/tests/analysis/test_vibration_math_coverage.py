@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from math import log10, sqrt
+from typing import Any
 
 import pytest
 from vibesensor_core.strength_bands import bucket_for_strength
@@ -51,15 +52,7 @@ def test_strength_db_exact_known_value() -> None:
         peak_band_rms_amp_g=band,
         floor_amp_g=floor,
     )
-    assert abs(result - expected) < 1e-9
-
-
-def test_strength_db_both_zero() -> None:
-    result = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=0.0,
-        floor_amp_g=0.0,
-    )
-    assert abs(result) < 1e-6
+    assert result == pytest.approx(expected, abs=1e-9)
 
 
 def test_strength_db_negative_inputs_clamped() -> None:
@@ -71,28 +64,7 @@ def test_strength_db_negative_inputs_clamped() -> None:
         peak_band_rms_amp_g=0.0,
         floor_amp_g=0.0,
     )
-    assert abs(result - zero_result) < 1e-9
-
-
-def test_strength_db_epsilon_dominated_regime() -> None:
-    """When both band and floor are at epsilon scale, result should be ~0 dB."""
-    result = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=1e-10,
-        floor_amp_g=0.0,
-    )
-    # Both numerator and denominator are dominated by eps (~1e-9),
-    # so the ratio is ~1.0 and result is ~0 dB.
-    assert abs(result) < 1.0
-
-
-def test_strength_db_very_large_signal_above_floor() -> None:
-    """Very large signal with tiny floor should produce high dB."""
-    result = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=100.0,
-        floor_amp_g=1e-12,
-    )
-    # 20 * log10(100 / eps) should be very large
-    assert result > 80.0
+    assert result == pytest.approx(zero_result, abs=1e-9)
 
 
 def test_strength_db_explicit_epsilon_override() -> None:
@@ -104,25 +76,33 @@ def test_strength_db_explicit_epsilon_override() -> None:
         epsilon_g=custom_eps,
     )
     expected = 20.0 * log10((1.0 + custom_eps) / (0.1 + custom_eps))
-    assert abs(result - expected) < 1e-9
+    assert result == pytest.approx(expected, abs=1e-9)
 
 
-def test_strength_db_equal_band_and_floor_near_zero() -> None:
-    """When band == floor, result should be near 0 dB regardless of amplitude."""
+@pytest.mark.parametrize(
+    "peak,floor,check",
+    [
+        pytest.param(0.0, 0.0, ("approx", 0.0, 1e-6), id="both_zero"),
+        pytest.param(1e-10, 0.0, ("approx", 0.0, 1.0), id="epsilon_dominated"),
+        pytest.param(1e-5, 1e-5, ("approx", 0.0, 1.0), id="equal_band_floor"),
+        pytest.param(100.0, 1e-12, ("gt", 80.0, None), id="large_signal"),
+        pytest.param(0.01, 0.1, ("lt", 0.0, None), id="floor_gt_band_negative"),
+    ],
+)
+def test_strength_db_edge_properties(
+    peak: float, floor: float, check: tuple[str, Any, Any]
+) -> None:
+    """Verify dB edge-case properties: near-zero, large, and negative."""
     result = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=1e-5,
-        floor_amp_g=1e-5,
+        peak_band_rms_amp_g=peak, floor_amp_g=floor
     )
-    assert abs(result) < 1.0
-
-
-def test_strength_db_floor_greater_than_band_is_negative() -> None:
-    """When floor > band, result should be negative dB (unusual but valid)."""
-    result = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=0.01,
-        floor_amp_g=0.1,
-    )
-    assert result < 0.0
+    kind, ref, tol = check
+    if kind == "approx":
+        assert result == pytest.approx(ref, abs=tol)
+    elif kind == "gt":
+        assert result > ref
+    else:
+        assert result < ref
 
 
 # -- combined_spectrum_amp_g -------------------------------------------------
@@ -131,8 +111,8 @@ def test_strength_db_floor_greater_than_band_is_negative() -> None:
 def test_combined_spectrum_three_axes_known_values() -> None:
     axes = [[3.0, 0.0], [4.0, 0.0], [0.0, 1.0]]
     result = combined_spectrum_amp_g(axis_spectra_amp_g=axes)
-    assert abs(result[0] - sqrt(25.0 / 3)) < 1e-9
-    assert abs(result[1] - sqrt(1.0 / 3)) < 1e-9
+    assert result[0] == pytest.approx(sqrt(25.0 / 3), abs=1e-9)
+    assert result[1] == pytest.approx(sqrt(1.0 / 3), abs=1e-9)
 
 
 def test_combined_spectrum_empty() -> None:
@@ -142,8 +122,7 @@ def test_combined_spectrum_empty() -> None:
 def test_combined_spectrum_single_axis() -> None:
     values = [2.0, 5.0, 7.0]
     result = combined_spectrum_amp_g(axis_spectra_amp_g=[values])
-    for orig, computed in zip(values, result, strict=True):
-        assert abs(computed - orig) < 1e-9
+    assert result == pytest.approx(values, abs=1e-9)
 
 
 # -- compute_vibration_strength_db -------------------------------------------

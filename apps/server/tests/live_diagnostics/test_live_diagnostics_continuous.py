@@ -11,6 +11,55 @@ from vibesensor.constants import SILENCE_DB
 from vibesensor.diagnostics_shared import severity_from_peak
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine, _RecentEvent, _TrackerLevelState
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+_NUM_BINS = 1200
+_PEAK_IDX = 320
+_BACKGROUND = 0.8
+_PEAK_AMP = 150.0
+
+
+def _build_strong_spectra(
+    client_ids: list[str] = ("c1",),  # type: ignore[assignment]
+    *,
+    peak_idx: int = _PEAK_IDX,
+    peak_amp: float = _PEAK_AMP,
+    background: float = _BACKGROUND,
+    num_bins: int = _NUM_BINS,
+) -> dict:
+    """Build a realistic spectra payload with a single strong peak.
+
+    Centralises the ~15-line boilerplate that was duplicated across four tests.
+    """
+    freq = [idx * 0.1 for idx in range(1, num_bins)]
+    base = [background] * len(freq)
+    base[peak_idx] = peak_amp
+    strength_metrics = compute_vibration_strength_db(
+        freq_hz=freq,
+        combined_spectrum_amp_g_values=base,
+        peak_bandwidth_hz=1.2,
+        peak_separation_hz=1.2,
+        top_n=5,
+    )
+    clients: dict[str, dict] = {}
+    for cid in client_ids:
+        clients[cid] = {
+            "freq": freq,
+            "x": list(base),
+            "y": list(base),
+            "z": list(base),
+            "combined_spectrum_amp_g": list(base),
+            "strength_metrics": strength_metrics,
+        }
+    return {"freq": freq, "clients": clients}
+
+
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+
 
 def test_severity_holds_for_small_hysteresis_dip_then_decays() -> None:
     state = None
@@ -81,30 +130,7 @@ def test_live_matrix_seconds_use_recent_window_during_throttled_emission(monkeyp
     engine = LiveDiagnosticsEngine()
     settings = {}
     speed_mps = 27.8
-    freq = [idx * 0.1 for idx in range(1, 1200)]
-    peak_idx = 320
-    base = [0.8 for _ in freq]
-    base[peak_idx] = 150.0
-    strength_metrics = compute_vibration_strength_db(
-        freq_hz=freq,
-        combined_spectrum_amp_g_values=base,
-        peak_bandwidth_hz=1.2,
-        peak_separation_hz=1.2,
-        top_n=5,
-    )
-    spectra = {
-        "freq": freq,
-        "clients": {
-            "c1": {
-                "freq": freq,
-                "x": base,
-                "y": base,
-                "z": base,
-                "combined_spectrum_amp_g": base,
-                "strength_metrics": strength_metrics,
-            }
-        },
-    }
+    spectra = _build_strong_spectra()
 
     snapshots = []
     for _ in range(12):
@@ -142,30 +168,7 @@ def test_events_persist_when_spectra_is_none(monkeypatch) -> None:
     monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", fake_monotonic)
 
     engine = LiveDiagnosticsEngine()
-    freq = [idx * 0.1 for idx in range(1, 1200)]
-    peak_idx = 320
-    base = [0.8 for _ in freq]
-    base[peak_idx] = 150.0
-    strength_metrics = compute_vibration_strength_db(
-        freq_hz=freq,
-        combined_spectrum_amp_g_values=base,
-        peak_bandwidth_hz=1.2,
-        peak_separation_hz=1.2,
-        top_n=5,
-    )
-    spectra = {
-        "freq": freq,
-        "clients": {
-            "c1": {
-                "freq": freq,
-                "x": base,
-                "y": base,
-                "z": base,
-                "combined_spectrum_amp_g": base,
-                "strength_metrics": strength_metrics,
-            }
-        },
-    }
+    spectra = _build_strong_spectra()
 
     # Several heavy ticks to build up tracker state and emit events
     snap_heavy = None
@@ -217,30 +220,7 @@ def test_matrix_preserved_when_spectra_is_none(monkeypatch) -> None:
     monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", fake_monotonic)
 
     engine = LiveDiagnosticsEngine()
-    freq = [idx * 0.1 for idx in range(1, 1200)]
-    peak_idx = 320
-    base = [0.8 for _ in freq]
-    base[peak_idx] = 150.0
-    strength_metrics = compute_vibration_strength_db(
-        freq_hz=freq,
-        combined_spectrum_amp_g_values=base,
-        peak_bandwidth_hz=1.2,
-        peak_separation_hz=1.2,
-        top_n=5,
-    )
-    spectra = {
-        "freq": freq,
-        "clients": {
-            "c1": {
-                "freq": freq,
-                "x": base,
-                "y": base,
-                "z": base,
-                "combined_spectrum_amp_g": base,
-                "strength_metrics": strength_metrics,
-            }
-        },
-    }
+    spectra = _build_strong_spectra()
 
     # Several heavy ticks to accumulate matrix (small time steps to stay inside window)
     for _ in range(5):
