@@ -99,6 +99,14 @@ _V2_INSERT_SQL: str = (
 _V2_SELECT_COLS: tuple[str, ...] = ("id",) + _V2_INSERT_COLS
 _V2_SELECT_SQL_COLS: str = ", ".join(_V2_SELECT_COLS)
 
+# Precomputed row offsets for _v2_row_to_dict (avoids len() at runtime).
+_V2_TYPED_OFFSET: int = 1  # skip autoincrement id
+_V2_PEAK_OFFSET: int = _V2_TYPED_OFFSET + len(_V2_TYPED_COLS)
+_V2_EXTRA_OFFSET: int = _V2_PEAK_OFFSET + len(_V2_PEAK_COLS)
+
+# Module-level binding avoids repeated attribute lookup in hot loops.
+_isfinite = math.isfinite
+
 # -- Schema DDL ---------------------------------------------------------------
 
 _SCHEMA_SQL = """\
@@ -376,30 +384,31 @@ class HistoryDB:
     def _sample_to_v2_row(cls, run_id: str, item: dict[str, Any] | SensorFrame) -> tuple[Any, ...]:
         """Convert a sample dict or SensorFrame to a row tuple for samples_v2."""
         d: dict[str, Any] = item.to_dict() if isinstance(item, SensorFrame) else item
+        isfinite = _isfinite  # local bind
+        _get = d.get
 
-        typed_vals: list[Any] = []
-        for col in _V2_TYPED_COLS:
-            val = d.get(col)
-            if col == "run_id":
-                val = run_id
-            if isinstance(val, float) and not math.isfinite(val):
+        # Build a single flat list → one tuple() call at the end.
+        vals: list[Any] = []
+
+        # Typed columns – run_id is always first; skip the per-iteration
+        # string comparison by handling it directly.
+        vals.append(run_id)
+        for col in _V2_TYPED_COLS[1:]:
+            val = _get(col)
+            if isinstance(val, float) and not isfinite(val):
                 val = None
-            typed_vals.append(val)
+            vals.append(val)
 
-        peak_vals: list[str | None] = []
+        # Peak columns (JSON arrays).
         for col in _V2_PEAK_COLS:
-            raw = d.get(col)
-            if raw:
-                peak_vals.append(safe_json_dumps(raw))
-            else:
-                peak_vals.append(None)
+            raw = _get(col)
+            vals.append(safe_json_dumps(raw) if raw else None)
 
+        # Extra keys not covered by the typed schema.
         extra = {k: v for k, v in d.items() if k not in _V2_KNOWN_KEYS}
-        extra_json: str | None = None
-        if extra:
-            extra_json = safe_json_dumps(extra)
+        vals.append(safe_json_dumps(extra) if extra else None)
 
-        return tuple(typed_vals) + tuple(peak_vals) + (extra_json,)
+        return tuple(vals)
 
     @classmethod
     def _v2_row_to_dict(cls, row: tuple[Any, ...]) -> dict[str, Any]:
@@ -408,23 +417,21 @@ class HistoryDB:
         *row* layout: ``(id, <typed cols>, <peak cols>, extra_json)``.
         """
         d: dict[str, Any] = {}
-        offset = 1  # skip autoincrement id
 
         for i, col in enumerate(_V2_TYPED_COLS):
-            val = row[offset + i]
+            val = row[_V2_TYPED_OFFSET + i]
             if val is not None:
                 d[col] = val
 
-        offset += len(_V2_TYPED_COLS)
         for i, col in enumerate(_V2_PEAK_COLS):
-            raw = row[offset + i]
+            raw = row[_V2_PEAK_OFFSET + i]
             if raw:
                 parsed = safe_json_loads(raw, context=f"peak column {col}")
                 d[col] = parsed if isinstance(parsed, list) else []
             else:
                 d[col] = []
 
-        extra_json = row[offset + len(_V2_PEAK_COLS)]
+        extra_json = row[_V2_EXTRA_OFFSET]
         if extra_json:
             extra = safe_json_loads(extra_json, context="extra_json")
             if isinstance(extra, dict):

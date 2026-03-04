@@ -43,11 +43,15 @@ _JITTER_EMA_ALPHA = 0.2
 timing jitter estimates.  Smaller values smooth more; 0.2 gives ~5-sample
 effective window."""
 
+# 32-bit sequence-number arithmetic masks (used in update_from_data).
+_SEQ_MASK = 0xFFFFFFFF
+_SEQ_HALF = 0x80000000
+
 
 def _sanitize_name(name: str) -> str:
     """Sanitize a client name: strip control chars, enforce 32 UTF-8 byte limit."""
     # Strip control characters (U+0000–U+001F, U+007F) except common whitespace
-    clean = "".join(c for c in name if ord(c) >= 0x20 and ord(c) != 0x7F)
+    clean = "".join(c for c in name if (o := ord(c)) >= 0x20 and o != 0x7F)
     clean = clean.strip()
     if not clean:
         return ""
@@ -229,6 +233,14 @@ class ClientRegistry:
             record.last_seen_mono = mono
             record.data_addr = (addr[0], addr[1])
 
+            # Local-bind constants used in hot-path arithmetic below.
+            seq_mask = _SEQ_MASK
+            seq_half = _SEQ_HALF
+            dedup_window = _DEDUP_WINDOW
+            restart_gap = _RESTART_SEQ_GAP
+            dedup_restart_gap = _DEDUP_RESTART_GAP
+            jitter_alpha = _JITTER_EMA_ALPHA
+
             # --- Deduplication check ---
             if data_msg.seq in record._seen_seqs:
                 # Distinguish genuine retransmit from client restart.
@@ -243,7 +255,7 @@ class ClientRegistry:
                     if record.last_seq is not None and record.last_seq > data_msg.seq
                     else 0
                 )
-                if backward <= _DEDUP_RESTART_GAP:
+                if backward <= dedup_restart_gap:
                     record.duplicates_received += 1
                     return DataUpdateResult(is_duplicate=True)
                 # Likely client restart — clear dedup window and accept.
@@ -253,8 +265,8 @@ class ClientRegistry:
             if data_msg.seq > record._seen_seqs_max:
                 record._seen_seqs_max = data_msg.seq
             # Prune old entries to keep the window bounded.
-            if len(record._seen_seqs) > _DEDUP_WINDOW:
-                cutoff = record._seen_seqs_max - _DEDUP_WINDOW + 1
+            if len(record._seen_seqs) > dedup_window:
+                cutoff = record._seen_seqs_max - dedup_window + 1
                 record._seen_seqs = {s for s in record._seen_seqs if s >= cutoff}
 
             # --- Normal (non-duplicate) processing ---
@@ -271,15 +283,15 @@ class ClientRegistry:
                 ) * 1_000_000.0
                 actual_delta_us = float(data_msg.t0_us - record.last_t0_us)
                 jitter_us = actual_delta_us - expected_delta_us
-                alpha = _JITTER_EMA_ALPHA
-                record.timing_jitter_us_ema = (1.0 - alpha) * record.timing_jitter_us_ema + (
-                    alpha * jitter_us
+                record.timing_jitter_us_ema = (
+                    (1.0 - jitter_alpha) * record.timing_jitter_us_ema
+                    + jitter_alpha * jitter_us
                 )
                 record.timing_drift_us_total += jitter_us
             if record.last_seq is not None:
                 if (
                     data_msg.seq < record.last_seq
-                    and (record.last_seq - data_msg.seq) > _RESTART_SEQ_GAP
+                    and (record.last_seq - data_msg.seq) > restart_gap
                 ):
                     record.reset_count += 1
                     record.last_reset_time = now_ts
@@ -291,16 +303,16 @@ class ClientRegistry:
                     record._seen_seqs_max = data_msg.seq
                     reset_detected = True
                 else:
-                    expected = (record.last_seq + 1) & 0xFFFFFFFF
+                    expected = (record.last_seq + 1) & seq_mask
                     if data_msg.seq != expected:
-                        gap = (data_msg.seq - expected) & 0xFFFFFFFF
-                        if gap < 0x80000000:
+                        gap = (data_msg.seq - expected) & seq_mask
+                        if gap < seq_half:
                             record.frames_dropped += gap
             # Only advance last_seq forward to prevent out-of-order UDP
             # packets from regressing the counter and inflating frames_dropped.
             if (
                 record.last_seq is None
-                or ((data_msg.seq - record.last_seq) & 0xFFFFFFFF) < 0x80000000
+                or ((data_msg.seq - record.last_seq) & seq_mask) < seq_half
             ):
                 record.last_seq = data_msg.seq
             record.last_t0_us = data_msg.t0_us

@@ -10,19 +10,36 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 # ---------------------------------------------------------------------------
+# Shared base classes
+# ---------------------------------------------------------------------------
+
+
+class _FrozenBase(BaseModel):
+    """Immutable base for request models (constructed once, never mutated)."""
+
+    model_config = ConfigDict(frozen=True)
+
+
+class _ExtraAllowBase(BaseModel):
+    """Base for models that accept arbitrary extra fields."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+# ---------------------------------------------------------------------------
 # Request models
 # ---------------------------------------------------------------------------
 
 
-class IdentifyRequest(BaseModel):
+class IdentifyRequest(_FrozenBase):
     duration_ms: int = Field(default=1500, ge=100, le=60_000)
 
 
-class SetLocationRequest(BaseModel):
+class SetLocationRequest(_FrozenBase):
     location_code: str = Field(min_length=0, max_length=64)
 
 
-class AnalysisSettingsRequest(BaseModel):
+class AnalysisSettingsRequest(_FrozenBase):
     tire_width_mm: float | None = Field(default=None, gt=0)
     tire_aspect_pct: float | None = Field(default=None, gt=0)
     rim_in: float | None = Field(default=None, gt=0)
@@ -39,43 +56,43 @@ class AnalysisSettingsRequest(BaseModel):
     max_band_half_width_pct: float | None = Field(default=None, gt=0)
 
 
-class LanguageRequest(BaseModel):
+class LanguageRequest(_FrozenBase):
     language: str = Field(pattern="^(en|nl)$")
 
 
-class SpeedUnitRequest(BaseModel):
+class SpeedUnitRequest(_FrozenBase):
     speedUnit: str = Field(pattern="^(kmh|mps)$")
 
 
-class CarUpsertRequest(BaseModel):
+class CarUpsertRequest(_FrozenBase):
     name: str | None = Field(default=None, max_length=64)
     type: str | None = Field(default=None, max_length=64)
     aspects: dict[str, float] | None = None
     variant: str | None = Field(default=None, max_length=64)
 
 
-class ActiveCarRequest(BaseModel):
+class ActiveCarRequest(_FrozenBase):
     carId: str = Field(min_length=1)
 
 
-class SpeedSourceRequest(BaseModel):
+class SpeedSourceRequest(_FrozenBase):
     speedSource: str | None = None
     manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
     staleTimeoutS: float | None = Field(default=None, ge=1, le=300)
     fallbackMode: str | None = None
 
 
-class UpdateStartRequest(BaseModel):
+class UpdateStartRequest(_FrozenBase):
     ssid: str = Field(min_length=1, max_length=64)
     password: str = Field(default="", max_length=128)
 
 
-class EspFlashStartRequest(BaseModel):
+class EspFlashStartRequest(_FrozenBase):
     port: str | None = None
     auto_detect: bool = True
 
 
-class SensorRequest(BaseModel):
+class SensorRequest(_FrozenBase):
     name: str | None = Field(default=None, max_length=64)
     location: str | None = Field(default=None, max_length=64)
 
@@ -163,8 +180,8 @@ class ClientLocationsResponse(BaseModel):
     locations: list[LocationOptionResponse]
 
 
-class AnalysisSettingsResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
+class AnalysisSettingsResponse(_ExtraAllowBase):
+    pass
 
 
 class IdentifyResponse(BaseModel):
@@ -196,18 +213,14 @@ class HistoryListResponse(BaseModel):
     runs: list[dict[str, Any]]
 
 
-class HistoryRunResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
+class HistoryRunResponse(_ExtraAllowBase):
     run_id: str
     status: str
     metadata: dict[str, Any] = Field(default_factory=dict)
     analysis: dict[str, Any] | None = None
 
 
-class HistoryInsightsResponse(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
+class HistoryInsightsResponse(_ExtraAllowBase):
     run_id: str | None = None
     status: str | None = None
 
@@ -309,23 +322,20 @@ class CarLibraryTypesResponse(BaseModel):
     types: list[str]
 
 
-class CarLibraryGearboxEntry(BaseModel):
-    model_config = ConfigDict(extra="allow")
+class CarLibraryGearboxEntry(_ExtraAllowBase):
     name: str
     final_drive_ratio: float
     top_gear_ratio: float
 
 
-class CarLibraryTireOptionEntry(BaseModel):
-    model_config = ConfigDict(extra="allow")
+class CarLibraryTireOptionEntry(_ExtraAllowBase):
     name: str
     tire_width_mm: float
     tire_aspect_pct: float
     rim_in: float
 
 
-class CarLibraryVariantEntry(BaseModel):
-    model_config = ConfigDict(extra="allow")
+class CarLibraryVariantEntry(_ExtraAllowBase):
     name: str
     engine: str | None = None
     drivetrain: str
@@ -336,8 +346,7 @@ class CarLibraryVariantEntry(BaseModel):
     rim_in: float | None = None
 
 
-class CarLibraryModelEntry(BaseModel):
-    model_config = ConfigDict(extra="allow")
+class CarLibraryModelEntry(_ExtraAllowBase):
     brand: str
     type: str
     model: str

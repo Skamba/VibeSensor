@@ -30,6 +30,16 @@ from .runlog import as_float_or_none
 
 DEFAULT_DIAGNOSTIC_SETTINGS = DEFAULT_ANALYSIS_SETTINGS
 
+_INF = float("inf")
+
+_DEFAULT_SEVERITY_STATE: dict[str, Any] = {
+    "current_bucket": None,
+    "pending_bucket": None,
+    "consecutive_up": 0,
+    "consecutive_down": 0,
+    "last_confirmed_hz": None,
+}
+
 
 def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dict[str, float]:
     out = dict(DEFAULT_ANALYSIS_SETTINGS)
@@ -307,7 +317,7 @@ def classify_peak_hz(
         candidates.append({"hz": engine_hz * HARMONIC_2X, "tol": engine_tol, "key": "eng2"})
 
     best: dict[str, float | str] | None = None
-    best_err = float("inf")
+    best_err = _INF
     for candidate in candidates:
         hz = float(candidate["hz"])
         if hz <= 0.2:
@@ -329,21 +339,19 @@ def classify_peak_hz(
             "suspected_source": suspected_source_from_class_key(class_key),
         }
     if ROAD_RESONANCE_MIN_HZ <= peak_hz <= ROAD_RESONANCE_MAX_HZ:
-        return {
-            "key": "road",
-            "matched_hz": None,
-            "rel_err": None,
-            "tol": None,
-            "order_label": None,
-            "suspected_source": suspected_source_from_class_key("road"),
-        }
+        return _unmatched_classification("road")
+    return _unmatched_classification("other")
+
+
+def _unmatched_classification(key: str) -> dict[str, object]:
+    """Return a classification result for a peak that did not match any order band."""
     return {
-        "key": "other",
+        "key": key,
         "matched_hz": None,
         "rel_err": None,
         "tol": None,
         "order_label": None,
-        "suspected_source": suspected_source_from_class_key("other"),
+        "suspected_source": suspected_source_from_class_key(key),
     }
 
 
@@ -355,12 +363,7 @@ def severity_from_peak(
     peak_hz: float | None = None,
     persistence_freq_bin_hz: float | None = None,
 ) -> dict[str, float | str | dict[str, Any]]:
-    state = dict(prior_state or {})
-    state.setdefault("current_bucket", None)
-    state.setdefault("pending_bucket", None)
-    state.setdefault("consecutive_up", 0)
-    state.setdefault("consecutive_down", 0)
-    state.setdefault("last_confirmed_hz", None)
+    state = {**_DEFAULT_SEVERITY_STATE, **(prior_state or {})}
     corroboration = MULTI_SENSOR_CORROBORATION_DB if sensor_count >= 2 else 0.0
     adjusted_db = float(vibration_strength_db) + corroboration
     candidate_bucket_raw = bucket_for_strength(adjusted_db)
