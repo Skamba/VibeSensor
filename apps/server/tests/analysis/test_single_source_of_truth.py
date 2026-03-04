@@ -40,54 +40,50 @@ def test_strength_scoring_module_removed() -> None:
         importlib.import_module("vibesensor.strength_scoring")
 
 
-def test_spectrum_payload_has_no_combined_alias() -> None:
-    """Spectrum payload must not contain the dead 'combined' alias field."""
-    import numpy as np
-
+def _make_signal_processor():
+    """Create a SignalProcessor with standard test parameters."""
     from vibesensor.processing import SignalProcessor
 
-    proc = SignalProcessor(
+    return SignalProcessor(
         sample_rate_hz=800,
         waveform_seconds=4,
         waveform_display_hz=120,
         fft_n=512,
         spectrum_max_hz=200,
     )
-    # Empty client
-    payload = proc.spectrum_payload("nonexistent")
-    assert "combined" not in payload
-    assert "combined_spectrum_amp_g" in payload
 
-    # Client with data
-    rng = np.random.default_rng(42)
+
+def _ingest_noise(proc, *, seed: int = 42):
+    """Ingest random noise into *proc* for ``test_client`` and compute metrics."""
+    import numpy as np
+
+    rng = np.random.default_rng(seed)
     samples = rng.standard_normal((600, 3)).astype(np.float32) * 0.01
     proc.ingest("test_client", samples, sample_rate_hz=800)
     proc.compute_metrics("test_client")
-    payload = proc.spectrum_payload("test_client")
+
+
+def _assert_no_combined_alias(payload: dict) -> None:
     assert "combined" not in payload
     assert "combined_spectrum_amp_g" in payload
+
+
+def test_spectrum_payload_has_no_combined_alias() -> None:
+    """Spectrum payload must not contain the dead 'combined' alias field."""
+    proc = _make_signal_processor()
+    # Empty client
+    _assert_no_combined_alias(proc.spectrum_payload("nonexistent"))
+    # Client with data
+    _ingest_noise(proc, seed=42)
+    _assert_no_combined_alias(proc.spectrum_payload("test_client"))
 
 
 def test_selected_payload_has_no_combined_alias() -> None:
     """Selected payload spectrum must not contain the dead 'combined' alias."""
-    import numpy as np
-
-    from vibesensor.processing import SignalProcessor
-
-    proc = SignalProcessor(
-        sample_rate_hz=800,
-        waveform_seconds=4,
-        waveform_display_hz=120,
-        fft_n=512,
-        spectrum_max_hz=200,
-    )
-    rng = np.random.default_rng(43)
-    samples = rng.standard_normal((600, 3)).astype(np.float32) * 0.01
-    proc.ingest("test_client", samples, sample_rate_hz=800)
-    proc.compute_metrics("test_client")
+    proc = _make_signal_processor()
+    _ingest_noise(proc, seed=43)
     payload = proc.selected_payload("test_client")
-    assert "combined" not in payload["spectrum"]
-    assert "combined_spectrum_amp_g" in payload["spectrum"]
+    _assert_no_combined_alias(payload["spectrum"])
 
 
 def test_metrics_log_no_old_field_names() -> None:
