@@ -2,20 +2,22 @@
 
 from __future__ import annotations
 
-import json
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 import pytest
+from _report_helpers import RUN_END, minimal_summary, write_jsonl
 from pypdf import PdfReader
 
 from vibesensor.analysis import summarize_log
 from vibesensor.analysis.pattern_parts import parts_for_pattern, why_parts_listed
 from vibesensor.analysis.report_data_builder import map_summary
 from vibesensor.analysis.strength_labels import certainty_label, strength_label, strength_text
+from vibesensor.analysis.summary import _most_likely_origin_summary
 from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.report.pdf_layout import assert_aspect_preserved, fit_rect_preserve_aspect
-from vibesensor.report.report_data import ReportTemplateData
+from vibesensor.report.report_data import ObservedSignature, ReportTemplateData
 
 # ---------------------------------------------------------------------------
 # strength_label / strength_text
@@ -160,15 +162,8 @@ def test_why_parts_listed_nl() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _write_jsonl(path: Path, records: list[dict]) -> None:
-    path.write_text(
-        "\n".join(json.dumps(record, separators=(",", ":")) for record in records) + "\n",
-        encoding="utf-8",
-    )
-
-
-def _run_metadata(run_id: str = "run-01", **kwargs) -> dict:
-    defaults = {
+def _run_metadata(run_id: str = "run-01", **kwargs: Any) -> dict:
+    defaults: dict[str, Any] = {
         "record_type": "run_metadata",
         "schema_version": "v2-jsonl",
         "run_id": run_id,
@@ -239,8 +234,8 @@ def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
     records: list[dict] = [_run_metadata()]
     for idx in range(15):
         records.append(_sample(idx, speed_kmh=50.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.08))
-    records.append({"record_type": "run_end", "run_id": "run-01", "schema_version": "v2-jsonl"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     # No car metadata in summary
@@ -261,8 +256,8 @@ def test_report_pdf_two_pages(tmp_path: Path) -> None:
         records.append(
             _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
         )
-    records.append({"record_type": "run_end", "run_id": "run-01", "schema_version": "v2-jsonl"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
 
     summary = summarize_log(run_path)
     pdf = build_report_pdf(map_summary(summary))
@@ -320,8 +315,8 @@ def test_map_summary_basic(tmp_path: Path) -> None:
         records.append(
             _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
         )
-    records.append({"record_type": "run_end", "run_id": "run-01", "schema_version": "v2-jsonl"})
-    _write_jsonl(run_path, records)
+    records.append(RUN_END)
+    write_jsonl(run_path, records)
     summary = summarize_log(run_path)
 
     data = map_summary(summary)
@@ -341,14 +336,7 @@ def test_map_summary_no_top_causes() -> None:
     (very low certainty) and provides data-collection guidance instead
     of empty next steps.
     """
-    summary: dict = {
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
+    summary = minimal_summary()
     data = map_summary(summary)
     assert isinstance(data, ReportTemplateData)
     assert data.system_cards == []
@@ -358,23 +346,17 @@ def test_map_summary_no_top_causes() -> None:
 
 
 def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
-    summary: dict = {
-        "lang": "en",
-        "sensor_count_used": 4,
-        "sensor_locations": ["Front Left", "Front Right", "Rear Left", "Rear Right"],
-        "sensor_locations_connected_throughout": ["Front Left", "Rear Left"],
-        "sensor_intensity_by_location": [
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        sensor_locations=["Front Left", "Front Right", "Rear Left", "Rear Right"],
+        sensor_locations_connected_throughout=["Front Left", "Rear Left"],
+        sensor_intensity_by_location=[
             {"location": "Front Left", "p95_intensity_db": 10.0},
             {"location": "Rear Left", "p95_intensity_db": 9.0},
             {"location": "Front Right", "p95_intensity_db": 18.0},
         ],
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
+    )
 
     data = map_summary(summary)
     assert data.sensor_count == 2
@@ -386,8 +368,6 @@ def test_map_summary_uses_connected_sensors_for_report_evidence() -> None:
 
 
 def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> None:
-    from vibesensor.analysis.summary import _most_likely_origin_summary
-
     findings = [
         {
             "strongest_location": "Rear Left",
@@ -415,70 +395,56 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
     assert origin["alternative_locations"] == ["Front Right"]
 
 
-def test_most_likely_origin_summary_phase_onset_acceleration() -> None:
-    """When top finding has dominant_phase='acceleration', explanation mentions it."""
-    from vibesensor.analysis.summary import _most_likely_origin_summary
+def _assert_no_phase_onset(explanation: object) -> None:
+    """Assert that the explanation does not contain a phase-onset i18n note."""
+    if isinstance(explanation, list):
+        assert not any(
+            isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+            for part in explanation
+        )
+    else:
+        assert isinstance(explanation, dict)
 
+
+@pytest.mark.parametrize(
+    "phase, location, speed_band, confidence, lang",
+    [
+        ("acceleration", "Front Right", "60-80 km/h", 0.75, "en"),
+        ("deceleration", "Rear Left", "40-60 km/h", 0.70, "nl"),
+    ],
+    ids=["acceleration_en", "deceleration_nl"],
+)
+def test_most_likely_origin_summary_phase_onset(
+    phase: str, location: str, speed_band: str, confidence: float, lang: str
+) -> None:
+    """Phase onset note is included for acceleration/deceleration phases."""
     findings = [
         {
-            "strongest_location": "Front Right",
+            "strongest_location": location,
             "suspected_source": "wheel/tire",
             "dominance_ratio": 2.5,
             "weak_spatial_separation": False,
-            "strongest_speed_band": "60-80 km/h",
-            "dominant_phase": "acceleration",
-            "confidence_0_to_1": 0.75,
+            "strongest_speed_band": speed_band,
+            "dominant_phase": phase,
+            "confidence_0_to_1": confidence,
         }
     ]
 
-    origin = _most_likely_origin_summary(findings, "en")
+    origin = _most_likely_origin_summary(findings, lang)
 
-    assert origin["dominant_phase"] == "acceleration"
-    # explanation is now a list of i18n refs when phase onset is present
+    assert origin["dominant_phase"] == phase
     explanation = origin["explanation"]
     assert isinstance(explanation, list)
     assert any(
         isinstance(part, dict)
         and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
-        and part.get("phase") == "acceleration"
-        for part in explanation
-    )
-
-
-def test_most_likely_origin_summary_phase_onset_deceleration_nl() -> None:
-    """Phase onset note for deceleration stores phase code (language-neutral)."""
-    from vibesensor.analysis.summary import _most_likely_origin_summary
-
-    findings = [
-        {
-            "strongest_location": "Rear Left",
-            "suspected_source": "wheel/tire",
-            "dominance_ratio": 2.0,
-            "weak_spatial_separation": False,
-            "strongest_speed_band": "40-60 km/h",
-            "dominant_phase": "deceleration",
-            "confidence_0_to_1": 0.70,
-        }
-    ]
-
-    origin = _most_likely_origin_summary(findings, "nl")
-
-    assert origin["dominant_phase"] == "deceleration"
-    # explanation is now a list of i18n refs (language-neutral)
-    explanation = origin["explanation"]
-    assert isinstance(explanation, list)
-    assert any(
-        isinstance(part, dict)
-        and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
-        and part.get("phase") == "deceleration"
+        and part.get("phase") == phase
         for part in explanation
     )
 
 
 def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
     """Cruise phase does not trigger a phase-onset note (it is the default phase)."""
-    from vibesensor.analysis.summary import _most_likely_origin_summary
-
     findings = [
         {
             "strongest_location": "Front Left",
@@ -494,21 +460,11 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
     origin = _most_likely_origin_summary(findings, "en")
 
     # cruise is not a notable onset phase — no onset addendum
-    explanation = origin["explanation"]
-    # Single ref (not a list) means no phase onset was appended
-    if isinstance(explanation, list):
-        assert not any(
-            isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
-            for part in explanation
-        )
-    else:
-        assert isinstance(explanation, dict)
+    _assert_no_phase_onset(origin["explanation"])
 
 
 def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     """When dominant_phase is not set, the explanation has no phase-onset addendum."""
-    from vibesensor.analysis.summary import _most_likely_origin_summary
-
     findings = [
         {
             "strongest_location": "Front Left",
@@ -523,18 +479,11 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     origin = _most_likely_origin_summary(findings, "en")
 
     assert origin["dominant_phase"] is None
-    explanation = origin["explanation"]
-    if isinstance(explanation, list):
-        assert not any(
-            isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
-            for part in explanation
-        )
-    else:
-        assert isinstance(explanation, dict)
+    _assert_no_phase_onset(origin["explanation"])
 
-    summary: dict = {
-        "lang": "en",
-        "top_causes": [
+    summary = minimal_summary(
+        lang="en",
+        top_causes=[
             {
                 "source": "wheel/tire",
                 "strongest_location": "Rear Left",
@@ -545,17 +494,12 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
                 "confidence_tone": "warn",
             }
         ],
-        "most_likely_origin": {
+        most_likely_origin={
             "location": "Rear Left / Front Right",
             "alternative_locations": ["Front Right"],
             "explanation": "Weak spatial separation.",
         },
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
+    )
 
     data = map_summary(summary)
 
@@ -563,13 +507,8 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
 
 
 def test_map_summary_peak_rows_use_persistence_metrics() -> None:
-    summary: dict = {
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {
+    summary = minimal_summary(
+        plots={
             "peaks_table": [
                 {
                     "rank": 1,
@@ -585,7 +524,7 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
                 }
             ]
         },
-    }
+    )
     data = map_summary(summary)
     assert data.peak_rows
     row = data.peak_rows[0]
@@ -596,14 +535,9 @@ def test_map_summary_peak_rows_use_persistence_metrics() -> None:
 
 
 def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
-    summary: dict = {
-        "lang": "en",
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {
+    summary = minimal_summary(
+        lang="en",
+        plots={
             "peaks_table": [
                 {
                     "rank": 1,
@@ -619,28 +553,23 @@ def test_map_summary_peak_rows_render_baseline_noise_label() -> None:
                 }
             ]
         },
-    }
+    )
     data = map_summary(summary)
     assert data.peak_rows
     assert "noise floor" in data.peak_rows[0].relevance
 
 
 def test_map_summary_data_trust_keeps_warning_detail() -> None:
-    summary: dict = {
-        "lang": "nl",
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [
+    summary = minimal_summary(
+        lang="nl",
+        run_suitability=[
             {
                 "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
                 "state": "warn",
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
             }
         ],
-        "plots": {},
-    }
+    )
     data = map_summary(summary)
     assert data.data_trust
     assert data.data_trust[0].state == "warn"
@@ -649,41 +578,31 @@ def test_map_summary_data_trust_keeps_warning_detail() -> None:
 
 
 def test_map_summary_data_trust_literal_check_labels() -> None:
-    summary: dict = {
-        "lang": "nl",
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [
+    summary = minimal_summary(
+        lang="nl",
+        run_suitability=[
             {
                 "check": "Frame integrity",
                 "state": "warn",
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
             }
         ],
-        "plots": {},
-    }
+    )
     data = map_summary(summary)
     assert data.data_trust
     assert data.data_trust[0].check == "Frame integrity"
 
 
 def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data() -> None:
-    base_summary: dict = {
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [
+    base_summary = minimal_summary(
+        run_suitability=[
             {
                 "check": "SUITABILITY_CHECK_SPEED_VARIATION",
                 "state": "pass",
                 "explanation": "Wide enough speed sweep for order tracking.",
             }
         ],
-        "plots": {},
-    }
+    )
 
     summary_en = {**base_summary, "lang": "en"}
     summary_nl = {**base_summary, "lang": "nl"}
@@ -696,10 +615,10 @@ def test_map_summary_data_trust_check_labels_follow_lang_for_same_summary_data()
 
 
 def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
-    summary: dict = {
-        "lang": "en",
-        "sensor_count_used": 4,
-        "top_causes": [
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        top_causes=[
             {
                 "source": "wheel/tire",
                 "strongest_location": "Front Left",
@@ -707,22 +626,18 @@ def test_map_summary_certainty_reason_ignores_unrelated_reference_gap() -> None:
                 "confidence": 0.82,
             }
         ],
-        "findings": [{"finding_id": "REF_ENGINE"}],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
+        findings=[{"finding_id": "REF_ENGINE"}],
+    )
     data = map_summary(summary)
     assert data.observed.certainty_reason
     assert "Missing reference data" not in data.observed.certainty_reason
 
 
 def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
-    summary: dict = {
-        "lang": "en",
-        "sensor_count_used": 4,
-        "top_causes": [
+    summary = minimal_summary(
+        lang="en",
+        sensor_count_used=4,
+        top_causes=[
             {
                 "source": "engine",
                 "strongest_location": "Engine Bay",
@@ -730,24 +645,16 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
                 "confidence": 0.82,
             }
         ],
-        "findings": [{"finding_id": "REF_ENGINE"}],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
+        findings=[{"finding_id": "REF_ENGINE"}],
+    )
     data = map_summary(summary)
     assert data.observed.certainty_reason == "Missing reference data limits pattern matching"
 
 
 def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
-    summary: dict = {
-        "lang": "en",
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [
+    summary = minimal_summary(
+        lang="en",
+        run_suitability=[
             {
                 "check": "Saturation and outliers",
                 "state": "warn",
@@ -759,9 +666,8 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
                 "explanation": "3 dropped frames, 2 queue overflows detected.",
             },
         ],
-        "plots": {},
-        "samples": [],
-    }
+        samples=[],
+    )
 
     pdf = build_report_pdf(map_summary(summary))
     # Detail text wraps across lines in the Data Trust panel, so check key
@@ -779,9 +685,9 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
 
 def test_map_summary_phase_fields_populated_from_phase_info() -> None:
     """map_summary populates observed.phase and phase_info from summary phase_info."""
-    summary: dict = {
-        "lang": "en",
-        "top_causes": [
+    summary = minimal_summary(
+        lang="en",
+        top_causes=[
             {
                 "source": "wheel/tire",
                 "strongest_location": "Rear Left",
@@ -790,12 +696,7 @@ def test_map_summary_phase_fields_populated_from_phase_info() -> None:
                 "signatures_observed": ["1x wheel order"],
             }
         ],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-        "phase_info": {
+        phase_info={
             "phase_counts": {"idle": 5, "cruise": 30, "acceleration": 10},
             "phase_pcts": {"idle": 11.1, "cruise": 66.7, "acceleration": 22.2},
             "total_samples": 45,
@@ -805,7 +706,7 @@ def test_map_summary_phase_fields_populated_from_phase_info() -> None:
             "cruise_pct": 66.7,
             "idle_pct": 11.1,
         },
-    }
+    )
     data = map_summary(summary)
 
     # observed.phase should be the dominant non-idle phase (cruise with 30 samples)
@@ -818,14 +719,7 @@ def test_map_summary_phase_fields_populated_from_phase_info() -> None:
 
 def test_map_summary_phase_fields_none_when_no_phase_info() -> None:
     """map_summary sets phase fields to None when phase_info is absent."""
-    summary: dict = {
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
+    summary = minimal_summary()
     data = map_summary(summary)
 
     assert data.observed.phase is None
@@ -834,15 +728,9 @@ def test_map_summary_phase_fields_none_when_no_phase_info() -> None:
 
 def test_map_summary_dominant_phase_excludes_idle() -> None:
     """dominant phase selection skips idle even if it has more samples."""
-    summary: dict = {
-        "lang": "en",
-        "top_causes": [],
-        "findings": [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-        "phase_info": {
+    summary = minimal_summary(
+        lang="en",
+        phase_info={
             "phase_counts": {"idle": 100, "acceleration": 20, "cruise": 15},
             "phase_pcts": {"idle": 74.1, "acceleration": 14.8, "cruise": 11.1},
             "total_samples": 135,
@@ -852,7 +740,7 @@ def test_map_summary_dominant_phase_excludes_idle() -> None:
             "cruise_pct": 11.1,
             "idle_pct": 74.1,
         },
-    }
+    )
     data = map_summary(summary)
 
     # idle (100) must be skipped; acceleration (20) wins over cruise (15)
@@ -861,8 +749,6 @@ def test_map_summary_dominant_phase_excludes_idle() -> None:
 
 def test_observed_signature_has_phase_field() -> None:
     """ObservedSignature dataclass exposes a phase field defaulting to None."""
-    from vibesensor.report.report_data import ObservedSignature
-
     sig = ObservedSignature()
     assert sig.phase is None
 
