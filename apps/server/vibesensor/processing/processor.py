@@ -323,7 +323,15 @@ class SignalProcessor:
             n_time = min(buf.count, buf.capacity, max(1, desired_samples))
             time_window = self._latest(buf, n_time)  # returns a copy
             has_fft_data = buf.count >= self.fft_n
-            fft_block = self._latest(buf, self.fft_n) if has_fft_data else None
+            if has_fft_data:
+                if n_time >= self.fft_n:
+                    # Slice from the already-copied time_window to avoid a
+                    # second circular-buffer read + allocation.
+                    fft_block = time_window[:, -self.fft_n :]
+                else:
+                    fft_block = self._latest(buf, self.fft_n)
+            else:
+                fft_block = None
             snap_ingest_gen = buf.ingest_generation
 
         # --- Phase 2: heavy computation (no lock held) -----------------------
@@ -332,17 +340,21 @@ class SignalProcessor:
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
         metrics: dict[str, Any] = {}
-        for axis_idx, axis in enumerate(AXES):
-            axis_data = time_window_detrended[axis_idx]
-            if axis_data.size == 0:
-                continue
-            rms = _finite_or_zero(float(np.sqrt(np.mean(np.square(axis_data), dtype=np.float64))))
-            p2p = _finite_or_zero(float(np.max(axis_data) - np.min(axis_data)))
-            metrics[axis] = {
-                "rms": rms,
-                "p2p": p2p,
-                "peaks": [],
-            }
+        if time_window_detrended.shape[1] > 0:
+            # Vectorised RMS and peak-to-peak across all three axes at once,
+            # replacing three individual per-axis NumPy reduction calls.
+            rms_vals = np.sqrt(
+                np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1)
+            )
+            p2p_vals = (
+                np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
+            )
+            for axis_idx, axis in enumerate(AXES):
+                metrics[axis] = {
+                    "rms": _finite_or_zero(float(rms_vals[axis_idx])),
+                    "p2p": _finite_or_zero(float(p2p_vals[axis_idx])),
+                    "peaks": [],
+                }
 
         if time_window_detrended.size > 0:
             vib_mag = np.sqrt(np.sum(np.square(time_window_detrended, dtype=np.float64), axis=0))
@@ -658,7 +670,7 @@ class SignalProcessor:
                 "fft_n": self.fft_n,
             }
         sr = buf.sample_rate_hz or self.sample_rate_hz
-        fft_block = self._latest(buf, self.fft_n).copy()
+        fft_block = self._latest(buf, self.fft_n)  # _latest already copies
 
         # Stats before filtering / mean removal
         raw_mean = [float(fft_block[i].mean()) for i in range(3)]
