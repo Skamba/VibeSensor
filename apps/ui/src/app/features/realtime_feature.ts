@@ -42,6 +42,14 @@ export interface RealtimeFeature {
 export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature {
   const { state, els, t, escapeHtml, formatInt, setPillState, renderMatrix } = ctx;
 
+  const SHORTHAND_LOCATION_MAP: Record<string, string> = {
+    "front left": "front_left_wheel",
+    "front right": "front_right_wheel",
+    "rear left": "rear_left_wheel",
+    "rear right": "rear_right_wheel",
+    driver: "driver_seat",
+  };
+
   function locationLabelForLang(lang: string, code: string): string {
     return I18N.get(lang, `location.${code}`, { code });
   }
@@ -60,14 +68,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     const name = String(client?.name || "").trim();
     if (!name) return "";
     const normalizedName = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
-    const shorthandMap: Record<string, string> = {
-      "front left": "front_left_wheel",
-      "front right": "front_right_wheel",
-      "rear left": "rear_left_wheel",
-      "rear right": "rear_right_wheel",
-      driver: "driver_seat",
-    };
-    for (const [token, code] of Object.entries(shorthandMap)) {
+    for (const [token, code] of Object.entries(SHORTHAND_LOCATION_MAP)) {
       if (normalizedName.includes(token) && state.locationCodes.includes(code)) return code;
     }
     for (const code of state.locationCodes) {

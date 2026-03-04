@@ -17,6 +17,15 @@ export interface UpdateFeature {
 const POLL_INTERVAL_IDLE = 10_000;
 const POLL_INTERVAL_RUNNING = 2_000;
 
+const STATE_VARIANT: Readonly<Record<string, string>> = {
+  idle: "muted",
+  running: "warn",
+  success: "ok",
+  failed: "bad",
+};
+
+const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
+
 function formatTimestamp(epoch: number | null): string {
   if (!epoch) return "—";
   return new Date(epoch * 1000).toLocaleString();
@@ -36,16 +45,9 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
 
     const isRunning = status.state === "running";
     const isIdle = status.state === "idle";
-    const hasAssetRelatedIssue = status.issues.some((issue) => {
-      const text = `${issue.message} ${issue.detail}`.toLowerCase();
-      return (
-        text.includes("asset") ||
-        text.includes("artifacts") ||
-        text.includes("stale") ||
-        text.includes("hash") ||
-        text.includes("missing")
-      );
-    });
+    const hasAssetRelatedIssue = status.issues.some((issue) =>
+      ASSET_ISSUE_RE.test(`${issue.message} ${issue.detail}`),
+    );
     const showRuntimeAssetsCheck = status.state !== "failed" || hasAssetRelatedIssue;
 
     // Toggle buttons
@@ -68,19 +70,12 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     const stateKey = `settings.update.state.${status.state}`;
     const phaseKey = `settings.update.phase.${status.phase}`;
 
-    const stateVariant: Record<string, string> = {
-      idle: "muted",
-      running: "warn",
-      success: "ok",
-      failed: "bad",
-    };
-
     let html = `<div class="update-status-grid">`;
 
     // State + Phase
     html += `<div class="update-status-row">`;
     html += `<span class="update-label">${escapeHtml(t("settings.update.status"))}</span>`;
-    html += `<span class="pill pill--${stateVariant[status.state] || "muted"}">${escapeHtml(t(stateKey))}</span>`;
+    html += `<span class="pill pill--${STATE_VARIANT[status.state] || "muted"}">${escapeHtml(t(stateKey))}</span>`;
     if (!isIdle) {
       html += ` <span class="subtle">${escapeHtml(t(phaseKey))}</span>`;
     }

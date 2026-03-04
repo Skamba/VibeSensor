@@ -18,6 +18,7 @@ export class SpectrumChart {
   private readonly measureEl: HTMLElement;
   private readonly overlayEl: HTMLElement | null;
   private readonly height: number;
+  private readonly rootStyle: CSSStyleDeclaration;
   private resizeObserver: ResizeObserver | null = null;
   private resizeRaf: number | null = null;
 
@@ -26,6 +27,7 @@ export class SpectrumChart {
     this.measureEl = measureEl || hostEl;
     this.overlayEl = overlayEl || null;
     this.height = height;
+    this.rootStyle = getComputedStyle(document.documentElement);
     this.startResizeObserver();
   }
 
@@ -135,8 +137,7 @@ export class SpectrumChart {
 
 
   private cssVar(name: string, fallback: string): string {
-    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-    return value || fallback;
+    return this.rootStyle.getPropertyValue(name).trim() || fallback;
   }
 
   private computeWidth(): number {
