@@ -20,8 +20,7 @@ def _run_check_script(cwd: Path) -> subprocess.CompletedProcess[str]:
 
 
 def test_no_tracked_pycache_or_pyc() -> None:
-    repo_root = REPO_ROOT
-    completed = _run_check_script(repo_root)
+    completed = _run_check_script(REPO_ROOT)
     assert completed.returncode == 0, completed.stdout + completed.stderr
 
 
