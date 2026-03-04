@@ -40,7 +40,10 @@ class UpdateStateStore:
             raw = self._path.read_text(encoding="utf-8")
             data = json.loads(raw)
             return UpdateJobStatus.from_dict(data)
-        except (json.JSONDecodeError, ValueError, KeyError, TypeError, OSError) as exc:
+        except (json.JSONDecodeError, ValueError, KeyError, TypeError) as exc:
+            LOGGER.warning("Corrupt update state file %s: %s", self._path, exc)
+            return None
+        except OSError as exc:
             LOGGER.warning("Cannot read update state file %s: %s", self._path, exc)
             return None
 
