@@ -8,22 +8,58 @@ phase segmentation, classification, localization, and report output.
 
 from __future__ import annotations
 
+from math import log1p
 from typing import Any
 
+import pytest
 from vibesensor_core.strength_bands import bucket_for_strength
 
-from vibesensor.analysis.findings import _classify_peak_type
+from vibesensor.analysis import build_findings_for_samples
+from vibesensor.analysis.findings import (
+    _classify_peak_type,
+    _phase_speed_breakdown,
+    _reference_missing_finding,
+    _sensor_intensity_by_location,
+)
+from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G, _location_label
 from vibesensor.analysis.phase_segmentation import (
     DrivingPhase,
     diagnostic_sample_mask,
     phase_summary,
     segment_run_phases,
 )
+from vibesensor.analysis.report_data_builder import map_summary
 from vibesensor.analysis.strength_labels import certainty_label
 from vibesensor.analysis.summary import (
     confidence_label,
+    select_top_causes,
     summarize_run_data,
 )
+from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
+from vibesensor.diagnostics_shared import classify_peak_hz
+
+# ---------------------------------------------------------------------------
+# Shared constants & helpers
+# ---------------------------------------------------------------------------
+
+_ORDER_SOURCES: set[str] = {"wheel/tire", "driveline", "engine"}
+
+
+def _max_order_source_conf(
+    summary: dict[str, Any],
+    sources: set[str] = _ORDER_SOURCES,
+) -> float:
+    """Return max confidence among non-REF order-tracking findings."""
+    return max(
+        (
+            float(f.get("confidence_0_to_1") or 0.0)
+            for f in summary.get("findings", [])
+            if not str(f.get("finding_id", "")).startswith("REF_")
+            and str(f.get("suspected_source") or "").strip().lower() in sources
+        ),
+        default=0.0,
+    )
+
 
 # ---------------------------------------------------------------------------
 # Shared sample factory
@@ -84,8 +120,6 @@ def _build_speed_sweep_samples(
     vib_db: float = 18.0,
 ) -> list[dict[str, Any]]:
     """Create a set of samples with linearly increasing speed and wheel-1x order peaks."""
-    from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
     samples: list[dict[str, Any]] = []
     for i in range(n):
         t = i * dt
@@ -204,16 +238,43 @@ class TestPhaseSegmentation:
         )
         assert has_decel
 
-    def test_diagnostic_mask_excludes_idle(self) -> None:
-        """The diagnostic mask should exclude IDLE samples by default."""
-        per_sample = [
-            DrivingPhase.IDLE,
-            DrivingPhase.CRUISE,
-            DrivingPhase.IDLE,
-            DrivingPhase.ACCELERATION,
-        ]
-        mask = diagnostic_sample_mask(per_sample)
-        assert mask == [False, True, False, True]
+    @pytest.mark.parametrize(
+        "phases, kwargs, expected",
+        [
+            pytest.param(
+                [
+                    DrivingPhase.IDLE,
+                    DrivingPhase.CRUISE,
+                    DrivingPhase.IDLE,
+                    DrivingPhase.ACCELERATION,
+                ],
+                {},
+                [False, True, False, True],
+                id="excludes_idle_by_default",
+            ),
+            pytest.param(
+                [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE],
+                {"exclude_coast_down": True},
+                [False, False, True],
+                id="exclude_coast_down",
+            ),
+            pytest.param(
+                [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE],
+                {},
+                [False, True, True],
+                id="coast_down_included_by_default",
+            ),
+        ],
+    )
+    def test_diagnostic_mask(
+        self,
+        phases: list[DrivingPhase],
+        kwargs: dict[str, Any],
+        expected: list[bool],
+    ) -> None:
+        """The diagnostic mask should correctly include/exclude phases."""
+        mask = diagnostic_sample_mask(phases, **kwargs)
+        assert mask == expected
 
     def test_phase_summary_structure(self) -> None:
         """phase_summary must return correct keys and percentages that add to 100."""
@@ -285,17 +346,7 @@ class TestPhaseSegmentation:
         per_sample, _segments = segment_run_phases(samples)
         assert all(p == DrivingPhase.SPEED_UNKNOWN for p in per_sample)
 
-    def test_diagnostic_mask_exclude_coast_down(self) -> None:
-        """When exclude_coast_down=True, COAST_DOWN samples must also be masked out."""
-        phases = [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE]
-        mask = diagnostic_sample_mask(phases, exclude_coast_down=True)
-        assert mask == [False, False, True]
 
-    def test_diagnostic_mask_coast_down_included_by_default(self) -> None:
-        """By default, COAST_DOWN samples are included (only IDLE is excluded)."""
-        phases = [DrivingPhase.IDLE, DrivingPhase.COAST_DOWN, DrivingPhase.CRUISE]
-        mask = diagnostic_sample_mask(phases)
-        assert mask == [False, True, True]
 
 
 # ---------------------------------------------------------------------------
@@ -343,18 +394,14 @@ class TestConfidenceCalibration:
 
         AC: A mean_amp of 0.002g (barely above MEMS noise) cannot produce snr_score > 0.40.
         """
-        from math import log1p as _log1p
-
-        from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G
-
         mean_amp = 0.002  # 2 mg – barely above MEMS noise
         near_zero_floor = 1e-7  # pathological near-zero floor
 
         # Without guard (old: max(1e-6, floor)):
-        snr_without_guard = min(1.0, _log1p(mean_amp / max(1e-6, near_zero_floor)) / 2.5)
+        snr_without_guard = min(1.0, log1p(mean_amp / max(1e-6, near_zero_floor)) / 2.5)
         # With floor clamp (current: max(MEMS_NOISE_FLOOR_G, floor)):
         snr_floor_clamped = min(
-            1.0, _log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, near_zero_floor)) / 2.5
+            1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, near_zero_floor)) / 2.5
         )
         # With absolute-strength guard applied (acceptance criteria):
         if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
@@ -370,9 +417,9 @@ class TestConfidenceCalibration:
         # Normal floor (already >= 0.001g) must be unaffected by floor clamp
         normal_floor = 0.005
         snr_normal_clamped = min(
-            1.0, _log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5
+            1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5
         )
-        snr_normal_direct = min(1.0, _log1p(mean_amp / normal_floor) / 2.5)
+        snr_normal_direct = min(1.0, log1p(mean_amp / normal_floor) / 2.5)
         assert abs(snr_normal_clamped - snr_normal_direct) < 1e-10, "Normal floor must be unchanged"
 
     def test_sample_count_scaling_formula_meets_minimum_penalty(self) -> None:
@@ -468,7 +515,6 @@ class TestConfidenceCalibration:
         that persistent-peak findings (which are pathway-agnostic) don't
         skew the comparison.
         """
-        _ORDER_SOURCES = {"wheel/tire", "driveline", "engine"}
         meta = _standard_metadata()
         sweep_samples = _build_speed_sweep_samples(
             peak_amp=0.04, vib_db=18.0, speed_start_kmh=40.0, speed_end_kmh=100.0
@@ -479,19 +525,8 @@ class TestConfidenceCalibration:
         sweep_summary = summarize_run_data(meta, sweep_samples, include_samples=False)
         steady_summary = summarize_run_data(meta, steady_samples, include_samples=False)
 
-        def best_order_conf(summary: dict) -> float:
-            return max(
-                (
-                    float(f.get("confidence_0_to_1") or 0)
-                    for f in summary.get("findings", [])
-                    if not str(f.get("finding_id", "")).startswith("REF_")
-                    and str(f.get("suspected_source") or "").strip().lower() in _ORDER_SOURCES
-                ),
-                default=0.0,
-            )
-
-        sweep_conf = best_order_conf(sweep_summary)
-        steady_conf = best_order_conf(steady_summary)
+        sweep_conf = _max_order_source_conf(sweep_summary)
+        steady_conf = _max_order_source_conf(steady_summary)
         # Sweep should yield higher confidence (or both 0 if no findings)
         if sweep_conf > 0 and steady_conf > 0:
             assert sweep_conf > steady_conf, f"Sweep {sweep_conf} should > steady {steady_conf}"
@@ -502,7 +537,6 @@ class TestConfidenceCalibration:
         Only considers order-tracking findings (wheel/driveshaft/engine) so
         persistent-peak findings don't skew the ceiling check.
         """
-        _ORDER_SOURCES = {"wheel/tire", "driveline", "engine"}
         meta = _standard_metadata()
         steady_samples = _build_speed_sweep_samples(
             peak_amp=0.04,
@@ -512,15 +546,7 @@ class TestConfidenceCalibration:
             n=24,
         )
         steady_summary = summarize_run_data(meta, steady_samples, include_samples=False)
-        max_non_ref_conf = max(
-            (
-                float(f.get("confidence_0_to_1") or 0.0)
-                for f in steady_summary.get("findings", [])
-                if not str(f.get("finding_id", "")).startswith("REF_")
-                and str(f.get("suspected_source") or "").strip().lower() in _ORDER_SOURCES
-            ),
-            default=0.0,
-        )
+        max_non_ref_conf = _max_order_source_conf(steady_summary)
         assert max_non_ref_conf <= 0.65, (
             f"Steady speed confidence must be <= 0.65, got {max_non_ref_conf}"
         )
@@ -546,31 +572,26 @@ class TestConfidenceCalibration:
 class TestStrengthBandsAlignment:
     """Ensure strength_bands.py and strength_labels.py agree on thresholds."""
 
-    def test_negligible_returns_l0(self) -> None:
-        """dB values 0–7.9 should return l0 bucket (negligible)."""
-        assert bucket_for_strength(0.0) == "l0"
-        assert bucket_for_strength(5.0) == "l0"
-        assert bucket_for_strength(7.9) == "l0"
-
-    def test_l1_starts_at_8(self) -> None:
-        assert bucket_for_strength(8.0) == "l1"
-        assert bucket_for_strength(15.9) == "l1"
-
-    def test_l2_starts_at_16(self) -> None:
-        assert bucket_for_strength(16.0) == "l2"
-        assert bucket_for_strength(25.9) == "l2"
-
-    def test_l3_starts_at_26(self) -> None:
-        assert bucket_for_strength(26.0) == "l3"
-        assert bucket_for_strength(35.9) == "l3"
-
-    def test_l4_starts_at_36(self) -> None:
-        assert bucket_for_strength(36.0) == "l4"
-        assert bucket_for_strength(45.9) == "l4"
-
-    def test_l5_starts_at_46(self) -> None:
-        assert bucket_for_strength(46.0) == "l5"
-        assert bucket_for_strength(100.0) == "l5"
+    @pytest.mark.parametrize(
+        "db_val, expected_bucket",
+        [
+            pytest.param(0.0, "l0", id="l0_at_0"),
+            pytest.param(5.0, "l0", id="l0_at_5"),
+            pytest.param(7.9, "l0", id="l0_at_7.9"),
+            pytest.param(8.0, "l1", id="l1_at_8"),
+            pytest.param(15.9, "l1", id="l1_at_15.9"),
+            pytest.param(16.0, "l2", id="l2_at_16"),
+            pytest.param(25.9, "l2", id="l2_at_25.9"),
+            pytest.param(26.0, "l3", id="l3_at_26"),
+            pytest.param(35.9, "l3", id="l3_at_35.9"),
+            pytest.param(36.0, "l4", id="l4_at_36"),
+            pytest.param(45.9, "l4", id="l4_at_45.9"),
+            pytest.param(46.0, "l5", id="l5_at_46"),
+            pytest.param(100.0, "l5", id="l5_at_100"),
+        ],
+    )
+    def test_bucket_for_strength(self, db_val: float, expected_bucket: str) -> None:
+        assert bucket_for_strength(db_val) == expected_bucket
 
 
 # ---------------------------------------------------------------------------
@@ -581,31 +602,36 @@ class TestStrengthBandsAlignment:
 class TestPeakClassification:
     """Verify _classify_peak_type edge cases and new baseline_noise class."""
 
-    def test_patterned(self) -> None:
-        assert _classify_peak_type(0.50, 2.0) == "patterned"
-
-    def test_persistent(self) -> None:
-        assert _classify_peak_type(0.25, 3.5) == "persistent"
-
-    def test_transient(self) -> None:
-        assert _classify_peak_type(0.05, 1.0) == "transient"
-
-    def test_high_burstiness_transient(self) -> None:
-        assert _classify_peak_type(0.50, 6.0) == "transient"
-
-    def test_baseline_noise_low_snr(self) -> None:
-        """Peaks with SNR below threshold → baseline_noise."""
-        assert _classify_peak_type(0.80, 1.5, snr=1.0) == "baseline_noise"
-
-    def test_baseline_noise_high_spatial_uniformity(self) -> None:
-        """Peaks present everywhere equally → baseline_noise."""
-        result = _classify_peak_type(0.70, 1.5, snr=5.0, spatial_uniformity=0.90)
-        assert result == "baseline_noise"
-
-    def test_not_baseline_if_snr_high(self) -> None:
-        """High SNR should not be classified as baseline even with uniformity."""
-        result = _classify_peak_type(0.70, 1.5, snr=5.0, spatial_uniformity=0.50)
-        assert result == "patterned"
+    @pytest.mark.parametrize(
+        "presence, burstiness, kwargs, expected",
+        [
+            pytest.param(0.50, 2.0, {}, "patterned", id="patterned"),
+            pytest.param(0.25, 3.5, {}, "persistent", id="persistent"),
+            pytest.param(0.05, 1.0, {}, "transient", id="transient"),
+            pytest.param(0.50, 6.0, {}, "transient", id="high_burstiness_transient"),
+            pytest.param(0.80, 1.5, {"snr": 1.0}, "baseline_noise", id="baseline_noise_low_snr"),
+            pytest.param(
+                0.70, 1.5,
+                {"snr": 5.0, "spatial_uniformity": 0.90},
+                "baseline_noise",
+                id="baseline_noise_high_uniformity",
+            ),
+            pytest.param(
+                0.70, 1.5,
+                {"snr": 5.0, "spatial_uniformity": 0.50},
+                "patterned",
+                id="not_baseline_if_snr_high",
+            ),
+        ],
+    )
+    def test_classify_peak_type(
+        self,
+        presence: float,
+        burstiness: float,
+        kwargs: dict[str, float],
+        expected: str,
+    ) -> None:
+        assert _classify_peak_type(presence, burstiness, **kwargs) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -618,8 +644,6 @@ class TestOverlapDetection:
 
     def test_wheel2_eng1_overlap_detection(self) -> None:
         """When 2×wheel ≈ engine_1x, classify as 'wheel2_eng1'."""
-        from vibesensor.diagnostics_shared import classify_peak_hz
-
         # At ~80 km/h with tire_circ ≈ 2.21m: wheel_hz ≈ 10.04, wheel_2x ≈ 20.08
         # With final_drive=3.08, gear=0.64: engine_hz ≈ 19.79
         # These overlap (0.015 < 0.025 tol)! Query at ~20.0 Hz.
@@ -659,33 +683,28 @@ class TestOverlapDetection:
 class TestLocationLabel:
     """_location_label should prefer structured location codes."""
 
-    def test_structured_location_preferred(self) -> None:
-        from vibesensor.analysis.helpers import _location_label
-
-        sample = {
-            "client_name": "My sensor",
-            "location": "front_left_wheel",
-        }
-        label = _location_label(sample)
-        assert label == "Front Left Wheel"
-
-    def test_fallback_to_client_name(self) -> None:
-        from vibesensor.analysis.helpers import _location_label
-
-        sample = {
-            "client_name": "Rear Axle Custom",
-        }
-        label = _location_label(sample)
-        assert label == "Rear Axle Custom"
-
-    def test_unknown_location_code_used_raw(self) -> None:
-        from vibesensor.analysis.helpers import _location_label
-
-        sample = {
-            "location": "custom_spot",
-        }
-        label = _location_label(sample)
-        assert label == "custom_spot"
+    @pytest.mark.parametrize(
+        "sample, expected",
+        [
+            pytest.param(
+                {"client_name": "My sensor", "location": "front_left_wheel"},
+                "Front Left Wheel",
+                id="structured_location_preferred",
+            ),
+            pytest.param(
+                {"client_name": "Rear Axle Custom"},
+                "Rear Axle Custom",
+                id="fallback_to_client_name",
+            ),
+            pytest.param(
+                {"location": "custom_spot"},
+                "custom_spot",
+                id="unknown_location_code_used_raw",
+            ),
+        ],
+    )
+    def test_location_label(self, sample: dict[str, str], expected: str) -> None:
+        assert _location_label(sample) == expected
 
 
 # ---------------------------------------------------------------------------
@@ -718,8 +737,6 @@ class TestMultiSensorLocalization:
 
     def test_multi_sensor_run(self) -> None:
         meta = _standard_metadata()
-        from vibesensor.analysis_settings import wheel_hz_from_speed_kmh
-
         samples: list[dict[str, Any]] = []
         tire_circ = 2.036
         for i in range(30):
@@ -769,8 +786,6 @@ class TestReportMetadataCompleteness:
     """map_summary should populate new metadata fields."""
 
     def test_report_data_has_metadata_fields(self) -> None:
-        from vibesensor.analysis.report_data_builder import map_summary
-
         meta = _standard_metadata()
         samples = _build_speed_sweep_samples(n=20, vib_db=18.0)
         summary = summarize_run_data(meta, samples, include_samples=False)
@@ -780,8 +795,6 @@ class TestReportMetadataCompleteness:
         assert tmpl.sensor_count >= 1
 
     def test_next_steps_have_enriched_fields(self) -> None:
-        from vibesensor.analysis.report_data_builder import map_summary
-
         meta = _standard_metadata()
         samples = _build_speed_sweep_samples(n=40, peak_amp=0.06, vib_db=22.0)
         summary = summarize_run_data(meta, samples, include_samples=False)
@@ -806,9 +819,6 @@ class TestSensorIntensityPhaseContext:
 
     def test_phase_intensity_present_when_phases_provided(self) -> None:
         """Each location row should have phase_intensity when per_sample_phases given."""
-        from vibesensor.analysis.findings import _sensor_intensity_by_location
-        from vibesensor.analysis.phase_segmentation import segment_run_phases
-
         # Build samples with two distinct locations and phases
         samples = []
         # Location A: idle then cruise
@@ -845,8 +855,6 @@ class TestSensorIntensityPhaseContext:
 
     def test_phase_intensity_absent_without_phases(self) -> None:
         """Without per_sample_phases, phase_intensity should be None."""
-        from vibesensor.analysis.findings import _sensor_intensity_by_location
-
         samples = [
             {"t_s": 0.0, "speed_kmh": 60.0, "vibration_strength_db": 22.0, "location_key": "fl"},
         ]
@@ -880,8 +888,6 @@ class TestOrderFindingsPhaseFiltering:
         With only IDLE samples and insufficient diagnostic samples, the fallback
         to full sample set applies. With a mix, IDLE should be excluded.
         """
-        from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
-
         # Build 5 idle + 15 cruise samples
         idle = [{"t_s": float(i), "speed_kmh": 0.0, "vibration_strength_db": 5.0} for i in range(5)]
         cruise = [
@@ -943,9 +949,6 @@ class TestPhaseSpeedBreakdown:
 
     def test_phase_speed_breakdown_groups_by_phase(self) -> None:
         """Output must have one row per detected phase, keyed by phase name."""
-        from vibesensor.analysis.findings import _phase_speed_breakdown
-        from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
-
         # Build a sequence: idle → cruise
         samples = []
         for i in range(5):
@@ -986,9 +989,6 @@ class TestPhaseSpeedBreakdown:
 
     def test_phase_breakdown_rows_cover_all_samples(self) -> None:
         """Sum of phase row counts must equal total samples processed."""
-        from vibesensor.analysis.findings import _phase_speed_breakdown
-        from vibesensor.analysis.phase_segmentation import segment_run_phases
-
         samples = _build_phased_samples([(5, 0.0, 0.0), (10, 50.0, 80.0), (5, 0.0, 0.0)])
         per_sample_phases, _ = segment_run_phases(samples)
         rows = _phase_speed_breakdown(samples, per_sample_phases)
@@ -1023,8 +1023,6 @@ class TestPhaseSpeedBreakdown:
             assert row["count"] > 0, "count must be positive"
 
     def test_phase_speed_breakdown_does_not_drop_samples_when_phase_list_short(self) -> None:
-        from vibesensor.analysis.findings import _phase_speed_breakdown
-
         samples = [
             {"t_s": 0.0, "speed_kmh": 40.0, "vibration_strength_db": 10.0},
             {"t_s": 1.0, "speed_kmh": 50.0, "vibration_strength_db": 11.0},
@@ -1042,8 +1040,6 @@ class TestReferenceFindingDistinguishability:
 
     def test_reference_finding_has_finding_type_field(self) -> None:
         """_reference_missing_finding must include finding_type='reference'."""
-        from vibesensor.analysis.findings import _reference_missing_finding
-
         ref = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
@@ -1056,8 +1052,6 @@ class TestReferenceFindingDistinguishability:
 
     def test_reference_findings_excluded_from_top_causes(self) -> None:
         """select_top_causes must not include REF_ findings in output."""
-        from vibesensor.analysis.findings import _reference_missing_finding
-
         ref = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
@@ -1074,8 +1068,6 @@ class TestReferenceFindingDistinguishability:
                 "severity": "diagnostic",
             },
         ]
-        from vibesensor.analysis.summary import select_top_causes
-
         top = select_top_causes(findings)
         for cause in top:
             fid = str(cause.get("finding_id") or "")
@@ -1083,25 +1075,24 @@ class TestReferenceFindingDistinguishability:
                 f"Reference finding {fid!r} must not appear in top_causes"
             )
 
-    def test_all_ref_variants_have_reference_type(self) -> None:
+    @pytest.mark.parametrize(
+        "fid",
+        ["REF_SPEED", "REF_WHEEL", "REF_ENGINE", "REF_SAMPLE_RATE"],
+    )
+    def test_all_ref_variants_have_reference_type(self, fid: str) -> None:
         """All four REF_ finding IDs must carry finding_type='reference'."""
-        from vibesensor.analysis.findings import _reference_missing_finding
-
-        for fid in ("REF_SPEED", "REF_WHEEL", "REF_ENGINE", "REF_SAMPLE_RATE"):
-            ref = _reference_missing_finding(
-                finding_id=fid,
-                suspected_source="unknown",
-                evidence_summary="missing",
-                quick_checks=[],
-            )
-            assert ref.get("finding_type") == "reference", (
-                f"{fid}: expected finding_type='reference', got {ref.get('finding_type')!r}"
-            )
+        ref = _reference_missing_finding(
+            finding_id=fid,
+            suspected_source="unknown",
+            evidence_summary="missing",
+            quick_checks=[],
+        )
+        assert ref.get("finding_type") == "reference", (
+            f"{fid}: expected finding_type='reference', got {ref.get('finding_type')!r}"
+        )
 
     def test_reference_finding_confidence_is_none(self) -> None:
         """Reference findings must have confidence_0_to_1=None to avoid inflating statistics."""
-        from vibesensor.analysis.findings import _reference_missing_finding
-
         ref = _reference_missing_finding(
             finding_id="REF_SPEED",
             suspected_source="unknown",
@@ -1197,8 +1188,6 @@ class TestPhaseInfoInSummary:
     def test_build_findings_for_samples_uses_phase_filtering(self) -> None:
         """build_findings_for_samples must compute phase segments and pass them
         to _build_findings so that IDLE samples are excluded from analysis."""
-        from vibesensor.analysis import build_findings_for_samples
-
         meta = _standard_metadata()
         # 10 idle + 10 cruise samples
         samples = _build_phased_samples([(10, 0.0, 0.0), (10, 60.0, 60.0)])
@@ -1226,8 +1215,6 @@ class TestSpeedStatsByPhase:
 
     def test_speed_stats_by_phase_keys_are_phase_labels(self) -> None:
         """Each key in speed_stats_by_phase must be a valid driving phase string."""
-        from vibesensor.analysis.phase_segmentation import DrivingPhase
-
         meta = _standard_metadata()
         samples = _build_phased_samples([(5, 0.0, 0.0), (15, 10.0, 80.0)])
         summary = summarize_run_data(meta, samples, include_samples=False)
@@ -1285,30 +1272,38 @@ class TestCertaintyLabelSignalQualityGuard:
     a 'High' label with a negligible strength band.
     """
 
-    def test_negligible_strength_caps_high_certainty_to_medium(self) -> None:
-        """High confidence + negligible strength → medium label, not high."""
-        level, label, _, _ = certainty_label(0.90, lang="en", strength_band_key="negligible")
-        assert level == "medium", f"Expected 'medium' for negligible strength, got '{level}'"
-        assert label == "Medium"
+    @pytest.mark.parametrize(
+        "confidence, lang, strength_band_key, expected_level, expected_label",
+        [
+            pytest.param(
+                0.90, "en", "negligible", "medium", "Medium",
+                id="negligible_caps_high_to_medium",
+            ),
+            pytest.param(0.55, "en", "negligible", "medium", None, id="negligible_keeps_medium"),
+            pytest.param(0.30, "en", "negligible", "low", None, id="negligible_keeps_low"),
+            pytest.param(0.80, "nl", "negligible", "medium", "Gemiddeld", id="negligible_guard_nl"),
+        ],
+    )
+    def test_negligible_strength_certainty(
+        self,
+        confidence: float,
+        lang: str,
+        strength_band_key: str,
+        expected_level: str,
+        expected_label: str | None,
+    ) -> None:
+        level, label, _, _ = certainty_label(
+            confidence, lang=lang, strength_band_key=strength_band_key,
+        )
+        assert level == expected_level, f"Expected '{expected_level}', got '{level}'"
+        if expected_label is not None:
+            assert label == expected_label
 
-    def test_negligible_strength_does_not_affect_medium_confidence(self) -> None:
-        """Medium confidence + negligible strength stays as medium (no over-cap)."""
-        level, label, _, _ = certainty_label(0.55, lang="en", strength_band_key="negligible")
-        assert level == "medium"
-
-    def test_negligible_strength_does_not_affect_low_confidence(self) -> None:
-        """Low confidence + negligible strength stays as low."""
-        level, label, _, _ = certainty_label(0.30, lang="en", strength_band_key="negligible")
-        assert level == "low"
-
-    def test_non_negligible_strength_allows_high_confidence(self) -> None:
+    @pytest.mark.parametrize(
+        "band",
+        ["light", "moderate", "strong", "very_strong", None],
+    )
+    def test_non_negligible_strength_allows_high_confidence(self, band: str | None) -> None:
         """High confidence + non-negligible strength → high label as expected."""
-        for band in ("light", "moderate", "strong", "very_strong", None):
-            level, _, _, _ = certainty_label(0.80, lang="en", strength_band_key=band)
-            assert level == "high", f"Expected 'high' for strength_band_key={band!r}, got '{level}'"
-
-    def test_negligible_guard_applies_in_nl_too(self) -> None:
-        """Guard applies regardless of language."""
-        level, label, _, _ = certainty_label(0.80, lang="nl", strength_band_key="negligible")
-        assert level == "medium"
-        assert label == "Gemiddeld"
+        level, _, _, _ = certainty_label(0.80, lang="en", strength_band_key=band)
+        assert level == "high", f"Expected 'high' for strength_band_key={band!r}, got '{level}'"
