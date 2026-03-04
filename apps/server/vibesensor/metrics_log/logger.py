@@ -29,8 +29,10 @@ from .sample_builder import (
     _LIVE_SAMPLE_WINDOW_S,
     build_run_metadata,
     build_sample_records,
+    extract_strength_data,
     firmware_version_for_run,
     resolve_speed_context,
+    safe_metric,
 )
 
 if TYPE_CHECKING:
@@ -136,14 +138,12 @@ class MetricsLogger:
             self._last_write_error = None
 
     def _active_frames_total(self) -> int:
-        active_ids = self.registry.active_client_ids()
-        total = 0
-        for client_id in active_ids:
-            record = self.registry.get(client_id)
-            if record is None:
-                continue
-            total += int(record.frames_total)
-        return total
+        _get = self.registry.get
+        return sum(
+            int(rec.frames_total)
+            for cid in self.registry.active_client_ids()
+            if (rec := _get(cid)) is not None
+        )
 
     def _refresh_data_progress_marker(self, now_mono_s: float) -> None:
         """Update data-progress tracking.
@@ -151,11 +151,7 @@ class MetricsLogger:
         Must be called while holding ``self._lock``.
         """
         current_total = self._active_frames_total()
-        if current_total > self._last_active_frames_total:
-            self._last_active_frames_total = current_total
-            self._last_data_progress_mono_s = now_mono_s
-            return
-        if current_total < self._last_active_frames_total:
+        if current_total != self._last_active_frames_total:
             self._last_active_frames_total = current_total
             self._last_data_progress_mono_s = now_mono_s
 
@@ -286,8 +282,6 @@ class MetricsLogger:
 
     @staticmethod
     def _safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
-        from .sample_builder import safe_metric
-
         return safe_metric(metrics, axis, key)
 
     @staticmethod
@@ -301,8 +295,6 @@ class MetricsLogger:
         float | None,
         list[dict[str, object]],
     ]:
-        from .sample_builder import extract_strength_data
-
         return extract_strength_data(metrics)
 
     def _resolve_speed_context(
@@ -430,15 +422,18 @@ class MetricsLogger:
     def _prune_live_samples_locked(self, live_t_s: float) -> None:
         """Keep only the rolling live window used by the dashboard."""
         cutoff = float(live_t_s) - max(0.0, self._live_sample_window_s)
-        while self._live_samples:
-            oldest = self._live_samples[0]
-            ts = oldest.get("t_s")
-            if not isinstance(ts, NUMERIC_TYPES):
-                self._live_samples.popleft()
+        _samples = self._live_samples
+        _popleft = _samples.popleft
+        _isinstance = isinstance
+        _NUMERIC = NUMERIC_TYPES
+        while _samples:
+            ts = _samples[0].get("t_s")
+            if not _isinstance(ts, _NUMERIC):
+                _popleft()
                 continue
             if float(ts) >= cutoff:
                 break
-            self._live_samples.popleft()
+            _popleft()
 
     def _finalize_run_locked(self) -> bool:
         """Finalize the current run in the history DB.
