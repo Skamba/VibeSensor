@@ -14,6 +14,8 @@ from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar,
 )
 
+_NAN = float("nan")
+
 
 class TestComputeVibrationStrengthBoundaries:
     @pytest.mark.smoke
@@ -32,32 +34,43 @@ class TestComputeVibrationStrengthBoundaries:
         )
         assert math.isfinite(result["vibration_strength_db"])
         assert result["peak_amp_g"] == 0.0
+        assert "strength_bucket" in result
 
-    def test_flat_spectrum(self) -> None:
-        """Perfectly flat spectrum: no local maxima above threshold."""
-        freq = [float(i) for i in range(100)]
-        amp = [0.01] * 100
+    @pytest.mark.parametrize(
+        ("label", "freq_hz", "amp"),
+        [
+            pytest.param(
+                "flat_spectrum",
+                [float(i) for i in range(100)],
+                [0.01] * 100,
+                id="flat_spectrum",
+            ),
+            pytest.param("single_bin", [10.0], [0.05], id="single_bin"),
+            pytest.param("two_bins", [1.0, 2.0], [0.01, 0.05], id="two_bins"),
+            pytest.param(
+                "mismatched_lengths",
+                [1.0, 2.0, 3.0],
+                [0.01, 0.05],
+                id="mismatched_lengths",
+            ),
+            pytest.param(
+                "negative_amplitudes",
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+                [-0.01, -0.05, 0.01, -0.02, 0.0],
+                id="negative_amplitudes",
+            ),
+        ],
+    )
+    def test_degenerate_input_yields_finite_db(
+        self, label: str, freq_hz: list[float], amp: list[float]
+    ) -> None:
+        """Degenerate / edge-case inputs must produce a finite dB value."""
         result = compute_vibration_strength_db(
-            freq_hz=freq,
+            freq_hz=freq_hz,
             combined_spectrum_amp_g_values=amp,
         )
-        assert math.isfinite(result["vibration_strength_db"])
-
-    def test_single_bin(self) -> None:
-        """Single bin input shouldn't crash."""
-        result = compute_vibration_strength_db(
-            freq_hz=[10.0],
-            combined_spectrum_amp_g_values=[0.05],
-        )
-        assert math.isfinite(result["vibration_strength_db"])
-
-    def test_two_bins(self) -> None:
-        """Two bins: no local maximum possible (needs 3 for central check)."""
-        result = compute_vibration_strength_db(
-            freq_hz=[1.0, 2.0],
-            combined_spectrum_amp_g_values=[0.01, 0.05],
-        )
-        assert math.isfinite(result["vibration_strength_db"])
+        assert math.isfinite(result["vibration_strength_db"]), f"{label}: dB not finite"
+        assert "strength_bucket" in result, f"{label}: missing strength_bucket"
 
     @pytest.mark.smoke
     def test_clear_peak(self) -> None:
@@ -72,29 +85,6 @@ class TestComputeVibrationStrengthBoundaries:
         assert result["vibration_strength_db"] > 0.0
         assert len(result["top_peaks"]) >= 1
         assert result["top_peaks"][0]["hz"] == 10.0
-
-    def test_mismatched_lengths(self) -> None:
-        """freq_hz and amplitude arrays of different lengths: use minimum."""
-        result = compute_vibration_strength_db(
-            freq_hz=[1.0, 2.0, 3.0],
-            combined_spectrum_amp_g_values=[0.01, 0.05],
-        )
-        assert math.isfinite(result["vibration_strength_db"])
-
-    def test_negative_amplitudes_clamped_to_zero(self) -> None:
-        """Negative amplitude values should not cause crashes."""
-        result = compute_vibration_strength_db(
-            freq_hz=[1.0, 2.0, 3.0, 4.0, 5.0],
-            combined_spectrum_amp_g_values=[-0.01, -0.05, 0.01, -0.02, 0.0],
-        )
-        assert math.isfinite(result["vibration_strength_db"])
-
-    def test_strength_bucket_present(self) -> None:
-        """Result should always include strength_bucket key."""
-        result = compute_vibration_strength_db(
-            freq_hz=[1.0, 2.0, 3.0],
-            combined_spectrum_amp_g_values=[0.01, 0.05, 0.01],
-        )
         assert "strength_bucket" in result
 
     def test_large_spectrum(self) -> None:
@@ -130,16 +120,21 @@ class TestVibrationStrengthDbScalar:
         assert math.isfinite(db)
         assert abs(db) < 0.01
 
-    def test_nan_peak_returns_finite(self) -> None:
-        db = vibration_strength_db_scalar(peak_band_rms_amp_g=float("nan"), floor_amp_g=0.01)
-        assert math.isfinite(db)
-
-    def test_nan_floor_returns_finite(self) -> None:
-        db = vibration_strength_db_scalar(peak_band_rms_amp_g=0.01, floor_amp_g=float("nan"))
-        assert math.isfinite(db)
-
-    def test_negative_inputs_treated_as_zero(self) -> None:
-        db = vibration_strength_db_scalar(peak_band_rms_amp_g=-0.5, floor_amp_g=-0.3)
+    @pytest.mark.parametrize(
+        ("peak", "floor", "kwargs"),
+        [
+            pytest.param(_NAN, 0.01, {}, id="nan_peak"),
+            pytest.param(0.01, _NAN, {}, id="nan_floor"),
+            pytest.param(-0.5, -0.3, {}, id="negative_inputs"),
+        ],
+    )
+    def test_invalid_inputs_return_finite(
+        self, peak: float, floor: float, kwargs: dict
+    ) -> None:
+        """NaN or negative inputs must still yield a finite dB value."""
+        db = vibration_strength_db_scalar(
+            peak_band_rms_amp_g=peak, floor_amp_g=floor, **kwargs
+        )
         assert math.isfinite(db)
 
     def test_custom_epsilon(self) -> None:
