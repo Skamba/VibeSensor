@@ -352,7 +352,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
                             run_id, batch_size=_EXPORT_BATCH_SIZE
                         ):
                             sample_count += len(batch)
-                            writer.writerows([flatten_for_csv(row) for row in batch])
+                            writer.writerows(flatten_for_csv(row) for row in batch)
                         raw_csv_text.flush()
 
                     # Write run metadata as JSON (after CSV so sample_count is known).
