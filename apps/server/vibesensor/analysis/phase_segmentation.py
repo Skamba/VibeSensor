@@ -62,14 +62,13 @@ def _estimate_speed_derivative(
     window: int = 2,
 ) -> float | None:
     """Central-difference speed derivative (km/h per second) at *idx*."""
-    if idx < 0 or idx >= len(speeds):
+    n = len(speeds)
+    if idx < 0 or idx >= n:
         return None
     # Look backward and forward for valid speed+time pairs
     prev_speed: float | None = None
     prev_time: float | None = None
     for j in range(idx - 1, max(-1, idx - window - 1), -1):
-        if j < 0:
-            break
         if speeds[j] is not None and times[j] is not None:
             prev_speed = speeds[j]
             prev_time = times[j]
@@ -77,7 +76,7 @@ def _estimate_speed_derivative(
 
     next_speed: float | None = None
     next_time: float | None = None
-    for j in range(idx + 1, min(len(speeds), idx + window + 1)):
+    for j in range(idx + 1, min(n, idx + window + 1)):
         if speeds[j] is not None and times[j] is not None:
             next_speed = speeds[j]
             next_time = times[j]
@@ -187,8 +186,7 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
             i = j
             continue
 
-        for k in range(i, j):
-            phases[k] = fill
+        phases[i:j] = [fill] * (j - i)
         i = j
 
 
@@ -303,12 +301,9 @@ def diagnostic_sample_mask(
     silently discard valid vibration data (issue #287).
     Coast-down can optionally be excluded when only powered driving is relevant.
     """
-    mask: list[bool] = []
-    for phase in per_sample_phases:
-        include = True
-        if exclude_idle and phase == DrivingPhase.IDLE:
-            include = False
-        if exclude_coast_down and phase == DrivingPhase.COAST_DOWN:
-            include = False
-        mask.append(include)
-    return mask
+    excluded: set[DrivingPhase] = set()
+    if exclude_idle:
+        excluded.add(DrivingPhase.IDLE)
+    if exclude_coast_down:
+        excluded.add(DrivingPhase.COAST_DOWN)
+    return [phase not in excluded for phase in per_sample_phases]
