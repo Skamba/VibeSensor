@@ -12,6 +12,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from vibesensor.analysis.helpers import _corr_abs_clamped
+from vibesensor.analysis.findings import _weighted_percentile
+from vibesensor.analysis.summary import _normalize_lang
+from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher, _dir_sha256
+from vibesensor.report.pdf_builder import _strength_with_peak
+from vibesensor.report.pdf_helpers import _canonical_location
+from vibesensor.report_i18n import tr
+from vibesensor.settings_store import PersistenceError, SettingsStore
+from vibesensor.update.manager import UpdateManager, UpdateState
+from vibesensor_core.vibration_strength import vibration_strength_db_scalar
+
 # ── 1. NaN guard in vibration_strength_db_scalar ─────────────────────────
 
 
@@ -28,14 +39,10 @@ class TestVibrationStrengthNanGuard:
         ],
     )
     def test_non_finite_input_returns_finite(self, peak: float, floor: float) -> None:
-        from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
         result = vibration_strength_db_scalar(peak_band_rms_amp_g=peak, floor_amp_g=floor)
         assert math.isfinite(result), f"Expected finite, got {result}"
 
     def test_normal_values_unchanged(self):
-        from vibesensor_core.vibration_strength import vibration_strength_db_scalar
-
         result = vibration_strength_db_scalar(peak_band_rms_amp_g=0.01, floor_amp_g=0.001)
         assert math.isfinite(result)
         assert result > 0  # peak > floor → positive dB
@@ -48,16 +55,12 @@ class TestCorrAbsClamped:
     """Verify _corr_abs_clamped clamps to [0, 1]."""
 
     def test_perfect_correlation_clamped(self):
-        from vibesensor.analysis.helpers import _corr_abs_clamped
-
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
         y = [1.0, 2.0, 3.0, 4.0, 5.0]
         result = _corr_abs_clamped(x, y)
         assert 0 <= result <= 1.0
 
     def test_anticorrelation_clamped(self):
-        from vibesensor.analysis.helpers import _corr_abs_clamped
-
         x = [1.0, 2.0, 3.0, 4.0, 5.0]
         y = [5.0, 4.0, 3.0, 2.0, 1.0]
         result = _corr_abs_clamped(x, y)
@@ -65,8 +68,6 @@ class TestCorrAbsClamped:
 
     def test_near_identical_values_clamped(self):
         """When values are nearly identical, _corr_abs may return None (zero variance)."""
-        from vibesensor.analysis.helpers import _corr_abs_clamped
-
         # Tiny perturbation — std dev may be zero → None from _corr_abs
         x = [1.0000000001, 1.0000000002, 1.0000000003]
         y = [1.0000000001, 1.0000000002, 1.0000000003]
@@ -81,23 +82,17 @@ class TestCorrAbsClamped:
 class TestSettingsStoreRollback:
     """Verify in-memory state is restored when _persist() fails."""
 
-    def _make_store(self):
-        from vibesensor.settings_store import PersistenceError, SettingsStore
-
+    @staticmethod
+    def _make_store_failing_persist() -> SettingsStore:
+        """Return a SettingsStore whose _persist() will raise."""
         store = SettingsStore(db=None)
-        # Add initial car
-        store.add_car({"name": "Test Car", "type": "sedan"})
-        cars = store.get_cars()
-        car_id = cars["cars"][0]["id"]
-        return store, car_id, PersistenceError
+        store._db = MagicMock()
+        store._db.set_settings_snapshot.side_effect = Exception("DB fail")
+        return store
 
     def test_add_car_rollback_on_persist_failure(self):
-        from vibesensor.settings_store import PersistenceError, SettingsStore
-
         store = SettingsStore(db=None)
-        # Initial state
-        initial = store.get_cars()
-        initial_count = len(initial["cars"])
+        initial_count = len(store.get_cars()["cars"])
 
         # Make persist fail
         store._db = MagicMock()
@@ -106,71 +101,54 @@ class TestSettingsStoreRollback:
         with pytest.raises(PersistenceError):
             store.add_car({"name": "New Car", "type": "suv"})
 
-        # State should be rolled back
-        after = store.get_cars()
-        assert len(after["cars"]) == initial_count
+        assert len(store.get_cars()["cars"]) == initial_count
 
     def test_delete_car_rollback_on_persist_failure(self):
-        from vibesensor.settings_store import PersistenceError, SettingsStore
-
         store = SettingsStore(db=None)
         store.add_car({"name": "Car 1", "type": "sedan"})
         store.add_car({"name": "Car 2", "type": "suv"})
         cars = store.get_cars()
         car_count = len(cars["cars"])
-        assert car_count >= 2  # at least 2
-
+        assert car_count >= 2
         target_id = cars["cars"][-1]["id"]
 
-        # Make persist fail
         store._db = MagicMock()
         store._db.set_settings_snapshot.side_effect = Exception("DB fail")
 
         with pytest.raises(PersistenceError):
             store.delete_car(target_id)
 
-        # State should be rolled back
-        after = store.get_cars()
-        assert len(after["cars"]) == car_count
+        assert len(store.get_cars()["cars"]) == car_count
 
     def test_set_active_car_rollback_on_persist_failure(self):
-        from vibesensor.settings_store import PersistenceError, SettingsStore
-
         store = SettingsStore(db=None)
         store.add_car({"name": "Car 2", "type": "suv"})
         cars = store.get_cars()
         original_active = cars["activeCarId"]
         new_id = [c["id"] for c in cars["cars"] if c["id"] != original_active][0]
 
-        # Make persist fail
         store._db = MagicMock()
         store._db.set_settings_snapshot.side_effect = Exception("DB fail")
 
         with pytest.raises(PersistenceError):
             store.set_active_car(new_id)
 
-        # Active car should be rolled back
-        after = store.get_cars()
-        assert after["activeCarId"] == original_active
+        assert store.get_cars()["activeCarId"] == original_active
 
     def test_update_car_rollback_on_persist_failure(self):
-        from vibesensor.settings_store import PersistenceError, SettingsStore
-
         store = SettingsStore(db=None)
         store.add_car({"name": "Original Name", "type": "sedan"})
         cars = store.get_cars()
         car_id = cars["cars"][0]["id"]
         original_name = cars["cars"][0]["name"]
 
-        # Make persist fail
         store._db = MagicMock()
         store._db.set_settings_snapshot.side_effect = Exception("DB fail")
 
         with pytest.raises(PersistenceError):
             store.update_car(car_id, {"name": "New Name"})
 
-        after = store.get_cars()
-        assert after["cars"][0]["name"] == original_name
+        assert store.get_cars()["cars"][0]["name"] == original_name
 
 
 # ── 4. Firmware cache streaming download ──────────────────────────────────
@@ -181,10 +159,6 @@ class TestFirmwareCacheStreamingDownload:
 
     def test_download_asset_creates_file(self, tmp_path):
         """_download_asset should stream data to a file."""
-        from unittest.mock import MagicMock
-
-        from vibesensor.firmware_cache import FirmwareCacheConfig, GitHubReleaseFetcher
-
         config = FirmwareCacheConfig(cache_dir=str(tmp_path / "cache"))
         fetcher = GitHubReleaseFetcher(config)
 
@@ -213,8 +187,6 @@ class TestUpdateManagerCancelledError:
     @pytest.mark.asyncio
     async def test_cancelled_error_is_reraised(self):
         """_run_update should re-raise CancelledError."""
-        from vibesensor.update.manager import UpdateManager, UpdateState
-
         mgr = UpdateManager.__new__(UpdateManager)
         mgr._status = MagicMock()
         mgr._status.phase = MagicMock()
@@ -263,8 +235,6 @@ class TestNormalizeLangDedup:
         ],
     )
     def test_normalize_lang(self, raw: str | None, expected: str) -> None:
-        from vibesensor.analysis.summary import _normalize_lang
-
         assert _normalize_lang(raw) == expected
 
 
@@ -275,13 +245,9 @@ class TestWeightedPercentileImport:
     """Verify _weighted_percentile is importable from findings without trampoline."""
 
     def test_import_works(self):
-        from vibesensor.analysis.findings import _weighted_percentile
-
         assert callable(_weighted_percentile)
 
     def test_basic_call(self):
-        from vibesensor.analysis.findings import _weighted_percentile
-
         result = _weighted_percentile([(10.0, 1.0), (20.0, 1.0), (30.0, 1.0)], 0.5)
         assert result is not None
 
@@ -293,8 +259,6 @@ class TestDirSha256Separators:
     """Verify _dir_sha256 uses null-byte separators between path and content."""
 
     def test_different_layouts_produce_different_hashes(self, tmp_path):
-        from vibesensor.firmware_cache import _dir_sha256
-
         # Layout 1: file "a" with content "bc"
         d1 = tmp_path / "d1"
         d1.mkdir()
@@ -343,8 +307,6 @@ class TestCanonicalLocation:
         ],
     )
     def test_canonical(self, raw, expected):
-        from vibesensor.report.pdf_helpers import _canonical_location
-
         assert _canonical_location(raw) == expected
 
 
@@ -355,29 +317,21 @@ class TestStrengthWithPeakI18n:
     """Verify _strength_with_peak uses the provided suffix."""
 
     def test_default_suffix_is_peak(self):
-        from vibesensor.report.pdf_builder import _strength_with_peak
-
         result = _strength_with_peak("Moderate", 28.3, fallback="—")
         assert "peak" in result
         assert "28.3" in result
 
     def test_nl_suffix(self):
-        from vibesensor.report.pdf_builder import _strength_with_peak
-
         result = _strength_with_peak("Matig", 28.3, fallback="—", peak_suffix="piek")
         assert "piek" in result
         assert "peak" not in result
         assert "28.3" in result
 
     def test_no_peak_db(self):
-        from vibesensor.report.pdf_builder import _strength_with_peak
-
         result = _strength_with_peak("Moderate", None, fallback="—")
         assert result == "Moderate"
 
     def test_db_in_label_skips_suffix(self):
-        from vibesensor.report.pdf_builder import _strength_with_peak
-
         result = _strength_with_peak("28.3 dB", 28.3, fallback="—")
         assert result == "28.3 dB"  # no suffix appended
 
@@ -388,15 +342,12 @@ class TestStrengthWithPeakI18n:
 class TestReportI18nPeakSuffix:
     """Verify STRENGTH_PEAK_SUFFIX key exists in both languages."""
 
-    def test_en_key(self):
-        from vibesensor.report_i18n import tr
-
-        assert tr("en", "STRENGTH_PEAK_SUFFIX") == "peak"
-
-    def test_nl_key(self):
-        from vibesensor.report_i18n import tr
-
-        assert tr("nl", "STRENGTH_PEAK_SUFFIX") == "piek"
+    @pytest.mark.parametrize(
+        "lang, expected",
+        [("en", "peak"), ("nl", "piek")],
+    )
+    def test_peak_suffix_key(self, lang: str, expected: str):
+        assert tr(lang, "STRENGTH_PEAK_SUFFIX") == expected
 
 
 # ── 12. Firmware cache restore on activation failure ──────────────────────
