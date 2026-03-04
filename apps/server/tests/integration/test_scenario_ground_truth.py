@@ -27,6 +27,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+from conftest import assert_summary_sections, assert_top_cause_contract
 from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis.summary import summarize_run_data
@@ -374,7 +375,7 @@ def _assert_not_engine(top_cause: dict) -> None:
 class TestScenario01IdleToOnsetFR:
     """Idle baseline → 20s acceleration ramp → 40s fault at 100 km/h on front-right."""
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def summary(self) -> dict:
         sensors = _ALL_SENSORS
         samples: list[dict[str, Any]] = []
@@ -443,8 +444,6 @@ class TestScenario01IdleToOnsetFR:
 
     def test_contract_validation(self, summary: dict) -> None:
         """Full contract validation via shared helpers."""
-        from conftest import assert_summary_sections, assert_top_cause_contract
-
         assert_summary_sections(summary, expected_lang="en", min_top_causes=1)
         top = _get_top_cause(summary)
         assert_top_cause_contract(
@@ -468,7 +467,7 @@ class TestScenario01IdleToOnsetFR:
 class TestScenario02StopGoRL:
     """Stop-go driving with intermittent rear-left fault at 50 and 60 km/h."""
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def summary(self) -> dict:
         sensors = _ALL_SENSORS
         samples: list[dict[str, Any]] = []
@@ -546,8 +545,6 @@ class TestScenario02StopGoRL:
 
     def test_contract_validation(self, summary: dict) -> None:
         """Full contract validation via shared helpers."""
-        from conftest import assert_summary_sections, assert_top_cause_contract
-
         assert_summary_sections(summary, expected_lang="nl", min_top_causes=1)
         top = _get_top_cause(summary)
         assert_top_cause_contract(
@@ -570,7 +567,7 @@ class TestScenario02StopGoRL:
 class TestScenario03HighwayRR:
     """Road baselines at 60 and 90, then 40s fault at 120, then road baseline at 100."""
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def summary(self) -> dict:
         sensors = _ALL_SENSORS
         samples: list[dict[str, Any]] = []
@@ -642,8 +639,6 @@ class TestScenario03HighwayRR:
 
     def test_contract_validation(self, summary: dict) -> None:
         """Full contract validation via shared helpers."""
-        from conftest import assert_summary_sections, assert_top_cause_contract
-
         assert_summary_sections(summary, expected_lang="en", min_top_causes=1)
         top = _get_top_cause(summary)
         assert_top_cause_contract(
@@ -667,7 +662,7 @@ class TestScenario03HighwayRR:
 class TestScenario04CoastdownFL:
     """Coast-down with variable-strength front-left fault across 90/70/50 km/h."""
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def summary(self) -> dict:
         sensors = _ALL_SENSORS
         samples: list[dict[str, Any]] = []
@@ -775,8 +770,6 @@ class TestScenario04CoastdownFL:
 
     def test_contract_validation(self, summary: dict) -> None:
         """Full contract validation via shared helpers."""
-        from conftest import assert_summary_sections, assert_top_cause_contract
-
         assert_summary_sections(summary, expected_lang="nl", min_top_causes=1)
         top = _get_top_cause(summary)
         assert_top_cause_contract(
@@ -799,7 +792,7 @@ class TestScenario04CoastdownFL:
 class TestScenario05NoiseThenFL:
     """Road noise baseline then onset of front-left fault at 100 km/h."""
 
-    @pytest.fixture()
+    @pytest.fixture(scope="class")
     def summary(self) -> dict:
         sensors = _ALL_SENSORS
         samples: list[dict[str, Any]] = []
@@ -891,8 +884,6 @@ class TestScenario05NoiseThenFL:
 
     def test_contract_validation(self, summary: dict) -> None:
         """Full contract validation via shared helpers."""
-        from conftest import assert_summary_sections, assert_top_cause_contract
-
         assert_summary_sections(summary, expected_lang="en", min_top_causes=1)
         top = _get_top_cause(summary)
         assert_top_cause_contract(
@@ -911,6 +902,24 @@ class TestScenario05NoiseThenFL:
 # ===========================================================================
 
 
+class _FakeSimClient:
+    """Lightweight stub for simulator client tests (shared across methods)."""
+
+    def __init__(self, name: str, *, profile_name: str = "engine_idle"):
+        self.name = name
+        self.profile_name = profile_name
+        self.scene_mode = ""
+        self.scene_gain = 0.0
+        self.scene_noise_gain = 0.0
+        self.common_event_gain = 0.0
+        self.amp_scale = 0.0
+        self.noise_scale = 0.0
+        self.bump_state = np.zeros(3, dtype=np.float32)
+
+    def pulse(self, strength: float) -> None:
+        pass
+
+
 class TestSimulatorDeterminism:
     """Verify simulator produces deterministic output for scripted scenarios."""
 
@@ -918,18 +927,7 @@ class TestSimulatorDeterminism:
         """road-fixed scenario sets deterministic scene_gain/scene_noise_gain."""
         from vibesensor_simulator.commands import apply_road_fixed_scenario
 
-        class FakeClient:
-            def __init__(self, name: str):
-                self.name = name
-                self.profile_name = "engine_idle"
-                self.scene_mode = ""
-                self.scene_gain = 0.0
-                self.scene_noise_gain = 0.0
-                self.common_event_gain = 0.0
-                self.amp_scale = 0.0
-                self.noise_scale = 0.0
-
-        clients = [FakeClient(n) for n in _ALL_SENSORS]
+        clients = [_FakeSimClient(n) for n in _ALL_SENSORS]
         apply_road_fixed_scenario(clients)
 
         for c in clients:
@@ -945,18 +943,7 @@ class TestSimulatorDeterminism:
         """All clients get the same deterministic scene state."""
         from vibesensor_simulator.commands import apply_road_fixed_scenario
 
-        class FakeClient:
-            def __init__(self, name: str):
-                self.name = name
-                self.profile_name = "engine_idle"
-                self.scene_mode = ""
-                self.scene_gain = 0.0
-                self.scene_noise_gain = 0.0
-                self.common_event_gain = 0.0
-                self.amp_scale = 0.0
-                self.noise_scale = 0.0
-
-        clients = [FakeClient(n) for n in _ALL_SENSORS]
+        clients = [_FakeSimClient(n) for n in _ALL_SENSORS]
         apply_road_fixed_scenario(clients)
 
         gains = [(c.scene_gain, c.scene_noise_gain, c.amp_scale, c.noise_scale) for c in clients]
@@ -966,22 +953,7 @@ class TestSimulatorDeterminism:
         """Fault corner dominates while other corners still carry coupled wheel energy."""
         from vibesensor_simulator.commands import apply_one_wheel_mild_scenario
 
-        class FakeClient:
-            def __init__(self, name: str):
-                self.name = name
-                self.profile_name = "engine_idle"
-                self.scene_mode = ""
-                self.scene_gain = 0.0
-                self.scene_noise_gain = 0.0
-                self.common_event_gain = 0.0
-                self.amp_scale = 0.0
-                self.noise_scale = 0.0
-                self.bump_state = __import__("numpy").zeros(3, dtype=__import__("numpy").float32)
-
-            def pulse(self, strength: float) -> None:
-                pass
-
-        clients = [FakeClient(n) for n in _ALL_SENSORS]
+        clients = [_FakeSimClient(n) for n in _ALL_SENSORS]
         apply_one_wheel_mild_scenario(clients, "rear-left")
 
         fault_client = next(c for c in clients if c.name == "rear-left")
@@ -1005,21 +977,7 @@ class TestSimulatorDeterminism:
     def test_road_scene_single_mode_keeps_non_active_sensors_alive(self) -> None:
         from vibesensor_simulator.sim_sender import RoadSceneController
 
-        class FakeClient:
-            def __init__(self, name: str):
-                self.name = name
-                self.profile_name = "rough_road"
-                self.scene_mode = ""
-                self.scene_gain = 0.0
-                self.scene_noise_gain = 0.0
-                self.common_event_gain = 0.0
-                self.amp_scale = 0.0
-                self.noise_scale = 0.0
-
-            def pulse(self, strength: float) -> None:
-                return None
-
-        clients = [FakeClient(n) for n in _ALL_SENSORS]
+        clients = [_FakeSimClient(n, profile_name="rough_road") for n in _ALL_SENSORS]
         controller = RoadSceneController(clients)
         controller._apply_single_active()
 
