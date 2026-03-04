@@ -44,21 +44,31 @@ def _make_spectra(peak_idx: int = 320, peak_amp: float = 150.0) -> dict:
     }
 
 
-# ---------------------------------------------------------------------------
-# diagnostics_sequence
-# ---------------------------------------------------------------------------
-
-
-def test_diagnostics_sequence_increments_on_heavy_ticks(monkeypatch) -> None:
+def _make_timed_engine(monkeypatch):
+    """Return (engine, spectra, clients, advance) with monkeypatched monotonic."""
     now = {"value": 100.0}
     monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
     engine = LiveDiagnosticsEngine()
     spectra = _make_spectra()
     clients = [{"id": "c1", "name": "front"}]
 
+    def advance(dt: float = 0.5) -> None:
+        now["value"] += dt
+
+    return engine, spectra, clients, advance
+
+
+# ---------------------------------------------------------------------------
+# diagnostics_sequence
+# ---------------------------------------------------------------------------
+
+
+def test_diagnostics_sequence_increments_on_heavy_ticks(monkeypatch) -> None:
+    engine, spectra, clients, advance = _make_timed_engine(monkeypatch)
+
     seqs: list[int] = []
     for _ in range(5):
-        now["value"] += 0.5
+        advance()
         snap = engine.update(speed_mps=27.8, clients=clients, spectra=spectra, settings={})
         seqs.append(snap["diagnostics_sequence"])
 
@@ -68,19 +78,15 @@ def test_diagnostics_sequence_increments_on_heavy_ticks(monkeypatch) -> None:
 
 
 def test_diagnostics_sequence_stable_on_light_ticks(monkeypatch) -> None:
-    now = {"value": 100.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
-    engine = LiveDiagnosticsEngine()
-    spectra = _make_spectra()
-    clients = [{"id": "c1", "name": "front"}]
+    engine, spectra, clients, advance = _make_timed_engine(monkeypatch)
 
     # Heavy tick
-    now["value"] += 0.5
+    advance()
     snap_heavy = engine.update(speed_mps=27.8, clients=clients, spectra=spectra, settings={})
     seq_heavy = snap_heavy["diagnostics_sequence"]
 
     # Light tick (spectra=None) - sequence should NOT increment
-    now["value"] += 0.5
+    advance()
     snap_light = engine.update(speed_mps=27.8, clients=clients, spectra=None, settings={})
     seq_light = snap_light["diagnostics_sequence"]
 
@@ -100,15 +106,11 @@ def test_diagnostics_sequence_resets_on_engine_reset() -> None:
 
 
 def test_events_have_event_id(monkeypatch) -> None:
-    now = {"value": 100.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
-    engine = LiveDiagnosticsEngine()
-    spectra = _make_spectra()
-    clients = [{"id": "c1", "name": "front"}]
+    engine, spectra, clients, advance = _make_timed_engine(monkeypatch)
 
     all_events: list[dict] = []
     for _ in range(10):
-        now["value"] += 0.5
+        advance()
         snap = engine.update(speed_mps=27.8, clients=clients, spectra=spectra, settings={})
         all_events.extend(snap["events"])
 
@@ -127,15 +129,11 @@ def test_events_have_event_id(monkeypatch) -> None:
 
 def test_matrix_dwell_seconds_accumulate_on_light_ticks(monkeypatch) -> None:
     """Dwell seconds should increase even when spectra is None (light ticks)."""
-    now = {"value": 100.0}
-    monkeypatch.setattr("vibesensor.live_diagnostics.engine.monotonic", lambda: now["value"])
-    engine = LiveDiagnosticsEngine()
-    spectra = _make_spectra()
-    clients = [{"id": "c1", "name": "front"}]
+    engine, spectra, clients, advance = _make_timed_engine(monkeypatch)
 
     # Bootstrap with several heavy ticks to establish active levels
     for _ in range(5):
-        now["value"] += 0.1
+        advance(0.1)
         engine.update(speed_mps=27.8, clients=clients, spectra=spectra, settings={})
 
     snap_before = engine.snapshot()
@@ -145,7 +143,7 @@ def test_matrix_dwell_seconds_accumulate_on_light_ticks(monkeypatch) -> None:
 
     # Several light ticks (spectra=None)
     for _ in range(5):
-        now["value"] += 0.1
+        advance(0.1)
         engine.update(speed_mps=27.8, clients=clients, spectra=None, settings={})
 
     snap_after = engine.snapshot()
