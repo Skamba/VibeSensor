@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501, F811
+# ruff: noqa: E402, E501
 from __future__ import annotations
 
 """Consolidated cross cutting regression tests."""
@@ -29,7 +29,8 @@ from vibesensor.domain_models import VALID_SPEED_SOURCES
 from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 from vibesensor.report_i18n import tr
-from vibesensor.runlog import as_float_or_none, parse_iso8601
+from vibesensor.runlog import as_float_or_none as runlog_as_float_or_none
+from vibesensor.runlog import parse_iso8601
 
 
 def _make_release_info(version: str) -> ReleaseInfo:
@@ -188,15 +189,15 @@ class TestBug09HotspotP95FallbackOnZero:
     def test_zero_p95_not_treated_as_missing(self) -> None:
         # Simulating the fixed code path
         row = {"p95_intensity_db": 0.0, "mean_intensity_db": 5.0}
-        p95_val = as_float_or_none(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else as_float_or_none(row.get("mean_intensity_db"))
+        p95_val = runlog_as_float_or_none(row.get("p95_intensity_db"))
+        p95 = p95_val if p95_val is not None else runlog_as_float_or_none(row.get("mean_intensity_db"))
         # 0.0 should be used, not fall through to mean
         assert p95 == 0.0
 
     def test_none_p95_falls_through_to_mean(self) -> None:
         row = {"p95_intensity_db": None, "mean_intensity_db": 5.0}
-        p95_val = as_float_or_none(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else as_float_or_none(row.get("mean_intensity_db"))
+        p95_val = runlog_as_float_or_none(row.get("p95_intensity_db"))
+        p95 = p95_val if p95_val is not None else runlog_as_float_or_none(row.get("mean_intensity_db"))
         assert p95 == 5.0
 
 
@@ -374,7 +375,7 @@ class TestBug18IntensitySortZero:
 class TestBug19FloorAmpZero:
     def test_zero_floor_amp_preserved(self) -> None:
         sample = {"strength_floor_amp_g": 0.0}
-        _floor_raw = as_float_or_none(sample.get("strength_floor_amp_g"))
+        _floor_raw = runlog_as_float_or_none(sample.get("strength_floor_amp_g"))
         floor_amp = _floor_raw if _floor_raw is not None else 0.0
         assert floor_amp == 0.0
         # Key: the value came from the sample, not the default
@@ -1304,7 +1305,7 @@ import vibesensor.locations as locations_mod
 import vibesensor.udp_control_tx as udp_control_tx_mod
 from vibesensor.analysis_settings import sanitize_settings
 from vibesensor.car_library import CAR_LIBRARY, get_models_for_brand_type, get_variants_for_model
-from vibesensor.diagnostics_shared import as_float_or_none
+from vibesensor.diagnostics_shared import as_float_or_none as diagnostics_as_float_or_none
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.locations import is_wheel_location
 from vibesensor.settings_store import PersistenceError, SettingsStore
@@ -1554,8 +1555,8 @@ class TestAsFloatOrNoneImport:
         assert "as_float_or_none" in source
 
     def test_as_float_or_none_accessible_from_diagnostics_shared(self) -> None:
-        assert as_float_or_none(3.14) == 3.14
-        assert as_float_or_none(None) is None
+        assert diagnostics_as_float_or_none(3.14) == 3.14
+        assert diagnostics_as_float_or_none(None) is None
 
 
 # ---------------------------------------------------------------------------
