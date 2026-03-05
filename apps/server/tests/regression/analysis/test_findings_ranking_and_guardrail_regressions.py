@@ -1,4 +1,4 @@
-"""Tests for Cycle 3 fixes:
+"""Findings ranking and analysis guardrail regressions:
 - _ranking_score synced after engine alias suppression
 - negligible confidence cap aligned with TIER_B_CEILING (0.40)
 - steady_speed uses AND (not OR) for stddev and range
@@ -59,7 +59,7 @@ class TestNegligibleCapAligned:
     """Regression: negligible-strength confidence cap must not exceed
     TIER_B_CEILING (0.40)."""
 
-    def test_cap_value_in_source(self) -> None:
+    def test_order_cap_value_in_source(self) -> None:
         src = inspect.getsource(order_findings_mod)
         assert "min(confidence, 0.40)" in src, (
             "Negligible cap should be 0.40 (aligned with TIER_B_CEILING)"

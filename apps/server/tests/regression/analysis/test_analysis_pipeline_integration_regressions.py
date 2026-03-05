@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Tests for the 20 analysis-pipeline fixes.
+"""Analysis pipeline integration regressions.
 
 Each test is tagged with the fix number it validates.
 """

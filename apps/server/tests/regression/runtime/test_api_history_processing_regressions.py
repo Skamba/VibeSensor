@@ -1,4 +1,4 @@
-"""Regression tests for the top-10 bug fixes (PR #390)."""
+"""Runtime regressions spanning API, history, and processing boundaries."""
 
 from __future__ import annotations
 

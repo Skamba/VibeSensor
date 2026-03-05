@@ -1,4 +1,4 @@
-"""Tests for Cycle 4 (session 3) fixes – a.k.a. cycle-13 in the global sequence.
+"""Strength labeling and reason-selection regressions.
 
 Covers:
   1. live_diagnostics._combine_amplitude_strength_db — NaN guard

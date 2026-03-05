@@ -1,4 +1,4 @@
-"""Tests for Cycle 2 fixes:
+"""Strength bucketing and combined-spectrum runtime regressions:
 - combined spectrum not polluted by zeroed amp_for_peaks
 - order tolerance scales with path_compliance
 - _noise_floor no double bin removal

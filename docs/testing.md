@@ -28,9 +28,10 @@ tests/
 ├── protocol/                # vibesensor/protocol.py, UDP tx/rx
 ├── regression/              # Bug-fix regressions grouped by intent:
 │   ├── audits/              # Coverage and report audits
-│   ├── bugfix_batches/      # PR/batch-level bug-fix packs
-│   ├── cycle_fixes/         # Numbered cycle regression packs
-│   └── review_fixes/        # Review-driven regression packs
+│   ├── analysis/            # Analysis/scoring/order regression packs
+│   ├── cross_cutting/       # Multi-subsystem regression packs
+│   ├── report/              # PDF/report-data regression packs
+│   └── runtime/             # Runtime/storage/API guard regressions
 ├── report/                  # vibesensor/report/* — PDF, i18n, hotspots
 ├── update/                  # vibesensor/update/*, firmware_cache, esp_flash
 └── websocket/               # vibesensor/ws_hub.py, ws_models, schema export
@@ -78,7 +79,7 @@ tests/
 | Category          | Directory            | Description                                |
 |-------------------|----------------------|--------------------------------------------|
 | Integration       | `tests/integration/` | Multi-module scenarios, level tests        |
-| Regression        | `tests/regression/`  | Bug-fix regressions grouped into `audits/`, `bugfix_batches/`, `cycle_fixes/`, `review_fixes/` |
+| Regression        | `tests/regression/`  | Bug-fix regressions grouped into `analysis/`, `audits/`, `cross_cutting/`, `report/`, `runtime/` |
 | Architecture      | `tests/hygiene/`     | Repo hygiene, architecture guards, smoke   |
 | End-to-end        | `tests/e2e/`         | Selenium browser tests                     |
 
@@ -118,7 +119,7 @@ make test-all
 6. **For cross-cutting tests** that span multiple modules, use
    `tests/integration/` (scenarios) or `tests/regression/` (bug fixes).
    Under regression, place files in the matching intent folder:
-   `audits/`, `bugfix_batches/`, `cycle_fixes/`, or `review_fixes/`.
+   `analysis/`, `audits/`, `cross_cutting/`, `report/`, or `runtime/`.
 
 ## Naming conventions
 

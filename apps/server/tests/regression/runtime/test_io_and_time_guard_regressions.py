@@ -1,4 +1,4 @@
-"""Tests for Cycle 2 (session 3) fixes – a.k.a. cycle-11 in the global sequence.
+"""I/O cleanup, time-source, and report-cli guard regressions.
 
 Covers:
   1. firmware_cache.refresh() – target/old_current initialised before try
