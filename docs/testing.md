@@ -120,14 +120,12 @@ make test-all
    `tests/integration/` (scenarios) or `tests/regression/` (bug fixes).
    Under regression, place files in the matching intent folder and
    scope subfolder (for example `runtime/guards/` or `analysis/scoring/`).
-   Keep regression files class/function-scoped using
-   `<pack_name>__<class_or_group_slug>.py` when splitting mixed packs.
 
 ## Naming conventions
 
 - **Test files**: `test_<feature_or_module>.py`
 - **Regression file names**: prefer descriptive names (for example
-  `test_runtime_queue_and_export__test_analysis_queue_maxlen.py`) over ad-hoc run labels.
+  `test_runtime_queue_and_export.py`) over ad-hoc run labels.
 - **Test classes**: `Test<FeatureName>` (group related tests)
 - **Test functions**: `test_<behavior_under_test>`
 - **Fixtures/builders**: in `conftest.py` (fixtures) or `builders.py` (data generators)
