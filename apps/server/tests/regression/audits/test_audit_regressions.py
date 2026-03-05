@@ -1047,7 +1047,7 @@ from vibesensor.analysis.summary import (
     _phase_ranking_score,
     summarize_run_data,
 )
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -1111,17 +1111,19 @@ def _make_metrics_logger() -> tuple[MetricsLogger, MagicMock]:
     }
 
     logger = MetricsLogger(
-        enabled=False,
-        log_path=Path("/tmp/test"),
-        metrics_log_hz=1,
+        MetricsLoggerConfig(
+            enabled=False,
+            log_path=Path("/tmp/test"),
+            metrics_log_hz=1,
+            sensor_model="test",
+            default_sample_rate_hz=800,
+            fft_window_size_samples=512,
+            persist_history_db=False,
+        ),
         registry=registry,
         gps_monitor=gps_mock,
         processor=MagicMock(),
         analysis_settings=settings_mock,
-        sensor_model="test",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=512,
-        persist_history_db=False,
     )
     return logger, gps_mock
 

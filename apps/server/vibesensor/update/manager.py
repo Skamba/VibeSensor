@@ -486,7 +486,22 @@ class UpdateManager:
                 LOGGER.warning("Update cleanup interrupted", exc_info=True)
 
     async def _run_update_inner(self, ssid: str, password: str) -> None:
-        # --- Phase: Validate ---
+        if not await self._phase_validate(ssid):
+            return
+        if self._cancel_event.is_set():
+            return
+        if not await self._phase_stop_hotspot():
+            return
+        if self._cancel_event.is_set():
+            return
+        if not await self._phase_connect_wifi(ssid, password):
+            return
+        if self._cancel_event.is_set():
+            return
+        await self._phase_check_and_install(ssid)
+
+    async def _phase_validate(self, ssid: str) -> bool:
+        """Validate prerequisites.  Returns False if the update should abort."""
         self._status.phase = UpdatePhase.validating
         self._persist_status("phase:validating")
         self._log(f"Starting update with SSID: {ssid}")
@@ -496,7 +511,7 @@ class UpdateManager:
             if not shutil.which(tool):
                 self._add_issue("validating", f"Required tool not found: {tool}")
                 self._status.state = UpdateState.failed
-                return
+                return False
 
         # Check sudo / privileges
         if os.geteuid() != 0:
@@ -509,12 +524,12 @@ class UpdateManager:
                     "In dev/Docker environments, hotspot management is not available.",
                 )
                 self._status.state = UpdateState.failed
-                return
+                return False
 
-        if self._cancel_event.is_set():
-            return
+        return True
 
-        # --- Phase: Stop hotspot ---
+    async def _phase_stop_hotspot(self) -> bool:
+        """Stop the Wi-Fi hotspot.  Returns False if the update should abort."""
         self._status.phase = UpdatePhase.stopping_hotspot
         self._persist_status("phase:stopping_hotspot")
         self._log("Stopping hotspot...")
@@ -526,11 +541,10 @@ class UpdateManager:
         )
         if rc != 0:
             self._log("Hotspot down returned non-zero; may already be inactive")
+        return True
 
-        if self._cancel_event.is_set():
-            return
-
-        # --- Phase: Connect to Wi-Fi ---
+    async def _phase_connect_wifi(self, ssid: str, password: str) -> bool:
+        """Connect to the upstream Wi-Fi network.  Returns False if the update should abort."""
         self._status.phase = UpdatePhase.connecting_wifi
         self._persist_status("phase:connecting_wifi")
         self._log(f"Connecting to Wi-Fi network: {ssid}")
@@ -563,7 +577,7 @@ class UpdateManager:
                         f"SSID '{ssid}' advertises security: {', '.join(sorted(security_modes))}",
                     )
                     self._status.state = UpdateState.failed
-                    return
+                    return False
 
         # Clean up any previous uplink
         rc, stdout, _ = await self._run_cmd(
@@ -611,7 +625,7 @@ class UpdateManager:
         if rc != 0:
             self._add_issue("connecting_wifi", "Failed to create uplink connection", stderr)
             self._status.state = UpdateState.failed
-            return
+            return False
 
         rc, _, stderr = await self._run_cmd(
             [
@@ -637,7 +651,7 @@ class UpdateManager:
         if rc != 0:
             self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
             self._status.state = UpdateState.failed
-            return
+            return False
 
         if password:
             rc, _, stderr = await self._run_cmd(
@@ -657,7 +671,7 @@ class UpdateManager:
             if rc != 0:
                 self._add_issue("connecting_wifi", "Failed to set Wi-Fi credentials", stderr)
                 self._status.state = UpdateState.failed
-                return
+                return False
 
         rc = 1
         stderr = ""
@@ -706,17 +720,18 @@ class UpdateManager:
         if rc != 0:
             self._add_issue("connecting_wifi", f"Failed to connect to Wi-Fi '{ssid}'", stderr)
             self._status.state = UpdateState.failed
-            return
+            return False
 
         self._log(f"Wi-Fi connected successfully (client DNS fallback={UPLINK_FALLBACK_DNS})")
 
-        if self._cancel_event.is_set():
-            return
-
         if not await self._wait_for_dns_ready():
             self._status.state = UpdateState.failed
-            return
+            return False
 
+        return True
+
+    async def _phase_check_and_install(self, ssid: str) -> None:
+        """Check for available update, download, install, and finalize."""
         # --- Phase: Check for updates ---
         self._status.phase = UpdatePhase.checking
         self._persist_status("phase:checking")

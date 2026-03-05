@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 
 # ---------------------------------------------------------------------------
 # Minimal fakes (same style as test_metrics_log_helpers.py)
@@ -47,16 +47,18 @@ class _FakeAnalysisSettings:
 
 def _make_logger(tmp_path: Path, history_db=None) -> MetricsLogger:
     return MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "m.jsonl",
-        metrics_log_hz=2,
+        MetricsLoggerConfig(
+            enabled=False,
+            log_path=tmp_path / "m.jsonl",
+            metrics_log_hz=2,
+            sensor_model="ADXL345",
+            default_sample_rate_hz=800,
+            fft_window_size_samples=1024,
+        ),
         registry=_FakeRegistry(),
         gps_monitor=_FakeGPSMonitor(),
         processor=_FakeProcessor(),
         analysis_settings=_FakeAnalysisSettings(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=1024,
         history_db=history_db,
     )
 

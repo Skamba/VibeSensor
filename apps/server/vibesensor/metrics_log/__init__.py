@@ -19,6 +19,7 @@ imports continue to work without changes.
 from .logger import (
     _MAX_HISTORY_CREATE_RETRIES,  # noqa: F401
     MetricsLogger,  # noqa: F401
+    MetricsLoggerConfig,  # noqa: F401
 )
 from .post_analysis import (
     _MAX_POST_ANALYSIS_SAMPLES,  # noqa: F401
@@ -37,6 +38,7 @@ from .sample_builder import (  # noqa: F401
 
 __all__ = [
     "MetricsLogger",
+    "MetricsLoggerConfig",
     "PostAnalysisWorker",
     "_MAX_HISTORY_CREATE_RETRIES",
     "_MAX_POST_ANALYSIS_SAMPLES",
