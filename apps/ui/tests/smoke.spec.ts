@@ -49,7 +49,7 @@ function jsonOk(body: unknown) {
 }
 
 function normalizePathname(pathname: string): string {
-  return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
 }
 
 function requestPath(route: Route): string {
