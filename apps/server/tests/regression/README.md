@@ -1,14 +1,14 @@
 # Regression tests
 
-Regression tests are grouped by intent to make discovery predictable:
+Regression tests are grouped by intent first, then by narrower scope:
 
-- `audits/`: coverage/report audits that verify known finding sets.
-- `analysis/`: analysis/scoring/order-detection regression packs.
-- `cross_cutting/`: broad regressions spanning multiple subsystems.
-- `report/`: PDF/report-data rendering and formatting regressions.
-- `runtime/`: runtime/storage/API guard regressions.
+- `audits/`: coverage and pipeline audits (`coverage/`, `pipeline/`).
+- `analysis/`: analysis regressions (`pipeline/`, `scoring/`, `signal/`).
+- `cross_cutting/`: broad regressions (`contracts/`, `delivery/`, `domains/`, `review/`).
+- `report/`: report regressions (`rendering/`, `signal/`).
+- `runtime/`: runtime regressions (`api/`, `concurrency/`, `guards/`, `metrics/`, `quality/`, `queues/`, `signal/`).
 
 Naming convention:
 
-- Prefer `test_<descriptive_scope>.py` (for example, `test_analysis_pipeline_guard_regressions.py`).
+- Prefer `test_<descriptive_scope>.py` (for example, `test_runtime_validation_and_schema.py`).
 - Avoid ambiguous run labels when a feature-focused name is available.

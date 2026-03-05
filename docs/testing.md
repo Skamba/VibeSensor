@@ -26,12 +26,12 @@ tests/
 ├── metrics_log/             # vibesensor/metrics_log/*
 ├── processing/              # vibesensor/processing/* — FFT, buffers, time-align
 ├── protocol/                # vibesensor/protocol.py, UDP tx/rx
-├── regression/              # Bug-fix regressions grouped by intent:
-│   ├── audits/              # Coverage and report audits
-│   ├── analysis/            # Analysis/scoring/order regression packs
-│   ├── cross_cutting/       # Multi-subsystem regression packs
-│   ├── report/              # PDF/report-data regression packs
-│   └── runtime/             # Runtime/storage/API guard regressions
+├── regression/              # Bug-fix regressions grouped by intent + scope:
+│   ├── audits/              # coverage/, pipeline/
+│   ├── analysis/            # pipeline/, scoring/, signal/
+│   ├── cross_cutting/       # contracts/, delivery/, domains/, review/
+│   ├── report/              # rendering/, signal/
+│   └── runtime/             # api/, concurrency/, guards/, metrics/, quality/, queues/, signal/
 ├── report/                  # vibesensor/report/* — PDF, i18n, hotspots
 ├── update/                  # vibesensor/update/*, firmware_cache, esp_flash
 └── websocket/               # vibesensor/ws_hub.py, ws_models, schema export
@@ -79,7 +79,7 @@ tests/
 | Category          | Directory            | Description                                |
 |-------------------|----------------------|--------------------------------------------|
 | Integration       | `tests/integration/` | Multi-module scenarios, level tests        |
-| Regression        | `tests/regression/`  | Bug-fix regressions grouped into `analysis/`, `audits/`, `cross_cutting/`, `report/`, `runtime/` |
+| Regression        | `tests/regression/`  | Bug-fix regressions grouped by intent (`analysis/`, `audits/`, `cross_cutting/`, `report/`, `runtime/`) and then by narrower scope |
 | Architecture      | `tests/hygiene/`     | Repo hygiene, architecture guards, smoke   |
 | End-to-end        | `tests/e2e/`         | Selenium browser tests                     |
 
@@ -118,14 +118,14 @@ make test-all
    `_paths` instead of using fragile `Path(__file__).parents[N]` chains.
 6. **For cross-cutting tests** that span multiple modules, use
    `tests/integration/` (scenarios) or `tests/regression/` (bug fixes).
-   Under regression, place files in the matching intent folder:
-   `analysis/`, `audits/`, `cross_cutting/`, `report/`, or `runtime/`.
+   Under regression, place files in the matching intent folder and
+   scope subfolder (for example `runtime/guards/` or `analysis/scoring/`).
 
 ## Naming conventions
 
 - **Test files**: `test_<feature_or_module>.py`
 - **Regression file names**: prefer descriptive names (for example
-  `test_analysis_pipeline_fixes.py`) over ad-hoc run labels.
+  `test_runtime_queue_and_export.py`) over ad-hoc run labels.
 - **Test classes**: `Test<FeatureName>` (group related tests)
 - **Test functions**: `test_<behavior_under_test>`
 - **Fixtures/builders**: in `conftest.py` (fixtures) or `builders.py` (data generators)
