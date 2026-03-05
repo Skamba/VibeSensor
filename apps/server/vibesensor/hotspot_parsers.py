@@ -24,6 +24,17 @@ _NM_LOG_SIGNALS: tuple[tuple[str, str | None, str], ...] = (
 _PORT53_DELIMITERS: tuple[str, ...] = ('users:(("', 'users:("')
 
 
+def _inet_cidr_from_ip_addr_line(line: str) -> str | None:
+    fields = line.split()
+    if len(fields) >= 2:
+        return fields[1]
+    return None
+
+
+def _ip_from_cidr(cidr: str) -> str:
+    return cidr.split("/", maxsplit=1)[0]
+
+
 def parse_active_connection_names(stdout: str) -> list[str]:
     """Parse ``nmcli -t -f NAME connection show`` output into a list of names."""
     return [stripped for line in stdout.splitlines() if (stripped := line.strip())]
@@ -46,9 +57,9 @@ def parse_ip(ip_show_output: str) -> str | None:
     for line in ip_show_output.splitlines():
         line = line.strip()
         if line.startswith("inet "):
-            fields = line.split()
-            if len(fields) >= 2:
-                return fields[1]
+            inet_cidr = _inet_cidr_from_ip_addr_line(line)
+            if inet_cidr is not None:
+                return inet_cidr
     return None
 
 
@@ -56,8 +67,8 @@ def expected_ip_match(expected_cidr: str, actual_cidr: str | None) -> bool:
     """Return True if the IP part of both CIDR strings is the same."""
     if actual_cidr is None:
         return False
-    expected_ip = expected_cidr.split("/", maxsplit=1)[0]
-    actual_ip = actual_cidr.split("/", maxsplit=1)[0]
+    expected_ip = _ip_from_cidr(expected_cidr)
+    actual_ip = _ip_from_cidr(actual_cidr)
     return expected_ip == actual_ip
 
 

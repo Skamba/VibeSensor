@@ -320,6 +320,17 @@ class TestParseWifiDiagnostics:
             assert "hunter2" not in issue.detail
             assert "hunter2" not in issue.message
 
+    def test_read_errors_are_ignored(self, tmp_path, monkeypatch) -> None:
+        log_dir = tmp_path / "wifi"
+        log_dir.mkdir()
+        (log_dir / "summary.txt").write_text("status=FAILED\n")
+
+        def _raise_oserror(*_args, **_kwargs) -> str:
+            raise OSError("boom")
+
+        monkeypatch.setattr(Path, "read_text", _raise_oserror)
+        assert parse_wifi_diagnostics(str(log_dir)) == []
+
 
 # ---------------------------------------------------------------------------
 # UpdateManager - unit tests
