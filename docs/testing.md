@@ -29,9 +29,8 @@ tests/
 ├── regression/              # Bug-fix regressions grouped by intent:
 │   ├── audits/              # Coverage and report audits
 │   ├── analysis/            # Analysis/scoring/order regression packs
-│   ├── bugfix_batches/      # PR/batch-level bug-fix packs
+│   ├── cross_cutting/       # Multi-subsystem regression packs
 │   ├── report/              # PDF/report-data regression packs
-│   └── review_fixes/        # Review-driven regression packs
 │   └── runtime/             # Runtime/storage/API guard regressions
 ├── report/                  # vibesensor/report/* — PDF, i18n, hotspots
 ├── update/                  # vibesensor/update/*, firmware_cache, esp_flash
@@ -80,7 +79,7 @@ tests/
 | Category          | Directory            | Description                                |
 |-------------------|----------------------|--------------------------------------------|
 | Integration       | `tests/integration/` | Multi-module scenarios, level tests        |
-| Regression        | `tests/regression/`  | Bug-fix regressions grouped into `analysis/`, `audits/`, `bugfix_batches/`, `report/`, `review_fixes/`, `runtime/` |
+| Regression        | `tests/regression/`  | Bug-fix regressions grouped into `analysis/`, `audits/`, `cross_cutting/`, `report/`, `runtime/` |
 | Architecture      | `tests/hygiene/`     | Repo hygiene, architecture guards, smoke   |
 | End-to-end        | `tests/e2e/`         | Selenium browser tests                     |
 
@@ -120,7 +119,7 @@ make test-all
 6. **For cross-cutting tests** that span multiple modules, use
    `tests/integration/` (scenarios) or `tests/regression/` (bug fixes).
    Under regression, place files in the matching intent folder:
-   `analysis/`, `audits/`, `bugfix_batches/`, `report/`, `review_fixes/`, or `runtime/`.
+   `analysis/`, `audits/`, `cross_cutting/`, `report/`, or `runtime/`.
 
 ## Naming conventions
 

@@ -1,4 +1,4 @@
-"""Tests for Cycle 3 (session 3) fixes – a.k.a. cycle-12 in the global sequence.
+"""Analysis pipeline guard regressions.
 
 Covers:
   1. findings.py burstiness → inf for near-zero median with non-zero max

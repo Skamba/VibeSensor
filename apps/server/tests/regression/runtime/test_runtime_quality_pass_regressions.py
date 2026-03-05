@@ -1,4 +1,4 @@
-"""Tests added by the quality-pass (issues 19–24).
+"""Runtime quality-pass regressions (issues 19–24).
 
 Covers:
   19 – bad-client diagnostics skip (live_diagnostics)

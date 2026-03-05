@@ -1,4 +1,4 @@
-"""Tests for Cycle 4b fixes:
+"""Report rendering regressions:
 - Next-step numbering continues across pages (start_number param)
 - SystemFindingCard.tone wired to theme colors
 - NextStep confirm/falsify/eta rendered

@@ -1,4 +1,4 @@
-"""Tests for Cycle 4 fixes:
+"""Spectrum smoothing and peak-selection regressions:
 - _smooth_spectrum uses edge-padding instead of zero-padding to prevent
   boundary attenuation of edge frequency bins.
 - _top_peaks (and compute_vibration_strength_db) considers the last

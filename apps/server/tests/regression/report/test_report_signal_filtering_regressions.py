@@ -1,4 +1,4 @@
-"""Tests for Cycle 6 (session 3) fixes – a.k.a. cycle-15 in the global sequence.
+"""Report signal-filtering and buffer-shape regressions.
 
 Covers:
   1. processing.medfilt3 — NaN-safe median via np.nanmedian

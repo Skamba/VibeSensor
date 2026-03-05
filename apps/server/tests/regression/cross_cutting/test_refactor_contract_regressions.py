@@ -1,4 +1,4 @@
-"""Tests for maintainability refactor: named constants, shared base class, etc.
+"""Cross-module refactor-contract regressions.
 
 Validates that the refactored code preserves behaviour while being more
 maintainable than the originals.

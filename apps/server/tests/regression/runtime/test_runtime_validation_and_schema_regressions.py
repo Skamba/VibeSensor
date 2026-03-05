@@ -1,4 +1,4 @@
-"""Tests for Run 2 improvement cycle fixes (Cycles 1-3).
+"""Runtime validation and schema-recovery regressions.
 
 Covers:
   1. _corr_abs — NaN propagation guard (helpers.py)

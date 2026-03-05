@@ -1,4 +1,4 @@
-"""Tests for Cycle 5 (session 3) fixes – a.k.a. cycle-14 in the global sequence.
+"""Order analysis and numeric input guard regressions.
 
 Covers:
   1. pdf_builder.py — guarded float() on confidence_0_to_1
