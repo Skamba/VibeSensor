@@ -22,15 +22,11 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from builders import (
-    make_sample as _make_sample,
-)
-from builders import (
-    standard_metadata as _standard_metadata,
-)
-from builders import (
-    wheel_hz as _wheel_hz,
-)
+from builders import make_fault_samples as _make_fault_samples
+from builders import make_sample as _make_sample
+from builders import make_speed_sweep_fault_samples as _make_speed_sweep_fault_samples
+from builders import standard_metadata as _standard_metadata
+from builders import wheel_hz as _wheel_hz
 
 from vibesensor.analysis.findings import _classify_peak_type
 from vibesensor.analysis.summary import summarize_run_data
@@ -55,55 +51,22 @@ def _build_fault_samples_at_speed(
     add_wheel_2x: bool = True,
     transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
-    """Generate samples at a fixed speed with wheel-order fault on one sensor.
-
-    The fault sensor gets strong speed-scaled wheel_1x (and optionally 2x) peaks.
-    Other sensors get lower-amplitude order leakage plus broadband noise.
-    """
-    samples: list[dict[str, Any]] = []
-    whz = _wheel_hz(speed_kmh)
-    for i in range(n_samples):
-        t = start_t_s + i * dt_s
-        # Fault sensor with speed-scaled order peaks
-        fault_peaks = [{"hz": whz, "amp": fault_amp}]
-        if add_wheel_2x:
-            fault_peaks.append({"hz": whz * 2, "amp": fault_amp * 0.4})
-        # Small noise peak far from any order
-        fault_peaks.append({"hz": 142.5, "amp": noise_amp})
-        samples.append(
-            _make_sample(
-                t_s=t,
-                speed_kmh=speed_kmh,
-                client_name=fault_sensor,
-                top_peaks=fault_peaks,
-                vibration_strength_db=fault_vib_db,
-                strength_floor_amp_g=noise_amp,
-            )
-        )
-        # Other sensors: only noise, no order peaks
-        for other in other_sensors:
-            other_peaks = [
-                {"hz": 142.5, "amp": noise_amp},
-                {"hz": 87.3, "amp": noise_amp * 0.8},
-            ]
-            if transfer_fraction > 0:
-                other_peaks.insert(0, {"hz": whz, "amp": fault_amp * transfer_fraction})
-                if add_wheel_2x:
-                    other_peaks.insert(
-                        1,
-                        {"hz": whz * 2, "amp": fault_amp * transfer_fraction * 0.24},
-                    )
-            samples.append(
-                _make_sample(
-                    t_s=t,
-                    speed_kmh=speed_kmh,
-                    client_name=other,
-                    top_peaks=other_peaks,
-                    vibration_strength_db=noise_vib_db,
-                    strength_floor_amp_g=noise_amp,
-                )
-            )
-    return samples
+    """Generate fixed-speed wheel-order fault samples using shared builders."""
+    sensors = [fault_sensor, *other_sensors]
+    return _make_fault_samples(
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp=fault_amp,
+        noise_amp=noise_amp,
+        fault_vib_db=fault_vib_db,
+        noise_vib_db=noise_vib_db,
+        add_wheel_2x=add_wheel_2x,
+        transfer_fraction=transfer_fraction,
+    )
 
 
 def _build_speed_sweep_fault_samples(
@@ -121,51 +84,22 @@ def _build_speed_sweep_fault_samples(
     noise_vib_db: float = 8.0,
     transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
-    """Generate samples with linearly varying speed and wheel-order fault on one sensor."""
-    samples: list[dict[str, Any]] = []
-    for i in range(n_samples):
-        t = start_t_s + i * dt_s
-        ratio = i / max(1, n_samples - 1)
-        speed = speed_start_kmh + (speed_end_kmh - speed_start_kmh) * ratio
-        whz = _wheel_hz(speed)
-
-        fault_peaks = [
-            {"hz": whz, "amp": fault_amp},
-            {"hz": whz * 2, "amp": fault_amp * 0.4},
-            {"hz": 142.5, "amp": noise_amp},
-        ]
-        samples.append(
-            _make_sample(
-                t_s=t,
-                speed_kmh=speed,
-                client_name=fault_sensor,
-                top_peaks=fault_peaks,
-                vibration_strength_db=fault_vib_db,
-                strength_floor_amp_g=noise_amp,
-            )
-        )
-        for other in other_sensors:
-            other_peaks = [
-                {"hz": 142.5, "amp": noise_amp},
-                {"hz": 87.3, "amp": noise_amp * 0.8},
-            ]
-            if transfer_fraction > 0:
-                other_peaks.insert(0, {"hz": whz, "amp": fault_amp * transfer_fraction})
-                other_peaks.insert(
-                    1,
-                    {"hz": whz * 2, "amp": fault_amp * transfer_fraction * 0.24},
-                )
-            samples.append(
-                _make_sample(
-                    t_s=t,
-                    speed_kmh=speed,
-                    client_name=other,
-                    top_peaks=other_peaks,
-                    vibration_strength_db=noise_vib_db,
-                    strength_floor_amp_g=noise_amp,
-                )
-            )
-    return samples
+    """Generate linear speed-sweep fault samples using shared builders."""
+    sensors = [fault_sensor, *other_sensors]
+    return _make_speed_sweep_fault_samples(
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_start=speed_start_kmh,
+        speed_end=speed_end_kmh,
+        n_steps=n_samples,
+        samples_per_step=1,
+        dt_s=dt_s,
+        start_t_s=start_t_s,
+        fault_amp=fault_amp,
+        noise_amp=noise_amp,
+        fault_vib_db=fault_vib_db,
+        noise_vib_db=noise_vib_db,
+    )
 
 
 def _extract_top_finding(summary: dict[str, Any]) -> dict[str, Any] | None:
@@ -548,7 +482,8 @@ class TestScenario4CoastDownMidRange:
 
     @staticmethod
     def _build_coast_down_samples(
-        *, add_harmonic: bool = True,
+        *,
+        add_harmonic: bool = True,
     ) -> list[dict[str, Any]]:
         """Generate a 110→30 km/h coast-down with front-left fault peaking at 70-90 km/h."""
         samples: list[dict[str, Any]] = []

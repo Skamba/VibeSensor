@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
 
 type FakeWebSocketOptions = {
   payload?: Record<string, unknown>;
@@ -35,69 +35,135 @@ async function installFakeWebSocket(page: Page, options: FakeWebSocketOptions = 
   }, options);
 }
 
+type CommonRouteOptions = {
+  runs?: Array<Record<string, unknown>>;
+  locations?: Array<Record<string, unknown>>;
+  historyHandler?: (route: Route) => Promise<void>;
+  settingsHandler?: (route: Route) => Promise<void>;
+};
+
+type SettingsRouteValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | void>);
+
+function jsonOk(body: unknown) {
+  return { status: 200, contentType: "application/json", body: JSON.stringify(body) };
+}
+
+function normalizePathname(pathname: string): string {
+  return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+}
+
+function requestPath(route: Route): string {
+  return normalizePathname(new URL(route.request().url()).pathname);
+}
+
+async function fulfillJson(route: Route, body: unknown): Promise<void> {
+  await route.fulfill(jsonOk(body));
+}
+
+async function installCommonRoutes(page: Page, options: CommonRouteOptions = {}): Promise<void> {
+  await page.route("**/api/logging/status", async (route) => {
+    await fulfillJson(route, { enabled: false, current_file: null });
+  });
+  await page.route("**/api/history**", async (route) => {
+    if (!requestPath(route).startsWith("/api/history")) {
+      await route.fallback();
+      return;
+    }
+    if (options.historyHandler) {
+      await options.historyHandler(route);
+      return;
+    }
+    await fulfillJson(route, { runs: options.runs ?? [] });
+  });
+  await page.route("**/api/client-locations", async (route) => {
+    await fulfillJson(route, { locations: options.locations ?? [] });
+  });
+  await page.route("**/api/car-library/**", async (route) => {
+    await fulfillJson(route, { brands: [], types: [], models: [] });
+  });
+  await page.route("**/api/settings/**", async (route) => {
+    if (!requestPath(route).startsWith("/api/settings")) {
+      await route.fallback();
+      return;
+    }
+    if (options.settingsHandler) {
+      await options.settingsHandler(route);
+      return;
+    }
+    await fulfillJson(route, {});
+  });
+}
+
+function createSettingsHandlerFromMap(settingsMap: Record<string, SettingsRouteValue>) {
+  return async (route: Route): Promise<void> => {
+    const path = requestPath(route);
+    const method = route.request().method();
+    const key = `${method} ${path}`;
+    const value = settingsMap[key] ?? settingsMap[path];
+    if (typeof value === "function") {
+      const result = await value(route, path, method);
+      if (typeof result !== "undefined") {
+        await fulfillJson(route, result);
+      }
+      return;
+    }
+    if (typeof value !== "undefined") {
+      await fulfillJson(route, value);
+      return;
+    }
+    await fulfillJson(route, {});
+  };
+}
+
+function gpsStatus(overrides: Partial<Record<string, unknown>>) {
+  return {
+    gps_enabled: true,
+    connection_state: "connected",
+    device: "gps0",
+    last_update_age_s: 0.1,
+    raw_speed_kmh: 18,
+    effective_speed_kmh: 18,
+    last_error: null,
+    reconnect_delay_s: 1,
+    fallback_active: false,
+    stale_timeout_s: 5,
+    fallback_mode: "hold",
+    ...overrides,
+  };
+}
+
 test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) => {
   let startCalls = 0;
   let stopCalls = 0;
 
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
+  await installCommonRoutes(page, {
+    runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+    locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
+    historyHandler: async (route) => {
+      const pathname = requestPath(route);
+      if (!pathname.startsWith("/api/history") || pathname.includes("/report.pdf")) {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, {
+        runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+      });
+    },
+    settingsHandler: async (route) => {
+      if (requestPath(route).startsWith("/api/settings/esp-flash/")) {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, {});
+    },
   });
   await page.route("**/api/logging/start", async (route) => {
     startCalls += 1;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: true, current_file: "run-001.jsonl" }),
-    });
+    await fulfillJson(route, { enabled: true, current_file: "run-001.jsonl" });
   });
   await page.route("**/api/logging/stop", async (route) => {
     stopCalls += 1;
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history**", async (route) => {
-    const pathname = new URL(route.request().url()).pathname;
-    if (!pathname.startsWith("/api/history") || pathname.includes("/report.pdf")) {
-      await route.fallback();
-      return;
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
-      }),
-    });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
-      }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    if (new URL(route.request().url()).pathname.startsWith("/api/settings/esp-flash/")) {
-      await route.fallback();
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
+    await fulfillJson(route, { enabled: false, current_file: null });
   });
 
   await installFakeWebSocket(page, {
@@ -148,43 +214,21 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
 test("shows header warning and blocks car-dependent analysis save when no car is selected", async ({ page }) => {
   let analysisPostCalls = 0;
 
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/settings/cars") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ cars: [], activeCarId: null }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      if (path === "/api/settings/cars") {
+        await fulfillJson(route, { cars: [], activeCarId: null });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
   });
   await page.route("**/api/analysis-settings", async (route) => {
     if (route.request().method() === "POST") {
       analysisPostCalls += 1;
     }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+    await fulfillJson(route, {});
   });
 
   await installFakeWebSocket(page);
@@ -203,40 +247,18 @@ test("shows header warning and blocks car-dependent analysis save when no car is
 });
 
 test("hides header warning when a valid selected car exists", async ({ page }) => {
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path.startsWith("/api/settings/cars")) {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      if (path.startsWith("/api/settings/cars")) {
+        await fulfillJson(route, {
           cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
           activeCarId: "car-1",
-        }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
   });
 
   await installFakeWebSocket(page);
@@ -248,84 +270,50 @@ test("hides header warning when a valid selected car exists", async ({ page }) =
 test("shows warning for invalid persisted selection and after deleting selected car", async ({ page }) => {
   let firstCarsGet = true;
 
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const method = route.request().method();
-    if (path === "/api/settings/cars" && method === "GET") {
-      if (firstCarsGet) {
-        firstCarsGet = false;
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      const method = route.request().method();
+      if (path === "/api/settings/cars" && method === "GET") {
+        if (firstCarsGet) {
+          firstCarsGet = false;
+          await fulfillJson(route, {
             cars: [
               { id: "car-1", name: "One", type: "sedan", aspects: {} },
               { id: "car-2", name: "Two", type: "suv", aspects: {} },
             ],
             activeCarId: "missing-car",
-          }),
+          });
+          return;
+        }
+        await fulfillJson(route, {
+          cars: [
+            { id: "car-1", name: "One", type: "sedan", aspects: {} },
+            { id: "car-2", name: "Two", type: "suv", aspects: {} },
+          ],
+          activeCarId: "car-2",
         });
         return;
       }
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
+      if (path === "/api/settings/cars/active" && method === "POST") {
+        await fulfillJson(route, {
           cars: [
             { id: "car-1", name: "One", type: "sedan", aspects: {} },
             { id: "car-2", name: "Two", type: "suv", aspects: {} },
           ],
           activeCarId: "car-2",
-        }),
-      });
-      return;
-    }
-    if (path === "/api/settings/cars/active" && method === "POST") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          cars: [
-            { id: "car-1", name: "One", type: "sedan", aspects: {} },
-            { id: "car-2", name: "Two", type: "suv", aspects: {} },
-          ],
-          activeCarId: "car-2",
-        }),
-      });
-      return;
-    }
-    if (path === "/api/settings/cars/car-2" && method === "DELETE") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
+        });
+        return;
+      }
+      if (path === "/api/settings/cars/car-2" && method === "DELETE") {
+        await fulfillJson(route, {
           cars: [{ id: "car-1", name: "One", type: "sedan", aspects: {} }],
           activeCarId: null,
-        }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
   });
 
   await installFakeWebSocket(page, { confirmResult: true });
@@ -343,69 +331,12 @@ test("shows warning for invalid persisted selection and after deleting selected 
 });
 
 test("gps status uses selected speed unit in settings panel", async ({ page }) => {
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ locations: [] }),
-    });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/settings/language") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ language: "en" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/speed-unit") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ speedUnit: "mps" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/speed-source/status") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          gps_enabled: true,
-          connection_state: "connected",
-          device: "gps0",
-          last_update_age_s: 0.333,
-          raw_speed_kmh: 36,
-          effective_speed_kmh: 18,
-          last_error: null,
-          reconnect_delay_s: 1,
-          fallback_active: false,
-          stale_timeout_s: 5,
-          fallback_mode: "hold",
-        }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "/api/settings/language": { language: "en" },
+      "/api/settings/speed-unit": { speedUnit: "mps" },
+      "/api/settings/speed-source/status": gpsStatus({ last_update_age_s: 0.333, raw_speed_kmh: 36 }),
+    }),
   });
 
   await installFakeWebSocket(page);
@@ -420,69 +351,12 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
 });
 
 test("gps status polling does not override websocket speed readout", async ({ page }) => {
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ locations: [] }),
-    });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/settings/language") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ language: "en" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/speed-unit") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ speedUnit: "kmh" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/speed-source/status") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          gps_enabled: true,
-          connection_state: "connected",
-          device: "gps0",
-          last_update_age_s: 0.1,
-          raw_speed_kmh: 18,
-          effective_speed_kmh: 18,
-          last_error: null,
-          reconnect_delay_s: 1,
-          fallback_active: false,
-          stale_timeout_s: 5,
-          fallback_mode: "hold",
-        }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "/api/settings/language": { language: "en" },
+      "/api/settings/speed-unit": { speedUnit: "kmh" },
+      "/api/settings/speed-source/status": gpsStatus({}),
+    }),
   });
 
   await installFakeWebSocket(page, {
@@ -502,12 +376,28 @@ test("gps status polling does not override websocket speed readout", async ({ pa
 });
 
 test("history preview uses dB intensity fields from insights payload", async ({ page }) => {
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      if (path === "/api/settings/cars") {
+        await fulfillJson(route, {
+          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
+          activeCarId: "car-1",
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
+    historyHandler: async (route) => {
+      const pathname = requestPath(route);
+      if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
+        await route.fallback();
+        return;
+      }
+      await fulfillJson(route, {
+        runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
+      });
+    },
   });
   await page.route("**/api/history/**/insights**", async (route) => {
     await route.fulfill({
@@ -532,50 +422,6 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
       }),
     });
   });
-  await page.route("**/api/history**", async (route) => {
-    const pathname = new URL(route.request().url()).pathname;
-    if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
-      await route.fallback();
-      return;
-    }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({
-        runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
-      }),
-    });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ locations: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/settings/cars") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
-          activeCarId: "car-1",
-        }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-
   await installFakeWebSocket(page);
 
   await page.goto("/");
@@ -590,78 +436,13 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
 });
 
 test("spectrum title updates when switching language", async ({ page }) => {
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ locations: [] }),
-    });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const method = route.request().method();
-    if (path === "/api/settings/language" && method === "GET") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ language: "en" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/language" && method === "POST") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ language: "nl" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/speed-unit") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ speedUnit: "kmh" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/speed-source/status") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          gps_enabled: true,
-          connection_state: "connected",
-          device: "gps0",
-          last_update_age_s: 0.1,
-          raw_speed_kmh: 72,
-          effective_speed_kmh: 72,
-          last_error: null,
-          reconnect_delay_s: 1,
-          fallback_active: false,
-          stale_timeout_s: 5,
-          fallback_mode: "hold",
-        }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/language": { language: "en" },
+      "POST /api/settings/language": { language: "nl" },
+      "/api/settings/speed-unit": { speedUnit: "kmh" },
+      "/api/settings/speed-source/status": gpsStatus({ raw_speed_kmh: 72, effective_speed_kmh: 72 }),
+    }),
   });
 
   await installFakeWebSocket(page, {
@@ -694,51 +475,19 @@ test("spectrum title updates when switching language", async ({ page }) => {
 test("manual speed save uses settings endpoint only (no speed-override call)", async ({ page }) => {
   let speedSourcePostCalls = 0;
   let speedOverrideCalls = 0;
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ locations: [] }),
-    });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    const method = route.request().method();
-    if (path === "/api/settings/speed-source" && method === "GET") {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ speedSource: "gps", manualSpeedKph: null, staleTimeoutS: 5, fallbackMode: "hold" }),
-      });
-      return;
-    }
-    if (path === "/api/settings/speed-source" && method === "POST") {
-      speedSourcePostCalls += 1;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(route.request().postDataJSON()),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  await installCommonRoutes(page, {
+    settingsHandler: createSettingsHandlerFromMap({
+      "GET /api/settings/speed-source": {
+        speedSource: "gps",
+        manualSpeedKph: null,
+        staleTimeoutS: 5,
+        fallbackMode: "hold",
+      },
+      "POST /api/settings/speed-source": async (route) => {
+        speedSourcePostCalls += 1;
+        return route.request().postDataJSON();
+      },
+    }),
   });
   await page.route("**/api/speed-override", async (route) => {
     speedOverrideCalls += 1;
@@ -762,62 +511,28 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   let persistedAnalysisSettings: Record<string, number> = {};
   let analysisPostCalls = 0;
 
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ enabled: false, current_file: null }),
-    });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ locations: [] }),
-    });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify({ brands: [], types: [], models: [] }),
-    });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path.startsWith("/api/settings/cars")) {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      if (path.startsWith("/api/settings/cars")) {
+        await fulfillJson(route, {
           cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
           activeCarId: "car-1",
-        }),
-      });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+        });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
   });
   await page.route("**/api/analysis-settings", async (route) => {
     const method = route.request().method();
     if (method === "POST") {
       analysisPostCalls += 1;
       persistedAnalysisSettings = route.request().postDataJSON() as Record<string, number>;
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(persistedAnalysisSettings),
-      });
+      await fulfillJson(route, persistedAnalysisSettings);
       return;
     }
-    await route.fulfill({
-      status: 200,
-      contentType: "application/json",
-      body: JSON.stringify(persistedAnalysisSettings),
-    });
+    await fulfillJson(route, persistedAnalysisSettings);
   });
 
   await installFakeWebSocket(page);
@@ -869,21 +584,8 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
   test("history PDF download revokes object URL with safe delay", async ({ page }) => {
     let reportPdfCalls = 0;
 
-    await page.route("**/api/logging/status", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ enabled: false, current_file: null }),
-      });
-    });
-    await page.route("**/api/history", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
-        }),
-      });
+    await installCommonRoutes(page, {
+      runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
     });
     await page.route("**/api/history/**/report.pdf**", async (route) => {
       reportPdfCalls += 1;
@@ -896,20 +598,6 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
         body: "PDF",
       });
     });
-    await page.route("**/api/client-locations", async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
-    });
-    await page.route("**/api/settings/**", async (route) => {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
-    });
-    await page.route("**/api/car-library/**", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ brands: [], types: [], models: [] }),
-      });
-    });
-
     await page.addInitScript(() => {
       const globalState = window as typeof window & {
         __revokeCallCount?: number;
@@ -947,65 +635,57 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   let logCursor = 0;
   const logs = ["build ok", "erase ok", "upload ok"];
 
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ enabled: false, current_file: null }) });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ brands: [], types: [], models: [] }) });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const url = new URL(route.request().url());
-    const path = url.pathname;
-    if (path === "/api/settings/esp-flash/ports") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }] }) });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/start") {
-      statusState = "running";
-      logCursor = 0;
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ status: "started", job_id: 1 }) });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/status") {
-      if (statusState === "running" && logCursor >= logs.length) statusState = "success";
-      const payload = {
-        state: statusState,
-        phase: statusState === "running" ? "flashing" : "done",
-        job_id: 1,
-        selected_port: "/dev/ttyUSB0",
-        auto_detect: false,
-        started_at: 1,
-        finished_at: statusState === "running" ? null : 2,
-        last_success_at: statusState === "success" ? 2 : null,
-        exit_code: statusState === "success" ? 0 : null,
-        error: null,
-        log_count: logCursor,
-      };
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(payload) });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/logs") {
-      const after = Number(url.searchParams.get("after") || "0");
-      if (after === 0) logCursor = Math.min(logs.length, logCursor + 2);
-      else logCursor = logs.length;
-      const lines = logs.slice(after, logCursor);
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ from_index: after, next_index: logCursor, lines }) });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/history") {
-      const attempts = statusState === "success"
-        ? [{ job_id: 1, state: "success", selected_port: "/dev/ttyUSB0", auto_detect: false, started_at: 1, finished_at: 2, exit_code: 0, error: null }]
-        : [];
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ attempts }) });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const url = new URL(route.request().url());
+      const path = normalizePathname(url.pathname);
+      if (path === "/api/settings/esp-flash/ports") {
+        await fulfillJson(route, {
+          ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }],
+        });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/start") {
+        statusState = "running";
+        logCursor = 0;
+        await fulfillJson(route, { status: "started", job_id: 1 });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/status") {
+        if (statusState === "running" && logCursor >= logs.length) statusState = "success";
+        const payload = {
+          state: statusState,
+          phase: statusState === "running" ? "flashing" : "done",
+          job_id: 1,
+          selected_port: "/dev/ttyUSB0",
+          auto_detect: false,
+          started_at: 1,
+          finished_at: statusState === "running" ? null : 2,
+          last_success_at: statusState === "success" ? 2 : null,
+          exit_code: statusState === "success" ? 0 : null,
+          error: null,
+          log_count: logCursor,
+        };
+        await fulfillJson(route, payload);
+        return;
+      }
+      if (path === "/api/settings/esp-flash/logs") {
+        const after = Number(url.searchParams.get("after") || "0");
+        if (after === 0) logCursor = Math.min(logs.length, logCursor + 2);
+        else logCursor = logs.length;
+        const lines = logs.slice(after, logCursor);
+        await fulfillJson(route, { from_index: after, next_index: logCursor, lines });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/history") {
+        const attempts = statusState === "success"
+          ? [{ job_id: 1, state: "success", selected_port: "/dev/ttyUSB0", auto_detect: false, started_at: 1, finished_at: 2, exit_code: 0, error: null }]
+          : [];
+        await fulfillJson(route, { attempts });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
   });
 
   await installFakeWebSocket(page);
@@ -1026,33 +706,23 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
 });
 
 test("settings esp flash status falls back to idle when API omits state", async ({ page }) => {
-  await page.route("**/api/logging/status", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ enabled: false, current_file: null }) });
-  });
-  await page.route("**/api/history", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ runs: [] }) });
-  });
-  await page.route("**/api/client-locations", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ locations: [] }) });
-  });
-  await page.route("**/api/car-library/**", async (route) => {
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ brands: [], types: [], models: [] }) });
-  });
-  await page.route("**/api/settings/**", async (route) => {
-    const path = new URL(route.request().url()).pathname;
-    if (path === "/api/settings/esp-flash/ports") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ports: [] }) });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/status") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ log_count: 0, error: null }) });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/history") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ attempts: [] }) });
-      return;
-    }
-    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+  await installCommonRoutes(page, {
+    settingsHandler: async (route) => {
+      const path = requestPath(route);
+      if (path === "/api/settings/esp-flash/ports") {
+        await fulfillJson(route, { ports: [] });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/status") {
+        await fulfillJson(route, { log_count: 0, error: null });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/history") {
+        await fulfillJson(route, { attempts: [] });
+        return;
+      }
+      await fulfillJson(route, {});
+    },
   });
 
   await page.goto("/");

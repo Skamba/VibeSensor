@@ -12,6 +12,10 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
+from builders import make_sample as _make_sample
+from builders import make_speed_sweep_fault_samples as _make_speed_sweep_fault_samples
+from builders import standard_metadata as _standard_metadata
+from builders import wheel_hz as _wheel_hz
 
 from vibesensor.analysis.summary import build_findings_for_samples, summarize_run_data
 from vibesensor.analysis.test_plan import _location_speedbin_summary
@@ -20,52 +24,6 @@ from vibesensor.locations import WHEEL_LOCATION_CODES, is_wheel_location
 # ---------------------------------------------------------------------------
 # Helpers (reused from test_scenario_ground_truth patterns)
 # ---------------------------------------------------------------------------
-_TIRE_CIRCUMFERENCE_M = 2.036
-
-
-def _wheel_hz(speed_kmh: float) -> float:
-    speed_m_s = speed_kmh / 3.6
-    return speed_m_s / _TIRE_CIRCUMFERENCE_M
-
-
-def _standard_metadata(**overrides: Any) -> dict[str, Any]:
-    meta: dict[str, Any] = {
-        "tire_circumference_m": _TIRE_CIRCUMFERENCE_M,
-        "raw_sample_rate_hz": 1000,
-        "final_drive_ratio": 3.73,
-        "current_gear_ratio": 0.64,
-        "sensor_model": "ADXL345",
-        "units": {"accel_x_g": "g", "accel_y_g": "g", "accel_z_g": "g"},
-        "language": "en",
-    }
-    meta.update(overrides)
-    return meta
-
-
-def _make_sample(
-    *,
-    t_s: float,
-    speed_kmh: float,
-    client_name: str,
-    top_peaks: list[dict[str, float]],
-    vibration_strength_db: float = 20.0,
-    strength_floor_amp_g: float = 0.003,
-) -> dict[str, Any]:
-    amp = max((p.get("amp", 0.01) for p in top_peaks), default=0.01)
-    return {
-        "record_type": "sample",
-        "t_s": t_s,
-        "speed_kmh": speed_kmh,
-        "accel_x_g": amp,
-        "accel_y_g": amp * 0.5,
-        "accel_z_g": amp * 0.3,
-        "vibration_strength_db": vibration_strength_db,
-        "strength_bucket": "l2" if vibration_strength_db < 20 else "l3",
-        "strength_floor_amp_g": strength_floor_amp_g,
-        "top_peaks": top_peaks,
-        "client_name": client_name,
-        "client_id": client_name,
-    }
 
 
 _ALL_WHEEL_SENSORS = ["front-left", "front-right", "rear-left", "rear-right"]
@@ -78,28 +36,19 @@ def _build_fault_samples(
     fault_sensor: str,
     n_samples: int = 30,
 ) -> list[dict[str, Any]]:
-    """Build samples with a clear 1x-wheel fault on *fault_sensor*, baseline on others."""
-    samples: list[dict[str, Any]] = []
-    for i in range(n_samples):
-        speed = 50.0 + i * 1.5
-        whz = _wheel_hz(speed)
-        for s in sensors:
-            if s == fault_sensor:
-                peaks = [{"hz": whz, "amp": 0.08}, {"hz": whz * 2, "amp": 0.03}]
-                vib_db = 28.0
-            else:
-                peaks = [{"hz": 15.0, "amp": 0.005}]
-                vib_db = 10.0
-            samples.append(
-                _make_sample(
-                    t_s=float(i),
-                    speed_kmh=speed,
-                    client_name=s,
-                    top_peaks=peaks,
-                    vibration_strength_db=vib_db,
-                )
-            )
-    return samples
+    """Build a speed-sweep wheel fault using shared test builders."""
+    return _make_speed_sweep_fault_samples(
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_start=50.0,
+        speed_end=50.0 + ((n_samples - 1) * 1.5),
+        n_steps=n_samples,
+        samples_per_step=1,
+        fault_amp=0.08,
+        noise_amp=0.005,
+        fault_vib_db=28.0,
+        noise_vib_db=10.0,
+    )
 
 
 def _wheel_findings(
@@ -379,9 +328,7 @@ class TestNoFaultSuppression:
         top_causes = summary.get("top_causes", [])
         # No wheel/tire diagnosis should appear for idle-only data
         wc = _wheel_causes(top_causes)
-        assert len(wc) == 0, (
-            f"Idle-only scenario produced wheel diagnosis: {wc}"
-        )
+        assert len(wc) == 0, f"Idle-only scenario produced wheel diagnosis: {wc}"
 
     def test_road_noise_no_specific_fault(self) -> None:
         """Road noise on all sensors should not produce a confident wheel finding."""
@@ -408,8 +355,8 @@ class TestNoFaultSuppression:
         metadata = _standard_metadata()
         summary = summarize_run_data(metadata, samples, lang="en", file_name="road_noise")
         for c in _wheel_causes(summary.get("top_causes", [])):
-                conf = float(c.get("confidence", 0))
-                assert conf < 0.50, f"Road noise produced confident wheel diagnosis: {conf:.2f}"
+            conf = float(c.get("confidence", 0))
+            assert conf < 0.50, f"Road noise produced confident wheel diagnosis: {conf:.2f}"
 
 
 # ---------------------------------------------------------------------------
@@ -484,7 +431,9 @@ class TestUnitConsistency:
                     f"Expected 'dB' units, got {amp_metric.get('units')}"
                 )
 
-    def test_evidence_metrics_include_strength_db(self, fault_findings: list[dict[str, Any]]) -> None:
+    def test_evidence_metrics_include_strength_db(
+        self, fault_findings: list[dict[str, Any]]
+    ) -> None:
         """Evidence metrics should include vibration_strength_db."""
         for f in fault_findings:
             ev = f.get("evidence_metrics")

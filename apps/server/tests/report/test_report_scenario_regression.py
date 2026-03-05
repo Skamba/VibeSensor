@@ -12,6 +12,8 @@ from math import log1p
 from typing import Any
 
 import pytest
+from builders import make_sample as _base_make_sample
+from builders import standard_metadata as _base_standard_metadata
 from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis import build_findings_for_samples
@@ -83,27 +85,25 @@ def _make_sample(
     engine_rpm: float | None = None,
     dominant_freq_hz: float | None = None,
 ) -> dict[str, Any]:
-    sample: dict[str, Any] = {
-        "t_s": t_s,
-        "accel_x_g": accel_x_g,
-        "accel_y_g": accel_y_g,
-        "accel_z_g": accel_z_g,
-        "vibration_strength_db": vibration_strength_db,
-        "strength_bucket": strength_bucket or bucket_for_strength(vibration_strength_db),
-        "strength_floor_amp_g": strength_floor_amp_g,
-        "client_name": client_name,
-        "client_id": client_id,
-    }
-    if speed_kmh is not None:
-        sample["speed_kmh"] = speed_kmh
-    if location:
-        sample["location"] = location
-    if top_peaks is not None:
-        sample["top_peaks"] = top_peaks
-    if engine_rpm is not None:
-        sample["engine_rpm"] = engine_rpm
-    if dominant_freq_hz is not None:
-        sample["dominant_freq_hz"] = dominant_freq_hz
+    # Keep historical/backward-compatible test-helper behavior: missing speed is treated as 0 km/h.
+    effective_speed = 0.0 if speed_kmh is None else speed_kmh
+    sample = _base_make_sample(
+        t_s=t_s,
+        speed_kmh=effective_speed,
+        accel_x_g=accel_x_g,
+        accel_y_g=accel_y_g,
+        accel_z_g=accel_z_g,
+        vibration_strength_db=vibration_strength_db,
+        strength_floor_amp_g=strength_floor_amp_g,
+        client_name=client_name,
+        client_id=client_id,
+        location=location,
+        top_peaks=top_peaks,
+        engine_rpm=engine_rpm,
+        dominant_freq_hz=dominant_freq_hz,
+    )
+    if strength_bucket is not None:
+        sample["strength_bucket"] = strength_bucket
     return sample
 
 
@@ -174,14 +174,14 @@ def _standard_metadata(
     final_drive_ratio: float = 3.08,
     current_gear_ratio: float = 0.64,
 ) -> dict[str, Any]:
-    return {
-        "tire_circumference_m": tire_circumference_m,
-        "raw_sample_rate_hz": raw_sample_rate_hz,
-        "final_drive_ratio": final_drive_ratio,
-        "current_gear_ratio": current_gear_ratio,
-        "sensor_model": "adxl345",
-        "units": {"accel_x_g": "g"},
-    }
+    return _base_standard_metadata(
+        tire_circumference_m=tire_circumference_m,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        final_drive_ratio=final_drive_ratio,
+        current_gear_ratio=current_gear_ratio,
+        sensor_model="adxl345",
+        units={"accel_x_g": "g"},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -347,8 +347,6 @@ class TestPhaseSegmentation:
         assert all(p == DrivingPhase.SPEED_UNKNOWN for p in per_sample)
 
 
-
-
 # ---------------------------------------------------------------------------
 # 2. Confidence calibration tests
 # ---------------------------------------------------------------------------
@@ -416,9 +414,7 @@ class TestConfidenceCalibration:
         assert MEMS_NOISE_FLOOR_G == 0.001, "MEMS noise floor constant must be 0.001g"
         # Normal floor (already >= 0.001g) must be unaffected by floor clamp
         normal_floor = 0.005
-        snr_normal_clamped = min(
-            1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5
-        )
+        snr_normal_clamped = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, normal_floor)) / 2.5)
         snr_normal_direct = min(1.0, log1p(mean_amp / normal_floor) / 2.5)
         assert abs(snr_normal_clamped - snr_normal_direct) < 1e-10, "Normal floor must be unchanged"
 
@@ -611,13 +607,15 @@ class TestPeakClassification:
             pytest.param(0.50, 6.0, {}, "transient", id="high_burstiness_transient"),
             pytest.param(0.80, 1.5, {"snr": 1.0}, "baseline_noise", id="baseline_noise_low_snr"),
             pytest.param(
-                0.70, 1.5,
+                0.70,
+                1.5,
                 {"snr": 5.0, "spatial_uniformity": 0.90},
                 "baseline_noise",
                 id="baseline_noise_high_uniformity",
             ),
             pytest.param(
-                0.70, 1.5,
+                0.70,
+                1.5,
                 {"snr": 5.0, "spatial_uniformity": 0.50},
                 "patterned",
                 id="not_baseline_if_snr_high",
@@ -1276,7 +1274,11 @@ class TestCertaintyLabelSignalQualityGuard:
         "confidence, lang, strength_band_key, expected_level, expected_label",
         [
             pytest.param(
-                0.90, "en", "negligible", "medium", "Medium",
+                0.90,
+                "en",
+                "negligible",
+                "medium",
+                "Medium",
                 id="negligible_caps_high_to_medium",
             ),
             pytest.param(0.55, "en", "negligible", "medium", None, id="negligible_keeps_medium"),
@@ -1293,7 +1295,9 @@ class TestCertaintyLabelSignalQualityGuard:
         expected_label: str | None,
     ) -> None:
         level, label, _, _ = certainty_label(
-            confidence, lang=lang, strength_band_key=strength_band_key,
+            confidence,
+            lang=lang,
+            strength_band_key=strength_band_key,
         )
         assert level == expected_level, f"Expected '{expected_level}', got '{level}'"
         if expected_label is not None:
