@@ -8,7 +8,7 @@ Canonical agent workflow (shared source of truth)
 - Verify existing behavior before rewriting code; investigate root cause before patching symptoms.
 - Scan the blast radius for similar in-scope issues and fix them in the same run.
 - Prefer extending and hardening existing logic over adding parallel implementations.
-- Fail-fast default: ship the smallest validated **complete** in-scope fix quickly (root-cause addressed and maintainable), then iterate using real test/runtime feedback.
+- Analysis-first default: examine the issue from multiple angles, choose the strongest approach, and deliver the smallest validated **complete** in-scope fix that addresses root cause and nearby in-scope blast radius.
 - Avoid symptom-only patches. Prefer fixes that make sense to a human maintainer and reduce future maintenance burden in the touched area.
 - Avoid over-conservative blocking behavior: do not hold a clear fix for exhaustive hypothetical analysis.
 - Use bounded risk rather than risk avoidance: keep changes reversible, validate early, and recover quickly on failures.
@@ -36,7 +36,7 @@ Updater deployment policy
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
 - For every PR, use `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor` as the default monitor.
-- Treat watcher exit `RESULT=NON_GREEN` as fail-fast: inspect the latest failing run immediately, implement the smallest complete maintainable fix, push, and restart the watcher.
+- Treat watcher exit `RESULT=NON_GREEN` as immediate action: inspect the latest failing run promptly, determine root cause, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.
 - CI-parity suite (same command groups as `.github/workflows/ci.yml`, run in parallel locally): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).

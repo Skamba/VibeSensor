@@ -43,7 +43,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - Python style: Ruff-enforced, explicit signatures, small focused modules.
 - Tests: fast-focused pytest files under `apps/server/tests/` are preferred, but broader integration and breaking updates are allowed when that speeds feedback.
 - Frontend: TypeScript strict checks, no ad-hoc runtime contracts; use existing i18n keys.
-- Infra: prefer deterministic scripts, fail-fast assertions, low-noise logs.
+- Infra: prefer deterministic scripts, explicit diagnostic assertions, and low-noise logs that support deep analysis when failures occur.
 
 ## Minimal Read Set for Most Changes
 1. `docs/ai/context.md`
