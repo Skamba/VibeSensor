@@ -20,6 +20,9 @@ from .reference_checks import _reference_missing_finding
 
 _QUANTISE_STEP = 0.02
 _QUANTISE_INV = 1.0 / _QUANTISE_STEP  # avoid division in hot path
+_MIN_DIAGNOSTIC_SAMPLES = 5
+"""Minimum number of diagnostic (non-IDLE) samples required to use phase-filtered
+analysis.  Falls back to all samples when fewer than this remain after filtering."""
 
 
 def _finding_sort_key(item: dict) -> tuple[float, float]:
@@ -49,6 +52,30 @@ def _build_findings(
     per_sample_phases: list[str] | None = None,
     run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, Any]]:
+    """Build and rank all findings for a completed run.
+
+    Coordinates reference checks (speed, wheel, engine, sample-rate), order
+    analysis, and persistent-peak detection.  Results are partitioned into
+    reference / diagnostic / informational buckets and sorted so the most
+    confident diagnostic finding appears first.
+
+    Args:
+        metadata: Run metadata dict (car settings, units, sample rate, etc.).
+        samples: Per-metric-tick sample dicts for the run.
+        speed_sufficient: Whether enough speed data was present for order analysis.
+        steady_speed: Whether the speed was steady enough for reliable analysis.
+        speed_stddev_kmh: Standard deviation of speed in km/h, or None.
+        speed_non_null_pct: Percentage of samples with non-null speed (0-100).
+        raw_sample_rate_hz: Accelerometer sample rate, or None if unknown.
+        lang: ISO 639-1 language code for human-readable text (default "en").
+        per_sample_phases: Optional pre-computed per-sample phase labels;
+            recomputed from ``samples`` when not provided.
+        run_noise_baseline_g: Optional ambient noise floor in g for this run.
+
+    Returns:
+        Ordered list of finding dicts: references first, then diagnostics sorted
+        by (quantised confidence, ranking_score) descending, then informational.
+    """
     findings: list[dict[str, Any]] = []
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
     units_obj = metadata.get("units")
@@ -133,8 +160,9 @@ def _build_findings(
         _per_sample_phases, _ = segment_run_phases(samples)
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
     diagnostic_samples = [s for s, keep in zip(samples, _diagnostic_mask, strict=True) if keep]
-    # Fall back to all samples if phase filtering removes too many (< 5 remaining)
-    use_filtered_samples = len(diagnostic_samples) >= 5
+    # Fall back to all samples if phase filtering removes too many
+    # (fewer than _MIN_DIAGNOSTIC_SAMPLES remaining)
+    use_filtered_samples = len(diagnostic_samples) >= _MIN_DIAGNOSTIC_SAMPLES
     analysis_samples = diagnostic_samples if use_filtered_samples else samples
     # Compute per-sample phases aligned with analysis_samples for phase-evidence tracking.
     if analysis_samples is diagnostic_samples:

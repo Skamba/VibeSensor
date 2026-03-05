@@ -24,9 +24,13 @@ def _mean(vals: list[float]) -> float:
     return sum(vals) / len(vals)
 
 
+_MIN_COUNTER_PAIRS = 2
+"""Minimum number of (timestamp, value) pairs needed to compute a counter delta."""
+
+
 def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
     """Sort timestamped counter pairs and delegate to shared helper."""
-    if len(counter_values) < 2:
+    if len(counter_values) < _MIN_COUNTER_PAIRS:
         return 0
     ordered = sorted(
         counter_values,

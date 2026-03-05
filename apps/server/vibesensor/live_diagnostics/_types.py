@@ -77,7 +77,8 @@ class _TrackerLevelState:
     last_sensor_location: str = ""
     last_emitted_ms: int = 0
     severity_state: dict[str, Any] | None = None
-    _silence_ticks: int = 0
+    silence_ticks: int = 0
+    """Number of consecutive ticks the tracker has been absent from incoming events."""
 
 
 @dataclass(slots=True)
