@@ -161,6 +161,126 @@ def _merge_test_plan(
     ]
 
 
+def _score_locations_in_bin(
+    bin_label: str,
+    rows: list[dict[str, Any]],
+    *,
+    corroboration_amp_multiplier: float,
+    connected_locations: set[str] | None,
+    suspected_source: str | None,
+) -> dict[str, Any] | None:
+    """Score and rank sensor locations within a single speed-bin.
+
+    Returns a candidate dict summarising the strongest location in this bin,
+    or ``None`` if no valid rows were found.
+    """
+    per_loc_scores: dict[str, list[float]] = defaultdict(list)
+    per_loc_sample_counts: dict[str, int] = defaultdict(int)
+    per_loc_corroborated_counts: dict[str, list[int]] = defaultdict(list)
+
+    for row in rows:
+        location = str(row.get("location") or "").strip()
+        amp = _as_float(row.get("amp"))
+        if not location or amp is None or amp <= 0:
+            continue
+
+        matched_hz = _as_float(row.get("matched_hz"))
+        rel_error = _as_float(row.get("rel_error"))
+        quality_weight = max(0.0, min(1.0, 1.0 - rel_error)) if rel_error is not None else 1.0
+
+        corroborating_locations: set[str] = set()
+        if matched_hz is not None and matched_hz > 0:
+            tolerance_hz = max(0.75, matched_hz * 0.03)
+            for peer in rows:
+                peer_location = str(peer.get("location") or "").strip()
+                peer_hz = _as_float(peer.get("matched_hz"))
+                if (
+                    not peer_location
+                    or peer_location == location
+                    or peer_hz is None
+                    or abs(peer_hz - matched_hz) > tolerance_hz
+                ):
+                    continue
+                corroborating_locations.add(peer_location)
+
+        corroborated_by_n_sensors = 1 + len(corroborating_locations)
+        corroboration_weight = (
+            corroboration_amp_multiplier if corroborated_by_n_sensors >= 2 else 1.0
+        )
+
+        per_loc_scores[location].append(amp * quality_weight * corroboration_weight)
+        per_loc_sample_counts[location] += 1
+        per_loc_corroborated_counts[location].append(corroborated_by_n_sensors)
+
+    ranked = sorted(
+        ((loc, sum(vals) / len(vals)) for loc, vals in per_loc_scores.items() if vals),
+        key=lambda item: item[1],
+        reverse=True,
+    )
+    if not ranked:
+        return None
+
+    eligible_ranked = (
+        [item for item in ranked if item[0] in connected_locations]
+        if connected_locations is not None
+        else ranked
+    )
+    ranked_for_winner = eligible_ranked or ranked
+
+    # Source-aware localization: for wheel/tire diagnoses prefer wheel
+    # sensors as the fault source.
+    _prefer_wheel = (suspected_source or "").strip().lower() == "wheel/tire"
+    if _prefer_wheel:
+        wheel_ranked = [item for item in ranked_for_winner if is_wheel_location(item[0])]
+        if wheel_ranked:
+            ranked_for_winner = wheel_ranked
+
+    top_loc, top_amp = ranked_for_winner[0]
+    top_count = int(per_loc_sample_counts.get(top_loc, 0))
+    second_loc = ranked_for_winner[1][0] if len(ranked_for_winner) > 1 else top_loc
+    second_count = (
+        int(per_loc_sample_counts.get(second_loc, 0))
+        if len(ranked_for_winner) > 1
+        else top_count
+    )
+    second_amp = ranked_for_winner[1][1] if len(ranked_for_winner) > 1 else top_amp
+    dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
+    total_samples = sum(per_loc_sample_counts.values())
+    ambiguous = len(ranked_for_winner) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
+    display_location = f"ambiguous location: {top_loc} / {second_loc}" if ambiguous else top_loc
+    partial_coverage = bool(connected_locations is not None and top_loc not in connected_locations)
+    top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
+    _no_wheel_sensors = _prefer_wheel and not has_any_wheel_location(
+        loc for loc, _ in ranked_for_winner
+    )
+    _raw_loc_conf = _localization_confidence(
+        dominance_ratio=dominance,
+        location_count=len(ranked_for_winner),
+        total_samples=total_samples,
+    )
+    _loc_conf = min(_raw_loc_conf, 0.30) if _no_wheel_sensors else _raw_loc_conf
+    _raw_weak_spatial = dominance < weak_spatial_dominance_threshold(len(ranked_for_winner))
+    return {
+        "speed_range": bin_label,
+        "location": display_location,
+        "mean_amp": top_amp,
+        "dominance_ratio": dominance,
+        "location_count": len(ranked_for_winner),
+        "top_location": top_loc,
+        "second_location": second_loc if len(ranked_for_winner) > 1 else None,
+        "top_location_samples": top_count,
+        "second_location_samples": second_count,
+        "corroborated_by_n_sensors": top_corroborated_by_n_sensors,
+        "total_samples": total_samples,
+        "ambiguous_location": ambiguous,
+        "ambiguous_locations": [top_loc, second_loc] if ambiguous else [],
+        "partial_coverage": partial_coverage,
+        "localization_confidence": _loc_conf,
+        "weak_spatial_separation": _raw_weak_spatial or _no_wheel_sensors,
+        "no_wheel_sensors": _no_wheel_sensors,
+    }
+
+
 def _location_speedbin_summary(
     matches: list[dict[str, Any]],
     lang: str,
@@ -215,124 +335,23 @@ def _location_speedbin_summary(
         if not rows:
             continue
 
-        per_loc_scores: dict[str, list[float]] = defaultdict(list)
-        per_loc_sample_counts: dict[str, int] = defaultdict(int)
-        per_loc_corroborated_counts: dict[str, list[int]] = defaultdict(list)
-
-        for row in rows:
-            location = str(row.get("location") or "").strip()
-            amp = _as_float(row.get("amp"))
-            if not location or amp is None or amp <= 0:
-                continue
-
-            matched_hz = _as_float(row.get("matched_hz"))
-            rel_error = _as_float(row.get("rel_error"))
-            quality_weight = max(0.0, min(1.0, 1.0 - rel_error)) if rel_error is not None else 1.0
-
-            corroborating_locations: set[str] = set()
-            if matched_hz is not None and matched_hz > 0:
-                tolerance_hz = max(0.75, matched_hz * 0.03)
-                for peer in rows:
-                    peer_location = str(peer.get("location") or "").strip()
-                    peer_hz = _as_float(peer.get("matched_hz"))
-                    if (
-                        not peer_location
-                        or peer_location == location
-                        or peer_hz is None
-                        or abs(peer_hz - matched_hz) > tolerance_hz
-                    ):
-                        continue
-                    corroborating_locations.add(peer_location)
-
-            corroborated_by_n_sensors = 1 + len(corroborating_locations)
-            corroboration_weight = (
-                corroboration_amp_multiplier if corroborated_by_n_sensors >= 2 else 1.0
-            )
-
-            per_loc_scores[location].append(amp * quality_weight * corroboration_weight)
-            per_loc_sample_counts[location] += 1
-            per_loc_corroborated_counts[location].append(corroborated_by_n_sensors)
-
-        ranked = sorted(
-            ((loc, sum(vals) / len(vals)) for loc, vals in per_loc_scores.items() if vals),
-            key=lambda item: item[1],
-            reverse=True,
+        candidate = _score_locations_in_bin(
+            bin_label,
+            rows,
+            corroboration_amp_multiplier=corroboration_amp_multiplier,
+            connected_locations=connected_locations,
+            suspected_source=suspected_source,
         )
-        if not ranked:
+        if candidate is None:
             continue
-
-        eligible_ranked = (
-            [item for item in ranked if item[0] in connected_locations]
-            if connected_locations is not None
-            else ranked
-        )
-        ranked_for_winner = eligible_ranked or ranked
-
-        # Source-aware localization: for wheel/tire diagnoses prefer wheel
-        # sensors as the fault source.  Non-wheel sensors (cabin, chassis)
-        # may carry transfer-path energy but should not be reported as the
-        # fault origin when wheel sensors are available.
-        _prefer_wheel = (suspected_source or "").strip().lower() == "wheel/tire"
-        if _prefer_wheel:
-            wheel_ranked = [item for item in ranked_for_winner if is_wheel_location(item[0])]
-            if wheel_ranked:
-                ranked_for_winner = wheel_ranked
-
-        top_loc, top_amp = ranked_for_winner[0]
-        top_count = int(per_loc_sample_counts.get(top_loc, 0))
-        second_loc = ranked_for_winner[1][0] if len(ranked_for_winner) > 1 else top_loc
-        second_count = (
-            int(per_loc_sample_counts.get(second_loc, 0))
-            if len(ranked_for_winner) > 1
-            else top_count
-        )
-        second_amp = ranked_for_winner[1][1] if len(ranked_for_winner) > 1 else top_amp
-        dominance = (top_amp / second_amp) if second_amp > 0 else 1.0
-        total_samples = sum(per_loc_sample_counts.values())
-        ambiguous = len(ranked_for_winner) > 1 and dominance < NEAR_TIE_DOMINANCE_THRESHOLD
-        display_location = f"ambiguous location: {top_loc} / {second_loc}" if ambiguous else top_loc
-        partial_coverage = bool(
-            connected_locations is not None and top_loc not in connected_locations
-        )
-        top_corroborated_by_n_sensors = max(per_loc_corroborated_counts.get(top_loc, [1]))
-        # Detect wheel/tire diagnosis without any wheel sensors in the topology.
-        # When only cabin/chassis sensors are present we cannot resolve to a
-        # specific wheel corner; force weak-spatial and cap localization confidence.
-        _no_wheel_sensors = _prefer_wheel and not has_any_wheel_location(
-            loc for loc, _ in ranked_for_winner
-        )
-        _raw_loc_conf = _localization_confidence(
-            dominance_ratio=dominance,
-            location_count=len(ranked_for_winner),
-            total_samples=total_samples,
-        )
-        _loc_conf = min(_raw_loc_conf, 0.30) if _no_wheel_sensors else _raw_loc_conf
-        _raw_weak_spatial = dominance < weak_spatial_dominance_threshold(len(ranked_for_winner))
-        candidate = {
-            "speed_range": bin_label,
-            "location": display_location,
-            "mean_amp": top_amp,
-            "dominance_ratio": dominance,
-            "location_count": len(ranked_for_winner),
-            "top_location": top_loc,
-            "second_location": second_loc if len(ranked_for_winner) > 1 else None,
-            "top_location_samples": top_count,
-            "second_location_samples": second_count,
-            "corroborated_by_n_sensors": top_corroborated_by_n_sensors,
-            "total_samples": total_samples,
-            "ambiguous_location": ambiguous,
-            "ambiguous_locations": [top_loc, second_loc] if ambiguous else [],
-            "partial_coverage": partial_coverage,
-            "localization_confidence": _loc_conf,
-            "weak_spatial_separation": _raw_weak_spatial or _no_wheel_sensors,
-            "no_wheel_sensors": _no_wheel_sensors,
-        }
         per_bin_results.append(candidate)
         # Prefer bins that are both strong and sufficiently sampled.
         # Pure mean-amplitude ranking lets tiny outlier bins dominate; this
         # weighted score preserves amplitude leadership while rewarding evidence
         # density via a logarithmic sample-count factor.
-        candidate_score = float(candidate["mean_amp"]) * log1p(float(total_samples))
+        candidate_score = float(candidate["mean_amp"]) * log1p(
+            float(candidate.get("total_samples") or 0)
+        )
         best_score = (
             float(best["mean_amp"]) * log1p(float(best.get("total_samples") or 0))
             if best is not None

@@ -294,32 +294,31 @@ def _compute_location_hotspot_rows(
 
 
 # ---------------------------------------------------------------------------
-# Summary → template data mapper
+# map_summary sub-functions
 # ---------------------------------------------------------------------------
 
 
-def map_summary(summary: dict) -> ReportTemplateData:
-    """Map a run summary dict to the report template data model."""
-    lang = normalize_lang(summary.get("lang"))
+def _extract_run_context(
+    summary: dict,
+) -> tuple[dict, str | None, str | None, str, list, list, list, dict, dict]:
+    """Extract and normalise the structural context fields from a run summary.
 
-    def tr(key: str, **kw: object) -> str:
-        return _tr(lang, key, **kw)
-
-    # -- Metadata --
+    Returns ``(meta, car_name, car_type, date_str, top_causes, findings_non_ref, findings,
+    speed_stats, origin)``.
+    """
     meta = summary.get("metadata")
     if not isinstance(meta, dict):
         meta = {}
     car_name = str(meta.get("car_name") or "").strip() or None
     car_type = str(meta.get("car_type") or "").strip() or None
-
-    # -- Date --
     report_date = summary.get("report_date") or utc_now_iso()
     date_str = str(report_date)[:19].replace("T", " ") + " UTC"
 
-    # -- Top causes and findings --
     findings = [f for f in summary.get("findings", []) if isinstance(f, dict)]
     findings_non_ref = [
-        f for f in findings if not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
+        f
+        for f in findings
+        if not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
     ]
     top_causes_all = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
     top_causes_non_ref = [
@@ -336,19 +335,30 @@ def map_summary(summary: dict) -> ReportTemplateData:
         not in {"", "unknown", "not available", "n/a"}
     ]
     top_causes = top_causes_actionable or findings_non_ref or top_causes_non_ref or top_causes_all
+
     speed_stats = summary.get("speed_stats")
     if not isinstance(speed_stats, dict):
         speed_stats = {}
+
     origin = summary.get("most_likely_origin", {})
     if not isinstance(origin, dict):
         origin = {}
-    origin_location = str(origin.get("location") or "").strip()
-    # The analysis layer stores "unknown" as a language-neutral placeholder.
-    # Clear it so the report builder falls through to tr("UNKNOWN") which
-    # produces the properly localised label (e.g. "Onbekend" in NL).
-    if origin_location.lower() == "unknown":
-        origin_location = ""
 
+    return (
+        meta,
+        car_name,
+        car_type,
+        date_str,
+        top_causes,
+        findings_non_ref,
+        findings,
+        speed_stats,
+        origin,
+    )
+
+
+def _extract_sensor_locations(summary: dict) -> tuple[list[str], list[str]]:
+    """Return ``(sensor_locations_active, sensor_locations_all)`` from a run summary."""
     sensor_locations_all = summary.get("sensor_locations", [])
     if not isinstance(sensor_locations_all, list):
         sensor_locations_all = []
@@ -358,6 +368,193 @@ def map_summary(summary: dict) -> ReportTemplateData:
     sensor_locations_active = [str(loc) for loc in connected_locations if str(loc).strip()]
     if not sensor_locations_active:
         sensor_locations_active = [str(loc) for loc in sensor_locations_all if str(loc).strip()]
+    return sensor_locations_active, sensor_locations_all
+
+
+def _build_next_steps_from_summary(
+    summary: dict,
+    *,
+    tier: str,
+    cert_reason: str,
+    lang: str,
+    tr: Callable,
+) -> list[NextStep]:
+    """Build next-step actions from a run summary dict."""
+    next_steps: list[NextStep] = []
+    if tier == "A":
+        _guidance = [
+            (tr("TIER_A_CAPTURE_WIDER_SPEED"), cert_reason),
+            (tr("TIER_A_CAPTURE_MORE_SENSORS"), cert_reason),
+            (tr("TIER_A_CAPTURE_REFERENCE_DATA"), cert_reason),
+        ]
+        for idx, (action, why) in enumerate(_guidance, start=1):
+            next_steps.append(NextStep(action=action, why=why, rank=idx))
+    else:
+        test_plan = [s for s in summary.get("test_plan", []) if isinstance(s, dict)]
+        for idx, step in enumerate(test_plan, start=1):
+            what_raw = step.get("what") or ""
+            why_raw = step.get("why") or ""
+            what = _resolve_i18n(lang, what_raw) if _is_i18n_ref(what_raw) else str(what_raw)
+            why = _resolve_i18n(lang, why_raw) if _is_i18n_ref(why_raw) else str(why_raw)
+            confirm_raw = step.get("confirm") or ""
+            falsify_raw = step.get("falsify") or ""
+            confirm = (
+                _resolve_i18n(lang, confirm_raw)
+                if _is_i18n_ref(confirm_raw)
+                else str(confirm_raw)
+            )
+            falsify = (
+                _resolve_i18n(lang, falsify_raw)
+                if _is_i18n_ref(falsify_raw)
+                else str(falsify_raw)
+            )
+            next_steps.append(
+                NextStep(
+                    action=what,
+                    why=why or None,
+                    rank=idx,
+                    speed_band=str(step.get("speed_band") or "") or None,
+                    confirm=confirm or None,
+                    falsify=falsify or None,
+                    eta=str(step.get("eta") or "") or None,
+                )
+            )
+    return next_steps
+
+
+def _build_data_trust_from_summary(
+    summary: dict,
+    *,
+    lang: str,
+    tr: Callable,
+) -> list[DataTrustItem]:
+    """Build the data-trust checklist from run_suitability items in *summary*."""
+    data_trust: list[DataTrustItem] = []
+    for item in summary.get("run_suitability", []):
+        if not isinstance(item, dict):
+            continue
+        check_raw = item.get("check") or ""
+        if _is_i18n_ref(check_raw):
+            check_text = _resolve_i18n(lang, check_raw)
+        elif isinstance(check_raw, str) and check_raw.startswith("SUITABILITY_CHECK_"):
+            check_text = tr(check_raw)
+        else:
+            check_text = str(check_raw)
+        explanation_raw = item.get("explanation") or ""
+        detail = (
+            _resolve_i18n(lang, explanation_raw).strip()
+            if _is_i18n_ref(explanation_raw) or isinstance(explanation_raw, list)
+            else (str(explanation_raw).strip() or None)
+        )
+        data_trust.append(
+            DataTrustItem(
+                check=check_text,
+                state=str(item.get("state") or "warn"),
+                detail=detail,
+            )
+        )
+    return data_trust
+
+
+def _build_peak_rows_from_plots(
+    summary: dict,
+    *,
+    lang: str,
+    tr: Callable,
+) -> list[PeakRow]:
+    """Build the peak-table rows from the plots section of *summary*."""
+    plots = summary.get("plots")
+    if not isinstance(plots, dict):
+        plots = {}
+    peak_rows: list[PeakRow] = []
+    raw_peaks = [r for r in (plots.get("peaks_table", []) or []) if isinstance(r, dict)]
+    above_noise = [
+        r for r in raw_peaks if ((_sdb := _as_float(r.get("strength_db"))) is None or _sdb > 0)
+    ]
+    for row in above_noise[:8]:
+        rank_val = _as_float(row.get("rank"))
+        rank = str(int(rank_val)) if rank_val is not None else "\u2014"
+        freq_val = _as_float(row.get("frequency_hz"))
+        freq = f"{freq_val:.1f}" if freq_val is not None else "\u2014"
+        classification = _peak_classification_text(row.get("peak_classification"), tr=tr)
+        order_label_raw = str(row.get("order_label") or "").strip()
+        order = _order_label_human(lang, order_label_raw) if order_label_raw else classification
+        peak_db_val = _as_float(row.get("p95_intensity_db"))
+        peak_db = f"{peak_db_val:.1f}" if peak_db_val is not None else "\u2014"
+        strength_db_val = _as_float(row.get("strength_db"))
+        strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "\u2014"
+        speed = str(row.get("typical_speed_band") or "\u2014")
+        presence = _as_float(row.get("presence_ratio")) or 0.0
+        score = _as_float(row.get("persistence_score")) or 0.0
+
+        order_lower = order.lower()
+        source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()
+        if (source_hint == "wheel/tire") or ("wheel" in order_lower):
+            system = tr("SOURCE_WHEEL_TIRE")
+        elif (source_hint == "engine") or ("engine" in order_lower):
+            system = tr("SOURCE_ENGINE")
+        elif (
+            (source_hint == "driveline")
+            or ("driveshaft" in order_lower)
+            or ("drive" in order_lower)
+        ):
+            system = tr("SOURCE_DRIVELINE")
+        elif "transient" in order_lower:
+            system = tr("SOURCE_TRANSIENT_IMPACT")
+        else:
+            system = "\u2014"
+        relevance = (
+            f"{classification} \u00b7 {presence:.0%} "
+            f"{tr('PRESENCE')} \u00b7 {tr('SCORE')} {score:.2f}"
+        )
+        peak_rows.append(
+            PeakRow(
+                rank=rank,
+                system=system,
+                freq_hz=freq,
+                order=order,
+                peak_db=peak_db,
+                strength_db=strength_db,
+                speed_band=speed,
+                relevance=relevance,
+            )
+        )
+    return peak_rows
+
+
+# ---------------------------------------------------------------------------
+# Summary → template data mapper
+# ---------------------------------------------------------------------------
+
+
+def map_summary(summary: dict) -> ReportTemplateData:
+    """Map a run summary dict to the report template data model."""
+    lang = normalize_lang(summary.get("lang"))
+
+    def tr(key: str, **kw: object) -> str:
+        return _tr(lang, key, **kw)
+
+    # -- Context extraction --
+    (
+        meta,
+        car_name,
+        car_type,
+        date_str,
+        top_causes,
+        findings_non_ref,
+        findings,
+        speed_stats,
+        origin,
+    ) = _extract_run_context(summary)
+
+    origin_location = str(origin.get("location") or "").strip()
+    # The analysis layer stores "unknown" as a language-neutral placeholder.
+    # Clear it so the report builder falls through to tr("UNKNOWN") which
+    # produces the properly localised label (e.g. "Onbekend" in NL).
+    if origin_location.lower() == "unknown":
+        origin_location = ""
+
+    sensor_locations_active, _sensor_locations_all = _extract_sensor_locations(summary)
 
     # -- Phase info --
     raw_phase_info = summary.get("phase_info")
@@ -465,67 +662,16 @@ def map_summary(summary: dict) -> ReportTemplateData:
             )
 
     # -- Next steps --
-    next_steps: list[NextStep] = []
-    if tier == "A":
-        # Tier A: replace repair steps with data-collection guidance.
-        _guidance = [
-            (tr("TIER_A_CAPTURE_WIDER_SPEED"), cert_reason),
-            (tr("TIER_A_CAPTURE_MORE_SENSORS"), cert_reason),
-            (tr("TIER_A_CAPTURE_REFERENCE_DATA"), cert_reason),
-        ]
-        for idx, (action, why) in enumerate(_guidance, start=1):
-            next_steps.append(NextStep(action=action, why=why, rank=idx))
-    else:
-        test_plan = [s for s in summary.get("test_plan", []) if isinstance(s, dict)]
-        for idx, step in enumerate(test_plan, start=1):
-            what_raw = step.get("what") or ""
-            why_raw = step.get("why") or ""
-            what = _resolve_i18n(lang, what_raw) if _is_i18n_ref(what_raw) else str(what_raw)
-            why = _resolve_i18n(lang, why_raw) if _is_i18n_ref(why_raw) else str(why_raw)
-            confirm_raw = step.get("confirm") or ""
-            falsify_raw = step.get("falsify") or ""
-            confirm = (
-                _resolve_i18n(lang, confirm_raw) if _is_i18n_ref(confirm_raw) else str(confirm_raw)
-            )
-            falsify = (
-                _resolve_i18n(lang, falsify_raw) if _is_i18n_ref(falsify_raw) else str(falsify_raw)
-            )
-            next_steps.append(
-                NextStep(
-                    action=what,
-                    why=why or None,
-                    rank=idx,
-                    speed_band=str(step.get("speed_band") or "") or None,
-                    confirm=confirm or None,
-                    falsify=falsify or None,
-                    eta=str(step.get("eta") or "") or None,
-                )
-            )
+    next_steps = _build_next_steps_from_summary(
+        summary,
+        tier=tier,
+        cert_reason=cert_reason,
+        lang=lang,
+        tr=tr,
+    )
 
     # -- Data trust --
-    data_trust: list[DataTrustItem] = []
-    for item in summary.get("run_suitability", []):
-        if isinstance(item, dict):
-            check_raw = item.get("check") or ""
-            if _is_i18n_ref(check_raw):
-                check_text = _resolve_i18n(lang, check_raw)
-            elif isinstance(check_raw, str) and check_raw.startswith("SUITABILITY_CHECK_"):
-                check_text = tr(check_raw)
-            else:
-                check_text = str(check_raw)
-            explanation_raw = item.get("explanation") or ""
-            detail = (
-                _resolve_i18n(lang, explanation_raw).strip()
-                if _is_i18n_ref(explanation_raw) or isinstance(explanation_raw, list)
-                else (str(explanation_raw).strip() or None)
-            )
-            data_trust.append(
-                DataTrustItem(
-                    check=check_text,
-                    state=str(item.get("state") or "warn"),
-                    detail=detail,
-                )
-            )
+    data_trust = _build_data_trust_from_summary(summary, lang=lang, tr=tr)
 
     # -- Pattern evidence --
     systems_raw = [
@@ -568,66 +714,7 @@ def map_summary(summary: dict) -> ReportTemplateData:
     )
 
     # -- Peak rows --
-    plots = summary.get("plots")
-    if not isinstance(plots, dict):
-        plots = {}
-    peak_rows: list[PeakRow] = []
-    # Filter out noise-floor peaks (≤ 0 dB) before taking the top 8.
-    # Iterate over all peaks so that significant peaks beyond early noise
-    # entries are still included.
-    raw_peaks = [r for r in (plots.get("peaks_table", []) or []) if isinstance(r, dict)]
-    above_noise = [
-        r for r in raw_peaks if ((_sdb := _as_float(r.get("strength_db"))) is None or _sdb > 0)
-    ]
-    for row in above_noise[:8]:
-        rank_val = _as_float(row.get("rank"))
-        rank = str(int(rank_val)) if rank_val is not None else "\u2014"
-        freq_val = _as_float(row.get("frequency_hz"))
-        freq = f"{freq_val:.1f}" if freq_val is not None else "\u2014"
-        classification = _peak_classification_text(row.get("peak_classification"), tr=tr)
-        order_label_raw = str(row.get("order_label") or "").strip()
-        order = _order_label_human(lang, order_label_raw) if order_label_raw else classification
-        peak_db_val = _as_float(row.get("p95_intensity_db"))
-        peak_db = f"{peak_db_val:.1f}" if peak_db_val is not None else "\u2014"
-        strength_db_val = _as_float(row.get("strength_db"))
-        strength_db = f"{strength_db_val:.1f}" if strength_db_val is not None else "\u2014"
-        speed = str(row.get("typical_speed_band") or "\u2014")
-        presence = _as_float(row.get("presence_ratio")) or 0.0
-        score = _as_float(row.get("persistence_score")) or 0.0
-
-        order_lower = order.lower()
-        source_hint = str(row.get("source") or row.get("suspected_source") or "").strip().lower()
-        if (source_hint == "wheel/tire") or ("wheel" in order_lower):
-            system = tr("SOURCE_WHEEL_TIRE")
-        elif (source_hint == "engine") or ("engine" in order_lower):
-            system = tr("SOURCE_ENGINE")
-        elif (
-            (source_hint == "driveline")
-            or ("driveshaft" in order_lower)
-            or ("drive" in order_lower)
-        ):
-            system = tr("SOURCE_DRIVELINE")
-        elif "transient" in order_lower:
-            system = tr("SOURCE_TRANSIENT_IMPACT")
-        else:
-            system = "\u2014"
-        relevance = (
-            f"{classification} \u00b7 {presence:.0%} "
-            f"{tr('PRESENCE')} \u00b7 {tr('SCORE')} {score:.2f}"
-        )
-
-        peak_rows.append(
-            PeakRow(
-                rank=rank,
-                system=system,
-                freq_hz=freq,
-                order=order,
-                peak_db=peak_db,
-                strength_db=strength_db,
-                speed_band=speed,
-                relevance=relevance,
-            )
-        )
+    peak_rows = _build_peak_rows_from_plots(summary, lang=lang, tr=tr)
 
     # -- Version marker --
     git_sha = str(os.getenv("GIT_SHA", "")).strip()

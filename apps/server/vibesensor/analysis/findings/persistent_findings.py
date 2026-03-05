@@ -61,6 +61,114 @@ _PATTERNED_MIN_PRESENCE = 0.40
 _PATTERNED_MAX_BURSTINESS = 3.0
 
 
+# ---------------------------------------------------------------------------
+# Frequency-bin accumulation helpers
+# ---------------------------------------------------------------------------
+
+
+def _nested_int_dd() -> defaultdict:
+    """Factory for a nested defaultdict(int); used with defaultdict(_nested_int_dd)."""
+    return defaultdict(int)
+
+
+class _PeakBinStats:
+    """Accumulated per-frequency-bin statistics collected from samples.
+
+    Populated by :func:`_accumulate_peak_bin_stats` and consumed by the
+    per-bin scoring loop inside :func:`_build_persistent_peak_findings`.
+    """
+
+    __slots__ = (
+        "bin_amps",
+        "bin_floors",
+        "bin_speeds",
+        "bin_speed_amp_pairs",
+        "bin_location_counts",
+        "bin_speed_bin_counts",
+        "bin_phase_counts",
+        "total_speed_bin_counts",
+        "total_locations",
+        "total_location_sample_counts",
+        "n_samples",
+    )
+
+    def __init__(self) -> None:
+        self.bin_amps: dict[float, list[float]] = defaultdict(list)
+        self.bin_floors: dict[float, list[float]] = defaultdict(list)
+        self.bin_speeds: dict[float, list[float]] = defaultdict(list)
+        self.bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
+        self.bin_location_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
+        self.bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
+        self.bin_phase_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
+        self.total_speed_bin_counts: dict[str, int] = defaultdict(int)
+        self.total_locations: set[str] = set()
+        self.total_location_sample_counts: dict[str, int] = defaultdict(int)
+        self.n_samples: int = 0
+
+
+def _accumulate_peak_bin_stats(
+    samples: list[dict[str, Any]],
+    *,
+    freq_bin_hz: float,
+    freq_bin_hz_half: float,
+    lang: str,
+    per_sample_phases: list[str] | None,
+    has_phases: bool,
+) -> _PeakBinStats:
+    """Accumulate per-sample data into frequency-bin statistics.
+
+    Iterates over every sample once and distributes peak amplitudes,
+    location/speed/phase counts into their corresponding frequency bins.
+    Returns a :class:`_PeakBinStats` that the caller then uses to score each
+    bin.
+    """
+    stats = _PeakBinStats()
+
+    # Local-bind frequently called helpers to avoid repeated global lookups.
+    _local_as_float = _as_float
+    _local_speed_bin = _speed_bin_label
+    _local_location = _location_label
+    _local_top_peaks = _sample_top_peaks
+    _local_floor_est = _estimate_strength_floor_amp_g
+    _local_phase_str = _phase_to_str
+    _floor = _math_floor
+
+    for i, sample in enumerate(samples):
+        if not isinstance(sample, dict):
+            continue
+        stats.n_samples += 1
+        speed = _local_as_float(sample.get("speed_kmh"))
+        sample_speed_bin = _local_speed_bin(speed) if speed is not None and speed > 0 else None
+        if sample_speed_bin is not None:
+            stats.total_speed_bin_counts[sample_speed_bin] += 1
+        _floor_raw = _local_floor_est(sample)
+        floor_amp = _floor_raw if _floor_raw is not None else 0.0
+        location = _local_location(sample, lang=lang)
+        if location:
+            stats.total_locations.add(location)
+            stats.total_location_sample_counts[location] += 1
+        sample_phase: str | None = None
+        if has_phases and per_sample_phases is not None and i < len(per_sample_phases):
+            sample_phase = _local_phase_str(per_sample_phases[i])
+        for hz, amp in _local_top_peaks(sample):
+            if hz <= 0 or amp <= 0:
+                continue
+            bin_center = _floor(hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
+            stats.bin_amps[bin_center].append(amp)
+            stats.bin_floors[bin_center].append(max(0.0, floor_amp))
+            if speed is not None and speed > 0:
+                stats.bin_speeds[bin_center].append(speed)
+                stats.bin_speed_amp_pairs[bin_center].append((speed, amp))
+            if location:
+                stats.bin_location_counts[bin_center][location] += 1
+            if sample_speed_bin is not None:
+                stats.bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
+            if sample_phase is not None:
+                stats.bin_phase_counts[bin_center][sample_phase] += 1
+
+    return stats
+
+
 def _classify_peak_type(
     presence_ratio: float,
     burstiness: float,
@@ -148,63 +256,25 @@ def _build_persistent_peak_findings(
         freq_bin_hz = 2.0
     freq_bin_hz_half = freq_bin_hz * 0.5
 
-    def _nested_int_dd() -> defaultdict:
-        return defaultdict(int)
-
-    bin_amps: dict[float, list[float]] = defaultdict(list)
-    bin_floors: dict[float, list[float]] = defaultdict(list)
-    bin_speeds: dict[float, list[float]] = defaultdict(list)
-    bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
-    bin_location_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-    bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-    bin_phase_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-    total_speed_bin_counts: dict[str, int] = defaultdict(int)
-    total_locations: set[str] = set()
-    total_location_sample_counts: dict[str, int] = defaultdict(int)
-    n_samples = 0
     has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
-
-    # Local-bind frequently called helpers to avoid repeated global lookups.
-    _local_as_float = _as_float
-    _local_speed_bin = _speed_bin_label
-    _local_location = _location_label
-    _local_top_peaks = _sample_top_peaks
-    _local_floor_est = _estimate_strength_floor_amp_g
-    _local_phase_str = _phase_to_str
-    _floor = _math_floor
-
-    for i, sample in enumerate(samples):
-        if not isinstance(sample, dict):
-            continue
-        n_samples += 1
-        speed = _local_as_float(sample.get("speed_kmh"))
-        sample_speed_bin = _local_speed_bin(speed) if speed is not None and speed > 0 else None
-        if sample_speed_bin is not None:
-            total_speed_bin_counts[sample_speed_bin] += 1
-        _floor_raw = _local_floor_est(sample)
-        floor_amp = _floor_raw if _floor_raw is not None else 0.0
-        location = _local_location(sample, lang=lang)
-        if location:
-            total_locations.add(location)
-            total_location_sample_counts[location] += 1
-        sample_phase: str | None = None
-        if per_sample_phases is not None and i < len(per_sample_phases):
-            sample_phase = _local_phase_str(per_sample_phases[i])
-        for hz, amp in _local_top_peaks(sample):
-            if hz <= 0 or amp <= 0:
-                continue
-            bin_center = _floor(hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
-            bin_amps[bin_center].append(amp)
-            bin_floors[bin_center].append(max(0.0, floor_amp))
-            if speed is not None and speed > 0:
-                bin_speeds[bin_center].append(speed)
-                bin_speed_amp_pairs[bin_center].append((speed, amp))
-            if location:
-                bin_location_counts[bin_center][location] += 1
-            if sample_speed_bin is not None:
-                bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
-            if sample_phase is not None:
-                bin_phase_counts[bin_center][sample_phase] += 1
+    stats = _accumulate_peak_bin_stats(
+        samples,
+        freq_bin_hz=freq_bin_hz,
+        freq_bin_hz_half=freq_bin_hz_half,
+        lang=lang,
+        per_sample_phases=per_sample_phases,
+        has_phases=has_phases,
+    )
+    n_samples = stats.n_samples
+    bin_amps = stats.bin_amps
+    bin_floors = stats.bin_floors
+    bin_speed_amp_pairs = stats.bin_speed_amp_pairs
+    bin_location_counts = stats.bin_location_counts
+    bin_speed_bin_counts = stats.bin_speed_bin_counts
+    bin_phase_counts = stats.bin_phase_counts
+    total_speed_bin_counts = stats.total_speed_bin_counts
+    total_locations = stats.total_locations
+    total_location_sample_counts = stats.total_location_sample_counts
 
     if n_samples == 0:
         return []

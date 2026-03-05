@@ -429,6 +429,7 @@ from vibesensor.registry import (
     _JITTER_EMA_ALPHA,
     _RESTART_SEQ_GAP,
     ClientRegistry,
+    ClientSnapshot,
 )
 from vibesensor.release_fetcher import (
     DOWNLOAD_CHUNK_BYTES,
@@ -641,26 +642,33 @@ class TestClientApiRow:
     def test_disconnected_row_has_all_keys(self) -> None:
         row = ClientRegistry._client_api_row(
             "aabbccddeeff",
-            name="test-client",
-            connected=False,
+            ClientSnapshot(name="test-client", connected=False),
         )
         assert set(row.keys()) == _EXPECTED_ROW_KEYS
 
     def test_connected_row_has_same_keys(self) -> None:
-        disconnected = ClientRegistry._client_api_row("aabbccddeeff", name="a", connected=False)
+        disconnected = ClientRegistry._client_api_row(
+            "aabbccddeeff",
+            ClientSnapshot(name="a", connected=False),
+        )
         connected = ClientRegistry._client_api_row(
             "aabbccddeeff",
-            name="b",
-            connected=True,
-            location="front-left",
-            firmware_version="1.0",
-            sample_rate_hz=800,
+            ClientSnapshot(
+                name="b",
+                connected=True,
+                location="front-left",
+                firmware_version="1.0",
+                sample_rate_hz=800,
+            ),
         )
         assert set(disconnected.keys()) == set(connected.keys())
 
     def test_defaults_match_old_disconnected_shape(self) -> None:
         """Disconnected client row defaults match the original inline dict."""
-        row = ClientRegistry._client_api_row("aabbccddeeff", name="test", connected=False)
+        row = ClientRegistry._client_api_row(
+            "aabbccddeeff",
+            ClientSnapshot(name="test", connected=False),
+        )
         assert row["connected"] is False
         assert row["location"] == ""
         assert row["firmware_version"] == ""
@@ -675,7 +683,8 @@ class TestClientApiRow:
         rows = registry.snapshot_for_api(now=1.0, now_mono=1.0)
         assert len(rows) == 1
         helper_row = ClientRegistry._client_api_row(
-            "aabbccddeeff", name="my-sensor", connected=False
+            "aabbccddeeff",
+            ClientSnapshot(name="my-sensor", connected=False),
         )
         assert set(rows[0].keys()) == set(helper_row.keys())
 
