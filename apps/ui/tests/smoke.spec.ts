@@ -47,6 +47,15 @@ type SettingsRouteValue = unknown | ((route: Route, path: string, method: string
 function jsonOk(body: unknown) {
   return { status: 200, contentType: "application/json", body: JSON.stringify(body) };
 }
+
+function normalizePathname(pathname: string): string {
+  return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+}
+
+function requestPath(route: Route): string {
+  return normalizePathname(new URL(route.request().url()).pathname);
+}
+
 async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill(jsonOk(body));
 }
@@ -79,7 +88,7 @@ async function installCommonRoutes(page: Page, options: CommonRouteOptions = {})
 
 function createSettingsHandlerFromMap(settingsMap: Record<string, SettingsRouteValue>) {
   return async (route: Route): Promise<void> => {
-    const path = new URL(route.request().url()).pathname;
+    const path = requestPath(route);
     const method = route.request().method();
     const key = `${method} ${path}`;
     const value = settingsMap[key] ?? settingsMap[path];
@@ -123,7 +132,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
     runs: [{ run_id: "run-001", start_time_utc: "2026-01-01T00:00:00Z", sample_count: 42 }],
     locations: [{ code: "front_left_wheel", label: "Front Left Wheel" }],
     historyHandler: async (route) => {
-      const pathname = new URL(route.request().url()).pathname;
+      const pathname = requestPath(route);
       if (!pathname.startsWith("/api/history") || pathname.includes("/report.pdf")) {
         await route.fallback();
         return;
@@ -133,7 +142,7 @@ test("ui bootstrap smoke: tabs, ws state, recording, history", async ({ page }) 
       });
     },
     settingsHandler: async (route) => {
-      if (new URL(route.request().url()).pathname.startsWith("/api/settings/esp-flash/")) {
+      if (requestPath(route).startsWith("/api/settings/esp-flash/")) {
         await route.fallback();
         return;
       }
@@ -199,7 +208,7 @@ test("shows header warning and blocks car-dependent analysis save when no car is
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
-      const path = new URL(route.request().url()).pathname;
+      const path = requestPath(route);
       if (path === "/api/settings/cars") {
         await fulfillJson(route, { cars: [], activeCarId: null });
         return;
@@ -232,7 +241,7 @@ test("shows header warning and blocks car-dependent analysis save when no car is
 test("hides header warning when a valid selected car exists", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
-      const path = new URL(route.request().url()).pathname;
+      const path = requestPath(route);
       if (path.startsWith("/api/settings/cars")) {
         await fulfillJson(route, {
           cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
@@ -255,7 +264,7 @@ test("shows warning for invalid persisted selection and after deleting selected 
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
-      const path = new URL(route.request().url()).pathname;
+      const path = requestPath(route);
       const method = route.request().method();
       if (path === "/api/settings/cars" && method === "GET") {
         if (firstCarsGet) {
@@ -361,7 +370,7 @@ test("gps status polling does not override websocket speed readout", async ({ pa
 test("history preview uses dB intensity fields from insights payload", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
-      const path = new URL(route.request().url()).pathname;
+      const path = requestPath(route);
       if (path === "/api/settings/cars") {
         await fulfillJson(route, {
           cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
@@ -372,7 +381,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
       await fulfillJson(route, {});
     },
     historyHandler: async (route) => {
-      const pathname = new URL(route.request().url()).pathname;
+      const pathname = requestPath(route);
       if (!pathname.startsWith("/api/history") || pathname.includes("/insights")) {
         await route.fallback();
         return;
@@ -496,7 +505,7 @@ test("analysis bandwidth and uncertainty settings persist through API round-trip
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
-      const path = new URL(route.request().url()).pathname;
+      const path = requestPath(route);
       if (path.startsWith("/api/settings/cars")) {
         await fulfillJson(route, {
           cars: [{ id: "car-1", name: "Selected", type: "sedan", aspects: {} }],
@@ -621,7 +630,7 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
       const url = new URL(route.request().url());
-      const path = url.pathname;
+      const path = normalizePathname(url.pathname);
       if (path === "/api/settings/esp-flash/ports") {
         await fulfillJson(route, {
           ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }],
@@ -691,7 +700,7 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
 test("settings esp flash status falls back to idle when API omits state", async ({ page }) => {
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
-      const path = new URL(route.request().url()).pathname;
+      const path = requestPath(route);
       if (path === "/api/settings/esp-flash/ports") {
         await fulfillJson(route, { ports: [] });
         return;
