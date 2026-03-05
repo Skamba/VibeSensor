@@ -170,7 +170,7 @@ import pytest
 
 from vibesensor.analysis_settings import AnalysisSettingsStore
 from vibesensor.gps_speed import GPSSpeedMonitor
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.registry import ClientRegistry
 
 
@@ -178,10 +178,33 @@ def _make_logger(tmp_path: Path, **overrides):
     """Create a minimal MetricsLogger + HistoryDB for concurrency tests."""
     db = HistoryDB(tmp_path / "history.db")
     registry = ClientRegistry(db=db)
-    defaults = dict(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=10,
+    # Separate config fields from collaborator overrides.
+    _CONFIG_FIELDS = frozenset(
+        {
+            "enabled",
+            "log_path",
+            "metrics_log_hz",
+            "sensor_model",
+            "default_sample_rate_hz",
+            "fft_window_size_samples",
+            "fft_window_type",
+            "peak_picker_method",
+            "accel_scale_g_per_lsb",
+            "persist_history_db",
+            "no_data_timeout_s",
+        }
+    )
+    config_overrides = {k: overrides.pop(k) for k in list(overrides) if k in _CONFIG_FIELDS}
+    config = MetricsLoggerConfig(
+        enabled=config_overrides.get("enabled", False),
+        log_path=config_overrides.get("log_path", tmp_path / "metrics.jsonl"),
+        metrics_log_hz=config_overrides.get("metrics_log_hz", 10),
+        sensor_model=config_overrides.get("sensor_model", "ADXL345"),
+        default_sample_rate_hz=config_overrides.get("default_sample_rate_hz", 800),
+        fft_window_size_samples=config_overrides.get("fft_window_size_samples", 256),
+        persist_history_db=config_overrides.get("persist_history_db", False),
+    )
+    collab_defaults = dict(
         registry=registry,
         gps_monitor=GPSSpeedMonitor(gps_enabled=False),
         processor=SignalProcessor(
@@ -192,14 +215,10 @@ def _make_logger(tmp_path: Path, **overrides):
             spectrum_max_hz=200,
         ),
         analysis_settings=AnalysisSettingsStore(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=256,
         history_db=db,
-        persist_history_db=False,
     )
-    defaults.update(overrides)
-    return MetricsLogger(**defaults), db
+    collab_defaults.update(overrides)
+    return MetricsLogger(config, **collab_defaults), db
 
 
 # ---------------------------------------------------------------------------

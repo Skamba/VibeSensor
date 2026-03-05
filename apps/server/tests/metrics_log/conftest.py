@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 
 # ---------------------------------------------------------------------------
 # Fake collaborators
@@ -228,17 +228,44 @@ def _make_logger(
     **extra: Any,
 ) -> MetricsLogger:
     """Build a ``MetricsLogger`` with sensible test defaults."""
+    # Separate MetricsLoggerConfig fields from runtime-collaborator overrides.
+    config_fields = {
+        k: extra.pop(k)
+        for k in list(extra)
+        if k
+        in (
+            "enabled",
+            "log_path",
+            "metrics_log_hz",
+            "sensor_model",
+            "default_sample_rate_hz",
+            "fft_window_size_samples",
+            "fft_window_type",
+            "peak_picker_method",
+            "accel_scale_g_per_lsb",
+            "persist_history_db",
+            "no_data_timeout_s",
+        )
+    }
+    config = MetricsLoggerConfig(
+        enabled=config_fields.get("enabled", False),
+        log_path=config_fields.get("log_path", tmp_path / "metrics.jsonl"),
+        metrics_log_hz=config_fields.get("metrics_log_hz", 2),
+        sensor_model=config_fields.get("sensor_model", "ADXL345"),
+        default_sample_rate_hz=config_fields.get("default_sample_rate_hz", 800),
+        fft_window_size_samples=config_fields.get("fft_window_size_samples", 1024),
+        fft_window_type=config_fields.get("fft_window_type", "hann"),
+        peak_picker_method=config_fields.get("peak_picker_method", "max_peak_amp_across_axes"),
+        accel_scale_g_per_lsb=config_fields.get("accel_scale_g_per_lsb"),
+        persist_history_db=config_fields.get("persist_history_db", True),
+        no_data_timeout_s=config_fields.get("no_data_timeout_s", 15.0),
+    )
     return MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=2,
+        config,
         registry=registry or _FakeRegistry(),
         gps_monitor=gps_monitor or _FakeGPSMonitor(),
         processor=processor or _FakeProcessor(),
         analysis_settings=analysis_settings or _FakeAnalysisSettings(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=1024,
         history_db=history_db,
         **extra,
     )

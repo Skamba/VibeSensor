@@ -8,6 +8,18 @@ stays renderer-only with zero analysis imports.
 
 from __future__ import annotations
 
+__all__ = [
+    "CarMeta",
+    "DataTrustItem",
+    "NextStep",
+    "ObservedSignature",
+    "PartSuggestion",
+    "PatternEvidence",
+    "PeakRow",
+    "ReportTemplateData",
+    "SystemFindingCard",
+]
+
 import dataclasses
 from dataclasses import dataclass, field
 from functools import lru_cache

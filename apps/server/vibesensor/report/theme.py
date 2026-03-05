@@ -1,6 +1,17 @@
 from __future__ import annotations
 
-__all__ = ["FINDING_SOURCE_COLORS", "REPORT_COLORS"]
+__all__ = [
+    "BMW_LENGTH_MM",
+    "BMW_WIDTH_MM",
+    "FINDING_SOURCE_COLORS",
+    "REPORT_COLORS",
+]
+
+# BMW reference body proportions used for aspect-ratio preservation in
+# the car location diagram.  Both pdf_builder.py and pdf_diagram.py
+# share these values so they can never diverge.
+BMW_LENGTH_MM = 5007.0
+BMW_WIDTH_MM = 1894.0
 
 # Aligned with apps/ui/src/styles/app.css design tokens (purple accent, print-friendly light).
 REPORT_COLORS = {
