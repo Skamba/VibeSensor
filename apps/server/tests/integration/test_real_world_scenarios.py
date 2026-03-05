@@ -13,6 +13,7 @@ Covers:
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -77,6 +78,30 @@ def _standard_metadata(**overrides: Any) -> dict[str, Any]:
     return meta
 
 
+def _build_samples(
+    *,
+    duration_s: int,
+    speed_at: Callable[[int], float],
+    sample_for: Callable[[int, str, float], tuple[list[dict[str, float]], float]],
+) -> list[dict[str, Any]]:
+    samples: list[dict[str, Any]] = []
+    for i in range(duration_s):
+        speed = speed_at(i)
+        for sensor in _ALL_SENSORS:
+            peaks, vib_db = sample_for(i, sensor, speed)
+            samples.append(
+                make_sample(
+                    t_s=float(i),
+                    speed_kmh=speed,
+                    client_name=sensor,
+                    top_peaks=peaks,
+                    vibration_strength_db=vib_db,
+                    strength_floor_amp_g=0.003,
+                )
+            )
+    return samples
+
+
 # ===========================================================================
 # J1 / C4: Healthy vehicle — no false positives
 # ===========================================================================
@@ -89,25 +114,14 @@ class TestHealthyVehicleNoFalsePositive:
     def _road_noise_samples(self, speed_kmh: float, duration_s: int = 40) -> list[dict[str, Any]]:
         """Generate road-noise-only samples: low broadband vibration, no peaks
         near wheel/engine orders."""
-        samples: list[dict[str, Any]] = []
-        for i in range(duration_s):
-            for sensor in _ALL_SENSORS:
-                # Random noise peaks at non-order-related frequencies
-                peaks = [
-                    {"hz": 142.5, "amp": 0.003},
-                    {"hz": 287.3, "amp": 0.002},
-                ]
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed_kmh,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=8.0,
-                        strength_floor_amp_g=0.003,
-                    )
-                )
-        return samples
+        return _build_samples(
+            duration_s=duration_s,
+            speed_at=lambda _i: speed_kmh,
+            sample_for=lambda _i, _sensor, _speed: (
+                [{"hz": 142.5, "amp": 0.003}, {"hz": 287.3, "amp": 0.002}],
+                8.0,
+            ),
+        )
 
     def test_steady_speed_clean_data_no_fault_findings(self) -> None:
         """Steady 80 km/h with only road noise: zero non-REF findings above 0.20."""
@@ -121,24 +135,14 @@ class TestHealthyVehicleNoFalsePositive:
     def test_speed_sweep_clean_data_no_fault_findings(self) -> None:
         """Speed sweep 40–120 km/h with only road noise: no false positives."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
-        for i in range(40):
-            speed = 40.0 + (80.0 / 40) * i  # 40→120 km/h
-            for sensor in _ALL_SENSORS:
-                peaks = [
-                    {"hz": 142.5, "amp": 0.003},
-                    {"hz": 287.3, "amp": 0.002},
-                ]
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=speed,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=8.0,
-                        strength_floor_amp_g=0.003,
-                    )
-                )
+        samples = _build_samples(
+            duration_s=40,
+            speed_at=lambda i: 40.0 + (80.0 / 40) * i,
+            sample_for=lambda _i, _sensor, _speed: (
+                [{"hz": 142.5, "amp": 0.003}, {"hz": 287.3, "amp": 0.002}],
+                8.0,
+            ),
+        )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="healthy_sweep")
         assert_summary_sections(summary)
@@ -147,22 +151,12 @@ class TestHealthyVehicleNoFalsePositive:
     def test_uniform_mild_vibration_no_fault_findings(self) -> None:
         """All four sensors at identical mild vibration: no corner flagged."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
         whz = _wheel_hz(80.0)
-        for i in range(30):
-            for sensor in _ALL_SENSORS:
-                # Same mild peak on all sensors — no spatial separation
-                peaks = [{"hz": whz, "amp": 0.010}]
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=80.0,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=12.0,
-                        strength_floor_amp_g=0.003,
-                    )
-                )
+        samples = _build_samples(
+            duration_s=30,
+            speed_at=lambda _i: 80.0,
+            sample_for=lambda _i, _sensor, _speed: ([{"hz": whz, "amp": 0.010}], 12.0),
+        )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="uniform_mild")
         assert_summary_sections(summary)
@@ -181,29 +175,18 @@ class TestEngineOrderFaultScenario:
     def test_engine_1x_all_sensors_classified_as_engine(self) -> None:
         """Engine 1x peaks at RPM-derived frequency on all 4 sensors → engine source."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
-
-        # At 80 km/h with the default gear & final-drive ratios, compute
-        # the engine-order frequency: engine_hz = speed / (tire_circ * 3.6) * final_drive * gear_ratio
         engine_hz = (80.0 / 3.6 / _TIRE_CIRC) * _FINAL_DRIVE * _GEAR_RATIO
-
-        for i in range(40):
-            for sensor in _ALL_SENSORS:
-                # Engine 1x peak — same amplitude on ALL sensors (no spatial separation)
-                peaks = [
+        samples = _build_samples(
+            duration_s=40,
+            speed_at=lambda _i: 80.0,
+            sample_for=lambda _i, _sensor, _speed: (
+                [
                     {"hz": engine_hz, "amp": 0.05},
-                    {"hz": engine_hz * 2, "amp": 0.02},  # engine 2x harmonic
-                ]
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=80.0,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=24.0,
-                        strength_floor_amp_g=0.003,
-                    )
-                )
+                    {"hz": engine_hz * 2, "amp": 0.02},
+                ],
+                24.0,
+            ),
+        )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="engine_1x_test")
         assert_summary_sections(summary, min_findings=1, min_top_causes=0)
@@ -241,25 +224,16 @@ class TestVeryShortRecording:
     def test_5s_recording_produces_report(self) -> None:
         """5-second recording: should produce a summary with run_suitability warning."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
         whz = _wheel_hz(80.0)
-        for i in range(5):
-            for sensor in _ALL_SENSORS:
-                if sensor == "front-right":
-                    peaks = [{"hz": whz, "amp": 0.06}]
-                    vib_db = 26.0
-                else:
-                    peaks = [{"hz": 142.5, "amp": 0.003}]
-                    vib_db = 8.0
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=80.0,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=vib_db,
-                    )
-                )
+        samples = _build_samples(
+            duration_s=5,
+            speed_at=lambda _i: 80.0,
+            sample_for=lambda _i, sensor, _speed: (
+                ([{"hz": whz, "amp": 0.06}], 26.0)
+                if sensor == "front-right"
+                else ([{"hz": 142.5, "amp": 0.003}], 8.0)
+            ),
+        )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="short_5s")
         assert isinstance(summary, dict)
@@ -277,19 +251,11 @@ class TestVeryShortRecording:
     def test_3s_recording_does_not_crash(self) -> None:
         """3-second recording: must not crash, even if findings are empty."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
-        for i in range(3):
-            for sensor in _ALL_SENSORS:
-                peaks = [{"hz": 142.5, "amp": 0.003}]
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=60.0,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=8.0,
-                    )
-                )
+        samples = _build_samples(
+            duration_s=3,
+            speed_at=lambda _i: 60.0,
+            sample_for=lambda _i, _sensor, _speed: ([{"hz": 142.5, "amp": 0.003}], 8.0),
+        )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="short_3s")
         assert isinstance(summary, dict)
@@ -307,31 +273,16 @@ class TestGradualFaultOnset:
     def test_gradual_onset_detected_in_later_phase(self) -> None:
         """Wheel fault starts quiet and grows — pipeline should still detect it."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
         whz = _wheel_hz(80.0)
-
-        for i in range(60):
-            # Fault amplitude grows linearly: 0→0.06 over 60s
-            fault_amp = 0.06 * (i / 60.0)
-            fault_db = 8.0 + 18.0 * (i / 60.0)  # 8→26 dB
-            for sensor in _ALL_SENSORS:
-                if sensor == "front-left":
-                    peaks = [
-                        {"hz": whz, "amp": max(0.003, fault_amp)},
-                    ]
-                    vib_db = fault_db
-                else:
-                    peaks = [{"hz": 142.5, "amp": 0.003}]
-                    vib_db = 8.0
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=80.0,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=vib_db,
-                    )
-                )
+        samples = _build_samples(
+            duration_s=60,
+            speed_at=lambda _i: 80.0,
+            sample_for=lambda i, sensor, _speed: (
+                ([{"hz": whz, "amp": max(0.003, 0.06 * (i / 60.0))}], 8.0 + 18.0 * (i / 60.0))
+                if sensor == "front-left"
+                else ([{"hz": 142.5, "amp": 0.003}], 8.0)
+            ),
+        )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="gradual_onset")
         assert_summary_sections(summary, min_findings=0)
@@ -359,38 +310,23 @@ class TestBorderlineTwoSourceOverlap:
     def test_overlapping_wheel_and_engine_freq(self) -> None:
         """Wheel_hz ≈ engine_hz: should produce findings without NaN or crash."""
         meta = _standard_metadata()
-        samples: list[dict[str, Any]] = []
 
-        # Choose a speed where wheel_hz is close to engine_hz
-        # engine_hz = (speed_mps / tire_circ) * final_drive * gear_ratio
-        # wheel_hz = speed_mps / tire_circ
-        # They overlap when final_drive * gear_ratio ≈ 1 (unlikely with defaults),
-        # so we fabricate peaks at the same frequency for both nominal orders.
         whz = _wheel_hz(80.0)
-        for i in range(40):
-            for sensor in _ALL_SENSORS:
-                if sensor == "front-left":
-                    # Strong peak at wheel_hz frequency on one corner
-                    peaks = [
+        samples = _build_samples(
+            duration_s=40,
+            speed_at=lambda _i: 80.0,
+            sample_for=lambda _i, sensor, _speed: (
+                (
+                    [
                         {"hz": whz, "amp": 0.06},
                         {"hz": whz * _FINAL_DRIVE * _GEAR_RATIO, "amp": 0.04},
-                    ]
-                    vib_db = 26.0
-                else:
-                    # Same peak on all other sensors (engine-like: no spatial sep)
-                    peaks = [
-                        {"hz": whz * _FINAL_DRIVE * _GEAR_RATIO, "amp": 0.04},
-                    ]
-                    vib_db = 20.0
-                samples.append(
-                    make_sample(
-                        t_s=float(i),
-                        speed_kmh=80.0,
-                        client_name=sensor,
-                        top_peaks=peaks,
-                        vibration_strength_db=vib_db,
-                    )
+                    ],
+                    26.0,
                 )
+                if sensor == "front-left"
+                else ([{"hz": whz * _FINAL_DRIVE * _GEAR_RATIO, "amp": 0.04}], 20.0)
+            ),
+        )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="overlap_test")
         assert isinstance(summary, dict)
