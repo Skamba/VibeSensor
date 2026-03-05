@@ -1,12 +1,4 @@
-"""Order analysis and numeric input guard regressions.
-
-Covers:
-  1. pdf_builder.py — guarded float() on confidence_0_to_1
-  2. summary.py — guarded float() on frequency_hz
-  3. order_analysis._order_label — edge cases (zero test coverage)
-  4. order_analysis._driveshaft_hz — edge cases (zero test coverage)
-  5. domain_models._as_float_or_none — NaN handling
-"""
+"""Regression for guarded float() parsing of PDF finding confidence."""
 
 from __future__ import annotations
 

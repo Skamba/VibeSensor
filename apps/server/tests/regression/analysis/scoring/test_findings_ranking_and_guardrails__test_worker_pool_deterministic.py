@@ -12,13 +12,6 @@ from __future__ import annotations
 
 import inspect
 
-import pytest
-
-_UNSEEDED_RANDOM_MODULES = [
-    pytest.param("tests.processing.test_processing_extended", id="processing_extended"),
-    pytest.param("tests.protocol.test_reset_buffer_flush", id="reset_buffer_flush"),
-]
-
 
 class TestWorkerPoolDeterministic:
     """Regression: test_worker_pool should use np.random.default_rng,
