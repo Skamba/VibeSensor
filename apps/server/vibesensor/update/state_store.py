@@ -7,6 +7,7 @@ return ``None`` with a logged warning.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -66,11 +67,9 @@ class UpdateStateStore:
                 os.fsync(fd)
             finally:
                 os.close(fd)
-            os.replace(tmp, str(self._path))
+            Path(tmp).replace(self._path)
         except OSError as exc:
             LOGGER.warning("Failed to persist update state to %s: %s", self._path, exc)
             if tmp is not None:
-                try:
-                    os.unlink(tmp)
-                except OSError:
-                    pass
+                with contextlib.suppress(OSError):
+                    Path(tmp).unlink()

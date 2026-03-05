@@ -177,9 +177,11 @@ class TestServerReleaseFetcher:
     )
     def test_find_latest_no_server_release(self, releases: list[dict]) -> None:
         fetcher = self._make_fetcher()
-        with patch.object(fetcher, "_api_get", return_value=releases):
-            with pytest.raises(ValueError, match="No server release found"):
-                fetcher.find_latest_release()
+        with (
+            patch.object(fetcher, "_api_get", return_value=releases),
+            pytest.raises(ValueError, match="No server release found"),
+        ):
+            fetcher.find_latest_release()
 
     def test_check_update_available_newer(self) -> None:
         fetcher = self._make_fetcher()

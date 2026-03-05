@@ -135,9 +135,11 @@ def test_safe_extractall_rejects_path_traversal(tmp_path: Path) -> None:
     buf = _make_zip({"../../etc/passwd": "pwned"})
     dest = tmp_path / "extract"
     dest.mkdir()
-    with zipfile.ZipFile(buf) as zf:
-        with pytest.raises(ValueError, match="outside the target directory"):
-            _safe_extractall(zf, dest)
+    with (
+        zipfile.ZipFile(buf) as zf,
+        pytest.raises(ValueError, match="outside the target directory"),
+    ):
+        _safe_extractall(zf, dest)
 
 
 def test_safe_extractall_allows_normal_entries(tmp_path: Path) -> None:

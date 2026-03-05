@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
 import random
 import subprocess
 import sys
@@ -710,10 +711,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(async_main(args))
-    except KeyboardInterrupt:
-        pass
 
 
 if __name__ == "__main__":
