@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Tests for the 20 bug fixes.
+"""Cross-cutting multi-domain regressions.
 
 Each test verifies the specific bug fix by reproducing the original failure
 condition and asserting the corrected behavior.

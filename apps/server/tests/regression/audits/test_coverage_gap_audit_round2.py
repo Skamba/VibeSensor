@@ -1,4 +1,4 @@
-"""Cycle 2 (cycle 9 in sequence) test-coverage gap audit.
+"""Coverage-gap audit (round 2).
 
 Findings addressed
 -------------------

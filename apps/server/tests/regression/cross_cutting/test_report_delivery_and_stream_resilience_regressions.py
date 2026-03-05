@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Tests for Cycle 9 fixes: EspFlashManager CancelledError, PDF diagram
+"""Report/export resilience regressions: EspFlashManager CancelledError, PDF diagram
 dead fallback removal, PDF diagram ValueError, dead _owns_pool removal,
 report_cli error handling, WebSocketHub circuit breaker,
 CSV export record_type/schema_version population."""

@@ -1,4 +1,4 @@
-"""Cycle 4 — concurrency/race-condition audit fixes.
+"""Concurrency and generation-guard regressions.
 
 Tests covering:
 1. Auto-stop generation guard (prevents killing a freshly started session)

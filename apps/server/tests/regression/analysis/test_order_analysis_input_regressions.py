@@ -1,4 +1,4 @@
-"""Tests for Cycle 5 (session 3) fixes – a.k.a. cycle-14 in the global sequence.
+"""Order analysis and numeric input guard regressions.
 
 Covers:
   1. pdf_builder.py — guarded float() on confidence_0_to_1
@@ -110,7 +110,7 @@ class TestDriveshaftHz:
         ],
         ids=["no-tire-circ", "zero-final-drive", "negative-final-drive"],
     )
-    def test_returns_none(
+    def test_driveshaft_hz_returns_none(
         self, sample: dict, overrides: dict, tire_m: float | None
     ) -> None:
         assert _driveshaft_hz(sample, overrides, tire_circumference_m=tire_m) is None

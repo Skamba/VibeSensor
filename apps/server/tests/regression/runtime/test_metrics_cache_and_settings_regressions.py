@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Tests for Cycle 10 fixes: settings rollback, processing guards, counter_delta dedup."""
+"""Metrics cache, settings rollback, and counter-delta regressions."""
 
 from __future__ import annotations
 

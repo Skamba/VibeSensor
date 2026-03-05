@@ -1,4 +1,4 @@
-"""Tests for Run 2 improvement cycle fixes (Cycles 1-3).
+"""Runtime validation and schema-recovery regressions.
 
 Covers:
   1. _corr_abs — NaN propagation guard (helpers.py)
@@ -49,7 +49,7 @@ class TestCorrAbsNanGuard:
         assert abs(result - 1.0) < 1e-6
 
     @pytest.mark.parametrize("x, y", _CORR_NONE_CASES)
-    def test_returns_none(self, x: list[float], y: list[float]) -> None:
+    def test_corr_abs_returns_none(self, x: list[float], y: list[float]) -> None:
         assert _corr_abs(x, y) is None
 
 

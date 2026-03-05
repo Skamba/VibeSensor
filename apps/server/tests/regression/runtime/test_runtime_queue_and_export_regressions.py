@@ -1,5 +1,5 @@
 # ruff: noqa: E501
-"""Tests for run-2 Cycle 2 fixes: busy_timeout, flush gen bump, deque, pruning, dedup, export filter."""
+"""Runtime queue/history tracking and export-filter regressions."""
 
 from __future__ import annotations
 

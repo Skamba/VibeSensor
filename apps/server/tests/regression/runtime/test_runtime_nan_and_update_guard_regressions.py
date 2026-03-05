@@ -1,5 +1,6 @@
 # ruff: noqa: E501
-"""Tests for Cycle 8 fixes: NaN guards, correlation clamp, persist rollback,
+"""Runtime NaN handling and update-manager guard regressions:
+NaN guards, correlation clamp, persist rollback,
 firmware cache streaming, CancelledError re-raise, _normalize_lang dedup,
 _weighted_percentile direct import, _dir_sha256 separators, _corr_abs_clamped,
 _canonical_location edge cases, PDF peak suffix i18n."""
