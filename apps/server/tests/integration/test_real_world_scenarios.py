@@ -81,14 +81,14 @@ def _standard_metadata(**overrides: Any) -> dict[str, Any]:
 def _build_samples(
     *,
     duration_s: int,
-    speed_at: Callable[[int], float],
-    sample_for: Callable[[int, str, float], tuple[list[dict[str, float]], float]],
+    speed_fn: Callable[[int], float],
+    sample_fn: Callable[[int, str, float], tuple[list[dict[str, float]], float]],
 ) -> list[dict[str, Any]]:
     samples: list[dict[str, Any]] = []
     for i in range(duration_s):
-        speed = speed_at(i)
+        speed = speed_fn(i)
         for sensor in _ALL_SENSORS:
-            peaks, vib_db = sample_for(i, sensor, speed)
+            peaks, vib_db = sample_fn(i, sensor, speed)
             samples.append(
                 make_sample(
                     t_s=float(i),
@@ -116,8 +116,8 @@ class TestHealthyVehicleNoFalsePositive:
         near wheel/engine orders."""
         return _build_samples(
             duration_s=duration_s,
-            speed_at=lambda _i: speed_kmh,
-            sample_for=lambda _i, _sensor, _speed: (
+            speed_fn=lambda _i: speed_kmh,
+            sample_fn=lambda _i, _sensor, _speed: (
                 [{"hz": 142.5, "amp": 0.003}, {"hz": 287.3, "amp": 0.002}],
                 8.0,
             ),
@@ -137,8 +137,8 @@ class TestHealthyVehicleNoFalsePositive:
         meta = _standard_metadata()
         samples = _build_samples(
             duration_s=40,
-            speed_at=lambda i: 40.0 + (80.0 / 40) * i,
-            sample_for=lambda _i, _sensor, _speed: (
+            speed_fn=lambda i: 40.0 + (80.0 / 40) * i,
+            sample_fn=lambda _i, _sensor, _speed: (
                 [{"hz": 142.5, "amp": 0.003}, {"hz": 287.3, "amp": 0.002}],
                 8.0,
             ),
@@ -154,8 +154,8 @@ class TestHealthyVehicleNoFalsePositive:
         whz = _wheel_hz(80.0)
         samples = _build_samples(
             duration_s=30,
-            speed_at=lambda _i: 80.0,
-            sample_for=lambda _i, _sensor, _speed: ([{"hz": whz, "amp": 0.010}], 12.0),
+            speed_fn=lambda _i: 80.0,
+            sample_fn=lambda _i, _sensor, _speed: ([{"hz": whz, "amp": 0.010}], 12.0),
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="uniform_mild")
@@ -178,8 +178,8 @@ class TestEngineOrderFaultScenario:
         engine_hz = (80.0 / 3.6 / _TIRE_CIRC) * _FINAL_DRIVE * _GEAR_RATIO
         samples = _build_samples(
             duration_s=40,
-            speed_at=lambda _i: 80.0,
-            sample_for=lambda _i, _sensor, _speed: (
+            speed_fn=lambda _i: 80.0,
+            sample_fn=lambda _i, _sensor, _speed: (
                 [
                     {"hz": engine_hz, "amp": 0.05},
                     {"hz": engine_hz * 2, "amp": 0.02},
@@ -227,8 +227,8 @@ class TestVeryShortRecording:
         whz = _wheel_hz(80.0)
         samples = _build_samples(
             duration_s=5,
-            speed_at=lambda _i: 80.0,
-            sample_for=lambda _i, sensor, _speed: (
+            speed_fn=lambda _i: 80.0,
+            sample_fn=lambda _i, sensor, _speed: (
                 ([{"hz": whz, "amp": 0.06}], 26.0)
                 if sensor == "front-right"
                 else ([{"hz": 142.5, "amp": 0.003}], 8.0)
@@ -253,8 +253,8 @@ class TestVeryShortRecording:
         meta = _standard_metadata()
         samples = _build_samples(
             duration_s=3,
-            speed_at=lambda _i: 60.0,
-            sample_for=lambda _i, _sensor, _speed: ([{"hz": 142.5, "amp": 0.003}], 8.0),
+            speed_fn=lambda _i: 60.0,
+            sample_fn=lambda _i, _sensor, _speed: ([{"hz": 142.5, "amp": 0.003}], 8.0),
         )
 
         summary = summarize_run_data(meta, samples, lang="en", file_name="short_3s")
@@ -276,8 +276,8 @@ class TestGradualFaultOnset:
         whz = _wheel_hz(80.0)
         samples = _build_samples(
             duration_s=60,
-            speed_at=lambda _i: 80.0,
-            sample_for=lambda i, sensor, _speed: (
+            speed_fn=lambda _i: 80.0,
+            sample_fn=lambda i, sensor, _speed: (
                 ([{"hz": whz, "amp": max(0.003, 0.06 * (i / 60.0))}], 8.0 + 18.0 * (i / 60.0))
                 if sensor == "front-left"
                 else ([{"hz": 142.5, "amp": 0.003}], 8.0)
@@ -314,8 +314,8 @@ class TestBorderlineTwoSourceOverlap:
         whz = _wheel_hz(80.0)
         samples = _build_samples(
             duration_s=40,
-            speed_at=lambda _i: 80.0,
-            sample_for=lambda _i, sensor, _speed: (
+            speed_fn=lambda _i: 80.0,
+            sample_fn=lambda _i, sensor, _speed: (
                 (
                     [
                         {"hz": whz, "amp": 0.06},

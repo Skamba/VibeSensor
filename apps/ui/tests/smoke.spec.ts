@@ -42,12 +42,11 @@ type CommonRouteOptions = {
   settingsHandler?: (route: Route) => Promise<void>;
 };
 
-type SettingsMapValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | void>);
+type SettingsRouteValue = unknown | ((route: Route, path: string, method: string) => Promise<unknown | void>);
 
 function jsonOk(body: unknown) {
   return { status: 200, contentType: "application/json", body: JSON.stringify(body) };
 }
-
 async function fulfillJson(route: Route, body: unknown): Promise<void> {
   await route.fulfill(jsonOk(body));
 }
@@ -78,12 +77,12 @@ async function installCommonRoutes(page: Page, options: CommonRouteOptions = {})
   });
 }
 
-function settingsHandlerFromMap(map: Record<string, SettingsMapValue>) {
+function createSettingsHandlerFromMap(settingsMap: Record<string, SettingsRouteValue>) {
   return async (route: Route): Promise<void> => {
     const path = new URL(route.request().url()).pathname;
     const method = route.request().method();
     const key = `${method} ${path}`;
-    const value = map[key] ?? map[path];
+    const value = settingsMap[key] ?? settingsMap[path];
     if (typeof value === "function") {
       const result = await value(route, path, method);
       if (typeof result !== "undefined") {
@@ -316,7 +315,7 @@ test("shows warning for invalid persisted selection and after deleting selected 
 
 test("gps status uses selected speed unit in settings panel", async ({ page }) => {
   await installCommonRoutes(page, {
-    settingsHandler: settingsHandlerFromMap({
+    settingsHandler: createSettingsHandlerFromMap({
       "/api/settings/language": { language: "en" },
       "/api/settings/speed-unit": { speedUnit: "mps" },
       "/api/settings/speed-source/status": gpsStatus({ last_update_age_s: 0.333, raw_speed_kmh: 36 }),
@@ -336,7 +335,7 @@ test("gps status uses selected speed unit in settings panel", async ({ page }) =
 
 test("gps status polling does not override websocket speed readout", async ({ page }) => {
   await installCommonRoutes(page, {
-    settingsHandler: settingsHandlerFromMap({
+    settingsHandler: createSettingsHandlerFromMap({
       "/api/settings/language": { language: "en" },
       "/api/settings/speed-unit": { speedUnit: "kmh" },
       "/api/settings/speed-source/status": gpsStatus({}),
@@ -421,7 +420,7 @@ test("history preview uses dB intensity fields from insights payload", async ({ 
 
 test("spectrum title updates when switching language", async ({ page }) => {
   await installCommonRoutes(page, {
-    settingsHandler: settingsHandlerFromMap({
+    settingsHandler: createSettingsHandlerFromMap({
       "GET /api/settings/language": { language: "en" },
       "POST /api/settings/language": { language: "nl" },
       "/api/settings/speed-unit": { speedUnit: "kmh" },
@@ -460,7 +459,7 @@ test("manual speed save uses settings endpoint only (no speed-override call)", a
   let speedSourcePostCalls = 0;
   let speedOverrideCalls = 0;
   await installCommonRoutes(page, {
-    settingsHandler: settingsHandlerFromMap({
+    settingsHandler: createSettingsHandlerFromMap({
       "GET /api/settings/speed-source": {
         speedSource: "gps",
         manualSpeedKph: null,
@@ -621,53 +620,53 @@ test("settings esp flash tab renders lifecycle state and live logs", async ({ pa
 
   await installCommonRoutes(page, {
     settingsHandler: async (route) => {
-    const url = new URL(route.request().url());
-    const path = url.pathname;
-    if (path === "/api/settings/esp-flash/ports") {
-      await fulfillJson(route, {
-        ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }],
-      });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/start") {
-      statusState = "running";
-      logCursor = 0;
-      await fulfillJson(route, { status: "started", job_id: 1 });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/status") {
-      if (statusState === "running" && logCursor >= logs.length) statusState = "success";
-      const payload = {
-        state: statusState,
-        phase: statusState === "running" ? "flashing" : "done",
-        job_id: 1,
-        selected_port: "/dev/ttyUSB0",
-        auto_detect: false,
-        started_at: 1,
-        finished_at: statusState === "running" ? null : 2,
-        last_success_at: statusState === "success" ? 2 : null,
-        exit_code: statusState === "success" ? 0 : null,
-        error: null,
-        log_count: logCursor,
-      };
-      await fulfillJson(route, payload);
-      return;
-    }
-    if (path === "/api/settings/esp-flash/logs") {
-      const after = Number(url.searchParams.get("after") || "0");
-      if (after === 0) logCursor = Math.min(logs.length, logCursor + 2);
-      else logCursor = logs.length;
-      const lines = logs.slice(after, logCursor);
-      await fulfillJson(route, { from_index: after, next_index: logCursor, lines });
-      return;
-    }
-    if (path === "/api/settings/esp-flash/history") {
-      const attempts = statusState === "success"
-        ? [{ job_id: 1, state: "success", selected_port: "/dev/ttyUSB0", auto_detect: false, started_at: 1, finished_at: 2, exit_code: 0, error: null }]
-        : [];
-      await fulfillJson(route, { attempts });
-      return;
-    }
+      const url = new URL(route.request().url());
+      const path = url.pathname;
+      if (path === "/api/settings/esp-flash/ports") {
+        await fulfillJson(route, {
+          ports: [{ port: "/dev/ttyUSB0", description: "USB UART", vid: 1, pid: 2, serial_number: "abc" }],
+        });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/start") {
+        statusState = "running";
+        logCursor = 0;
+        await fulfillJson(route, { status: "started", job_id: 1 });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/status") {
+        if (statusState === "running" && logCursor >= logs.length) statusState = "success";
+        const payload = {
+          state: statusState,
+          phase: statusState === "running" ? "flashing" : "done",
+          job_id: 1,
+          selected_port: "/dev/ttyUSB0",
+          auto_detect: false,
+          started_at: 1,
+          finished_at: statusState === "running" ? null : 2,
+          last_success_at: statusState === "success" ? 2 : null,
+          exit_code: statusState === "success" ? 0 : null,
+          error: null,
+          log_count: logCursor,
+        };
+        await fulfillJson(route, payload);
+        return;
+      }
+      if (path === "/api/settings/esp-flash/logs") {
+        const after = Number(url.searchParams.get("after") || "0");
+        if (after === 0) logCursor = Math.min(logs.length, logCursor + 2);
+        else logCursor = logs.length;
+        const lines = logs.slice(after, logCursor);
+        await fulfillJson(route, { from_index: after, next_index: logCursor, lines });
+        return;
+      }
+      if (path === "/api/settings/esp-flash/history") {
+        const attempts = statusState === "success"
+          ? [{ job_id: 1, state: "success", selected_port: "/dev/ttyUSB0", auto_detect: false, started_at: 1, finished_at: 2, exit_code: 0, error: null }]
+          : [];
+        await fulfillJson(route, { attempts });
+        return;
+      }
       await fulfillJson(route, {});
     },
   });

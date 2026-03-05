@@ -22,21 +22,11 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from builders import (
-    make_fault_samples as _make_fault_samples,
-)
-from builders import (
-    make_sample as _make_sample,
-)
-from builders import (
-    make_speed_sweep_fault_samples as _make_speed_sweep_fault_samples,
-)
-from builders import (
-    standard_metadata as _standard_metadata,
-)
-from builders import (
-    wheel_hz as _wheel_hz,
-)
+from builders import make_fault_samples as _make_fault_samples
+from builders import make_sample as _make_sample
+from builders import make_speed_sweep_fault_samples as _make_speed_sweep_fault_samples
+from builders import standard_metadata as _standard_metadata
+from builders import wheel_hz as _wheel_hz
 
 from vibesensor.analysis.findings import _classify_peak_type
 from vibesensor.analysis.summary import summarize_run_data
@@ -62,7 +52,6 @@ def _build_fault_samples_at_speed(
     transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
     """Generate fixed-speed wheel-order fault samples using shared builders."""
-    assert fault_sensor not in other_sensors, "fault_sensor must not be listed in other_sensors"
     sensors = [fault_sensor, *other_sensors]
     return _make_fault_samples(
         fault_sensor=fault_sensor,
@@ -96,7 +85,6 @@ def _build_speed_sweep_fault_samples(
     transfer_fraction: float = 0.20,
 ) -> list[dict[str, Any]]:
     """Generate linear speed-sweep fault samples using shared builders."""
-    assert fault_sensor not in other_sensors, "fault_sensor must not be listed in other_sensors"
     sensors = [fault_sensor, *other_sensors]
     return _make_speed_sweep_fault_samples(
         fault_sensor=fault_sensor,
