@@ -139,14 +139,14 @@ class TestHashTreeFileDeletedMidScan:
         h1 = _hash_tree(tmp_path, ignore_names=set())
         assert len(h1) == 64  # SHA256 hex digest
 
-        original_open = open
+        original_path_open = Path.open
 
-        def failing_open(path, *args, **kwargs):
-            if "b.txt" in str(path):
-                raise FileNotFoundError(f"simulated deletion: {path}")
-            return original_open(path, *args, **kwargs)
+        def failing_path_open(self, *args, **kwargs):
+            if "b.txt" in str(self):
+                raise FileNotFoundError(f"simulated deletion: {self}")
+            return original_path_open(self, *args, **kwargs)
 
-        with patch("builtins.open", side_effect=failing_open):
+        with patch.object(Path, "open", side_effect=failing_path_open, autospec=True):
             h2 = _hash_tree(tmp_path, ignore_names=set())
             assert len(h2) == 64
             assert h2 != h1
@@ -887,7 +887,7 @@ class TestNegligibleCapAligned:
         # After refactoring the literal 0.40 to a named constant, verify
         # _NEGLIGIBLE_STRENGTH_CONF_CAP holds the correct value and that
         # the code actually uses it as the cap expression.
-        assert order_findings_mod._NEGLIGIBLE_STRENGTH_CONF_CAP == pytest.approx(0.40), (
+        assert pytest.approx(0.40) == order_findings_mod._NEGLIGIBLE_STRENGTH_CONF_CAP, (
             "Negligible cap constant should be 0.40 (aligned with TIER_B_CEILING)"
         )
         src = inspect.getsource(order_findings_mod)

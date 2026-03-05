@@ -779,6 +779,7 @@ CSV export record_type/schema_version population."""
 
 
 import asyncio
+import contextlib
 import json
 
 import pytest
@@ -963,15 +964,11 @@ class TestWebSocketHubCircuitBreaker:
         task = asyncio.create_task(
             hub.run(hz=200, payload_builder=dummy_builder, on_tick=failing_tick)
         )
-        try:
+        with contextlib.suppress(TimeoutError):
             await asyncio.wait_for(stop_after_4(), timeout=5.0)
-        except TimeoutError:
-            pass
         task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError):
             await task
-        except asyncio.CancelledError:
-            pass
         assert call_count >= 4, (
             f"on_tick should have been called at least 4 times, got {call_count}"
         )
@@ -1353,9 +1350,11 @@ class TestRemoveSensorRollback:
         assert "aabbccddeeff" in store.get_sensors()
 
         # Simulate persistence failure
-        with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
-            with pytest.raises(PersistenceError):
-                store.remove_sensor("aabbccddeeff")
+        with (
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            pytest.raises(PersistenceError),
+        ):
+            store.remove_sensor("aabbccddeeff")
 
         # Sensor should still be in memory after rollback
         assert "aabbccddeeff" in store.get_sensors()

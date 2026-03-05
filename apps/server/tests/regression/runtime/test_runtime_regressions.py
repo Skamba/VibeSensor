@@ -9,6 +9,7 @@ from __future__ import annotations
 """Runtime regressions spanning API, history, and processing boundaries."""
 
 
+import contextlib
 import re
 from pathlib import Path
 
@@ -755,9 +756,11 @@ class TestSettingsStoreRollbackDbFailure:
         cars = store.get_cars()
         original_aspects = dict(cars["cars"][0].get("aspects", {}))
 
-        with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
-            with pytest.raises(PersistenceError):
-                store.update_active_car_aspects({"tire_width": 999})
+        with (
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            pytest.raises(PersistenceError),
+        ):
+            store.update_active_car_aspects({"tire_width": 999})
 
         # Aspects should be rolled back
         current = store.get_cars()
@@ -766,9 +769,11 @@ class TestSettingsStoreRollbackDbFailure:
     def test_update_speed_source_rollback(self, store: Any) -> None:
         original = store.get_speed_source()
 
-        with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
-            with pytest.raises(PersistenceError):
-                store.update_speed_source({"mode": "gps"})
+        with (
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            pytest.raises(PersistenceError),
+        ):
+            store.update_speed_source({"mode": "gps"})
 
         # Speed source should be rolled back
         assert store.get_speed_source() == original
@@ -776,29 +781,35 @@ class TestSettingsStoreRollbackDbFailure:
     def test_set_language_rollback(self, store: Any) -> None:
         original = store.language
 
-        with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
-            with pytest.raises(PersistenceError):
-                new_lang = "nl" if original == "en" else "en"
-                store.set_language(new_lang)
+        with (
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            pytest.raises(PersistenceError),
+        ):
+            new_lang = "nl" if original == "en" else "en"
+            store.set_language(new_lang)
 
         assert store.language == original
 
     def test_set_speed_unit_rollback(self, store: Any) -> None:
         original = store.speed_unit
 
-        with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
-            with pytest.raises(PersistenceError):
-                new_unit = "mps" if original == "kmh" else "kmh"
-                store.set_speed_unit(new_unit)
+        with (
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            pytest.raises(PersistenceError),
+        ):
+            new_unit = "mps" if original == "kmh" else "kmh"
+            store.set_speed_unit(new_unit)
 
         assert store.speed_unit == original
 
     def test_set_sensor_rollback_new_sensor(self, store: Any) -> None:
         mac = "AA:BB:CC:DD:EE:FF"
 
-        with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
-            with pytest.raises(PersistenceError):
-                store.set_sensor(mac, {"name": "Test", "location": "front"})
+        with (
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            pytest.raises(PersistenceError),
+        ):
+            store.set_sensor(mac, {"name": "Test", "location": "front"})
 
         # Sensor should not exist after rollback
         sensors = store.get_sensors()
@@ -810,9 +821,11 @@ class TestSettingsStoreRollbackDbFailure:
         # First create a sensor successfully
         store.set_sensor(mac, {"name": "Original", "location": "rear"})
 
-        with patch.object(store, "_persist", side_effect=PersistenceError("disk full")):
-            with pytest.raises(PersistenceError):
-                store.set_sensor(mac, {"name": "Updated", "location": "front"})
+        with (
+            patch.object(store, "_persist", side_effect=PersistenceError("disk full")),
+            pytest.raises(PersistenceError),
+        ):
+            store.set_sensor(mac, {"name": "Updated", "location": "front"})
 
         # Should have original values
         sensors = store.get_sensors()
@@ -1957,11 +1970,11 @@ class TestSettingsStoreRollbackSafety:
             original_aspects_id = id(car.aspects)
 
         # Force persist to fail
-        with patch.object(store, "_persist", side_effect=Exception("disk full")):
-            try:
-                store.update_car(car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}})
-            except Exception:
-                pass
+        with (
+            patch.object(store, "_persist", side_effect=Exception("disk full")),
+            contextlib.suppress(Exception),
+        ):
+            store.update_car(car_id, {"aspects": {"wheel": 1.0, "driveshaft": 0.5}})
 
         # The aspects dict should still be the SAME object
         with store._lock:

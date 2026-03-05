@@ -99,11 +99,13 @@ class GPSSpeedMonitor:
         consumers should prefer this over reading ``effective_speed_mps``
         and ``fallback_active`` separately when they need both values.
         """
-        if self.manual_source_selected in (None, True):
+        if (
+            self.manual_source_selected in (None, True)
+            and isinstance(self.override_speed_mps, NUMERIC_TYPES)
+        ):
             # Legacy path (None) or explicitly selected manual source
-            if isinstance(self.override_speed_mps, NUMERIC_TYPES):
-                return SpeedResolution(float(self.override_speed_mps), False, "manual")
-            # Manual selected but no override set → fall through to GPS
+            return SpeedResolution(float(self.override_speed_mps), False, "manual")
+        # Manual selected but no override set → fall through to GPS
 
         # Read from the atomic (speed, timestamp) snapshot so the speed value
         # and the staleness check are always consistent with each other.

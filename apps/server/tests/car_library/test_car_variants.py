@@ -221,7 +221,7 @@ def test_car_library_json_parseable() -> None:
     """The car library JSON is valid JSON and loadable."""
     from vibesensor.car_library import _DATA_FILE
 
-    with open(_DATA_FILE) as fh:
+    with _DATA_FILE.open() as fh:
         data = json.load(fh)
     assert isinstance(data, list)
     assert len(data) == 73
