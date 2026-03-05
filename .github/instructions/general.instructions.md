@@ -8,6 +8,9 @@ Canonical agent workflow (shared source of truth)
 - Verify existing behavior before rewriting code; investigate root cause before patching symptoms.
 - Scan the blast radius for similar in-scope issues and fix them in the same run.
 - Prefer extending and hardening existing logic over adding parallel implementations.
+- Fail-fast default: ship the smallest validated in-scope fix quickly, then iterate using real test/runtime feedback.
+- Avoid over-conservative blocking behavior: do not hold a clear fix for exhaustive hypothetical analysis.
+- Use bounded risk rather than risk avoidance: keep changes reversible, validate early, and recover quickly on failures.
 - Continue autonomously on clearly adjacent in-scope issues without waiting for another prompt.
 - Stop only when one of these conditions is true:
   1. all plan items are complete and validated,
