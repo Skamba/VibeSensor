@@ -18,7 +18,7 @@ def _load_translations() -> dict[str, dict[str, str]]:
     if not _DATA_FILE.exists():
         raise RuntimeError(f"Missing translation file: {_DATA_FILE}")
     try:
-        with open(_DATA_FILE, encoding="utf-8") as fh:
+        with _DATA_FILE.open(encoding="utf-8") as fh:
             data: dict[str, dict[str, str]] = json.load(fh)
     except json.JSONDecodeError as exc:
         raise RuntimeError(f"Invalid translation file: {_DATA_FILE}") from exc

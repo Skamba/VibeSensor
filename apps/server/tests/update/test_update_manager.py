@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
-import os
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -94,10 +94,8 @@ async def _cancel_task(mgr: UpdateManager) -> None:
     """Cancel and await a running update task."""
     if mgr._task:
         mgr._task.cancel()
-        try:
+        with contextlib.suppress(asyncio.CancelledError, Exception):
             await mgr._task
-        except (asyncio.CancelledError, Exception):
-            pass
 
 
 def _assert_hotspot_restored(runner: FakeRunner) -> None:
@@ -217,7 +215,7 @@ class TestUpdaterInterpreterSelection:
         venv_python = repo / "apps" / "server" / ".venv" / "bin" / "python3"
         venv_python.parent.mkdir(parents=True)
         venv_python.write_text("#!/usr/bin/env python3\n")
-        os.chmod(venv_python, 0o755)
+        venv_python.chmod(0o755)
         (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
         assert UpdateManager._reinstall_python_executable(repo) == str(venv_python)
 
@@ -232,7 +230,7 @@ class TestUpdaterInterpreterSelection:
         venv_python = repo / "apps" / "server" / ".venv" / "bin" / "python3"
         venv_python.parent.mkdir(parents=True)
         venv_python.write_text("#!/usr/bin/env python3\n")
-        os.chmod(venv_python, 0o755)
+        venv_python.chmod(0o755)
         assert not UpdateManager._is_reinstall_venv_ready(repo)
         (repo / "apps" / "server" / ".venv" / "pyvenv.cfg").write_text("home = /usr/bin\n")
         assert UpdateManager._is_reinstall_venv_ready(repo)

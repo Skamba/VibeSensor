@@ -66,12 +66,14 @@ def test_datagram_queue_backpressure_rate_limits_drop_warnings() -> None:
         samples=np.zeros((1, 3), dtype=np.int16),
     )
     proto.datagram_received(pkt, ("127.0.0.1", 10001))
-    with patch("vibesensor.udp_data_rx.time.monotonic", side_effect=[100.0, 101.0, 102.0, 115.0]):
-        with patch("vibesensor.udp_data_rx.LOGGER.warning") as warning_log:
-            proto.datagram_received(pkt, ("127.0.0.1", 10002))
-            proto.datagram_received(pkt, ("127.0.0.1", 10003))
-            proto.datagram_received(pkt, ("127.0.0.1", 10004))
-            proto.datagram_received(pkt, ("127.0.0.1", 10005))
+    with (
+        patch("vibesensor.udp_data_rx.time.monotonic", side_effect=[100.0, 101.0, 102.0, 115.0]),
+        patch("vibesensor.udp_data_rx.LOGGER.warning") as warning_log,
+    ):
+        proto.datagram_received(pkt, ("127.0.0.1", 10002))
+        proto.datagram_received(pkt, ("127.0.0.1", 10003))
+        proto.datagram_received(pkt, ("127.0.0.1", 10004))
+        proto.datagram_received(pkt, ("127.0.0.1", 10005))
 
     assert registry.note_server_queue_drop.call_count == 4
     assert warning_log.call_count == 2

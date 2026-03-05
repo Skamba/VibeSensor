@@ -28,6 +28,7 @@ Cache directory structure::
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
@@ -234,7 +235,7 @@ def _write_meta(bundle_dir: Path, meta: BundleMeta) -> None:
         os.fsync(fd)
     finally:
         os.close(fd)
-    os.replace(tmp, str(meta_path))
+    Path(tmp).replace(meta_path)
 
 
 class GitHubReleaseFetcher(GitHubAPIClient):
@@ -270,20 +271,16 @@ class GitHubReleaseFetcher(GitHubAPIClient):
                                 f"size limit; aborting download to prevent OOM."
                             )
                         tmp_f.write(chunk)
-                os.replace(tmp_path, str(dest))
+                Path(tmp_path).replace(dest)
             except BaseException:
                 # If os.fdopen() failed, the raw fd is still open; close it.
                 # Once os.fdopen() succeeds it owns the fd (closed by `with`).
                 if not fdopen_ok:
-                    try:
+                    with contextlib.suppress(OSError):
                         os.close(tmp_fd)
-                    except OSError:
-                        pass
                 # Clean up partial temp file on any failure
-                try:
-                    os.unlink(tmp_path)
-                except OSError:
-                    pass
+                with contextlib.suppress(OSError):
+                    Path(tmp_path).unlink()
                 raise
 
     def find_release(self) -> dict[str, Any]:
@@ -512,7 +509,7 @@ def _dir_sha256(directory: Path) -> str:
         if fpath.is_file():
             _update(str(fpath.relative_to(directory)).encode())
             _update(b"\0")  # separator between path and content
-            with open(fpath, "rb") as f:
+            with fpath.open("rb") as f:
                 while True:
                     chunk = f.read(65536)
                     if not chunk:
