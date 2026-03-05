@@ -55,9 +55,7 @@ def _wait_http_ok(url: str, timeout_s: float = 20.0) -> None:
     raise RuntimeError(f"Server did not become ready: {url}")
 
 
-def _open_app(
-    driver: webdriver.Remote, live_server: dict[str, object]
-) -> WebDriverWait:
+def _open_app(driver: webdriver.Remote, live_server: dict[str, object]) -> WebDriverWait:
     """Navigate to the live server root and return a ``WebDriverWait``."""
     driver.get(f"{live_server['base_url']}/")
     return WebDriverWait(driver, _DEFAULT_WAIT_S)

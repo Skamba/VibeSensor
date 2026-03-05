@@ -45,9 +45,14 @@ _ROUNDTRIP_CASES = [
     pytest.param(
         PeakRow,
         dict(
-            rank="1", system="wheel", freq_hz="42.3",
-            order="1x", peak_db="15.2", strength_db="12.0",
-            speed_band="80-100 km/h", relevance="high",
+            rank="1",
+            system="wheel",
+            freq_hz="42.3",
+            order="1x",
+            peak_db="15.2",
+            strength_db="12.0",
+            speed_band="80-100 km/h",
+            relevance="high",
         ),
         id="PeakRow",
     ),

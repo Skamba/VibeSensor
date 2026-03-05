@@ -422,14 +422,10 @@ def _compute_matched_speed_phase_evidence(
     if focused_speed_band and not strongest_speed_band:
         strongest_speed_band = focused_speed_band
 
-    matched_phase_strs = [
-        str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")
-    ]
+    matched_phase_strs = [str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")]
     _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_val)
     phase_evidence: dict[str, Any] = {
-        "cruise_fraction": _cruise_matched / len(matched_phase_strs)
-        if matched_phase_strs
-        else 0.0,
+        "cruise_fraction": _cruise_matched / len(matched_phase_strs) if matched_phase_strs else 0.0,
         "phases_detected": sorted(set(matched_phase_strs)),
     }
     dominant_phase: str | None = None

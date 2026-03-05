@@ -146,6 +146,7 @@ def test_no_fault_ramp_baseline(
 # wheel, but engine/driveline should NOT appear at medium+ confidence.
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @_param_profile
 @_param_corner
 @_param_speed
@@ -467,9 +468,7 @@ def test_ambiguous_dual_frequency_low_confidence(profile: dict[str, Any]) -> Non
     ],
     ids=["4-non-wheel", "4-wheel+4-non-wheel"],
 )
-def test_noise_only_no_wheel_fault(
-    profile: dict[str, Any], sensors: list[str], label: str
-) -> None:
+def test_noise_only_no_wheel_fault(profile: dict[str, Any], sensors: list[str], label: str) -> None:
     """Noise-only on non-wheel or mixed sensor sets → no wheel fault.
 
     2 scenarios (previously two separate test functions)

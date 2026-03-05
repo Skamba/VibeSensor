@@ -105,7 +105,10 @@ class TestCarConfig:
         ids=["whitespace-name", "empty-name", "whitespace-type"],
     )
     def test_blank_field_falls_back_to_default(
-        self, data: dict, field: str, fallback: str,
+        self,
+        data: dict,
+        field: str,
+        fallback: str,
     ) -> None:
         car = CarConfig.from_dict(data)
         assert getattr(car, field) == fallback

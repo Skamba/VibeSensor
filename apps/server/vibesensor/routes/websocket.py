@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import TYPE_CHECKING
@@ -16,6 +17,12 @@ if TYPE_CHECKING:
 __all__ = ["create_websocket_routes"]
 
 LOGGER = logging.getLogger(__name__)
+
+# Idle receive timeout: if a connected client sends no message for this many
+# seconds the server assumes the connection is a zombie (TCP half-open) and
+# closes it.  Normal dashboard sessions only send messages when changing the
+# selected sensor, so this is intentionally long.
+_RECEIVE_IDLE_TIMEOUT_S: float = 300.0
 
 
 def create_websocket_routes(state: RuntimeState) -> APIRouter:
@@ -34,7 +41,18 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
         _loads = json.loads
         try:
             while True:
-                message = await ws.receive_text()
+                try:
+                    message = await asyncio.wait_for(
+                        ws.receive_text(),
+                        timeout=_RECEIVE_IDLE_TIMEOUT_S,
+                    )
+                except TimeoutError:
+                    LOGGER.debug(
+                        "WebSocket client idle for %.0fs; closing zombie connection.",
+                        _RECEIVE_IDLE_TIMEOUT_S,
+                    )
+                    await ws.close()
+                    return
                 try:
                     payload = _loads(message)
                 except json.JSONDecodeError:

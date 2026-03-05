@@ -148,9 +148,7 @@ class SeverityMatrix:
             cell = matrix[event.source_key][event.severity_key]
             cell["count"] += 1
             contributors = cell["contributors"]
-            contributors[event.contributor_label] = (
-                contributors.get(event.contributor_label, 0) + 1
-            )
+            contributors[event.contributor_label] = contributors.get(event.contributor_label, 0) + 1
         for event in seconds_events:
             matrix[event.source_key][event.severity_key]["seconds"] += event.dt_seconds
         self._matrix = matrix

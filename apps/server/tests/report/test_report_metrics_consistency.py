@@ -466,7 +466,9 @@ class TestAllFiveScenariosPass:
     """Run all 5 scenarios and assert all consistency checks pass."""
 
     @pytest.fixture(params=sorted(_SCENARIO_BUILDERS), scope="class")
-    def named_scenario(self, request: pytest.FixtureRequest) -> tuple[str, dict, ReportTemplateData]:
+    def named_scenario(
+        self, request: pytest.FixtureRequest
+    ) -> tuple[str, dict, ReportTemplateData]:
         name: str = request.param
         summary, rd = _SCENARIO_BUILDERS[name]()
         return name, summary, rd

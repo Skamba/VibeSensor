@@ -316,9 +316,7 @@ def _extract_run_context(
 
     findings = [f for f in summary.get("findings", []) if isinstance(f, dict)]
     findings_non_ref = [
-        f
-        for f in findings
-        if not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
+        f for f in findings if not str(f.get("finding_id") or "").strip().upper().startswith("REF_")
     ]
     top_causes_all = [c for c in summary.get("top_causes", []) if isinstance(c, dict)]
     top_causes_non_ref = [
@@ -399,14 +397,10 @@ def _build_next_steps_from_summary(
             confirm_raw = step.get("confirm") or ""
             falsify_raw = step.get("falsify") or ""
             confirm = (
-                _resolve_i18n(lang, confirm_raw)
-                if _is_i18n_ref(confirm_raw)
-                else str(confirm_raw)
+                _resolve_i18n(lang, confirm_raw) if _is_i18n_ref(confirm_raw) else str(confirm_raw)
             )
             falsify = (
-                _resolve_i18n(lang, falsify_raw)
-                if _is_i18n_ref(falsify_raw)
-                else str(falsify_raw)
+                _resolve_i18n(lang, falsify_raw) if _is_i18n_ref(falsify_raw) else str(falsify_raw)
             )
             next_steps.append(
                 NextStep(

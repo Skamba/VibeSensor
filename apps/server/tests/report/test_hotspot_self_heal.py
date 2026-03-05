@@ -195,17 +195,23 @@ def _collect_health_for(
     [
         pytest.param(
             {("systemctl", "is-active", "NetworkManager"): [_err("inactive")]},
-            "nm_running", False, "networkmanager_down",
+            "nm_running",
+            False,
+            "networkmanager_down",
             id="nm_stopped",
         ),
         pytest.param(
             {("nmcli", "-t", "-f", "WIFI", "general", "status"): [_ok("disabled")]},
-            "wifi_radio_on", False, "wifi_radio_off",
+            "wifi_radio_on",
+            False,
+            "wifi_radio_off",
             id="wifi_radio_off",
         ),
         pytest.param(
             {("rfkill", "list"): [_ok("Soft blocked: yes\nHard blocked: no")]},
-            "rfkill_blocked", True, "rfkill_blocked",
+            "rfkill_blocked",
+            True,
+            "rfkill_blocked",
             id="rfkill_blocked",
         ),
         pytest.param(
@@ -213,14 +219,20 @@ def _collect_health_for(
                 ("nmcli", "-t", "-f", "NAME", "connection", "show"): [_ok("OtherConn\n")],
                 ("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"): [_ok("")],
             },
-            "ap_conn_exists", False, "ap_connection_missing",
+            "ap_conn_exists",
+            False,
+            "ap_connection_missing",
             id="ap_connection_missing",
         ),
         pytest.param(
-            {("ip", "link", "show", "dev", "wlan0"): [
-                _ok("2: wlan0: <BROADCAST,MULTICAST> mtu 1500 state DOWN"),
-            ]},
-            "iface_up", False, "iface_down",
+            {
+                ("ip", "link", "show", "dev", "wlan0"): [
+                    _ok("2: wlan0: <BROADCAST,MULTICAST> mtu 1500 state DOWN"),
+                ]
+            },
+            "iface_up",
+            False,
+            "iface_down",
             id="iface_down",
         ),
     ],
@@ -238,24 +250,36 @@ def test_collect_health_single_fault(
 
 
 def test_collect_health_ap_present_but_inactive(tmp_path: Path) -> None:
-    state = _collect_health_for(tmp_path, {
-        ("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"): [
-            _ok("uplink:wlan0\n"),
-        ],
-    })
+    state = _collect_health_for(
+        tmp_path,
+        {
+            ("nmcli", "-t", "-f", "NAME,DEVICE", "connection", "show", "--active"): [
+                _ok("uplink:wlan0\n"),
+            ],
+        },
+    )
     assert state.ap_conn_exists
     assert not state.ap_conn_active
     assert "ap_connection_inactive" in state.issues
 
 
 def test_collect_health_dhcp_broken_signal(tmp_path: Path) -> None:
-    state = _collect_health_for(tmp_path, {
-        ("pgrep", "-af", "dnsmasq"): [_err(stderr="not found")],
-        (
-            "journalctl", "-u", "NetworkManager",
-            "--since", "-5 min", "--no-pager", "-n", "120",
-        ): [_ok("dnsmasq failed to start: no address range available for DHCP request")],
-    })
+    state = _collect_health_for(
+        tmp_path,
+        {
+            ("pgrep", "-af", "dnsmasq"): [_err(stderr="not found")],
+            (
+                "journalctl",
+                "-u",
+                "NetworkManager",
+                "--since",
+                "-5 min",
+                "--no-pager",
+                "-n",
+                "120",
+            ): [_ok("dnsmasq failed to start: no address range available for DHCP request")],
+        },
+    )
     assert not state.dhcp_ok
     assert state.dhcp_log_signal == "dhcp_no_range"
 

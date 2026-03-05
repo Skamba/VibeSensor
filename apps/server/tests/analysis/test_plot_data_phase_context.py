@@ -42,7 +42,6 @@ def _make_summary(samples: list[dict], raw_sample_rate_hz: int = 200) -> dict:
     }
 
 
-
 _VALID_PHASES = frozenset(p.value for p in DrivingPhase)
 _SEGMENT_REQUIRED_KEYS = {"phase", "start_t_s", "end_t_s"}
 

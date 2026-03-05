@@ -83,6 +83,7 @@ def strength_text(
 # Certainty labels  (confidence 0–1 → label + short reason)
 # ---------------------------------------------------------------------------
 
+
 def _is_negligible_band(key: str | None) -> bool:
     """Return *True* when *key* denotes the negligible vibration band."""
     return (key or "").strip().lower() == "negligible"

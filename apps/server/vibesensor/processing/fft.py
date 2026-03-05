@@ -105,11 +105,7 @@ def top_peaks(
     # Vectorised interior-peak detection (replaces per-element Python loop).
     if smoothed.size > 2:
         interior = smoothed[1:-1]
-        mask = (
-            (interior >= threshold)
-            & (interior > smoothed[:-2])
-            & (interior >= smoothed[2:])
-        )
+        mask = (interior >= threshold) & (interior > smoothed[:-2]) & (interior >= smoothed[2:])
         peak_idx: list[int] = (np.flatnonzero(mask) + 1).tolist()
     else:
         peak_idx = []

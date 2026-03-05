@@ -80,7 +80,9 @@ _TOP_CAUSE_REQUIRED_FIELDS = (
 
 
 def _assert_confidence_valid(
-    d: dict[str, Any], field: str, confidence_range: tuple[float, float],
+    d: dict[str, Any],
+    field: str,
+    confidence_range: tuple[float, float],
 ) -> None:
     """Assert *field* in *d* is a finite number within *confidence_range*."""
     conf = d.get(field, 0.0)
@@ -91,21 +93,19 @@ def _assert_confidence_valid(
 
 
 def _assert_source_contains(
-    d: dict[str, Any], field: str, expected: str,
+    d: dict[str, Any],
+    field: str,
+    expected: str,
 ) -> None:
     """Assert *field* in *d* contains *expected* (case-insensitive)."""
     source = str(d.get(field, "")).lower()
-    assert expected.lower() in source, (
-        f"Expected source containing {expected!r}, got {source!r}"
-    )
+    assert expected.lower() in source, f"Expected source containing {expected!r}, got {source!r}"
 
 
 def _assert_location_contains(d: dict[str, Any], expected: str) -> None:
     """Assert ``strongest_location`` in *d* contains *expected* (case-insensitive)."""
     loc = str(d.get("strongest_location") or "").lower()
-    assert expected.lower() in loc, (
-        f"Expected location containing {expected!r}, got {loc!r}"
-    )
+    assert expected.lower() in loc, f"Expected location containing {expected!r}, got {loc!r}"
 
 
 def assert_finding_contract(

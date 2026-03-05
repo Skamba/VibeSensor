@@ -49,9 +49,7 @@ def test_location_hotspots_uses_db_unit(
     findings: list[dict[str, object]],
     expect_no_g_in_summary: bool,
 ) -> None:
-    rows, summary, _, _ = location_hotspots(
-        summaries, findings, tr=_tr, text_fn=_text_fn
-    )
+    rows, summary, _, _ = location_hotspots(summaries, findings, tr=_tr, text_fn=_text_fn)
 
     assert rows[0]["unit"] == "db"
     assert "peak_db" in rows[0]
