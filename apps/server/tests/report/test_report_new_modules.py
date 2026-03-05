@@ -4,10 +4,19 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-from typing import Any
 
 import pytest
-from _report_helpers import RUN_END, minimal_summary, write_jsonl
+from _report_helpers import (
+    RUN_END,
+    minimal_summary,
+    write_jsonl,
+)
+from _report_helpers import (
+    report_run_metadata as _run_metadata,
+)
+from _report_helpers import (
+    report_sample as _base_sample,
+)
 from pypdf import PdfReader
 
 from vibesensor.analysis import summarize_log
@@ -162,70 +171,13 @@ def test_why_parts_listed_nl() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _run_metadata(run_id: str = "run-01", **kwargs: Any) -> dict:
-    defaults: dict[str, Any] = {
-        "record_type": "run_metadata",
-        "schema_version": "v2-jsonl",
-        "run_id": run_id,
-        "start_time_utc": "2026-02-15T12:00:00+00:00",
-        "end_time_utc": "2026-02-15T12:01:00+00:00",
-        "sensor_model": "ADXL345",
-        "raw_sample_rate_hz": 800,
-        "feature_interval_s": 0.5,
-        "fft_window_size_samples": 2048,
-        "fft_window_type": "hann",
-        "peak_picker_method": "max_peak_amp_across_axes",
-        "accel_scale_g_per_lsb": 1.0 / 256.0,
-        "units": {
-            "t_s": "s",
-            "speed_kmh": "km/h",
-            "accel_x_g": "g",
-            "accel_y_g": "g",
-            "accel_z_g": "g",
-            "vibration_strength_db": "dB",
-        },
-        "amplitude_definitions": {
-            "vibration_strength_db": {
-                "statistic": "Peak band RMS vs noise floor",
-                "units": "dB",
-                "definition": "20*log10((peak_band_rms + eps) / (floor + eps))",
-            }
-        },
-    }
-    defaults.update(kwargs)
-    defaults.setdefault("incomplete_for_order_analysis", defaults.get("raw_sample_rate_hz") is None)
-    return defaults
-
-
 def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: float) -> dict:
-    return {
-        "record_type": "sample",
-        "schema_version": "v2-jsonl",
-        "run_id": "run-01",
-        "timestamp_utc": f"2026-02-15T12:00:{idx:02d}+00:00",
-        "t_s": idx * 0.5,
-        "client_id": "c1",
-        "client_name": "front-left wheel",
-        "speed_kmh": speed_kmh,
-        "gps_speed_kmh": speed_kmh,
-        "engine_rpm": None,
-        "gear": None,
-        "accel_x_g": 0.03,
-        "accel_y_g": 0.02,
-        "accel_z_g": 0.01,
-        "dominant_freq_hz": dominant_freq_hz,
-        "dominant_axis": "x",
-        "top_peaks": [
-            {
-                "hz": dominant_freq_hz,
-                "amp": peak_amp_g,
-                "vibration_strength_db": 22.0,
-                "strength_bucket": "l2",
-            },
-        ],
-        "vibration_strength_db": 22.0,
-        "strength_bucket": "l2",
-    }
+    return _base_sample(
+        idx,
+        speed_kmh=speed_kmh,
+        dominant_freq_hz=dominant_freq_hz,
+        peak_amp_g=peak_amp_g,
+    )
 
 
 def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
