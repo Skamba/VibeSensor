@@ -1,4 +1,4 @@
-# ruff: noqa: E402, E501, F811
+# ruff: noqa: E402, E501
 from __future__ import annotations
 
 """Consolidated audits regression tests."""
