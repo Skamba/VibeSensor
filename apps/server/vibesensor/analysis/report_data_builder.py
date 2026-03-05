@@ -195,8 +195,7 @@ def _top_strength_values(
         for row in summary.get("sensor_intensity_by_location", [])
         if isinstance(row, dict)
     ]
-    sensor_db = max((value for value in sensor_rows if value is not None), default=None)
-    return sensor_db
+    return max((value for value in sensor_rows if value is not None), default=None)
 
 
 def _dominant_phase(phase_info: dict | None) -> str | None:

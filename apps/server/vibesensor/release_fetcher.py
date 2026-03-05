@@ -135,7 +135,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
         try:
             with urlopen(req, timeout=300) as resp:
                 total = 0
-                with open(tmp, "wb") as f:
+                with tmp.open("wb") as f:
                     while True:
                         chunk = resp.read(chunk_size)
                         if not chunk:
@@ -146,7 +146,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
                         f.write(chunk)
                     f.flush()
                     os.fsync(f.fileno())
-            os.replace(tmp, dest)
+            tmp.replace(dest)
         except BaseException:
             tmp.unlink(missing_ok=True)
             raise
@@ -215,7 +215,7 @@ class ServerReleaseFetcher(GitHubAPIClient):
         self._download_asset(release.asset_url, dest)
 
         h = hashlib.sha256()
-        with open(dest, "rb") as f:
+        with dest.open("rb") as f:
             for chunk in iter(lambda: f.read(_HASH_CHUNK_BYTES), b""):
                 h.update(chunk)
         sha = h.hexdigest()

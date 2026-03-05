@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -212,10 +213,8 @@ class TestNoSecretsInPersistedFile:
         with patch("shutil.which", _mock_which):
             mgr.start("TestNet", secret_password)
             assert mgr._task is not None
-            try:
+            with contextlib.suppress(TimeoutError, asyncio.CancelledError):
                 await asyncio.wait_for(mgr._task, timeout=15)
-            except (TimeoutError, asyncio.CancelledError):
-                pass
 
         assert state_path.is_file(), "State file should have been created"
         contents = state_path.read_text(encoding="utf-8")

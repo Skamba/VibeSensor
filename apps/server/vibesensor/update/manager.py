@@ -99,7 +99,7 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
         hasher.update(str(relative.as_posix()).encode("utf-8"))
         hasher.update(b"\0")
         try:
-            with open(path, "rb") as fh:
+            with path.open("rb") as fh:
                 while True:
                     chunk = fh.read(65536)
                     if not chunk:

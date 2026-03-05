@@ -7,6 +7,7 @@ testable and ``app.py`` stays a thin FastAPI wiring layer.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 from dataclasses import dataclass, field
 from typing import Any
@@ -407,10 +408,8 @@ class RuntimeState:
                 task.cancel()
         for task in managed:
             if task is not None and not task.done():
-                try:
+                with contextlib.suppress(asyncio.CancelledError, Exception):
                     await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
-                except (asyncio.CancelledError, Exception):
-                    pass
 
         self.metrics_logger.stop_logging()
         analysis_timeout_s = self.config.logging.shutdown_analysis_timeout_s

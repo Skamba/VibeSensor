@@ -129,15 +129,15 @@ def location_hotspots(
         monitored_count >= 3
         and active_count == monitored_count
         and "wheel" in strongest_loc.lower()
+        and len(hotspot_rows) >= 2
     ):
-        if len(hotspot_rows) >= 2:
-            second_peak = float(hotspot_rows[1]["peak_value"])
-            if (
-                second_peak > 0
-                and (strongest_peak / second_peak) >= _PEAK_RATIO_LOCALIZATION_THRESHOLD
-            ):
-                summary_text += tr(
-                    "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST",
-                    strongest_loc=strongest_loc,
-                )
+        second_peak = float(hotspot_rows[1]["peak_value"])
+        if (
+            second_peak > 0
+            and (strongest_peak / second_peak) >= _PEAK_RATIO_LOCALIZATION_THRESHOLD
+        ):
+            summary_text += tr(
+                "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST",
+                strongest_loc=strongest_loc,
+            )
     return hotspot_rows, summary_text, active_count, monitored_count

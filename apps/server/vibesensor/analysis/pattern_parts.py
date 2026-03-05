@@ -110,9 +110,8 @@ def _order_bucket(order_text: str) -> str:
         return "2x"
     # Any numeric > 2 or general "higher"
     for token in text.split():
-        if token.endswith("x") and token[:-1].isdigit():
-            if int(token[:-1]) > 2:
-                return "higher"
+        if token.endswith("x") and token[:-1].isdigit() and int(token[:-1]) > 2:
+            return "higher"
     return "*"
 
 

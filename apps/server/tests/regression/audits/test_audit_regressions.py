@@ -459,12 +459,14 @@ class TestFinding10_NoPipelineErrorIsolation:
         ]
 
         # Patch _build_findings to raise an exception
-        with patch(
-            "vibesensor.analysis.summary._build_findings",
-            side_effect=RuntimeError("simulated findings failure"),
+        with (
+            patch(
+                "vibesensor.analysis.summary._build_findings",
+                side_effect=RuntimeError("simulated findings failure"),
+            ),
+            pytest.raises(RuntimeError, match="simulated findings failure"),
         ):
-            with pytest.raises(RuntimeError, match="simulated findings failure"):
-                summarize_run_data(metadata, samples, lang="en", file_name="test")
+            summarize_run_data(metadata, samples, lang="en", file_name="test")
         # Bug: the entire summary is lost; no partial results are available
 
 
