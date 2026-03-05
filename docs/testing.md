@@ -26,12 +26,12 @@ tests/
 ├── metrics_log/             # vibesensor/metrics_log/*
 ├── processing/              # vibesensor/processing/* — FFT, buffers, time-align
 ├── protocol/                # vibesensor/protocol.py, UDP tx/rx
-├── regression/              # Bug-fix regressions grouped by intent:
-│   ├── audits/              # Coverage and report audits
-│   ├── analysis/            # Analysis/scoring/order regression packs
-│   ├── cross_cutting/       # Multi-subsystem regression packs
-│   ├── report/              # PDF/report-data regression packs
-│   └── runtime/             # Runtime/storage/API guard regressions
+├── regression/              # Bug-fix regressions grouped by intent (single pack file per folder):
+│   ├── analysis/test_analysis_regressions.py
+│   ├── audits/test_audit_regressions.py
+│   ├── cross_cutting/test_cross_cutting_regressions.py
+│   ├── report/test_report_regressions.py
+│   └── runtime/test_runtime_regressions.py
 ├── report/                  # vibesensor/report/* — PDF, i18n, hotspots
 ├── update/                  # vibesensor/update/*, firmware_cache, esp_flash
 └── websocket/               # vibesensor/ws_hub.py, ws_models, schema export
@@ -79,7 +79,7 @@ tests/
 | Category          | Directory            | Description                                |
 |-------------------|----------------------|--------------------------------------------|
 | Integration       | `tests/integration/` | Multi-module scenarios, level tests        |
-| Regression        | `tests/regression/`  | Bug-fix regressions grouped into `analysis/`, `audits/`, `cross_cutting/`, `report/`, `runtime/` |
+| Regression        | `tests/regression/`  | Bug-fix regressions in five consolidated intent packs (`analysis`, `audits`, `cross_cutting`, `report`, `runtime`) |
 | Architecture      | `tests/hygiene/`     | Repo hygiene, architecture guards, smoke   |
 | End-to-end        | `tests/e2e/`         | Selenium browser tests                     |
 
@@ -118,8 +118,10 @@ make test-all
    `_paths` instead of using fragile `Path(__file__).parents[N]` chains.
 6. **For cross-cutting tests** that span multiple modules, use
    `tests/integration/` (scenarios) or `tests/regression/` (bug fixes).
-   Under regression, place files in the matching intent folder:
-   `analysis/`, `audits/`, `cross_cutting/`, `report/`, or `runtime/`.
+   Under regression, add tests to the matching consolidated intent pack file:
+   `analysis/test_analysis_regressions.py`, `audits/test_audit_regressions.py`,
+   `cross_cutting/test_cross_cutting_regressions.py`,
+   `report/test_report_regressions.py`, or `runtime/test_runtime_regressions.py`.
 
 ## Naming conventions
 
