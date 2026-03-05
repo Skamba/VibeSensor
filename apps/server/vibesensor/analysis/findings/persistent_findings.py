@@ -66,8 +66,12 @@ _PATTERNED_MAX_BURSTINESS = 3.0
 # ---------------------------------------------------------------------------
 
 
-def _nested_int_dd() -> defaultdict:
-    """Factory for a nested defaultdict(int); used with defaultdict(_nested_int_dd)."""
+def _make_nested_int_defaultdict() -> defaultdict:
+    """Factory for a nested defaultdict(int).
+
+    Use as ``defaultdict(_make_nested_int_defaultdict)`` to get a
+    two-level defaultdict where inner values are ints.
+    """
     return defaultdict(int)
 
 
@@ -97,9 +101,10 @@ class _PeakBinStats:
         self.bin_floors: dict[float, list[float]] = defaultdict(list)
         self.bin_speeds: dict[float, list[float]] = defaultdict(list)
         self.bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
-        self.bin_location_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-        self.bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-        self.bin_phase_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
+        _dd_factory = _make_nested_int_defaultdict
+        self.bin_location_counts: dict[float, dict[str, int]] = defaultdict(_dd_factory)
+        self.bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(_dd_factory)
+        self.bin_phase_counts: dict[float, dict[str, int]] = defaultdict(_dd_factory)
         self.total_speed_bin_counts: dict[str, int] = defaultdict(int)
         self.total_locations: set[str] = set()
         self.total_location_sample_counts: dict[str, int] = defaultdict(int)
