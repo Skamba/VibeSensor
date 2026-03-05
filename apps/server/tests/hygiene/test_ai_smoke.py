@@ -95,7 +95,9 @@ _BUILD_WRAPPER_CHECKS: list[tuple[str, str]] = [
     ids=[c[0][:40] for c in _BUILD_WRAPPER_CHECKS],
 )
 def test_smoke_build_wrapper_asserts_requirement(
-    build_sh_text: str, substring: str, msg: str,
+    build_sh_text: str,
+    substring: str,
+    msg: str,
 ) -> None:
     assert substring in build_sh_text, msg
 

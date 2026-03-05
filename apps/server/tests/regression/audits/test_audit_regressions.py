@@ -930,7 +930,8 @@ class TestHistoryDBFinalizeNoOp:
         history_db.finalize_run("nonexistent", "2026-01-01T00:00:00Z")
 
     def test_finalize_run_with_metadata_noop_when_not_recording(
-        self, history_db: HistoryDB,
+        self,
+        history_db: HistoryDB,
     ) -> None:
         history_db.create_run("r1", "2026-01-01T00:00:00Z", {"v": 1})
         history_db.finalize_run("r1", "2026-01-01T00:05:00Z")

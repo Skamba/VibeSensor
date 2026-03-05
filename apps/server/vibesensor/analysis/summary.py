@@ -550,9 +550,7 @@ def _compute_accel_statistics(
 ) -> dict[str, Any]:
     """Compute per-axis accel lists, magnitude, amplitude metric, saturation and mean/variance."""
     sensor_limit = _sensor_limit_g(sensor_model)
-    sat_threshold = (
-        sensor_limit * _SATURATION_FRACTION if sensor_limit is not None else None
-    )
+    sat_threshold = sensor_limit * _SATURATION_FRACTION if sensor_limit is not None else None
 
     # Single pass over samples to collect all per-axis values, magnitude,
     # vibration-strength metric, and saturation count — replacing six
@@ -581,9 +579,7 @@ def _compute_accel_statistics(
         if x is not None and y is not None and z is not None:
             accel_mag_vals.append(_sqrt(x * x + y * y + z * z))
             if sat_threshold is not None and (
-                abs(x) >= sat_threshold
-                or abs(y) >= sat_threshold
-                or abs(z) >= sat_threshold
+                abs(x) >= sat_threshold or abs(y) >= sat_threshold or abs(z) >= sat_threshold
             ):
                 sat_count += 1
         amp = _vib_db(sample)

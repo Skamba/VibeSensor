@@ -335,12 +335,8 @@ class SignalProcessor:
         if time_window_detrended.shape[1] > 0:
             # Vectorised RMS and peak-to-peak across all three axes at once,
             # replacing three individual per-axis NumPy reduction calls.
-            rms_vals = np.sqrt(
-                np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1)
-            )
-            p2p_vals = (
-                np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
-            )
+            rms_vals = np.sqrt(np.mean(np.square(time_window_detrended, dtype=np.float64), axis=1))
+            p2p_vals = np.max(time_window_detrended, axis=1) - np.min(time_window_detrended, axis=1)
             for axis_idx, axis in enumerate(AXES):
                 metrics[axis] = {
                     "rms": _finite_or_zero(float(rms_vals[axis_idx])),

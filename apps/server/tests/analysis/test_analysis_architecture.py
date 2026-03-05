@@ -156,16 +156,18 @@ def test_summarize_run_data_returns_expected_structure() -> None:
 # 4. No analysis module files exist outside the analysis folder
 # ---------------------------------------------------------------------------
 
-_ANALYSIS_ONLY_NAMES: frozenset[str] = frozenset({
-    "findings.py",
-    "order_analysis.py",
-    "phase_segmentation.py",
-    "plot_data.py",
-    "strength_labels.py",
-    "test_plan.py",
-    "pattern_parts.py",
-    "report_data_builder.py",
-})
+_ANALYSIS_ONLY_NAMES: frozenset[str] = frozenset(
+    {
+        "findings.py",
+        "order_analysis.py",
+        "phase_segmentation.py",
+        "plot_data.py",
+        "strength_labels.py",
+        "test_plan.py",
+        "pattern_parts.py",
+        "report_data_builder.py",
+    }
+)
 
 
 def test_no_analysis_files_outside_analysis_folder() -> None:

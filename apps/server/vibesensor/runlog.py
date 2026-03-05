@@ -180,9 +180,7 @@ def append_jsonl_records(
     with path.open("a", encoding="utf-8") as f:
         for index, record in enumerate(records, start=1):
             try:
-                line = _dumps(
-                    record, ensure_ascii=False, allow_nan=False, separators=_seps
-                )
+                line = _dumps(record, ensure_ascii=False, allow_nan=False, separators=_seps)
             except ValueError:
                 # NaN/Inf values — fall back to default serialisation so we
                 # never silently drop records mid-batch.

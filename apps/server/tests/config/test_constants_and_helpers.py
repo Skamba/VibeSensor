@@ -62,8 +62,12 @@ def test_wheel_hz_from_speed_kmh_basic() -> None:
         (10.0, 0.0, "mps"),
     ],
     ids=[
-        "kmh-zero-speed", "kmh-zero-circ", "kmh-neg-speed",
-        "kmh-neg-circ", "mps-zero-speed", "mps-zero-circ",
+        "kmh-zero-speed",
+        "kmh-zero-circ",
+        "kmh-neg-speed",
+        "kmh-neg-circ",
+        "mps-zero-speed",
+        "mps-zero-circ",
     ],
 )
 def test_wheel_hz_returns_none_for_invalid_input(speed: float, circ: float, func: str) -> None:

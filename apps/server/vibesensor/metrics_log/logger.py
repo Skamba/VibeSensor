@@ -46,6 +46,9 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 _MAX_HISTORY_CREATE_RETRIES = 5
+_DB_THREAD_TIMEOUT_S: float = 10.0
+"""Timeout for DB-bound asyncio.to_thread() calls; prevents a stalled DB from
+blocking the metrics-logger event loop indefinitely."""
 
 
 @dataclass
@@ -493,11 +496,14 @@ class MetricsLogger:
                     _live_start = self._live_start_mono_s
                     run_id_for_live = self._run_id or "live"
                 live_t_s = max(0.0, time.monotonic() - _live_start)
-                live_rows = await asyncio.to_thread(
-                    self._build_sample_records,
-                    run_id=run_id_for_live,
-                    t_s=live_t_s,
-                    timestamp_utc=timestamp_utc,
+                live_rows = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        self._build_sample_records,
+                        run_id=run_id_for_live,
+                        t_s=live_t_s,
+                        timestamp_utc=timestamp_utc,
+                    ),
+                    timeout=_DB_THREAD_TIMEOUT_S,
                 )
                 with self._lock:
                     if live_rows:
@@ -506,13 +512,16 @@ class MetricsLogger:
                 snapshot = self._session_snapshot()
                 if snapshot is not None:
                     run_id, start_time_utc, start_mono_s, generation = snapshot
-                    no_data_timeout = await asyncio.to_thread(
-                        self._append_records,
-                        run_id,
-                        start_time_utc,
-                        start_mono_s,
-                        session_generation=generation,
-                        prebuilt_rows=live_rows,
+                    no_data_timeout = await asyncio.wait_for(
+                        asyncio.to_thread(
+                            self._append_records,
+                            run_id,
+                            start_time_utc,
+                            start_mono_s,
+                            session_generation=generation,
+                            prebuilt_rows=live_rows,
+                        ),
+                        timeout=_DB_THREAD_TIMEOUT_S,
                     )
                     if no_data_timeout:
                         LOGGER.info(
@@ -521,6 +530,12 @@ class MetricsLogger:
                             self._no_data_timeout_s,
                         )
                         self.stop_logging(_only_if_generation=generation)
+            except TimeoutError:
+                self._set_last_write_error("metrics logger DB call timed out")
+                LOGGER.warning(
+                    "Metrics logger DB call exceeded %.1fs timeout; skipping tick.",
+                    _DB_THREAD_TIMEOUT_S,
+                )
             except Exception as exc:
                 self._set_last_write_error(f"metrics logger tick failed: {exc}")
                 LOGGER.warning(

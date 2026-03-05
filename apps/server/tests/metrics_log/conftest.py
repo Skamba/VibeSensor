@@ -137,9 +137,7 @@ class _FakeProcessor:
     def latest_sample_rate_hz(self, client_id: str):
         return 800
 
-    def clients_with_recent_data(
-        self, client_ids: list[str], max_age_s: float = 3.0
-    ) -> list[str]:
+    def clients_with_recent_data(self, client_ids: list[str], max_age_s: float = 3.0) -> list[str]:
         return list(client_ids)
 
 
@@ -188,9 +186,7 @@ class _FakeHistoryDB:
         self.updated_metadata.append((run_id, metadata))
         return True
 
-    def finalize_run_with_metadata(
-        self, run_id: str, end_time_utc: str, metadata: dict
-    ) -> None:
+    def finalize_run_with_metadata(self, run_id: str, end_time_utc: str, metadata: dict) -> None:
         self.updated_metadata.append((run_id, metadata))
         self.finalize_calls.append(run_id)
 

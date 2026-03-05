@@ -78,13 +78,9 @@ def test_variant_tire_overrides_valid() -> None:
         for v in entry["variants"]:
             label = _variant_label(entry, v)
             if "tire_width_mm" in v and v["tire_width_mm"] is not None:
-                assert 175 <= v["tire_width_mm"] <= 335, (
-                    f"{label} tire width out of range"
-                )
+                assert 175 <= v["tire_width_mm"] <= 335, f"{label} tire width out of range"
             if "tire_aspect_pct" in v and v["tire_aspect_pct"] is not None:
-                assert 20 <= v["tire_aspect_pct"] <= 65, (
-                    f"{label} aspect out of range"
-                )
+                assert 20 <= v["tire_aspect_pct"] <= 65, f"{label} aspect out of range"
             if "rim_in" in v and v["rim_in"] is not None:
                 assert 15 <= v["rim_in"] <= 22, f"{label} rim out of range"
 
