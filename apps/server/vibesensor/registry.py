@@ -180,15 +180,18 @@ class ClientRegistry:
     def _load_persisted_names(self) -> None:
         if self._db is None:
             return
+        try:
+            # Read from DB *outside* the registry lock so that incoming UDP
+            # frames during startup are not blocked waiting for DB I/O.
+            rows = self._db.list_client_names()
+        except Exception as exc:
+            LOGGER.warning("Could not load persisted client names from DB: %s", exc)
+            return
         with self._lock:
-            try:
-                rows = self._db.list_client_names()
-                for client_id, name in rows.items():
-                    clean = _sanitize_name(name)
-                    if clean:
-                        self._user_names[client_id] = clean
-            except Exception as exc:
-                LOGGER.warning("Could not load persisted client names from DB: %s", exc)
+            for client_id, name in rows.items():
+                clean = _sanitize_name(name)
+                if clean:
+                    self._user_names[client_id] = clean
 
     def _persist_name(self, client_id: str, name: str) -> None:
         if self._db is None:

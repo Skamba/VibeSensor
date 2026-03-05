@@ -35,7 +35,10 @@ def _has_log10_call(text: str) -> bool:
 
 
 def _assert_no_forbidden_strings(
-    pkg_dir: Path, forbidden: list[str], *, suffix: str = "*.py",
+    pkg_dir: Path,
+    forbidden: list[str],
+    *,
+    suffix: str = "*.py",
 ) -> None:
     """Assert none of *forbidden* substrings appear in any *suffix* files under *pkg_dir*."""
     for src_file in sorted(pkg_dir.rglob(suffix)):

@@ -147,7 +147,12 @@ def create_app(config_path: Path | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        await runtime.start()
+        try:
+            await runtime.start()
+        except Exception:
+            LOGGER.error("RuntimeState.start() failed; cleaning up before re-raise", exc_info=True)
+            await runtime.stop()
+            raise
         try:
             yield
         finally:

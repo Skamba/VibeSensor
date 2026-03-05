@@ -328,13 +328,27 @@ class LoggingConfig:
 
     def __post_init__(self) -> None:
         if not isinstance(self.metrics_log_hz, int) or self.metrics_log_hz < 1:
-            object.__setattr__(self, "metrics_log_hz", max(1, int(self.metrics_log_hz or 1)))
+            clamped = max(1, int(self.metrics_log_hz or 1))
+            LOGGER.warning(
+                "logging.metrics_log_hz=%r is invalid — clamped to %s",
+                self.metrics_log_hz,
+                clamped,
+            )
+            object.__setattr__(self, "metrics_log_hz", clamped)
         if not isinstance(self.no_data_timeout_s, NUMERIC_TYPES) or self.no_data_timeout_s < 0:
+            LOGGER.warning(
+                "logging.no_data_timeout_s=%r is invalid — clamped to 15.0",
+                self.no_data_timeout_s,
+            )
             object.__setattr__(self, "no_data_timeout_s", 15.0)
         if (
             not isinstance(self.shutdown_analysis_timeout_s, NUMERIC_TYPES)
             or self.shutdown_analysis_timeout_s < 0
         ):
+            LOGGER.warning(
+                "logging.shutdown_analysis_timeout_s=%r is invalid — clamped to 30.0",
+                self.shutdown_analysis_timeout_s,
+            )
             object.__setattr__(self, "shutdown_analysis_timeout_s", 30.0)
 
 

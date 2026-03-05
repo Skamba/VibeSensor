@@ -175,9 +175,7 @@ class PostAnalysisWorker:
             if metadata is None:
                 LOGGER.warning("Cannot analyse run %s: metadata not found", run_id)
                 try:
-                    db.store_analysis_error(
-                        run_id, "Metadata not found or corrupt; cannot analyse"
-                    )
+                    db.store_analysis_error(run_id, "Metadata not found or corrupt; cannot analyse")
                 except Exception:
                     LOGGER.warning(
                         "Failed to store analysis error for run %s", run_id, exc_info=True

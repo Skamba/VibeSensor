@@ -84,10 +84,14 @@ def _make_overlap_samples(
         t = float(i)
         for sensor in sensors:
             if sensor == fault_sensor:
-                peaks = [
-                    {"hz": whz, "amp": wheel_amp},
-                    {"hz": whz * 2, "amp": wheel_amp * 0.4},
-                ] + bg_peaks + _fn
+                peaks = (
+                    [
+                        {"hz": whz, "amp": wheel_amp},
+                        {"hz": whz * 2, "amp": wheel_amp * 0.4},
+                    ]
+                    + bg_peaks
+                    + _fn
+                )
                 vib_db = fault_vib_db
             else:
                 peaks = bg_peaks + _bn
@@ -121,9 +125,14 @@ def _make_engine_plus_wheel_samples(
     ehz = engine_hz(speed_kmh)
     bg = [{"hz": ehz, "amp": engine_amp}, {"hz": ehz * 2, "amp": engine_amp * 0.5}]
     return _make_overlap_samples(
-        fault_sensor=fault_sensor, sensors=sensors, speed_kmh=speed_kmh,
-        n_samples=n_samples, wheel_amp=wheel_amp, bg_peaks=bg,
-        fault_vib_db=wheel_vib_db, noise_vib_db=noise_vib_db,
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        wheel_amp=wheel_amp,
+        bg_peaks=bg,
+        fault_vib_db=wheel_vib_db,
+        noise_vib_db=noise_vib_db,
         engine_rpm=ehz * 60.0,
     )
 
@@ -142,11 +151,19 @@ def _make_driveshaft_plus_wheel_samples(
     """Build samples with wheel fault + driveshaft-order vibration."""
     whz_val = wheel_hz(speed_kmh)
     dshaft_hz = whz_val * _DRIVESHAFT_WHEEL_RATIO
-    bg = [{"hz": dshaft_hz, "amp": driveshaft_amp}, {"hz": dshaft_hz * 2, "amp": driveshaft_amp * 0.4}]
+    bg = [
+        {"hz": dshaft_hz, "amp": driveshaft_amp},
+        {"hz": dshaft_hz * 2, "amp": driveshaft_amp * 0.4},
+    ]
     return _make_overlap_samples(
-        fault_sensor=fault_sensor, sensors=sensors, speed_kmh=speed_kmh,
-        n_samples=n_samples, wheel_amp=wheel_amp, bg_peaks=bg,
-        fault_vib_db=wheel_vib_db, noise_vib_db=noise_vib_db,
+        fault_sensor=fault_sensor,
+        sensors=sensors,
+        speed_kmh=speed_kmh,
+        n_samples=n_samples,
+        wheel_amp=wheel_amp,
+        bg_peaks=bg,
+        fault_vib_db=wheel_vib_db,
+        noise_vib_db=noise_vib_db,
     )
 
 
@@ -244,11 +261,16 @@ def test_three_systems_simultaneous(corner: str, speed: float) -> None:
         {"hz": dshaft_hz, "amp": 0.02},
     ]
     samples = _make_overlap_samples(
-        fault_sensor=sensor, sensors=ALL_WHEEL_SENSORS, speed_kmh=speed,
-        wheel_amp=0.06, bg_peaks=bg,
-        fault_vib_db=26.0, noise_vib_db=10.0,
+        fault_sensor=sensor,
+        sensors=ALL_WHEEL_SENSORS,
+        speed_kmh=speed,
+        wheel_amp=0.06,
+        bg_peaks=bg,
+        fault_vib_db=26.0,
+        noise_vib_db=10.0,
         engine_rpm=ehz * 60.0,
-        fault_noise=[], bg_noise=_NOISE_SINGLE,
+        fault_noise=[],
+        bg_noise=_NOISE_SINGLE,
     )
 
     summary = run_analysis(samples)
@@ -341,10 +363,14 @@ def test_profile_engine_plus_wheel(profile: dict[str, Any], corner: str) -> None
     ehz = whz * profile["final_drive_ratio"] * profile["current_gear_ratio"]
     bg = [{"hz": ehz, "amp": 0.03}, {"hz": ehz * 2, "amp": 0.015}]
     samples = _make_overlap_samples(
-        fault_sensor=sensor, sensors=ALL_WHEEL_SENSORS, speed_kmh=SPEED_MID,
-        wheel_amp=0.06, bg_peaks=bg,
+        fault_sensor=sensor,
+        sensors=ALL_WHEEL_SENSORS,
+        speed_kmh=SPEED_MID,
+        wheel_amp=0.06,
+        bg_peaks=bg,
         engine_rpm=ehz * 60.0,
-        fault_noise=[], bg_noise=_NOISE_SINGLE,
+        fault_noise=[],
+        bg_noise=_NOISE_SINGLE,
     )
 
     meta = profile_metadata(profile)

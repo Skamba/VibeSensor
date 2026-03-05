@@ -18,6 +18,7 @@ from vibesensor.analysis_settings import (
 def store() -> AnalysisSettingsStore:
     return AnalysisSettingsStore()
 
+
 # -- tire_circumference_m_from_spec -------------------------------------------
 
 

@@ -93,9 +93,7 @@ def test_strength_db_edge_properties(
     peak: float, floor: float, check: tuple[str, Any, Any]
 ) -> None:
     """Verify dB edge-case properties: near-zero, large, and negative."""
-    result = vibration_strength_db_scalar(
-        peak_band_rms_amp_g=peak, floor_amp_g=floor
-    )
+    result = vibration_strength_db_scalar(peak_band_rms_amp_g=peak, floor_amp_g=floor)
     kind, ref, tol = check
     if kind == "approx":
         assert result == pytest.approx(ref, abs=tol)

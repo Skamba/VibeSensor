@@ -329,8 +329,7 @@ class GitHubReleaseFetcher(GitHubAPIClient):
     @staticmethod
     def _release_has_firmware_asset(release: dict[str, Any]) -> bool:
         return any(
-            _is_firmware_asset_name(str(a.get("name", "")))
-            for a in release.get("assets", [])
+            _is_firmware_asset_name(str(a.get("name", ""))) for a in release.get("assets", [])
         )
 
     def find_firmware_asset(self, release: dict[str, Any]) -> dict[str, Any]:

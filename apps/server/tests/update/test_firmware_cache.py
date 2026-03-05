@@ -95,7 +95,9 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
     ],
 )
 def test_find_release_prefers_combined_release_assets(
-    channel: str, expected_tag: str, releases: list[dict],
+    channel: str,
+    expected_tag: str,
+    releases: list[dict],
 ) -> None:
     fetcher = _make_fetcher(channel)
     fetcher._api_get = lambda _url: releases  # type: ignore[method-assign]

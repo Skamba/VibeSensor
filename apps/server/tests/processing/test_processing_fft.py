@@ -191,10 +191,16 @@ class TestComputeFftSpectrum:
 
         params = _make_fft_params(sr=sr, fft_n=fft_n)
         with_filter = compute_fft_spectrum(
-            block, sr, **params, spike_filter_enabled=True,
+            block,
+            sr,
+            **params,
+            spike_filter_enabled=True,
         )
         without_filter = compute_fft_spectrum(
-            block, sr, **params, spike_filter_enabled=False,
+            block,
+            sr,
+            **params,
+            spike_filter_enabled=False,
         )
 
         # Without the filter, the spike should show larger combined amplitude
