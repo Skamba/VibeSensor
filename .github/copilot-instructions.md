@@ -16,6 +16,9 @@ Execution model
 - For medium/large tasks, start with an explicit checklist plan whose item titles include problem + fix + user impact.
 - Iterate until complete: `plan → verify existing behavior → root cause → blast radius scan → implement minimal change → targeted tests → broader relevant tests → re-plan`.
 - Prefer extending/hardening existing logic over parallel implementations.
+- Fail-fast default: bias toward shipping the smallest working change quickly, then iterating based on real validation feedback.
+- Avoid over-conservative blocking behavior: do not delay a clear in-scope fix for exhaustive hypotheticals or speculative edge cases.
+- Use bounded risk, not risk avoidance: keep changes reversible, test quickly, and correct fast when validation fails.
 - Continue autonomously on clearly adjacent in-scope issues.
 - Stop only when all plan items are validated complete, no similar in-scope issues remain, a real blocker exists, or time budget is reached.
 - Long deep runs are allowed and preferred for deeper tasks; 45–60 minutes is acceptable for medium/large work.
