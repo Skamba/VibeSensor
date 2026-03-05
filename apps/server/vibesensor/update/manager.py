@@ -66,13 +66,15 @@ UPDATE_SERVICE_NAME = "vibesensor.service"
 SERVICE_ENV_DROPIN = "/etc/systemd/system/vibesensor.service.d/10-contracts-dir.conf"
 SERVICE_CONTRACTS_DIR = "/opt/VibeSensor/libs/shared/contracts"
 
-_SENSITIVE_KEYS: frozenset[str] = frozenset({
-    "password",
-    "psk",
-    "secret",
-    "key",
-    "802-11-wireless-security.psk",
-})
+_SENSITIVE_KEYS: frozenset[str] = frozenset(
+    {
+        "password",
+        "psk",
+        "secret",
+        "key",
+        "802-11-wireless-security.psk",
+    }
+)
 
 _PACKAGED_STATIC_DIR: Path = Path(__file__).resolve().parent.parent / "static"
 
@@ -1117,7 +1119,7 @@ class UpdateManager:
                 if proc.returncode == 0:
                     commit = proc.stdout.strip()
             except OSError:
-                pass
+                LOGGER.debug("git rev-parse failed; commit hash unavailable", exc_info=True)
 
         # Check for packaged static assets (wheel-based install)
         has_packaged_static = (_PACKAGED_STATIC_DIR / "index.html").exists()

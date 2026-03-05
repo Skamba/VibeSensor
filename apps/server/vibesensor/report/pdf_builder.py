@@ -32,7 +32,15 @@ from .report_data import (
     ReportTemplateData,
     SystemFindingCard,
 )
-from .theme import REPORT_COLORS
+from .theme import (
+    BMW_LENGTH_MM as _BMW_LENGTH_MM,
+)
+from .theme import (
+    BMW_WIDTH_MM as _BMW_WIDTH_MM,
+)
+from .theme import (
+    REPORT_COLORS,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,6 +76,11 @@ EVIDENCE_CAR_PANEL_WIDTH_RATIO = 0.50
 DISCLAIMER_Y_OFFSET = 5.5 * mm
 CAR_PANEL_TITLE_RESERVE = 18 * mm
 PANEL_HEADER_H = 10.5 * mm
+
+# Empirical average-character-width ratio for Helvetica at a given point size.
+# Used by _wrap_lines() to estimate the maximum characters per line without
+# calling pdfmetrics.stringWidth() on every paragraph.
+_HELVETICA_AVG_CHAR_RATIO = 0.48
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +138,7 @@ def _draw_panel(
 
 
 def _wrap_lines(text: str, width_pt: float, font_size: int) -> list[str]:
-    avg_char_w = font_size * 0.48
+    avg_char_w = font_size * _HELVETICA_AVG_CHAR_RATIO
     max_chars = max(10, int(width_pt / avg_char_w))
     lines: list[str] = []
     for paragraph in text.split("\n"):
@@ -220,7 +233,14 @@ def _draw_kv_column(
     for idx, (label, value, label_w) in enumerate(rows):
         value_w = max(20 * mm, col_w - label_w)
         y = _draw_kv(
-            c, x, y, label, value, label_w=label_w, fs=FS_BODY, value_w=value_w,
+            c,
+            x,
+            y,
+            label,
+            value,
+            label_w=label_w,
+            fs=FS_BODY,
+            value_w=value_w,
         )
         if idx < len(rows) - 1:
             y -= row_gap
@@ -698,10 +718,6 @@ def _draw_next_steps_table(
 # Page 2 — Evidence & Diagnostics
 # ---------------------------------------------------------------------------
 
-# BMW body proportions for aspect-ratio protection.
-_BMW_LENGTH_MM = 5007.0
-_BMW_WIDTH_MM = 1894.0
-
 
 def _page2(
     c: Canvas,
@@ -898,11 +914,18 @@ def _draw_pattern_evidence(
         ry -= 1.5 * mm
 
     # Interpretation
-    ry = _draw_section_block(c, rx, ry, w - 8 * mm, tr("INTERPRETATION"), _safe(ev.interpretation, na))
+    ry = _draw_section_block(
+        c, rx, ry, w - 8 * mm, tr("INTERPRETATION"), _safe(ev.interpretation, na)
+    )
 
     # Why parts listed
     _draw_section_block(
-        c, rx, ry, w - 8 * mm, tr("WHY_PARTS_LISTED"), _safe(ev.why_parts_text, na),
+        c,
+        rx,
+        ry,
+        w - 8 * mm,
+        tr("WHY_PARTS_LISTED"),
+        _safe(ev.why_parts_text, na),
         title_gap=3.0 * mm,
     )
 
@@ -969,8 +992,16 @@ def _draw_peaks_table(
         cx_off = x + 1.5
         row_y = y - _y_off
         for val, (_, cw) in zip(
-            (row.rank, row.system, row.freq_hz, row.order,
-             row.peak_db, row.strength_db, row.speed_band, row.relevance),
+            (
+                row.rank,
+                row.system,
+                row.freq_hz,
+                row.order,
+                row.peak_db,
+                row.strength_db,
+                row.speed_band,
+                row.relevance,
+            ),
             col_defs,
             strict=True,
         ):

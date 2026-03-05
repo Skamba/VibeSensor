@@ -39,6 +39,27 @@ PERSISTENT_PEAK_MAX_FINDINGS = 3
 # Minimum SNR for a peak to be considered above baseline noise
 BASELINE_NOISE_SNR_THRESHOLD = 1.5
 
+# ── Peak classification thresholds ───────────────────────────────────────
+# High spatial uniformity: present across most sensor locations → likely noise.
+_SPATIAL_UNIFORMITY_HIGH = 0.85
+# Medium spatial uniformity: used with speed-uniformity check.
+_SPATIAL_UNIFORMITY_MED = 0.80
+# Presence ratio below which a "high spatial uniformity" peak is noise.
+_NOISE_PRESENCE_MIN_HIGH = 0.60
+# Burstiness ceiling for "spatially uniform + high presence" noise check.
+_NOISE_BURSTINESS_MAX_LOW = 2.0
+# Speed-uniformity (std-dev) ceiling: flat across speed bins → noise.
+_NOISE_SPEED_UNIFORMITY_MAX = 0.10
+# Presence band for the "medium spatial + low speed variance" noise check.
+_NOISE_PRESENCE_LOW_MIN = 0.20
+_NOISE_PRESENCE_LOW_MAX = 0.40
+# Burstiness band for the "medium spatial + low speed variance" noise check.
+_NOISE_BURSTINESS_BAND_MIN = 3.0
+_NOISE_BURSTINESS_BAND_MAX = 5.0
+# Minimum presence and maximum burstiness for a "patterned" peak.
+_PATTERNED_MIN_PRESENCE = 0.40
+_PATTERNED_MAX_BURSTINESS = 3.0
+
 
 def _classify_peak_type(
     presence_ratio: float,
@@ -77,18 +98,18 @@ def _classify_peak_type(
         return "baseline_noise"
     if (
         spatial_uniformity is not None
-        and spatial_uniformity > 0.85
-        and presence_ratio >= 0.60
-        and burstiness < 2.0
+        and spatial_uniformity > _SPATIAL_UNIFORMITY_HIGH
+        and presence_ratio >= _NOISE_PRESENCE_MIN_HIGH
+        and burstiness < _NOISE_BURSTINESS_MAX_LOW
     ):
         return "baseline_noise"
     if (
         spatial_uniformity is not None
         and speed_uniformity is not None
-        and spatial_uniformity >= 0.80
-        and speed_uniformity <= 0.10
-        and 0.20 <= presence_ratio <= 0.40
-        and 3.0 <= burstiness <= 5.0
+        and spatial_uniformity >= _SPATIAL_UNIFORMITY_MED
+        and speed_uniformity <= _NOISE_SPEED_UNIFORMITY_MAX
+        and _NOISE_PRESENCE_LOW_MIN <= presence_ratio <= _NOISE_PRESENCE_LOW_MAX
+        and _NOISE_BURSTINESS_BAND_MIN <= burstiness <= _NOISE_BURSTINESS_BAND_MAX
     ):
         return "baseline_noise"
 
@@ -96,7 +117,7 @@ def _classify_peak_type(
         return "transient"
     if burstiness > TRANSIENT_BURSTINESS_THRESHOLD:
         return "transient"
-    if presence_ratio >= 0.40 and burstiness < 3.0:
+    if presence_ratio >= _PATTERNED_MIN_PRESENCE and burstiness < _PATTERNED_MAX_BURSTINESS:
         return "patterned"
     return "persistent"
 
@@ -127,7 +148,9 @@ def _build_persistent_peak_findings(
         freq_bin_hz = 2.0
     freq_bin_hz_half = freq_bin_hz * 0.5
 
-    _nested_int_dd = lambda: defaultdict(int)  # noqa: E731
+    def _nested_int_dd() -> defaultdict:
+        return defaultdict(int)
+
     bin_amps: dict[float, list[float]] = defaultdict(list)
     bin_floors: dict[float, list[float]] = defaultdict(list)
     bin_speeds: dict[float, list[float]] = defaultdict(list)
@@ -219,9 +242,7 @@ def _build_persistent_peak_findings(
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
         mean_floor_vals = bin_floors.get(bin_center)
-        mean_floor = (
-            sum(mean_floor_vals) / len(mean_floor_vals) if mean_floor_vals else 0.0
-        )
+        mean_floor = sum(mean_floor_vals) / len(mean_floor_vals) if mean_floor_vals else 0.0
         effective_floor = _effective_baseline_floor(run_noise_baseline_g, extra_fallback=mean_floor)
         raw_snr = p95_amp / effective_floor
 
@@ -264,9 +285,7 @@ def _build_persistent_peak_findings(
 
         snr_score = min(1.0, log1p(raw_snr) / _SNR_LOG_DIVISOR)
         spatial_concentration = (
-            max(loc_counts_for_bin.values()) / count
-            if loc_counts_for_bin and count > 0
-            else 1.0
+            max(loc_counts_for_bin.values()) / count if loc_counts_for_bin and count > 0 else 1.0
         )
         spatial_penalty = (0.35 + 0.65 * spatial_concentration) if loc_counts_for_bin else 1.0
 
