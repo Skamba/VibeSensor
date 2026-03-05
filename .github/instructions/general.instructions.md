@@ -4,11 +4,12 @@ applyTo: "**"
 Canonical agent workflow (shared source of truth)
 - Read `docs/ai/repo-map.md` first.
 - For medium/large tasks, always start with an explicit checklist plan. Use highly descriptive titles that include the problem, the fix, and user impact.
-- Work in iterative loops until done: `plan → verify current behavior → root cause → blast radius scan → implement minimal change → targeted tests → broader relevant tests → re-plan`.
+- Work in iterative loops until done: `plan → verify current behavior → root cause → blast radius scan → implement complete maintainable fix → targeted tests → broader relevant tests → re-plan`.
 - Verify existing behavior before rewriting code; investigate root cause before patching symptoms.
 - Scan the blast radius for similar in-scope issues and fix them in the same run.
 - Prefer extending and hardening existing logic over adding parallel implementations.
-- Fail-fast default: ship the smallest validated in-scope fix quickly, then iterate using real test/runtime feedback.
+- Fail-fast default: ship the smallest validated **complete** in-scope fix quickly (root-cause addressed and maintainable), then iterate using real test/runtime feedback.
+- Avoid symptom-only patches. Prefer fixes that make sense to a human maintainer and reduce future maintenance burden in the touched area.
 - Avoid over-conservative blocking behavior: do not hold a clear fix for exhaustive hypothetical analysis.
 - Use bounded risk rather than risk avoidance: keep changes reversible, validate early, and recover quickly on failures.
 - Continue autonomously on clearly adjacent in-scope issues without waiting for another prompt.
@@ -35,7 +36,7 @@ Updater deployment policy
 Validation (always required)
 - Pull request default mode: after opening or updating a PR, check CI/review status, fix all blocking issues, push updates, and keep monitoring until required checks are green.
 - For every PR, use `python3 tools/ci/watch_pr_checks.py --pr <PR_NUMBER> --interval 30 --repo Skamba/VibeSensor` as the default monitor.
-- Treat watcher exit `RESULT=NON_GREEN` as fail-fast: inspect the latest failing run immediately, implement the minimal fix, push, and restart the watcher.
+- Treat watcher exit `RESULT=NON_GREEN` as fail-fast: inspect the latest failing run immediately, implement the smallest complete maintainable fix, push, and restart the watcher.
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.
 - CI-parity suite (same command groups as `.github/workflows/ci.yml`, run in parallel locally): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
