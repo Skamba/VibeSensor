@@ -16,7 +16,7 @@ Execution model
 - For medium/large tasks, start with an explicit checklist plan whose item titles include problem + fix + user impact.
 - Iterate until complete: `plan → verify existing behavior → root cause → blast radius scan → implement complete maintainable fix → targeted tests → broader relevant tests → re-plan`.
 - Prefer extending/hardening existing logic over parallel implementations.
-- Fail-fast default: ship the smallest **complete** fix quickly (root-cause addressed, human-meaningful behavior, maintainable structure), then iterate based on real validation feedback.
+- Analysis-first default: evaluate the problem from multiple angles, compare viable options, and then choose the best path to deliver a **complete** root-cause fix with thorough in-scope coverage.
 - Do not stop at symptom-only patches; when touching an issue, resolve the underlying cause and any tightly coupled maintainability gaps in the same area.
 - Avoid over-conservative blocking behavior: do not delay a clear in-scope fix for exhaustive hypotheticals or speculative edge cases.
 - Use bounded risk, not risk avoidance: keep changes reversible, test quickly, and correct fast when validation fails.
