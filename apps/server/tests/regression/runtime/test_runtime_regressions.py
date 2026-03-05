@@ -165,7 +165,6 @@ Tests covering:
 """
 
 
-
 import pytest
 
 from vibesensor.analysis_settings import AnalysisSettingsStore
@@ -383,7 +382,7 @@ class TestFinalizeReturnGatesAnalysis:
         schedule_calls: list[str] = []
         monkeypatch.setattr(
             logger,
-            "_schedule_post_analysis",
+            "schedule_post_analysis",
             lambda rid: schedule_calls.append(rid),
         )
 
@@ -438,6 +437,7 @@ def _make_summary(report_date: str, **overrides: Any) -> dict[str, Any]:
     }
     base.update(overrides)
     return base
+
 
 # ------------------------------------------------------------------
 # 1. firmware_cache.refresh() – UnboundLocalError guard
@@ -631,7 +631,6 @@ class TestReportDataBuilderUTCSuffix:
 # ===== From test_metrics_cache_and_settings_regressions.py =====
 
 """Metrics cache, settings rollback, and counter-delta regressions."""
-
 
 
 import pytest
@@ -1358,6 +1357,7 @@ from vibesensor.live_diagnostics import LiveDiagnosticsEngine
 
 # -- shared helpers ----------------------------------------------------------
 
+
 def _make_history_db(tmp_path: Path, name: str = "history.db") -> HistoryDB:
     return HistoryDB(tmp_path / name)
 
@@ -1447,13 +1447,15 @@ def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
 
     # Phase 1 – fill with a 10 Hz tone (2400 samples → wraps at 1600)
     processor.ingest(
-        "c1", _make_tone_chunk(10.0, 2400, sample_rate_hz),
+        "c1",
+        _make_tone_chunk(10.0, 2400, sample_rate_hz),
         sample_rate_hz=sample_rate_hz,
     )
 
     # Phase 2 – overwrite with a 50 Hz tone (another 2400 samples)
     processor.ingest(
-        "c1", _make_tone_chunk(50.0, 2400, sample_rate_hz),
+        "c1",
+        _make_tone_chunk(50.0, 2400, sample_rate_hz),
         sample_rate_hz=sample_rate_hz,
     )
 
@@ -1701,7 +1703,9 @@ _DEAD_FUNCTION_CASES = [
 
 
 class TestDeadFunctionsRemoved:
-    @pytest.mark.parametrize("rel_path, forbidden", _DEAD_FUNCTION_CASES, ids=[c[1] for c in _DEAD_FUNCTION_CASES])
+    @pytest.mark.parametrize(
+        "rel_path, forbidden", _DEAD_FUNCTION_CASES, ids=[c[1] for c in _DEAD_FUNCTION_CASES]
+    )
     def test_dead_function_absent(self, rel_path: str, forbidden: str) -> None:
         text = (SERVER_ROOT / rel_path).read_text()
         assert forbidden not in text
@@ -1774,7 +1778,6 @@ Covers:
   7. settings_store.py — dict rollback safety
   8. json_utils.py — depth limit prevents infinite recursion
 """
-
 
 
 import pytest

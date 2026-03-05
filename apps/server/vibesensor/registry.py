@@ -140,6 +140,29 @@ class ClientRecord:
     _seen_seqs: set[int] = field(default_factory=set)
     _seen_seqs_max: int = -1
 
+    # -- deduplication window helpers -----------------------------------------
+
+    def clear_dedup(self) -> None:
+        """Reset the per-client dedup window (e.g. on restart or hard reset)."""
+        self._seen_seqs.clear()
+        self._seen_seqs_max = -1
+
+    def has_seq(self, seq: int) -> bool:
+        """Return True if *seq* is already in the dedup window."""
+        return seq in self._seen_seqs
+
+    def record_seq(self, seq: int) -> None:
+        """Add *seq* to the dedup window and update the running max."""
+        self._seen_seqs.add(seq)
+        if seq > self._seen_seqs_max:
+            self._seen_seqs_max = seq
+
+    def prune_seqs(self, window_size: int) -> None:
+        """Discard old entries so the window stays bounded to *window_size*."""
+        if len(self._seen_seqs) > window_size:
+            cutoff = self._seen_seqs_max - window_size + 1
+            self._seen_seqs = {s for s in self._seen_seqs if s >= cutoff}
+
 
 class ClientRegistry:
     def __init__(
@@ -240,8 +263,7 @@ class ClientRegistry:
     @staticmethod
     def _clear_dedup(record: ClientRecord) -> None:
         """Reset the per-client dedup window (e.g. on restart or hard reset)."""
-        record._seen_seqs.clear()
-        record._seen_seqs_max = -1
+        record.clear_dedup()
 
     def update_from_data(
         self,
@@ -275,7 +297,7 @@ class ClientRegistry:
             jitter_alpha = _JITTER_EMA_ALPHA
 
             # --- Deduplication check ---
-            if data_msg.seq in record._seen_seqs:
+            if record.has_seq(data_msg.seq):
                 # Distinguish genuine retransmit from client restart.
                 # A retransmit has seq close to last_seq (backward ≤ gap).
                 # A restart reuses low seq numbers while last_seq is higher.
@@ -294,13 +316,8 @@ class ClientRegistry:
                 # Likely client restart — clear dedup window and accept.
                 self._clear_dedup(record)
 
-            record._seen_seqs.add(data_msg.seq)
-            if data_msg.seq > record._seen_seqs_max:
-                record._seen_seqs_max = data_msg.seq
-            # Prune old entries to keep the window bounded.
-            if len(record._seen_seqs) > dedup_window:
-                cutoff = record._seen_seqs_max - dedup_window + 1
-                record._seen_seqs = {s for s in record._seen_seqs if s >= cutoff}
+            record.record_seq(data_msg.seq)
+            record.prune_seqs(dedup_window)
 
             # --- Normal (non-duplicate) processing ---
             record.frames_total += 1
@@ -317,9 +334,8 @@ class ClientRegistry:
                 actual_delta_us = float(data_msg.t0_us - record.last_t0_us)
                 jitter_us = actual_delta_us - expected_delta_us
                 record.timing_jitter_us_ema = (
-                    (1.0 - jitter_alpha) * record.timing_jitter_us_ema
-                    + jitter_alpha * jitter_us
-                )
+                    1.0 - jitter_alpha
+                ) * record.timing_jitter_us_ema + jitter_alpha * jitter_us
                 record.timing_drift_us_total += jitter_us
             if record.last_seq is not None:
                 if (
@@ -331,9 +347,8 @@ class ClientRegistry:
                     record.last_t0_us = None
                     record.timing_jitter_us_ema = 0.0
                     record.timing_drift_us_total = 0.0
-                    record._seen_seqs.clear()
-                    record._seen_seqs.add(data_msg.seq)
-                    record._seen_seqs_max = data_msg.seq
+                    record.clear_dedup()
+                    record.record_seq(data_msg.seq)
                     reset_detected = True
                 else:
                     expected = (record.last_seq + 1) & seq_mask
@@ -343,10 +358,7 @@ class ClientRegistry:
                             record.frames_dropped += gap
             # Only advance last_seq forward to prevent out-of-order UDP
             # packets from regressing the counter and inflating frames_dropped.
-            if (
-                record.last_seq is None
-                or ((data_msg.seq - record.last_seq) & seq_mask) < seq_half
-            ):
+            if record.last_seq is None or ((data_msg.seq - record.last_seq) & seq_mask) < seq_half:
                 record.last_seq = data_msg.seq
             record.last_t0_us = data_msg.t0_us
             return DataUpdateResult(reset_detected=reset_detected)

@@ -32,6 +32,15 @@ class PhaseClassifier:
     def current_phase(self) -> str:
         return self._current_phase
 
+    @property
+    def speed_history(self) -> deque[tuple[float, float | None]]:
+        """Read/write access to the rolling speed history (for testing and inspection)."""
+        return self._speed_history
+
+    @speed_history.setter
+    def speed_history(self, value: deque[tuple[float, float | None]]) -> None:
+        self._speed_history = value
+
     def update(self, speed_mps: float | None, now_s: float) -> None:
         speed_kmh: float | None = speed_mps * MPS_TO_KMH if speed_mps is not None else None
         self._speed_history.append((now_s, speed_kmh))
