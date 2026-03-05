@@ -384,6 +384,71 @@ def _suppress_engine_aliases(
     return valid[:5]
 
 
+def _compute_matched_speed_phase_evidence(
+    matched_points: list[dict[str, Any]],
+    *,
+    focused_speed_band: str | None,
+    hotspot_speed_band: str,
+) -> tuple[float | None, list[float], str | None, str, dict[str, Any], str | None]:
+    """Derive speed-profile and phase-evidence from *matched_points*.
+
+    Returns ``(peak_speed_kmh, speed_window_kmh, strongest_speed_band,
+    hotspot_speed_band_out, phase_evidence, dominant_phase)``.
+    """
+    _cruise_val = DrivingPhase.CRUISE.value
+    speed_points: list[tuple[float, float]] = []
+    speed_phase_weights: list[float] = []
+    for point in matched_points:
+        point_speed = _as_float(point.get("speed_kmh"))
+        point_amp = _as_float(point.get("amp"))
+        if point_speed is None or point_amp is None:
+            continue
+        speed_points.append((point_speed, point_amp))
+        ph = str(point.get("phase") or "")
+        if ph == _cruise_val:
+            speed_phase_weights.append(3.0)
+        elif ph in _PHASE_ONSET_RELEVANT:
+            speed_phase_weights.append(0.3)
+        else:
+            speed_phase_weights.append(1.0)
+
+    peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
+        speed_points,
+        allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
+        phase_weights=speed_phase_weights if speed_phase_weights else None,
+    )
+    if not strongest_speed_band:
+        strongest_speed_band = hotspot_speed_band
+    if focused_speed_band and not strongest_speed_band:
+        strongest_speed_band = focused_speed_band
+
+    matched_phase_strs = [
+        str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")
+    ]
+    _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_val)
+    phase_evidence: dict[str, Any] = {
+        "cruise_fraction": _cruise_matched / len(matched_phase_strs)
+        if matched_phase_strs
+        else 0.0,
+        "phases_detected": sorted(set(matched_phase_strs)),
+    }
+    dominant_phase: str | None = None
+    onset_phase_labels = [p for p in matched_phase_strs if p in _PHASE_ONSET_RELEVANT]
+    if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
+        top_phase, top_count = Counter(onset_phase_labels).most_common(1)[0]
+        if top_count / len(matched_points) >= 0.50:
+            dominant_phase = top_phase
+
+    return (
+        peak_speed_kmh,
+        list(speed_window_kmh),
+        strongest_speed_band or None,
+        hotspot_speed_band,
+        phase_evidence,
+        dominant_phase,
+    )
+
+
 def _build_order_findings(
     *,
     metadata: dict[str, Any],
@@ -697,33 +762,18 @@ def _build_order_findings(
 
         strongest_location = str(location_hotspot.get("location")) if _hotspot_is_dict else ""
         hotspot_speed_band = str(location_hotspot.get("speed_range")) if _hotspot_is_dict else ""
-        speed_points: list[tuple[float, float]] = []
-        speed_phase_weights: list[float] = []
-        _cruise_val = DrivingPhase.CRUISE.value
-        for point in matched_points:
-            point_speed = _as_float(point.get("speed_kmh"))
-            point_amp = _as_float(point.get("amp"))
-            if point_speed is None or point_amp is None:
-                continue
-            speed_points.append((point_speed, point_amp))
-            # Phase-aware weight: CRUISE samples are most diagnostic (3x),
-            # transient phases (ACCELERATION/DECELERATION) are down-weighted (0.3x).
-            ph = str(point.get("phase") or "")
-            if ph == _cruise_val:
-                speed_phase_weights.append(3.0)
-            elif ph in _PHASE_ONSET_RELEVANT:
-                speed_phase_weights.append(0.3)
-            else:
-                speed_phase_weights.append(1.0)
-        peak_speed_kmh, speed_window_kmh, strongest_speed_band = _speed_profile_from_points(
-            speed_points,
-            allowed_speed_bins=[focused_speed_band] if focused_speed_band else None,
-            phase_weights=speed_phase_weights if speed_phase_weights else None,
+        (
+            peak_speed_kmh,
+            speed_window_kmh,
+            strongest_speed_band,
+            _hotspot_speed_band_out,
+            phase_evidence,
+            dominant_phase,
+        ) = _compute_matched_speed_phase_evidence(
+            matched_points,
+            focused_speed_band=focused_speed_band,
+            hotspot_speed_band=hotspot_speed_band,
         )
-        if not strongest_speed_band:
-            strongest_speed_band = hotspot_speed_band
-        if focused_speed_band and not strongest_speed_band:
-            strongest_speed_band = focused_speed_band
         actions = _finding_actions_for_source(
             lang,
             hypothesis.suspected_source,
@@ -736,26 +786,6 @@ def _build_order_findings(
             for action in actions
             if str(action.get("what") or "").strip()
         ][:3]
-
-        # Compute phase evidence: how much of the matched evidence came from CRUISE phase.
-        # CRUISE (steady driving) provides the most reliable diagnostic signal.
-        matched_phase_strs = [
-            str(pt.get("phase") or "") for pt in matched_points if pt.get("phase")
-        ]
-        _cruise_matched = sum(1 for p in matched_phase_strs if p == _cruise_val)
-        phase_evidence: dict[str, Any] = {
-            "cruise_fraction": _cruise_matched / len(matched_phase_strs)
-            if matched_phase_strs
-            else 0.0,
-            "phases_detected": sorted(set(matched_phase_strs)),
-        }
-        # Dominant non-cruise onset phase helps explain whether issue appears on transitions.
-        dominant_phase: str | None = None
-        onset_phase_labels = [p for p in matched_phase_strs if p in _PHASE_ONSET_RELEVANT]
-        if onset_phase_labels and len(onset_phase_labels) >= max(2, len(matched_points) // 2):
-            top_phase, top_count = Counter(onset_phase_labels).most_common(1)[0]
-            if top_count / len(matched_points) >= 0.50:
-                dominant_phase = top_phase
 
         finding = {
             "finding_id": "F_ORDER",
