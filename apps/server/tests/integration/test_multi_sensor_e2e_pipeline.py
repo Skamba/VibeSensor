@@ -18,7 +18,7 @@ from vibesensor.analysis_settings import (
 )
 from vibesensor.gps_speed import GPSSpeedMonitor
 from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.processing import SignalProcessor
 from vibesensor.protocol import pack_data, pack_hello, parse_hello
 from vibesensor.registry import ClientRegistry
@@ -104,18 +104,20 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
     gps_monitor = GPSSpeedMonitor(gps_enabled=False)
     settings_store = AnalysisSettingsStore()
     logger = MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=20,
+        MetricsLoggerConfig(
+            enabled=False,
+            log_path=tmp_path / "metrics.jsonl",
+            metrics_log_hz=20,
+            sensor_model="ADXL345",
+            default_sample_rate_hz=_SAMPLE_RATE_HZ,
+            fft_window_size_samples=_FRAME_N,
+            persist_history_db=True,
+        ),
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
         analysis_settings=settings_store,
-        sensor_model="ADXL345",
-        default_sample_rate_hz=_SAMPLE_RATE_HZ,
-        fft_window_size_samples=_FRAME_N,
         history_db=history_db,
-        persist_history_db=True,
         language_provider=lambda: "en",
     )
     proto = DataDatagramProtocol(registry=registry, processor=processor, queue_maxsize=256)

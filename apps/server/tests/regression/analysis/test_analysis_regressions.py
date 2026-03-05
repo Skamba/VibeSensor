@@ -27,7 +27,7 @@ import pytest
 
 from vibesensor.analysis.findings import _compute_effective_match_rate
 from vibesensor.analysis.helpers import _speed_bin_label
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.update.manager import _hash_tree
 
 # ------------------------------------------------------------------
@@ -336,16 +336,18 @@ class TestWorkerThreadRace:
                 return {}
 
         logger = MetricsLogger(
-            enabled=False,
-            log_path=tmp_path / "m.jsonl",
-            metrics_log_hz=2,
+            MetricsLoggerConfig(
+                enabled=False,
+                log_path=tmp_path / "m.jsonl",
+                metrics_log_hz=2,
+                sensor_model="test",
+                default_sample_rate_hz=800,
+                fft_window_size_samples=256,
+            ),
             registry=FakeReg(),
             gps_monitor=FakeGPS(),
             processor=FakeProc(),
             analysis_settings=FakeSettings(),
-            sensor_model="test",
-            default_sample_rate_hz=800,
-            fft_window_size_samples=256,
         )
 
         seen: list[str] = []

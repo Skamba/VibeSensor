@@ -228,7 +228,7 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     """Integration: stop_logging → post-analysis → analysis persisted in DB."""
     from vibesensor.analysis_settings import AnalysisSettingsStore
     from vibesensor.gps_speed import GPSSpeedMonitor
-    from vibesensor.metrics_log import MetricsLogger
+    from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
     from vibesensor.processing import SignalProcessor
     from vibesensor.registry import ClientRegistry
 
@@ -245,18 +245,20 @@ def test_stop_run_triggers_analysis_and_persists(tmp_path: Path, monkeypatch) ->
     analysis_settings = AnalysisSettingsStore()
 
     logger = MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=10,
+        MetricsLoggerConfig(
+            enabled=False,
+            log_path=tmp_path / "metrics.jsonl",
+            metrics_log_hz=10,
+            sensor_model="ADXL345",
+            default_sample_rate_hz=800,
+            fft_window_size_samples=256,
+            persist_history_db=True,
+        ),
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
         analysis_settings=analysis_settings,
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=256,
         history_db=db,
-        persist_history_db=True,
         language_provider=lambda: "en",
     )
 

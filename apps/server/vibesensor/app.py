@@ -27,7 +27,7 @@ from .esp_flash_manager import EspFlashManager
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
 from .live_diagnostics import LiveDiagnosticsEngine
-from .metrics_log import MetricsLogger
+from .metrics_log import MetricsLogger, MetricsLoggerConfig
 from .processing import SignalProcessor
 from .registry import ClientRegistry
 from .routes import create_router
@@ -92,22 +92,24 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     analysis_settings = AnalysisSettingsStore()
     settings_store = SettingsStore(db=history_db)
     metrics_logger = MetricsLogger(
-        enabled=config.logging.log_metrics,
-        log_path=config.logging.metrics_log_path,
-        metrics_log_hz=config.logging.metrics_log_hz,
-        no_data_timeout_s=config.logging.no_data_timeout_s,
+        MetricsLoggerConfig(
+            enabled=config.logging.log_metrics,
+            log_path=config.logging.metrics_log_path,
+            metrics_log_hz=config.logging.metrics_log_hz,
+            no_data_timeout_s=config.logging.no_data_timeout_s,
+            sensor_model=config.logging.sensor_model,
+            default_sample_rate_hz=config.processing.sample_rate_hz,
+            fft_window_size_samples=config.processing.fft_n,
+            fft_window_type="hann",
+            peak_picker_method="canonical_strength_metrics_module",
+            accel_scale_g_per_lsb=accel_scale_g_per_lsb,
+            persist_history_db=config.logging.persist_history_db,
+        ),
         registry=registry,
         gps_monitor=gps_monitor,
         processor=processor,
         analysis_settings=analysis_settings,
-        sensor_model=config.logging.sensor_model,
-        default_sample_rate_hz=config.processing.sample_rate_hz,
-        fft_window_size_samples=config.processing.fft_n,
-        fft_window_type="hann",
-        peak_picker_method="canonical_strength_metrics_module",
-        accel_scale_g_per_lsb=accel_scale_g_per_lsb,
         history_db=history_db,
-        persist_history_db=config.logging.persist_history_db,
         language_provider=lambda: settings_store.language,
     )
 
