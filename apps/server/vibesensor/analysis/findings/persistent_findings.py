@@ -39,6 +39,140 @@ PERSISTENT_PEAK_MAX_FINDINGS = 3
 # Minimum SNR for a peak to be considered above baseline noise
 BASELINE_NOISE_SNR_THRESHOLD = 1.5
 
+# ── Peak classification thresholds ───────────────────────────────────────
+# High spatial uniformity: present across most sensor locations → likely noise.
+_SPATIAL_UNIFORMITY_HIGH = 0.85
+# Medium spatial uniformity: used with speed-uniformity check.
+_SPATIAL_UNIFORMITY_MED = 0.80
+# Presence ratio below which a "high spatial uniformity" peak is noise.
+_NOISE_PRESENCE_MIN_HIGH = 0.60
+# Burstiness ceiling for "spatially uniform + high presence" noise check.
+_NOISE_BURSTINESS_MAX_LOW = 2.0
+# Speed-uniformity (std-dev) ceiling: flat across speed bins → noise.
+_NOISE_SPEED_UNIFORMITY_MAX = 0.10
+# Presence band for the "medium spatial + low speed variance" noise check.
+_NOISE_PRESENCE_LOW_MIN = 0.20
+_NOISE_PRESENCE_LOW_MAX = 0.40
+# Burstiness band for the "medium spatial + low speed variance" noise check.
+_NOISE_BURSTINESS_BAND_MIN = 3.0
+_NOISE_BURSTINESS_BAND_MAX = 5.0
+# Minimum presence and maximum burstiness for a "patterned" peak.
+_PATTERNED_MIN_PRESENCE = 0.40
+_PATTERNED_MAX_BURSTINESS = 3.0
+
+
+# ---------------------------------------------------------------------------
+# Frequency-bin accumulation helpers
+# ---------------------------------------------------------------------------
+
+
+def _make_nested_int_defaultdict() -> defaultdict:
+    """Factory for a nested defaultdict(int).
+
+    Use as ``defaultdict(_make_nested_int_defaultdict)`` to get a
+    two-level defaultdict where inner values are ints.
+    """
+    return defaultdict(int)
+
+
+class _PeakBinStats:
+    """Accumulated per-frequency-bin statistics collected from samples.
+
+    Populated by :func:`_accumulate_peak_bin_stats` and consumed by the
+    per-bin scoring loop inside :func:`_build_persistent_peak_findings`.
+    """
+
+    __slots__ = (
+        "bin_amps",
+        "bin_floors",
+        "bin_speeds",
+        "bin_speed_amp_pairs",
+        "bin_location_counts",
+        "bin_speed_bin_counts",
+        "bin_phase_counts",
+        "total_speed_bin_counts",
+        "total_locations",
+        "total_location_sample_counts",
+        "n_samples",
+    )
+
+    def __init__(self) -> None:
+        self.bin_amps: dict[float, list[float]] = defaultdict(list)
+        self.bin_floors: dict[float, list[float]] = defaultdict(list)
+        self.bin_speeds: dict[float, list[float]] = defaultdict(list)
+        self.bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
+        _dd_factory = _make_nested_int_defaultdict
+        self.bin_location_counts: dict[float, dict[str, int]] = defaultdict(_dd_factory)
+        self.bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(_dd_factory)
+        self.bin_phase_counts: dict[float, dict[str, int]] = defaultdict(_dd_factory)
+        self.total_speed_bin_counts: dict[str, int] = defaultdict(int)
+        self.total_locations: set[str] = set()
+        self.total_location_sample_counts: dict[str, int] = defaultdict(int)
+        self.n_samples: int = 0
+
+
+def _accumulate_peak_bin_stats(
+    samples: list[dict[str, Any]],
+    *,
+    freq_bin_hz: float,
+    freq_bin_hz_half: float,
+    lang: str,
+    per_sample_phases: list[str] | None,
+    has_phases: bool,
+) -> _PeakBinStats:
+    """Accumulate per-sample data into frequency-bin statistics.
+
+    Iterates over every sample once and distributes peak amplitudes,
+    location/speed/phase counts into their corresponding frequency bins.
+    Returns a :class:`_PeakBinStats` that the caller then uses to score each
+    bin.
+    """
+    stats = _PeakBinStats()
+
+    # Local-bind frequently called helpers to avoid repeated global lookups.
+    _local_as_float = _as_float
+    _local_speed_bin = _speed_bin_label
+    _local_location = _location_label
+    _local_top_peaks = _sample_top_peaks
+    _local_floor_est = _estimate_strength_floor_amp_g
+    _local_phase_str = _phase_to_str
+    _floor = _math_floor
+
+    for i, sample in enumerate(samples):
+        if not isinstance(sample, dict):
+            continue
+        stats.n_samples += 1
+        speed = _local_as_float(sample.get("speed_kmh"))
+        sample_speed_bin = _local_speed_bin(speed) if speed is not None and speed > 0 else None
+        if sample_speed_bin is not None:
+            stats.total_speed_bin_counts[sample_speed_bin] += 1
+        _floor_raw = _local_floor_est(sample)
+        floor_amp = _floor_raw if _floor_raw is not None else 0.0
+        location = _local_location(sample, lang=lang)
+        if location:
+            stats.total_locations.add(location)
+            stats.total_location_sample_counts[location] += 1
+        sample_phase: str | None = None
+        if has_phases and per_sample_phases is not None and i < len(per_sample_phases):
+            sample_phase = _local_phase_str(per_sample_phases[i])
+        for hz, amp in _local_top_peaks(sample):
+            if hz <= 0 or amp <= 0:
+                continue
+            bin_center = _floor(hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
+            stats.bin_amps[bin_center].append(amp)
+            stats.bin_floors[bin_center].append(max(0.0, floor_amp))
+            if speed is not None and speed > 0:
+                stats.bin_speeds[bin_center].append(speed)
+                stats.bin_speed_amp_pairs[bin_center].append((speed, amp))
+            if location:
+                stats.bin_location_counts[bin_center][location] += 1
+            if sample_speed_bin is not None:
+                stats.bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
+            if sample_phase is not None:
+                stats.bin_phase_counts[bin_center][sample_phase] += 1
+
+    return stats
+
 
 def _classify_peak_type(
     presence_ratio: float,
@@ -77,18 +211,18 @@ def _classify_peak_type(
         return "baseline_noise"
     if (
         spatial_uniformity is not None
-        and spatial_uniformity > 0.85
-        and presence_ratio >= 0.60
-        and burstiness < 2.0
+        and spatial_uniformity > _SPATIAL_UNIFORMITY_HIGH
+        and presence_ratio >= _NOISE_PRESENCE_MIN_HIGH
+        and burstiness < _NOISE_BURSTINESS_MAX_LOW
     ):
         return "baseline_noise"
     if (
         spatial_uniformity is not None
         and speed_uniformity is not None
-        and spatial_uniformity >= 0.80
-        and speed_uniformity <= 0.10
-        and 0.20 <= presence_ratio <= 0.40
-        and 3.0 <= burstiness <= 5.0
+        and spatial_uniformity >= _SPATIAL_UNIFORMITY_MED
+        and speed_uniformity <= _NOISE_SPEED_UNIFORMITY_MAX
+        and _NOISE_PRESENCE_LOW_MIN <= presence_ratio <= _NOISE_PRESENCE_LOW_MAX
+        and _NOISE_BURSTINESS_BAND_MIN <= burstiness <= _NOISE_BURSTINESS_BAND_MAX
     ):
         return "baseline_noise"
 
@@ -96,7 +230,7 @@ def _classify_peak_type(
         return "transient"
     if burstiness > TRANSIENT_BURSTINESS_THRESHOLD:
         return "transient"
-    if presence_ratio >= 0.40 and burstiness < 3.0:
+    if presence_ratio >= _PATTERNED_MIN_PRESENCE and burstiness < _PATTERNED_MAX_BURSTINESS:
         return "patterned"
     return "persistent"
 
@@ -127,61 +261,25 @@ def _build_persistent_peak_findings(
         freq_bin_hz = 2.0
     freq_bin_hz_half = freq_bin_hz * 0.5
 
-    _nested_int_dd = lambda: defaultdict(int)  # noqa: E731
-    bin_amps: dict[float, list[float]] = defaultdict(list)
-    bin_floors: dict[float, list[float]] = defaultdict(list)
-    bin_speeds: dict[float, list[float]] = defaultdict(list)
-    bin_speed_amp_pairs: dict[float, list[tuple[float, float]]] = defaultdict(list)
-    bin_location_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-    bin_speed_bin_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-    bin_phase_counts: dict[float, dict[str, int]] = defaultdict(_nested_int_dd)
-    total_speed_bin_counts: dict[str, int] = defaultdict(int)
-    total_locations: set[str] = set()
-    total_location_sample_counts: dict[str, int] = defaultdict(int)
-    n_samples = 0
     has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
-
-    # Local-bind frequently called helpers to avoid repeated global lookups.
-    _local_as_float = _as_float
-    _local_speed_bin = _speed_bin_label
-    _local_location = _location_label
-    _local_top_peaks = _sample_top_peaks
-    _local_floor_est = _estimate_strength_floor_amp_g
-    _local_phase_str = _phase_to_str
-    _floor = _math_floor
-
-    for i, sample in enumerate(samples):
-        if not isinstance(sample, dict):
-            continue
-        n_samples += 1
-        speed = _local_as_float(sample.get("speed_kmh"))
-        sample_speed_bin = _local_speed_bin(speed) if speed is not None and speed > 0 else None
-        if sample_speed_bin is not None:
-            total_speed_bin_counts[sample_speed_bin] += 1
-        _floor_raw = _local_floor_est(sample)
-        floor_amp = _floor_raw if _floor_raw is not None else 0.0
-        location = _local_location(sample, lang=lang)
-        if location:
-            total_locations.add(location)
-            total_location_sample_counts[location] += 1
-        sample_phase: str | None = None
-        if per_sample_phases is not None and i < len(per_sample_phases):
-            sample_phase = _local_phase_str(per_sample_phases[i])
-        for hz, amp in _local_top_peaks(sample):
-            if hz <= 0 or amp <= 0:
-                continue
-            bin_center = _floor(hz / freq_bin_hz) * freq_bin_hz + freq_bin_hz_half
-            bin_amps[bin_center].append(amp)
-            bin_floors[bin_center].append(max(0.0, floor_amp))
-            if speed is not None and speed > 0:
-                bin_speeds[bin_center].append(speed)
-                bin_speed_amp_pairs[bin_center].append((speed, amp))
-            if location:
-                bin_location_counts[bin_center][location] += 1
-            if sample_speed_bin is not None:
-                bin_speed_bin_counts[bin_center][sample_speed_bin] += 1
-            if sample_phase is not None:
-                bin_phase_counts[bin_center][sample_phase] += 1
+    stats = _accumulate_peak_bin_stats(
+        samples,
+        freq_bin_hz=freq_bin_hz,
+        freq_bin_hz_half=freq_bin_hz_half,
+        lang=lang,
+        per_sample_phases=per_sample_phases,
+        has_phases=has_phases,
+    )
+    n_samples = stats.n_samples
+    bin_amps = stats.bin_amps
+    bin_floors = stats.bin_floors
+    bin_speed_amp_pairs = stats.bin_speed_amp_pairs
+    bin_location_counts = stats.bin_location_counts
+    bin_speed_bin_counts = stats.bin_speed_bin_counts
+    bin_phase_counts = stats.bin_phase_counts
+    total_speed_bin_counts = stats.total_speed_bin_counts
+    total_locations = stats.total_locations
+    total_location_sample_counts = stats.total_location_sample_counts
 
     if n_samples == 0:
         return []
@@ -219,9 +317,7 @@ def _build_persistent_peak_findings(
         burstiness = (max_amp / median_amp) if median_amp > 1e-9 else 0.0
 
         mean_floor_vals = bin_floors.get(bin_center)
-        mean_floor = (
-            sum(mean_floor_vals) / len(mean_floor_vals) if mean_floor_vals else 0.0
-        )
+        mean_floor = sum(mean_floor_vals) / len(mean_floor_vals) if mean_floor_vals else 0.0
         effective_floor = _effective_baseline_floor(run_noise_baseline_g, extra_fallback=mean_floor)
         raw_snr = p95_amp / effective_floor
 
@@ -264,9 +360,7 @@ def _build_persistent_peak_findings(
 
         snr_score = min(1.0, log1p(raw_snr) / _SNR_LOG_DIVISOR)
         spatial_concentration = (
-            max(loc_counts_for_bin.values()) / count
-            if loc_counts_for_bin and count > 0
-            else 1.0
+            max(loc_counts_for_bin.values()) / count if loc_counts_for_bin and count > 0 else 1.0
         )
         spatial_penalty = (0.35 + 0.65 * spatial_concentration) if loc_counts_for_bin else 1.0
 

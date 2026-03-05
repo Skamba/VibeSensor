@@ -9,6 +9,62 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
+__all__ = [
+    # Request models
+    "IdentifyRequest",
+    "SetLocationRequest",
+    "AnalysisSettingsRequest",
+    "LanguageRequest",
+    "SpeedUnitRequest",
+    "CarUpsertRequest",
+    "ActiveCarRequest",
+    "SpeedSourceRequest",
+    "UpdateStartRequest",
+    "EspFlashStartRequest",
+    "SensorRequest",
+    # Response models
+    "HealthResponse",
+    "CarResponse",
+    "CarsResponse",
+    "SpeedSourceResponse",
+    "SpeedSourceStatusResponse",
+    "SensorConfigResponse",
+    "SensorsResponse",
+    "LanguageResponse",
+    "SpeedUnitResponse",
+    "ClientsResponse",
+    "LocationOptionResponse",
+    "ClientLocationsResponse",
+    "AnalysisSettingsResponse",
+    "IdentifyResponse",
+    "SetClientLocationResponse",
+    "RemoveClientResponse",
+    "LoggingStatusResponse",
+    "HistoryListResponse",
+    "HistoryRunResponse",
+    "HistoryInsightsResponse",
+    "DeleteHistoryRunResponse",
+    "UpdateIssueResponse",
+    "UpdateStatusResponse",
+    "UpdateStartResponse",
+    "UpdateCancelResponse",
+    "EspSerialPortResponse",
+    "EspFlashPortsResponse",
+    "EspFlashStatusResponse",
+    "EspFlashStartResponse",
+    "EspFlashCancelResponse",
+    "EspFlashLogsResponse",
+    "EspFlashHistoryEntryResponse",
+    "EspFlashHistoryResponse",
+    "CarLibraryBrandsResponse",
+    "CarLibraryTypesResponse",
+    "CarLibraryGearboxEntry",
+    "CarLibraryTireOptionEntry",
+    "CarLibraryVariantEntry",
+    "CarLibraryModelEntry",
+    "CarLibraryModelsResponse",
+]
+
 # ---------------------------------------------------------------------------
 # Shared base classes
 # ---------------------------------------------------------------------------

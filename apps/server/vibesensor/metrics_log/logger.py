@@ -16,6 +16,7 @@ import logging
 import time
 from collections import deque
 from collections.abc import Callable
+from dataclasses import dataclass
 from itertools import islice
 from pathlib import Path
 from threading import RLock
@@ -47,42 +48,54 @@ LOGGER = logging.getLogger(__name__)
 _MAX_HISTORY_CREATE_RETRIES = 5
 
 
+@dataclass
+class MetricsLoggerConfig:
+    """Static configuration bundle for :class:`MetricsLogger`.
+
+    Separates the immutable configuration knobs from the runtime collaborators
+    so that :meth:`MetricsLogger.__init__` has a manageable signature.
+    """
+
+    enabled: bool
+    log_path: Path
+    metrics_log_hz: int
+    sensor_model: str
+    default_sample_rate_hz: int
+    fft_window_size_samples: int
+    fft_window_type: str = "hann"
+    peak_picker_method: str = "max_peak_amp_across_axes"
+    accel_scale_g_per_lsb: float | None = None
+    persist_history_db: bool = True
+    no_data_timeout_s: float = 15.0
+
+
 class MetricsLogger:
     def __init__(
         self,
-        enabled: bool,
-        log_path: Path,
-        metrics_log_hz: int,
+        config: MetricsLoggerConfig,
         registry: ClientRegistry,
         gps_monitor: GPSSpeedMonitor,
         processor: SignalProcessor,
         analysis_settings: AnalysisSettingsStore,
-        sensor_model: str,
-        default_sample_rate_hz: int,
-        fft_window_size_samples: int,
-        fft_window_type: str = "hann",
-        peak_picker_method: str = "max_peak_amp_across_axes",
-        accel_scale_g_per_lsb: float | None = None,
         history_db: HistoryDB | None = None,
-        persist_history_db: bool = True,
         language_provider: Callable[[], str] | None = None,
-        no_data_timeout_s: float = 15.0,
     ):
-        self.enabled = bool(enabled)
-        self.log_path = log_path
-        self.metrics_log_hz = max(1, metrics_log_hz)
+        self.enabled = bool(config.enabled)
+        self.log_path = config.log_path
+        self.metrics_log_hz = max(1, config.metrics_log_hz)
         self.registry = registry
         self.gps_monitor = gps_monitor
         self.processor = processor
         self.analysis_settings = analysis_settings
-        self.sensor_model = sensor_model.strip() or "unknown"
-        self.default_sample_rate_hz = int(default_sample_rate_hz)
-        self.fft_window_size_samples = int(fft_window_size_samples)
-        self.fft_window_type = fft_window_type
-        self.peak_picker_method = peak_picker_method
+        self.sensor_model = config.sensor_model.strip() or "unknown"
+        self.default_sample_rate_hz = int(config.default_sample_rate_hz)
+        self.fft_window_size_samples = int(config.fft_window_size_samples)
+        self.fft_window_type = config.fft_window_type
+        self.peak_picker_method = config.peak_picker_method
         self.accel_scale_g_per_lsb = (
-            float(accel_scale_g_per_lsb)
-            if isinstance(accel_scale_g_per_lsb, NUMERIC_TYPES) and accel_scale_g_per_lsb > 0
+            float(config.accel_scale_g_per_lsb)
+            if isinstance(config.accel_scale_g_per_lsb, NUMERIC_TYPES)
+            and config.accel_scale_g_per_lsb > 0
             else None
         )
         self._lock = RLock()
@@ -91,12 +104,12 @@ class MetricsLogger:
         self._run_start_mono_s: float | None = None
         self._last_write_error: str | None = None
         self._history_db = history_db
-        self._persist_history_db = bool(persist_history_db)
+        self._persist_history_db = bool(config.persist_history_db)
         self._language_provider = language_provider
         self._history_run_created = False
         self._history_create_fail_count = 0
         self._written_sample_count = 0
-        self._no_data_timeout_s = max(1.0, float(no_data_timeout_s))
+        self._no_data_timeout_s = max(1.0, float(config.no_data_timeout_s))
         self._last_data_progress_mono_s: float | None = None
         self._session_generation: int = 0
         self._last_active_frames_total = 0

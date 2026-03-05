@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vibesensor.metrics_log import _MAX_HISTORY_CREATE_RETRIES, MetricsLogger
+from vibesensor.metrics_log import _MAX_HISTORY_CREATE_RETRIES, MetricsLogger, MetricsLoggerConfig
 
 # -- Minimal fakes -----------------------------------------------------------
 
@@ -103,16 +103,18 @@ class _FakeAnalysisSettings:
 
 def _make_logger(history_db, tmp_path: Path) -> MetricsLogger:
     return MetricsLogger(
-        enabled=False,
-        log_path=tmp_path / "metrics.jsonl",
-        metrics_log_hz=2,
+        MetricsLoggerConfig(
+            enabled=False,
+            log_path=tmp_path / "metrics.jsonl",
+            metrics_log_hz=2,
+            sensor_model="ADXL345",
+            default_sample_rate_hz=800,
+            fft_window_size_samples=1024,
+        ),
         registry=_FakeRegistry(),
         gps_monitor=_FakeGPSMonitor(),
         processor=_FakeProcessor(),
         analysis_settings=_FakeAnalysisSettings(),
-        sensor_model="ADXL345",
-        default_sample_rate_hz=800,
-        fft_window_size_samples=1024,
         history_db=history_db,
     )
 

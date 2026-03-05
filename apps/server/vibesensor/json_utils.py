@@ -39,8 +39,9 @@ def sanitize_for_json(obj: Any, *, _max_depth: int = 128) -> tuple[Any, bool]:
         if depth > _max_depth:
             return None
         # Fast path: common leaf types that never need sanitisation.
-        # Exact-type checks avoid isinstance overhead and skip the hasattr
-        # probes below for the vast majority of values in typical payloads.
+        # Intentional type() identity checks (not isinstance): these are exact
+        # native Python types with no relevant subclasses in our payloads, and
+        # skipping isinstance() avoids its hasattr/MRO probes on the hot path.
         t = type(v)
         if t is int or t is str or t is bool or v is None:
             return v

@@ -8,6 +8,12 @@ from typing import TYPE_CHECKING, Any, Literal
 from ..runlog import as_float_or_none as _as_float
 from .pdf_helpers import _canonical_location, _source_color
 from .theme import (
+    BMW_LENGTH_MM as _BMW_LENGTH_MM,
+)
+from .theme import (
+    BMW_WIDTH_MM as _BMW_WIDTH_MM,
+)
+from .theme import (
     FINDING_SOURCE_COLORS,
     REPORT_COLORS,
 )
@@ -129,9 +135,7 @@ def _choose_label_plan(
     font_size: float,
     color: str,
 ) -> LabelRenderPlan:
-    ordered_candidates = (
-        _LABEL_CANDIDATES_RIGHT if px < (width * 0.5) else _LABEL_CANDIDATES_LEFT
-    )
+    ordered_candidates = _LABEL_CANDIDATES_RIGHT if px < (width * 0.5) else _LABEL_CANDIDATES_LEFT
 
     best: tuple[float, LabelRenderPlan] | None = None
     for idx, (dx, dy, anchor) in enumerate(ordered_candidates):
@@ -221,9 +225,7 @@ def _build_sensor_render_plan(
 
     labels: list[LabelRenderPlan] = []
     _label_states = frozenset({"connected-active", "connected-inactive"})
-    labeled_names = {
-        m.name for m in markers if m.state in _label_states or m.name in highlight
-    }
+    labeled_names = {m.name for m in markers if m.state in _label_states or m.name in highlight}
     for name in sorted(
         labeled_names, key=lambda value: (location_points[value][1], location_points[value][0])
     ):
@@ -271,9 +273,7 @@ def car_location_diagram(
     _HexColor = colors.HexColor
 
     d_width = diagram_width if diagram_width is not None else content_width * 0.44
-    bmw_length_mm = 5007.0
-    bmw_width_mm = 1894.0
-    length_width_ratio = bmw_length_mm / bmw_width_mm
+    length_width_ratio = _BMW_LENGTH_MM / _BMW_WIDTH_MM
 
     drawing_h = max(220.0, float(diagram_height))
     drawing = Drawing(d_width, drawing_h)
