@@ -64,8 +64,11 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
                 raise HTTPException(status_code=400, detail="Unknown location_code")
 
             conflict = next(
-                (row for row in registry.snapshot_for_api()
-                 if row["id"] != normalized_client_id and row.get("location") == code),
+                (
+                    row
+                    for row in registry.snapshot_for_api()
+                    if row["id"] != normalized_client_id and row.get("location") == code
+                ),
                 None,
             )
             if conflict is not None:

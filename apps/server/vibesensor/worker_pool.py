@@ -99,14 +99,27 @@ class WorkerPool:
 
         Items whose callable raises are logged and omitted from the result
         dict (fail-open: one broken client doesn't block others).
+
+        Each task is wrapped with the same ``_timed`` logic used by
+        :meth:`submit` so that ``total_wait_s`` accumulates per-task
+        execution time consistently across both call paths.
         """
         if not items:
             return {}
-        t0 = time.monotonic()
         with self._metrics_lock:
             self._total_tasks += len(items)
+
+        def _timed_fn(item: T) -> R:
+            t0 = time.monotonic()
+            try:
+                return fn(item)
+            finally:
+                elapsed = time.monotonic() - t0
+                with self._metrics_lock:
+                    self._total_wait_s += elapsed
+
         futures: dict[Future[R], T] = {
-            self._executor.submit(fn, item): item for item in items
+            self._executor.submit(_timed_fn, item): item for item in items
         }
 
         results: dict[T, R] = {}
@@ -119,9 +132,6 @@ class WorkerPool:
                     item,
                     exc_info=True,
                 )
-        elapsed = time.monotonic() - t0
-        with self._metrics_lock:
-            self._total_wait_s += elapsed
         return results
 
     def shutdown(self, wait: bool = True) -> None:

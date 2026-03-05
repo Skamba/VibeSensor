@@ -291,6 +291,4 @@ def test_build_ws_payload_rotational_speeds_include_reason_when_speed_unavailabl
     gps.effective_speed_mps = None
 
     payload = state.build_ws_payload(selected_client="aaa")
-    _assert_rotational(
-        payload["rotational_speeds"], reason="speed_unavailable"
-    )
+    _assert_rotational(payload["rotational_speeds"], reason="speed_unavailable")

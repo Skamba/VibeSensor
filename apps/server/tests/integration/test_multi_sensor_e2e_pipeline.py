@@ -70,7 +70,11 @@ def _register_sensors(registry: ClientRegistry) -> None:
 
 
 def _build_sensor_packet(
-    client_id: bytes, amplitude: float, step: int, seq: int, wheel_hz: float,
+    client_id: bytes,
+    amplitude: float,
+    step: int,
+    seq: int,
+    wheel_hz: float,
 ) -> bytes:
     """Generate one UDP data packet for the given sensor at the given time step."""
     t = (np.arange(_FRAME_N) + step * _FRAME_N) / _SAMPLE_RATE_HZ
@@ -201,8 +205,7 @@ def test_multi_sensor_udp_to_report_pipeline(history_db: HistoryDB, tmp_path: Pa
 
     intensity_rows = analysis.get("sensor_intensity_by_location") or []
     by_location = {
-        str(row.get("location")): float(row.get("mean_intensity_db", 0.0))
-        for row in intensity_rows
+        str(row.get("location")): float(row.get("mean_intensity_db", 0.0)) for row in intensity_rows
     }
     assert set(by_location) >= _SENSOR_LOCATIONS
     assert max(by_location, key=by_location.get) == "front-left"

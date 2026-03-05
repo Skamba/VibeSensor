@@ -653,9 +653,7 @@ class HistoryDB:
             )
             return cur.fetchone() is not None
 
-    def _resolve_keyset_offset(
-        self, table: str, run_id: str, offset: int
-    ) -> int | None:
+    def _resolve_keyset_offset(self, table: str, run_id: str, offset: int) -> int | None:
         """Translate a row *offset* into a keyset-pagination ``last_id``.
 
         Returns the ``id`` value to use as the keyset bound, or ``None``
@@ -678,6 +676,7 @@ class HistoryDB:
             last_id = self._resolve_keyset_offset("samples_v2", run_id, offset)
             if last_id is None:
                 return
+        total_skipped = 0
         while True:
             with self._cursor(commit=False) as cur:
                 if last_id is None:
@@ -694,6 +693,12 @@ class HistoryDB:
                     )
                 batch_rows = cur.fetchall()
             if not batch_rows:
+                if total_skipped:
+                    LOGGER.warning(
+                        "run_id=%s: skipped %d corrupt v2 sample row(s) in total",
+                        run_id,
+                        total_skipped,
+                    )
                 return
             last_id = batch_rows[-1][0]
             parsed_batch: list[dict[str, Any]] = []
@@ -701,6 +706,7 @@ class HistoryDB:
                 try:
                     parsed_batch.append(self._v2_row_to_dict(row))
                 except Exception:
+                    total_skipped += 1
                     LOGGER.warning("Skipping corrupt v2 sample row id=%s", row[0], exc_info=True)
             if parsed_batch:
                 yield parsed_batch

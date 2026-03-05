@@ -73,7 +73,9 @@ class _State:
             set_speed_override_kmh=_noop,
         )
         self.ws_hub = SimpleNamespace(
-            add=_noop, remove=_noop, update_selected_client=_noop,
+            add=_noop,
+            remove=_noop,
+            update_selected_client=_noop,
         )
         self.processor = SimpleNamespace(
             debug_spectrum=lambda _id: {},

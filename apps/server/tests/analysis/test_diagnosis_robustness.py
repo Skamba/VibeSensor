@@ -689,9 +689,7 @@ class TestGpsSpeedValidation:
         ],
         ids=["nan", "inf", "negative", "none", "string"],
     )
-    def test_invalid_speed_rejected_by_product_code(
-        self, bad_speed: object, label: str
-    ) -> None:
+    def test_invalid_speed_rejected_by_product_code(self, bad_speed: object, label: str) -> None:
         """GPSSpeedMonitor.run() must reject *bad_speed* from gpsd TPV."""
         import asyncio
 

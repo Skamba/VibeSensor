@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import struct
 from dataclasses import dataclass
 
 import numpy as np
+
+LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "AckMessage",
@@ -57,6 +60,12 @@ DATA_ACK_BYTES: int = DATA_ACK_STRUCT.size
 CMD_HEADER_BYTES: int = CMD_HEADER.size
 CMD_IDENTIFY_BYTES: int = CMD_IDENTIFY_STRUCT.size
 CMD_SYNC_CLOCK_BYTES: int = CMD_SYNC_CLOCK_STRUCT.size
+
+HELLO_MAX_NAME_BYTES: int = 32
+"""Maximum length (in UTF-8 bytes) for the name and firmware_version fields
+in HELLO messages.  ``pack_hello`` enforces this limit on the send path;
+``parse_hello`` warns when an inbound message exceeds it (the value is still
+accepted to preserve forward compatibility with future firmware)."""
 
 # Pre-resolved dtype for the hot ingest path (parse_data / pack_data).
 _SAMPLE_DTYPE = np.dtype("<i2")
@@ -153,8 +162,16 @@ def parse_hello(data: bytes) -> HelloMessage:
     offset = HELLO_BASE.size
     if len(data) < offset + name_len:
         raise ProtocolError("HELLO missing name bytes")
-    name = data[offset : offset + name_len].decode("utf-8", errors="replace")
+    raw_name = data[offset : offset + name_len]
     offset += name_len
+    if name_len > HELLO_MAX_NAME_BYTES:
+        LOGGER.warning(
+            "HELLO name field is %d bytes (max expected %d); accepting but truncating stored value",
+            name_len,
+            HELLO_MAX_NAME_BYTES,
+        )
+        raw_name = raw_name[:HELLO_MAX_NAME_BYTES]
+    name = raw_name.decode("utf-8", errors="replace")
 
     firmware_version = ""
     queue_overflow_drops = 0
@@ -163,8 +180,17 @@ def parse_hello(data: bytes) -> HelloMessage:
         offset += 1
         if len(data) < offset + firmware_len:
             raise ProtocolError("HELLO firmware length out of range")
-        firmware_version = data[offset : offset + firmware_len].decode("utf-8", errors="replace")
+        raw_fw = data[offset : offset + firmware_len]
         offset += firmware_len
+        if firmware_len > HELLO_MAX_NAME_BYTES:
+            LOGGER.warning(
+                "HELLO firmware_version field is %d bytes (max expected %d); "
+                "accepting but truncating stored value",
+                firmware_len,
+                HELLO_MAX_NAME_BYTES,
+            )
+            raw_fw = raw_fw[:HELLO_MAX_NAME_BYTES]
+        firmware_version = raw_fw.decode("utf-8", errors="replace")
         if len(data) >= offset + 4:
             queue_overflow_drops = struct.unpack_from("<I", data, offset)[0]
 
@@ -188,8 +214,8 @@ def pack_hello(
     firmware_version: str = "",
     queue_overflow_drops: int = 0,
 ) -> bytes:
-    name_bytes = name.encode("utf-8")[:32]
-    fw_bytes = firmware_version.encode("utf-8")[:32]
+    name_bytes = name.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
+    fw_bytes = firmware_version.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
     header = HELLO_BASE.pack(
         MSG_HELLO,
         VERSION,

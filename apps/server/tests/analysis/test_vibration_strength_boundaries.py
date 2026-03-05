@@ -128,13 +128,9 @@ class TestVibrationStrengthDbScalar:
             pytest.param(-0.5, -0.3, {}, id="negative_inputs"),
         ],
     )
-    def test_invalid_inputs_return_finite(
-        self, peak: float, floor: float, kwargs: dict
-    ) -> None:
+    def test_invalid_inputs_return_finite(self, peak: float, floor: float, kwargs: dict) -> None:
         """NaN or negative inputs must still yield a finite dB value."""
-        db = vibration_strength_db_scalar(
-            peak_band_rms_amp_g=peak, floor_amp_g=floor, **kwargs
-        )
+        db = vibration_strength_db_scalar(peak_band_rms_amp_g=peak, floor_amp_g=floor, **kwargs)
         assert math.isfinite(db)
 
     def test_custom_epsilon(self) -> None:

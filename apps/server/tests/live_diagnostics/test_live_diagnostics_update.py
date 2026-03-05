@@ -130,18 +130,31 @@ class TestUpdateSnapshotContract:
         clients = _make_clients(_DEFAULT_CLIENTS)
 
         snap = diag_env.engine.update(
-            speed_mps=20.0, clients=clients, spectra=spectra, settings={},
+            speed_mps=20.0,
+            clients=clients,
+            spectra=spectra,
+            settings={},
         )
 
         required_keys = {
-            "diagnostics_sequence", "matrix", "events", "strength_bands",
-            "levels", "findings", "top_finding", "driving_phase", "error",
+            "diagnostics_sequence",
+            "matrix",
+            "events",
+            "strength_bands",
+            "levels",
+            "findings",
+            "top_finding",
+            "driving_phase",
+            "error",
         }
         assert required_keys.issubset(snap.keys()), f"Missing: {required_keys - snap.keys()}"
 
     def test_matrix_has_expected_sources_and_severities(self, diag_env) -> None:
         snap = diag_env.engine.update(
-            speed_mps=None, clients=[], spectra=None, settings={},
+            speed_mps=None,
+            clients=[],
+            spectra=None,
+            settings={},
         )
 
         expected_sources = {"engine", "driveshaft", "wheel", "other"}
@@ -156,7 +169,10 @@ class TestUpdateSnapshotContract:
 
     def test_levels_has_expected_sub_dicts(self, diag_env) -> None:
         snap = diag_env.engine.update(
-            speed_mps=20.0, clients=[], spectra=None, settings={},
+            speed_mps=20.0,
+            clients=[],
+            spectra=None,
+            settings={},
         )
 
         assert "levels" in snap
@@ -175,14 +191,23 @@ class TestSingleSensorEventEmission:
         for _ in range(10):
             diag_env.t["now"] += 1.0
             snap = diag_env.engine.update(
-                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
             all_events.extend(snap.get("events", []))
 
         assert len(all_events) > 0, "Expected at least one event after persistence ticks"
         event = all_events[0]
-        for key in ("event_id", "kind", "class_key", "peak_hz",
-                     "severity_key", "vibration_strength_db"):
+        for key in (
+            "event_id",
+            "kind",
+            "class_key",
+            "peak_hz",
+            "severity_key",
+            "vibration_strength_db",
+        ):
             assert key in event
         assert event["kind"] == "single"
 
@@ -194,7 +219,10 @@ class TestSingleSensorEventEmission:
         for _ in range(5):
             diag_env.t["now"] += 0.5
             snap = diag_env.engine.update(
-                speed_mps=20.0, clients=clients, spectra=spectra, settings={},
+                speed_mps=20.0,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
             seqs.append(snap["diagnostics_sequence"])
 
@@ -240,7 +268,10 @@ class TestLightTickBehavior:
         # Light tick with dt=2 seconds — should still accumulate dwell
         diag_env.t["now"] += 2.0
         snap_after = diag_env.engine.update(
-            speed_mps=27.8, clients=clients, spectra=None, settings={},
+            speed_mps=27.8,
+            clients=clients,
+            spectra=None,
+            settings={},
         )
         assert _matrix_total(snap_after, "seconds") >= total_before
 
@@ -251,7 +282,10 @@ class TestLightTickBehavior:
         # Light tick
         diag_env.t["now"] += 0.1
         snap = diag_env.engine.update(
-            speed_mps=27.8, clients=clients, spectra=None, settings={},
+            speed_mps=27.8,
+            clients=clients,
+            spectra=None,
+            settings={},
         )
         assert _matrix_total(snap, "count") >= total_before
 
@@ -274,7 +308,9 @@ class TestMalformedSpectra:
         ],
     )
     def test_malformed_spectra_returns_snapshot_without_crash(
-        self, diag_env, spectra_payload,
+        self,
+        diag_env,
+        spectra_payload,
     ) -> None:
         snap = diag_env.engine.update(
             speed_mps=20.0,
@@ -297,7 +333,10 @@ class TestMultiSensorGrouping:
         for _ in range(12):
             diag_env.t["now"] += 1.0
             snap = diag_env.engine.update(
-                speed_mps=27.8, clients=clients, spectra=spectra, settings={},
+                speed_mps=27.8,
+                clients=clients,
+                spectra=spectra,
+                settings={},
             )
             all_events.extend(snap.get("events", []))
 
@@ -311,7 +350,10 @@ class TestDrivingPhase:
 
     def test_phase_is_speed_unknown_without_speed(self, diag_env) -> None:
         snap = diag_env.engine.update(
-            speed_mps=None, clients=[], spectra=None, settings={},
+            speed_mps=None,
+            clients=[],
+            spectra=None,
+            settings={},
         )
         assert snap["driving_phase"] == "speed_unknown"
 

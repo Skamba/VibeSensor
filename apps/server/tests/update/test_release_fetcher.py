@@ -23,10 +23,14 @@ class TestValidateUrl:
     def test_https_accepted(self) -> None:
         validate_https_url("https://api.github.com/repos/owner/repo")
 
-    @pytest.mark.parametrize("url", [
-        "http://example.com/release.whl",
-        "ftp://example.com/release.whl",
-    ], ids=["http", "ftp"])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://example.com/release.whl",
+            "ftp://example.com/release.whl",
+        ],
+        ids=["http", "ftp"],
+    )
     def test_non_https_rejected(self, url: str) -> None:
         with pytest.raises(ValueError, match="non-HTTPS"):
             validate_https_url(url)
@@ -154,18 +158,23 @@ class TestServerReleaseFetcher:
             release = fetcher.find_latest_release()
         assert release.tag == "server-v2025.6.15"
 
-    @pytest.mark.parametrize("releases", [
-        pytest.param(
-            [{
-                "tag_name": "fw-v2025.6.15",
-                "draft": False,
-                "prerelease": False,
-                "assets": [{"name": "vibesensor-fw-v2025.6.15.zip", "url": "https://a"}],
-            }],
-            id="firmware-only-tags",
-        ),
-        pytest.param([], id="empty-releases"),
-    ])
+    @pytest.mark.parametrize(
+        "releases",
+        [
+            pytest.param(
+                [
+                    {
+                        "tag_name": "fw-v2025.6.15",
+                        "draft": False,
+                        "prerelease": False,
+                        "assets": [{"name": "vibesensor-fw-v2025.6.15.zip", "url": "https://a"}],
+                    }
+                ],
+                id="firmware-only-tags",
+            ),
+            pytest.param([], id="empty-releases"),
+        ],
+    )
     def test_find_latest_no_server_release(self, releases: list[dict]) -> None:
         fetcher = self._make_fetcher()
         with patch.object(fetcher, "_api_get", return_value=releases):

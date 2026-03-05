@@ -375,13 +375,20 @@ def _make_registry_with_hello(tmp_path: Path, client_id_hex: str = "aabbccddeeff
 
 
 def _data_msg(
-    client_id: bytes, seq: int, t0_us: int, *, sample_count: int = 100,
+    client_id: bytes,
+    seq: int,
+    t0_us: int,
+    *,
+    sample_count: int = 100,
 ) -> DataMessage:
     """Build a :class:`DataMessage` with zero-filled samples."""
     samples = np.zeros((sample_count, 3), dtype=np.int16)
     return DataMessage(
-        client_id=client_id, seq=seq, t0_us=t0_us,
-        sample_count=sample_count, samples=samples,
+        client_id=client_id,
+        seq=seq,
+        t0_us=t0_us,
+        sample_count=sample_count,
+        samples=samples,
     )
 
 

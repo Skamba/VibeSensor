@@ -77,11 +77,16 @@ class WebSocketHub:
         payload_builder: Callable[[str | None], dict],
         payload_cache: dict[str | None, str],
         failed_client_ids: set[str | None],
+        debug_info: dict[str | None, bool] | None = None,
     ) -> str:
         """Build and cache the JSON payload for *selected_client_id*.
 
         On failure the error payload is cached and an ERROR log is
         emitted (once per failing client_id per tick).
+
+        When *debug_info* is provided (``VIBESENSOR_WS_DEBUG=1``), the method
+        inspects the pre-serialisation dict and records whether per-client
+        frequency data is present, avoiding a redundant ``json.loads()`` later.
         """
         if selected_client_id in payload_cache:
             return payload_cache[selected_client_id]
@@ -91,10 +96,22 @@ class WebSocketHub:
             cleaned, had_non_finite = sanitize_for_json(raw_payload)
             if had_non_finite:
                 LOGGER.warning(
-                    "WebSocket payload for client %r contained NaN/Inf "
-                    "values; replaced with null.",
+                    "WebSocket payload for client %r contained NaN/Inf values; replaced with null.",
                     selected_client_id,
                 )
+            if debug_info is not None:
+                # Inspect the pre-serialised dict; avoids a redundant json.loads().
+                has_freq = False
+                try:
+                    spectra = cleaned.get("spectra") if isinstance(cleaned, dict) else None
+                    if isinstance(spectra, dict):
+                        for _cid, cs in (spectra.get("clients") or {}).items():
+                            if isinstance(cs, dict) and cs.get("freq"):
+                                has_freq = True
+                                break
+                except Exception:
+                    LOGGER.debug("Debug freq-inspection failed", exc_info=True)
+                debug_info[selected_client_id] = has_freq
             text = _dumps(
                 cleaned,
                 separators=(",", ":"),
@@ -118,10 +135,15 @@ class WebSocketHub:
         payload_builder: Callable[[str | None], dict],
         payload_cache: dict[str | None, str],
         failed_client_ids: set[str | None],
+        debug_info: dict[str | None, bool] | None = None,
     ) -> WebSocket | None:
         """Send the appropriate payload to *conn*, return the WebSocket on failure."""
         payload_text = self._build_payload_for(
-            conn.selected_client_id, payload_builder, payload_cache, failed_client_ids
+            conn.selected_client_id,
+            payload_builder,
+            payload_cache,
+            failed_client_ids,
+            debug_info=debug_info,
         )
         try:
             await asyncio.wait_for(
@@ -148,10 +170,18 @@ class WebSocketHub:
             return
         payload_cache: dict[str | None, str] = {}
         failed_client_ids: set[str | None] = set()
+        # Collect debug inspection data during build (avoids redundant json.loads later).
+        debug_info: dict[str | None, bool] | None = {} if _ws_debug_enabled() else None
 
         dead_ws = await asyncio.gather(
             *(
-                self._send_conn(conn, payload_builder, payload_cache, failed_client_ids)
+                self._send_conn(
+                    conn,
+                    payload_builder,
+                    payload_cache,
+                    failed_client_ids,
+                    debug_info=debug_info,
+                )
                 for conn in conns
             )
         )
@@ -170,25 +200,14 @@ class WebSocketHub:
             )
 
         # Dev-only instrumentation: log payload sizes when VIBESENSOR_WS_DEBUG=1.
-        if _ws_debug_enabled() and payload_cache:
+        if debug_info is not None and payload_cache:
             for sel_id, text in payload_cache.items():
-                has_per_client_freq = False
-                try:
-                    parsed = json.loads(text)
-                    spectra = parsed.get("spectra")
-                    if isinstance(spectra, dict):
-                        for _cid, cs in (spectra.get("clients") or {}).items():
-                            if isinstance(cs, dict) and cs.get("freq"):
-                                has_per_client_freq = True
-                                break
-                except Exception:
-                    LOGGER.debug("Debug payload parsing failed", exc_info=True)
                 LOGGER.debug(
                     "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
                     sel_id,
                     len(text),
                     len(conns),
-                    has_per_client_freq,
+                    debug_info.get(sel_id, False),
                 )
 
     async def run(

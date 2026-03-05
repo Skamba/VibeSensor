@@ -190,14 +190,22 @@ class TestBug09HotspotP95FallbackOnZero:
         # Simulating the fixed code path
         row = {"p95_intensity_db": 0.0, "mean_intensity_db": 5.0}
         p95_val = runlog_as_float_or_none(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else runlog_as_float_or_none(row.get("mean_intensity_db"))
+        p95 = (
+            p95_val
+            if p95_val is not None
+            else runlog_as_float_or_none(row.get("mean_intensity_db"))
+        )
         # 0.0 should be used, not fall through to mean
         assert p95 == 0.0
 
     def test_none_p95_falls_through_to_mean(self) -> None:
         row = {"p95_intensity_db": None, "mean_intensity_db": 5.0}
         p95_val = runlog_as_float_or_none(row.get("p95_intensity_db"))
-        p95 = p95_val if p95_val is not None else runlog_as_float_or_none(row.get("mean_intensity_db"))
+        p95 = (
+            p95_val
+            if p95_val is not None
+            else runlog_as_float_or_none(row.get("mean_intensity_db"))
+        )
         assert p95 == 5.0
 
 
@@ -465,6 +473,7 @@ def _hello(client_id: bytes = _CLIENT_ID, **overrides: object) -> HelloMessage:
     }
     defaults.update(overrides)
     return HelloMessage(**defaults)  # type: ignore[arg-type]
+
 
 # ---------------------------------------------------------------------------
 # Fix 1 & 2: Named constants in registry.py
@@ -1236,15 +1245,11 @@ _PROCESSING_DEFAULTS = dict(
 
 class TestNyquistFloatDivision:
     def test_odd_sample_rate_nyquist(self) -> None:
-        cfg = ProcessingConfig(
-            sample_rate_hz=801, spectrum_max_hz=400, **_PROCESSING_DEFAULTS
-        )
+        cfg = ProcessingConfig(sample_rate_hz=801, spectrum_max_hz=400, **_PROCESSING_DEFAULTS)
         assert cfg.spectrum_max_hz == 400  # NOT clamped to 399
 
     def test_even_sample_rate_still_clamps(self) -> None:
-        cfg = ProcessingConfig(
-            sample_rate_hz=800, spectrum_max_hz=400, **_PROCESSING_DEFAULTS
-        )
+        cfg = ProcessingConfig(sample_rate_hz=800, spectrum_max_hz=400, **_PROCESSING_DEFAULTS)
         assert cfg.spectrum_max_hz == 399  # clamped
 
 

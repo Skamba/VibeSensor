@@ -180,7 +180,8 @@ def test_payload_reuses_cached_conversion(
         raise AssertionError(f"float_list should not be called for cached {method_name}")
 
     monkeypatch.setattr(
-        "vibesensor.processing.processor.float_list", _fail_float_list,
+        "vibesensor.processing.processor.float_list",
+        _fail_float_list,
     )
     second = payload_fn("client1")
     assert second is first
@@ -337,9 +338,7 @@ def test_smooth_spectrum_single_bin() -> None:
     "arr, expected",
     [
         pytest.param(np.array([], dtype=np.float32), 0.0, id="empty"),
-        pytest.param(
-            np.array([float("nan")] * 3, dtype=np.float32), 0.0, id="all_nan"
-        ),
+        pytest.param(np.array([float("nan")] * 3, dtype=np.float32), 0.0, id="all_nan"),
         pytest.param(np.array([5.0], dtype=np.float32), 5.0, id="single_element"),
     ],
 )

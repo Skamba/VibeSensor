@@ -67,7 +67,7 @@ def test_low_speed_fault_not_rescued_when_highest_bin_poor() -> None:
         0.20,
         (
             ("30-40 km/h", 10, 9),  # 90% match rate – strong signal but not highest
-            ("50-60 km/h", 6, 1),   # noise
+            ("50-60 km/h", 6, 1),  # noise
             ("90-100 km/h", 8, 1),  # noise at highest bin
         ),
     )
@@ -131,9 +131,9 @@ def test_only_highest_bin_evaluated() -> None:
         0.20,
         (
             ("30-40 km/h", 10, 10),  # perfect — but not highest
-            ("60-70 km/h", 6, 1),    # noise
-            ("70-80 km/h", 6, 1),    # noise
-            ("90-100 km/h", 6, 1),   # noise – highest
+            ("60-70 km/h", 6, 1),  # noise
+            ("70-80 km/h", 6, 1),  # noise
+            ("90-100 km/h", 6, 1),  # noise – highest
         ),
     )
     # Highest bin (90-100) doesn’t qualify → no rescue

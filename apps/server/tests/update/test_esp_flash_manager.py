@@ -116,9 +116,7 @@ def _make_bundle(bundle_dir: Path) -> None:
     (bundle_dir / "flash.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
-def _make_cache(
-    tmp_path: Path, *, with_current: bool = False, with_baseline: bool = False
-) -> Path:
+def _make_cache(tmp_path: Path, *, with_current: bool = False, with_baseline: bool = False) -> Path:
     """Create a firmware cache directory with optional current/baseline bundles."""
     cache_dir = tmp_path / "fw-cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -411,7 +409,8 @@ async def test_esp_flash_api_rejects_concurrent_start(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_flash_uses_python_module_fallback_when_esptool_binary_missing(
-    tmp_path: Path, monkeypatch,
+    tmp_path: Path,
+    monkeypatch,
 ) -> None:
     monkeypatch.setattr("shutil.which", lambda _name: None)
     monkeypatch.setattr(
