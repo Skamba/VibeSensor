@@ -17,6 +17,10 @@ LOGGER = logging.getLogger(__name__)
 
 _FLASH_HISTORY_LIMIT = 10
 _FLASH_STEP_TIMEOUT_S = 90
+_FLASH_LOG_MAX_LINES: int = 2000
+"""Maximum number of log lines retained for a single flash job."""
+_FLASH_LOG_TRIM_TO: int = 1000
+"""Number of most-recent log lines to keep after the log buffer is trimmed."""
 
 
 def _esptool_base_cmd() -> list[str] | None:
@@ -197,12 +201,16 @@ class EspFlashManager:
         self._cancel_event = asyncio.Event()
         self._job_counter = 0
         self._logs: list[str] = []
-        self._max_log_lines = 2000
         self._history: list[EspFlashHistoryEntry] = []
 
     @property
     def status(self) -> EspFlashStatus:
         return self._status
+
+    @property
+    def job_task(self) -> asyncio.Task[None] | None:
+        """The background task for the currently running flash job, or None."""
+        return self._task
 
     async def list_ports(self) -> list[dict[str, Any]]:
         ports = await self._ports.list_ports()
@@ -241,8 +249,8 @@ class EspFlashManager:
 
     def _append_log(self, line: str) -> None:
         self._logs.append(line)
-        if len(self._logs) > self._max_log_lines:
-            del self._logs[: -1000]
+        if len(self._logs) > _FLASH_LOG_MAX_LINES:
+            del self._logs[:-_FLASH_LOG_TRIM_TO]
         self._status.log_count = len(self._logs)
         LOGGER.debug("esp flash log line recorded")
 

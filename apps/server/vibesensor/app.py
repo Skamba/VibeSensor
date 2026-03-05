@@ -117,7 +117,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     stale_analyzing = history_db.stale_analyzing_run_ids()
     for stale_run_id in stale_analyzing:
         LOGGER.info("Re-queuing stuck analyzing run %s for re-analysis", stale_run_id)
-        metrics_logger._schedule_post_analysis(stale_run_id)
+        metrics_logger.schedule_post_analysis(stale_run_id)
     if stale_analyzing:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
 

@@ -76,6 +76,12 @@ _SENSITIVE_KEYS: frozenset[str] = frozenset(
     }
 )
 
+_LOG_TAIL_MAX: int = 200
+"""Maximum number of entries kept in the job log tail before trimming."""
+
+_LOG_TAIL_TRIM_TO: int = 100
+"""Number of most-recent entries to retain after the log tail is trimmed."""
+
 _PACKAGED_STATIC_DIR: Path = Path(__file__).resolve().parent.parent / "static"
 
 _UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
@@ -157,6 +163,11 @@ class UpdateManager:
     def status(self) -> UpdateJobStatus:
         return self._status
 
+    @property
+    def job_task(self) -> asyncio.Task[None] | None:
+        """The background task for the currently running update job, or None."""
+        return self._task
+
     def start(self, ssid: str, password: str) -> None:
         """Start an update job.  Raises ValueError on bad input, RuntimeError if busy."""
         ssid = ssid.strip()
@@ -178,7 +189,7 @@ class UpdateManager:
             last_success_at=self._status.last_success_at,
             runtime=previous_runtime,
         )
-        self._persist_status("start")
+        self._persist_status()
         # Track password for log redaction, launch background task
         self._redact_secrets = {password} if password else set()
         self._task = asyncio.get_running_loop().create_task(
@@ -243,11 +254,11 @@ class UpdateManager:
                 )
             )
 
-        self._persist_status("startup_recover")
+        self._persist_status()
 
     # -- persistence helper --------------------------------------------------
 
-    def _persist_status(self, reason: str = "") -> None:
+    def _persist_status(self) -> None:
         """Save current status to disk."""
         self._state_store.save(self._status)
 
@@ -264,8 +275,8 @@ class UpdateManager:
         sanitized = self._redact(sanitize_log_line(msg))
         log_tail = self._status.log_tail
         log_tail.append(sanitized)
-        if len(log_tail) > 200:
-            del log_tail[:-100]
+        if len(log_tail) > _LOG_TAIL_MAX:
+            del log_tail[:-_LOG_TAIL_TRIM_TO]
         LOGGER.debug("update event recorded")
 
     def _redacted_args_for_log(self, args: list[str]) -> list[str]:
@@ -297,7 +308,7 @@ class UpdateManager:
                 detail=self._redact(sanitize_log_line(detail)),
             )
         )
-        self._persist_status("issue")
+        self._persist_status()
 
     @staticmethod
     def _ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
@@ -396,7 +407,7 @@ class UpdateManager:
     async def _restore_hotspot(self) -> bool:
         """Best-effort hotspot restore with retries.  Returns True if successful."""
         self._status.phase = UpdatePhase.restoring_hotspot
-        self._persist_status("phase:restoring_hotspot")
+        self._persist_status()
         self._log("Restoring hotspot...")
 
         # Clean up temporary uplink connection
@@ -474,7 +485,7 @@ class UpdateManager:
                 except Exception:
                     LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
 
-                self._persist_status("job_end")
+                self._persist_status()
             except (asyncio.CancelledError, Exception):
                 # Last-resort: ensure secrets are cleared and status is persisted
                 # even if cleanup itself is interrupted.
@@ -482,7 +493,7 @@ class UpdateManager:
                 self._status.finished_at = self._status.finished_at or time.time()
                 if self._status.state == UpdateState.running:
                     self._status.state = UpdateState.failed
-                self._persist_status("job_end")
+                self._persist_status()
                 LOGGER.warning("Update cleanup interrupted", exc_info=True)
 
     async def _run_update_inner(self, ssid: str, password: str) -> None:
@@ -503,7 +514,7 @@ class UpdateManager:
     async def _phase_validate(self, ssid: str) -> bool:
         """Validate prerequisites.  Returns False if the update should abort."""
         self._status.phase = UpdatePhase.validating
-        self._persist_status("phase:validating")
+        self._persist_status()
         self._log(f"Starting update with SSID: {ssid}")
 
         # Check required tools (git and npm no longer needed)
@@ -531,7 +542,7 @@ class UpdateManager:
     async def _phase_stop_hotspot(self) -> bool:
         """Stop the Wi-Fi hotspot.  Returns False if the update should abort."""
         self._status.phase = UpdatePhase.stopping_hotspot
-        self._persist_status("phase:stopping_hotspot")
+        self._persist_status()
         self._log("Stopping hotspot...")
 
         rc, _, _ = await self._run_cmd(
@@ -546,7 +557,7 @@ class UpdateManager:
     async def _phase_connect_wifi(self, ssid: str, password: str) -> bool:
         """Connect to the upstream Wi-Fi network.  Returns False if the update should abort."""
         self._status.phase = UpdatePhase.connecting_wifi
-        self._persist_status("phase:connecting_wifi")
+        self._persist_status()
         self._log(f"Connecting to Wi-Fi network: {ssid}")
 
         if not password:
@@ -734,7 +745,7 @@ class UpdateManager:
         """Check for available update, download, install, and finalize."""
         # --- Phase: Check for updates ---
         self._status.phase = UpdatePhase.checking
-        self._persist_status("phase:checking")
+        self._persist_status()
         self._log("Checking for available updates...")
 
         from vibesensor import __version__ as current_version
@@ -788,7 +799,7 @@ class UpdateManager:
 
         # --- Phase: Download ---
         self._status.phase = UpdatePhase.downloading
-        self._persist_status("phase:downloading")
+        self._persist_status()
         self._log(f"Downloading release {release.tag}...")
 
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
@@ -811,7 +822,7 @@ class UpdateManager:
 
             # --- Phase: Install ---
             self._status.phase = UpdatePhase.installing
-            self._persist_status("phase:installing")
+            self._persist_status()
             self._log("Installing update...")
 
             # Snapshot current version for rollback

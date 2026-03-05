@@ -76,9 +76,7 @@ def test_build_sample_records_uses_only_active_clients(make_logger) -> None:
     assert rows[0]["strength_floor_amp_g"] == 0.003
 
 
-def test_build_sample_records_caps_combined_and_axis_peak_lists(
-    make_logger, fake_registry
-) -> None:
+def test_build_sample_records_caps_combined_and_axis_peak_lists(make_logger, fake_registry) -> None:
     active = fake_registry.get("active")
     assert active is not None
     active.latest_metrics["strength_metrics"]["top_peaks"] = [  # type: ignore[index]
@@ -140,9 +138,7 @@ def test_speed_source_reports(
         assert rows[0]["speed_kmh"] == pytest.approx(expected_speed_kmh, abs=0.01)
 
 
-def test_stop_without_samples_does_not_persist_history_run(
-    make_logger, fake_history_db
-) -> None:
+def test_stop_without_samples_does_not_persist_history_run(make_logger, fake_history_db) -> None:
     logger = make_logger(history_db=fake_history_db)
 
     logger.start_logging()
@@ -359,7 +355,7 @@ def test_post_analysis_burst_uses_single_daemon_worker(
     monkeypatch.setattr(logger._post_analysis, "_run_post_analysis", _slow_post_analysis)
 
     for idx in range(6):
-        logger._schedule_post_analysis(f"run-{idx}")
+        logger.schedule_post_analysis(f"run-{idx}")
 
     logger.wait_for_post_analysis(timeout_s=3.0)
 
@@ -455,9 +451,7 @@ def test_post_analysis_uses_run_language_from_metadata(
     assert stored["lang"] == "nl"
 
 
-def test_db_persists_when_jsonl_disabled(
-    make_logger, tmp_path: Path
-) -> None:
+def test_db_persists_when_jsonl_disabled(make_logger, tmp_path: Path) -> None:
     history_db = HistoryDB(tmp_path / "history.db")
     logger = make_logger(history_db=history_db, persist_history_db=True)
 

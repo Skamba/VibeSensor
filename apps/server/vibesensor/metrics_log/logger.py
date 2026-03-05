@@ -211,7 +211,7 @@ class MetricsLogger:
             self._live_start_mono_s = self._run_start_mono_s or time.monotonic()
             result = self.status()
         if completed_run_id and self._history_db is not None:
-            self._schedule_post_analysis(completed_run_id)
+            self.schedule_post_analysis(completed_run_id)
         return result
 
     def stop_logging(
@@ -240,7 +240,7 @@ class MetricsLogger:
             self._last_active_frames_total = 0
             result = self.status()
         if run_id_to_analyze and self._history_db is not None:
-            self._schedule_post_analysis(run_id_to_analyze)
+            self.schedule_post_analysis(run_id_to_analyze)
         return result
 
     def analysis_snapshot(
@@ -475,7 +475,8 @@ class MetricsLogger:
 
     # -- post-analysis delegates ----------------------------------------------
 
-    def _schedule_post_analysis(self, run_id: str) -> None:
+    def schedule_post_analysis(self, run_id: str) -> None:
+        """Queue *run_id* for background post-run analysis."""
         self._post_analysis.schedule(run_id)
 
     def wait_for_post_analysis(self, timeout_s: float = 30.0) -> bool:

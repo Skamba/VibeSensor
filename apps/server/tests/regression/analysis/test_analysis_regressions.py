@@ -356,13 +356,13 @@ class TestWorkerThreadRace:
             seen.append(run_id)
 
         logger._post_analysis._run_post_analysis = _mock_analysis  # type: ignore[assignment]
-        logger._schedule_post_analysis("run-1")
+        logger.schedule_post_analysis("run-1")
         logger.wait_for_post_analysis(timeout_s=2.0)
 
         with logger._post_analysis._lock:
             assert logger._post_analysis._analysis_thread is None
 
-        logger._schedule_post_analysis("run-2")
+        logger.schedule_post_analysis("run-2")
         logger.wait_for_post_analysis(timeout_s=2.0)
         assert seen == ["run-1", "run-2"]
 
