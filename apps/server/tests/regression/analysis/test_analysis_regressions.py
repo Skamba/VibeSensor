@@ -602,7 +602,6 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
 """
 
 
-
 import pytest
 
 import vibesensor.analysis.findings as fmod
@@ -837,7 +836,6 @@ class TestPersistentPeakNegligibleCapAligned:
 """
 
 
-
 import pytest
 
 import vibesensor.analysis.findings.order_findings as order_findings_mod
@@ -884,9 +882,15 @@ class TestNegligibleCapAligned:
     TIER_B_CEILING (0.40)."""
 
     def test_order_cap_value_in_source(self) -> None:
+        # After refactoring the literal 0.40 to a named constant, verify
+        # _NEGLIGIBLE_STRENGTH_CONF_CAP holds the correct value and that
+        # the code actually uses it as the cap expression.
+        assert order_findings_mod._NEGLIGIBLE_STRENGTH_CONF_CAP == pytest.approx(0.40), (
+            "Negligible cap constant should be 0.40 (aligned with TIER_B_CEILING)"
+        )
         src = inspect.getsource(order_findings_mod)
-        assert "min(confidence, 0.40)" in src, (
-            "Negligible cap should be 0.40 (aligned with TIER_B_CEILING)"
+        assert "min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)" in src, (
+            "Negligible cap should use the _NEGLIGIBLE_STRENGTH_CONF_CAP constant"
         )
 
 
@@ -1272,7 +1276,6 @@ Covers:
 """
 
 
-
 import pytest
 
 from vibesensor.analysis.helpers import (
@@ -1306,9 +1309,7 @@ class TestCombineAmplitudeNanGuard:
         ],
         ids=["nan", "inf", "empty"],
     )
-    def test_invalid_returns_silence(
-        self, values: list[float], expected_silence: bool
-    ) -> None:
+    def test_invalid_returns_silence(self, values: list[float], expected_silence: bool) -> None:
         assert _combine_amplitude_strength_db(values) == SILENCE_DB
 
     def test_nan_mixed_with_valid(self) -> None:
@@ -1398,9 +1399,7 @@ class TestEffectiveBaselineFloor:
         ],
         ids=["none", "zero-clamped", "negative-clamped", "valid"],
     )
-    def test_baseline_floor(
-        self, baseline: float | None, kwargs: dict, expected: float
-    ) -> None:
+    def test_baseline_floor(self, baseline: float | None, kwargs: dict, expected: float) -> None:
         result = _effective_baseline_floor(baseline, **kwargs)
         assert result == expected
 
@@ -1443,32 +1442,40 @@ class TestSelectReasonKey:
         [
             (
                 dict(
-                    confidence=0.9, steady_speed=False,
-                    weak_spatial=False, sensor_count=4,
+                    confidence=0.9,
+                    steady_speed=False,
+                    weak_spatial=False,
+                    sensor_count=4,
                     has_reference_gaps=True,
                 ),
                 "reference_gaps",
             ),
             (
                 dict(
-                    confidence=0.9, steady_speed=False,
-                    weak_spatial=False, sensor_count=1,
+                    confidence=0.9,
+                    steady_speed=False,
+                    weak_spatial=False,
+                    sensor_count=1,
                     has_reference_gaps=False,
                 ),
                 "single_sensor",
             ),
             (
                 dict(
-                    confidence=0.9, steady_speed=False,
-                    weak_spatial=False, sensor_count=4,
+                    confidence=0.9,
+                    steady_speed=False,
+                    weak_spatial=False,
+                    sensor_count=4,
                     has_reference_gaps=False,
                 ),
                 "strong_order_match",
             ),
             (
                 dict(
-                    confidence=0.2, steady_speed=False,
-                    weak_spatial=False, sensor_count=4,
+                    confidence=0.2,
+                    steady_speed=False,
+                    weak_spatial=False,
+                    sensor_count=4,
                     has_reference_gaps=False,
                 ),
                 "weak_order_match",

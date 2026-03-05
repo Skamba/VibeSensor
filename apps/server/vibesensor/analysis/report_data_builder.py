@@ -275,17 +275,19 @@ def _compute_location_hotspot_rows(
     for location, amps in amp_by_location.items():
         peak_val = max(amps)
         mean_val = _mean(amps)
-        hotspot_rows.append({
-            "location": location,
-            "count": len(amps),
-            "unit": "db",
-            "peak_value": peak_val,
-            "mean_value": mean_val,
-            "peak_db": peak_val,
-            "mean_db": mean_val,
-        })
+        hotspot_rows.append(
+            {
+                "location": location,
+                "count": len(amps),
+                "unit": "db",
+                "peak_value": peak_val,
+                "mean_value": mean_val,
+                "peak_db": peak_val,
+                "mean_db": mean_val,
+            }
+        )
     hotspot_rows.sort(
-        key=lambda r: (float(r["peak_value"]), float(r["mean_value"])),
+        key=lambda r: (float(r.get("peak_value") or 0.0), float(r.get("mean_value") or 0.0)),
         reverse=True,
     )
     return hotspot_rows

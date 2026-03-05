@@ -89,6 +89,55 @@ _DIFFUSE_PENALTY_FLOOR = 0.65
 _SINGLE_SENSOR_CONFIDENCE_SCALE = 0.85
 _DUAL_SENSOR_CONFIDENCE_SCALE = 0.92
 
+# ── Confidence weight budget ─────────────────────────────────────────────
+# Total weight sums to 0.95 (with the 0.10 base).
+# Baseline (stiff path): match=0.35, error=0.20, corr=0.10, snr=0.20
+# Compliant path (1.5): match=0.40, error=0.20, corr=0.05, snr=0.20
+_CONF_BASE = 0.10
+_MATCH_BASE_WEIGHT = 0.35
+_ERROR_WEIGHT = 0.20
+_CORR_BASE_WEIGHT = 0.10
+_SNR_WEIGHT = 0.20
+# Per-unit compliance shift: moves weight from correlation → match.
+# At path_compliance=1.5 the full _CORR_MAX_SHIFT is consumed.
+_CORR_MAX_SHIFT = 0.05
+_CORR_COMPLIANCE_FACTOR = 0.10
+
+# ── Strength-based confidence adjustments ────────────────────────────────
+_NEGLIGIBLE_STRENGTH_CONF_CAP = 0.40  # cap for negligible-strength findings
+_LIGHT_STRENGTH_PENALTY = 0.80  # multiplier for light-strength findings
+
+# ── Localization scaling ──────────────────────────────────────────────────
+_LOCALIZATION_BASE = 0.70  # base factor before localization contribution
+_LOCALIZATION_SPREAD = 0.30  # range that localization_confidence can add
+
+# ── Spatial separation penalties ─────────────────────────────────────────
+# Applied when weak_spatial_separation is True (can't pinpoint corner).
+_WEAK_SEP_DOMINANCE_THRESHOLD = 1.5  # dominance ratio to qualify for lighter penalty
+_WEAK_SEP_STRONG_PENALTY = 0.90  # lighter penalty: clear amplitude asymmetry present
+_WEAK_SEP_UNIFORM_DOMINANCE = 1.05  # below this → vibration is spatially uniform
+_WEAK_SEP_UNIFORM_PENALTY = 0.70  # heavier penalty: spatially uniform excitation
+_WEAK_SEP_MILD_PENALTY = 0.80  # default penalty: mild spatial asymmetry
+_NO_WHEEL_SENSOR_PENALTY = 0.75  # extra penalty when no wheel-corner sensors at all
+
+# ── Speed-profile penalties ───────────────────────────────────────────────
+_CONSTANT_SPEED_PENALTY = 0.75  # confidence reduction for constant-speed runs
+_STEADY_SPEED_PENALTY = 0.82  # smaller reduction for steady (non-varying) speed
+
+# ── Sample-count saturation ───────────────────────────────────────────────
+_SAMPLE_SATURATION_COUNT = 20  # matched samples needed to reach full weight
+_SAMPLE_WEIGHT_BASE = 0.70  # base weight with zero samples
+_SAMPLE_WEIGHT_RANGE = 0.30  # extra weight added as samples accumulate
+
+# ── Corroborating-evidence bonuses ───────────────────────────────────────
+_CORROBORATING_3_BONUS = 1.08  # bonus: ≥3 corroborating locations
+_CORROBORATING_2_BONUS = 1.04  # bonus: 2 corroborating locations
+_PHASES_3_BONUS = 1.06  # bonus: ≥3 driving phases with evidence
+_PHASES_2_BONUS = 1.03  # bonus: 2 driving phases with evidence
+
+# ── Minimum localization threshold for sensor-count scaling ──────────────
+_LOCALIZATION_MIN_SCALE_THRESHOLD = 0.30
+
 
 def _compute_effective_match_rate(
     match_rate: float,
@@ -219,60 +268,64 @@ def _compute_order_confidence(
     because on rough roads the wheel is already shaking from road input,
     reducing correlation, while the fault amplitude persists.
     """
-    # Weight budget (sums to 0.95 including base 0.10):
-    #   match  error  corr  snr
-    #   0.35   0.20   0.10  0.20   (baseline, stiff path)
-    #   0.40   0.20   0.05  0.20   (compliance=1.5, wheel path)
-    #
+    # Weight values are defined as module-level constants; see _CONF_BASE,
+    # _MATCH_BASE_WEIGHT, _ERROR_WEIGHT, _CORR_BASE_WEIGHT, _SNR_WEIGHT.
     # Correlation is intentionally the lightest component: on real roads
     # FFT-bin wander, road noise, and suspension compliance all degrade
     # correlation for genuine faults, while amplitude (SNR) and consistent
     # detection (match) are more robust fault indicators.
-    corr_shift = min(0.05, 0.10 * (path_compliance - 1.0))  # 0.0 at 1.0, 0.05 at 1.5
-    match_weight = 0.35 + corr_shift
-    corr_weight = 0.10 - corr_shift
+    corr_shift = min(_CORR_MAX_SHIFT, _CORR_COMPLIANCE_FACTOR * (path_compliance - 1.0))
+    match_weight = _MATCH_BASE_WEIGHT + corr_shift
+    corr_weight = _CORR_BASE_WEIGHT - corr_shift
     confidence = (
-        0.10
+        _CONF_BASE
         + (match_weight * effective_match_rate)
-        + (0.20 * error_score)
+        + (_ERROR_WEIGHT * error_score)
         + (corr_weight * corr_val)
-        + (0.20 * snr_score)
+        + (_SNR_WEIGHT * snr_score)
     )
     if absolute_strength_db < _NEGLIGIBLE_STRENGTH_MAX_DB:
-        confidence = min(confidence, 0.40)
+        confidence = min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP)
     elif absolute_strength_db < _LIGHT_STRENGTH_MAX_DB:
-        confidence *= 0.80
-    confidence *= 0.70 + (0.30 * max(0.0, min(1.0, localization_confidence)))
+        confidence *= _LIGHT_STRENGTH_PENALTY
+    confidence *= _LOCALIZATION_BASE + (
+        _LOCALIZATION_SPREAD * max(0.0, min(1.0, localization_confidence))
+    )
     if weak_spatial_separation:
-        if no_wheel_sensors and dominance_ratio is not None and dominance_ratio >= 1.5:
+        if (
+            no_wheel_sensors
+            and dominance_ratio is not None
+            and dominance_ratio >= _WEAK_SEP_DOMINANCE_THRESHOLD
+        ):
             # When weak_spatial_separation was forced by no_wheel_sensors but
             # the actual spatial signal is strong (e.g. trunk 2× driver seat),
             # apply a lighter penalty.  We can't resolve the specific wheel
             # corner, but the clear amplitude asymmetry is still diagnostic.
-            confidence *= 0.90
+            confidence *= _WEAK_SEP_STRONG_PENALTY
         else:
-            confidence *= 0.70 if dominance_ratio is not None and dominance_ratio < 1.05 else 0.80
+            uniform = dominance_ratio is not None and dominance_ratio < _WEAK_SEP_UNIFORM_DOMINANCE
+            confidence *= _WEAK_SEP_UNIFORM_PENALTY if uniform else _WEAK_SEP_MILD_PENALTY
     if no_wheel_sensors and not weak_spatial_separation:
         # Only apply the no-wheel-sensors penalty when weak_spatial_separation
         # wasn't already triggered.  When no_wheel_sensors forced
         # weak_spatial_separation (test_plan.py), the location uncertainty
         # is already penalised; stacking a second penalty double-counts
         # the same underlying lack of wheel-corner resolution.
-        confidence *= 0.75
+        confidence *= _NO_WHEEL_SENSOR_PENALTY
     if constant_speed:
-        confidence *= 0.75
+        confidence *= _CONSTANT_SPEED_PENALTY
     elif steady_speed:
-        confidence *= 0.82
-    sample_factor = min(1.0, matched / 20.0)
-    confidence = confidence * (0.70 + 0.30 * sample_factor)
+        confidence *= _STEADY_SPEED_PENALTY
+    sample_factor = min(1.0, matched / _SAMPLE_SATURATION_COUNT)
+    confidence = confidence * (_SAMPLE_WEIGHT_BASE + _SAMPLE_WEIGHT_RANGE * sample_factor)
     if corroborating_locations >= 3:
-        confidence *= 1.08
+        confidence *= _CORROBORATING_3_BONUS
     elif corroborating_locations >= 2:
-        confidence *= 1.04
+        confidence *= _CORROBORATING_2_BONUS
     if phases_with_evidence >= 3:
-        confidence *= 1.06
+        confidence *= _PHASES_3_BONUS
     elif phases_with_evidence >= 2:
-        confidence *= 1.03
+        confidence *= _PHASES_2_BONUS
     if is_diffuse_excitation:
         confidence *= diffuse_penalty
     # Sensor-coverage scaling: only apply when localization_confidence is
@@ -282,9 +335,11 @@ def _compute_order_confidence(
     # above, AND weak_spatial_separation adds another penalty.  Stacking
     # the explicit sensor-count scale on top triple-counts the same
     # underlying uncertainty.
-    if n_connected_locations <= 1 and localization_confidence >= 0.30:
+    if n_connected_locations <= 1 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD:
         confidence *= _SINGLE_SENSOR_CONFIDENCE_SCALE
-    elif n_connected_locations == 2 and localization_confidence >= 0.30:
+    elif (
+        n_connected_locations == 2 and localization_confidence >= _LOCALIZATION_MIN_SCALE_THRESHOLD
+    ):
         confidence *= _DUAL_SENSOR_CONFIDENCE_SCALE
     return max(_CONFIDENCE_FLOOR, min(_CONFIDENCE_CEILING, confidence))
 
