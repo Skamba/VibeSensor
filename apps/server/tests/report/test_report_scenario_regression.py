@@ -12,12 +12,8 @@ from math import log1p
 from typing import Any
 
 import pytest
-from builders import (
-    make_sample as _base_make_sample,
-)
-from builders import (
-    standard_metadata as _base_standard_metadata,
-)
+from builders import make_sample as _base_make_sample
+from builders import standard_metadata as _base_standard_metadata
 from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis import build_findings_for_samples
@@ -75,7 +71,7 @@ def _max_order_source_conf(
 def _make_sample(
     *,
     t_s: float,
-    speed_kmh: float,
+    speed_kmh: float | None = None,
     accel_x_g: float = 0.01,
     accel_y_g: float = 0.01,
     accel_z_g: float = 0.10,
@@ -89,9 +85,11 @@ def _make_sample(
     engine_rpm: float | None = None,
     dominant_freq_hz: float | None = None,
 ) -> dict[str, Any]:
+    # Keep historical/backward-compatible test-helper behavior: missing speed is treated as 0 km/h.
+    effective_speed = 0.0 if speed_kmh is None else speed_kmh
     sample = _base_make_sample(
         t_s=t_s,
-        speed_kmh=speed_kmh,
+        speed_kmh=effective_speed,
         accel_x_g=accel_x_g,
         accel_y_g=accel_y_g,
         accel_z_g=accel_z_g,
