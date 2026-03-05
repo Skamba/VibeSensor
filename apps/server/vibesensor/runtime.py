@@ -189,9 +189,8 @@ class RuntimeState:
         On heavy ticks the cache is always refreshed.  On light ticks the
         existing cache is reused if it was populated at least once.
         """
-        need_refresh = (
-            self.cached_analysis_metadata is None
-            or (self.ws_include_heavy and self.cached_analysis_tick != self.ws_tick)
+        need_refresh = self.cached_analysis_metadata is None or (
+            self.ws_include_heavy and self.cached_analysis_tick != self.ws_tick
         )
         if need_refresh:
             metadata, samples = self.metrics_logger.analysis_snapshot()
@@ -400,8 +399,8 @@ class RuntimeState:
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
         managed = [
-            self.update_manager._task,
-            self.esp_flash_manager._task,
+            self.update_manager.job_task,
+            self.esp_flash_manager.job_task,
         ]
         for task in managed:
             if task is not None:

@@ -40,6 +40,8 @@ LOGGER = logging.getLogger(__name__)
 
 _BANDS_LIST: list[dict[str, Any]] = list(BANDS)
 _PRUNE_SILENCE_TICKS: int = 60
+_COMBINED_TRACKER_PRUNE_MS: int = 30_000
+"""Remove combined trackers that have been absent for this many milliseconds."""
 
 
 class LiveDiagnosticsEngine:
@@ -140,11 +142,11 @@ class LiveDiagnosticsEngine:
 
     @property
     def _phase_speed_history(self) -> deque[tuple[float, float | None]]:
-        return self._phase._speed_history
+        return self._phase.speed_history
 
     @_phase_speed_history.setter
     def _phase_speed_history(self, value: deque[tuple[float, float | None]]) -> None:
-        self._phase._speed_history = value
+        self._phase.speed_history = value
 
     # ------------------------------------------------------------------
     # Snapshot
@@ -205,7 +207,7 @@ class LiveDiagnosticsEngine:
                     lang=language,
                 )
             except Exception as exc:
-                LOGGER.warning("Live diagnostics findings unavailable: %s", exc)
+                LOGGER.warning("Live diagnostics findings unavailable: %s", exc, exc_info=True)
                 self._latest_findings = []
 
         now_ms = int(monotonic() * 1000.0)
@@ -235,6 +237,7 @@ class LiveDiagnosticsEngine:
             LOGGER.warning(
                 "Live diagnostics update skipped due to invalid spectra payload: %s",
                 exc,
+                exc_info=True,
             )
             self._last_error = str(exc)
             sensor_events = []
@@ -347,7 +350,10 @@ class LiveDiagnosticsEngine:
                 sensor_count=2,
                 fallback_db=SILENCE_DB,
             )
-            if tracker.current_bucket_key is None and (now_ms - tracker.last_update_ms) > 30_000:
+            if (
+                tracker.current_bucket_key is None
+                and (now_ms - tracker.last_update_ms) > _COMBINED_TRACKER_PRUNE_MS
+            ):
                 del self._combined_trackers[combined_key]
 
         self._active_levels_by_source = active_by_source
@@ -369,7 +375,7 @@ class LiveDiagnosticsEngine:
         """Apply silence decay to sensor trackers not seen in the current tick."""
         for tracker_key, tracker in list(self._sensor_trackers.items()):
             if tracker_key in seen_keys:
-                tracker._silence_ticks = 0
+                tracker.silence_ticks = 0
                 continue
             self._apply_severity_to_tracker(
                 tracker,
@@ -377,8 +383,8 @@ class LiveDiagnosticsEngine:
                 sensor_count=1,
                 fallback_db=SILENCE_DB,
             )
-            tracker._silence_ticks += 1
-            if tracker._silence_ticks >= _PRUNE_SILENCE_TICKS:  # noqa: SLF001
+            tracker.silence_ticks += 1
+            if tracker.silence_ticks >= _PRUNE_SILENCE_TICKS:
                 del self._sensor_trackers[tracker_key]
 
     def _process_combined_groups(

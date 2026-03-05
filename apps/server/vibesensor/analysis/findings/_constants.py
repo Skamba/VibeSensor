@@ -4,12 +4,20 @@ from __future__ import annotations
 
 from ..strength_labels import _STRENGTH_THRESHOLDS
 
+# Band indices into _STRENGTH_THRESHOLDS (band 1 = negligible, band 2 = light).
+_NEGLIGIBLE_BAND_INDEX = 1
+_LIGHT_BAND_INDEX = 2
+
 # Strength thresholds derived from the global strength-labels table.
 _NEGLIGIBLE_STRENGTH_MAX_DB = (
-    float(_STRENGTH_THRESHOLDS[1][0]) if len(_STRENGTH_THRESHOLDS) > 1 else 8.0
+    float(_STRENGTH_THRESHOLDS[_NEGLIGIBLE_BAND_INDEX][0])
+    if len(_STRENGTH_THRESHOLDS) > _NEGLIGIBLE_BAND_INDEX
+    else 8.0
 )
 _LIGHT_STRENGTH_MAX_DB = (
-    float(_STRENGTH_THRESHOLDS[2][0]) if len(_STRENGTH_THRESHOLDS) > 2 else 16.0
+    float(_STRENGTH_THRESHOLDS[_LIGHT_BAND_INDEX][0])
+    if len(_STRENGTH_THRESHOLDS) > _LIGHT_BAND_INDEX
+    else 16.0
 )
 
 # Minimum order-finding confidence to suppress a matching persistent-peak.
