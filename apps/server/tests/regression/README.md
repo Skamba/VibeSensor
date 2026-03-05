@@ -4,8 +4,10 @@ Regression tests are grouped by intent to make discovery predictable:
 
 - `audits/`: coverage/report audits that verify known finding sets.
 - `bugfix_batches/`: PR or batch-level bug-fix packs.
-- `cycle_fixes/`: cycle-based fix packs (kept in numeric order).
+- `analysis/`: analysis/scoring/order-detection regression packs.
+- `report/`: PDF/report-data rendering and formatting regressions.
 - `review_fixes/`: reviewer-driven fix packs.
+- `runtime/`: runtime/storage/API guard regressions.
 
 Naming convention:
 

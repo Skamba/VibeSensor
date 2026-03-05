@@ -222,7 +222,7 @@ class TestPersistentPeakNegligibleCapAligned:
     ~0.37 confidence always suppresses persistent peaks at the same
     frequency."""
 
-    def test_cap_value_in_source(self) -> None:
+    def test_persistent_peak_cap_value_in_source(self) -> None:
         src = inspect.getsource(fmod._build_persistent_peak_findings)
         # The negligible cap must be 0.40, not 0.35
         assert "min(confidence, 0.40)" in src, (
