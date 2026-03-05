@@ -34,6 +34,11 @@ def _clamp_str(value: object, maxlen: int) -> str:
     return str(value).strip()[:maxlen]
 
 
+def _normalize_choice(value: object, default: str) -> str:
+    """Normalize a choice-like value into a lowercase trimmed token."""
+    return str(value or default).strip().lower()
+
+
 class SettingsStore:
     """Holds the full app settings: cars, speed source, and sensors.
 
@@ -83,10 +88,10 @@ class SettingsStore:
                     "fallbackMode": raw.get("fallbackMode"),
                 }
             )
-            language = str(raw.get("language") or "en").strip().lower()
+            language = _normalize_choice(raw.get("language"), "en")
             self._language = language if language in VALID_LANGUAGES else "en"
 
-            speed_unit = str(raw.get("speedUnit") or "kmh").strip().lower()
+            speed_unit = _normalize_choice(raw.get("speedUnit"), "kmh")
             self._speed_unit = speed_unit if speed_unit in VALID_SPEED_UNITS else "kmh"
 
             # Sensors
@@ -308,7 +313,7 @@ class SettingsStore:
             return self._language
 
     def set_language(self, value: str) -> str:
-        language = str(value).strip().lower()
+        language = _normalize_choice(value, "en")
         if language not in VALID_LANGUAGES:
             raise ValueError(f"language must be one of {sorted(VALID_LANGUAGES)}")
         with self._lock:
@@ -327,7 +332,7 @@ class SettingsStore:
             return self._speed_unit
 
     def set_speed_unit(self, value: str) -> str:
-        unit = str(value).strip().lower()
+        unit = _normalize_choice(value, "kmh")
         if unit not in VALID_SPEED_UNITS:
             raise ValueError(f"speed_unit must be one of {sorted(VALID_SPEED_UNITS)}")
         with self._lock:

@@ -87,6 +87,10 @@ class TestParseIp:
     def test_empty(self) -> None:
         assert parse_ip("") is None
 
+    def test_skips_malformed_inet_row_and_uses_next_match(self) -> None:
+        output = "    inet\n    inet 10.0.0.5/24 brd 10.0.0.255 scope global wlan0\n"
+        assert parse_ip(output) == "10.0.0.5/24"
+
 
 # ---------------------------------------------------------------------------
 # expected_ip_match
@@ -163,7 +167,8 @@ class TestNmLogSignals:
         [
             pytest.param(
                 "dhcp: no address range available for subnet\n",
-                "dhcp_no_range", id="dhcp_no_range",
+                "dhcp_no_range",
+                id="dhcp_no_range",
             ),
             pytest.param(
                 "failed to start dnsmasq process\n",
@@ -172,7 +177,8 @@ class TestNmLogSignals:
             ),
             pytest.param(
                 "address already in use on port 53\n",
-                "port53_conflict", id="port53_conflict",
+                "port53_conflict",
+                id="port53_conflict",
             ),
             pytest.param("everything is fine\n", None, id="no_signal"),
         ],
