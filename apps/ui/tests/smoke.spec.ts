@@ -49,7 +49,7 @@ function jsonOk(body: unknown) {
 }
 
 function normalizePathname(pathname: string): string {
-  return pathname.length > 1 ? pathname.replace(/\/$/, "") : pathname;
+  return pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
 }
 
 function requestPath(route: Route): string {
@@ -65,6 +65,10 @@ async function installCommonRoutes(page: Page, options: CommonRouteOptions = {})
     await fulfillJson(route, { enabled: false, current_file: null });
   });
   await page.route("**/api/history**", async (route) => {
+    if (!requestPath(route).startsWith("/api/history")) {
+      await route.fallback();
+      return;
+    }
     if (options.historyHandler) {
       await options.historyHandler(route);
       return;
@@ -78,6 +82,10 @@ async function installCommonRoutes(page: Page, options: CommonRouteOptions = {})
     await fulfillJson(route, { brands: [], types: [], models: [] });
   });
   await page.route("**/api/settings/**", async (route) => {
+    if (!requestPath(route).startsWith("/api/settings")) {
+      await route.fallback();
+      return;
+    }
     if (options.settingsHandler) {
       await options.settingsHandler(route);
       return;
