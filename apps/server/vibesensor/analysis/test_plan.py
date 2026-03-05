@@ -26,6 +26,31 @@ _ACTION_PRIORITY: dict[str, int] = {
 }
 
 
+def _normalized_text(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _normalized_lower_text(value: object) -> str:
+    return _normalized_text(value).lower()
+
+
+def _enrich_test_step(
+    step: dict[str, Any],
+    *,
+    finding_confidence: float | None,
+    finding_speed_band: str,
+    finding_frequency: str,
+) -> dict[str, Any]:
+    enriched_step = dict(step)
+    if finding_confidence is not None:
+        enriched_step.setdefault("certainty_0_to_1", f"{finding_confidence:.4f}")
+    if finding_speed_band:
+        enriched_step.setdefault("speed_band", finding_speed_band)
+    if finding_frequency:
+        enriched_step.setdefault("frequency_hz_or_order", finding_frequency)
+    return enriched_step
+
+
 def _weighted_percentile_speed(
     speed_weight_pairs: list[tuple[float, float]],
     percentile_0_to_1: float,
@@ -71,43 +96,43 @@ def _merge_test_plan(
         if not isinstance(finding, dict):
             continue
         finding_confidence = _as_float(finding.get("confidence_0_to_1"))
-        finding_speed_band = str(finding.get("strongest_speed_band") or "").strip()
-        finding_frequency = str(finding.get("frequency_hz_or_order") or "").strip()
+        finding_speed_band = _normalized_text(finding.get("strongest_speed_band"))
+        finding_frequency = _normalized_text(finding.get("frequency_hz_or_order"))
         actions = finding.get("actions")
         if isinstance(actions, list) and actions:
             for step in actions:
                 if not isinstance(step, dict):
                     continue
-                enriched_step = dict(step)
-                if finding_confidence is not None:
-                    enriched_step.setdefault("certainty_0_to_1", f"{finding_confidence:.4f}")
-                if finding_speed_band:
-                    enriched_step.setdefault("speed_band", finding_speed_band)
-                if finding_frequency:
-                    enriched_step.setdefault("frequency_hz_or_order", finding_frequency)
-                steps.append(enriched_step)
+                steps.append(
+                    _enrich_test_step(
+                        step,
+                        finding_confidence=finding_confidence,
+                        finding_speed_band=finding_speed_band,
+                        finding_frequency=finding_frequency,
+                    )
+                )
             continue
-        source = str(finding.get("suspected_source") or "").strip().lower()
+        source = _normalized_lower_text(finding.get("suspected_source"))
         generated_steps = _finding_actions_for_source(
             source,
-            strongest_location=str(finding.get("strongest_location") or ""),
-            strongest_speed_band=str(finding.get("strongest_speed_band") or ""),
+            strongest_location=_normalized_text(finding.get("strongest_location")),
+            strongest_speed_band=finding_speed_band,
             weak_spatial_separation=bool(finding.get("weak_spatial_separation")),
         )
         for step in generated_steps:
-            enriched_step = dict(step)
-            if finding_confidence is not None:
-                enriched_step.setdefault("certainty_0_to_1", f"{finding_confidence:.4f}")
-            if finding_speed_band:
-                enriched_step.setdefault("speed_band", finding_speed_band)
-            if finding_frequency:
-                enriched_step.setdefault("frequency_hz_or_order", finding_frequency)
-            steps.append(enriched_step)
+            steps.append(
+                _enrich_test_step(
+                    step,
+                    finding_confidence=finding_confidence,
+                    finding_speed_band=finding_speed_band,
+                    finding_frequency=finding_frequency,
+                )
+            )
 
     dedup: dict[str, dict[str, Any]] = {}
     ordered: list[dict[str, Any]] = []
     for step in steps:
-        action_id = str(step.get("action_id") or "").strip().lower()
+        action_id = _normalized_lower_text(step.get("action_id"))
         if not action_id:
             continue
         if action_id in dedup:
@@ -116,9 +141,7 @@ def _merge_test_plan(
         ordered.append(step)
 
     # Sort by priority (least-invasive first), then preserve original order as tiebreak
-    ordered.sort(
-        key=lambda s: _ACTION_PRIORITY.get(str(s.get("action_id") or "").strip().lower(), 99)
-    )
+    ordered.sort(key=lambda s: _ACTION_PRIORITY.get(_normalized_lower_text(s.get("action_id")), 99))
 
     if ordered:
         return ordered[:5]
@@ -231,11 +254,7 @@ def _location_speedbin_summary(
             per_loc_corroborated_counts[location].append(corroborated_by_n_sensors)
 
         ranked = sorted(
-            (
-                (loc, sum(vals) / len(vals))
-                for loc, vals in per_loc_scores.items()
-                if vals
-            ),
+            ((loc, sum(vals) / len(vals)) for loc, vals in per_loc_scores.items() if vals),
             key=lambda item: item[1],
             reverse=True,
         )

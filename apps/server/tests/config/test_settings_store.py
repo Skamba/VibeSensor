@@ -415,6 +415,14 @@ def test_store_speed_unit_roundtrip(tmp_path: Path) -> None:
     assert store2.speed_unit == "mps"
 
 
+def test_store_load_normalizes_language_and_speed_unit(tmp_path: Path) -> None:
+    db = HistoryDB(tmp_path / "history.db")
+    db.set_settings_snapshot({"language": " NL ", "speedUnit": " MPS "})
+    store = SettingsStore(db=db)
+    assert store.language == "nl"
+    assert store.speed_unit == "mps"
+
+
 def test_store_speed_unit_invalid_raises() -> None:
     """set_speed_unit() rejects unknown units."""
     store = SettingsStore()
