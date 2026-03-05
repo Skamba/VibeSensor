@@ -1,4 +1,4 @@
-"""Tests for the 10-item grumpy code quality review, round 2.
+"""Cross-cutting review guardrail regressions (extended set).
 
 Each test group validates one of the hate-list items to prevent regression.
 """

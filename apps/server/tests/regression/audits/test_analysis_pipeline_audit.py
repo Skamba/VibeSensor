@@ -1,6 +1,5 @@
 """
-Cycle 2 Audit – Offline Analysis Pipeline Correctness & Determinism
-====================================================================
+Analysis pipeline audit – correctness and determinism.
 
 10 findings: 5 confirmations/refinements of known issues, 5 new findings.
 Each finding includes title, severity, evidence, root cause, and proposed fix.

@@ -1,4 +1,4 @@
-"""Cycle 2 Report Audit — tests covering 10 findings from the report-generation
+"""Report pipeline audit — tests covering 10 findings from the report-generation
 traceability and consistency audit.
 
 These tests document and verify issues found in the analysis → report_data →

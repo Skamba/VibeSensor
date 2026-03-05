@@ -1,4 +1,4 @@
-"""Tests for Cycle 4b confidence/scoring fixes:
+"""Confidence and scoring regressions:
 - Ranking score error denominator uses compliance (matches confidence formula)
 - _suppress_engine_aliases filters before slicing (no lost valid findings)
 - Single-sensor confidence no longer triple-penalised

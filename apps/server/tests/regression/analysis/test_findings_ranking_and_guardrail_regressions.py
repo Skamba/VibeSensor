@@ -1,4 +1,4 @@
-"""Tests for Cycle 3 fixes:
+"""Findings ranking and analysis guardrail regressions:
 - _ranking_score synced after engine alias suppression
 - negligible confidence cap aligned with TIER_B_CEILING (0.40)
 - steady_speed uses AND (not OR) for stddev and range
