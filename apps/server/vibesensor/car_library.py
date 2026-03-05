@@ -27,6 +27,14 @@ _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "car_library.json
 _TIRE_OVERRIDE_KEYS = ("tire_width_mm", "tire_aspect_pct", "rim_in")
 
 
+def _entry_matches_identity(entry: dict, *, brand: str, car_type: str, model: str) -> bool:
+    return (
+        entry.get("brand") == brand
+        and entry.get("type") == car_type
+        and entry.get("model") == model
+    )
+
+
 def _load_library() -> list[dict]:
     """Load and return the car library from the canonical JSON file.
 
@@ -58,9 +66,7 @@ def get_brands() -> list[str]:
 
 def get_types_for_brand(brand: str) -> list[str]:
     """Return sorted body types available for *brand*."""
-    return sorted(
-        {t for e in CAR_LIBRARY if e.get("brand") == brand and (t := e.get("type"))}
-    )
+    return sorted({t for e in CAR_LIBRARY if e.get("brand") == brand and (t := e.get("type"))})
 
 
 def get_models_for_brand_type(brand: str, car_type: str) -> list[dict]:
@@ -81,7 +87,7 @@ def get_variants_for_model(brand: str, car_type: str, model: str) -> list[dict]:
     Returns deep copies so callers cannot corrupt the cached library.
     """
     for e in CAR_LIBRARY:
-        if e.get("brand") == brand and e.get("type") == car_type and e.get("model") == model:
+        if _entry_matches_identity(e, brand=brand, car_type=car_type, model=model):
             return copy.deepcopy(e.get("variants") or [])
     return []
 

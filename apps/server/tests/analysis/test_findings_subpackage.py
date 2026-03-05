@@ -341,6 +341,18 @@ class TestSuppressEngineAliases:
         if engine_results:
             assert engine_results[0]["confidence_0_to_1"] < 0.50
 
+    def test_engine_suppression_normalizes_source_tokens(self) -> None:
+        input_findings = [
+            (0.5, {"suspected_source": " Wheel/Tire ", "confidence_0_to_1": 0.60}),
+            (0.4, {"suspected_source": " ENGINE ", "confidence_0_to_1": 0.50}),
+        ]
+        result = _suppress_engine_aliases(input_findings)
+        engine_results = [
+            f for f in result if str(f["suspected_source"]).strip().lower() == "engine"
+        ]
+        if engine_results:
+            assert engine_results[0]["confidence_0_to_1"] < 0.50
+
 
 # -- intensity tests ----------------------------------------------------------
 

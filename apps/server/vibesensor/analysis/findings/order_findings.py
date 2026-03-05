@@ -58,12 +58,18 @@ def _mean(xs: list[float]) -> float:
     return sum(xs) / len(xs)
 
 
+def _normalized_source(finding: dict[str, Any]) -> str:
+    return str(finding.get("suspected_source") or "").strip().lower()
+
+
 # Phase values used as constants across hypothesis iterations.
-_PHASE_ONSET_RELEVANT: frozenset[str] = frozenset({
-    DrivingPhase.ACCELERATION.value,
-    DrivingPhase.DECELERATION.value,
-    DrivingPhase.COAST_DOWN.value,
-})
+_PHASE_ONSET_RELEVANT: frozenset[str] = frozenset(
+    {
+        DrivingPhase.ACCELERATION.value,
+        DrivingPhase.DECELERATION.value,
+        DrivingPhase.COAST_DOWN.value,
+    }
+)
 
 # ── Diffuse excitation detection constants ──────────────────────────────
 # If one sensor's amplitude is more than this ratio above the weakest,
@@ -296,13 +302,13 @@ def _suppress_engine_aliases(
         (
             float(f.get("confidence_0_to_1", 0))
             for _, f in findings
-            if str(f.get("suspected_source") or "").strip().lower() == "wheel/tire"
+            if _normalized_source(f) == "wheel/tire"
         ),
         default=0.0,
     )
     if _best_wheel_conf > 0:
         for i, (rs, f) in enumerate(findings):
-            src = str(f.get("suspected_source") or "").strip().lower()
+            src = _normalized_source(f)
             if src == "engine":
                 eng_conf = float(f.get("confidence_0_to_1", 0))
                 if eng_conf <= _best_wheel_conf * _HARMONIC_ALIAS_RATIO:
@@ -513,19 +519,13 @@ def _build_order_findings(
         )
         _hotspot_is_dict = isinstance(location_hotspot, dict)
         weak_spatial_separation = (
-            bool(location_hotspot.get("weak_spatial_separation"))
-            if _hotspot_is_dict
-            else True
+            bool(location_hotspot.get("weak_spatial_separation")) if _hotspot_is_dict else True
         )
         dominance_ratio = (
-            _as_float(location_hotspot.get("dominance_ratio"))
-            if _hotspot_is_dict
-            else None
+            _as_float(location_hotspot.get("dominance_ratio")) if _hotspot_is_dict else None
         )
         localization_confidence = (
-            float(location_hotspot.get("localization_confidence"))
-            if _hotspot_is_dict
-            else 0.05
+            float(location_hotspot.get("localization_confidence")) if _hotspot_is_dict else 0.05
         )
 
         # ── Single-sensor dominance override ────────────────────────────
@@ -543,9 +543,7 @@ def _build_order_findings(
             str(pt.get("location") or "") for pt in matched_points if pt.get("location")
         }
         _no_wheel_override = (
-            bool(location_hotspot.get("no_wheel_sensors"))
-            if _hotspot_is_dict
-            else False
+            bool(location_hotspot.get("no_wheel_sensors")) if _hotspot_is_dict else False
         )
         if (
             per_location_dominant
@@ -642,12 +640,8 @@ def _build_order_findings(
             evidence = dict(evidence)
             evidence["_suffix"] = f" {location_line}"
 
-        strongest_location = (
-            str(location_hotspot.get("location")) if _hotspot_is_dict else ""
-        )
-        hotspot_speed_band = (
-            str(location_hotspot.get("speed_range")) if _hotspot_is_dict else ""
-        )
+        strongest_location = str(location_hotspot.get("location")) if _hotspot_is_dict else ""
+        hotspot_speed_band = str(location_hotspot.get("speed_range")) if _hotspot_is_dict else ""
         speed_points: list[tuple[float, float]] = []
         speed_phase_weights: list[float] = []
         _cruise_val = DrivingPhase.CRUISE.value
@@ -730,9 +724,7 @@ def _build_order_findings(
             "peak_speed_kmh": peak_speed_kmh,
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
             "dominance_ratio": (
-                float(location_hotspot.get("dominance_ratio"))
-                if _hotspot_is_dict
-                else None
+                float(location_hotspot.get("dominance_ratio")) if _hotspot_is_dict else None
             ),
             "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,

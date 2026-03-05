@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from pathlib import Path
 
 from .models import UpdateIssue
@@ -19,6 +20,7 @@ HOTSPOT_RESTORE_RETRIES = 3
 HOTSPOT_RESTORE_DELAY_S = 2
 
 _FAILURE_MARKERS = ("failed", "error", "timeout")
+LOGGER = logging.getLogger(__name__)
 
 
 def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
@@ -48,7 +50,7 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
                         )
                     )
         except OSError:
-            pass
+            LOGGER.debug("Unable to read wifi summary diagnostics from %s", summary, exc_info=True)
 
     hotspot_log = log_path / "hotspot.log"
     if hotspot_log.is_file():
@@ -67,7 +69,7 @@ def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
                         )
                     )
         except OSError:
-            pass
+            LOGGER.debug("Unable to read hotspot diagnostics from %s", hotspot_log, exc_info=True)
 
     return issues
 
