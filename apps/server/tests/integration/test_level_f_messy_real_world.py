@@ -50,9 +50,7 @@ _4S = ALL_WHEEL_SENSORS  # never mutated – no need to copy
 _CORNERS = list(CORNER_SENSORS)  # derive from single source of truth
 
 
-# ---------------------------------------------------------------------------
 # F.1 – Persistent wheel fault + sensor dropout (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -90,9 +88,7 @@ def test_fault_with_sensor_dropout(corner: str, profile: dict[str, Any]) -> None
     )
 
 
-# ---------------------------------------------------------------------------
 # F.2 – Persistent wheel fault + speed jitter (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -115,7 +111,12 @@ def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
     )
     # Add speed jitter: perturb the speed of each sample
     jittered = [
-        {**s, "speed_kmh": max(5.0, s["speed_kmh"] + 8.0 * ((_stable_hash(f"jitter-{i}") % 200) / 100.0 - 1.0))}
+        {
+            **s,
+            "speed_kmh": max(
+                5.0, s["speed_kmh"] + 8.0 * ((_stable_hash(f"jitter-{i}") % 200) / 100.0 - 1.0)
+            ),
+        }
         for i, s in enumerate(fault)
     ]
 
@@ -126,9 +127,7 @@ def test_fault_with_speed_jitter(corner: str, profile: dict[str, Any]) -> None:
     assert_confidence_between(summary, 0.10, 1.0, msg=f"fault+jitter {corner}")
 
 
-# ---------------------------------------------------------------------------
 # F.3 – No-fault diffuse + pothole transients (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -159,9 +158,7 @@ def test_diffuse_noise_with_pothole_transients(speed: float, profile: dict[str, 
     assert_tolerant_no_fault(summary, msg=f"diffuse+pothole@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # F.4 – Overlapping engine/wheel harmonics (2 speeds = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -204,9 +201,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any
     assert_strongest_location(summary, SENSOR_FL, msg=f"engine+wheel@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # F.5 – Dual fault ambiguity (2 pairs = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -245,9 +240,7 @@ def test_dual_fault_detection(pair: tuple[str, str], primary: str, profile: dict
     assert len(findings) >= 2, f"Expected multiple findings for dual fault, got {len(findings)}"
 
 
-# ---------------------------------------------------------------------------
 # F.6 – Road surface phase changes (1 case)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -267,9 +260,7 @@ def test_road_phase_smooth_rough_pothole(profile: dict[str, Any]) -> None:
     assert_tolerant_no_fault(summary, msg="road-phases")
 
 
-# ---------------------------------------------------------------------------
 # F.7 – Out-of-order timestamps with fault (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -294,9 +285,7 @@ def test_fault_with_out_of_order_timestamps(corner: str, profile: dict[str, Any]
     assert_strongest_location(summary, fault_sensor, msg=f"ooo {corner}")
 
 
-# ---------------------------------------------------------------------------
 # F.8 – Clock skew on one sensor with fault (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -326,9 +315,7 @@ def test_fault_with_clock_skew(corner: str, profile: dict[str, Any]) -> None:
     assert_strongest_location(summary, fault_sensor, msg=f"skew {corner}")
 
 
-# ---------------------------------------------------------------------------
 # F.9 – Gain mismatch on fault sensor (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -353,9 +340,7 @@ def test_fault_with_gain_mismatch(corner: str, profile: dict[str, Any]) -> None:
     assert_strongest_location(summary, fault_sensor, msg=f"gain {corner}")
 
 
-# ---------------------------------------------------------------------------
 # F.10 – Pairwise monotonic amplitude trend on 4 sensors (1 case)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -381,9 +366,7 @@ def test_pairwise_monotonic_amplitude_4sensor(profile: dict[str, Any]) -> None:
     assert_pairwise_monotonic(confs, tolerance=0.10, labels=labels, msg="amplitude sweep")
 
 
-# ---------------------------------------------------------------------------
 # F.11 – Persistent wheel fault + dropout on fault sensor itself (2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -416,9 +399,7 @@ def test_fault_with_self_dropout(corner: str, profile: dict[str, Any]) -> None:
     assert_confidence_between(summary, 0.10, 1.0, msg=f"self-dropout {corner}")
 
 
-# ---------------------------------------------------------------------------
 # F.12 – Engine-only excitation → no wheel fault (1 case)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
@@ -436,9 +417,7 @@ def test_engine_only_no_wheel_fault(profile: dict[str, Any]) -> None:
     assert_tolerant_no_fault(summary, msg="engine-only")
 
 
-# ---------------------------------------------------------------------------
 # F.13 – Speed jitter baseline → no false fault (1 case)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)

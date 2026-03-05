@@ -37,9 +37,7 @@ from builders import (
     run_analysis,
 )
 
-# ---------------------------------------------------------------------------
 # B.1 – Fault at each corner × speed band (4 corners × 3 speeds = 12 cases)
-# ---------------------------------------------------------------------------
 
 _CORNERS = ["FL", "FR", "RL", "RR"]
 _SPEEDS = [SPEED_LOW, SPEED_MID, SPEED_HIGH]
@@ -48,9 +46,7 @@ _OPTIMIZED_CAR_PROFILES = [CAR_PROFILES[0], CAR_PROFILES[2], CAR_PROFILES[-1]]
 _OPTIMIZED_CAR_PROFILE_IDS = [p["name"] for p in _OPTIMIZED_CAR_PROFILES]
 
 
-# ---------------------------------------------------------------------------
 # Shared helper: run single-sensor fault analysis
-# ---------------------------------------------------------------------------
 
 
 def _run_single_fault(
@@ -104,9 +100,7 @@ def test_single_sensor_fault_corner_speed(
     assert_has_warnings(summary, msg=f"{corner}@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # B.2 – No-fault baseline at each speed (3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -119,9 +113,7 @@ def test_single_sensor_no_fault_baseline(speed: float, profile: dict[str, Any]) 
     assert_has_warnings(summary, msg=f"no-fault@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # B.3 – Varying fault amplitude (low/med/high) × 2 corners = 6 cases
-# ---------------------------------------------------------------------------
 
 _AMPS = [
     ("low", 0.02, 16.0),
@@ -164,7 +156,10 @@ def test_single_sensor_amplitude_scaling_monotonic(corner: str, profile: dict[st
     labels: list[str] = []
     for amp_label, fault_amp, vib_db in monotonic_tiers:
         summary, top = _run_single_fault(
-            profile, corner, fault_amp=fault_amp, fault_vib_db=vib_db,
+            profile,
+            corner,
+            fault_amp=fault_amp,
+            fault_vib_db=vib_db,
         )
         confidences.append(float(top.get("confidence", 0.0)) if top else 0.0)
         labels.append(amp_label)
@@ -176,9 +171,7 @@ def test_single_sensor_amplitude_scaling_monotonic(corner: str, profile: dict[st
     )
 
 
-# ---------------------------------------------------------------------------
 # B.4 – Phased onset: idle → ramp → fault (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -211,9 +204,7 @@ def test_single_sensor_phased_onset(corner: str, profile: dict[str, Any]) -> Non
     assert_confidence_between(summary, 0.15, 1.0, msg=f"phased {corner}")
 
 
-# ---------------------------------------------------------------------------
 # B.5 – Diffuse noise on single sensor (should NOT produce wheel fault) (3 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -225,9 +216,7 @@ def test_single_sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -
     assert_tolerant_no_fault(summary, msg=f"diffuse@{speed}")
 
 
-# ---------------------------------------------------------------------------
 # B.6 – Very high speed (120 km/h) at each corner (4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -235,16 +224,18 @@ def test_single_sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -
 def test_single_sensor_very_high_speed(corner: str, profile: dict[str, Any]) -> None:
     """Wheel fault at very high speed (120 km/h)."""
     summary, top = _run_single_fault(
-        profile, corner, speed_kmh=SPEED_VERY_HIGH, fault_amp=0.08, fault_vib_db=30.0,
+        profile,
+        corner,
+        speed_kmh=SPEED_VERY_HIGH,
+        fault_amp=0.08,
+        fault_vib_db=30.0,
     )
     assert top is not None, f"No finding for {corner}@120"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner}@120")
     assert_confidence_label_valid(summary, msg=f"{corner}@120")
 
 
-# ---------------------------------------------------------------------------
 # B.7 – Idle only → no fault (1 case)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -255,9 +246,7 @@ def test_single_sensor_idle_only_no_fault(profile: dict[str, Any]) -> None:
     assert_strict_no_fault(summary, msg="idle-only")
 
 
-# ---------------------------------------------------------------------------
 # B.8 – Ramp only → no fault (1 case)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -268,9 +257,7 @@ def test_single_sensor_ramp_only_no_fault(profile: dict[str, Any]) -> None:
     assert_strict_no_fault(summary, msg="ramp-only")
 
 
-# ---------------------------------------------------------------------------
 # B.9 – Fault with 2x and 3x harmonics (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -280,16 +267,17 @@ def test_single_sensor_harmonics_1x_2x_3x(corner: str, profile: dict[str, Any]) 
     # Note: add_wheel_3x is not supported by make_profile_fault_samples;
     # profile-aware builder covers 1x + 2x harmonics.
     summary, top = _run_single_fault(
-        profile, corner, fault_amp=0.08, add_wheel_2x=True,
+        profile,
+        corner,
+        fault_amp=0.08,
+        add_wheel_2x=True,
     )
     assert top is not None, f"No finding for {corner} with 1x+2x+3x"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} 1x+2x+3x")
     assert_confidence_label_valid(summary, msg=f"{corner} 1x+2x+3x")
 
 
-# ---------------------------------------------------------------------------
 # B.10 – Long duration steady fault (2 corners × 2 durations = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -298,16 +286,18 @@ def test_single_sensor_harmonics_1x_2x_3x(corner: str, profile: dict[str, Any]) 
 def test_single_sensor_long_steady(corner: str, n_samples: int, profile: dict[str, Any]) -> None:
     """Longer recording durations should maintain or improve detection."""
     summary, top = _run_single_fault(
-        profile, corner, speed_kmh=SPEED_HIGH, n_samples=n_samples,
-        fault_amp=0.06, fault_vib_db=26.0,
+        profile,
+        corner,
+        speed_kmh=SPEED_HIGH,
+        n_samples=n_samples,
+        fault_amp=0.06,
+        fault_vib_db=26.0,
     )
     assert top is not None, f"No finding for long {corner}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"long {corner} n={n_samples}")
 
 
-# ---------------------------------------------------------------------------
 # B.11 – Weak signal barely above noise (4 corners = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -315,8 +305,12 @@ def test_single_sensor_long_steady(corner: str, n_samples: int, profile: dict[st
 def test_single_sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None:
     """Very weak fault should produce low confidence or no finding."""
     summary, top = _run_single_fault(
-        profile, corner, fault_amp=0.008, noise_amp=0.005,
-        fault_vib_db=12.0, noise_vib_db=10.0,
+        profile,
+        corner,
+        fault_amp=0.008,
+        noise_amp=0.005,
+        fault_vib_db=12.0,
+        noise_vib_db=10.0,
     )
     assert isinstance(summary, dict), f"Expected summary dict for weak {corner}"
     assert summary, f"Expected non-empty summary for weak {corner}"
@@ -330,9 +324,7 @@ def test_single_sensor_weak_signal(corner: str, profile: dict[str, Any]) -> None
         )
 
 
-# ---------------------------------------------------------------------------
 # B.12 – Speed sweep fault (2 corners = 2 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -355,9 +347,7 @@ def test_single_sensor_speed_sweep_fault(corner: str, profile: dict[str, Any]) -
     assert_confidence_between(summary, 0.15, 1.0, msg=f"sweep {corner}")
 
 
-# ---------------------------------------------------------------------------
 # B.13 – Noise floor variation (2 corners × 2 noise levels = 4 cases)
-# ---------------------------------------------------------------------------
 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
@@ -368,7 +358,11 @@ def test_single_sensor_noise_floor_variation(
 ) -> None:
     """Fault detection at different noise floor levels."""
     summary, top = _run_single_fault(
-        profile, corner, fault_amp=0.06, noise_amp=noise_amp, fault_vib_db=26.0,
+        profile,
+        corner,
+        fault_amp=0.06,
+        noise_amp=noise_amp,
+        fault_vib_db=26.0,
     )
     assert top is not None, f"No finding for {corner} noise={noise_amp}"
     assert_confidence_between(summary, 0.15, 1.0, msg=f"{corner} noise={noise_amp}")

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from _report_helpers import minimal_summary
 from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.analysis.report_data_builder import map_summary
@@ -22,24 +23,6 @@ _F_ORDER_CAUSE: dict[str, Any] = {
 }
 
 
-def _make_summary(
-    *,
-    top_causes: list[dict[str, Any]] | None = None,
-    findings: list[dict[str, Any]] | None = None,
-    sensor_rows: list[dict[str, Any]] | None = None,
-) -> dict[str, Any]:
-    """Build a summary dict with sensible defaults for the unchanging keys."""
-    return {
-        "top_causes": top_causes or [],
-        "findings": findings or [],
-        "sensor_intensity_by_location": sensor_rows or [],
-        "speed_stats": {},
-        "test_plan": [],
-        "run_suitability": [],
-        "plots": {},
-    }
-
-
 def test_strength_text_value_with_peak_amp() -> None:
     txt = strength_text(22.0, lang="en")
     assert "Moderate" in txt
@@ -48,7 +31,7 @@ def test_strength_text_value_with_peak_amp() -> None:
 
 
 def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
-    summary = _make_summary(
+    summary = minimal_summary(
         top_causes=[_F_ORDER_CAUSE],
         findings=[
             {
@@ -56,7 +39,7 @@ def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
                 "amplitude_metric": {"value": 0.032, "units": "g"},
             }
         ],
-        sensor_rows=[{"p95_intensity_db": 22.0}],
+        sensor_intensity_by_location=[{"p95_intensity_db": 22.0}],
     )
     data = map_summary(summary)
     assert data.observed.strength_label is not None
@@ -69,7 +52,7 @@ def test_map_summary_strength_label_includes_peak_amp_when_available() -> None:
 
 
 def test_map_summary_strength_label_falls_back_to_db_only_without_peak_amp() -> None:
-    summary = _make_summary(sensor_rows=[{"p95_intensity_db": 22.0}])
+    summary = minimal_summary(sensor_intensity_by_location=[{"p95_intensity_db": 22.0}])
     data = map_summary(summary)
     assert data.observed.strength_label is not None
     assert "22.0 dB" in data.observed.strength_label
@@ -90,7 +73,7 @@ def test_strength_with_peak_appends_only_when_label_lacks_db_text() -> None:
 
 
 def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -> None:
-    summary = _make_summary(
+    summary = minimal_summary(
         top_causes=[_F_ORDER_CAUSE],
         findings=[
             {
@@ -111,7 +94,7 @@ def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> N
     amp = 0.015
     floor = 0.005
     expected_db = vibration_strength_db_scalar(peak_band_rms_amp_g=amp, floor_amp_g=floor)
-    summary = _make_summary(
+    summary = minimal_summary(
         top_causes=[_F_ORDER_CAUSE],
         findings=[
             {
@@ -129,7 +112,7 @@ def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> N
 
 
 def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> None:
-    summary = _make_summary(
+    summary = minimal_summary(
         top_causes=[{"finding_id": "F_PRIMARY"}, {"finding_id": "F_SECONDARY"}],
         findings=[
             {
@@ -141,7 +124,7 @@ def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> Non
                 "evidence_metrics": {"vibration_strength_db": 40.0},
             },
         ],
-        sensor_rows=[{"p95_intensity_db": 22.0}],
+        sensor_intensity_by_location=[{"p95_intensity_db": 22.0}],
     )
     data = map_summary(summary)
     assert data.observed.strength_label is not None
@@ -150,8 +133,8 @@ def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> Non
 
 
 def test_map_summary_strength_label_uses_strongest_sensor_row_when_unsorted() -> None:
-    summary = _make_summary(
-        sensor_rows=[
+    summary = minimal_summary(
+        sensor_intensity_by_location=[
             {"location": "A", "p95_intensity_db": 12.0},
             {"location": "B", "p95_intensity_db": 28.0},
             {"location": "C", "p95_intensity_db": 20.0},

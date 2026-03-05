@@ -8,6 +8,12 @@ above one-off transient spikes, and that findings are classified appropriately.
 from __future__ import annotations
 
 import pytest
+from _report_helpers import (
+    analysis_metadata as _make_metadata,
+)
+from _report_helpers import (
+    analysis_sample_with_peaks as _sample,
+)
 
 from vibesensor.analysis.findings import (
     _build_persistent_peak_findings,
@@ -26,70 +32,10 @@ from vibesensor.analysis.summary import (
     build_findings_for_samples,
     summarize_run_data,
 )
-from vibesensor.runlog import create_run_metadata
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-
-def _make_metadata(**overrides) -> dict:
-    defaults = dict(
-        run_id="test-persistence",
-        start_time_utc="2025-01-01T00:00:00+00:00",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-        tire_width_mm=285.0,
-        tire_aspect_pct=30.0,
-        rim_in=21.0,
-        final_drive_ratio=3.08,
-        current_gear_ratio=0.64,
-    )
-    defaults.update(overrides)
-    valid_keys = create_run_metadata.__code__.co_varnames
-    return create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})
-
-
-def _sample(
-    t_s: float,
-    speed_kmh: float,
-    peaks: list[dict],
-    *,
-    vibration_strength_db: float = 20.0,
-    strength_bucket: str = "l2",
-    client_name: str = "Front Left",
-    strength_floor_amp_g: float | None = None,
-) -> dict:
-    dominant = peaks[0] if peaks else {"hz": 10.0, "amp": 0.01}
-    sample = {
-        "record_type": "sample",
-        "t_s": t_s,
-        "speed_kmh": speed_kmh,
-        "accel_x_g": dominant["amp"],
-        "accel_y_g": dominant["amp"],
-        "accel_z_g": dominant["amp"],
-        "dominant_freq_hz": dominant["hz"],
-        "vibration_strength_db": vibration_strength_db,
-        "strength_bucket": strength_bucket,
-        "top_peaks": [
-            {
-                "hz": p["hz"],
-                "amp": p["amp"],
-                "vibration_strength_db": p.get("vibration_strength_db", vibration_strength_db),
-                "strength_bucket": p.get("strength_bucket", strength_bucket),
-            }
-            for p in peaks
-        ],
-        "client_name": client_name,
-    }
-    if strength_floor_amp_g is not None:
-        sample["strength_floor_amp_g"] = strength_floor_amp_g
-    return sample
 
 
 def _uniform_samples(
@@ -124,9 +70,7 @@ def _build_findings(
 def _findings_at_freq(findings: list[dict], *freq_strs: str) -> list[dict]:
     """Return findings whose ``frequency_hz_or_order`` contains any of *freq_strs*."""
     return [
-        f
-        for f in findings
-        if any(s in str(f.get("frequency_hz_or_order", "")) for s in freq_strs)
+        f for f in findings if any(s in str(f.get("frequency_hz_or_order", "")) for s in freq_strs)
     ]
 
 
