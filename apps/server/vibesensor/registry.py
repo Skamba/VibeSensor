@@ -497,7 +497,9 @@ class ClientRegistry:
             "queue_overflow_drops": snapshot.queue_overflow_drops,
             "parse_errors": snapshot.parse_errors,
             "server_queue_drops": snapshot.server_queue_drops,
-            "latest_metrics": snapshot.latest_metrics if snapshot.latest_metrics is not None else {},  # noqa: E501
+            "latest_metrics": snapshot.latest_metrics
+            if snapshot.latest_metrics is not None
+            else {},
             "last_ack_cmd_seq": snapshot.last_ack_cmd_seq,
             "last_ack_status": snapshot.last_ack_status,
             "reset_count": snapshot.reset_count,
