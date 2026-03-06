@@ -490,7 +490,7 @@ class UpdateManager:
                     LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
 
                 self._persist_status()
-            except (asyncio.CancelledError, Exception):
+            except (asyncio.CancelledError, Exception) as _cleanup_exc:
                 # Last-resort: ensure secrets are cleared and status is persisted
                 # even if cleanup itself is interrupted.
                 self._redact_secrets.clear()
@@ -499,6 +499,11 @@ class UpdateManager:
                     self._status.state = UpdateState.failed
                 self._persist_status()
                 LOGGER.warning("Update cleanup interrupted", exc_info=True)
+                # Re-raise CancelledError so the task is properly marked as
+                # cancelled; swallowing it prevents asyncio from knowing the
+                # task was cancelled.
+                if isinstance(_cleanup_exc, asyncio.CancelledError):
+                    raise
 
     async def _run_update_inner(self, ssid: str, password: str) -> None:
         if not await self._phase_validate(ssid):
