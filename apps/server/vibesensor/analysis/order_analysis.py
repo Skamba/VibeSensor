@@ -169,7 +169,13 @@ def _finding_actions_for_source(
 
     location = strongest_location.strip()
     speed_band = strongest_speed_band.strip()
-    speed_hint = _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band) if speed_band else ""
+    # Only include speed_hint param when a speed band is available; passing an
+    # empty string (the previous behaviour) included speed_hint="" in the i18n
+    # ref dict, which is semantically different from the key being absent and
+    # could confuse template renderers that check for key presence vs truthiness.
+    _speed_hint_param: dict[str, Any] = (
+        {"speed_hint": _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band)} if speed_band else {}
+    )
     if source == "wheel/tire":
         wheel_focus = _wheel_focus_from_location(location)
         location_hint = (
@@ -183,7 +189,7 @@ def _finding_actions_for_source(
                 "what": _i18n_ref(
                     "ACTION_WHEEL_BALANCE_WHAT",
                     wheel_focus=wheel_focus,
-                    speed_hint=speed_hint,
+                    **_speed_hint_param,
                 ),
                 "why": _i18n_ref("ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
                 "confirm": _i18n_ref("ACTION_WHEEL_BALANCE_CONFIRM"),
