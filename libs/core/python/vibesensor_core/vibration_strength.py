@@ -89,14 +89,18 @@ def combined_spectrum_amp_g(
 
 
 def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
-    """Return the P20 amplitude floor in g, skipping the DC bin (index 0)."""
-    if not combined_spectrum_amp_g:
+    """Return the P20 amplitude floor in g, skipping the DC bin (index 0).
+
+    Returns ``0.0`` when the spectrum is empty or contains only the DC bin,
+    because the DC component (index 0, 0 Hz) carries gravitational acceleration
+    (~1 g on a level surface) rather than vibration noise, and using it as the
+    noise floor would raise the floor by orders of magnitude and suppress all
+    real vibration findings.
+    """
+    if len(combined_spectrum_amp_g) <= 1:
+        # Empty spectrum or DC-only: no frequency content to estimate noise from.
         return 0.0
-    band = (
-        combined_spectrum_amp_g[1:]
-        if len(combined_spectrum_amp_g) > 1
-        else combined_spectrum_amp_g
-    )
+    band = combined_spectrum_amp_g[1:]
     finite = sorted(value for value in band if isfinite(value) and value >= 0.0)
     return percentile(finite, 0.20)
 
