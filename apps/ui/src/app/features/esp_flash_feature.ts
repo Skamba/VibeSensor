@@ -37,13 +37,17 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
 
   async function refreshPorts(): Promise<void> {
     if (!els.espFlashPortSelect) return;
-    const payload = await getEspFlashPorts();
-    const options = [`<option value="__auto__">${escapeHtml(t("settings.esp_flash.auto_detect"))}</option>`];
-    for (const port of payload.ports || []) {
-      const label = `${port.port}${port.description ? ` — ${port.description}` : ""}`;
-      options.push(`<option value="${escapeHtml(port.port)}">${escapeHtml(label)}</option>`);
+    try {
+      const payload = await getEspFlashPorts();
+      const options = [`<option value="__auto__">${escapeHtml(t("settings.esp_flash.auto_detect"))}</option>`];
+      for (const port of payload.ports || []) {
+        const label = `${port.port}${port.description ? ` — ${port.description}` : ""}`;
+        options.push(`<option value="${escapeHtml(port.port)}">${escapeHtml(label)}</option>`);
+      }
+      els.espFlashPortSelect.innerHTML = options.join("");
+    } catch {
+      // Port list unavailable — keep existing options
     }
-    els.espFlashPortSelect.innerHTML = options.join("");
   }
 
   function renderStatus(status: EspFlashStatusPayload): void {

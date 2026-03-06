@@ -345,12 +345,15 @@ def _corr_abs_clamped(x: list[float], y: list[float]) -> float | None:
     """Absolute Pearson correlation, clamped to [0, 1].
 
     Delegates to ``_corr_abs`` and clamps the result to handle
-    floating-point overshoot (e.g. 1.0000000000000002).
+    floating-point overshoot (e.g. 1.0000000000000002) or undershoot.
+    Both bounds are applied: ``abs()`` in ``_corr_abs`` guarantees
+    non-negative values in theory, but the explicit lower clamp protects
+    against hypothetical floating-point edge cases.
     """
     raw = _corr_abs(x, y)
     if raw is None:
         return None
-    return min(1.0, raw)
+    return max(0.0, min(1.0, raw))
 
 
 def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:

@@ -291,7 +291,12 @@ def _build_persistent_peak_findings(
     transient_findings: list[tuple[float, dict[str, Any]]] = []
 
     for bin_center, amps in bin_amps.items():
-        # Skip bins already claimed by order findings
+        # Skip bins already claimed by order findings.
+        # Exclusion radius = one full bin width (freq_bin_hz).  Bin centers are
+        # at multiples of freq_bin_hz offset by freq_bin_hz_half, so adjacent
+        # bins are always exactly freq_bin_hz apart; using the full width ensures
+        # the bin containing the matched order frequency is suppressed while
+        # leaving all other bins unaffected.
         if any(abs(bin_center - of) < freq_bin_hz for of in order_finding_freqs):
             continue
 
@@ -347,7 +352,9 @@ def _build_persistent_peak_findings(
                 hr_n += 1
             if hr_n > 1:
                 hr_mean = hr_sum / hr_n
-                speed_uniformity = ((hr_sq_sum / hr_n) - hr_mean * hr_mean) ** 0.5
+                # Clamp before sqrt: floating-point subtraction can yield a
+                # tiny negative value (e.g. -2e-16) that would raise ValueError.
+                speed_uniformity = max(0.0, (hr_sq_sum / hr_n) - hr_mean * hr_mean) ** 0.5
             elif hr_n == 1:
                 speed_uniformity = 0.0
 

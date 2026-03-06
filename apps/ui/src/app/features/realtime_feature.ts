@@ -92,7 +92,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     const clientPart = state.clients
       .map((client) => {
         const connected = client.connected ? "1" : "0";
-        return `${client.id}|${client.name || ""}|${client.mac_address || ""}|${connected}`;
+        return `${client.id}|${client.name || ""}|${client.mac_address || ""}|${connected}|${client.location_code || ""}`;
       })
       .join("||");
     const locationPart = state.locationOptions.map((loc) => `${loc.code}|${loc.label}`).join("||");

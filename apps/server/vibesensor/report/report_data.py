@@ -209,8 +209,10 @@ class ReportTemplateData:
     location_hotspot_rows: list[dict[str, Any]] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> ReportTemplateData:
+    def from_dict(cls, d: Any) -> ReportTemplateData:
         """Reconstruct a :class:`ReportTemplateData` from a persisted dict."""
+        if not isinstance(d, dict):
+            return cls()
         filtered = _filter_fields(cls, d)
         filtered["car"] = CarMeta.from_dict(d.get("car"))
         filtered["observed"] = ObservedSignature.from_dict(d.get("observed"))

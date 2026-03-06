@@ -20,6 +20,11 @@ artifacts/
 apps/ui/dist
 apps/ui/test-results
 
+# Test directories (not needed at runtime)
+apps/server/tests/
+apps/server/tests_e2e/
+apps/ui/tests/
+
 # IDE / editor
 .vscode
 .idea
@@ -34,6 +39,12 @@ hardware/
 docs/
 scripts/ai/
 examples/
+
+# Dev/CI tooling not needed at runtime
+tools/ci/
+tools/dev/
+tools/tests/
+tools/simulator
 
 # Misc
 .ruff_cache

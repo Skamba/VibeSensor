@@ -11,6 +11,8 @@ from .runner import CommandRunner, _sudo_prefix, sanitize_log_line
 
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
 UPLINK_CONNECT_WAIT_S = 30
+UPLINK_CONNECT_RETRIES = 3
+"""Number of times to retry bringing up the uplink Wi-Fi connection."""
 UPLINK_FALLBACK_DNS = "1.1.1.1,1.0.0.1"
 DNS_READY_MIN_WAIT_S = 10.0
 DNS_RETRY_INTERVAL_S = 1.0
@@ -20,10 +22,12 @@ HOTSPOT_RESTORE_RETRIES = 3
 HOTSPOT_RESTORE_DELAY_S = 2
 
 _FAILURE_MARKERS = ("failed", "error", "timeout")
+_WIFI_DIAG_DIR = "/var/log/wifi"
+"""Default directory for Wi-Fi diagnostic log files written by the hotspot helper scripts."""
 LOGGER = logging.getLogger(__name__)
 
 
-def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
+def parse_wifi_diagnostics(log_dir: str = _WIFI_DIAG_DIR) -> list[UpdateIssue]:
     """Parse wifi diagnostic files into structured issues."""
     issues: list[UpdateIssue] = []
     log_path = Path(log_dir)
