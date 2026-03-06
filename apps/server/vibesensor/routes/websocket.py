@@ -59,7 +59,13 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
                 except json.JSONDecodeError:
                     LOGGER.debug("Ignoring malformed WS message (not valid JSON)")
                     continue
-                if isinstance(payload, dict) and "client_id" in payload:
+                if not isinstance(payload, dict):
+                    LOGGER.debug(
+                        "Ignoring WS message with unexpected type %s (expected dict)",
+                        type(payload).__name__,
+                    )
+                    continue
+                if "client_id" in payload:
                     value = payload["client_id"]
                     try:
                         if value is None:
@@ -82,6 +88,11 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
                     except Exception:
                         LOGGER.debug("Error processing WS message", exc_info=True)
                         continue
+                else:
+                    LOGGER.debug(
+                        "Ignoring WS message dict with no recognized keys: %s",
+                        list(payload.keys()),
+                    )
         except WebSocketDisconnect:
             LOGGER.debug("WebSocket client disconnected")
         except Exception:
