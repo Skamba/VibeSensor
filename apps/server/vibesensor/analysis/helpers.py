@@ -57,9 +57,13 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
             return  # at least one valid sample → OK
         if first_bad_idx is None:
             first_bad_idx = idx
+    # first_bad_idx is always set (to 0) when we reach this raise because the
+    # loop iterates from index 0 and any bad sample at idx=0 sets it immediately.
+    # Using 'or 0' as a fallback for None is misleading here: replace with an
+    # explicit None-check to make the intent clear.
     raise ValueError(
         f"Missing required precomputed strength metrics in sample index "
-        f"{first_bad_idx or 0}: vibration_strength_db"
+        f"{first_bad_idx if first_bad_idx is not None else 0}: vibration_strength_db"
     )
 
 
