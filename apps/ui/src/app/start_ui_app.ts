@@ -39,7 +39,7 @@ export function startUiApp(): void {
   const SPECTRUM_TWEEN_DURATION_MS = 180;
   const SPECTRUM_LOG10_REF = Math.log10(SPECTRUM_DB_REFERENCE_AMP_G);
 
-  function t(key: string, vars?: Record<string, any>): string { return I18N.get(state.lang, key, vars); }
+  function t(key: string, vars?: Record<string, unknown>): string { return I18N.get(state.lang, key, vars); }
   function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
   function saveSpeedUnit(unit: string): void { state.speedUnit = normalizeSpeedUnit(unit); void setSettingsSpeedUnit(state.speedUnit).catch(() => {}); }
   function speedValueInSelectedUnit(speedMps: number | null): number | null { if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null; return state.speedUnit === "mps" ? speedMps : speedMps * 3.6; }
@@ -375,15 +375,15 @@ export function startUiApp(): void {
     });
   }
 
-  function applyPayload(payload: Record<string, any>): void {
+  function applyPayload(payload: unknown): void {
     let adapted;
-    try { adapted = adaptServerPayload(payload); }
+    try { adapted = adaptServerPayload(payload as Record<string, unknown>); }
     catch (err) { state.payloadError = err instanceof Error ? err.message : "Invalid server payload."; state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
     state.payloadError = null; renderWsState();
     const prevSelected = state.selectedClientId;
     state.clients = adapted.clients as unknown as ClientRow[];
     const incomingSpectra = adapted.spectra
-      ? { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, AdaptedSpectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics as Record<string, any>, combined: spectrum.combined }])) }
+      ? { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, AdaptedSpectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics as Record<string, unknown>, combined: spectrum.combined }])) }
       : null;
     const spectrumTick = applySpectrumTick(state.spectra, state.hasSpectrumData, incomingSpectra);
     state.spectra = spectrumTick.spectra;

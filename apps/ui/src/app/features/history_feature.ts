@@ -1,5 +1,6 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { AppState } from "../state/ui_app_state";
+import type { AppState, RunDetail } from "../state/ui_app_state";
+import type { HistoryEntry } from "../../api/types";
 import {
   deleteHistoryRun as deleteHistoryRunApi,
   getHistory,
@@ -12,7 +13,7 @@ import { normalizeUnit, heatColor } from "./heat_utils";
 export interface HistoryFeatureDeps {
   state: AppState;
   els: UiDomElements;
-  t: (key: string, vars?: Record<string, any>) => string;
+  t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
   fmt: (n: number, digits?: number) => string;
   fmtTs: (iso: string) => string;
@@ -67,7 +68,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     }
   }
 
-  function summarizeFindings(summary: Record<string, any> | null): unknown[] {
+  function summarizeFindings(summary: Record<string, unknown> | null): Record<string, unknown>[] {
     const findings = Array.isArray(summary?.findings) ? summary!.findings : [];
     return findings.slice(0, 3);
   }
@@ -90,13 +91,13 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     return raw;
   }
 
-  function metricFromLocationStat(row: Record<string, any>): number | null {
+  function metricFromLocationStat(row: Record<string, unknown>): number | null {
     if (!row || typeof row !== "object") return null;
     const value = Number(row.p95_intensity_db ?? row.p95 ?? row.mean_intensity_db ?? row.max_intensity_db);
     return Number.isFinite(value) ? value : null;
   }
 
-  function renderPreviewHeatmap(summary: Record<string, any>): string {
+  function renderPreviewHeatmap(summary: Record<string, unknown>): string {
     const statsRows = Array.isArray(summary?.sensor_intensity_by_location)
       ? summary.sensor_intensity_by_location
       : [];
@@ -130,7 +131,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     return `\n      <div class="mini-car-wrap">\n        <div class="mini-car-title">${escapeHtml(t("history.preview_heatmap_title"))}</div>\n        <div class="mini-car">${dots}</div>\n        ${unmappedSummary}\n      </div>\n    `;
   }
 
-  function renderPreviewStats(summary: Record<string, any>): string {
+  function renderPreviewStats(summary: Record<string, unknown>): string {
     const rows = Array.isArray(summary?.sensor_intensity_by_location)
       ? summary.sensor_intensity_by_location
       : [];
@@ -138,22 +139,22 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       return `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
     }
     const body = rows
-      .map((row: Record<string, any>) => {
+      .map((row: Record<string, unknown>) => {
         const dropped = row?.dropped_frames_delta ?? row?.frames_dropped_delta;
         const overflow = row?.queue_overflow_drops_delta;
-        return `\n          <tr>\n            <td>${escapeHtml(row.location || "--")}</td>\n            <td class="numeric">${fmt(row.p50_intensity_db ?? row.p50, 1)}</td>\n            <td class="numeric">${fmt(row.p95_intensity_db ?? row.p95, 1)}</td>\n            <td class="numeric">${fmt(row.max_intensity_db, 1)}</td>\n            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>\n            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>\n            <td class="numeric">${formatInt(row.sample_count ?? row.samples)}</td>\n          </tr>`;
+        return `\n          <tr>\n            <td>${escapeHtml(row.location || "--")}</td>\n            <td class="numeric">${fmt(Number(row.p50_intensity_db ?? row.p50), 1)}</td>\n            <td class="numeric">${fmt(Number(row.p95_intensity_db ?? row.p95), 1)}</td>\n            <td class="numeric">${fmt(Number(row.max_intensity_db), 1)}</td>\n            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>\n            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>\n            <td class="numeric">${formatInt(Number(row.sample_count ?? row.samples))}</td>\n          </tr>`;
       })
       .join("");
     return `\n      <div class="history-preview-stats">\n        <div class="mini-car-title">${escapeHtml(t("history.preview_stats_title"))}</div>\n        <table class="history-preview-table">\n          <thead>\n            <tr>\n              <th>${escapeHtml(t("history.table.location"))}</th>\n              <th class="numeric">p50 (dB)</th>\n              <th class="numeric">p95 (dB)</th>\n              <th class="numeric">max (dB)</th>\n              <th class="numeric">${escapeHtml(t("history.table.dropped_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.overflow_delta"))}</th>\n              <th class="numeric">${escapeHtml(t("history.table.samples"))}</th>\n            </tr>\n          </thead>\n          <tbody>${body}</tbody>\n        </table>\n      </div>\n    `;
   }
 
-  function renderInsightsBlock(detail: Record<string, any>): string {
-    const findings = summarizeFindings(detail.insights as Record<string, any> | null);
+  function renderInsightsBlock(detail: RunDetail): string {
+    const findings = summarizeFindings(detail.insights);
     const ctaLabel = detail.insights ? t("history.reload_insights") : t("history.load_insights");
     const loading = detail.insightsLoading;
     const findingsMarkup = findings.length
       ? findings
-          .map((finding: Record<string, any>) => {
+          .map((finding: Record<string, unknown>) => {
             const source = finding?.suspected_source || t("report.missing");
             const confidence = typeof finding?.confidence_0_to_1 === "number" ? fmt(finding.confidence_0_to_1, 2) : "--";
             return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(finding?.evidence_summary || "")}</li>`;
@@ -163,16 +164,16 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     return `\n      <div class="history-insights-block">\n        <div class="history-insights-actions">\n          <button class="btn btn--primary" data-run-action="load-insights" ${loading ? "disabled" : ""}>${escapeHtml(loading ? t("history.loading_insights") : ctaLabel)}</button>\n          ${detail.insightsError ? `<span class="history-inline-error">${escapeHtml(detail.insightsError)}</span>` : ""}\n        </div>\n        ${detail.insights ? `<ul class="history-findings-list">${findingsMarkup}</ul>` : ""}\n      </div>\n    `;
   }
 
-  function renderRunDetailsRow(run: Record<string, any>, detail: Record<string, any>): string {
+  function renderRunDetailsRow(run: HistoryEntry, detail: RunDetail): string {
     if (!detail) return "";
     const summary = detail.preview;
     const runSummary = summary
       ? [
           `${t("report.run_id")}: ${run.run_id}`,
-          `${t("history.summary_created")}: ${fmtTs(summary.start_time_utc)}`,
-          `${t("history.summary_updated")}: ${fmtTs(run.end_time_utc)}`,
-          `${t("history.summary_size")}: ${fmt(summary.duration_s, 1)} s`,
-          `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used)}`,
+          `${t("history.summary_created")}: ${fmtTs(summary.start_time_utc as string)}`,
+          `${t("history.summary_updated")}: ${fmtTs(run.end_time_utc ?? "")}`,
+          `${t("history.summary_size")}: ${fmt(summary.duration_s as number, 1)} s`,
+          `${t("history.summary_sensor_count")}: ${formatInt(summary.sensor_count_used as number)}`,
         ].join(" · ")
       : "";
     let previewMarkup = "";
@@ -215,8 +216,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
 
   async function refreshHistory(): Promise<void> {
     try {
-      const payload = await getHistory() as Record<string, any>;
-      state.runs = Array.isArray(payload.runs) ? payload.runs : [];
+      const payload = await getHistory();
+      state.runs = payload.runs ?? [];
       renderHistoryTable();
     } catch (_err) {
       // Keep stale data on transient errors — do not wipe the run list.
@@ -231,7 +232,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     try {
       await deleteHistoryRunApi(runId);
     } catch (err) {
-      window.alert(err?.message || t("history.delete_failed"));
+      window.alert(err instanceof Error ? err.message : t("history.delete_failed"));
       return;
     }
     if (state.expandedRunId === runId) collapseExpandedRun();
@@ -239,7 +240,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   async function deleteAllRuns(): Promise<void> {
-    const names = state.runs.map((row) => (row && typeof row.run_id === "string" ? row.run_id : "")).filter((name) => Boolean(name));
+    const names = state.runs.map((row) => row.run_id).filter(Boolean);
     if (!names.length) return;
     const ok = window.confirm(t("history.delete_all_confirm", { count: names.length }));
     if (!ok) return;
@@ -257,7 +258,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
         if (state.expandedRunId === name) collapseExpandedRun();
       } catch (err) {
         failed += 1;
-        if (!firstError) firstError = err?.message || t("history.delete_failed");
+        if (!firstError) firstError = err instanceof Error ? err.message : t("history.delete_failed");
       }
     }
     state.deleteAllRunsInFlight = false;
@@ -276,9 +277,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.previewError = "";
     renderHistoryTable();
     try {
-      detail.preview = await getHistoryInsights(runId, state.lang) as Record<string, any>;
+      detail.preview = await getHistoryInsights(runId, state.lang) as Record<string, unknown>;
     } catch (err) {
-      detail.previewError = err?.message || t("report.unable_load_insights");
+      detail.previewError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {
       detail.previewLoading = false;
       renderHistoryTable();
@@ -293,9 +294,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.insightsError = "";
     renderHistoryTable();
     try {
-      detail.insights = await getHistoryInsights(runId, state.lang) as Record<string, any>;
+      detail.insights = await getHistoryInsights(runId, state.lang) as Record<string, unknown>;
     } catch (err) {
-      detail.insightsError = err?.message || t("report.unable_load_insights");
+      detail.insightsError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {
       detail.insightsLoading = false;
       renderHistoryTable();
@@ -342,7 +343,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     try {
       await downloadBlobFile(historyReportPdfUrl(runId, state.lang), `${runId}_report.pdf`);
     } catch (err) {
-      detail.pdfError = err?.message || t("history.pdf_failed");
+      detail.pdfError = err instanceof Error ? err.message : t("history.pdf_failed");
     } finally {
       detail.pdfLoading = false;
       renderHistoryTable();

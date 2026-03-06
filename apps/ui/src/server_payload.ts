@@ -135,7 +135,7 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
     const mapped = { ...c } as ClientInfo;
     // Server sends "location", UI uses "location_code" in ClientRow
     if ("location" in c && !("location_code" in c)) {
-      (mapped as unknown as Record<string, unknown>).location_code = c.location;
+      mapped.location_code = c.location;
     }
     return mapped;
   });
