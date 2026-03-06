@@ -347,7 +347,9 @@ def _build_persistent_peak_findings(
                 hr_n += 1
             if hr_n > 1:
                 hr_mean = hr_sum / hr_n
-                speed_uniformity = ((hr_sq_sum / hr_n) - hr_mean * hr_mean) ** 0.5
+                # Clamp before sqrt: floating-point subtraction can yield a
+                # tiny negative value (e.g. -2e-16) that would raise ValueError.
+                speed_uniformity = max(0.0, (hr_sq_sum / hr_n) - hr_mean * hr_mean) ** 0.5
             elif hr_n == 1:
                 speed_uniformity = 0.0
 
