@@ -248,6 +248,11 @@ class WebSocketHub:
         Consecutive broadcast failures trigger back-off to avoid thundering-herd
         log spam.
         """
+        if hz <= 0:
+            LOGGER.warning(
+                "WebSocketHub.run called with hz=%r; clamping to 1 Hz.",
+                hz,
+            )
         interval = 1.0 / max(1, hz)
         _consecutive_failures = 0
         loop = asyncio.get_running_loop()
