@@ -671,6 +671,12 @@ class HistoryDB:
             yield from self._iter_v2_samples(run_id, batch_size, offset)
         elif self._has_legacy_samples:
             yield from self._iter_legacy_samples(run_id, batch_size, offset)
+        else:
+            LOGGER.debug(
+                "iter_run_samples: run_id=%s has no samples in v2 table "
+                "and no legacy samples table is present",
+                run_id,
+            )
 
     def _run_has_v2_samples(self, run_id: str) -> bool:
         with self._cursor(commit=False) as cur:
