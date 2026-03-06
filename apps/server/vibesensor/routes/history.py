@@ -13,7 +13,7 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import Response, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 
 from ..api_models import (
     DeleteHistoryRunResponse,
@@ -216,7 +216,13 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/history/{run_id}", response_model=HistoryRunResponse)
     async def get_history_run(run_id: str) -> HistoryRunResponse:
-        return await async_require_run(state.history_db, run_id)
+        run = await async_require_run(state.history_db, run_id)
+        # Strip internal renderer-only fields (prefixed with _) from analysis
+        # before returning to avoid leaking implementation details to callers.
+        if isinstance(run.get("analysis"), dict):
+            run = dict(run)
+            run["analysis"] = _strip_internal_fields(run["analysis"])
+        return run
 
     @router.get("/api/history/{run_id}/insights", response_model=HistoryInsightsResponse)
     async def get_history_insights(
@@ -225,14 +231,28 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
     ) -> HistoryInsightsResponse:
         run = await async_require_run(state.history_db, run_id)
         if run["status"] == RunStatus.ANALYZING:
-            return {"run_id": run_id, "status": RunStatus.ANALYZING}
+            # Return 202 Accepted so clients know to poll again; 200 would imply
+            # the response is the final/complete resource.
+            return JSONResponse(
+                status_code=202,
+                content={"run_id": run_id, "status": RunStatus.ANALYZING},
+            )
         analysis = _require_analysis_ready(run)
 
-        # Expose staleness to callers so they can decide whether to re-request
+        # Copy the dict before mutating to avoid corrupting the DB cache
+        # reference that history_db may return.
+        if isinstance(analysis, dict):
+            analysis = dict(analysis)
+
+        # Always expose staleness so callers never need to check key presence.
         analysis_version = run.get("analysis_version")
-        if isinstance(analysis, dict) and analysis_version is not None:
+        if isinstance(analysis, dict):
             try:
-                analysis["analysis_is_current"] = int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+                analysis["analysis_is_current"] = (
+                    int(analysis_version) >= ANALYSIS_SCHEMA_VERSION
+                    if analysis_version is not None
+                    else False
+                )
             except (TypeError, ValueError):
                 analysis["analysis_is_current"] = False
 
@@ -262,7 +282,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
 
     # -- report PDF ------------------------------------------------------------
 
-    @router.get("/api/history/{run_id}/report.pdf")
+    @router.get("/api/history/{run_id}/report.pdf", response_class=Response)
     async def download_history_report_pdf(
         run_id: str, lang: str | None = Query(default=None)
     ) -> Response:
@@ -333,7 +353,7 @@ def create_history_routes(state: RuntimeState) -> APIRouter:
 
     # -- CSV/ZIP export --------------------------------------------------------
 
-    @router.get("/api/history/{run_id}/export")
+    @router.get("/api/history/{run_id}/export", response_class=StreamingResponse)
     async def export_history_run(run_id: str) -> StreamingResponse:
         run = await async_require_run(state.history_db, run_id)
         safe_name = safe_filename(run_id)
