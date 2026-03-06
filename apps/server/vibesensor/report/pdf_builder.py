@@ -67,6 +67,7 @@ FS_TITLE = 12
 FS_H2 = 9
 FS_BODY = 7
 FS_SMALL = 6
+FS_CARD_TITLE = 8.0  # system-card title (between FS_H2 and FS_BODY)  
 
 R_CARD = 6
 GAP = 4 * mm
@@ -202,7 +203,13 @@ def _draw_kv(
     fs: float = FS_BODY,
     value_w: float | None = None,
 ) -> float:
-    """Draw a label: value pair.  Returns the y after the last line."""
+    """Draw a ``label: value`` pair and return the y-coordinate below the last line.
+
+    When *value_w* is ``None`` the value is drawn on a single line at
+    ``x + label_w``.  When *value_w* is provided the value is wrapped to that
+    width and all wrapped lines are drawn top-down, returning the y position
+    below the final line.
+    """
     c.setFillColor(_hex(SUB_CLR))
     c.setFont(FONT, fs)
     c.drawString(x, y, f"{label}:")
@@ -230,8 +237,15 @@ def _kv_consumed_height(value: str, *, fs: float = FS_BODY, value_w: float | Non
 
 
 def _cert_display(label: str | None, pct: str | None, fallback: str) -> str:
-    """Format a certainty label with optional percentage."""
-    val = _safe(label, fallback)
+    """Format a certainty label with optional percentage.
+
+    Only appends *pct* when *label* is genuinely present.  This prevents the
+    misleading ``"— (85%)"`` artefact that would appear when ``certainty_label``
+    is ``None`` (e.g. older persisted records) but ``certainty_pct`` is set.
+    """
+    if not label or not label.strip():
+        return fallback
+    val = label.strip()
     if pct:
         val = f"{val} ({pct})"
     return val
@@ -613,7 +627,7 @@ def _draw_system_card(
         w - 6 * mm,
         card.system_name,
         font=FONT_B,
-        size=8,
+        size=FS_CARD_TITLE,
         color=TEXT_CLR,
         max_lines=2,
     )
@@ -624,7 +638,7 @@ def _draw_system_card(
         title_bottom - 1.2 * mm,
         w - 6 * mm,
         f"{tr('STRONGEST_SENSOR')}: {_safe(card.strongest_location, na)}",
-        size=7,
+        size=FS_BODY,
         color=SUB_CLR,
         max_lines=2,
     )
@@ -635,7 +649,7 @@ def _draw_system_card(
         strongest_bottom - 1.0 * mm,
         w - 6 * mm,
         _safe(card.pattern_summary, na),
-        size=7,
+        size=FS_BODY,
         color=SUB_CLR,
         max_lines=2,
     )
@@ -644,7 +658,7 @@ def _draw_system_card(
     if card.parts:
         parts_y = pattern_bottom - 1.0 * mm
         c.setFillColor(_hex(TEXT_CLR))
-        c.setFont(FONT_B, 7)
+        c.setFont(FONT_B, FS_BODY)
         c.drawString(cx, parts_y, tr("COMMON_PARTS"))
 
         py = parts_y - 3.6 * mm
@@ -657,7 +671,7 @@ def _draw_system_card(
                 py,
                 w - 6 * mm,
                 f"\u2022 {p.name}",
-                size=6.7,
+                size=FS_BODY,
                 color=TEXT_CLR,
                 max_lines=2,
             )
@@ -986,9 +1000,10 @@ def _draw_peaks_table(
         c.drawString(cx_off, y - 4.2 * mm, label)
         cx_off += cw
 
-    # Data rows
+    # Data rows – the height-based ``y_bottom`` check inside the loop
+    # naturally limits visible rows; no hard-coded slice needed here.
     c.setFont(FONT, 6.5)
-    rows = data.peak_rows[:6]
+    rows = data.peak_rows
     if not rows:
         y -= row_h
         c.setFillColor(_hex(PANEL_BG))
@@ -1029,7 +1044,11 @@ def _draw_peaks_table(
 
 
 def _norm(v: object) -> str:
-    """Normalise an optional string value for comparison."""
+    """Normalise *v* to a lowercase stripped string for case-insensitive comparison.
+
+    Converts ``None`` and other falsy values to an empty string so callers can
+    safely compare without additional ``None`` guards.
+    """
     return str(v or "").strip().lower()
 
 
@@ -1050,8 +1069,11 @@ def _draw_additional_observations(
     _isfinite = math.isfinite
     _x_pad = x + 4 * mm
     _step = 3.5 * mm
+    _y_min = y + 2 * mm  # bottom guard: stay above the panel floor
     y_cursor = y + h - 10 * mm
     for finding in transient_findings[:3]:
+        if y_cursor < _y_min:
+            break  # prevent text from overflowing below the panel boundary
         order_label = str(finding.get("frequency_hz_or_order") or "").strip()
         if not order_label:
             order_label = tr("SOURCE_TRANSIENT_IMPACT")
@@ -1078,11 +1100,18 @@ def build_report_pdf(data: ReportTemplateData) -> bytes:
     """
     if not isinstance(data, ReportTemplateData):
         raise TypeError(f"build_report_pdf expects ReportTemplateData, got {type(data).__name__}")
+    _VALID_TIERS = frozenset({"A", "B", "C"})
+    if data.certainty_tier_key not in _VALID_TIERS:
+        LOGGER.warning(
+            "Invalid certainty_tier_key %r; falling back to 'C'.",
+            data.certainty_tier_key,
+        )
+        data.certainty_tier_key = "C"
     try:
         return _build_canvas_pdf(data)
     except Exception as exc:
         LOGGER.error("PDF generation failed.", exc_info=True)
-        raise RuntimeError("PDF generation failed") from exc
+        raise RuntimeError(f"PDF generation failed: {type(exc).__name__}: {exc}") from exc
 
 
 def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
