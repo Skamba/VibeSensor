@@ -23,28 +23,30 @@ Key modules in `vibesensor/`:
 
 | Module | Purpose |
 |--------|---------|
-| `app.py` | FastAPI application entry point and lifecycle |
-| `api.py` | HTTP + WebSocket endpoint definitions |
+| `app.py` | FastAPI application factory and CLI entry point |
+| `api.py` | Backward-compatibility wrapper — delegates to `routes/` |
+| `routes/` | Domain-specific HTTP + WebSocket route modules |
 | `api_models.py` | Pydantic request/response models for the HTTP API |
 | `protocol.py` | UDP wire protocol parser (HELLO, DATA, CMD, ACK) |
-| `processing.py` | FFT, waveform, RMS/P2P, peak detection, spike filtering |
+| `processing/` | Signal processing package — FFT, buffers, peak detection, time-align |
 | `metrics_log/` | Run recording to JSONL with auto-start/stop on silence |
 | `history_db.py` | SQLite storage for run metadata and analysis results |
 | `live_diagnostics/` | Real-time vibration event detection and severity tracking |
 | `ws_hub.py` | WebSocket connection management and broadcast |
 | `udp_data_rx.py` | UDP data listener (port 9000) |
 | `udp_control_tx.py` | UDP control sender (port 9001, identify command) |
-| `report/` | Report analysis sub-package (findings, order matching, PDF generation) |
+| `report/` | PDF report renderer — layout, diagram, i18n (no analysis logic) |
 | `report_i18n.py` | Internationalization strings (EN, NL) |
 | `config.py` | YAML configuration loader with defaults |
 | `registry.py` | Connected client registry |
-| `gps_speed.py` | GPSD client for speed input |
+| `gps_speed.py` | GPS speed monitor — parses NMEA sentences from a serial GPS device |
 | `hotspot_self_heal.py` | Wi-Fi AP health monitoring and auto-recovery |
 | `analysis_settings.py` | Vehicle parameter defaults and frequency band math |
 | `settings_store.py` | Persistent car profiles and sensor settings |
 | `car_library.py` | Vehicle database for car setup wizard |
 | `locations.py` | Canonical sensor location codes |
 | `constants.py` | Shared physical and analysis constants |
+| `update/` | OTA update orchestration and firmware-flash management |
 
 ## Setup
 
