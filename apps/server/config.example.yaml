@@ -6,58 +6,58 @@ ap:
   ssid: VibeSensor
   psk: ""
   ip: 10.4.0.1/24
-  channel: 7
+  channel: 7          # 2.4 GHz channel (1–14)
   ifname: wlan0
   con_name: VibeSensor-AP
   self_heal:
     enabled: true
-    interval_seconds: 120
-    diagnostics_lookback_minutes: 5
-    min_restart_interval_seconds: 120
+    interval_seconds: 120               # How often the watchdog polls (seconds, ≥1)
+    diagnostics_lookback_minutes: 5     # Window for connectivity diagnostics (minutes, ≥1)
+    min_restart_interval_seconds: 120   # Minimum cooldown between AP restarts (seconds, ≥1)
     allow_disable_resolved_stub_listener: false
     state_file: data/hotspot-self-heal-state.json
 
 server:
-  host: 0.0.0.0
-  port: 80
+  host: 0.0.0.0   # Bind address for the HTTP/WebSocket server
+  port: 80         # HTTP port (1–65535); use 8000 for dev/Docker
 
 udp:
-  data_listen: 0.0.0.0:9000
-  control_listen: 0.0.0.0:9001
-  data_queue_maxsize: 1024
+  data_listen: 0.0.0.0:9000     # UDP socket for sensor data frames
+  control_listen: 0.0.0.0:9001  # UDP socket for control messages
+  data_queue_maxsize: 1024       # Max frames buffered before dropping
 
 processing:
-  sample_rate_hz: 800
-  waveform_seconds: 8
-  waveform_display_hz: 120
-  ui_push_hz: 10
-  ui_heavy_push_hz: 4
-  fft_update_hz: 4
-  fft_n: 2048
-  spectrum_min_hz: 5.0
-  spectrum_max_hz: 200
-  client_ttl_seconds: 120
-  accel_scale_g_per_lsb: null
+  sample_rate_hz: 800          # ADC sample rate expected from the sensor
+  waveform_seconds: 8          # Seconds of raw waveform kept per client buffer
+  waveform_display_hz: 120     # Decimated rate sent to the UI waveform chart
+  ui_push_hz: 10               # Frequency of lightweight metric pushes to UI
+  ui_heavy_push_hz: 4          # Frequency of heavy (FFT spectrum) pushes to UI
+  fft_update_hz: 4             # FFT recomputation rate
+  fft_n: 2048                  # FFT window size (power of 2, 16–65536)
+  spectrum_min_hz: 5.0         # Lower frequency shown on the spectrum chart (Hz, ≥0)
+  spectrum_max_hz: 200         # Upper frequency shown on the spectrum chart (Hz, float, < Nyquist)
+  client_ttl_seconds: 120      # Seconds of silence before a client buffer is evicted
+  accel_scale_g_per_lsb: null  # Override accelerometer scale (null = auto-detect from sensor)
 
 logging:
-  log_metrics: true
-  metrics_log_path: data/metrics.jsonl
-  metrics_log_hz: 4
-  no_data_timeout_s: 15.0
-  sensor_model: ADXL345
-  persist_history_db: true
-  shutdown_analysis_timeout_s: 30
-  history_db_path: data/history.db
+  log_metrics: true             # Write per-sample metrics to metrics_log_path
+  metrics_log_path: data/metrics.jsonl  # JSONL file that records raw run data
+  metrics_log_hz: 4             # How many samples per second are written (int, ≥1)
+  no_data_timeout_s: 15.0       # Seconds of silence before "no data" warning is raised
+  sensor_model: ADXL345         # Sensor model string stored in run metadata
+  persist_history_db: true      # Persist run history across restarts via SQLite
+  shutdown_analysis_timeout_s: 30  # Max seconds to wait for post-run analysis on shutdown
+  history_db_path: data/history.db  # SQLite database path for run history
 
 storage:
-  clients_json_path: data/clients.json
+  clients_json_path: data/clients.json  # JSON file storing per-sensor client configuration
 
 gps:
-  gps_enabled: true
+  gps_enabled: true      # Set to false when gpsd is not available (Docker, dev machines)
   # gpsd host and port — defaults suit the standard gpsd local socket.
   gpsd_host: 127.0.0.1
-  gpsd_port: 2947
+  gpsd_port: 2947        # Port must be 1–65535
 
 update:
-  server_repo: Skamba/VibeSensor
-  rollback_dir: /var/lib/vibesensor/rollback
+  server_repo: Skamba/VibeSensor  # GitHub repo used by the auto-updater (owner/name)
+  rollback_dir: /var/lib/vibesensor/rollback  # Directory for storing rollback wheels
