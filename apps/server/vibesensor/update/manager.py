@@ -30,6 +30,7 @@ from .network import (
     HOTSPOT_RESTORE_DELAY_S,
     HOTSPOT_RESTORE_RETRIES,
     NMCLI_TIMEOUT_S,
+    UPLINK_CONNECT_RETRIES,
     UPLINK_CONNECT_WAIT_S,
     UPLINK_CONNECTION_NAME,
     UPLINK_FALLBACK_DNS,
@@ -713,7 +714,7 @@ class UpdateManager:
 
         rc = 1
         stderr = ""
-        for attempt in range(1, 4):
+        for attempt in range(1, UPLINK_CONNECT_RETRIES + 1):
             rc, _, stderr = await self._run_cmd(
                 [
                     "nmcli",
