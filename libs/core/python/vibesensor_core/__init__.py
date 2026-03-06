@@ -26,6 +26,7 @@ from .vibration_strength import median as median
 from .vibration_strength import noise_floor_amp_p20_g as noise_floor_amp_p20_g
 from .vibration_strength import peak_band_rms_amp_g as peak_band_rms_amp_g
 from .vibration_strength import PEAK_BANDWIDTH_HZ as PEAK_BANDWIDTH_HZ
+from .vibration_strength import PEAK_THRESHOLD_FLOOR_RATIO as PEAK_THRESHOLD_FLOOR_RATIO
 from .vibration_strength import PEAK_SEPARATION_HZ as PEAK_SEPARATION_HZ
 from .vibration_strength import percentile as percentile
 from .vibration_strength import strength_floor_amp_g as strength_floor_amp_g
@@ -53,8 +54,9 @@ __all__ = [
     "get_accel_scale_g_per_lsb",
     "PEAK_BANDWIDTH_HZ",
     "PEAK_SEPARATION_HZ",
-    "STRENGTH_EPSILON_MIN_G",
+    "PEAK_THRESHOLD_FLOOR_RATIO",
     "STRENGTH_EPSILON_FLOOR_RATIO",
+    "STRENGTH_EPSILON_MIN_G",
     "median",
     "percentile",
     "combined_spectrum_amp_g",
