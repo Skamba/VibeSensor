@@ -1042,7 +1042,28 @@ class UpdateManager:
             )
             return False
 
-        self._log(f"Rolled back to {wheel.name}")
+        # Verify the rolled-back package can be imported (mirrors install check)
+        verify_cmd = [
+            venv_python,
+            "-c",
+            "from vibesensor import __version__; print(__version__)",
+        ]
+        rc, stdout, stderr = await self._run_cmd(
+            verify_cmd,
+            phase="installing",
+            timeout=30,
+            sudo=False,
+        )
+        if rc != 0:
+            self._add_issue(
+                "installing",
+                f"Post-rollback verification failed (exit {rc})",
+                stderr,
+            )
+            return False
+
+        rolled_back_version = stdout.strip()
+        self._log(f"Rolled back to {wheel.name} (verified version={rolled_back_version})")
         return True
 
     @staticmethod
