@@ -40,6 +40,12 @@ docs/
 scripts/ai/
 examples/
 
+# Dev/CI tooling not needed at runtime
+tools/ci/
+tools/dev/
+tools/tests/
+tools/simulator
+
 # Misc
 .ruff_cache
 .pytest_cache
