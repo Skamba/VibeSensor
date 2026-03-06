@@ -272,7 +272,9 @@ def parse_data(data: bytes) -> DataMessage:
             f"DATA sample_count {sample_count} exceeds maximum {_MAX_SAMPLE_COUNT}"
         )
 
-    payload_len = sample_count * 6
+    if sample_count == 0:
+        raise ProtocolError("DATA sample_count must not be zero")
+    payload_len = sample_count * BYTES_PER_SAMPLE
     expected_len = DATA_HEADER_BYTES + payload_len
     if len(data) != expected_len:
         raise ProtocolError(f"DATA payload size mismatch: expected {expected_len}, got {len(data)}")
