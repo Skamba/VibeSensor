@@ -211,6 +211,7 @@ class AnalysisSettingsStore:
     """Thread-safe store for runtime analysis settings (tire specs, gear ratios, etc.)."""
 
     def __init__(self) -> None:
+        """Initialise the store with default analysis settings."""
         self._lock = RLock()
         self._values: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
 
