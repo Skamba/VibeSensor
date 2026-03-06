@@ -60,3 +60,85 @@ def test_openapi_component_shapes_are_not_generic_dict_for_typed_responses(
     assert update_status_properties["issues"]["items"] == {
         "$ref": "#/components/schemas/UpdateIssueResponse"
     }
+
+
+# ---------------------------------------------------------------------------
+# Fix 3+8: EspFlashStartRequest model_validator rejects missing port
+# ---------------------------------------------------------------------------
+
+
+def test_esp_flash_start_request_requires_port_when_not_auto_detect() -> None:
+    """EspFlashStartRequest must reject auto_detect=False with no port (Fix 8)."""
+    import pytest
+    from pydantic import ValidationError
+
+    from vibesensor.api_models import EspFlashStartRequest
+
+    with pytest.raises(ValidationError):
+        EspFlashStartRequest(port=None, auto_detect=False)
+
+    with pytest.raises(ValidationError):
+        EspFlashStartRequest(port="", auto_detect=False)
+
+    # Valid: auto_detect=False with explicit port
+    req = EspFlashStartRequest(port="/dev/ttyUSB0", auto_detect=False)
+    assert req.port == "/dev/ttyUSB0"
+
+    # Valid: auto_detect=True without port
+    req = EspFlashStartRequest(port=None, auto_detect=True)
+    assert req.auto_detect is True
+
+
+# ---------------------------------------------------------------------------
+# Fix 3: start_esp_flash catches ValueError and returns HTTP 400
+# ---------------------------------------------------------------------------
+
+
+import asyncio
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_esp_flash_start_returns_400_on_value_error() -> None:
+    """start_esp_flash must map ValueError from esp_flash_manager.start → 400 (Fix 3)."""
+    from fastapi import HTTPException
+
+    from vibesensor.routes.updates import create_update_routes
+    from fastapi import APIRouter
+
+    class _ValErrFlashManager:
+        async def list_ports(self):
+            return []
+
+        def start(self, **_):
+            raise ValueError("port is required when auto_detect is False")
+
+        def cancel(self):
+            return False
+
+        def logs_since(self, _after):
+            return {"lines": [], "next_after": 0}
+
+        def history(self):
+            return []
+
+        @property
+        def status(self):
+            return type("S", (), {"to_dict": lambda self: {}})()
+
+    state = MagicMock()
+    state.esp_flash_manager = _ValErrFlashManager()
+    router = create_update_routes(state)
+
+    start_endpoint = None
+    for route in router.routes:
+        if getattr(route, "path", "") == "/api/settings/esp-flash/start" and "POST" in getattr(route, "methods", set()):
+            start_endpoint = route.endpoint
+            break
+    assert start_endpoint is not None
+
+    req = type("R", (), {"port": None, "auto_detect": False})()
+    with pytest.raises(HTTPException) as exc_info:
+        await start_endpoint(req)
+    assert exc_info.value.status_code == 400
+
