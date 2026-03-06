@@ -36,6 +36,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
 
   // Track latest by_location diagnostics for confirmed car map intensity
   const STRENGTH_KEYS = ["wheel", "driveshaft", "engine", "other"] as const;
+  const CAR_MAP_PULSE_DURATION_MS = 750;
 
   let latestByLocation: Record<string, Record<string, unknown>> = {};
   let _strengthResizeHandler: (() => void) | null = null;
@@ -72,7 +73,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     setTimeout(() => {
       for (const code of locationCodes) state.carMapPulseLocations.delete(code);
       renderCarMap();
-    }, 750);
+    }, CAR_MAP_PULSE_DURATION_MS);
   }
 
   function renderCarMap(): void {
@@ -246,7 +247,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
           ctx2.lineTo(u.bbox.left + u.bbox.width, y1);
           ctx2.stroke();
           ctx2.fillStyle = "#4f5d73";
-          ctx2.font = "11px Segoe UI";
+          ctx2.font = "11px system-ui, -apple-system, 'Segoe UI', sans-serif";
           ctx2.fillText(band.key.toUpperCase(), u.bbox.left + u.bbox.width + 8, y1 + 4);
         }
       },
@@ -338,7 +339,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
         const peakAmpG = Number(ev.peak_amp_g ?? ev.peak_amp);
         const ampText = Number.isFinite(peakAmpG) && peakAmpG > 0 ? ` · ${fmt(peakAmpG, 3)} g` : "";
         const classKey = String(ev.class_key || "other");
-        const confidenceText = classKey.includes("_eng") || classKey.includes("shaft_eng") ? " ⚠ ambiguous" : "";
+        const confidenceText = classKey.includes("_eng") || classKey.includes("shaft_eng") ? ` ${t("vibration.event_ambiguous")}` : "";
         pushVibrationMessage(`Strength ${String(ev.severity_key || "l1").toUpperCase()} (${fmt(Number(ev.vibration_strength_db) || 0, 1)} dB${ampText}) @ ${fmt(Number(ev.peak_hz) || 0, 2)} Hz | ${labels} | ${classKey}${confidenceText}`);
         const sensorLabels: string[] = Array.isArray(ev.sensor_labels) ? ev.sensor_labels : ev.sensor_label ? [String(ev.sensor_label)] : [];
         for (const label of sensorLabels) {
