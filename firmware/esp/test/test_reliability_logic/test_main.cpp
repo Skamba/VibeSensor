@@ -106,6 +106,175 @@ void test_saturating_inc_u8_does_not_wrap() {
   TEST_ASSERT_EQUAL_UINT8(0xFF, v);
 }
 
+// ---------------------------------------------------------------------------
+// Flaky-sensor tests: sensor_should_reinit()
+// ---------------------------------------------------------------------------
+
+// Below threshold → reinit not triggered, even with no cooldown constraint.
+void test_flaky_sensor_below_threshold_no_reinit() {
+  TEST_ASSERT_FALSE(
+      vibesensor::reliability::sensor_should_reinit(0, 3, 5000, 0, 5000));
+  TEST_ASSERT_FALSE(
+      vibesensor::reliability::sensor_should_reinit(2, 3, 5000, 0, 5000));
+}
+
+// At/above threshold with cooldown satisfied → reinit triggered.
+void test_flaky_sensor_at_threshold_triggers_reinit() {
+  // Exactly at threshold; last_reinit_ms=0 so cooldown is always satisfied.
+  TEST_ASSERT_TRUE(
+      vibesensor::reliability::sensor_should_reinit(3, 3, 5000, 0, 5000));
+  // Above threshold.
+  TEST_ASSERT_TRUE(
+      vibesensor::reliability::sensor_should_reinit(10, 3, 5000, 0, 5000));
+}
+
+// Cooldown not yet elapsed → reinit blocked even though threshold is met.
+void test_flaky_sensor_cooldown_blocks_rapid_reinit() {
+  // last_reinit_ms=3000, now=6000, cooldown=5000 → elapsed=3000 < 5000
+  TEST_ASSERT_FALSE(
+      vibesensor::reliability::sensor_should_reinit(5, 3, 6000, 3000, 5000));
+}
+
+// Cooldown just satisfied → reinit allowed.
+void test_flaky_sensor_cooldown_satisfied_allows_reinit() {
+  // last_reinit_ms=3000, now=8001, cooldown=5000 → elapsed=5001 >= 5000
+  TEST_ASSERT_TRUE(
+      vibesensor::reliability::sensor_should_reinit(5, 3, 8001, 3000, 5000));
+  // Exactly at boundary: elapsed == cooldown.
+  TEST_ASSERT_TRUE(
+      vibesensor::reliability::sensor_should_reinit(5, 3, 8000, 3000, 5000));
+}
+
+// Simulates a sustained sensor failure: errors saturate at 0xFF, reinit
+// keeps triggering each time the cooldown elapses.
+void test_flaky_sensor_sustained_failure_reinit_cycles() {
+  uint8_t errs = 0;
+  constexpr uint8_t kThreshold = 3;
+  constexpr uint32_t kCooldown = 5000;
+
+  uint32_t now = 0;
+  uint32_t last_reinit = 0;
+  uint32_t reinit_count = 0;
+
+  // Run enough iterations that the error counter saturates at 0xFF.
+  // Use 300 iterations at 1 s each → saturation guaranteed by iteration 255.
+  for (uint32_t i = 0; i < 300; ++i) {
+    now += 1000;  // 1 s per iteration
+    errs = vibesensor::reliability::saturating_inc_u8(errs);
+
+    if (vibesensor::reliability::sensor_should_reinit(
+            errs, kThreshold, now, last_reinit, kCooldown)) {
+      reinit_count++;
+      last_reinit = now;
+      // Reinit fails: errors stay high (not reset to 0).
+    }
+  }
+  // At 1 s/iteration with 5 s cooldown, ~60 reinits expected over 300 s.
+  TEST_ASSERT_TRUE(reinit_count >= 55 && reinit_count <= 65);
+  // Error counter saturated at 0xFF, never wrapped.
+  TEST_ASSERT_EQUAL_UINT8(0xFF, errs);
+}
+
+// After a successful reinit (errors reset to 0), reinit is NOT immediately
+// re-triggered on the very next error.
+void test_flaky_sensor_reinit_success_resets_counter() {
+  uint8_t errs = 0xFF;
+  constexpr uint8_t kThreshold = 3;
+  constexpr uint32_t kCooldown = 5000;
+  const uint32_t now = 10000;
+  const uint32_t last_reinit = now - kCooldown;  // cooldown satisfied
+
+  // Before reset: reinit is triggered.
+  TEST_ASSERT_TRUE(
+      vibesensor::reliability::sensor_should_reinit(
+          errs, kThreshold, now, last_reinit, kCooldown));
+
+  // Simulate successful reinit: reset error counter and update last_reinit.
+  errs = 0;
+  const uint32_t new_reinit_ts = now;
+
+  // A single new error after successful reinit should not re-trigger reinit.
+  errs = vibesensor::reliability::saturating_inc_u8(errs);
+  TEST_ASSERT_FALSE(
+      vibesensor::reliability::sensor_should_reinit(
+          errs, kThreshold, now, new_reinit_ts, kCooldown));
+}
+
+// ---------------------------------------------------------------------------
+// Flaky-WiFi tests: retry backoff and reconnect behaviour
+// ---------------------------------------------------------------------------
+
+// After a rapid sequence of failures, the retry delay should accumulate and
+// be capped, never exceeding the maximum or dropping below the minimum.
+void test_flaky_wifi_backoff_bounded_across_many_failures() {
+  uint8_t failures = 0;
+  constexpr uint32_t kBase = 4000;
+  constexpr uint32_t kMax = 60000;
+
+  for (uint32_t i = 0; i < 200; ++i) {
+    failures = vibesensor::reliability::saturating_inc_u8(failures);
+    const uint32_t delay =
+        vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, i);
+    TEST_ASSERT_TRUE(delay >= kBase);
+    TEST_ASSERT_TRUE(delay <= kMax);
+  }
+}
+
+// After many consecutive failures the delay converges near the cap; after a
+// successful reconnect (failures reset to 0), the next delay is short again.
+void test_flaky_wifi_reconnect_success_resets_backoff() {
+  uint8_t failures = 20;
+  constexpr uint32_t kBase = 4000;
+  constexpr uint32_t kMax = 60000;
+
+  // When heavily backed off, delay is near the cap.
+  const uint32_t long_delay =
+      vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, 0);
+  TEST_ASSERT_TRUE(long_delay >= 52500);
+
+  // On reconnect success failures are reset to 0.
+  failures = 0;
+  const uint32_t short_delay =
+      vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, 0);
+  // First retry after success should be well below 10 s.
+  TEST_ASSERT_TRUE(short_delay < 10000);
+}
+
+// Simulate a flaky AP: repeated connect/disconnect cycles.  The retry timer
+// must always be set in the future and must never regress below the minimum.
+void test_flaky_wifi_repeated_connect_disconnect_cycles() {
+  constexpr uint32_t kBase = 4000;
+  constexpr uint32_t kMax = 60000;
+
+  uint8_t failures = 0;
+  uint32_t now = 1000;
+  uint32_t retry_at = 0;  // fire immediately on first check
+
+  for (uint32_t cycle = 0; cycle < 30; ++cycle) {
+    // Advance time to when retry is due.
+    TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(now, retry_at));
+
+    // Attempt reconnect (fails).
+    failures = vibesensor::reliability::saturating_inc_u8(failures);
+    const uint32_t delay =
+        vibesensor::reliability::compute_retry_delay_ms(kBase, kMax, failures, cycle);
+    retry_at = now + delay;
+
+    // Not yet due immediately after scheduling.
+    TEST_ASSERT_FALSE(vibesensor::reliability::retry_due(now, retry_at));
+
+    // Advance time past the retry window.
+    now = retry_at + 1;
+    TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(now, retry_at));
+
+    // Simulate an occasional successful reconnect (every 7 cycles).
+    if (cycle % 7 == 6) {
+      failures = 0;
+      retry_at = 0;  // reset → retry_due fires immediately next check
+    }
+  }
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_frame_samples_are_clamped_to_datagram_limit);
@@ -119,5 +288,16 @@ int main() {
   RUN_TEST(test_retry_due_zero_retry_at_always_true);
   RUN_TEST(test_retry_due_respects_wall_clock);
   RUN_TEST(test_saturating_inc_u8_does_not_wrap);
+  // Flaky sensor
+  RUN_TEST(test_flaky_sensor_below_threshold_no_reinit);
+  RUN_TEST(test_flaky_sensor_at_threshold_triggers_reinit);
+  RUN_TEST(test_flaky_sensor_cooldown_blocks_rapid_reinit);
+  RUN_TEST(test_flaky_sensor_cooldown_satisfied_allows_reinit);
+  RUN_TEST(test_flaky_sensor_sustained_failure_reinit_cycles);
+  RUN_TEST(test_flaky_sensor_reinit_success_resets_counter);
+  // Flaky WiFi
+  RUN_TEST(test_flaky_wifi_backoff_bounded_across_many_failures);
+  RUN_TEST(test_flaky_wifi_reconnect_success_resets_backoff);
+  RUN_TEST(test_flaky_wifi_repeated_connect_disconnect_cycles);
   return UNITY_END();
 }

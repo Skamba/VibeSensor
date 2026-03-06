@@ -435,11 +435,13 @@ bool next_sensor_sample(int16_t* x, int16_t* y, int16_t* z) {
     }
     if (io_error) {
       g_sensor_read_errors++;
-      g_sensor_consecutive_errors++;
+      g_sensor_consecutive_errors = vibesensor::reliability::saturating_inc_u8(
+          g_sensor_consecutive_errors);
       set_last_error(1);
       uint32_t now_ms = millis();
-      if (g_sensor_consecutive_errors >= kSensorReinitErrorThreshold &&
-          (now_ms - g_last_sensor_reinit_ms) >= kSensorReinitCooldownMs) {
+      if (vibesensor::reliability::sensor_should_reinit(
+              g_sensor_consecutive_errors, kSensorReinitErrorThreshold,
+              now_ms, g_last_sensor_reinit_ms, kSensorReinitCooldownMs)) {
         g_last_sensor_reinit_ms = now_ms;
         g_sensor_reinit_attempts++;
         g_sensor_ok = g_adxl.begin();
@@ -854,6 +856,9 @@ void setup() {
 
   g_next_sample_due_us = esp_timer_get_time();
   send_hello();
+  // Mark the time so service_hello() waits a full interval before sending
+  // the next HELLO, preventing a redundant duplicate ~2 s after boot.
+  g_last_hello_ms = millis();
 }
 
 void loop() {
