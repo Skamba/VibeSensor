@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from math import isfinite, sqrt
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from vibesensor_core.vibration_strength import percentile
 
@@ -92,7 +92,17 @@ def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
     return m, var
 
 
-def _outlier_summary(values: list[float]) -> dict[str, Any]:
+class _OutlierSummary(TypedDict):
+    """Return type of :func:`_outlier_summary`."""
+
+    count: int
+    outlier_count: int
+    outlier_pct: float
+    lower_bound: float | None
+    upper_bound: float | None
+
+
+def _outlier_summary(values: list[float]) -> _OutlierSummary:
     if not values:
         return {
             "count": 0,
