@@ -1,10 +1,18 @@
-# Docker overrides — only fields that differ from defaults.
+# Docker overrides — only fields that differ from Pi defaults.
 # Uses local relative paths inside the container working directory.
-# NOTE: identical to config.dev.yaml; kept separate so the Dockerfile
-#       and local-dev entrypoints reference distinct filenames.
+
+ap:
+  self_heal:
+    enabled: false  # Docker containers have no NetworkManager/hostapd for AP management
 
 server:
   port: 8000
 
 logging:
   metrics_log_path: data/metrics.jsonl
+
+gps:
+  gps_enabled: false  # Docker containers do not run a gpsd daemon
+
+update:
+  rollback_dir: /app/apps/server/data/rollback  # Pi default /var/lib/vibesensor/rollback does not exist in container

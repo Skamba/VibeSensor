@@ -1,4 +1,4 @@
-FROM node:22-slim AS ui-build
+FROM node:22.14-slim AS ui-build
 
 WORKDIR /app/apps/ui
 
@@ -11,12 +11,12 @@ COPY libs/ /app/libs/
 COPY apps/ui/ ./
 RUN npm run typecheck && npm run build
 
-FROM python:3.11-slim
+FROM python:3.11.12-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-ENV VIBESENSOR_SERVE_STATIC=1
-ENV VIBESENSOR_CONTRACTS_DIR=/app/libs/shared/contracts
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    VIBESENSOR_SERVE_STATIC=1 \
+    VIBESENSOR_CONTRACTS_DIR=/app/libs/shared/contracts
 
 WORKDIR /app
 
@@ -27,7 +27,8 @@ COPY libs /app/libs
 RUN rm -rf /app/apps/server/public && mkdir -p /app/apps/server/public
 COPY --from=ui-build /app/apps/ui/dist/ /app/apps/server/public/
 
-RUN pip install --no-cache-dir -e /app/apps/server
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -e /app/apps/server
 
 EXPOSE 8000/tcp
 EXPOSE 9000/udp
