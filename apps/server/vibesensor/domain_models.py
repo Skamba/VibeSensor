@@ -9,6 +9,7 @@ from __future__ import annotations
 import math
 import uuid
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
@@ -51,7 +52,7 @@ RUN_END_TYPE = "run_end"
 VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "obd2", "manual")
 VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 
-DEFAULT_CAR_ASPECTS: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
+DEFAULT_CAR_ASPECTS: MappingProxyType[str, float] = MappingProxyType(DEFAULT_ANALYSIS_SETTINGS)
 
 
 def as_float_or_none(value: object) -> float | None:
