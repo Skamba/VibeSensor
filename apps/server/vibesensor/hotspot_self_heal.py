@@ -1,3 +1,8 @@
+"""Wi-Fi hotspot self-heal manager.
+
+Monitors hotspot connectivity and automatically recovers from failures
+by restarting ``hostapd``/``dnsmasq`` when the hotspot becomes unreachable.
+"""
 from __future__ import annotations
 
 import argparse
@@ -126,6 +131,7 @@ def _find_port53_conflict(runner: CommandRunner) -> str | None:
 
 
 def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRunner) -> HealthState:
+    """Collect the current hotspot health state by running diagnostic commands."""
     issues: list[str] = []
 
     nm_active = runner.run(["systemctl", "is-active", "NetworkManager"], timeout_s=5)
@@ -380,6 +386,7 @@ def run_self_heal_once(
     state_store: HealStateStore,
     diagnostics_only: bool = False,
 ) -> int:
+    """Run one self-heal cycle; return an exit code (0 = ok, 1 = healed, 2 = failed)."""
     if diagnostics_only:
         _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
         return 0
@@ -540,6 +547,7 @@ def run_self_heal_once(
 
 
 def run_self_heal(config_path: Path, diagnostics_only: bool = False) -> int:
+    """Load configuration from *config_path* and run one self-heal cycle."""
     cfg = load_config(config_path)
     ap = cfg.ap
     self_heal = cfg.ap.self_heal
@@ -549,6 +557,7 @@ def run_self_heal(config_path: Path, diagnostics_only: bool = False) -> int:
 
 
 def main() -> None:
+    """Entry point for the ``vibesensor-hotspot-heal`` CLI tool."""
     parser = argparse.ArgumentParser(description="VibeSensor hotspot health check and self-healing")
     parser.add_argument(
         "--config",

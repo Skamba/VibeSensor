@@ -1,3 +1,8 @@
+"""Application configuration loading and validation.
+
+Loads the YAML config file, deep-merges with defaults, and validates
+all sections into typed ``AppConfig`` dataclass hierarchy.
+"""
 from __future__ import annotations
 
 import ipaddress
@@ -386,6 +391,12 @@ def _read_config_file(path: Path) -> dict[str, Any]:
 
 
 def load_config(config_path: Path | None = None) -> AppConfig:
+    """Load, validate, and return the application configuration.
+
+    Reads *config_path* (or the default ``config.yaml`` next to this module),
+    deep-merges with documented defaults, and returns a fully validated
+    ``AppConfig``.
+    """
     path = config_path or (SERVER_DIR / "config.yaml")
     path = path.resolve()
     if config_path is not None and not path.exists():

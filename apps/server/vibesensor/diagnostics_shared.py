@@ -1,3 +1,9 @@
+"""Shared diagnostic helpers used across analysis and report modules.
+
+Contains settings builders, order/frequency math, peak classification,
+and severity-state tracking shared between live diagnostics and the
+offline report pipeline.
+"""
 from __future__ import annotations
 
 from collections.abc import Mapping
@@ -42,6 +48,7 @@ _DEFAULT_SEVERITY_STATE: dict[str, Any] = {
 
 
 def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dict[str, float]:
+    """Return analysis settings merged with validated *overrides*."""
     out = dict(DEFAULT_ANALYSIS_SETTINGS)
     if not overrides:
         return out
@@ -53,6 +60,7 @@ def build_diagnostic_settings(overrides: Mapping[str, Any] | None = None) -> dic
 
 
 def combined_relative_uncertainty(*parts: float) -> float:
+    """Return the combined relative uncertainty as ``sqrt(sum(part²))``."""
     sum_sq = 0.0
     for part in parts:
         if part > 0:
@@ -68,6 +76,7 @@ def tolerance_for_order(
     min_abs_band_hz: float,
     max_band_half_width_pct: float,
 ) -> float:
+    """Compute the half-bandwidth tolerance for an order-tracking band."""
     if order_hz <= 0:
         return 0.0
     base_half_rel = max(0.0, base_bandwidth_pct) / 200.0
@@ -156,6 +165,10 @@ def vehicle_orders_hz(
     speed_mps: float | None,
     settings: Mapping[str, Any],
 ) -> dict[str, float] | None:
+    """Return per-order frequencies in Hz for the given speed and settings.
+
+    Returns ``None`` when *speed_mps* is unavailable or non-positive.
+    """
     if speed_mps is None or not isfinite(speed_mps) or speed_mps <= 0:
         return None
     # build_diagnostic_settings guarantees all DEFAULT_ANALYSIS_SETTINGS keys
@@ -235,6 +248,7 @@ _SUSPECTED_SOURCES: dict[str, str] = {
 
 
 def suspected_source_from_class_key(class_key: str) -> str:
+    """Return the human-readable suspected vibration source for *class_key*."""
     return _SUSPECTED_SOURCES.get(class_key, "unknown")
 
 
@@ -250,6 +264,7 @@ _SOURCE_KEYS: dict[str, tuple[str, ...]] = {
 
 
 def source_keys_from_class_key(class_key: str) -> tuple[str, ...]:
+    """Return the tuple of source system keys associated with *class_key*."""
     return _SOURCE_KEYS.get(class_key, ("other",))
 
 
@@ -259,6 +274,11 @@ def classify_peak_hz(
     speed_mps: float | None,
     settings: Mapping[str, Any],
 ) -> dict[str, object]:
+    """Classify *peak_hz* against known vehicle order frequencies.
+
+    Returns a dict with ``class_key``, ``suspected_source``, ``order_label``,
+    ``rel_err``, and ``tol`` fields.
+    """
     candidates: list[dict[str, float | str]] = []
     order_refs = vehicle_orders_hz(speed_mps=speed_mps, settings=settings)
     resolved_settings = build_diagnostic_settings(settings)
@@ -355,6 +375,11 @@ def severity_from_peak(
     peak_hz: float | None = None,
     persistence_freq_bin_hz: float | None = None,
 ) -> dict[str, float | str | dict[str, Any]]:
+    """Compute the severity bucket and updated state for a peak measurement.
+
+    Applies hysteresis, persistence, and multi-sensor corroboration before
+    returning the new bucket and a ``"state"`` dict for subsequent calls.
+    """
     state = {**_DEFAULT_SEVERITY_STATE, **(prior_state or {})}
     corroboration = MULTI_SENSOR_CORROBORATION_DB if sensor_count >= 2 else 0.0
     adjusted_db = float(vibration_strength_db) + corroboration

@@ -1,3 +1,8 @@
+"""Sensor location helpers — codes, labels, and wheel-location tests.
+
+Maps short sensor location codes (e.g. ``"fl"``, ``"rr"``) to human-readable
+labels and provides helpers to identify wheel-mounted sensor positions.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -101,8 +106,10 @@ def has_any_wheel_location(locations: Iterable[str]) -> bool:
 
 
 def all_locations() -> list[dict[str, str]]:
+    """Return all known sensor location options as a list of ``{code, label}`` dicts."""
     return [{"code": code, "label": label} for code, label in LOCATION_OPTIONS]
 
 
 def label_for_code(code: str) -> str | None:
+    """Return the human-readable label for location *code*, or ``None`` if unknown."""
     return LOCATION_LABEL_BY_CODE.get(code)

@@ -1,3 +1,8 @@
+"""GPS speed monitor — tracks current vehicle speed from NMEA sentences.
+
+``GPSSpeedMonitor`` parses GPVTG/GPRMC sentences from a serial GPS device
+and exposes the current speed in m/s with a configurable resolution window.
+"""
 from __future__ import annotations
 
 import asyncio

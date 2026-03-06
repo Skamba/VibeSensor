@@ -1,3 +1,9 @@
+"""UDP data receiver — ingests binary sensor payloads from ESP32 nodes.
+
+``UDPDataRxProtocol`` is an asyncio ``DatagramProtocol`` that decodes
+incoming ``DataMessage`` frames, deduplicates them via the client registry,
+runs the processing pipeline, and hands results to the metrics logger.
+"""
 from __future__ import annotations
 
 import asyncio
@@ -132,6 +138,7 @@ async def start_udp_data_receiver(
     processor: SignalProcessor,
     queue_maxsize: int = 1024,
 ) -> tuple[asyncio.DatagramTransport, asyncio.Task[None]]:
+    """Bind the UDP data socket and start the background consumer task."""
     loop = asyncio.get_running_loop()
     protocol = DataDatagramProtocol(
         registry=registry,

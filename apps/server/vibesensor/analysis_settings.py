@@ -1,3 +1,8 @@
+"""Analysis settings — defaults, validation, and thread-safe storage.
+
+Provides ``DEFAULT_ANALYSIS_SETTINGS``, ``sanitize_settings()``, tire/wheel
+geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
+"""
 from __future__ import annotations
 
 import logging
@@ -117,6 +122,7 @@ def tire_circumference_m_from_spec(
     rim_in: float | None,
     deflection_factor: float | None = None,
 ) -> float | None:
+    """Compute tire circumference in metres from width/aspect/rim spec."""
     if tire_width_mm is None or tire_aspect_pct is None or rim_in is None:
         return None
     if not isfinite(tire_width_mm) or not isfinite(tire_aspect_pct) or not isfinite(rim_in):

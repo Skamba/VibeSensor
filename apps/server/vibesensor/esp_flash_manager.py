@@ -1,3 +1,8 @@
+"""ESP32 firmware flash manager.
+
+Manages detection of connected ESP32 devices, flashing firmware via
+``esptool``, and tracking flash state/history through ``EspFlashManager``.
+"""
 from __future__ import annotations
 
 import asyncio

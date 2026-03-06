@@ -1,3 +1,17 @@
+"""vibesensor_core — pure-Python domain logic for VibeSensor.
+
+Re-exports all public symbols from the sub-modules so that callers can
+import directly from ``vibesensor_core`` without knowing the internal layout.
+
+Sub-modules
+-----------
+strength_bands
+    Band definitions (l0–l5), bucket classification, hysteresis constants.
+vibration_strength
+    Canonical spectrum, floor, peak-RMS, and dB computations.
+sensor_units
+    Hardware scale-factor helpers (g-per-LSB).
+"""
 from .sensor_units import get_accel_scale_g_per_lsb as get_accel_scale_g_per_lsb
 from .strength_bands import BANDS as BANDS
 from .strength_bands import DECAY_TICKS as DECAY_TICKS
