@@ -482,9 +482,9 @@ class CarLibraryTireOptionEntry(_ExtraAllowBase):
     """A tire size option from the car library."""
 
     name: str
-    tire_width_mm: float
-    tire_aspect_pct: float
-    rim_in: float
+    tire_width_mm: float = Field(gt=0)
+    tire_aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
 
 
 class CarLibraryVariantEntry(_ExtraAllowBase):
