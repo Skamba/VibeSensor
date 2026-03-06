@@ -67,8 +67,8 @@ def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) 
         return None
     low = floor(min(p10, p90))
     high = ceil(max(p10, p90))
-    if high < low:
-        high = low
+    # Note: floor(min(...)) ≤ ceil(max(...)) is guaranteed for any finite
+    # floats, so no explicit low/high swap is needed here.
     if low == high:
         return f"{low} km/h"
     return f"{low}-{high} km/h"
