@@ -1086,6 +1086,12 @@ def build_report_pdf(data: ReportTemplateData) -> bytes:
 
 
 def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
+    """Build the raw PDF bytes from *data* using the ReportLab Canvas API.
+
+    Sets up locale-aware ``tr_fn`` / ``text_fn`` helpers, resolves location
+    hotspot rows (from pre-computed data or falls back to an empty sample list),
+    and renders both pages before serialising to bytes.
+    """
     lang = data.lang
 
     def tr_fn(key: str, **kw: object) -> str:
