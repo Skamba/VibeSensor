@@ -698,6 +698,11 @@ class UpdateManager:
         if rc != 0:
             self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
             self._status.state = UpdateState.failed
+            await self._run_cmd(
+                ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
+                phase="connecting_wifi",
+                sudo=True,
+            )
             return False
 
         if password:
@@ -718,6 +723,11 @@ class UpdateManager:
             if rc != 0:
                 self._add_issue("connecting_wifi", "Failed to set Wi-Fi credentials", stderr)
                 self._status.state = UpdateState.failed
+                await self._run_cmd(
+                    ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
+                    phase="connecting_wifi",
+                    sudo=True,
+                )
                 return False
 
         rc = 1
