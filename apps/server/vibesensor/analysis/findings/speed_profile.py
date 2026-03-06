@@ -46,8 +46,8 @@ def _speed_profile_from_points(
         if allowed is not None and _bin_label(speed) not in allowed:
             continue
         phase_weight = 1.0
-        if has_weights and idx < n_weights:
-            parsed_weight = _float_or_none(phase_weights[idx])  # type: ignore[index]
+        if phase_weights is not None and idx < n_weights:
+            parsed_weight = _float_or_none(phase_weights[idx])
             if parsed_weight is not None and parsed_weight > 0:
                 phase_weight = parsed_weight
         valid.append((speed, amp))
