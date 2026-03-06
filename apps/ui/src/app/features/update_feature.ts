@@ -27,7 +27,7 @@ const STATE_VARIANT: Readonly<Record<string, string>> = {
 const ASSET_ISSUE_RE = /asset|artifacts|stale|hash|missing/i;
 
 function formatTimestamp(epoch: number | null): string {
-  if (!epoch) return "—";
+  if (epoch === null) return "—";
   return new Date(epoch * 1000).toLocaleString();
 }
 

@@ -4,6 +4,7 @@ import type { CarLibraryModel, CarLibraryGearbox, CarLibraryTireOption, CarLibra
 
 export interface CarsFeatureDeps {
   els: UiDomElements;
+  t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
   fmt: (n: number, digits?: number) => string;
   addCarFromWizard: (name: string, carType: string, aspects: Record<string, number>, variant?: string) => Promise<void>;
@@ -37,7 +38,7 @@ function resolveTireOptions(model: CarLibraryModel | null, variant: CarLibraryVa
 }
 
 export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
-  const { els, escapeHtml } = ctx;
+  const { els, escapeHtml, t } = ctx;
   const wizState: WizardState = {
     step: 0,
     brand: "",
@@ -98,7 +99,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
   async function loadBrandStep(): Promise<void> {
     const container = document.getElementById("wizardBrandList");
     if (!container) return;
-    container.innerHTML = "<em>Loading...</em>";
+    container.innerHTML = `<em>${escapeHtml(t("settings.wizard.loading"))}</em>`;
     try {
       const data = await getCarLibraryBrands();
       container.innerHTML = (data.brands || []).map((b) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(b)}">${escapeHtml(b)}</button>`).join("");
@@ -110,14 +111,14 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         });
       });
     } catch (_err) {
-      container.innerHTML = "<em>Could not load brands</em>";
+      container.innerHTML = `<em>${escapeHtml(t("settings.wizard.load_failed_brands"))}</em>`;
     }
   }
 
   async function loadTypeStep(): Promise<void> {
     const container = document.getElementById("wizardTypeList");
     if (!container) return;
-    container.innerHTML = "<em>Loading...</em>";
+    container.innerHTML = `<em>${escapeHtml(t("settings.wizard.loading"))}</em>`;
     try {
       const data = await getCarLibraryTypes(wizState.brand);
       container.innerHTML = (data.types || []).map((t2) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(t2)}">${escapeHtml(t2)}</button>`).join("");
@@ -129,14 +130,14 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         });
       });
     } catch (_err) {
-      container.innerHTML = "<em>Could not load types</em>";
+      container.innerHTML = `<em>${escapeHtml(t("settings.wizard.load_failed_types"))}</em>`;
     }
   }
 
   async function loadModelStep(): Promise<void> {
     const container = document.getElementById("wizardModelList");
     if (!container) return;
-    container.innerHTML = "<em>Loading...</em>";
+    container.innerHTML = `<em>${escapeHtml(t("settings.wizard.loading"))}</em>`;
     try {
       const data = await getCarLibraryModels(wizState.brand, wizState.carType);
       const models: CarLibraryModel[] = data.models || [];
@@ -156,7 +157,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
         });
       });
     } catch (_err) {
-      container.innerHTML = "<em>Could not load models</em>";
+      container.innerHTML = `<em>${escapeHtml(t("settings.wizard.load_failed_models"))}</em>`;
     }
   }
 
@@ -210,7 +211,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     if (!container) return;
     const gearboxes = resolveGearboxes(wizState.selectedModel, wizState.selectedVariant);
     if (!gearboxes.length) {
-      container.innerHTML = "<em>No pre-defined gearboxes. Enter specs manually below.</em>";
+      container.innerHTML = `<em>${escapeHtml(t("settings.wizard.no_gearboxes"))}</em>`;
       return;
     }
     container.innerHTML = gearboxes.map((gb, idx) => `<button type="button" class="wiz-opt" data-idx="${idx}"><span>${escapeHtml(gb.name)}</span><span class="wiz-opt-detail">FD: ${ctx.fmt(gb.final_drive_ratio, 2)} · Top Gear: ${ctx.fmt(gb.top_gear_ratio, 2)}</span></button>`).join("");

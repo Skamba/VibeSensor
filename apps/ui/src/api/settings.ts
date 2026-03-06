@@ -97,24 +97,6 @@ export async function getSpeedSourceStatus(): Promise<SpeedSourceStatusPayload> 
   return apiJson("/api/settings/speed-source/status");
 }
 
-export async function getSettingsSensors(): Promise<unknown> {
-  return apiJson("/api/settings/sensors");
-}
-
-export async function updateSettingsSensor(mac: string, data: Record<string, unknown>): Promise<unknown> {
-  return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
-    method: "POST",
-    headers: JSON_HEADERS,
-    body: JSON.stringify(data),
-  });
-}
-
-export async function deleteSettingsSensor(mac: string): Promise<unknown> {
-  return apiJson(`/api/settings/sensors/${encodeURIComponent(mac)}`, {
-    method: "DELETE",
-  });
-}
-
 export async function getUpdateStatus(): Promise<UpdateStatusPayload> {
   return apiJson("/api/settings/update/status");
 }
