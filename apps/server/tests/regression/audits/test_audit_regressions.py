@@ -1442,7 +1442,7 @@ class TestBuildPhaseTimeline:
     """Direct unit tests for _build_phase_timeline."""
 
     def test_empty_segments_returns_empty(self) -> None:
-        assert _build_phase_timeline([], [], "en") == []
+        assert _build_phase_timeline([], []) == []
 
     def test_basic_segment_output(self) -> None:
         segs = [
@@ -1456,7 +1456,7 @@ class TestBuildPhaseTimeline:
                 "phase_evidence": {"phases_detected": ["cruise"]},
             }
         ]
-        entries = _build_phase_timeline(segs, findings, "en")
+        entries = _build_phase_timeline(segs, findings)
         assert len(entries) == 2
         assert entries[0]["phase"] == "cruise"
         assert entries[0]["has_fault_evidence"] is True
@@ -1485,7 +1485,7 @@ class TestBuildPhaseTimeline:
     )
     def test_finding_does_not_mark_phase(self, finding: dict[str, object]) -> None:
         """REF_ findings and below-threshold findings should not contribute."""
-        entries = _build_phase_timeline([_FakeSeg()], [finding], "en")
+        entries = _build_phase_timeline([_FakeSeg()], [finding])
         assert entries[0]["has_fault_evidence"] is False
 
 
@@ -2227,29 +2227,28 @@ class TestDataTrustPanelOverflow:
 
 class TestPeaksTableFixedHeight:
     """The peaks table uses a fixed panel height of 53 mm regardless of
-    how many rows it contains.  While _draw_peaks_table has a y_bottom
-    guard, the panel itself is drawn at fixed size.  With long relevance
-    strings, rows may be silently truncated.
+    how many rows it contains.  _draw_peaks_table uses a y_bottom guard
+    to limit visible rows to what fits in the panel height.
 
-    Evidence: pdf_builder.py line ~800: table_h = 53 * mm
+    Evidence: pdf_builder.py: y - row_h < y_bottom: break
     """
 
     def test_peaks_table_rows_cap_at_six(self) -> None:
-        """Verify the renderer caps peak rows at 6 regardless of input."""
+        """Verify the renderer uses height-based limiting (y_bottom guard)."""
         source = inspect.getsource(_draw_peaks_table)
-        assert "peak_rows[:6]" in source
+        assert "y_bottom" in source
 
     def test_fixed_height_with_many_rows(self) -> None:
-        """Eight peaks in data but only 6 rendered, and the panel height
-        is fixed regardless."""
+        """Eight peaks in data; the builder forwards all of them and the
+        renderer trims via a y_bottom guard at render time."""
         rows = [_make_peaks_table_row(rank=i, frequency_hz=20.0 + i * 5) for i in range(1, 9)]
         summary = _make_minimal_summary(overrides={"plots": {"peaks_table": rows}})
         data = map_summary(summary)
         # Builder forwards up to 8 above-noise peaks
         assert len(data.peak_rows) == 8
-        # But the renderer only draws 6 — documented via source inspection
+        # The renderer uses height-based y_bottom limiting (not hard slice)
         source = inspect.getsource(_draw_peaks_table)
-        assert "[:6]" in source
+        assert "y_bottom" in source
 
 
 # ===================================================================
