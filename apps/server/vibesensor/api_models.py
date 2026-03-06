@@ -473,7 +473,7 @@ class CarLibraryTypesResponse(BaseModel):
 class CarLibraryGearboxEntry(_ExtraAllowBase):
     """A gearbox option from the car library (gear ratios)."""
 
-    name: str
+    name: str = Field(min_length=1)
     final_drive_ratio: float = Field(gt=0)
     top_gear_ratio: float = Field(gt=0)
 
@@ -481,7 +481,7 @@ class CarLibraryGearboxEntry(_ExtraAllowBase):
 class CarLibraryTireOptionEntry(_ExtraAllowBase):
     """A tire size option from the car library."""
 
-    name: str
+    name: str = Field(min_length=1)
     tire_width_mm: float = Field(gt=0)
     tire_aspect_pct: float = Field(gt=0)
     rim_in: float = Field(gt=0)
@@ -506,8 +506,8 @@ class CarLibraryModelEntry(_ExtraAllowBase):
     brand: str
     type: str
     model: str
-    gearboxes: list[CarLibraryGearboxEntry]
-    tire_options: list[CarLibraryTireOptionEntry]
+    gearboxes: list[CarLibraryGearboxEntry] = Field(min_length=1)
+    tire_options: list[CarLibraryTireOptionEntry] = Field(min_length=1)
     tire_width_mm: float = Field(gt=0)
     tire_aspect_pct: float = Field(gt=0)
     rim_in: float = Field(gt=0)
