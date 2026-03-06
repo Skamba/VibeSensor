@@ -1,6 +1,10 @@
 # Docker overrides — only fields that differ from Pi defaults.
 # Uses local relative paths inside the container working directory.
 
+ap:
+  self_heal:
+    enabled: false  # Docker containers have no NetworkManager/hostapd for AP management
+
 server:
   port: 8000
 
