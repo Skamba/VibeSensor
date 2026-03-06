@@ -67,8 +67,8 @@ def _weighted_speed_window_label(speed_weight_pairs: list[tuple[float, float]]) 
         return None
     low = floor(min(p10, p90))
     high = ceil(max(p10, p90))
-    if high < low:
-        high = low
+    # Note: floor(min(...)) ≤ ceil(max(...)) is guaranteed for any finite
+    # floats, so no explicit low/high swap is needed here.
     if low == high:
         return f"{low} km/h"
     return f"{low}-{high} km/h"
@@ -372,6 +372,10 @@ def _location_speedbin_summary(
         if str(row.get("location") or "").strip() == top_location
     ]
     if not speed_weight_pairs:
+        # Defensive fallback: top_location is always a key from per_loc_scores
+        # which is built from the same grouped rows, so this branch should not
+        # trigger in practice.  Guard against any future refactor that
+        # introduces a mismatch between the scored and grouped data structures.
         speed_weight_pairs = [
             (
                 float(row.get("speed_kmh") or 0.0),

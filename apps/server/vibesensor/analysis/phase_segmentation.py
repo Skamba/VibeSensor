@@ -155,10 +155,10 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
         know the vehicle was moving but lack derivative info).
       * Exactly one neighbour is a moving phase (gap at run start/end) →
         assign the gap to that neighbour's phase.
-      * Both neighbours are IDLE (or the entire run is SPEED_UNKNOWN) →
-        leave as SPEED_UNKNOWN so that ``diagnostic_sample_mask`` still
-        *includes* these samples rather than incorrectly dropping them as
-        IDLE.
+      * Neither side is a moving phase (run boundary, IDLE, or another
+        SPEED_UNKNOWN block) → leave as SPEED_UNKNOWN so that
+        ``diagnostic_sample_mask`` still *includes* these samples
+        (IDLE is excluded; SPEED_UNKNOWN is kept per issue #287).
     """
     n = len(phases)
     i = 0
@@ -185,7 +185,8 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
         elif right_moving:
             fill = right
         else:
-            # Both sides IDLE or run edges — leave as SPEED_UNKNOWN
+            # Neither side is a moving phase (run boundary, IDLE, or nested
+            # SPEED_UNKNOWN) — leave as SPEED_UNKNOWN.
             i = j
             continue
 
