@@ -104,10 +104,17 @@ class WorkerPool:
         Each task is wrapped with the same ``_timed`` logic used by
         :meth:`submit` so that ``total_wait_s`` accumulates per-task
         execution time consistently across both call paths.
+
+        Raises
+        ------
+        RuntimeError
+            If the pool has already been shut down.
         """
         if not items:
             return {}
         with self._metrics_lock:
+            if not self._alive:
+                raise RuntimeError("WorkerPool is shut down")
             self._total_tasks += len(items)
 
         def _timed_fn(item: T) -> R:
@@ -135,11 +142,29 @@ class WorkerPool:
                 )
         return results
 
-    def shutdown(self, wait: bool = True) -> None:
-        """Shut down the pool.  Safe to call multiple times."""
+    def shutdown(self, wait: bool = True, *, cancel_futures: bool = False) -> None:
+        """Shut down the pool.  Safe to call multiple times.
+
+        Parameters
+        ----------
+        wait:
+            If ``True`` (default), block until all running futures finish.
+        cancel_futures:
+            If ``True``, cancel all pending (not yet started) futures before
+            shutting down.  Useful for fast teardown on error paths.
+            Requires Python ≥ 3.9.
+        """
         with self._metrics_lock:
             self._alive = False
-        self._executor.shutdown(wait=wait)
+        self._executor.shutdown(wait=wait, cancel_futures=cancel_futures)
+
+    def __enter__(self) -> WorkerPool:
+        """Support ``with WorkerPool(...) as pool:`` usage."""
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        """Shut down the pool when the context manager exits."""
+        self.shutdown(wait=True)
 
     # -- Observability --------------------------------------------------------
 
@@ -148,10 +173,21 @@ class WorkerPool:
         return self._max_workers
 
     def stats(self) -> dict[str, Any]:
+        """Return a snapshot of pool metrics.
+
+        Includes ``avg_wait_s`` (per-task execution time average) which is
+        useful for detecting pathologically slow worker payloads.
+        """
         with self._metrics_lock:
+            avg = (
+                round(self._total_wait_s / self._total_tasks, 6)
+                if self._total_tasks > 0
+                else 0.0
+            )
             return {
                 "max_workers": self._max_workers,
                 "total_tasks": self._total_tasks,
                 "total_wait_s": round(self._total_wait_s, 4),
+                "avg_wait_s": avg,
                 "alive": self._alive,
             }
