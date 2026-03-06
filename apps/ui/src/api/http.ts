@@ -36,7 +36,7 @@ export async function apiJson<T = unknown>(path: string, init?: RequestInit): Pr
   const timeoutMs = DEFAULT_TIMEOUT_MS;
   const timeoutController = new AbortController();
   const timeoutId = window.setTimeout(() => timeoutController.abort(), timeoutMs);
-  const { signal, cleanup } = composeSignal(timeoutController.signal, init?.signal);
+  const { signal, cleanup } = composeSignal(timeoutController.signal, init?.signal ?? undefined);
   const response = await fetch(path, { ...init, signal }).finally(() => {
     window.clearTimeout(timeoutId);
     cleanup();

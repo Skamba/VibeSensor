@@ -9,7 +9,7 @@ import { normalizeUnit, heatColor } from "./heat_utils";
 export interface DashboardFeatureDeps {
   state: AppState;
   els: UiDomElements;
-  t: (key: string, vars?: Record<string, any>) => string;
+  t: (key: string, vars?: Record<string, unknown>) => string;
   fmt: (n: number, digits?: number) => string;
   escapeHtml: (value: unknown) => string;
   locationCodeForClient: (client: ClientRow) => string;
@@ -284,7 +284,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
     document.addEventListener("visibilitychange", visibilityHandler);
   }
 
-  function pushStrengthSample(bySource: Record<string, Record<string, any>>): void {
+  function pushStrengthSample(bySource: Record<string, Record<string, unknown>>): void {
     ensureStrengthChart();
     if (!state.strengthPlot) return;
     const now = Date.now() / 1000;

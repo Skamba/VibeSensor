@@ -1,6 +1,6 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
 import type { AppState } from "../state/ui_app_state";
-import type { SpeedSourceStatusPayload } from "../../api/types";
+import type { CarsPayload, SpeedSourcePayload, SpeedSourceStatusPayload } from "../../api/types";
 import {
   addSettingsCar,
   deleteSettingsCar,
@@ -16,7 +16,7 @@ import {
 export interface SettingsFeatureDeps {
   state: AppState;
   els: UiDomElements;
-  t: (key: string, vars?: Record<string, any>) => string;
+  t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
   fmt: (n: number, digits?: number) => string;
   renderSpectrum: () => void;
@@ -62,12 +62,9 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     ctx.onCarSelectionStateChange();
   }
 
-  function applyCarsPayload(payload: Record<string, any>): void {
-    if (!Array.isArray(payload.cars)) {
-      return;
-    }
+  function applyCarsPayload(payload: CarsPayload): void {
     state.cars = payload.cars;
-    const requestedActiveCarId = typeof payload.activeCarId === "string" ? payload.activeCarId : null;
+    const requestedActiveCarId = payload.activeCarId;
     const hasRequestedActive = requestedActiveCarId
       ? state.cars.some((car) => car.id === requestedActiveCarId)
       : false;
@@ -103,19 +100,13 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   async function loadSpeedSourceFromServer(): Promise<void> {
     try {
-      const payload = await getSettingsSpeedSource() as Record<string, any>;
-      if (payload && typeof payload === "object") {
-        if (typeof payload.speedSource === "string") state.speedSource = payload.speedSource;
-        state.manualSpeedKph = typeof payload.manualSpeedKph === "number" ? payload.manualSpeedKph : null;
-        if (typeof payload.staleTimeoutS === "number" && els.staleTimeoutInput) {
-          els.staleTimeoutInput.value = String(payload.staleTimeoutS);
-        }
-        if (typeof payload.fallbackMode === "string" && els.fallbackModeSelect) {
-          els.fallbackModeSelect.value = payload.fallbackMode;
-        }
-        syncSpeedSourceInputs();
-        ctx.renderSpeedReadout();
-      }
+      const payload: SpeedSourcePayload = await getSettingsSpeedSource();
+      state.speedSource = payload.speedSource;
+      state.manualSpeedKph = payload.manualSpeedKph;
+      if (els.staleTimeoutInput) els.staleTimeoutInput.value = String(payload.staleTimeoutS);
+      if (els.fallbackModeSelect) els.fallbackModeSelect.value = payload.fallbackMode;
+      syncSpeedSourceInputs();
+      ctx.renderSpeedReadout();
     } catch (_err) { /* ignore */ }
   }
 
@@ -170,7 +161,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
 
   async function loadCarsFromServer(): Promise<void> {
     try {
-      const payload = await getSettingsCars() as Record<string, any>;
+      const payload = await getSettingsCars();
       applyCarsPayload(payload);
       renderCarList();
       syncActiveCarToInputs();
@@ -197,7 +188,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         const carId = btn.getAttribute("data-car-id");
         if (!carId) return;
         try {
-          const result = await setActiveSettingsCar(carId) as Record<string, any>;
+          const result = await setActiveSettingsCar(carId);
           applyCarsPayload(result);
           syncActiveCarToInputs();
           renderCarList();
@@ -216,7 +207,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
         const ok = window.confirm(t("settings.car.delete_confirm", { name: car?.name || "" }));
         if (!ok) return;
         try {
-          const result = await deleteSettingsCar(carId) as Record<string, any>;
+          const result = await deleteSettingsCar(carId);
           applyCarsPayload(result);
           syncActiveCarToInputs();
           renderCarList();
@@ -236,7 +227,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
     }
     if (car.aspects && typeof car.aspects === "object") {
       for (const key of Object.keys(car.aspects)) {
-        if (typeof car.aspects[key] === "number") state.vehicleSettings[key] = car.aspects[key];
+        state.vehicleSettings[key] = car.aspects[key];
       }
     }
     syncSettingsInputs();
@@ -340,12 +331,12 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       const fullAspects = { ...state.vehicleSettings, ...aspects };
       const payload: Record<string, unknown> = { name, type: carType, aspects: fullAspects };
       if (variant) payload.variant = variant;
-      const result = await addSettingsCar(payload) as Record<string, any>;
+      const result = await addSettingsCar(payload);
       if (Array.isArray(result?.cars)) {
         applyCarsPayload(result);
         const newCar = state.cars[state.cars.length - 1];
         if (newCar) {
-          const setResult = await setActiveSettingsCar(newCar.id) as Record<string, any>;
+          const setResult = await setActiveSettingsCar(newCar.id);
           applyCarsPayload(setResult);
         }
         syncActiveCarToInputs();

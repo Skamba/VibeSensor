@@ -100,7 +100,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     if (!container) return;
     container.innerHTML = "<em>Loading...</em>";
     try {
-      const data = await getCarLibraryBrands() as Record<string, any>;
+      const data = await getCarLibraryBrands();
       container.innerHTML = (data.brands || []).map((b: string) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(b)}">${escapeHtml(b)}</button>`).join("");
       container.querySelectorAll(".wiz-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -119,7 +119,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     if (!container) return;
     container.innerHTML = "<em>Loading...</em>";
     try {
-      const data = await getCarLibraryTypes(wizState.brand) as Record<string, any>;
+      const data = await getCarLibraryTypes(wizState.brand);
       container.innerHTML = (data.types || []).map((t2: string) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(t2)}">${escapeHtml(t2)}</button>`).join("");
       container.querySelectorAll(".wiz-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -138,7 +138,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     if (!container) return;
     container.innerHTML = "<em>Loading...</em>";
     try {
-      const data = await getCarLibraryModels(wizState.brand, wizState.carType) as Record<string, any>;
+      const data = await getCarLibraryModels(wizState.brand, wizState.carType);
       const models: CarLibraryModel[] = data.models || [];
       container.innerHTML = models.map((m, idx) => {
         const tireStr = `${m.tire_width_mm}/${m.tire_aspect_pct}R${m.rim_in}`;
