@@ -357,7 +357,7 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
   }
 
   function resetLiveVibrationCounts(): void {
-    state.eventMatrix = createEmptyMatrix();
+    state.eventMatrix = createEmptyMatrix(state.strengthBands);
     renderMatrix();
   }
 
