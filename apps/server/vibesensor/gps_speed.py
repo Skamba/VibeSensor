@@ -58,6 +58,7 @@ class GPSSpeedMonitor:
     """Monitors GPS speed over a serial connection and exposes it via ``speed_mps``."""
 
     def __init__(self, gps_enabled: bool):
+        """Initialise the GPS speed monitor with the given enabled flag."""
         self.gps_enabled = gps_enabled
         self.override_speed_mps: float | None = None
         # None keeps legacy behavior (override has top priority) for backwards
