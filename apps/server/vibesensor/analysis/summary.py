@@ -584,8 +584,13 @@ def _compute_accel_statistics(
             accel_z_vals.append(z)
         if x is not None and y is not None and z is not None:
             accel_mag_vals.append(_sqrt(x * x + y * y + z * z))
-            if sat_threshold is not None and (
-                abs(x) >= sat_threshold or abs(y) >= sat_threshold or abs(z) >= sat_threshold
+        # Check saturation independently of magnitude: a single-axis sensor
+        # (or a sample where one channel is missing) should not silently
+        # skip the saturation check for the remaining axes.
+        if sat_threshold is not None:
+            if any(
+                axis_val is not None and abs(axis_val) >= sat_threshold
+                for axis_val in (x, y, z)
             ):
                 sat_count += 1
         amp = _vib_db(sample)
