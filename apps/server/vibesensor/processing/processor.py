@@ -242,7 +242,12 @@ class SignalProcessor:
             buf.last_t0_us = int(t0_us)
             buf.samples_since_t0 = n
         else:
-            buf.samples_since_t0 += n
+            # Cap accumulator to prevent unbounded growth during long runs
+            # where the sensor never emits a fresh t0_us.  At 2^28 samples
+            # (~18 hours at 4096 Hz) the derived end_us estimate already
+            # far exceeds any realistic session length.
+            _MAX_SAMPLES_SINCE_T0 = 2 ** 28
+            buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
         buf.ingest_generation += 1
         buf.invalidate_caches()
         self._total_ingested_samples += n
