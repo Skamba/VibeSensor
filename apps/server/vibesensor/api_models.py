@@ -508,10 +508,10 @@ class CarLibraryModelEntry(_ExtraAllowBase):
     model: str
     gearboxes: list[CarLibraryGearboxEntry]
     tire_options: list[CarLibraryTireOptionEntry]
-    tire_width_mm: float
-    tire_aspect_pct: float
-    rim_in: float
-    variants: list[CarLibraryVariantEntry]
+    tire_width_mm: float = Field(gt=0)
+    tire_aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
+    variants: list[CarLibraryVariantEntry] = Field(default_factory=list)
 
 
 class CarLibraryModelsResponse(BaseModel):
