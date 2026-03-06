@@ -232,4 +232,27 @@ def test_wheel_hz_from_speed_kmh_invalid_returns_none(speed: float, circ: float)
 def test_engine_rpm_from_wheel_hz_basic() -> None:
     """10 Hz wheel × 3.08 final × 0.64 gear × 60 = 1182.72 RPM."""
     result = engine_rpm_from_wheel_hz(10.0, 3.08, 0.64)
+    assert result is not None
     assert abs(result - 10.0 * 3.08 * 0.64 * 60.0) < 1e-6
+
+
+def test_engine_rpm_from_wheel_hz_non_finite_inputs_return_none() -> None:
+    """Non-finite inputs must return None to avoid propagating nan/inf."""
+    assert engine_rpm_from_wheel_hz(float("nan"), 3.08, 0.64) is None
+    assert engine_rpm_from_wheel_hz(float("inf"), 3.08, 0.64) is None
+    assert engine_rpm_from_wheel_hz(10.0, float("nan"), 0.64) is None
+    assert engine_rpm_from_wheel_hz(10.0, 3.08, float("inf")) is None
+
+
+def test_engine_rpm_from_wheel_hz_non_positive_ratios_return_none() -> None:
+    """Zero or negative drive ratios must return None (invalid configuration)."""
+    assert engine_rpm_from_wheel_hz(10.0, 0.0, 0.64) is None
+    assert engine_rpm_from_wheel_hz(10.0, -1.0, 0.64) is None
+    assert engine_rpm_from_wheel_hz(10.0, 3.08, 0.0) is None
+    assert engine_rpm_from_wheel_hz(10.0, 3.08, -0.5) is None
+
+
+def test_engine_rpm_from_wheel_hz_zero_wheel_hz_returns_zero() -> None:
+    """Zero wheel Hz (stopped vehicle) must return 0.0, not None."""
+    result = engine_rpm_from_wheel_hz(0.0, 3.08, 0.64)
+    assert result == 0.0

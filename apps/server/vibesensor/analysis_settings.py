@@ -7,6 +7,7 @@ geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from math import isfinite, pi
 from threading import RLock
 
@@ -78,7 +79,7 @@ DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
 
 def sanitize_settings(
     payload: dict[str, object],
-    allowed_keys: dict[str, float] | None = None,
+    allowed_keys: Mapping[str, float] | None = None,
 ) -> dict[str, float]:
     """Validate and filter analysis settings, dropping invalid values with logging.
 
@@ -169,9 +170,22 @@ def wheel_hz_from_speed_mps(speed_mps: float, tire_circumference_m: float) -> fl
     return result if isfinite(result) else None
 
 
-def engine_rpm_from_wheel_hz(wheel_hz: float, final_drive_ratio: float, gear_ratio: float) -> float:
-    """Engine RPM from wheel Hz, final-drive ratio, and current gear ratio."""
-    return wheel_hz * final_drive_ratio * gear_ratio * SECONDS_PER_MINUTE
+def engine_rpm_from_wheel_hz(
+    wheel_hz: float, final_drive_ratio: float, gear_ratio: float
+) -> float | None:
+    """Engine RPM from wheel Hz, final-drive ratio, and current gear ratio.
+
+    Returns ``None`` when any input is non-finite or when the drive ratios are
+    non-positive, preventing silent propagation of ``inf``/``nan`` into
+    downstream consumers.  A ``wheel_hz`` of zero (stopped vehicle) returns
+    ``0.0`` as expected.
+    """
+    if not (isfinite(wheel_hz) and isfinite(final_drive_ratio) and isfinite(gear_ratio)):
+        return None
+    if final_drive_ratio <= 0 or gear_ratio <= 0:
+        return None
+    result = wheel_hz * final_drive_ratio * gear_ratio * SECONDS_PER_MINUTE
+    return result if isfinite(result) else None
 
 
 class AnalysisSettingsStore:
@@ -193,5 +207,5 @@ class AnalysisSettingsStore:
     def update(self, payload: dict[str, float]) -> dict[str, float]:
         """Merge *payload* into the store (after validation) and return the new snapshot."""
         with self._lock:
-            self._values.update(sanitize_settings(payload))
+            self._values.update(self._sanitize(payload))
             return dict(self._values)
