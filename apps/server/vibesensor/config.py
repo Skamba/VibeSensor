@@ -173,6 +173,18 @@ class APSelfHealConfig:
     allow_disable_resolved_stub_listener: bool
     state_file: Path
 
+    def __post_init__(self) -> None:
+        for field_name in (
+            "interval_seconds",
+            "diagnostics_lookback_minutes",
+            "min_restart_interval_seconds",
+        ):
+            val = getattr(self, field_name)
+            if not isinstance(val, int) or val < 1:
+                raise ValueError(
+                    f"ap.self_heal.{field_name} must be a positive integer, got {val!r}"
+                )
+
 
 @dataclass(slots=True)
 class APConfig:
