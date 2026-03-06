@@ -476,7 +476,9 @@ class UpdateManager:
                 # Clear secrets from memory
                 self._redact_secrets.clear()
                 try:
-                    self._status.runtime = self._collect_runtime_details()
+                    self._status.runtime = await asyncio.to_thread(
+                        self._collect_runtime_details
+                    )
                 except Exception:
                     LOGGER.warning("Failed to collect runtime details", exc_info=True)
 
@@ -890,7 +892,7 @@ class UpdateManager:
         finally:
             shutil.rmtree(staging_dir, ignore_errors=True)
 
-        runtime_details = self._collect_runtime_details()
+        runtime_details = await asyncio.to_thread(self._collect_runtime_details)
         self._status.runtime = runtime_details
 
         if self._cancel_event.is_set():
