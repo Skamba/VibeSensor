@@ -25,11 +25,13 @@ class PhaseClassifier:
         self._current_phase: str = _IDLE_VALUE
 
     def reset(self) -> None:
+        """Clear speed history and return to ``idle`` phase."""
         self._speed_history.clear()
         self._current_phase = _IDLE_VALUE
 
     @property
     def current_phase(self) -> str:
+        """Return the current driving phase string (e.g. ``"idle"``, ``"cruise"``)."""
         return self._current_phase
 
     @property
@@ -42,6 +44,7 @@ class PhaseClassifier:
         self._speed_history = value
 
     def update(self, speed_mps: float | None, now_s: float) -> None:
+        """Add a new speed sample, re-derive the rolling phase, and update ``current_phase``."""
         speed_kmh: float | None = speed_mps * MPS_TO_KMH if speed_mps is not None else None
         self._speed_history.append((now_s, speed_kmh))
 
