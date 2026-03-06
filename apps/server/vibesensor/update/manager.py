@@ -1108,6 +1108,25 @@ class UpdateManager:
             return False
 
         rolled_back_version = stdout.strip()
+        # Sanity-check: the running version should match the wheel filename.
+        # The wheel stem is e.g. "vibesensor-1.2.3-py3-none-any" so split on
+        # '-' and take index 1 for the version segment.
+        wheel_parts = wheel.stem.split("-")
+        expected_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
+        if expected_version and rolled_back_version != expected_version:
+            self._add_issue(
+                "installing",
+                "Rolled-back version label mismatch",
+                (
+                    f"wheel filename version={expected_version} but "
+                    f"import reports version={rolled_back_version}; "
+                    "possible wheel naming issue or pip normalisation difference"
+                ),
+            )
+            self._log(
+                f"WARNING: rolled-back version mismatch "
+                f"(wheel={expected_version}, import={rolled_back_version})"
+            )
         self._log(f"Rolled back to {wheel.name} (verified version={rolled_back_version})")
         return True
 
