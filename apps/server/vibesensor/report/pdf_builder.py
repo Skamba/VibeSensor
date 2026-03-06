@@ -100,6 +100,7 @@ def _hex(c: str) -> colors.Color:
 
 
 def _safe(v: str | None, fallback: str = "—") -> str:
+    """Return *v* stripped if non-empty, otherwise *fallback*."""
     if v:
         s = str(v).strip()
         if s:
@@ -114,6 +115,11 @@ def _strength_with_peak(
     fallback: str,
     peak_suffix: str = "peak",
 ) -> str:
+    """Format a strength label with an optional peak dB suffix.
+
+    If *peak_db* is ``None``, or the *base* label already contains ``'dB'``
+    (preventing a double-annotation), the *base* value is returned as-is.
+    """
     base = _safe(strength_label, fallback)
     if peak_db is None:
         return base
@@ -132,6 +138,7 @@ def _draw_panel(
     fill: str = PANEL_BG,
     border: str = LINE_CLR,
 ) -> None:
+    """Draw a rounded-corner panel rectangle, optionally with a bold title."""
     c.setFillColor(_hex(fill))
     c.setStrokeColor(_hex(border))
     c.roundRect(x, y, w, h, R_CARD, stroke=1, fill=1)
