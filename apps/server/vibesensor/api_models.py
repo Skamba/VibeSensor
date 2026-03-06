@@ -5,7 +5,7 @@ Separated from ``api.py`` to keep routing logic distinct from data contracts.
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -492,12 +492,12 @@ class CarLibraryVariantEntry(_ExtraAllowBase):
 
     name: str
     engine: str | None = None
-    drivetrain: str
+    drivetrain: Literal["FWD", "RWD", "AWD"]
     gearboxes: list[CarLibraryGearboxEntry] | None = None
     tire_options: list[CarLibraryTireOptionEntry] | None = None
-    tire_width_mm: float | None = None
-    tire_aspect_pct: float | None = None
-    rim_in: float | None = None
+    tire_width_mm: float | None = Field(default=None, gt=0)
+    tire_aspect_pct: float | None = Field(default=None, gt=0)
+    rim_in: float | None = Field(default=None, gt=0)
 
 
 class CarLibraryModelEntry(_ExtraAllowBase):
