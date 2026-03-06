@@ -104,6 +104,9 @@ _V2_TYPED_OFFSET: int = 1  # skip autoincrement id
 _V2_PEAK_OFFSET: int = _V2_TYPED_OFFSET + len(_V2_TYPED_COLS)
 _V2_EXTRA_OFFSET: int = _V2_PEAK_OFFSET + len(_V2_PEAK_COLS)
 
+# Allowed table names for keyset pagination — used to guard the f-string in SQL.
+_ALLOWED_SAMPLE_TABLES: frozenset[str] = frozenset({"samples_v2", "samples"})
+
 # Module-level binding avoids repeated attribute lookup in hot loops.
 _isfinite = math.isfinite
 
@@ -370,6 +373,8 @@ class HistoryDB:
     ) -> None:
         if not samples:
             return
+        if not run_id or not run_id.strip():
+            raise ValueError("append_samples: run_id must be a non-empty string")
 
         chunk_size = 256
         with self._cursor() as cur:
@@ -433,7 +438,18 @@ class HistoryDB:
             raw = row[_V2_PEAK_OFFSET + i]
             if raw:
                 parsed = safe_json_loads(raw, context=f"peak column {col}")
-                d[col] = parsed if isinstance(parsed, list) else []
+                if isinstance(parsed, list):
+                    d[col] = parsed
+                else:
+                    if parsed is not None:
+                        LOGGER.warning(
+                            "_v2_row_to_dict: peak column %r for row id=%s parsed to %s, "
+                            "expected list; using []",
+                            col,
+                            row[0],
+                            type(parsed).__name__,
+                        )
+                    d[col] = []
             else:
                 d[col] = []
 
@@ -584,9 +600,11 @@ class HistoryDB:
         The default cap of 500 prevents unbounded memory consumption on
         Raspberry Pi hardware when many runs have accumulated.  Pass
         ``limit=0`` to fetch all rows (use only when the total count is
-        known to be small).
+        known to be small).  Negative values are treated as ``limit=0``.
         """
         with self._cursor(commit=False) as cur:
+            if limit < 0:
+                limit = 0
             if limit > 0:
                 cur.execute(
                     "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
@@ -681,6 +699,8 @@ class HistoryDB:
     def iter_run_samples(
         self, run_id: str, batch_size: int = 1000, offset: int = 0
     ) -> Iterator[list[dict[str, Any]]]:
+        if offset < 0:
+            raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
         if self._run_has_v2_samples(run_id):
             yield from self._iter_v2_samples(run_id, batch_size, offset)
         elif self._has_legacy_samples:
@@ -706,6 +726,11 @@ class HistoryDB:
         Returns the ``id`` value to use as the keyset bound, or ``None``
         when *offset* is past the last row (caller should stop iterating).
         """
+        if table not in _ALLOWED_SAMPLE_TABLES:
+            raise ValueError(
+                f"_resolve_keyset_offset: invalid table name {table!r}; "
+                f"must be one of {sorted(_ALLOWED_SAMPLE_TABLES)}"
+            )
         with self._cursor(commit=False) as cur:
             cur.execute(
                 f"SELECT id FROM {table} WHERE run_id = ? ORDER BY id LIMIT 1 OFFSET ?",
@@ -809,7 +834,16 @@ class HistoryDB:
         if row is None:
             return None
         parsed = safe_json_loads(row[0], context=f"run {run_id} metadata")
-        return parsed if isinstance(parsed, dict) else None
+        if not isinstance(parsed, dict):
+            if parsed is not None:
+                LOGGER.warning(
+                    "get_run_metadata: run %s metadata_json parsed to %s, expected dict; "
+                    "returning None",
+                    run_id,
+                    type(parsed).__name__,
+                )
+            return None
+        return parsed
 
     def get_run_analysis(self, run_id: str) -> dict[str, Any] | None:
         with self._cursor(commit=False) as cur:
