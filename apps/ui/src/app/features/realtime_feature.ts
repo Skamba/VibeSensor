@@ -15,7 +15,7 @@ import { defaultLocationCodes } from "../../constants";
 export interface RealtimeFeatureDeps {
   state: AppState;
   els: UiDomElements;
-  t: (key: string, vars?: Record<string, any>) => string;
+  t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
   formatInt: (value: number) => string;
   setPillState: (el: HTMLElement | null, variant: string, text: string) => void;
@@ -262,7 +262,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     try {
       await setClientLocationApi(clientId, locationCode);
     } catch (err) {
-      window.alert(err?.message || t("actions.set_location_failed"));
+      window.alert(err instanceof Error ? err.message : t("actions.set_location_failed"));
       return;
     }
     const client = state.clients.find((c) => c.id === clientId);
@@ -286,7 +286,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
     try {
       await removeClientApi(clientId);
     } catch (err) {
-      window.alert(err?.message || t("actions.remove_client_failed"));
+      window.alert(err instanceof Error ? err.message : t("actions.remove_client_failed"));
       return;
     }
     const prevSelected = state.selectedClientId;

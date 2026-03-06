@@ -4,7 +4,7 @@ import { getUpdateStatus, startUpdate, cancelUpdate } from "../../api/settings";
 
 export interface UpdateFeatureDeps {
   els: UiDomElements;
-  t: (key: string, vars?: Record<string, any>) => string;
+  t: (key: string, vars?: Record<string, unknown>) => string;
   escapeHtml: (value: unknown) => string;
 }
 

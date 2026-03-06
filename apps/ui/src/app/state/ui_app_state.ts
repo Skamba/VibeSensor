@@ -4,6 +4,7 @@ import type { WsClient } from "../../ws";
 import type { StrengthBand } from "../../diagnostics";
 import { createEmptyMatrix } from "../../diagnostics";
 import { defaultLocationCodes } from "../../constants";
+import type { CarRecord, HistoryEntry } from "../../api/types";
 
 export interface LocationOption {
   code: string;
@@ -29,10 +30,10 @@ export interface VehicleSettings {
 }
 
 export interface RunDetail {
-  preview: Record<string, any> | null;
+  preview: Record<string, unknown> | null;
   previewLoading: boolean;
   previewError: string;
-  insights: Record<string, any> | null;
+  insights: Record<string, unknown> | null;
   insightsLoading: boolean;
   insightsError: string;
   pdfLoading: boolean;
@@ -70,7 +71,7 @@ export interface ClientRow {
 
 export interface SpectrumClientData {
   freq: number[];
-  strength_metrics: Record<string, any>;
+  strength_metrics: Record<string, unknown>;
   combined: number[];
 }
 
@@ -113,14 +114,14 @@ export interface AppState {
   spectra: { clients: Record<string, SpectrumClientData> };
   speedMps: number | null;
   activeViewId: string;
-  runs: Record<string, any>[];
+  runs: HistoryEntry[];
   deleteAllRunsInFlight: boolean;
   expandedRunId: string | null;
   runDetailsById: Record<string, RunDetail>;
   loggingStatus: { enabled: boolean; current_file: string | null; write_error: string | null };
   locationOptions: LocationOption[];
   vehicleSettings: VehicleSettings;
-  cars: Record<string, any>[];
+  cars: CarRecord[];
   activeCarId: string | null;
   speedSource: string;
   manualSpeedKph: number | null;
@@ -129,7 +130,7 @@ export interface AppState {
   vibrationMessages: VibrationMessage[];
   strengthBands: StrengthBand[];
   eventMatrix: Record<string, Record<string, { count: number; seconds: number; contributors: Record<string, number> }>>;
-  pendingPayload: Record<string, any> | null;
+  pendingPayload: Record<string, unknown> | null;
   renderQueued: boolean;
   lastRenderTsMs: number;
   minRenderIntervalMs: number;
