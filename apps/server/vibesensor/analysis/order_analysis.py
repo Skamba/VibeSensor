@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
+from ..constants import SECONDS_PER_MINUTE
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _effective_engine_rpm
 
@@ -39,7 +40,7 @@ def _engine_hz(
     rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
     if rpm is None or rpm <= 0:
         return None, src
-    return rpm / 60.0, src
+    return rpm / SECONDS_PER_MINUTE, src
 
 
 def _order_label(order: int, base: str) -> str:
