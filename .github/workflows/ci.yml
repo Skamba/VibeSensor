@@ -42,6 +42,7 @@ jobs:
         run: |
           vibesensor-config-preflight apps/server/config.example.yaml
           vibesensor-config-preflight apps/server/config.dev.yaml
+          vibesensor-config-preflight apps/server/config.docker.yaml
 
       - name: Verify no path indirections
         run: |
@@ -77,6 +78,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e "./apps/server[dev]"
+
+      - name: Install UI dependencies
+        run: |
+          cd apps/ui && npm ci
 
       - name: UI sync + typecheck
         run: |
@@ -117,7 +122,7 @@ jobs:
 
       - name: Backend tests (non-selenium, shard)
         run: |
-          python3 tools/tests/pytest_shard.py --shard-index ${{ matrix.shard }} --shard-count 4 -- -m "not selenium" apps/server/tests
+          python3 tools/tests/pytest_shard.py --shard-index ${{ matrix.shard }} --shard-count 4 -- -m "not selenium" --tb=short apps/server/tests
 
   e2e:
     name: E2E (docker)
