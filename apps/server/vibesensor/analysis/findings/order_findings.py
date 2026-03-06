@@ -437,7 +437,7 @@ def _compute_matched_speed_phase_evidence(
 
     return (
         peak_speed_kmh,
-        list(speed_window_kmh),
+        list(speed_window_kmh) if speed_window_kmh is not None else [],
         strongest_speed_band or None,
         hotspot_speed_band,
         phase_evidence,
