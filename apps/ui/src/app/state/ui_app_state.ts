@@ -4,7 +4,7 @@ import type { WsClient } from "../../ws";
 import type { StrengthBand } from "../../diagnostics";
 import { createEmptyMatrix } from "../../diagnostics";
 import { defaultLocationCodes } from "../../constants";
-import type { CarRecord, HistoryEntry } from "../../api/types";
+import type { CarRecord, HistoryEntry, LoggingStatusPayload } from "../../api/types";
 
 export interface LocationOption {
   code: string;
@@ -93,7 +93,7 @@ export function applySpectrumTick(
     };
   }
   const hasSpectrumData = Object.values(incomingSpectra.clients).some(
-    (clientSpec: SpectrumClientData) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
+    (clientSpec) => clientSpec.freq.length > 0 && clientSpec.combined.length > 0,
   );
   return {
     spectra: incomingSpectra,
@@ -117,7 +117,7 @@ export interface AppState {
   deleteAllRunsInFlight: boolean;
   expandedRunId: string | null;
   runDetailsById: Record<string, RunDetail>;
-  loggingStatus: { enabled: boolean; current_file: string | null; write_error: string | null };
+  loggingStatus: LoggingStatusPayload;
   locationOptions: LocationOption[];
   vehicleSettings: VehicleSettings;
   cars: CarRecord[];

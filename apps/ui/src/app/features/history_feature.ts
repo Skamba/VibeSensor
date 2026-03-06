@@ -277,7 +277,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.previewError = "";
     renderHistoryTable();
     try {
-      detail.preview = await getHistoryInsights(runId, state.lang) as Record<string, unknown>;
+      detail.preview = await getHistoryInsights(runId, state.lang);
     } catch (err) {
       detail.previewError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {
@@ -294,7 +294,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.insightsError = "";
     renderHistoryTable();
     try {
-      detail.insights = await getHistoryInsights(runId, state.lang) as Record<string, unknown>;
+      detail.insights = await getHistoryInsights(runId, state.lang);
     } catch (err) {
       detail.insightsError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {
