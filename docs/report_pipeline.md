@@ -30,7 +30,7 @@ _run_post_analysis()          [vibesensor.metrics_log.post_analysis]
        └─ Persists summary dict + embedded _report_template_data
   │
   ▼
-GET /api/history/{run_id}/report.pdf   [vibesensor.api]
+GET /api/history/{run_id}/report.pdf   [vibesensor.routes.history]
   ├─ Load persisted analysis + _report_template_data
   ├─ Reconstruct ReportTemplateData from dict
   └─ build_report_pdf(data)   [vibesensor.report.pdf_builder]

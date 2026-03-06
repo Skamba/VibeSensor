@@ -115,6 +115,15 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     return hasher.hexdigest()
 
 
+def _sha256_file(path: Path) -> str:
+    """Return the lowercase hex SHA-256 digest of *path*."""
+    hasher = hashlib.sha256()
+    with path.open("rb") as fh:
+        while chunk := fh.read(65536):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
 # ---------------------------------------------------------------------------
 # UpdateManager
 # ---------------------------------------------------------------------------
@@ -208,6 +217,10 @@ class UpdateManager:
         if self._task is None or self._task.done():
             return False
         self._cancel_event.set()
+        # Also cancel the asyncio task directly so long-blocking awaits (e.g.
+        # nmcli --wait, DNS probe loop) are interrupted immediately via
+        # CancelledError rather than waiting for the next cancel_event poll.
+        self._task.cancel()
         return True
 
     async def startup_recover(self) -> None:
@@ -229,8 +242,12 @@ class UpdateManager:
                 message="Update interrupted by server restart",
             )
         )
+        # Persist immediately so a crash during network cleanup still records the
+        # failed state rather than leaving the job stuck in 'running'.
+        self._persist_status()
 
         # Best-effort network cleanup
+        self._log("startup_recover: cleaning up uplink connection")
         try:
             await cleanup_uplink(self._runner)
         except Exception as exc:
@@ -242,6 +259,7 @@ class UpdateManager:
                 )
             )
 
+        self._log("startup_recover: restoring hotspot")
         try:
             ok = await restore_hotspot(self._runner, self._ap_con_name)
             if not ok:
@@ -251,6 +269,9 @@ class UpdateManager:
                         message="Failed to restore hotspot after interrupted update",
                     )
                 )
+                self._log("startup_recover: hotspot restore failed")
+            else:
+                self._log("startup_recover: hotspot restored successfully")
         except Exception as exc:
             self._status.issues.append(
                 UpdateIssue(
@@ -552,7 +573,12 @@ class UpdateManager:
 
         # Check available disk space before committing to download + install
         try:
-            free_bytes = shutil.disk_usage(self._rollback_dir.parent).free
+            # Prefer to measure the filesystem that will hold the rollback wheel;
+            # fall back to the root filesystem if that path doesn't exist yet.
+            disk_check_path = self._rollback_dir.parent
+            if not disk_check_path.exists():
+                disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
+            free_bytes = shutil.disk_usage(disk_check_path).free
             if free_bytes < MIN_FREE_DISK_BYTES:
                 free_mb = free_bytes // (1024 * 1024)
                 min_mb = MIN_FREE_DISK_BYTES // (1024 * 1024)
@@ -690,6 +716,11 @@ class UpdateManager:
         if rc != 0:
             self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
             self._status.state = UpdateState.failed
+            await self._run_cmd(
+                ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
+                phase="connecting_wifi",
+                sudo=True,
+            )
             return False
 
         if password:
@@ -710,6 +741,11 @@ class UpdateManager:
             if rc != 0:
                 self._add_issue("connecting_wifi", "Failed to set Wi-Fi credentials", stderr)
                 self._status.state = UpdateState.failed
+                await self._run_cmd(
+                    ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
+                    phase="connecting_wifi",
+                    sudo=True,
+                )
                 return False
 
         rc = 1
@@ -845,6 +881,25 @@ class UpdateManager:
                 return
 
             self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
+
+            # Verify SHA-256 integrity of the downloaded wheel.
+            # A mismatch means the file was corrupted in transit or the
+            # release metadata is wrong — abort before installing.
+            if release.sha256:
+                actual_sha256 = await asyncio.to_thread(_sha256_file, wheel_path)
+                if actual_sha256 != release.sha256.lower():
+                    self._add_issue(
+                        "downloading",
+                        "Downloaded wheel SHA-256 mismatch",
+                        f"expected={release.sha256} actual={actual_sha256}",
+                    )
+                    self._log(
+                        f"SHA-256 mismatch: expected {release.sha256} "
+                        f"but got {actual_sha256}"
+                    )
+                    self._status.state = UpdateState.failed
+                    return
+                self._log(f"SHA-256 verified: {actual_sha256}")
 
             # Refresh ESP firmware from the same GitHub release as the server wheel.
             await self._refresh_esp_firmware(pinned_tag=release.tag)
@@ -1090,6 +1145,25 @@ class UpdateManager:
             return False
 
         rolled_back_version = stdout.strip()
+        # Sanity-check: the running version should match the wheel filename.
+        # The wheel stem is e.g. "vibesensor-1.2.3-py3-none-any" so split on
+        # '-' and take index 1 for the version segment.
+        wheel_parts = wheel.stem.split("-")
+        expected_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
+        if expected_version and rolled_back_version != expected_version:
+            self._add_issue(
+                "installing",
+                "Rolled-back version label mismatch",
+                (
+                    f"wheel filename version={expected_version} but "
+                    f"import reports version={rolled_back_version}; "
+                    "possible wheel naming issue or pip normalisation difference"
+                ),
+            )
+            self._log(
+                f"WARNING: rolled-back version mismatch "
+                f"(wheel={expected_version}, import={rolled_back_version})"
+            )
         self._log(f"Rolled back to {wheel.name} (verified version={rolled_back_version})")
         return True
 

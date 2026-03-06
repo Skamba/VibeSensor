@@ -38,6 +38,7 @@ def medfilt3(block: np.ndarray) -> np.ndarray:
     block:
         Must be a 2-D array with shape ``(axes, samples)``.
         1-D inputs are rejected with a ``ValueError``.
+
     """
     if block.ndim != 2:
         raise ValueError(

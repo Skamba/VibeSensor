@@ -783,11 +783,13 @@ def _build_order_findings(
             strongest_speed_band=strongest_speed_band,
             weak_spatial_separation=weak_spatial_separation,
         )
-        quick_checks = [
-            str(action.get("what") or "")
-            for action in actions
-            if str(action.get("what") or "").strip()
-        ][:3]
+        # Preserve i18n reference dicts as-is so the report layer can resolve
+        # them at render time.  Previously str() was applied, which converted
+        # {"_i18n_key": "ACTION_WHEEL_BALANCE_WHAT", ...} to its Python repr
+        # (e.g. "{'_i18n_key': 'ACTION_WHEEL_BALANCE_WHAT', ...}"), making
+        # quick_checks inconsistent with builder.py and reference_checks.py
+        # which both store actual dict objects.
+        quick_checks = [action["what"] for action in actions if action.get("what")][:3]
 
         finding = {
             "finding_id": "F_ORDER",

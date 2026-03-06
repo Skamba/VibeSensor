@@ -79,6 +79,7 @@ class SignalProcessor:
         accel_scale_g_per_lsb: float | None = None,
         worker_pool: WorkerPool | None = None,
     ):
+        """Initialise the signal processor with buffer and FFT parameters."""
         self.sample_rate_hz = sample_rate_hz
         self.waveform_seconds = waveform_seconds
         self.waveform_display_hz = waveform_display_hz

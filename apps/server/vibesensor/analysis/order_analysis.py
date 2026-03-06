@@ -163,13 +163,30 @@ def _finding_actions_for_source(
     source:
         Explicit source override.  When provided, *lang_or_source* is ignored.
         Recognised values: ``"wheel/tire"``, ``"driveline"``, ``"engine"``.
+    strongest_location:
+        Sensor location code (e.g. ``"front_left"``) used to tailor action
+        hints toward the most affected wheel or mounting position.
+    strongest_speed_band:
+        Speed band string (e.g. ``"80–100 km/h"``) injected into speed-focus
+        action hints so the technician knows at which speed to reproduce the
+        symptom.
+    weak_spatial_separation:
+        When ``True``, the action plan notes that sensor locations produced
+        similar intensities, which weakens spatial localisation confidence.
+
     """
     if source is None:
         source = lang_or_source
 
     location = strongest_location.strip()
     speed_band = strongest_speed_band.strip()
-    speed_hint = _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band) if speed_band else ""
+    # Only include speed_hint param when a speed band is available; passing an
+    # empty string (the previous behaviour) included speed_hint="" in the i18n
+    # ref dict, which is semantically different from the key being absent and
+    # could confuse template renderers that check for key presence vs truthiness.
+    _speed_hint_param: dict[str, Any] = (
+        {"speed_hint": _i18n_ref("SPEED_HINT_FOCUS", speed_band=speed_band)} if speed_band else {}
+    )
     if source == "wheel/tire":
         wheel_focus = _wheel_focus_from_location(location)
         location_hint = (
@@ -183,7 +200,7 @@ def _finding_actions_for_source(
                 "what": _i18n_ref(
                     "ACTION_WHEEL_BALANCE_WHAT",
                     wheel_focus=wheel_focus,
-                    speed_hint=speed_hint,
+                    **_speed_hint_param,
                 ),
                 "why": _i18n_ref("ACTION_WHEEL_BALANCE_WHY", location_hint=location_hint),
                 "confirm": _i18n_ref("ACTION_WHEEL_BALANCE_CONFIRM"),

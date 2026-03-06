@@ -48,6 +48,7 @@ class LiveDiagnosticsEngine:
     """Coordinates severity tracking, matrix updates, and live event emission."""
 
     def __init__(self) -> None:
+        """Initialise the live diagnostics engine with default component state."""
         self._matrix = SeverityMatrix()
         self._sensor_trackers: dict[str, _TrackerLevelState] = {}
         self._combined_trackers: dict[str, _TrackerLevelState] = {}
