@@ -30,6 +30,7 @@ from .network import (
     HOTSPOT_RESTORE_DELAY_S,
     HOTSPOT_RESTORE_RETRIES,
     NMCLI_TIMEOUT_S,
+    UPLINK_CONNECT_RETRIES,
     UPLINK_CONNECT_WAIT_S,
     UPLINK_CONNECTION_NAME,
     UPLINK_FALLBACK_DNS,
@@ -51,6 +52,9 @@ UPDATE_TIMEOUT_S = 600
 
 REINSTALL_OP_TIMEOUT_S = 180
 """Per-backend-reinstall timeout."""
+
+MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
+"""Minimum free disk space (200 MiB) required before starting an update."""
 
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 """Per-online ESP firmware cache refresh timeout."""
@@ -476,7 +480,9 @@ class UpdateManager:
                 # Clear secrets from memory
                 self._redact_secrets.clear()
                 try:
-                    self._status.runtime = self._collect_runtime_details()
+                    self._status.runtime = await asyncio.to_thread(
+                        self._collect_runtime_details
+                    )
                 except Exception:
                     LOGGER.warning("Failed to collect runtime details", exc_info=True)
 
@@ -488,7 +494,7 @@ class UpdateManager:
                     LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
 
                 self._persist_status()
-            except (asyncio.CancelledError, Exception):
+            except (asyncio.CancelledError, Exception) as _cleanup_exc:
                 # Last-resort: ensure secrets are cleared and status is persisted
                 # even if cleanup itself is interrupted.
                 self._redact_secrets.clear()
@@ -497,6 +503,11 @@ class UpdateManager:
                     self._status.state = UpdateState.failed
                 self._persist_status()
                 LOGGER.warning("Update cleanup interrupted", exc_info=True)
+                # Re-raise CancelledError so the task is properly marked as
+                # cancelled; swallowing it prevents asyncio from knowing the
+                # task was cancelled.
+                if isinstance(_cleanup_exc, asyncio.CancelledError):
+                    raise
 
     async def _run_update_inner(self, ssid: str, password: str) -> None:
         if not await self._phase_validate(ssid):
@@ -538,6 +549,21 @@ class UpdateManager:
                 )
                 self._status.state = UpdateState.failed
                 return False
+
+        # Check available disk space before committing to download + install
+        try:
+            free_bytes = shutil.disk_usage(self._rollback_dir.parent).free
+            if free_bytes < MIN_FREE_DISK_BYTES:
+                free_mb = free_bytes // (1024 * 1024)
+                min_mb = MIN_FREE_DISK_BYTES // (1024 * 1024)
+                self._add_issue(
+                    "validating",
+                    f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
+                )
+                self._status.state = UpdateState.failed
+                return False
+        except OSError as exc:
+            self._log(f"Could not check disk space: {exc}; proceeding anyway")
 
         return True
 
@@ -688,7 +714,7 @@ class UpdateManager:
 
         rc = 1
         stderr = ""
-        for attempt in range(1, 4):
+        for attempt in range(1, UPLINK_CONNECT_RETRIES + 1):
             rc, _, stderr = await self._run_cmd(
                 [
                     "nmcli",
@@ -809,14 +835,15 @@ class UpdateManager:
 
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
         try:
-            wheel_path = await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
-        except Exception as exc:
-            self._add_issue("downloading", f"Failed to download release: {exc}")
-            self._status.state = UpdateState.failed
-            shutil.rmtree(staging_dir, ignore_errors=True)
-            return
+            # Inner guard to set state on download Exception without leaking
+            # staging_dir.  CancelledError propagates to the outer finally.
+            try:
+                wheel_path = await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
+            except Exception as exc:
+                self._add_issue("downloading", f"Failed to download release: {exc}")
+                self._status.state = UpdateState.failed
+                return
 
-        try:
             self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
 
             # Refresh ESP firmware from the same GitHub release as the server wheel.
@@ -890,7 +917,7 @@ class UpdateManager:
         finally:
             shutil.rmtree(staging_dir, ignore_errors=True)
 
-        runtime_details = self._collect_runtime_details()
+        runtime_details = await asyncio.to_thread(self._collect_runtime_details)
         self._status.runtime = runtime_details
 
         if self._cancel_event.is_set():
@@ -965,11 +992,9 @@ class UpdateManager:
 
         self._log(f"Creating rollback snapshot (version={current_version})")
 
-        # Clear old rollback wheels
-        for old_whl in self._rollback_dir.glob("vibesensor-*.whl"):
-            old_whl.unlink()
-
-        # pip download the installed package to rollback dir
+        # pip download the installed package to rollback dir.
+        # NOTE: Clear old wheels only AFTER the download succeeds so we never
+        # end up with zero rollback wheels when pip fails.
         rc, _, stderr = await self._run_cmd(
             [
                 venv_python,
@@ -987,11 +1012,19 @@ class UpdateManager:
             sudo=False,
         )
         if rc != 0:
-            # Fallback: just record the version number
+            # Fallback: just record the version number (old wheels, if any, are
+            # intentionally left in place so _rollback() can still use them).
             self._log(f"pip download for rollback failed (exit {rc}): {stderr}")
             meta_path = self._rollback_dir / "rollback_version.txt"
             meta_path.write_text(current_version, encoding="utf-8")
             return False
+
+        # Download succeeded: now safe to remove stale wheels that are no longer
+        # the target version, keeping any freshly downloaded ones.
+        for old_whl in self._rollback_dir.glob("vibesensor-*.whl"):
+            whl_ver = old_whl.stem.split("-")[1] if "-" in old_whl.stem else ""
+            if whl_ver != current_version:
+                old_whl.unlink(missing_ok=True)
 
         self._log("Rollback snapshot created successfully")
         return True
@@ -1002,7 +1035,11 @@ class UpdateManager:
         Returns True if rollback succeeded.
         """
         self._log("Rolling back to previous version...")
-        rollback_wheels = list(self._rollback_dir.glob("vibesensor-*.whl"))
+        rollback_wheels = sorted(
+            self._rollback_dir.glob("vibesensor-*.whl"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
         if not rollback_wheels:
             self._add_issue("installing", "No rollback wheel available")
             return False
@@ -1032,7 +1069,28 @@ class UpdateManager:
             )
             return False
 
-        self._log(f"Rolled back to {wheel.name}")
+        # Verify the rolled-back package can be imported (mirrors install check)
+        verify_cmd = [
+            venv_python,
+            "-c",
+            "from vibesensor import __version__; print(__version__)",
+        ]
+        rc, stdout, stderr = await self._run_cmd(
+            verify_cmd,
+            phase="installing",
+            timeout=30,
+            sudo=False,
+        )
+        if rc != 0:
+            self._add_issue(
+                "installing",
+                f"Post-rollback verification failed (exit {rc})",
+                stderr,
+            )
+            return False
+
+        rolled_back_version = stdout.strip()
+        self._log(f"Rolled back to {wheel.name} (verified version={rolled_back_version})")
         return True
 
     @staticmethod
