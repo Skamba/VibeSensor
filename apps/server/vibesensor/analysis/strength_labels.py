@@ -58,6 +58,10 @@ def strength_label(db_value: float | None, *, lang: str = "en") -> tuple[str, st
     """
     if db_value is None or not _isfinite(db_value):
         return ("unknown", "Onbekend" if lang == "nl" else "Unknown")
+    # Guard against an empty threshold table (e.g. BANDS tampered with at
+    # test time): return unknown rather than raising IndexError.
+    if not _STRENGTH_THRESHOLDS:
+        return ("unknown", "Onbekend" if lang == "nl" else "Unknown")
     label_idx = 3 if lang == "nl" else 2
     # Iterate from highest threshold downward; first match is the highest
     # qualifying band.  Using reversed() is correct regardless of table order
@@ -200,12 +204,12 @@ def certainty_label(
         e.g. ``("high", "High", "80%", "Consistent order-tracking …")``.
 
     """
-    pct = max(0.0, min(100.0, confidence_0_to_1 * 100.0))
-    pct_text = f"{pct:.0f}%"
-    # Clamp non-finite confidence to zero to prevent silent misclassification.
+    # Guard non-finite inputs before any arithmetic so that all downstream
+    # expressions (pct, threshold comparisons) work on a valid float.
     if not _isfinite(confidence_0_to_1):
         confidence_0_to_1 = 0.0
-        pct_text = "0%"
+    pct = max(0.0, min(100.0, confidence_0_to_1 * 100.0))
+    pct_text = f"{pct:.0f}%"
 
     if confidence_0_to_1 >= CONFIDENCE_HIGH_THRESHOLD:
         level_key, label_en, label_nl = "high", "High", "Hoog"
@@ -278,6 +282,11 @@ def certainty_tier(
         ``"A"`` (very low), ``"B"`` (guarded), or ``"C"`` (sufficient).
 
     """
+    # Non-finite confidence (inf/nan/-inf) must not flow through the tier
+    # guards: float('inf') would pass both <= checks and return "C" (highest
+    # tier), silently granting full diagnostic permissions to garbage input.
+    if not _isfinite(confidence_0_to_1):
+        confidence_0_to_1 = 0.0
     if confidence_0_to_1 <= TIER_A_CEILING:
         return "A"
     if confidence_0_to_1 <= TIER_B_CEILING:
