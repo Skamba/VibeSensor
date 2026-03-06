@@ -67,6 +67,12 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
                         elif isinstance(value, str):
                             normalized = normalize_sensor_id(value)
                             await state.ws_hub.update_selected_client(ws, normalized)
+                        else:
+                            LOGGER.debug(
+                                "Ignoring unsupported client_id type %s in WS message: %r",
+                                type(value).__name__,
+                                value,
+                            )
                     except ValueError:
                         LOGGER.debug(
                             "Ignoring invalid client_id value in WS message: %r",
