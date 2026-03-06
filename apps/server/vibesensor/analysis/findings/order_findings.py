@@ -54,7 +54,9 @@ from .speed_profile import _phase_to_str, _speed_profile_from_points
 
 
 def _mean(xs: list[float]) -> float:
-    """Arithmetic mean for non-empty float lists (avoids statistics.mean overhead)."""
+    """Arithmetic mean; returns 0.0 for empty lists (avoids statistics.mean overhead)."""
+    if not xs:
+        return 0.0
     return sum(xs) / len(xs)
 
 
@@ -274,7 +276,9 @@ def _compute_order_confidence(
     # FFT-bin wander, road noise, and suspension compliance all degrade
     # correlation for genuine faults, while amplitude (SNR) and consistent
     # detection (match) are more robust fault indicators.
-    corr_shift = min(_CORR_MAX_SHIFT, _CORR_COMPLIANCE_FACTOR * (path_compliance - 1.0))
+    # Clamp corr_shift to [0, _CORR_MAX_SHIFT]: path_compliance < 1.0 would
+    # otherwise produce a negative shift, reversing the intended weight transfer.
+    corr_shift = max(0.0, min(_CORR_MAX_SHIFT, _CORR_COMPLIANCE_FACTOR * (path_compliance - 1.0)))
     match_weight = _MATCH_BASE_WEIGHT + corr_shift
     corr_weight = _CORR_BASE_WEIGHT - corr_shift
     confidence = (
@@ -349,7 +353,7 @@ def _suppress_engine_aliases(
 ) -> list[dict[str, Any]]:
     """Suppress engine findings that are likely harmonic aliases of wheel findings.
 
-    Sorts by ranking score, filters below minimum confidence, and returns the top 3.
+    Sorts by ranking score, filters below minimum confidence, and returns the top 5.
     """
     _HARMONIC_ALIAS_RATIO = 1.15
     _ENGINE_ALIAS_SUPPRESSION = 0.60
@@ -555,7 +559,9 @@ def _build_order_findings(
             predicted_vals.append(predicted_hz)
             measured_vals.append(best_hz)
             sample_phase: str | None = None
-            if per_sample_phases is not None and sample_idx < len(per_sample_phases):
+            # Only assign phase when has_phases is True (lengths verified equal),
+            # otherwise matched_points would have inconsistent phase coverage.
+            if has_phases and per_sample_phases is not None:
                 sample_phase = _phase_to_str(per_sample_phases[sample_idx])
             matched_points.append(
                 {
