@@ -48,7 +48,7 @@ def test_override_converts_kmh_to_mps() -> None:
 
 
 @pytest.mark.parametrize(
-    "clear_value, expected",
+    ("clear_value", "expected"),
     [
         pytest.param(None, None, id="none_clears"),
         pytest.param(0.0, 0.0, id="zero_sets_stationary"),

@@ -44,6 +44,7 @@ def _sanitize_non_finite(obj: Any) -> Any:
         return [_sanitize_non_finite(v) for v in obj]
     return obj
 
+
 __all__ = [
     "RUN_SCHEMA_VERSION",
     "RUN_METADATA_TYPE",
@@ -312,9 +313,7 @@ def read_jsonl_run(path: Path) -> RunData:
     if metadata is None:
         raise ValueError(f"Run metadata missing in {path}")
     if not metadata.get("run_id"):
-        raise ValueError(
-            f"Run metadata in {path} is missing required 'run_id' field"
-        )
+        raise ValueError(f"Run metadata in {path} is missing required 'run_id' field")
     if end_record and not metadata.get("end_time_utc"):
         end_time = end_record.get("end_time_utc")
         if end_time:

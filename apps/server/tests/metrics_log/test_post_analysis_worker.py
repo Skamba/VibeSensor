@@ -18,7 +18,7 @@ from vibesensor.metrics_log.post_analysis import PostAnalysisWorker
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def make_worker():
     """Factory for PostAnalysisWorker with an optional mock ``_run_post_analysis``."""
 

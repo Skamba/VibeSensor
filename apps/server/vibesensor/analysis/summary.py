@@ -129,8 +129,7 @@ def _annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
         matched_freqs = [
             v
             for pt in matched_pts
-            if isinstance(pt, dict)
-            and (v := _as_float(pt.get("matched_hz"))) is not None
+            if isinstance(pt, dict) and (v := _as_float(pt.get("matched_hz"))) is not None
         ]
         if not matched_freqs:
             continue
@@ -594,12 +593,10 @@ def _compute_accel_statistics(
         # Check saturation independently of magnitude: a single-axis sensor
         # (or a sample where one channel is missing) should not silently
         # skip the saturation check for the remaining axes.
-        if sat_threshold is not None:
-            if any(
-                axis_val is not None and abs(axis_val) >= sat_threshold
-                for axis_val in (x, y, z)
-            ):
-                sat_count += 1
+        if sat_threshold is not None and any(
+            axis_val is not None and abs(axis_val) >= sat_threshold for axis_val in (x, y, z)
+        ):
+            sat_count += 1
         amp = _vib_db(sample)
         if amp is not None:
             amp_metric_values.append(amp)

@@ -70,14 +70,14 @@ def run_benchmark(
 
     # --- Sequential baseline ---
     proc_seq = _make_processor(pool=None)
-    for cid, freq in zip(client_ids, freqs):
+    for cid, freq in zip(client_ids, freqs, strict=True):
         _inject_signal(proc_seq, cid, freq)
 
     seq_ingest_ms: list[float] = []
     seq_compute_ms: list[float] = []
     for _round in range(n_rounds):
         t0 = time.monotonic()
-        for cid, freq in zip(client_ids, freqs):
+        for cid, freq in zip(client_ids, freqs, strict=True):
             for _ in range(n_ingest_per_round):
                 _inject_signal(proc_seq, cid, freq)
         seq_ingest_ms.append((time.monotonic() - t0) * 1000)
@@ -89,14 +89,14 @@ def run_benchmark(
     # --- Parallel ---
     pool = WorkerPool(max_workers=4, thread_name_prefix="bench-fft")
     proc_par = _make_processor(pool=pool)
-    for cid, freq in zip(client_ids, freqs):
+    for cid, freq in zip(client_ids, freqs, strict=True):
         _inject_signal(proc_par, cid, freq)
 
     par_ingest_ms: list[float] = []
     par_compute_ms: list[float] = []
     for _round in range(n_rounds):
         t0 = time.monotonic()
-        for cid, freq in zip(client_ids, freqs):
+        for cid, freq in zip(client_ids, freqs, strict=True):
             for _ in range(n_ingest_per_round):
                 _inject_signal(proc_par, cid, freq)
         par_ingest_ms.append((time.monotonic() - t0) * 1000)
@@ -112,7 +112,7 @@ def run_benchmark(
     proc_a = _make_processor(pool=None)
     pool_b = WorkerPool(max_workers=4)
     proc_b = _make_processor(pool=pool_b)
-    for cid, freq in zip(client_ids, freqs):
+    for cid, freq in zip(client_ids, freqs, strict=True):
         _inject_signal(proc_a, cid, freq)
         _inject_signal(proc_b, cid, freq)
     res_a = proc_a.compute_all(client_ids)
@@ -142,7 +142,9 @@ def run_benchmark(
             "compute_p95_ms": round(_p95(par_compute_ms), 3),
         },
         "speedup_compute_median": round(
-            statistics.median(seq_compute_ms) / max(0.001, statistics.median(par_compute_ms)), 2
+            statistics.median(seq_compute_ms)
+            / max(0.001, statistics.median(par_compute_ms)),
+            2,
         ),
         "output_equivalent": output_match,
     }
@@ -150,8 +152,12 @@ def run_benchmark(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Pipeline throughput benchmark")
-    parser.add_argument("--sensors", type=int, default=4, help="Number of simulated sensors")
-    parser.add_argument("--rounds", type=int, default=10, help="Number of benchmark rounds")
+    parser.add_argument(
+        "--sensors", type=int, default=4, help="Number of simulated sensors"
+    )
+    parser.add_argument(
+        "--rounds", type=int, default=10, help="Number of benchmark rounds"
+    )
     args = parser.parse_args()
 
     print(f"Benchmarking with {args.sensors} sensors, {args.rounds} rounds ...\n")
@@ -162,13 +168,23 @@ def main() -> None:
     print("=" * 60)
     print(f"  {'Metric':<30} {'Sequential':>12} {'Parallel':>12}")
     print("-" * 60)
-    print(f"  {'Ingest median (ms)':<30} {seq['ingest_median_ms']:>12.3f} {par['ingest_median_ms']:>12.3f}")
-    print(f"  {'Ingest P95 (ms)':<30} {seq['ingest_p95_ms']:>12.3f} {par['ingest_p95_ms']:>12.3f}")
-    print(f"  {'Compute median (ms)':<30} {seq['compute_median_ms']:>12.3f} {par['compute_median_ms']:>12.3f}")
-    print(f"  {'Compute P95 (ms)':<30} {seq['compute_p95_ms']:>12.3f} {par['compute_p95_ms']:>12.3f}")
+    print(
+        f"  {'Ingest median (ms)':<30} {seq['ingest_median_ms']:>12.3f} {par['ingest_median_ms']:>12.3f}"
+    )
+    print(
+        f"  {'Ingest P95 (ms)':<30} {seq['ingest_p95_ms']:>12.3f} {par['ingest_p95_ms']:>12.3f}"
+    )
+    print(
+        f"  {'Compute median (ms)':<30} {seq['compute_median_ms']:>12.3f} {par['compute_median_ms']:>12.3f}"
+    )
+    print(
+        f"  {'Compute P95 (ms)':<30} {seq['compute_p95_ms']:>12.3f} {par['compute_p95_ms']:>12.3f}"
+    )
     print("-" * 60)
     print(f"  {'Compute speedup':<30} {results['speedup_compute_median']:>12.2f}x")
-    print(f"  {'Output equivalent':<30} {'YES' if results['output_equivalent'] else 'NO':>12}")
+    print(
+        f"  {'Output equivalent':<30} {'YES' if results['output_equivalent'] else 'NO':>12}"
+    )
     print("=" * 60)
 
 

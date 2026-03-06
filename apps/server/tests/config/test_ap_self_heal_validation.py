@@ -18,14 +18,14 @@ from vibesensor.config import APSelfHealConfig
 
 def _make_self_heal(**overrides) -> APSelfHealConfig:
     """Return an APSelfHealConfig with sensible defaults, applying *overrides*."""
-    defaults = dict(
-        enabled=True,
-        interval_seconds=60,
-        diagnostics_lookback_minutes=5,
-        min_restart_interval_seconds=120,
-        allow_disable_resolved_stub_listener=False,
-        state_file=Path("/tmp/vibesensor_ap_state.json"),
-    )
+    defaults = {
+        "enabled": True,
+        "interval_seconds": 60,
+        "diagnostics_lookback_minutes": 5,
+        "min_restart_interval_seconds": 120,
+        "allow_disable_resolved_stub_listener": False,
+        "state_file": Path("/tmp/vibesensor_ap_state.json"),
+    }
     defaults.update(overrides)
     return APSelfHealConfig(**defaults)  # type: ignore[arg-type]
 

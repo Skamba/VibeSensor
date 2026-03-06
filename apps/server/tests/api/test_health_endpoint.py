@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def _health_router(fake_state):
     """Return ``(router, state)`` for health-endpoint tests."""
     from vibesensor.api import create_router

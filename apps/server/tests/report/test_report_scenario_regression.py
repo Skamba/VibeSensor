@@ -239,7 +239,7 @@ class TestPhaseSegmentation:
         assert has_decel
 
     @pytest.mark.parametrize(
-        "phases, kwargs, expected",
+        ("phases", "kwargs", "expected"),
         [
             pytest.param(
                 [
@@ -569,7 +569,7 @@ class TestStrengthBandsAlignment:
     """Ensure strength_bands.py and strength_labels.py agree on thresholds."""
 
     @pytest.mark.parametrize(
-        "db_val, expected_bucket",
+        ("db_val", "expected_bucket"),
         [
             pytest.param(0.0, "l0", id="l0_at_0"),
             pytest.param(5.0, "l0", id="l0_at_5"),
@@ -599,7 +599,7 @@ class TestPeakClassification:
     """Verify _classify_peak_type edge cases and new baseline_noise class."""
 
     @pytest.mark.parametrize(
-        "presence, burstiness, kwargs, expected",
+        ("presence", "burstiness", "kwargs", "expected"),
         [
             pytest.param(0.50, 2.0, {}, "patterned", id="patterned"),
             pytest.param(0.25, 3.5, {}, "persistent", id="persistent"),
@@ -682,7 +682,7 @@ class TestLocationLabel:
     """_location_label should prefer structured location codes."""
 
     @pytest.mark.parametrize(
-        "sample, expected",
+        ("sample", "expected"),
         [
             pytest.param(
                 {"client_name": "My sensor", "location": "front_left_wheel"},
@@ -1271,7 +1271,7 @@ class TestCertaintyLabelSignalQualityGuard:
     """
 
     @pytest.mark.parametrize(
-        "confidence, lang, strength_band_key, expected_level, expected_label",
+        ("confidence", "lang", "strength_band_key", "expected_level", "expected_label"),
         [
             pytest.param(
                 0.90,

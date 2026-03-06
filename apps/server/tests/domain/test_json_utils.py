@@ -21,7 +21,7 @@ class TestSanitizeForJson:
     """Comprehensive tests for :func:`sanitize_for_json`."""
 
     @pytest.mark.parametrize(
-        "value, label",
+        ("value", "label"),
         [(float("nan"), "nan"), (float("inf"), "inf"), (float("-inf"), "-inf")],
     )
     def test_non_finite_replaced_with_none(self, value: float, label: str) -> None:

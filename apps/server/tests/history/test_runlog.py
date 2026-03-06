@@ -26,17 +26,17 @@ from vibesensor.runlog import (
 
 def _make_run_metadata(*, run_id: str = "r1", **overrides) -> dict:
     """Build a ``create_run_metadata`` dict with sensible test defaults."""
-    defaults = dict(
-        run_id=run_id,
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    defaults = {
+        "run_id": run_id,
+        "start_time_utc": "2025-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200,
+        "feature_interval_s": 0.5,
+        "fft_window_size_samples": 256,
+        "fft_window_type": "hann",
+        "peak_picker_method": "max_peak_amp_across_axes",
+        "accel_scale_g_per_lsb": 1.0 / 256.0,
+    }
     defaults.update(overrides)
     return create_run_metadata(**defaults)
 
@@ -83,7 +83,7 @@ def test_parse_iso8601_returns_none_for_bad_input(value: object) -> None:
 
 
 @pytest.mark.parametrize(
-    "value, expected",
+    ("value", "expected"),
     [
         (3.14, 3.14),
         (42, 42.0),
@@ -105,7 +105,7 @@ def test_as_float_or_none(value: object, expected: float | None) -> None:
 
 
 @pytest.mark.parametrize(
-    "value, expected",
+    ("value", "expected"),
     [
         (3.7, 4),
         (3.2, 3),
@@ -224,7 +224,7 @@ def test_append_and_read_roundtrip(tmp_path: Path) -> None:
 def test_read_jsonl_run_missing_metadata_raises(tmp_path: Path) -> None:
     path = tmp_path / "bad.jsonl"
     path.write_text('{"record_type": "sample", "t_s": 1.0}\n')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Run metadata missing"):
         read_jsonl_run(path)
 
 

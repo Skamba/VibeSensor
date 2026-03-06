@@ -71,15 +71,15 @@ class TestComputeOverlap:
         assert result.overlap_s == pytest.approx(6.0)
 
 
-_ATR_DEFAULTS: dict[str, object] = dict(
-    count=1000,
-    last_ingest_mono_s=100.0,
-    sample_rate_hz=1000,
-    waveform_seconds=2,
-    capacity=2000,
-    last_t0_us=0,
-    samples_since_t0=0,
-)
+_ATR_DEFAULTS: dict[str, object] = {
+    "count": 1000,
+    "last_ingest_mono_s": 100.0,
+    "sample_rate_hz": 1000,
+    "waveform_seconds": 2,
+    "capacity": 2000,
+    "last_t0_us": 0,
+    "samples_since_t0": 0,
+}
 
 
 def _atr(**overrides: object) -> tuple[float, float, bool] | None:

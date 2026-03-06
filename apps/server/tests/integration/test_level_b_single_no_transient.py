@@ -64,15 +64,15 @@ def _run_single_fault(
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """Create single-sensor fault samples, run analysis, return (summary, top)."""
     sensor = CORNER_SENSORS[corner]
-    kwargs: dict[str, Any] = dict(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=speed_kmh,
-        n_samples=n_samples,
-        fault_amp=fault_amp,
-        fault_vib_db=fault_vib_db,
-    )
+    kwargs: dict[str, Any] = {
+        "profile": profile,
+        "fault_sensor": sensor,
+        "sensors": [sensor],
+        "speed_kmh": speed_kmh,
+        "n_samples": n_samples,
+        "fault_amp": fault_amp,
+        "fault_vib_db": fault_vib_db,
+    }
     if noise_amp is not None:
         kwargs["noise_amp"] = noise_amp
     if noise_vib_db is not None:
@@ -125,7 +125,7 @@ _AMPS = [
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize(
-    "amp_label,fault_amp,vib_db", _AMPS, ids=["amp_low", "amp_med", "amp_high"]
+    ("amp_label", "fault_amp", "vib_db"), _AMPS, ids=["amp_low", "amp_med", "amp_high"]
 )
 def test_single_sensor_amplitude_scaling(
     corner: str, amp_label: str, fault_amp: float, vib_db: float, profile: dict[str, Any]

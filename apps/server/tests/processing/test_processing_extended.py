@@ -8,13 +8,13 @@ from vibesensor.processing import MAX_CLIENT_SAMPLE_RATE_HZ, SignalProcessor
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
-    defaults = dict(
-        sample_rate_hz=200,
-        waveform_seconds=2,
-        waveform_display_hz=50,
-        fft_n=256,
-        spectrum_max_hz=100,
-    )
+    defaults = {
+        "sample_rate_hz": 200,
+        "waveform_seconds": 2,
+        "waveform_display_hz": 50,
+        "fft_n": 256,
+        "spectrum_max_hz": 100,
+    }
     defaults.update(kwargs)
     return SignalProcessor(**defaults)
 
@@ -144,17 +144,17 @@ def test_spectrum_payload_has_vibration_strength_db() -> None:
 
 
 @pytest.mark.parametrize(
-    "proc_kw, method_name, n_samples, sr",
+    ("proc_kw", "method_name", "n_samples", "sr"),
     [
         pytest.param(
-            dict(sample_rate_hz=400, fft_n=128, spectrum_max_hz=150),
+            {"sample_rate_hz": 400, "fft_n": 128, "spectrum_max_hz": 150},
             "spectrum_payload",
             300,
             400,
             id="spectrum",
         ),
         pytest.param(
-            dict(sample_rate_hz=200, waveform_seconds=2, waveform_display_hz=50),
+            {"sample_rate_hz": 200, "waveform_seconds": 2, "waveform_display_hz": 50},
             "selected_payload",
             500,
             200,
@@ -335,7 +335,7 @@ def test_smooth_spectrum_single_bin() -> None:
 
 
 @pytest.mark.parametrize(
-    "arr, expected",
+    ("arr", "expected"),
     [
         pytest.param(np.array([], dtype=np.float32), 0.0, id="empty"),
         pytest.param(np.array([float("nan")] * 3, dtype=np.float32), 0.0, id="all_nan"),

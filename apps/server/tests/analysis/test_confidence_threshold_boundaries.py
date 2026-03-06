@@ -226,7 +226,7 @@ _AMPLITUDE_TIERS = [
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "tier_name,fault_amp,fault_db",
+    ("tier_name", "fault_amp", "fault_db"),
     _AMPLITUDE_TIERS,
     ids=[t[0] for t in _AMPLITUDE_TIERS],
 )
@@ -298,7 +298,7 @@ _SENSOR_CONFIGS = [
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
-@pytest.mark.parametrize("cfg_name,sensors", _SENSOR_CONFIGS, ids=["single", "quad"])
+@pytest.mark.parametrize(("cfg_name", "sensors"), _SENSOR_CONFIGS, ids=["single", "quad"])
 def test_noise_only_no_spurious_fault(
     profile: dict[str, Any], cfg_name: str, sensors: list[str], speed: float
 ) -> None:

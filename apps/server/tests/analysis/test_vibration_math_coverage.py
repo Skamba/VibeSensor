@@ -19,7 +19,7 @@ from vibesensor_core.vibration_strength import (
 
 
 @pytest.mark.parametrize(
-    "db_value,expected",
+    ("db_value", "expected"),
     [
         (7.999, "l0"),
         (8.0, "l1"),
@@ -80,7 +80,7 @@ def test_strength_db_explicit_epsilon_override() -> None:
 
 
 @pytest.mark.parametrize(
-    "peak,floor,check",
+    ("peak", "floor", "check"),
     [
         pytest.param(0.0, 0.0, ("approx", 0.0, 1e-6), id="both_zero"),
         pytest.param(1e-10, 0.0, ("approx", 0.0, 1.0), id="epsilon_dominated"),

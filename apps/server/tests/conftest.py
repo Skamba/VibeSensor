@@ -56,13 +56,13 @@ class FakeState:
     apply_speed_source_settings: object = field(default_factory=MagicMock)
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_state() -> FakeState:
     """Return a fresh ``FakeState`` for each test."""
     return FakeState()
 
 
-@pytest.fixture()
+@pytest.fixture
 def route_paths(fake_state: FakeState) -> set[str]:
     """All registered URL paths from the assembled router."""
     from vibesensor.routes import create_router

@@ -115,9 +115,7 @@ class GPSSpeedMonitor:
         consumers should prefer this over reading ``effective_speed_mps``
         and ``fallback_active`` separately when they need both values.
         """
-        if self.manual_source_selected in (None, True) and _is_numeric(
-            self.override_speed_mps
-        ):
+        if self.manual_source_selected in (None, True) and _is_numeric(self.override_speed_mps):
             # Legacy path (None) or explicitly selected manual source.
             # _is_numeric() excludes bool to prevent accidental bool→speed coercion.
             return SpeedResolution(float(self.override_speed_mps), False, "manual")
@@ -372,10 +370,14 @@ class GPSSpeedMonitor:
                         self._reset_fix_metadata()
                         break
                     try:
-                        payload: dict[str, Any] = _loads(line.decode("utf-8", errors="replace"))
+                        _parsed = _loads(line.decode("utf-8", errors="replace"))
                     except json.JSONDecodeError:
                         LOGGER.debug("Ignoring malformed GPS JSON line")
                         continue
+                    if not isinstance(_parsed, dict):
+                        LOGGER.debug("Ignoring non-object GPS JSON line")
+                        continue
+                    payload: dict[str, Any] = _parsed
                     if payload.get("class") != "TPV":
                         # Extract device info from VERSION messages
                         if payload.get("class") == "VERSION":

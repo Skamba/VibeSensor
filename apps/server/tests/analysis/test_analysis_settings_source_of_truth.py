@@ -92,7 +92,7 @@ def _route(router, path: str, method: str = "GET"):
     raise AssertionError(path)
 
 
-@pytest.fixture()
+@pytest.fixture
 def _wiring(tmp_path: Path):
     """Provide a wired (state, router) pair with one active car named 'Primary'."""
     from vibesensor.history_db import HistoryDB

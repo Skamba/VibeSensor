@@ -174,7 +174,7 @@ _SPIKE_AMPS = [
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize(
-    "label,amp,vdb", _SPIKE_AMPS, ids=["spike_small", "spike_med", "spike_large"]
+    ("label", "amp", "vdb"), _SPIKE_AMPS, ids=["spike_small", "spike_med", "spike_large"]
 )
 def test_transient_amplitude_deweighting(
     corner: str, label: str, amp: float, vdb: float, profile: dict[str, Any]

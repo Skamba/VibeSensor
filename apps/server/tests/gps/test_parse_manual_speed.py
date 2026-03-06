@@ -10,7 +10,7 @@ from vibesensor.domain_models import _parse_manual_speed
 
 
 @pytest.mark.parametrize(
-    "value, expected",
+    ("value", "expected"),
     [
         (50, 50.0),
         (80.5, 80.5),

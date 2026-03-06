@@ -282,9 +282,7 @@ def parse_data(data: bytes) -> DataMessage:
     # generous headroom while preventing accidental or malicious OOM.
     _MAX_SAMPLE_COUNT = 1024
     if sample_count > _MAX_SAMPLE_COUNT:
-        raise ProtocolError(
-            f"DATA sample_count {sample_count} exceeds maximum {_MAX_SAMPLE_COUNT}"
-        )
+        raise ProtocolError(f"DATA sample_count {sample_count} exceeds maximum {_MAX_SAMPLE_COUNT}")
 
     if sample_count == 0:
         raise ProtocolError("DATA sample_count must not be zero")

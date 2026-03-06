@@ -77,7 +77,7 @@ def as_int_or_none(value: object) -> int | None:
     out = as_float_or_none(value)
     if out is None:
         return None
-    return int(round(out))
+    return round(out)
 
 
 def _parse_manual_speed(value: Any) -> float | None:

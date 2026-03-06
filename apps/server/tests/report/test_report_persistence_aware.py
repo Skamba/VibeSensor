@@ -86,7 +86,7 @@ def _summarize(samples: list[dict], **meta_overrides: object) -> dict:
 
 class TestClassifyPeakType:
     @pytest.mark.parametrize(
-        "presence_ratio, burstiness, expected",
+        ("presence_ratio", "burstiness", "expected"),
         [
             pytest.param(0.80, 1.5, "patterned", id="high_presence_low_burstiness"),
             pytest.param(0.45, 2.5, "patterned", id="moderate_presence_low_burstiness"),

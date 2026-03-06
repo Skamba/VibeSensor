@@ -34,7 +34,7 @@ from vibesensor.report.report_data import ObservedSignature, ReportTemplateData
 
 
 @pytest.mark.parametrize(
-    "db_val, expected_key",
+    ("db_val", "expected_key"),
     [
         (None, "unknown"),
         (0.0, "negligible"),
@@ -77,7 +77,7 @@ def test_strength_text_value() -> None:
 
 
 @pytest.mark.parametrize(
-    "conf, expected_level",
+    ("conf", "expected_level"),
     [
         (0.0, "low"),
         (0.39, "low"),
@@ -359,7 +359,7 @@ def _assert_no_phase_onset(explanation: object) -> None:
 
 
 @pytest.mark.parametrize(
-    "phase, location, speed_band, confidence, lang",
+    ("phase", "location", "speed_band", "confidence", "lang"),
     [
         ("acceleration", "Front Right", "60-80 km/h", 0.75, "en"),
         ("deceleration", "Rear Left", "40-60 km/h", 0.70, "nl"),

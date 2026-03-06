@@ -20,13 +20,13 @@ from vibesensor.udp_data_rx import DataDatagramProtocol
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
-    defaults = dict(
-        sample_rate_hz=800,
-        waveform_seconds=8,
-        waveform_display_hz=100,
-        fft_n=1024,
-        spectrum_max_hz=200,
-    )
+    defaults = {
+        "sample_rate_hz": 800,
+        "waveform_seconds": 8,
+        "waveform_display_hz": 100,
+        "fft_n": 1024,
+        "spectrum_max_hz": 200,
+    }
     defaults.update(kwargs)
     return SignalProcessor(**defaults)
 

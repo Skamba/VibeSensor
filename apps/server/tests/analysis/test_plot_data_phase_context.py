@@ -46,7 +46,7 @@ _VALID_PHASES = frozenset(p.value for p in DrivingPhase)
 _SEGMENT_REQUIRED_KEYS = {"phase", "start_t_s", "end_t_s"}
 
 
-@pytest.fixture()
+@pytest.fixture
 def cruise_plots() -> dict:
     """Pre-computed _plot_data result for a simple 6-sample cruise run at 60 km/h."""
     samples = [_make_sample(t_s=float(i), speed_kmh=60.0) for i in range(6)]

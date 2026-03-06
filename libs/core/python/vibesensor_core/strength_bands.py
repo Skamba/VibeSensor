@@ -19,6 +19,8 @@ __all__ = [
     "band_rank",
     "bucket_for_strength",
 ]
+
+
 class StrengthBand(TypedDict):
     """Typed dict for a single vibration-strength band definition."""
 

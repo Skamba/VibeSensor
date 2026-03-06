@@ -679,7 +679,7 @@ class TestGpsSpeedValidation:
         )
 
     @pytest.mark.parametrize(
-        "bad_speed,label",
+        ("bad_speed", "label"),
         [
             (float("nan"), "NaN"),
             (float("inf"), "Inf"),

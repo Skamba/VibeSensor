@@ -144,7 +144,7 @@ def live_server(tmp_path_factory: pytest.TempPathFactory) -> dict[str, object]:
             proc.kill()
 
 
-@pytest.fixture()
+@pytest.fixture
 def driver() -> webdriver.Remote:
     errors: list[str] = []
 

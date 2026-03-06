@@ -145,7 +145,7 @@ def test_extract_client_id_hex_too_short(data) -> None:
 
 
 @pytest.mark.parametrize(
-    "fn, arg, match",
+    ("fn", "arg", "match"),
     [
         (client_id_hex, b"\x01\x02", "6 bytes"),
         (client_id_mac, b"\x01\x02\x03", "6 bytes"),
@@ -159,7 +159,7 @@ def test_client_id_rejects_wrong_length(fn, arg, match) -> None:
 
 
 @pytest.mark.parametrize(
-    "parse_fn, short_data, match",
+    ("parse_fn", "short_data", "match"),
     [
         (parse_hello, b"\x01", "HELLO too short"),
         (parse_data, b"\x02\x01", "DATA too short"),
@@ -173,7 +173,7 @@ def test_parse_too_short(parse_fn, short_data, match) -> None:
 
 
 @pytest.mark.parametrize(
-    "parse_fn, header_bytes, match",
+    ("parse_fn", "header_bytes", "match"),
     [
         (parse_hello, HELLO_FIXED_BYTES, "Invalid HELLO header"),
         (parse_data, DATA_HEADER_BYTES, "Invalid DATA header"),
@@ -239,7 +239,7 @@ def test_ack_roundtrip() -> None:
 
 
 @pytest.mark.parametrize(
-    "parse_fn, short_data, match",
+    ("parse_fn", "short_data", "match"),
     [
         (parse_ack, b"\x04\x01\x00", "ACK has unexpected size"),
         (parse_data_ack, b"\x05\x01\x00", "DATA_ACK has unexpected size"),
@@ -252,7 +252,7 @@ def test_parse_wrong_size(parse_fn, short_data, match) -> None:
 
 
 @pytest.mark.parametrize(
-    "struct, parse_fn, pack_args, match",
+    ("struct", "parse_fn", "pack_args", "match"),
     [
         (ACK_STRUCT, parse_ack, (0xFF, 0x01, b"\x00" * 6, 0, 0), "Invalid ACK header"),
         (DATA_ACK_STRUCT, parse_data_ack, (0xFF, 0x01, b"\x00" * 6, 0), "Invalid DATA_ACK header"),
@@ -285,6 +285,7 @@ def test_parse_hello_rejects_zero_sample_rate() -> None:
     # Build a raw HELLO packet with sample_rate_hz=0 manually.
     name_bytes = b"sensor"
     import struct as _struct
+
     raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 9000, 0, 200, len(name_bytes))
     raw += name_bytes + bytes([0]) + _struct.pack("<I", 0)
     with pytest.raises(ProtocolError, match="sample_rate_hz must not be zero"):
@@ -295,6 +296,7 @@ def test_parse_hello_warns_on_zero_control_port(caplog: pytest.LogCaptureFixture
     """parse_hello must log a warning when control_port == 0 (Fix 2)."""
     import logging
     import struct as _struct
+
     client_id = bytes.fromhex("aabbccddeeff")
     name_bytes = b"sensor"
     raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 0, 800, 200, len(name_bytes))
@@ -322,6 +324,7 @@ def test_parse_cmd_warns_on_unknown_cmd_id(caplog: pytest.LogCaptureFixture) -> 
     """parse_cmd must log a warning for an unrecognized cmd_id (Fix 5)."""
     import logging
     import struct as _struct
+
     client_id = bytes.fromhex("aabbccddeeff")
     # Build a CMD header with cmd_id=99 (unknown)
     raw = _struct.pack("<BB6sBI", 3, 1, client_id, 99, 42)
@@ -350,4 +353,3 @@ def test_pack_ack_rejects_negative_cmd_seq() -> None:
     client_id = bytes.fromhex("aabbccddeeff")
     with pytest.raises(ValueError, match="cmd_seq must be non-negative"):
         pack_ack(client_id, cmd_seq=-1)
-

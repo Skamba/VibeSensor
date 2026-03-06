@@ -252,6 +252,23 @@ async def test_run_ignores_malformed_json() -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
+    "non_dict_line",
+    [
+        pytest.param(b'["array", "not", "object"]\n', id="json-array"),
+        pytest.param(b'"just a string"\n', id="json-string"),
+        pytest.param(b"42\n", id="json-number"),
+        pytest.param(b"null\n", id="json-null"),
+    ],
+)
+async def test_run_ignores_non_dict_json(non_dict_line: bytes) -> None:
+    """Non-object JSON lines (arrays, strings, numbers, null) are silently skipped."""
+    async with _gps_server_scenario(non_dict_line, _tpv_line(9.5)) as monitor:
+        await _await_speed(monitor)
+        assert monitor.speed_mps == 9.5
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
     "tpv_kwargs",
     [
         pytest.param({"speed": 8.8, "mode": 1}, id="mode-below-2"),

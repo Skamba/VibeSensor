@@ -23,7 +23,7 @@ def test_split_host_port_valid() -> None:
 
 
 def test_split_host_port_missing_colon_raises() -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Expected HOST:PORT"):
         _split_host_port("localhost9000")
 
 
@@ -86,7 +86,7 @@ def test_read_config_file_valid(tmp_path: Path) -> None:
 def test_read_config_file_non_dict_raises(tmp_path: Path) -> None:
     cfg_path = tmp_path / "config.yaml"
     cfg_path.write_text("- item1\n- item2\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="must contain a YAML object"):
         _read_config_file(cfg_path)
 
 

@@ -415,7 +415,7 @@ class TestConfidenceCalibration:
 class TestUnitConsistency:
     """Amplitude units must be consistent end-to-end."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def fault_findings(self) -> list[dict[str, Any]]:
         """Shared findings from a single-sensor (front-right) fault scenario."""
         samples = _build_fault_samples(_ALL_WHEEL_SENSORS, "front-right")

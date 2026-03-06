@@ -24,13 +24,13 @@ from vibesensor.processing import _ALIGNMENT_MIN_OVERLAP, SignalProcessor
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
-    defaults = dict(
-        sample_rate_hz=200,
-        waveform_seconds=2,
-        waveform_display_hz=50,
-        fft_n=256,
-        spectrum_max_hz=100,
-    )
+    defaults = {
+        "sample_rate_hz": 200,
+        "waveform_seconds": 2,
+        "waveform_display_hz": 50,
+        "fft_n": 256,
+        "spectrum_max_hz": 100,
+    }
     defaults.update(kwargs)
     return SignalProcessor(**defaults)
 
@@ -298,7 +298,7 @@ class TestSyncedClockAlignment:
     the sensor-clock timestamps (more precise than arrival time)."""
 
     @pytest.mark.parametrize(
-        "t0_us, expected",
+        ("t0_us", "expected"),
         [
             pytest.param(100_000_000, True, id="with_t0_us"),
             pytest.param(None, False, id="without_t0_us"),
@@ -312,7 +312,7 @@ class TestSyncedClockAlignment:
         assert info["clock_synced"] is expected
 
     @pytest.mark.parametrize(
-        "s1_t0, s2_mono, s2_t0, expected_aligned",
+        ("s1_t0", "s2_mono", "s2_t0", "expected_aligned"),
         [
             pytest.param(50_000_000, 100.1, 50_100_000, True, id="close_timestamps"),
             pytest.param(50_000_000, 100.0, 60_000_000, False, id="large_t0_offset"),
@@ -437,4 +437,3 @@ class TestAnalysisTimeRangeEdgeCases:
             samples_since_t0=0,
         )
         assert result is None
-

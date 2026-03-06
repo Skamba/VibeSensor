@@ -67,7 +67,7 @@ FS_TITLE = 12
 FS_H2 = 9
 FS_BODY = 7
 FS_SMALL = 6
-FS_CARD_TITLE = 8.0  # system-card title (between FS_H2 and FS_BODY)  
+FS_CARD_TITLE = 8.0  # system-card title (between FS_H2 and FS_BODY)
 
 R_CARD = 6
 GAP = 4 * mm
@@ -943,7 +943,9 @@ def _draw_pattern_evidence(
         c.setFont(FONT_B, FS_SMALL)
         c.drawString(rx, ry, f"\u26a0 {tr('WARNING_LABEL')}")
         ry -= 3.0 * mm
-        ry = _draw_text(c, rx, ry, w - 8 * mm, ev.warning, size=FS_SMALL, color=WARN_CLR, max_lines=3)
+        ry = _draw_text(
+            c, rx, ry, w - 8 * mm, ev.warning, size=FS_SMALL, color=WARN_CLR, max_lines=3
+        )
         ry -= 1.5 * mm
 
     # Interpretation
