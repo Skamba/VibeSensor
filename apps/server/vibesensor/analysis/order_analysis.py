@@ -42,9 +42,9 @@ def _engine_hz(
     return rpm / 60.0, src
 
 
-def _order_label(order: int | object, base: str | object) -> str:
+def _order_label(order: int, base: str) -> str:
     """Return a language-neutral order label like ``'1x wheel'``."""
-    return f"{int(order)}x {base!s}"  # type: ignore[arg-type]
+    return f"{order}x {base}"
 
 
 @dataclass(slots=True, frozen=True)

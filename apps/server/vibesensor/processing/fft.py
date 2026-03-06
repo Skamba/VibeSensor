@@ -9,6 +9,7 @@ This makes them independently testable and reusable outside of the
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Any
 
 import numpy as np
@@ -36,7 +37,9 @@ def medfilt3(block: np.ndarray) -> np.ndarray:
         return block
     stacked = np.stack([block[:, :-2], block[:, 1:-1], block[:, 2:]], axis=0)
     filtered = block.copy()
-    filtered[:, 1:-1] = np.nanmedian(stacked, axis=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        filtered[:, 1:-1] = np.nanmedian(stacked, axis=0)
     return filtered
 
 
