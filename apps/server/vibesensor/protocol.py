@@ -185,6 +185,12 @@ def parse_hello(data: bytes) -> HelloMessage:
     if msg_type != MSG_HELLO or version != VERSION:
         raise ProtocolError("Invalid HELLO header")
 
+    if sample_rate_hz == 0:
+        raise ProtocolError("HELLO sample_rate_hz must not be zero")
+
+    if control_port == 0:
+        LOGGER.warning("HELLO control_port is 0; sensor may not be reachable for commands")
+
     offset = HELLO_BASE.size
     if len(data) < offset + name_len:
         raise ProtocolError("HELLO missing name bytes")
@@ -241,6 +247,8 @@ def pack_hello(
     queue_overflow_drops: int = 0,
 ) -> bytes:
     """Encode a HELLO message as bytes."""
+    if len(client_id) != CLIENT_ID_BYTES:
+        raise ValueError(f"client_id must be {CLIENT_ID_BYTES} bytes, got {len(client_id)}")
     name_bytes = name.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
     fw_bytes = firmware_version.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
     header = HELLO_BASE.pack(
@@ -302,6 +310,8 @@ def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> by
     if samples_int16.ndim != 2 or samples_int16.shape[1] != ACCEL_AXES:
         raise ValueError(f"samples must be shaped (N, {ACCEL_AXES})")
     sample_count = int(samples_int16.shape[0])
+    if sample_count == 0:
+        raise ValueError("pack_data: samples array must not be empty (sample_count must be > 0)")
     header = DATA_HEADER.pack(MSG_DATA, VERSION, client_id, seq, t0_us, sample_count)
     return header + samples_int16.tobytes(order="C")
 
@@ -313,12 +323,19 @@ def parse_cmd(data: bytes) -> CmdMessage:
     msg_type, version, client_id, cmd_id, cmd_seq = CMD_HEADER.unpack_from(data, 0)
     if msg_type != MSG_CMD or version != VERSION:
         raise ProtocolError("Invalid CMD header")
+    if cmd_id not in (CMD_IDENTIFY, CMD_SYNC_CLOCK):
+        LOGGER.warning(
+            "parse_cmd: unrecognized cmd_id=%d; continuing for forward compatibility",
+            cmd_id,
+        )
     params = data[CMD_HEADER_BYTES:]
     return CmdMessage(client_id=client_id, cmd_id=cmd_id, cmd_seq=cmd_seq, params=params)
 
 
 def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes:
     """Encode a CMD_IDENTIFY command as bytes."""
+    if cmd_seq < 0:
+        raise ValueError(f"cmd_seq must be non-negative, got {cmd_seq}")
     return CMD_IDENTIFY_STRUCT.pack(
         MSG_CMD,
         VERSION,
@@ -331,6 +348,8 @@ def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes
 
 def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> bytes:
     """Encode a CMD_SYNC_CLOCK command as bytes."""
+    if cmd_seq < 0:
+        raise ValueError(f"cmd_seq must be non-negative, got {cmd_seq}")
     return CMD_SYNC_CLOCK_STRUCT.pack(
         MSG_CMD,
         VERSION,
@@ -353,6 +372,8 @@ def parse_ack(data: bytes) -> AckMessage:
 
 def pack_ack(client_id: bytes, cmd_seq: int, status: int = 0) -> bytes:
     """Encode an ACK message as bytes."""
+    if cmd_seq < 0:
+        raise ValueError(f"cmd_seq must be non-negative, got {cmd_seq}")
     return ACK_STRUCT.pack(MSG_ACK, VERSION, client_id, cmd_seq, status & 0xFF)
 
 

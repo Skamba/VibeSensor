@@ -7,12 +7,14 @@ Manages detection of connected ESP32 devices, flashing firmware via
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import enum
 import importlib.util
 import logging
 import shutil
 import sys
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -155,6 +157,7 @@ class SerialPortProvider:
                 )
             return pyserial_ports
         except Exception:
+            LOGGER.warning("Serial port enumeration failed; returning empty list.", exc_info=True)
             return []
 
 
@@ -166,7 +169,7 @@ class FlashCommandRunner:
         args: list[str],
         *,
         cwd: str,
-        line_cb,
+        line_cb: Callable[[str], None],
         cancel_event: asyncio.Event,
         timeout_s: float | None = None,
     ) -> int:
@@ -196,7 +199,15 @@ class FlashCommandRunner:
                 await proc.wait()
                 break
             line_cb(line.decode("utf-8", errors="replace").rstrip("\n"))
-        await proc.wait()
+        # Wait for the process to exit; guard against a process that ignores
+        # SIGTERM by escalating to SIGKILL after a short grace period.
+        try:
+            await asyncio.wait_for(proc.wait(), timeout=5.0)
+        except TimeoutError:
+            LOGGER.warning("Process did not exit after SIGTERM; sending SIGKILL.")
+            with contextlib.suppress(ProcessLookupError):
+                proc.kill()
+            await proc.wait()
         return proc.returncode or 0
 
 
@@ -270,7 +281,7 @@ class EspFlashManager:
         if len(self._logs) > _FLASH_LOG_MAX_LINES:
             del self._logs[:-_FLASH_LOG_TRIM_TO]
         self._status.log_count = len(self._logs)
-        LOGGER.debug("esp flash log line recorded")
+        LOGGER.debug("esp flash [%d]: %s", self._status.log_count, line)
 
     async def _resolve_port(self) -> str:
         configured = self._status.selected_port
@@ -323,6 +334,12 @@ class EspFlashManager:
         self._status.state = state
         self._status.error = error
         self._status.finished_at = time.time()
+        # Align `phase` with terminal states so API consumers get a coherent picture
+        # (e.g. phase="erasing" + state="cancelled" is confusing).
+        if state == EspFlashState.cancelled:
+            self._status.phase = "cancelled"
+        elif state == EspFlashState.failed:
+            self._status.phase = "failed"
         if state == EspFlashState.success:
             self._status.last_success_at = self._status.finished_at
         self._history.insert(

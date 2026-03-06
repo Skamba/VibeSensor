@@ -21,8 +21,9 @@ def _reference_missing_finding(
     suspected_source: str,
     evidence_summary: object,
     quick_checks: list[object],
-    lang: str = "en",
 ) -> dict[str, Any]:
+    # All output fields are language-neutral i18n reference dicts; the
+    # language is resolved at report-render time, not here.
     return {
         "finding_id": finding_id,
         "finding_type": "reference",

@@ -360,6 +360,16 @@ class RuntimeState:
                     await asyncio.sleep(FAILURE_BACKOFF_S)
                     consecutive_failures = 0
                     self.processing_state = "degraded"
+                    LOGGER.info(
+                        "Processing loop resuming after fatal-backoff; "
+                        "total failure count so far: %d",
+                        self.processing_failure_count,
+                    )
+                    LOGGER.info(
+                        "Processing loop resuming after fatal-backoff; "
+                        "total failure count so far: %d",
+                        self.processing_failure_count,
+                    )
             delay = (
                 interval
                 if consecutive_failures == 0
@@ -408,7 +418,18 @@ class RuntimeState:
         """Graceful shutdown: cancel tasks, close DB/transport, wait for post-analysis."""
         for task in self.tasks:
             task.cancel()
-        await asyncio.gather(*self.tasks, return_exceptions=True)
+        # Wait up to 15 s for tasks to respond to cancellation.  Tasks stuck in
+        # asyncio.to_thread (e.g. blocking FFT) could otherwise hang shutdown
+        # indefinitely if we used a bare asyncio.gather with no timeout.
+        if self.tasks:
+            _done, _pending = await asyncio.wait(self.tasks, timeout=15.0)
+            if _pending:
+                LOGGER.warning(
+                    "%d background task(s) did not finish within the cancellation "
+                    "deadline and will be abandoned: %s",
+                    len(_pending),
+                    [t.get_name() for t in _pending],
+                )
         self.tasks.clear()
 
         # Cancel any in-progress update or flash jobs so cleanup
@@ -452,10 +473,14 @@ class RuntimeState:
             await asyncio.gather(self.data_consumer_task, return_exceptions=True)
             self.data_consumer_task = None
         try:
-            self.worker_pool.shutdown(wait=True)
+            # Run the blocking executor shutdown off the event loop so we do
+            # not stall other coroutines (e.g. lifespan finalisation) while
+            # waiting for in-flight FFT threads to drain.
+            await asyncio.to_thread(self.worker_pool.shutdown, True)
         except Exception:
             LOGGER.warning("Error shutting down worker pool", exc_info=True)
         try:
             self.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
+        LOGGER.info("RuntimeState stopped cleanly.")
