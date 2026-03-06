@@ -393,7 +393,12 @@ class GPSSpeedMonitor:
                 self._reset_fix_metadata()
                 self.last_error = str(exc) or type(exc).__name__
                 self.current_reconnect_delay = reconnect_delay
-                LOGGER.warning("GPS connection lost, retrying in %gs", reconnect_delay)
+                LOGGER.warning(
+                    "GPS connection lost, retrying in %gs: %s",
+                    reconnect_delay,
+                    exc,
+                    exc_info=True,
+                )
                 await asyncio.sleep(reconnect_delay)
                 reconnect_delay = min(_GPS_RECONNECT_MAX_DELAY_S, reconnect_delay * 2.0)
             finally:
