@@ -117,7 +117,7 @@ export function startUiApp(): void {
   };
 
   function renderWsState(): void {
-    if (state.payloadError) return setPillState(els.linkState, "bad", "Payload error");
+    if (state.payloadError) return setPillState(els.linkState, "bad", t("ws.payload_error_pill"));
     setPillState(els.linkState, WS_VARIANT_BY_STATE[state.wsState] || "muted", t(WS_KEY_BY_STATE[state.wsState] || "ws.connecting"));
 
     // Connection status banner
@@ -413,7 +413,7 @@ export function startUiApp(): void {
   function applyPayload(payload: unknown): void {
     let adapted;
     try { adapted = adaptServerPayload(payload as Record<string, unknown>); }
-    catch (err) { state.payloadError = err instanceof Error ? err.message : "Invalid server payload."; state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
+    catch (err) { state.payloadError = err instanceof Error ? err.message : t("ws.payload_error"); state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
     state.payloadError = null; renderWsState();
     const prevSelected = state.selectedClientId;
     state.clients = adapted.clients as unknown as ClientRow[];
