@@ -7,6 +7,7 @@ geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from math import isfinite, pi
 from threading import RLock
 
@@ -78,7 +79,7 @@ DEFAULT_ANALYSIS_SETTINGS: dict[str, float] = {
 
 def sanitize_settings(
     payload: dict[str, object],
-    allowed_keys: dict[str, float] | None = None,
+    allowed_keys: Mapping[str, float] | None = None,
 ) -> dict[str, float]:
     """Validate and filter analysis settings, dropping invalid values with logging.
 
