@@ -461,6 +461,11 @@ class HistoryDB:
                 )
 
     def update_run_metadata(self, run_id: str, metadata: dict[str, Any]) -> bool:
+        """Overwrite the stored metadata for *run_id*.
+
+        Returns ``True`` when the row was found and updated, ``False`` when
+        no run with that ID exists.
+        """
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
@@ -827,6 +832,7 @@ class HistoryDB:
         return parsed
 
     def get_run_status(self, run_id: str) -> str | None:
+        """Return the status string for *run_id*, or ``None`` if not found."""
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
