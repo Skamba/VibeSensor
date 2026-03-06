@@ -372,3 +372,69 @@ class TestSyncedClockAlignment:
         buf = proc._buffers["s1"]
         assert buf.last_t0_us == 50_000_000
         assert buf.samples_since_t0 == 200  # 100 + 100
+
+
+# ---------------------------------------------------------------------------
+# Wave 3 Bruno3 — analysis_time_range edge-case fixes
+# ---------------------------------------------------------------------------
+
+
+class TestAnalysisTimeRangeEdgeCases:
+    """Tests for Fix 9 (negative samples_since_t0 guard) and Fix 10
+    (waveform_seconds <= 0 early return) in analysis_time_range."""
+
+    def test_negative_samples_since_t0_clamped_to_zero(self) -> None:
+        """Fix 9: samples_since_t0 < 0 must not produce end_us < last_t0_us.
+
+        When samples_since_t0 is negative (defensive guard against corruption),
+        analysis_time_range should clamp it to 0 so end_s == last_t0_us / 1e6.
+        """
+        from vibesensor.processing.time_align import analysis_time_range
+
+        last_t0_us = 10_000_000  # 10 s
+        result = analysis_time_range(
+            count=400,
+            last_ingest_mono_s=10.5,
+            sample_rate_hz=200,
+            waveform_seconds=2,
+            capacity=400,
+            last_t0_us=last_t0_us,
+            samples_since_t0=-50,  # corrupt / inverted — must be clamped
+        )
+        assert result is not None
+        start_s, end_s, synced = result
+        assert synced is True
+        # end_s must equal last_t0_us / 1e6 (0 samples advanced)
+        assert end_s == pytest.approx(10.0)
+        assert start_s <= end_s
+
+    def test_zero_waveform_seconds_returns_none(self) -> None:
+        """Fix 10: waveform_seconds <= 0 must return None rather than a silent 1-sample window."""
+        from vibesensor.processing.time_align import analysis_time_range
+
+        result = analysis_time_range(
+            count=400,
+            last_ingest_mono_s=10.5,
+            sample_rate_hz=200,
+            waveform_seconds=0,
+            capacity=400,
+            last_t0_us=0,
+            samples_since_t0=0,
+        )
+        assert result is None
+
+    def test_negative_waveform_seconds_returns_none(self) -> None:
+        """Fix 10: waveform_seconds < 0 must also return None."""
+        from vibesensor.processing.time_align import analysis_time_range
+
+        result = analysis_time_range(
+            count=200,
+            last_ingest_mono_s=5.0,
+            sample_rate_hz=100,
+            waveform_seconds=-3,
+            capacity=300,
+            last_t0_us=0,
+            samples_since_t0=0,
+        )
+        assert result is None
+
