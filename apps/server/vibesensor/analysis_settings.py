@@ -3,6 +3,7 @@
 Provides ``DEFAULT_ANALYSIS_SETTINGS``, ``sanitize_settings()``, tire/wheel
 geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
 """
+
 from __future__ import annotations
 
 import logging
@@ -174,6 +175,8 @@ def engine_rpm_from_wheel_hz(wheel_hz: float, final_drive_ratio: float, gear_rat
 
 
 class AnalysisSettingsStore:
+    """Thread-safe store for runtime analysis settings (tire specs, gear ratios, etc.)."""
+
     def __init__(self) -> None:
         self._lock = RLock()
         self._values: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)

@@ -4,6 +4,7 @@
 transmits binary control frames (``CmdMessage``, ``AckMessage``) to sensor
 nodes over the control UDP socket.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -66,6 +67,8 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
 
 
 class UDPControlPlane:
+    """Manages the control UDP socket: receives ACKs, sends commands to sensors."""
+
     def __init__(self, registry: ClientRegistry, bind_host: str, bind_port: int):
         self.registry = registry
         self.bind_host = bind_host

@@ -3,6 +3,7 @@
 Loads the YAML config file, deep-merges with defaults, and validates
 all sections into typed ``AppConfig`` dataclass hierarchy.
 """
+
 from __future__ import annotations
 
 import ipaddress

@@ -3,6 +3,7 @@
 ``BANDS`` defines six strength levels (l0–l5) with minimum dB thresholds.
 ``bucket_for_strength`` maps a dB value to the appropriate band key.
 """
+
 from __future__ import annotations
 
 from typing import TypedDict

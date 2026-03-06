@@ -4,6 +4,7 @@
 processed metric payloads to all subscribed clients with back-pressure
 protection via per-connection send queues.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -44,11 +45,15 @@ _MAX_CONSECUTIVE_FAILURES: int = 10
 
 @dataclass(slots=True)
 class WSConnection:
+    """Tracks a single active WebSocket connection and its selected client filter."""
+
     websocket: WebSocket
     selected_client_id: str | None = None
 
 
 class WebSocketHub:
+    """Fan-out broadcaster: sends live metric payloads to all connected WebSocket clients."""
+
     def __init__(self) -> None:
         self._connections: dict[int, WSConnection] = {}
         self._lock = asyncio.Lock()

@@ -51,9 +51,9 @@ class SpectrumSeries(BaseModel):
 
 
 class AlignmentInfo(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    """Multi-sensor clock-alignment quality metrics for a frequency window."""
 
-    overlap_ratio: float
+    model_config = ConfigDict(frozen=True)
     aligned: bool
     shared_window_s: float
     sensor_count: int
@@ -61,9 +61,9 @@ class AlignmentInfo(BaseModel):
 
 
 class FrequencyWarning(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    """Warning about frequency data quality issues in a spectra payload."""
 
-    code: str
+    model_config = ConfigDict(frozen=True)
     message: str
     client_ids: list[str]
 
@@ -80,17 +80,17 @@ class SpectraPayload(BaseModel):
 
 
 class RotationalSpeedValue(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    """Current rotational speed estimate with source and confidence metadata."""
 
-    rpm: float | None = None
+    model_config = ConfigDict(frozen=True)
     mode: str | None = None
     reason: str | None = None
 
 
 class OrderBand(BaseModel):
-    model_config = ConfigDict(frozen=True)
+    """Frequency band for a specific rotation-order harmonic."""
 
-    key: str
+    model_config = ConfigDict(frozen=True)
     center_hz: float
     tolerance: float
 

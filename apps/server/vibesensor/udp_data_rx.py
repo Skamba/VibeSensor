@@ -4,6 +4,7 @@
 incoming ``DataMessage`` frames, deduplicates them via the client registry,
 runs the processing pipeline, and hands results to the metrics logger.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -21,6 +22,8 @@ _QUEUE_DROP_LOG_INTERVAL_S: float = 10.0
 
 
 class DataDatagramProtocol(asyncio.DatagramProtocol):
+    """asyncio ``DatagramProtocol`` that ingests UDP sensor data frames."""
+
     _MSG_DATA: int = MSG_DATA  # class-level cache avoids module-dict lookup per packet
 
     def __init__(

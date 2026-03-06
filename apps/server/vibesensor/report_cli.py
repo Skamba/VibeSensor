@@ -1,4 +1,5 @@
 """``vibesensor-report`` CLI — generate PDF reports from JSONL run logs."""
+
 from __future__ import annotations
 
 import argparse

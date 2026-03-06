@@ -52,6 +52,8 @@ STALE_DATA_AGE_S = 2.0
 
 @dataclass(slots=True)
 class RuntimeState:
+    """Owns all live server state: registry, processor, websocket hub, GPS, etc."""
+
     config: AppConfig
     registry: ClientRegistry
     processor: SignalProcessor

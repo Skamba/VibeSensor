@@ -3,6 +3,7 @@
 Maps sensor model strings to their physical scale factor (g per LSB),
 keeping hardware-specific constants out of the core analysis pipeline.
 """
+
 from __future__ import annotations
 
 from typing import Final

@@ -63,12 +63,16 @@ class _FromDictMixin:
 
 @dataclass
 class CarMeta(_FromDictMixin):
+    """Vehicle identification metadata (name, type) extracted from the report run."""
+
     name: str | None = None
     car_type: str | None = None
 
 
 @dataclass
 class ObservedSignature(_FromDictMixin):
+    """The dominant vibration signature observed during the run."""
+
     primary_system: str | None = None
     strongest_sensor_location: str | None = None
     speed_band: str | None = None
@@ -82,6 +86,8 @@ class ObservedSignature(_FromDictMixin):
 
 @dataclass
 class PartSuggestion:
+    """A suggested replacement part associated with a diagnostic finding."""
+
     name: str = ""
     why_shown: str | None = None
 
@@ -96,6 +102,8 @@ class PartSuggestion:
 
 @dataclass
 class SystemFindingCard:
+    """A per-system diagnostic finding card for the report, with location and parts."""
+
     system_name: str = ""
     strongest_location: str | None = None
     pattern_summary: str | None = None

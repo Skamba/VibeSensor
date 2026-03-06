@@ -88,10 +88,14 @@ class _ExtraAllowBase(BaseModel):
 
 
 class IdentifyRequest(_FrozenBase):
+    """Request body for the ``/api/clients/{id}/identify`` endpoint."""
+
     duration_ms: int = Field(default=1500, ge=100, le=60_000)
 
 
 class SetLocationRequest(_FrozenBase):
+    """Request body for setting the sensor location code."""
+
     location_code: str = Field(min_length=0, max_length=64)
 
 

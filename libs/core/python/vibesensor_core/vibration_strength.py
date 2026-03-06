@@ -14,6 +14,7 @@ compute_vibration_strength_db
 combined_spectrum_amp_g
     Canonical multi-axis combination: ``sqrt(mean(axis_amp²))``.
 """
+
 from __future__ import annotations
 
 from math import isfinite, log10, sqrt

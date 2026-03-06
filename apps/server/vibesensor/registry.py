@@ -3,6 +3,7 @@
 Maintains per-client state (sequence numbers, dedup windows, last-seen
 timestamps) and exposes a snapshot API for connected clients.
 """
+
 from __future__ import annotations
 
 import logging

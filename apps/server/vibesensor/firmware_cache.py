@@ -83,6 +83,8 @@ def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:
 
 @dataclass
 class FirmwareCacheConfig:
+    """Configuration for the local ESP32 firmware download cache."""
+
     cache_dir: str = ""
     firmware_repo: str = _DEFAULT_FIRMWARE_REPO
     channel: str = "stable"  # "stable" or "prerelease"

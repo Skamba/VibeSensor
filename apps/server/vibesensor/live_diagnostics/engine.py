@@ -45,6 +45,8 @@ _COMBINED_TRACKER_PRUNE_MS: int = 30_000
 
 
 class LiveDiagnosticsEngine:
+    """Coordinates severity tracking, matrix updates, and live event emission."""
+
     def __init__(self) -> None:
         self._matrix = SeverityMatrix()
         self._sensor_trackers: dict[str, _TrackerLevelState] = {}
