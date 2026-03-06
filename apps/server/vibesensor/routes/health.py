@@ -18,10 +18,11 @@ def create_health_routes(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
+        failures = state.processing_failure_count
         return {
-            "status": "ok",
+            "status": "ok" if failures == 0 else "degraded",
             "processing_state": state.processing_state,
-            "processing_failures": state.processing_failure_count,
+            "processing_failures": failures,
             "intake_stats": state.processor.intake_stats(),
         }
 

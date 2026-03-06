@@ -188,7 +188,8 @@ class APSelfHealConfig:
         mri = self.min_restart_interval_seconds
         if not isinstance(mri, int) or mri < 0:
             raise ValueError(
-                f"ap.self_heal.min_restart_interval_seconds must be a non-negative integer, got {mri!r}"
+                "ap.self_heal.min_restart_interval_seconds must be a non-negative integer,"
+                f" got {mri!r}"
             )
 
 

@@ -197,8 +197,11 @@ class _FakeState:
             {
                 "debug_spectrum": lambda self, _id: {},
                 "raw_samples": lambda self, _id, n_samples=1: {},
+                "intake_stats": lambda self: {},
             },
         )()
+        self.processing_failure_count = 0
+        self.processing_state = "idle"
 
 
 def _make_router_and_state(language: str = "en", sample_count: int = 20):
@@ -670,7 +673,7 @@ async def test_history_endpoints_return_404_for_unknown_run(path: str, lang: str
 @pytest.mark.parametrize(
     ("status", "analysis", "expected_status", "expected_detail"),
     [
-        ("analyzing", {"status": "analyzing"}, 200, None),
+        ("analyzing", {"status": "analyzing"}, 202, None),
         ("error", {"status": "error"}, 422, "Analysis failed"),
         ("complete", None, 422, "No analysis available for this run"),
     ],
@@ -684,9 +687,14 @@ async def test_history_insights_status_and_analysis_errors(
     router = _make_status_router(status=status, analysis=analysis, include_error_message=False)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
 
-    if expected_status == 200:
+    if expected_status == 202:
+        from fastapi.responses import JSONResponse
+
         payload = await endpoint("run-1", "en")
-        assert payload["status"] == "analyzing"
+        assert isinstance(payload, JSONResponse)
+        assert payload.status_code == 202
+        body = json.loads(payload.body)
+        assert body["status"] == "analyzing"
         return
     with pytest.raises(HTTPException) as exc_info:
         await endpoint("run-1", "en")
@@ -810,3 +818,192 @@ async def test_ws_ignores_invalid_client_selection_messages(messages: list[str])
     ws = _FakeWs(messages=messages)
     await endpoint(ws)
     assert state.ws_hub.selected_updates == [None]
+
+
+# ---------------------------------------------------------------------------
+# Fix 1+6: get_history_insights copies analysis before mutation and always
+# emits analysis_is_current regardless of whether analysis_version is present.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_history_insights_does_not_mutate_db_analysis() -> None:
+    """get_history_insights must not modify the analysis dict returned by the DB."""
+    router, state = _make_router_and_state(language="en")
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
+    original_analysis = state.history_db.analysis
+    original_keys = set(original_analysis.keys())
+
+    await endpoint("run-1", "en")
+
+    # The original dict must remain unchanged after the route handler ran.
+    assert set(state.history_db.analysis.keys()) == original_keys, (
+        "get_history_insights mutated the cached analysis dict"
+    )
+
+
+@pytest.mark.asyncio
+async def test_history_insights_always_emits_analysis_is_current() -> None:
+    """analysis_is_current must be present even when analysis_version is None."""
+    @dataclass
+    class _NoVersionDB(_FakeHistoryDB):
+        def get_run(self, run_id: str) -> dict[str, Any] | None:
+            if run_id != "run-1":
+                return None
+            return {
+                "run_id": run_id,
+                "status": "complete",
+                "metadata": self.metadata,
+                "analysis": self.analysis,
+                # Intentionally omit analysis_version
+            }
+
+    metadata = _make_metadata()
+    samples = [_sample(i) for i in range(5)]
+    analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    db = _NoVersionDB(metadata, samples, analysis)
+    router = create_router(_FakeState(db, _FakeWsHub()))
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
+
+    payload = await endpoint("run-1", "en")
+    assert "analysis_is_current" in payload
+    assert payload["analysis_is_current"] is False
+
+
+# ---------------------------------------------------------------------------
+# Fix 2: get_history_run strips internal _* fields from analysis
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_history_run_strips_internal_analysis_fields() -> None:
+    """GET /api/history/{run_id} must not expose _-prefixed internal keys."""
+    @dataclass
+    class _InternalFieldDB(_FakeHistoryDB):
+        def get_run(self, run_id: str) -> dict[str, Any] | None:
+            if run_id != "run-1":
+                return None
+            return {
+                "run_id": run_id,
+                "status": "complete",
+                "metadata": self.metadata,
+                "analysis": {
+                    "some_field": 42,
+                    "_internal_secret": "should-not-appear",
+                    "_report_template_data": {"lang": "en"},
+                },
+            }
+
+    metadata = _make_metadata()
+    samples = [_sample(0)]
+    db = _InternalFieldDB(metadata, samples, {})
+    router = create_router(_FakeState(db, _FakeWsHub()))
+    endpoint = _route_endpoint(router, "/api/history/{run_id}")
+
+    result = await endpoint("run-1")
+    assert isinstance(result, dict)
+    analysis = result.get("analysis", {})
+    assert "_internal_secret" not in analysis
+    assert "_report_template_data" not in analysis
+    assert analysis.get("some_field") == 42
+
+
+# ---------------------------------------------------------------------------
+# Fix 7: health endpoint returns "degraded" when processing_failures > 0
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_health_ok_status_when_no_failures() -> None:
+    router, _ = _make_router_and_state()
+    endpoint = _route_endpoint(router, "/api/health")
+    resp = await endpoint()
+    assert resp["status"] == "ok"
+
+
+@pytest.mark.asyncio
+async def test_health_degraded_status_when_processing_failures() -> None:
+    """Health endpoint must report 'degraded' when processing_failure_count > 0."""
+    router, state = _make_router_and_state()
+    state.processing_failure_count = 3
+    endpoint = _route_endpoint(router, "/api/health")
+    resp = await endpoint()
+    assert resp["status"] == "degraded"
+    assert resp["processing_failures"] == 3
+
+
+# ---------------------------------------------------------------------------
+# Fix 9: identify_client uses 404 for unknown sensor and 503 for unreachable
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_identify_client_404_when_sensor_not_in_registry() -> None:
+    """identify_client returns 404 when the sensor is not in the registry."""
+    router, state = _make_router_and_state()
+    state.registry = type(
+        "R", (), {"get": lambda self, cid: None}
+    )()
+    endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
+    assert exc_info.value.status_code == 404
+    assert "not found" in exc_info.value.detail.lower()
+
+
+@pytest.mark.asyncio
+async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
+    """identify_client returns 503 when sensor is in registry but not reachable."""
+    _sentinel = object()
+    router, state = _make_router_and_state()
+    state.registry = type(
+        "R", (), {"get": lambda self, cid: _sentinel}
+    )()
+    state.control_plane = type(
+        "C", (), {"send_identify": lambda self, _id, _dur: (False, None)}
+    )()
+    endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
+    assert exc_info.value.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_identify_client_200_when_sensor_reachable() -> None:
+    """identify_client returns the sent status when sensor responds."""
+    _sentinel = object()
+    router, state = _make_router_and_state()
+    state.registry = type(
+        "R", (), {"get": lambda self, cid: _sentinel}
+    )()
+    state.control_plane = type(
+        "C", (), {"send_identify": lambda self, _id, _dur: (True, 7)}
+    )()
+    endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
+
+    resp = await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())
+    assert resp == {"status": "sent", "cmd_seq": 7}
+
+
+# ---------------------------------------------------------------------------
+# Fix 10: get_history_insights returns 202 while analyzing
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_history_insights_analyzing_returns_202_json_response() -> None:
+    """Insights endpoint must return 202 (not 200) when run is still analyzing."""
+    from fastapi.responses import JSONResponse
+
+    router = _make_status_router(
+        status="analyzing", analysis={"status": "analyzing"}, include_error_message=False
+    )
+    endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
+    result = await endpoint("run-1", "en")
+    assert isinstance(result, JSONResponse)
+    assert result.status_code == 202
+    body = json.loads(result.body)
+    assert body["status"] == "analyzing"
+    assert body["run_id"] == "run-1"

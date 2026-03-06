@@ -119,7 +119,15 @@ acceleration fields may still be expressed in g.
 vibesensor/analysis/
 ├── __init__.py            Public API re-exports
 ├── summary.py             Pipeline entrypoint (summarize_run_data)
-├── findings.py            Core findings engine, order tracking
+├── findings/              Core findings engine (package)
+│   ├── __init__.py        Public re-exports for the findings sub-package
+│   ├── builder.py         Main _build_findings() orchestrator
+│   ├── order_findings.py  Order-tracking hypothesis matching engine
+│   ├── intensity.py       Per-location intensity statistics
+│   ├── persistent_findings.py  Non-order persistent/transient peak findings
+│   ├── reference_checks.py    Reference-missing finding generation
+│   ├── speed_profile.py   Speed-profile extraction and phase-string helpers
+│   └── _constants.py      Shared constants across the findings sub-package
 ├── order_analysis.py      Wheel/engine/driveshaft Hz helpers
 ├── phase_segmentation.py  Driving-phase classification
 ├── helpers.py             Constants, statistics, strength utils

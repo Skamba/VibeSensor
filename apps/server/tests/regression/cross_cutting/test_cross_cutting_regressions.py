@@ -225,6 +225,23 @@ class TestBug10ConfidenceLabelNone:
         label_key, tone, pct_text = confidence_label(0.0)
         assert label_key == "CONFIDENCE_LOW"
 
+    def test_inf_confidence_returns_low_not_high(self) -> None:
+        """float('inf') previously returned CONFIDENCE_HIGH silently."""
+        label_key, tone, pct_text = confidence_label(float("inf"))
+        assert label_key == "CONFIDENCE_LOW"
+        assert pct_text == "0%"
+
+    def test_nan_confidence_consistent_label_and_pct(self) -> None:
+        """float('nan') previously gave pct_text='100%' with CONFIDENCE_LOW label."""
+        label_key, tone, pct_text = confidence_label(float("nan"))
+        assert label_key == "CONFIDENCE_LOW"
+        assert pct_text == "0%"
+
+    def test_neg_inf_confidence_returns_low(self) -> None:
+        label_key, tone, pct_text = confidence_label(float("-inf"))
+        assert label_key == "CONFIDENCE_LOW"
+        assert pct_text == "0%"
+
 
 # ---------------------------------------------------------------------------
 # Bug 11: _order_label_human case-sensitive lookup
@@ -928,7 +945,7 @@ class TestWebSocketHubCircuitBreaker:
 
     def test_run_method_has_consecutive_failure_tracking(self):
         """ws_hub.run() should track consecutive failures."""
-        assert "_consecutive_failures" in self._WS_HUB_RUN_SRC, (
+        assert "consecutive_failures" in self._WS_HUB_RUN_SRC, (
             "run() should track consecutive failures"
         )
         assert "_MAX_CONSECUTIVE_FAILURES" in self._WS_HUB_RUN_SRC, (
@@ -937,7 +954,7 @@ class TestWebSocketHubCircuitBreaker:
 
     def test_failure_counter_resets_on_success(self):
         """After a successful tick, the failure counter should reset."""
-        assert "_consecutive_failures = 0" in self._WS_HUB_RUN_SRC, (
+        assert "consecutive_failures = 0" in self._WS_HUB_RUN_SRC, (
             "Failure counter should be reset to 0 on success"
         )
 

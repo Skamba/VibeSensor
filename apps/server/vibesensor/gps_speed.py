@@ -45,8 +45,15 @@ _GPS_ZERO_CONFIRM_SAMPLES: int = 3
 DEFAULT_STALE_TIMEOUT_S: float = 10.0
 MIN_STALE_TIMEOUT_S: float = 3.0
 MAX_STALE_TIMEOUT_S: float = 120.0
-VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
+VALID_FALLBACK_MODES: frozenset[str] = frozenset({"manual"})
+"""Use frozenset so ``in`` membership tests are O(1) and the set is immutable."""
 DEFAULT_FALLBACK_MODE: str = "manual"
+
+# Speed plausibility limits
+_GPS_MAX_SPEED_MPS: float = 150.0
+"""Reject GPS TPV speed samples above this value (≈ 540 km/h) as implausible."""
+MAX_MANUAL_SPEED_KMH: float = 500.0
+"""Upper bound for manually supplied speed overrides."""
 
 
 def _is_numeric(value: object) -> bool:
@@ -58,6 +65,7 @@ class GPSSpeedMonitor:
     """Monitors GPS speed over a serial connection and exposes it via ``speed_mps``."""
 
     def __init__(self, gps_enabled: bool):
+        """Initialise the GPS speed monitor with the given enabled flag."""
         self.gps_enabled = gps_enabled
         self.override_speed_mps: float | None = None
         # None keeps legacy behavior (override has top priority) for backwards
@@ -107,10 +115,11 @@ class GPSSpeedMonitor:
         consumers should prefer this over reading ``effective_speed_mps``
         and ``fallback_active`` separately when they need both values.
         """
-        if self.manual_source_selected in (None, True) and isinstance(
-            self.override_speed_mps, NUMERIC_TYPES
+        if self.manual_source_selected in (None, True) and _is_numeric(
+            self.override_speed_mps
         ):
-            # Legacy path (None) or explicitly selected manual source
+            # Legacy path (None) or explicitly selected manual source.
+            # _is_numeric() excludes bool to prevent accidental bool→speed coercion.
             return SpeedResolution(float(self.override_speed_mps), False, "manual")
         # Manual selected but no override set → fall through to GPS
 
@@ -170,7 +179,8 @@ class GPSSpeedMonitor:
 
     def _fallback_speed_value(self) -> float | None:
         """Return fallback speed if available — **no side effects**."""
-        if self.fallback_mode == "manual" and isinstance(self.override_speed_mps, NUMERIC_TYPES):
+        # _is_numeric() excludes bool to match the guard in resolve_speed().
+        if self.fallback_mode == "manual" and _is_numeric(self.override_speed_mps):
             return float(self.override_speed_mps)
         return None
 
@@ -182,6 +192,13 @@ class GPSSpeedMonitor:
         if speed_val < 0 or not math.isfinite(speed_val):
             self.override_speed_mps = None
             return None
+        if speed_val > MAX_MANUAL_SPEED_KMH:
+            LOGGER.warning(
+                "Manual speed override %.1f km/h exceeds cap %.1f km/h; clamping.",
+                speed_val,
+                MAX_MANUAL_SPEED_KMH,
+            )
+            speed_val = MAX_MANUAL_SPEED_KMH
         self.override_speed_mps = speed_val * KMH_TO_MPS
         return speed_val
 
@@ -199,8 +216,15 @@ class GPSSpeedMonitor:
                 MIN_STALE_TIMEOUT_S,
                 min(MAX_STALE_TIMEOUT_S, float(stale_timeout_s)),
             )
-        if fallback_mode is not None and fallback_mode in VALID_FALLBACK_MODES:
-            self.fallback_mode = fallback_mode
+        if fallback_mode is not None:
+            if fallback_mode in VALID_FALLBACK_MODES:
+                self.fallback_mode = fallback_mode
+            else:
+                LOGGER.warning(
+                    "Ignoring unknown fallback_mode %r; valid values: %s",
+                    fallback_mode,
+                    sorted(VALID_FALLBACK_MODES),
+                )
 
     @staticmethod
     def _read_non_negative_metric(payload: dict[str, Any], field: str) -> float | None:
@@ -226,7 +250,8 @@ class GPSSpeedMonitor:
             if self.last_epx_m <= _GPS_MAX_EPH_M and self.last_epy_m <= _GPS_MAX_EPH_M:
                 return "medium"
             return "low"
-        return "medium"
+        # 2-D fix but no horizontal-error estimate — quality is unconfirmed.
+        return "low"
 
     def _accept_speed_sample(self, speed_mps: float) -> bool:
         if speed_mps == 0.0:
@@ -244,7 +269,8 @@ class GPSSpeedMonitor:
         """Clear stale fix-quality fields when GPS disconnects.
 
         Prevents the status dict from showing contradictory state like
-        connection_state="disconnected" + fix_dimension="3d".
+        connection_state="disconnected" + fix_dimension="3d" or a stale
+        device name that no longer reflects the active connection.
         """
         self.last_fix_mode = None
         self.last_epx_m = None
@@ -252,6 +278,7 @@ class GPSSpeedMonitor:
         self.last_epv_m = None
         self._zero_speed_streak = 0
         self._speed_snapshot = (None, None)
+        self.device_info = None
 
     def status_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable status snapshot — **no side effects**."""
@@ -299,6 +326,7 @@ class GPSSpeedMonitor:
                 round(self.current_reconnect_delay, 1) if conn_state == "disconnected" else None
             ),
             "fallback_active": resolution.fallback_active,
+            "speed_source": resolution.source,
             "stale_timeout_s": self.stale_timeout_s,
             "fallback_mode": self.fallback_mode,
         }
@@ -332,6 +360,10 @@ class GPSSpeedMonitor:
                 await writer.drain()
                 self.connection_state = "connected"
                 self.last_error = None
+                # Reset reconnect delay so status_dict shows the initial value
+                # after a successful connection, not the last back-off delay.
+                self.current_reconnect_delay = _GPS_RECONNECT_DELAY_S
+                reconnect_delay = _GPS_RECONNECT_DELAY_S
                 while True:
                     line = await asyncio.wait_for(reader.readline(), timeout=_GPS_READ_TIMEOUT_S)
                     if not line:
@@ -363,6 +395,7 @@ class GPSSpeedMonitor:
                         and _is_num(speed)
                         and _isfinite(speed)
                         and speed >= 0
+                        and speed <= _GPS_MAX_SPEED_MPS
                     ):
                         speed_mps = float(speed)
                         if self._accept_speed_sample(speed_mps):

@@ -127,9 +127,10 @@ def _annotate_peaks_with_order_labels(summary: dict[str, Any]) -> None:
         if not isinstance(matched_pts, list) or not matched_pts:
             continue
         matched_freqs = [
-            float(pt["matched_hz"])
+            v
             for pt in matched_pts
-            if isinstance(pt, dict) and pt.get("matched_hz") is not None
+            if isinstance(pt, dict)
+            and (v := _as_float(pt.get("matched_hz"))) is not None
         ]
         if not matched_freqs:
             continue
@@ -189,6 +190,13 @@ def confidence_label(
 
     """
     conf = float(conf_0_to_1) if conf_0_to_1 is not None else 0.0
+    # Guard non-finite values before pct arithmetic: float('nan') * 100 can
+    # produce 100.0 via min(100.0, nan) (CPython behavior), giving pct_text
+    # "100%" while nan comparisons force the label to "CONFIDENCE_LOW" —
+    # an obviously inconsistent output. float('inf') silently returns
+    # "CONFIDENCE_HIGH" for garbage input. Clamp both to 0.0 here.
+    if not math.isfinite(conf):
+        conf = 0.0
     pct = max(0.0, min(100.0, conf * 100.0))
     pct_text = f"{pct:.0f}%"
     if conf >= CONFIDENCE_HIGH_THRESHOLD:

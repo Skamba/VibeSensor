@@ -35,6 +35,11 @@ class TestCertaintyTierThresholds:
             pytest.param(0.10, "A", id="10pct"),
             pytest.param(TIER_A_CEILING, "A", id="ceiling_a"),
             pytest.param(-0.1, "A", id="negative_edge_case"),
+            # Non-finite inputs must always return "A" (lowest tier):
+            # float('inf') previously passed both <= guards and returned "C".
+            pytest.param(float("inf"), "A", id="inf_clamps_to_tier_a"),
+            pytest.param(float("nan"), "A", id="nan_clamps_to_tier_a"),
+            pytest.param(float("-inf"), "A", id="neg_inf_clamps_to_tier_a"),
             # Tier B: moderate confidence (15% < x ≤ 40%)
             pytest.param(TIER_A_CEILING + 0.001, "B", id="just_above_a"),
             pytest.param(0.16, "B", id="16pct"),

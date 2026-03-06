@@ -18,16 +18,32 @@ combined_spectrum_amp_g
 from __future__ import annotations
 
 from math import isfinite, log10, sqrt
-from typing import Any
+from typing import Any, Final
 
 from .strength_bands import bucket_for_strength
 
-PEAK_BANDWIDTH_HZ = 1.2
-PEAK_SEPARATION_HZ = 1.2
+__all__ = [
+    "PEAK_BANDWIDTH_HZ",
+    "PEAK_SEPARATION_HZ",
+    "PEAK_THRESHOLD_FLOOR_RATIO",
+    "STRENGTH_EPSILON_FLOOR_RATIO",
+    "STRENGTH_EPSILON_MIN_G",
+    "combined_spectrum_amp_g",
+    "compute_vibration_strength_db",
+    "median",
+    "noise_floor_amp_p20_g",
+    "peak_band_rms_amp_g",
+    "percentile",
+    "strength_floor_amp_g",
+    "vibration_strength_db_scalar",
+]
 
-STRENGTH_EPSILON_MIN_G = 1e-9
-STRENGTH_EPSILON_FLOOR_RATIO = 0.05
-PEAK_THRESHOLD_FLOOR_RATIO = 2.6
+PEAK_BANDWIDTH_HZ: Final[float] = 1.2
+PEAK_SEPARATION_HZ: Final[float] = 1.2
+
+STRENGTH_EPSILON_MIN_G: Final[float] = 1e-9
+STRENGTH_EPSILON_FLOOR_RATIO: Final[float] = 0.05
+PEAK_THRESHOLD_FLOOR_RATIO: Final[float] = 2.6
 
 
 def median(values: list[float]) -> float:
