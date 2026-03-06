@@ -7,7 +7,6 @@ import { SpectrumChart } from "../spectrum";
 import { escapeHtml, fmt, fmtTs, formatInt } from "../format";
 import { combinedRelativeUncertainty, parseTireSpec, tireDiameterMeters, toleranceForOrder } from "../vehicle_math";
 import { adaptServerPayload } from "../server_payload";
-import type { AdaptedSpectrum } from "../server_payload";
 import type { RotationalSpeeds } from "../server_payload";
 import { WsClient } from "../ws";
 import { runDemoMode } from "../features/demo/runDemoMode";
@@ -192,7 +191,7 @@ export function startUiApp(): void {
 
   function vehicleOrdersHz() {
     const speed = effectiveSpeedMps();
-    if (!(typeof speed === "number" && speed > 0)) return null;
+    if (speed === null) return null;
     const tire = parseTireSpec({ widthMm: state.vehicleSettings.tire_width_mm, aspect: state.vehicleSettings.tire_aspect_pct, rimIn: state.vehicleSettings.rim_in });
     if (!tire) return null;
     const wheelHz = speed / (Math.PI * tireDiameterMeters(tire));
@@ -383,7 +382,7 @@ export function startUiApp(): void {
     const prevSelected = state.selectedClientId;
     state.clients = adapted.clients as unknown as ClientRow[];
     const incomingSpectra = adapted.spectra
-      ? { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]: [string, AdaptedSpectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics as Record<string, unknown>, combined: spectrum.combined }])) }
+      ? { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics, combined: spectrum.combined }])) }
       : null;
     const spectrumTick = applySpectrumTick(state.spectra, state.hasSpectrumData, incomingSpectra);
     state.spectra = spectrumTick.spectra;

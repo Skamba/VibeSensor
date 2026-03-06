@@ -44,7 +44,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     { key: "trunk", top: 86, left: 50 },
   ];
 
-  function ensureRunDetail(runId: string) {
+  function ensureRunDetail(runId: string): RunDetail {
     if (!state.runDetailsById[runId]) {
       state.runDetailsById[runId] = {
         preview: null,
@@ -69,7 +69,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   function summarizeFindings(summary: Record<string, unknown> | null): Record<string, unknown>[] {
-    const findings = Array.isArray(summary?.findings) ? summary!.findings : [];
+    const findings = summary !== null && Array.isArray(summary.findings) ? summary.findings : [];
     return findings.slice(0, 3);
   }
 
@@ -154,7 +154,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     const loading = detail.insightsLoading;
     const findingsMarkup = findings.length
       ? findings
-          .map((finding: Record<string, unknown>) => {
+          .map((finding) => {
             const source = finding?.suspected_source || t("report.missing");
             const confidence = typeof finding?.confidence_0_to_1 === "number" ? fmt(finding.confidence_0_to_1, 2) : "--";
             return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(finding?.evidence_summary || "")}</li>`;
@@ -277,7 +277,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.previewError = "";
     renderHistoryTable();
     try {
-      detail.preview = await getHistoryInsights(runId, state.lang) as Record<string, unknown>;
+      detail.preview = await getHistoryInsights(runId, state.lang);
     } catch (err) {
       detail.previewError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {
@@ -294,7 +294,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     detail.insightsError = "";
     renderHistoryTable();
     try {
-      detail.insights = await getHistoryInsights(runId, state.lang) as Record<string, unknown>;
+      detail.insights = await getHistoryInsights(runId, state.lang);
     } catch (err) {
       detail.insightsError = err instanceof Error ? err.message : t("report.unable_load_insights");
     } finally {
@@ -373,7 +373,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   function reloadExpandedRunOnLanguageChange(): void {
     if (!state.expandedRunId) return;
     const runId = state.expandedRunId;
-    const detail = state.runDetailsById?.[runId];
+    const detail = state.runDetailsById[runId];
     const shouldReloadInsights = Boolean(detail?.insights);
     delete state.runDetailsById[runId];
     void loadRunPreview(runId, true).then(() => {

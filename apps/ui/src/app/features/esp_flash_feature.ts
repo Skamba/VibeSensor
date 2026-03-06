@@ -1,5 +1,5 @@
 import type { UiDomElements } from "../dom/ui_dom_registry";
-import type { EspFlashHistoryAttemptPayload, EspFlashStatusPayload } from "../../api/types";
+import type { EspFlashStatusPayload } from "../../api/types";
 import {
   cancelEspFlash,
   getEspFlashHistory,
@@ -48,14 +48,12 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
 
   function renderStatus(status: EspFlashStatusPayload): void {
     if (els.espFlashStatusBanner) {
-      const state =
-        typeof status.state === "string" && status.state
-          ? status.state
-          : "idle";
-      const stateLabel = t(`settings.esp_flash.state.${state}`);
+      // Defensively fallback to "idle" when state is missing from API response
+      const safeState: string = status.state || "idle";
+      const stateLabel = t(`settings.esp_flash.state.${safeState}`);
       const extra = status.error ? ` — ${status.error}` : "";
       els.espFlashStatusBanner.textContent = `${stateLabel}${extra}`;
-      const variant = STATE_TO_VARIANT[state] || "muted";
+      const variant = STATE_TO_VARIANT[safeState] || "muted";
       els.espFlashStatusBanner.className = `pill pill--${variant}`;
     }
     if (els.espFlashStartBtn) els.espFlashStartBtn.disabled = status.state === "running";
@@ -87,12 +85,10 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
       els.espFlashHistoryPanel.innerHTML = `<div class="subtle">${escapeHtml(t("settings.esp_flash.no_history"))}</div>`;
       return;
     }
-    const rows = attempts.map((attempt: EspFlashHistoryAttemptPayload) => {
-      const state =
-        typeof attempt?.state === "string" && attempt.state
-          ? attempt.state
-          : "idle";
-      const stateLabel = t(`settings.esp_flash.state.${state}`);
+    const rows = attempts.map((attempt) => {
+      // Defensively fallback to "idle" when state is missing from API response
+      const safeState: string = attempt.state || "idle";
+      const stateLabel = t(`settings.esp_flash.state.${safeState}`);
       const port = attempt.selected_port || t("settings.esp_flash.auto_detect");
       return `<li><strong>${escapeHtml(stateLabel)}</strong> — ${escapeHtml(port)}</li>`;
     });

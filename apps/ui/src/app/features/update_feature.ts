@@ -35,11 +35,9 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
   const { els, t, escapeHtml } = ctx;
 
   let pollTimer: ReturnType<typeof setTimeout> | null = null;
-  let lastStatus: UpdateStatusPayload | null = null;
   let passwordVisible = false;
 
   function renderStatus(status: UpdateStatusPayload): void {
-    lastStatus = status;
     const panel = els.updateStatusPanel;
     if (!panel) return;
 
@@ -53,14 +51,14 @@ export function createUpdateFeature(ctx: UpdateFeatureDeps): UpdateFeature {
     // Toggle buttons
     if (els.updateStartBtn) {
       els.updateStartBtn.hidden = isRunning;
-      (els.updateStartBtn as HTMLButtonElement).disabled = isRunning;
+      els.updateStartBtn.disabled = isRunning;
     }
     if (els.updateCancelBtn) {
       els.updateCancelBtn.hidden = !isRunning;
     }
     // Disable form inputs while running
-    if (els.updateSsidInput) (els.updateSsidInput as HTMLInputElement).disabled = isRunning;
-    if (els.updatePasswordInput) (els.updatePasswordInput as HTMLInputElement).disabled = isRunning;
+    if (els.updateSsidInput) els.updateSsidInput.disabled = isRunning;
+    if (els.updatePasswordInput) els.updatePasswordInput.disabled = isRunning;
 
     if (isIdle && !status.last_success_at && !status.issues.length) {
       panel.innerHTML = "";

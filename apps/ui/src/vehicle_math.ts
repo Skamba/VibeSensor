@@ -23,7 +23,7 @@ export function tireDiameterMeters(spec: TireSpec): number {
 export function combinedRelativeUncertainty(...parts: number[]): number {
   let sumSq = 0;
   for (const p of parts) {
-    if (typeof p === "number" && p > 0) sumSq += p * p;
+    if (p > 0) sumSq += p * p;
   }
   return Math.sqrt(sumSq);
 }
