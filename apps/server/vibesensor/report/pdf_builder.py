@@ -149,6 +149,12 @@ def _draw_panel(
 
 
 def _wrap_lines(text: str, width_pt: float, font_size: float) -> list[str]:
+    """Split *text* into lines that fit within *width_pt* at *font_size*.
+
+    Uses ``_HELVETICA_AVG_CHAR_RATIO`` to approximate character width without
+    calling ``pdfmetrics.stringWidth`` on every paragraph.  Each blank
+    paragraph yields a single empty string so callers preserve blank lines.
+    """
     avg_char_w = font_size * _HELVETICA_AVG_CHAR_RATIO
     max_chars = max(10, int(width_pt / avg_char_w))
     lines: list[str] = []
