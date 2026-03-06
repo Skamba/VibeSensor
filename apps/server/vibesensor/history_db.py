@@ -816,7 +816,15 @@ class HistoryDB:
         if row is None:
             return None
         parsed = safe_json_loads(row[0], context=f"run {run_id} analysis")
-        return parsed if isinstance(parsed, dict) else None
+        if parsed is not None and not isinstance(parsed, dict):
+            LOGGER.warning(
+                "get_run_analysis: run %s analysis_json parsed to %s, expected dict; "
+                "treating as missing",
+                run_id,
+                type(parsed).__name__,
+            )
+            return None
+        return parsed
 
     def get_run_status(self, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:
