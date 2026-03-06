@@ -272,3 +272,82 @@ def test_data_ack_roundtrip() -> None:
     decoded = parse_data_ack(pkt)
     assert decoded.client_id == client_id
     assert decoded.last_seq_received == 1234
+
+
+# ---------------------------------------------------------------------------
+# Wave 3 Bruno3 — new validation fixes
+# ---------------------------------------------------------------------------
+
+
+def test_parse_hello_rejects_zero_sample_rate() -> None:
+    """parse_hello must raise ProtocolError when sample_rate_hz == 0 (Fix 1)."""
+    client_id = bytes.fromhex("aabbccddeeff")
+    # Build a raw HELLO packet with sample_rate_hz=0 manually.
+    name_bytes = b"sensor"
+    import struct as _struct
+    raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 9000, 0, 200, len(name_bytes))
+    raw += name_bytes + bytes([0]) + _struct.pack("<I", 0)
+    with pytest.raises(ProtocolError, match="sample_rate_hz must not be zero"):
+        parse_hello(raw)
+
+
+def test_parse_hello_warns_on_zero_control_port(caplog: pytest.LogCaptureFixture) -> None:
+    """parse_hello must log a warning when control_port == 0 (Fix 2)."""
+    import logging
+    import struct as _struct
+    client_id = bytes.fromhex("aabbccddeeff")
+    name_bytes = b"sensor"
+    raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 0, 800, 200, len(name_bytes))
+    raw += name_bytes + bytes([0]) + _struct.pack("<I", 0)
+    with caplog.at_level(logging.WARNING, logger="vibesensor.protocol"):
+        msg = parse_hello(raw)
+    assert msg.control_port == 0
+    assert any("control_port is 0" in r.message for r in caplog.records)
+
+
+def test_pack_hello_rejects_wrong_client_id_length() -> None:
+    """pack_hello must raise ValueError when client_id is not exactly 6 bytes (Fix 3)."""
+    with pytest.raises(ValueError, match="client_id must be 6 bytes"):
+        pack_hello(b"\x01\x02\x03", 9000, 800, "test")
+
+
+def test_pack_data_rejects_empty_samples() -> None:
+    """pack_data must raise ValueError for a zero-row samples array (Fix 4)."""
+    client_id = bytes.fromhex("aabbccddeeff")
+    with pytest.raises(ValueError, match="must not be empty"):
+        pack_data(client_id, seq=1, t0_us=0, samples=np.zeros((0, 3), dtype="<i2"))
+
+
+def test_parse_cmd_warns_on_unknown_cmd_id(caplog: pytest.LogCaptureFixture) -> None:
+    """parse_cmd must log a warning for an unrecognized cmd_id (Fix 5)."""
+    import logging
+    import struct as _struct
+    client_id = bytes.fromhex("aabbccddeeff")
+    # Build a CMD header with cmd_id=99 (unknown)
+    raw = _struct.pack("<BB6sBI", 3, 1, client_id, 99, 42)
+    with caplog.at_level(logging.WARNING, logger="vibesensor.protocol"):
+        cmd = parse_cmd(raw)
+    assert cmd.cmd_id == 99
+    assert any("unrecognized cmd_id" in r.message for r in caplog.records)
+
+
+def test_pack_cmd_identify_rejects_negative_cmd_seq() -> None:
+    """pack_cmd_identify must raise ValueError for cmd_seq < 0 (Fix 6)."""
+    client_id = bytes.fromhex("aabbccddeeff")
+    with pytest.raises(ValueError, match="cmd_seq must be non-negative"):
+        pack_cmd_identify(client_id, cmd_seq=-1, duration_ms=500)
+
+
+def test_pack_cmd_sync_clock_rejects_negative_cmd_seq() -> None:
+    """pack_cmd_sync_clock must raise ValueError for cmd_seq < 0 (Fix 7)."""
+    client_id = bytes.fromhex("aabbccddeeff")
+    with pytest.raises(ValueError, match="cmd_seq must be non-negative"):
+        pack_cmd_sync_clock(client_id, cmd_seq=-5, server_time_us=1_000_000)
+
+
+def test_pack_ack_rejects_negative_cmd_seq() -> None:
+    """pack_ack must raise ValueError for cmd_seq < 0 (Fix 8)."""
+    client_id = bytes.fromhex("aabbccddeeff")
+    with pytest.raises(ValueError, match="cmd_seq must be non-negative"):
+        pack_ack(client_id, cmd_seq=-1)
+
