@@ -474,8 +474,8 @@ class CarLibraryGearboxEntry(_ExtraAllowBase):
     """A gearbox option from the car library (gear ratios)."""
 
     name: str
-    final_drive_ratio: float
-    top_gear_ratio: float
+    final_drive_ratio: float = Field(gt=0)
+    top_gear_ratio: float = Field(gt=0)
 
 
 class CarLibraryTireOptionEntry(_ExtraAllowBase):
