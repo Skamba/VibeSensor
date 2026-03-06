@@ -5,7 +5,7 @@ Separated from ``api.py`` to keep routing logic distinct from data contracts.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -133,10 +133,10 @@ class SpeedUnitRequest(_FrozenBase):
 class CarUpsertRequest(_FrozenBase):
     """Request body for creating or updating a car profile."""
 
-    name: str | None = Field(default=None, max_length=64)
-    type: str | None = Field(default=None, max_length=64)
+    name: Annotated[str, Field(min_length=1, max_length=64)] | None = None
+    type: Annotated[str, Field(min_length=1, max_length=64)] | None = None
     aspects: dict[str, float] | None = None
-    variant: str | None = Field(default=None, max_length=64)
+    variant: Annotated[str, Field(min_length=1, max_length=64)] | None = None
 
 
 class ActiveCarRequest(_FrozenBase):
