@@ -291,8 +291,13 @@ def _build_persistent_peak_findings(
     transient_findings: list[tuple[float, dict[str, Any]]] = []
 
     for bin_center, amps in bin_amps.items():
-        # Skip bins already claimed by order findings
-        if any(abs(bin_center - of) < freq_bin_hz for of in order_finding_freqs):
+        # Skip bins already claimed by order findings.
+        # Use freq_bin_hz_half (= half the bin width) as the exclusion radius
+        # so only the bin that actually *contains* the matched order frequency
+        # is suppressed.  Using the full freq_bin_hz would also suppress the
+        # adjacent bin (e.g., a genuine 17 Hz peak excluded by a 15.3 Hz order
+        # match even though 17 Hz is in the next 2-Hz bin).
+        if any(abs(bin_center - of) < freq_bin_hz_half for of in order_finding_freqs):
             continue
 
         sorted_amps = sorted(amps)
