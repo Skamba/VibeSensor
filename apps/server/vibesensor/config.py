@@ -517,7 +517,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             fft_update_hz=int(merged["processing"]["fft_update_hz"]),
             fft_n=int(merged["processing"]["fft_n"]),
             spectrum_min_hz=float(merged["processing"].get("spectrum_min_hz", 5.0)),
-            spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
+            spectrum_max_hz=float(merged["processing"]["spectrum_max_hz"]),
             client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
             accel_scale_g_per_lsb=accel_scale,
         ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields
