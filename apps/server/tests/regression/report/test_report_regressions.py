@@ -88,7 +88,7 @@ class TestFftNUpperBound:
     """Regression: fft_n must be clamped to a max of 65536."""
 
     @pytest.mark.parametrize(
-        "fft_n, expected",
+        ("fft_n", "expected"),
         [
             pytest.param(2**20, 65536, id="absurd_clamped"),
             pytest.param(4096, 4096, id="normal_unchanged"),

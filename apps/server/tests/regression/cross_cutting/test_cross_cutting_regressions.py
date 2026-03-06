@@ -570,7 +570,7 @@ class TestRunStatus:
     """Verify RunStatus constants match database values."""
 
     @pytest.mark.parametrize(
-        "attr, expected",
+        ("attr", "expected"),
         [
             ("RECORDING", "recording"),
             ("ANALYZING", "analyzing"),
@@ -1222,7 +1222,7 @@ class TestSanitizeName:
 
 class TestSeverityFromPeakReturnType:
     @pytest.mark.parametrize(
-        "db, sensor_count, prior_state",
+        ("db", "sensor_count", "prior_state"),
         [
             (-100.0, 0, None),
             (50.0, 1, None),
@@ -1399,7 +1399,7 @@ class TestNonWheelTokensModuleLevel:
         assert "trunk" in locations_mod._NON_WHEEL_TOKENS
 
     @pytest.mark.parametrize(
-        "location, expected",
+        ("location", "expected"),
         [
             ("driver_seat", False),
             ("transmission", False),

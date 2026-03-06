@@ -25,7 +25,7 @@ def _text_fn(en: str, _nl: str) -> str:
 
 
 @pytest.mark.parametrize(
-    "summaries, findings, expect_no_g_in_summary",
+    ("summaries", "findings", "expect_no_g_in_summary"),
     [
         pytest.param(
             [

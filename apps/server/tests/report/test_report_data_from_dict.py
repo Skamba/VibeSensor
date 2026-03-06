@@ -59,7 +59,7 @@ _ROUNDTRIP_CASES = [
 ]
 
 
-@pytest.mark.parametrize("cls, kwargs", _ROUNDTRIP_CASES)
+@pytest.mark.parametrize(("cls", "kwargs"), _ROUNDTRIP_CASES)
 def test_from_dict_roundtrip(cls, kwargs) -> None:  # type: ignore[type-arg]
     original = cls(**kwargs)
     assert cls.from_dict(asdict(original)) == original

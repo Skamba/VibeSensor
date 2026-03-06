@@ -83,7 +83,7 @@ def test_parse_iso8601_returns_none_for_bad_input(value: object) -> None:
 
 
 @pytest.mark.parametrize(
-    "value, expected",
+    ("value", "expected"),
     [
         (3.14, 3.14),
         (42, 42.0),
@@ -105,7 +105,7 @@ def test_as_float_or_none(value: object, expected: float | None) -> None:
 
 
 @pytest.mark.parametrize(
-    "value, expected",
+    ("value", "expected"),
     [
         (3.7, 4),
         (3.2, 3),

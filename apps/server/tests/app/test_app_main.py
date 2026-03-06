@@ -39,7 +39,7 @@ def _run_main(monkeypatch, *, port: int, fail_port: int | None = None) -> list[i
 
 
 @pytest.mark.parametrize(
-    "port, fail_port, expected_calls",
+    ("port", "fail_port", "expected_calls"),
     [
         pytest.param(80, 80, [80, 8000], id="fallback-on-bind-fail"),
         pytest.param(9000, None, [9000], id="configured-port-no-fallback"),

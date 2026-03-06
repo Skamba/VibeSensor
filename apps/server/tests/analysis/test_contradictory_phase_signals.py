@@ -68,7 +68,7 @@ _CORNER_PAIRS = [
 # 6 corner pairs × 2 speeds = 12 cases
 # ===================================================================
 @pytest.mark.parametrize(
-    "corner_a,corner_b",
+    ("corner_a", "corner_b"),
     _CORNER_PAIRS,
     ids=[f"{a}_{b}" for a, b in _CORNER_PAIRS],
 )
@@ -122,7 +122,7 @@ _IDLE_DURATIONS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "idle_name,idle_n",
+    ("idle_name", "idle_n"),
     _IDLE_DURATIONS,
     ids=[d[0] for d in _IDLE_DURATIONS],
 )
@@ -184,7 +184,7 @@ _TRANSIENT_POSITIONS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "pos_name,trans_start,fault_start",
+    ("pos_name", "trans_start", "fault_start"),
     _TRANSIENT_POSITIONS,
     ids=[p[0] for p in _TRANSIENT_POSITIONS],
 )
@@ -236,7 +236,7 @@ _SPLIT_RATIOS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "split_name,fault_n,noise_n",
+    ("split_name", "fault_n", "noise_n"),
     _SPLIT_RATIOS,
     ids=[s[0] for s in _SPLIT_RATIOS],
 )
@@ -273,7 +273,7 @@ def test_fault_then_noise(corner: str, split_name: str, fault_n: int, noise_n: i
 # 6 corner pairs = 6 cases
 # ===================================================================
 @pytest.mark.parametrize(
-    "corner_a,corner_b",
+    ("corner_a", "corner_b"),
     _CORNER_PAIRS,
     ids=[f"{a}_{b}" for a, b in _CORNER_PAIRS],
 )
@@ -330,7 +330,7 @@ _CONTRADICTION_TYPES = [
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "contra_name,corner_a,corner_b",
+    ("contra_name", "corner_a", "corner_b"),
     _CONTRADICTION_TYPES,
     ids=[c[0] for c in _CONTRADICTION_TYPES],
 )
@@ -387,7 +387,7 @@ _SPEED_COMBOS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "combo_name,speed_a,speed_b",
+    ("combo_name", "speed_a", "speed_b"),
     _SPEED_COMBOS,
     ids=[c[0] for c in _SPEED_COMBOS],
 )

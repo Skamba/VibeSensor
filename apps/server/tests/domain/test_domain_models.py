@@ -24,7 +24,7 @@ from vibesensor.domain_models import (
 
 class TestAsFloatOrNone:
     @pytest.mark.parametrize(
-        "value, expected",
+        ("value", "expected"),
         [
             (3.14, 3.14),
             (42, 42.0),
@@ -43,7 +43,7 @@ class TestAsFloatOrNone:
 
 class TestAsIntOrNone:
     @pytest.mark.parametrize(
-        "value, expected",
+        ("value", "expected"),
         [
             (42, 42),
             (3.7, 4),
@@ -96,7 +96,7 @@ class TestCarConfig:
         assert isinstance(car.aspects.get("tire_width_mm"), (int, float))
 
     @pytest.mark.parametrize(
-        "data, field, fallback",
+        ("data", "field", "fallback"),
         [
             ({"name": "   "}, "name", "Unnamed Car"),
             ({"name": ""}, "name", "Unnamed Car"),

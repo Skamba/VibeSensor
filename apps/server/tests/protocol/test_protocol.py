@@ -145,7 +145,7 @@ def test_extract_client_id_hex_too_short(data) -> None:
 
 
 @pytest.mark.parametrize(
-    "fn, arg, match",
+    ("fn", "arg", "match"),
     [
         (client_id_hex, b"\x01\x02", "6 bytes"),
         (client_id_mac, b"\x01\x02\x03", "6 bytes"),
@@ -159,7 +159,7 @@ def test_client_id_rejects_wrong_length(fn, arg, match) -> None:
 
 
 @pytest.mark.parametrize(
-    "parse_fn, short_data, match",
+    ("parse_fn", "short_data", "match"),
     [
         (parse_hello, b"\x01", "HELLO too short"),
         (parse_data, b"\x02\x01", "DATA too short"),
@@ -173,7 +173,7 @@ def test_parse_too_short(parse_fn, short_data, match) -> None:
 
 
 @pytest.mark.parametrize(
-    "parse_fn, header_bytes, match",
+    ("parse_fn", "header_bytes", "match"),
     [
         (parse_hello, HELLO_FIXED_BYTES, "Invalid HELLO header"),
         (parse_data, DATA_HEADER_BYTES, "Invalid DATA header"),
@@ -239,7 +239,7 @@ def test_ack_roundtrip() -> None:
 
 
 @pytest.mark.parametrize(
-    "parse_fn, short_data, match",
+    ("parse_fn", "short_data", "match"),
     [
         (parse_ack, b"\x04\x01\x00", "ACK has unexpected size"),
         (parse_data_ack, b"\x05\x01\x00", "DATA_ACK has unexpected size"),
@@ -252,7 +252,7 @@ def test_parse_wrong_size(parse_fn, short_data, match) -> None:
 
 
 @pytest.mark.parametrize(
-    "struct, parse_fn, pack_args, match",
+    ("struct", "parse_fn", "pack_args", "match"),
     [
         (ACK_STRUCT, parse_ack, (0xFF, 0x01, b"\x00" * 6, 0, 0), "Invalid ACK header"),
         (DATA_ACK_STRUCT, parse_data_ack, (0xFF, 0x01, b"\x00" * 6, 0), "Invalid DATA_ACK header"),

@@ -115,7 +115,7 @@ def test_4sensor_no_fault(speed: float, profile: dict[str, Any]) -> None:
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "sensors,fault_corner",
+    ("sensors", "fault_corner"),
     [
         (_2_SENSORS_FL_RR, "FL"),
         (_2_SENSORS_FL_RR, "RR"),
@@ -147,7 +147,7 @@ def test_2sensor_localization(
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "sensors,label",
+    ("sensors", "label"),
     [(_8_SENSORS, "8s"), (_12_SENSORS, "12s")],
     ids=["8s", "12s"],
 )
@@ -187,7 +187,7 @@ def test_4sensor_diffuse_no_fault(speed: float, profile: dict[str, Any]) -> None
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "sensors,label",
+    ("sensors", "label"),
     [(_2_SENSORS_FL_RR, "2sensor"), (_4_SENSORS, "4sensor"), (_8_SENSORS, "8sensor")],
     ids=["2s", "4s", "8s"],
 )
@@ -323,7 +323,7 @@ def test_4sensor_phased_onset(corner: str, profile: dict[str, Any]) -> None:
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "sensors,label",
+    ("sensors", "label"),
     [(_8_SENSORS, "8sensor"), (_12_SENSORS, "12sensor")],
     ids=["8s", "12s"],
 )
@@ -341,7 +341,7 @@ def test_multi_sensor_no_fault_baseline(
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "sensors,label",
+    ("sensors", "label"),
     [(_8_SENSORS, "8s"), (_12_SENSORS, "12s")],
     ids=["8s_diffuse", "12s_diffuse"],
 )

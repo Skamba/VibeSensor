@@ -33,7 +33,7 @@ class TestSafeFilename:
         assert _safe_filename("run-2026-01-15_12-30") == "run-2026-01-15_12-30"
 
     @pytest.mark.parametrize(
-        "raw,forbidden",
+        ("raw", "forbidden"),
         [
             ('run"injected', ['"']),
             ("run\r\nX-Injected: yes", ["\r", "\n"]),
@@ -122,7 +122,9 @@ class TestProcessingZeroSampleRate:
         # Must return without crash; waveform/spectrum/metrics empty
         assert result.get("waveform") == {} or result.get("metrics") == {}
 
-    @pytest.mark.parametrize("sr,expect_empty", [(0, True), (800, False)], ids=["zero", "normal"])
+    @pytest.mark.parametrize(
+        ("sr", "expect_empty"), [(0, True), (800, False)], ids=["zero", "normal"]
+    )
     def test_fft_params(self, sr: int, *, expect_empty: bool) -> None:
         proc = self._make_processor(800)
         freq_slice, valid_idx = proc._fft_params(sr)
@@ -538,7 +540,7 @@ class TestIsGpsStaleTOCTOU:
     """_is_gps_stale must snapshot last_update_ts."""
 
     @pytest.mark.parametrize(
-        "ts,expected",
+        ("ts", "expected"),
         [
             pytest.param(None, True, id="none_ts"),
             pytest.param("fresh", False, id="fresh_ts"),
@@ -911,7 +913,7 @@ class TestWheelFocusFromLocation:
     which use spaces (e.g. 'Front Left Wheel'), not hyphens."""
 
     @pytest.mark.parametrize(
-        "label, expected_key",
+        ("label", "expected_key"),
         [
             # Space-separated (canonical)
             ("Front Left Wheel", "WHEEL_FOCUS_FRONT_LEFT"),
@@ -999,7 +1001,7 @@ class TestVibrationStrengthNanGuard:
     """Verify NaN inputs do not propagate through vibration_strength_db_scalar."""
 
     @pytest.mark.parametrize(
-        "peak, floor",
+        ("peak", "floor"),
         [
             (0.001, float("nan")),
             (float("nan"), 0.001),
@@ -1192,7 +1194,7 @@ class TestNormalizeLangDedup:
     """Verify summary uses the canonical normalize_lang."""
 
     @pytest.mark.parametrize(
-        "raw, expected",
+        ("raw", "expected"),
         [
             ("en", "en"),
             ("EN", "en"),
@@ -1250,7 +1252,7 @@ class TestCanonicalLocation:
     """Dedicated edge-case tests for _canonical_location."""
 
     @pytest.mark.parametrize(
-        "raw,expected",
+        ("raw", "expected"),
         [
             (None, ""),
             ("", ""),
@@ -1312,7 +1314,7 @@ class TestReportI18nPeakSuffix:
     """Verify STRENGTH_PEAK_SUFFIX key exists in both languages."""
 
     @pytest.mark.parametrize(
-        "lang, expected",
+        ("lang", "expected"),
         [("en", "peak"), ("nl", "piek")],
     )
     def test_peak_suffix_key(self, lang: str, expected: str):
@@ -1487,7 +1489,7 @@ def test_ring_buffer_wraparound_returns_correct_latest_data() -> None:
 
 class TestBoundedSample:
     @pytest.mark.parametrize(
-        "n_items, max_items, total_hint, exp_total, exp_len, exp_stride",
+        ("n_items", "max_items", "total_hint", "exp_total", "exp_len", "exp_stride"),
         [
             pytest.param(5, 100, None, 5, 5, 1, id="small_input_no_halving"),
             pytest.param(10, 10, None, 10, 10, None, id="exact_limit"),
@@ -1717,7 +1719,7 @@ _DEAD_FUNCTION_CASES = [
 
 class TestDeadFunctionsRemoved:
     @pytest.mark.parametrize(
-        "rel_path, forbidden", _DEAD_FUNCTION_CASES, ids=[c[1] for c in _DEAD_FUNCTION_CASES]
+        ("rel_path", "forbidden"), _DEAD_FUNCTION_CASES, ids=[c[1] for c in _DEAD_FUNCTION_CASES]
     )
     def test_dead_function_absent(self, rel_path: str, forbidden: str) -> None:
         text = (SERVER_ROOT / rel_path).read_text()
@@ -1822,7 +1824,7 @@ class TestCorrAbsNanGuard:
         assert result is not None
         assert abs(result - 1.0) < 1e-6
 
-    @pytest.mark.parametrize("x, y", _CORR_NONE_CASES)
+    @pytest.mark.parametrize(("x", "y"), _CORR_NONE_CASES)
     def test_corr_abs_returns_none(self, x: list[float], y: list[float]) -> None:
         assert _corr_abs(x, y) is None
 
@@ -1872,7 +1874,7 @@ class TestConfidenceNanGuard:
     """Confidence formatting must handle NaN/Inf gracefully."""
 
     @pytest.mark.parametrize(
-        "raw, expected",
+        ("raw", "expected"),
         [
             pytest.param(float("nan"), 0.0, id="nan"),
             pytest.param(float("inf"), 0.0, id="inf"),
@@ -1903,7 +1905,7 @@ _VALIDATION_REJECT_CASES = [
 class TestApiModelValidationBounds:
     """Request models must reject out-of-bounds values."""
 
-    @pytest.mark.parametrize("model, kwargs", _VALIDATION_REJECT_CASES)
+    @pytest.mark.parametrize(("model", "kwargs"), _VALIDATION_REJECT_CASES)
     def test_out_of_bounds_rejected(self, model: type, kwargs: dict) -> None:
         with pytest.raises(ValidationError):
             model(**kwargs)
@@ -2037,7 +2039,7 @@ class TestBucketForStrengthNegativeDB:
     not None."""
 
     @pytest.mark.parametrize(
-        "db_val, expected",
+        ("db_val", "expected"),
         [
             pytest.param(-5.0, "l0", id="negative"),
             pytest.param(0.0, "l0", id="zero"),

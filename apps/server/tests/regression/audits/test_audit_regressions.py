@@ -1208,7 +1208,7 @@ class TestComputeOrderConfidence:
         assert conf <= 0.45 + 0.001
 
     @pytest.mark.parametrize(
-        "normal_kw,penalty_kw",
+        ("normal_kw", "penalty_kw"),
         [
             pytest.param(
                 {"weak_spatial_separation": False},
@@ -1390,7 +1390,7 @@ class TestBuildRunSuitabilityChecks:
         )
 
     @pytest.mark.parametrize(
-        "overrides,check_key",
+        ("overrides", "check_key"),
         [
             pytest.param(
                 {"steady_speed": True},

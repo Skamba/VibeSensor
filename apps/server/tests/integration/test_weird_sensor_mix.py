@@ -84,7 +84,7 @@ _SPARSE_SENSORS: list[tuple[str, str]] = [
 
 
 @pytest.mark.parametrize(
-    "mix_id, sensors",
+    ("mix_id", "sensors"),
     _CABIN_SENSOR_MIXES,
     ids=[m[0] for m in _CABIN_SENSOR_MIXES],
 )
@@ -119,12 +119,12 @@ _WEAK_AMPS: list[tuple[str, float, float]] = [
 
 
 @pytest.mark.parametrize(
-    "mix_id, sensors",
+    ("mix_id", "sensors"),
     _CABIN_SENSOR_MIXES,
     ids=[m[0] for m in _CABIN_SENSOR_MIXES],
 )
 @pytest.mark.parametrize(
-    "amp_id, fault_amp, fault_vib_db",
+    ("amp_id", "fault_amp", "fault_vib_db"),
     _WEAK_AMPS,
     ids=[a[0] for a in _WEAK_AMPS],
 )
@@ -159,12 +159,12 @@ def test_cabin_only_weak_evidence(
 
 
 @pytest.mark.parametrize(
-    "corner_id, wheel_sensor",
+    ("corner_id", "wheel_sensor"),
     _WHEEL_CORNERS,
     ids=[c[0] for c in _WHEEL_CORNERS],
 )
 @pytest.mark.parametrize(
-    "cabin_id, cabin_sensors",
+    ("cabin_id", "cabin_sensors"),
     _CABIN_COMBOS_FOR_WHEEL,
     ids=[c[0] for c in _CABIN_COMBOS_FOR_WHEEL],
 )
@@ -205,12 +205,12 @@ _HIGH_TRANSFERS: list[tuple[str, float]] = [
 
 
 @pytest.mark.parametrize(
-    "mix_id, sensors",
+    ("mix_id", "sensors"),
     _CABIN_SENSOR_MIXES,
     ids=[m[0] for m in _CABIN_SENSOR_MIXES],
 )
 @pytest.mark.parametrize(
-    "tf_id, transfer_fraction",
+    ("tf_id", "transfer_fraction"),
     _HIGH_TRANSFERS,
     ids=[t[0] for t in _HIGH_TRANSFERS],
 )
@@ -244,7 +244,7 @@ def test_cabin_high_transfer_ambiguous(
 
 
 @pytest.mark.parametrize(
-    "combo_id, sensors",
+    ("combo_id", "sensors"),
     _ASYMMETRIC_COMBOS,
     ids=[c[0] for c in _ASYMMETRIC_COMBOS],
 )
@@ -275,7 +275,7 @@ _SPARSE_SPEED_IDS = ["60kph", "100kph"]
 
 
 @pytest.mark.parametrize(
-    "sensor_id, sensor",
+    ("sensor_id", "sensor"),
     _SPARSE_SENSORS,
     ids=[s[0] for s in _SPARSE_SENSORS],
 )
@@ -313,7 +313,7 @@ _PHASED_SCENARIOS: list[tuple[str, list[str], float]] = [
 
 
 @pytest.mark.parametrize(
-    "scenario_id, sensors, speed",
+    ("scenario_id", "sensors", "speed"),
     _PHASED_SCENARIOS,
     ids=[s[0] for s in _PHASED_SCENARIOS],
 )
@@ -360,12 +360,12 @@ _NOISE_LEVELS: list[tuple[str, float, float]] = [
 
 
 @pytest.mark.parametrize(
-    "mix_id, sensors",
+    ("mix_id", "sensors"),
     _CONTRA_MIXES,
     ids=[m[0] for m in _CONTRA_MIXES],
 )
 @pytest.mark.parametrize(
-    "noise_id, noise_amp, noise_db",
+    ("noise_id", "noise_amp", "noise_db"),
     _NOISE_LEVELS,
     ids=[n[0] for n in _NOISE_LEVELS],
 )
@@ -420,12 +420,12 @@ _RESOLVE_COMBOS: list[tuple[str, list[str]]] = [
 
 
 @pytest.mark.parametrize(
-    "amp_id, fault_amp, fault_vib_db",
+    ("amp_id", "fault_amp", "fault_vib_db"),
     _STRONG_AMPS,
     ids=[a[0] for a in _STRONG_AMPS],
 )
 @pytest.mark.parametrize(
-    "combo_id, sensors",
+    ("combo_id", "sensors"),
     _RESOLVE_COMBOS,
     ids=[c[0] for c in _RESOLVE_COMBOS],
 )
@@ -463,7 +463,7 @@ _GRANULARITY_SCENARIOS: list[tuple[str, list[str], float]] = [
 
 
 @pytest.mark.parametrize(
-    "scenario_id, sensors, speed",
+    ("scenario_id", "sensors", "speed"),
     _GRANULARITY_SCENARIOS,
     ids=[s[0] for s in _GRANULARITY_SCENARIOS],
 )

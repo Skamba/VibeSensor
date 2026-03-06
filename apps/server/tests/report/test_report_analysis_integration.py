@@ -284,7 +284,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
 
 
 @pytest.mark.parametrize(
-    "phases, expected_dominant_phase",
+    ("phases", "expected_dominant_phase"),
     [
         pytest.param([DrivingPhase.ACCELERATION] * 20, "acceleration", id="with_phases"),
         pytest.param(None, None, id="without_phases"),

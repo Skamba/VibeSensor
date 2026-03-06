@@ -144,7 +144,7 @@ def test_spectrum_payload_has_vibration_strength_db() -> None:
 
 
 @pytest.mark.parametrize(
-    "proc_kw, method_name, n_samples, sr",
+    ("proc_kw", "method_name", "n_samples", "sr"),
     [
         pytest.param(
             {"sample_rate_hz": 400, "fft_n": 128, "spectrum_max_hz": 150},
@@ -335,7 +335,7 @@ def test_smooth_spectrum_single_bin() -> None:
 
 
 @pytest.mark.parametrize(
-    "arr, expected",
+    ("arr", "expected"),
     [
         pytest.param(np.array([], dtype=np.float32), 0.0, id="empty"),
         pytest.param(np.array([float("nan")] * 3, dtype=np.float32), 0.0, id="all_nan"),

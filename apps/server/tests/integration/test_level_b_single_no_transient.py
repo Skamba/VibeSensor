@@ -125,7 +125,7 @@ _AMPS = [
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize("corner", ["FL", "RR"])
 @pytest.mark.parametrize(
-    "amp_label,fault_amp,vib_db", _AMPS, ids=["amp_low", "amp_med", "amp_high"]
+    ("amp_label", "fault_amp", "vib_db"), _AMPS, ids=["amp_low", "amp_med", "amp_high"]
 )
 def test_single_sensor_amplitude_scaling(
     corner: str, amp_label: str, fault_amp: float, vib_db: float, profile: dict[str, Any]
