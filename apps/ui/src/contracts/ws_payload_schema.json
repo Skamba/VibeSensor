@@ -1,6 +1,7 @@
 {
   "$defs": {
     "AlignmentInfo": {
+      "description": "Multi-sensor clock-alignment quality metrics for a frequency window.",
       "properties": {
         "aligned": {
           "title": "Aligned",
@@ -9,10 +10,6 @@
         "clock_synced": {
           "title": "Clock Synced",
           "type": "boolean"
-        },
-        "overlap_ratio": {
-          "title": "Overlap Ratio",
-          "type": "number"
         },
         "sensor_count": {
           "title": "Sensor Count",
@@ -24,7 +21,6 @@
         }
       },
       "required": [
-        "overlap_ratio",
         "aligned",
         "shared_window_s",
         "sensor_count",
@@ -34,6 +30,7 @@
       "type": "object"
     },
     "FrequencyWarning": {
+      "description": "Warning about frequency data quality issues in a spectra payload.",
       "properties": {
         "client_ids": {
           "items": {
@@ -42,17 +39,12 @@
           "title": "Client Ids",
           "type": "array"
         },
-        "code": {
-          "title": "Code",
-          "type": "string"
-        },
         "message": {
           "title": "Message",
           "type": "string"
         }
       },
       "required": [
-        "code",
         "message",
         "client_ids"
       ],
@@ -60,14 +52,11 @@
       "type": "object"
     },
     "OrderBand": {
+      "description": "Frequency band for a specific rotation-order harmonic.",
       "properties": {
         "center_hz": {
           "title": "Center Hz",
           "type": "number"
-        },
-        "key": {
-          "title": "Key",
-          "type": "string"
         },
         "tolerance": {
           "title": "Tolerance",
@@ -75,7 +64,6 @@
         }
       },
       "required": [
-        "key",
         "center_hz",
         "tolerance"
       ],
@@ -83,6 +71,7 @@
       "type": "object"
     },
     "RotationalSpeedValue": {
+      "description": "Current rotational speed estimate with source and confidence metadata.",
       "properties": {
         "mode": {
           "anyOf": [
@@ -107,24 +96,13 @@
           ],
           "default": null,
           "title": "Reason"
-        },
-        "rpm": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Rpm"
         }
       },
       "title": "RotationalSpeedValue",
       "type": "object"
     },
     "RotationalSpeeds": {
+      "description": "Current per-system rotational speed estimates (wheel, driveshaft, engine).",
       "properties": {
         "basis_speed_source": {
           "anyOf": [
@@ -142,16 +120,14 @@
           "$ref": "#/$defs/RotationalSpeedValue",
           "default": {
             "mode": null,
-            "reason": null,
-            "rpm": null
+            "reason": null
           }
         },
         "engine": {
           "$ref": "#/$defs/RotationalSpeedValue",
           "default": {
             "mode": null,
-            "reason": null,
-            "rpm": null
+            "reason": null
           }
         },
         "order_bands": {
@@ -173,8 +149,7 @@
           "$ref": "#/$defs/RotationalSpeedValue",
           "default": {
             "mode": null,
-            "reason": null,
-            "rpm": null
+            "reason": null
           }
         }
       },
