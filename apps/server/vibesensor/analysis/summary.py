@@ -53,6 +53,10 @@ from .helpers import (
 )
 from .order_analysis import _i18n_ref
 from .phase_segmentation import (
+    DrivingPhase,
+    PhaseSegment,
+)
+from .phase_segmentation import (
     phase_summary as _phase_summary,
 )
 from .phase_segmentation import (
@@ -420,7 +424,7 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
 
 
 def _build_phase_timeline(
-    phase_segments: list,
+    phase_segments: list[PhaseSegment],
     findings: list[dict[str, Any]],
     lang: str,
 ) -> list[dict[str, Any]]:
@@ -469,7 +473,7 @@ def _build_phase_timeline(
 
 def _prepare_speed_and_phases(
     samples: list[dict[str, Any]],
-) -> tuple[list[float], dict[str, Any], float, bool, list[Any], list[Any]]:
+) -> tuple[list[float], dict[str, Any], float, bool, list[DrivingPhase], list[PhaseSegment]]:
     """Compute speed stats and phase segmentation shared by multiple entry points.
 
     Returns ``(speed_values, speed_stats, speed_non_null_pct,
