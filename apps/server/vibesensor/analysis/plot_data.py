@@ -23,6 +23,7 @@ from .helpers import (
     _run_noise_baseline_g,
     _sample_top_peaks,
 )
+from .phase_segmentation import DrivingPhase, PhaseSegment
 from .phase_segmentation import segment_run_phases as _segment_run_phases
 
 
@@ -436,8 +437,8 @@ def _plot_data(
     summary: dict[str, Any],
     *,
     run_noise_baseline_g: float | None = None,
-    per_sample_phases: list | None = None,
-    phase_segments: list | None = None,
+    per_sample_phases: list[DrivingPhase] | None = None,
+    phase_segments: list[PhaseSegment] | None = None,
 ) -> dict[str, Any]:
     samples: list[dict[str, Any]] = summary.get("samples", [])
     raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
