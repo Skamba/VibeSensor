@@ -11,6 +11,8 @@ from .runner import CommandRunner, _sudo_prefix, sanitize_log_line
 
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
 UPLINK_CONNECT_WAIT_S = 30
+UPLINK_CONNECT_RETRIES = 3
+"""Number of times to retry bringing up the uplink Wi-Fi connection."""
 UPLINK_FALLBACK_DNS = "1.1.1.1,1.0.0.1"
 DNS_READY_MIN_WAIT_S = 10.0
 DNS_RETRY_INTERVAL_S = 1.0
