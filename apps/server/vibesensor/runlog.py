@@ -273,6 +273,7 @@ def read_jsonl_run(path: Path) -> RunData:
                         line_no,
                         path,
                         exc,
+                        exc_info=True,
                     )
                     skipped += 1
             elif record_type == _end_type:
