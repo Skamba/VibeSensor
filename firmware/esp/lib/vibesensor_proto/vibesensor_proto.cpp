@@ -56,9 +56,6 @@ bool parse_mac(const String& mac, uint8_t out_client_id[6]) {
     return false;
   }
   for (size_t i = 0; i < 6; ++i) {
-    if (values[i] > 0xFF) {
-      return false;
-    }
     out_client_id[i] = static_cast<uint8_t>(values[i]);
   }
   return true;
