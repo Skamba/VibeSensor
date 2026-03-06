@@ -71,6 +71,11 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.delete("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def delete_car(car_id: str) -> CarsResponse:
+        # Existence check first so unknown-car yields 404 while business-logic
+        # errors (e.g. "cannot delete the last car") propagate as 400.
+        cars_snapshot = await asyncio.to_thread(state.settings_store.get_cars)
+        if not any(c.get("id") == car_id for c in cars_snapshot.get("cars", [])):
+            raise HTTPException(status_code=404, detail=f"Car {car_id!r} not found")
         with _value_error_to_http():
             result = await asyncio.to_thread(state.settings_store.delete_car, car_id)
         state.apply_car_settings()
