@@ -370,10 +370,14 @@ class GPSSpeedMonitor:
                         self._reset_fix_metadata()
                         break
                     try:
-                        payload: dict[str, Any] = _loads(line.decode("utf-8", errors="replace"))
+                        _parsed = _loads(line.decode("utf-8", errors="replace"))
                     except json.JSONDecodeError:
                         LOGGER.debug("Ignoring malformed GPS JSON line")
                         continue
+                    if not isinstance(_parsed, dict):
+                        LOGGER.debug("Ignoring non-object GPS JSON line")
+                        continue
+                    payload: dict[str, Any] = _parsed
                     if payload.get("class") != "TPV":
                         # Extract device info from VERSION messages
                         if payload.get("class") == "VERSION":

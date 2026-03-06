@@ -70,14 +70,14 @@ def run_benchmark(
 
     # --- Sequential baseline ---
     proc_seq = _make_processor(pool=None)
-    for cid, freq in zip(client_ids, freqs):
+    for cid, freq in zip(client_ids, freqs, strict=True):
         _inject_signal(proc_seq, cid, freq)
 
     seq_ingest_ms: list[float] = []
     seq_compute_ms: list[float] = []
     for _round in range(n_rounds):
         t0 = time.monotonic()
-        for cid, freq in zip(client_ids, freqs):
+        for cid, freq in zip(client_ids, freqs, strict=True):
             for _ in range(n_ingest_per_round):
                 _inject_signal(proc_seq, cid, freq)
         seq_ingest_ms.append((time.monotonic() - t0) * 1000)
@@ -89,14 +89,14 @@ def run_benchmark(
     # --- Parallel ---
     pool = WorkerPool(max_workers=4, thread_name_prefix="bench-fft")
     proc_par = _make_processor(pool=pool)
-    for cid, freq in zip(client_ids, freqs):
+    for cid, freq in zip(client_ids, freqs, strict=True):
         _inject_signal(proc_par, cid, freq)
 
     par_ingest_ms: list[float] = []
     par_compute_ms: list[float] = []
     for _round in range(n_rounds):
         t0 = time.monotonic()
-        for cid, freq in zip(client_ids, freqs):
+        for cid, freq in zip(client_ids, freqs, strict=True):
             for _ in range(n_ingest_per_round):
                 _inject_signal(proc_par, cid, freq)
         par_ingest_ms.append((time.monotonic() - t0) * 1000)
@@ -112,7 +112,7 @@ def run_benchmark(
     proc_a = _make_processor(pool=None)
     pool_b = WorkerPool(max_workers=4)
     proc_b = _make_processor(pool=pool_b)
-    for cid, freq in zip(client_ids, freqs):
+    for cid, freq in zip(client_ids, freqs, strict=True):
         _inject_signal(proc_a, cid, freq)
         _inject_signal(proc_b, cid, freq)
     res_a = proc_a.compute_all(client_ids)
