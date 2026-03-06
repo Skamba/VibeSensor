@@ -227,7 +227,7 @@ bool parse_data_ack(const uint8_t* data,
                     size_t len,
                     const uint8_t expected_client_id[6],
                     uint32_t* out_last_seq_received) {
-  if (len != kDataAckBytes) {
+  if (len < kDataAckBytes) {
     return false;
   }
   if (data[0] != kMsgDataAck || data[1] != kProtoVersion) {
