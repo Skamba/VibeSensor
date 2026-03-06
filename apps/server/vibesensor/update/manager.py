@@ -217,6 +217,10 @@ class UpdateManager:
         if self._task is None or self._task.done():
             return False
         self._cancel_event.set()
+        # Also cancel the asyncio task directly so long-blocking awaits (e.g.
+        # nmcli --wait, DNS probe loop) are interrupted immediately via
+        # CancelledError rather than waiting for the next cancel_event poll.
+        self._task.cancel()
         return True
 
     async def startup_recover(self) -> None:
@@ -569,7 +573,12 @@ class UpdateManager:
 
         # Check available disk space before committing to download + install
         try:
-            free_bytes = shutil.disk_usage(self._rollback_dir.parent).free
+            # Prefer to measure the filesystem that will hold the rollback wheel;
+            # fall back to the root filesystem if that path doesn't exist yet.
+            disk_check_path = self._rollback_dir.parent
+            if not disk_check_path.exists():
+                disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
+            free_bytes = shutil.disk_usage(disk_check_path).free
             if free_bytes < MIN_FREE_DISK_BYTES:
                 free_mb = free_bytes // (1024 * 1024)
                 min_mb = MIN_FREE_DISK_BYTES // (1024 * 1024)
