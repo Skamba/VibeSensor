@@ -85,6 +85,7 @@ class UDPControlPlane:
             return self._cmd_seq
 
     async def start(self) -> None:
+        """Bind the control UDP socket and start listening for ACKs."""
         loop = asyncio.get_running_loop()
         transport, _ = await loop.create_datagram_endpoint(
             lambda: self.protocol,
@@ -93,6 +94,7 @@ class UDPControlPlane:
         self.transport = transport
 
     def close(self) -> None:
+        """Close the control UDP transport if open."""
         if self.transport is not None:
             self.transport.close()
             self.transport = None

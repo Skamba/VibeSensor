@@ -62,6 +62,7 @@ class WebSocketHub:
         self._send_error_log_interval_s = _SEND_ERROR_LOG_INTERVAL_S
 
     async def add(self, websocket: WebSocket, selected_client_id: str | None) -> None:
+        """Register *websocket* as a new active connection with an optional client filter."""
         async with self._lock:
             self._connections[id(websocket)] = WSConnection(
                 websocket=websocket,
@@ -69,10 +70,12 @@ class WebSocketHub:
             )
 
     async def remove(self, websocket: WebSocket) -> None:
+        """Deregister *websocket* from the hub."""
         async with self._lock:
             self._connections.pop(id(websocket), None)
 
     async def update_selected_client(self, websocket: WebSocket, client_id: str | None) -> None:
+        """Update the client-filter for an existing connection."""
         async with self._lock:
             conn = self._connections.get(id(websocket))
             if conn is not None:

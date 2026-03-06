@@ -44,9 +44,11 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         self._suppressed_queue_drop_warnings = 0
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        """Store the transport reference when the datagram endpoint is established."""
         self.transport = cast(asyncio.DatagramTransport, transport)
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
+        """Enqueue an incoming datagram for background processing."""
         if not data:
             return
         if data[0] != self._MSG_DATA:
@@ -80,6 +82,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             return
 
     async def process_queue(self) -> None:
+        """Consume the ingestion queue until cancelled, processing each datagram."""
         while True:
             data, addr = await self._queue.get()
             try:

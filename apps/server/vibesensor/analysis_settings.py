@@ -186,10 +186,12 @@ class AnalysisSettingsStore:
         return sanitize_settings(payload)
 
     def snapshot(self) -> dict[str, float]:
+        """Return a thread-safe snapshot copy of the current analysis settings."""
         with self._lock:
             return dict(self._values)
 
     def update(self, payload: dict[str, float]) -> dict[str, float]:
+        """Merge *payload* into the store (after validation) and return the new snapshot."""
         with self._lock:
             self._values.update(sanitize_settings(payload))
             return dict(self._values)
