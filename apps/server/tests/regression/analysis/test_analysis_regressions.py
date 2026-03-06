@@ -924,19 +924,28 @@ class TestHistoryDbCloseLocked:
 
 
 class TestJsonlHandlesNan:
-    """Regression: JSONL serialization must handle NaN/Infinity gracefully."""
+    """Regression: JSONL serialization must handle NaN/Infinity gracefully.
+
+    Non-finite floats must be sanitised to JSON ``null`` so the output is
+    always valid JSON.  Bare NaN/Infinity (produced by allow_nan=True) are
+    invalid JSON and break downstream parsers.
+    """
 
     @pytest.mark.parametrize(
-        "value, expected_text",
+        "value",
         [
-            pytest.param(float("nan"), "NaN", id="nan"),
-            pytest.param(float("inf"), "Infinity", id="inf"),
+            pytest.param(float("nan"), id="nan"),
+            pytest.param(float("inf"), id="inf"),
         ],
     )
-    def test_non_finite_falls_back(self, tmp_path: Path, value: float, expected_text: str) -> None:
+    def test_non_finite_falls_back(self, tmp_path: Path, value: float) -> None:
         out = tmp_path / "out.jsonl"
         append_jsonl_records(path=out, records=[{"value": value}])
-        assert expected_text in out.read_text()
+        text = out.read_text()
+        # Must be valid JSON — json.loads raises ValueError for bare NaN/Infinity
+        import json as _json
+        parsed = _json.loads(text.strip())
+        assert parsed["value"] is None, f"Non-finite float must serialise as null, got {parsed['value']!r}"
 
 
 class TestIdentifyClientNormalized:

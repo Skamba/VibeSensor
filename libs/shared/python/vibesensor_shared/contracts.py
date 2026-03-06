@@ -5,6 +5,12 @@ import os
 from pathlib import Path
 from typing import Any
 
+__all__ = [
+    "METRIC_FIELDS",
+    "NETWORK_PORTS",
+    "REPORT_FIELDS",
+]
+
 
 def _contracts_dir() -> Path:
     # Allow explicit override (e.g. Docker containers with non-editable installs)

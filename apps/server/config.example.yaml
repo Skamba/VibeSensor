@@ -54,6 +54,9 @@ storage:
 
 gps:
   gps_enabled: true
+  # gpsd host and port — defaults suit the standard gpsd local socket.
+  gpsd_host: 127.0.0.1
+  gpsd_port: 2947
 
 update:
   server_repo: Skamba/VibeSensor

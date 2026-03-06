@@ -388,7 +388,13 @@ class RuntimeState:
                 name="ws-broadcast",
             ),
             asyncio.create_task(self.metrics_logger.run(), name="metrics-log"),
-            asyncio.create_task(self.gps_monitor.run(), name="gps-speed"),
+            asyncio.create_task(
+                self.gps_monitor.run(
+                    host=self.config.gps.gpsd_host,
+                    port=self.config.gps.gpsd_port,
+                ),
+                name="gps-speed",
+            ),
         ]
         # Recover interrupted update jobs (best-effort, must not crash server)
         self.tasks.append(

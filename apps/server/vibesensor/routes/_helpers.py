@@ -24,6 +24,20 @@ def normalize_client_id_or_400(client_id: str) -> str:
         raise HTTPException(status_code=400, detail="Invalid sensor identifier") from exc
 
 
+def normalize_mac_or_400(mac: str) -> str:
+    """Normalize a MAC address path parameter or raise HTTP 400 with a clear message.
+
+    Performs an early length guard before delegating to normalize_sensor_id,
+    so that oversized or empty inputs are rejected without touching the store.
+    """
+    if not mac or len(mac) > 64:
+        raise HTTPException(status_code=400, detail="Invalid MAC address: must be 1-64 characters")
+    try:
+        return normalize_sensor_id(mac)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid MAC address format") from exc
+
+
 def safe_filename(name: str) -> str:
     """Sanitize *name* for use in Content-Disposition headers and zip entry names."""
     cleaned = _SAFE_FILENAME_RE.sub("_", name)[:200].lstrip(".")

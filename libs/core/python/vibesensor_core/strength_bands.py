@@ -38,6 +38,8 @@ def bucket_for_strength(vibration_strength_db: float) -> str | None:
     """Return the band key (e.g. ``"l3"``) for *vibration_strength_db*.
 
     Returns ``"l0"`` for sub-zero dB values (treated as negligible).
+    Always returns a non-None string; the ``| None`` annotation that appeared
+    in earlier versions was incorrect.
     """
     # Reverse-iterate sorted bands; first match is the highest qualifying band.
     for band in reversed(BANDS):

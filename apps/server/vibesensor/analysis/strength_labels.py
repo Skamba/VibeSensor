@@ -59,11 +59,14 @@ def strength_label(db_value: float | None, *, lang: str = "en") -> tuple[str, st
     if db_value is None or not _isfinite(db_value):
         return ("unknown", "Onbekend" if lang == "nl" else "Unknown")
     label_idx = 3 if lang == "nl" else 2
+    # Iterate from highest threshold downward; first match is the highest
+    # qualifying band.  Using reversed() is correct regardless of table order
+    # and avoids the silent dependency on sorted thresholds that the old
+    # else:break pattern relied on.
     result = _STRENGTH_THRESHOLDS[0]
-    for threshold in _STRENGTH_THRESHOLDS:
+    for threshold in reversed(_STRENGTH_THRESHOLDS):
         if db_value >= threshold[0]:
             result = threshold
-        else:
             break
     return (result[1], result[label_idx])
 

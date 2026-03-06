@@ -12,7 +12,7 @@ from ..helpers import (
     _tire_reference_from_metadata,
 )
 from ..order_analysis import _i18n_ref
-from ..phase_segmentation import diagnostic_sample_mask, segment_run_phases
+from ..phase_segmentation import DrivingPhase, diagnostic_sample_mask, segment_run_phases
 from ._constants import _ORDER_SUPPRESS_PERSISTENT_MIN_CONF
 from .order_findings import _build_order_findings
 from .persistent_findings import _build_persistent_peak_findings
@@ -25,7 +25,7 @@ _MIN_DIAGNOSTIC_SAMPLES = 5
 analysis.  Falls back to all samples when fewer than this remain after filtering."""
 
 
-def _finding_sort_key(item: dict) -> tuple[float, float]:
+def _finding_sort_key(item: dict[str, Any]) -> tuple[float, float]:
     """Sort key: (quantised confidence, ranking_score) for deterministic ordering.
 
     Confidence is quantised to 0.02 steps so that findings whose
@@ -167,7 +167,7 @@ def _build_findings(
     analysis_samples = diagnostic_samples if use_filtered_samples else samples
     # Compute per-sample phases aligned with analysis_samples for phase-evidence tracking.
     if analysis_samples is diagnostic_samples:
-        analysis_phases: list = [
+        analysis_phases: list[DrivingPhase] = [
             p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=True) if keep
         ]
     else:
