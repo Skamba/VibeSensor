@@ -560,7 +560,16 @@ class HistoryDB:
             row = cur.fetchone()
         if row is None or row[0] is None:
             return False
-        return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
+        try:
+            return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
+        except (ValueError, TypeError):
+            LOGGER.warning(
+                "analysis_is_current: invalid analysis_version value %r for run %s; "
+                "treating as outdated",
+                row[0],
+                run_id,
+            )
+            return False
 
     # -- read -----------------------------------------------------------------
 
