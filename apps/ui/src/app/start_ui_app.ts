@@ -164,7 +164,7 @@ export function startUiApp(): void {
   const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt });
   const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => {}, sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
   const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout, onCarSelectionStateChange: renderCarSelectionWarning });
-  const wizardFeature = createCarsFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
+  const wizardFeature = createCarsFeature({ els, t, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
   const updateFeature = createUpdateFeature({ els, t, escapeHtml });
   const espFlashFeature = createEspFlashFeature({ els, t, escapeHtml });
 
