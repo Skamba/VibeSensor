@@ -149,22 +149,22 @@ def report_sample(
 
 def analysis_metadata(**overrides: Any) -> dict[str, Any]:
     """Return shared metadata defaults for report-analysis unit tests."""
-    defaults = dict(
-        run_id="test-run",
-        start_time_utc="2025-01-01T00:00:00+00:00",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-        tire_width_mm=285.0,
-        tire_aspect_pct=30.0,
-        rim_in=21.0,
-        final_drive_ratio=3.08,
-        current_gear_ratio=0.64,
-    )
+    defaults = {
+        "run_id": "test-run",
+        "start_time_utc": "2025-01-01T00:00:00+00:00",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200,
+        "feature_interval_s": 0.5,
+        "fft_window_size_samples": 256,
+        "fft_window_type": "hann",
+        "peak_picker_method": "max_peak_amp_across_axes",
+        "accel_scale_g_per_lsb": 1.0 / 256.0,
+        "tire_width_mm": 285.0,
+        "tire_aspect_pct": 30.0,
+        "rim_in": 21.0,
+        "final_drive_ratio": 3.08,
+        "current_gear_ratio": 0.64,
+    }
     defaults.update(overrides)
     valid_keys = create_run_metadata.__code__.co_varnames
     return create_run_metadata(**{k: v for k, v in defaults.items() if k in valid_keys})

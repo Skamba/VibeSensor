@@ -104,7 +104,7 @@ def _assert_no_nan_confidence(summary: dict[str, Any], *, msg: str = "") -> None
 # S1 – Frozen speed: same speed for entire run (constant speed penalty)
 # 4 corners × 3 speeds = 12 cases
 # ===================================================================
-@pytest.mark.parametrize("corner,sensor", _CORNERS_AND_SENSORS, ids=["FL", "FR", "RL", "RR"])
+@pytest.mark.parametrize(("corner", "sensor"), _CORNERS_AND_SENSORS, ids=["FL", "FR", "RL", "RR"])
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
 def test_frozen_speed_with_fault(corner: str, sensor: str, speed: float) -> None:
     """A valid fault should still be detected even with perfectly frozen speed."""
@@ -200,7 +200,7 @@ _RAMP_CONFIGS = [
 ]
 
 
-@pytest.mark.parametrize("name,start,end", _RAMP_CONFIGS, ids=[c[0] for c in _RAMP_CONFIGS])
+@pytest.mark.parametrize(("name", "start", "end"), _RAMP_CONFIGS, ids=[c[0] for c in _RAMP_CONFIGS])
 def test_speed_ramp_with_fault(name: str, start: float, end: float) -> None:
     """Speed ramp across bands should still detect wheel fault."""
 
@@ -233,7 +233,9 @@ _CORRUPTION_TYPES = [
 ]
 
 
-@pytest.mark.parametrize("name,speed_fn", _CORRUPTION_TYPES, ids=[c[0] for c in _CORRUPTION_TYPES])
+@pytest.mark.parametrize(
+    ("name", "speed_fn"), _CORRUPTION_TYPES, ids=[c[0] for c in _CORRUPTION_TYPES]
+)
 @pytest.mark.parametrize("fault_sensor", [SENSOR_FL, SENSOR_RR], ids=["FL", "RR"])
 def test_mixed_valid_invalid_speed(name: str, speed_fn: Any, fault_sensor: str) -> None:
     """Run with partially corrupted speed should still complete analysis."""
@@ -296,7 +298,9 @@ _STEP_CONFIGS = [
 ]
 
 
-@pytest.mark.parametrize("name,before,after", _STEP_CONFIGS, ids=[c[0] for c in _STEP_CONFIGS])
+@pytest.mark.parametrize(
+    ("name", "before", "after"), _STEP_CONFIGS, ids=[c[0] for c in _STEP_CONFIGS]
+)
 def test_speed_step_change(name: str, before: float, after: float) -> None:
     """Sudden speed step change should not crash or produce NaN."""
 

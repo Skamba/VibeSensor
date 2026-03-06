@@ -230,7 +230,7 @@ def test_select_top_causes_no_phase_evidence_still_works() -> None:
 
 
 @pytest.mark.parametrize(
-    "value, expected_key, expected_tone",
+    ("value", "expected_key", "expected_tone"),
     [
         (0.0, "CONFIDENCE_LOW", "neutral"),
         (0.39, "CONFIDENCE_LOW", "neutral"),

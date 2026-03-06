@@ -138,4 +138,3 @@ async def test_esp_flash_start_returns_400_on_value_error() -> None:
     with pytest.raises(HTTPException) as exc_info:
         await start_endpoint(req)
     assert exc_info.value.status_code == 400
-

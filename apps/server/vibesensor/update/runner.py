@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import re
@@ -88,10 +89,8 @@ class CommandRunner:
         except asyncio.CancelledError:
             # Kill the subprocess so it doesn't outlive the cancelled task.
             if proc is not None:
-                try:
+                with contextlib.suppress(ProcessLookupError, OSError):
                     proc.kill()
-                except (ProcessLookupError, OSError):
-                    pass
             raise
         except FileNotFoundError:
             LOGGER.warning("Command not found: %s", args[0] if args else "(empty)", exc_info=True)

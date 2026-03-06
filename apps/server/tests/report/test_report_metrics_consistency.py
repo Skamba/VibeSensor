@@ -300,7 +300,7 @@ def _run_all_consistency_checks(
 class TestScenario1NoFaultBaseline:
     """Clean noise-only scenario -- should remain guarded, no overconfident claims."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def scenario(self) -> ScenarioPair:
         return _build_no_fault_baseline()
 
@@ -331,7 +331,7 @@ class TestScenario1NoFaultBaseline:
 class TestScenario2SingleWheelFault:
     """Clear wheel fault on FL -- should localise correctly."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def scenario(self) -> ScenarioPair:
         return _build_single_wheel_fault()
 
@@ -372,7 +372,7 @@ class TestScenario2SingleWheelFault:
 class TestScenario3HighSpeedFault:
     """Fault only at high speed -- speed band must reflect high-speed condition."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def scenario(self) -> ScenarioPair:
         return _build_high_speed_fault()
 
@@ -403,7 +403,7 @@ class TestScenario3HighSpeedFault:
 class TestScenario4MixedNoiseFault:
     """Noise-heavy scenario with fault onset -- robustness against noise."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def scenario(self) -> ScenarioPair:
         return _build_mixed_noise_fault()
 
@@ -429,7 +429,7 @@ class TestScenario4MixedNoiseFault:
 class TestScenario5SparseSensors:
     """Only 2 sensors (non-standard mix) -- should degrade granularity."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def scenario(self) -> ScenarioPair:
         return _build_sparse_sensors()
 

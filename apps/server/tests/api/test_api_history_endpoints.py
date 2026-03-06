@@ -845,6 +845,7 @@ async def test_history_insights_does_not_mutate_db_analysis() -> None:
 @pytest.mark.asyncio
 async def test_history_insights_always_emits_analysis_is_current() -> None:
     """analysis_is_current must be present even when analysis_version is None."""
+
     @dataclass
     class _NoVersionDB(_FakeHistoryDB):
         def get_run(self, run_id: str) -> dict[str, Any] | None:
@@ -878,6 +879,7 @@ async def test_history_insights_always_emits_analysis_is_current() -> None:
 @pytest.mark.asyncio
 async def test_history_run_strips_internal_analysis_fields() -> None:
     """GET /api/history/{run_id} must not expose _-prefixed internal keys."""
+
     @dataclass
     class _InternalFieldDB(_FakeHistoryDB):
         def get_run(self, run_id: str) -> dict[str, Any] | None:
@@ -941,9 +943,7 @@ async def test_health_degraded_status_when_processing_failures() -> None:
 async def test_identify_client_404_when_sensor_not_in_registry() -> None:
     """identify_client returns 404 when the sensor is not in the registry."""
     router, state = _make_router_and_state()
-    state.registry = type(
-        "R", (), {"get": lambda self, cid: None}
-    )()
+    state.registry = type("R", (), {"get": lambda self, cid: None})()
     endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -957,12 +957,8 @@ async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
     """identify_client returns 503 when sensor is in registry but not reachable."""
     _sentinel = object()
     router, state = _make_router_and_state()
-    state.registry = type(
-        "R", (), {"get": lambda self, cid: _sentinel}
-    )()
-    state.control_plane = type(
-        "C", (), {"send_identify": lambda self, _id, _dur: (False, None)}
-    )()
+    state.registry = type("R", (), {"get": lambda self, cid: _sentinel})()
+    state.control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
     endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -975,12 +971,8 @@ async def test_identify_client_200_when_sensor_reachable() -> None:
     """identify_client returns the sent status when sensor responds."""
     _sentinel = object()
     router, state = _make_router_and_state()
-    state.registry = type(
-        "R", (), {"get": lambda self, cid: _sentinel}
-    )()
-    state.control_plane = type(
-        "C", (), {"send_identify": lambda self, _id, _dur: (True, 7)}
-    )()
+    state.registry = type("R", (), {"get": lambda self, cid: _sentinel})()
+    state.control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (True, 7)})()
     endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     resp = await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())

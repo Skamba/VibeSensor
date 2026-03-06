@@ -110,7 +110,7 @@ class TestSpeedBinLabelEdgeCases:
     """_speed_bin_label must handle NaN, Inf, negative values gracefully."""
 
     @pytest.mark.parametrize(
-        "kmh, expected",
+        ("kmh", "expected"),
         [
             (float("nan"), "0-10 km/h"),
             (float("inf"), "0-10 km/h"),
@@ -208,7 +208,7 @@ _START = "2026-01-01T00:00:00Z"
 _END = "2026-01-01T00:05:00Z"
 
 
-@pytest.fixture()
+@pytest.fixture
 def db(tmp_path: Path) -> HistoryDB:
     return HistoryDB(tmp_path / "pipeline_test.db")
 
@@ -257,7 +257,7 @@ class TestBoundedSample:
     """Fix 1: The canonical bounded_sample lives in runlog, not duplicated."""
 
     @pytest.mark.parametrize(
-        "n, max_items, total_hint, expect_total, expect_max_len",
+        ("n", "max_items", "total_hint", "expect_total", "expect_max_len"),
         [
             pytest.param(100, 20, None, 100, 20, id="downsampling"),
             pytest.param(5, 100, None, 5, 5, id="below-limit"),
@@ -779,23 +779,23 @@ class TestSingleSensorNotTriplePenalised:
         the explicit sensor-count scale should NOT stack on top."""
         # Call twice: once with n_connected=1, once with n_connected=3
         # (n_connected=3 avoids sensor scale entirely).
-        kwargs = dict(
-            effective_match_rate=0.70,
-            error_score=0.80,
-            corr_val=0.60,
-            snr_score=0.75,
-            absolute_strength_db=18.0,
-            localization_confidence=0.05,  # very low
-            weak_spatial_separation=True,
-            dominance_ratio=1.0,
-            constant_speed=False,
-            steady_speed=False,
-            matched=20,
-            corroborating_locations=1,
-            phases_with_evidence=1,
-            is_diffuse_excitation=False,
-            diffuse_penalty=1.0,
-        )
+        kwargs = {
+            "effective_match_rate": 0.70,
+            "error_score": 0.80,
+            "corr_val": 0.60,
+            "snr_score": 0.75,
+            "absolute_strength_db": 18.0,
+            "localization_confidence": 0.05,  # very low
+            "weak_spatial_separation": True,
+            "dominance_ratio": 1.0,
+            "constant_speed": False,
+            "steady_speed": False,
+            "matched": 20,
+            "corroborating_locations": 1,
+            "phases_with_evidence": 1,
+            "is_diffuse_excitation": False,
+            "diffuse_penalty": 1.0,
+        }
         conf_single = _compute_order_confidence(n_connected_locations=1, **kwargs)
         conf_multi = _compute_order_confidence(n_connected_locations=3, **kwargs)
         # With low localization_confidence, the sensor-count penalty should
@@ -944,8 +944,11 @@ class TestJsonlHandlesNan:
         text = out.read_text()
         # Must be valid JSON — json.loads raises ValueError for bare NaN/Infinity
         import json as _json
+
         parsed = _json.loads(text.strip())
-        assert parsed["value"] is None, f"Non-finite float must serialise as null, got {parsed['value']!r}"
+        assert parsed["value"] is None, (
+            f"Non-finite float must serialise as null, got {parsed['value']!r}"
+        )
 
 
 class TestIdentifyClientNormalized:
@@ -1039,7 +1042,7 @@ class TestPdfBuilderConfidenceGuard:
     """float() on confidence should not crash on non-numeric values."""
 
     @pytest.mark.parametrize(
-        "raw_value, expected",
+        ("raw_value", "expected"),
         [
             ("unknown", 0.0),
             (0.85, pytest.approx(0.85)),
@@ -1086,7 +1089,7 @@ class TestOrderLabel:
     """_order_label should handle 2-arg signatures."""
 
     @pytest.mark.parametrize(
-        "order, base, expected",
+        ("order", "base", "expected"),
         [
             (1, "wheel", "1x wheel"),
             (3, "engine", "3x engine"),
@@ -1117,7 +1120,7 @@ class TestDriveshaftHz:
     """_driveshaft_hz must handle missing/zero/negative inputs gracefully."""
 
     @pytest.mark.parametrize(
-        "sample, overrides, tire_m",
+        ("sample", "overrides", "tire_m"),
         [
             ({"speed_kmh": 80.0}, {"final_drive_ratio": 3.5}, None),
             ({"speed_kmh": 80.0, "final_drive_ratio": 0.0}, {}, 2.0),
@@ -1146,7 +1149,7 @@ class TestDriveshaftHz:
 
 
 @pytest.mark.parametrize(
-    "value, expected",
+    ("value", "expected"),
     [
         (float("nan"), None),
         (float("inf"), None),
@@ -1312,7 +1315,7 @@ class TestCombineAmplitudeNanGuard:
     """NaN values in dB list must be skipped, not mapped to 200 dB."""
 
     @pytest.mark.parametrize(
-        "values, expected_silence",
+        ("values", "expected_silence"),
         [
             ([float("nan")], True),
             ([float("inf")], True),
@@ -1401,7 +1404,7 @@ class TestEffectiveBaselineFloor:
     """Test the baseline floor helper for edge cases."""
 
     @pytest.mark.parametrize(
-        "baseline, kwargs, expected",
+        ("baseline", "kwargs", "expected"),
         [
             (None, {}, MEMS_NOISE_FLOOR_G),
             (0.0, {"extra_fallback": 0.005}, MEMS_NOISE_FLOOR_G),
@@ -1449,46 +1452,46 @@ class TestSelectReasonKey:
     """Test reason key selection priority ordering."""
 
     @pytest.mark.parametrize(
-        "kwargs, expected",
+        ("kwargs", "expected"),
         [
             (
-                dict(
-                    confidence=0.9,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=4,
-                    has_reference_gaps=True,
-                ),
+                {
+                    "confidence": 0.9,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 4,
+                    "has_reference_gaps": True,
+                },
                 "reference_gaps",
             ),
             (
-                dict(
-                    confidence=0.9,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=1,
-                    has_reference_gaps=False,
-                ),
+                {
+                    "confidence": 0.9,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 1,
+                    "has_reference_gaps": False,
+                },
                 "single_sensor",
             ),
             (
-                dict(
-                    confidence=0.9,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=4,
-                    has_reference_gaps=False,
-                ),
+                {
+                    "confidence": 0.9,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 4,
+                    "has_reference_gaps": False,
+                },
                 "strong_order_match",
             ),
             (
-                dict(
-                    confidence=0.2,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=4,
-                    has_reference_gaps=False,
-                ),
+                {
+                    "confidence": 0.2,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 4,
+                    "has_reference_gaps": False,
+                },
                 "weak_order_match",
             ),
         ],

@@ -82,7 +82,7 @@ _param_profile = pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFIL
 _param_speed = pytest.mark.parametrize("speed", _SPEEDS, ids=_SPEED_IDS)
 _param_corner = pytest.mark.parametrize("corner", _CORNERS)
 _param_sensor_config = pytest.mark.parametrize(
-    "config_name,sensors",
+    ("config_name", "sensors"),
     list(_SENSOR_CONFIGS.items()),
     ids=lambda x: x if isinstance(x, str) else "",
 )
@@ -283,7 +283,7 @@ def test_diffuse_excitation_not_localized(profile: dict[str, Any], speed: float)
 
 @_param_profile
 @pytest.mark.parametrize(
-    "config_name,sensors",
+    ("config_name", "sensors"),
     [
         ("8-sensor", ALL_WHEEL_SENSORS + NON_WHEEL_SENSORS[:4]),
         ("12-sensor", ALL_WHEEL_SENSORS + NON_WHEEL_SENSORS),
@@ -384,7 +384,7 @@ def test_fault_late_onset_clean_early_phase(profile: dict[str, Any], corner: str
 
 @_param_profile
 @pytest.mark.parametrize(
-    "amp,vib_db,label",
+    ("amp", "vib_db", "label"),
     [
         (0.008, 12.0, "barely-above-noise"),
         (0.012, 14.0, "weak"),
@@ -461,7 +461,7 @@ def test_ambiguous_dual_frequency_low_confidence(profile: dict[str, Any]) -> Non
 
 @_param_profile
 @pytest.mark.parametrize(
-    "sensors,label",
+    ("sensors", "label"),
     [
         (NON_WHEEL_SENSORS[:4], "non-wheel-noise"),
         (ALL_WHEEL_SENSORS + NON_WHEEL_SENSORS[:4], "mixed-8s-noise"),

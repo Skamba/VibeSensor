@@ -14,7 +14,7 @@ from vibesensor.analysis_settings import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def store() -> AnalysisSettingsStore:
     return AnalysisSettingsStore()
 

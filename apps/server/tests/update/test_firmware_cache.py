@@ -30,7 +30,7 @@ def _make_zip(entries: dict[str, str | bytes]) -> io.BytesIO:
 
 
 @pytest.mark.parametrize(
-    "channel, expected_tag, releases",
+    ("channel", "expected_tag", "releases"),
     [
         pytest.param(
             "stable",

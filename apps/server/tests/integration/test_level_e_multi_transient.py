@@ -245,7 +245,7 @@ def test_12sensor_fault_with_transient(corner: str, profile: dict[str, Any]) -> 
 
 @pytest.mark.parametrize("profile", _OPTIMIZED_CAR_PROFILES, ids=_OPTIMIZED_CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "sensors,fault_corner",
+    ("sensors", "fault_corner"),
     [
         (_2S_FL_RR, "FL"),
         (_2S_FL_RR, "RR"),

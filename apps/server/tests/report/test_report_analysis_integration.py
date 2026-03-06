@@ -284,7 +284,7 @@ def test_build_order_findings_min_match_threshold_stays_below_confidence_cutoff(
 
 
 @pytest.mark.parametrize(
-    "phases, expected_dominant_phase",
+    ("phases", "expected_dominant_phase"),
     [
         pytest.param([DrivingPhase.ACCELERATION] * 20, "acceleration", id="with_phases"),
         pytest.param(None, None, id="without_phases"),
@@ -924,7 +924,7 @@ def test_summarize_log_missing_file(tmp_path: Path) -> None:
 def test_summarize_log_non_jsonl(tmp_path: Path) -> None:
     csv_path = tmp_path / "data.csv"
     csv_path.write_text("a,b,c\n1,2,3\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unsupported run format"):
         summarize_log(csv_path)
 
 
@@ -1031,10 +1031,10 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
     # Spread across two phases so both report high match rates
     phases_multi = [DrivingPhase.CRUISE] * 10 + [DrivingPhase.ACCELERATION] * 10
 
-    _common: dict[str, object] = dict(
-        speed_stddev_kmh=5.0,
-        engine_ref_sufficient=False,
-    )
+    _common: dict[str, object] = {
+        "speed_stddev_kmh": 5.0,
+        "engine_ref_sufficient": False,
+    }
     single_findings = _call_build_order_findings(
         samples, per_sample_phases=phases_single, **_common
     )

@@ -204,7 +204,7 @@ _ENGINE_STRENGTHS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "eng_name,engine_amp",
+    ("eng_name", "engine_amp"),
     _ENGINE_STRENGTHS,
     ids=[e[0] for e in _ENGINE_STRENGTHS],
 )
@@ -293,7 +293,7 @@ _ENGINE_ONLY_STRENGTHS = [
 
 @pytest.mark.parametrize("speed", [SPEED_LOW, SPEED_MID, SPEED_HIGH], ids=["low", "mid", "high"])
 @pytest.mark.parametrize(
-    "eng_name,engine_amp,engine_db",
+    ("eng_name", "engine_amp", "engine_db"),
     _ENGINE_ONLY_STRENGTHS,
     ids=[e[0] for e in _ENGINE_ONLY_STRENGTHS],
 )
@@ -327,7 +327,7 @@ _RELATIVE_STRENGTHS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "strength_name,wheel_amp,engine_amp",
+    ("strength_name", "wheel_amp", "engine_amp"),
     _RELATIVE_STRENGTHS,
     ids=[s[0] for s in _RELATIVE_STRENGTHS],
 )

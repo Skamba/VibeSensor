@@ -470,12 +470,12 @@ _CLIENT_ID = bytes.fromhex("aabbccddeeff")
 _SAMPLES_200X3 = np.zeros((200, 3), dtype=np.int16)
 
 
-@pytest.fixture()
+@pytest.fixture
 def db(tmp_path: Path) -> HistoryDB:
     return HistoryDB(tmp_path / "history.db")
 
 
-@pytest.fixture()
+@pytest.fixture
 def registry(db: HistoryDB) -> ClientRegistry:
     return ClientRegistry(db=db)
 
@@ -570,7 +570,7 @@ class TestRunStatus:
     """Verify RunStatus constants match database values."""
 
     @pytest.mark.parametrize(
-        "attr, expected",
+        ("attr", "expected"),
         [
             ("RECORDING", "recording"),
             ("ANALYZING", "analyzing"),
@@ -1222,7 +1222,7 @@ class TestSanitizeName:
 
 class TestSeverityFromPeakReturnType:
     @pytest.mark.parametrize(
-        "db, sensor_count, prior_state",
+        ("db", "sensor_count", "prior_state"),
         [
             (-100.0, 0, None),
             (50.0, 1, None),
@@ -1244,17 +1244,17 @@ class TestSeverityFromPeakReturnType:
 # ---------------------------------------------------------------------------
 
 
-_PROCESSING_DEFAULTS = dict(
-    waveform_seconds=8,
-    waveform_display_hz=120,
-    ui_push_hz=10,
-    ui_heavy_push_hz=4,
-    fft_update_hz=4,
-    fft_n=2048,
-    spectrum_min_hz=5.0,
-    client_ttl_seconds=120,
-    accel_scale_g_per_lsb=None,
-)
+_PROCESSING_DEFAULTS = {
+    "waveform_seconds": 8,
+    "waveform_display_hz": 120,
+    "ui_push_hz": 10,
+    "ui_heavy_push_hz": 4,
+    "fft_update_hz": 4,
+    "fft_n": 2048,
+    "spectrum_min_hz": 5.0,
+    "client_ttl_seconds": 120,
+    "accel_scale_g_per_lsb": None,
+}
 
 
 class TestNyquistFloatDivision:
@@ -1399,7 +1399,7 @@ class TestNonWheelTokensModuleLevel:
         assert "trunk" in locations_mod._NON_WHEEL_TOKENS
 
     @pytest.mark.parametrize(
-        "location, expected",
+        ("location", "expected"),
         [
             ("driver_seat", False),
             ("transmission", False),

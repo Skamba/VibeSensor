@@ -17,7 +17,7 @@ from vibesensor_core.vibration_strength import (
 
 class TestMedian:
     @pytest.mark.parametrize(
-        "values, expected",
+        ("values", "expected"),
         [
             pytest.param([], 0.0, id="empty"),
             pytest.param([42.0], 42.0, id="single"),
@@ -35,7 +35,7 @@ class TestMedian:
 
 class TestPercentile:
     @pytest.mark.parametrize(
-        "values, q, expected",
+        ("values", "q", "expected"),
         [
             pytest.param([], 0.5, 0.0, id="empty"),
             pytest.param([5.0], 0.5, 5.0, id="single"),

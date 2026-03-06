@@ -11,7 +11,7 @@ from ..strength_labels import _STRENGTH_THRESHOLDS
 # exclusive upper bound of the negligible band.  Similarly, index 2 gives 16.0
 # dB — the exclusive upper bound of the light band.
 _NEGLIGIBLE_UPPER_BAND_INDEX = 1  # _STRENGTH_THRESHOLDS[1][0] == 8.0 dB
-_LIGHT_UPPER_BAND_INDEX = 2       # _STRENGTH_THRESHOLDS[2][0] == 16.0 dB
+_LIGHT_UPPER_BAND_INDEX = 2  # _STRENGTH_THRESHOLDS[2][0] == 16.0 dB
 
 # Strength thresholds derived from the global strength-labels table.
 _NEGLIGIBLE_STRENGTH_MAX_DB = (

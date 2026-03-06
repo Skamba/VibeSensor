@@ -206,7 +206,7 @@ def test_overlapping_engine_wheel_harmonics(speed: float, profile: dict[str, Any
 
 @pytest.mark.parametrize("profile", CAR_PROFILES, ids=CAR_PROFILE_IDS)
 @pytest.mark.parametrize(
-    "pair,primary",
+    ("pair", "primary"),
     [
         ((SENSOR_FL, SENSOR_RR), SENSOR_FL),
         ((SENSOR_FR, SENSOR_RL), SENSOR_FR),

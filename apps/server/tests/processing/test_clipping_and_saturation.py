@@ -92,7 +92,7 @@ _CLIP_LEVELS = [
 
 @pytest.mark.parametrize("corner", _CORNERS)
 @pytest.mark.parametrize(
-    "clip_name,clip_amp",
+    ("clip_name", "clip_amp"),
     _CLIP_LEVELS,
     ids=[c[0] for c in _CLIP_LEVELS],
 )
@@ -191,7 +191,7 @@ _EXTREME_CONFIGS = [
 
 
 @pytest.mark.parametrize("corner", _CORNERS)
-@pytest.mark.parametrize("cfg_name,sensor_fn", _EXTREME_CONFIGS, ids=["single", "quad"])
+@pytest.mark.parametrize(("cfg_name", "sensor_fn"), _EXTREME_CONFIGS, ids=["single", "quad"])
 def test_extreme_clipping_no_crash(corner: str, cfg_name: str, sensor_fn: Any) -> None:
     """Clipping every peak to near-zero should not crash or produce NaN."""
     sensor = CORNER_SENSORS[corner]
@@ -222,7 +222,7 @@ _SPEED_VARIANTS = [
 
 
 @pytest.mark.parametrize(
-    "speed_name,speed_fn",
+    ("speed_name", "speed_fn"),
     _SPEED_VARIANTS,
     ids=[v[0] for v in _SPEED_VARIANTS],
 )

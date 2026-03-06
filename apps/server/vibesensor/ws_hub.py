@@ -8,6 +8,7 @@ protection via per-connection send queues.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -226,10 +227,8 @@ class WebSocketHub:
         )
         for ws in dead_ws:
             if ws is not None:
-                try:
+                with contextlib.suppress(Exception):
                     await ws.close()
-                except Exception:
-                    pass  # Already gone; ignore close errors.
                 await self.remove(ws)
         if failed_client_ids:
             # Count how many connections were affected by build failures.

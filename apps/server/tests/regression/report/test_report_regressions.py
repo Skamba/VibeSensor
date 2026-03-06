@@ -88,7 +88,7 @@ class TestFftNUpperBound:
     """Regression: fft_n must be clamped to a max of 65536."""
 
     @pytest.mark.parametrize(
-        "fft_n, expected",
+        ("fft_n", "expected"),
         [
             pytest.param(2**20, 65536, id="absurd_clamped"),
             pytest.param(4096, 4096, id="normal_unchanged"),
@@ -162,12 +162,12 @@ from vibesensor.processing.fft import medfilt3
 
 
 def _make_processor(**overrides) -> SignalProcessor:
-    defaults = dict(
-        sample_rate_hz=100,
-        waveform_seconds=1,
-        waveform_display_hz=50,
-        fft_n=32,
-    )
+    defaults = {
+        "sample_rate_hz": 100,
+        "waveform_seconds": 1,
+        "waveform_display_hz": 50,
+        "fft_n": 32,
+    }
     defaults.update(overrides)
     return SignalProcessor(**defaults)
 

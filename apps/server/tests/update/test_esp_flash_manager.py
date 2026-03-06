@@ -179,7 +179,7 @@ def _route_endpoint(router, path: str, method: str):
 # ── Fixtures ──
 
 
-@pytest.fixture()
+@pytest.fixture
 def _patch_esptool_which(monkeypatch) -> None:
     """Patch ``shutil.which`` so ``esptool.py`` resolves to a fake path."""
     monkeypatch.setattr(
