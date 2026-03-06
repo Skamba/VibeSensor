@@ -203,6 +203,7 @@
   "actions.remove_client_confirm": "Sensor {id} uit de lijst verwijderen?",
   "actions.remove_client_failed": "Verwijderen van sensor is mislukt.",
   "actions.set_location_failed": "Instellen van locatie is mislukt.",
+  "vibration.event_ambiguous": "⚠ dubbelzinnig",
   "vibration.none": "Nog geen noemenswaardige trillingen.",
   "vibration.db_scale_note": "dB wordt gemeten boven de ruisvloer.",
   "matrix.amplitude_group": "Amplitudegroep",
