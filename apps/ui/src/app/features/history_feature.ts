@@ -73,7 +73,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     return findings.slice(0, 3);
   }
 
-  function normalizeLogLocationKey(location: string): string {
+  function normalizeLogLocationKey(location: unknown): string {
     const raw = String(location || "")
       .toLowerCase()
       .replace(/[_-]+/g, " ")
@@ -99,7 +99,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
 
   function renderPreviewHeatmap(summary: Record<string, unknown>): string {
     const statsRows = Array.isArray(summary?.sensor_intensity_by_location)
-      ? summary.sensor_intensity_by_location
+      ? (summary.sensor_intensity_by_location as Record<string, unknown>[])
       : [];
     const metricByLocation: Record<string, number> = {};
     for (const row of statsRows) {
@@ -133,13 +133,13 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
 
   function renderPreviewStats(summary: Record<string, unknown>): string {
     const rows = Array.isArray(summary?.sensor_intensity_by_location)
-      ? summary.sensor_intensity_by_location
+      ? (summary.sensor_intensity_by_location as Record<string, unknown>[])
       : [];
     if (!rows.length) {
       return `<p class="subtle">${escapeHtml(t("history.preview_unavailable"))}</p>`;
     }
     const body = rows
-      .map((row: Record<string, unknown>) => {
+      .map((row) => {
         const dropped = row?.dropped_frames_delta ?? row?.frames_dropped_delta;
         const overflow = row?.queue_overflow_drops_delta;
         return `\n          <tr>\n            <td>${escapeHtml(row.location || "--")}</td>\n            <td class="numeric">${fmt(Number(row.p50_intensity_db ?? row.p50), 1)}</td>\n            <td class="numeric">${fmt(Number(row.p95_intensity_db ?? row.p95), 1)}</td>\n            <td class="numeric">${fmt(Number(row.max_intensity_db), 1)}</td>\n            <td class="numeric">${typeof dropped === "number" ? formatInt(dropped) : "--"}</td>\n            <td class="numeric">${typeof overflow === "number" ? formatInt(overflow) : "--"}</td>\n            <td class="numeric">${formatInt(Number(row.sample_count ?? row.samples))}</td>\n          </tr>`;
