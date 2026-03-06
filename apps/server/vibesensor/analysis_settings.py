@@ -126,6 +126,13 @@ def sanitize_settings(
                 LOGGER.info("Clamped analysis setting %s from %r to %r", key, value, upper)
                 value = upper
         out[key] = value
+    attempted = [k for k in allowed if payload.get(k) is not None]
+    if attempted and not out:
+        LOGGER.warning(
+            "sanitize_settings: all %d submitted keys were invalid and dropped: %s",
+            len(attempted),
+            attempted,
+        )
     return out
 
 
