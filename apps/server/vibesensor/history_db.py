@@ -461,6 +461,11 @@ class HistoryDB:
                 )
 
     def update_run_metadata(self, run_id: str, metadata: dict[str, Any]) -> bool:
+        """Overwrite the stored metadata for *run_id*.
+
+        Returns ``True`` when the row was found and updated, ``False`` when
+        no run with that ID exists.
+        """
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
@@ -543,6 +548,12 @@ class HistoryDB:
                 "WHERE run_id = ? AND status NOT IN ('complete')",
                 (error, now, run_id),
             )
+            if cur.rowcount == 0:
+                LOGGER.warning(
+                    "store_analysis_error for run %s: no rows updated "
+                    "(run not found or already complete)",
+                    run_id,
+                )
 
     def analysis_is_current(self, run_id: str) -> bool:
         """Return *True* when the persisted analysis version matches the current schema."""
@@ -554,17 +565,41 @@ class HistoryDB:
             row = cur.fetchone()
         if row is None or row[0] is None:
             return False
-        return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
+        try:
+            return int(row[0]) >= ANALYSIS_SCHEMA_VERSION
+        except (ValueError, TypeError):
+            LOGGER.warning(
+                "analysis_is_current: invalid analysis_version value %r for run %s; "
+                "treating as outdated",
+                row[0],
+                run_id,
+            )
+            return False
 
     # -- read -----------------------------------------------------------------
 
-    def list_runs(self) -> list[dict[str, Any]]:
+    def list_runs(self, limit: int = 500) -> list[dict[str, Any]]:
+        """Return up to *limit* run summaries ordered newest-first.
+
+        The default cap of 500 prevents unbounded memory consumption on
+        Raspberry Pi hardware when many runs have accumulated.  Pass
+        ``limit=0`` to fetch all rows (use only when the total count is
+        known to be small).
+        """
         with self._cursor(commit=False) as cur:
-            cur.execute(
-                "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                "r.created_at, r.error_message, r.sample_count, r.analysis_version "
-                "FROM runs r ORDER BY r.created_at DESC"
-            )
+            if limit > 0:
+                cur.execute(
+                    "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
+                    "r.created_at, r.error_message, r.sample_count, r.analysis_version "
+                    "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
+                    (limit,),
+                )
+            else:
+                cur.execute(
+                    "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
+                    "r.created_at, r.error_message, r.sample_count, r.analysis_version "
+                    "FROM runs r ORDER BY r.created_at DESC"
+                )
             rows = cur.fetchall()
         result: list[dict[str, Any]] = []
         for row in rows:
@@ -650,6 +685,12 @@ class HistoryDB:
             yield from self._iter_v2_samples(run_id, batch_size, offset)
         elif self._has_legacy_samples:
             yield from self._iter_legacy_samples(run_id, batch_size, offset)
+        else:
+            LOGGER.debug(
+                "iter_run_samples: run_id=%s has no samples in v2 table "
+                "and no legacy samples table is present",
+                run_id,
+            )
 
     def _run_has_v2_samples(self, run_id: str) -> bool:
         with self._cursor(commit=False) as cur:
@@ -727,6 +768,7 @@ class HistoryDB:
             last_id = self._resolve_keyset_offset("samples", run_id, offset)
             if last_id is None:
                 return
+        total_skipped = 0
         while True:
             with self._cursor(commit=False) as cur:
                 if last_id is None:
@@ -742,6 +784,12 @@ class HistoryDB:
                     )
                 batch_rows = cur.fetchall()
             if not batch_rows:
+                if total_skipped:
+                    LOGGER.warning(
+                        "run_id=%s: skipped %d unparseable legacy sample row(s) in total",
+                        run_id,
+                        total_skipped,
+                    )
                 return
             last_id = batch_rows[-1][0]
             parsed_batch: list[dict[str, Any]] = []
@@ -749,6 +797,8 @@ class HistoryDB:
                 parsed = safe_json_loads(sample_json, context=f"sample {sample_id}")
                 if isinstance(parsed, dict):
                     parsed_batch.append(parsed)
+                else:
+                    total_skipped += 1
             if parsed_batch:
                 yield parsed_batch
 
@@ -771,9 +821,18 @@ class HistoryDB:
         if row is None:
             return None
         parsed = safe_json_loads(row[0], context=f"run {run_id} analysis")
-        return parsed if isinstance(parsed, dict) else None
+        if parsed is not None and not isinstance(parsed, dict):
+            LOGGER.warning(
+                "get_run_analysis: run %s analysis_json parsed to %s, expected dict; "
+                "treating as missing",
+                run_id,
+                type(parsed).__name__,
+            )
+            return None
+        return parsed
 
     def get_run_status(self, run_id: str) -> str | None:
+        """Return the status string for *run_id*, or ``None`` if not found."""
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
@@ -807,10 +866,15 @@ class HistoryDB:
             return cur.rowcount
 
     def stale_analyzing_run_ids(self) -> list[str]:
-        """Return run IDs stuck in 'analyzing' state (e.g. after a crash)."""
+        """Return run IDs stuck in 'analyzing' state (e.g. after a crash).
+
+        Capped at 1 000 rows to prevent unbounded memory use; in practice
+        there should only ever be a handful of stale runs.
+        """
         with self._cursor(commit=False) as cur:
             cur.execute(
-                "SELECT run_id FROM runs WHERE status = 'analyzing' ORDER BY created_at ASC"
+                "SELECT run_id FROM runs WHERE status = 'analyzing' "
+                "ORDER BY created_at ASC LIMIT 1000"
             )
             return [row[0] for row in cur.fetchall()]
 
