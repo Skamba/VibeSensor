@@ -44,7 +44,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     { key: "trunk", top: 86, left: 50 },
   ];
 
-  function ensureRunDetail(runId: string) {
+  function ensureRunDetail(runId: string): RunDetail {
     if (!state.runDetailsById[runId]) {
       state.runDetailsById[runId] = {
         preview: null,
@@ -69,7 +69,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   }
 
   function summarizeFindings(summary: Record<string, unknown> | null): Record<string, unknown>[] {
-    const findings = Array.isArray(summary?.findings) ? summary!.findings : [];
+    const findings = summary !== null && Array.isArray(summary.findings) ? summary.findings : [];
     return findings.slice(0, 3);
   }
 
