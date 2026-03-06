@@ -21,6 +21,8 @@ from .json_utils import sanitize_for_json
 
 LOGGER = logging.getLogger(__name__)
 
+__all__ = ["WebSocketHub", "WSConnection"]
+
 
 def _ws_debug_enabled() -> bool:
     """Check WS debug flag at call time so it can be toggled at runtime."""
@@ -73,6 +75,15 @@ class WebSocketHub:
                 websocket=websocket,
                 selected_client_id=selected_client_id,
             )
+
+    def connection_count(self) -> int:
+        """Return an approximate count of active connections.
+
+        Uses ``len()`` on the internal dict, which is atomic in CPython, so
+        no lock is acquired.  The value may be stale by the time the caller
+        acts on it; use ``_snapshot()`` when a consistent view is needed.
+        """
+        return len(self._connections)
 
     async def remove(self, websocket: WebSocket) -> None:
         """Deregister *websocket* from the hub."""
@@ -129,7 +140,7 @@ class WebSocketHub:
                             if isinstance(cs, dict) and cs.get("freq"):
                                 has_freq = True
                                 break
-                except Exception:
+                except (AttributeError, TypeError, KeyError):
                     LOGGER.debug("Debug freq-inspection failed", exc_info=True)
                 debug_info[selected_client_id] = has_freq
             text = _dumps(
@@ -176,7 +187,9 @@ class WebSocketHub:
             if (now - self._last_send_error_log_ts) >= self._send_error_log_interval_s:
                 self._last_send_error_log_ts = now
                 LOGGER.warning(
-                    "WebSocket broadcast send failed; connection will be removed.",
+                    "WebSocket broadcast send failed (selected_client=%r); "
+                    "connection will be removed.",
+                    conn.selected_client_id,
                     exc_info=True,
                 )
             return conn.websocket
@@ -213,6 +226,10 @@ class WebSocketHub:
         )
         for ws in dead_ws:
             if ws is not None:
+                try:
+                    await ws.close()
+                except Exception:
+                    pass  # Already gone; ignore close errors.
                 await self.remove(ws)
         if failed_client_ids:
             # Count how many connections were affected by build failures.
@@ -256,7 +273,7 @@ class WebSocketHub:
                 hz,
             )
         interval = 1.0 / max(1, hz)
-        _consecutive_failures = 0
+        consecutive_failures = 0
         loop = asyncio.get_running_loop()
         while True:
             tick_start = loop.time()
@@ -270,21 +287,24 @@ class WebSocketHub:
                             exc_info=True,
                         )
                 await self.broadcast(payload_builder)
-                _consecutive_failures = 0
+                consecutive_failures = 0
             except Exception:
-                _consecutive_failures += 1
-                if _consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
+                consecutive_failures += 1
+                if consecutive_failures >= _MAX_CONSECUTIVE_FAILURES:
                     LOGGER.error(
                         "WebSocket broadcast tick failed %d consecutive times; backing off.",
-                        _consecutive_failures,
+                        consecutive_failures,
                         exc_info=True,
                     )
                     await asyncio.sleep(interval * _BACKOFF_MULTIPLIER)
-                    _consecutive_failures = 0
+                    # Reset the tick clock after the backoff sleep so the
+                    # post-tick sleep uses the correct remaining time.
+                    tick_start = loop.time()
+                    consecutive_failures = 0
                 else:
                     LOGGER.warning(
                         "WebSocket broadcast tick failed (%d consecutive); will retry.",
-                        _consecutive_failures,
+                        consecutive_failures,
                         exc_info=True,
                     )
             elapsed = loop.time() - tick_start
