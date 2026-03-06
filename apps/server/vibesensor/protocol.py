@@ -278,7 +278,7 @@ def parse_data(data: bytes) -> DataMessage:
         raise ProtocolError(f"DATA payload size mismatch: expected {expected_len}, got {len(data)}")
 
     payload = memoryview(data)[DATA_HEADER_BYTES:]
-    samples = np.frombuffer(payload, dtype=_SAMPLE_DTYPE).reshape(sample_count, 3).copy()
+    samples = np.frombuffer(payload, dtype=_SAMPLE_DTYPE).reshape(sample_count, ACCEL_AXES).copy()
     return DataMessage(
         client_id=client_id,
         seq=seq,
@@ -291,8 +291,8 @@ def parse_data(data: bytes) -> DataMessage:
 def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> bytes:
     """Encode a DATA message as bytes from an (N, 3) int16 samples array."""
     samples_int16 = np.asarray(samples, dtype=_SAMPLE_DTYPE)
-    if samples_int16.ndim != 2 or samples_int16.shape[1] != 3:
-        raise ValueError("samples must be shaped (N, 3)")
+    if samples_int16.ndim != 2 or samples_int16.shape[1] != ACCEL_AXES:
+        raise ValueError(f"samples must be shaped (N, {ACCEL_AXES})")
     sample_count = int(samples_int16.shape[0])
     header = DATA_HEADER.pack(MSG_DATA, VERSION, client_id, seq, t0_us, sample_count)
     return header + samples_int16.tobytes(order="C")
