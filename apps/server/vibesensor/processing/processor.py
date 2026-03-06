@@ -66,6 +66,8 @@ def _synchronized(method: Callable[_P, _R]) -> Callable[_P, _R]:
 
 
 class SignalProcessor:
+    """Processes raw accelerometer frames into vibration-strength metrics."""
+
     def __init__(
         self,
         sample_rate_hz: int,

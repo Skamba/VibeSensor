@@ -90,8 +90,11 @@ _HELVETICA_AVG_CHAR_RATIO = 0.48
 
 @lru_cache(maxsize=32)
 def _hex(c: str) -> colors.Color:
-    """Return a ReportLab ``Color`` for *c*.  Results are cached because the
-    same handful of theme colours are referenced dozens of times per PDF."""
+    """Return a ReportLab ``Color`` for *c*.
+
+    Results are cached because the same handful of theme colours are
+    referenced dozens of times per PDF.
+    """
     return colors.HexColor(c)
 
 

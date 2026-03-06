@@ -1,3 +1,10 @@
+"""UDP data receiver — ingests binary sensor payloads from ESP32 nodes.
+
+``UDPDataRxProtocol`` is an asyncio ``DatagramProtocol`` that decodes
+incoming ``DataMessage`` frames, deduplicates them via the client registry,
+runs the processing pipeline, and hands results to the metrics logger.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -15,6 +22,8 @@ _QUEUE_DROP_LOG_INTERVAL_S: float = 10.0
 
 
 class DataDatagramProtocol(asyncio.DatagramProtocol):
+    """asyncio ``DatagramProtocol`` that ingests UDP sensor data frames."""
+
     _MSG_DATA: int = MSG_DATA  # class-level cache avoids module-dict lookup per packet
 
     def __init__(
@@ -35,9 +44,11 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         self._suppressed_queue_drop_warnings = 0
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
+        """Store the transport reference when the datagram endpoint is established."""
         self.transport = cast(asyncio.DatagramTransport, transport)
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
+        """Enqueue an incoming datagram for background processing."""
         if not data:
             return
         if data[0] != self._MSG_DATA:
@@ -71,6 +82,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
             return
 
     async def process_queue(self) -> None:
+        """Consume the ingestion queue until cancelled, processing each datagram."""
         while True:
             data, addr = await self._queue.get()
             try:
@@ -132,6 +144,7 @@ async def start_udp_data_receiver(
     processor: SignalProcessor,
     queue_maxsize: int = 1024,
 ) -> tuple[asyncio.DatagramTransport, asyncio.Task[None]]:
+    """Bind the UDP data socket and start the background consumer task."""
     loop = asyncio.get_running_loop()
     protocol = DataDatagramProtocol(
         registry=registry,

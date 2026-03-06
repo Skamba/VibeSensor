@@ -1,3 +1,9 @@
+"""ESP32 UDP binary protocol — message encoding and decoding.
+
+Defines the binary message format exchanged over UDP between the ESP32
+sensor nodes and the VibeSensor server (Hello, Data, Cmd, Ack, DataAck).
+"""
+
 from __future__ import annotations
 
 import logging
@@ -72,11 +78,13 @@ _SAMPLE_DTYPE = np.dtype("<i2")
 
 
 class ProtocolError(ValueError):
-    pass
+    """Raised when a binary protocol message is malformed or unexpected."""
 
 
 @dataclass(slots=True)
 class HelloMessage:
+    """Decoded HELLO message sent by an ESP32 sensor on connect."""
+
     client_id: bytes
     control_port: int
     sample_rate_hz: int
@@ -88,6 +96,8 @@ class HelloMessage:
 
 @dataclass(slots=True)
 class DataMessage:
+    """Decoded DATA message containing one frame of accelerometer samples."""
+
     client_id: bytes
     seq: int
     t0_us: int
@@ -97,6 +107,8 @@ class DataMessage:
 
 @dataclass(slots=True)
 class CmdMessage:
+    """Decoded CMD message: a command sent from server to a sensor node."""
+
     client_id: bytes
     cmd_id: int
     cmd_seq: int
@@ -105,6 +117,8 @@ class CmdMessage:
 
 @dataclass(slots=True)
 class AckMessage:
+    """Decoded ACK message: a command acknowledgment sent by a sensor node."""
+
     client_id: bytes
     cmd_seq: int
     status: int
@@ -112,11 +126,14 @@ class AckMessage:
 
 @dataclass(slots=True)
 class DataAckMessage:
+    """Decoded DATA_ACK message: data-receipt acknowledgment from server to sensor."""
+
     client_id: bytes
     last_seq_received: int
 
 
 def client_id_hex(client_id: bytes) -> str:
+    """Return the 6-byte *client_id* as a lowercase hex string."""
     if len(client_id) != 6:
         raise ValueError(f"client_id must be 6 bytes, got {len(client_id)}")
     return client_id.hex()
@@ -131,6 +148,7 @@ def extract_client_id_hex(data: bytes) -> str | None:
 
 
 def client_id_mac(client_id: bytes | str) -> str:
+    """Return *client_id* formatted as a colon-separated MAC address string."""
     raw = parse_client_id(client_id) if isinstance(client_id, str) else client_id
     if len(raw) != 6:
         raise ValueError(f"client_id must be 6 bytes, got {len(raw)}")
@@ -138,6 +156,7 @@ def client_id_mac(client_id: bytes | str) -> str:
 
 
 def parse_client_id(client_id_text: str) -> bytes:
+    """Parse a hex or colon-separated MAC string into 6 bytes."""
     compact = client_id_text.replace(":", "").strip().lower()
     if len(compact) != 12:
         raise ValueError("client_id must be 12 hex chars")
@@ -145,6 +164,7 @@ def parse_client_id(client_id_text: str) -> bytes:
 
 
 def parse_hello(data: bytes) -> HelloMessage:
+    """Decode a raw HELLO message into a :class:`HelloMessage`."""
     if len(data) < HELLO_BASE.size:
         raise ProtocolError("HELLO too short")
     (
@@ -214,6 +234,7 @@ def pack_hello(
     firmware_version: str = "",
     queue_overflow_drops: int = 0,
 ) -> bytes:
+    """Encode a HELLO message as bytes."""
     name_bytes = name.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
     fw_bytes = firmware_version.encode("utf-8")[:HELLO_MAX_NAME_BYTES]
     header = HELLO_BASE.pack(
@@ -235,6 +256,7 @@ def pack_hello(
 
 
 def parse_data(data: bytes) -> DataMessage:
+    """Decode a raw DATA message into a :class:`DataMessage`."""
     if len(data) < DATA_HEADER_BYTES:
         raise ProtocolError("DATA too short")
     msg_type, version, client_id, seq, t0_us, sample_count = DATA_HEADER.unpack_from(data, 0)
@@ -258,6 +280,7 @@ def parse_data(data: bytes) -> DataMessage:
 
 
 def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> bytes:
+    """Encode a DATA message as bytes from an (N, 3) int16 samples array."""
     samples_int16 = np.asarray(samples, dtype=_SAMPLE_DTYPE)
     if samples_int16.ndim != 2 or samples_int16.shape[1] != 3:
         raise ValueError("samples must be shaped (N, 3)")
@@ -267,6 +290,7 @@ def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> by
 
 
 def parse_cmd(data: bytes) -> CmdMessage:
+    """Decode a raw CMD message into a :class:`CmdMessage`."""
     if len(data) < CMD_HEADER_BYTES:
         raise ProtocolError("CMD too short")
     msg_type, version, client_id, cmd_id, cmd_seq = CMD_HEADER.unpack_from(data, 0)
@@ -277,6 +301,7 @@ def parse_cmd(data: bytes) -> CmdMessage:
 
 
 def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes:
+    """Encode a CMD_IDENTIFY command as bytes."""
     return CMD_IDENTIFY_STRUCT.pack(
         MSG_CMD,
         VERSION,
@@ -288,6 +313,7 @@ def pack_cmd_identify(client_id: bytes, cmd_seq: int, duration_ms: int) -> bytes
 
 
 def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> bytes:
+    """Encode a CMD_SYNC_CLOCK command as bytes."""
     return CMD_SYNC_CLOCK_STRUCT.pack(
         MSG_CMD,
         VERSION,
@@ -299,6 +325,7 @@ def pack_cmd_sync_clock(client_id: bytes, cmd_seq: int, server_time_us: int) -> 
 
 
 def parse_ack(data: bytes) -> AckMessage:
+    """Decode a raw ACK message into an :class:`AckMessage`."""
     if len(data) != ACK_BYTES:
         raise ProtocolError("ACK has unexpected size")
     msg_type, version, client_id, cmd_seq, status = ACK_STRUCT.unpack_from(data, 0)
@@ -308,10 +335,12 @@ def parse_ack(data: bytes) -> AckMessage:
 
 
 def pack_ack(client_id: bytes, cmd_seq: int, status: int = 0) -> bytes:
+    """Encode an ACK message as bytes."""
     return ACK_STRUCT.pack(MSG_ACK, VERSION, client_id, cmd_seq, status & 0xFF)
 
 
 def parse_data_ack(data: bytes) -> DataAckMessage:
+    """Decode a raw DATA_ACK message into a :class:`DataAckMessage`."""
     if len(data) != DATA_ACK_BYTES:
         raise ProtocolError("DATA_ACK has unexpected size")
     msg_type, version, client_id, last_seq_received = DATA_ACK_STRUCT.unpack_from(data, 0)
@@ -321,4 +350,5 @@ def parse_data_ack(data: bytes) -> DataAckMessage:
 
 
 def pack_data_ack(client_id: bytes, last_seq_received: int) -> bytes:
+    """Encode a DATA_ACK message as bytes."""
     return DATA_ACK_STRUCT.pack(MSG_DATA_ACK, VERSION, client_id, last_seq_received & 0xFFFFFFFF)

@@ -1,3 +1,10 @@
+"""UDP control transmitter — sends command/ack messages to ESP32 sensors.
+
+``UDPControlTxProtocol`` is an asyncio ``DatagramProtocol`` that builds and
+transmits binary control frames (``CmdMessage``, ``AckMessage``) to sensor
+nodes over the control UDP socket.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -60,6 +67,8 @@ class ControlDatagramProtocol(asyncio.DatagramProtocol):
 
 
 class UDPControlPlane:
+    """Manages the control UDP socket: receives ACKs, sends commands to sensors."""
+
     def __init__(self, registry: ClientRegistry, bind_host: str, bind_port: int):
         self.registry = registry
         self.bind_host = bind_host
@@ -76,6 +85,7 @@ class UDPControlPlane:
             return self._cmd_seq
 
     async def start(self) -> None:
+        """Bind the control UDP socket and start listening for ACKs."""
         loop = asyncio.get_running_loop()
         transport, _ = await loop.create_datagram_endpoint(
             lambda: self.protocol,
@@ -84,6 +94,7 @@ class UDPControlPlane:
         self.transport = transport
 
     def close(self) -> None:
+        """Close the control UDP transport if open."""
         if self.transport is not None:
             self.transport.close()
             self.transport = None

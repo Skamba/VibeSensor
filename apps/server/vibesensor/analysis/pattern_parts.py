@@ -142,6 +142,7 @@ def parts_for_pattern(
     -------
     list[str]
         Part descriptions in the requested language.
+
     """
     src = _normalize_system(system)
     bucket = _order_bucket(order_label or "")

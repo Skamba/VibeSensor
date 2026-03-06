@@ -1,3 +1,9 @@
+"""ESP32 firmware flash manager.
+
+Manages detection of connected ESP32 devices, flashing firmware via
+``esptool``, and tracking flash state/history through ``EspFlashManager``.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -36,6 +42,8 @@ def _esptool_base_cmd() -> list[str] | None:
 
 
 class EspFlashState(enum.StrEnum):
+    """State machine values for an ESP32 flash job."""
+
     idle = "idle"
     running = "running"
     success = "success"
@@ -45,6 +53,8 @@ class EspFlashState(enum.StrEnum):
 
 @dataclass
 class SerialPortInfo:
+    """Metadata about a detected serial port (USB device)."""
+
     port: str
     description: str = ""
     vid: int | None = None
@@ -52,6 +62,7 @@ class SerialPortInfo:
     serial_number: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise serial port info to a plain dict for API responses."""
         return {
             "port": self.port,
             "description": self.description,
@@ -63,6 +74,8 @@ class SerialPortInfo:
 
 @dataclass
 class EspFlashHistoryEntry:
+    """Record of a completed or cancelled ESP32 flash job."""
+
     job_id: int
     state: EspFlashState
     selected_port: str | None
@@ -73,6 +86,7 @@ class EspFlashHistoryEntry:
     error: str | None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise flash history entry to a plain dict for API responses."""
         return {
             "job_id": self.job_id,
             "state": self.state.value,
@@ -87,6 +101,8 @@ class EspFlashHistoryEntry:
 
 @dataclass
 class EspFlashStatus:
+    """Current real-time status of the ESP32 flash manager."""
+
     state: EspFlashState = EspFlashState.idle
     phase: str = "idle"
     job_id: int | None = None
@@ -185,6 +201,8 @@ class FlashCommandRunner:
 
 
 class EspFlashManager:
+    """Manages ESP32 firmware flash jobs: detect ports, run esptool, track history."""
+
     def __init__(
         self,
         *,

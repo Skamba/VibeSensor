@@ -204,6 +204,7 @@ def segment_run_phases(
         One phase label per sample (same order/length as *samples*).
     segments : list[PhaseSegment]
         Contiguous segments of identical phase, sorted by time.
+
     """
     n = len(samples)
     if n == 0:

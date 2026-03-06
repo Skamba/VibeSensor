@@ -1,9 +1,17 @@
+"""Vibration-strength band definitions and bucket classification.
+
+``BANDS`` defines six strength levels (l0–l5) with minimum dB thresholds.
+``bucket_for_strength`` maps a dB value to the appropriate band key.
+"""
+
 from __future__ import annotations
 
 from typing import TypedDict
 
 
 class StrengthBand(TypedDict):
+    """Typed dict for a single vibration-strength band definition."""
+
     key: str
     min_db: float
 
@@ -27,6 +35,10 @@ _BAND_RANK: dict[str, int] = {b["key"]: i for i, b in enumerate(BANDS)}
 
 
 def bucket_for_strength(vibration_strength_db: float) -> str | None:
+    """Return the band key (e.g. ``"l3"``) for *vibration_strength_db*.
+
+    Returns ``"l0"`` for sub-zero dB values (treated as negligible).
+    """
     # Reverse-iterate sorted bands; first match is the highest qualifying band.
     for band in reversed(BANDS):
         if vibration_strength_db >= band["min_db"]:
@@ -35,8 +47,10 @@ def bucket_for_strength(vibration_strength_db: float) -> str | None:
 
 
 def band_by_key(key: str) -> StrengthBand | None:
+    """Return the :class:`StrengthBand` for *key*, or ``None`` if unknown."""
     return _BAND_BY_KEY.get(key)
 
 
 def band_rank(key: str) -> int:
+    """Return the 0-based rank of *key* in ``BANDS``, or ``-1`` if unknown."""
     return _BAND_RANK.get(key, -1)

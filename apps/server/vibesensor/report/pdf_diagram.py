@@ -27,6 +27,8 @@ MarkerState = Literal["connected-active", "connected-inactive", "disconnected"]
 
 @dataclass(frozen=True)
 class MarkerRenderPlan:
+    """Computed render parameters for a single location marker on the car diagram."""
+
     name: str
     x: float
     y: float
@@ -39,6 +41,8 @@ class MarkerRenderPlan:
 
 @dataclass(frozen=True)
 class LabelRenderPlan:
+    """Computed render parameters for a location label on the car diagram."""
+
     name: str
     text: str
     x: float
@@ -266,6 +270,7 @@ def car_location_diagram(
     diagram_width: float | None = None,
     diagram_height: float = 252,
 ) -> Any:
+    """Build and return a ReportLab car location diagram ``Drawing``."""
     from reportlab.graphics.shapes import Circle, Drawing, Line, Rect, String
     from reportlab.lib import colors
 

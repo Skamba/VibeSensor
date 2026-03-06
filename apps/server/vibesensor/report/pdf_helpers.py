@@ -66,6 +66,10 @@ def location_hotspots(
     tr: Callable[..., str],
     text_fn: Callable[..., str],
 ) -> tuple[list[dict[str, Any]], str, int, int]:
+    """Analyse samples and findings to produce per-location vibration hotspots.
+
+    Returns a tuple of ``(hotspot_rows, summary_text, total_samples, loc_count)``.
+    """
     if not isinstance(samples_obj, list):
         return [], tr("LOCATION_ANALYSIS_UNAVAILABLE"), 0, 0
     all_locations: set[str] = set()

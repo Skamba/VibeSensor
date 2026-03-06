@@ -36,6 +36,7 @@ def export_schema(out_path: Path | None = None) -> str:
 
 
 def main() -> None:
+    """Entry point for the ``vibesensor-ws-schema-export`` CLI tool."""
     parser = argparse.ArgumentParser(description="Export WS payload JSON Schema")
     parser.add_argument("--out", type=Path, default=_DEFAULT_OUT, help="Output file path")
     parser.add_argument("--check", action="store_true", help="Fail if committed schema differs")

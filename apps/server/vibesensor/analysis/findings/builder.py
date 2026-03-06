@@ -75,6 +75,7 @@ def _build_findings(
     Returns:
         Ordered list of finding dicts: references first, then diagnostics sorted
         by (quantised confidence, ranking_score) descending, then informational.
+
     """
     findings: list[dict[str, Any]] = []
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)

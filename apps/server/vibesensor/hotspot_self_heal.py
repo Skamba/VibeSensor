@@ -1,3 +1,9 @@
+"""Wi-Fi hotspot self-heal manager.
+
+Monitors hotspot connectivity and automatically recovers from failures
+by restarting ``hostapd``/``dnsmasq`` when the hotspot becomes unreachable.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -31,18 +37,26 @@ _FALLBACK_CHANNELS: tuple[int, ...] = (1, 6, 11)
 
 @dataclass(slots=True)
 class CommandResult:
+    """Result of a subprocess command run by :class:`CommandRunner`."""
+
     returncode: int
     stdout: str
     stderr: str
 
 
 class CommandRunner(ABC):
+    """Abstract base for running system commands (real subprocess or test stub)."""
+
     @abstractmethod
-    def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult: ...
+    def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
+        """Execute *argv* and return a :class:`CommandResult`."""
 
 
 class SubprocessRunner(CommandRunner):
+    """Default :class:`CommandRunner` that executes real subprocesses."""
+
     def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
+        """Execute *argv* as a subprocess and return the result."""
         try:
             completed = subprocess.run(
                 argv,
@@ -64,6 +78,8 @@ class SubprocessRunner(CommandRunner):
 
 @dataclass(slots=True)
 class HealAction:
+    """Record of a single self-heal action taken to restore hotspot connectivity."""
+
     name: str
     detected: str
     action: str
@@ -72,6 +88,8 @@ class HealAction:
 
 @dataclass(slots=True)
 class HealthState:
+    """Snapshot of the current Wi-Fi hotspot health collected from system commands."""
+
     nm_running: bool
     wifi_radio_on: bool
     rfkill_blocked: bool
@@ -126,6 +144,7 @@ def _find_port53_conflict(runner: CommandRunner) -> str | None:
 
 
 def collect_health(ap: APConfig, self_heal: APSelfHealConfig, runner: CommandRunner) -> HealthState:
+    """Collect the current hotspot health state by running diagnostic commands."""
     issues: list[str] = []
 
     nm_active = runner.run(["systemctl", "is-active", "NetworkManager"], timeout_s=5)
@@ -380,6 +399,7 @@ def run_self_heal_once(
     state_store: HealStateStore,
     diagnostics_only: bool = False,
 ) -> int:
+    """Run one self-heal cycle; return an exit code (0 = ok, 1 = healed, 2 = failed)."""
     if diagnostics_only:
         _emit_diagnostics(ap, self_heal.diagnostics_lookback_minutes, runner, LOGGER)
         return 0
@@ -540,6 +560,7 @@ def run_self_heal_once(
 
 
 def run_self_heal(config_path: Path, diagnostics_only: bool = False) -> int:
+    """Load configuration from *config_path* and run one self-heal cycle."""
     cfg = load_config(config_path)
     ap = cfg.ap
     self_heal = cfg.ap.self_heal
@@ -549,6 +570,7 @@ def run_self_heal(config_path: Path, diagnostics_only: bool = False) -> int:
 
 
 def main() -> None:
+    """Entry point for the ``vibesensor-hotspot-heal`` CLI tool."""
     parser = argparse.ArgumentParser(description="VibeSensor hotspot health check and self-healing")
     parser.add_argument(
         "--config",

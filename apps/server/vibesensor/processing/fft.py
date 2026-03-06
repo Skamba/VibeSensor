@@ -181,6 +181,7 @@ def compute_fft_spectrum(
     dict with keys: ``freq_slice``, ``valid_idx``, ``spectrum_by_axis``,
     ``axis_amp_slices``, ``axis_amps``, ``combined_amp``,
     ``strength_metrics``, ``axis_peaks``.
+
     """
     if spike_filter_enabled:
         fft_block = medfilt3(fft_block)

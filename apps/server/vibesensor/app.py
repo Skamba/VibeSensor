@@ -55,6 +55,7 @@ _BIND_ERROR_NUMBERS: frozenset[int] = frozenset({errno.EACCES, errno.EADDRINUSE,
 
 
 def create_app(config_path: Path | None = None) -> FastAPI:
+    """Create and configure the VibeSensor FastAPI application."""
     config = load_config(config_path)
 
     history_db = HistoryDB(config.logging.history_db_path)
@@ -196,6 +197,7 @@ app: FastAPI | None = (
 
 
 def main() -> None:
+    """Entry point for the ``vibesensor-server`` CLI command."""
     parser = argparse.ArgumentParser(description="Run VibeSensor server")
     parser.add_argument("--config", type=Path, default=None, help="Path to config YAML")
     args = parser.parse_args()
