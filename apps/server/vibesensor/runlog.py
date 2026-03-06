@@ -300,6 +300,10 @@ def read_jsonl_run(path: Path) -> RunData:
         LOGGER.warning("Skipped %d corrupt line(s) while reading %s", skipped, path)
     if metadata is None:
         raise ValueError(f"Run metadata missing in {path}")
+    if not metadata.get("run_id"):
+        raise ValueError(
+            f"Run metadata in {path} is missing required 'run_id' field"
+        )
     if end_record and not metadata.get("end_time_utc"):
         metadata["end_time_utc"] = end_record.get("end_time_utc")
     return RunData(metadata=metadata, samples=samples, source_path=path)
