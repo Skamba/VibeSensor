@@ -26,10 +26,32 @@ import type { AppState, ChartBand, ClientRow } from "./state/ui_app_state";
 import type { UiDomElements } from "./dom/ui_dom_registry";
 import { areHeavyFramesCompatible, interpolateHeavyFrame } from "./spectrum_animation";
 import type { SpectrumHeavyFrame } from "./spectrum_animation";
+import { createDashboardFeature } from "./features/dashboard_feature";
+import type { DashboardFeature } from "./features/dashboard_feature";
+import { METRIC_FIELDS } from "../generated/shared_contracts";
 
 export function startUiApp(): void {
   const els: UiDomElements = createUiDomRegistry();
   const state: AppState = createAppState();
+
+  const CAR_MAP_WINDOW_MS = 10_000;
+  const CAR_MAP_POSITIONS: Record<string, { top: number; left: number }> = {
+    front_left_wheel: { top: 22, left: 18 },
+    front_right_wheel: { top: 22, left: 82 },
+    rear_left_wheel: { top: 78, left: 18 },
+    rear_right_wheel: { top: 78, left: 82 },
+    engine_bay: { top: 28, left: 50 },
+    front_subframe: { top: 14, left: 50 },
+    rear_subframe: { top: 88, left: 50 },
+    driveshaft_tunnel: { top: 52, left: 50 },
+    transmission: { top: 40, left: 48 },
+    driver_seat: { top: 44, left: 38 },
+    front_passenger_seat: { top: 44, left: 62 },
+    rear_left_seat: { top: 66, left: 30 },
+    rear_center_seat: { top: 66, left: 50 },
+    rear_right_seat: { top: 66, left: 70 },
+    trunk: { top: 88, left: 50 },
+  };
 
   const SPECTRUM_DB_MIN = 0;
   const SPECTRUM_DB_MAX = 100;
@@ -95,7 +117,7 @@ export function startUiApp(): void {
   };
 
   function renderWsState(): void {
-    if (state.payloadError) return setPillState(els.linkState, "bad", "Payload error");
+    if (state.payloadError) return setPillState(els.linkState, "bad", t("ws.payload_error_pill"));
     setPillState(els.linkState, WS_VARIANT_BY_STATE[state.wsState] || "muted", t(WS_KEY_BY_STATE[state.wsState] || "ws.connecting"));
 
     // Connection status banner
@@ -161,12 +183,25 @@ export function startUiApp(): void {
   }
 
   // Create features — cross-feature callbacks use lazy references via closures.
+  let dashboardFeature: DashboardFeature | undefined;
   const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt });
-  const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix, renderMatrix: () => {}, sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
+  const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix: () => createEmptyMatrix(state.strengthBands), renderMatrix: () => { dashboardFeature?.renderMatrix(); }, sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
   const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout, onCarSelectionStateChange: renderCarSelectionWarning });
-  const wizardFeature = createCarsFeature({ els, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
+  const wizardFeature = createCarsFeature({ els, t, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
   const updateFeature = createUpdateFeature({ els, t, escapeHtml });
   const espFlashFeature = createEspFlashFeature({ els, t, escapeHtml });
+
+  dashboardFeature = createDashboardFeature({
+    state,
+    els,
+    t,
+    fmt,
+    escapeHtml,
+    locationCodeForClient: (client) => sensorsFeature.locationCodeForClient(client),
+    carMapPositions: CAR_MAP_POSITIONS,
+    carMapWindowMs: CAR_MAP_WINDOW_MS,
+    metricField: METRIC_FIELDS.vibration_strength_db,
+  });
 
   function applyLanguage(forceReloadInsights = false): void {
     document.documentElement.lang = state.lang;
@@ -185,6 +220,7 @@ export function startUiApp(): void {
     renderWsState();
     renderCarSelectionWarning();
     if (state.spectrumPlot) { state.spectrumPlot.destroy(); state.spectrumPlot = null; renderSpectrum(); }
+    dashboardFeature?.recreateStrengthChart();
     if (forceReloadInsights) historyFeature.reloadExpandedRunOnLanguageChange();
     updateSpectrumOverlay();
   }
@@ -377,10 +413,11 @@ export function startUiApp(): void {
   function applyPayload(payload: unknown): void {
     let adapted;
     try { adapted = adaptServerPayload(payload as Record<string, unknown>); }
-    catch (err) { state.payloadError = err instanceof Error ? err.message : "Invalid server payload."; state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
+    catch (err) { state.payloadError = err instanceof Error ? err.message : t("ws.payload_error"); state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
     state.payloadError = null; renderWsState();
     const prevSelected = state.selectedClientId;
     state.clients = adapted.clients as unknown as ClientRow[];
+    const hasFresh = dashboardFeature?.hasFreshSensorFrames(state.clients) ?? false;
     const incomingSpectra = adapted.spectra
       ? { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics, combined: spectrum.combined }])) }
       : null;
@@ -394,6 +431,13 @@ export function startUiApp(): void {
     latestRotationalSpeeds = adapted.rotational_speeds;
     state.hasSpectrumData = spectrumTick.hasSpectrumData;
     renderSpeedReadout();
+    dashboardFeature?.applyServerDiagnostics(adapted.diagnostics, hasFresh);
+    const liveIntensity = dashboardFeature?.extractLiveLocationIntensity() ?? {};
+    const intensityToPlot = Object.keys(liveIntensity).length > 0
+      ? liveIntensity
+      : (dashboardFeature?.extractConfirmedLocationIntensity() ?? {});
+    dashboardFeature?.pushCarMapSample(intensityToPlot);
+    dashboardFeature?.renderCarMap();
     if (spectrumTick.hasNewSpectrumFrame) renderSpectrum(); else updateSpectrumOverlay();
     sensorsFeature.renderStatus(state.clients.find((c) => c.id === state.selectedClientId));
   }

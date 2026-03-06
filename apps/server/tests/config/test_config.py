@@ -56,16 +56,23 @@ def test_logging_no_data_timeout_defaults_and_allows_override(cfg_path: Path) ->
 
 
 def test_dev_and_docker_configs_equivalent() -> None:
-    """config.dev.yaml and config.docker.yaml must produce identical AppConfig."""
+    """config.dev.yaml and config.docker.yaml share core settings but Docker
+    intentionally overrides environment-specific options (GPS disabled because
+    Docker containers have no gpsd, AP self-heal disabled because nmcli/hostapd
+    are absent, rollback_dir uses a container-local path)."""
     dev_cfg = load_config(SERVER_DIR / "config.dev.yaml")
     docker_cfg = load_config(SERVER_DIR / "config.docker.yaml")
-    # Compare all meaningful fields (config_path will differ)
+    # Core transport and processing settings must still agree
     assert dev_cfg.logging.metrics_log_path == docker_cfg.logging.metrics_log_path
     assert dev_cfg.server == docker_cfg.server
     assert dev_cfg.udp == docker_cfg.udp
     assert dev_cfg.processing == docker_cfg.processing
-    assert dev_cfg.gps == docker_cfg.gps
-    assert dev_cfg.ap == docker_cfg.ap
+    # GPS: Docker container has no gpsd — GPS is intentionally disabled there
+    assert dev_cfg.gps.gpsd_host == docker_cfg.gps.gpsd_host
+    assert dev_cfg.gps.gpsd_port == docker_cfg.gps.gpsd_port
+    assert docker_cfg.gps.gps_enabled is False, "Docker config must disable GPS"
+    # AP: self-heal is intentionally disabled in Docker (no nmcli/hostapd)
+    assert docker_cfg.ap.self_heal.enabled is False, "Docker config must disable AP self-heal"
 
 
 def test_default_server_port_is_80_for_base_config(cfg_path: Path) -> None:

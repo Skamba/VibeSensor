@@ -92,7 +92,7 @@ class UpdateJobStatus:
             last_success_at=data.get("last_success_at"),
             ssid=str(data.get("ssid", "")),
             issues=issues,
-            log_tail=list(data.get("log_tail") or []),
+            log_tail=list(data.get("log_tail") or [])[-_LOG_TAIL_LIMIT:],
             exit_code=data.get("exit_code"),
             runtime=dict(data.get("runtime") or {}),
         )

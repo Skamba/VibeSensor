@@ -150,11 +150,19 @@ def strength_floor_amp_g(
         if amp >= 0.0 and _isfinite(amp):
             selected.append(amp)
     if not selected:
-        # All bins fell within peak exclusion zones; fall back to P20 noise
-        # floor to avoid returning 0.0 which would produce ~140 dB artifacts.
-        return noise_floor_amp_p20_g(
-            combined_spectrum_amp_g=list(combined_spectrum_amp_g[:n]),
+        # All bins were within peak exclusion zones.  Compute P20 of all
+        # qualifying in-range bins instead of delegating to
+        # noise_floor_amp_p20_g, which unconditionally skips index 0
+        # (assuming DC content at 0 Hz) — an assumption that breaks when
+        # the caller has already stripped the DC bin from the spectrum.
+        all_qualifying = sorted(
+            float(combined_spectrum_amp_g[i])
+            for i in range(n)
+            if min_hz <= float(freq_hz[i]) <= max_hz
+            and isfinite(float(combined_spectrum_amp_g[i]))
+            and float(combined_spectrum_amp_g[i]) >= 0.0
         )
+        return percentile(all_qualifying, 0.20) if all_qualifying else 0.0
     return median(selected)
 
 
@@ -251,7 +259,12 @@ def compute_vibration_strength_db(
         value = combined[idx]
         if value < threshold:
             continue
-        if value > combined[idx - 1] and value >= combined[idx + 1]:
+        # For the first non-DC bin (idx == 1), skip the left-neighbour check:
+        # combined[0] may be the DC gravitational component (~1 g on embedded
+        # hardware) which would prevent any legitimate low-frequency peak from
+        # qualifying via the normal strict-left-neighbour condition.
+        left_ok = (idx == 1) or (value > combined[idx - 1])
+        if left_ok and value >= combined[idx + 1]:
             local_maxima.append(idx)
     # Boundary check: last bin can be a peak if it exceeds its left neighbor.
     if n > 1:

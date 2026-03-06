@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import math
 import textwrap
+from collections.abc import Callable
 from functools import lru_cache
 from io import BytesIO
 
@@ -99,6 +100,7 @@ def _hex(c: str) -> colors.Color:
 
 
 def _safe(v: str | None, fallback: str = "—") -> str:
+    """Return *v* stripped if non-empty, otherwise *fallback*."""
     if v:
         s = str(v).strip()
         if s:
@@ -113,6 +115,11 @@ def _strength_with_peak(
     fallback: str,
     peak_suffix: str = "peak",
 ) -> str:
+    """Format a strength label with an optional peak dB suffix.
+
+    If *peak_db* is ``None``, or the *base* label already contains ``'dB'``
+    (preventing a double-annotation), the *base* value is returned as-is.
+    """
     base = _safe(strength_label, fallback)
     if peak_db is None:
         return base
@@ -131,6 +138,7 @@ def _draw_panel(
     fill: str = PANEL_BG,
     border: str = LINE_CLR,
 ) -> None:
+    """Draw a rounded-corner panel rectangle, optionally with a bold title."""
     c.setFillColor(_hex(fill))
     c.setStrokeColor(_hex(border))
     c.roundRect(x, y, w, h, R_CARD, stroke=1, fill=1)
@@ -140,7 +148,13 @@ def _draw_panel(
         c.drawString(x + 4 * mm, y + h - 5.5 * mm, title)
 
 
-def _wrap_lines(text: str, width_pt: float, font_size: int) -> list[str]:
+def _wrap_lines(text: str, width_pt: float, font_size: float) -> list[str]:
+    """Split *text* into lines that fit within *width_pt* at *font_size*.
+
+    Uses ``_HELVETICA_AVG_CHAR_RATIO`` to approximate character width without
+    calling ``pdfmetrics.stringWidth`` on every paragraph.  Each blank
+    paragraph yields a single empty string so callers preserve blank lines.
+    """
     avg_char_w = font_size * _HELVETICA_AVG_CHAR_RATIO
     max_chars = max(10, int(width_pt / avg_char_w))
     lines: list[str] = []
@@ -157,7 +171,7 @@ def _draw_text(
     text: str,
     *,
     font: str = FONT,
-    size: int = FS_BODY,
+    size: float = FS_BODY,
     color: str = TEXT_CLR,
     leading: float | None = None,
     max_lines: int | None = None,
@@ -185,7 +199,7 @@ def _draw_kv(
     value: str,
     *,
     label_w: float = 30 * mm,
-    fs: int = FS_BODY,
+    fs: float = FS_BODY,
     value_w: float | None = None,
 ) -> float:
     """Draw a label: value pair.  Returns the y after the last line."""
@@ -207,7 +221,7 @@ def _draw_kv(
     return y - (fs + 2)
 
 
-def _kv_consumed_height(value: str, *, fs: int = FS_BODY, value_w: float | None = None) -> float:
+def _kv_consumed_height(value: str, *, fs: float = FS_BODY, value_w: float | None = None) -> float:
     """Return vertical space consumed by a key/value value block."""
     leading = fs + 2
     if value_w is None:
@@ -267,14 +281,15 @@ def _draw_section_block(
     c.setFont(FONT_B, FS_SMALL)
     c.drawString(x, y, title)
     y -= title_gap
-    y = _draw_text(c, x, y, w, body, size=6, color=SUB_CLR, max_lines=max_lines)
+    y = _draw_text(c, x, y, w, body, size=FS_SMALL, color=SUB_CLR, max_lines=max_lines)
     y -= body_gap
     return y
 
 
 def _draw_footer(c: Canvas, page_num: int, total: int, version: str) -> None:
+    """Draw page number (right) and version string (left) in the bottom margin."""
     y = MARGIN - 4 * mm
-    c.setFont(FONT, 6)
+    c.setFont(FONT, FS_SMALL)
     c.setFillColor(_hex(MUTED_CLR))
     c.drawString(MARGIN, y, version)
     c.drawRightString(PAGE_W - MARGIN, y, f"{page_num} / {total}")
@@ -575,7 +590,7 @@ def _draw_system_card(
     h: float,
     card: SystemFindingCard,
     *,
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
     """Render a single system-finding card."""
     na = tr("NOT_AVAILABLE")
@@ -728,8 +743,8 @@ def _page2(
     *,
     location_rows: list,
     top_causes: list,
-    tr_fn,
-    text_fn,
+    tr_fn: Callable[..., str],
+    text_fn: Callable[[str, str], str],
     next_steps_continued: list[NextStep] | None = None,
 ) -> None:
     """Render page-2: car visual + pattern evidence + peaks table."""
@@ -853,8 +868,9 @@ def _draw_pattern_evidence(
     w: float,
     h: float,
     ev: PatternEvidence,
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
+    """Draw the pattern-evidence panel on page 2 (matched systems, strength, certainty)."""
     na = tr("NOT_AVAILABLE")
 
     _draw_panel(c, x, y, w, h, tr("PATTERN_EVIDENCE"))
@@ -901,7 +917,7 @@ def _draw_pattern_evidence(
             ry,
             val_w + lw - 2 * mm,
             ev.certainty_reason,
-            size=6,
+            size=FS_SMALL,
             color=SUB_CLR,
             max_lines=2,
         )
@@ -913,7 +929,7 @@ def _draw_pattern_evidence(
         c.setFont(FONT_B, FS_SMALL)
         c.drawString(rx, ry, f"\u26a0 {tr('WARNING_LABEL')}")
         ry -= 3.0 * mm
-        ry = _draw_text(c, rx, ry, w - 8 * mm, ev.warning, size=6, color=WARN_CLR, max_lines=3)
+        ry = _draw_text(c, rx, ry, w - 8 * mm, ev.warning, size=FS_SMALL, color=WARN_CLR, max_lines=3)
         ry -= 1.5 * mm
 
     # Interpretation
@@ -940,7 +956,7 @@ def _draw_peaks_table(
     w: float,
     y_bottom: float,
     data: ReportTemplateData,
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
     """Diagnostic-first peaks table."""
     col_defs = [
@@ -1024,8 +1040,9 @@ def _draw_additional_observations(
     w: float,
     h: float,
     transient_findings: list[dict[str, object]],
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
+    """Draw transient-impact findings in the additional-observations panel on page 2."""
     _draw_panel(c, x, y, w, h, tr("ADDITIONAL_OBSERVATIONS"), fill=SOFT_BG)
     c.setFillColor(_hex(MUTED_CLR))
     c.setFont(FONT, 6.5)
@@ -1069,6 +1086,12 @@ def build_report_pdf(data: ReportTemplateData) -> bytes:
 
 
 def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
+    """Build the raw PDF bytes from *data* using the ReportLab Canvas API.
+
+    Sets up locale-aware ``tr_fn`` / ``text_fn`` helpers, resolves location
+    hotspot rows (from pre-computed data or falls back to an empty sample list),
+    and renders both pages before serialising to bytes.
+    """
     lang = data.lang
 
     def tr_fn(key: str, **kw: object) -> str:

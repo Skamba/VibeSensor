@@ -13,6 +13,7 @@ import logging
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from fastapi import WebSocket
 
@@ -42,6 +43,9 @@ _ERROR_PAYLOAD: str = json.dumps(
 _MAX_CONSECUTIVE_FAILURES: int = 10
 """Back off after this many consecutive broadcast tick failures."""
 
+_BACKOFF_MULTIPLIER: int = 5
+"""Sleep multiplier applied to the tick interval during error back-off."""
+
 
 @dataclass(slots=True)
 class WSConnection:
@@ -55,6 +59,7 @@ class WebSocketHub:
     """Fan-out broadcaster: sends live metric payloads to all connected WebSocket clients."""
 
     def __init__(self) -> None:
+        """Initialise the hub with an empty client registry."""
         self._connections: dict[int, WSConnection] = {}
         self._lock = asyncio.Lock()
         self._send_timeout_s = _SEND_TIMEOUT_S
@@ -82,13 +87,14 @@ class WebSocketHub:
                 conn.selected_client_id = client_id
 
     async def _snapshot(self) -> list[WSConnection]:
+        """Return a point-in-time copy of the active connections list."""
         async with self._lock:
             return list(self._connections.values())
 
     def _build_payload_for(
         self,
         selected_client_id: str | None,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
         payload_cache: dict[str | None, str],
         failed_client_ids: set[str | None],
         debug_info: dict[str | None, bool] | None = None,
@@ -146,7 +152,7 @@ class WebSocketHub:
     async def _send_conn(
         self,
         conn: WSConnection,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
         payload_cache: dict[str | None, str],
         failed_client_ids: set[str | None],
         debug_info: dict[str | None, bool] | None = None,
@@ -177,8 +183,14 @@ class WebSocketHub:
 
     async def broadcast(
         self,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
     ) -> None:
+        """Broadcast a live metric payload to all connected WebSocket clients.
+
+        Calls *payload_builder* at most once per unique ``selected_client_id``
+        across all connections (results are cached per tick).  Connections that
+        fail or time out during send are removed from the hub automatically.
+        """
         conns = await self._snapshot()
         if not conns:
             return
@@ -215,21 +227,34 @@ class WebSocketHub:
 
         # Dev-only instrumentation: log payload sizes when VIBESENSOR_WS_DEBUG=1.
         if debug_info is not None and payload_cache:
+            live_count = len(conns) - sum(1 for ws in dead_ws if ws is not None)
             for sel_id, text in payload_cache.items():
                 LOGGER.debug(
                     "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
                     sel_id,
                     len(text),
-                    len(conns),
+                    live_count,
                     debug_info.get(sel_id, False),
                 )
 
     async def run(
         self,
         hz: int,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
         on_tick: Callable[[], None] | None = None,
     ) -> None:
+        """Drive broadcast ticks at *hz* frames per second until cancelled.
+
+        *on_tick* (if provided) is called synchronously before each broadcast so
+        the caller can update shared state atomically with payload generation.
+        Consecutive broadcast failures trigger back-off to avoid thundering-herd
+        log spam.
+        """
+        if hz <= 0:
+            LOGGER.warning(
+                "WebSocketHub.run called with hz=%r; clamping to 1 Hz.",
+                hz,
+            )
         interval = 1.0 / max(1, hz)
         _consecutive_failures = 0
         loop = asyncio.get_running_loop()
@@ -237,7 +262,13 @@ class WebSocketHub:
             tick_start = loop.time()
             try:
                 if on_tick is not None:
-                    on_tick()
+                    try:
+                        on_tick()
+                    except Exception:
+                        LOGGER.warning(
+                            "WebSocket on_tick callback raised; proceeding to broadcast.",
+                            exc_info=True,
+                        )
                 await self.broadcast(payload_builder)
                 _consecutive_failures = 0
             except Exception:
@@ -248,9 +279,13 @@ class WebSocketHub:
                         _consecutive_failures,
                         exc_info=True,
                     )
-                    await asyncio.sleep(interval * 5)
+                    await asyncio.sleep(interval * _BACKOFF_MULTIPLIER)
                     _consecutive_failures = 0
                 else:
-                    LOGGER.warning("WebSocket broadcast tick failed; will retry.", exc_info=True)
+                    LOGGER.warning(
+                        "WebSocket broadcast tick failed (%d consecutive); will retry.",
+                        _consecutive_failures,
+                        exc_info=True,
+                    )
             elapsed = loop.time() - tick_start
             await asyncio.sleep(max(0, interval - elapsed))
