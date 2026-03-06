@@ -72,7 +72,7 @@ class CommandRunner:
             )
             stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
             return (
-                proc.returncode or 0,
+                proc.returncode if proc.returncode is not None else 0,
                 stdout_bytes.decode(errors="replace"),
                 stderr_bytes.decode(errors="replace"),
             )
