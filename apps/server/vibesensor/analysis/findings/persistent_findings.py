@@ -292,12 +292,12 @@ def _build_persistent_peak_findings(
 
     for bin_center, amps in bin_amps.items():
         # Skip bins already claimed by order findings.
-        # Use freq_bin_hz_half (= half the bin width) as the exclusion radius
-        # so only the bin that actually *contains* the matched order frequency
-        # is suppressed.  Using the full freq_bin_hz would also suppress the
-        # adjacent bin (e.g., a genuine 17 Hz peak excluded by a 15.3 Hz order
-        # match even though 17 Hz is in the next 2-Hz bin).
-        if any(abs(bin_center - of) < freq_bin_hz_half for of in order_finding_freqs):
+        # Exclusion radius = one full bin width (freq_bin_hz).  Bin centers are
+        # at multiples of freq_bin_hz offset by freq_bin_hz_half, so adjacent
+        # bins are always exactly freq_bin_hz apart; using the full width ensures
+        # the bin containing the matched order frequency is suppressed while
+        # leaving all other bins unaffected.
+        if any(abs(bin_center - of) < freq_bin_hz for of in order_finding_freqs):
             continue
 
         sorted_amps = sorted(amps)
