@@ -110,7 +110,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "storage": {
         "clients_json_path": "data/clients.json",
     },
-    "gps": {"gps_enabled": True},
+    "gps": {"gps_enabled": True, "gpsd_host": "127.0.0.1", "gpsd_port": 2947},
     "update": {
         "server_repo": "Skamba/VibeSensor",
         "rollback_dir": "/var/lib/vibesensor/rollback",
@@ -372,9 +372,11 @@ class LoggingConfig:
 
 @dataclass(slots=True)
 class GPSConfig:
-    """GPS device configuration (enable/disable flag)."""
+    """GPS device configuration (enable/disable flag, gpsd host/port)."""
 
     gps_enabled: bool
+    gpsd_host: str
+    gpsd_port: int
 
 
 @dataclass(slots=True)
@@ -543,6 +545,8 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         gps=GPSConfig(
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
+            gpsd_host=str(merged["gps"].get("gpsd_host", DEFAULT_CONFIG["gps"]["gpsd_host"])),
+            gpsd_port=int(merged["gps"].get("gpsd_port", DEFAULT_CONFIG["gps"]["gpsd_port"])),
         ),
         clients_json_path=_resolve_config_path(
             str(
