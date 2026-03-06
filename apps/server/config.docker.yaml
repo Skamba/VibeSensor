@@ -1,10 +1,11 @@
-# Docker overrides — only fields that differ from defaults.
+# Docker overrides — only fields that differ from Pi defaults.
 # Uses local relative paths inside the container working directory.
-# NOTE: identical to config.dev.yaml; kept separate so the Dockerfile
-#       and local-dev entrypoints reference distinct filenames.
 
 server:
   port: 8000
 
 logging:
   metrics_log_path: data/metrics.jsonl
+
+gps:
+  gps_enabled: false  # Docker containers do not run a gpsd daemon
