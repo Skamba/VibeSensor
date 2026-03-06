@@ -48,13 +48,15 @@ class CommandRunner(ABC):
     """Abstract base for running system commands (real subprocess or test stub)."""
 
     @abstractmethod
-    def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult: ...
+    def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
+        """Execute *argv* and return a :class:`CommandResult`."""
 
 
 class SubprocessRunner(CommandRunner):
     """Default :class:`CommandRunner` that executes real subprocesses."""
 
     def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
+        """Execute *argv* as a subprocess and return the result."""
         try:
             completed = subprocess.run(
                 argv,

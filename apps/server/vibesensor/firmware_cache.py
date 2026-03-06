@@ -106,6 +106,8 @@ class FirmwareCacheConfig:
 
 @dataclass
 class BundleMeta:
+    """Metadata about a downloaded firmware bundle (tag, asset, hash, source)."""
+
     tag: str = ""
     asset: str = ""
     timestamp: str = ""
@@ -124,6 +126,8 @@ class BundleMeta:
 
 @dataclass
 class ManifestSegment:
+    """A single flash segment from the ESP32 flash manifest (file, offset, hash)."""
+
     file: str
     offset: str
     sha256: str = ""
@@ -131,12 +135,16 @@ class ManifestSegment:
 
 @dataclass
 class ManifestEnvironment:
+    """A flash environment (e.g. board variant) containing multiple flash segments."""
+
     name: str
     segments: list[ManifestSegment] = field(default_factory=list)
 
 
 @dataclass
 class FlashManifest:
+    """Parsed contents of a ``flash.json`` firmware manifest file."""
+
     generated_from: str = ""
     environments: list[ManifestEnvironment] = field(default_factory=list)
 

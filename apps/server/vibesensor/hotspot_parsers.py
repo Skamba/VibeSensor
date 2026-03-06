@@ -128,6 +128,8 @@ def parse_port53_conflict(ss_stdout: str) -> str | None:
 
 
 class HealStateStore:
+    """Persists and loads heal-action timestamps for cooldown tracking."""
+
     def __init__(self, path: Path) -> None:
         self._path = path
 

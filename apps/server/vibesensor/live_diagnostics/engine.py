@@ -67,6 +67,7 @@ class LiveDiagnosticsEngine:
         self._next_event_id: int = 0
 
     def reset(self) -> None:
+        """Clear all tracker state and reset the severity matrix."""
         self._matrix.reset()
         self._sensor_trackers = {}
         self._combined_trackers = {}

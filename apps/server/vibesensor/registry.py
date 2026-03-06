@@ -118,6 +118,8 @@ class ClientSnapshot:
 
 @dataclass(slots=True)
 class ClientRecord:
+    """Per-client state: last-seen timestamps, dedup window, hello/firmware metadata."""
+
     client_id: str
     name: str
     firmware_version: str = ""
@@ -171,6 +173,8 @@ class ClientRecord:
 
 
 class ClientRegistry:
+    """Thread-safe registry of connected ESP32 clients with snapshot and snapshot helpers."""
+
     def __init__(
         self,
         db: HistoryDB | None = None,

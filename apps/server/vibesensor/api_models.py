@@ -100,6 +100,8 @@ class SetLocationRequest(_FrozenBase):
 
 
 class AnalysisSettingsRequest(_FrozenBase):
+    """Request body for updating vehicle analysis settings (tire geometry, gear ratios, etc.)."""
+
     tire_width_mm: float | None = Field(default=None, gt=0)
     tire_aspect_pct: float | None = Field(default=None, gt=0)
     rim_in: float | None = Field(default=None, gt=0)
@@ -117,14 +119,20 @@ class AnalysisSettingsRequest(_FrozenBase):
 
 
 class LanguageRequest(_FrozenBase):
+    """Request body for changing the UI language."""
+
     language: str = Field(pattern="^(en|nl)$")
 
 
 class SpeedUnitRequest(_FrozenBase):
+    """Request body for changing the displayed speed unit."""
+
     speedUnit: str = Field(pattern="^(kmh|mps)$")
 
 
 class CarUpsertRequest(_FrozenBase):
+    """Request body for creating or updating a car profile."""
+
     name: str | None = Field(default=None, max_length=64)
     type: str | None = Field(default=None, max_length=64)
     aspects: dict[str, float] | None = None
@@ -132,10 +140,14 @@ class CarUpsertRequest(_FrozenBase):
 
 
 class ActiveCarRequest(_FrozenBase):
+    """Request body for selecting the active car profile."""
+
     carId: str = Field(min_length=1)
 
 
 class SpeedSourceRequest(_FrozenBase):
+    """Request body for configuring the speed source (GPS, manual, OBD2, etc.)."""
+
     speedSource: str | None = None
     manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
     staleTimeoutS: float | None = Field(default=None, ge=1, le=300)
@@ -143,16 +155,22 @@ class SpeedSourceRequest(_FrozenBase):
 
 
 class UpdateStartRequest(_FrozenBase):
+    """Request body to start an OTA software update (provides Wi-Fi credentials)."""
+
     ssid: str = Field(min_length=1, max_length=64)
     password: str = Field(default="", max_length=128)
 
 
 class EspFlashStartRequest(_FrozenBase):
+    """Request body to start an ESP32 firmware flash job."""
+
     port: str | None = None
     auto_detect: bool = True
 
 
 class SensorRequest(_FrozenBase):
+    """Request body for updating sensor name and location."""
+
     name: str | None = Field(default=None, max_length=64)
     location: str | None = Field(default=None, max_length=64)
 
@@ -163,6 +181,8 @@ class SensorRequest(_FrozenBase):
 
 
 class HealthResponse(BaseModel):
+    """Response body for the server health check endpoint."""
+
     status: str
     processing_state: str
     processing_failures: int
@@ -170,6 +190,8 @@ class HealthResponse(BaseModel):
 
 
 class CarResponse(BaseModel):
+    """Response body representing a single car profile."""
+
     id: str
     name: str
     type: str
@@ -178,11 +200,15 @@ class CarResponse(BaseModel):
 
 
 class CarsResponse(BaseModel):
+    """Response body for the list of all car profiles with the active car ID."""
+
     cars: list[CarResponse]
     activeCarId: str | None
 
 
 class SpeedSourceResponse(BaseModel):
+    """Response body for the current speed-source configuration."""
+
     speedSource: str
     manualSpeedKph: float | None = None
     obd2Config: dict[str, Any] = Field(default_factory=dict)
@@ -191,6 +217,8 @@ class SpeedSourceResponse(BaseModel):
 
 
 class SpeedSourceStatusResponse(BaseModel):
+    """Response body for the live GPS/speed-source connection status."""
+
     gps_enabled: bool
     connection_state: str
     device: str | None = None
@@ -211,45 +239,65 @@ class SpeedSourceStatusResponse(BaseModel):
 
 
 class SensorConfigResponse(BaseModel):
+    """Response body with persisted config for a single sensor (name, location)."""
+
     name: str
     location: str
 
 
 class SensorsResponse(BaseModel):
+    """Response body mapping MAC addresses to sensor config responses."""
+
     sensorsByMac: dict[str, SensorConfigResponse]
 
 
 class LanguageResponse(BaseModel):
+    """Response body confirming the active UI language."""
+
     language: str
 
 
 class SpeedUnitResponse(BaseModel):
+    """Response body confirming the active speed unit."""
+
     speedUnit: str
 
 
 class ClientsResponse(BaseModel):
+    """Response body listing all currently-connected sensor clients."""
+
     clients: list[dict[str, Any]]
 
 
 class LocationOptionResponse(BaseModel):
+    """A single sensor-location option (code + human-readable label)."""
+
     code: str
     label: str
 
 
 class ClientLocationsResponse(BaseModel):
+    """Response body with available sensor-location options."""
+
     locations: list[LocationOptionResponse]
 
 
 class AnalysisSettingsResponse(_ExtraAllowBase):
+    """Response body reflecting the current analysis settings (all fields pass-through)."""
+
     pass
 
 
 class IdentifyResponse(BaseModel):
+    """Response body for a sensor identify (blink) command."""
+
     status: str
     cmd_seq: int | None = None
 
 
 class SetClientLocationResponse(BaseModel):
+    """Response body confirming the new location assignment for a client."""
+
     id: str
     mac_address: str
     location_code: str
@@ -257,11 +305,15 @@ class SetClientLocationResponse(BaseModel):
 
 
 class RemoveClientResponse(BaseModel):
+    """Response body confirming removal of a disconnected client."""
+
     id: str
     status: str
 
 
 class LoggingStatusResponse(BaseModel):
+    """Response body with the current recording (run-logging) status."""
+
     enabled: bool
     current_file: str | None = None
     run_id: str | None = None
@@ -270,10 +322,14 @@ class LoggingStatusResponse(BaseModel):
 
 
 class HistoryListResponse(BaseModel):
+    """Response body listing recorded run summaries."""
+
     runs: list[dict[str, Any]]
 
 
 class HistoryRunResponse(_ExtraAllowBase):
+    """Response body for a single history run with metadata and optional analysis."""
+
     run_id: str
     status: str
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -281,22 +337,30 @@ class HistoryRunResponse(_ExtraAllowBase):
 
 
 class HistoryInsightsResponse(_ExtraAllowBase):
+    """Response body with aggregated diagnostic insights for a run."""
+
     run_id: str | None = None
     status: str | None = None
 
 
 class DeleteHistoryRunResponse(BaseModel):
+    """Response body confirming deletion of a history run."""
+
     run_id: str
     status: str
 
 
 class UpdateIssueResponse(BaseModel):
+    """Response body for a single issue raised during an OTA update phase."""
+
     phase: str
     message: str
     detail: str
 
 
 class UpdateStatusResponse(BaseModel):
+    """Response body for the full OTA update job status."""
+
     state: str
     phase: str
     started_at: float | None = None
@@ -310,15 +374,21 @@ class UpdateStatusResponse(BaseModel):
 
 
 class UpdateStartResponse(BaseModel):
+    """Response body confirming that an OTA update job has started."""
+
     status: str
     ssid: str
 
 
 class UpdateCancelResponse(BaseModel):
+    """Response body confirming whether an OTA update job was cancelled."""
+
     cancelled: bool
 
 
 class EspSerialPortResponse(BaseModel):
+    """Response body describing a single detected serial port."""
+
     port: str
     description: str
     vid: int | None = None
@@ -327,10 +397,14 @@ class EspSerialPortResponse(BaseModel):
 
 
 class EspFlashPortsResponse(BaseModel):
+    """Response body listing detected serial ports for ESP32 flashing."""
+
     ports: list[EspSerialPortResponse]
 
 
 class EspFlashStatusResponse(BaseModel):
+    """Response body for the current ESP32 flash job status."""
+
     state: str
     phase: str
     job_id: int | None = None
@@ -345,21 +419,29 @@ class EspFlashStatusResponse(BaseModel):
 
 
 class EspFlashStartResponse(BaseModel):
+    """Response body confirming that an ESP32 flash job has been queued."""
+
     status: str
     job_id: int
 
 
 class EspFlashCancelResponse(BaseModel):
+    """Response body confirming whether an ESP32 flash job was cancelled."""
+
     cancelled: bool
 
 
 class EspFlashLogsResponse(BaseModel):
+    """Response body with a page of ESP32 flash log lines."""
+
     from_index: int
     next_index: int
     lines: list[str]
 
 
 class EspFlashHistoryEntryResponse(BaseModel):
+    """Response body for a single historical ESP32 flash job."""
+
     job_id: int
     state: str
     selected_port: str | None = None
@@ -371,24 +453,34 @@ class EspFlashHistoryEntryResponse(BaseModel):
 
 
 class EspFlashHistoryResponse(BaseModel):
+    """Response body listing all past ESP32 flash job attempts."""
+
     attempts: list[EspFlashHistoryEntryResponse]
 
 
 class CarLibraryBrandsResponse(BaseModel):
+    """Response body listing available car manufacturer brands."""
+
     brands: list[str]
 
 
 class CarLibraryTypesResponse(BaseModel):
+    """Response body listing available car body types."""
+
     types: list[str]
 
 
 class CarLibraryGearboxEntry(_ExtraAllowBase):
+    """A gearbox option from the car library (gear ratios)."""
+
     name: str
     final_drive_ratio: float
     top_gear_ratio: float
 
 
 class CarLibraryTireOptionEntry(_ExtraAllowBase):
+    """A tire size option from the car library."""
+
     name: str
     tire_width_mm: float
     tire_aspect_pct: float
@@ -396,6 +488,8 @@ class CarLibraryTireOptionEntry(_ExtraAllowBase):
 
 
 class CarLibraryVariantEntry(_ExtraAllowBase):
+    """A specific variant/trim of a car library model entry."""
+
     name: str
     engine: str | None = None
     drivetrain: str
@@ -407,6 +501,8 @@ class CarLibraryVariantEntry(_ExtraAllowBase):
 
 
 class CarLibraryModelEntry(_ExtraAllowBase):
+    """A full car library entry with brand, model, tire options, and variants."""
+
     brand: str
     type: str
     model: str
@@ -419,4 +515,6 @@ class CarLibraryModelEntry(_ExtraAllowBase):
 
 
 class CarLibraryModelsResponse(BaseModel):
+    """Response body listing car library model entries."""
+
     models: list[CarLibraryModelEntry]

@@ -70,6 +70,7 @@ class PostAnalysisWorker:
 
     @property
     def active_run_id(self) -> str | None:
+        """Return the run ID currently being analysed, or ``None``."""
         with self._lock:
             return self._analysis_active_run_id
 
