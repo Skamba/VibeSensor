@@ -168,7 +168,8 @@ def compute_fft_spectrum(
     fft_window:
         Pre-computed window function (Hann, etc.).
     fft_scale:
-        Normalisation scalar ``2 / sum(window)``.
+        Normalisation scalar ``2 / max(1, sum(window))``.  The ``max(1, …)``
+        guard prevents division-by-zero when the window sums to zero.
     freq_slice:
         Pre-computed frequency bins within the display range.
     valid_idx:
