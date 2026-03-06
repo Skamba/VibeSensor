@@ -433,8 +433,17 @@ class ClientRegistry:
             return record
 
     def set_location(self, client_id: str, location: str) -> ClientRecord:
-        """Assign a location code (e.g. ``"front-left"``) to a sensor."""
+        """Assign a location code (e.g. ``"front-left"``) to a sensor.
+
+        The value is stripped of leading/trailing whitespace and capped at
+        64 UTF-8 bytes to bound stored string size (consistent with the
+        32-byte cap applied to client names).
+        """
         clean = location.strip()
+        # Cap at 64 UTF-8 bytes without splitting multi-byte characters.
+        encoded = clean.encode("utf-8", errors="ignore")
+        if len(encoded) > 64:
+            clean = encoded[:64].decode("utf-8", errors="ignore")
         with self._lock:
             record = self._get_or_create(client_id)
             record.location = clean
@@ -470,22 +479,22 @@ class ClientRegistry:
         self, now: float | None = None, *, now_mono: float | None = None
     ) -> list[str]:
         with self._lock:
-            now_mono = self._resolve_now_mono(now_mono)
+            mono_now = self._resolve_now_mono(now_mono)
             return [
                 record.client_id
                 for record in self._clients.values()
                 if record.last_seen_mono
-                and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
+                and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds
             ]
 
     def evict_stale(self, now: float | None = None, *, now_mono: float | None = None) -> list[str]:
         with self._lock:
-            now_mono = self._resolve_now_mono(now_mono)
+            mono_now = self._resolve_now_mono(now_mono)
             stale_ids = [
                 client_id
                 for client_id, record in self._clients.items()
                 if record.last_seen_mono
-                and (now_mono - record.last_seen_mono) > self._stale_ttl_seconds
+                and (mono_now - record.last_seen_mono) > self._stale_ttl_seconds
             ]
             for client_id in stale_ids:
                 self._clients.pop(client_id, None)
@@ -537,7 +546,7 @@ class ClientRegistry:
     ) -> list[dict[str, Any]]:
         with self._lock:
             now_ts = self._resolve_now_wall(now)
-            now_mono = self._resolve_now_mono(now_mono)
+            mono_now = self._resolve_now_mono(now_mono)
             rows: list[dict[str, Any]] = []
             all_client_ids = sorted(set(self._clients) | set(self._user_names))
             for client_id in all_client_ids:
@@ -558,7 +567,7 @@ class ClientRegistry:
                 )
                 connected = bool(
                     record.last_seen_mono
-                    and (now_mono - record.last_seen_mono) <= self._stale_ttl_seconds
+                    and (mono_now - record.last_seen_mono) <= self._stale_ttl_seconds
                 )
                 rows.append(
                     self._client_api_row(
