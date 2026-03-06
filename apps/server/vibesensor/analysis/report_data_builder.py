@@ -111,8 +111,9 @@ def _resolve_i18n(lang: str, value: object) -> str:
 def _order_label_human(lang: str, label: str) -> str:
     """Translate a language-neutral order label like ``'1x wheel'`` to localized form."""
     names = _ORDER_LABEL_NAMES_NL if lang == "nl" else _ORDER_LABEL_NAMES_DEFAULT
-    # Parse "Nx base" format
-    parts = label.split(" ", 1)
+    # Parse "Nx base" format; strip first so a label like " wheel" that
+    # starts with a space does not produce an empty multiplier token.
+    parts = label.strip().split(" ", 1)
     if len(parts) == 2:
         multiplier, base = parts
         localized = names.get(base.lower(), base)
@@ -140,7 +141,7 @@ def _human_source(source: object, *, tr: Callable[[str], str]) -> str:
     return mapping.get(raw, raw.replace("_", " ").title() if raw else tr("UNKNOWN"))
 
 
-def _finding_strength_values(finding: dict) -> float | None:
+def _finding_strength_values(finding: dict[str, Any]) -> float | None:
     amp_metric = finding.get("amplitude_metric")
     peak_amp = _as_float(amp_metric.get("value")) if isinstance(amp_metric, dict) else None
 
