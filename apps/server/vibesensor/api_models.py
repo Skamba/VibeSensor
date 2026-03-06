@@ -152,7 +152,7 @@ class SpeedSourceRequest(_FrozenBase):
     speedSource: Literal["gps", "obd2", "manual"] | None = None
     manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
     staleTimeoutS: float | None = Field(default=None, ge=3, le=120)
-    fallbackMode: str | None = None
+    fallbackMode: Literal["manual"] | None = None
 
 
 class UpdateStartRequest(_FrozenBase):
