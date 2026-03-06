@@ -1552,7 +1552,7 @@ def test_speed_unit_persists_and_round_trips(tmp_path: Path) -> None:
     assert store2.speed_unit == "mps"
 
     # Invalid falls back
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="speed_unit must be one of"):
         store.set_speed_unit("mph")  # not a valid choice
 
 

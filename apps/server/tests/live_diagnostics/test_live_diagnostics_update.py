@@ -73,7 +73,7 @@ def _matrix_total(snap: dict, field: str) -> int | float:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def diag_env(monkeypatch):
     """LiveDiagnosticsEngine with a controllable monotonic clock.
 

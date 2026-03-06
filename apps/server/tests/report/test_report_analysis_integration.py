@@ -924,7 +924,7 @@ def test_summarize_log_missing_file(tmp_path: Path) -> None:
 def test_summarize_log_non_jsonl(tmp_path: Path) -> None:
     csv_path = tmp_path / "data.csv"
     csv_path.write_text("a,b,c\n1,2,3\n")
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Unsupported run format"):
         summarize_log(csv_path)
 
 

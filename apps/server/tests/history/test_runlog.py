@@ -224,7 +224,7 @@ def test_append_and_read_roundtrip(tmp_path: Path) -> None:
 def test_read_jsonl_run_missing_metadata_raises(tmp_path: Path) -> None:
     path = tmp_path / "bad.jsonl"
     path.write_text('{"record_type": "sample", "t_s": 1.0}\n')
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Run metadata missing"):
         read_jsonl_run(path)
 
 

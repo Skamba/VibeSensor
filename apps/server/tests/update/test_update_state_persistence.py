@@ -62,7 +62,7 @@ def _mock_which(name: str) -> str | None:
     return f"/usr/bin/{name}" if name in ("nmcli", "python3") else None
 
 
-@pytest.fixture()
+@pytest.fixture
 def update_env(
     tmp_path: Path,
 ) -> tuple[Path, UpdateStateStore, FakeRunner, Callable[..., UpdateManager]]:

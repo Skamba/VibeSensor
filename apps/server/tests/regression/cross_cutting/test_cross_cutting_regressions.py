@@ -470,12 +470,12 @@ _CLIENT_ID = bytes.fromhex("aabbccddeeff")
 _SAMPLES_200X3 = np.zeros((200, 3), dtype=np.int16)
 
 
-@pytest.fixture()
+@pytest.fixture
 def db(tmp_path: Path) -> HistoryDB:
     return HistoryDB(tmp_path / "history.db")
 
 
-@pytest.fixture()
+@pytest.fixture
 def registry(db: HistoryDB) -> ClientRegistry:
     return ClientRegistry(db=db)
 

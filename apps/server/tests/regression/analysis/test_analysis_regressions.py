@@ -208,7 +208,7 @@ _START = "2026-01-01T00:00:00Z"
 _END = "2026-01-01T00:05:00Z"
 
 
-@pytest.fixture()
+@pytest.fixture
 def db(tmp_path: Path) -> HistoryDB:
     return HistoryDB(tmp_path / "pipeline_test.db")
 

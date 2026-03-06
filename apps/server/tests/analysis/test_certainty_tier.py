@@ -115,7 +115,7 @@ def _make_summary(
 class TestTierAReportOutput:
     """Tier A (very low certainty): no specific systems, no repair steps."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def tier_a_data(self):
         return map_summary(_make_summary(confidence=0.06))
 
@@ -159,7 +159,7 @@ class TestTierAReportOutput:
 class TestTierBReportOutput:
     """Tier B (guarded certainty): hypotheses only, no repair parts."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def tier_b_data(self):
         return map_summary(_make_summary(confidence=0.25))
 
@@ -191,7 +191,7 @@ class TestTierBReportOutput:
 class TestTierCReportOutput:
     """Tier C (sufficient certainty): existing diagnostic behavior."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def tier_c_data(self):
         return map_summary(_make_summary(confidence=0.75))
 
@@ -219,7 +219,7 @@ class TestTierCReportOutput:
 class TestLowCertaintyRegression:
     """Regression: at ~6% certainty the report must not suggest specific repairs."""
 
-    @pytest.fixture()
+    @pytest.fixture
     def low_cert_data(self):
         return map_summary(_make_summary(confidence=0.06))
 

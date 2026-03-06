@@ -267,7 +267,7 @@ def _make_logger(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def make_logger(tmp_path: Path):
     """Factory fixture: call ``make_logger(...)`` to get a MetricsLogger.
 
@@ -287,43 +287,43 @@ def make_logger(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_registry():
     """Return a fresh ``_FakeRegistry`` instance."""
     return _FakeRegistry()
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_gps_monitor():
     """Return a fresh ``_FakeGPSMonitor`` instance."""
     return _FakeGPSMonitor()
 
 
-@pytest.fixture()
+@pytest.fixture
 def fake_history_db():
     """Return a fresh ``_FakeHistoryDB`` instance."""
     return _FakeHistoryDB()
 
 
-@pytest.fixture()
+@pytest.fixture
 def mutable_fake_settings():
     """Return a ``_MutableFakeAnalysisSettings`` instance."""
     return _MutableFakeAnalysisSettings()
 
 
-@pytest.fixture()
+@pytest.fixture
 def failing_create_run_db():
     """Return a ``_FailingCreateRunHistoryDB`` instance."""
     return _FailingCreateRunHistoryDB()
 
 
-@pytest.fixture()
+@pytest.fixture
 def failing_append_once_db():
     """Return a ``_FailingAppendOnceHistoryDB`` instance."""
     return _FailingAppendOnceHistoryDB()
 
 
-@pytest.fixture()
+@pytest.fixture
 def no_active_registry():
     """Return a ``_NoActiveRegistry`` instance."""
     return _NoActiveRegistry()
