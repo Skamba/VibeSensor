@@ -1042,6 +1042,7 @@ def _draw_additional_observations(
     transient_findings: list[dict[str, object]],
     tr: Callable[[str], str],
 ) -> None:
+    """Draw transient-impact findings in the additional-observations panel on page 2."""
     _draw_panel(c, x, y, w, h, tr("ADDITIONAL_OBSERVATIONS"), fill=SOFT_BG)
     c.setFillColor(_hex(MUTED_CLR))
     c.setFont(FONT, 6.5)
