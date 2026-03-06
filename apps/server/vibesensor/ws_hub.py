@@ -55,6 +55,7 @@ class WebSocketHub:
     """Fan-out broadcaster: sends live metric payloads to all connected WebSocket clients."""
 
     def __init__(self) -> None:
+        """Initialise the hub with an empty client registry."""
         self._connections: dict[int, WSConnection] = {}
         self._lock = asyncio.Lock()
         self._send_timeout_s = _SEND_TIMEOUT_S
