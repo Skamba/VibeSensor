@@ -268,7 +268,7 @@ def _draw_section_block(
     c.setFont(FONT_B, FS_SMALL)
     c.drawString(x, y, title)
     y -= title_gap
-    y = _draw_text(c, x, y, w, body, size=6, color=SUB_CLR, max_lines=max_lines)
+    y = _draw_text(c, x, y, w, body, size=FS_SMALL, color=SUB_CLR, max_lines=max_lines)
     y -= body_gap
     return y
 
@@ -902,7 +902,7 @@ def _draw_pattern_evidence(
             ry,
             val_w + lw - 2 * mm,
             ev.certainty_reason,
-            size=6,
+            size=FS_SMALL,
             color=SUB_CLR,
             max_lines=2,
         )
@@ -914,7 +914,7 @@ def _draw_pattern_evidence(
         c.setFont(FONT_B, FS_SMALL)
         c.drawString(rx, ry, f"\u26a0 {tr('WARNING_LABEL')}")
         ry -= 3.0 * mm
-        ry = _draw_text(c, rx, ry, w - 8 * mm, ev.warning, size=6, color=WARN_CLR, max_lines=3)
+        ry = _draw_text(c, rx, ry, w - 8 * mm, ev.warning, size=FS_SMALL, color=WARN_CLR, max_lines=3)
         ry -= 1.5 * mm
 
     # Interpretation
