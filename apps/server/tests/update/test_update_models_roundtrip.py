@@ -27,9 +27,7 @@ class TestUpdateJobStatusRoundTrip:
             finished_at=1_700_000_060.0,
             last_success_at=1_700_000_060.0,
             ssid="CorpNet",
-            issues=[
-                UpdateIssue(phase="installing", message="slow pip", detail="took 90s")
-            ],
+            issues=[UpdateIssue(phase="installing", message="slow pip", detail="took 90s")],
             log_tail=["line1", "line2", "line3"],
             exit_code=0,
             runtime={"version": "1.2.3"},

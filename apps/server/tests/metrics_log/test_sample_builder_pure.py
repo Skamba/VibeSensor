@@ -63,9 +63,9 @@ class TestExtractStrengthData:
         metrics = {
             "strength_metrics": {
                 "top_peaks": [
-                    {"hz": 100.0, "amp": 0.0},   # should be filtered
+                    {"hz": 100.0, "amp": 0.0},  # should be filtered
                     {"hz": 200.0, "amp": -1.0},  # should be filtered
-                    {"hz": 300.0, "amp": 0.5},   # should be kept
+                    {"hz": 300.0, "amp": 0.5},  # should be kept
                 ]
             }
         }

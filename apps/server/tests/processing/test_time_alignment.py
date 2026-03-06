@@ -437,4 +437,3 @@ class TestAnalysisTimeRangeEdgeCases:
             samples_since_t0=0,
         )
         assert result is None
-

@@ -41,9 +41,7 @@ def medfilt3(block: np.ndarray) -> np.ndarray:
 
     """
     if block.ndim != 2:
-        raise ValueError(
-            f"medfilt3 expects a 2-D (axes, samples) array, got ndim={block.ndim}"
-        )
+        raise ValueError(f"medfilt3 expects a 2-D (axes, samples) array, got ndim={block.ndim}")
     if block.shape[-1] < 3:
         return block
     stacked = np.stack([block[:, :-2], block[:, 1:-1], block[:, 2:]], axis=0)
@@ -205,14 +203,11 @@ def compute_fft_spectrum(
 
     """
     if fft_block.ndim != 2 or fft_block.shape[0] != 3:
-        raise ValueError(
-            f"fft_block must have shape (3, N), got {fft_block.shape}"
-        )
+        raise ValueError(f"fft_block must have shape (3, N), got {fft_block.shape}")
     fft_n = fft_window.shape[0]
     if fft_block.shape[1] != fft_n:
         raise ValueError(
-            f"fft_block column count {fft_block.shape[1]} does not match "
-            f"fft_window length {fft_n}"
+            f"fft_block column count {fft_block.shape[1]} does not match fft_window length {fft_n}"
         )
     if spike_filter_enabled:
         fft_block = medfilt3(fft_block)

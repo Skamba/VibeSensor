@@ -2,6 +2,7 @@
 
 Each test corresponds to one of the 10 fixes applied in this wave.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ from vibesensor.gps_speed import (
 # Fix 1: VALID_FALLBACK_MODES is now a frozenset (O(1) membership, immutable)
 # ---------------------------------------------------------------------------
 
+
 def test_valid_fallback_modes_is_frozenset() -> None:
     from vibesensor.gps_speed import VALID_FALLBACK_MODES
 
@@ -32,6 +34,7 @@ def test_valid_fallback_modes_is_frozenset() -> None:
 # ---------------------------------------------------------------------------
 # Fix 2 & 3: resolve_speed() and _fallback_speed_value() exclude bool values
 # ---------------------------------------------------------------------------
+
 
 def test_resolve_speed_ignores_bool_override() -> None:
     """bool True/False must not be treated as a valid speed override."""
@@ -56,6 +59,7 @@ def test_fallback_speed_value_ignores_bool() -> None:
 # ---------------------------------------------------------------------------
 # Fix 4: set_speed_override_kmh() clamps at MAX_MANUAL_SPEED_KMH
 # ---------------------------------------------------------------------------
+
 
 def test_set_speed_override_kmh_clamps_at_max(caplog: pytest.LogCaptureFixture) -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
@@ -83,6 +87,7 @@ def test_set_speed_override_kmh_at_exact_max_does_not_warn(
 # Fix 5: set_fallback_settings() logs a warning for unknown fallback_mode
 # ---------------------------------------------------------------------------
 
+
 def test_set_fallback_settings_warns_on_invalid_mode(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -97,6 +102,7 @@ def test_set_fallback_settings_warns_on_invalid_mode(
 # ---------------------------------------------------------------------------
 # Fix 6: _reset_fix_metadata() now also clears device_info
 # ---------------------------------------------------------------------------
+
 
 def test_reset_fix_metadata_clears_device_info() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=True)
@@ -132,6 +138,7 @@ def test_reset_fix_metadata_clears_all_expected_fields() -> None:
 # Fix 7: _speed_confidence() returns "low" for 2D fix with no EPH data
 # ---------------------------------------------------------------------------
 
+
 def test_speed_confidence_2d_no_eph_returns_low() -> None:
     """A 2D fix without EPH data should give 'low' confidence, not 'medium'."""
     monitor = GPSSpeedMonitor(gps_enabled=True)
@@ -163,6 +170,7 @@ def test_speed_confidence_3d_fix_returns_high() -> None:
 # Fix 8: status_dict() includes "speed_source" key
 # ---------------------------------------------------------------------------
 
+
 def test_status_dict_includes_speed_source() -> None:
     monitor = GPSSpeedMonitor(gps_enabled=False)
     status = monitor.status_dict()
@@ -187,6 +195,7 @@ def test_status_dict_speed_source_none_when_no_data() -> None:
 # Fix 9: GPS plausibility gate in run() — speeds > _GPS_MAX_SPEED_MPS rejected
 # ---------------------------------------------------------------------------
 
+
 def test_gps_max_speed_constant_is_reasonable() -> None:
     """_GPS_MAX_SPEED_MPS should be between 100 and 200 m/s (360–720 km/h)."""
     assert 100.0 < _GPS_MAX_SPEED_MPS <= 200.0, (
@@ -199,6 +208,7 @@ def test_accept_speed_sample_not_affected_by_plausibility_constant() -> None:
     The constant exists and the TPV guard uses it.  Verify the module exports it.
     """
     import vibesensor.gps_speed as mod
+
     assert hasattr(mod, "_GPS_MAX_SPEED_MPS")
     assert mod._GPS_MAX_SPEED_MPS > 0
 
@@ -206,6 +216,7 @@ def test_accept_speed_sample_not_affected_by_plausibility_constant() -> None:
 # ---------------------------------------------------------------------------
 # Fix 10: current_reconnect_delay reset on successful connection
 # ---------------------------------------------------------------------------
+
 
 def test_current_reconnect_delay_constant_initial_value() -> None:
     """Newly constructed monitor starts with the initial reconnect delay."""

@@ -180,11 +180,7 @@ class WorkerPool:
         useful for detecting pathologically slow worker payloads.
         """
         with self._metrics_lock:
-            avg = (
-                round(self._total_wait_s / self._total_tasks, 6)
-                if self._total_tasks > 0
-                else 0.0
-            )
+            avg = round(self._total_wait_s / self._total_tasks, 6) if self._total_tasks > 0 else 0.0
             return {
                 "max_workers": self._max_workers,
                 "total_tasks": self._total_tasks,

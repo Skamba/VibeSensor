@@ -773,9 +773,7 @@ class TestUpdateManagerAsync:
         assert "sha-256" in issues_text or "sha256" in issues_text
         # Pip install must NOT have been called — update aborted before install
         pip_calls = [
-            c[0]
-            for c in runner.calls
-            if "pip" in " ".join(c[0]) and "install" in " ".join(c[0])
+            c[0] for c in runner.calls if "pip" in " ".join(c[0]) and "install" in " ".join(c[0])
         ]
         assert not pip_calls, "pip install must not run after SHA-256 mismatch"
         # Hotspot must still be restored

@@ -154,9 +154,7 @@ def _split_host_port(value: str) -> tuple[str, int]:
     except ValueError:
         raise ValueError(f"Invalid port number in {value!r}: {port!r} is not an integer") from None
     if not (1 <= port_int <= 65535):
-        raise ValueError(
-            f"Port number in {value!r} must be 1–65535, got {port_int}"
-        )
+        raise ValueError(f"Port number in {value!r} must be 1–65535, got {port_int}")
     return host, port_int
 
 
@@ -400,9 +398,7 @@ class GPSConfig:
 
     def __post_init__(self) -> None:
         if not isinstance(self.gpsd_port, int) or not (1 <= self.gpsd_port <= 65535):
-            raise ValueError(
-                f"gps.gpsd_port must be 1–65535, got {self.gpsd_port!r}"
-            )
+            raise ValueError(f"gps.gpsd_port must be 1–65535, got {self.gpsd_port!r}")
 
 
 @dataclass(slots=True)
@@ -585,9 +581,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
         ),
         update=UpdateConfig(
             server_repo=str(
-                merged.get("update", {}).get(
-                    "server_repo", DEFAULT_CONFIG["update"]["server_repo"]
-                )
+                merged.get("update", {}).get("server_repo", DEFAULT_CONFIG["update"]["server_repo"])
             ),
             rollback_dir=Path(
                 str(

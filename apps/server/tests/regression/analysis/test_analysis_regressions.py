@@ -944,8 +944,11 @@ class TestJsonlHandlesNan:
         text = out.read_text()
         # Must be valid JSON — json.loads raises ValueError for bare NaN/Infinity
         import json as _json
+
         parsed = _json.loads(text.strip())
-        assert parsed["value"] is None, f"Non-finite float must serialise as null, got {parsed['value']!r}"
+        assert parsed["value"] is None, (
+            f"Non-finite float must serialise as null, got {parsed['value']!r}"
+        )
 
 
 class TestIdentifyClientNormalized:

@@ -501,9 +501,7 @@ class UpdateManager:
                 # Clear secrets from memory
                 self._redact_secrets.clear()
                 try:
-                    self._status.runtime = await asyncio.to_thread(
-                        self._collect_runtime_details
-                    )
+                    self._status.runtime = await asyncio.to_thread(self._collect_runtime_details)
                 except Exception:
                     LOGGER.warning("Failed to collect runtime details", exc_info=True)
 
@@ -894,8 +892,7 @@ class UpdateManager:
                         f"expected={release.sha256} actual={actual_sha256}",
                     )
                     self._log(
-                        f"SHA-256 mismatch: expected {release.sha256} "
-                        f"but got {actual_sha256}"
+                        f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}"
                     )
                     self._status.state = UpdateState.failed
                     return

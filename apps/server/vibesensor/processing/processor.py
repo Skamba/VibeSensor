@@ -247,7 +247,7 @@ class SignalProcessor:
             # where the sensor never emits a fresh t0_us.  At 2^28 samples
             # (~18 hours at 4096 Hz) the derived end_us estimate already
             # far exceeds any realistic session length.
-            _MAX_SAMPLES_SINCE_T0 = 2 ** 28
+            _MAX_SAMPLES_SINCE_T0 = 2**28
             buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
         buf.ingest_generation += 1
         buf.invalidate_caches()
@@ -458,9 +458,7 @@ class SignalProcessor:
             result = {}
             for cid in client_ids:
                 try:
-                    result[cid] = self.compute_metrics(
-                        cid, sample_rate_hz=rates.get(cid)
-                    )
+                    result[cid] = self.compute_metrics(cid, sample_rate_hz=rates.get(cid))
                 except Exception:
                     LOGGER.warning(
                         "compute_metrics failed for %s (serial fallback); skipping.",

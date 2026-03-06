@@ -41,11 +41,21 @@ NETWORK_PORTS: dict[str, int] = _load_json("network_ports.json")
 
 # Validate that required contract keys exist at import time so misconfigurations
 # surface immediately with a descriptive error rather than a cryptic KeyError later.
-_REQUIRED_METRIC_KEYS: frozenset[str] = frozenset({"vibration_strength_db", "strength_bucket"})
+_REQUIRED_METRIC_KEYS: frozenset[str] = frozenset(
+    {"vibration_strength_db", "strength_bucket"}
+)
 _REQUIRED_REPORT_KEYS: frozenset[str] = frozenset(
-    {"run_id", "timestamp_utc", "client_id", "client_name",
-     "speed_kmh", "dominant_freq_hz", "vibration_strength_db",
-     "strength_bucket", "top_peaks"}
+    {
+        "run_id",
+        "timestamp_utc",
+        "client_id",
+        "client_name",
+        "speed_kmh",
+        "dominant_freq_hz",
+        "vibration_strength_db",
+        "strength_bucket",
+        "top_peaks",
+    }
 )
 _REQUIRED_PORT_KEYS: frozenset[str] = frozenset(
     {"server_udp_data", "server_udp_control", "firmware_control_port_base"}

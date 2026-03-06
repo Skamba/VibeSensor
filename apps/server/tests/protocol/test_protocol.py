@@ -285,6 +285,7 @@ def test_parse_hello_rejects_zero_sample_rate() -> None:
     # Build a raw HELLO packet with sample_rate_hz=0 manually.
     name_bytes = b"sensor"
     import struct as _struct
+
     raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 9000, 0, 200, len(name_bytes))
     raw += name_bytes + bytes([0]) + _struct.pack("<I", 0)
     with pytest.raises(ProtocolError, match="sample_rate_hz must not be zero"):
@@ -295,6 +296,7 @@ def test_parse_hello_warns_on_zero_control_port(caplog: pytest.LogCaptureFixture
     """parse_hello must log a warning when control_port == 0 (Fix 2)."""
     import logging
     import struct as _struct
+
     client_id = bytes.fromhex("aabbccddeeff")
     name_bytes = b"sensor"
     raw = HELLO_BASE.pack(MSG_HELLO, 1, client_id, 0, 800, 200, len(name_bytes))
@@ -322,6 +324,7 @@ def test_parse_cmd_warns_on_unknown_cmd_id(caplog: pytest.LogCaptureFixture) -> 
     """parse_cmd must log a warning for an unrecognized cmd_id (Fix 5)."""
     import logging
     import struct as _struct
+
     client_id = bytes.fromhex("aabbccddeeff")
     # Build a CMD header with cmd_id=99 (unknown)
     raw = _struct.pack("<BB6sBI", 3, 1, client_id, 99, 42)
@@ -350,4 +353,3 @@ def test_pack_ack_rejects_negative_cmd_seq() -> None:
     client_id = bytes.fromhex("aabbccddeeff")
     with pytest.raises(ValueError, match="cmd_seq must be non-negative"):
         pack_ack(client_id, cmd_seq=-1)
-
