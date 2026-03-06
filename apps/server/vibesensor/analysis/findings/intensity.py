@@ -44,7 +44,7 @@ _EMPTY_BUCKET_COUNTS: dict[str, int] = {f"l{idx}": 0 for idx in range(6)}
 
 def _phase_speed_breakdown(
     samples: list[dict[str, Any]],
-    per_sample_phases: list,
+    per_sample_phases: list[DrivingPhase],
 ) -> list[dict[str, Any]]:
     """Group vibration statistics by driving phase (temporal context).
 
@@ -130,7 +130,7 @@ def _sensor_intensity_by_location(
     *,
     lang: str = "en",
     connected_locations: set[str] | None = None,
-    per_sample_phases: list | None = None,
+    per_sample_phases: list[DrivingPhase] | None = None,
 ) -> list[dict[str, Any]]:
     """Compute per-location vibration intensity statistics.
 
