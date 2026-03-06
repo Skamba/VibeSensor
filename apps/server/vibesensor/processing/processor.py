@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable
 from functools import wraps
 from threading import RLock
-from typing import Any, ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar, cast
 
 import numpy as np
 
@@ -62,7 +62,7 @@ def _synchronized(method: Callable[_P, _R]) -> Callable[_P, _R]:
         with self._lock:
             return method(self, *args, **kwargs)
 
-    return _wrapped  # type: ignore[return-value]
+    return cast(Callable[_P, _R], _wrapped)
 
 
 class SignalProcessor:
