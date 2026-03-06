@@ -64,8 +64,19 @@ def combined_spectrum_amp_g(
     """Canonical combined spectrum amplitude definition.
 
     Input axis arrays must be single-sided FFT amplitude magnitudes in g.
-    Output is sqrt(mean(axis_amp^2)) per frequency bin,
-    i.e. sqrt((x^2+y^2+z^2)/3) when 3 axes exist.
+    Output is ``sqrt(mean(axis_amp^2))`` per frequency bin — e.g.
+    ``sqrt((x^2 + y^2 + z^2) / 3)`` when three axes are provided.
+
+    Parameters
+    ----------
+    axis_spectra_amp_g:
+        List of per-axis amplitude arrays.  All arrays are truncated to the
+        shortest length before combining.
+    axis_count_for_mean:
+        Denominator used for the mean.  When ``None`` (default) the actual
+        number of input axes is used.  Pass an explicit value to keep the
+        denominator fixed (e.g. always divide by 3 even when only 2 axes are
+        valid), which preserves comparability across partial-axis frames.
     """
     if not axis_spectra_amp_g:
         return []
