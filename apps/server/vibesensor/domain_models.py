@@ -125,6 +125,7 @@ class CarConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CarConfig:
+        """Construct a :class:`CarConfig` from a raw dict (e.g., loaded from JSON)."""
         car_id = str(data.get("id") or new_car_id())
         name = str(data.get("name") or "Unnamed Car").strip()[:64] or "Unnamed Car"
         car_type = str(data.get("type") or "sedan").strip()[:32] or "sedan"
@@ -147,6 +148,7 @@ class CarConfig:
     # -- serialization ---------------------------------------------------------
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise this car config to a plain dict for JSON persistence."""
         d: dict[str, Any] = {
             "id": self.id,
             "name": self.name,
@@ -173,6 +175,7 @@ class SensorConfig:
 
     @classmethod
     def from_dict(cls, sensor_id: str, data: dict[str, Any]) -> SensorConfig:
+        """Construct a :class:`SensorConfig` from *sensor_id* and a raw dict."""
         name = str(data.get("name") or sensor_id).strip()[:64]
         location = str(data.get("location") or "").strip()[:64]
         return cls(
@@ -182,6 +185,7 @@ class SensorConfig:
         )
 
     def to_dict(self) -> dict[str, str]:
+        """Serialise this sensor config to a plain dict."""
         return {"name": self.name, "location": self.location}
 
 
@@ -202,6 +206,7 @@ class SpeedSourceConfig:
 
     @classmethod
     def default(cls) -> SpeedSourceConfig:
+        """Return a GPS-based default speed source config."""
         return cls(
             speed_source="gps",
             manual_speed_kph=None,
@@ -212,6 +217,7 @@ class SpeedSourceConfig:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> SpeedSourceConfig:
+        """Construct a :class:`SpeedSourceConfig` from a raw dict (e.g., from API payload)."""
         src = str(data.get("speedSource") or "gps")
         speed_source = src if src in VALID_SPEED_SOURCES else "gps"
         manual_speed_kph = _parse_manual_speed(data.get("manualSpeedKph"))
@@ -234,6 +240,7 @@ class SpeedSourceConfig:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise this speed source config to a plain dict for JSON persistence."""
         return {
             "speedSource": self.speed_source,
             "manualSpeedKph": self.manual_speed_kph,

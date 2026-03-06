@@ -62,6 +62,7 @@ class SerialPortInfo:
     serial_number: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise serial port info to a plain dict for API responses."""
         return {
             "port": self.port,
             "description": self.description,
@@ -85,6 +86,7 @@ class EspFlashHistoryEntry:
     error: str | None
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialise flash history entry to a plain dict for API responses."""
         return {
             "job_id": self.job_id,
             "state": self.state.value,
