@@ -152,6 +152,16 @@ class HealStateStore:
         self._path.write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
 
     def allow(self, key: str, min_interval_s: int) -> bool:
+        """Return ``True`` and record the action timestamp if the cooldown has passed.
+
+        Loads the persisted timestamps, checks whether at least
+        *min_interval_s* seconds have elapsed since the last time *key* was
+        allowed, and — if so — writes the current timestamp back to disk
+        before returning ``True``.
+
+        Returns ``False`` (without updating state) when the cooldown period
+        has not yet expired.  This method has a write side-effect on ``True``.
+        """
         data = self._load()
         now = time.time()
         last = data.get(key, 0.0)
