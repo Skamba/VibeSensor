@@ -24,6 +24,11 @@ def upsert_active_level(
     class_key: str,
     peak_hz: float,
 ) -> None:
+    """Insert or replace the active level for each key in *source_keys*.
+
+    The new entry replaces an existing one only if *strength_db* is
+    strictly greater, keeping the strongest level per source.
+    """
     _get = active_by_source.get
     for source_key in source_keys:
         existing = _get(source_key)
@@ -59,6 +64,7 @@ def update_sensor_active_level(
 
 
 def location_key(sensor_location: str) -> str | None:
+    """Return a normalised location key, or ``None`` for blank/empty strings."""
     key = str(sensor_location or "").strip()
     return key or None
 
@@ -77,6 +83,7 @@ def build_active_levels_by_location(
     candidates_by_location: dict[str, list[dict[str, Any]]],
     freq_bin_hz: float,
 ) -> dict[str, dict[str, Any]]:
+    """Aggregate candidate rows per location, keeping the strongest per frequency bin."""
     by_location: dict[str, dict[str, Any]] = {}
     # Pre-compute reciprocal once; multiplication is cheaper than division
     # inside the per-candidate inner loop.

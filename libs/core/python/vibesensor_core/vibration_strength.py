@@ -1,3 +1,20 @@
+"""Vibration-strength computation — canonical pure-Python implementation.
+
+This module is the single source of truth for all vibration-strength
+arithmetic used by VibeSensor.  It is intentionally dependency-free
+(stdlib only) so it can be imported in firmware simulators, server-side
+analysis, and CLI tools alike.
+
+Key functions
+-------------
+vibration_strength_db_scalar
+    Core dB formula: ``20*log10((peak+eps)/(floor+eps))``.
+compute_vibration_strength_db
+    Full pipeline: spectrum → peak detection → floor estimation → dB result.
+combined_spectrum_amp_g
+    Canonical multi-axis combination: ``sqrt(mean(axis_amp²))``.
+"""
+
 from __future__ import annotations
 
 from math import isfinite, log10, sqrt
@@ -14,6 +31,7 @@ PEAK_THRESHOLD_FLOOR_RATIO = 2.6
 
 
 def median(values: list[float]) -> float:
+    """Return the median of *values*, or 0.0 for an empty list."""
     if not values:
         return 0.0
     ordered = sorted(values)
@@ -25,6 +43,7 @@ def median(values: list[float]) -> float:
 
 
 def percentile(sorted_values: list[float], q: float) -> float:
+    """Return the *q*-th percentile (0–1) of *sorted_values* via linear interpolation."""
     if not sorted_values:
         return 0.0
     if len(sorted_values) == 1:
@@ -42,8 +61,7 @@ def percentile(sorted_values: list[float], q: float) -> float:
 def combined_spectrum_amp_g(
     *, axis_spectra_amp_g: list[list[float]], axis_count_for_mean: int | None = None
 ) -> list[float]:
-    """
-    Canonical combined spectrum amplitude definition.
+    """Canonical combined spectrum amplitude definition.
 
     Input axis arrays must be single-sided FFT amplitude magnitudes in g.
     Output is sqrt(mean(axis_amp^2)) per frequency bin,
@@ -71,6 +89,7 @@ def combined_spectrum_amp_g(
 
 
 def noise_floor_amp_p20_g(*, combined_spectrum_amp_g: list[float]) -> float:
+    """Return the P20 amplitude floor in g, skipping the DC bin (index 0)."""
     if not combined_spectrum_amp_g:
         return 0.0
     band = (
@@ -91,6 +110,11 @@ def strength_floor_amp_g(
     min_hz: float,
     max_hz: float,
 ) -> float:
+    """Estimate the strength floor as the median amplitude in non-peak bins.
+
+    Bins within *exclusion_hz* of any detected peak are excluded.
+    Falls back to :func:`noise_floor_amp_p20_g` when all bins are excluded.
+    """
     if not freq_hz or not combined_spectrum_amp_g:
         return 0.0
     n = min(len(freq_hz), len(combined_spectrum_amp_g))
@@ -126,6 +150,7 @@ def peak_band_rms_amp_g(
     center_idx: int,
     bandwidth_hz: float,
 ) -> float:
+    """Return the RMS amplitude in g of bins within *bandwidth_hz* of *center_idx*."""
     n = min(len(freq_hz), len(combined_spectrum_amp_g))
     if not (0 <= center_idx < n):
         return 0.0
@@ -148,6 +173,11 @@ def vibration_strength_db_scalar(
     floor_amp_g: float,
     epsilon_g: float | None = None,
 ) -> float:
+    """Compute vibration strength in dB: ``20*log10((peak+eps)/(floor+eps))``.
+
+    *epsilon_g* defaults to ``max(1e-9, floor * 0.05)`` to avoid log(0)
+    and to set a meaningful dynamic range floor.
+    """
     _floor_raw = float(floor_amp_g)
     _band_raw = float(peak_band_rms_amp_g)
     # Guard against NaN inputs: max(0.0, NaN) returns NaN in CPython.
@@ -169,6 +199,16 @@ def compute_vibration_strength_db(
     peak_separation_hz: float = PEAK_SEPARATION_HZ,
     top_n: int = 5,
 ) -> dict[str, Any]:
+    """Run the full vibration-strength pipeline on a combined spectrum.
+
+    Detects up to *top_n* local-maxima peaks, estimates the noise floor,
+    and returns dB strength for the dominant peak together with the full
+    candidate list.
+
+    Returns a dict with keys: ``combined_spectrum_amp_g``,
+    ``vibration_strength_db``, ``peak_amp_g``, ``noise_floor_amp_g``,
+    ``strength_bucket``, ``top_peaks``.
+    """
     n = min(len(freq_hz), len(combined_spectrum_amp_g_values))
     if n <= 0:
         return {

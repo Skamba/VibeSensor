@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 
 
 def create_health_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the health-check API routes."""
     router = APIRouter()
 
     @router.get("/api/health", response_model=HealthResponse)

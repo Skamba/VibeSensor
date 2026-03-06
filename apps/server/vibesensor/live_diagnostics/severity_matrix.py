@@ -55,15 +55,18 @@ class SeverityMatrix:
         self._seconds_events: deque[_MatrixSecondsEvent] = deque(maxlen=10_000)
 
     def reset(self) -> None:
+        """Clear all event queues and reset the matrix to zeros."""
         self._matrix = _new_matrix()
         self._count_events.clear()
         self._seconds_events.clear()
 
     @property
     def data(self) -> dict[str, dict[str, dict[str, Any]]]:
+        """Return a direct reference to the live matrix (not a copy)."""
         return self._matrix
 
     def copy(self) -> dict[str, dict[str, dict[str, Any]]]:
+        """Return a deep copy of the current matrix state."""
         return _copy_matrix(self._matrix)
 
     def record_count(
@@ -73,6 +76,7 @@ class SeverityMatrix:
         severity_key: str,
         contributor_label: str,
     ) -> None:
+        """Record one count event for *source_key* × *severity_key*."""
         if source_key not in _SOURCE_SET or severity_key not in _SEVERITY_SET:
             return
         self._count_events.append(
@@ -91,6 +95,7 @@ class SeverityMatrix:
         severity_key: str,
         contributor_label: str,
     ) -> None:
+        """Record one count event per source in *source_keys* for *severity_key*."""
         if severity_key not in _SEVERITY_SET:
             return
         # Inline append to avoid per-iteration method-call overhead.

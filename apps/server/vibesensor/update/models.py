@@ -8,6 +8,8 @@ from typing import Any
 
 
 class UpdateState(enum.StrEnum):
+    """Top-level state of an OTA software update job."""
+
     idle = "idle"
     running = "running"
     success = "success"
@@ -15,6 +17,8 @@ class UpdateState(enum.StrEnum):
 
 
 class UpdatePhase(enum.StrEnum):
+    """Granular phase within an OTA update job."""
+
     idle = "idle"
     validating = "validating"
     stopping_hotspot = "stopping_hotspot"
@@ -31,6 +35,8 @@ _LOG_TAIL_LIMIT: int = 50
 
 @dataclass(frozen=True, slots=True)
 class UpdateIssue:
+    """An issue (warning or error) raised during a specific update phase."""
+
     phase: str
     message: str
     detail: str = ""
@@ -38,6 +44,8 @@ class UpdateIssue:
 
 @dataclass(slots=True)
 class UpdateJobStatus:
+    """Full status snapshot of the current or most-recent OTA update job."""
+
     state: UpdateState = UpdateState.idle
     phase: UpdatePhase = UpdatePhase.idle
     started_at: float | None = None

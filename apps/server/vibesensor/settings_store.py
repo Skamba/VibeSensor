@@ -1,3 +1,10 @@
+"""Settings store — persists user settings (car profile, analysis config, etc.).
+
+``SettingsStore`` provides thread-safe read/write access to JSON-backed
+settings and exposes the canonical vehicle and analysis settings to other
+modules at runtime.
+"""
+
 from __future__ import annotations
 
 import logging

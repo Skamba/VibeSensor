@@ -73,6 +73,8 @@ class MetricsLoggerConfig:
 
 
 class MetricsLogger:
+    """Manages recording of runs, post-analysis, and history persistence."""
+
     def __init__(
         self,
         config: MetricsLoggerConfig,

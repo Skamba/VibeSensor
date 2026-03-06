@@ -15,6 +15,7 @@ __all__ = ["create_recording_routes"]
 
 
 def create_recording_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the run-recording / logging API routes."""
     router = APIRouter()
 
     @router.get("/api/logging/status", response_model=LoggingStatusResponse)

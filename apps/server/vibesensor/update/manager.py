@@ -439,7 +439,7 @@ class UpdateManager:
         return False
 
     async def _run_update(self, ssid: str, password: str) -> None:
-        """Main update coroutine.  Always restores hotspot on exit."""
+        """Run the main update coroutine.  Always restores hotspot on exit."""
         try:
             await asyncio.wait_for(
                 self._run_update_inner(ssid, password),

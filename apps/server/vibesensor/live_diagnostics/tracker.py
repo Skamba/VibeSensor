@@ -47,6 +47,11 @@ def should_emit_event(
     now_ms: int,
     heartbeat_ms: int,
 ) -> bool:
+    """Return ``True`` when a live event should be emitted for this tracker.
+
+    Emits when the bucket escalates (higher rank) or when the heartbeat
+    interval has elapsed since the last emission.
+    """
     if current_bucket is None:
         return False
     _rank = band_rank
@@ -60,6 +65,7 @@ def matrix_transition_bucket(
     previous_bucket: str | None,
     current_bucket: str | None,
 ) -> str | None:
+    """Return *current_bucket* if it represents an escalation, else ``None``."""
     if current_bucket is None:
         return None
     if previous_bucket is None:

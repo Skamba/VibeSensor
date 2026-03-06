@@ -63,12 +63,16 @@ class _FromDictMixin:
 
 @dataclass
 class CarMeta(_FromDictMixin):
+    """Vehicle identification metadata (name, type) extracted from the report run."""
+
     name: str | None = None
     car_type: str | None = None
 
 
 @dataclass
 class ObservedSignature(_FromDictMixin):
+    """The dominant vibration signature observed during the run."""
+
     primary_system: str | None = None
     strongest_sensor_location: str | None = None
     speed_band: str | None = None
@@ -82,6 +86,8 @@ class ObservedSignature(_FromDictMixin):
 
 @dataclass
 class PartSuggestion:
+    """A suggested replacement part associated with a diagnostic finding."""
+
     name: str = ""
     why_shown: str | None = None
 
@@ -96,6 +102,8 @@ class PartSuggestion:
 
 @dataclass
 class SystemFindingCard:
+    """A per-system diagnostic finding card for the report, with location and parts."""
+
     system_name: str = ""
     strongest_location: str | None = None
     pattern_summary: str | None = None
@@ -113,6 +121,8 @@ class SystemFindingCard:
 
 @dataclass
 class NextStep(_FromDictMixin):
+    """A recommended diagnostic next step (action, rationale, ETA)."""
+
     action: str = ""
     why: str | None = None
     rank: int = 999
@@ -124,6 +134,8 @@ class NextStep(_FromDictMixin):
 
 @dataclass
 class DataTrustItem(_FromDictMixin):
+    """A single data-quality check result (pass/warn/fail with detail)."""
+
     check: str = ""
     state: str = "pass"
     detail: str | None = None
@@ -131,6 +143,8 @@ class DataTrustItem(_FromDictMixin):
 
 @dataclass
 class PatternEvidence(_FromDictMixin):
+    """Evidence summary for the dominant vibration pattern from post-analysis."""
+
     matched_systems: list[str] = field(default_factory=list)
     strongest_location: str | None = None
     speed_band: str | None = None
@@ -146,6 +160,8 @@ class PatternEvidence(_FromDictMixin):
 
 @dataclass
 class PeakRow(_FromDictMixin):
+    """A single row in the report's peak-frequency evidence table."""
+
     rank: str = ""
     system: str = ""
     freq_hz: str = ""
@@ -158,6 +174,8 @@ class PeakRow(_FromDictMixin):
 
 @dataclass
 class ReportTemplateData:
+    """All data needed to render a diagnostic PDF report."""
+
     title: str = ""
     run_datetime: str | None = None
     run_id: str | None = None

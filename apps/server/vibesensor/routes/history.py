@@ -139,6 +139,7 @@ def _reconstruct_report_template_data(data: dict[str, Any]) -> ReportTemplateDat
 
 
 def create_history_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the run-history / report API routes."""
     router = APIRouter()
     report_pdf_cache: OrderedDict[tuple[object, ...], bytes] = OrderedDict()
     report_pdf_locks: dict[tuple[object, ...], asyncio.Lock] = {}

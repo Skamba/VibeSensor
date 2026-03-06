@@ -1,3 +1,9 @@
+"""Analysis settings — defaults, validation, and thread-safe storage.
+
+Provides ``DEFAULT_ANALYSIS_SETTINGS``, ``sanitize_settings()``, tire/wheel
+geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
+"""
+
 from __future__ import annotations
 
 import logging
@@ -117,6 +123,7 @@ def tire_circumference_m_from_spec(
     rim_in: float | None,
     deflection_factor: float | None = None,
 ) -> float | None:
+    """Compute tire circumference in metres from width/aspect/rim spec."""
     if tire_width_mm is None or tire_aspect_pct is None or rim_in is None:
         return None
     if not isfinite(tire_width_mm) or not isfinite(tire_aspect_pct) or not isfinite(rim_in):
@@ -168,6 +175,8 @@ def engine_rpm_from_wheel_hz(wheel_hz: float, final_drive_ratio: float, gear_rat
 
 
 class AnalysisSettingsStore:
+    """Thread-safe store for runtime analysis settings (tire specs, gear ratios, etc.)."""
+
     def __init__(self) -> None:
         self._lock = RLock()
         self._values: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
@@ -177,10 +186,12 @@ class AnalysisSettingsStore:
         return sanitize_settings(payload)
 
     def snapshot(self) -> dict[str, float]:
+        """Return a thread-safe snapshot copy of the current analysis settings."""
         with self._lock:
             return dict(self._values)
 
     def update(self, payload: dict[str, float]) -> dict[str, float]:
+        """Merge *payload* into the store (after validation) and return the new snapshot."""
         with self._lock:
             self._values.update(sanitize_settings(payload))
             return dict(self._values)

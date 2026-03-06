@@ -40,6 +40,7 @@ def _value_error_to_http(status_code: int = 400) -> Iterator[None]:
 
 
 def create_settings_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the device-settings API routes."""
     router = APIRouter()
 
     # -- cars ------------------------------------------------------------------

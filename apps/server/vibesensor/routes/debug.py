@@ -15,6 +15,7 @@ __all__ = ["create_debug_routes"]
 
 
 def create_debug_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the internal debug API routes."""
     router = APIRouter()
 
     @router.get("/api/debug/spectrum/{client_id}")
