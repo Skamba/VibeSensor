@@ -226,12 +226,13 @@ class WebSocketHub:
 
         # Dev-only instrumentation: log payload sizes when VIBESENSOR_WS_DEBUG=1.
         if debug_info is not None and payload_cache:
+            live_count = len(conns) - sum(1 for ws in dead_ws if ws is not None)
             for sel_id, text in payload_cache.items():
                 LOGGER.debug(
                     "WS_DEBUG selected=%r size_bytes=%d connections=%d per_client_freq=%s",
                     sel_id,
                     len(text),
-                    len(conns),
+                    live_count,
                     debug_info.get(sel_id, False),
                 )
 
