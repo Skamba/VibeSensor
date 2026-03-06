@@ -142,7 +142,7 @@ class HealStateStore:
                 return {}
             return {str(k): float(v) for k, v in data.items() if isinstance(v, (int, float))}
         except Exception:
-            LOGGER.debug(
+            LOGGER.warning(
                 "HealStateStore: ignoring corrupt state file %s", self._path, exc_info=True
             )
             return {}
