@@ -301,5 +301,10 @@
   "settings.esp_flash.state.success": "Success",
   "settings.esp_flash.state.failed": "Failed",
   "settings.esp_flash.state.cancelled": "Cancelled",
-  "status.age_ms_ago": "{value} ms ago"
+  "status.age_ms_ago": "{value} ms ago",
+  "settings.wizard.loading": "Loading…",
+  "settings.wizard.load_failed_brands": "Could not load brands.",
+  "settings.wizard.load_failed_types": "Could not load types.",
+  "settings.wizard.load_failed_models": "Could not load models.",
+  "settings.wizard.no_gearboxes": "No pre-defined gearboxes. Enter specs manually below."
 }
