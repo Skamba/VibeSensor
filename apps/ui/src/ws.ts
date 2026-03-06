@@ -34,7 +34,7 @@ export class WsClient {
         if (!spectra || typeof spectra !== "object") return false;
         const clients = (spectra as Record<string, unknown>).clients;
         if (!clients || typeof clients !== "object") return false;
-        return Object.keys(clients as object).length > 0;
+        return Object.keys(clients as Record<string, unknown>).length > 0;
       },
       ...options,
     };

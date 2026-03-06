@@ -107,12 +107,10 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function updateClientSelection(): void {
-    const current = state.selectedClientId;
     const firstConnected = state.clients.find((c) => Boolean(c.connected));
     if (!state.selectedClientId && state.clients.length > 0) {
       state.selectedClientId = firstConnected ? firstConnected.id : state.clients[0].id;
     }
-    if (current && state.clients.some((c) => c.id === current)) state.selectedClientId = current;
     if (state.selectedClientId && !state.clients.some((c) => c.id === state.selectedClientId)) {
       state.selectedClientId = firstConnected ? firstConnected.id : state.clients.length ? state.clients[0].id : null;
     }
@@ -205,7 +203,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function refreshLoggingStatus(): Promise<void> {
     try {
-      state.loggingStatus = await getLoggingStatus() as AppState["loggingStatus"];
+      state.loggingStatus = await getLoggingStatus();
       renderLoggingStatus();
     } catch (_err) {
       setPillState(els.loggingStatus, "bad", t("status.unavailable"));
@@ -219,7 +217,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function startLogging(): Promise<void> {
     try {
-      state.loggingStatus = await startLoggingRun() as AppState["loggingStatus"];
+      state.loggingStatus = await startLoggingRun();
       resetLiveVibrationCounts();
       renderLoggingStatus();
       await ctx.refreshHistory();
@@ -231,7 +229,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function stopLogging(): Promise<void> {
     try {
-      state.loggingStatus = await stopLoggingRun() as AppState["loggingStatus"];
+      state.loggingStatus = await stopLoggingRun();
       renderLoggingStatus();
       await ctx.refreshHistory();
     } catch (err) {

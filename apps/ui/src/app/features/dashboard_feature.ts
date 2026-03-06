@@ -175,18 +175,16 @@ export function createDashboardFeature(ctx: DashboardFeatureDeps): DashboardFeat
 
   function bindMatrixTooltips(): void {
     if (!els.vibrationMatrix) return;
-    const cells = els.vibrationMatrix.querySelectorAll(".vib-cell");
+    const cells = els.vibrationMatrix.querySelectorAll<HTMLElement>(".vib-cell");
     for (const cell of cells) {
       const sourceKey = cell.getAttribute("data-source");
       const severityKey = cell.getAttribute("data-severity");
       if (!sourceKey || !severityKey) continue;
-      cell.addEventListener("mouseenter", (ev: Event) => {
-        const me = ev as MouseEvent;
-        showMatrixTooltip(tooltipForCell(sourceKey, severityKey), me.clientX, me.clientY);
+      cell.addEventListener("mouseenter", (ev: MouseEvent) => {
+        showMatrixTooltip(tooltipForCell(sourceKey, severityKey), ev.clientX, ev.clientY);
       });
-      cell.addEventListener("mousemove", (ev: Event) => {
-        const me = ev as MouseEvent;
-        showMatrixTooltip(tooltipForCell(sourceKey, severityKey), me.clientX, me.clientY);
+      cell.addEventListener("mousemove", (ev: MouseEvent) => {
+        showMatrixTooltip(tooltipForCell(sourceKey, severityKey), ev.clientX, ev.clientY);
       });
       cell.addEventListener("mouseleave", hideMatrixTooltip);
       cell.addEventListener("blur", hideMatrixTooltip);

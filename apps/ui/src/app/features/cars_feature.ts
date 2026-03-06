@@ -239,9 +239,9 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     const tw = document.getElementById("wizTireWidth") as HTMLInputElement | null;
     const ta = document.getElementById("wizTireAspect") as HTMLInputElement | null;
     const ri = document.getElementById("wizRim") as HTMLInputElement | null;
-    if (tw && tire) tw.value = String(tire.tire_width_mm);
-    if (ta && tire) ta.value = String(tire.tire_aspect_pct);
-    if (ri && tire) ri.value = String(tire.rim_in);
+    if (tw) tw.value = String(tire.tire_width_mm);
+    if (ta) ta.value = String(tire.tire_aspect_pct);
+    if (ri) ri.value = String(tire.rim_in);
   }
 
   function bindWizardHandlers(): void {
