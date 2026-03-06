@@ -7,6 +7,12 @@ export type CarRecord = {
   [key: string]: unknown;
 };
 
+export type LoggingStatusPayload = {
+  enabled: boolean;
+  current_file: string | null;
+  write_error: string | null;
+};
+
 export type CarsPayload = {
   cars: CarRecord[];
   activeCarId: string | null;

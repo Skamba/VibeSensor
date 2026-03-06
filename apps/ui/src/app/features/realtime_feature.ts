@@ -63,9 +63,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function locationCodeForClient(client: ClientRow): string {
-    const explicitCode = String(client?.location_code || "").trim();
+    const explicitCode = String(client.location_code || "").trim();
     if (explicitCode && state.locationCodes.includes(explicitCode)) return explicitCode;
-    const name = String(client?.name || "").trim();
+    const name = String(client.name || "").trim();
     if (!name) return "";
     const normalizedName = name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
     for (const [token, code] of Object.entries(SHORTHAND_LOCATION_MAP)) {
@@ -107,12 +107,10 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function updateClientSelection(): void {
-    const current = state.selectedClientId;
     const firstConnected = state.clients.find((c) => Boolean(c.connected));
     if (!state.selectedClientId && state.clients.length > 0) {
       state.selectedClientId = firstConnected ? firstConnected.id : state.clients[0].id;
     }
-    if (current && state.clients.some((c) => c.id === current)) state.selectedClientId = current;
     if (state.selectedClientId && !state.clients.some((c) => c.id === state.selectedClientId)) {
       state.selectedClientId = firstConnected ? firstConnected.id : state.clients.length ? state.clients[0].id : null;
     }
@@ -135,8 +133,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       })
       .join("");
 
-    els.sensorsSettingsBody.querySelectorAll(".row-location-select").forEach((selectNode) => {
-      const select = selectNode as HTMLSelectElement;
+    els.sensorsSettingsBody.querySelectorAll<HTMLSelectElement>(".row-location-select").forEach((select) => {
       select.addEventListener("change", async () => {
         const clientId = select.getAttribute("data-client-id");
         if (!clientId) return;
@@ -149,9 +146,9 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
       });
     });
 
-    els.sensorsSettingsBody.querySelectorAll(".row-identify").forEach((btn) => {
+    els.sensorsSettingsBody.querySelectorAll<HTMLButtonElement>(".row-identify").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        if ((btn as HTMLButtonElement).disabled) return;
+        if (btn.disabled) return;
         const clientId = btn.getAttribute("data-client-id");
         if (!clientId) return;
         try {
@@ -190,7 +187,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
   }
 
   function renderLoggingStatus(): void {
-    const status = state.loggingStatus || { enabled: false, current_file: null, write_error: null };
+    const status = state.loggingStatus;
     const on = Boolean(status.enabled);
     const hasActiveClients = state.clients.some((client) => Boolean(client?.connected));
     if (status.write_error) {
@@ -205,7 +202,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function refreshLoggingStatus(): Promise<void> {
     try {
-      state.loggingStatus = await getLoggingStatus() as AppState["loggingStatus"];
+      state.loggingStatus = await getLoggingStatus();
       renderLoggingStatus();
     } catch (_err) {
       setPillState(els.loggingStatus, "bad", t("status.unavailable"));
@@ -219,7 +216,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function startLogging(): Promise<void> {
     try {
-      state.loggingStatus = await startLoggingRun() as AppState["loggingStatus"];
+      state.loggingStatus = await startLoggingRun();
       resetLiveVibrationCounts();
       renderLoggingStatus();
       await ctx.refreshHistory();
@@ -231,7 +228,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function stopLogging(): Promise<void> {
     try {
-      state.loggingStatus = await stopLoggingRun() as AppState["loggingStatus"];
+      state.loggingStatus = await stopLoggingRun();
       renderLoggingStatus();
       await ctx.refreshHistory();
     } catch (err) {

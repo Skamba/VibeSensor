@@ -101,7 +101,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     container.innerHTML = "<em>Loading...</em>";
     try {
       const data = await getCarLibraryBrands();
-      container.innerHTML = (data.brands || []).map((b: string) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(b)}">${escapeHtml(b)}</button>`).join("");
+      container.innerHTML = (data.brands || []).map((b) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(b)}">${escapeHtml(b)}</button>`).join("");
       container.querySelectorAll(".wiz-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
           wizState.brand = btn.getAttribute("data-value") || "";
@@ -120,7 +120,7 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     container.innerHTML = "<em>Loading...</em>";
     try {
       const data = await getCarLibraryTypes(wizState.brand);
-      container.innerHTML = (data.types || []).map((t2: string) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(t2)}">${escapeHtml(t2)}</button>`).join("");
+      container.innerHTML = (data.types || []).map((t2) => `<button type="button" class="wiz-opt" data-value="${escapeHtml(t2)}">${escapeHtml(t2)}</button>`).join("");
       container.querySelectorAll(".wiz-opt").forEach((btn) => {
         btn.addEventListener("click", () => {
           wizState.carType = btn.getAttribute("data-value") || "";
@@ -239,9 +239,9 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
     const tw = document.getElementById("wizTireWidth") as HTMLInputElement | null;
     const ta = document.getElementById("wizTireAspect") as HTMLInputElement | null;
     const ri = document.getElementById("wizRim") as HTMLInputElement | null;
-    if (tw && tire) tw.value = String(tire.tire_width_mm);
-    if (ta && tire) ta.value = String(tire.tire_aspect_pct);
-    if (ri && tire) ri.value = String(tire.rim_in);
+    if (tw) tw.value = String(tire.tire_width_mm);
+    if (ta) ta.value = String(tire.tire_aspect_pct);
+    if (ri) ri.value = String(tire.rim_in);
   }
 
   function bindWizardHandlers(): void {
