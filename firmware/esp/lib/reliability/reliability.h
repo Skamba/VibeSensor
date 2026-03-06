@@ -47,4 +47,17 @@ inline bool retry_due(uint32_t now_ms, uint32_t retry_at_ms) {
   return retry_at_ms == 0 || static_cast<int32_t>(now_ms - retry_at_ms) >= 0;
 }
 
+// Returns true when the sensor consecutive-error count has reached
+// error_threshold AND the reinit cooldown has elapsed since the last attempt.
+// Uses signed subtraction for millis() wrap-around safety (same idiom as
+// retry_due).
+inline bool sensor_should_reinit(uint8_t consecutive_errors,
+                                  uint8_t error_threshold,
+                                  uint32_t now_ms,
+                                  uint32_t last_reinit_ms,
+                                  uint32_t cooldown_ms) {
+  return consecutive_errors >= error_threshold &&
+         static_cast<int32_t>(now_ms - last_reinit_ms) >= static_cast<int32_t>(cooldown_ms);
+}
+
 }  // namespace vibesensor::reliability
