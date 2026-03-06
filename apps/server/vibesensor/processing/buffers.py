@@ -15,6 +15,8 @@ import numpy as np
 
 @dataclass(slots=True, eq=False, repr=False)
 class ClientBuffer:
+    """Ring-buffer accumulator for a single ESP32 client's raw accelerometer data."""
+
     data: np.ndarray
     capacity: int
     write_idx: int = 0

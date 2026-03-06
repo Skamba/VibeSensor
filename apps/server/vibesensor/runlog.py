@@ -3,6 +3,7 @@
 Provides helpers for creating and reading metric run files in JSONL format,
 plus normalisation helpers for backward-compatible field name migration.
 """
+
 from __future__ import annotations
 
 import json
@@ -54,6 +55,8 @@ __all__ = [
 
 @dataclass(slots=True)
 class RunData:
+    """Parsed contents of a JSONL run file: metadata, samples, and source path."""
+
     metadata: dict[str, Any]
     samples: list[dict[str, Any]]
     source_path: Path

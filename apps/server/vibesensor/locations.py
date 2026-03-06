@@ -3,6 +3,7 @@
 Maps short sensor location codes (e.g. ``"fl"``, ``"rr"``) to human-readable
 labels and provides helpers to identify wheel-mounted sensor positions.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

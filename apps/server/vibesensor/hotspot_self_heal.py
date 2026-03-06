@@ -3,6 +3,7 @@
 Monitors hotspot connectivity and automatically recovers from failures
 by restarting ``hostapd``/``dnsmasq`` when the hotspot becomes unreachable.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -36,17 +37,23 @@ _FALLBACK_CHANNELS: tuple[int, ...] = (1, 6, 11)
 
 @dataclass(slots=True)
 class CommandResult:
+    """Result of a subprocess command run by :class:`CommandRunner`."""
+
     returncode: int
     stdout: str
     stderr: str
 
 
 class CommandRunner(ABC):
+    """Abstract base for running system commands (real subprocess or test stub)."""
+
     @abstractmethod
     def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult: ...
 
 
 class SubprocessRunner(CommandRunner):
+    """Default :class:`CommandRunner` that executes real subprocesses."""
+
     def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
         try:
             completed = subprocess.run(
@@ -69,6 +76,8 @@ class SubprocessRunner(CommandRunner):
 
 @dataclass(slots=True)
 class HealAction:
+    """Record of a single self-heal action taken to restore hotspot connectivity."""
+
     name: str
     detected: str
     action: str
@@ -77,6 +86,8 @@ class HealAction:
 
 @dataclass(slots=True)
 class HealthState:
+    """Snapshot of the current Wi-Fi hotspot health collected from system commands."""
+
     nm_running: bool
     wifi_radio_on: bool
     rfkill_blocked: bool

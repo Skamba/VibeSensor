@@ -3,6 +3,7 @@
 ``GPSSpeedMonitor`` parses GPVTG/GPRMC sentences from a serial GPS device
 and exposes the current speed in m/s with a configurable resolution window.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -54,6 +55,8 @@ def _is_numeric(value: object) -> bool:
 
 
 class GPSSpeedMonitor:
+    """Monitors GPS speed over a serial connection and exposes it via ``speed_mps``."""
+
     def __init__(self, gps_enabled: bool):
         self.gps_enabled = gps_enabled
         self.override_speed_mps: float | None = None

@@ -4,6 +4,7 @@
 settings and exposes the canonical vehicle and analysis settings to other
 modules at runtime.
 """
+
 from __future__ import annotations
 
 import logging

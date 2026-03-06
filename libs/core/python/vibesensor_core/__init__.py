@@ -12,6 +12,7 @@ vibration_strength
 sensor_units
     Hardware scale-factor helpers (g-per-LSB).
 """
+
 from .sensor_units import get_accel_scale_g_per_lsb as get_accel_scale_g_per_lsb
 from .strength_bands import BANDS as BANDS
 from .strength_bands import DECAY_TICKS as DECAY_TICKS

@@ -3,6 +3,7 @@
 Generates a human-readable Markdown description of the public UDP / HTTP /
 WebSocket API contracts for use in documentation and diagnostics.
 """
+
 from __future__ import annotations
 
 __all__ = ["render_contract_reference_markdown"]

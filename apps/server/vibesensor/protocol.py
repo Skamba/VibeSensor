@@ -3,6 +3,7 @@
 Defines the binary message format exchanged over UDP between the ESP32
 sensor nodes and the VibeSensor server (Hello, Data, Cmd, Ack, DataAck).
 """
+
 from __future__ import annotations
 
 import logging
@@ -77,11 +78,13 @@ _SAMPLE_DTYPE = np.dtype("<i2")
 
 
 class ProtocolError(ValueError):
-    pass
+    """Raised when a binary protocol message is malformed or unexpected."""
 
 
 @dataclass(slots=True)
 class HelloMessage:
+    """Decoded HELLO message sent by an ESP32 sensor on connect."""
+
     client_id: bytes
     control_port: int
     sample_rate_hz: int
@@ -93,6 +96,8 @@ class HelloMessage:
 
 @dataclass(slots=True)
 class DataMessage:
+    """Decoded DATA message containing one frame of accelerometer samples."""
+
     client_id: bytes
     seq: int
     t0_us: int
