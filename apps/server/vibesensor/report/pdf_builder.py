@@ -870,6 +870,7 @@ def _draw_pattern_evidence(
     ev: PatternEvidence,
     tr: Callable[[str], str],
 ) -> None:
+    """Draw the pattern-evidence panel on page 2 (matched systems, strength, certainty)."""
     na = tr("NOT_AVAILABLE")
 
     _draw_panel(c, x, y, w, h, tr("PATTERN_EVIDENCE"))
