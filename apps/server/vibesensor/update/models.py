@@ -7,6 +7,26 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+def _to_float_or_none(value: Any) -> float | None:
+    """Coerce *value* to float, returning None for null / unconvertible input."""
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _to_int_or_none(value: Any) -> int | None:
+    """Coerce *value* to int, returning None for null / unconvertible input."""
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 class UpdateState(enum.StrEnum):
     """Top-level state of an OTA software update job."""
 
@@ -87,12 +107,12 @@ class UpdateJobStatus:
         return cls(
             state=UpdateState(data.get("state", "idle")),
             phase=UpdatePhase(data.get("phase", "idle")),
-            started_at=data.get("started_at"),
-            finished_at=data.get("finished_at"),
-            last_success_at=data.get("last_success_at"),
-            ssid=str(data.get("ssid", "")),
+            started_at=_to_float_or_none(data.get("started_at")),
+            finished_at=_to_float_or_none(data.get("finished_at")),
+            last_success_at=_to_float_or_none(data.get("last_success_at")),
+            ssid=str(data.get("ssid") or ""),
             issues=issues,
             log_tail=list(data.get("log_tail") or [])[-_LOG_TAIL_LIMIT:],
-            exit_code=data.get("exit_code"),
+            exit_code=_to_int_or_none(data.get("exit_code")),
             runtime=dict(data.get("runtime") or {}),
         )

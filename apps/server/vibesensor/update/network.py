@@ -24,6 +24,9 @@ HOTSPOT_RESTORE_DELAY_S = 2
 _FAILURE_MARKERS = ("failed", "error", "timeout")
 _WIFI_DIAG_DIR = "/var/log/wifi"
 """Default directory for Wi-Fi diagnostic log files written by the hotspot helper scripts."""
+_MAX_HOTSPOT_LOG_ISSUES = 5
+"""Maximum number of issues surfaced from a single hotspot.log scan to prevent
+flooding the issues list when the log contains many repeated failure lines."""
 LOGGER = logging.getLogger(__name__)
 
 
@@ -61,17 +64,21 @@ def parse_wifi_diagnostics(log_dir: str = _WIFI_DIAG_DIR) -> list[UpdateIssue]:
         try:
             text = hotspot_log.read_text(encoding="utf-8", errors="replace")
             lines = text.splitlines()
+            hotspot_issues: list[UpdateIssue] = []
             for line in lines[-100:]:
                 lower = line.lower()
                 if any(marker in lower for marker in _FAILURE_MARKERS):
                     sanitized = sanitize_log_line(line)
-                    issues.append(
+                    hotspot_issues.append(
                         UpdateIssue(
                             phase="diagnostics",
                             message="Hotspot log issue",
                             detail=sanitized,
                         )
                     )
+                    if len(hotspot_issues) >= _MAX_HOTSPOT_LOG_ISSUES:
+                        break
+            issues.extend(hotspot_issues)
         except OSError:
             LOGGER.debug("Unable to read hotspot diagnostics from %s", hotspot_log, exc_info=True)
 
