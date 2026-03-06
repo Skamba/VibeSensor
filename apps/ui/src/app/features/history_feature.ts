@@ -118,8 +118,8 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
       .map((point) => {
         const value = metricByLocation[point.key];
         const hasValue = typeof value === "number" && Number.isFinite(value);
-        if (!hasValue) return "";
-        const norm = normalizeUnit(value, min!, max!);
+        if (!hasValue || min === null || max === null) return "";
+        const norm = normalizeUnit(value, min, max);
         const fill = heatColor(norm);
         const valueLabel = `${fmt(value, 1)} dB`;
         return `<div class="mini-car-dot" style="top:${point.top}%;left:${point.left}%;background:${fill}" title="${escapeHtml(point.key)}: ${escapeHtml(valueLabel)}"></div>`;
