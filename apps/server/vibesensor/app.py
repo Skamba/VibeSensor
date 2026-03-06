@@ -59,7 +59,14 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     config = load_config(config_path)
 
     history_db = HistoryDB(config.logging.history_db_path)
-    recovered_runs = history_db.recover_stale_recording_runs()
+    try:
+        recovered_runs = history_db.recover_stale_recording_runs()
+    except Exception:
+        # Ensure the DB connection is released if early startup fails before
+        # the lifespan context can take ownership of the resource.
+        LOGGER.error("Failed during early startup DB operations; closing DB.", exc_info=True)
+        history_db.close()
+        raise
     if recovered_runs:
         LOGGER.warning("Recovered %d stale recording run(s) on startup", recovered_runs)
 

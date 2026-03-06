@@ -6,9 +6,11 @@ JSON contracts (API responses, JSONL run schema, history DB blobs) stable.
 
 from __future__ import annotations
 
+import logging
 import math
 import uuid
 from dataclasses import dataclass
+from types import MappingProxyType
 from typing import Any
 
 from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
@@ -18,6 +20,7 @@ from .constants import NUMERIC_TYPES
 from .protocol import parse_client_id
 
 _isfinite = math.isfinite
+_LOGGER = logging.getLogger(__name__)
 
 __all__ = [
     "RUN_END_TYPE",
@@ -51,7 +54,7 @@ RUN_END_TYPE = "run_end"
 VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "obd2", "manual")
 VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 
-DEFAULT_CAR_ASPECTS: dict[str, float] = dict(DEFAULT_ANALYSIS_SETTINGS)
+DEFAULT_CAR_ASPECTS: MappingProxyType[str, float] = MappingProxyType(DEFAULT_ANALYSIS_SETTINGS)
 
 
 def as_float_or_none(value: object) -> float | None:
@@ -386,10 +389,13 @@ class RunMetadata:
     def from_dict(cls, data: dict[str, Any]) -> RunMetadata:
         accel_scale = data.get("accel_scale_g_per_lsb")
         accel_units = "g" if accel_scale is not None else "raw_lsb"
+        run_id = str(data.get("run_id", ""))
+        if not run_id:
+            _LOGGER.warning("RunMetadata.from_dict: missing or empty run_id in record %r", data)
         return cls(
             record_type=str(data.get("record_type", RUN_METADATA_TYPE)),
             schema_version=str(data.get("schema_version", RUN_SCHEMA_VERSION)),
-            run_id=str(data.get("run_id", "")),
+            run_id=run_id,
             start_time_utc=str(data.get("start_time_utc", "")),
             end_time_utc=data.get("end_time_utc"),
             sensor_model=str(data.get("sensor_model", "unknown")),

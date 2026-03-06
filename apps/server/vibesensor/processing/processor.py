@@ -271,6 +271,11 @@ class SignalProcessor:
             if cached is not None:
                 return cached
             if sample_rate_hz <= 0:
+                LOGGER.warning(
+                    "_fft_params called with invalid sample_rate_hz=%d; "
+                    "returning empty frequency slice.",
+                    sample_rate_hz,
+                )
                 return _EMPTY_F32, np.empty(0, dtype=np.intp)
             freqs = np.fft.rfftfreq(self.fft_n, d=1.0 / sample_rate_hz)
             valid = (freqs >= self.spectrum_min_hz) & (freqs <= self.spectrum_max_hz)
@@ -774,14 +779,20 @@ class SignalProcessor:
             self._buffers.pop(client_id, None)
 
     def intake_stats(self) -> dict[str, Any]:
-        """Return lightweight intake/analysis metrics for observability."""
-        stats: dict[str, Any] = {
-            "total_ingested_samples": self._total_ingested_samples,
-            "total_compute_calls": self._total_compute_calls,
-            "last_compute_duration_s": self._last_compute_duration_s,
-            "last_compute_all_duration_s": self._last_compute_all_duration_s,
-            "last_ingest_duration_s": self._last_ingest_duration_s,
-        }
+        """Return lightweight intake/analysis metrics for observability.
+
+        All counter reads are taken under ``_lock`` to avoid returning a
+        torn snapshot (e.g. ``total_compute_calls`` incremented while
+        ``last_compute_duration_s`` hasn't been updated yet).
+        """
+        with self._lock:
+            stats: dict[str, Any] = {
+                "total_ingested_samples": self._total_ingested_samples,
+                "total_compute_calls": self._total_compute_calls,
+                "last_compute_duration_s": self._last_compute_duration_s,
+                "last_compute_all_duration_s": self._last_compute_all_duration_s,
+                "last_ingest_duration_s": self._last_ingest_duration_s,
+            }
         if self._worker_pool is not None:
             stats["worker_pool"] = self._worker_pool.stats()
         return stats

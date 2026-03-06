@@ -6,3 +6,6 @@ server:
 
 logging:
   metrics_log_path: data/metrics.jsonl
+
+gps:
+  gps_enabled: false  # Developer machines do not run a gpsd daemon

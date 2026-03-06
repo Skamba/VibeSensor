@@ -150,9 +150,14 @@ def _split_host_port(value: str) -> tuple[str, int]:
     if sep == "":
         raise ValueError(f"Expected HOST:PORT, got: {value!r}")
     try:
-        return host, int(port)
+        port_int = int(port)
     except ValueError:
         raise ValueError(f"Invalid port number in {value!r}: {port!r} is not an integer") from None
+    if not (1 <= port_int <= 65535):
+        raise ValueError(
+            f"Port number in {value!r} must be 1–65535, got {port_int}"
+        )
+    return host, port_int
 
 
 def _resolve_config_path(path_text: str, config_path: Path) -> Path:
@@ -172,6 +177,19 @@ class APSelfHealConfig:
     min_restart_interval_seconds: int
     allow_disable_resolved_stub_listener: bool
     state_file: Path
+
+    def __post_init__(self) -> None:
+        for field_name in ("interval_seconds", "diagnostics_lookback_minutes"):
+            val = getattr(self, field_name)
+            if not isinstance(val, int) or val < 1:
+                raise ValueError(
+                    f"ap.self_heal.{field_name} must be a positive integer, got {val!r}"
+                )
+        mri = self.min_restart_interval_seconds
+        if not isinstance(mri, int) or mri < 0:
+            raise ValueError(
+                f"ap.self_heal.min_restart_interval_seconds must be a non-negative integer, got {mri!r}"
+            )
 
 
 @dataclass(slots=True)
@@ -379,6 +397,12 @@ class GPSConfig:
     gpsd_host: str
     gpsd_port: int
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.gpsd_port, int) or not (1 <= self.gpsd_port <= 65535):
+            raise ValueError(
+                f"gps.gpsd_port must be 1–65535, got {self.gpsd_port!r}"
+            )
+
 
 @dataclass(slots=True)
 class UpdateConfig:
@@ -517,7 +541,7 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             fft_update_hz=int(merged["processing"]["fft_update_hz"]),
             fft_n=int(merged["processing"]["fft_n"]),
             spectrum_min_hz=float(merged["processing"].get("spectrum_min_hz", 5.0)),
-            spectrum_max_hz=int(merged["processing"]["spectrum_max_hz"]),
+            spectrum_max_hz=float(merged["processing"]["spectrum_max_hz"]),
             client_ttl_seconds=int(merged["processing"].get("client_ttl_seconds", 120)),
             accel_scale_g_per_lsb=accel_scale,
         ),  # NOTE: ProcessingConfig.__post_init__ validates & clamps all fields

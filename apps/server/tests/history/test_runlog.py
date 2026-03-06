@@ -12,6 +12,7 @@ from vibesensor.runlog import (
     append_jsonl_records,
     as_float_or_none,
     as_int_or_none,
+    bounded_sample,
     create_run_end_record,
     create_run_metadata,
     normalize_sample_record,
@@ -352,3 +353,101 @@ def test_append_jsonl_records_durable_fsync_cadence(
         monkeypatch.setattr(os, "fsync", original_fsync)
     # At records 2 and 4, plus final flush.
     assert len(fsync_calls) == 3
+
+
+# ---------------------------------------------------------------------------
+# Fix 1: bounded_sample rejects max_items <= 0
+# ---------------------------------------------------------------------------
+
+
+def test_bounded_sample_zero_max_items_raises() -> None:
+    """max_items=0 must raise ValueError (not ZeroDivisionError)."""
+    with pytest.raises(ValueError, match="max_items"):
+        bounded_sample(iter([{"x": 1}]), max_items=0)
+
+
+def test_bounded_sample_negative_max_items_raises() -> None:
+    """Negative max_items must raise ValueError."""
+    with pytest.raises(ValueError, match="max_items"):
+        bounded_sample(iter([{"x": 1}]), max_items=-5)
+
+
+def test_bounded_sample_zero_max_items_with_hint_raises() -> None:
+    """max_items=0 with a total_hint must raise before the ZeroDivisionError."""
+    with pytest.raises(ValueError, match="max_items"):
+        bounded_sample(iter([{"x": 1}]), max_items=0, total_hint=100)
+
+
+# ---------------------------------------------------------------------------
+# Fix 3: read_jsonl_run warns on duplicate metadata records
+# ---------------------------------------------------------------------------
+
+
+def test_read_jsonl_run_warns_on_duplicate_metadata(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Second metadata record in the same file logs a warning; first is used."""
+    path = tmp_path / "dup_meta.jsonl"
+    meta1 = _make_run_metadata(run_id="dup-run")
+    meta2 = dict(meta1)
+    meta2["run_id"] = "should-not-be-used"
+
+    with path.open("w") as f:
+        f.write(json.dumps(meta1) + "\n")
+        f.write(json.dumps({"record_type": "sample", "t_s": 1.0}) + "\n")
+        f.write(json.dumps(meta2) + "\n")
+
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.runlog"):
+        run_data = read_jsonl_run(path)
+
+    # First metadata wins
+    assert run_data.metadata["run_id"] == "dup-run"
+    # Warning was emitted
+    assert "Duplicate metadata" in caplog.text
+
+
+# ---------------------------------------------------------------------------
+# Fix 4: read_jsonl_run end record missing end_time_utc is not silently set to None
+# ---------------------------------------------------------------------------
+
+
+def test_read_jsonl_run_end_record_without_end_time_utc_leaves_metadata_unchanged(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """When the end record has no end_time_utc, metadata is not overwritten with None."""
+    path = tmp_path / "no_end_time.jsonl"
+    meta = _make_run_metadata(run_id="no-end-run")
+    end_record = {"record_type": "run_end", "run_id": "no-end-run"}  # no end_time_utc
+
+    with path.open("w") as f:
+        f.write(json.dumps(meta) + "\n")
+        f.write(json.dumps(end_record) + "\n")
+
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.runlog"):
+        run_data = read_jsonl_run(path)
+
+    # end_time_utc must NOT be set to None
+    assert run_data.metadata.get("end_time_utc") in (None, "")
+    # Warning was emitted
+    assert "end_time_utc" in caplog.text
+    assert "no end_time_utc" in caplog.text.lower() or "not updated" in caplog.text.lower()
+
+
+def test_read_jsonl_run_end_record_with_valid_end_time_utc_is_applied(
+    tmp_path: Path,
+) -> None:
+    """When the end record has a valid end_time_utc and metadata lacks one, it is propagated."""
+    path = tmp_path / "valid_end.jsonl"
+    meta = _make_run_metadata(run_id="end-run")
+    end_record = create_run_end_record("end-run", "2025-01-01T00:10:00Z")
+
+    with path.open("w") as f:
+        f.write(json.dumps(meta) + "\n")
+        f.write(json.dumps(end_record) + "\n")
+
+    run_data = read_jsonl_run(path)
+    assert run_data.metadata["end_time_utc"] == "2025-01-01T00:10:00Z"
