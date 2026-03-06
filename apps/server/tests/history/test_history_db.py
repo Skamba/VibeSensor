@@ -652,3 +652,125 @@ def test_sanitize_value_handles_numpy_arrays() -> None:
     result2d = sanitize_value(arr2d)
     assert result2d == [[1.0, 2.0], [3.0, 4.0]]
     json.dumps(result2d)
+
+
+# ---------------------------------------------------------------------------
+# Fix 2: list_runs negative limit clamped to 0 (returns all rows)
+# ---------------------------------------------------------------------------
+
+
+def test_list_runs_clamps_negative_limit_to_all_rows(tmp_path: Path) -> None:
+    """Negative limit must not produce LIMIT -1 in SQL; treated as 'all rows'."""
+    db = HistoryDB(tmp_path / "history.db")
+    for i in range(5):
+        db.create_run(f"run-{i}", "2026-01-01T00:00:00Z", {"source": "test"})
+        db.finalize_run(f"run-{i}", "2026-01-01T00:10:00Z")
+
+    result = db.list_runs(limit=-1)
+    assert len(result) == 5
+
+
+# ---------------------------------------------------------------------------
+# Fix 5: _resolve_keyset_offset rejects unknown table names
+# ---------------------------------------------------------------------------
+
+
+def test_resolve_keyset_offset_rejects_invalid_table(tmp_path: Path) -> None:
+    """An invalid table name raises ValueError rather than building bad SQL."""
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-guard", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-guard", [{"i": i} for i in range(3)])
+
+    with pytest.raises(ValueError, match="invalid table name"):
+        db._resolve_keyset_offset("injected_table", "run-guard", 1)
+
+
+# ---------------------------------------------------------------------------
+# Fix 6: get_run_metadata warns when stored JSON is not a dict
+# ---------------------------------------------------------------------------
+
+
+def test_get_run_metadata_non_dict_json_returns_none_and_warns(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Non-dict metadata_json returns None and emits a warning."""
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-bad-meta", "2026-01-01T00:00:00Z", {"source": "test"})
+    # Overwrite metadata_json with a non-dict JSON value
+    with db._cursor() as cur:
+        cur.execute(
+            "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
+            ("[1, 2, 3]", "run-bad-meta"),
+        )
+
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.history_db"):
+        result = db.get_run_metadata("run-bad-meta")
+
+    assert result is None
+    assert "run-bad-meta" in caplog.text
+    assert "metadata_json" in caplog.text
+
+
+# ---------------------------------------------------------------------------
+# Fix 7: append_samples rejects empty run_id
+# ---------------------------------------------------------------------------
+
+
+def test_append_samples_empty_run_id_raises(tmp_path: Path) -> None:
+    """An empty run_id must raise ValueError immediately."""
+    db = HistoryDB(tmp_path / "history.db")
+    with pytest.raises(ValueError, match="run_id"):
+        db.append_samples("", [{"i": 1}])
+
+
+def test_append_samples_whitespace_run_id_raises(tmp_path: Path) -> None:
+    """A whitespace-only run_id is considered empty and raises ValueError."""
+    db = HistoryDB(tmp_path / "history.db")
+    with pytest.raises(ValueError, match="run_id"):
+        db.append_samples("   ", [{"i": 1}])
+
+
+# ---------------------------------------------------------------------------
+# Fix 8: iter_run_samples rejects negative offset
+# ---------------------------------------------------------------------------
+
+
+def test_iter_run_samples_negative_offset_raises(tmp_path: Path) -> None:
+    """A negative offset must raise ValueError."""
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-neg-off", "2026-01-01T00:00:00Z", {"source": "test"})
+    db.append_samples("run-neg-off", [{"i": i} for i in range(3)])
+
+    with pytest.raises(ValueError, match="offset"):
+        list(db.iter_run_samples("run-neg-off", offset=-1))
+
+
+# ---------------------------------------------------------------------------
+# Fix 10: _v2_row_to_dict warns when a peak column contains non-list JSON
+# ---------------------------------------------------------------------------
+
+
+def test_v2_row_to_dict_non_list_peak_column_warns_and_uses_empty(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """Non-list peak column JSON emits a warning and falls back to []."""
+    db = HistoryDB(tmp_path / "history.db")
+    db.create_run("run-peak-warn", "2026-01-01T00:00:00Z", {"source": "test"})
+
+    # Insert a row that has a dict (not list) in top_peaks
+    with db._cursor() as cur:
+        cur.execute(
+            "INSERT INTO samples_v2 (run_id, top_peaks) VALUES (?, ?)",
+            ("run-peak-warn", '{"unexpected": "dict"}'),
+        )
+
+    import logging
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.history_db"):
+        rows = db.get_run_samples("run-peak-warn")
+
+    assert len(rows) == 1
+    assert rows[0]["top_peaks"] == []
+    assert "top_peaks" in caplog.text
