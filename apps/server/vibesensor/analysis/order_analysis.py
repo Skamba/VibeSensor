@@ -149,6 +149,20 @@ def _finding_actions_for_source(
     Each ``what``, ``why``, ``confirm``, ``falsify`` field is an i18n reference
     dict (``{"_i18n_key": "KEY", ...params}``) that the report layer resolves
     at render time.
+
+    Parameters
+    ----------
+    lang_or_source:
+        **Legacy dual-purpose parameter.**  When called with a single positional
+        argument (e.g. ``_finding_actions_for_source("wheel/tire", ...)``), this
+        is the vibration source string.  When called with two positional
+        arguments (e.g. ``_finding_actions_for_source(lang, "wheel/tire", ...)``),
+        the first argument is a language string that is **silently ignored**
+        because *source* takes precedence.  New call sites should always pass
+        the source string as the first argument and omit *source*.
+    source:
+        Explicit source override.  When provided, *lang_or_source* is ignored.
+        Recognised values: ``"wheel/tire"``, ``"driveline"``, ``"engine"``.
     """
     if source is None:
         source = lang_or_source
