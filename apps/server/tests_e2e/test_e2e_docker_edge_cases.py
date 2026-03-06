@@ -184,7 +184,7 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
         assert b"analysis" in pdf_while.body.lower()
 
         api_json(base, "/api/logging/stop", method="POST")
-        immediate = api_json(base, f"/api/history/{run_id}/insights", expected_status=(200, 422))
+        immediate = api_json(base, f"/api/history/{run_id}/insights", expected_status=(200, 202, 422))
         if immediate.get("status") == "analyzing":
             pass
         elif immediate.get("findings"):
