@@ -172,7 +172,13 @@ def bounded_sample(
         number of items consumed from the iterator, and *final_stride*
         is the stride factor that was applied.
 
+    Raises
+    ------
+    ValueError
+        If *max_items* is not a positive integer.
     """
+    if max_items <= 0:
+        raise ValueError(f"bounded_sample: max_items must be >= 1, got {max_items}")
     stride: int = max(1, -(-total_hint // max_items)) if total_hint > max_items else 1
     kept: list[dict] = []
     total = 0
@@ -236,8 +242,7 @@ def append_jsonl_records(
                     separators=_seps,
                     default=str,
                 )
-            f.write(line)
-            f.write("\n")
+            f.write(line + "\n")
             if durable and (index % cadence) == 0:
                 f.flush()
                 os.fsync(f.fileno())
@@ -281,6 +286,12 @@ def read_jsonl_run(path: Path) -> RunData:
             record_type = str(payload.get("record_type", ""))
             if record_type == _meta_type and metadata is None:
                 metadata = payload
+            elif record_type == _meta_type:
+                LOGGER.warning(
+                    "Duplicate metadata record at line %d in %s; ignoring",
+                    line_no,
+                    path,
+                )
             elif record_type == _sample_type:
                 try:
                     samples.append(_normalize(payload))
@@ -305,5 +316,12 @@ def read_jsonl_run(path: Path) -> RunData:
             f"Run metadata in {path} is missing required 'run_id' field"
         )
     if end_record and not metadata.get("end_time_utc"):
-        metadata["end_time_utc"] = end_record.get("end_time_utc")
+        end_time = end_record.get("end_time_utc")
+        if end_time:
+            metadata["end_time_utc"] = end_time
+        else:
+            LOGGER.warning(
+                "Run end record in %s has no end_time_utc; metadata end time not updated",
+                path,
+            )
     return RunData(metadata=metadata, samples=samples, source_path=path)
