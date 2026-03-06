@@ -115,6 +115,15 @@ def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
     return hasher.hexdigest()
 
 
+def _sha256_file(path: Path) -> str:
+    """Return the lowercase hex SHA-256 digest of *path*."""
+    hasher = hashlib.sha256()
+    with path.open("rb") as fh:
+        while chunk := fh.read(65536):
+            hasher.update(chunk)
+    return hasher.hexdigest()
+
+
 # ---------------------------------------------------------------------------
 # UpdateManager
 # ---------------------------------------------------------------------------
@@ -863,6 +872,25 @@ class UpdateManager:
                 return
 
             self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
+
+            # Verify SHA-256 integrity of the downloaded wheel.
+            # A mismatch means the file was corrupted in transit or the
+            # release metadata is wrong — abort before installing.
+            if release.sha256:
+                actual_sha256 = await asyncio.to_thread(_sha256_file, wheel_path)
+                if actual_sha256 != release.sha256.lower():
+                    self._add_issue(
+                        "downloading",
+                        "Downloaded wheel SHA-256 mismatch",
+                        f"expected={release.sha256} actual={actual_sha256}",
+                    )
+                    self._log(
+                        f"SHA-256 mismatch: expected {release.sha256} "
+                        f"but got {actual_sha256}"
+                    )
+                    self._status.state = UpdateState.failed
+                    return
+                self._log(f"SHA-256 verified: {actual_sha256}")
 
             # Refresh ESP firmware from the same GitHub release as the server wheel.
             await self._refresh_esp_firmware(pinned_tag=release.tag)
