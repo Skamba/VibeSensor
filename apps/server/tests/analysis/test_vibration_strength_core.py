@@ -96,8 +96,10 @@ class TestNoiseFloorAmpP20G:
         assert noise_floor_amp_p20_g(combined_spectrum_amp_g=[]) == 0.0
 
     def test_single_value(self) -> None:
+        # A single-element input is treated as the DC bin only — there is no
+        # AC frequency content to estimate a noise floor from, so 0.0 is correct.
         result = noise_floor_amp_p20_g(combined_spectrum_amp_g=[0.05])
-        assert result == pytest.approx(0.05)
+        assert result == 0.0
 
     def test_skips_dc_bin(self) -> None:
         # First value (DC) is large but should be skipped

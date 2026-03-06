@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
@@ -31,6 +32,17 @@ from .domain_models import as_int_or_none as _as_int_or_none
 LOGGER = logging.getLogger(__name__)
 
 _JSONL_SEPARATORS = (",", ":")
+
+
+def _sanitize_non_finite(obj: Any) -> Any:
+    """Recursively replace NaN/Inf floats with ``None`` for valid JSON output."""
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return None
+    if isinstance(obj, dict):
+        return {k: _sanitize_non_finite(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_non_finite(v) for v in obj]
+    return obj
 
 __all__ = [
     "RUN_SCHEMA_VERSION",
@@ -196,13 +208,18 @@ def append_jsonl_records(
             try:
                 line = _dumps(record, ensure_ascii=False, allow_nan=False, separators=_seps)
             except ValueError:
-                # NaN/Inf values — fall back to default serialisation so we
-                # never silently drop records mid-batch.
+                # NaN/Inf values — sanitize to null so the output is always
+                # valid JSON and downstream consumers can parse it safely.
                 LOGGER.warning(
-                    "Record %d contains non-finite float; serialising with allow_nan",
+                    "Record %d contains non-finite float; sanitising NaN/Inf to null",
                     index,
                 )
-                line = _dumps(record, ensure_ascii=False, allow_nan=True, separators=_seps)
+                line = _dumps(
+                    _sanitize_non_finite(record),
+                    ensure_ascii=False,
+                    allow_nan=False,
+                    separators=_seps,
+                )
             except TypeError as exc:
                 # Non-serialisable value (datetime, bytes, set, …). Coerce
                 # to string representation so we never silently drop a
@@ -213,9 +230,9 @@ def append_jsonl_records(
                     exc,
                 )
                 line = _dumps(
-                    record,
+                    _sanitize_non_finite(record),
                     ensure_ascii=False,
-                    allow_nan=True,
+                    allow_nan=False,
                     separators=_seps,
                     default=str,
                 )

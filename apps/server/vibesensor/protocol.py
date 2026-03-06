@@ -76,6 +76,12 @@ accepted to preserve forward compatibility with future firmware)."""
 # Pre-resolved dtype for the hot ingest path (parse_data / pack_data).
 _SAMPLE_DTYPE = np.dtype("<i2")
 
+ACCEL_AXES: int = 3
+"""Number of accelerometer axes per sample (X, Y, Z)."""
+
+BYTES_PER_SAMPLE: int = ACCEL_AXES * _SAMPLE_DTYPE.itemsize
+"""Wire size of one accelerometer sample in bytes (3 axes × 2 bytes for int16)."""
+
 
 class ProtocolError(ValueError):
     """Raised when a binary protocol message is malformed or unexpected."""
