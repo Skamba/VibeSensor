@@ -42,6 +42,9 @@ _ERROR_PAYLOAD: str = json.dumps(
 _MAX_CONSECUTIVE_FAILURES: int = 10
 """Back off after this many consecutive broadcast tick failures."""
 
+_BACKOFF_MULTIPLIER: int = 5
+"""Sleep multiplier applied to the tick interval during error back-off."""
+
 
 @dataclass(slots=True)
 class WSConnection:
@@ -263,7 +266,7 @@ class WebSocketHub:
                         _consecutive_failures,
                         exc_info=True,
                     )
-                    await asyncio.sleep(interval * 5)
+                    await asyncio.sleep(interval * _BACKOFF_MULTIPLIER)
                     _consecutive_failures = 0
                 else:
                     LOGGER.warning("WebSocket broadcast tick failed; will retry.", exc_info=True)
