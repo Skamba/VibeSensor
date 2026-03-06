@@ -38,7 +38,7 @@ import tempfile
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from urllib.request import Request, urlopen
 
 from .release_fetcher import (
@@ -66,7 +66,7 @@ def _is_firmware_asset_name(name: str) -> bool:
 
 def _read_json_file(path: Path) -> dict[str, Any]:
     """Read and parse a JSON file. Raises JSONDecodeError or OSError on failure."""
-    return json.loads(path.read_text(encoding="utf-8"))  # type: ignore[no-any-return]
+    return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
 
 
 def _safe_extractall(zf: zipfile.ZipFile, dest: Path) -> None:

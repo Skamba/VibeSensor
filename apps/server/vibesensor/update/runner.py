@@ -62,6 +62,7 @@ class CommandRunner:
     ) -> tuple[int, str, str]:
         """Return (returncode, stdout, stderr)."""
         merged_env = {**os.environ, **env} if env else None
+        proc: asyncio.subprocess.Process | None = None
         try:
             proc = await asyncio.create_subprocess_exec(
                 *args,
@@ -77,8 +78,9 @@ class CommandRunner:
             )
         except TimeoutError:
             try:
-                proc.kill()  # type: ignore[union-attr]
-                await proc.wait()  # type: ignore[union-attr]
+                if proc is not None:
+                    proc.kill()
+                    await proc.wait()
             except ProcessLookupError:
                 pass  # process already exited
             LOGGER.warning("Command timed out after %.0fs: %s", timeout, " ".join(args))

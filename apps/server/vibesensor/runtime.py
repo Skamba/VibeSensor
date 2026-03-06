@@ -198,7 +198,10 @@ class RuntimeState:
             self.cached_analysis_metadata = metadata
             self.cached_analysis_samples = samples
             self.cached_analysis_tick = self.ws_tick
-        return self.cached_analysis_metadata, self.cached_analysis_samples  # type: ignore[return-value]
+        assert self.cached_analysis_metadata is not None, (
+            "analysis cache must be populated: need_refresh was True or cache was valid"
+        )
+        return self.cached_analysis_metadata, self.cached_analysis_samples
 
     def _refresh_diagnostics_cache(
         self,
@@ -217,7 +220,10 @@ class RuntimeState:
             and self.cached_diagnostics_heavy == self.ws_include_heavy
         )
         if cache_valid:
-            return self.cached_diagnostics  # type: ignore[return-value]
+            assert self.cached_diagnostics is not None, (
+                "diagnostics cache must be populated when cache_valid is True"
+            )
+            return self.cached_diagnostics
         diagnostics = self.live_diagnostics.update(
             speed_mps=speed_mps,
             clients=clients,

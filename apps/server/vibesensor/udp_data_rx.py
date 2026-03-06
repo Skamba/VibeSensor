@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from typing import cast
 
 from .processing import SignalProcessor
 from .protocol import MSG_DATA, extract_client_id_hex, pack_data_ack, parse_data
@@ -34,7 +35,7 @@ class DataDatagramProtocol(asyncio.DatagramProtocol):
         self._suppressed_queue_drop_warnings = 0
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
-        self.transport = transport  # type: ignore[assignment]
+        self.transport = cast(asyncio.DatagramTransport, transport)
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         if not data:
