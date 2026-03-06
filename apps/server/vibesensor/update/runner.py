@@ -85,6 +85,14 @@ class CommandRunner:
                 pass  # process already exited
             LOGGER.warning("Command timed out after %.0fs: %s", timeout, " ".join(args))
             return (124, "", "Command timed out")
+        except asyncio.CancelledError:
+            # Kill the subprocess so it doesn't outlive the cancelled task.
+            if proc is not None:
+                try:
+                    proc.kill()
+                except (ProcessLookupError, OSError):
+                    pass
+            raise
         except FileNotFoundError:
             LOGGER.warning("Command not found: %s", args[0] if args else "(empty)", exc_info=True)
             return (127, "", f"Command not found: {args[0]}")
