@@ -6,6 +6,18 @@ geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
 
 from __future__ import annotations
 
+__all__ = [
+    "AnalysisSettingsStore",
+    "DEFAULT_ANALYSIS_SETTINGS",
+    "NON_NEGATIVE_KEYS",
+    "POSITIVE_REQUIRED_KEYS",
+    "engine_rpm_from_wheel_hz",
+    "sanitize_settings",
+    "tire_circumference_m_from_spec",
+    "wheel_hz_from_speed_kmh",
+    "wheel_hz_from_speed_mps",
+]
+
 import logging
 from collections.abc import Mapping
 from math import isfinite, pi
@@ -115,6 +127,13 @@ def sanitize_settings(
                 LOGGER.info("Clamped analysis setting %s from %r to %r", key, value, upper)
                 value = upper
         out[key] = value
+    attempted = [k for k in allowed if payload.get(k) is not None]
+    if attempted and not out:
+        LOGGER.warning(
+            "sanitize_settings: all %d submitted keys were invalid and dropped: %s",
+            len(attempted),
+            attempted,
+        )
     return out
 
 
@@ -207,5 +226,16 @@ class AnalysisSettingsStore:
     def update(self, payload: dict[str, float]) -> dict[str, float]:
         """Merge *payload* into the store (after validation) and return the new snapshot."""
         with self._lock:
-            self._values.update(self._sanitize(payload))
+            sanitized = self._sanitize(payload)
+            changed = {
+                k: (self._values.get(k), v)
+                for k, v in sanitized.items()
+                if self._values.get(k) != v
+            }
+            if changed:
+                LOGGER.info(
+                    "Analysis settings updated: %s",
+                    ", ".join(f"{k}={old!r}→{new!r}" for k, (old, new) in changed.items()),
+                )
+            self._values.update(sanitized)
             return dict(self._values)
