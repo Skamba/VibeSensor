@@ -379,6 +379,12 @@ class GPSConfig:
     gpsd_host: str
     gpsd_port: int
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.gpsd_port, int) or not (1 <= self.gpsd_port <= 65535):
+            raise ValueError(
+                f"gps.gpsd_port must be 1–65535, got {self.gpsd_port!r}"
+            )
+
 
 @dataclass(slots=True)
 class UpdateConfig:
