@@ -834,14 +834,15 @@ class UpdateManager:
 
         staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
         try:
-            wheel_path = await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
-        except Exception as exc:
-            self._add_issue("downloading", f"Failed to download release: {exc}")
-            self._status.state = UpdateState.failed
-            shutil.rmtree(staging_dir, ignore_errors=True)
-            return
+            # Inner guard to set state on download Exception without leaking
+            # staging_dir.  CancelledError propagates to the outer finally.
+            try:
+                wheel_path = await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
+            except Exception as exc:
+                self._add_issue("downloading", f"Failed to download release: {exc}")
+                self._status.state = UpdateState.failed
+                return
 
-        try:
             self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
 
             # Refresh ESP firmware from the same GitHub release as the server wheel.
