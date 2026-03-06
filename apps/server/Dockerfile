@@ -11,7 +11,7 @@ COPY libs/ /app/libs/
 COPY apps/ui/ ./
 RUN npm run typecheck && npm run build
 
-FROM python:3.11-slim
+FROM python:3.11.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
