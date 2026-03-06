@@ -17,6 +17,24 @@
   - transmit packing/send failures and parser failures are now counted
 - Added command guardrail:
   - identify blink duration is capped to `10s` to prevent long/accidental lockouts
+- Fixed sampling missed-sample double-count:
+  - when `sample_once()` returns false (sensor unavailable), the code now advances
+    `g_next_sample_due_us` before breaking so the post-loop lag detector does not
+    re-count the same slot as an additional missed sample
+- Fixed ignored `beginPacket()` return value in `send_hello()` and `send_ack()`:
+  - both functions now check whether `beginPacket()` succeeded before calling
+    `write()` / `endPacket()`, preventing writes into an invalid UDP send state
+- Fixed strict equality length check in `parse_data_ack()`:
+  - changed `len != kDataAckBytes` to `len < kDataAckBytes` so future protocol
+    extensions that append optional trailing fields are not silently rejected
+- Bounded `service_data_rx()` loop:
+  - the `while(true)` ACK-drain loop is now capped at `kMaxDataAckPacketsPerLoop`
+    iterations per `loop()` call, preventing a burst of incoming ACKs from starving
+    all other cooperative tasks
+- Queue allocation log:
+  - a `Serial` warning is emitted when the heap frame-queue allocation fails
+    entirely so the operator knows buffering is unavailable; on success the
+    allocated slot count and size are logged once at startup
 
 ## Build and test
 

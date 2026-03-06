@@ -90,6 +90,7 @@ constexpr size_t kSensorReadBatchSamples = 8;
 constexpr size_t kSensorPrefetchSamples = 32;
 constexpr size_t kSensorPrefetchLowWaterSamples = 8;
 constexpr size_t kMaxTxFramesPerLoop = 2;
+constexpr size_t kMaxDataAckPacketsPerLoop = 8;
 constexpr uint32_t kDataRetransmitIntervalMs = 120;
 constexpr uint32_t kStatusReportIntervalMs = 10000;
 constexpr uint16_t kMaxIdentifyDurationMs = 10000;
@@ -472,7 +473,9 @@ void service_sampling() {
   while (static_cast<int64_t>(now - g_next_sample_due_us) >= 0 &&
          catch_up_count < kMaxCatchUpSamplesPerLoop) {
     if (!sample_once()) {
+      // Consume the slot so the post-loop lag detector does not re-count it.
       g_sampling_missed_samples++;
+      g_next_sample_due_us += step_us;
       break;
     }
     g_next_sample_due_us += step_us;
@@ -504,7 +507,10 @@ void send_hello() {
     return;
   }
 
-  g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort);
+  if (g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort) != 1) {
+    set_last_error(4);
+    return;
+  }
   g_control_udp.write(packet, len);
   if (g_control_udp.endPacket() != 1) {
     set_last_error(4);
@@ -573,7 +579,10 @@ void send_ack(uint32_t cmd_seq, uint8_t status) {
   if (len == 0) {
     return;
   }
-  g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort);
+  if (g_control_udp.beginPacket(vibesensor_network::server_ip, kServerControlPort) != 1) {
+    set_last_error(8);
+    return;
+  }
   g_control_udp.write(packet, len);
   if (g_control_udp.endPacket() != 1) {
     set_last_error(8);
@@ -633,12 +642,12 @@ void service_control_rx() {
 }
 
 void service_data_rx() {
-  while (true) {
+  uint8_t packet[32];
+  for (size_t i = 0; i < kMaxDataAckPacketsPerLoop; ++i) {
     int packet_size = g_data_udp.parsePacket();
     if (packet_size <= 0) {
       return;
     }
-    uint8_t packet[32];
     size_t read = static_cast<size_t>(g_data_udp.read(packet, sizeof(packet)));
     if (read == 0 || packet[0] != vibesensor::kMsgDataAck) {
       continue;
@@ -753,6 +762,13 @@ void setup() {
     if (cap == kFrameQueueLenMin) {
       break;
     }
+  }
+  if (g_queue == nullptr) {
+    Serial.printf("WARN: frame queue alloc failed; running without buffering\n");
+  } else {
+    Serial.printf("frame queue: %u slots (%u bytes)\n",
+                  static_cast<unsigned>(g_queue_capacity),
+                  static_cast<unsigned>(g_queue_capacity * sizeof(DataFrame)));
   }
 
   g_led_strip.begin();
