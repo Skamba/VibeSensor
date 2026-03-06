@@ -79,7 +79,11 @@ def _aggregate_fft_spectrum(
         if aggregation == "max":
             result[bin_center] = max(amps)
         else:
-            presence_ratio = len(amps) / max(1, n_samples)
+            # Clamp to 1.0: a sample may contribute multiple peaks that all
+            # fall into the same freq bin (e.g. 40 Hz and 41 Hz → both bin
+            # to the same bin_center at freq_bin_hz=2 Hz), so len(amps) can
+            # exceed n_samples, inflating presence_ratio above 1.
+            presence_ratio = min(1.0, len(amps) / max(1, n_samples))
             sorted_amps = sorted(amps)
             p95 = _safe_percentile(sorted_amps, 0.95)
             result[bin_center] = (presence_ratio**2) * (p95 / baseline_floor)
@@ -367,6 +371,11 @@ def _top_peaks_table_rows(
                 hit_rates.append(float(per_bin_hits.get(speed_bin, 0)) / float(total_count))
             if hit_rates:
                 hit_rate_mean = sum(hit_rates) / len(hit_rates)
+                # Note: despite the name, speed_uniformity stores the
+                # *population std dev* of per-speed-bin hit rates — higher
+                # values indicate more speed-selective (non-uniform) presence.
+                # _classify_peak_type uses it with a <= threshold so that low
+                # std dev (uniform across speeds) is treated as noise-like.
                 speed_uniformity = (
                     (sum((rate - hit_rate_mean) ** 2 for rate in hit_rates) / len(hit_rates)) ** 0.5
                     if len(hit_rates) > 1
