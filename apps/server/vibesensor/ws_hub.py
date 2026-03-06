@@ -181,6 +181,12 @@ class WebSocketHub:
         self,
         payload_builder: Callable[[str | None], dict],
     ) -> None:
+        """Broadcast a live metric payload to all connected WebSocket clients.
+
+        Calls *payload_builder* at most once per unique ``selected_client_id``
+        across all connections (results are cached per tick).  Connections that
+        fail or time out during send are removed from the hub automatically.
+        """
         conns = await self._snapshot()
         if not conns:
             return
