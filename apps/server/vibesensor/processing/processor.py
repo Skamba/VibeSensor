@@ -437,7 +437,25 @@ class SignalProcessor:
         def _compute_one(client_id: str) -> dict[str, Any]:
             return self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
 
-        result = self._worker_pool.map_unordered(_compute_one, client_ids)
+        try:
+            result = self._worker_pool.map_unordered(_compute_one, client_ids)
+        except Exception:
+            LOGGER.warning(
+                "compute_all: worker pool raised; falling back to serial execution.",
+                exc_info=True,
+            )
+            result = {}
+            for cid in client_ids:
+                try:
+                    result[cid] = self.compute_metrics(
+                        cid, sample_rate_hz=rates.get(cid)
+                    )
+                except Exception:
+                    LOGGER.warning(
+                        "compute_metrics failed for %s (serial fallback); skipping.",
+                        cid,
+                        exc_info=True,
+                    )
         self._last_compute_all_duration_s = time.monotonic() - t0
         return result
 
