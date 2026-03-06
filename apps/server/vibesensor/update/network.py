@@ -22,10 +22,12 @@ HOTSPOT_RESTORE_RETRIES = 3
 HOTSPOT_RESTORE_DELAY_S = 2
 
 _FAILURE_MARKERS = ("failed", "error", "timeout")
+_WIFI_DIAG_DIR = "/var/log/wifi"
+"""Default directory for Wi-Fi diagnostic log files written by the hotspot helper scripts."""
 LOGGER = logging.getLogger(__name__)
 
 
-def parse_wifi_diagnostics(log_dir: str = "/var/log/wifi") -> list[UpdateIssue]:
+def parse_wifi_diagnostics(log_dir: str = _WIFI_DIAG_DIR) -> list[UpdateIssue]:
     """Parse wifi diagnostic files into structured issues."""
     issues: list[UpdateIssue] = []
     log_path = Path(log_dir)
