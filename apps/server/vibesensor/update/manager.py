@@ -1214,9 +1214,9 @@ class UpdateManager:
         dropin_body = f"[Service]\nEnvironment=VIBESENSOR_CONTRACTS_DIR={contracts_dir}\n"
         script = (
             "from pathlib import Path; "
-            f"p=Path({repr(str(dropin_path))}); "
+            f"p=Path({str(dropin_path)!r}); "
             "p.parent.mkdir(parents=True, exist_ok=True); "
-            f"content={repr(dropin_body)}; "
+            f"content={dropin_body!r}; "
             "changed=(not p.exists()) or (p.read_text(encoding='utf-8')!=content); "
             "p.write_text(content, encoding='utf-8'); "
             "print('changed' if changed else 'unchanged')"

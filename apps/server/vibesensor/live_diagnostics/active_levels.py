@@ -74,7 +74,7 @@ def _row_bin(row: dict[str, Any], inv_bin: float) -> tuple[str, str, int]:
     return (
         str(row.get("class_key") or ""),
         str(row.get("bucket_key") or ""),
-        int(round(float(row.get("peak_hz") or 0.0) * inv_bin)),
+        round(float(row.get("peak_hz") or 0.0) * inv_bin),
     )
 
 
