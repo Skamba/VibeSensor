@@ -48,7 +48,10 @@ class PhaseClassifier:
         # Derive speed derivative from first & last valid entries in the
         # rolling window without building an intermediate filtered list.
         deriv: float | None = None
-        first_t = first_s = last_t = last_s = None
+        first_t: float | None = None
+        first_s: float | None = None
+        last_t: float | None = None
+        last_s: float | None = None
         for t, s in self._speed_history:
             if s is not None:
                 if first_t is None:
@@ -56,9 +59,15 @@ class PhaseClassifier:
                     first_s = s
                 last_t = t
                 last_s = s
-        if first_t is not None and last_t is not None and first_t is not last_t:
+        if (
+            first_t is not None
+            and first_s is not None
+            and last_t is not None
+            and last_s is not None
+            and first_t is not last_t
+        ):
             dt = last_t - first_t
             if dt >= 0.1:
-                deriv = (last_s - first_s) / dt  # type: ignore[operator]
+                deriv = (last_s - first_s) / dt
 
         self._current_phase = _classify(speed_kmh, deriv).value

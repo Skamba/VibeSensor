@@ -9,7 +9,8 @@ This makes them independently testable and reusable outside of the
 from __future__ import annotations
 
 import math
-from typing import Any
+import warnings
+from typing import Any, cast
 
 import numpy as np
 from vibesensor_core.vibration_strength import (
@@ -36,7 +37,9 @@ def medfilt3(block: np.ndarray) -> np.ndarray:
         return block
     stacked = np.stack([block[:, :-2], block[:, 1:-1], block[:, 2:]], axis=0)
     filtered = block.copy()
-    filtered[:, 1:-1] = np.nanmedian(stacked, axis=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        filtered[:, 1:-1] = np.nanmedian(stacked, axis=0)
     return filtered
 
 
@@ -221,7 +224,7 @@ def compute_fft_spectrum(
     if axis_amp_slices:
         combined_amp = np.asarray(
             combined_spectrum_amp_g(
-                axis_spectra_amp_g=axis_amp_slices,  # type: ignore[arg-type]
+                axis_spectra_amp_g=cast(list[list[float]], axis_amp_slices),
                 axis_count_for_mean=len(axis_amp_slices),
             ),
             dtype=np.float32,
