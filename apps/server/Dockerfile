@@ -1,4 +1,4 @@
-FROM node:22-slim AS ui-build
+FROM node:22.14-slim AS ui-build
 
 WORKDIR /app/apps/ui
 
