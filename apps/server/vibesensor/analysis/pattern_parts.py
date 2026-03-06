@@ -112,7 +112,8 @@ def _order_bucket(order_text: str) -> str:
     # Accept both ASCII "x" and the Unicode times sign "×" (U+00D7) so that
     # labels like "3×" are correctly classified as "higher" instead of "*".
     for token in text.split():
-        if (token.endswith("x") or token.endswith("\u00d7")) and token[:-1].isdigit() and int(token[:-1]) > 2:
+        suffix = token[-1:] if token else ""
+        if suffix in ("x", "\u00d7") and token[:-1].isdigit() and int(token[:-1]) > 2:
             return "higher"
     return "*"
 

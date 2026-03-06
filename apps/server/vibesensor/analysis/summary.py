@@ -426,7 +426,6 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
 def _build_phase_timeline(
     phase_segments: list[PhaseSegment],
     findings: list[dict[str, Any]],
-    lang: str,
 ) -> list[dict[str, Any]]:
     """Build a simple timeline summary: what changed when.
 
@@ -782,7 +781,7 @@ def summarize_run_data(
     ]
     most_likely_origin = _most_likely_origin_summary(_diagnostic_for_origin, language)
     test_plan = _merge_test_plan(findings, language)
-    phase_timeline = _build_phase_timeline(phase_segments, findings, language)
+    phase_timeline = _build_phase_timeline(phase_segments, findings)
 
     # --- Reference completeness ---
     reference_complete = bool(
