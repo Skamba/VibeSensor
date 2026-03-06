@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import math
 import textwrap
+from collections.abc import Callable
 from functools import lru_cache
 from io import BytesIO
 
@@ -575,7 +576,7 @@ def _draw_system_card(
     h: float,
     card: SystemFindingCard,
     *,
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
     """Render a single system-finding card."""
     na = tr("NOT_AVAILABLE")
@@ -728,8 +729,8 @@ def _page2(
     *,
     location_rows: list,
     top_causes: list,
-    tr_fn,
-    text_fn,
+    tr_fn: Callable[..., str],
+    text_fn: Callable[[str, str], str],
     next_steps_continued: list[NextStep] | None = None,
 ) -> None:
     """Render page-2: car visual + pattern evidence + peaks table."""
@@ -853,7 +854,7 @@ def _draw_pattern_evidence(
     w: float,
     h: float,
     ev: PatternEvidence,
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
     na = tr("NOT_AVAILABLE")
 
@@ -940,7 +941,7 @@ def _draw_peaks_table(
     w: float,
     y_bottom: float,
     data: ReportTemplateData,
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
     """Diagnostic-first peaks table."""
     col_defs = [
@@ -1024,7 +1025,7 @@ def _draw_additional_observations(
     w: float,
     h: float,
     transient_findings: list[dict[str, object]],
-    tr,
+    tr: Callable[[str], str],
 ) -> None:
     _draw_panel(c, x, y, w, h, tr("ADDITIONAL_OBSERVATIONS"), fill=SOFT_BG)
     c.setFillColor(_hex(MUTED_CLR))
