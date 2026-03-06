@@ -232,9 +232,7 @@ class HistoryDB:
         self.db_path = db_path
         self._lock = RLock()
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        self._conn: sqlite3.Connection | None = sqlite3.connect(
-            str(db_path), check_same_thread=False
-        )
+        self._conn: sqlite3.Connection | None = sqlite3.connect(db_path, check_same_thread=False)
         try:
             self._conn.execute("PRAGMA journal_mode=WAL")
             self._conn.execute("PRAGMA wal_autocheckpoint=500")
