@@ -54,6 +54,58 @@ void test_fault_injection_repeated_failures_keep_retry_bounded() {
   TEST_ASSERT_EQUAL_UINT8(0xFF, failures);
 }
 
+void test_clamp_sample_rate_within_range() {
+  // Values already in range pass through unchanged.
+  TEST_ASSERT_EQUAL_UINT16(400,
+      vibesensor::reliability::clamp_sample_rate(400, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(25,
+      vibesensor::reliability::clamp_sample_rate(25, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(3200,
+      vibesensor::reliability::clamp_sample_rate(3200, 25, 3200));
+}
+
+void test_clamp_sample_rate_below_minimum() {
+  // Values below the minimum are raised to the minimum.
+  TEST_ASSERT_EQUAL_UINT16(25,
+      vibesensor::reliability::clamp_sample_rate(0, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(25,
+      vibesensor::reliability::clamp_sample_rate(1, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(25,
+      vibesensor::reliability::clamp_sample_rate(24, 25, 3200));
+}
+
+void test_clamp_sample_rate_above_maximum() {
+  // Values above the maximum are lowered to the maximum.
+  TEST_ASSERT_EQUAL_UINT16(3200,
+      vibesensor::reliability::clamp_sample_rate(3201, 25, 3200));
+  TEST_ASSERT_EQUAL_UINT16(3200,
+      vibesensor::reliability::clamp_sample_rate(65535, 25, 3200));
+}
+
+void test_retry_due_zero_retry_at_always_true() {
+  // retry_at_ms == 0 means "fire immediately on first check".
+  TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(0, 0));
+  TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(1000, 0));
+}
+
+void test_retry_due_respects_wall_clock() {
+  // retry_due is true when now >= retry_at (signed comparison for wrap safety).
+  TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(5000, 5000));
+  TEST_ASSERT_TRUE(vibesensor::reliability::retry_due(5001, 5000));
+  TEST_ASSERT_FALSE(vibesensor::reliability::retry_due(4999, 5000));
+}
+
+void test_saturating_inc_u8_does_not_wrap() {
+  uint8_t v = 0xFE;
+  v = vibesensor::reliability::saturating_inc_u8(v);
+  TEST_ASSERT_EQUAL_UINT8(0xFF, v);
+  // Subsequent increments stay at 0xFF.
+  v = vibesensor::reliability::saturating_inc_u8(v);
+  TEST_ASSERT_EQUAL_UINT8(0xFF, v);
+  v = vibesensor::reliability::saturating_inc_u8(v);
+  TEST_ASSERT_EQUAL_UINT8(0xFF, v);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_frame_samples_are_clamped_to_datagram_limit);
@@ -61,5 +113,11 @@ int main() {
   RUN_TEST(test_frame_samples_clamped_for_mtu_safe_payload);
   RUN_TEST(test_retry_backoff_grows_and_caps_with_jitter);
   RUN_TEST(test_fault_injection_repeated_failures_keep_retry_bounded);
+  RUN_TEST(test_clamp_sample_rate_within_range);
+  RUN_TEST(test_clamp_sample_rate_below_minimum);
+  RUN_TEST(test_clamp_sample_rate_above_maximum);
+  RUN_TEST(test_retry_due_zero_retry_at_always_true);
+  RUN_TEST(test_retry_due_respects_wall_clock);
+  RUN_TEST(test_saturating_inc_u8_does_not_wrap);
   return UNITY_END();
 }

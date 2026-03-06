@@ -35,6 +35,28 @@
   - a `Serial` warning is emitted when the heap frame-queue allocation fails
     entirely so the operator knows buffering is unavailable; on success the
     allocated slot count and size are logged once at startup
+- Fixed blocking WiFi scan in `service_wifi()`:
+  - `refresh_target_ap()` previously used `WiFi.scanNetworks(false, ...)` (synchronous),
+    which could stall the cooperative loop for 1–4+ seconds during reconnection,
+    causing hundreds of dropped accelerometer samples
+  - `service_wifi()` now uses `start_ap_scan()` (async, non-blocking) during the
+    backoff idle period and `poll_ap_scan()` to consume results without stalling;
+    the blocking `refresh_target_ap()` is retained for the startup path only, where
+    blocking before sampling begins is acceptable
+- Fixed unnecessary NVS flash writes in `service_wifi()`:
+  - `WiFi.disconnect(true, true)` with `eraseap=true` was called on every reconnect
+    attempt, causing a flash write per retry; credentials are always supplied
+    programmatically so erasing is unnecessary; changed to `eraseap=false`
+- Fixed partial sensor read results silently discarded:
+  - when `read_samples()` returned both `io_error=true` and a non-zero `read_count`
+    (valid samples delivered before the I2C failure), the prefetch ring ignored them
+    entirely due to `else if (read_count > 0)` gating; changed to process valid
+    partial samples unconditionally while keeping the consecutive-error counter
+    update only on fully clean reads (no io_error) as before
+- Removed dead code in `parse_mac()`:
+  - the `values[i] > 0xFF` guard in the MAC-parsing loop was unreachable because
+    `%2x` in `sscanf` reads at most two hex digits (0–255); removed to save flash
+
 
 ## Build and test
 

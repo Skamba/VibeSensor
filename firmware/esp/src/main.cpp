@@ -198,6 +198,7 @@ uint32_t g_last_error_ms = 0;
 uint8_t g_target_bssid[6] = {};
 bool g_has_target_bssid = false;
 int32_t g_target_channel = 0;
+bool g_scan_in_progress = false;
 bool g_has_last_real_sample = false;
 int16_t g_last_real_x = 0;
 int16_t g_last_real_y = 0;
@@ -237,8 +238,10 @@ void report_runtime_status(uint32_t now_ms) {
       static_cast<unsigned long>(g_last_error_ms));
 }
 
-bool refresh_target_ap() {
-  int found = WiFi.scanNetworks(false, true);
+// Consume WiFi scan results into g_has_target_bssid / g_target_channel and
+// release the scan memory via WiFi.scanDelete().
+// Called from both the blocking startup path and the async runtime path.
+static void consume_scan_results(int found) {
   g_has_target_bssid = false;
   g_target_channel = 0;
   for (int i = 0; i < found; ++i) {
@@ -255,7 +258,51 @@ bool refresh_target_ap() {
     break;
   }
   WiFi.scanDelete();
+}
+
+// Blocking AP scan – only safe to call from setup() before sampling starts.
+bool refresh_target_ap() {
+  int found = WiFi.scanNetworks(/*async=*/false, /*show_hidden=*/true);
+  consume_scan_results(found);
   return g_has_target_bssid;
+}
+
+// Start a background (non-blocking) AP scan.  Call from service_wifi() so
+// the cooperative loop is never stalled by a multi-second channel sweep.
+void start_ap_scan() {
+  if (g_scan_in_progress) {
+    return;
+  }
+  // scanNetworks returns WIFI_SCAN_RUNNING (-1) on success or a negative
+  // error code if the hardware rejected the request (e.g., bad state).
+  // Log any immediate failure so it shows up in the 10-s status snapshot.
+  int16_t rc = WiFi.scanNetworks(/*async=*/true, /*show_hidden=*/true);
+  if (rc == WIFI_SCAN_RUNNING) {
+    g_scan_in_progress = true;
+  } else {
+    // Hardware refused the scan; keep existing BSSID info and try again later.
+    set_last_error(13);
+  }
+}
+
+// Poll an in-progress async scan.  Non-blocking: returns true only when
+// results have been consumed (scan finished or failed).
+bool poll_ap_scan() {
+  if (!g_scan_in_progress) {
+    return false;
+  }
+  int16_t found = WiFi.scanComplete();
+  if (found == WIFI_SCAN_RUNNING) {
+    return false;  // Still scanning; nothing to do yet.
+  }
+  g_scan_in_progress = false;
+  if (found > 0) {
+    consume_scan_results(static_cast<int>(found));
+  }
+  // On WIFI_SCAN_FAILED or 0 results keep existing g_has_target_bssid info.
+  // Either way, returning true signals the scan is done so service_wifi() can
+  // schedule the next one after kWifiScanIntervalMs.
+  return true;
 }
 
 void begin_target_wifi() {
@@ -404,8 +451,15 @@ bool next_sensor_sample(int16_t* x, int16_t* y, int16_t* z) {
           g_sensor_prefetch_count = 0;
         }
       }
-    } else if (read_count > 0) {
+    } else {
       g_sensor_consecutive_errors = 0;
+    }
+    if (read_count > 0) {
+      // Enqueue samples that arrived before an I2C error.  Previously the
+      // `else if` gate discarded these valid partial results whenever
+      // io_error was also true.  The consecutive-error counter is only
+      // cleared on a fully clean read (io_error == false) so the reinit
+      // heuristic remains accurate.
       for (size_t i = 0; i < read_count && g_sensor_prefetch_count < kSensorPrefetchSamples; ++i) {
         const size_t src = i * 3;
         const size_t dst = g_sensor_prefetch_head * 3;
@@ -710,23 +764,33 @@ bool connect_wifi() {
 }
 
 void service_wifi() {
+  // Always poll first: consume any async scan results without blocking.
+  poll_ap_scan();
+
   if (WiFi.status() == WL_CONNECTED) {
     g_wifi_retry_failures = 0;
     g_wifi_next_retry_ms = 0;
     return;
   }
   uint32_t now = millis();
+
+  // While waiting for the retry timer, kick off a background AP scan so
+  // fresh BSSID/channel info is ready before the next connection attempt.
+  if (!g_scan_in_progress && (now - g_last_wifi_scan_ms >= kWifiScanIntervalMs)) {
+    g_last_wifi_scan_ms = now;
+    start_ap_scan();
+  }
+
   if (!vibesensor::reliability::retry_due(now, g_wifi_next_retry_ms)) {
     return;
   }
   g_last_wifi_retry_ms = now;
   g_wifi_reconnect_attempts++;
   set_last_error(12);
-  if (now - g_last_wifi_scan_ms >= kWifiScanIntervalMs) {
-    g_last_wifi_scan_ms = now;
-    refresh_target_ap();
-  }
-  WiFi.disconnect(true, true);
+  // eraseap=false: credentials are always supplied programmatically, so
+  // there is no need to erase the saved AP on every retry — which would
+  // cause unnecessary NVS flash writes and accelerate flash wear.
+  WiFi.disconnect(true, false);
   begin_target_wifi();
   g_wifi_retry_failures = vibesensor::reliability::saturating_inc_u8(g_wifi_retry_failures);
   g_wifi_next_retry_ms = now + vibesensor::reliability::compute_retry_delay_ms(
