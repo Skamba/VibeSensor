@@ -39,9 +39,13 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
     @router.post("/api/clients/{client_id}/identify", response_model=IdentifyResponse)
     async def identify_client(client_id: str, req: IdentifyRequest) -> IdentifyResponse:
         normalized = normalize_client_id_or_400(client_id)
+        # Distinguish "sensor never seen" (404) from "sensor known but not
+        # currently connected" (503) so callers can react appropriately.
+        if state.registry.get(normalized) is None:
+            raise HTTPException(status_code=404, detail="Sensor not found")
         ok, cmd_seq = state.control_plane.send_identify(normalized, req.duration_ms)
         if not ok:
-            raise HTTPException(status_code=404, detail="Sensor is not connected or not reachable")
+            raise HTTPException(status_code=503, detail="Sensor is not currently reachable")
         return {"status": "sent", "cmd_seq": cmd_seq}
 
     @router.post(

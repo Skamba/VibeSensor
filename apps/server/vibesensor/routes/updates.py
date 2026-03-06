@@ -61,6 +61,8 @@ def create_update_routes(state: RuntimeState) -> APIRouter:
     async def start_esp_flash(req: EspFlashStartRequest) -> EspFlashStartResponse:
         try:
             job_id = state.esp_flash_manager.start(port=req.port, auto_detect=req.auto_detect)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
         except RuntimeError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
         return {"status": "started", "job_id": job_id}

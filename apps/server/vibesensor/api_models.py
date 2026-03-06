@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 __all__ = [
     # Request models
@@ -167,6 +167,13 @@ class EspFlashStartRequest(_FrozenBase):
 
     port: str | None = None
     auto_detect: bool = True
+
+    @model_validator(mode="after")
+    def _require_port_when_not_auto_detect(self) -> EspFlashStartRequest:
+        """When auto_detect is False a port must be provided explicitly."""
+        if not self.auto_detect and not self.port:
+            raise ValueError("port is required when auto_detect is False")
+        return self
 
 
 class SensorRequest(_FrozenBase):
