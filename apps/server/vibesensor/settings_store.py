@@ -54,6 +54,7 @@ class SettingsStore:
     """
 
     def __init__(self, db: HistoryDB | None = None) -> None:
+        """Initialise the settings store, loading persisted settings from *db* if provided."""
         self._lock = RLock()
         self._db = db
 
