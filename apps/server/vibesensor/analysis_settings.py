@@ -206,5 +206,5 @@ class AnalysisSettingsStore:
     def update(self, payload: dict[str, float]) -> dict[str, float]:
         """Merge *payload* into the store (after validation) and return the new snapshot."""
         with self._lock:
-            self._values.update(sanitize_settings(payload))
+            self._values.update(self._sanitize(payload))
             return dict(self._values)
