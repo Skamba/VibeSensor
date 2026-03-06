@@ -945,7 +945,7 @@ class TestWebSocketHubCircuitBreaker:
 
     def test_run_method_has_consecutive_failure_tracking(self):
         """ws_hub.run() should track consecutive failures."""
-        assert "_consecutive_failures" in self._WS_HUB_RUN_SRC, (
+        assert "consecutive_failures" in self._WS_HUB_RUN_SRC, (
             "run() should track consecutive failures"
         )
         assert "_MAX_CONSECUTIVE_FAILURES" in self._WS_HUB_RUN_SRC, (
@@ -954,7 +954,7 @@ class TestWebSocketHubCircuitBreaker:
 
     def test_failure_counter_resets_on_success(self):
         """After a successful tick, the failure counter should reset."""
-        assert "_consecutive_failures = 0" in self._WS_HUB_RUN_SRC, (
+        assert "consecutive_failures = 0" in self._WS_HUB_RUN_SRC, (
             "Failure counter should be reset to 0 on success"
         )
 
