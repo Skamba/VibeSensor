@@ -60,16 +60,25 @@ class _StubLoggingConfig:
 
 
 @dataclass(slots=True)
+class _StubGpsConfig:
+    gpsd_host: str = "127.0.0.1"
+    gpsd_port: int = 2947
+
+
+@dataclass(slots=True)
 class _StubConfig:
     processing: _StubProcessingConfig
     udp: _StubUDPConfig = None  # type: ignore[assignment]
     logging: _StubLoggingConfig = None  # type: ignore[assignment]
+    gps: _StubGpsConfig = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
         if self.udp is None:
             self.udp = _StubUDPConfig()
         if self.logging is None:
             self.logging = _StubLoggingConfig()
+        if self.gps is None:
+            self.gps = _StubGpsConfig()
 
 
 class _StubRecord:

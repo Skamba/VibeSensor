@@ -66,6 +66,11 @@ def noise_floor(amps: np.ndarray) -> float:
     Returns ``0.0`` for empty or all-invalid inputs.  Delegates the
     actual percentile computation to
     :func:`~vibesensor_core.vibration_strength.noise_floor_amp_p20_g`.
+
+    Pre-sorts the array so that when ``noise_floor_amp_p20_g`` strips the DC
+    bin (index 0), it discards the global minimum amplitude, yielding a
+    slightly more conservative (higher) floor estimate.  A single-element
+    array returns that element directly since there is no minimum to strip.
     """
     if amps.size == 0:
         return 0.0
@@ -75,10 +80,14 @@ def noise_floor(amps: np.ndarray) -> float:
     non_neg = finite[finite >= 0.0]
     if non_neg.size == 0:
         return 0.0
-    # noise_floor_amp_p20_g strips [1:] and sorts internally; pre-sorting
-    # here ensures the stripped element is the global minimum amplitude,
-    # yielding a slightly more conservative (higher) floor estimate.
-    return noise_floor_amp_p20_g(combined_spectrum_amp_g=np.sort(non_neg).tolist())
+    sorted_non_neg = np.sort(non_neg).tolist()
+    if len(sorted_non_neg) == 1:
+        # noise_floor_amp_p20_g treats a single-element input as DC-only and
+        # returns 0.0, which is correct for the full-spectrum context but not
+        # here — the single value is a valid amplitude reading, not the DC
+        # bias.  Return it directly so callers get a usable floor estimate.
+        return float(sorted_non_neg[0])
+    return noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted_non_neg)
 
 
 def float_list(values: np.ndarray | list[float]) -> list[float]:
