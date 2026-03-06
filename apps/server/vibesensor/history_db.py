@@ -748,6 +748,7 @@ class HistoryDB:
             last_id = self._resolve_keyset_offset("samples", run_id, offset)
             if last_id is None:
                 return
+        total_skipped = 0
         while True:
             with self._cursor(commit=False) as cur:
                 if last_id is None:
@@ -763,6 +764,12 @@ class HistoryDB:
                     )
                 batch_rows = cur.fetchall()
             if not batch_rows:
+                if total_skipped:
+                    LOGGER.warning(
+                        "run_id=%s: skipped %d unparseable legacy sample row(s) in total",
+                        run_id,
+                        total_skipped,
+                    )
                 return
             last_id = batch_rows[-1][0]
             parsed_batch: list[dict[str, Any]] = []
@@ -770,6 +777,8 @@ class HistoryDB:
                 parsed = safe_json_loads(sample_json, context=f"sample {sample_id}")
                 if isinstance(parsed, dict):
                     parsed_batch.append(parsed)
+                else:
+                    total_skipped += 1
             if parsed_batch:
                 yield parsed_batch
 
