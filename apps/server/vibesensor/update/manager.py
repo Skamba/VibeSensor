@@ -52,6 +52,9 @@ UPDATE_TIMEOUT_S = 600
 REINSTALL_OP_TIMEOUT_S = 180
 """Per-backend-reinstall timeout."""
 
+MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
+"""Minimum free disk space (200 MiB) required before starting an update."""
+
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 """Per-online ESP firmware cache refresh timeout."""
 
@@ -545,6 +548,21 @@ class UpdateManager:
                 )
                 self._status.state = UpdateState.failed
                 return False
+
+        # Check available disk space before committing to download + install
+        try:
+            free_bytes = shutil.disk_usage(self._rollback_dir.parent).free
+            if free_bytes < MIN_FREE_DISK_BYTES:
+                free_mb = free_bytes // (1024 * 1024)
+                min_mb = MIN_FREE_DISK_BYTES // (1024 * 1024)
+                self._add_issue(
+                    "validating",
+                    f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
+                )
+                self._status.state = UpdateState.failed
+                return False
+        except OSError as exc:
+            self._log(f"Could not check disk space: {exc}; proceeding anyway")
 
         return True
 
