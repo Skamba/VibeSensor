@@ -182,6 +182,7 @@ def confidence_label(
         Optional vibration-strength band key.  When set to ``"negligible"``,
         high confidence is capped to medium as a defensive label guard —
         mirrors the guard in :func:`certainty_label`.
+
     """
     conf = float(conf_0_to_1) if conf_0_to_1 is not None else 0.0
     pct = max(0.0, min(100.0, conf * 100.0))
@@ -501,6 +502,7 @@ def build_findings_for_samples(
     samples: list[dict[str, Any]],
     lang: str | None = None,
 ) -> list[dict[str, Any]]:
+    """Build the findings list from *samples* using the full analysis pipeline."""
     language = _normalize_lang(lang)
     rows = list(samples)
     _validate_required_strength_metrics(rows)
@@ -949,7 +951,7 @@ def summarize_run_data(
 def summarize_log(
     log_path: Path, lang: str | None = None, include_samples: bool = True
 ) -> dict[str, Any]:
-    """Reads a JSONL run file and analyses it."""
+    """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)
     return summarize_run_data(
         metadata,

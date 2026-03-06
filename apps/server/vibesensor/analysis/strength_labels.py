@@ -54,6 +54,7 @@ def strength_label(db_value: float | None, *, lang: str = "en") -> tuple[str, st
     -------
     tuple[str, str]
         ``(band_key, human_label)`` — e.g. ``("moderate", "Moderate")``.
+
     """
     if db_value is None or not _isfinite(db_value):
         return ("unknown", "Onbekend" if lang == "nl" else "Unknown")
@@ -174,10 +175,19 @@ def certainty_label(
         Analysis confidence from 0.0 to 1.0.
     lang:
         ``"en"`` or ``"nl"``.
-    steady_speed / weak_spatial / sensor_count / has_reference_gaps:
-        Context flags used to select the most appropriate reason phrase.
+    steady_speed:
+        ``True`` when the vehicle was at a consistent cruising speed during
+        the run; used to select the most appropriate reason phrase.
+    weak_spatial:
+        ``True`` when spatial correlation across sensors is weak; shifts
+        the reason phrase towards uncertainty.
+    sensor_count:
+        Number of active sensors; affects confidence reason phrasing.
+    has_reference_gaps:
+        ``True`` when known-order reference data has gaps; used to select
+        a more conservative reason phrase.
     strength_band_key:
-        Optional vibration-strength band key. When set to ``"negligible"``,
+        Optional vibration-strength band key.  When set to ``"negligible"``,
         high certainty is capped to medium as a defensive label guard.
 
     Returns
@@ -185,6 +195,7 @@ def certainty_label(
     tuple[str, str, str, str]
         ``(level_key, human_label, pct_text, reason)``
         e.g. ``("high", "High", "80%", "Consistent order-tracking …")``.
+
     """
     pct = max(0.0, min(100.0, confidence_0_to_1 * 100.0))
     pct_text = f"{pct:.0f}%"
@@ -262,6 +273,7 @@ def certainty_tier(
     -------
     str
         ``"A"`` (very low), ``"B"`` (guarded), or ``"C"`` (sufficient).
+
     """
     if confidence_0_to_1 <= TIER_A_CEILING:
         return "A"

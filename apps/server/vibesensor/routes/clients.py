@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 
 
 def create_client_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the client-management API routes."""
     router = APIRouter()
 
     @router.get("/api/clients", response_model=ClientsResponse)

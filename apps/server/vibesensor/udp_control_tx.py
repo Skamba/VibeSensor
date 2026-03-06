@@ -1,3 +1,9 @@
+"""UDP control transmitter — sends command/ack messages to ESP32 sensors.
+
+``UDPControlTxProtocol`` is an asyncio ``DatagramProtocol`` that builds and
+transmits binary control frames (``CmdMessage``, ``AckMessage``) to sensor
+nodes over the control UDP socket.
+"""
 from __future__ import annotations
 
 import asyncio

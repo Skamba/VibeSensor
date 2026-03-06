@@ -1,3 +1,8 @@
+"""Contract reference document renderer.
+
+Generates a human-readable Markdown description of the public UDP / HTTP /
+WebSocket API contracts for use in documentation and diagnostics.
+"""
 from __future__ import annotations
 
 __all__ = ["render_contract_reference_markdown"]
@@ -27,6 +32,7 @@ def _port(value: str) -> int:
 
 
 def render_contract_reference_markdown() -> str:
+    """Render the public API contract reference as a Markdown string."""
     data_port = _port(str(DEFAULT_CONFIG["udp"]["data_listen"]))
     control_port = _port(str(DEFAULT_CONFIG["udp"]["control_listen"]))
     server_http_port = int(DEFAULT_CONFIG["server"]["port"])

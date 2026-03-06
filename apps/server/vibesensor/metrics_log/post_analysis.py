@@ -38,6 +38,7 @@ class PostAnalysisWorker:
         operation fails.  Typically wired to ``MetricsLogger._set_last_write_error``.
     clear_error_callback:
         Called (no args) when an error condition is resolved.
+
     """
 
     def __init__(

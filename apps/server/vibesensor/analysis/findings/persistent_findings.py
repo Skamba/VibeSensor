@@ -67,7 +67,7 @@ _PATTERNED_MAX_BURSTINESS = 3.0
 
 
 def _make_nested_int_defaultdict() -> defaultdict:
-    """Factory for a nested defaultdict(int).
+    """Create a nested defaultdict(int).
 
     Use as ``defaultdict(_make_nested_int_defaultdict)`` to get a
     two-level defaultdict where inner values are ints.
@@ -205,6 +205,7 @@ def _classify_peak_type(
     speed_uniformity : float | None
         Standard deviation of per-speed-bin hit rates for this peak.
         Lower values indicate uniform presence across speed bins.
+
     """
     # Baseline noise: appears everywhere at similar level, or very low SNR
     if snr is not None and snr < BASELINE_NOISE_SNR_THRESHOLD:

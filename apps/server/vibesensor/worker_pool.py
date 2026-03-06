@@ -40,6 +40,7 @@ class WorkerPool:
         Number of worker threads.  Defaults to 4 (one per Pi core).
     thread_name_prefix:
         Prefix for worker-thread names (aids debugging / profiling).
+
     """
 
     __slots__ = (

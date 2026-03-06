@@ -1,3 +1,9 @@
+"""WebSocket hub — fan-out broadcaster for live sensor payloads.
+
+``WSHub`` maintains a set of active WebSocket connections and broadcasts
+processed metric payloads to all subscribed clients with back-pressure
+protection via per-connection send queues.
+"""
 from __future__ import annotations
 
 import asyncio

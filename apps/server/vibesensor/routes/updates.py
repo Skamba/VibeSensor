@@ -27,6 +27,7 @@ __all__ = ["create_update_routes"]
 
 
 def create_update_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the OTA software/firmware update API routes."""
     router = APIRouter()
 
     # -- software update -------------------------------------------------------

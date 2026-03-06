@@ -1,3 +1,4 @@
+"""``vibesensor-report`` CLI — generate PDF reports from JSONL run logs."""
 from __future__ import annotations
 
 import argparse
@@ -10,6 +11,7 @@ from .report.pdf_builder import build_report_pdf
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for the report-generation CLI."""
     parser = argparse.ArgumentParser(description="Generate VibeSensor PDF report from a run log")
     parser.add_argument("input", type=Path, help="Input run file (.jsonl)")
     parser.add_argument(
@@ -28,6 +30,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Entry point for the ``vibesensor-report`` CLI tool."""
     args = parse_args()
     if not args.input.exists():
         print(f"Error: input file not found: {args.input}", file=sys.stderr)

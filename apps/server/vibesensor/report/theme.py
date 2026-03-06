@@ -1,3 +1,4 @@
+"""PDF report visual theme — colours, fonts, and layout constants."""
 from __future__ import annotations
 
 __all__ = [

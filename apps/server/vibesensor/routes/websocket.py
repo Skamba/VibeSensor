@@ -26,6 +26,7 @@ _RECEIVE_IDLE_TIMEOUT_S: float = 300.0
 
 
 def create_websocket_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the WebSocket streaming routes."""
     router = APIRouter()
 
     @router.websocket("/ws")

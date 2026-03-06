@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 
 def create_car_library_routes(state: RuntimeState) -> APIRouter:
+    """Create and return the car-library API routes."""
     from ..car_library import get_brands, get_models_for_brand_type, get_types_for_brand
 
     router = APIRouter()

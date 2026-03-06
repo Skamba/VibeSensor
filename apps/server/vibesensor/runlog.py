@@ -1,3 +1,8 @@
+"""Run-log I/O — reading, writing, and normalising JSONL run files.
+
+Provides helpers for creating and reading metric run files in JSONL format,
+plus normalisation helpers for backward-compatible field name migration.
+"""
 from __future__ import annotations
 
 import json
@@ -55,10 +60,12 @@ class RunData:
 
 
 def utc_now_iso() -> str:
+    """Return the current UTC time as an ISO 8601 string."""
     return datetime.now(UTC).isoformat()
 
 
 def parse_iso8601(value: object) -> datetime | None:
+    """Parse an ISO 8601 string into an aware ``datetime``, or return ``None``."""
     if not isinstance(value, str) or not value.strip():
         return None
     try:
@@ -92,6 +99,7 @@ def create_run_metadata(
     end_time_utc: str | None = None,
     incomplete_for_order_analysis: bool = False,
 ) -> dict[str, Any]:
+    """Build and return a run-metadata dict from the supplied fields."""
     return RunMetadata.create(
         run_id=run_id,
         start_time_utc=start_time_utc,
@@ -109,6 +117,7 @@ def create_run_metadata(
 
 
 def create_run_end_record(run_id: str, end_time_utc: str | None = None) -> dict[str, Any]:
+    """Build a RUN_END record dict to mark the end of a run in the log."""
     return {
         "record_type": RUN_END_TYPE,
         "schema_version": RUN_SCHEMA_VERSION,
@@ -147,6 +156,7 @@ def bounded_sample(
         *kept_samples* is the down-sampled list, *total_count* is the
         number of items consumed from the iterator, and *final_stride*
         is the stride factor that was applied.
+
     """
     stride: int = max(1, -(-total_hint // max_items)) if total_hint > max_items else 1
     kept: list[dict] = []
@@ -173,6 +183,7 @@ def append_jsonl_records(
     durable: bool = False,
     durable_every_records: int = 100,
 ) -> None:
+    """Append *records* as JSONL lines to *path*, optionally with fsync durability."""
     path.parent.mkdir(parents=True, exist_ok=True)
     cadence = max(1, int(durable_every_records))
     _dumps = json.dumps
@@ -216,6 +227,7 @@ def append_jsonl_records(
 
 
 def read_jsonl_run(path: Path) -> RunData:
+    """Read a JSONL run file and return parsed metadata and sample records."""
     if not path.exists():
         raise FileNotFoundError(path)
 

@@ -26,12 +26,14 @@ def _load_translations() -> dict[str, dict[str, str]]:
 
 
 def normalize_lang(lang: object) -> str:
+    """Return ``"nl"`` for Dutch locale strings, ``"en"`` for everything else."""
     if isinstance(lang, str) and lang.strip().lower().startswith("nl"):
         return "nl"
     return "en"
 
 
 def tr(lang: object, key: str, **kwargs: Any) -> str:
+    """Look up translation *key* for *lang* and format with *kwargs*."""
     values = _load_translations().get(key)
     if values is None:
         template = key
