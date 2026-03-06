@@ -57,6 +57,7 @@ class WorkerPool:
         max_workers: int = DEFAULT_MAX_WORKERS,
         thread_name_prefix: str = "vibesensor-worker",
     ) -> None:
+        """Initialise the worker pool with the given concurrency limit."""
         self._max_workers = max(1, int(max_workers))
         self._executor = ThreadPoolExecutor(
             max_workers=self._max_workers,

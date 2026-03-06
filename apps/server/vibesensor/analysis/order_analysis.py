@@ -163,6 +163,17 @@ def _finding_actions_for_source(
     source:
         Explicit source override.  When provided, *lang_or_source* is ignored.
         Recognised values: ``"wheel/tire"``, ``"driveline"``, ``"engine"``.
+    strongest_location:
+        Sensor location code (e.g. ``"front_left"``) used to tailor action
+        hints toward the most affected wheel or mounting position.
+    strongest_speed_band:
+        Speed band string (e.g. ``"80–100 km/h"``) injected into speed-focus
+        action hints so the technician knows at which speed to reproduce the
+        symptom.
+    weak_spatial_separation:
+        When ``True``, the action plan notes that sensor locations produced
+        similar intensities, which weakens spatial localisation confidence.
+
     """
     if source is None:
         source = lang_or_source

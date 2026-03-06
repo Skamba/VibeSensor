@@ -21,7 +21,7 @@ them, updates the client registry, writes samples into the ring buffer
 (`SignalProcessor.ingest()`), and sends a UDP ACK. This runs on the main
 event loop but each call is lightweight (microseconds per packet).
 
-### 3. Analysis (`processing_loop` in `app.py`)
+### 3. Analysis (`processing_loop` in `runtime.py`)
 
 `compute_all()` runs FFT and metrics computation for all active clients. It
 is dispatched to a **worker thread** via `asyncio.to_thread()` so it never
