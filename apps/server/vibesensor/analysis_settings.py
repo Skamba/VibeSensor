@@ -6,6 +6,18 @@ geometry helpers, and ``AnalysisSettingsStore`` for runtime settings management.
 
 from __future__ import annotations
 
+__all__ = [
+    "AnalysisSettingsStore",
+    "DEFAULT_ANALYSIS_SETTINGS",
+    "NON_NEGATIVE_KEYS",
+    "POSITIVE_REQUIRED_KEYS",
+    "engine_rpm_from_wheel_hz",
+    "sanitize_settings",
+    "tire_circumference_m_from_spec",
+    "wheel_hz_from_speed_kmh",
+    "wheel_hz_from_speed_mps",
+]
+
 import logging
 from math import isfinite, pi
 from threading import RLock
@@ -193,5 +205,16 @@ class AnalysisSettingsStore:
     def update(self, payload: dict[str, float]) -> dict[str, float]:
         """Merge *payload* into the store (after validation) and return the new snapshot."""
         with self._lock:
-            self._values.update(sanitize_settings(payload))
+            sanitized = sanitize_settings(payload)
+            changed = {
+                k: (self._values.get(k), v)
+                for k, v in sanitized.items()
+                if self._values.get(k) != v
+            }
+            if changed:
+                LOGGER.info(
+                    "Analysis settings updated: %s",
+                    ", ".join(f"{k}={old!r}→{new!r}" for k, (old, new) in changed.items()),
+                )
+            self._values.update(sanitized)
             return dict(self._values)
