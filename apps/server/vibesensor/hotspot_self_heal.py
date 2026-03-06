@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import subprocess
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -35,9 +36,9 @@ class CommandResult:
     stderr: str
 
 
-class CommandRunner:
-    def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult:
-        raise NotImplementedError
+class CommandRunner(ABC):
+    @abstractmethod
+    def run(self, argv: list[str], timeout_s: int = 10) -> CommandResult: ...
 
 
 class SubprocessRunner(CommandRunner):

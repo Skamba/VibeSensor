@@ -9,7 +9,7 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from vibesensor_shared.contracts import NETWORK_PORTS
@@ -217,7 +217,7 @@ class ClientProtocol(asyncio.DatagramProtocol):
         self.sim = sim
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
-        self.sim.control_transport = transport  # type: ignore[assignment]
+        self.sim.control_transport = cast(asyncio.DatagramTransport, transport)
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         if not data or data[0] != MSG_CMD:
@@ -251,7 +251,7 @@ class DataProtocol(asyncio.DatagramProtocol):
         self.sim = sim
 
     def connection_made(self, transport: asyncio.BaseTransport) -> None:
-        self.sim.data_transport = transport  # type: ignore[assignment]
+        self.sim.data_transport = cast(asyncio.DatagramTransport, transport)
 
 
 def make_client_id(seed: int) -> bytes:

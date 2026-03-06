@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from vibesensor_core.vibration_strength import (
@@ -224,7 +224,7 @@ def compute_fft_spectrum(
     if axis_amp_slices:
         combined_amp = np.asarray(
             combined_spectrum_amp_g(
-                axis_spectra_amp_g=axis_amp_slices,  # type: ignore[arg-type]
+                axis_spectra_amp_g=cast(list[list[float]], axis_amp_slices),
                 axis_count_for_mean=len(axis_amp_slices),
             ),
             dtype=np.float32,
