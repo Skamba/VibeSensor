@@ -116,6 +116,7 @@ class AnalysisSettingsRequest(_FrozenBase):
     gear_uncertainty_pct: float | None = Field(default=None, ge=0)
     min_abs_band_hz: float | None = Field(default=None, ge=0)
     max_band_half_width_pct: float | None = Field(default=None, gt=0)
+    tire_deflection_factor: float | None = Field(default=None, ge=0.85, le=1.0)
 
 
 class LanguageRequest(_FrozenBase):
@@ -148,10 +149,10 @@ class ActiveCarRequest(_FrozenBase):
 class SpeedSourceRequest(_FrozenBase):
     """Request body for configuring the speed source (GPS, manual, OBD2, etc.)."""
 
-    speedSource: str | None = None
+    speedSource: Literal["gps", "obd2", "manual"] | None = None
     manualSpeedKph: float | None = Field(default=None, ge=0, le=500)
-    staleTimeoutS: float | None = Field(default=None, ge=1, le=300)
-    fallbackMode: str | None = None
+    staleTimeoutS: float | None = Field(default=None, ge=3, le=120)
+    fallbackMode: Literal["manual"] | None = None
 
 
 class UpdateStartRequest(_FrozenBase):
@@ -171,7 +172,7 @@ class EspFlashStartRequest(_FrozenBase):
 class SensorRequest(_FrozenBase):
     """Request body for updating sensor name and location."""
 
-    name: str | None = Field(default=None, max_length=64)
+    name: str | None = Field(default=None, min_length=1, max_length=64)
     location: str | None = Field(default=None, max_length=64)
 
 
@@ -490,7 +491,7 @@ class CarLibraryTireOptionEntry(_ExtraAllowBase):
 class CarLibraryVariantEntry(_ExtraAllowBase):
     """A specific variant/trim of a car library model entry."""
 
-    name: str
+    name: str = Field(min_length=1)
     engine: str | None = None
     drivetrain: Literal["FWD", "RWD", "AWD"]
     gearboxes: list[CarLibraryGearboxEntry] | None = None
