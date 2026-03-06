@@ -11,7 +11,7 @@ import math
 import uuid
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Final
 
 from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
 
@@ -46,15 +46,17 @@ __all__ = [
 # Shared helpers (previously inlined in runlog / metrics_log)
 # ---------------------------------------------------------------------------
 
-RUN_SCHEMA_VERSION = "v2-jsonl"
-RUN_METADATA_TYPE = "run_metadata"
-RUN_SAMPLE_TYPE = "sample"
-RUN_END_TYPE = "run_end"
+RUN_SCHEMA_VERSION: Final[str] = "v2-jsonl"
+RUN_METADATA_TYPE: Final[str] = "run_metadata"
+RUN_SAMPLE_TYPE: Final[str] = "sample"
+RUN_END_TYPE: Final[str] = "run_end"
 
 VALID_SPEED_SOURCES: tuple[str, ...] = ("gps", "obd2", "manual")
 VALID_FALLBACK_MODES: tuple[str, ...] = ("manual",)
 
-DEFAULT_CAR_ASPECTS: MappingProxyType[str, float] = MappingProxyType(DEFAULT_ANALYSIS_SETTINGS)
+DEFAULT_CAR_ASPECTS: Final[MappingProxyType[str, float]] = MappingProxyType(
+    DEFAULT_ANALYSIS_SETTINGS
+)
 
 
 def as_float_or_none(value: object) -> float | None:

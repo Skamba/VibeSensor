@@ -38,3 +38,30 @@ def _load_json(name: str) -> dict[str, Any]:
 METRIC_FIELDS: dict[str, str] = _load_json("metrics_fields.json")
 REPORT_FIELDS: dict[str, str] = _load_json("report_fields.json")
 NETWORK_PORTS: dict[str, int] = _load_json("network_ports.json")
+
+# Validate that required contract keys exist at import time so misconfigurations
+# surface immediately with a descriptive error rather than a cryptic KeyError later.
+_REQUIRED_METRIC_KEYS: frozenset[str] = frozenset({"vibration_strength_db", "strength_bucket"})
+_REQUIRED_REPORT_KEYS: frozenset[str] = frozenset(
+    {"run_id", "timestamp_utc", "client_id", "client_name",
+     "speed_kmh", "dominant_freq_hz", "vibration_strength_db",
+     "strength_bucket", "top_peaks"}
+)
+_REQUIRED_PORT_KEYS: frozenset[str] = frozenset(
+    {"server_udp_data", "server_udp_control", "firmware_control_port_base"}
+)
+_missing_metric = _REQUIRED_METRIC_KEYS - METRIC_FIELDS.keys()
+if _missing_metric:
+    raise KeyError(
+        f"metrics_fields.json is missing required keys: {sorted(_missing_metric)}"
+    )
+_missing_report = _REQUIRED_REPORT_KEYS - REPORT_FIELDS.keys()
+if _missing_report:
+    raise KeyError(
+        f"report_fields.json is missing required keys: {sorted(_missing_report)}"
+    )
+_missing_ports = _REQUIRED_PORT_KEYS - NETWORK_PORTS.keys()
+if _missing_ports:
+    raise KeyError(
+        f"network_ports.json is missing required keys: {sorted(_missing_ports)}"
+    )

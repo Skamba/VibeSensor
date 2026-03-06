@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Final
 
+__all__ = ["get_accel_scale_g_per_lsb"]
+
 _ADXL345_SCALE_G_PER_LSB: Final[float] = 1.0 / 256.0
 
 
