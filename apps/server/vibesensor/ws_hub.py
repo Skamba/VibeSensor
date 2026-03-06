@@ -83,6 +83,7 @@ class WebSocketHub:
                 conn.selected_client_id = client_id
 
     async def _snapshot(self) -> list[WSConnection]:
+        """Return a point-in-time copy of the active connections list."""
         async with self._lock:
             return list(self._connections.values())
 
