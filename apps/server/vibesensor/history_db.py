@@ -543,6 +543,12 @@ class HistoryDB:
                 "WHERE run_id = ? AND status NOT IN ('complete')",
                 (error, now, run_id),
             )
+            if cur.rowcount == 0:
+                LOGGER.warning(
+                    "store_analysis_error for run %s: no rows updated "
+                    "(run not found or already complete)",
+                    run_id,
+                )
 
     def analysis_is_current(self, run_id: str) -> bool:
         """Return *True* when the persisted analysis version matches the current schema."""
