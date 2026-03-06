@@ -414,3 +414,82 @@ async def test_send_error_logging_is_rate_limited(caplog) -> None:
 
     send_fail_logs = [r for r in caplog.records if "broadcast send failed" in r.message]
     assert len(send_fail_logs) == 1
+
+
+# ── connection_count() tests ─────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_connection_count_empty() -> None:
+    """connection_count() returns 0 when no connections are registered."""
+    hub = WebSocketHub()
+    assert hub.connection_count() == 0
+
+
+@pytest.mark.asyncio
+async def test_connection_count_tracks_add_remove() -> None:
+    """connection_count() reflects add/remove operations correctly."""
+    hub = WebSocketHub()
+    ws1 = _make_ws()
+    ws2 = _make_ws()
+    assert hub.connection_count() == 0
+    await hub.add(ws1, None)
+    assert hub.connection_count() == 1
+    await hub.add(ws2, "sensor_x")
+    assert hub.connection_count() == 2
+    await hub.remove(ws1)
+    assert hub.connection_count() == 1
+    await hub.remove(ws2)
+    assert hub.connection_count() == 0
+
+
+# ── graceful close of dead connections ───────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_broadcast_closes_dead_websocket() -> None:
+    """broadcast() should call ws.close() on failed connections before removing."""
+    hub = WebSocketHub()
+    ws = _make_ws()
+    ws.send_text = AsyncMock(side_effect=ConnectionError("gone"))
+    ws.close = AsyncMock()
+    await hub.add(ws, "c1")
+
+    await hub.broadcast(lambda _: {"ok": True})
+
+    ws.close.assert_awaited_once()
+    assert await hub._snapshot() == []
+
+
+@pytest.mark.asyncio
+async def test_broadcast_close_error_does_not_prevent_removal() -> None:
+    """Even if ws.close() raises, the connection must still be removed from hub."""
+    hub = WebSocketHub()
+    ws = _make_ws()
+    ws.send_text = AsyncMock(side_effect=ConnectionError("gone"))
+    ws.close = AsyncMock(side_effect=RuntimeError("already closed"))
+    await hub.add(ws, None)
+
+    await hub.broadcast(lambda _: {"data": True})
+
+    # Hub should have cleaned up despite close() raising.
+    assert await hub._snapshot() == []
+
+
+# ── send-failure log includes selected_client_id ─────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_send_failure_log_includes_client_id(caplog) -> None:
+    """The send-failure WARNING message must include the selected_client_id."""
+    hub = WebSocketHub()
+    ws = _make_ws()
+    ws.send_text = AsyncMock(side_effect=ConnectionError("boom"))
+    await hub.add(ws, "sensor_42")
+
+    with caplog.at_level(logging.WARNING, logger="vibesensor.ws_hub"):
+        await hub.broadcast(lambda _: {"ok": True})
+
+    warn_logs = [r for r in caplog.records if "broadcast send failed" in r.message]
+    assert len(warn_logs) == 1
+    assert "sensor_42" in warn_logs[0].message
