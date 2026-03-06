@@ -27,7 +27,8 @@ COPY libs /app/libs
 RUN rm -rf /app/apps/server/public && mkdir -p /app/apps/server/public
 COPY --from=ui-build /app/apps/ui/dist/ /app/apps/server/public/
 
-RUN pip install --no-cache-dir -e /app/apps/server
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -e /app/apps/server
 
 EXPOSE 8000/tcp
 EXPOSE 9000/udp
