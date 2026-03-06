@@ -252,8 +252,8 @@ export function createCarsFeature(ctx: CarsFeatureDeps): CarsFeature {
       els.wizardBackBtn.addEventListener("click", () => {
         if (wizState.step > 0) {
           wizState.step -= 1;
-          // Skip variant step when going back from gearbox if no library model selected
-          if (wizState.step === 3 && !wizState.selectedModel) {
+          // Skip variant step when going back from gearbox if there are no variants to show
+          if (wizState.step === 3 && (!wizState.selectedModel || !(wizState.selectedModel.variants?.length))) {
             wizState.step = 2;
           }
           loadWizardStep();
