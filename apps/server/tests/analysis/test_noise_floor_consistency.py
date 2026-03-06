@@ -19,14 +19,26 @@ from vibesensor.processing import SignalProcessor
 
 def _core_noise_floor_from_array(arr: np.ndarray) -> float:
     """Replicate the band/finite filtering that _noise_floor does, then call
-    the core lib — used as the expected-value oracle."""
+    the core lib — used as the expected-value oracle.
+
+    For a single non-negative finite value, returns that value directly;
+    ``noise_floor_amp_p20_g`` would treat it as DC-only and return 0.0,
+    but ``fft.noise_floor`` returns the value itself (no minimum to strip).
+    """
     if arr.size == 0:
         return 0.0
     finite = arr[np.isfinite(arr)]
     if finite.size == 0:
         return 0.0
+    non_neg = sorted(float(v) for v in finite if v >= 0.0)
+    if not non_neg:
+        return 0.0
+    if len(non_neg) == 1:
+        # fft.noise_floor returns the single element directly rather than
+        # delegating to noise_floor_amp_p20_g (which returns 0.0 for n=1).
+        return non_neg[0]
     return noise_floor_amp_p20_g(
-        combined_spectrum_amp_g=sorted(float(v) for v in finite if v >= 0.0),
+        combined_spectrum_amp_g=non_neg,
     )
 
 

@@ -68,6 +68,10 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
                             normalized = normalize_sensor_id(value)
                             await state.ws_hub.update_selected_client(ws, normalized)
                     except ValueError:
+                        LOGGER.debug(
+                            "Ignoring invalid client_id value in WS message: %r",
+                            value,
+                        )
                         continue
                     except Exception:
                         LOGGER.debug("Error processing WS message", exc_info=True)

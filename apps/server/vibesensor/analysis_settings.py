@@ -10,7 +10,7 @@ import logging
 from math import isfinite, pi
 from threading import RLock
 
-from .constants import KMH_TO_MPS
+from .constants import KMH_TO_MPS, SECONDS_PER_MINUTE
 
 LOGGER = logging.getLogger(__name__)
 
@@ -171,7 +171,7 @@ def wheel_hz_from_speed_mps(speed_mps: float, tire_circumference_m: float) -> fl
 
 def engine_rpm_from_wheel_hz(wheel_hz: float, final_drive_ratio: float, gear_ratio: float) -> float:
     """Engine RPM from wheel Hz, final-drive ratio, and current gear ratio."""
-    return wheel_hz * final_drive_ratio * gear_ratio * 60.0
+    return wheel_hz * final_drive_ratio * gear_ratio * SECONDS_PER_MINUTE
 
 
 class AnalysisSettingsStore:

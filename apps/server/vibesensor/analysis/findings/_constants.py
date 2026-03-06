@@ -4,19 +4,24 @@ from __future__ import annotations
 
 from ..strength_labels import _STRENGTH_THRESHOLDS
 
-# Band indices into _STRENGTH_THRESHOLDS (band 1 = negligible, band 2 = light).
-_NEGLIGIBLE_BAND_INDEX = 1
-_LIGHT_BAND_INDEX = 2
+# Upper-boundary indices into _STRENGTH_THRESHOLDS for the negligible and light
+# bands.  The BANDS tuple has: index 0 = l0 "negligible" (0 dB), index 1 = l1
+# "light" (8 dB), index 2 = l2 "moderate" (16 dB).
+# Using index 1 gives 8.0 dB — the minimum threshold of "light", which is the
+# exclusive upper bound of the negligible band.  Similarly, index 2 gives 16.0
+# dB — the exclusive upper bound of the light band.
+_NEGLIGIBLE_UPPER_BAND_INDEX = 1  # _STRENGTH_THRESHOLDS[1][0] == 8.0 dB
+_LIGHT_UPPER_BAND_INDEX = 2       # _STRENGTH_THRESHOLDS[2][0] == 16.0 dB
 
 # Strength thresholds derived from the global strength-labels table.
 _NEGLIGIBLE_STRENGTH_MAX_DB = (
-    float(_STRENGTH_THRESHOLDS[_NEGLIGIBLE_BAND_INDEX][0])
-    if len(_STRENGTH_THRESHOLDS) > _NEGLIGIBLE_BAND_INDEX
+    float(_STRENGTH_THRESHOLDS[_NEGLIGIBLE_UPPER_BAND_INDEX][0])
+    if len(_STRENGTH_THRESHOLDS) > _NEGLIGIBLE_UPPER_BAND_INDEX
     else 8.0
 )
 _LIGHT_STRENGTH_MAX_DB = (
-    float(_STRENGTH_THRESHOLDS[_LIGHT_BAND_INDEX][0])
-    if len(_STRENGTH_THRESHOLDS) > _LIGHT_BAND_INDEX
+    float(_STRENGTH_THRESHOLDS[_LIGHT_UPPER_BAND_INDEX][0])
+    if len(_STRENGTH_THRESHOLDS) > _LIGHT_UPPER_BAND_INDEX
     else 16.0
 )
 

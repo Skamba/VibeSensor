@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections import defaultdict
 from math import isfinite, sqrt
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 from vibesensor_core.vibration_strength import percentile
 
@@ -57,9 +57,13 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
             return  # at least one valid sample → OK
         if first_bad_idx is None:
             first_bad_idx = idx
+    # first_bad_idx is always set (to 0) when we reach this raise because the
+    # loop iterates from index 0 and any bad sample at idx=0 sets it immediately.
+    # Using 'or 0' as a fallback for None is misleading here: replace with an
+    # explicit None-check to make the intent clear.
     raise ValueError(
         f"Missing required precomputed strength metrics in sample index "
-        f"{first_bad_idx or 0}: vibration_strength_db"
+        f"{first_bad_idx if first_bad_idx is not None else 0}: vibration_strength_db"
     )
 
 
@@ -88,7 +92,17 @@ def _mean_variance(values: list[float]) -> tuple[float | None, float | None]:
     return m, var
 
 
-def _outlier_summary(values: list[float]) -> dict[str, Any]:
+class _OutlierSummary(TypedDict):
+    """Return type of :func:`_outlier_summary`."""
+
+    count: int
+    outlier_count: int
+    outlier_pct: float
+    lower_bound: float | None
+    upper_bound: float | None
+
+
+def _outlier_summary(values: list[float]) -> _OutlierSummary:
     if not values:
         return {
             "count": 0,

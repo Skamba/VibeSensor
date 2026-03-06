@@ -66,6 +66,11 @@ def noise_floor(amps: np.ndarray) -> float:
     Returns ``0.0`` for empty or all-invalid inputs.  Delegates the
     actual percentile computation to
     :func:`~vibesensor_core.vibration_strength.noise_floor_amp_p20_g`.
+
+    Pre-sorts the array so that when ``noise_floor_amp_p20_g`` strips the DC
+    bin (index 0), it discards the global minimum amplitude, yielding a
+    slightly more conservative (higher) floor estimate.  A single-element
+    array returns that element directly since there is no minimum to strip.
     """
     if amps.size == 0:
         return 0.0
@@ -75,10 +80,14 @@ def noise_floor(amps: np.ndarray) -> float:
     non_neg = finite[finite >= 0.0]
     if non_neg.size == 0:
         return 0.0
-    # noise_floor_amp_p20_g strips [1:] and sorts internally; pre-sorting
-    # here ensures the stripped element is the global minimum amplitude,
-    # yielding a slightly more conservative (higher) floor estimate.
-    return noise_floor_amp_p20_g(combined_spectrum_amp_g=np.sort(non_neg).tolist())
+    sorted_non_neg = np.sort(non_neg).tolist()
+    if len(sorted_non_neg) == 1:
+        # noise_floor_amp_p20_g treats a single-element input as DC-only and
+        # returns 0.0, which is correct for the full-spectrum context but not
+        # here — the single value is a valid amplitude reading, not the DC
+        # bias.  Return it directly so callers get a usable floor estimate.
+        return float(sorted_non_neg[0])
+    return noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted_non_neg)
 
 
 def float_list(values: np.ndarray | list[float]) -> list[float]:
@@ -168,7 +177,8 @@ def compute_fft_spectrum(
     fft_window:
         Pre-computed window function (Hann, etc.).
     fft_scale:
-        Normalisation scalar ``2 / sum(window)``.
+        Normalisation scalar ``2 / max(1, sum(window))``.  The ``max(1, …)``
+        guard prevents division-by-zero when the window sums to zero.
     freq_slice:
         Pre-computed frequency bins within the display range.
     valid_idx:
@@ -185,8 +195,17 @@ def compute_fft_spectrum(
     """
     if spike_filter_enabled:
         fft_block = medfilt3(fft_block)
-    fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
+    if fft_block.ndim != 2 or fft_block.shape[0] != 3:
+        raise ValueError(
+            f"fft_block must have shape (3, N), got {fft_block.shape}"
+        )
     fft_n = fft_window.shape[0]
+    if fft_block.shape[1] != fft_n:
+        raise ValueError(
+            f"fft_block column count {fft_block.shape[1]} does not match "
+            f"fft_window length {fft_n}"
+        )
+    fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
 
     # Batch FFT: window and transform all axes in a single call instead of 3.
     windowed_all = fft_block * fft_window  # broadcasts (3, N) * (N,)

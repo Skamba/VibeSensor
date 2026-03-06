@@ -76,6 +76,12 @@ accepted to preserve forward compatibility with future firmware)."""
 # Pre-resolved dtype for the hot ingest path (parse_data / pack_data).
 _SAMPLE_DTYPE = np.dtype("<i2")
 
+ACCEL_AXES: int = 3
+"""Number of accelerometer axes per sample (X, Y, Z)."""
+
+BYTES_PER_SAMPLE: int = ACCEL_AXES * _SAMPLE_DTYPE.itemsize
+"""Wire size of one accelerometer sample in bytes (3 axes × 2 bytes for int16)."""
+
 
 class ProtocolError(ValueError):
     """Raised when a binary protocol message is malformed or unexpected."""
@@ -263,13 +269,24 @@ def parse_data(data: bytes) -> DataMessage:
     if msg_type != MSG_DATA or version != VERSION:
         raise ProtocolError("Invalid DATA header")
 
-    payload_len = sample_count * 6
+    # Reject unreasonably large frames before any allocation.  The ESP32
+    # firmware sends at most ~200 samples per frame at 4096 Hz; 1024 gives
+    # generous headroom while preventing accidental or malicious OOM.
+    _MAX_SAMPLE_COUNT = 1024
+    if sample_count > _MAX_SAMPLE_COUNT:
+        raise ProtocolError(
+            f"DATA sample_count {sample_count} exceeds maximum {_MAX_SAMPLE_COUNT}"
+        )
+
+    if sample_count == 0:
+        raise ProtocolError("DATA sample_count must not be zero")
+    payload_len = sample_count * BYTES_PER_SAMPLE
     expected_len = DATA_HEADER_BYTES + payload_len
     if len(data) != expected_len:
         raise ProtocolError(f"DATA payload size mismatch: expected {expected_len}, got {len(data)}")
 
     payload = memoryview(data)[DATA_HEADER_BYTES:]
-    samples = np.frombuffer(payload, dtype=_SAMPLE_DTYPE).reshape(sample_count, 3).copy()
+    samples = np.frombuffer(payload, dtype=_SAMPLE_DTYPE).reshape(sample_count, ACCEL_AXES).copy()
     return DataMessage(
         client_id=client_id,
         seq=seq,
@@ -282,8 +299,8 @@ def parse_data(data: bytes) -> DataMessage:
 def pack_data(client_id: bytes, seq: int, t0_us: int, samples: np.ndarray) -> bytes:
     """Encode a DATA message as bytes from an (N, 3) int16 samples array."""
     samples_int16 = np.asarray(samples, dtype=_SAMPLE_DTYPE)
-    if samples_int16.ndim != 2 or samples_int16.shape[1] != 3:
-        raise ValueError("samples must be shaped (N, 3)")
+    if samples_int16.ndim != 2 or samples_int16.shape[1] != ACCEL_AXES:
+        raise ValueError(f"samples must be shaped (N, {ACCEL_AXES})")
     sample_count = int(samples_int16.shape[0])
     header = DATA_HEADER.pack(MSG_DATA, VERSION, client_id, seq, t0_us, sample_count)
     return header + samples_int16.tobytes(order="C")

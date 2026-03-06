@@ -242,7 +242,12 @@ class SignalProcessor:
             buf.last_t0_us = int(t0_us)
             buf.samples_since_t0 = n
         else:
-            buf.samples_since_t0 += n
+            # Cap accumulator to prevent unbounded growth during long runs
+            # where the sensor never emits a fresh t0_us.  At 2^28 samples
+            # (~18 hours at 4096 Hz) the derived end_us estimate already
+            # far exceeds any realistic session length.
+            _MAX_SAMPLES_SINCE_T0 = 2 ** 28
+            buf.samples_since_t0 = min(buf.samples_since_t0 + n, _MAX_SAMPLES_SINCE_T0)
         buf.ingest_generation += 1
         buf.invalidate_caches()
         self._total_ingested_samples += n
@@ -437,7 +442,25 @@ class SignalProcessor:
         def _compute_one(client_id: str) -> dict[str, Any]:
             return self.compute_metrics(client_id, sample_rate_hz=rates.get(client_id))
 
-        result = self._worker_pool.map_unordered(_compute_one, client_ids)
+        try:
+            result = self._worker_pool.map_unordered(_compute_one, client_ids)
+        except Exception:
+            LOGGER.warning(
+                "compute_all: worker pool raised; falling back to serial execution.",
+                exc_info=True,
+            )
+            result = {}
+            for cid in client_ids:
+                try:
+                    result[cid] = self.compute_metrics(
+                        cid, sample_rate_hz=rates.get(cid)
+                    )
+                except Exception:
+                    LOGGER.warning(
+                        "compute_metrics failed for %s (serial fallback); skipping.",
+                        cid,
+                        exc_info=True,
+                    )
         self._last_compute_all_duration_s = time.monotonic() - t0
         return result
 
@@ -641,36 +664,42 @@ class SignalProcessor:
         rate = int(buf.sample_rate_hz or 0)
         return rate if rate > 0 else None
 
-    @_synchronized
     def debug_spectrum(self, client_id: str) -> dict[str, Any]:
-        """Return detailed spectrum debug info for independent verification."""
-        buf = self._buffers.get(client_id)
-        if buf is None or buf.count < self.fft_n:
-            return {
-                "error": "insufficient samples",
-                "count": buf.count if buf else 0,
-                "fft_n": self.fft_n,
-            }
-        sr = buf.sample_rate_hz or self.sample_rate_hz
-        fft_block = self._latest(buf, self.fft_n)  # _latest already copies
+        """Return detailed spectrum debug info for independent verification.
 
-        # Stats before filtering / mean removal (vectorised across axes)
+        The buffer snapshot is taken under a brief lock; the heavy FFT
+        computation runs *outside* the lock so that concurrent ``ingest()``
+        calls are not serialised behind the debug endpoint.
+        """
+        with self._lock:
+            buf = self._buffers.get(client_id)
+            if buf is None or buf.count < self.fft_n:
+                return {
+                    "error": "insufficient samples",
+                    "count": buf.count if buf else 0,
+                    "fft_n": self.fft_n,
+                }
+            sr = buf.sample_rate_hz or self.sample_rate_hz
+            snap_fft_n = self.fft_n
+            snap_fft_scale = self._fft_scale
+            snap_min_hz = self.spectrum_min_hz
+            snap_max_hz = self.spectrum_max_hz
+            fft_block = self._latest(buf, self.fft_n)  # returns a copy
+
+        # --- Heavy computation outside the lock to avoid blocking ingest ----
         raw_mean = fft_block.mean(axis=1).tolist()
         raw_std = fft_block.std(axis=1).tolist()
         raw_min = fft_block.min(axis=1).tolist()
         raw_max = fft_block.max(axis=1).tolist()
 
-        # Use shared FFT computation (same path as compute_metrics)
         fft_result = self._compute_fft_spectrum(fft_block, sr)
         freq_slice = fft_result["freq_slice"]
         axis_amps = fft_result["axis_amps"]
         combined_amp = fft_result["combined_amp"]
         sm = fft_result["strength_metrics"]
 
-        # Detrended std from the filtered block (vectorised across axes)
         detrended_std = (fft_block - fft_block.mean(axis=1, keepdims=True)).std(axis=1).tolist()
 
-        # Top 10 bins by combined amplitude
         sorted_idx = np.argsort(combined_amp)[::-1]
         top_bins = []
         for i in sorted_idx[:10]:
@@ -688,13 +717,13 @@ class SignalProcessor:
         return {
             "client_id": client_id,
             "sample_rate_hz": sr,
-            "fft_n": self.fft_n,
-            "fft_scale": self._fft_scale,
+            "fft_n": snap_fft_n,
+            "fft_scale": snap_fft_scale,
             "window": "hann",
-            "spectrum_min_hz": self.spectrum_min_hz,
-            "spectrum_max_hz": self.spectrum_max_hz,
+            "spectrum_min_hz": snap_min_hz,
+            "spectrum_max_hz": snap_max_hz,
             "freq_bins": len(freq_slice),
-            "freq_resolution_hz": float(sr) / self.fft_n,
+            "freq_resolution_hz": float(sr) / snap_fft_n,
             "raw_stats": {
                 "mean_g": raw_mean,
                 "std_g": raw_std,

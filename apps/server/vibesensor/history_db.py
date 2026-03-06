@@ -169,6 +169,9 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
 
+CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
+CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
+
 CREATE TABLE IF NOT EXISTS settings_kv (
     key         TEXT PRIMARY KEY,
     value_json  TEXT NOT NULL,
@@ -222,6 +225,9 @@ CREATE TABLE IF NOT EXISTS samples_v2 (
 
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
 CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
+
+CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
+CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
 """
 
 

@@ -25,6 +25,7 @@ from ..api_models import (
     SpeedUnitRequest,
     SpeedUnitResponse,
 )
+from ._helpers import normalize_mac_or_400
 
 if TYPE_CHECKING:
     from ..runtime import RuntimeState
@@ -114,19 +115,21 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.post("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def update_sensor(mac: str, req: SensorRequest) -> SensorsResponse:
+        normalized_mac = normalize_mac_or_400(mac)
         payload = req.model_dump(exclude_none=True)
         with _value_error_to_http():
             await asyncio.to_thread(
                 state.settings_store.set_sensor,
-                mac,
+                normalized_mac,
                 payload,
             )
         return _sensors_response()
 
     @router.delete("/api/settings/sensors/{mac}", response_model=SensorsResponse)
     async def delete_sensor(mac: str) -> SensorsResponse:
+        normalized_mac = normalize_mac_or_400(mac)
         with _value_error_to_http():
-            removed = await asyncio.to_thread(state.settings_store.remove_sensor, mac)
+            removed = await asyncio.to_thread(state.settings_store.remove_sensor, normalized_mac)
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
         return _sensors_response()

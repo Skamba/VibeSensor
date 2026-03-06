@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ..analysis_settings import wheel_hz_from_speed_kmh
+from ..constants import SECONDS_PER_MINUTE
 from ..runlog import as_float_or_none as _as_float
 from .helpers import _effective_engine_rpm
 
@@ -39,7 +40,7 @@ def _engine_hz(
     rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
     if rpm is None or rpm <= 0:
         return None, src
-    return rpm / 60.0, src
+    return rpm / SECONDS_PER_MINUTE, src
 
 
 def _order_label(order: int, base: str) -> str:
@@ -148,6 +149,20 @@ def _finding_actions_for_source(
     Each ``what``, ``why``, ``confirm``, ``falsify`` field is an i18n reference
     dict (``{"_i18n_key": "KEY", ...params}``) that the report layer resolves
     at render time.
+
+    Parameters
+    ----------
+    lang_or_source:
+        **Legacy dual-purpose parameter.**  When called with a single positional
+        argument (e.g. ``_finding_actions_for_source("wheel/tire", ...)``), this
+        is the vibration source string.  When called with two positional
+        arguments (e.g. ``_finding_actions_for_source(lang, "wheel/tire", ...)``),
+        the first argument is a language string that is **silently ignored**
+        because *source* takes precedence.  New call sites should always pass
+        the source string as the first argument and omit *source*.
+    source:
+        Explicit source override.  When provided, *lang_or_source* is ignored.
+        Recognised values: ``"wheel/tire"``, ``"driveline"``, ``"engine"``.
     """
     if source is None:
         source = lang_or_source

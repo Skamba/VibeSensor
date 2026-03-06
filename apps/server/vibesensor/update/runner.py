@@ -86,6 +86,7 @@ class CommandRunner:
             LOGGER.warning("Command timed out after %.0fs: %s", timeout, " ".join(args))
             return (124, "", "Command timed out")
         except FileNotFoundError:
+            LOGGER.warning("Command not found: %s", args[0] if args else "(empty)", exc_info=True)
             return (127, "", f"Command not found: {args[0]}")
         except OSError as exc:
             return (1, "", str(exc))

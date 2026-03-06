@@ -97,6 +97,28 @@ def analysis_time_range(
     is in use.
 
     Returns ``None`` when the buffer has no data or no timing information.
+
+    Parameters
+    ----------
+    count:
+        Number of valid samples currently held in the circular buffer.
+    last_ingest_mono_s:
+        Server-side monotonic timestamp of the most recently ingested frame,
+        used as the fallback end-of-window reference when ``last_t0_us`` is 0.
+    sample_rate_hz:
+        Current sensor sample rate in Hz; used to convert sample counts to
+        seconds.
+    waveform_seconds:
+        Desired analysis window duration in seconds (bounded by *capacity*).
+    capacity:
+        Total buffer capacity in samples.
+    last_t0_us:
+        Sensor-clock timestamp (µs, server-relative after ``CMD_SYNC_CLOCK``)
+        of the first sample in the most-recently ingested frame.  Zero if the
+        sensor has not yet been clock-synced.
+    samples_since_t0:
+        Number of samples ingested since ``last_t0_us`` was recorded; used to
+        advance the end-of-window pointer to the newest sample.
     """
     if count == 0 or last_ingest_mono_s <= 0:
         return None
