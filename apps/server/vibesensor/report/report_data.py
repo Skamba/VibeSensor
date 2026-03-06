@@ -134,10 +134,15 @@ class NextStep(_FromDictMixin):
 
 @dataclass
 class DataTrustItem(_FromDictMixin):
-    """A single data-quality check result (pass/warn/fail with detail)."""
+    """A single data-quality check result (pass/warn/fail with detail).
+
+    ``state`` defaults to ``"warn"`` so that data quality items reconstructed
+    from older persisted data (where the ``state`` key may be absent) are
+    treated conservatively rather than silently marked as passing.
+    """
 
     check: str = ""
-    state: str = "pass"
+    state: str = "warn"
     detail: str | None = None
 
 
@@ -156,6 +161,22 @@ class PatternEvidence(_FromDictMixin):
     warning: str | None = None
     interpretation: str | None = None
     why_parts_text: str | None = None
+
+    @classmethod
+    def from_dict(cls, d: Any) -> Self:
+        """Reconstruct from a persisted dict, guarding ``matched_systems`` against ``None``.
+
+        Older persisted records may omit ``matched_systems`` or store ``null``,
+        which would bypass the ``default_factory`` and set the field to ``None``.
+        This override coerces any non-list value back to an empty list so the
+        renderer can safely call ``', '.join(ev.matched_systems)``.
+        """
+        if not isinstance(d, dict):
+            return cls()
+        filtered = _filter_fields(cls, d)
+        if not isinstance(filtered.get("matched_systems"), list):
+            filtered["matched_systems"] = []
+        return cls(**filtered)
 
 
 @dataclass
