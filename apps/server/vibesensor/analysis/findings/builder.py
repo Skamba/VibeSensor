@@ -96,7 +96,6 @@ def _build_findings(
                     _i18n_ref("RECORD_VEHICLE_SPEED_FOR_MOST_SAMPLES_GPS_OR"),
                     _i18n_ref("VERIFY_TIMESTAMP_ALIGNMENT_BETWEEN_SPEED_AND_ACCELERATION_STREAM"),
                 ],
-                lang=lang,
             )
         )
 
@@ -112,7 +111,6 @@ def _build_findings(
                     _i18n_ref("PROVIDE_TIRE_CIRCUMFERENCE_OR_TIRE_SIZE_WIDTH_ASPECT"),
                     _i18n_ref("RE_RUN_WITH_MEASURED_LOADED_TIRE_CIRCUMFERENCE"),
                 ],
-                lang=lang,
             )
         )
 
@@ -135,7 +133,6 @@ def _build_findings(
                     _i18n_ref("LOG_ENGINE_RPM_FROM_CAN_OBD_FOR_THE"),
                     _i18n_ref("KEEP_TIMESTAMP_BASE_SHARED_WITH_ACCELEROMETER_AND_SPEED"),
                 ],
-                lang=lang,
             )
         )
 
@@ -146,7 +143,6 @@ def _build_findings(
                 suspected_source="unknown",
                 evidence_summary=_i18n_ref("RAW_ACCELEROMETER_SAMPLE_RATE_IS_MISSING_SO_DOMINANT"),
                 quick_checks=[_i18n_ref("RECORD_THE_TRUE_ACCELEROMETER_SAMPLE_RATE_IN_RUN")],
-                lang=lang,
             )
         )
 
