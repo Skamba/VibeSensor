@@ -32,6 +32,7 @@ __all__ = [
     "SERVER_DIR",
     "ServerConfig",
     "UDPConfig",
+    "UpdateConfig",
     "VALID_24GHZ_CHANNELS",
     "documented_default_config",
     "load_config",
@@ -380,6 +381,14 @@ class GPSConfig:
 
 
 @dataclass(slots=True)
+class UpdateConfig:
+    """Server auto-update configuration (GitHub repo and rollback directory)."""
+
+    server_repo: str
+    rollback_dir: Path
+
+
+@dataclass(slots=True)
 class AppConfig:
     """Full application configuration assembled from the YAML config file."""
 
@@ -389,6 +398,7 @@ class AppConfig:
     processing: ProcessingConfig
     logging: LoggingConfig
     gps: GPSConfig
+    update: UpdateConfig
     clients_json_path: Path
     config_path: Path
     repo_dir: Path = REPO_DIR
@@ -547,6 +557,20 @@ def load_config(config_path: Path | None = None) -> AppConfig:
             gps_enabled=bool(merged["gps"]["gps_enabled"]),
             gpsd_host=str(merged["gps"].get("gpsd_host", DEFAULT_CONFIG["gps"]["gpsd_host"])),
             gpsd_port=int(merged["gps"].get("gpsd_port", DEFAULT_CONFIG["gps"]["gpsd_port"])),
+        ),
+        update=UpdateConfig(
+            server_repo=str(
+                merged.get("update", {}).get(
+                    "server_repo", DEFAULT_CONFIG["update"]["server_repo"]
+                )
+            ),
+            rollback_dir=Path(
+                str(
+                    merged.get("update", {}).get(
+                        "rollback_dir", DEFAULT_CONFIG["update"]["rollback_dir"]
+                    )
+                )
+            ),
         ),
         clients_json_path=_resolve_config_path(
             str(

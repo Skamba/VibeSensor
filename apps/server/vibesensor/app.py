@@ -123,7 +123,12 @@ def create_app(config_path: Path | None = None) -> FastAPI:
         LOGGER.info("Re-queued %d stuck analyzing run(s)", len(stale_analyzing))
 
     live_diagnostics = LiveDiagnosticsEngine()
-    update_manager = UpdateManager()
+    update_manager = UpdateManager(
+        ap_con_name=config.ap.con_name,
+        wifi_ifname=config.ap.ifname,
+        rollback_dir=str(config.update.rollback_dir),
+        server_repo=config.update.server_repo,
+    )
     esp_flash_manager = EspFlashManager()
 
     runtime = RuntimeState(
