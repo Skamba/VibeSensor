@@ -301,5 +301,12 @@
   "settings.esp_flash.state.success": "Gelukt",
   "settings.esp_flash.state.failed": "Mislukt",
   "settings.esp_flash.state.cancelled": "Geannuleerd",
-  "status.age_ms_ago": "{value} ms geleden"
+  "status.age_ms_ago": "{value} ms geleden",
+  "settings.wizard.loading": "Laden…",
+  "settings.wizard.load_failed_brands": "Merken konden niet worden geladen.",
+  "settings.wizard.load_failed_types": "Types konden niet worden geladen.",
+  "settings.wizard.load_failed_models": "Modellen konden niet worden geladen.",
+  "settings.wizard.no_gearboxes": "Geen voorgedefinieerde versnellingsbakken. Voer specificaties handmatig in.",
+  "ws.payload_error": "Ongeldig serverpayload.",
+  "ws.payload_error_pill": "Payload error"
 }
