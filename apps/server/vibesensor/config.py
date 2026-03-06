@@ -179,16 +179,17 @@ class APSelfHealConfig:
     state_file: Path
 
     def __post_init__(self) -> None:
-        for field_name in (
-            "interval_seconds",
-            "diagnostics_lookback_minutes",
-            "min_restart_interval_seconds",
-        ):
+        for field_name in ("interval_seconds", "diagnostics_lookback_minutes"):
             val = getattr(self, field_name)
             if not isinstance(val, int) or val < 1:
                 raise ValueError(
                     f"ap.self_heal.{field_name} must be a positive integer, got {val!r}"
                 )
+        mri = self.min_restart_interval_seconds
+        if not isinstance(mri, int) or mri < 0:
+            raise ValueError(
+                f"ap.self_heal.min_restart_interval_seconds must be a non-negative integer, got {mri!r}"
+            )
 
 
 @dataclass(slots=True)
