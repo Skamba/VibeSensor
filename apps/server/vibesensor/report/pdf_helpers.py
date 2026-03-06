@@ -132,10 +132,7 @@ def location_hotspots(
         and len(hotspot_rows) >= 2
     ):
         second_peak = float(hotspot_rows[1]["peak_value"])
-        if (
-            second_peak > 0
-            and (strongest_peak / second_peak) >= _PEAK_RATIO_LOCALIZATION_THRESHOLD
-        ):
+        if second_peak > 0 and (strongest_peak / second_peak) >= _PEAK_RATIO_LOCALIZATION_THRESHOLD:
             summary_text += tr(
                 "SINCE_ALL_SENSORS_SAW_THE_SIGNATURE_BUT_STRONGEST",
                 strongest_loc=strongest_loc,
