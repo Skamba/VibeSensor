@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import json
 import time
 from collections.abc import Iterator
@@ -158,9 +159,15 @@ def _setup_update_env(
 def _make_mock_release(
     version: str = "2025.6.15",
     tag: str = "server-v2025.6.15",
-    sha256: str = "abc123",
+    sha256: str = "",
 ) -> MagicMock:
-    """Create a mock release object."""
+    """Create a mock release object.
+
+    ``sha256`` defaults to empty string so callers that do not care about
+    integrity verification are not affected when a fake wheel is used.
+    Pass a real hash (computed from the fake wheel's bytes) to exercise the
+    SHA-256 verification path.
+    """
     release = MagicMock()
     release.version = version
     release.tag = tag
@@ -468,10 +475,12 @@ class TestUpdateManagerAsync:
         rollback_dir = tmp_path / "rollback"
         rollback_dir.mkdir()
 
-        mock_release = _make_mock_release()
+        wheel_content = b"fake-wheel"
+        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
+        mock_release = _make_mock_release(sha256=wheel_sha256)
 
         mock_wheel_path = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        mock_wheel_path.write_text("fake-wheel")
+        mock_wheel_path.write_bytes(wheel_content)
 
         with _patch_release_fetcher(current_version="2025.6.14") as MockFetcher:
             mock_fetcher_inst = MockFetcher.return_value
@@ -723,11 +732,13 @@ class TestUpdateManagerAsync:
         rollback_dir = tmp_path / "rollback"
         rollback_dir.mkdir()
 
+        wheel_content = b"fake-wheel"
+        wheel_sha256 = hashlib.sha256(wheel_content).hexdigest()
         fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
-        fake_wheel.write_text("fake-wheel")
+        fake_wheel.write_bytes(wheel_content)
 
         with _patch_release_fetcher(current_version="2025.6.14") as MockFetcher:
-            mock_release = _make_mock_release(sha256="abc")
+            mock_release = _make_mock_release(sha256=wheel_sha256)
 
             mock_fetcher_inst = MockFetcher.return_value
             mock_fetcher_inst.check_update_available.return_value = mock_release
@@ -738,6 +749,37 @@ class TestUpdateManagerAsync:
         assert mgr.status.state == UpdateState.failed
         issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
         assert "install" in issues_text
+
+    async def test_sha256_mismatch_aborts_install(self, tmp_path) -> None:
+        """When the downloaded wheel SHA-256 does not match, update is aborted."""
+        mgr, runner, _repo = _setup_update_env(tmp_path)
+
+        fake_wheel = tmp_path / "vibesensor-2025.6.15-py3-none-any.whl"
+        fake_wheel.write_bytes(b"fake-wheel-content")
+
+        # Give a sha256 that does NOT match the fake wheel bytes
+        wrong_sha256 = "0" * 64
+
+        with _patch_release_fetcher(current_version="2025.6.14") as MockFetcher:
+            mock_release = _make_mock_release(sha256=wrong_sha256)
+            mock_fetcher_inst = MockFetcher.return_value
+            mock_fetcher_inst.check_update_available.return_value = mock_release
+            mock_fetcher_inst.download_wheel.return_value = fake_wheel
+
+            await _run_update(mgr, "TestNet", "pass")
+
+        assert mgr.status.state == UpdateState.failed
+        issues_text = " ".join(i.message.lower() for i in mgr.status.issues)
+        assert "sha-256" in issues_text or "sha256" in issues_text
+        # Pip install must NOT have been called — update aborted before install
+        pip_calls = [
+            c[0]
+            for c in runner.calls
+            if "pip" in " ".join(c[0]) and "install" in " ".join(c[0])
+        ]
+        assert not pip_calls, "pip install must not run after SHA-256 mismatch"
+        # Hotspot must still be restored
+        _assert_hotspot_restored(runner)
 
     async def test_password_never_in_logs(self, tmp_path) -> None:
         """Password must never appear in status log_tail or issues."""
