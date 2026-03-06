@@ -116,6 +116,7 @@ class AnalysisSettingsRequest(_FrozenBase):
     gear_uncertainty_pct: float | None = Field(default=None, ge=0)
     min_abs_band_hz: float | None = Field(default=None, ge=0)
     max_band_half_width_pct: float | None = Field(default=None, gt=0)
+    tire_deflection_factor: float | None = Field(default=None, ge=0.85, le=1.0)
 
 
 class LanguageRequest(_FrozenBase):
