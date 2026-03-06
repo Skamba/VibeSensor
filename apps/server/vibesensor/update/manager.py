@@ -1008,7 +1008,11 @@ class UpdateManager:
         Returns True if rollback succeeded.
         """
         self._log("Rolling back to previous version...")
-        rollback_wheels = list(self._rollback_dir.glob("vibesensor-*.whl"))
+        rollback_wheels = sorted(
+            self._rollback_dir.glob("vibesensor-*.whl"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
         if not rollback_wheels:
             self._add_issue("installing", "No rollback wheel available")
             return False
