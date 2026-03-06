@@ -860,10 +860,15 @@ class HistoryDB:
             return cur.rowcount
 
     def stale_analyzing_run_ids(self) -> list[str]:
-        """Return run IDs stuck in 'analyzing' state (e.g. after a crash)."""
+        """Return run IDs stuck in 'analyzing' state (e.g. after a crash).
+
+        Capped at 1 000 rows to prevent unbounded memory use; in practice
+        there should only ever be a handful of stale runs.
+        """
         with self._cursor(commit=False) as cur:
             cur.execute(
-                "SELECT run_id FROM runs WHERE status = 'analyzing' ORDER BY created_at ASC"
+                "SELECT run_id FROM runs WHERE status = 'analyzing' "
+                "ORDER BY created_at ASC LIMIT 1000"
             )
             return [row[0] for row in cur.fetchall()]
 
