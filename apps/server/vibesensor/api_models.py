@@ -5,7 +5,7 @@ Separated from ``api.py`` to keep routing logic distinct from data contracts.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -133,10 +133,10 @@ class SpeedUnitRequest(_FrozenBase):
 class CarUpsertRequest(_FrozenBase):
     """Request body for creating or updating a car profile."""
 
-    name: str | None = Field(default=None, max_length=64)
-    type: str | None = Field(default=None, max_length=64)
+    name: Annotated[str, Field(min_length=1, max_length=64)] | None = None
+    type: Annotated[str, Field(min_length=1, max_length=64)] | None = None
     aspects: dict[str, float] | None = None
-    variant: str | None = Field(default=None, max_length=64)
+    variant: Annotated[str, Field(min_length=1, max_length=64)] | None = None
 
 
 class ActiveCarRequest(_FrozenBase):
@@ -473,18 +473,18 @@ class CarLibraryTypesResponse(BaseModel):
 class CarLibraryGearboxEntry(_ExtraAllowBase):
     """A gearbox option from the car library (gear ratios)."""
 
-    name: str
-    final_drive_ratio: float
-    top_gear_ratio: float
+    name: str = Field(min_length=1)
+    final_drive_ratio: float = Field(gt=0)
+    top_gear_ratio: float = Field(gt=0)
 
 
 class CarLibraryTireOptionEntry(_ExtraAllowBase):
     """A tire size option from the car library."""
 
-    name: str
-    tire_width_mm: float
-    tire_aspect_pct: float
-    rim_in: float
+    name: str = Field(min_length=1)
+    tire_width_mm: float = Field(gt=0)
+    tire_aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
 
 
 class CarLibraryVariantEntry(_ExtraAllowBase):
@@ -492,12 +492,12 @@ class CarLibraryVariantEntry(_ExtraAllowBase):
 
     name: str
     engine: str | None = None
-    drivetrain: str
+    drivetrain: Literal["FWD", "RWD", "AWD"]
     gearboxes: list[CarLibraryGearboxEntry] | None = None
     tire_options: list[CarLibraryTireOptionEntry] | None = None
-    tire_width_mm: float | None = None
-    tire_aspect_pct: float | None = None
-    rim_in: float | None = None
+    tire_width_mm: float | None = Field(default=None, gt=0)
+    tire_aspect_pct: float | None = Field(default=None, gt=0)
+    rim_in: float | None = Field(default=None, gt=0)
 
 
 class CarLibraryModelEntry(_ExtraAllowBase):
@@ -506,12 +506,12 @@ class CarLibraryModelEntry(_ExtraAllowBase):
     brand: str
     type: str
     model: str
-    gearboxes: list[CarLibraryGearboxEntry]
-    tire_options: list[CarLibraryTireOptionEntry]
-    tire_width_mm: float
-    tire_aspect_pct: float
-    rim_in: float
-    variants: list[CarLibraryVariantEntry]
+    gearboxes: list[CarLibraryGearboxEntry] = Field(min_length=1)
+    tire_options: list[CarLibraryTireOptionEntry] = Field(min_length=1)
+    tire_width_mm: float = Field(gt=0)
+    tire_aspect_pct: float = Field(gt=0)
+    rim_in: float = Field(gt=0)
+    variants: list[CarLibraryVariantEntry] = Field(default_factory=list)
 
 
 class CarLibraryModelsResponse(BaseModel):
