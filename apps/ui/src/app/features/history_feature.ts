@@ -154,7 +154,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
     const loading = detail.insightsLoading;
     const findingsMarkup = findings.length
       ? findings
-          .map((finding: Record<string, unknown>) => {
+          .map((finding) => {
             const source = finding?.suspected_source || t("report.missing");
             const confidence = typeof finding?.confidence_0_to_1 === "number" ? fmt(finding.confidence_0_to_1, 2) : "--";
             return `<li><strong>${escapeHtml(source)}</strong> (${escapeHtml(t("report.confidence", { value: confidence }))}) - ${escapeHtml(finding?.evidence_summary || "")}</li>`;
@@ -373,7 +373,7 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   function reloadExpandedRunOnLanguageChange(): void {
     if (!state.expandedRunId) return;
     const runId = state.expandedRunId;
-    const detail = state.runDetailsById?.[runId];
+    const detail = state.runDetailsById[runId];
     const shouldReloadInsights = Boolean(detail?.insights);
     delete state.runDetailsById[runId];
     void loadRunPreview(runId, true).then(() => {
