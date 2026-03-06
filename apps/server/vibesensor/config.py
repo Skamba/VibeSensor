@@ -163,6 +163,8 @@ def _resolve_config_path(path_text: str, config_path: Path) -> Path:
 
 @dataclass(slots=True)
 class APSelfHealConfig:
+    """Configuration for the Wi-Fi AP self-heal watchdog."""
+
     enabled: bool
     interval_seconds: int
     diagnostics_lookback_minutes: int
@@ -173,6 +175,8 @@ class APSelfHealConfig:
 
 @dataclass(slots=True)
 class APConfig:
+    """Wi-Fi access-point configuration (SSID, PSK, IP, channel, NM connection)."""
+
     ssid: str
     psk: str
     ip: str
@@ -184,6 +188,8 @@ class APConfig:
 
 @dataclass(slots=True)
 class ServerConfig:
+    """HTTP server bind host and port configuration."""
+
     host: str
     port: int
 
@@ -194,6 +200,8 @@ class ServerConfig:
 
 @dataclass(slots=True)
 class UDPConfig:
+    """UDP data and control socket configuration (hosts, ports, queue size)."""
+
     data_host: str
     data_port: int
     control_host: str
@@ -213,6 +221,8 @@ class UDPConfig:
 
 @dataclass(slots=True)
 class ProcessingConfig:
+    """Signal processing parameters (sample rate, FFT size, UI push rates, etc.)."""
+
     sample_rate_hz: int
     waveform_seconds: int
     waveform_display_hz: int
@@ -323,6 +333,8 @@ class ProcessingConfig:
 
 @dataclass(slots=True)
 class LoggingConfig:
+    """Run-logging configuration (file path, sample rate, history DB, timeouts)."""
+
     log_metrics: bool
     metrics_log_path: Path
     metrics_log_hz: int
@@ -360,11 +372,15 @@ class LoggingConfig:
 
 @dataclass(slots=True)
 class GPSConfig:
+    """GPS device configuration (enable/disable flag)."""
+
     gps_enabled: bool
 
 
 @dataclass(slots=True)
 class AppConfig:
+    """Full application configuration assembled from the YAML config file."""
+
     ap: APConfig
     server: ServerConfig
     udp: UDPConfig

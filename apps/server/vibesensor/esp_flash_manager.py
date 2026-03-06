@@ -199,6 +199,8 @@ class FlashCommandRunner:
 
 
 class EspFlashManager:
+    """Manages ESP32 firmware flash jobs: detect ports, run esptool, track history."""
+
     def __init__(
         self,
         *,

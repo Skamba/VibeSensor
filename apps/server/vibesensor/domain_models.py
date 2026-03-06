@@ -113,6 +113,8 @@ def new_car_id() -> str:
 
 @dataclass(slots=True)
 class CarConfig:
+    """Persisted vehicle profile (ID, name, type, geometry aspects, variant)."""
+
     id: str
     name: str
     type: str
@@ -163,6 +165,8 @@ class CarConfig:
 
 @dataclass(slots=True)
 class SensorConfig:
+    """Persisted configuration for a sensor node (ID, name, location)."""
+
     sensor_id: str
     name: str
     location: str
@@ -188,6 +192,8 @@ class SensorConfig:
 
 @dataclass(slots=True)
 class SpeedSourceConfig:
+    """Speed source settings (GPS, OBD2, or manual) with fallback policy."""
+
     speed_source: str  # Literal values: "gps", "obd2", "manual"
     manual_speed_kph: float | None
     obd2_config: dict[str, Any]
@@ -311,6 +317,8 @@ def _default_phase_metadata() -> dict[str, object]:
 
 @dataclass(slots=True)
 class RunMetadata:
+    """Metadata record from the header of a JSONL run file."""
+
     record_type: str
     schema_version: str
     run_id: str
@@ -451,6 +459,8 @@ def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str,
 
 @dataclass(slots=True)
 class SensorFrame:
+    """A single sample/data record from a JSONL run file."""
+
     record_type: str
     schema_version: str
     run_id: str

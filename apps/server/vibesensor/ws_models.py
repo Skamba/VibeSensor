@@ -96,6 +96,8 @@ class OrderBand(BaseModel):
 
 
 class RotationalSpeeds(BaseModel):
+    """Current per-system rotational speed estimates (wheel, driveshaft, engine)."""
+
     basis_speed_source: str | None = None
     wheel: RotationalSpeedValue = RotationalSpeedValue()
     driveshaft: RotationalSpeedValue = RotationalSpeedValue()

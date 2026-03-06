@@ -107,6 +107,8 @@ class DataMessage:
 
 @dataclass(slots=True)
 class CmdMessage:
+    """Decoded CMD message: a command sent from server to a sensor node."""
+
     client_id: bytes
     cmd_id: int
     cmd_seq: int
@@ -115,6 +117,8 @@ class CmdMessage:
 
 @dataclass(slots=True)
 class AckMessage:
+    """Decoded ACK message: a command acknowledgment sent by a sensor node."""
+
     client_id: bytes
     cmd_seq: int
     status: int
@@ -122,6 +126,8 @@ class AckMessage:
 
 @dataclass(slots=True)
 class DataAckMessage:
+    """Decoded DATA_ACK message: data-receipt acknowledgment from server to sensor."""
+
     client_id: bytes
     last_seq_received: int
 
