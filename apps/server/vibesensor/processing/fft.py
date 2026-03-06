@@ -185,8 +185,17 @@ def compute_fft_spectrum(
     """
     if spike_filter_enabled:
         fft_block = medfilt3(fft_block)
-    fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
+    if fft_block.ndim != 2 or fft_block.shape[0] != 3:
+        raise ValueError(
+            f"fft_block must have shape (3, N), got {fft_block.shape}"
+        )
     fft_n = fft_window.shape[0]
+    if fft_block.shape[1] != fft_n:
+        raise ValueError(
+            f"fft_block column count {fft_block.shape[1]} does not match "
+            f"fft_window length {fft_n}"
+        )
+    fft_block = fft_block - np.mean(fft_block, axis=1, keepdims=True)
 
     # Batch FFT: window and transform all axes in a single call instead of 3.
     windowed_all = fft_block * fft_window  # broadcasts (3, N) * (N,)
