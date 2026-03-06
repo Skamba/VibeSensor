@@ -100,5 +100,4 @@ def test_wheel_hz_mps_kmh_consistency() -> None:
 
 def test_engine_rpm_basic() -> None:
     rpm = engine_rpm_from_wheel_hz(10.0, 3.08, 0.64)
-    expected = 10.0 * 3.08 * 0.64 * 60.0
     assert rpm is not None

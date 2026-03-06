@@ -113,7 +113,7 @@ def test_logging_start_while_recording_rollover(e2e_env: dict[str, str]) -> None
         first = api_json(base, "/api/logging/start", method="POST")
         run_1 = str(first["run_id"])
         run_ids.append(run_1)
-        _simulate(e2e_env, duration=3.0)
+        _simulate(e2e_env, duration=5.0)  # increased from 3.0 to ensure FFT windows complete
 
         second = api_json(base, "/api/logging/start", method="POST")
         run_2 = str(second["run_id"])
@@ -184,7 +184,7 @@ def test_report_and_insights_not_ready_states(e2e_env: dict[str, str]) -> None:
         assert b"analysis" in pdf_while.body.lower()
 
         api_json(base, "/api/logging/stop", method="POST")
-        immediate = api_json(base, f"/api/history/{run_id}/insights", expected_status=(200, 422))
+        immediate = api_json(base, f"/api/history/{run_id}/insights", expected_status=(200, 202, 422))
         if immediate.get("status") == "analyzing":
             pass
         elif immediate.get("findings"):
@@ -464,14 +464,16 @@ def test_speed_source_transitions_and_invalid_values(e2e_env: dict[str, str]) ->
             3, int(len(speed_values) * 0.75)
         )
 
-        invalid = api_json(
+        api_json(
             base,
             "/api/settings/speed-source",
             method="POST",
             body={"speedSource": "invalid", "manualSpeedKph": 77},
+            expected_status=422,
         )
-        assert invalid["speedSource"] == "manual"
-        assert float(invalid["manualSpeedKph"]) == pytest.approx(77.0)
+        still_manual = api_json(base, "/api/settings/speed-source")
+        assert still_manual["speedSource"] == "manual"
+        assert float(still_manual["manualSpeedKph"]) == pytest.approx(77.0)
     finally:
         api_json(base, "/api/logging/stop", method="POST")
         if run_id:

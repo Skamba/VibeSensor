@@ -9,13 +9,12 @@ import time
 
 import pytest
 
+from vibesensor.constants import KMH_TO_MPS
 from vibesensor.gps_speed import (
+    _GPS_MAX_SPEED_MPS,
     MAX_MANUAL_SPEED_KMH,
     GPSSpeedMonitor,
-    _GPS_MAX_SPEED_MPS,
 )
-from vibesensor.constants import KMH_TO_MPS
-
 
 # ---------------------------------------------------------------------------
 # Fix 1: VALID_FALLBACK_MODES is now a frozenset (O(1) membership, immutable)

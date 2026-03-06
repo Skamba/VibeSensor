@@ -94,17 +94,12 @@ def test_esp_flash_start_request_requires_port_when_not_auto_detect() -> None:
 # ---------------------------------------------------------------------------
 
 
-import asyncio
-import pytest
-
-
 @pytest.mark.asyncio
 async def test_esp_flash_start_returns_400_on_value_error() -> None:
     """start_esp_flash must map ValueError from esp_flash_manager.start → 400 (Fix 3)."""
     from fastapi import HTTPException
 
     from vibesensor.routes.updates import create_update_routes
-    from fastapi import APIRouter
 
     class _ValErrFlashManager:
         async def list_ports(self):
@@ -132,7 +127,9 @@ async def test_esp_flash_start_returns_400_on_value_error() -> None:
 
     start_endpoint = None
     for route in router.routes:
-        if getattr(route, "path", "") == "/api/settings/esp-flash/start" and "POST" in getattr(route, "methods", set()):
+        path_match = getattr(route, "path", "") == "/api/settings/esp-flash/start"
+        method_match = "POST" in getattr(route, "methods", set())
+        if path_match and method_match:
             start_endpoint = route.endpoint
             break
     assert start_endpoint is not None
