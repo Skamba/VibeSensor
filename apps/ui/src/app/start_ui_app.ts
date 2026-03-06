@@ -4,7 +4,7 @@ import "../styles/app.css";
 import * as I18N from "../i18n";
 import { defaultLocationCodes } from "../constants";
 import { SpectrumChart } from "../spectrum";
-import { escapeHtml, fmt, fmtTs, formatInt } from "../format";
+import { escapeHtml, fmt, fmtTs, formatIntLocale } from "../format";
 import { combinedRelativeUncertainty, parseTireSpec, tireDiameterMeters, toleranceForOrder } from "../vehicle_math";
 import { adaptServerPayload } from "../server_payload";
 import type { RotationalSpeeds } from "../server_payload";
@@ -61,6 +61,8 @@ export function startUiApp(): void {
   const SPECTRUM_LOG10_REF = Math.log10(SPECTRUM_DB_REFERENCE_AMP_G);
 
   function t(key: string, vars?: Record<string, unknown>): string { return I18N.get(state.lang, key, vars); }
+  /** Locale-aware integer formatter that respects the active UI language. */
+  function localFormatInt(value: number): string { return formatIntLocale(value, state.lang); }
   function normalizeSpeedUnit(raw: string): string { return raw === "mps" ? "mps" : "kmh"; }
   function saveSpeedUnit(unit: string): void { state.speedUnit = normalizeSpeedUnit(unit); void setSettingsSpeedUnit(state.speedUnit).catch(() => {}); }
   function speedValueInSelectedUnit(speedMps: number | null): number | null { if (!(typeof speedMps === "number") || !Number.isFinite(speedMps)) return null; return state.speedUnit === "mps" ? speedMps : speedMps * 3.6; }
@@ -184,8 +186,8 @@ export function startUiApp(): void {
 
   // Create features — cross-feature callbacks use lazy references via closures.
   let dashboardFeature: DashboardFeature | undefined;
-  const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt });
-  const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt, setPillState, setStatValue, createEmptyMatrix: () => createEmptyMatrix(state.strengthBands), renderMatrix: () => { dashboardFeature?.renderMatrix(); }, sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
+  const historyFeature = createHistoryFeature({ state, els, t, escapeHtml, fmt, fmtTs, formatInt: localFormatInt });
+  const sensorsFeature = createRealtimeFeature({ state, els, t, escapeHtml, formatInt: localFormatInt, setPillState, setStatValue, createEmptyMatrix: () => createEmptyMatrix(state.strengthBands), renderMatrix: () => { dashboardFeature?.renderMatrix(); }, sendSelection, refreshHistory: () => historyFeature.refreshHistory() });
   const vehicleFeature = createSettingsFeature({ state, els, t, escapeHtml, fmt, renderSpectrum, renderSpeedReadout, onCarSelectionStateChange: renderCarSelectionWarning });
   const wizardFeature = createCarsFeature({ els, t, escapeHtml, fmt, addCarFromWizard: vehicleFeature.addCarFromWizard });
   const updateFeature = createUpdateFeature({ els, t, escapeHtml });
@@ -445,7 +447,7 @@ export function startUiApp(): void {
   function connectWS(): void {
     const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
     state.ws = new WsClient({
-      url: `${proto}//${window.location.host}/ws`, staleAfterMs: 10000,
+      url: `${proto}//${window.location.host}/ws`,
       onPayload: (payload) => { state.hasReceivedPayload = true; state.pendingPayload = payload; queueRender(); },
       onStateChange: (nextState) => {
         state.wsState = nextState;

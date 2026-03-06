@@ -83,7 +83,13 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
 
   async function refreshHistory(): Promise<void> {
     if (!els.espFlashHistoryPanel) return;
-    const payload = await getEspFlashHistory();
+    let payload;
+    try {
+      payload = await getEspFlashHistory();
+    } catch {
+      // History is non-critical; keep existing panel content on transient error.
+      return;
+    }
     const attempts = payload.attempts || [];
     if (!attempts.length) {
       els.espFlashHistoryPanel.innerHTML = `<div class="subtle">${escapeHtml(t("settings.esp_flash.no_history"))}</div>`;
@@ -126,7 +132,11 @@ export function createEspFlashFeature(ctx: EspFlashFeatureDeps): EspFlashFeature
   }
 
   async function onCancel(): Promise<void> {
-    await cancelEspFlash();
+    try {
+      await cancelEspFlash();
+    } catch {
+      // Cancel request may fail if the job already finished; poll to sync state.
+    }
     void poll();
   }
 

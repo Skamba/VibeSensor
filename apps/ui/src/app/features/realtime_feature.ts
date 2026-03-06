@@ -273,7 +273,7 @@ export function createRealtimeFeature(ctx: RealtimeFeatureDeps): RealtimeFeature
 
   async function identifyClient(clientId: string): Promise<void> {
     if (!clientId) return;
-    await identifyClientApi(clientId, 1500);
+    await identifyClientApi(clientId); // uses API default of 1500 ms
   }
 
   async function removeClient(clientId: string): Promise<void> {
