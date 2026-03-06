@@ -13,6 +13,7 @@ import logging
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from fastapi import WebSocket
 
@@ -93,7 +94,7 @@ class WebSocketHub:
     def _build_payload_for(
         self,
         selected_client_id: str | None,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
         payload_cache: dict[str | None, str],
         failed_client_ids: set[str | None],
         debug_info: dict[str | None, bool] | None = None,
@@ -151,7 +152,7 @@ class WebSocketHub:
     async def _send_conn(
         self,
         conn: WSConnection,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
         payload_cache: dict[str | None, str],
         failed_client_ids: set[str | None],
         debug_info: dict[str | None, bool] | None = None,
@@ -182,7 +183,7 @@ class WebSocketHub:
 
     async def broadcast(
         self,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
     ) -> None:
         """Broadcast a live metric payload to all connected WebSocket clients.
 
@@ -239,7 +240,7 @@ class WebSocketHub:
     async def run(
         self,
         hz: int,
-        payload_builder: Callable[[str | None], dict],
+        payload_builder: Callable[[str | None], dict[str, Any]],
         on_tick: Callable[[], None] | None = None,
     ) -> None:
         """Drive broadcast ticks at *hz* frames per second until cancelled.
