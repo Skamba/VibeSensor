@@ -146,3 +146,55 @@ def test_plot_data_reuses_precomputed_phase_and_noise(monkeypatch: pytest.Monkey
 
     assert segment_calls == 0
     assert noise_calls == 0
+
+
+# ---------------------------------------------------------------------------
+# Regression: _aggregate_fft_spectrum presence_ratio > 1 when a single sample
+# contributes two peaks into the same frequency bin.
+# ---------------------------------------------------------------------------
+
+
+def test_aggregate_fft_spectrum_presence_ratio_clamped_to_one() -> None:
+    """Two peaks from the same sample that bin together must not exceed presence_ratio=1.
+
+    At freq_bin_hz=10 Hz, peaks at 42 Hz and 47 Hz both fall in the 40–50 Hz
+    bin (bin_center = 45 Hz). Previously len(amps)=2 / n_samples=1 = 2.0 gave
+    a persistence score inflated by 4× relative to a single-peak sample.
+    """
+    from vibesensor.analysis.plot_data import _aggregate_fft_spectrum
+
+    # Two co-binned peaks from one sample — should behave like presence_ratio=1.
+    two_peaks_sample = [
+        {
+            "vibration_strength_db": 20.0,
+            "top_peaks": [
+                # Both bin to center 45 Hz at freq_bin_hz=10
+                {"hz": 42.0, "amp": 0.1},
+                {"hz": 47.0, "amp": 0.12},
+            ],
+        }
+    ]
+    # Baseline: single peak at same p95 amplitude from one sample.
+    one_peak_sample = [
+        {
+            "vibration_strength_db": 20.0,
+            "top_peaks": [{"hz": 45.0, "amp": 0.12}],
+        }
+    ]
+
+    two_result = dict(_aggregate_fft_spectrum(two_peaks_sample, freq_bin_hz=10.0))
+    one_result = dict(_aggregate_fft_spectrum(one_peak_sample, freq_bin_hz=10.0))
+
+    # Both produce a single bin near 45 Hz with presence_ratio=1 after clamping.
+    # Without clamping, two_result score would be 4× one_result score (2²=4).
+    assert len(two_result) == 1, "expected a single 45 Hz bin"
+    assert len(one_result) == 1, "expected a single 45 Hz bin"
+    # After clamping, two co-binned peaks should NOT produce a score 4× larger.
+    # The score may differ slightly (p95 of [0.1, 0.12] vs [0.12]) but
+    # the 4× inflation from unclamped presence_ratio=2 would be unmistakable.
+    two_score = next(iter(two_result.values()))
+    one_score = next(iter(one_result.values()))
+    assert two_score < one_score * 2.5, (  # far less than 4× inflation
+        f"two co-binned peaks score {two_score:.3f} is suspiciously > 2.5× "
+        f"single-peak score {one_score:.3f}; presence_ratio may be unclamped"
+    )

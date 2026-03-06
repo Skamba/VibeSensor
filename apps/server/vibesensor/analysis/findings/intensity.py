@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections import defaultdict
 from typing import Any
 
@@ -34,7 +35,15 @@ def _counter_delta(counter_values: list[tuple[float | None, float]]) -> int:
         return 0
     ordered = sorted(
         counter_values,
-        key=lambda pair: (pair[0] is None, pair[0] if pair[0] is not None else 0.0),
+        # Treat NaN timestamps like None (sort last) to avoid undefined
+        # comparison behaviour: Python's sort uses < internally, and
+        # nan < x is False for all x, so NaN can end up anywhere in the
+        # sort order.  Both None and NaN are non-informative timestamps;
+        # placing them last keeps the meaningful (finite) timestamps first.
+        key=lambda pair: (
+            pair[0] is None or not math.isfinite(pair[0]),
+            pair[0] if (pair[0] is not None and math.isfinite(pair[0])) else 0.0,
+        ),
     )
     return counter_delta([float(v) for _t, v in ordered])
 
