@@ -263,6 +263,15 @@ def parse_data(data: bytes) -> DataMessage:
     if msg_type != MSG_DATA or version != VERSION:
         raise ProtocolError("Invalid DATA header")
 
+    # Reject unreasonably large frames before any allocation.  The ESP32
+    # firmware sends at most ~200 samples per frame at 4096 Hz; 1024 gives
+    # generous headroom while preventing accidental or malicious OOM.
+    _MAX_SAMPLE_COUNT = 1024
+    if sample_count > _MAX_SAMPLE_COUNT:
+        raise ProtocolError(
+            f"DATA sample_count {sample_count} exceeds maximum {_MAX_SAMPLE_COUNT}"
+        )
+
     payload_len = sample_count * 6
     expected_len = DATA_HEADER_BYTES + payload_len
     if len(data) != expected_len:
