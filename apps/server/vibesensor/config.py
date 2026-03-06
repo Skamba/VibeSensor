@@ -150,9 +150,14 @@ def _split_host_port(value: str) -> tuple[str, int]:
     if sep == "":
         raise ValueError(f"Expected HOST:PORT, got: {value!r}")
     try:
-        return host, int(port)
+        port_int = int(port)
     except ValueError:
         raise ValueError(f"Invalid port number in {value!r}: {port!r} is not an integer") from None
+    if not (1 <= port_int <= 65535):
+        raise ValueError(
+            f"Port number in {value!r} must be 1–65535, got {port_int}"
+        )
+    return host, port_int
 
 
 def _resolve_config_path(path_text: str, config_path: Path) -> Path:
