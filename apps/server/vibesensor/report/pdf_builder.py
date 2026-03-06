@@ -140,7 +140,7 @@ def _draw_panel(
         c.drawString(x + 4 * mm, y + h - 5.5 * mm, title)
 
 
-def _wrap_lines(text: str, width_pt: float, font_size: int) -> list[str]:
+def _wrap_lines(text: str, width_pt: float, font_size: float) -> list[str]:
     avg_char_w = font_size * _HELVETICA_AVG_CHAR_RATIO
     max_chars = max(10, int(width_pt / avg_char_w))
     lines: list[str] = []
@@ -157,7 +157,7 @@ def _draw_text(
     text: str,
     *,
     font: str = FONT,
-    size: int = FS_BODY,
+    size: float = FS_BODY,
     color: str = TEXT_CLR,
     leading: float | None = None,
     max_lines: int | None = None,
@@ -185,7 +185,7 @@ def _draw_kv(
     value: str,
     *,
     label_w: float = 30 * mm,
-    fs: int = FS_BODY,
+    fs: float = FS_BODY,
     value_w: float | None = None,
 ) -> float:
     """Draw a label: value pair.  Returns the y after the last line."""
@@ -207,7 +207,7 @@ def _draw_kv(
     return y - (fs + 2)
 
 
-def _kv_consumed_height(value: str, *, fs: int = FS_BODY, value_w: float | None = None) -> float:
+def _kv_consumed_height(value: str, *, fs: float = FS_BODY, value_w: float | None = None) -> float:
     """Return vertical space consumed by a key/value value block."""
     leading = fs + 2
     if value_w is None:
