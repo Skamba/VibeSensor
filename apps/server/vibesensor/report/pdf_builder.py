@@ -287,8 +287,9 @@ def _draw_section_block(
 
 
 def _draw_footer(c: Canvas, page_num: int, total: int, version: str) -> None:
+    """Draw page number (right) and version string (left) in the bottom margin."""
     y = MARGIN - 4 * mm
-    c.setFont(FONT, 6)
+    c.setFont(FONT, FS_SMALL)
     c.setFillColor(_hex(MUTED_CLR))
     c.drawString(MARGIN, y, version)
     c.drawRightString(PAGE_W - MARGIN, y, f"{page_num} / {total}")
