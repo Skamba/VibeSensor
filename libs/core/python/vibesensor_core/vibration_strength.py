@@ -61,8 +61,7 @@ def percentile(sorted_values: list[float], q: float) -> float:
 def combined_spectrum_amp_g(
     *, axis_spectra_amp_g: list[list[float]], axis_count_for_mean: int | None = None
 ) -> list[float]:
-    """
-    Canonical combined spectrum amplitude definition.
+    """Canonical combined spectrum amplitude definition.
 
     Input axis arrays must be single-sided FFT amplitude magnitudes in g.
     Output is sqrt(mean(axis_amp^2)) per frequency bin,
