@@ -965,11 +965,9 @@ class UpdateManager:
 
         self._log(f"Creating rollback snapshot (version={current_version})")
 
-        # Clear old rollback wheels
-        for old_whl in self._rollback_dir.glob("vibesensor-*.whl"):
-            old_whl.unlink()
-
-        # pip download the installed package to rollback dir
+        # pip download the installed package to rollback dir.
+        # NOTE: Clear old wheels only AFTER the download succeeds so we never
+        # end up with zero rollback wheels when pip fails.
         rc, _, stderr = await self._run_cmd(
             [
                 venv_python,
@@ -987,11 +985,19 @@ class UpdateManager:
             sudo=False,
         )
         if rc != 0:
-            # Fallback: just record the version number
+            # Fallback: just record the version number (old wheels, if any, are
+            # intentionally left in place so _rollback() can still use them).
             self._log(f"pip download for rollback failed (exit {rc}): {stderr}")
             meta_path = self._rollback_dir / "rollback_version.txt"
             meta_path.write_text(current_version, encoding="utf-8")
             return False
+
+        # Download succeeded: now safe to remove stale wheels that are no longer
+        # the target version, keeping any freshly downloaded ones.
+        for old_whl in self._rollback_dir.glob("vibesensor-*.whl"):
+            whl_ver = old_whl.stem.split("-")[1] if "-" in old_whl.stem else ""
+            if whl_ver != current_version:
+                old_whl.unlink(missing_ok=True)
 
         self._log("Rollback snapshot created successfully")
         return True
