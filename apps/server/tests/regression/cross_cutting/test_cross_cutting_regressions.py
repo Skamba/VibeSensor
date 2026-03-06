@@ -1244,17 +1244,17 @@ class TestSeverityFromPeakReturnType:
 # ---------------------------------------------------------------------------
 
 
-_PROCESSING_DEFAULTS = dict(
-    waveform_seconds=8,
-    waveform_display_hz=120,
-    ui_push_hz=10,
-    ui_heavy_push_hz=4,
-    fft_update_hz=4,
-    fft_n=2048,
-    spectrum_min_hz=5.0,
-    client_ttl_seconds=120,
-    accel_scale_g_per_lsb=None,
-)
+_PROCESSING_DEFAULTS = {
+    "waveform_seconds": 8,
+    "waveform_display_hz": 120,
+    "ui_push_hz": 10,
+    "ui_heavy_push_hz": 4,
+    "fft_update_hz": 4,
+    "fft_n": 2048,
+    "spectrum_min_hz": 5.0,
+    "client_ttl_seconds": 120,
+    "accel_scale_g_per_lsb": None,
+}
 
 
 class TestNyquistFloatDivision:

@@ -24,13 +24,13 @@ from vibesensor.processing import _ALIGNMENT_MIN_OVERLAP, SignalProcessor
 
 
 def _make_processor(**kwargs) -> SignalProcessor:
-    defaults = dict(
-        sample_rate_hz=200,
-        waveform_seconds=2,
-        waveform_display_hz=50,
-        fft_n=256,
-        spectrum_max_hz=100,
-    )
+    defaults = {
+        "sample_rate_hz": 200,
+        "waveform_seconds": 2,
+        "waveform_display_hz": 50,
+        "fft_n": 256,
+        "spectrum_max_hz": 100,
+    }
     defaults.update(kwargs)
     return SignalProcessor(**defaults)
 

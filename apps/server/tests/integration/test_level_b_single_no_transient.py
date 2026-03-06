@@ -64,15 +64,15 @@ def _run_single_fault(
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
     """Create single-sensor fault samples, run analysis, return (summary, top)."""
     sensor = CORNER_SENSORS[corner]
-    kwargs: dict[str, Any] = dict(
-        profile=profile,
-        fault_sensor=sensor,
-        sensors=[sensor],
-        speed_kmh=speed_kmh,
-        n_samples=n_samples,
-        fault_amp=fault_amp,
-        fault_vib_db=fault_vib_db,
-    )
+    kwargs: dict[str, Any] = {
+        "profile": profile,
+        "fault_sensor": sensor,
+        "sensors": [sensor],
+        "speed_kmh": speed_kmh,
+        "n_samples": n_samples,
+        "fault_amp": fault_amp,
+        "fault_vib_db": fault_vib_db,
+    }
     if noise_amp is not None:
         kwargs["noise_amp"] = noise_amp
     if noise_vib_db is not None:

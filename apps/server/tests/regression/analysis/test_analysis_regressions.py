@@ -779,23 +779,23 @@ class TestSingleSensorNotTriplePenalised:
         the explicit sensor-count scale should NOT stack on top."""
         # Call twice: once with n_connected=1, once with n_connected=3
         # (n_connected=3 avoids sensor scale entirely).
-        kwargs = dict(
-            effective_match_rate=0.70,
-            error_score=0.80,
-            corr_val=0.60,
-            snr_score=0.75,
-            absolute_strength_db=18.0,
-            localization_confidence=0.05,  # very low
-            weak_spatial_separation=True,
-            dominance_ratio=1.0,
-            constant_speed=False,
-            steady_speed=False,
-            matched=20,
-            corroborating_locations=1,
-            phases_with_evidence=1,
-            is_diffuse_excitation=False,
-            diffuse_penalty=1.0,
-        )
+        kwargs = {
+            "effective_match_rate": 0.70,
+            "error_score": 0.80,
+            "corr_val": 0.60,
+            "snr_score": 0.75,
+            "absolute_strength_db": 18.0,
+            "localization_confidence": 0.05,  # very low
+            "weak_spatial_separation": True,
+            "dominance_ratio": 1.0,
+            "constant_speed": False,
+            "steady_speed": False,
+            "matched": 20,
+            "corroborating_locations": 1,
+            "phases_with_evidence": 1,
+            "is_diffuse_excitation": False,
+            "diffuse_penalty": 1.0,
+        }
         conf_single = _compute_order_confidence(n_connected_locations=1, **kwargs)
         conf_multi = _compute_order_confidence(n_connected_locations=3, **kwargs)
         # With low localization_confidence, the sensor-count penalty should
@@ -1455,43 +1455,43 @@ class TestSelectReasonKey:
         "kwargs, expected",
         [
             (
-                dict(
-                    confidence=0.9,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=4,
-                    has_reference_gaps=True,
-                ),
+                {
+                    "confidence": 0.9,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 4,
+                    "has_reference_gaps": True,
+                },
                 "reference_gaps",
             ),
             (
-                dict(
-                    confidence=0.9,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=1,
-                    has_reference_gaps=False,
-                ),
+                {
+                    "confidence": 0.9,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 1,
+                    "has_reference_gaps": False,
+                },
                 "single_sensor",
             ),
             (
-                dict(
-                    confidence=0.9,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=4,
-                    has_reference_gaps=False,
-                ),
+                {
+                    "confidence": 0.9,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 4,
+                    "has_reference_gaps": False,
+                },
                 "strong_order_match",
             ),
             (
-                dict(
-                    confidence=0.2,
-                    steady_speed=False,
-                    weak_spatial=False,
-                    sensor_count=4,
-                    has_reference_gaps=False,
-                ),
+                {
+                    "confidence": 0.2,
+                    "steady_speed": False,
+                    "weak_spatial": False,
+                    "sensor_count": 4,
+                    "has_reference_gaps": False,
+                },
                 "weak_order_match",
             ),
         ],

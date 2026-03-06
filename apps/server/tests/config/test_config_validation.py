@@ -26,19 +26,19 @@ def _write_config(path: Path, payload: dict) -> None:
 
 def _make_processing(**overrides: int | float | None) -> ProcessingConfig:
     """Return a ProcessingConfig with sensible defaults, applying *overrides*."""
-    defaults = dict(
-        sample_rate_hz=800,
-        waveform_seconds=8,
-        waveform_display_hz=120,
-        ui_push_hz=10,
-        ui_heavy_push_hz=4,
-        fft_update_hz=4,
-        fft_n=2048,
-        spectrum_min_hz=5.0,
-        spectrum_max_hz=200,
-        client_ttl_seconds=120,
-        accel_scale_g_per_lsb=None,
-    )
+    defaults = {
+        "sample_rate_hz": 800,
+        "waveform_seconds": 8,
+        "waveform_display_hz": 120,
+        "ui_push_hz": 10,
+        "ui_heavy_push_hz": 4,
+        "fft_update_hz": 4,
+        "fft_n": 2048,
+        "spectrum_min_hz": 5.0,
+        "spectrum_max_hz": 200,
+        "client_ttl_seconds": 120,
+        "accel_scale_g_per_lsb": None,
+    }
     defaults.update(overrides)
     return ProcessingConfig(**defaults)  # type: ignore[arg-type]
 
@@ -224,13 +224,13 @@ class TestUDPConfigValidation:
     @pytest.mark.parametrize("field", ["data_port", "control_port"])
     @pytest.mark.parametrize("bad_value", [0, -1, 65536])
     def test_invalid_port_rejected(self, field: str, bad_value: int) -> None:
-        kwargs = dict(
-            data_host="0.0.0.0",
-            data_port=9000,
-            control_host="0.0.0.0",
-            control_port=9001,
-            data_queue_maxsize=1024,
-        )
+        kwargs = {
+            "data_host": "0.0.0.0",
+            "data_port": 9000,
+            "control_host": "0.0.0.0",
+            "control_port": 9001,
+            "data_queue_maxsize": 1024,
+        }
         kwargs[field] = bad_value
         with pytest.raises(ValueError, match=field):
             UDPConfig(**kwargs)
@@ -256,16 +256,16 @@ class TestLoggingConfigValidation:
     """LoggingConfig clamping for numeric fields."""
 
     def _make(self, **overrides) -> LoggingConfig:
-        defaults = dict(
-            log_metrics=True,
-            metrics_log_path=Path("/tmp/metrics"),
-            metrics_log_hz=4,
-            no_data_timeout_s=15.0,
-            sensor_model="ADXL345",
-            history_db_path=Path("/tmp/history.db"),
-            persist_history_db=True,
-            shutdown_analysis_timeout_s=30.0,
-        )
+        defaults = {
+            "log_metrics": True,
+            "metrics_log_path": Path("/tmp/metrics"),
+            "metrics_log_hz": 4,
+            "no_data_timeout_s": 15.0,
+            "sensor_model": "ADXL345",
+            "history_db_path": Path("/tmp/history.db"),
+            "persist_history_db": True,
+            "shutdown_analysis_timeout_s": 30.0,
+        }
         defaults.update(overrides)
         return LoggingConfig(**defaults)
 

@@ -204,19 +204,19 @@ def _make_logger(tmp_path: Path, **overrides):
         fft_window_size_samples=config_overrides.get("fft_window_size_samples", 256),
         persist_history_db=config_overrides.get("persist_history_db", False),
     )
-    collab_defaults = dict(
-        registry=registry,
-        gps_monitor=GPSSpeedMonitor(gps_enabled=False),
-        processor=SignalProcessor(
+    collab_defaults = {
+        "registry": registry,
+        "gps_monitor": GPSSpeedMonitor(gps_enabled=False),
+        "processor": SignalProcessor(
             sample_rate_hz=800,
             waveform_seconds=5,
             waveform_display_hz=60,
             fft_n=256,
             spectrum_max_hz=200,
         ),
-        analysis_settings=AnalysisSettingsStore(),
-        history_db=db,
-    )
+        "analysis_settings": AnalysisSettingsStore(),
+        "history_db": db,
+    }
     collab_defaults.update(overrides)
     return MetricsLogger(config, **collab_defaults), db
 

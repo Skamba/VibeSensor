@@ -162,12 +162,12 @@ from vibesensor.processing.fft import medfilt3
 
 
 def _make_processor(**overrides) -> SignalProcessor:
-    defaults = dict(
-        sample_rate_hz=100,
-        waveform_seconds=1,
-        waveform_display_hz=50,
-        fft_n=32,
-    )
+    defaults = {
+        "sample_rate_hz": 100,
+        "waveform_seconds": 1,
+        "waveform_display_hz": 50,
+        "fft_n": 32,
+    }
     defaults.update(overrides)
     return SignalProcessor(**defaults)
 

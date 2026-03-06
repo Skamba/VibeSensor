@@ -517,13 +517,13 @@ from vibesensor.ws_hub import WebSocketHub
 
 
 def _proc(**kwargs) -> SignalProcessor:
-    defaults = dict(
-        sample_rate_hz=800,
-        waveform_seconds=4,
-        waveform_display_hz=100,
-        fft_n=512,
-        spectrum_max_hz=200,
-    )
+    defaults = {
+        "sample_rate_hz": 800,
+        "waveform_seconds": 4,
+        "waveform_display_hz": 100,
+        "fft_n": 512,
+        "spectrum_max_hz": 200,
+    }
     defaults.update(kwargs)
     return SignalProcessor(**defaults)
 
@@ -1278,8 +1278,8 @@ class TestDetectDiffuseExcitation:
 
     def test_uniform_rates_uniform_amplitude_is_diffuse(self) -> None:
         locs = {"front_left", "front_right", "rear"}
-        possible = {loc: 30 for loc in locs}
-        matched = {loc: 20 for loc in locs}
+        possible = dict.fromkeys(locs, 30)
+        matched = dict.fromkeys(locs, 20)
         pts = [{"location": loc, "amp": 0.05} for loc in locs for _ in range(20)]
         is_diff, penalty = _detect_diffuse_excitation(locs, possible, matched, pts)
         assert is_diff, "Uniform rates + uniform amplitude should be diffuse"

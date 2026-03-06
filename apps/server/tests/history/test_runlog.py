@@ -26,17 +26,17 @@ from vibesensor.runlog import (
 
 def _make_run_metadata(*, run_id: str = "r1", **overrides) -> dict:
     """Build a ``create_run_metadata`` dict with sensible test defaults."""
-    defaults = dict(
-        run_id=run_id,
-        start_time_utc="2025-01-01T00:00:00Z",
-        sensor_model="ADXL345",
-        raw_sample_rate_hz=200,
-        feature_interval_s=0.5,
-        fft_window_size_samples=256,
-        fft_window_type="hann",
-        peak_picker_method="max_peak_amp_across_axes",
-        accel_scale_g_per_lsb=1.0 / 256.0,
-    )
+    defaults = {
+        "run_id": run_id,
+        "start_time_utc": "2025-01-01T00:00:00Z",
+        "sensor_model": "ADXL345",
+        "raw_sample_rate_hz": 200,
+        "feature_interval_s": 0.5,
+        "fft_window_size_samples": 256,
+        "fft_window_type": "hann",
+        "peak_picker_method": "max_peak_amp_across_axes",
+        "accel_scale_g_per_lsb": 1.0 / 256.0,
+    }
     defaults.update(overrides)
     return create_run_metadata(**defaults)
 

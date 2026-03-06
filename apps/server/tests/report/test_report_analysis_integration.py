@@ -1031,10 +1031,10 @@ def test_build_order_findings_multi_phase_higher_confidence_than_single_phase() 
     # Spread across two phases so both report high match rates
     phases_multi = [DrivingPhase.CRUISE] * 10 + [DrivingPhase.ACCELERATION] * 10
 
-    _common: dict[str, object] = dict(
-        speed_stddev_kmh=5.0,
-        engine_ref_sufficient=False,
-    )
+    _common: dict[str, object] = {
+        "speed_stddev_kmh": 5.0,
+        "engine_ref_sufficient": False,
+    }
     single_findings = _call_build_order_findings(
         samples, per_sample_phases=phases_single, **_common
     )
