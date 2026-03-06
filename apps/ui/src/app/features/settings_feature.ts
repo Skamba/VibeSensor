@@ -149,7 +149,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   async function loadAnalysisSettingsFromServer(): Promise<void> {
     try {
       const serverSettings = await getAnalysisSettings();
-      if (serverSettings && typeof serverSettings === "object") {
+      if (serverSettings) {
         for (const key of Object.keys(serverSettings)) {
           if (typeof serverSettings[key] === "number") state.vehicleSettings[key] = serverSettings[key];
         }
@@ -332,7 +332,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
       const payload: Record<string, unknown> = { name, type: carType, aspects: fullAspects };
       if (variant) payload.variant = variant;
       const result = await addSettingsCar(payload);
-      if (Array.isArray(result?.cars)) {
+      if (Array.isArray(result.cars)) {
         applyCarsPayload(result);
         const newCar = state.cars[state.cars.length - 1];
         if (newCar) {
@@ -361,7 +361,7 @@ export function createSettingsFeature(ctx: SettingsFeatureDeps): SettingsFeature
   }
 
   function speedKmhInSelectedUnit(speedKmh: number | null): number | null {
-    if (typeof speedKmh !== "number" || !Number.isFinite(speedKmh)) return null;
+    if (speedKmh === null || !Number.isFinite(speedKmh)) return null;
     return state.speedUnit === "mps" ? speedKmh / 3.6 : speedKmh;
   }
 
