@@ -1,16 +1,16 @@
-.PHONY: setup format lint test test-fast test-all test-ci test-full-suite smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
+.PHONY: setup format lint test test-fast test-all test-ci test-full-suite smoke loc docs-lint ui-typecheck ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
 
 setup:
+	python3 -m pip install --upgrade pip
 	python3 -m pip install -e "./apps/server[dev]"
 	cd apps/ui && npm ci
 
 format:
-	ruff format apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
+	ruff format apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
 
 lint:
-	ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
-	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python
-
+	ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
+	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
 test:
 	python3 -m pytest -q -m "not selenium" apps/server/tests
 
@@ -34,6 +34,9 @@ loc:
 
 docs-lint:
 	python3 tools/dev/docs_lint.py
+
+ui-typecheck:
+	cd apps/ui && npm run typecheck
 
 ai-check:
 	@scripts/ai/task ai:check
