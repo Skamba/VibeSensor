@@ -558,13 +558,28 @@ class HistoryDB:
 
     # -- read -----------------------------------------------------------------
 
-    def list_runs(self) -> list[dict[str, Any]]:
+    def list_runs(self, limit: int = 500) -> list[dict[str, Any]]:
+        """Return up to *limit* run summaries ordered newest-first.
+
+        The default cap of 500 prevents unbounded memory consumption on
+        Raspberry Pi hardware when many runs have accumulated.  Pass
+        ``limit=0`` to fetch all rows (use only when the total count is
+        known to be small).
+        """
         with self._cursor(commit=False) as cur:
-            cur.execute(
-                "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
-                "r.created_at, r.error_message, r.sample_count, r.analysis_version "
-                "FROM runs r ORDER BY r.created_at DESC"
-            )
+            if limit > 0:
+                cur.execute(
+                    "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
+                    "r.created_at, r.error_message, r.sample_count, r.analysis_version "
+                    "FROM runs r ORDER BY r.created_at DESC LIMIT ?",
+                    (limit,),
+                )
+            else:
+                cur.execute(
+                    "SELECT r.run_id, r.status, r.start_time_utc, r.end_time_utc, "
+                    "r.created_at, r.error_message, r.sample_count, r.analysis_version "
+                    "FROM runs r ORDER BY r.created_at DESC"
+                )
             rows = cur.fetchall()
         result: list[dict[str, Any]] = []
         for row in rows:
