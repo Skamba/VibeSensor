@@ -238,6 +238,13 @@ class WebSocketHub:
         payload_builder: Callable[[str | None], dict],
         on_tick: Callable[[], None] | None = None,
     ) -> None:
+        """Drive broadcast ticks at *hz* frames per second until cancelled.
+
+        *on_tick* (if provided) is called synchronously before each broadcast so
+        the caller can update shared state atomically with payload generation.
+        Consecutive broadcast failures trigger back-off to avoid thundering-herd
+        log spam.
+        """
         interval = 1.0 / max(1, hz)
         _consecutive_failures = 0
         loop = asyncio.get_running_loop()
