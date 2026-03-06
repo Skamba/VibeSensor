@@ -134,6 +134,7 @@ class UpdateManager:
         ap_con_name: str = "VibeSensor-AP",
         wifi_ifname: str = "wlan0",
         rollback_dir: str | None = None,
+        server_repo: str | None = None,
         state_store: UpdateStateStore | None = None,
     ) -> None:
         self._runner = runner or CommandRunner()
@@ -145,6 +146,7 @@ class UpdateManager:
         self._rollback_dir = Path(
             rollback_dir or os.environ.get("VIBESENSOR_ROLLBACK_DIR", DEFAULT_ROLLBACK_DIR)
         )
+        self._server_repo = server_repo or os.environ.get("VIBESENSOR_SERVER_REPO", "")
         self._state_store = state_store or UpdateStateStore()
         self._repo = Path(self._repo_path)
 
@@ -752,7 +754,10 @@ class UpdateManager:
         from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
 
         fetcher = ServerReleaseFetcher(
-            ReleaseFetcherConfig(rollback_dir=str(self._rollback_dir)),
+            ReleaseFetcherConfig(
+                server_repo=self._server_repo,
+                rollback_dir=str(self._rollback_dir),
+            ),
         )
 
         try:
