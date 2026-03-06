@@ -229,8 +229,12 @@ class UpdateManager:
                 message="Update interrupted by server restart",
             )
         )
+        # Persist immediately so a crash during network cleanup still records the
+        # failed state rather than leaving the job stuck in 'running'.
+        self._persist_status()
 
         # Best-effort network cleanup
+        self._log("startup_recover: cleaning up uplink connection")
         try:
             await cleanup_uplink(self._runner)
         except Exception as exc:
@@ -242,6 +246,7 @@ class UpdateManager:
                 )
             )
 
+        self._log("startup_recover: restoring hotspot")
         try:
             ok = await restore_hotspot(self._runner, self._ap_con_name)
             if not ok:
@@ -251,6 +256,9 @@ class UpdateManager:
                         message="Failed to restore hotspot after interrupted update",
                     )
                 )
+                self._log("startup_recover: hotspot restore failed")
+            else:
+                self._log("startup_recover: hotspot restored successfully")
         except Exception as exc:
             self._status.issues.append(
                 UpdateIssue(
