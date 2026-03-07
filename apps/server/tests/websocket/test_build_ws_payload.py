@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from vibesensor.app import RuntimeState
+    from vibesensor.runtime import RuntimeState
 
 # ---------------------------------------------------------------------------
 # Minimal stubs – only implement methods called by build_ws_payload / on_ws_broadcast_tick

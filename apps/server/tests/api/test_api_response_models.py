@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi import FastAPI
 
-from vibesensor.api import create_router
+from vibesensor.routes import create_router
 
 
 @pytest.fixture(scope="module")

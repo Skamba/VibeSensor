@@ -217,7 +217,6 @@ class TestComputeFftSpectrum:
 
         expected_keys = {
             "freq_slice",
-            "valid_idx",
             "spectrum_by_axis",
             "axis_amp_slices",
             "axis_amps",

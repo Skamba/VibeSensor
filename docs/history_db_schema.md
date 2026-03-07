@@ -11,7 +11,6 @@ application settings and client names in a single SQLite file located at
 | Low overhead on Raspberry Pi 3A+ | WAL journal mode, batched inserts (256 rows), typed columns (no per-row JSON parsing) |
 | Efficient long recordings | Keyset pagination (`id > ?`), streaming iterator, no full-run memory load |
 | Queryable time-series | Typed columns for accel, speed, frequency, strength; indexed by `(run_id, t_s)` |
-| Backward compatibility | Legacy v4 JSON-blob rows remain readable; auto-migration on first open |
 
 ## Tables
 
@@ -88,20 +87,6 @@ are stored as typed columns; peak arrays use compact JSON in TEXT columns.
 - `idx_samples_v2_run_id` on `(run_id)` — fast lookup by run
 - `idx_samples_v2_run_time` on `(run_id, t_s)` — time-range queries
 
-### `samples` (legacy, v4)
-
-Only present in databases migrated from v4. One row per sample with
-the entire payload stored as a JSON blob.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER PK | Auto-increment row ID |
-| `run_id` | TEXT FK | References `runs(run_id)` with `ON DELETE CASCADE` |
-| `sample_json` | TEXT | Full sample payload as JSON |
-
-Legacy rows are read transparently when no `samples_v2` rows exist for
-a given run.
-
 ### `settings_kv`
 
 Persistent application settings.
@@ -130,15 +115,8 @@ checks the stored version (the text value of the `'version'` key):
 | Stored version | Action |
 |----------------|--------|
 | No row (fresh DB, `schema_meta` table just created) | Create all v5 tables, insert version `'5'` |
-| `'4'` | Run migration: create `samples_v2` table + indexes, bump to `'5'`. Legacy `samples` table is kept as-is. |
 | `'5'` | No action needed |
-| Anything else | Raise `RuntimeError` (delete and recreate) |
-
-**Migration from v4 to v5** is non-destructive:
-- The old `samples` table is **not** deleted or modified.
-- New `samples_v2` table and indexes are created.
-- New runs write to `samples_v2`; old runs read from `samples`.
-- No data copying is needed — old JSON rows remain readable.
+| Anything else | Raise `RuntimeError` (delete and recreate the database file) |
 
 ## Performance settings
 

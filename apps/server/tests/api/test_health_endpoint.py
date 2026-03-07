@@ -8,7 +8,7 @@ import pytest
 @pytest.fixture
 def _health_router(fake_state):
     """Return ``(router, state)`` for health-endpoint tests."""
-    from vibesensor.api import create_router
+    from vibesensor.routes import create_router
 
     fake_state.processing_state = "ok"
     fake_state.processing_failure_count = 0

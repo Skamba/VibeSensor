@@ -59,9 +59,6 @@ MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
 """Per-online ESP firmware cache refresh timeout."""
 
-DEFAULT_GIT_REMOTE = "https://github.com/Skamba/VibeSensor.git"
-DEFAULT_GIT_BRANCH = "main"
-
 DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
 
 UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
@@ -142,8 +139,6 @@ class UpdateManager:
         *,
         runner: CommandRunner | None = None,
         repo_path: str | None = None,
-        git_remote: str | None = None,
-        git_branch: str | None = None,
         ap_con_name: str = "VibeSensor-AP",
         wifi_ifname: str = "wlan0",
         rollback_dir: str | None = None,
@@ -152,8 +147,6 @@ class UpdateManager:
     ) -> None:
         self._runner = runner or CommandRunner()
         self._repo_path = repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor")
-        self._git_remote = git_remote or os.environ.get("VIBESENSOR_GIT_REMOTE", DEFAULT_GIT_REMOTE)
-        self._git_branch = git_branch or os.environ.get("VIBESENSOR_GIT_BRANCH", DEFAULT_GIT_BRANCH)
         self._ap_con_name = ap_con_name
         self._wifi_ifname = wifi_ifname
         self._rollback_dir = Path(
@@ -365,7 +358,6 @@ class UpdateManager:
         args: list[str],
         *,
         timeout: float = NMCLI_TIMEOUT_S,
-        env: dict[str, str] | None = None,
         phase: str = "",
         sudo: bool = False,
     ) -> tuple[int, str, str]:
@@ -375,7 +367,7 @@ class UpdateManager:
         if len(cmd_for_log) > 500:
             cmd_for_log = f"{cmd_for_log[:497]}..."
         self._log(f"[{phase}] $ {cmd_for_log}")
-        rc, stdout, stderr = await self._runner.run(args, timeout=timeout, env=env)
+        rc, stdout, stderr = await self._runner.run(args, timeout=timeout)
         stdout_s = stdout.strip()
         stderr_s = stderr.strip()
         if stdout_s:

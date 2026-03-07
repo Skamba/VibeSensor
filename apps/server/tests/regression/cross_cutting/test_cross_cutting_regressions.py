@@ -802,11 +802,11 @@ import json
 import pytest
 from _paths import REPO_ROOT
 
-from vibesensor.api import _flatten_for_csv
 from vibesensor.esp_flash_manager import EspFlashManager
 from vibesensor.processing import SignalProcessor
 from vibesensor.report import pdf_diagram
 from vibesensor.report_cli import main as report_cli_main
+from vibesensor.routes.history import flatten_for_csv as _flatten_for_csv
 from vibesensor.ws_hub import WebSocketHub
 
 _PDF_DIAGRAM_SRC = inspect.getsource(pdf_diagram)

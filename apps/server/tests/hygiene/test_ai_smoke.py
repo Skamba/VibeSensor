@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import pytest
 from _paths import REPO_ROOT, SERVER_ROOT
 
-from vibesensor.api import create_router
+from vibesensor.routes import create_router
 
 # ---------------------------------------------------------------------------
 # Fixtures – read shared files once per module

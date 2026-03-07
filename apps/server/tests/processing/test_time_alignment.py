@@ -16,7 +16,8 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from vibesensor.processing import _ALIGNMENT_MIN_OVERLAP, SignalProcessor
+from vibesensor.processing import SignalProcessor
+from vibesensor.processing.time_align import _ALIGNMENT_MIN_OVERLAP
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -257,35 +258,6 @@ class TestCmdSyncClockProtocol:
         from vibesensor.protocol import CMD_SYNC_CLOCK_BYTES, CMD_SYNC_CLOCK_STRUCT
 
         assert CMD_SYNC_CLOCK_STRUCT.size == CMD_SYNC_CLOCK_BYTES
-
-
-# ---------------------------------------------------------------------------
-# first_ingest_mono_s tracking
-# ---------------------------------------------------------------------------
-
-
-class TestFirstIngestTracking:
-    def test_first_ingest_set_on_first_data(self) -> None:
-        proc = _make_processor()
-        _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0)
-        # Access buffer internals (white-box test)
-        buf = proc._buffers["s1"]
-        assert buf.first_ingest_mono_s == pytest.approx(42.0)
-
-    def test_first_ingest_not_reset_on_subsequent_data(self) -> None:
-        proc = _make_processor()
-        _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0)
-        _fill_sensor(proc, "s1", n_samples=100, mono_time=43.0)
-        buf = proc._buffers["s1"]
-        assert buf.first_ingest_mono_s == pytest.approx(42.0)
-        assert buf.last_ingest_mono_s == pytest.approx(43.0)
-
-    def test_first_ingest_reset_on_flush(self) -> None:
-        proc = _make_processor()
-        _fill_sensor(proc, "s1", n_samples=100, mono_time=42.0)
-        proc.flush_client_buffer("s1")
-        buf = proc._buffers["s1"]
-        assert buf.first_ingest_mono_s == 0.0
 
 
 # ---------------------------------------------------------------------------

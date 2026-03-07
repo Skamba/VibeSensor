@@ -151,7 +151,7 @@ def test_resolve_variant_unknown_name_returns_base() -> None:
 
 def test_car_library_models_response_accepts_variants() -> None:
     """CarLibraryModelsResponse validates entries with variants."""
-    from vibesensor.api import CarLibraryModelsResponse
+    from vibesensor.api_models import CarLibraryModelsResponse
 
     models = get_models_for_brand_type("BMW", "Sedan")
     resp = CarLibraryModelsResponse(models=models)

@@ -13,7 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from vibesensor.metrics_log import _MAX_HISTORY_CREATE_RETRIES, MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
+from vibesensor.metrics_log.logger import _MAX_HISTORY_CREATE_RETRIES
 
 # -- Minimal fakes -----------------------------------------------------------
 

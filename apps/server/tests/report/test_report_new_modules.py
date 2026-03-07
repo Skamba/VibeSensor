@@ -26,7 +26,7 @@ from vibesensor.analysis.strength_labels import certainty_label, strength_label,
 from vibesensor.analysis.summary import _most_likely_origin_summary
 from vibesensor.report.pdf_builder import build_report_pdf
 from vibesensor.report.pdf_layout import assert_aspect_preserved, fit_rect_preserve_aspect
-from vibesensor.report.report_data import ObservedSignature, ReportTemplateData
+from vibesensor.report.report_data import ReportTemplateData
 
 # ---------------------------------------------------------------------------
 # strength_label / strength_text
@@ -340,9 +340,7 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
         },
     ]
 
-    origin = _most_likely_origin_summary(findings, "en")
-
-    assert origin["weak_spatial_separation"] is True
+    origin = _most_likely_origin_summary(findings)
     assert origin["location"] == "Rear Left / Front Right"
     assert origin["alternative_locations"] == ["Front Right"]
 
@@ -359,15 +357,15 @@ def _assert_no_phase_onset(explanation: object) -> None:
 
 
 @pytest.mark.parametrize(
-    ("phase", "location", "speed_band", "confidence", "lang"),
+    ("phase", "location", "speed_band", "confidence"),
     [
-        ("acceleration", "Front Right", "60-80 km/h", 0.75, "en"),
-        ("deceleration", "Rear Left", "40-60 km/h", 0.70, "nl"),
+        ("acceleration", "Front Right", "60-80 km/h", 0.75),
+        ("deceleration", "Rear Left", "40-60 km/h", 0.70),
     ],
     ids=["acceleration_en", "deceleration_nl"],
 )
 def test_most_likely_origin_summary_phase_onset(
-    phase: str, location: str, speed_band: str, confidence: float, lang: str
+    phase: str, location: str, speed_band: str, confidence: float
 ) -> None:
     """Phase onset note is included for acceleration/deceleration phases."""
     findings = [
@@ -382,7 +380,7 @@ def test_most_likely_origin_summary_phase_onset(
         }
     ]
 
-    origin = _most_likely_origin_summary(findings, lang)
+    origin = _most_likely_origin_summary(findings)
 
     assert origin["dominant_phase"] == phase
     explanation = origin["explanation"]
@@ -409,7 +407,7 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
         }
     ]
 
-    origin = _most_likely_origin_summary(findings, "en")
+    origin = _most_likely_origin_summary(findings)
 
     # cruise is not a notable onset phase — no onset addendum
     _assert_no_phase_onset(origin["explanation"])
@@ -428,7 +426,7 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
         }
     ]
 
-    origin = _most_likely_origin_summary(findings, "en")
+    origin = _most_likely_origin_summary(findings)
 
     assert origin["dominant_phase"] is None
     _assert_no_phase_onset(origin["explanation"])
@@ -628,90 +626,3 @@ def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
     assert b"samples detected." in pdf
     assert b"3 dropped frames" in pdf
     assert b"queue overflows" in pdf
-
-
-# ---------------------------------------------------------------------------
-# Phase fields: ObservedSignature.phase and ReportTemplateData.phase_info
-# ---------------------------------------------------------------------------
-
-
-def test_map_summary_phase_fields_populated_from_phase_info() -> None:
-    """map_summary populates observed.phase and phase_info from summary phase_info."""
-    summary = minimal_summary(
-        lang="en",
-        top_causes=[
-            {
-                "source": "wheel/tire",
-                "strongest_location": "Rear Left",
-                "strongest_speed_band": "70-80 km/h",
-                "confidence": 0.75,
-                "signatures_observed": ["1x wheel order"],
-            }
-        ],
-        phase_info={
-            "phase_counts": {"idle": 5, "cruise": 30, "acceleration": 10},
-            "phase_pcts": {"idle": 11.1, "cruise": 66.7, "acceleration": 22.2},
-            "total_samples": 45,
-            "segment_count": 3,
-            "has_cruise": True,
-            "has_acceleration": True,
-            "cruise_pct": 66.7,
-            "idle_pct": 11.1,
-        },
-    )
-    data = map_summary(summary)
-
-    # observed.phase should be the dominant non-idle phase (cruise with 30 samples)
-    assert data.observed.phase == "cruise"
-    # phase_info should be forwarded onto the template data
-    assert isinstance(data.phase_info, dict)
-    assert data.phase_info["has_cruise"] is True
-    assert data.phase_info["cruise_pct"] == pytest.approx(66.7)
-
-
-def test_map_summary_phase_fields_none_when_no_phase_info() -> None:
-    """map_summary sets phase fields to None when phase_info is absent."""
-    summary = minimal_summary()
-    data = map_summary(summary)
-
-    assert data.observed.phase is None
-    assert data.phase_info is None
-
-
-def test_map_summary_dominant_phase_excludes_idle() -> None:
-    """dominant phase selection skips idle even if it has more samples."""
-    summary = minimal_summary(
-        lang="en",
-        phase_info={
-            "phase_counts": {"idle": 100, "acceleration": 20, "cruise": 15},
-            "phase_pcts": {"idle": 74.1, "acceleration": 14.8, "cruise": 11.1},
-            "total_samples": 135,
-            "segment_count": 4,
-            "has_cruise": True,
-            "has_acceleration": True,
-            "cruise_pct": 11.1,
-            "idle_pct": 74.1,
-        },
-    )
-    data = map_summary(summary)
-
-    # idle (100) must be skipped; acceleration (20) wins over cruise (15)
-    assert data.observed.phase == "acceleration"
-
-
-def test_observed_signature_has_phase_field() -> None:
-    """ObservedSignature dataclass exposes a phase field defaulting to None."""
-    sig = ObservedSignature()
-    assert sig.phase is None
-
-    sig2 = ObservedSignature(phase="cruise")
-    assert sig2.phase == "cruise"
-
-
-def test_report_template_data_has_phase_info_field() -> None:
-    """ReportTemplateData dataclass exposes a phase_info field defaulting to None."""
-    data = ReportTemplateData()
-    assert data.phase_info is None
-
-    data2 = ReportTemplateData(phase_info={"cruise_pct": 80.0})
-    assert data2.phase_info == {"cruise_pct": 80.0}

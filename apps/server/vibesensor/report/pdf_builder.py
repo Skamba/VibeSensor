@@ -23,9 +23,8 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from .i18n import tr as _tr
+from ..report_i18n import tr as _tr
 from .pdf_diagram import car_location_diagram
-from .pdf_helpers import location_hotspots
 from .pdf_layout import assert_aspect_preserved, fit_rect_preserve_aspect
 from .report_data import (
     NextStep,
@@ -1132,15 +1131,7 @@ def _build_canvas_pdf(data: ReportTemplateData) -> bytes:
         return nl if lang == "nl" else en
 
     # Use pre-computed location hotspot rows when available.
-    if data.location_hotspot_rows:
-        location_rows = data.location_hotspot_rows
-    else:
-        location_rows, _, _, _ = location_hotspots(
-            [],  # no raw samples — use findings path only
-            data.findings,
-            tr=tr_fn,
-            text_fn=text_fn,
-        )
+    location_rows = data.location_hotspot_rows
 
     # Pre-computed top causes from ReportTemplateData.
     top_causes = data.top_causes

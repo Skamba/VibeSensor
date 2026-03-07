@@ -40,7 +40,7 @@ from .runlog import utc_now_iso
 from .settings_store import SettingsStore
 from .udp_control_tx import UDPControlPlane
 from .udp_data_rx import start_udp_data_receiver
-from .update_manager import UpdateManager
+from .update.manager import UpdateManager
 from .worker_pool import WorkerPool
 from .ws_hub import WebSocketHub
 from .ws_models import SCHEMA_VERSION

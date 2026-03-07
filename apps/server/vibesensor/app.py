@@ -38,7 +38,7 @@ from .update.manager import UpdateManager
 from .worker_pool import WorkerPool
 from .ws_hub import WebSocketHub
 
-__all__ = ["RuntimeState", "create_app", "main"]
+__all__ = ["create_app", "main"]
 
 LOGGER = logging.getLogger(__name__)
 

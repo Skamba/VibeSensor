@@ -23,7 +23,6 @@ from ._types import (
 from .active_levels import (
     build_active_levels_by_location,
     collect_active_levels_from_trackers,
-    location_key,
     update_sensor_active_level,
     upsert_active_level,
 )
@@ -140,17 +139,9 @@ class LiveDiagnosticsEngine:
     ) -> str | None:
         return matrix_transition_bucket(previous_bucket, current_bucket)
 
-    @staticmethod
-    def _location_key(sensor_location: str) -> str | None:
-        return location_key(sensor_location)
-
     @property
     def _phase_speed_history(self) -> deque[tuple[float, float | None]]:
         return self._phase.speed_history
-
-    @_phase_speed_history.setter
-    def _phase_speed_history(self, value: deque[tuple[float, float | None]]) -> None:
-        self._phase.speed_history = value
 
     # ------------------------------------------------------------------
     # Snapshot

@@ -288,7 +288,7 @@ def test_top_peaks_handles_nan_noise_floor() -> None:
 
 def test_compute_overlap_empty_lists() -> None:
     """_compute_overlap must not crash on empty input lists."""
-    from vibesensor.processing import _compute_overlap
+    from vibesensor.processing.time_align import compute_overlap as _compute_overlap
 
     result = _compute_overlap([], [])
     assert result.overlap_ratio == 0.0
@@ -297,7 +297,7 @@ def test_compute_overlap_empty_lists() -> None:
 
 def test_compute_overlap_mismatched_lengths() -> None:
     """_compute_overlap returns zero-overlap when starts/ends lengths differ."""
-    from vibesensor.processing import _compute_overlap
+    from vibesensor.processing.time_align import compute_overlap as _compute_overlap
 
     result = _compute_overlap([1.0, 2.0], [3.0])
     assert result.overlap_ratio == 0.0
@@ -307,7 +307,7 @@ def test_compute_overlap_mismatched_lengths() -> None:
 
 def test_compute_overlap_single_range() -> None:
     """_compute_overlap handles a single time range correctly."""
-    from vibesensor.processing import _compute_overlap
+    from vibesensor.processing.time_align import compute_overlap as _compute_overlap
 
     result = _compute_overlap([0.0], [10.0])
     assert result.overlap_ratio == 1.0
@@ -319,7 +319,7 @@ def test_compute_overlap_single_range() -> None:
 
 def test_compute_overlap_partial_overlap() -> None:
     """_compute_overlap correctly computes partial overlap between two ranges."""
-    from vibesensor.processing import _compute_overlap
+    from vibesensor.processing.time_align import compute_overlap as _compute_overlap
 
     result = _compute_overlap([0.0, 5.0], [10.0, 15.0])
     # Shared: max(0,5)=5 to min(10,15)=10 => 5s overlap
@@ -332,7 +332,7 @@ def test_compute_overlap_partial_overlap() -> None:
 
 def test_compute_overlap_no_overlap() -> None:
     """_compute_overlap returns zero overlap for disjoint ranges."""
-    from vibesensor.processing import _compute_overlap
+    from vibesensor.processing.time_align import compute_overlap as _compute_overlap
 
     result = _compute_overlap([0.0, 20.0], [10.0, 30.0])
     # Shared: max(0,20)=20 to min(10,30)=10 => negative => 0

@@ -8,12 +8,8 @@ import pytest
 from fastapi import FastAPI
 
 from vibesensor.analysis_settings import AnalysisSettingsStore
-from vibesensor.api import (
-    ActiveCarRequest,
-    AnalysisSettingsRequest,
-    CarUpsertRequest,
-    create_router,
-)
+from vibesensor.api_models import ActiveCarRequest, AnalysisSettingsRequest, CarUpsertRequest
+from vibesensor.routes import create_router
 from vibesensor.settings_store import SettingsStore
 
 

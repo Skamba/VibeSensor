@@ -9,7 +9,7 @@ import pytest
 from _test_helpers import wait_until
 
 from vibesensor.history_db import HistoryDB
-from vibesensor.metrics_log import MetricsLogger
+from vibesensor.metrics_log.sample_builder import safe_metric
 
 # -- MetricsLogger._safe_metric ------------------------------------------------
 
@@ -33,7 +33,7 @@ from vibesensor.metrics_log import MetricsLogger
     ],
 )
 def test_safe_metric(metrics: dict, axis: str, key: str, expected: float | None) -> None:
-    assert MetricsLogger._safe_metric(metrics, axis, key) == expected
+    assert safe_metric(metrics, axis, key) == expected
 
 
 class _ReverseOnlySamples:

@@ -323,7 +323,7 @@ def select_top_causes(
     return result
 
 
-def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> dict[str, Any]:
+def _most_likely_origin_summary(findings: list[dict[str, Any]]) -> dict[str, Any]:
     if not findings:
         return {
             "location": _UNKNOWN,
@@ -364,7 +364,6 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
 
     # Spatial disambiguation: check if second-ranked finding disagrees on
     # location with similar confidence — strengthens the "weak" flag.
-    spatial_disagreement = False
     if len(findings) >= 2:
         second = findings[1]
         second_loc = str(second.get("strongest_location") or "").strip()
@@ -377,7 +376,6 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
             and top_conf > 0
             and second_conf / top_conf >= 0.7  # within 30% confidence
         ):
-            spatial_disagreement = True
             weak = True
             if second_loc not in alternative_locations:
                 alternative_locations.append(second_loc)
@@ -416,7 +414,6 @@ def _most_likely_origin_summary(findings: list[dict[str, Any]], lang: str) -> di
         "source": source,
         "dominance_ratio": dominance,
         "weak_spatial_separation": weak,
-        "spatial_disagreement": spatial_disagreement,
         "speed_band": speed_band or None,
         "dominant_phase": dominant_phase or None,
         "explanation": explanation,
@@ -641,7 +638,6 @@ def _compute_frame_integrity_counts(
 
 
 def _build_run_suitability_checks(
-    language: str,
     steady_speed: bool,
     speed_sufficient: bool,
     sensor_ids: set[str],
@@ -859,7 +855,7 @@ def summarize_run_data(
     _diagnostic_for_origin = [
         f for f in findings if not str(f.get("finding_id", "")).startswith("REF_")
     ]
-    most_likely_origin = _most_likely_origin_summary(_diagnostic_for_origin, language)
+    most_likely_origin = _most_likely_origin_summary(_diagnostic_for_origin)
     test_plan = _merge_test_plan(findings, language)
     phase_timeline = _build_phase_timeline(phase_segments, findings)
 
@@ -870,7 +866,6 @@ def summarize_run_data(
     steady_speed = bool(speed_stats.get("steady_speed"))
     sensor_ids = {str(cid) for s in samples if isinstance(s, dict) and (cid := s.get("client_id"))}
     run_suitability = _build_run_suitability_checks(
-        language=language,
         steady_speed=steady_speed,
         speed_sufficient=speed_sufficient,
         sensor_ids=sensor_ids,
