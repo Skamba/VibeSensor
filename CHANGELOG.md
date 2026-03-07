@@ -19,6 +19,18 @@
 - **Removed backward-compat import tests** — ``test_backward_compat_imports_via_analysis_findings``
   and ``TestBackwardCompatReExports`` deleted; these imports are now the
   standard API path.
+- **Removed ``REPORT_FIELDS``/``METRIC_FIELDS`` indirection** — These were
+  identity-mapping dicts (key == value) loaded from JSON. All consumers now
+  use direct string literals (``"vibration_strength_db"``, etc.) instead.
+- **Removed ``findings/__init__.py`` re-exports** — Package-level re-exports
+  deleted. Import directly from submodules: ``findings.builder``,
+  ``findings.order_findings``, ``findings.persistent_findings``,
+  ``findings.intensity``, ``findings.speed_profile``,
+  ``findings.reference_checks``.
+- **Removed ``live_diagnostics/__init__.py`` re-exports** — Package-level
+  re-exports deleted. Import directly from submodules:
+  ``live_diagnostics.engine``, ``live_diagnostics._types``,
+  ``live_diagnostics.severity_matrix``.
 
 ## Unreleased — Canonical Vibration Strength Metric
 
