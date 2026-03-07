@@ -10,13 +10,15 @@ Use this when changing backend code without scanning the whole package.
 - Rule: no analysis helpers outside the analysis folder.
 
 ## Orchestration vs Computation
-- `app.py`: orchestrates runtime loops, task startup/shutdown, payload assembly.
+- `app.py`: thin FastAPI wiring layer; delegates service construction to `bootstrap.py`.
+- `runtime/` package: lifecycle management (`lifecycle.py`), processing loop (`processing_loop.py`),
+  WebSocket broadcast (`ws_broadcast.py`), settings sync (`settings_sync.py`),
+  rotational speed helpers (`rotational_speeds.py`), and thin coordinator (`_state.py`).
 - FFT/metrics computation source of truth lives in `vibesensor_core`
-	(`libs/core/python/vibesensor_core/vibration_strength.py` and
-	`libs/core/python/vibesensor_core/strength_bands.py`).
+        (`libs/core/python/vibesensor_core/vibration_strength.py` and
+        `libs/core/python/vibesensor_core/strength_bands.py`).
 - `processing.py` orchestrates calls into core computation.
-- Rule: do not move algorithm details into `app.py`.
-
+- Rule: do not move algorithm details into `app.py` or `runtime/`.
 ## Shared Utilities
 - `json_utils.py`: single source of truth for numpy-aware JSON sanitisation.
   Both `ws_hub.py` and `history_db.py` delegate to it.  Also provides

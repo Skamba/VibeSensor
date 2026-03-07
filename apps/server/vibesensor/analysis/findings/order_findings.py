@@ -623,6 +623,104 @@ def _match_samples_for_hypothesis(
     }
 
 
+def _compute_phase_stats(
+    has_phases: bool,
+    possible_by_phase: dict[str, int],
+    matched_by_phase: dict[str, int],
+    min_match_rate: float,
+) -> tuple[dict[str, float] | None, int]:
+    """Compute per-phase match rates and count phases with sufficient evidence.
+
+    Returns ``(per_phase_confidence, phases_with_evidence)``.
+    Per-phase confidence is ``None`` when phase labels are unavailable.
+    """
+    if not has_phases or not possible_by_phase:
+        return None, 0
+    per_phase_confidence: dict[str, float] = {}
+    phases_with_evidence = 0
+    for ph_key, ph_possible in possible_by_phase.items():
+        ph_matched = matched_by_phase.get(ph_key, 0)
+        per_phase_confidence[ph_key] = ph_matched / max(1, ph_possible)
+        if ph_matched >= ORDER_MIN_MATCH_POINTS and per_phase_confidence[ph_key] >= min_match_rate:
+            phases_with_evidence += 1
+    return per_phase_confidence, phases_with_evidence
+
+
+def _compute_amplitude_and_error_stats(
+    matched_amp: list[float],
+    matched_floor: list[float],
+    rel_errors: list[float],
+    predicted_vals: list[float],
+    measured_vals: list[float],
+    matched_points: list[dict[str, Any]],
+    constant_speed: bool,
+) -> tuple[float, float, float, float, float | None]:
+    """Compute amplitude, noise floor, frequency-error, and correlation statistics.
+
+    Returns ``(mean_amp, mean_floor, mean_rel_err, corr_val, corr)`` where
+    ``corr`` is ``None`` when speed is constant (correlation is degenerate in
+    that case) or when fewer than 3 matched points exist.
+    """
+    mean_amp = _mean(matched_amp) if matched_amp else 0.0
+    mean_floor = _mean(matched_floor) if matched_floor else 0.0
+    mean_rel_err = _mean(rel_errors) if rel_errors else 1.0
+    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+    # When speed is constant, predicted Hz never varies so correlation
+    # is degenerate (undefined or misleading).  Zero it out.
+    if constant_speed:
+        corr = None
+    corr_val = corr if corr is not None else 0.0
+    return mean_amp, mean_floor, mean_rel_err, corr_val, corr
+
+
+def _apply_localization_override(
+    per_location_dominant: bool,
+    unique_match_locations: set[str],
+    connected_locations: set[str],
+    matched: int,
+    no_wheel_override: bool,
+    localization_confidence: float,
+    weak_spatial_separation: bool,
+) -> tuple[float, bool]:
+    """Override localization when a single sensor captures all matched points.
+
+    When matched points cluster at one location but multiple sensors were
+    connected, the standard ``localization_confidence`` formula computes
+    ``dominance_ratio = 1.0`` (no second sensor to compare), giving
+    ``localization_confidence ≈ 0.05`` and wrongly penalising a well-localised
+    finding.  Absence of matches from other connected sensors IS strong spatial
+    evidence and should boost, not suppress, localization confidence.
+
+    The ``no_wheel_override`` exception applies when diagnosing wheel/tire
+    without any wheel-corner sensors: clustering at one cabin sensor does not
+    imply corner localisation, so the hotspot result is preserved.
+
+    Returns updated ``(localization_confidence, weak_spatial_separation)``.
+    """
+    if (
+        per_location_dominant
+        and len(unique_match_locations) == 1
+        and len(connected_locations) >= 2
+        and not no_wheel_override
+    ):
+        # Strong localization: 1 of N sensors matched.
+        localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
+        weak_spatial_separation = False
+    elif (
+        len(unique_match_locations) == 1
+        and len(connected_locations) >= 2
+        and matched >= ORDER_MIN_MATCH_POINTS
+        and not no_wheel_override
+    ):
+        # Weaker case: global rate passed but all matches still from one sensor.
+        localization_confidence = max(
+            localization_confidence,
+            min(1.0, 0.40 + 0.10 * (len(connected_locations) - 1)),
+        )
+        weak_spatial_separation = False
+    return localization_confidence, weak_spatial_separation
+
+
 def _assemble_order_finding(
     hypothesis: Any,
     m: MatchAccumulator,
@@ -640,15 +738,9 @@ def _assemble_order_finding(
     """Build a single order finding from a successful match result.
 
     Called by :func:`_build_order_findings` for each hypothesis that passes the
-    effective-match-rate threshold.  Encapsulates:
-
-    * Per-phase confidence computation
-    * Amplitude, SNR, error-score, and correlation statistics
-    * Location hotspot query and single-sensor dominance override
-    * Confidence and ranking-score calculation
-    * Finding dict assembly
-
-    Returns ``(ranking_score, finding_dict)``.
+    effective-match-rate threshold.  Delegates per-phase stats, amplitude stats,
+    and localization override to dedicated helpers; assembles the final finding
+    dict and returns ``(ranking_score, finding_dict)``.
     """
     possible = m["possible"]
     matched = m["matched"]
@@ -666,30 +758,21 @@ def _assemble_order_finding(
     has_phases = m["has_phases"]
     compliance = m["compliance"]
 
-    # Per-phase confidence: compute match rate for each driving phase.
-    # Phases with sufficient matches act as independent evidence sources.
-    per_phase_confidence: dict[str, float] | None = None
-    phases_with_evidence = 0
-    if has_phases and possible_by_phase:
-        per_phase_confidence = {}
-        for ph_key, ph_possible in possible_by_phase.items():
-            ph_matched = matched_by_phase.get(ph_key, 0)
-            per_phase_confidence[ph_key] = ph_matched / max(1, ph_possible)
-            if (
-                ph_matched >= ORDER_MIN_MATCH_POINTS
-                and per_phase_confidence[ph_key] >= min_match_rate
-            ):
-                phases_with_evidence += 1
+    # Phase evidence
+    per_phase_confidence, phases_with_evidence = _compute_phase_stats(
+        has_phases, possible_by_phase, matched_by_phase, min_match_rate
+    )
 
-    mean_amp = _mean(matched_amp) if matched_amp else 0.0
-    mean_floor = _mean(matched_floor) if matched_floor else 0.0
-    mean_rel_err = _mean(rel_errors) if rel_errors else 1.0
-    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
-    # When speed is constant, predicted Hz never varies so correlation
-    # is degenerate (undefined or misleading).  Zero it out.
-    if constant_speed:
-        corr = None
-    corr_val = corr if corr is not None else 0.0
+    # Amplitude / error / correlation statistics
+    mean_amp, mean_floor, mean_rel_err, corr_val, corr = _compute_amplitude_and_error_stats(
+        matched_amp,
+        matched_floor,
+        rel_errors,
+        predicted_vals,
+        measured_vals,
+        matched_points,
+        constant_speed,
+    )
 
     # Compute location hotspot BEFORE confidence so spatial info is available.
     # When order evidence is accepted via focused high-speed coverage,
@@ -716,44 +799,24 @@ def _assemble_order_finding(
         else 0.05
     )
 
-    # ── Single-sensor dominance override ────────────────────────────
-    # When matched points cluster at one location but multiple sensors
-    # were connected, the standard localization_confidence formula
-    # computes dominance_ratio = 1.0 (no second sensor to compare).
-    # That gives localization_confidence ≈ 0.05, wrongly penalising a
-    # finding that is actually well-localised.
-    # Fix: absence of matches from other connected sensors IS strong
-    # spatial evidence.
-    # Exception: when diagnosing wheel/tire but no wheel sensors are
-    # present, clustering at one cabin sensor does NOT imply corner
-    # localization — keep weak_spatial_separation as set by the hotspot.
+    # Single-sensor dominance override: absence of matches from other connected
+    # sensors is strong spatial evidence even when the hotspot formula cannot
+    # compute a dominance ratio.  Exception: wheel/tire without wheel sensors.
     unique_match_locations = {
         str(pt.get("location") or "") for pt in matched_points if pt.get("location")
     }
     _no_wheel_override = (
         bool(location_hotspot.get("no_wheel_sensors")) if _hotspot_is_dict else False
     )
-    if (
-        per_location_dominant
-        and len(unique_match_locations) == 1
-        and len(connected_locations) >= 2
-        and not _no_wheel_override
-    ):
-        # Strong localization: 1 of N sensors matched.
-        localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
-        weak_spatial_separation = False
-    elif (
-        len(unique_match_locations) == 1
-        and len(connected_locations) >= 2
-        and matched >= ORDER_MIN_MATCH_POINTS
-        and not _no_wheel_override
-    ):
-        # Weaker case: global rate passed but all matches still from one sensor.
-        localization_confidence = max(
-            localization_confidence,
-            min(1.0, 0.40 + 0.10 * (len(connected_locations) - 1)),
-        )
-        weak_spatial_separation = False
+    localization_confidence, weak_spatial_separation = _apply_localization_override(
+        per_location_dominant,
+        unique_match_locations,
+        connected_locations,
+        matched,
+        _no_wheel_override,
+        localization_confidence,
+        weak_spatial_separation,
+    )
 
     # Count how many distinct locations independently detected this order
     corroborating_locations = len(

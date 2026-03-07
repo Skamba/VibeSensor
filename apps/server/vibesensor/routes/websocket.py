@@ -12,7 +12,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from ..domain_models import normalize_sensor_id
 
 if TYPE_CHECKING:
-    from ..runtime import RuntimeState
+    from ..ws_hub import WebSocketHub
 
 __all__ = ["create_websocket_routes"]
 
@@ -25,7 +25,7 @@ LOGGER = logging.getLogger(__name__)
 _RECEIVE_IDLE_TIMEOUT_S: float = 300.0
 
 
-def create_websocket_routes(state: RuntimeState) -> APIRouter:
+def create_websocket_routes(ws_hub: WebSocketHub) -> APIRouter:
     """Create and return the WebSocket streaming routes."""
     router = APIRouter()
 
@@ -38,7 +38,7 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
             except ValueError:
                 selected = None
         await ws.accept()
-        await state.ws_hub.add(ws, selected)
+        await ws_hub.add(ws, selected)
         _loads = json.loads
         try:
             while True:
@@ -69,10 +69,10 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
                     value = payload["client_id"]
                     try:
                         if value is None:
-                            await state.ws_hub.update_selected_client(ws, None)
+                            await ws_hub.update_selected_client(ws, None)
                         elif isinstance(value, str):
                             normalized = normalize_sensor_id(value)
-                            await state.ws_hub.update_selected_client(ws, normalized)
+                            await ws_hub.update_selected_client(ws, normalized)
                         else:
                             LOGGER.debug(
                                 "Ignoring unsupported client_id type %s in WS message: %r",
@@ -98,6 +98,6 @@ def create_websocket_routes(state: RuntimeState) -> APIRouter:
         except Exception:
             LOGGER.warning("WebSocket handler error", exc_info=True)
         finally:
-            await state.ws_hub.remove(ws)
+            await ws_hub.remove(ws)
 
     return router

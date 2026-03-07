@@ -20,7 +20,7 @@ from vibesensor.firmware_cache import (
     FirmwareCacheConfig,
     validate_bundle,
 )
-from vibesensor.routes import create_router
+from vibesensor.routes.updates import create_update_routes
 
 # ── Constants ──
 
@@ -370,8 +370,7 @@ async def test_esp_flash_api_lifecycle(tmp_path: Path) -> None:
     cache_dir = _make_cache(tmp_path, with_current=True)
     mgr, _ = _build_manager(cache_dir)
 
-    state = type("S", (), {"esp_flash_manager": mgr})()
-    router = create_router(state)
+    router = create_update_routes(None, mgr)
     start_ep = _route_endpoint(router, "/api/settings/esp-flash/start", "POST")
     status_ep = _route_endpoint(router, "/api/settings/esp-flash/status", "GET")
     logs_ep = _route_endpoint(router, "/api/settings/esp-flash/logs", "GET")
@@ -393,8 +392,7 @@ async def test_esp_flash_api_rejects_concurrent_start(tmp_path: Path) -> None:
     cache_dir = _make_cache(tmp_path, with_current=True)
     mgr, _ = _build_manager(cache_dir, runner=_FakeRunner(hang=True))
 
-    state = type("S", (), {"esp_flash_manager": mgr})()
-    router = create_router(state)
+    router = create_update_routes(None, mgr)
     start_ep = _route_endpoint(router, "/api/settings/esp-flash/start", "POST")
 
     req = type("Req", (), {"port": None, "auto_detect": True})()

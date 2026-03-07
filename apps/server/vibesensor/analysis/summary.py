@@ -224,6 +224,48 @@ def _phase_ranking_score(finding: dict[str, Any]) -> float:
     return confidence * (0.85 + 0.15 * cruise_fraction)
 
 
+def _group_findings_by_source(
+    diag_findings: list[dict[str, Any]],
+) -> list[tuple[float, dict[str, Any]]]:
+    """Group diagnostic findings by suspected source and return one representative per group.
+
+    Each group representative is the finding with the highest phase-adjusted
+    ranking score.  All unique order signatures observed in the group are
+    collected into ``representative["signatures_observed"]`` so downstream
+    callers can show the full set without re-grouping.
+
+    Returns a list of ``(best_score, representative)`` pairs sorted by
+    best_score descending.
+    """
+    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for f in diag_findings:
+        src = str(f.get("suspected_source") or "unknown").strip().lower()
+        groups[src].append(f)
+
+    _rank = _phase_ranking_score
+    group_reps: list[tuple[float, dict[str, Any]]] = []
+    for members in groups.values():
+        members_scored = sorted(
+            ((_rank(m), m) for m in members),
+            key=lambda t: t[0],
+            reverse=True,
+        )
+        representative = dict(members_scored[0][1])
+        signatures: list[str] = []
+        seen_sigs: set[str] = set()
+        for _score, m in members_scored:
+            sig = str(m.get("frequency_hz_or_order") or "").strip()
+            if sig and sig not in seen_sigs:
+                signatures.append(sig)
+                seen_sigs.add(sig)
+        representative["signatures_observed"] = signatures
+        representative["grouped_count"] = len(members_scored)
+        group_reps.append((members_scored[0][0], representative))
+
+    group_reps.sort(key=lambda t: t[0], reverse=True)
+    return group_reps
+
+
 def select_top_causes(
     findings: list[dict[str, Any]],
     *,
@@ -249,38 +291,7 @@ def select_top_causes(
     if not diag_findings:
         return []
 
-    # Group by suspected_source
-    groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    for f in diag_findings:
-        src = str(f.get("suspected_source") or "unknown").strip().lower()
-        groups[src].append(f)
-
-    # For each group, pick the highest-phase-adjusted-score finding as representative.
-    # Precompute scores to avoid redundant _phase_ranking_score calls during
-    # sort and drop-off evaluation.
-    _rank = _phase_ranking_score
-    group_reps: list[tuple[float, dict[str, Any]]] = []
-    for members in groups.values():
-        members_scored = sorted(
-            ((_rank(m), m) for m in members),
-            key=lambda t: t[0],
-            reverse=True,
-        )
-        representative = dict(members_scored[0][1])
-        # Collect all signatures (frequency_hz_or_order) in this group
-        signatures: list[str] = []
-        seen_sigs: set[str] = set()
-        for _score, m in members_scored:
-            sig = str(m.get("frequency_hz_or_order") or "").strip()
-            if sig and sig not in seen_sigs:
-                signatures.append(sig)
-                seen_sigs.add(sig)
-        representative["signatures_observed"] = signatures
-        representative["grouped_count"] = len(members_scored)
-        group_reps.append((members_scored[0][0], representative))
-
-    # Sort groups by cached phase-adjusted score descending
-    group_reps.sort(key=lambda t: t[0], reverse=True)
+    group_reps = _group_findings_by_source(diag_findings)
 
     # Apply drop-off rule using cached phase-adjusted scores
     best_score_pct = group_reps[0][0] * 100.0
@@ -465,6 +476,44 @@ def _build_phase_timeline(
             }
         )
     return entries
+
+
+def _serialize_phase_segments(
+    phase_segments: list[PhaseSegment],
+) -> list[dict[str, Any]]:
+    """Serialise phase segments to JSON-safe dicts.
+
+    Converts NaN sentinel values (unknown start/end times) to ``None``.
+    """
+    return [
+        {
+            "phase": seg.phase.value,
+            "start_idx": seg.start_idx,
+            "end_idx": seg.end_idx,
+            "start_t_s": (
+                None
+                if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
+                else seg.start_t_s
+            ),
+            "end_t_s": (
+                None if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s) else seg.end_t_s
+            ),
+            "speed_min_kmh": seg.speed_min_kmh,
+            "speed_max_kmh": seg.speed_max_kmh,
+            "sample_count": seg.sample_count,
+        }
+        for seg in phase_segments
+    ]
+
+
+def _noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
+    """Convert a run noise baseline amplitude in g to dB, or return None."""
+    if run_noise_baseline_g is None:
+        return None
+    return canonical_vibration_db(
+        peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+        floor_amp_g=MEMS_NOISE_FLOOR_G,
+    )
 
 
 def _prepare_speed_and_phases(
@@ -925,35 +974,8 @@ def summarize_run_data(
         "warnings": [],
         "speed_breakdown": speed_breakdown,
         "phase_speed_breakdown": phase_speed_breakdown,
-        "phase_segments": [
-            {
-                "phase": seg.phase.value,
-                "start_idx": seg.start_idx,
-                "end_idx": seg.end_idx,
-                "start_t_s": (
-                    None
-                    if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
-                    else seg.start_t_s
-                ),
-                "end_t_s": (
-                    None
-                    if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s)
-                    else seg.end_t_s
-                ),
-                "speed_min_kmh": seg.speed_min_kmh,
-                "speed_max_kmh": seg.speed_max_kmh,
-                "sample_count": seg.sample_count,
-            }
-            for seg in phase_segments
-        ],
-        "run_noise_baseline_db": (
-            canonical_vibration_db(
-                peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
-                floor_amp_g=MEMS_NOISE_FLOOR_G,
-            )
-            if run_noise_baseline_g is not None
-            else None
-        ),
+        "phase_segments": _serialize_phase_segments(phase_segments),
+        "run_noise_baseline_db": _noise_baseline_db(run_noise_baseline_g),
         "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
         "findings": findings,
         "top_causes": top_causes,

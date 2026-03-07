@@ -130,7 +130,7 @@ def _make_state(
     ui_push_hz: int = 10,
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
-    from vibesensor.app import RuntimeState
+    from vibesensor.runtime import RuntimeState
 
     state = RuntimeState(
         config=_StubConfig(
@@ -153,8 +153,7 @@ def _make_state(
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
         worker_pool=_SENTINEL,  # type: ignore[arg-type]
     )
-    # ws_include_heavy is now a property delegating to ws_cache; set after construction.
-    state.ws_include_heavy = ws_include_heavy
+    state.ws_cache.include_heavy = ws_include_heavy
     return state
 
 
@@ -192,7 +191,7 @@ def _assert_rotational(
 
 def test_build_ws_payload_returns_required_keys() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    payload = state.build_ws_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaa")
 
     # Always-present keys
     for key in ("server_time", "speed_mps", "clients", "selected_client_id", "rotational_speeds"):
@@ -210,7 +209,7 @@ def test_build_ws_payload_returns_required_keys() -> None:
 
 def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
-    payload = state.build_ws_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaa")
 
     assert "spectra" not in payload
     # diagnostics is always present
@@ -219,14 +218,14 @@ def test_build_ws_payload_light_tick_omits_spectra_and_selected() -> None:
 
 def test_build_ws_payload_auto_selects_first_client() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
-    payload = state.build_ws_payload(selected_client=None)
+    payload = state.ws_broadcast.build_payload(selected_client=None)
 
     assert payload["selected_client_id"] == "aaa"
 
 
 def test_build_ws_payload_no_clients() -> None:
     state = _make_state(clients=[], ws_include_heavy=True)
-    payload = state.build_ws_payload(selected_client=None)
+    payload = state.ws_broadcast.build_payload(selected_client=None)
 
     assert payload["clients"] == []
     assert payload["selected_client_id"] is None
@@ -235,13 +234,13 @@ def test_build_ws_payload_no_clients() -> None:
 def test_build_ws_payload_light_tick_reuses_cached_analysis_snapshot() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=True)
 
-    state.build_ws_payload(selected_client="aaa")
+    state.ws_broadcast.build_payload(selected_client="aaa")
     metrics_logger = state.metrics_logger
     assert isinstance(metrics_logger, _StubMetricsLogger)
     assert metrics_logger.analysis_snapshot_calls == 1
 
-    state.ws_include_heavy = False
-    state.build_ws_payload(selected_client="aaa")
+    state.ws_cache.include_heavy = False
+    state.ws_broadcast.build_payload(selected_client="aaa")
 
     assert metrics_logger.analysis_snapshot_calls == 1
 
@@ -249,7 +248,7 @@ def test_build_ws_payload_light_tick_reuses_cached_analysis_snapshot() -> None:
 def test_build_ws_payload_light_tick_without_cache_still_collects_snapshot() -> None:
     state = _make_state(clients=_TWO_CLIENTS, ws_include_heavy=False)
 
-    state.build_ws_payload(selected_client="aaa")
+    state.ws_broadcast.build_payload(selected_client="aaa")
     metrics_logger = state.metrics_logger
 
     assert isinstance(metrics_logger, _StubMetricsLogger)
@@ -263,9 +262,9 @@ def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:
     assert isinstance(diagnostics, _StubDiagnostics)
     assert isinstance(metrics_logger, _StubMetricsLogger)
 
-    state.ws_tick = 77
-    state.build_ws_payload(selected_client="aaa")
-    state.build_ws_payload(selected_client="bbb")
+    state.ws_cache.tick = 77
+    state.ws_broadcast.build_payload(selected_client="aaa")
+    state.ws_broadcast.build_payload(selected_client="bbb")
 
     assert diagnostics.update_calls == 1
     assert metrics_logger.analysis_snapshot_calls == 1
@@ -274,13 +273,13 @@ def test_build_ws_payload_reuses_diagnostics_per_tick() -> None:
 def test_on_ws_broadcast_tick_toggles_heavy() -> None:
     # ui_push_hz=10, ui_heavy_push_hz=2 → heavy_every=5
     state = _make_state(ui_push_hz=10, ui_heavy_push_hz=2)
-    state.ws_tick = 0
-    state.ws_include_heavy = True  # initial
+    state.ws_cache.tick = 0
+    state.ws_cache.include_heavy = True  # initial
 
     results: list[bool] = []
     for _ in range(10):
-        state.on_ws_broadcast_tick()
-        results.append(state.ws_include_heavy)
+        state.ws_broadcast.on_tick()
+        results.append(state.ws_cache.include_heavy)
 
     # Ticks 1..10: heavy at tick 5 and 10 (tick % 5 == 0)
     assert results == [False, False, False, False, True, False, False, False, False, True]
@@ -292,5 +291,5 @@ def test_build_ws_payload_rotational_speeds_include_reason_when_speed_unavailabl
     assert isinstance(gps, _StubGPS)
     gps.effective_speed_mps = None
 
-    payload = state.build_ws_payload(selected_client="aaa")
+    payload = state.ws_broadcast.build_payload(selected_client="aaa")
     _assert_rotational(payload["rotational_speeds"], reason="speed_unavailable")
