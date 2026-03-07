@@ -10,8 +10,6 @@ from ..report.report_data import (
     ObservedSignature,
     ReportTemplateData,
 )
-from ..report_i18n import normalize_lang
-from ..report_i18n import tr as _tr
 from ..runlog import as_float_or_none as _as_float
 from .report_mapping_components import (
     build_data_trust_from_summary,
@@ -36,21 +34,10 @@ from .report_mapping_models import PrimaryCandidateContext, ReportMappingContext
 from .strength_labels import certainty_label, certainty_tier, strength_label, strength_text
 
 
-def build_translator(lang: str) -> Callable[..., str]:
-    """Build the simple report-i18n translator used throughout report mapping."""
-
-    def tr(key: str, **kw: object) -> str:
-        return str(_tr(lang, key, **kw))
-
-    return tr
-
-
 def prepare_report_mapping_context(
     summary: dict[str, Any],
-) -> tuple[str, Callable[..., str], ReportMappingContext]:
-    """Normalize language and structural summary context for report mapping."""
-    lang = str(normalize_lang(summary.get("lang")))
-    tr = build_translator(lang)
+) -> ReportMappingContext:
+    """Extract structural summary context for report mapping."""
     (
         meta,
         car_name,
@@ -64,22 +51,18 @@ def prepare_report_mapping_context(
     ) = extract_run_context(summary)
     origin_location = normalized_origin_location(origin)
     sensor_locations_active = extract_sensor_locations(summary)
-    return (
-        lang,
-        tr,
-        ReportMappingContext(
-            meta=meta,
-            car_name=car_name,
-            car_type=car_type,
-            date_str=date_str,
-            top_causes=top_causes,
-            findings_non_ref=findings_non_ref,
-            findings=findings,
-            speed_stats=speed_stats,
-            origin=origin,
-            origin_location=origin_location,
-            sensor_locations_active=sensor_locations_active,
-        ),
+    return ReportMappingContext(
+        meta=meta,
+        car_name=car_name,
+        car_type=car_type,
+        date_str=date_str,
+        top_causes=top_causes,
+        findings_non_ref=findings_non_ref,
+        findings=findings,
+        speed_stats=speed_stats,
+        origin=origin,
+        origin_location=origin_location,
+        sensor_locations_active=sensor_locations_active,
     )
 
 
@@ -159,9 +142,14 @@ def build_observed_signature(primary: PrimaryCandidateContext) -> ObservedSignat
     )
 
 
-def map_summary_to_report(summary: dict[str, Any]) -> ReportTemplateData:
+def build_report_template_data(
+    summary: dict[str, Any],
+    *,
+    lang: str,
+    tr: Callable[..., str],
+) -> ReportTemplateData:
     """Map a summary dict into the final report template data structure."""
-    lang, tr, context = prepare_report_mapping_context(summary)
+    context = prepare_report_mapping_context(summary)
     primary = resolve_primary_report_candidate(summary, context=context, tr=tr, lang=lang)
     observed = build_observed_signature(primary)
     system_cards = build_system_cards(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 from statistics import median as _median
 from typing import Any
@@ -160,9 +161,10 @@ def build_findings_bundle(
     language: str,
     prepared: PreparedRunData,
     overall_strength_band_key: str | None,
+    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
 ) -> FindingsBundle:
     """Build findings plus derived diagnosis narrative fields."""
-    findings = _build_findings(
+    findings = findings_builder(
         metadata=metadata,
         samples=samples,
         speed_sufficient=prepared.speed_sufficient,
@@ -250,6 +252,7 @@ def summarize_run_data(
     lang: str | None = None,
     file_name: str = "run",
     include_samples: bool = True,
+    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
 ) -> dict[str, Any]:
     """Analyze pre-loaded run data and return the full summary dict."""
     language = normalize_lang(lang)
@@ -269,6 +272,7 @@ def summarize_run_data(
         language=language,
         prepared=prepared,
         overall_strength_band_key=suitability.overall_strength_band_key,
+        findings_builder=findings_builder,
     )
     sensors = build_sensor_bundle(
         samples,
@@ -331,13 +335,14 @@ def build_findings_for_samples(
     metadata: dict[str, Any],
     samples: list[dict[str, Any]],
     lang: str | None = None,
+    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
 ) -> list[dict[str, Any]]:
     """Build the findings list from *samples* using the full analysis pipeline."""
     language = normalize_lang(lang)
     rows = list(samples)
     _validate_required_strength_metrics(rows)
     prepared = prepare_run_data(metadata, rows, file_name="run")
-    return _build_findings(
+    return findings_builder(
         metadata=dict(metadata),
         samples=rows,
         speed_sufficient=prepared.speed_sufficient,
@@ -354,6 +359,7 @@ def summarize_log(
     log_path: Path,
     lang: str | None = None,
     include_samples: bool = True,
+    findings_builder: Callable[..., list[dict[str, Any]]] = _build_findings,
 ) -> dict[str, Any]:
     """Read a JSONL run file and analyse it."""
     metadata, samples, _warnings = _load_run(log_path)
@@ -363,4 +369,5 @@ def summarize_log(
         lang=lang,
         file_name=log_path.name,
         include_samples=include_samples,
+        findings_builder=findings_builder,
     )

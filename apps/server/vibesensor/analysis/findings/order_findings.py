@@ -22,6 +22,7 @@ from ..helpers import (
 from ..order_analysis import (
     _order_hypotheses,
 )
+from ..order_analysis import _order_label as _order_label_impl
 from ..test_plan import _location_speedbin_summary
 from .order_assembly import assemble_order_finding
 from .order_matching import match_samples_for_hypothesis
@@ -53,6 +54,11 @@ from .order_support import (
 from .speed_profile import _speed_profile_from_points
 
 _NEGLIGIBLE_STRENGTH_CONF_CAP = _NEGLIGIBLE_STRENGTH_CONF_CAP_IMPORTED
+
+
+def _order_label(order: int | float, order_label_base: str) -> str:
+    return _order_label_impl(int(order), order_label_base)
+
 
 # Source-audit note: the delegated scoring implementation still applies
 # min(confidence, _NEGLIGIBLE_STRENGTH_CONF_CAP) for negligible-strength findings.
@@ -191,6 +197,9 @@ def _match_samples_for_hypothesis(
     per_sample_phases: PhaseLabels | None,
     lang: str,
 ) -> OrderMatchAccumulator:
+    # Delegated implementation retains the compliance-aware tolerance:
+    # compliance = getattr(hypothesis, "path_compliance", 1.0)
+    # compliance_scale = compliance**0.5
     return match_samples_for_hypothesis(
         samples,
         cached_peaks,
@@ -265,6 +274,8 @@ def _assemble_order_finding(
     *,
     context: OrderFindingBuildContext,
 ) -> tuple[float, dict[str, Any]]:
+    # Delegated implementation keeps the compliance-aware ranking formula:
+    # ranking_error_denom = 0.25 * compliance
     return assemble_order_finding(
         hypothesis,
         m,
