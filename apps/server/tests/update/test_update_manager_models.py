@@ -119,8 +119,7 @@ class TestParseWifiDiagnostics:
         )
         issues = parse_wifi_diagnostics(str(log_dir))
         assert any(
-            "error" in issue.detail.lower() or "failed" in issue.detail.lower()
-            for issue in issues
+            "error" in issue.detail.lower() or "failed" in issue.detail.lower() for issue in issues
         )
 
     def test_password_not_leaked_in_diagnostics(self, tmp_path) -> None:

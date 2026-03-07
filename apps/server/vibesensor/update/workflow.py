@@ -60,9 +60,7 @@ class UpdateWorkflow:
             await self._complete_success("No server update needed; ESP firmware checked")
             return
 
-        self.tracker.log(
-            f"Update available: {current_version} → {release_check.release.version}"
-        )
+        self.tracker.log(f"Update available: {current_version} → {release_check.release.version}")
         if self.cancel_requested():
             return
 

@@ -4,15 +4,16 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Any
 
+from _diagnosis_robustness_helpers import (
+    ALL_SENSORS,
+    extract_pdf_text,
+    make_sample,
+    map_summary,
+    standard_metadata,
+    summarize_run_data,
+    wheel_hz,
+)
 from pypdf import PdfReader
-
-from _diagnosis_robustness_helpers import ALL_SENSORS
-from _diagnosis_robustness_helpers import extract_pdf_text
-from _diagnosis_robustness_helpers import make_sample
-from _diagnosis_robustness_helpers import map_summary
-from _diagnosis_robustness_helpers import standard_metadata
-from _diagnosis_robustness_helpers import summarize_run_data
-from _diagnosis_robustness_helpers import wheel_hz
 
 
 class TestPdfContentForDiagnosedScenario:
@@ -27,11 +28,22 @@ class TestPdfContentForDiagnosedScenario:
                 else:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
-                samples.append(make_sample(t_s=float(i), speed_kmh=100.0, client_name=sensor, top_peaks=peaks, vibration_strength_db=vib_db, strength_floor_amp_g=0.003))
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=100.0,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=vib_db,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
 
         from vibesensor.report.pdf_builder import build_report_pdf
 
-        summary = summarize_run_data(standard_metadata(language="en"), samples, lang="en", file_name="pdf_diag_test")
+        summary = summarize_run_data(
+            standard_metadata(language="en"), samples, lang="en", file_name="pdf_diag_test"
+        )
         pdf_bytes = build_report_pdf(map_summary(summary))
         text_lower = extract_pdf_text(pdf_bytes).lower()
         assert "diagnostic worksheet" in text_lower
@@ -52,11 +64,22 @@ class TestPdfContentForDiagnosedScenario:
                 else:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
-                samples.append(make_sample(t_s=float(i), speed_kmh=80.0, client_name=sensor, top_peaks=peaks, vibration_strength_db=vib_db, strength_floor_amp_g=0.003))
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=80.0,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=vib_db,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
 
         from vibesensor.report.pdf_builder import build_report_pdf
 
-        summary = summarize_run_data(standard_metadata(language="nl"), samples, lang="nl", file_name="pdf_nl_diag")
+        summary = summarize_run_data(
+            standard_metadata(language="nl"), samples, lang="nl", file_name="pdf_nl_diag"
+        )
         text_lower = extract_pdf_text(build_report_pdf(map_summary(summary))).lower()
         assert "diagnostisch werkformulier" in text_lower
         assert "km/h" in text_lower

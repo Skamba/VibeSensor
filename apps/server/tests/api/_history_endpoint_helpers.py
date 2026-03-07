@@ -263,7 +263,12 @@ def route_endpoint_with_method(router, path: str, method: str):
     raise AssertionError(f"Route not found: {method.upper()} {path}")
 
 
-def make_status_router(*, status: str, analysis: dict[str, Any] | None, include_error_message: bool):
+def make_status_router(
+    *,
+    status: str,
+    analysis: dict[str, Any] | None,
+    include_error_message: bool,
+):
     @dataclass
     class StatusDB(FakeHistoryDB):
         run_status: str = "complete"

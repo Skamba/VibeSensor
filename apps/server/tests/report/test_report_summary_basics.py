@@ -181,9 +181,9 @@ def test_data_quality_outliers_include_zero_strength_values(tmp_path: Path) -> N
         records.append(current_sample)
     records.append(RUN_END)
     write_jsonl(run_path, records)
-    outliers = summarize_log(run_path, include_samples=False)["data_quality"][
-        "outliers"
-    ]["amplitude_metric"]
+    outliers = summarize_log(run_path, include_samples=False)["data_quality"]["outliers"][
+        "amplitude_metric"
+    ]
     assert outliers["count"] == 3
 
 

@@ -5,14 +5,15 @@ import math
 from typing import Any
 
 import pytest
-
-from _diagnosis_robustness_helpers import ALL_SENSORS
-from _diagnosis_robustness_helpers import assert_summary_sections
-from _diagnosis_robustness_helpers import assert_top_cause_contract
-from _diagnosis_robustness_helpers import make_sample
-from _diagnosis_robustness_helpers import standard_metadata
-from _diagnosis_robustness_helpers import summarize_run_data
-from _diagnosis_robustness_helpers import wheel_hz
+from _diagnosis_robustness_helpers import (
+    ALL_SENSORS,
+    assert_summary_sections,
+    assert_top_cause_contract,
+    make_sample,
+    standard_metadata,
+    summarize_run_data,
+    wheel_hz,
+)
 
 
 class TestMissingStaleSpeed:
@@ -20,8 +21,19 @@ class TestMissingStaleSpeed:
         samples: list[dict[str, Any]] = []
         for i in range(20):
             for sensor in ALL_SENSORS:
-                samples.append(make_sample(t_s=float(i), speed_kmh=0.0, client_name=sensor, top_peaks=[{"hz": 25.0, "amp": 0.005}, {"hz": 50.0, "amp": 0.004}], vibration_strength_db=10.0, strength_floor_amp_g=0.003))
-        summary = summarize_run_data(standard_metadata(), samples, lang="en", file_name="zero_speed")
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=0.0,
+                        client_name=sensor,
+                        top_peaks=[{"hz": 25.0, "amp": 0.005}, {"hz": 50.0, "amp": 0.004}],
+                        vibration_strength_db=10.0,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
+        summary = summarize_run_data(
+            standard_metadata(), samples, lang="en", file_name="zero_speed"
+        )
         assert "findings" in summary
 
     def test_nan_speed_samples_do_not_produce_nan_output(self) -> None:
@@ -36,7 +48,16 @@ class TestMissingStaleSpeed:
                 else:
                     peaks = [{"hz": 142.5, "amp": 0.004}]
                     vib_db = 8.0
-                samples.append(make_sample(t_s=float(i), speed_kmh=speed, client_name=sensor, top_peaks=peaks, vibration_strength_db=vib_db, strength_floor_amp_g=0.003))
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=speed,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=vib_db,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
         summary = summarize_run_data(standard_metadata(), samples, lang="en", file_name="nan_speed")
         for top_cause in summary.get("top_causes", []):
             assert not math.isnan(top_cause.get("confidence", 0))
@@ -53,8 +74,19 @@ class TestMissingStaleSpeed:
                 else:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
-                samples.append(make_sample(t_s=float(i), speed_kmh=speed, client_name=sensor, top_peaks=peaks, vibration_strength_db=vib_db, strength_floor_amp_g=0.003))
-        summary = summarize_run_data(standard_metadata(), samples, lang="en", file_name="stale_speed")
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=speed,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=vib_db,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
+        summary = summarize_run_data(
+            standard_metadata(), samples, lang="en", file_name="stale_speed"
+        )
         assert_summary_sections(summary, min_findings=0)
 
 
@@ -72,9 +104,25 @@ class TestSensorDropoutRejoin:
                 else:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
-                samples.append(make_sample(t_s=float(i), speed_kmh=90.0, client_name=sensor, top_peaks=peaks, vibration_strength_db=vib_db, strength_floor_amp_g=0.003))
-        top_causes = summarize_run_data(standard_metadata(), samples, lang="en", file_name="dropout_test").get("top_causes", [])
-        assert_top_cause_contract(top_causes[0], expected_source="wheel", expected_location="front-left", confidence_range=(0.15, 1.0))
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=90.0,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=vib_db,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
+        top_causes = summarize_run_data(
+            standard_metadata(), samples, lang="en", file_name="dropout_test"
+        ).get("top_causes", [])
+        assert_top_cause_contract(
+            top_causes[0],
+            expected_source="wheel",
+            expected_location="front-left",
+            confidence_range=(0.15, 1.0),
+        )
 
     def test_sensor_rejoin_after_gap_does_not_crash(self) -> None:
         samples: list[dict[str, Any]] = []
@@ -89,10 +137,23 @@ class TestSensorDropoutRejoin:
                 else:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
-                samples.append(make_sample(t_s=float(i), speed_kmh=80.0, client_name=sensor, top_peaks=peaks, vibration_strength_db=vib_db, strength_floor_amp_g=0.003))
-        summary = summarize_run_data(standard_metadata(), samples, lang="en", file_name="rejoin_test")
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=80.0,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=vib_db,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
+        summary = summarize_run_data(
+            standard_metadata(), samples, lang="en", file_name="rejoin_test"
+        )
         assert_summary_sections(summary, min_top_causes=1)
-        assert_top_cause_contract(summary["top_causes"][0], expected_source="wheel", expected_location="front-right")
+        assert_top_cause_contract(
+            summary["top_causes"][0], expected_source="wheel", expected_location="front-right"
+        )
 
 
 class TestSensorNameNormalization:
@@ -133,8 +194,19 @@ class TestSensorNameNormalization:
                 else:
                     peaks = [{"hz": 142.5, "amp": 0.003}]
                     vib_db = 8.0
-                samples.append(make_sample(t_s=float(i), speed_kmh=80.0, client_name=sensor, top_peaks=peaks, vibration_strength_db=vib_db, strength_floor_amp_g=0.003))
-        summary = summarize_run_data(standard_metadata(), samples, lang="en", file_name="case_mix_test")
+                samples.append(
+                    make_sample(
+                        t_s=float(i),
+                        speed_kmh=80.0,
+                        client_name=sensor,
+                        top_peaks=peaks,
+                        vibration_strength_db=vib_db,
+                        strength_floor_amp_g=0.003,
+                    )
+                )
+        summary = summarize_run_data(
+            standard_metadata(), samples, lang="en", file_name="case_mix_test"
+        )
         assert_summary_sections(summary, min_top_causes=1)
         assert "wheel" in str(summary["top_causes"][0].get("source", "")).lower()
 
@@ -144,17 +216,54 @@ class TestGpsSpeedValidation:
     def tpv_line(speed_value: object) -> bytes:
         import json as json_module
 
-        return (json_module.dumps({"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "lat": 54.6872, "lon": 25.2797, "speed": speed_value}).encode() + b"\n")
+        return (
+            json_module.dumps(
+                {
+                    "class": "TPV",
+                    "mode": 3,
+                    "eph": 10.0,
+                    "eps": 0.5,
+                    "lat": 54.6872,
+                    "lon": 25.2797,
+                    "speed": speed_value,
+                }
+            ).encode()
+            + b"\n"
+        )
 
     @staticmethod
     def valid_tpv_line(speed: float = 25.5) -> bytes:
         import json as json_module
 
-        return (json_module.dumps({"class": "TPV", "mode": 3, "eph": 10.0, "eps": 0.5, "lat": 54.6872, "lon": 25.2797, "speed": speed}).encode() + b"\n")
+        return (
+            json_module.dumps(
+                {
+                    "class": "TPV",
+                    "mode": 3,
+                    "eph": 10.0,
+                    "eps": 0.5,
+                    "lat": 54.6872,
+                    "lon": 25.2797,
+                    "speed": speed,
+                }
+            ).encode()
+            + b"\n"
+        )
 
-    @pytest.mark.parametrize(("bad_speed", "label"), [(float("nan"), "NaN"), (float("inf"), "Inf"), (-5.0, "Negative"), (None, "None"), ("fast", "String")], ids=["nan", "inf", "negative", "none", "string"])
+    @pytest.mark.parametrize(
+        ("bad_speed", "label"),
+        [
+            (float("nan"), "NaN"),
+            (float("inf"), "Inf"),
+            (-5.0, "Negative"),
+            (None, "None"),
+            ("fast", "String"),
+        ],
+        ids=["nan", "inf", "negative", "none", "string"],
+    )
     def test_invalid_speed_rejected_by_product_code(self, bad_speed: object, label: str) -> None:
         import asyncio
+
         from vibesensor.gps_speed import GPSSpeedMonitor
 
         monitor = GPSSpeedMonitor(gps_enabled=True)
@@ -180,7 +289,9 @@ class TestGpsSpeedValidation:
                 await asyncio.sleep(0.05)
             assert monitor.speed_mps == 10.0
             await asyncio.sleep(0.15)
-            assert monitor.speed_mps == 10.0, f"{label} speed leaked into speed_mps: {monitor.speed_mps}"
+            assert monitor.speed_mps == 10.0, (
+                f"{label} speed leaked into speed_mps: {monitor.speed_mps}"
+            )
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
             server.close()

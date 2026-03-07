@@ -5,20 +5,21 @@ from io import BytesIO
 from unittest.mock import patch
 
 import pytest
+from _history_endpoint_helpers import (
+    FakeHistoryDB,
+    FakeState,
+    FakeWsHub,
+    make_metadata,
+    make_router_and_state,
+    make_status_router,
+    route_endpoint,
+    sample,
+)
 from fastapi import FastAPI, HTTPException
 from pypdf import PdfReader
 
 from vibesensor.analysis import summarize_run_data
 from vibesensor.routes import create_router
-
-from _history_endpoint_helpers import FakeHistoryDB
-from _history_endpoint_helpers import FakeState
-from _history_endpoint_helpers import FakeWsHub
-from _history_endpoint_helpers import make_metadata
-from _history_endpoint_helpers import make_router_and_state
-from _history_endpoint_helpers import make_status_router
-from _history_endpoint_helpers import route_endpoint
-from _history_endpoint_helpers import sample
 
 
 @pytest.mark.asyncio
@@ -100,7 +101,9 @@ async def test_report_pdf_lang_override_when_template_data_persisted() -> None:
 
     assert nl.body.startswith(b"%PDF")
     assert en.body.startswith(b"%PDF")
-    nl_text = "\n".join((page.extract_text() or "") for page in PdfReader(BytesIO(nl.body)).pages).lower()
+    nl_text = "\n".join(
+        (page.extract_text() or "") for page in PdfReader(BytesIO(nl.body)).pages
+    ).lower()
     text_from_en_request = "\n".join(
         (page.extract_text() or "") for page in PdfReader(BytesIO(en.body)).pages
     ).lower()

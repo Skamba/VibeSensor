@@ -62,8 +62,7 @@ class UpdateServiceController:
         if not self._config.contracts_dir.is_dir():
             return
         dropin_body = (
-            "[Service]\n"
-            f"Environment=VIBESENSOR_CONTRACTS_DIR={self._config.contracts_dir}\n"
+            f"[Service]\nEnvironment=VIBESENSOR_CONTRACTS_DIR={self._config.contracts_dir}\n"
         )
         script = (
             "from pathlib import Path; "

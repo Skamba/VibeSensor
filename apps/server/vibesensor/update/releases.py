@@ -56,8 +56,7 @@ class UpdateReleaseService:
                 latest_tag = latest_release.tag
         except Exception as exc:
             self._tracker.log(
-                "Could not resolve the latest release tag for ESP firmware sync: "
-                f"{exc}"
+                f"Could not resolve the latest release tag for ESP firmware sync: {exc}"
             )
         return UpdateReleaseCheck(release=None, latest_tag=latest_tag)
 

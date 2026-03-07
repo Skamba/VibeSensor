@@ -11,6 +11,20 @@ from builders import wheel_hz as wheel_hz
 from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
 from vibesensor.analysis.summary import summarize_run_data
 
+__all__ = [
+    "_classify_peak_type",
+    "assert_finding_location",
+    "assert_finding_source",
+    "build_fault_samples_at_speed",
+    "build_speed_sweep_fault_samples",
+    "extract_top_finding",
+    "make_sample",
+    "parse_speed_band",
+    "standard_metadata",
+    "summarize_run_data",
+    "wheel_hz",
+]
+
 
 def build_fault_samples_at_speed(
     *,
@@ -88,11 +102,17 @@ def extract_top_finding(summary: dict[str, Any]) -> dict[str, Any] | None:
     return max(non_ref, key=lambda finding: float(finding.get("confidence_0_to_1") or 0))
 
 
-def assert_finding_location(summary: dict[str, Any], expected: str, label: str = "") -> dict[str, Any]:
+def assert_finding_location(
+    summary: dict[str, Any],
+    expected: str,
+    label: str = "",
+) -> dict[str, Any]:
     top = extract_top_finding(summary)
     assert top is not None, f"{label}: Should produce at least one diagnostic finding"
     location = str(top.get("strongest_location") or "").lower()
-    assert expected in location, f"{label}: Expected '{expected}', got '{top.get('strongest_location')}'"
+    assert expected in location, (
+        f"{label}: Expected '{expected}', got '{top.get('strongest_location')}'"
+    )
     return top
 
 
