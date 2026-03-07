@@ -449,6 +449,150 @@ def _compute_matched_speed_phase_evidence(
     )
 
 
+def _match_samples_for_hypothesis(
+    samples: list[dict[str, Any]],
+    cached_peaks: list[list[tuple[float, float]]],
+    hypothesis: Any,
+    metadata: dict[str, Any],
+    tire_circumference_m: float | None,
+    per_sample_phases: list | None,
+    lang: str,
+) -> dict[str, Any]:
+    """Match hypothesis order frequencies against each sample's top peaks.
+
+    Iterates over all samples once, accumulating match counts, amplitudes,
+    relative errors, per-speed-bin and per-location statistics, and the
+    matched-points list used for downstream confidence and localization.
+
+    Returns a dict of accumulated statistics with the following keys:
+
+    - ``possible``, ``matched``: total possible/matched sample counts
+    - ``matched_amp``, ``matched_floor``: amplitude and noise-floor lists for matched samples
+    - ``rel_errors``, ``predicted_vals``, ``measured_vals``: error and frequency tracking lists
+    - ``matched_points``: list of per-match detail dicts
+    - ``ref_sources``: set of reference-source labels used to predict frequencies
+    - ``possible_by_speed_bin``, ``matched_by_speed_bin``: per-speed-bin counters
+    - ``possible_by_phase``, ``matched_by_phase``: per-phase counters
+    - ``possible_by_location``, ``matched_by_location``: per-sensor-location counters
+    - ``has_phases``: whether per-sample phase labels were applied
+    - ``compliance``: mechanical path compliance factor from the hypothesis
+    """
+    possible = 0
+    matched = 0
+    matched_amp: list[float] = []
+    matched_floor: list[float] = []
+    rel_errors: list[float] = []
+    predicted_vals: list[float] = []
+    measured_vals: list[float] = []
+    matched_points: list[dict[str, Any]] = []
+    ref_sources: set[str] = set()
+    possible_by_speed_bin: dict[str, int] = defaultdict(int)
+    matched_by_speed_bin: dict[str, int] = defaultdict(int)
+    possible_by_phase: dict[str, int] = defaultdict(int)
+    matched_by_phase: dict[str, int] = defaultdict(int)
+    # Per-location tracking: multi-sensor runs dilute the global match rate
+    # because only the fault sensor matches.  Track per-location stats so we
+    # can recognise a single-sensor signal even when the global rate is low.
+    possible_by_location: dict[str, int] = defaultdict(int)
+    matched_by_location: dict[str, int] = defaultdict(int)
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
+    compliance = getattr(hypothesis, "path_compliance", 1.0)
+    # Scale tolerance by sqrt(compliance) — a conservative widening
+    # for mechanically compliant paths (wheel/bushing) without
+    # inflating false-positive match rates excessively.
+    compliance_scale = compliance**0.5
+
+    for sample_idx, sample in enumerate(samples):
+        peaks = cached_peaks[sample_idx]
+        if not peaks:
+            continue
+        predicted_hz, ref_source = hypothesis.predicted_hz(
+            sample,
+            metadata,
+            tire_circumference_m,
+        )
+        if predicted_hz is None or predicted_hz <= 0:
+            continue
+        possible += 1
+        ref_sources.add(ref_source)
+        sample_location = _location_label(sample, lang=lang)
+        if sample_location:
+            possible_by_location[sample_location] += 1
+        sample_speed = _as_float(sample.get("speed_kmh"))
+        sample_speed_bin = (
+            _speed_bin_label(sample_speed)
+            if sample_speed is not None and sample_speed > 0
+            else None
+        )
+        if sample_speed_bin is not None:
+            possible_by_speed_bin[sample_speed_bin] += 1
+        if has_phases:
+            ph = per_sample_phases[sample_idx]
+            phase_key = str(ph.value if hasattr(ph, "value") else ph)
+            possible_by_phase[phase_key] += 1
+
+        tolerance_hz = max(
+            ORDER_TOLERANCE_MIN_HZ,
+            predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
+        )
+        best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
+        delta_hz = abs(best_hz - predicted_hz)
+        if delta_hz > tolerance_hz:
+            continue
+
+        matched += 1
+        if sample_location:
+            matched_by_location[sample_location] += 1
+        if sample_speed_bin is not None:
+            matched_by_speed_bin[sample_speed_bin] += 1
+        if has_phases:
+            matched_by_phase[phase_key] += 1
+        rel_errors.append(delta_hz / max(1e-9, predicted_hz))
+        matched_amp.append(best_amp)
+        _floor_est = _estimate_strength_floor_amp_g(sample)
+        floor_amp = _floor_est if _floor_est is not None else 0.0
+        matched_floor.append(max(0.0, floor_amp))
+        predicted_vals.append(predicted_hz)
+        measured_vals.append(best_hz)
+        sample_phase: str | None = None
+        # Only assign phase when has_phases is True (lengths verified equal),
+        # otherwise matched_points would have inconsistent phase coverage.
+        if has_phases:
+            sample_phase = _phase_to_str(per_sample_phases[sample_idx])
+        matched_points.append(
+            {
+                "t_s": _as_float(sample.get("t_s")),
+                "speed_kmh": _as_float(sample.get("speed_kmh")),
+                "predicted_hz": predicted_hz,
+                "matched_hz": best_hz,
+                "rel_error": delta_hz / max(1e-9, predicted_hz),
+                "amp": best_amp,
+                "location": sample_location,
+                "phase": sample_phase,
+            }
+        )
+
+    return {
+        "possible": possible,
+        "matched": matched,
+        "matched_amp": matched_amp,
+        "matched_floor": matched_floor,
+        "rel_errors": rel_errors,
+        "predicted_vals": predicted_vals,
+        "measured_vals": measured_vals,
+        "matched_points": matched_points,
+        "ref_sources": ref_sources,
+        "possible_by_speed_bin": dict(possible_by_speed_bin),
+        "matched_by_speed_bin": dict(matched_by_speed_bin),
+        "possible_by_phase": dict(possible_by_phase),
+        "matched_by_phase": dict(matched_by_phase),
+        "possible_by_location": dict(possible_by_location),
+        "matched_by_location": dict(matched_by_location),
+        "has_phases": has_phases,
+        "compliance": compliance,
+    }
+
+
 def _build_order_findings(
     *,
     metadata: dict[str, Any],
@@ -480,100 +624,32 @@ def _build_order_findings(
         if hypothesis.key.startswith("engine_") and not engine_ref_sufficient:
             continue
 
-        possible = 0
-        matched = 0
-        matched_amp: list[float] = []
-        matched_floor: list[float] = []
-        rel_errors: list[float] = []
-        predicted_vals: list[float] = []
-        measured_vals: list[float] = []
-        matched_points: list[dict[str, Any]] = []
-        ref_sources: set[str] = set()
-        possible_by_speed_bin: dict[str, int] = defaultdict(int)
-        matched_by_speed_bin: dict[str, int] = defaultdict(int)
-        possible_by_phase: dict[str, int] = defaultdict(int)
-        matched_by_phase: dict[str, int] = defaultdict(int)
-        # Per-location tracking: multi-sensor runs dilute the global match rate
-        # because only the fault sensor matches.  Track per-location stats so we
-        # can recognise a single-sensor signal even when the global rate is low.
-        possible_by_location: dict[str, int] = defaultdict(int)
-        matched_by_location: dict[str, int] = defaultdict(int)
-        has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
-        compliance = getattr(hypothesis, "path_compliance", 1.0)
-
-        for sample_idx, sample in enumerate(samples):
-            peaks = cached_peaks[sample_idx]
-            if not peaks:
-                continue
-            predicted_hz, ref_source = hypothesis.predicted_hz(
-                sample,
-                metadata,
-                tire_circumference_m,
-            )
-            if predicted_hz is None or predicted_hz <= 0:
-                continue
-            possible += 1
-            ref_sources.add(ref_source)
-            sample_location = _location_label(sample, lang=lang)
-            if sample_location:
-                possible_by_location[sample_location] += 1
-            sample_speed = _as_float(sample.get("speed_kmh"))
-            sample_speed_bin = (
-                _speed_bin_label(sample_speed)
-                if sample_speed is not None and sample_speed > 0
-                else None
-            )
-            if sample_speed_bin is not None:
-                possible_by_speed_bin[sample_speed_bin] += 1
-            if has_phases:
-                ph = per_sample_phases[sample_idx]
-                phase_key = str(ph.value if hasattr(ph, "value") else ph)
-                possible_by_phase[phase_key] += 1
-
-            # Scale tolerance by sqrt(compliance) — a conservative widening
-            # for mechanically compliant paths (wheel/bushing) without
-            # inflating false-positive match rates excessively.
-            compliance_scale = compliance**0.5
-            tolerance_hz = max(
-                ORDER_TOLERANCE_MIN_HZ,
-                predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
-            )
-            best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
-            delta_hz = abs(best_hz - predicted_hz)
-            if delta_hz > tolerance_hz:
-                continue
-
-            matched += 1
-            if sample_location:
-                matched_by_location[sample_location] += 1
-            if sample_speed_bin is not None:
-                matched_by_speed_bin[sample_speed_bin] += 1
-            if has_phases:
-                matched_by_phase[phase_key] += 1
-            rel_errors.append(delta_hz / max(1e-9, predicted_hz))
-            matched_amp.append(best_amp)
-            _floor_est = _estimate_strength_floor_amp_g(sample)
-            floor_amp = _floor_est if _floor_est is not None else 0.0
-            matched_floor.append(max(0.0, floor_amp))
-            predicted_vals.append(predicted_hz)
-            measured_vals.append(best_hz)
-            sample_phase: str | None = None
-            # Only assign phase when has_phases is True (lengths verified equal),
-            # otherwise matched_points would have inconsistent phase coverage.
-            if has_phases:
-                sample_phase = _phase_to_str(per_sample_phases[sample_idx])
-            matched_points.append(
-                {
-                    "t_s": _as_float(sample.get("t_s")),
-                    "speed_kmh": _as_float(sample.get("speed_kmh")),
-                    "predicted_hz": predicted_hz,
-                    "matched_hz": best_hz,
-                    "rel_error": delta_hz / max(1e-9, predicted_hz),
-                    "amp": best_amp,
-                    "location": sample_location,
-                    "phase": sample_phase,
-                }
-            )
+        m = _match_samples_for_hypothesis(
+            samples,
+            cached_peaks,
+            hypothesis,
+            metadata,
+            tire_circumference_m,
+            per_sample_phases,
+            lang,
+        )
+        possible = m["possible"]
+        matched = m["matched"]
+        matched_amp = m["matched_amp"]
+        matched_floor = m["matched_floor"]
+        rel_errors = m["rel_errors"]
+        predicted_vals = m["predicted_vals"]
+        measured_vals = m["measured_vals"]
+        matched_points = m["matched_points"]
+        ref_sources = m["ref_sources"]
+        possible_by_speed_bin = m["possible_by_speed_bin"]
+        matched_by_speed_bin = m["matched_by_speed_bin"]
+        possible_by_phase = m["possible_by_phase"]
+        matched_by_phase = m["matched_by_phase"]
+        possible_by_location = m["possible_by_location"]
+        matched_by_location = m["matched_by_location"]
+        has_phases = m["has_phases"]
+        compliance = m["compliance"]
 
         if possible < ORDER_MIN_COVERAGE_POINTS or matched < ORDER_MIN_MATCH_POINTS:
             continue

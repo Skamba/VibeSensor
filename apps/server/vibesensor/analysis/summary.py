@@ -622,6 +622,31 @@ def _compute_accel_statistics(
     }
 
 
+def _compute_frame_integrity_counts(
+    samples: list[dict[str, Any]],
+) -> tuple[int, int]:
+    """Compute (total_dropped, total_overflow) frame counters across all client sensors.
+
+    Uses per-sensor counter deltas (max − min per client) to avoid mixing
+    cumulative counters from different sensors.
+    """
+    _per_client_dropped: dict[str, list[float]] = defaultdict(list)
+    _per_client_overflow: dict[str, list[float]] = defaultdict(list)
+    for s in samples:
+        cid = str(s.get("client_id") or "")
+        if not cid:
+            continue
+        d = _as_float(s.get("frames_dropped_total"))
+        if d is not None:
+            _per_client_dropped[cid].append(d)
+        o = _as_float(s.get("queue_overflow_drops"))
+        if o is not None:
+            _per_client_overflow[cid].append(o)
+    total_dropped = sum(counter_delta(vals) for vals in _per_client_dropped.values())
+    total_overflow = sum(counter_delta(vals) for vals in _per_client_overflow.values())
+    return total_dropped, total_overflow
+
+
 def _build_run_suitability_checks(
     language: str,
     steady_speed: bool,
@@ -681,24 +706,7 @@ def _build_run_suitability_checks(
         },
     ]
 
-    # Aggregate dropped frames / queue overflow across all samples.
-    # Compute per-sensor deltas (max - min per client) to avoid mixing
-    # cumulative counters from different sensors.
-    _per_client_dropped: dict[str, list[float]] = defaultdict(list)
-    _per_client_overflow: dict[str, list[float]] = defaultdict(list)
-    for s in samples:
-        cid = str(s.get("client_id") or "")
-        if not cid:
-            continue
-        d = _as_float(s.get("frames_dropped_total"))
-        if d is not None:
-            _per_client_dropped[cid].append(d)
-        o = _as_float(s.get("queue_overflow_drops"))
-        if o is not None:
-            _per_client_overflow[cid].append(o)
-
-    total_dropped = sum(counter_delta(vals) for vals in _per_client_dropped.values())
-    total_overflow = sum(counter_delta(vals) for vals in _per_client_overflow.values())
+    total_dropped, total_overflow = _compute_frame_integrity_counts(samples)
     frame_issues = total_dropped + total_overflow
     run_suitability.append(
         {

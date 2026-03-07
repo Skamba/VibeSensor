@@ -26,6 +26,7 @@ from .order_findings import (  # noqa: F401
     _compute_effective_match_rate,
     _compute_order_confidence,
     _detect_diffuse_excitation,
+    _match_samples_for_hypothesis,
     _suppress_engine_aliases,
 )
 from .persistent_findings import (  # noqa: F401
@@ -51,6 +52,7 @@ __all__ = [
     "_compute_effective_match_rate",
     "_compute_order_confidence",
     "_detect_diffuse_excitation",
+    "_match_samples_for_hypothesis",
     "_phase_speed_breakdown",
     "_phase_to_str",
     "_reference_missing_finding",

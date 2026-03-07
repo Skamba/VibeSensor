@@ -517,6 +517,119 @@ def _build_peak_rows_from_plots(
 
 
 # ---------------------------------------------------------------------------
+# map_summary component builders
+# ---------------------------------------------------------------------------
+
+
+def _build_system_cards(
+    top_causes: list[dict],
+    findings_non_ref: list[dict],
+    findings: list[dict],
+    tier: str,
+    lang: str,
+    tr: Callable,
+) -> list[SystemFindingCard]:
+    """Build system finding cards for the report template.
+
+    Returns an empty list for Tier A (data insufficient for conclusions).
+    For Tier B returns at most 2 cards labelled as hypotheses; for other
+    tiers returns at most 2 cards with repair-oriented part suggestions.
+    """
+    if tier == "A":
+        # Tier A: suppress specific system findings entirely.
+        return []
+    card_sources = top_causes or findings_non_ref or findings
+    cards: list[SystemFindingCard] = []
+    for cause in card_sources[:2]:
+        src = cause.get("source") or cause.get("suspected_source") or "unknown"
+        src_human = _human_source(src, tr=tr)
+        location = str(cause.get("strongest_location") or tr("UNKNOWN"))
+        sigs = cause.get("signatures_observed", [])
+        # Translate language-neutral order labels (e.g. "1x wheel" → "1x wheel order")
+        sigs_human = [_order_label_human(lang, str(s)) for s in sigs[:3]] if sigs else []
+        pattern_text = ", ".join(sigs_human) if sigs_human else tr("UNKNOWN")
+        order_label = sigs_human[0] if sigs_human else None
+        parts_list = parts_for_pattern(str(src), order_label, lang=lang)
+        c_conf = _extract_confidence(cause)
+        _ck, _cl, _cp, c_reason = certainty_label(c_conf, lang=lang)
+        tone = cause.get("confidence_tone", "neutral")
+
+        card_system_name = src_human
+        card_parts = [PartSuggestion(name=p, why_shown=c_reason) for p in parts_list]
+        if tier == "B":
+            # Tier B: label as hypothesis, suppress repair-oriented parts.
+            card_system_name = f"{src_human} — {tr('TIER_B_HYPOTHESIS_LABEL')}"
+            card_parts = []
+
+        cards.append(
+            SystemFindingCard(
+                system_name=card_system_name,
+                strongest_location=location,
+                pattern_summary=pattern_text,
+                parts=card_parts,
+                tone=tone,
+            )
+        )
+    return cards
+
+
+def _build_pattern_evidence(
+    top_causes: list[dict],
+    primary_candidate: dict | None,
+    origin: dict,
+    primary_location: str,
+    primary_speed: str,
+    str_text: str,
+    db_val: float | None,
+    cert_label_text: str,
+    cert_pct: str,
+    cert_reason: str,
+    weak_spatial: bool,
+    lang: str,
+    tr: Callable,
+) -> PatternEvidence:
+    """Build the pattern-evidence block for the report template.
+
+    Aggregates matched system names, resolves the origin interpretation text,
+    and computes the "why parts listed" explanation for the PDF renderer.
+    """
+    systems_raw = [
+        _human_source(c.get("source") or c.get("suspected_source"), tr=tr) for c in top_causes[:3]
+    ]
+    # Deduplicate while preserving order so that e.g. three baseline_noise
+    # findings don't appear as three repeated system names.
+    systems = list(dict.fromkeys(systems_raw))
+    interp_raw = origin.get("explanation", "") if isinstance(origin, dict) else ""
+    interp = (
+        _resolve_i18n(lang, interp_raw)
+        if _is_i18n_ref(interp_raw) or isinstance(interp_raw, list)
+        else str(interp_raw)
+    )
+    src_why = str(
+        (primary_candidate.get("source") or primary_candidate.get("suspected_source"))
+        if primary_candidate
+        else ""
+    )
+    sigs_why = primary_candidate.get("signatures_observed", []) if primary_candidate else []
+    order_lbl_why = _order_label_human(lang, str(sigs_why[0])) if sigs_why else None
+    why_text = why_parts_listed(src_why, order_lbl_why, lang=lang)
+    warning_text = cert_reason if weak_spatial else None
+    return PatternEvidence(
+        matched_systems=systems,
+        strongest_location=primary_location,
+        speed_band=primary_speed,
+        strength_label=str_text,
+        strength_peak_db=db_val,
+        certainty_label=cert_label_text,
+        certainty_pct=cert_pct,
+        certainty_reason=cert_reason,
+        warning=warning_text,
+        interpretation=interp or None,
+        why_parts_text=why_text,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Summary → template data mapper
 # ---------------------------------------------------------------------------
 
@@ -618,42 +731,14 @@ def map_summary(summary: dict) -> ReportTemplateData:
     )
 
     # -- System cards --
-    system_cards: list[SystemFindingCard] = []
-    if tier == "A":
-        # Tier A: suppress specific system findings entirely.
-        pass
-    else:
-        card_sources = top_causes or findings_non_ref or findings
-        for cause in card_sources[:2]:
-            src = cause.get("source") or cause.get("suspected_source") or "unknown"
-            src_human = _human_source(src, tr=tr)
-            location = str(cause.get("strongest_location") or tr("UNKNOWN"))
-            sigs = cause.get("signatures_observed", [])
-            # Translate language-neutral order labels (e.g. "1x wheel" → "1x wheel order")
-            sigs_human = [_order_label_human(lang, str(s)) for s in sigs[:3]] if sigs else []
-            pattern_text = ", ".join(sigs_human) if sigs_human else tr("UNKNOWN")
-            order_label = sigs_human[0] if sigs_human else None
-            parts_list = parts_for_pattern(str(src), order_label, lang=lang)
-            c_conf = _extract_confidence(cause)
-            _ck, _cl, _cp, c_reason = certainty_label(c_conf, lang=lang)
-            tone = cause.get("confidence_tone", "neutral")
-
-            card_system_name = src_human
-            card_parts = [PartSuggestion(name=p, why_shown=c_reason) for p in parts_list]
-            if tier == "B":
-                # Tier B: label as hypothesis, suppress repair-oriented parts.
-                card_system_name = f"{src_human} — {tr('TIER_B_HYPOTHESIS_LABEL')}"
-                card_parts = []
-
-            system_cards.append(
-                SystemFindingCard(
-                    system_name=card_system_name,
-                    strongest_location=location,
-                    pattern_summary=pattern_text,
-                    parts=card_parts,
-                    tone=tone,
-                )
-            )
+    system_cards = _build_system_cards(
+        top_causes,
+        findings_non_ref,
+        findings,
+        tier,
+        lang,
+        tr,
+    )
 
     # -- Next steps --
     next_steps = _build_next_steps_from_summary(
@@ -668,43 +753,20 @@ def map_summary(summary: dict) -> ReportTemplateData:
     data_trust = _build_data_trust_from_summary(summary, lang=lang, tr=tr)
 
     # -- Pattern evidence --
-    systems_raw = [
-        _human_source(c.get("source") or c.get("suspected_source"), tr=tr) for c in top_causes[:3]
-    ]
-    # Deduplicate while preserving order so that e.g. three baseline_noise
-    # findings don't appear as three repeated system names.
-    systems = list(dict.fromkeys(systems_raw))
-    pe_loc = primary_location
-    pe_speed = primary_speed
-    interp_raw = origin.get("explanation", "") if isinstance(origin, dict) else ""
-    interp = (
-        _resolve_i18n(lang, interp_raw)
-        if _is_i18n_ref(interp_raw) or isinstance(interp_raw, list)
-        else str(interp_raw)
-    )
-    src_why = str(
-        (primary_candidate.get("source") or primary_candidate.get("suspected_source"))
-        if primary_candidate
-        else ""
-    )
-    sigs_why = primary_candidate.get("signatures_observed", []) if primary_candidate else []
-    order_lbl_why = _order_label_human(lang, str(sigs_why[0])) if sigs_why else None
-    why_text = why_parts_listed(src_why, order_lbl_why, lang=lang)
-
-    warning_text = cert_reason if weak_spatial else None
-
-    pattern_evidence = PatternEvidence(
-        matched_systems=systems,
-        strongest_location=pe_loc,
-        speed_band=pe_speed,
-        strength_label=str_text,
-        strength_peak_db=db_val,
-        certainty_label=cert_label_text,
-        certainty_pct=cert_pct,
-        certainty_reason=cert_reason,
-        warning=warning_text,
-        interpretation=interp or None,
-        why_parts_text=why_text,
+    pattern_evidence = _build_pattern_evidence(
+        top_causes,
+        primary_candidate,
+        origin,
+        primary_location,
+        primary_speed,
+        str_text,
+        db_val,
+        cert_label_text,
+        cert_pct,
+        cert_reason,
+        weak_spatial,
+        lang,
+        tr,
     )
 
     # -- Peak rows --
