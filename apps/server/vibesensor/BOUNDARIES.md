@@ -4,7 +4,8 @@ Use this when changing backend code without scanning the whole package.
 
 ## Analysis Pipeline
 - All post-stop analysis lives in `analysis/`. See [docs/analysis_pipeline.md](../../../docs/analysis_pipeline.md).
-- Single entrypoint: `summarize_run_data()` in `analysis/summary.py`.
+- Single entrypoint: `summarize_run_data()` in `analysis/summary.py` (facade over
+  `summary_builder.py` and pure helpers in `summary_pipeline.py`).
 - External code should prefer the public `vibesensor.analysis` package API.
 - `report/` is renderer-only and must not import from `analysis/`.
 - Rule: no analysis helpers outside the analysis folder.
