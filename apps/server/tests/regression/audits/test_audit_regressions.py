@@ -205,16 +205,28 @@ class TestFinding4_ToleranceIgnoresCompliance:
     """Demonstrate that compliance is computed but not used in tolerance_hz."""
 
     def test_compliance_used_in_tolerance(self):
-        """FIXED: tolerance_hz now scales with sqrt(path_compliance)."""
+        """FIXED: tolerance_hz now scales with sqrt(path_compliance).
+
+        The compliance-aware matching was extracted to
+        ``_match_samples_for_hypothesis``; check there.
+        """
         import inspect
 
-        from vibesensor.analysis.findings import _build_order_findings
+        from vibesensor.analysis.findings import (
+            _build_order_findings,
+            _match_samples_for_hypothesis,
+        )
 
-        source = inspect.getsource(_build_order_findings)
-        assert "compliance = getattr(hypothesis" in source
+        # The outer orchestrator still calls the helper which contains the fix.
+        outer_source = inspect.getsource(_build_order_findings)
+        assert "_match_samples_for_hypothesis" in outer_source
+
+        # The actual compliance-scaled tolerance lives in the extracted helper.
+        inner_source = inspect.getsource(_match_samples_for_hypothesis)
+        assert "compliance = getattr(hypothesis" in inner_source
         # After fix: compliance_scale IS used in the tolerance computation
-        assert "compliance_scale" in source
-        assert "compliance**0.5" in source or "compliance ** 0.5" in source
+        assert "compliance_scale" in inner_source
+        assert "compliance**0.5" in inner_source or "compliance ** 0.5" in inner_source
 
 
 # =====================================================================
