@@ -63,7 +63,10 @@ Pi access defaults (prebuilt image)
 PR monitoring rule
 - On every PR update, run the watcher command above; if it exits `RESULT=NON_GREEN`, fix and re-run. Merge only after `RESULT=ALL_GREEN`.
 
-No-cheating + compatibility
+No-cheating + no-backward-compatibility
 - Keep code in proper code files (not hidden in docs/json/txt wrappers).
 - Move newly introduced large inline data to suitable data files (`.json`, `.yaml`, etc.) when appropriate.
-- Breaking changes are generally allowed, but preserve parsing compatibility for old recorded runs/report data unless explicitly waived.
+- Breaking changes are allowed. We own the full codebase end to end.
+- Do not add or preserve backward-compatibility layers (deprecated paths, adapters, fallbacks, shims, version-bridging logic, or legacy schema support) unless explicitly asked. Remove them when encountered.
+- Standardize on the current contract, schema, config, and runtime path.
+- Do not add new compatibility code "just in case". If compatibility seems necessary, flag it explicitly rather than implementing it silently.
