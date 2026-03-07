@@ -13,6 +13,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from vibesensor.runtime import ProcessingLoopState
+
 # ---------------------------------------------------------------------------
 # Shared API test helpers
 # ---------------------------------------------------------------------------
@@ -35,8 +37,7 @@ class FakeState:
     history_db: object = field(default_factory=MagicMock)
     update_manager: object = field(default_factory=MagicMock)
     esp_flash_manager: object = field(default_factory=MagicMock)
-    processing_state: str = "idle"
-    processing_failure_count: int = 0
+    loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
     apply_car_settings: object = field(default_factory=MagicMock)
     apply_speed_source_settings: object = field(default_factory=MagicMock)
 

@@ -7,7 +7,7 @@ import zipfile
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI, HTTPException, WebSocketDisconnect
@@ -200,14 +200,24 @@ class _FakeState:
                 "intake_stats": lambda self: {},
             },
         )()
-        self.processing_failure_count = 0
-        self.processing_state = "idle"
+        from vibesensor.runtime import ProcessingLoopState
+
+        self.loop_state = ProcessingLoopState()
+        self.apply_car_settings = lambda: None
+        self.apply_speed_source_settings = lambda: None
+        self.update_manager = MagicMock()
+        self.esp_flash_manager = MagicMock()
 
 
 def _make_router_and_state(language: str = "en", sample_count: int = 20):
+    from dataclasses import asdict
+
+    from vibesensor.analysis.report_data_builder import map_summary
+
     metadata = _make_metadata(language=language)
     samples = [_sample(i) for i in range(sample_count)]
     analysis = summarize_run_data(metadata, samples, lang=language, include_samples=False)
+    analysis["_report_template_data"] = asdict(map_summary(analysis))
     state = _FakeState(_FakeHistoryDB(metadata, samples, analysis), _FakeWsHub())
     app = FastAPI()
     router = create_router(state)
@@ -275,13 +285,19 @@ async def test_history_insights_returns_persisted_analysis() -> None:
 
 @pytest.mark.asyncio
 async def test_report_pdf_respects_lang_query() -> None:
+    """Lang query param is overridden by the persisted analysis language.
+
+    All requests for the same run return the same PDF regardless of the
+    requested language because the persisted ``_report_template_data`` lang wins.
+    """
     router, _ = _make_router_and_state(language="en")
     endpoint = _route_endpoint(router, "/api/history/{run_id}/report.pdf")
     en = await endpoint("run-1", "en")
     nl = await endpoint("run-1", "nl")
     assert en.body.startswith(b"%PDF")
     assert nl.body.startswith(b"%PDF")
-    assert en.body != nl.body
+    # Persisted lang ("en") overrides the "nl" query param; cache key is the same
+    assert en.body == nl.body
 
 
 @pytest.mark.asyncio
@@ -371,7 +387,7 @@ async def test_report_pdf_reuses_cached_pdf_for_same_run_lang_and_analysis_versi
         call_count += 1
         return b"%PDF-cached"
 
-    with patch("vibesensor.routes.history.build_report_pdf", side_effect=_fake_pdf):
+    with patch("vibesensor.history_reports.build_report_pdf", side_effect=_fake_pdf):
         first = await endpoint("run-1", "en")
         second = await endpoint("run-1", "en")
 
@@ -397,7 +413,7 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
         call_count += 1
         return b"%PDF-cached-cross-lang"
 
-    with patch("vibesensor.routes.history.build_report_pdf", side_effect=_fake_pdf):
+    with patch("vibesensor.history_reports.build_report_pdf", side_effect=_fake_pdf):
         first = await endpoint("run-1", "en")
         second = await endpoint("run-1", "nl")
 
@@ -407,9 +423,14 @@ async def test_report_pdf_reuses_cached_pdf_across_lang_when_template_is_persist
 
 @pytest.mark.asyncio
 async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> None:
+    from dataclasses import asdict
+
+    from vibesensor.analysis.report_data_builder import map_summary
+
     metadata = _make_metadata()
     samples = [_sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    analysis["_report_template_data"] = asdict(map_summary(analysis))
 
     @dataclass
     class _VersionFlipDB(_FakeHistoryDB):
@@ -435,7 +456,7 @@ async def test_report_pdf_cache_invalidates_when_analysis_version_changes() -> N
         call_count += 1
         return b"%PDF-versioned"
 
-    with patch("vibesensor.routes.history.build_report_pdf", side_effect=_fake_pdf):
+    with patch("vibesensor.history_reports.build_report_pdf", side_effect=_fake_pdf):
         await endpoint("run-1", "en")
         await endpoint("run-1", "en")
 
@@ -532,7 +553,7 @@ async def test_history_export_uses_streaming_response() -> None:
 @pytest.mark.asyncio
 async def test_history_export_csv_has_fixed_columns() -> None:
     """CSV header uses the fixed column schema regardless of sample keys."""
-    from vibesensor.routes.history import EXPORT_CSV_COLUMNS as _EXPORT_CSV_COLUMNS
+    from vibesensor.history_exports import EXPORT_CSV_COLUMNS as _EXPORT_CSV_COLUMNS
 
     router, _ = _make_router_and_state(language="en", sample_count=5)
     endpoint = _route_endpoint(router, "/api/history/{run_id}/export")
@@ -696,6 +717,12 @@ async def test_history_insights_status_and_analysis_errors(
         ("analyzing", {"status": "analyzing"}, 409, "Analysis is still in progress"),
         ("error", {"status": "error"}, 422, "Analysis failed"),
         ("complete", None, 422, "No analysis available for this run"),
+        (
+            "complete",
+            {"some_field": 42},
+            422,
+            "Report data unavailable for this run. Re-analyze to regenerate the PDF.",
+        ),
     ],
 )
 async def test_report_pdf_status_and_analysis_errors(
@@ -914,7 +941,7 @@ async def test_health_ok_status_when_no_failures() -> None:
 async def test_health_degraded_status_when_processing_failures() -> None:
     """Health endpoint must report 'degraded' when processing_failure_count > 0."""
     router, state = _make_router_and_state()
-    state.processing_failure_count = 3
+    state.loop_state.processing_failure_count = 3
     endpoint = _route_endpoint(router, "/api/health")
     resp = await endpoint()
     assert resp["status"] == "degraded"
@@ -929,8 +956,12 @@ async def test_health_degraded_status_when_processing_failures() -> None:
 @pytest.mark.asyncio
 async def test_identify_client_404_when_sensor_not_in_registry() -> None:
     """identify_client returns 404 when the sensor is not in the registry."""
-    router, state = _make_router_and_state()
-    state.registry = type("R", (), {"get": lambda self, cid: None})()
+    from vibesensor.routes.clients import create_client_routes
+
+    registry = type("R", (), {"get": lambda self, cid: None})()
+    control_plane = MagicMock()
+    settings_store = MagicMock()
+    router = create_client_routes(registry, control_plane, settings_store)
     endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -942,10 +973,13 @@ async def test_identify_client_404_when_sensor_not_in_registry() -> None:
 @pytest.mark.asyncio
 async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
     """identify_client returns 503 when sensor is in registry but not reachable."""
+    from vibesensor.routes.clients import create_client_routes
+
     _sentinel = object()
-    router, state = _make_router_and_state()
-    state.registry = type("R", (), {"get": lambda self, cid: _sentinel})()
-    state.control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
+    registry = type("R", (), {"get": lambda self, cid: _sentinel})()
+    control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (False, None)})()
+    settings_store = MagicMock()
+    router = create_client_routes(registry, control_plane, settings_store)
     endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -956,10 +990,13 @@ async def test_identify_client_503_when_sensor_known_but_unreachable() -> None:
 @pytest.mark.asyncio
 async def test_identify_client_200_when_sensor_reachable() -> None:
     """identify_client returns the sent status when sensor responds."""
+    from vibesensor.routes.clients import create_client_routes
+
     _sentinel = object()
-    router, state = _make_router_and_state()
-    state.registry = type("R", (), {"get": lambda self, cid: _sentinel})()
-    state.control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (True, 7)})()
+    registry = type("R", (), {"get": lambda self, cid: _sentinel})()
+    control_plane = type("C", (), {"send_identify": lambda self, _id, _dur: (True, 7)})()
+    settings_store = MagicMock()
+    router = create_client_routes(registry, control_plane, settings_store)
     endpoint = _route_endpoint_with_method(router, "/api/clients/{client_id}/identify", "POST")
 
     resp = await endpoint("aa:bb:cc:dd:ee:ff", type("Req", (), {"duration_ms": 1000})())

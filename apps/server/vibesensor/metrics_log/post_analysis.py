@@ -233,7 +233,7 @@ class PostAnalysisWorker:
             except Exception:
                 LOGGER.error(
                     "Failed to build ReportTemplateData for run %s; "
-                    "PDF will rebuild from summary on request",
+                    "PDF will be unavailable for this run",
                     run_id,
                     exc_info=True,
                 )

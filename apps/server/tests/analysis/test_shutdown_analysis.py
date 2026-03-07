@@ -144,7 +144,8 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
     monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
 
     from vibesensor import app as app_module
-    from vibesensor import runtime as runtime_module
+    from vibesensor import bootstrap as bootstrap_module
+    from vibesensor.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp_receiver(*args, **kwargs):
         return None, None
@@ -154,7 +155,7 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
 
     events: list[str] = []
 
-    original_close = app_module.HistoryDB.close
+    original_close = bootstrap_module.HistoryDB.close
 
     def _tracking_close(self):
         events.append("db_close")
@@ -167,9 +168,9 @@ async def test_shutdown_waits_for_analysis_before_db_close(tmp_path: Path, monke
         events.append("analysis_wait_done")
         return result
 
-    monkeypatch.setattr(runtime_module, "start_udp_data_receiver", _fake_udp_receiver)
-    monkeypatch.setattr(app_module.UDPControlPlane, "start", _fake_start)
-    monkeypatch.setattr(app_module.HistoryDB, "close", _tracking_close)
+    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp_receiver)
+    monkeypatch.setattr(bootstrap_module.UDPControlPlane, "start", _fake_start)
+    monkeypatch.setattr(bootstrap_module.HistoryDB, "close", _tracking_close)
     monkeypatch.setattr(MetricsLogger, "wait_for_post_analysis", _tracking_wait)
 
     app = app_module.create_app(config_path=cfg_path)

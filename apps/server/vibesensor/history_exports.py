@@ -1,0 +1,200 @@
+"""CSV/ZIP export shaping and streaming for history runs."""
+
+from __future__ import annotations
+
+import asyncio
+import csv
+import io
+import json
+import logging
+import tempfile
+import zipfile
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
+
+from .history_helpers import async_require_run, safe_filename, strip_internal_fields
+
+if TYPE_CHECKING:
+    from .history_db import HistoryDB
+
+LOGGER = logging.getLogger(__name__)
+
+EXPORT_BATCH_SIZE = 2048
+EXPORT_SPOOL_THRESHOLD = 4 * 1024 * 1024
+EXPORT_STREAM_CHUNK = 1024 * 1024
+
+EXPORT_CSV_COLUMNS: tuple[str, ...] = (
+    "record_type",
+    "schema_version",
+    "run_id",
+    "timestamp_utc",
+    "t_s",
+    "client_id",
+    "client_name",
+    "location",
+    "sample_rate_hz",
+    "speed_kmh",
+    "gps_speed_kmh",
+    "speed_source",
+    "engine_rpm",
+    "engine_rpm_source",
+    "gear",
+    "final_drive_ratio",
+    "accel_x_g",
+    "accel_y_g",
+    "accel_z_g",
+    "dominant_freq_hz",
+    "dominant_axis",
+    "top_peaks",
+    "top_peaks_x",
+    "top_peaks_y",
+    "top_peaks_z",
+    "vibration_strength_db",
+    "strength_bucket",
+    "strength_peak_amp_g",
+    "strength_floor_amp_g",
+    "frames_dropped_total",
+    "queue_overflow_drops",
+    "extras",
+)
+
+EXPORT_CSV_COLUMN_SET: frozenset[str] = frozenset(EXPORT_CSV_COLUMNS) - {"extras"}
+
+
+def flatten_for_csv(row: dict[str, Any]) -> dict[str, Any]:
+    """Convert nested/complex values to JSON strings for CSV export."""
+    out: dict[str, Any] = {}
+    extras: dict[str, Any] = {}
+    for key, value in row.items():
+        if key in EXPORT_CSV_COLUMN_SET:
+            out[key] = (
+                json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else value
+            )
+        elif key == "extras" and isinstance(value, dict):
+            extras.update(value)
+        else:
+            extras[key] = value
+    out.setdefault("record_type", "sample")
+    out.setdefault("schema_version", "2")
+    if extras:
+        out["extras"] = json.dumps(extras, ensure_ascii=False)
+    return out
+
+
+@dataclass
+class HistoryExportDownload:
+    """Streaming ZIP export with filename and size metadata."""
+
+    filename: str
+    file_size: int
+    spool: tempfile.SpooledTemporaryFile[bytes]
+    chunk_size: int = EXPORT_STREAM_CHUNK
+
+    def iter_bytes(self):
+        try:
+            while True:
+                chunk = self.spool.read(self.chunk_size)
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            self.spool.close()
+
+
+class HistoryExportService:
+    """Build ZIP exports for history runs without route-local business logic."""
+
+    __slots__ = ("_history_db", "_archive_builder")
+
+    def __init__(self, history_db: HistoryDB) -> None:
+        self._history_db = history_db
+        self._archive_builder = HistoryExportArchiveBuilder(history_db)
+
+    async def build_export(self, run_id: str) -> HistoryExportDownload:
+        run = await async_require_run(self._history_db, run_id)
+        spool = await asyncio.to_thread(self._archive_builder.build_zip_file, run, run_id)
+        file_size = spool.seek(0, 2)
+        spool.seek(0)
+        return HistoryExportDownload(
+            filename=f"{safe_filename(run_id)}.zip",
+            file_size=file_size,
+            spool=spool,
+        )
+
+
+class HistoryExportArchiveBuilder:
+    """Build the ZIP archive contents for a run export."""
+
+    __slots__ = ("_history_db",)
+
+    def __init__(self, history_db: HistoryDB) -> None:
+        self._history_db = history_db
+
+    def build_zip_file(
+        self,
+        run: dict[str, Any],
+        run_id: str,
+    ) -> tempfile.SpooledTemporaryFile[bytes]:
+        sample_count = 0
+        safe_name = safe_filename(run_id)
+        spool: tempfile.SpooledTemporaryFile[bytes] = tempfile.SpooledTemporaryFile(
+            max_size=EXPORT_SPOOL_THRESHOLD
+        )
+        try:
+            with zipfile.ZipFile(spool, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+                with archive.open(f"{safe_name}_raw.csv", mode="w") as raw_csv:
+                    raw_csv_text = io.TextIOWrapper(raw_csv, encoding="utf-8", newline="")
+                    writer = csv.DictWriter(
+                        raw_csv_text,
+                        fieldnames=EXPORT_CSV_COLUMNS,
+                        extrasaction="ignore",
+                    )
+                    writer.writeheader()
+                    for batch in self._history_db.iter_run_samples(
+                        run_id,
+                        batch_size=EXPORT_BATCH_SIZE,
+                    ):
+                        sample_count += len(batch)
+                        writer.writerows(flatten_for_csv(row) for row in batch)
+                    raw_csv_text.flush()
+
+                archive.writestr(
+                    f"{safe_name}.json",
+                    build_run_details_json(run, sample_count, run_id),
+                )
+
+            spool.seek(0)
+        except BaseException:
+            spool.close()
+            raise
+        return spool
+
+
+def build_run_details_json(
+    run: dict[str, Any],
+    sample_count: int,
+    run_id: str,
+) -> str:
+    """Build the exported JSON metadata document for a history run."""
+    run_details = dict(run)
+    run_details["sample_count"] = sample_count
+    analysis = run_details.get("analysis")
+    if isinstance(analysis, dict):
+        run_details["analysis"] = strip_internal_fields(analysis)
+    try:
+        return json.dumps(
+            run_details,
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+            allow_nan=False,
+        )
+    except ValueError:
+        LOGGER.warning("Export run %s: analysis contains non-finite floats", run_id)
+        return json.dumps(
+            run_details,
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+            allow_nan=True,
+        )

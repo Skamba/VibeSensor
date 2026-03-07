@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -28,7 +28,9 @@ from ..api_models import (
 from ._helpers import normalize_mac_or_400
 
 if TYPE_CHECKING:
-    from ..runtime import RuntimeState
+    from ..analysis_settings import AnalysisSettingsStore
+    from ..gps_speed import GPSSpeedMonitor
+    from ..settings_store import SettingsStore
 
 
 @contextmanager
@@ -40,7 +42,13 @@ def _value_error_to_http(status_code: int = 400) -> Iterator[None]:
         raise HTTPException(status_code=status_code, detail=str(exc)) from exc
 
 
-def create_settings_routes(state: RuntimeState) -> APIRouter:
+def create_settings_routes(
+    settings_store: SettingsStore,
+    gps_monitor: GPSSpeedMonitor,
+    analysis_settings: AnalysisSettingsStore,
+    apply_car_settings: Callable[[], None],
+    apply_speed_source_settings: Callable[[], None],
+) -> APIRouter:
     """Create and return the device-settings API routes."""
     router = APIRouter()
 
@@ -48,13 +56,13 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/settings/cars", response_model=CarsResponse)
     async def get_cars() -> CarsResponse:
-        return state.settings_store.get_cars()
+        return settings_store.get_cars()
 
     @router.post("/api/settings/cars", response_model=CarsResponse)
     async def add_car(req: CarUpsertRequest) -> CarsResponse:
         payload = req.model_dump(exclude_none=True)
-        result = await asyncio.to_thread(state.settings_store.add_car, payload)
-        state.apply_car_settings()
+        result = await asyncio.to_thread(settings_store.add_car, payload)
+        apply_car_settings()
         return result
 
     @router.put("/api/settings/cars/{car_id}", response_model=CarsResponse)
@@ -62,57 +70,57 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
         payload = req.model_dump(exclude_none=True)
         with _value_error_to_http(404):
             result = await asyncio.to_thread(
-                state.settings_store.update_car,
+                settings_store.update_car,
                 car_id,
                 payload,
             )
-        state.apply_car_settings()
+        apply_car_settings()
         return result
 
     @router.delete("/api/settings/cars/{car_id}", response_model=CarsResponse)
     async def delete_car(car_id: str) -> CarsResponse:
         # Existence check first so unknown-car yields 404 while business-logic
         # errors (e.g. "cannot delete the last car") propagate as 400.
-        cars_snapshot = await asyncio.to_thread(state.settings_store.get_cars)
+        cars_snapshot = await asyncio.to_thread(settings_store.get_cars)
         if not any(c.get("id") == car_id for c in cars_snapshot.get("cars", [])):
             raise HTTPException(status_code=404, detail=f"Car {car_id!r} not found")
         with _value_error_to_http():
-            result = await asyncio.to_thread(state.settings_store.delete_car, car_id)
-        state.apply_car_settings()
+            result = await asyncio.to_thread(settings_store.delete_car, car_id)
+        apply_car_settings()
         return result
 
     @router.post("/api/settings/cars/active", response_model=CarsResponse)
     async def set_active_car(req: ActiveCarRequest) -> CarsResponse:
         car_id = req.carId
         with _value_error_to_http(404):
-            result = await asyncio.to_thread(state.settings_store.set_active_car, car_id)
-        state.apply_car_settings()
+            result = await asyncio.to_thread(settings_store.set_active_car, car_id)
+        apply_car_settings()
         return result
 
     # -- speed source ----------------------------------------------------------
 
     @router.get("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def get_speed_source() -> SpeedSourceResponse:
-        return state.settings_store.get_speed_source()
+        return settings_store.get_speed_source()
 
     @router.post("/api/settings/speed-source", response_model=SpeedSourceResponse)
     async def update_speed_source(req: SpeedSourceRequest) -> SpeedSourceResponse:
         payload = req.model_dump(exclude_none=True)
         result = await asyncio.to_thread(
-            state.settings_store.update_speed_source,
+            settings_store.update_speed_source,
             payload,
         )
-        state.apply_speed_source_settings()
+        apply_speed_source_settings()
         return result
 
     @router.get("/api/settings/speed-source/status", response_model=SpeedSourceStatusResponse)
     async def get_speed_source_status() -> SpeedSourceStatusResponse:
-        return state.gps_monitor.status_dict()
+        return gps_monitor.status_dict()
 
     # -- sensors ---------------------------------------------------------------
 
     def _sensors_response() -> SensorsResponse:
-        return {"sensorsByMac": state.settings_store.get_sensors()}
+        return {"sensorsByMac": settings_store.get_sensors()}
 
     @router.get("/api/settings/sensors", response_model=SensorsResponse)
     async def get_sensors() -> SensorsResponse:
@@ -124,7 +132,7 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
         payload = req.model_dump(exclude_none=True)
         with _value_error_to_http():
             await asyncio.to_thread(
-                state.settings_store.set_sensor,
+                settings_store.set_sensor,
                 normalized_mac,
                 payload,
             )
@@ -134,7 +142,7 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
     async def delete_sensor(mac: str) -> SensorsResponse:
         normalized_mac = normalize_mac_or_400(mac)
         with _value_error_to_http():
-            removed = await asyncio.to_thread(state.settings_store.remove_sensor, normalized_mac)
+            removed = await asyncio.to_thread(settings_store.remove_sensor, normalized_mac)
         if not removed:
             raise HTTPException(status_code=404, detail="Unknown sensor MAC")
         return _sensors_response()
@@ -143,38 +151,38 @@ def create_settings_routes(state: RuntimeState) -> APIRouter:
 
     @router.get("/api/settings/language", response_model=LanguageResponse)
     async def get_language() -> LanguageResponse:
-        return {"language": state.settings_store.language}
+        return {"language": settings_store.language}
 
     @router.post("/api/settings/language", response_model=LanguageResponse)
     async def set_language(req: LanguageRequest) -> LanguageResponse:
         with _value_error_to_http():
-            language = await asyncio.to_thread(state.settings_store.set_language, req.language)
+            language = await asyncio.to_thread(settings_store.set_language, req.language)
         return {"language": language}
 
     @router.get("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def get_speed_unit() -> SpeedUnitResponse:
-        return {"speedUnit": state.settings_store.speed_unit}
+        return {"speedUnit": settings_store.speed_unit}
 
     @router.post("/api/settings/speed-unit", response_model=SpeedUnitResponse)
     async def set_speed_unit(req: SpeedUnitRequest) -> SpeedUnitResponse:
         with _value_error_to_http():
-            unit = await asyncio.to_thread(state.settings_store.set_speed_unit, req.speedUnit)
+            unit = await asyncio.to_thread(settings_store.set_speed_unit, req.speedUnit)
         return {"speedUnit": unit}
 
     # -- analysis settings -----------------------------------------------------
 
     @router.get("/api/analysis-settings", response_model=AnalysisSettingsResponse)
     async def get_analysis_settings() -> AnalysisSettingsResponse:
-        return state.analysis_settings.snapshot()
+        return analysis_settings.snapshot()
 
     @router.post("/api/analysis-settings", response_model=AnalysisSettingsResponse)
     async def set_analysis_settings(req: AnalysisSettingsRequest) -> AnalysisSettingsResponse:
         changes = req.model_dump(exclude_none=True)
         if changes:
             with _value_error_to_http():
-                await asyncio.to_thread(state.settings_store.update_active_car_aspects, changes)
-            state.apply_car_settings()
-        return state.analysis_settings.snapshot()
+                await asyncio.to_thread(settings_store.update_active_car_aspects, changes)
+            apply_car_settings()
+        return analysis_settings.snapshot()
 
     # -- simulator speed override (delegates to speed source) ------------------
 

@@ -168,7 +168,7 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
     asyncio.sleep = _counting_sleep
     try:
         with pytest.raises(asyncio.CancelledError):
-            await rt.processing_loop()
+            await rt.processing_loop.run()
     finally:
         asyncio.sleep = original_sleep
 
@@ -177,11 +177,11 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
 async def test_processing_loop_runs_one_tick_and_resets_state() -> None:
     """processing_loop should call compute_all and set state to 'ok'."""
     rt = _make_runtime()
-    rt.processing_state = "degraded"
+    rt.loop_state.processing_state = "degraded"
 
     await _run_processing_loop(rt, max_ticks=1)
 
-    assert rt.processing_state == "ok"
+    assert rt.loop_state.processing_state == "ok"
 
 
 @pytest.mark.asyncio
@@ -197,8 +197,8 @@ async def test_processing_loop_handles_failure_gracefully() -> None:
 
     await _run_processing_loop(rt, max_ticks=1)
 
-    assert rt.processing_failure_count >= 1
-    assert rt.processing_state in ("degraded", "fatal")
+    assert rt.loop_state.processing_failure_count >= 1
+    assert rt.loop_state.processing_state in ("degraded", "fatal")
 
 
 @pytest.mark.asyncio
@@ -226,12 +226,12 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
 @pytest.mark.asyncio
 async def test_start_creates_tasks(monkeypatch) -> None:
     """RuntimeState.start() should populate the tasks list."""
-    from vibesensor import runtime as runtime_mod
+    from vibesensor.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
         return None, None
 
-    monkeypatch.setattr(runtime_mod, "start_udp_data_receiver", _fake_udp)
+    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
     control_plane = MagicMock()
     control_plane.start = AsyncMock()
@@ -253,24 +253,24 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     )
 
     await rt.start()
-    assert len(rt.tasks) == 5
+    assert len(rt.lifecycle.tasks) == 5
     assert control_plane.start.called
 
     # Cleanup
-    for task in rt.tasks:
+    for task in rt.lifecycle.tasks:
         task.cancel()
-    await asyncio.gather(*rt.tasks, return_exceptions=True)
+    await asyncio.gather(*rt.lifecycle.tasks, return_exceptions=True)
 
 
 @pytest.mark.asyncio
 async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     """RuntimeState.stop() should cancel tasks, close DB and worker pool."""
-    from vibesensor import runtime as runtime_mod
+    from vibesensor.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
         return MagicMock(), None
 
-    monkeypatch.setattr(runtime_mod, "start_udp_data_receiver", _fake_udp)
+    monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp)
 
     metrics_logger = MagicMock()
     metrics_logger.stop_logging = MagicMock()
@@ -305,18 +305,18 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     )
 
     await rt.start()
-    assert len(rt.tasks) > 0
+    assert len(rt.lifecycle.tasks) > 0
 
     await rt.stop()
-    assert rt.tasks == []
+    assert rt.lifecycle.tasks == []
     assert metrics_logger.stop_logging.called
     assert worker_pool.shutdown.called
     assert history_db.close.called
 
 
-@pytest.mark.parametrize("attr", ["processing_loop", "start", "stop", "build_ws_payload"])
-def test_runtime_state_has_public_method(attr: str) -> None:
-    """Canonical import path should expose key public methods."""
+@pytest.mark.parametrize("attr", ["start", "stop", "processing_loop", "ws_broadcast", "lifecycle"])
+def test_runtime_state_has_public_attribute(attr: str) -> None:
+    """Canonical import path should expose key public attributes."""
     from vibesensor.runtime import RuntimeState
 
     assert hasattr(RuntimeState, attr), f"RuntimeState missing {attr}"

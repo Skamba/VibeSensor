@@ -10,8 +10,8 @@ def _health_router(fake_state):
     """Return ``(router, state)`` for health-endpoint tests."""
     from vibesensor.routes import create_router
 
-    fake_state.processing_state = "ok"
-    fake_state.processing_failure_count = 0
+    fake_state.loop_state.processing_state = "ok"
+    fake_state.loop_state.processing_failure_count = 0
     return create_router(fake_state), fake_state
 
 

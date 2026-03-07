@@ -208,11 +208,21 @@ def _make_fake_state(history_db: Any) -> Any:
             {
                 "debug_spectrum": lambda self, _id: {},
                 "raw_samples": lambda self, _id, n_samples=1: {},
+                "intake_stats": lambda self: {},
             },
         )()
 
     state = _FakeState()
     state.history_db = history_db
+    from unittest.mock import MagicMock
+
+    from vibesensor.runtime import ProcessingLoopState
+
+    state.loop_state = ProcessingLoopState()
+    state.apply_car_settings = lambda: None
+    state.apply_speed_source_settings = lambda: None
+    state.update_manager = MagicMock()
+    state.esp_flash_manager = MagicMock()
     return state
 
 
@@ -325,6 +335,11 @@ async def test_pdf_reuses_persisted_analysis_same_lang(tmp_path: Path) -> None:
     }
     samples = [_sample(i) for i in range(20)]
     analysis = summarize_run_data(metadata, samples, lang="en", include_samples=False)
+    from dataclasses import asdict
+
+    from vibesensor.analysis.report_data_builder import map_summary
+
+    analysis["_report_template_data"] = asdict(map_summary(analysis))
 
     @dataclass
     class _FakeDB:

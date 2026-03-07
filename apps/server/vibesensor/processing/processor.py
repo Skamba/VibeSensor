@@ -32,6 +32,12 @@ from .fft import (
     smooth_spectrum,
     top_peaks,
 )
+from .payload import (
+    EMPTY_SPECTRUM_PAYLOAD,
+    build_multi_spectrum_payload,
+    build_selected_payload,
+    build_spectrum_payload,
+)
 from .time_align import (
     analysis_time_range,
     compute_overlap,
@@ -466,115 +472,24 @@ class SignalProcessor:
     @_synchronized
     def spectrum_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
-        if buf is None or not buf.latest_spectrum:
-            return {
-                "x": [],
-                "y": [],
-                "z": [],
-                "combined_spectrum_amp_g": [],
-                "strength_metrics": {},
-            }
-        if (
-            buf.cached_spectrum_payload is not None
-            and buf.cached_spectrum_payload_generation == buf.spectrum_generation
-        ):
-            return buf.cached_spectrum_payload
-        payload = {
-            "x": float_list(buf.latest_spectrum.get("x", {}).get("amp", _EMPTY_F32)),
-            "y": float_list(buf.latest_spectrum.get("y", {}).get("amp", _EMPTY_F32)),
-            "z": float_list(buf.latest_spectrum.get("z", {}).get("amp", _EMPTY_F32)),
-            "combined_spectrum_amp_g": (
-                float_list(buf.latest_spectrum.get("combined", {}).get("amp", _EMPTY_F32))
-            ),
-            "strength_metrics": dict(buf.latest_strength_metrics),
-        }
-        buf.cached_spectrum_payload = payload
-        buf.cached_spectrum_payload_generation = buf.spectrum_generation
-        return payload
+        if buf is None:
+            return dict(EMPTY_SPECTRUM_PAYLOAD)
+        return build_spectrum_payload(buf)
 
     @_synchronized
     def multi_spectrum_payload(self, client_ids: list[str]) -> dict[str, Any]:
-        shared_freq: np.ndarray | None = None
-        clients: dict[str, dict[str, Any]] = {}
-        mismatch_ids: list[str] = []
-        # Track per-client freq arrays so we can decide later whether to
-        # include them per-client or only at the top level.
-        per_client_freq: dict[str, np.ndarray] = {}
-
-        # --- Compute per-sensor time ranges for alignment metadata -----------
-        ranges: list[tuple[str, float, float]] = []
-        any_synced = False
-        all_synced = True
-        for client_id in client_ids:
-            buf = self._buffers.get(client_id)
-            if buf is None or not buf.latest_spectrum:
-                continue
-            client_freq = buf.latest_spectrum["x"]["freq"]
-            if not isinstance(client_freq, np.ndarray):
-                client_freq = np.array(client_freq, dtype=np.float32)
-            if shared_freq is None:
-                shared_freq = client_freq
-            elif len(client_freq) != len(shared_freq) or not np.allclose(
-                client_freq,
-                shared_freq,
-                rtol=0.0,
-                atol=1e-6,
-            ):
-                mismatch_ids.append(client_id)
-            per_client_freq[client_id] = client_freq
-            clients[client_id] = self.spectrum_payload(client_id)
-
-            tr = self._analysis_time_range(buf)
-            if tr is not None:
-                ranges.append((client_id, tr[0], tr[1]))
-                if tr[2]:
-                    any_synced = True
-                else:
-                    all_synced = False
-
-        # When all clients share the same frequency axis, emit a single
-        # top-level "freq" and omit per-client "freq" to reduce payload size.
-        if mismatch_ids:
-            # Axes differ: include per-client freq and clear shared.
-            for cid, freq_arr in per_client_freq.items():
-                clients[cid]["freq"] = float_list(freq_arr)
-            shared_freq_list: list[float] = []
-        else:
-            # All axes match: shared freq only, no per-client duplication.
-            shared_freq_list = float_list(shared_freq) if shared_freq is not None else []
-
-        payload: dict[str, Any] = {
-            "freq": shared_freq_list,
-            "clients": clients,
-        }
-        if mismatch_ids:
-            payload["warning"] = {
-                "code": "frequency_bin_mismatch",
-                "message": "Per-client frequency axes returned due to sample-rate mismatch.",
-                "client_ids": sorted(mismatch_ids),
-            }
-
-        # --- Alignment metadata ----------------------------------------------
-        if len(ranges) >= 2:
-            ov = compute_overlap(
-                [s for _, s, _ in ranges],
-                [e for _, _, e in ranges],
-            )
-            payload["alignment"] = {
-                "overlap_ratio": round(ov.overlap_ratio, 4),
-                "aligned": ov.aligned,
-                "shared_window_s": round(ov.overlap_s, 4),
-                "sensor_count": len(ranges),
-                "clock_synced": all_synced and any_synced,
-            }
-        return payload
+        return build_multi_spectrum_payload(
+            self._buffers,
+            client_ids,
+            spectrum_fn=self.spectrum_payload,
+            analysis_time_range_fn=self._analysis_time_range,
+        )
 
     @_synchronized
     def selected_payload(self, client_id: str) -> dict[str, Any]:
         buf = self._buffers.get(client_id)
-        no_data = buf is None or buf.count == 0
-        sr = self.sample_rate_hz if no_data else (buf.sample_rate_hz or self.sample_rate_hz)
-        if no_data or sr <= 0:
+        if buf is None or buf.count == 0:
+            sr = self.sample_rate_hz
             return {
                 "client_id": client_id,
                 "sample_rate_hz": sr,
@@ -582,62 +497,14 @@ class SignalProcessor:
                 "spectrum": {},
                 "metrics": {},
             }
-        selected_cache_key = (buf.ingest_generation, buf.spectrum_generation, sr)
-        if (
-            buf.cached_selected_payload is not None
-            and buf.cached_selected_payload_key == selected_cache_key
-        ):
-            return buf.cached_selected_payload
-        window_samples = min(
-            buf.count,
-            buf.capacity,
-            max(1, int(sr * max(1, self.waveform_seconds))),
+        return build_selected_payload(
+            buf,
+            client_id,
+            sample_rate_hz=self.sample_rate_hz,
+            waveform_seconds=self.waveform_seconds,
+            waveform_display_hz=self.waveform_display_hz,
+            latest_fn=self._latest,
         )
-        waveform_raw = self._latest(buf, window_samples)
-        waveform_step = max(1, sr // max(1, self.waveform_display_hz))
-        decimated = waveform_raw[:, ::waveform_step]
-        points = decimated.shape[1]
-        x = (np.arange(points, dtype=np.float32) - (points - 1)) * (waveform_step / sr)
-
-        waveform = {"t": float_list(x)}
-        for axis_idx, axis in enumerate(AXES):
-            waveform[axis] = float_list(decimated[axis_idx])
-
-        spectrum: dict[str, Any] = {}
-        if buf.latest_spectrum:
-            x_axis = buf.latest_spectrum.get("x", {})
-            freq = x_axis.get("freq", _EMPTY_F32)
-            spectrum["freq"] = float_list(freq)
-            for axis in AXES:
-                axis_data = buf.latest_spectrum.get(axis, {})
-                spectrum[axis] = float_list(axis_data.get("amp", _EMPTY_F32))
-            combined = buf.latest_spectrum.get("combined")
-            spectrum["combined_spectrum_amp_g"] = (
-                float_list(combined["amp"])
-                if isinstance(combined, dict) and "amp" in combined
-                else []
-            )
-            spectrum["strength_metrics"] = dict(buf.latest_strength_metrics)
-        else:
-            spectrum = {
-                "freq": [],
-                "x": [],
-                "y": [],
-                "z": [],
-                "combined_spectrum_amp_g": [],
-                "strength_metrics": {},
-            }
-
-        payload = {
-            "client_id": client_id,
-            "sample_rate_hz": sr,
-            "waveform": waveform,
-            "spectrum": spectrum,
-            "metrics": buf.latest_metrics,
-        }
-        buf.cached_selected_payload = payload
-        buf.cached_selected_payload_key = selected_cache_key
-        return payload
 
     # -- Accessors & debug ----------------------------------------------------
 

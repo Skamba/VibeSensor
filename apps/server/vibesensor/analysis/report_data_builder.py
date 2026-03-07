@@ -581,6 +581,102 @@ def _build_pattern_evidence(
     )
 
 
+def _resolve_primary_candidate(
+    top_causes: list[dict],
+    findings_non_ref: list[dict],
+    origin_location: str,
+    tr: Callable,
+) -> tuple[dict | None, object, str, str, str, float]:
+    """Extract the primary candidate and derive source, system, location, speed, and confidence.
+
+    Returns ``(primary_candidate, primary_source, primary_system,
+    primary_location, primary_speed, conf)``.
+    """
+    primary_candidates = top_causes or findings_non_ref
+    primary_candidate = primary_candidates[0] if primary_candidates else None
+    if primary_candidate:
+        primary_source = primary_candidate.get("source") or primary_candidate.get(
+            "suspected_source"
+        )
+        primary_system = _human_source(primary_source, tr=tr)
+        primary_location = origin_location or str(
+            primary_candidate.get("strongest_location") or tr("UNKNOWN")
+        )
+        primary_speed = str(
+            primary_candidate.get("strongest_speed_band")
+            or primary_candidate.get("speed_band")
+            or tr("UNKNOWN")
+        )
+        conf = _extract_confidence(primary_candidate)
+    else:
+        primary_source = None
+        primary_system = tr("UNKNOWN")
+        primary_location = origin_location or tr("UNKNOWN")
+        primary_speed = tr("UNKNOWN")
+        conf = 0.0
+    return primary_candidate, primary_source, primary_system, primary_location, primary_speed, conf
+
+
+def _build_run_metadata_fields(
+    summary: dict,
+    meta: dict,
+) -> dict[str, object]:
+    """Extract and format run metadata text fields for the report template.
+
+    Returns a plain dict with keys: ``duration_text``, ``start_time_utc``,
+    ``end_time_utc``, ``sample_rate_hz``, ``tire_spec_text``, ``sample_count``,
+    ``sensor_model``, ``firmware_version``.
+    """
+    duration_text = str(summary.get("record_length") or "") or None
+    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
+    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
+    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
+    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
+
+    tire_width_mm = _as_float(meta.get("tire_width_mm"))
+    tire_aspect_pct = _as_float(meta.get("tire_aspect_pct"))
+    rim_in = _as_float(meta.get("rim_in"))
+    tire_spec_text: str | None = None
+    if (
+        tire_width_mm is not None
+        and tire_aspect_pct is not None
+        and rim_in is not None
+        and tire_width_mm > 0
+        and tire_aspect_pct > 0
+        and rim_in > 0
+    ):
+        tire_spec_text = f"{tire_width_mm:g}/{tire_aspect_pct:g}R{rim_in:g}"
+
+    return {
+        "duration_text": duration_text,
+        "start_time_utc": start_time_utc,
+        "end_time_utc": end_time_utc,
+        "sample_rate_hz": sample_rate_hz,
+        "tire_spec_text": tire_spec_text,
+        "sample_count": int(_as_float(summary.get("rows")) or 0),
+        "sensor_model": str(summary.get("sensor_model") or "").strip() or None,
+        "firmware_version": str(summary.get("firmware_version") or "").strip() or None,
+    }
+
+
+def _filter_active_sensor_intensity(
+    raw_sensor_intensity_all: list,
+    sensor_locations_active: list[str],
+) -> list[dict]:
+    """Filter sensor intensity rows to only active (connected-throughout) locations.
+
+    When no active locations are known, returns all well-formed rows.
+    """
+    active_locations = set(sensor_locations_active)
+    if active_locations:
+        return [
+            row
+            for row in raw_sensor_intensity_all
+            if isinstance(row, dict) and str(row.get("location") or "") in active_locations
+        ]
+    return [row for row in raw_sensor_intensity_all if isinstance(row, dict)]
+
+
 # ---------------------------------------------------------------------------
 # Summary → template data mapper
 # ---------------------------------------------------------------------------
@@ -615,29 +711,10 @@ def map_summary(summary: dict) -> ReportTemplateData:
 
     sensor_locations_active = _extract_sensor_locations(summary)
 
-    # -- Observed signature --
-    primary_candidates = top_causes or findings_non_ref
-    primary_candidate = primary_candidates[0] if primary_candidates else None
-    if primary_candidate:
-        primary_source = primary_candidate.get("source") or primary_candidate.get(
-            "suspected_source"
-        )
-        primary_system = _human_source(primary_source, tr=tr)
-        primary_location = origin_location or str(
-            primary_candidate.get("strongest_location") or tr("UNKNOWN")
-        )
-        primary_speed = str(
-            primary_candidate.get("strongest_speed_band")
-            or primary_candidate.get("speed_band")
-            or tr("UNKNOWN")
-        )
-        conf = _extract_confidence(primary_candidate)
-    else:
-        primary_source = None
-        primary_system = tr("UNKNOWN")
-        primary_location = origin_location or tr("UNKNOWN")
-        primary_speed = tr("UNKNOWN")
-        conf = 0.0
+    # -- Primary candidate: source, system name, location, speed, confidence --
+    primary_candidate, primary_source, primary_system, primary_location, primary_speed, conf = (
+        _resolve_primary_candidate(top_causes, findings_non_ref, origin_location, tr)
+    )
 
     db_val = _top_strength_values(summary, effective_causes=top_causes)
     str_text = strength_text(db_val, lang=lang)
@@ -722,44 +799,16 @@ def map_summary(summary: dict) -> ReportTemplateData:
     version_marker = f"v{__version__} ({git_sha[:8]})" if git_sha else f"v{__version__}"
 
     # -- Metadata enrichment --
-    duration_text = str(summary.get("record_length") or "") or None
-    start_time_utc = str(summary.get("start_time_utc") or "").strip() or None
-    end_time_utc = str(summary.get("end_time_utc") or "").strip() or None
-    raw_sample_rate_hz = _as_float(summary.get("raw_sample_rate_hz"))
-    sample_rate_hz = f"{raw_sample_rate_hz:g}" if raw_sample_rate_hz is not None else None
-
-    tire_width_mm = _as_float(meta.get("tire_width_mm"))
-    tire_aspect_pct = _as_float(meta.get("tire_aspect_pct"))
-    rim_in = _as_float(meta.get("rim_in"))
-    tire_spec_text: str | None = None
-    if (
-        tire_width_mm is not None
-        and tire_aspect_pct is not None
-        and rim_in is not None
-        and tire_width_mm > 0
-        and tire_aspect_pct > 0
-        and rim_in > 0
-    ):
-        tire_spec_text = f"{tire_width_mm:g}/{tire_aspect_pct:g}R{rim_in:g}"
-
-    sample_count = int(_as_float(summary.get("rows")) or 0)
+    run_meta = _build_run_metadata_fields(summary, meta)
     sensor_count_used = sensor_count
-    sensor_model_val = str(summary.get("sensor_model") or "").strip() or None
-    firmware_version_val = str(summary.get("firmware_version") or "").strip() or None
 
     # -- Rendering context (pre-computed for the PDF renderer) --
     raw_sensor_intensity_all = summary.get("sensor_intensity_by_location", [])
     if not isinstance(raw_sensor_intensity_all, list):
         raw_sensor_intensity_all = []
-    active_locations = set(sensor_locations_active)
-    if active_locations:
-        raw_sensor_intensity = [
-            row
-            for row in raw_sensor_intensity_all
-            if isinstance(row, dict) and str(row.get("location") or "") in active_locations
-        ]
-    else:
-        raw_sensor_intensity = [row for row in raw_sensor_intensity_all if isinstance(row, dict)]
+    raw_sensor_intensity = _filter_active_sensor_intensity(
+        raw_sensor_intensity_all, sensor_locations_active
+    )
 
     # Pre-compute location hotspot rows from findings matched_points
     # so the PDF renderer never reads raw samples.
@@ -769,16 +818,16 @@ def map_summary(summary: dict) -> ReportTemplateData:
         title=tr("DIAGNOSTIC_WORKSHEET"),
         run_datetime=date_str,
         run_id=summary.get("run_id"),
-        duration_text=duration_text,
-        start_time_utc=start_time_utc,
-        end_time_utc=end_time_utc,
-        sample_rate_hz=sample_rate_hz,
-        tire_spec_text=tire_spec_text,
-        sample_count=sample_count,
+        duration_text=run_meta["duration_text"],
+        start_time_utc=run_meta["start_time_utc"],
+        end_time_utc=run_meta["end_time_utc"],
+        sample_rate_hz=run_meta["sample_rate_hz"],
+        tire_spec_text=run_meta["tire_spec_text"],
+        sample_count=run_meta["sample_count"],
         sensor_count=sensor_count_used,
         sensor_locations=sensor_locations_active,
-        sensor_model=sensor_model_val,
-        firmware_version=firmware_version_val,
+        sensor_model=run_meta["sensor_model"],
+        firmware_version=run_meta["firmware_version"],
         car=CarMeta(name=car_name, car_type=car_type),
         observed=observed,
         system_cards=system_cards,

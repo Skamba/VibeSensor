@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from fastapi import APIRouter, HTTPException, Query
 
 from ..api_models import (
@@ -12,11 +10,8 @@ from ..api_models import (
     CarLibraryTypesResponse,
 )
 
-if TYPE_CHECKING:
-    from ..runtime import RuntimeState
 
-
-def create_car_library_routes(state: RuntimeState) -> APIRouter:
+def create_car_library_routes() -> APIRouter:
     """Create and return the car-library API routes."""
     from ..car_library import get_brands, get_models_for_brand_type, get_types_for_brand
 

@@ -123,7 +123,7 @@ async def test_esp_flash_start_returns_400_on_value_error() -> None:
 
     state = MagicMock()
     state.esp_flash_manager = _ValErrFlashManager()
-    router = create_update_routes(state)
+    router = create_update_routes(state.update_manager, state.esp_flash_manager)
 
     start_endpoint = None
     for route in router.routes:

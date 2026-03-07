@@ -30,6 +30,9 @@ class _State:
     gps_monitor: object = field(init=False)
     ws_hub: object = field(init=False)
     processor: object = field(init=False)
+    loop_state: object = field(init=False)
+    update_manager: object = field(init=False)
+    esp_flash_manager: object = field(init=False)
 
     def apply_car_settings(self) -> None:
         aspects = self.settings_store.active_car_aspects()
@@ -40,6 +43,11 @@ class _State:
         pass
 
     def __post_init__(self) -> None:
+        from vibesensor.runtime import ProcessingLoopState
+
+        self.loop_state = ProcessingLoopState()
+        self.update_manager = None
+        self.esp_flash_manager = None
         self.live_diagnostics = SimpleNamespace(reset=_noop)
         self.metrics_logger = SimpleNamespace(
             status=dict,
@@ -76,6 +84,7 @@ class _State:
         self.processor = SimpleNamespace(
             debug_spectrum=lambda _id: {},
             raw_samples=lambda _id, n_samples=1: {},
+            intake_stats=lambda: {},
         )
 
 

@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-import asyncio
-import re
-from typing import TYPE_CHECKING, Any
-
 from fastapi import HTTPException
 
 from ..domain_models import normalize_sensor_id
+from ..history_helpers import async_require_run, safe_filename
 
-if TYPE_CHECKING:
-    from ..history_db import HistoryDB
-
-_SAFE_FILENAME_RE = re.compile(r"[^a-zA-Z0-9._-]")
+__all__ = [
+    "async_require_run",
+    "normalize_client_id_or_400",
+    "normalize_mac_or_400",
+    "safe_filename",
+]
 
 
 def normalize_client_id_or_400(client_id: str) -> str:
@@ -36,17 +35,3 @@ def normalize_mac_or_400(mac: str) -> str:
         return normalize_sensor_id(mac)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="Invalid MAC address format") from exc
-
-
-def safe_filename(name: str) -> str:
-    """Sanitize *name* for use in Content-Disposition headers and zip entry names."""
-    cleaned = _SAFE_FILENAME_RE.sub("_", name)[:200].lstrip(".")
-    return cleaned or "download"
-
-
-async def async_require_run(history_db: HistoryDB, run_id: str) -> dict[str, Any]:
-    """Fetch a history run in a thread or raise 404."""
-    run = await asyncio.to_thread(history_db.get_run, run_id)
-    if run is None:
-        raise HTTPException(status_code=404, detail="Run not found")
-    return run
