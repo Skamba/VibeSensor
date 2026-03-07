@@ -1,7 +1,15 @@
-"""RuntimeState – owns server lifecycle, processing loop, and WS payload assembly.
+"""RuntimeState – thin orchestration layer: lifecycle, processing loop, WS broadcast.
 
 Extracted from ``app.py`` so that the orchestration logic is independently
 testable and ``app.py`` stays a thin FastAPI wiring layer.
+
+Internal helpers
+----------------
+- ``ProcessingLoopState`` – mutable failure-tracking state for the processing loop.
+- ``WsBroadcastCache`` – tick counter and per-tick caches for WS payload assembly.
+- ``_apply_car_settings`` / ``_apply_speed_source_settings`` – stateless settings applicators.
+- ``_rotational_basis_speed_source`` / ``_build_rotational_speeds_payload`` – stateless payload
+  builders.
 """
 
 from __future__ import annotations
@@ -50,9 +58,235 @@ STALE_DATA_AGE_S = 2.0
 """Clients without fresh UDP data within this window are excluded from spectrum output."""
 
 
+# ---------------------------------------------------------------------------
+# ProcessingLoopState – failure tracking and mismatch logging
+# ---------------------------------------------------------------------------
+
+
+@dataclass(slots=True)
+class ProcessingLoopState:
+    """Mutable tracking state for the processing loop.
+
+    Extracted from ``RuntimeState`` so the loop's counters and mismatch
+    log-guards form a coherent, narrowly-scoped unit.
+    """
+
+    processing_state: str = "ok"
+    processing_failure_count: int = 0
+    sample_rate_mismatch_logged: set[str] = field(default_factory=set)
+    frame_size_mismatch_logged: set[str] = field(default_factory=set)
+
+
+# ---------------------------------------------------------------------------
+# WsBroadcastCache – tick counter and per-tick result caches
+# ---------------------------------------------------------------------------
+
+
+@dataclass(slots=True)
+class WsBroadcastCache:
+    """Tick counter and per-tick caches for WebSocket payload assembly.
+
+    Extracted from ``RuntimeState`` so that cache-staleness logic and the
+    tick/heavy-tick toggle form a single coherent unit rather than scattered
+    fields on the god object.
+    """
+
+    tick: int = 0
+    include_heavy: bool = True
+    analysis_metadata: dict[str, object] | None = None
+    analysis_samples: list[dict[str, object]] = field(default_factory=list)
+    analysis_tick: int = -1
+    diagnostics: dict[str, object] | None = None
+    diagnostics_tick: int = -1
+    diagnostics_heavy: bool = True
+
+    def advance(self, heavy_every: int) -> None:
+        """Advance the tick counter and update ``include_heavy``."""
+        self.tick += 1
+        self.include_heavy = (self.tick % heavy_every) == 0
+
+    def refresh_analysis(
+        self,
+        metrics_logger: MetricsLogger,
+    ) -> tuple[dict[str, object], list[dict[str, object]]]:
+        """Return (metadata, samples), refreshing only when the cache is stale.
+
+        On heavy ticks the cache is always refreshed.  On light ticks the
+        existing cache is reused if it was populated at least once.
+        """
+        need_refresh = self.analysis_metadata is None or (
+            self.include_heavy and self.analysis_tick != self.tick
+        )
+        if need_refresh:
+            metadata, samples = metrics_logger.analysis_snapshot()
+            self.analysis_metadata = metadata
+            self.analysis_samples = samples
+            self.analysis_tick = self.tick
+        assert self.analysis_metadata is not None, (
+            "analysis cache must be populated: need_refresh was True or cache was valid"
+        )
+        return self.analysis_metadata, self.analysis_samples
+
+    def refresh_diagnostics(
+        self,
+        live_diagnostics: LiveDiagnosticsEngine,
+        *,
+        speed_mps: float | None,
+        clients: list[dict[str, Any]],
+        spectra: dict[str, Any] | None,
+        settings: dict[str, Any],
+        analysis_metadata: dict[str, object],
+        analysis_samples: list[dict[str, object]],
+        language: str,
+    ) -> dict[str, object]:
+        """Return diagnostics payload, refreshing only when the cache is stale."""
+        cache_valid = (
+            self.diagnostics is not None
+            and self.diagnostics_tick == self.tick
+            and self.diagnostics_heavy == self.include_heavy
+        )
+        if cache_valid:
+            assert self.diagnostics is not None, (
+                "diagnostics cache must be populated when cache_valid is True"
+            )
+            return self.diagnostics
+        diagnostics = live_diagnostics.update(
+            speed_mps=speed_mps,
+            clients=clients,
+            spectra=spectra,
+            settings=settings,
+            finding_metadata=analysis_metadata,
+            finding_samples=analysis_samples,
+            language=language,
+        )
+        self.diagnostics = diagnostics
+        self.diagnostics_tick = self.tick
+        self.diagnostics_heavy = self.include_heavy
+        return diagnostics
+
+
+# ---------------------------------------------------------------------------
+# Settings applicators (stateless module-level helpers)
+# ---------------------------------------------------------------------------
+
+
+def _apply_car_settings(
+    settings_store: SettingsStore,
+    analysis_settings: AnalysisSettingsStore,
+) -> None:
+    """Push active car aspects into the shared AnalysisSettingsStore."""
+    aspects = settings_store.active_car_aspects()
+    if aspects:
+        analysis_settings.update(aspects)
+
+
+def _apply_speed_source_settings(
+    settings_store: SettingsStore,
+    gps_monitor: GPSSpeedMonitor,
+) -> None:
+    """Push speed-source settings into GPSSpeedMonitor."""
+    ss = settings_store.get_speed_source()
+    gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
+    if ss["manualSpeedKph"] is not None:
+        gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
+    else:
+        gps_monitor.set_speed_override_kmh(None)
+    gps_monitor.set_fallback_settings(
+        stale_timeout_s=ss.get("staleTimeoutS"),
+        fallback_mode=ss.get("fallbackMode"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rotational-speed payload helpers (stateless module-level helpers)
+# ---------------------------------------------------------------------------
+
+
+def _rotational_basis_speed_source(
+    settings_store: SettingsStore,
+    gps_monitor: GPSSpeedMonitor,
+    *,
+    resolution_source: str | None = None,
+) -> str:
+    """Determine the basis speed source label for rotational RPM display."""
+    speed_source = settings_store.get_speed_source()
+    selected_source = str(speed_source.get("speedSource") or "gps").lower()
+    if selected_source == "manual":
+        return "manual"
+    if selected_source == "obd2":
+        return "obd2"
+    # Use the pre-resolved source when available for snapshot consistency.
+    if resolution_source is not None:
+        if resolution_source == "fallback_manual":
+            return "fallback_manual"
+        if gps_monitor.gps_enabled:
+            return "gps"
+    else:
+        # Fallback for callers that don't pass a resolution.
+        if gps_monitor.fallback_active:
+            return "fallback_manual"
+        if gps_monitor.gps_enabled:
+            return "gps"
+    return "unknown"
+
+
+def _build_rotational_speeds_payload(
+    *,
+    basis_speed_source: str,
+    speed_mps: float | None,
+    analysis_settings: dict[str, Any],
+) -> dict[str, Any]:
+    """Assemble the ``rotational_speeds`` sub-dict for the WS payload."""
+    # Determine failure reason early to avoid closure allocation and
+    # full-dict construction on the common no-speed / invalid-settings paths.
+    if speed_mps is None or speed_mps <= 0:
+        reason: str | None = "speed_unavailable"
+        orders_hz = None
+    else:
+        orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
+        reason = "invalid_vehicle_settings" if orders_hz is None else None
+
+    if reason is not None:
+        _component: dict[str, Any] = {"rpm": None, "mode": "calculated", "reason": reason}
+        return {
+            "basis_speed_source": basis_speed_source,
+            "wheel": {**_component},
+            "driveshaft": {**_component},
+            "engine": {**_component},
+            "order_bands": None,
+        }
+
+    wheel_rpm = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
+    drive_rpm = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
+    engine_rpm = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE
+
+    return {
+        "basis_speed_source": basis_speed_source,
+        "wheel": {"rpm": wheel_rpm, "mode": "calculated", "reason": None},
+        "driveshaft": {"rpm": drive_rpm, "mode": "calculated", "reason": None},
+        "engine": {"rpm": engine_rpm, "mode": "calculated", "reason": None},
+        "order_bands": build_order_bands(orders_hz, analysis_settings),
+    }
+
+
+# ---------------------------------------------------------------------------
+# RuntimeState – thin orchestration layer
+# ---------------------------------------------------------------------------
+
+
 @dataclass(slots=True)
 class RuntimeState:
-    """Owns all live server state: registry, processor, websocket hub, GPS, etc."""
+    """Thin orchestration layer: holds service refs and coordinates lifecycle.
+
+    Mutable state has been extracted into focused sub-objects:
+
+    - ``loop_state``: processing-loop failure tracking and mismatch log-guards.
+    - ``ws_cache``: WebSocket tick counter and per-tick payload caches.
+
+    The public surface (``processing_state``, ``processing_failure_count``,
+    ``ws_tick``, ``ws_include_heavy``) is preserved as properties for
+    backward compatibility with callers that read/write these directly.
+    """
 
     config: AppConfig
     registry: ClientRegistry
@@ -71,174 +305,65 @@ class RuntimeState:
     tasks: list[asyncio.Task] = field(default_factory=list)
     data_transport: asyncio.DatagramTransport | None = None
     data_consumer_task: asyncio.Task | None = None
-    sample_rate_mismatch_logged: set[str] = field(default_factory=set)
-    frame_size_mismatch_logged: set[str] = field(default_factory=set)
-    processing_state: str = "ok"
-    processing_failure_count: int = 0
-    ws_tick: int = 0
-    ws_include_heavy: bool = True
-    cached_analysis_metadata: dict[str, object] | None = None
-    cached_analysis_samples: list[dict[str, object]] = field(default_factory=list)
-    cached_analysis_tick: int = -1
-    cached_diagnostics: dict[str, object] | None = None
-    cached_diagnostics_tick: int = -1
-    cached_diagnostics_heavy: bool = True
+    loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
+    ws_cache: WsBroadcastCache = field(default_factory=WsBroadcastCache)
+
+    # -- Backward-compatible property delegates ----------------------------
+    # Allow external code (health route, tests) to read/write the narrowly-
+    # extracted state fields through the original flat attribute names.
+
+    @property
+    def processing_state(self) -> str:
+        return self.loop_state.processing_state
+
+    @processing_state.setter
+    def processing_state(self, value: str) -> None:
+        self.loop_state.processing_state = value
+
+    @property
+    def processing_failure_count(self) -> int:
+        return self.loop_state.processing_failure_count
+
+    @processing_failure_count.setter
+    def processing_failure_count(self, value: int) -> None:
+        self.loop_state.processing_failure_count = value
+
+    @property
+    def ws_tick(self) -> int:
+        return self.ws_cache.tick
+
+    @ws_tick.setter
+    def ws_tick(self, value: int) -> None:
+        self.ws_cache.tick = value
+
+    @property
+    def ws_include_heavy(self) -> bool:
+        return self.ws_cache.include_heavy
+
+    @ws_include_heavy.setter
+    def ws_include_heavy(self, value: bool) -> None:
+        self.ws_cache.include_heavy = value
 
     # -- settings helpers ---------------------------------------------------
 
     def apply_car_settings(self) -> None:
         """Push active car aspects into the shared AnalysisSettingsStore."""
-        aspects = self.settings_store.active_car_aspects()
-        if aspects:
-            self.analysis_settings.update(aspects)
+        _apply_car_settings(self.settings_store, self.analysis_settings)
 
     def apply_speed_source_settings(self) -> None:
         """Push speed-source settings into GPSSpeedMonitor."""
-        ss = self.settings_store.get_speed_source()
-        self.gps_monitor.set_manual_source_selected(ss["speedSource"] == "manual")
-        if ss["manualSpeedKph"] is not None:
-            self.gps_monitor.set_speed_override_kmh(ss["manualSpeedKph"])
-        else:
-            self.gps_monitor.set_speed_override_kmh(None)
-        self.gps_monitor.set_fallback_settings(
-            stale_timeout_s=ss.get("staleTimeoutS"),
-            fallback_mode=ss.get("fallbackMode"),
-        )
-
-    # -- rotational speeds --------------------------------------------------
-
-    def _rotational_basis_speed_source(
-        self,
-        *,
-        resolution_source: str | None = None,
-    ) -> str:
-        speed_source = self.settings_store.get_speed_source()
-        selected_source = str(speed_source.get("speedSource") or "gps").lower()
-        if selected_source == "manual":
-            return "manual"
-        if selected_source == "obd2":
-            return "obd2"
-        # Use the pre-resolved source when available for snapshot consistency.
-        if resolution_source is not None:
-            if resolution_source == "fallback_manual":
-                return "fallback_manual"
-            if self.gps_monitor.gps_enabled:
-                return "gps"
-        else:
-            # Fallback for callers that don't pass a resolution.
-            if self.gps_monitor.fallback_active:
-                return "fallback_manual"
-            if self.gps_monitor.gps_enabled:
-                return "gps"
-        return "unknown"
-
-    def _build_rotational_speeds_payload(
-        self,
-        *,
-        speed_mps: float | None,
-        analysis_settings: dict[str, Any],
-        resolution_source: str | None = None,
-    ) -> dict[str, Any]:
-        basis = self._rotational_basis_speed_source(
-            resolution_source=resolution_source,
-        )
-
-        # Determine failure reason early to avoid closure allocation and
-        # full-dict construction on the common no-speed / invalid-settings paths.
-        if speed_mps is None or speed_mps <= 0:
-            reason: str | None = "speed_unavailable"
-            orders_hz = None
-        else:
-            orders_hz = vehicle_orders_hz(speed_mps=speed_mps, settings=analysis_settings)
-            reason = "invalid_vehicle_settings" if orders_hz is None else None
-
-        if reason is not None:
-            _comp: dict[str, Any] = {"rpm": None, "mode": "calculated", "reason": reason}
-            return {
-                "basis_speed_source": basis,
-                "wheel": {**_comp},
-                "driveshaft": {**_comp},
-                "engine": {**_comp},
-                "order_bands": None,
-            }
-
-        wheel_rpm = float(orders_hz["wheel_hz"]) * SECONDS_PER_MINUTE
-        drive_rpm = float(orders_hz["drive_hz"]) * SECONDS_PER_MINUTE
-        engine_rpm = float(orders_hz["engine_hz"]) * SECONDS_PER_MINUTE
-
-        return {
-            "basis_speed_source": basis,
-            "wheel": {"rpm": wheel_rpm, "mode": "calculated", "reason": None},
-            "driveshaft": {"rpm": drive_rpm, "mode": "calculated", "reason": None},
-            "engine": {"rpm": engine_rpm, "mode": "calculated", "reason": None},
-            "order_bands": build_order_bands(orders_hz, analysis_settings),
-        }
+        _apply_speed_source_settings(self.settings_store, self.gps_monitor)
 
     # -- WS broadcast helpers -----------------------------------------------
 
     def on_ws_broadcast_tick(self) -> None:
-        self.ws_tick += 1
         heavy_every = max(
             1,
             int(
                 self.config.processing.ui_push_hz / max(1, self.config.processing.ui_heavy_push_hz)
             ),
         )
-        self.ws_include_heavy = (self.ws_tick % heavy_every) == 0
-
-    def _refresh_analysis_cache(self) -> tuple[dict[str, object], list[dict[str, object]]]:
-        """Return (metadata, samples), refreshing only when the cache is stale.
-
-        On heavy ticks the cache is always refreshed.  On light ticks the
-        existing cache is reused if it was populated at least once.
-        """
-        need_refresh = self.cached_analysis_metadata is None or (
-            self.ws_include_heavy and self.cached_analysis_tick != self.ws_tick
-        )
-        if need_refresh:
-            metadata, samples = self.metrics_logger.analysis_snapshot()
-            self.cached_analysis_metadata = metadata
-            self.cached_analysis_samples = samples
-            self.cached_analysis_tick = self.ws_tick
-        assert self.cached_analysis_metadata is not None, (
-            "analysis cache must be populated: need_refresh was True or cache was valid"
-        )
-        return self.cached_analysis_metadata, self.cached_analysis_samples
-
-    def _refresh_diagnostics_cache(
-        self,
-        *,
-        speed_mps: float | None,
-        clients: list[dict[str, Any]],
-        spectra: dict[str, Any] | None,
-        settings: dict[str, Any],
-        analysis_metadata: dict[str, object],
-        analysis_samples: list[dict[str, object]],
-    ) -> dict[str, object]:
-        """Return diagnostics payload, refreshing only when the cache is stale."""
-        cache_valid = (
-            self.cached_diagnostics is not None
-            and self.cached_diagnostics_tick == self.ws_tick
-            and self.cached_diagnostics_heavy == self.ws_include_heavy
-        )
-        if cache_valid:
-            assert self.cached_diagnostics is not None, (
-                "diagnostics cache must be populated when cache_valid is True"
-            )
-            return self.cached_diagnostics
-        diagnostics = self.live_diagnostics.update(
-            speed_mps=speed_mps,
-            clients=clients,
-            spectra=spectra,
-            settings=settings,
-            finding_metadata=analysis_metadata,
-            finding_samples=analysis_samples,
-            language=self.settings_store.language,
-        )
-        self.cached_diagnostics = diagnostics
-        self.cached_diagnostics_tick = self.ws_tick
-        self.cached_diagnostics_heavy = self.ws_include_heavy
-        return diagnostics
+        self.ws_cache.advance(heavy_every)
 
     def build_ws_payload(self, selected_client: str | None) -> dict[str, Any]:
         clients = self.registry.snapshot_for_api()
@@ -260,21 +385,28 @@ class RuntimeState:
             "selected_client_id": active,
         }
         analysis_settings_snapshot = self.analysis_settings.snapshot()
-        payload["rotational_speeds"] = self._build_rotational_speeds_payload(
-            speed_mps=speed_mps,
-            analysis_settings=analysis_settings_snapshot,
+        basis = _rotational_basis_speed_source(
+            self.settings_store,
+            self.gps_monitor,
             resolution_source=resolution.source,
         )
-        analysis_metadata, analysis_samples = self._refresh_analysis_cache()
-        if self.ws_include_heavy:
+        payload["rotational_speeds"] = _build_rotational_speeds_payload(
+            basis_speed_source=basis,
+            speed_mps=speed_mps,
+            analysis_settings=analysis_settings_snapshot,
+        )
+        analysis_metadata, analysis_samples = self.ws_cache.refresh_analysis(self.metrics_logger)
+        if self.ws_cache.include_heavy:
             payload["spectra"] = self.processor.multi_spectrum_payload(fresh_ids)
-        payload["diagnostics"] = self._refresh_diagnostics_cache(
+        payload["diagnostics"] = self.ws_cache.refresh_diagnostics(
+            self.live_diagnostics,
             speed_mps=speed_mps,
             clients=clients,
-            spectra=payload.get("spectra") if self.ws_include_heavy else None,
+            spectra=payload.get("spectra") if self.ws_cache.include_heavy else None,
             settings=analysis_settings_snapshot,
             analysis_metadata=analysis_metadata,
             analysis_samples=analysis_samples,
+            language=self.settings_store.language,
         )
         return payload
 
@@ -302,6 +434,7 @@ class RuntimeState:
                     active_ids, max_age_s=STALE_DATA_AGE_S
                 )
                 sample_rates: dict[str, int] = {}
+                loop_state = self.loop_state  # local alias avoids repeated attr lookup in the loop
                 for client_id in fresh_ids:
                     record = self.registry.get(client_id)
                     if record is None:
@@ -312,9 +445,9 @@ class RuntimeState:
                     if (
                         client_rate > 0
                         and client_rate != default_rate
-                        and client_id not in self.sample_rate_mismatch_logged
+                        and client_id not in loop_state.sample_rate_mismatch_logged
                     ):
-                        self.sample_rate_mismatch_logged.add(client_id)
+                        loop_state.sample_rate_mismatch_logged.add(client_id)
                         LOGGER.warning(
                             "Client %s uses sample_rate_hz=%d; default config is %d.",
                             client_id,
@@ -325,9 +458,9 @@ class RuntimeState:
                     if (
                         frame_samples > 0
                         and frame_samples > self.config.processing.fft_n
-                        and client_id not in self.frame_size_mismatch_logged
+                        and client_id not in loop_state.frame_size_mismatch_logged
                     ):
-                        self.frame_size_mismatch_logged.add(client_id)
+                        loop_state.frame_size_mismatch_logged.add(client_id)
                         LOGGER.error(
                             "Client %s reported frame_samples=%d larger than fft_n=%d; "
                             "ingest may be degraded.",
@@ -344,12 +477,12 @@ class RuntimeState:
                     self.registry.set_latest_metrics(client_id, metrics)
                 self.processor.evict_clients(set(active_ids))
                 consecutive_failures = 0
-                self.processing_state = "ok"
+                loop_state.processing_state = "ok"
             except Exception:
                 consecutive_failures += 1
-                self.processing_failure_count += 1
+                self.loop_state.processing_failure_count += 1
                 is_fatal = consecutive_failures >= MAX_CONSECUTIVE_FAILURES
-                self.processing_state = "fatal" if is_fatal else "degraded"
+                self.loop_state.processing_state = "fatal" if is_fatal else "degraded"
                 LOGGER.warning("Processing loop tick failed; will retry.", exc_info=True)
                 if is_fatal:
                     LOGGER.error(
@@ -359,16 +492,11 @@ class RuntimeState:
                     )
                     await asyncio.sleep(FAILURE_BACKOFF_S)
                     consecutive_failures = 0
-                    self.processing_state = "degraded"
+                    self.loop_state.processing_state = "degraded"
                     LOGGER.info(
                         "Processing loop resuming after fatal-backoff; "
                         "total failure count so far: %d",
-                        self.processing_failure_count,
-                    )
-                    LOGGER.info(
-                        "Processing loop resuming after fatal-backoff; "
-                        "total failure count so far: %d",
-                        self.processing_failure_count,
+                        self.loop_state.processing_failure_count,
                     )
             delay = (
                 interval

@@ -132,7 +132,7 @@ def _make_state(
 ) -> RuntimeState:
     from vibesensor.app import RuntimeState
 
-    return RuntimeState(
+    state = RuntimeState(
         config=_StubConfig(
             processing=_StubProcessingConfig(
                 ui_push_hz=ui_push_hz,
@@ -152,8 +152,10 @@ def _make_state(
         update_manager=_SENTINEL,  # type: ignore[arg-type]
         esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
         worker_pool=_SENTINEL,  # type: ignore[arg-type]
-        ws_include_heavy=ws_include_heavy,
     )
+    # ws_include_heavy is now a property delegating to ws_cache; set after construction.
+    state.ws_include_heavy = ws_include_heavy
+    return state
 
 
 # ---------------------------------------------------------------------------
