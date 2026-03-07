@@ -72,7 +72,7 @@ def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
     # explicit None-check to make the intent clear.
     raise ValueError(
         f"Missing required precomputed strength metrics in sample index "
-        f"{first_bad_idx if first_bad_idx is not None else 0}: vibration_strength_db"
+        f"{first_bad_idx}: vibration_strength_db"
     )
 
 

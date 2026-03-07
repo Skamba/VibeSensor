@@ -35,8 +35,6 @@ export type SpeedSourceStatusPayload = {
   last_error: string | null;
   reconnect_delay_s: number | null;
   fallback_active: boolean;
-  stale_timeout_s: number;
-  fallback_mode: string;
 };
 
 export type HistoryEntry = {

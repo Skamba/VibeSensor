@@ -25,7 +25,7 @@ def test_location_lookup_roundtrip() -> None:
 class TestSetLocationRequestAcceptsEmptyCode:
     """Verify that SetLocationRequest allows empty location_code for clearing."""
 
-    from vibesensor.api import SetLocationRequest as _Req
+    from vibesensor.api_models import SetLocationRequest as _Req
 
     @pytest.mark.parametrize(
         "code",

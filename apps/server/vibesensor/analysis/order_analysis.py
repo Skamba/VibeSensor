@@ -137,8 +137,7 @@ def _i18n_ref(key: str, **params: object) -> dict[str, Any]:
 
 
 def _finding_actions_for_source(
-    lang_or_source: str,
-    source: str | None = None,
+    source: str,
     *,
     strongest_location: str = "",
     strongest_speed_band: str = "",
@@ -152,16 +151,8 @@ def _finding_actions_for_source(
 
     Parameters
     ----------
-    lang_or_source:
-        **Legacy dual-purpose parameter.**  When called with a single positional
-        argument (e.g. ``_finding_actions_for_source("wheel/tire", ...)``), this
-        is the vibration source string.  When called with two positional
-        arguments (e.g. ``_finding_actions_for_source(lang, "wheel/tire", ...)``),
-        the first argument is a language string that is **silently ignored**
-        because *source* takes precedence.  New call sites should always pass
-        the source string as the first argument and omit *source*.
     source:
-        Explicit source override.  When provided, *lang_or_source* is ignored.
+        Vibration source string.
         Recognised values: ``"wheel/tire"``, ``"driveline"``, ``"engine"``.
     strongest_location:
         Sensor location code (e.g. ``"front_left"``) used to tailor action
@@ -175,8 +166,6 @@ def _finding_actions_for_source(
         similar intensities, which weakens spatial localisation confidence.
 
     """
-    if source is None:
-        source = lang_or_source
 
     location = strongest_location.strip()
     speed_band = strongest_speed_band.strip()

@@ -1,12 +1,9 @@
 """Shared test fixtures and helpers for the vibesensor test suite.
 
-Plain helper functions / assertion utilities have been moved to
+Plain helper functions / assertion utilities live in
 ``_test_helpers.py`` so they can be imported unambiguously even when
 sub-directory ``conftest.py`` files exist (which shadow this module in
 ``sys.modules``).
-
-Re-exports are kept here for backward compatibility, but new code should
-prefer ``from _test_helpers import …``.
 """
 
 from __future__ import annotations
@@ -15,18 +12,6 @@ from dataclasses import dataclass, field
 from unittest.mock import MagicMock
 
 import pytest
-
-# Re-export all helpers so ``from conftest import X`` still works when this
-# conftest *is* the one Python resolves (i.e. no subdirectory conftest
-# shadows it).  New code should use ``from _test_helpers import …`` instead.
-from _test_helpers import (  # noqa: F401
-    assert_finding_contract,
-    assert_summary_sections,
-    assert_top_cause_contract,
-    async_wait_until,
-    extract_pdf_text,
-    wait_until,
-)
 
 # ---------------------------------------------------------------------------
 # Shared API test helpers

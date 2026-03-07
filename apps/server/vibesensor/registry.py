@@ -265,18 +265,13 @@ class ClientRegistry:
             if record.firmware_version and hello.firmware_version != record.firmware_version:
                 record.reset_count += 1
                 record.last_reset_time = now_ts
-                self._clear_dedup(record)
+                record.clear_dedup()
             record.firmware_version = hello.firmware_version
             record.queue_overflow_drops = hello.queue_overflow_drops
             if client_id not in self._user_names:
                 advertised = _sanitize_name(hello.name)
                 if advertised:
                     record.name = advertised
-
-    @staticmethod
-    def _clear_dedup(record: ClientRecord) -> None:
-        """Reset the per-client dedup window (e.g. on restart or hard reset)."""
-        record.clear_dedup()
 
     def update_from_data(
         self,
@@ -327,7 +322,7 @@ class ClientRegistry:
                     record.duplicates_received += 1
                     return DataUpdateResult(is_duplicate=True)
                 # Likely client restart — clear dedup window and accept.
-                self._clear_dedup(record)
+                record.clear_dedup()
 
             record.record_seq(data_msg.seq)
             record.prune_seqs(dedup_window)

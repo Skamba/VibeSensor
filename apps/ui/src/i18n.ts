@@ -62,10 +62,6 @@ export function get(lang: string, key: string, vars?: Record<string, unknown>): 
   });
 }
 
-export function number(value: number, options?: Intl.NumberFormatOptions): NumberVar {
-  return { number: value, options };
-}
-
 export function getForAllLangs(key: string): string[] {
   return supported.map((lang) => get(lang, key));
 }

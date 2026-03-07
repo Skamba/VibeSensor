@@ -297,7 +297,6 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
 
     sensor_events = [
         _RecentEvent(
-            ts_ms=250000,
             sensor_id="s1",
             sensor_label="front-left",
             sensor_location="front-left",
@@ -307,7 +306,6 @@ def test_combined_multi_sensor_strength_uses_linear_amplitude_domain(monkeypatch
             class_key="wheel",
         ),
         _RecentEvent(
-            ts_ms=250000,
             sensor_id="s2",
             sensor_label="front-right",
             sensor_location="front-right",
@@ -358,7 +356,6 @@ def test_levels_by_location_includes_confidence_boost_for_agreement(monkeypatch)
 
     sensor_events = [
         _RecentEvent(
-            ts_ms=300000,
             sensor_id="s1",
             sensor_label="front-left-a",
             sensor_location="front-left-wheel",
@@ -368,7 +365,6 @@ def test_levels_by_location_includes_confidence_boost_for_agreement(monkeypatch)
             class_key="wheel",
         ),
         _RecentEvent(
-            ts_ms=300000,
             sensor_id="s2",
             sensor_label="front-left-b",
             sensor_location="front-left-wheel",

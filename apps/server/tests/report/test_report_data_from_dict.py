@@ -34,7 +34,7 @@ _ROUNDTRIP_CASES = [
     ),
     pytest.param(
         NextStep,
-        {"action": "Inspect", "rank": 1, "speed_band": "60-80 km/h"},
+        {"action": "Inspect", "why": "Check for play"},
         id="NextStep",
     ),
     pytest.param(
@@ -87,9 +87,8 @@ class TestCarMetaFromDict:
 
 class TestPartSuggestionFromDict:
     def test_from_dict(self) -> None:
-        result = PartSuggestion.from_dict({"name": "Bearing", "why_shown": "matched"})
+        result = PartSuggestion.from_dict({"name": "Bearing", "unknown_field": "ignored"})
         assert result.name == "Bearing"
-        assert result.why_shown == "matched"
 
     def test_from_string(self) -> None:
         result = PartSuggestion.from_dict("Tire")
@@ -137,7 +136,7 @@ class TestReportTemplateDataFromDict:
                     parts=[PartSuggestion(name="Part A")],
                 ),
             ],
-            next_steps=[NextStep(action="Inspect", rank=1)],
+            next_steps=[NextStep(action="Inspect")],
             data_trust=[DataTrustItem(check="speed", state="pass")],
             pattern_evidence=PatternEvidence(strongest_location="FL"),
             peak_rows=[

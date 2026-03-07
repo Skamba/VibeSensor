@@ -240,7 +240,6 @@ def _build_persistent_peak_findings(
     *,
     samples: list[dict[str, Any]],
     order_finding_freqs: set[float],
-    accel_units: str,
     lang: str,
     freq_bin_hz: float = 2.0,
     per_sample_phases: list[str] | None = None,
