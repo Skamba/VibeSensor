@@ -259,19 +259,16 @@ def _make_status_router(
 
 
 @pytest.mark.asyncio
-async def test_history_insights_respects_lang_query() -> None:
+async def test_history_insights_returns_persisted_analysis() -> None:
     router, _ = _make_router_and_state(language="en")
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
-    en = await endpoint("run-1", "en")
-    nl = await endpoint("run-1", "nl")
-    assert en["lang"] == "en"
-    assert nl["lang"] == "en"
-    # /insights is persisted post-stop output only: lang query must not
-    # trigger on-demand recomputation.
-    assert en["most_likely_origin"] == nl["most_likely_origin"]
+    result = await endpoint("run-1")
+    assert result["lang"] == "en"
+    assert "most_likely_origin" in result
     # Suitability check keys are now i18n keys (language-neutral)
     check_keys = {
-        str(item.get("check_key") or item.get("check")) for item in en.get("run_suitability", [])
+        str(item.get("check_key") or item.get("check"))
+        for item in result.get("run_suitability", [])
     }
     assert "SUITABILITY_CHECK_SPEED_VARIATION" in check_keys
 
@@ -580,16 +577,6 @@ async def test_ws_selected_client_id_validation() -> None:
 
 
 @pytest.mark.asyncio
-async def test_history_insights_lang_query_does_not_recompute() -> None:
-    router, _ = _make_router_and_state(language="en", sample_count=500)
-    endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
-    # Requesting a different language should still return persisted analysis.
-    payload = await endpoint("run-1", "nl")
-    assert payload["lang"] == "en"
-    assert "sampling" not in payload
-
-
-@pytest.mark.asyncio
 async def test_delete_active_run_returns_409() -> None:
     """DELETE /api/history/{run_id} returns 409 when run is active."""
 
@@ -690,14 +677,14 @@ async def test_history_insights_status_and_analysis_errors(
     if expected_status == 202:
         from fastapi.responses import JSONResponse
 
-        payload = await endpoint("run-1", "en")
+        payload = await endpoint("run-1")
         assert isinstance(payload, JSONResponse)
         assert payload.status_code == 202
         body = json.loads(payload.body)
         assert body["status"] == "analyzing"
         return
     with pytest.raises(HTTPException) as exc_info:
-        await endpoint("run-1", "en")
+        await endpoint("run-1")
     assert exc_info.value.status_code == expected_status
     assert exc_info.value.detail == expected_detail
 
@@ -834,7 +821,7 @@ async def test_history_insights_does_not_mutate_db_analysis() -> None:
     original_analysis = state.history_db.analysis
     original_keys = set(original_analysis.keys())
 
-    await endpoint("run-1", "en")
+    await endpoint("run-1")
 
     # The original dict must remain unchanged after the route handler ran.
     assert set(state.history_db.analysis.keys()) == original_keys, (
@@ -866,7 +853,7 @@ async def test_history_insights_always_emits_analysis_is_current() -> None:
     router = create_router(_FakeState(db, _FakeWsHub()))
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
 
-    payload = await endpoint("run-1", "en")
+    payload = await endpoint("run-1")
     assert "analysis_is_current" in payload
     assert payload["analysis_is_current"] is False
 
@@ -993,7 +980,7 @@ async def test_history_insights_analyzing_returns_202_json_response() -> None:
         status="analyzing", analysis={"status": "analyzing"}, include_error_message=False
     )
     endpoint = _route_endpoint(router, "/api/history/{run_id}/insights")
-    result = await endpoint("run-1", "en")
+    result = await endpoint("run-1")
     assert isinstance(result, JSONResponse)
     assert result.status_code == 202
     body = json.loads(result.body)

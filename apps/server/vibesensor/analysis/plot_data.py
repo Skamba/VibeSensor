@@ -13,7 +13,7 @@ from vibesensor_core.vibration_strength import (
 
 from ..constants import MEMS_NOISE_FLOOR_G, NUMERIC_TYPES
 from ..runlog import as_float_or_none as _as_float
-from .findings import _classify_peak_type, _speed_bin_label
+from .findings.persistent_findings import _classify_peak_type
 from .helpers import (
     _amplitude_weighted_speed_window,
     _effective_baseline_floor,
@@ -22,6 +22,7 @@ from .helpers import (
     _primary_vibration_strength_db,
     _run_noise_baseline_g,
     _sample_top_peaks,
+    _speed_bin_label,
 )
 from .phase_segmentation import DrivingPhase, PhaseSegment
 from .phase_segmentation import segment_run_phases as _segment_run_phases

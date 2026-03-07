@@ -159,10 +159,10 @@ class TestFallback:
         m.last_update_ts = time.monotonic()
         assert m.effective_speed_mps == pytest.approx(25.0)
 
-    def test_default_override_wins_for_backward_compat(self) -> None:
-        """Default state keeps legacy behavior where manual override has top priority."""
+    def test_default_override_wins(self) -> None:
+        """Default state (manual_source_selected=True) prioritizes override."""
         m = GPSSpeedMonitor(gps_enabled=True)
-        assert m.manual_source_selected is None
+        assert m.manual_source_selected is True
         m.override_speed_mps = 25.0
         m.speed_mps = 10.0
         m.last_update_ts = time.monotonic()

@@ -32,7 +32,7 @@ from .diagnostics_shared import (
 from .esp_flash_manager import EspFlashManager
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
-from .live_diagnostics import LiveDiagnosticsEngine
+from .live_diagnostics.engine import LiveDiagnosticsEngine
 from .metrics_log import MetricsLogger
 from .processing import SignalProcessor
 from .registry import ClientRegistry

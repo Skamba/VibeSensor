@@ -1,5 +1,37 @@
 # Changelog
 
+## Unreleased — Legacy Compatibility Removal
+
+### Breaking changes
+
+- **Removed v4→v5 database migration** — Opening a v4 schema database now
+  raises ``RuntimeError`` instead of auto-migrating. Recreate the database
+  if needed.
+- **Removed legacy JSON-blob sample reader** — ``_iter_legacy_samples()`` and
+  the ``samples`` table fallback path are deleted. Only the ``samples_v2``
+  typed-column format is supported.
+- **Simplified GPS `manual_source_selected`** — Changed from three-state
+  (``None | True | False``) to two-state (``bool``). Default is ``True``
+  (manual override has priority), matching the previous ``None`` behavior.
+- **Removed unused `lang` query parameter** from
+  ``GET /api/history/{run_id}/insights`` — was kept only for backward
+  compatibility and never used.
+- **Removed backward-compat import tests** — ``test_backward_compat_imports_via_analysis_findings``
+  and ``TestBackwardCompatReExports`` deleted; these imports are now the
+  standard API path.
+- **Removed ``REPORT_FIELDS``/``METRIC_FIELDS`` indirection** — These were
+  identity-mapping dicts (key == value) loaded from JSON. All consumers now
+  use direct string literals (``"vibration_strength_db"``, etc.) instead.
+- **Removed ``findings/__init__.py`` re-exports** — Package-level re-exports
+  deleted. Import directly from submodules: ``findings.builder``,
+  ``findings.order_findings``, ``findings.persistent_findings``,
+  ``findings.intensity``, ``findings.speed_profile``,
+  ``findings.reference_checks``.
+- **Removed ``live_diagnostics/__init__.py`` re-exports** — Package-level
+  re-exports deleted. Import directly from submodules:
+  ``live_diagnostics.engine``, ``live_diagnostics._types``,
+  ``live_diagnostics.severity_matrix``.
+
 ## Unreleased — Canonical Vibration Strength Metric
 
 ### Breaking changes

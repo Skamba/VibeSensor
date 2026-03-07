@@ -403,8 +403,7 @@ async def test_insights_returns_persisted_analysis_no_lang() -> None:
     app.include_router(router)
 
     endpoint = _find_endpoint(router, "/api/history/{run_id}/insights")
-    # Without lang param → returns persisted analysis directly (no recompute)
-    result = await endpoint("run-ins", None)
+    result = await endpoint("run-ins")
     assert result["lang"] == "en"
     assert "findings" in result
 

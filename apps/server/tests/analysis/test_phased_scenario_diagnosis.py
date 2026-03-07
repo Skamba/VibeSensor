@@ -28,7 +28,7 @@ from builders import make_speed_sweep_fault_samples as _make_speed_sweep_fault_s
 from builders import standard_metadata as _standard_metadata
 from builders import wheel_hz as _wheel_hz
 
-from vibesensor.analysis.findings import _classify_peak_type
+from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
 from vibesensor.analysis.summary import summarize_run_data
 
 # ---------------------------------------------------------------------------

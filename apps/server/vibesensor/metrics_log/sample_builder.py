@@ -9,8 +9,6 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from vibesensor_shared.contracts import METRIC_FIELDS
-
 from ..analysis_settings import (
     engine_rpm_from_wheel_hz,
     tire_circumference_m_from_spec,
@@ -41,8 +39,8 @@ def _parse_peak(raw: object) -> tuple[float, float] | None:
     return None
 
 
-_VIB_STRENGTH_DB_KEY: str = METRIC_FIELDS["vibration_strength_db"]
-_STRENGTH_BUCKET_KEY: str = METRIC_FIELDS["strength_bucket"]
+_VIB_STRENGTH_DB_KEY: str = "vibration_strength_db"
+_STRENGTH_BUCKET_KEY: str = "strength_bucket"
 
 _SPEED_SOURCE_MAP = {
     "manual": "manual",

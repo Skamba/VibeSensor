@@ -24,8 +24,8 @@ from vibesensor_core.vibration_strength import (
 from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import parse_iso8601, utc_now_iso
-from .findings import (
-    _build_findings,
+from .findings.builder import _build_findings
+from .findings.intensity import (
     _phase_speed_breakdown,
     _sensor_intensity_by_location,
     _speed_breakdown,

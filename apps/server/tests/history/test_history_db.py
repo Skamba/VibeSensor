@@ -410,11 +410,10 @@ def test_v2_no_json_blobs_in_storage(tmp_path: Path) -> None:
     assert "top_peaks" in columns
 
 
-def test_v4_to_v5_migration(tmp_path: Path) -> None:
-    """Opening a v4 database auto-migrates to v5 with legacy data readable."""
+def test_v4_db_rejected(tmp_path: Path) -> None:
+    """Opening a v4 database raises RuntimeError (migration removed)."""
     db_path = tmp_path / "history.db"
 
-    # Create a v4 database manually
     conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA foreign_keys=ON")
     conn.executescript("""\
@@ -450,44 +449,13 @@ def test_v4_to_v5_migration(tmp_path: Path) -> None:
             client_id TEXT PRIMARY KEY, name TEXT NOT NULL, updated_at TEXT NOT NULL
         );
     """)
-    # Insert legacy run with JSON-blob samples
-    conn.execute(
-        "INSERT INTO runs (run_id, status, start_time_utc, metadata_json,"
-        " created_at, sample_count) "
-        "VALUES (?, 'complete', '2026-01-01T00:00:00Z', '{}', "
-        "'2026-01-01T00:00:00Z', 3)",
-        ("legacy-run",),
-    )
-    for i in range(3):
-        conn.execute(
-            "INSERT INTO samples (run_id, sample_json) VALUES (?, ?)",
-            ("legacy-run", json.dumps({"i": i, "speed_kmh": 60.0 + i})),
-        )
     conn.commit()
     conn.close()
 
-    # Open with HistoryDB — should migrate v4 → v5
-    db = HistoryDB(db_path)
+    import pytest
 
-    # Legacy samples are still readable
-    rows = db.get_run_samples("legacy-run")
-    assert len(rows) == 3
-    assert [row["i"] for row in rows] == [0, 1, 2]
-    assert [row["speed_kmh"] for row in rows] == [60.0, 61.0, 62.0]
-
-    # New samples go to structured table
-    db.create_run("new-run", "2026-01-02T00:00:00Z", {"source": "test"})
-    db.append_samples("new-run", [_sensor_frame_dict(0, run_id="new-run")])
-    new_rows = db.get_run_samples("new-run")
-    assert len(new_rows) == 1
-    assert new_rows[0]["speed_kmh"] == 60.0
-
-    # Schema version is now 5
-    with db._cursor(commit=False) as cur:
-        cur.execute("SELECT value FROM schema_meta WHERE key = 'version'")
-        assert cur.fetchone()[0] == "5"
-
-    db.close()
+    with pytest.raises(RuntimeError, match="Unsupported history DB schema version 4"):
+        HistoryDB(db_path)
 
 
 def test_v2_sensor_frame_objects(tmp_path: Path) -> None:

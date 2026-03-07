@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from vibesensor.live_diagnostics import (
-    SEVERITY_KEYS,
-    SOURCE_KEYS,
-    LiveDiagnosticsEngine,
-    _copy_matrix,
-    _new_matrix,
-    _TrackerLevelState,
-)
+from vibesensor.live_diagnostics._types import SEVERITY_KEYS, SOURCE_KEYS, _TrackerLevelState
+from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
+from vibesensor.live_diagnostics.severity_matrix import _copy_matrix, _new_matrix
 
 # -- _new_matrix ---------------------------------------------------------------
 

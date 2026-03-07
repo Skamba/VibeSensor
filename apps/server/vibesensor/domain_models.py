@@ -13,8 +13,6 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Final
 
-from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
-
 from .analysis_settings import DEFAULT_ANALYSIS_SETTINGS, sanitize_settings
 from .constants import NUMERIC_TYPES
 from .protocol import parse_client_id
@@ -283,24 +281,24 @@ class SpeedSourceConfig:
 
 def _default_units(*, accel_units: str = "g") -> dict[str, str]:
     return {
-        REPORT_FIELDS["timestamp_utc"]: "iso8601",
+        "timestamp_utc": "iso8601",
         "t_s": "s",
-        REPORT_FIELDS["speed_kmh"]: "km/h",
+        "speed_kmh": "km/h",
         "gps_speed_kmh": "km/h",
         "accel_x_g": accel_units,
         "accel_y_g": accel_units,
         "accel_z_g": accel_units,
         "engine_rpm": "rpm",
         "gear": "ratio",
-        REPORT_FIELDS["dominant_freq_hz"]: "Hz",
-        METRIC_FIELDS["vibration_strength_db"]: "dB",
-        METRIC_FIELDS["strength_bucket"]: "band_key",
+        "dominant_freq_hz": "Hz",
+        "vibration_strength_db": "dB",
+        "strength_bucket": "band_key",
     }
 
 
 def _default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[str, str]]:
     return {
-        METRIC_FIELDS["vibration_strength_db"]: {
+        "vibration_strength_db": {
             "statistic": "dB above floor",
             "units": "dB",
             "definition": (
@@ -308,7 +306,7 @@ def _default_amplitude_definitions(*, accel_units: str = "g") -> dict[str, dict[
                 "eps=max(1e-9, floor_amp_g*0.05)"
             ),
         },
-        METRIC_FIELDS["strength_bucket"]: {
+        "strength_bucket": {
             "statistic": "Bucket",
             "units": "band_key",
             "definition": "strength severity bucket derived from vibration_strength_db",
@@ -445,8 +443,8 @@ class RunMetadata:
 # 5) SensorFrame
 # ---------------------------------------------------------------------------
 
-_VSD_KEY: str = METRIC_FIELDS["vibration_strength_db"]
-_BUCKET_KEY: str = METRIC_FIELDS["strength_bucket"]
+_VSD_KEY: str = "vibration_strength_db"
+_BUCKET_KEY: str = "strength_bucket"
 
 
 def _normalize_peak_list(peaks_raw: object, *, max_items: int) -> list[dict[str, object]]:
@@ -554,7 +552,7 @@ class SensorFrame:
         accel_z_g = as_float_or_none(record.get("accel_z_g"))
         engine_rpm = as_float_or_none(record.get("engine_rpm"))
         gear = as_float_or_none(record.get("gear"))
-        dominant_freq_hz = as_float_or_none(record.get(REPORT_FIELDS["dominant_freq_hz"]))
+        dominant_freq_hz = as_float_or_none(record.get("dominant_freq_hz"))
         vibration_strength_db = as_float_or_none(record.get(_VSD_KEY))
         raw_bucket = record.get(_BUCKET_KEY)
         strength_bucket = str(raw_bucket) if raw_bucket not in (None, "") else None

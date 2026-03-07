@@ -15,7 +15,7 @@ os.environ.setdefault("VIBESENSOR_DISABLE_AUTO_APP", "1")
 
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
-from vibesensor.live_diagnostics import LiveDiagnosticsEngine
+from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 
 
 def _make_spectra(peak_idx: int = 320, peak_amp: float = 150.0) -> dict:

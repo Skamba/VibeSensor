@@ -212,7 +212,7 @@ class TestFinding4_ToleranceIgnoresCompliance:
         """
         import inspect
 
-        from vibesensor.analysis.findings import (
+        from vibesensor.analysis.findings.order_findings import (
             _build_order_findings,
             _match_samples_for_hypothesis,
         )
@@ -804,7 +804,7 @@ class TestGPSFallbackSettings:
 
     def test_set_manual_source_selected(self) -> None:
         m = GPSSpeedMonitor(gps_enabled=True)
-        assert m.manual_source_selected is None
+        assert m.manual_source_selected is True
         m.set_manual_source_selected(True)
         assert m.manual_source_selected is True
         m.set_manual_source_selected(False)
@@ -1049,7 +1049,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.analysis.findings import (
+from vibesensor.analysis.findings.order_findings import (
     _compute_order_confidence,
     _detect_diffuse_excitation,
     _suppress_engine_aliases,
