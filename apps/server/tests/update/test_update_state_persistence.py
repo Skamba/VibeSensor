@@ -339,6 +339,10 @@ class TestPersistenceDuringLifecycle:
             loaded = store.load()
             assert loaded is not None
             assert loaded.state == UpdateState.running
+            if mgr._task is not None:
+                mgr._task.cancel()
+                with contextlib.suppress(asyncio.CancelledError, Exception):
+                    await mgr._task
 
     @pytest.mark.asyncio
     async def test_state_persisted_after_job_ends(self, update_env) -> None:

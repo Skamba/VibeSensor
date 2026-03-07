@@ -11,9 +11,9 @@ its entrypoint, ordered steps, outputs, and architectural rules.
    `apps/server/vibesensor/analysis/`. No analysis helpers elsewhere.
 3. **Single entrypoint** — `summarize_run_data()` is the primary
    pipeline function. All steps are called from there.
-4. **Public API** — external code imports exclusively from
-   `vibesensor.analysis` (the package `__init__.py`), never from
-   sub-modules directly.
+4. **Public API** — external code should prefer `vibesensor.analysis`
+   for stable entrypoints such as `summarize_run_data()`, `map_summary()`,
+   and `build_findings_for_samples()`.
 5. **Renderer-only report package** — `vibesensor.report` must not
    import from `vibesensor.analysis` (enforced by tests).
 6. **No circular coupling** — the live signal-processing layer
@@ -92,14 +92,14 @@ in order.  Each step runs exactly once per analysis invocation.
 | 10 | Top-cause selection | `select_top_causes` | Rank findings by phase-adjusted score, apply drop-off threshold |
 | 11 | Run suitability | `_build_run_suitability_checks` | Data-quality and run-condition checks (steady speed, GPS, duration, etc.) |
 | 12 | Sensor analysis | `_locations_connected_throughout_run`, `_sensor_intensity_by_location` | Per-location vibration intensity and connection stability |
-| 13 | Summary construction | (inline dict) | Assemble all results into the summary dict |
+| 13 | Summary construction | `build_summary_payload` | Assemble the final summary dict |
 | 14 | Plot generation | `_plot_data` | FFT aggregation, spectrogram, peak table |
 | 15 | Peak annotation | `_annotate_peaks_with_order_labels` | Label peaks with human-readable order names |
 
 ## Persisted Outputs
 
 After `summarize_run_data()` returns, the orchestrator in
-`metrics_log/`:
+`metrics_log/post_analysis.py`:
 
 1. Adds `analysis_metadata` (sample count, stride info).
 2. Calls `map_summary()` to convert the summary dict into a
@@ -118,11 +118,14 @@ acceleration fields may still be expressed in g.
 ```
 vibesensor/analysis/
 ├── __init__.py            Public API re-exports
-├── summary.py             Pipeline entrypoint (summarize_run_data)
+├── summary.py             Public summary entrypoints and orchestration helpers
+├── summary_pipeline.py    Focused pipeline helpers used by summary.py
 ├── findings/              Core findings engine (package)
-│   ├── __init__.py        Public re-exports for the findings sub-package
+│   ├── __init__.py        Package overview and ownership notes
 │   ├── builder.py         Main _build_findings() orchestrator
 │   ├── order_findings.py  Order-tracking hypothesis matching engine
+│   ├── order_scoring.py   Confidence and suppression helpers for order findings
+│   ├── order_support.py   Shared pure helpers used by order assembly
 │   ├── intensity.py       Per-location intensity statistics
 │   ├── persistent_findings.py  Non-order persistent/transient peak findings
 │   ├── reference_checks.py    Reference-missing finding generation
@@ -133,7 +136,11 @@ vibesensor/analysis/
 ├── helpers.py             Constants, statistics, strength utils
 ├── strength_labels.py     dB → strength-band classification
 ├── test_plan.py           Action-plan generation
-├── report_data_builder.py Summary dict → ReportTemplateData mapping
+├── report_data_builder.py Summary dict → ReportTemplateData mapping entrypoint
+├── diagnosis_candidates.py Cause/finding filtering helpers for report mapping
+├── report_mapping_common.py Shared i18n and value-resolution helpers for report mapping
+├── report_mapping_components.py Component builders used by map_summary()
+├── report_mapping_context.py Context extraction for report mapping
 ├── plot_data.py           FFT/spectrogram/peak-table payloads
 └── pattern_parts.py       Pattern → likely-parts mapping
 ```

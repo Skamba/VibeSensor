@@ -32,7 +32,7 @@ Documentation maintenance
 - Keep human-facing docs (`README.md`, `apps/server/README.md`, `docs/**`) and AI-facing guidance (`docs/ai/**`, `.github/**/*.instructions.md`, `.github/copilot-instructions.md`) aligned with the live codebase.
 
 Updater delivery model (authoritative)
-- Production updater behavior is wheel-based: devices fetch release wheels and install them through `apps/server/vibesensor/update/manager.py`.
+- Production updater behavior is wheel-based: devices fetch release wheels and install them through the `apps/server/vibesensor/update/` package, with `manager.py` as the public facade.
 - Do not treat in-place edits under `/opt/VibeSensor/.../site-packages` as a normal deployment mechanism.
 - Emergency-only exception: direct on-device patching is allowed for live incident mitigation when the updater path itself is broken.
 - If emergency patching is used, always follow up by:

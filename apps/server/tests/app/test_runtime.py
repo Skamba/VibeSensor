@@ -123,37 +123,84 @@ class _StubProcessor:
 def _make_runtime(**overrides: Any):
     """Build a RuntimeState with stubs for lifecycle testing."""
     from vibesensor.runtime import (
-        RuntimeIngressServices,
-        RuntimeOperationsServices,
-        RuntimePlatformServices,
+        RuntimeDiagnosticsSubsystem,
+        RuntimeIngressSubsystem,
+        RuntimePersistenceSubsystem,
+        RuntimeProcessingSubsystem,
+        RuntimeRouteServices,
+        RuntimeSettingsSubsystem,
+        RuntimeUpdateSubsystem,
+        RuntimeWebsocketSubsystem,
         build_runtime_state,
     )
+    from vibesensor.runtime.processing_loop import ProcessingLoop, ProcessingLoopState
+    from vibesensor.runtime.ws_broadcast import WsBroadcastCache, WsBroadcastService
 
     config = overrides.pop("config", _StubConfig(processing=_StubProcessingConfig()))
-    ingress = RuntimeIngressServices(
+    ingress = RuntimeIngressSubsystem(
         registry=overrides.pop("registry", _StubRegistry()),
         processor=overrides.pop("processor", _StubProcessor()),
         control_plane=overrides.pop("control_plane", MagicMock()),
+        worker_pool=overrides.pop("worker_pool", MagicMock()),
     )
-    operations = RuntimeOperationsServices(
+    settings = RuntimeSettingsSubsystem(
         settings_store=overrides.pop("settings_store", MagicMock()),
         analysis_settings=overrides.pop("analysis_settings", MagicMock()),
         gps_monitor=overrides.pop("gps_monitor", MagicMock()),
+    )
+    diagnostics = RuntimeDiagnosticsSubsystem(
         metrics_logger=overrides.pop("metrics_logger", MagicMock()),
         live_diagnostics=overrides.pop("live_diagnostics", MagicMock()),
     )
-    platform = RuntimePlatformServices(
-        ws_hub=overrides.pop("ws_hub", MagicMock()),
+    persistence = RuntimePersistenceSubsystem(
         history_db=overrides.pop("history_db", MagicMock()),
+    )
+    updates = RuntimeUpdateSubsystem(
         update_manager=overrides.pop("update_manager", MagicMock()),
         esp_flash_manager=overrides.pop("esp_flash_manager", MagicMock()),
-        worker_pool=overrides.pop("worker_pool", MagicMock()),
+    )
+    processing_state = ProcessingLoopState()
+    processing = RuntimeProcessingSubsystem(
+        state=processing_state,
+        loop=ProcessingLoop(
+            state=processing_state,
+            fft_update_hz=config.processing.fft_update_hz,
+            sample_rate_hz=config.processing.sample_rate_hz,
+            fft_n=config.processing.fft_n,
+            ingress=ingress,
+        ),
+    )
+    ws_cache = WsBroadcastCache()
+    websocket = RuntimeWebsocketSubsystem(
+        hub=overrides.pop("ws_hub", MagicMock()),
+        cache=ws_cache,
+        broadcast=WsBroadcastService(
+            cache=ws_cache,
+            ui_push_hz=config.processing.ui_push_hz,
+            ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
+            ingress=ingress,
+            settings=settings,
+            diagnostics=diagnostics,
+        ),
     )
     rt = build_runtime_state(
         config=config,
         ingress=ingress,
-        operations=operations,
-        platform=platform,
+        settings=settings,
+        diagnostics=diagnostics,
+        persistence=persistence,
+        updates=updates,
+        processing=processing,
+        websocket=websocket,
+        routes=RuntimeRouteServices(
+            ingress=ingress,
+            settings=settings,
+            diagnostics=diagnostics,
+            persistence=persistence,
+            updates=updates,
+            processing=processing,
+            websocket=websocket,
+        ),
     )
     if overrides:
         for name, value in overrides.items():
@@ -167,7 +214,7 @@ def _make_runtime(**overrides: Any):
 
 
 async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
-    """Run *rt*.processing_loop() for *max_ticks* iterations, then cancel.
+    """Run *rt*.processing.loop() for *max_ticks* iterations, then cancel.
 
     Temporarily replaces ``asyncio.sleep`` with a counting stub so the loop
     completes deterministically without real delays.
@@ -185,7 +232,7 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
     asyncio.sleep = _counting_sleep
     try:
         with pytest.raises(asyncio.CancelledError):
-            await rt.processing_loop.run()
+            await rt.processing.loop.run()
     finally:
         asyncio.sleep = original_sleep
 
@@ -194,11 +241,11 @@ async def _run_processing_loop(rt, *, max_ticks: int = 1) -> None:
 async def test_processing_loop_runs_one_tick_and_resets_state() -> None:
     """processing_loop should call compute_all and set state to 'ok'."""
     rt = _make_runtime()
-    rt.loop_state.processing_state = "degraded"
+    rt.processing.state.processing_state = "degraded"
 
     await _run_processing_loop(rt, max_ticks=1)
 
-    assert rt.loop_state.processing_state == "ok"
+    assert rt.processing.state.processing_state == "ok"
 
 
 @pytest.mark.asyncio
@@ -214,8 +261,8 @@ async def test_processing_loop_handles_failure_gracefully() -> None:
 
     await _run_processing_loop(rt, max_ticks=1)
 
-    assert rt.loop_state.processing_failure_count >= 1
-    assert rt.loop_state.processing_state in ("degraded", "fatal")
+    assert rt.processing.state.processing_failure_count >= 1
+    assert rt.processing.state.processing_state in ("degraded", "fatal")
 
 
 @pytest.mark.asyncio
@@ -242,7 +289,7 @@ async def test_processing_loop_broadcasts_sync_clock() -> None:
 
 @pytest.mark.asyncio
 async def test_start_creates_tasks(monkeypatch) -> None:
-    """RuntimeState.start() should populate the tasks list."""
+    """LifecycleManager.start() should populate the tasks list."""
     from vibesensor.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
@@ -260,6 +307,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
     gps_monitor.run = AsyncMock(side_effect=asyncio.CancelledError)
     update_manager = MagicMock()
     update_manager.startup_recover = AsyncMock()
+    update_manager.job_task = None
 
     rt = _make_runtime(
         control_plane=control_plane,
@@ -269,7 +317,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
         update_manager=update_manager,
     )
 
-    await rt.start()
+    await rt.lifecycle.start()
     assert len(rt.lifecycle.tasks) == 5
     assert control_plane.start.called
 
@@ -281,7 +329,7 @@ async def test_start_creates_tasks(monkeypatch) -> None:
 
 @pytest.mark.asyncio
 async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
-    """RuntimeState.stop() should cancel tasks, close DB and worker pool."""
+    """LifecycleManager.stop() should cancel tasks, close DB and worker pool."""
     from vibesensor.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp(*args, **kwargs):
@@ -299,9 +347,9 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     control_plane.start = AsyncMock()
     control_plane.close = MagicMock()
     update_manager = MagicMock()
-    update_manager._task = None
+    update_manager.job_task = None
     esp_flash_manager = MagicMock()
-    esp_flash_manager._task = None
+    esp_flash_manager.job_task = None
 
     ws_hub = MagicMock()
     ws_hub.run = AsyncMock(side_effect=asyncio.CancelledError)
@@ -321,17 +369,17 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
         worker_pool=worker_pool,
     )
 
-    await rt.start()
+    await rt.lifecycle.start()
     assert len(rt.lifecycle.tasks) > 0
 
-    await rt.stop()
+    await rt.lifecycle.stop()
     assert rt.lifecycle.tasks == []
     assert metrics_logger.stop_logging.called
     assert worker_pool.shutdown.called
     assert history_db.close.called
 
 
-@pytest.mark.parametrize("attr", ["start", "stop", "processing_loop", "ws_broadcast", "lifecycle"])
+@pytest.mark.parametrize("attr", ["settings", "processing", "websocket", "routes", "lifecycle"])
 def test_runtime_state_has_public_attribute(attr: str) -> None:
     """Canonical import path should expose key public attributes."""
     from vibesensor.runtime import RuntimeState

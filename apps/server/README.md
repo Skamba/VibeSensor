@@ -19,9 +19,9 @@ ESP32 nodes -> udp_data_rx.py -> processing/ + analysis/ -> runtime/ -> routes/ 
 Backend ownership boundaries:
 
 - `app.py`: FastAPI app factory and startup entry.
-- `bootstrap.py`: builds the focused runtime service groups and hands them to runtime composition.
+- `bootstrap.py`: orchestrates focused subsystem builders and returns the assembled runtime.
 - `routes/`: HTTP and WebSocket route groups.
-- `runtime/`: explicit composition helpers, focused dependency groups, thin runtime state, lifecycle, processing loop, websocket broadcast cache.
+- `runtime/`: explicit subsystem builders and owners for ingress, settings, diagnostics, persistence, updates, processing, websocket delivery, route services, and lifecycle.
 - `processing/`, `analysis/`, `live_diagnostics/`: signal processing and findings logic.
 - `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`: recording, persistence, and exports.
 - `report/`: PDF rendering pipeline.
@@ -107,7 +107,7 @@ The public renderer facade is `apps/server/vibesensor/report/pdf_builder.py`. Pa
 
 ## Updates
 
-Production devices use the wheel-based updater in `apps/server/vibesensor/update/manager.py`.
+Production devices use the wheel-based updater in `apps/server/vibesensor/update/`, with `manager.py` as the public facade over the focused updater modules.
 
 - Normal delivery should go through release wheels.
 - Do not rely on manual edits inside deployed `site-packages` as a normal workflow.
@@ -123,4 +123,4 @@ python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" ap
 make test-all
 ```
 
-`make typecheck-backend` is the enforced backend static-typing gate for the runtime/API orchestration slice. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` or `regression/` coverage when the behavior crosses package boundaries.
+`make typecheck-backend` is the enforced backend static-typing gate for app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages. Use `docs/testing.md` for the full test map. Start with the matching feature directory under `apps/server/tests/`, then add `integration/` or `regression/` coverage when the behavior crosses package boundaries.

@@ -88,7 +88,7 @@ Do not defer doc cleanup unless the user explicitly asks for code-only work.
 
 ## Updater incident runbook
 
-- Default updater model is wheel-based and lives in `apps/server/vibesensor/update/manager.py`.
+- Default updater model is wheel-based and lives in `apps/server/vibesensor/update/`, with `manager.py` as the public facade over the workflow and subsystem modules.
 - Do not use direct runtime file patching as normal delivery.
 - Emergency-only path: if the updater itself is broken on a live Pi, apply a temporary in-place patch to restore service.
 - Mandatory follow-up after emergency patching:

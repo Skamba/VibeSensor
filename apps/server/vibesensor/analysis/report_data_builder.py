@@ -298,10 +298,10 @@ def _filter_active_sensor_intensity(
 
 def map_summary(summary: dict) -> ReportTemplateData:
     """Map a run summary dict to the report template data model."""
-    lang = normalize_lang(summary.get("lang"))
+    lang = str(normalize_lang(summary.get("lang")))
 
     def tr(key: str, **kw: object) -> str:
-        return _tr(lang, key, **kw)
+        return str(_tr(lang, key, **kw))
 
     # -- Context extraction --
     (

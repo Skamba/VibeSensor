@@ -9,6 +9,7 @@ from typing import Any
 from ..json_utils import safe_json_loads
 from ._run_common import ANALYSIS_SCHEMA_VERSION
 from ._samples import ALLOWED_SAMPLE_TABLES, V2_SELECT_SQL_COLS, v2_row_to_dict
+from ._typing import HistoryCursorProvider
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ class HistoryRunReadMixin:
 
     __slots__ = ()
 
-    def analysis_is_current(self, run_id: str) -> bool:
+    def analysis_is_current(self: HistoryCursorProvider, run_id: str) -> bool:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT analysis_version FROM runs WHERE run_id = ?",
@@ -38,7 +39,7 @@ class HistoryRunReadMixin:
             )
             return False
 
-    def list_runs(self, limit: int = 500) -> list[dict[str, Any]]:
+    def list_runs(self: HistoryCursorProvider, limit: int = 500) -> list[dict[str, Any]]:
         with self._cursor(commit=False) as cur:
             if limit < 0:
                 limit = 0
@@ -74,7 +75,7 @@ class HistoryRunReadMixin:
             result.append(entry)
         return result
 
-    def get_run(self, run_id: str) -> dict[str, Any] | None:
+    def get_run(self: HistoryCursorProvider, run_id: str) -> dict[str, Any] | None:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id, status, start_time_utc, end_time_utc, "
@@ -125,20 +126,25 @@ class HistoryRunReadMixin:
             entry["analysis_completed_at"] = analysis_completed
         return entry
 
-    def get_run_samples(self, run_id: str) -> list[dict[str, Any]]:
+    def get_run_samples(self: HistoryCursorProvider, run_id: str) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         for batch in self.iter_run_samples(run_id):
             rows.extend(batch)
         return rows
 
     def iter_run_samples(
-        self, run_id: str, batch_size: int = 1000, offset: int = 0
+        self: HistoryCursorProvider, run_id: str, batch_size: int = 1000, offset: int = 0
     ) -> Iterator[list[dict[str, Any]]]:
         if offset < 0:
             raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
         yield from self._iter_v2_samples(run_id, batch_size, offset)
 
-    def _resolve_keyset_offset(self, table: str, run_id: str, offset: int) -> int | None:
+    def _resolve_keyset_offset(
+        self: HistoryCursorProvider,
+        table: str,
+        run_id: str,
+        offset: int,
+    ) -> int | None:
         if table not in ALLOWED_SAMPLE_TABLES:
             raise ValueError(
                 f"_resolve_keyset_offset: invalid table name {table!r}; "
@@ -150,10 +156,10 @@ class HistoryRunReadMixin:
                 (run_id, offset - 1),
             )
             row = cur.fetchone()
-        return row[0] if row else None
+        return int(row[0]) if row else None
 
     def _iter_v2_samples(
-        self, run_id: str, batch_size: int = 1000, offset: int = 0
+        self: HistoryCursorProvider, run_id: str, batch_size: int = 1000, offset: int = 0
     ) -> Iterator[list[dict[str, Any]]]:
         size = max(1, batch_size)
         last_id: int | None = None
@@ -196,7 +202,7 @@ class HistoryRunReadMixin:
             if parsed_batch:
                 yield parsed_batch
 
-    def get_run_metadata(self, run_id: str) -> dict[str, Any] | None:
+    def get_run_metadata(self: HistoryCursorProvider, run_id: str) -> dict[str, Any] | None:
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT metadata_json FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
@@ -214,7 +220,7 @@ class HistoryRunReadMixin:
             return None
         return parsed
 
-    def get_run_analysis(self, run_id: str) -> dict[str, Any] | None:
+    def get_run_analysis(self: HistoryCursorProvider, run_id: str) -> dict[str, Any] | None:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT analysis_json FROM runs WHERE run_id = ? AND status = 'complete'",
@@ -234,25 +240,25 @@ class HistoryRunReadMixin:
             return None
         return parsed
 
-    def get_run_status(self, run_id: str) -> str | None:
+    def get_run_status(self: HistoryCursorProvider, run_id: str) -> str | None:
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
-        return row[0] if row else None
+        return str(row[0]) if row else None
 
-    def get_active_run_id(self) -> str | None:
+    def get_active_run_id(self: HistoryCursorProvider) -> str | None:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id FROM runs WHERE status = 'recording' "
                 "ORDER BY created_at DESC LIMIT 1"
             )
             row = cur.fetchone()
-        return row[0] if row else None
+        return str(row[0]) if row else None
 
-    def stale_analyzing_run_ids(self) -> list[str]:
+    def stale_analyzing_run_ids(self: HistoryCursorProvider) -> list[str]:
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT run_id FROM runs WHERE status = 'analyzing' "
                 "ORDER BY created_at ASC LIMIT 1000"
             )
-            return [row[0] for row in cur.fetchall()]
+            return [str(row[0]) for row in cur.fetchall()]

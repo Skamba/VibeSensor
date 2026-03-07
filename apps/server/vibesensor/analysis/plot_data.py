@@ -31,7 +31,7 @@ from .phase_segmentation import segment_run_phases as _segment_run_phases
 def _safe_percentile(sorted_vals: list[float], q: float, *, default: float = 0.0) -> float:
     """Return ``percentile(sorted_vals, q)`` when len >= 2, else last item or *default*."""
     if len(sorted_vals) >= 2:
-        return percentile(sorted_vals, q)
+        return float(percentile(sorted_vals, q))
     return sorted_vals[-1] if sorted_vals else default
 
 
@@ -39,7 +39,7 @@ def _vibration_db_or_none(peak_amp: float | None, floor_amp: float | None) -> fl
     """Return ``canonical_vibration_db(peak_amp, floor_amp)`` or *None* if either is *None*."""
     if peak_amp is None or floor_amp is None:
         return None
-    return canonical_vibration_db(peak_band_rms_amp_g=peak_amp, floor_amp_g=floor_amp)
+    return float(canonical_vibration_db(peak_band_rms_amp_g=peak_amp, floor_amp_g=floor_amp))
 
 
 def _aggregate_fft_spectrum(

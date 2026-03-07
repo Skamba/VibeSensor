@@ -62,6 +62,14 @@ class UpdateIssue:
     detail: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class UpdateRequest:
+    """Immutable request parameters for a single update run."""
+
+    ssid: str
+    password: str
+
+
 @dataclass(slots=True)
 class UpdateJobStatus:
     """Full status snapshot of the current or most-recent OTA update job."""

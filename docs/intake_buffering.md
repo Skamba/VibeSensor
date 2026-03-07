@@ -1,11 +1,11 @@
-# Intake Buffering & Analysis Separation
+# Intake Buffering & Live Compute Separation
 
 ## Architecture
 
 Sensor data flows through three decoupled stages:
 
 ```
-UDP datagram → async queue → ring buffer → (analysis runs in background thread)
+UDP datagram → async queue → per-client ring buffer → processing loop → worker threads
 ```
 
 ### 1. Packet reception (`udp_data_rx.py`)
@@ -21,11 +21,15 @@ them, updates the client registry, writes samples into the ring buffer
 (`SignalProcessor.ingest()`), and sends a UDP ACK. This runs on the main
 event loop but each call is lightweight (microseconds per packet).
 
-### 3. Analysis (`processing_loop` in `runtime.py`)
+### 3. Live compute (`runtime/processing_loop.py` + `processing/processor.py`)
 
-`compute_all()` runs FFT and metrics computation for all active clients. It
-is dispatched to a **worker thread** via `asyncio.to_thread()` so it never
-blocks the event loop. `compute_metrics()` uses snapshot-based locking:
+The async processing loop in `runtime/processing_loop.py` runs on a timer,
+filters to active clients with fresh data, and calls `SignalProcessor.compute_all()`
+via `asyncio.to_thread()` so the event loop never performs FFT work directly.
+
+Inside `SignalProcessor.compute_all()`, per-client FFT work is dispatched through
+the shared `WorkerPool` when multiple clients are active. `compute_metrics()` uses
+snapshot-based locking:
 
 - **Phase 1 (lock):** copy the ring buffer data (~20–100 μs).
 - **Phase 2 (no lock):** heavy FFT / peak-finding / strength-db
@@ -34,8 +38,8 @@ blocks the event loop. `compute_metrics()` uses snapshot-based locking:
   (~10 μs).
 
 Because the lock is held only during the brief snapshot and store phases,
-`ingest()` (which also needs the lock) is never blocked for more than a
-fraction of a millisecond, even while analysis is running.
+`ingest()` (which also needs the lock) is blocked only briefly even while
+background compute work is running.
 
 ## Overflow / backpressure policy
 
@@ -43,7 +47,8 @@ fraction of a millisecond, even while analysis is running.
 |-------|--------|----------|--------------------|
 | UDP queue | `asyncio.Queue` | `data_queue_maxsize` (default 1024 packets) | Oldest arriving packet is dropped; warning logged (rate-limited to 1/10 s); `note_server_queue_drop` counter incremented on client record. |
 | Ring buffer | numpy array per client | `sample_rate_hz × waveform_seconds` (default 6400 samples) | Circular overwrite — oldest samples are silently replaced. |
-| Analysis scheduling | One pending `compute_all` at a time | 1 | If the previous cycle is still running, the event loop yields to `asyncio.to_thread()` and waits; at most one "next" cycle is pending. |
+| Worker pool | `WorkerPool` outstanding task cap | `max_workers + max_queue_size` | Submission blocks once the pool is saturated; no unbounded executor backlog is allowed. |
+| Processing loop | One async tick loop | 1 | The runtime loop computes on the current set of fresh clients, then sleeps until the next tick. |
 
 ## Observability
 
@@ -61,9 +66,9 @@ Use these to monitor:
 
 - **Intake throughput:** `total_ingested_samples` should grow at
   `sample_rate_hz × num_sensors`.
-- **Analysis cadence:** `total_compute_calls` should grow at
+- **Processing cadence:** `total_compute_calls` should grow at
   `fft_update_hz` (default 4/s).
-- **Analysis headroom:** `last_compute_duration_s` should be well below
+- **Processing headroom:** `last_compute_duration_s` should be well below
   `1 / fft_update_hz` (250 ms at default settings).
 
 Queue drops are logged as WARNING and counted in the client registry
