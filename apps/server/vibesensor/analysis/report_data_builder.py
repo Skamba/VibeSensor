@@ -12,6 +12,8 @@ from ..report.report_data import (
     ReportTemplateData,
     SystemFindingCard,
 )
+from ..report_i18n import normalize_lang
+from ..report_i18n import tr as _tr
 from .report_mapping_common import (
     extract_confidence as _extract_confidence_impl,
 )
@@ -54,7 +56,7 @@ from .report_mapping_components import (
 from .report_mapping_components import (
     top_strength_values as _top_strength_values_impl,
 )
-from .report_mapping_pipeline import map_summary_to_report
+from .report_mapping_pipeline import build_report_template_data
 
 
 def _is_i18n_ref(value: object) -> bool:
@@ -151,4 +153,9 @@ def _build_system_cards(
 
 def map_summary(summary: dict) -> ReportTemplateData:
     """Map a run summary dict to the report template data model."""
-    return map_summary_to_report(summary)
+    lang = str(normalize_lang(summary.get("lang")))
+
+    def tr(key: str, **kw: object) -> str:
+        return str(_tr(lang, key, **kw))
+
+    return build_report_template_data(summary, lang=lang, tr=tr)
