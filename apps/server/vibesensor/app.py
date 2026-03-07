@@ -26,7 +26,7 @@ from .config import SERVER_DIR, load_config
 from .esp_flash_manager import EspFlashManager
 from .gps_speed import GPSSpeedMonitor
 from .history_db import HistoryDB
-from .live_diagnostics import LiveDiagnosticsEngine
+from .live_diagnostics.engine import LiveDiagnosticsEngine
 from .metrics_log import MetricsLogger, MetricsLoggerConfig
 from .processing import SignalProcessor
 from .registry import ClientRegistry

@@ -17,12 +17,12 @@ from builders import standard_metadata as _base_standard_metadata
 from vibesensor_core.strength_bands import bucket_for_strength
 
 from vibesensor.analysis import build_findings_for_samples
-from vibesensor.analysis.findings import (
-    _classify_peak_type,
+from vibesensor.analysis.findings.intensity import (
     _phase_speed_breakdown,
-    _reference_missing_finding,
     _sensor_intensity_by_location,
 )
+from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
+from vibesensor.analysis.findings.reference_checks import _reference_missing_finding
 from vibesensor.analysis.helpers import MEMS_NOISE_FLOOR_G, _location_label
 from vibesensor.analysis.phase_segmentation import (
     DrivingPhase,

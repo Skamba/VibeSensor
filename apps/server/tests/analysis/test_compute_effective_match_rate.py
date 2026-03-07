@@ -6,7 +6,7 @@ Covers the highest-speed-bin rescue path and per-location fallback.
 
 from __future__ import annotations
 
-from vibesensor.analysis.findings import _compute_effective_match_rate
+from vibesensor.analysis.findings.order_findings import _compute_effective_match_rate
 
 # ---------------------------------------------------------------------------
 # Helpers

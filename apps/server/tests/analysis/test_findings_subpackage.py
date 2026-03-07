@@ -1,15 +1,13 @@
 """Tests for the findings subpackage structure and individual submodule contracts.
 
-Validates that the refactoring from monolithic findings.py to the findings/
-subpackage preserves all public APIs and that each submodule is independently
-importable and testable.
+Validates that the findings/ subpackage submodules are independently
+importable and testable, and that each submodule exposes expected symbols.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from vibesensor.analysis import findings
 from vibesensor.analysis.findings._constants import (
     _CONFIDENCE_CEILING,
     _CONFIDENCE_FLOOR,
@@ -36,37 +34,9 @@ from vibesensor.analysis.phase_segmentation import DrivingPhase
 
 # -- Subpackage structure tests -----------------------------------------------
 
-_EXPECTED_PUBLIC_SYMBOLS = [
-    "_build_findings",
-    "_build_order_findings",
-    "_build_persistent_peak_findings",
-    "_classify_peak_type",
-    "_compute_effective_match_rate",
-    "_compute_order_confidence",
-    "_detect_diffuse_excitation",
-    "_phase_speed_breakdown",
-    "_phase_to_str",
-    "_reference_missing_finding",
-    "_sensor_intensity_by_location",
-    "_speed_bin_label",
-    "_speed_breakdown",
-    "_speed_profile_from_points",
-    "_suppress_engine_aliases",
-    "_weighted_percentile",
-    "BASELINE_NOISE_SNR_THRESHOLD",
-    "PERSISTENT_PEAK_MAX_FINDINGS",
-    "PERSISTENT_PEAK_MIN_PRESENCE",
-    "TRANSIENT_BURSTINESS_THRESHOLD",
-]
-
 
 class TestFindingsSubpackageStructure:
-    """Verify the subpackage re-exports all expected symbols."""
-
-    @pytest.mark.parametrize("symbol", _EXPECTED_PUBLIC_SYMBOLS)
-    def test_public_symbol_accessible_from_package(self, symbol: str) -> None:
-        """Every symbol previously available from findings.py must be accessible."""
-        assert hasattr(findings, symbol), f"findings package missing re-export: {symbol}"
+    """Verify the subpackage submodules are independently importable."""
 
     def test_submodules_importable_independently(self) -> None:
         """Each submodule must be directly importable with expected symbols."""

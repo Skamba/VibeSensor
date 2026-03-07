@@ -9,7 +9,8 @@ from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 from vibesensor.constants import SILENCE_DB
 from vibesensor.diagnostics_shared import severity_from_peak
-from vibesensor.live_diagnostics import LiveDiagnosticsEngine, _RecentEvent, _TrackerLevelState
+from vibesensor.live_diagnostics._types import _RecentEvent, _TrackerLevelState
+from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 
 # ---------------------------------------------------------------------------
 # Helpers

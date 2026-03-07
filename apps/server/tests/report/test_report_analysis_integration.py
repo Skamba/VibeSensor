@@ -8,10 +8,13 @@ from _report_helpers import analysis_metadata as _make_metadata
 from _report_helpers import analysis_sample as _make_sample
 
 from vibesensor.analysis import build_findings_for_samples, summarize_log
-from vibesensor.analysis import findings as findings_module
-from vibesensor.analysis.findings import _speed_breakdown
 from vibesensor.analysis.findings import builder as findings_builder_module
 from vibesensor.analysis.findings import order_findings as order_findings_module
+from vibesensor.analysis.findings.builder import _build_findings as _findings_build_findings
+from vibesensor.analysis.findings.intensity import _speed_breakdown
+from vibesensor.analysis.findings.order_findings import (
+    _build_order_findings as _findings_build_order_findings,
+)
 from vibesensor.analysis.phase_segmentation import DrivingPhase, segment_run_phases
 from vibesensor.analysis.plot_data import _top_peaks_table_rows
 from vibesensor.analysis.summary import _most_likely_origin_summary, summarize_run_data
@@ -106,7 +109,7 @@ def _call_build_order_findings(
     if per_sample_phases is not None:
         kwargs["per_sample_phases"] = per_sample_phases
     kwargs.update(overrides)
-    return findings_module._build_order_findings(**kwargs)
+    return _findings_build_order_findings(**kwargs)
 
 
 def _max_non_ref_confidence(findings: list[dict[str, object]]) -> float:
@@ -202,7 +205,7 @@ def test_build_findings_orders_informational_transients_after_diagnostics(
         _fake_persistent_peaks,
     )
 
-    findings = findings_module._build_findings(
+    findings = _findings_build_findings(
         metadata={"units": {"accel_x_g": "g"}},
         samples=[],
         speed_sufficient=True,
@@ -1101,7 +1104,7 @@ def test_build_findings_accepts_per_sample_phases_without_recomputing() -> None:
         "vibesensor.analysis.findings.builder.segment_run_phases",
         side_effect=_patched_segment_run_phases,
     ):
-        findings_module._build_findings(
+        _findings_build_findings(
             metadata={"units": {"accel_x_g": "g"}},
             samples=samples,
             speed_sufficient=True,
