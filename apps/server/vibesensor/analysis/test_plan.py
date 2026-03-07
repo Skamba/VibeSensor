@@ -285,7 +285,7 @@ def _location_speedbin_summary(
     relevant_speed_bins: list[str] | tuple[str, ...] | set[str] | None = None,
     connected_locations: set[str] | None = None,
     suspected_source: str | None = None,
-) -> tuple[str, dict[str, Any] | None]:
+) -> tuple[object, dict[str, Any] | None]:
     """Return strongest location summary, optionally restricted to specific speed bins.
 
     When ``relevant_speed_bins`` is provided, location ranking is computed only

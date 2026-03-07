@@ -10,9 +10,10 @@ from __future__ import annotations
 
 import math
 import warnings
-from typing import Any, cast
+from typing import Any, TypeAlias
 
 import numpy as np
+import numpy.typing as npt
 from vibesensor_core.vibration_strength import (
     PEAK_THRESHOLD_FLOOR_RATIO,
     STRENGTH_EPSILON_MIN_G,
@@ -25,8 +26,11 @@ from ..constants import PEAK_BANDWIDTH_HZ, PEAK_SEPARATION_HZ
 
 AXES = ("x", "y", "z")
 
+FloatArray: TypeAlias = npt.NDArray[np.float32]
+IntIndexArray: TypeAlias = npt.NDArray[np.intp]
 
-def medfilt3(block: np.ndarray) -> np.ndarray:
+
+def medfilt3(block: FloatArray) -> FloatArray:
     """Apply a 3-point median filter per-row (per-axis).
 
     Eliminates isolated single-sample spikes caused by I2C bus
@@ -52,7 +56,7 @@ def medfilt3(block: np.ndarray) -> np.ndarray:
     return filtered
 
 
-def smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
+def smooth_spectrum(amps: FloatArray, bins: int = 5) -> FloatArray:
     """Smooth a spectrum using a sliding-average convolution kernel."""
     if amps.size == 0:
         return amps
@@ -69,7 +73,7 @@ def smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
     return np.convolve(padded, kernel, mode="valid").astype(np.float32)
 
 
-def noise_floor(amps: np.ndarray) -> float:
+def noise_floor(amps: FloatArray) -> float:
     """Compute the P20 noise floor, filtering non-finite and negative values.
 
     Returns ``0.0`` for empty or all-invalid inputs.  Delegates the
@@ -96,19 +100,19 @@ def noise_floor(amps: np.ndarray) -> float:
         # here — the single value is a valid amplitude reading, not the DC
         # bias.  Return it directly so callers get a usable floor estimate.
         return float(sorted_non_neg[0])
-    return noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted_non_neg)
+    return float(noise_floor_amp_p20_g(combined_spectrum_amp_g=sorted_non_neg))
 
 
-def float_list(values: np.ndarray | list[float]) -> list[float]:
+def float_list(values: FloatArray | list[float]) -> list[float]:
     """Convert an array-like to a plain Python ``list[float]``."""
     if isinstance(values, np.ndarray):
-        return values.ravel().tolist()
+        return [float(v) for v in values.ravel().tolist()]
     return [float(v) for v in values]
 
 
 def top_peaks(
-    freqs: np.ndarray,
-    amps: np.ndarray,
+    freqs: FloatArray,
+    amps: FloatArray,
     *,
     top_n: int = 5,
     floor_ratio: float = PEAK_THRESHOLD_FLOOR_RATIO,
@@ -162,13 +166,13 @@ def top_peaks(
 
 
 def compute_fft_spectrum(
-    fft_block: np.ndarray,
+    fft_block: FloatArray,
     sample_rate_hz: int,
     *,
-    fft_window: np.ndarray,
+    fft_window: FloatArray,
     fft_scale: float,
-    freq_slice: np.ndarray,
-    valid_idx: np.ndarray,
+    freq_slice: FloatArray,
+    valid_idx: IntIndexArray,
     spike_filter_enabled: bool = True,
 ) -> dict[str, Any]:
     """Compute per-axis and combined FFT spectra from a sample block.
@@ -222,10 +226,10 @@ def compute_fft_spectrum(
     if (fft_n % 2) == 0 and specs_all.shape[1] > 1:
         specs_all[:, -1] *= 0.5
 
-    spectrum_by_axis: dict[str, dict[str, np.ndarray]] = {}
-    axis_amp_slices: list[np.ndarray] = []
-    axis_amps: dict[str, np.ndarray] = {}
-    axis_peaks: dict[str, list] = {}
+    spectrum_by_axis: dict[str, dict[str, FloatArray]] = {}
+    axis_amp_slices: list[FloatArray] = []
+    axis_amps: dict[str, FloatArray] = {}
+    axis_peaks: dict[str, list[dict[str, float]]] = {}
 
     for axis_idx, axis in enumerate(AXES):
         amp_slice = specs_all[axis_idx, valid_idx]
@@ -245,12 +249,12 @@ def compute_fft_spectrum(
         axis_amps[axis] = amp_slice
         axis_amp_slices.append(amp_slice)
 
-    combined_amp = np.empty(0, dtype=np.float32)
+    combined_amp: FloatArray = np.empty(0, dtype=np.float32)
     strength_metrics: dict[str, Any] = {}
     if axis_amp_slices:
         combined_amp = np.asarray(
             combined_spectrum_amp_g(
-                axis_spectra_amp_g=cast(list[list[float]], axis_amp_slices),
+                axis_spectra_amp_g=[float_list(amp_slice) for amp_slice in axis_amp_slices],
                 axis_count_for_mean=len(axis_amp_slices),
             ),
             dtype=np.float32,

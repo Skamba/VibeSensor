@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
 
 from ...runlog import as_float_or_none as _as_float
+from .._types import PhaseLabels
 from ..helpers import (
     SPEED_COVERAGE_MIN_PCT,
     _effective_engine_rpm,
@@ -49,7 +51,7 @@ def _build_findings(
     speed_non_null_pct: float,
     raw_sample_rate_hz: float | None,
     lang: str = "en",
-    per_sample_phases: list[str] | None = None,
+    per_sample_phases: PhaseLabels | None = None,
     run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, Any]]:
     """Build and rank all findings for a completed run.
@@ -150,7 +152,10 @@ def _build_findings(
     # Issues #190 and #191.
     # Use caller-supplied phases when available to avoid redundant recomputation.
     if per_sample_phases is not None and len(per_sample_phases) == len(samples):
-        _per_sample_phases = per_sample_phases
+        _per_sample_phases: list[DrivingPhase] = [
+            phase if isinstance(phase, DrivingPhase) else DrivingPhase(str(phase))
+            for phase in per_sample_phases
+        ]
     else:
         _per_sample_phases, _ = segment_run_phases(samples)
     _diagnostic_mask = diagnostic_sample_mask(_per_sample_phases)
@@ -161,7 +166,7 @@ def _build_findings(
     analysis_samples = diagnostic_samples if use_filtered_samples else samples
     # Compute per-sample phases aligned with analysis_samples for phase-evidence tracking.
     if analysis_samples is diagnostic_samples:
-        analysis_phases: list[DrivingPhase] = [
+        analysis_phases: Sequence[DrivingPhase] = [
             p for p, keep in zip(_per_sample_phases, _diagnostic_mask, strict=True) if keep
         ]
     else:
@@ -178,7 +183,7 @@ def _build_findings(
         raw_sample_rate_hz=raw_sample_rate_hz,
         connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
-        per_sample_phases=analysis_phases,
+        per_sample_phases=list(analysis_phases),
     )
     findings.extend(order_findings)
 

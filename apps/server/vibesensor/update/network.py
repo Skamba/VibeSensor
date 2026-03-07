@@ -1,13 +1,12 @@
-"""Network helpers for the update subsystem (nmcli operations)."""
+"""Wi-Fi diagnostic parsing and shared updater network constants."""
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from pathlib import Path
 
 from .models import UpdateIssue
-from .runner import CommandRunner, _sudo_prefix, sanitize_log_line
+from .runner import sanitize_log_line
 
 UPLINK_CONNECTION_NAME = "VibeSensor-Uplink"
 UPLINK_CONNECT_WAIT_S = 30
@@ -83,38 +82,3 @@ def parse_wifi_diagnostics(log_dir: str = _WIFI_DIAG_DIR) -> list[UpdateIssue]:
             LOGGER.debug("Unable to read hotspot diagnostics from %s", hotspot_log, exc_info=True)
 
     return issues
-
-
-async def cleanup_uplink(runner: CommandRunner) -> None:
-    """Best-effort removal of the temporary uplink connection."""
-    sudo = _sudo_prefix()
-    await runner.run(
-        [*sudo, "nmcli", "connection", "down", UPLINK_CONNECTION_NAME],
-        timeout=NMCLI_TIMEOUT_S,
-    )
-    await runner.run(
-        [*sudo, "nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
-        timeout=NMCLI_TIMEOUT_S,
-    )
-
-
-async def restore_hotspot(
-    runner: CommandRunner,
-    ap_con_name: str,
-) -> bool:
-    """Bring the AP connection back up with retries.  Returns True on success."""
-    sudo = _sudo_prefix()
-    # Clean up temporary uplink first
-    await cleanup_uplink(runner)
-
-    for attempt in range(1, HOTSPOT_RESTORE_RETRIES + 1):
-        rc, _, _ = await runner.run(
-            [*sudo, "nmcli", "connection", "up", ap_con_name],
-            timeout=NMCLI_TIMEOUT_S,
-        )
-        if rc == 0:
-            return True
-        if attempt < HOTSPOT_RESTORE_RETRIES:
-            await asyncio.sleep(HOTSPOT_RESTORE_DELAY_S)
-
-    return False

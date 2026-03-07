@@ -31,11 +31,11 @@ _run_post_analysis()          [vibesensor.metrics_log.post_analysis]
   │
   ▼
 GET /api/history/{run_id}/report.pdf   [vibesensor.routes.history]
-  ├─ Load persisted analysis + _report_template_data
-  ├─ Reconstruct ReportTemplateData from dict
-  └─ build_report_pdf(data)   [vibesensor.report.pdf_builder]
-       ├─ Page 1: header, observed signature, systems, next steps
-       └─ Page 2: car diagram, pattern evidence, peaks table
+  └─ HistoryReportService.build_pdf()  [vibesensor.history_reports]
+     ├─ load persisted analysis + _report_template_data
+     ├─ reconstruct ReportTemplateData from dict
+     └─ build_report_pdf(data)       [vibesensor.report.pdf_builder]
+        └─ delegate to focused page, layout, drawing, and diagram modules in `vibesensor.report`
 ```
 
 ## Key Architectural Rules
@@ -51,14 +51,18 @@ analysis.
 
 The `vibesensor.report` package contains **only** rendering code:
 
-| File              | Purpose                              |
-|-------------------|--------------------------------------|
-| `pdf_builder.py`  | PDF page layout and rendering        |
-| `pdf_diagram.py`  | Car location diagram (ReportLab)     |
-| `pdf_helpers.py`  | PDF rendering utilities              |
-| `report_data.py`  | Dataclass definitions (pure data)    |
-| `i18n.py`         | Translation string lookup            |
-| `theme.py`        | Color tokens and styling constants   |
+| File | Purpose |
+|---|---|
+| `pdf_builder.py` | Public renderer facade and compatibility exports |
+| `pdf_engine.py` | Top-level pagination and page orchestration |
+| `pdf_page1.py`, `pdf_page2.py` | Page-level composition |
+| `pdf_page1_sections.py`, `pdf_page2_sections.py`, `pdf_page_layouts.py` | Focused page section renderers and geometry |
+| `pdf_drawing.py`, `pdf_text.py`, `pdf_layout.py` | Shared drawing, text, and geometry helpers |
+| `pdf_diagram.py` | Compatibility facade for the car diagram |
+| `pdf_diagram_layout.py`, `pdf_diagram_models.py`, `pdf_diagram_render.py` | Diagram planning, typed models, and drawing |
+| `pdf_helpers.py` | Shared PDF helper functions |
+| `report_data.py` | Dataclass definitions (pure data) |
+| `theme.py` | Color tokens and styling constants |
 
 **Rule:** Report modules must not import from `vibesensor.analysis` at
 module level.  A guardrail test (`test_report_analysis_separation.py`)
@@ -98,5 +102,5 @@ needs:
    `vibesensor.report.report_data`.
 3. Populate the new field in `map_summary()` in
    `vibesensor.analysis.report_data_builder`.
-4. Render the new field in `pdf_builder.py`.
-5. Never add analysis logic to `pdf_builder.py` — always pre-compute.
+4. Render the new field through the renderer facade in `pdf_builder.py`, usually by wiring it into the relevant page or section module under `vibesensor.report`.
+5. Never add analysis logic to the renderer package — always pre-compute.

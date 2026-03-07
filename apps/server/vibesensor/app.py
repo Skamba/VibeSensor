@@ -48,19 +48,22 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         try:
-            await runtime.start()
+            await runtime.lifecycle.start()
         except Exception:
-            LOGGER.error("RuntimeState.start() failed; cleaning up before re-raise", exc_info=True)
-            await runtime.stop()
+            LOGGER.error(
+                "Runtime lifecycle start failed; cleaning up before re-raise",
+                exc_info=True,
+            )
+            await runtime.lifecycle.stop()
             raise
         try:
             yield
         finally:
-            await runtime.stop()
+            await runtime.lifecycle.stop()
 
     app = FastAPI(title="VibeSensor", lifespan=lifespan)
     app.state.runtime = runtime
-    app.include_router(create_router(runtime))
+    app.include_router(create_router(runtime.routes))
     if os.getenv("VIBESENSOR_SERVE_STATIC", "1") == "1":
         # Prefer packaged static assets (baked into the wheel by CI), then
         # fall back to the legacy ``apps/server/public/`` directory used by

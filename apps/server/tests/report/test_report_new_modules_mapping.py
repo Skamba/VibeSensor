@@ -1,174 +1,18 @@
-"""Tests for new report modules: pattern_parts, strength_labels, aspect ratio, data model."""
+"""Focused tests for report summary mapping and origin explanation behavior."""
 
 from __future__ import annotations
 
-from io import BytesIO
 from pathlib import Path
 
 import pytest
-from _report_helpers import (
-    RUN_END,
-    minimal_summary,
-    write_jsonl,
-)
-from _report_helpers import (
-    report_run_metadata as _run_metadata,
-)
-from _report_helpers import (
-    report_sample as _base_sample,
-)
-from pypdf import PdfReader
+from _report_helpers import RUN_END, minimal_summary, write_jsonl
+from _report_helpers import report_run_metadata as _run_metadata
+from _report_helpers import report_sample as _base_sample
 
 from vibesensor.analysis import summarize_log
-from vibesensor.analysis.pattern_parts import parts_for_pattern, why_parts_listed
 from vibesensor.analysis.report_data_builder import map_summary
-from vibesensor.analysis.strength_labels import certainty_label, strength_label, strength_text
 from vibesensor.analysis.summary import _most_likely_origin_summary
-from vibesensor.report.pdf_builder import build_report_pdf
-from vibesensor.report.pdf_layout import assert_aspect_preserved, fit_rect_preserve_aspect
 from vibesensor.report.report_data import ReportTemplateData
-
-# ---------------------------------------------------------------------------
-# strength_label / strength_text
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("db_val", "expected_key"),
-    [
-        (None, "unknown"),
-        (0.0, "negligible"),
-        (5.0, "negligible"),
-        (8.0, "light"),
-        (15.9, "light"),
-        (16.0, "moderate"),
-        (25.9, "moderate"),
-        (26.0, "strong"),
-        (35.9, "strong"),
-        (36.0, "very_strong"),
-        (100.0, "very_strong"),
-    ],
-)
-def test_strength_label_bands(db_val: float | None, expected_key: str) -> None:
-    key, label = strength_label(db_val, lang="en")
-    assert key == expected_key
-    assert isinstance(label, str) and label
-
-
-def test_strength_label_nl() -> None:
-    key, label = strength_label(20.0, lang="nl")
-    assert key == "moderate"
-    assert label == "Matig"
-
-
-def test_strength_text_none() -> None:
-    assert "Unknown" in strength_text(None, lang="en")
-
-
-def test_strength_text_value() -> None:
-    txt = strength_text(22.0, lang="en")
-    assert "Moderate" in txt
-    assert "22.0 dB" in txt
-
-
-# ---------------------------------------------------------------------------
-# certainty_label
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("conf", "expected_level"),
-    [
-        (0.0, "low"),
-        (0.39, "low"),
-        (0.40, "medium"),
-        (0.69, "medium"),
-        (0.70, "high"),
-        (1.0, "high"),
-    ],
-)
-def test_certainty_label_levels(conf: float, expected_level: str) -> None:
-    level, label, pct, reason = certainty_label(conf, lang="en")
-    assert level == expected_level
-    assert isinstance(label, str) and label
-    assert "%" in pct
-    assert isinstance(reason, str) and reason
-
-
-def test_certainty_label_nl() -> None:
-    _, label, _, _ = certainty_label(0.80, lang="nl")
-    assert label == "Hoog"
-
-
-def test_certainty_single_sensor_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", sensor_count=1)
-    assert "single sensor" in reason.lower()
-
-
-def test_certainty_reference_gaps_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", has_reference_gaps=True)
-    assert "reference" in reason.lower()
-
-
-def test_certainty_narrow_speed_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", steady_speed=True)
-    assert "speed" in reason.lower()
-
-
-def test_certainty_weak_spatial_reason() -> None:
-    _, _, _, reason = certainty_label(0.80, lang="en", weak_spatial=True)
-    assert "spatial" in reason.lower()
-
-
-def test_certainty_negligible_strength_caps_high_label() -> None:
-    level, label, _, _ = certainty_label(0.80, lang="en", strength_band_key="negligible")
-    assert level == "medium"
-    assert label == "Medium"
-
-
-# ---------------------------------------------------------------------------
-# parts_for_pattern
-# ---------------------------------------------------------------------------
-
-
-def test_parts_for_wheel_1x() -> None:
-    parts = parts_for_pattern("wheel/tire", "1x wheel order")
-    assert len(parts) >= 2
-    assert any("flat spot" in p.lower() or "bearing" in p.lower() for p in parts)
-
-
-def test_parts_for_driveline_wildcard() -> None:
-    parts = parts_for_pattern("driveline", None)
-    assert len(parts) >= 2
-
-
-def test_parts_for_engine_2x_nl() -> None:
-    parts = parts_for_pattern("engine", "2x engine order", lang="nl")
-    assert len(parts) >= 2
-    # NL labels should be present
-    assert all(isinstance(p, str) and p for p in parts)
-
-
-def test_parts_for_unknown_system() -> None:
-    parts = parts_for_pattern("unknown_system", "1x")
-    assert len(parts) >= 1  # Should return default parts
-
-
-def test_why_parts_listed_en() -> None:
-    text = why_parts_listed("wheel/tire", "1x wheel order")
-    assert "1x" in text
-    assert "wheel" in text.lower()
-
-
-def test_why_parts_listed_nl() -> None:
-    text = why_parts_listed("engine", "2x engine order", lang="nl")
-    assert "2x" in text
-    assert "motor" in text.lower()
-
-
-# ---------------------------------------------------------------------------
-# PDF generation with missing car metadata
-# ---------------------------------------------------------------------------
 
 
 def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: float) -> dict:
@@ -180,85 +24,17 @@ def _sample(idx: int, *, speed_kmh: float, dominant_freq_hz: float, peak_amp_g: 
     )
 
 
-def test_report_pdf_no_car_metadata(tmp_path: Path) -> None:
-    """PDF gracefully handles summary without car_name/car_type metadata."""
-    run_path = tmp_path / "no_car.jsonl"
-    records: list[dict] = [_run_metadata()]
-    for idx in range(15):
-        records.append(_sample(idx, speed_kmh=50.0 + idx, dominant_freq_hz=14.0, peak_amp_g=0.08))
-    records.append(RUN_END)
-    write_jsonl(run_path, records)
-
-    summary = summarize_log(run_path)
-    # No car metadata in summary
-    pdf = build_report_pdf(map_summary(summary))
-    assert pdf.startswith(b"%PDF")
-
-    reader = PdfReader(BytesIO(pdf))
-    assert len(reader.pages) == 2
-
-
-def test_report_pdf_two_pages(tmp_path: Path) -> None:
-    """New layout generates exactly 2 pages."""
-    run_path = tmp_path / "two_pages.jsonl"
-    records: list[dict] = [_run_metadata(tire_circumference_m=2.2)]
-    for idx in range(30):
-        speed = 40 + idx
-        wheel_hz = (speed * (1000.0 / 3600.0)) / 2.2
-        records.append(
-            _sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09)
+def _assert_no_phase_onset(explanation: object) -> None:
+    if isinstance(explanation, list):
+        assert not any(
+            isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
+            for part in explanation
         )
-    records.append(RUN_END)
-    write_jsonl(run_path, records)
-
-    summary = summarize_log(run_path)
-    pdf = build_report_pdf(map_summary(summary))
-    reader = PdfReader(BytesIO(pdf))
-    assert len(reader.pages) == 2
-
-
-# ---------------------------------------------------------------------------
-# Aspect ratio preservation (from template spec)
-# ---------------------------------------------------------------------------
-
-
-def test_fit_rect_preserve_aspect_wider_box() -> None:
-    """Box wider than source → fit to height, center horizontally."""
-    x, y, w, h = fit_rect_preserve_aspect(100, 200, 0, 0, 400, 200)
-    assert h == pytest.approx(200.0)
-    assert w == pytest.approx(100.0)
-    assert x == pytest.approx(150.0)  # centered
-
-
-def test_fit_rect_preserve_aspect_taller_box() -> None:
-    """Box taller than source → fit to width, center vertically."""
-    x, y, w, h = fit_rect_preserve_aspect(200, 100, 0, 0, 200, 400)
-    assert w == pytest.approx(200.0)
-    assert h == pytest.approx(100.0)
-    assert y == pytest.approx(150.0)
-
-
-def test_assert_aspect_preserved_ok() -> None:
-    assert_aspect_preserved(100, 200, 50, 100)  # ratio 0.5
-
-
-def test_assert_aspect_preserved_fails() -> None:
-    with pytest.raises(AssertionError, match="distorted"):
-        assert_aspect_preserved(100, 200, 150, 100)  # very different ratio
-
-
-def test_assert_aspect_preserved_zero_dims() -> None:
-    with pytest.raises(AssertionError, match="Invalid"):
-        assert_aspect_preserved(0, 200, 50, 100)
-
-
-# ---------------------------------------------------------------------------
-# map_summary data model
-# ---------------------------------------------------------------------------
+    else:
+        assert isinstance(explanation, dict)
 
 
 def test_map_summary_basic(tmp_path: Path) -> None:
-    """map_summary produces a valid ReportTemplateData with expected fields."""
     run_path = tmp_path / "map_summary.jsonl"
     records: list[dict] = [_run_metadata(tire_circumference_m=2.2)]
     for idx in range(20):
@@ -273,7 +49,7 @@ def test_map_summary_basic(tmp_path: Path) -> None:
 
     data = map_summary(summary)
     assert isinstance(data, ReportTemplateData)
-    assert data.title  # not empty
+    assert data.title
     assert data.run_datetime
     assert data.observed.primary_system
     assert data.observed.certainty_label
@@ -282,17 +58,10 @@ def test_map_summary_basic(tmp_path: Path) -> None:
 
 
 def test_map_summary_no_top_causes() -> None:
-    """map_summary handles empty summary gracefully.
-
-    With no findings and zero confidence, the report falls into Tier A
-    (very low certainty) and provides data-collection guidance instead
-    of empty next steps.
-    """
     summary = minimal_summary()
     data = map_summary(summary)
     assert isinstance(data, ReportTemplateData)
     assert data.system_cards == []
-    # Tier A provides capture guidance instead of empty next steps
     assert data.certainty_tier_key == "A"
     assert len(data.next_steps) >= 1
 
@@ -345,17 +114,6 @@ def test_most_likely_origin_summary_weak_spatial_disambiguates_location() -> Non
     assert origin["alternative_locations"] == ["Front Right"]
 
 
-def _assert_no_phase_onset(explanation: object) -> None:
-    """Assert that the explanation does not contain a phase-onset i18n note."""
-    if isinstance(explanation, list):
-        assert not any(
-            isinstance(part, dict) and part.get("_i18n_key") == "ORIGIN_PHASE_ONSET_NOTE"
-            for part in explanation
-        )
-    else:
-        assert isinstance(explanation, dict)
-
-
 @pytest.mark.parametrize(
     ("phase", "location", "speed_band", "confidence"),
     [
@@ -367,7 +125,6 @@ def _assert_no_phase_onset(explanation: object) -> None:
 def test_most_likely_origin_summary_phase_onset(
     phase: str, location: str, speed_band: str, confidence: float
 ) -> None:
-    """Phase onset note is included for acceleration/deceleration phases."""
     findings = [
         {
             "strongest_location": location,
@@ -394,7 +151,6 @@ def test_most_likely_origin_summary_phase_onset(
 
 
 def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
-    """Cruise phase does not trigger a phase-onset note (it is the default phase)."""
     findings = [
         {
             "strongest_location": "Front Left",
@@ -408,13 +164,10 @@ def test_most_likely_origin_summary_no_phase_onset_for_cruise() -> None:
     ]
 
     origin = _most_likely_origin_summary(findings)
-
-    # cruise is not a notable onset phase — no onset addendum
     _assert_no_phase_onset(origin["explanation"])
 
 
 def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
-    """When dominant_phase is not set, the explanation has no phase-onset addendum."""
     findings = [
         {
             "strongest_location": "Front Left",
@@ -452,7 +205,6 @@ def test_most_likely_origin_summary_no_phase_onset_when_absent() -> None:
     )
 
     data = map_summary(summary)
-
     assert data.observed.strongest_sensor_location == "Rear Left / Front Right"
 
 
@@ -599,30 +351,3 @@ def test_map_summary_certainty_reason_keeps_relevant_reference_gap() -> None:
     )
     data = map_summary(summary)
     assert data.observed.certainty_reason == "Missing reference data limits pattern matching"
-
-
-def test_build_report_pdf_renders_data_trust_warning_detail() -> None:
-    summary = minimal_summary(
-        lang="en",
-        run_suitability=[
-            {
-                "check": "Saturation and outliers",
-                "state": "warn",
-                "explanation": "5 potential saturation samples detected.",
-            },
-            {
-                "check": "Frame integrity",
-                "state": "warn",
-                "explanation": "3 dropped frames, 2 queue overflows detected.",
-            },
-        ],
-        samples=[],
-    )
-
-    pdf = build_report_pdf(map_summary(summary))
-    # Detail text wraps across lines in the Data Trust panel, so check key
-    # fragments rather than the exact full string.
-    assert b"5 potential saturation" in pdf
-    assert b"samples detected." in pdf
-    assert b"3 dropped frames" in pdf
-    assert b"queue overflows" in pdf

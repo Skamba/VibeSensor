@@ -10,6 +10,7 @@ from ..json_utils import safe_json_dumps
 from ..runlog import utc_now_iso
 from ._run_common import ANALYSIS_SCHEMA_VERSION, RunStatus
 from ._samples import V2_INSERT_SQL, sample_to_v2_row
+from ._typing import HistoryCursorProvider
 
 LOGGER = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class HistoryRunWriteMixin:
     __slots__ = ()
 
     def create_run(
-        self,
+        self: HistoryCursorProvider,
         run_id: str,
         start_time_utc: str,
         metadata: dict[str, Any],
@@ -38,7 +39,9 @@ class HistoryRunWriteMixin:
             )
 
     def append_samples(
-        self, run_id: str, samples: list[dict[str, Any]] | list[SensorFrame]
+        self: HistoryCursorProvider,
+        run_id: str,
+        samples: list[dict[str, Any]] | list[SensorFrame],
     ) -> None:
         if not samples:
             return
@@ -58,7 +61,7 @@ class HistoryRunWriteMixin:
                 (len(samples), run_id),
             )
 
-    def finalize_run(self, run_id: str, end_time_utc: str) -> None:
+    def finalize_run(self: HistoryCursorProvider, run_id: str, end_time_utc: str) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
@@ -73,16 +76,23 @@ class HistoryRunWriteMixin:
                     run_id,
                 )
 
-    def update_run_metadata(self, run_id: str, metadata: dict[str, Any]) -> bool:
+    def update_run_metadata(
+        self: HistoryCursorProvider,
+        run_id: str,
+        metadata: dict[str, Any],
+    ) -> bool:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
                 (safe_json_dumps(metadata), run_id),
             )
-            return cur.rowcount > 0
+            return bool(int(cur.rowcount) > 0)
 
     def finalize_run_with_metadata(
-        self, run_id: str, end_time_utc: str, metadata: dict[str, Any]
+        self: HistoryCursorProvider,
+        run_id: str,
+        end_time_utc: str,
+        metadata: dict[str, Any],
     ) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
@@ -99,7 +109,10 @@ class HistoryRunWriteMixin:
                     run_id,
                 )
 
-    def delete_run_if_safe(self, run_id: str) -> tuple[bool, str | None]:
+    def delete_run_if_safe(
+        self: HistoryCursorProvider,
+        run_id: str,
+    ) -> tuple[bool, str | None]:
         with self._cursor() as cur:
             cur.execute("SELECT status FROM runs WHERE run_id = ?", (run_id,))
             row = cur.fetchone()
@@ -111,9 +124,13 @@ class HistoryRunWriteMixin:
             if status == RunStatus.ANALYZING:
                 return False, RunStatus.ANALYZING
             cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
-            return cur.rowcount > 0, None
+            return bool(int(cur.rowcount) > 0), None
 
-    def store_analysis(self, run_id: str, analysis: dict[str, Any]) -> None:
+    def store_analysis(
+        self: HistoryCursorProvider,
+        run_id: str,
+        analysis: dict[str, Any],
+    ) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
@@ -136,7 +153,7 @@ class HistoryRunWriteMixin:
                         run_id,
                     )
 
-    def store_analysis_error(self, run_id: str, error: str) -> None:
+    def store_analysis_error(self: HistoryCursorProvider, run_id: str, error: str) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
@@ -152,15 +169,15 @@ class HistoryRunWriteMixin:
                     run_id,
                 )
 
-    def delete_run(self, run_id: str) -> bool:
+    def delete_run(self: HistoryCursorProvider, run_id: str) -> bool:
         with self._cursor() as cur:
             cur.execute("DELETE FROM runs WHERE run_id = ?", (run_id,))
-            return cur.rowcount > 0
+            return bool(int(cur.rowcount) > 0)
 
-    def recover_stale_recording_runs(self) -> int:
+    def recover_stale_recording_runs(self: HistoryCursorProvider) -> int:
         with self._cursor() as cur:
             cur.execute(
                 "UPDATE runs SET status = 'error', error_message = ? WHERE status = 'recording'",
                 ("Recovered stale recording during startup",),
             )
-            return cur.rowcount
+            return int(cur.rowcount)

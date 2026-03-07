@@ -212,7 +212,7 @@ def _sensor_intensity_by_location(
         overflow_delta = _counter_delta(overflow_vals)
         bucket_counts = strength_bucket_counts.get(location, _EMPTY_BUCKET_COUNTS)
         bucket_total = max(0, strength_bucket_totals.get(location, 0))
-        bucket_distribution: dict[str, float | int] = {
+        bucket_distribution: dict[str, object] = {
             "total": bucket_total,
             "counts": dict(bucket_counts),
         }
@@ -262,8 +262,16 @@ def _sensor_intensity_by_location(
         key=lambda row: (
             1 if not bool(row.get("partial_coverage")) else 0,
             1 if not bool(row.get("sample_coverage_warning")) else 0,
-            float(row.get("p95_intensity_db") if row.get("p95_intensity_db") is not None else 0.0),
-            float(row.get("max_intensity_db") if row.get("max_intensity_db") is not None else 0.0),
+            (
+                row["p95_intensity_db"]
+                if isinstance(row.get("p95_intensity_db"), (int, float))
+                else 0.0
+            ),
+            (
+                row["max_intensity_db"]
+                if isinstance(row.get("max_intensity_db"), (int, float))
+                else 0.0
+            ),
         ),
         reverse=True,
     )

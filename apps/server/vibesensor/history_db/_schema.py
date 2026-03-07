@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 
+from ._typing import HistoryCursorProvider
+
 LOGGER = logging.getLogger(__name__)
 
 SCHEMA_VERSION = 5
@@ -90,7 +92,7 @@ class HistorySchemaMixin:
 
     __slots__ = ()
 
-    def _ensure_schema(self) -> None:
+    def _ensure_schema(self: HistoryCursorProvider) -> None:
         with self._cursor() as cur:
             cur.executescript(SCHEMA_SQL)
         with self._cursor() as cur:

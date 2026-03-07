@@ -2,9 +2,10 @@
 
 Submodules
 ----------
-- ``_state``: RuntimeState thin coordinator
-- ``composition``: explicit runtime subsystem assembly
-- ``dependencies``: focused runtime service-group dataclasses
+- ``_state``: top-level runtime assembly
+- ``builders``: focused subsystem builders
+- ``subsystems``: concern-owned runtime containers
+- ``composition``: runtime assembly from explicit subsystems
 - ``processing_loop``: ProcessingLoop (async tick loop + failure tracking)
 - ``ws_broadcast``: WsBroadcastService (payload assembly + cache)
 - ``lifecycle``: LifecycleManager (start/stop + task management)
@@ -14,11 +15,6 @@ Submodules
 
 from ._state import RuntimeState
 from .composition import build_runtime_state
-from .dependencies import (
-    RuntimeIngressServices,
-    RuntimeOperationsServices,
-    RuntimePlatformServices,
-)
 from .processing_loop import ProcessingLoopState
 from .rotational_speeds import (
     build_rotational_speeds_payload as _build_rotational_speeds_payload,
@@ -26,14 +22,29 @@ from .rotational_speeds import (
 from .rotational_speeds import (
     rotational_basis_speed_source as _rotational_basis_speed_source,
 )
+from .subsystems import (
+    RuntimeDiagnosticsSubsystem,
+    RuntimeIngressSubsystem,
+    RuntimePersistenceSubsystem,
+    RuntimeProcessingSubsystem,
+    RuntimeRouteServices,
+    RuntimeSettingsSubsystem,
+    RuntimeUpdateSubsystem,
+    RuntimeWebsocketSubsystem,
+)
 from .ws_broadcast import WsBroadcastCache
 
 __all__ = [
     "RuntimeState",
     "build_runtime_state",
-    "RuntimeIngressServices",
-    "RuntimeOperationsServices",
-    "RuntimePlatformServices",
+    "RuntimeIngressSubsystem",
+    "RuntimeSettingsSubsystem",
+    "RuntimeDiagnosticsSubsystem",
+    "RuntimePersistenceSubsystem",
+    "RuntimeUpdateSubsystem",
+    "RuntimeProcessingSubsystem",
+    "RuntimeWebsocketSubsystem",
+    "RuntimeRouteServices",
     "ProcessingLoopState",
     "WsBroadcastCache",
     "_build_rotational_speeds_payload",
