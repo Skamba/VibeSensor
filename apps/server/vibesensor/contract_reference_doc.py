@@ -8,8 +8,6 @@ from __future__ import annotations
 
 __all__ = ["render_contract_reference_markdown"]
 
-from vibesensor_shared.contracts import METRIC_FIELDS, REPORT_FIELDS
-
 from vibesensor.config import DEFAULT_CONFIG
 from vibesensor.protocol import (
     ACK_BYTES,
@@ -38,8 +36,21 @@ def render_contract_reference_markdown() -> str:
     control_port = _port(str(DEFAULT_CONFIG["udp"]["control_listen"]))
     server_http_port = int(DEFAULT_CONFIG["server"]["port"])
 
-    metric_fields = "\n".join(f"- `{key}`" for key in METRIC_FIELDS)
-    report_fields = "\n".join(f"- `{key}`" for key in REPORT_FIELDS)
+    # Canonical metric/report field names (kept in sync with libs/shared/contracts/*.json)
+    _metric_field_names = ["vibration_strength_db", "strength_bucket"]
+    _report_field_names = [
+        "run_id",
+        "timestamp_utc",
+        "client_id",
+        "client_name",
+        "speed_kmh",
+        "dominant_freq_hz",
+        "vibration_strength_db",
+        "strength_bucket",
+        "top_peaks",
+    ]
+    metric_fields = "\n".join(f"- `{key}`" for key in _metric_field_names)
+    report_fields = "\n".join(f"- `{key}`" for key in _report_field_names)
 
     return f"""# Authoritative Protocol & Ports Contract
 

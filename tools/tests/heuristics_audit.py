@@ -101,17 +101,17 @@ def check_contracts() -> tuple[bool, list[str]]:
     ]
     missing = [str(p.relative_to(ROOT)) for p in needed if not p.exists()]
     uses: list[str] = []
-    server_ref = ROOT / "apps/server/vibesensor/shared_contracts.py"
+    server_ref = ROOT / "apps/server/vibesensor/domain_models.py"
     ui_ref = ROOT / "apps/ui/src/main.ts"
     fw_ref = ROOT / "firmware/esp/include/vibesensor_contracts.h"
-    if server_ref.exists() and "METRIC_FIELDS" in server_ref.read_text(
+    if server_ref.exists() and "vibration_strength_db" in server_ref.read_text(
         encoding="utf-8", errors="ignore"
     ):
-        uses.append("server_shared_contracts")
-    if ui_ref.exists() and "METRIC_FIELDS" in ui_ref.read_text(
+        uses.append("server_domain_models")
+    if ui_ref.exists() and "vibration_strength_db" in ui_ref.read_text(
         encoding="utf-8", errors="ignore"
     ):
-        uses.append("ui_metric_fields")
+        uses.append("ui_vibration_strength")
     if fw_ref.exists() and "VS_FIELD_VIBRATION_STRENGTH_DB" in fw_ref.read_text(
         encoding="utf-8", errors="ignore"
     ):
