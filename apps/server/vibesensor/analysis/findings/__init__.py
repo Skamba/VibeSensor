@@ -22,10 +22,13 @@ from .intensity import (  # noqa: F401
     _speed_breakdown,
 )
 from .order_findings import (  # noqa: F401
+    MatchAccumulator,
+    _assemble_order_finding,
     _build_order_findings,
     _compute_effective_match_rate,
     _compute_order_confidence,
     _detect_diffuse_excitation,
+    _match_samples_for_hypothesis,
     _suppress_engine_aliases,
 )
 from .persistent_findings import (  # noqa: F401
@@ -41,9 +44,11 @@ from .speed_profile import _phase_to_str, _speed_profile_from_points  # noqa: F4
 
 __all__ = [
     "BASELINE_NOISE_SNR_THRESHOLD",
+    "MatchAccumulator",
     "PERSISTENT_PEAK_MAX_FINDINGS",
     "PERSISTENT_PEAK_MIN_PRESENCE",
     "TRANSIENT_BURSTINESS_THRESHOLD",
+    "_assemble_order_finding",
     "_build_findings",
     "_build_order_findings",
     "_build_persistent_peak_findings",
@@ -51,6 +56,7 @@ __all__ = [
     "_compute_effective_match_rate",
     "_compute_order_confidence",
     "_detect_diffuse_excitation",
+    "_match_samples_for_hypothesis",
     "_phase_speed_breakdown",
     "_phase_to_str",
     "_reference_missing_finding",

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from math import log1p
-from typing import Any
+from typing import Any, TypedDict
 
 from vibesensor_core.vibration_strength import (
     vibration_strength_db_scalar as canonical_vibration_db,
@@ -47,6 +47,37 @@ from ._constants import (
     _SNR_LOG_DIVISOR,
 )
 from .speed_profile import _phase_to_str, _speed_profile_from_points
+
+# ---------------------------------------------------------------------------
+# Types
+# ---------------------------------------------------------------------------
+
+
+class MatchAccumulator(TypedDict):
+    """Accumulated statistics from matching a hypothesis against all samples.
+
+    Returned by :func:`_match_samples_for_hypothesis` and consumed by
+    :func:`_build_order_findings` to compute confidence and assemble findings.
+    """
+
+    possible: int
+    matched: int
+    matched_amp: list[float]
+    matched_floor: list[float]
+    rel_errors: list[float]
+    predicted_vals: list[float]
+    measured_vals: list[float]
+    matched_points: list[dict[str, Any]]
+    ref_sources: set[str]
+    possible_by_speed_bin: dict[str, int]
+    matched_by_speed_bin: dict[str, int]
+    possible_by_phase: dict[str, int]
+    matched_by_phase: dict[str, int]
+    possible_by_location: dict[str, int]
+    matched_by_location: dict[str, int]
+    has_phases: bool
+    compliance: float
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -449,6 +480,436 @@ def _compute_matched_speed_phase_evidence(
     )
 
 
+def _match_samples_for_hypothesis(
+    samples: list[dict[str, Any]],
+    cached_peaks: list[list[tuple[float, float]]],
+    hypothesis: Any,
+    metadata: dict[str, Any],
+    tire_circumference_m: float | None,
+    per_sample_phases: list | None,
+    lang: str,
+) -> MatchAccumulator:
+    """Match hypothesis order frequencies against each sample's top peaks.
+
+    Iterates over all samples once, accumulating match counts, amplitudes,
+    relative errors, per-speed-bin and per-location statistics, and the
+    matched-points list used for downstream confidence and localization.
+
+    Returns a dict of accumulated statistics with the following keys:
+
+    - ``possible``, ``matched``: total possible/matched sample counts
+    - ``matched_amp``, ``matched_floor``: amplitude and noise-floor lists for matched samples
+    - ``rel_errors``, ``predicted_vals``, ``measured_vals``: error and frequency tracking lists
+    - ``matched_points``: list of per-match detail dicts
+    - ``ref_sources``: set of reference-source labels used to predict frequencies
+    - ``possible_by_speed_bin``, ``matched_by_speed_bin``: per-speed-bin counters
+    - ``possible_by_phase``, ``matched_by_phase``: per-phase counters
+    - ``possible_by_location``, ``matched_by_location``: per-sensor-location counters
+    - ``has_phases``: whether per-sample phase labels were applied
+    - ``compliance``: mechanical path compliance factor from the hypothesis
+    """
+    possible = 0
+    matched = 0
+    matched_amp: list[float] = []
+    matched_floor: list[float] = []
+    rel_errors: list[float] = []
+    predicted_vals: list[float] = []
+    measured_vals: list[float] = []
+    matched_points: list[dict[str, Any]] = []
+    ref_sources: set[str] = set()
+    possible_by_speed_bin: dict[str, int] = defaultdict(int)
+    matched_by_speed_bin: dict[str, int] = defaultdict(int)
+    possible_by_phase: dict[str, int] = defaultdict(int)
+    matched_by_phase: dict[str, int] = defaultdict(int)
+    # Per-location tracking: multi-sensor runs dilute the global match rate
+    # because only the fault sensor matches.  Track per-location stats so we
+    # can recognise a single-sensor signal even when the global rate is low.
+    possible_by_location: dict[str, int] = defaultdict(int)
+    matched_by_location: dict[str, int] = defaultdict(int)
+    has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
+    compliance = getattr(hypothesis, "path_compliance", 1.0)
+    # Scale tolerance by sqrt(compliance) — a conservative widening
+    # for mechanically compliant paths (wheel/bushing) without
+    # inflating false-positive match rates excessively.
+    compliance_scale = compliance**0.5
+
+    for sample_idx, sample in enumerate(samples):
+        peaks = cached_peaks[sample_idx]
+        if not peaks:
+            continue
+        predicted_hz, ref_source = hypothesis.predicted_hz(
+            sample,
+            metadata,
+            tire_circumference_m,
+        )
+        if predicted_hz is None or predicted_hz <= 0:
+            continue
+        possible += 1
+        ref_sources.add(ref_source)
+        sample_location = _location_label(sample, lang=lang)
+        if sample_location:
+            possible_by_location[sample_location] += 1
+        sample_speed = _as_float(sample.get("speed_kmh"))
+        sample_speed_bin = (
+            _speed_bin_label(sample_speed)
+            if sample_speed is not None and sample_speed > 0
+            else None
+        )
+        if sample_speed_bin is not None:
+            possible_by_speed_bin[sample_speed_bin] += 1
+        if has_phases:
+            ph = per_sample_phases[sample_idx]
+            phase_key = str(ph.value if hasattr(ph, "value") else ph)
+            possible_by_phase[phase_key] += 1
+
+        tolerance_hz = max(
+            ORDER_TOLERANCE_MIN_HZ,
+            predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
+        )
+        best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
+        delta_hz = abs(best_hz - predicted_hz)
+        if delta_hz > tolerance_hz:
+            continue
+
+        matched += 1
+        if sample_location:
+            matched_by_location[sample_location] += 1
+        if sample_speed_bin is not None:
+            matched_by_speed_bin[sample_speed_bin] += 1
+        if has_phases:
+            matched_by_phase[phase_key] += 1
+        rel_errors.append(delta_hz / max(1e-9, predicted_hz))
+        matched_amp.append(best_amp)
+        _floor_est = _estimate_strength_floor_amp_g(sample)
+        floor_amp = _floor_est if _floor_est is not None else 0.0
+        matched_floor.append(max(0.0, floor_amp))
+        predicted_vals.append(predicted_hz)
+        measured_vals.append(best_hz)
+        sample_phase: str | None = None
+        # Only assign phase when has_phases is True (lengths verified equal),
+        # otherwise matched_points would have inconsistent phase coverage.
+        if has_phases:
+            sample_phase = _phase_to_str(per_sample_phases[sample_idx])
+        matched_points.append(
+            {
+                "t_s": _as_float(sample.get("t_s")),
+                "speed_kmh": _as_float(sample.get("speed_kmh")),
+                "predicted_hz": predicted_hz,
+                "matched_hz": best_hz,
+                "rel_error": delta_hz / max(1e-9, predicted_hz),
+                "amp": best_amp,
+                "location": sample_location,
+                "phase": sample_phase,
+            }
+        )
+
+    return {
+        "possible": possible,
+        "matched": matched,
+        "matched_amp": matched_amp,
+        "matched_floor": matched_floor,
+        "rel_errors": rel_errors,
+        "predicted_vals": predicted_vals,
+        "measured_vals": measured_vals,
+        "matched_points": matched_points,
+        "ref_sources": ref_sources,
+        "possible_by_speed_bin": dict(possible_by_speed_bin),
+        "matched_by_speed_bin": dict(matched_by_speed_bin),
+        "possible_by_phase": dict(possible_by_phase),
+        "matched_by_phase": dict(matched_by_phase),
+        "possible_by_location": dict(possible_by_location),
+        "matched_by_location": dict(matched_by_location),
+        "has_phases": has_phases,
+        "compliance": compliance,
+    }
+
+
+def _assemble_order_finding(
+    hypothesis: Any,
+    m: MatchAccumulator,
+    *,
+    effective_match_rate: float,
+    focused_speed_band: str | None,
+    per_location_dominant: bool,
+    match_rate: float,
+    min_match_rate: float,
+    constant_speed: bool,
+    steady_speed: bool,
+    connected_locations: set[str],
+    lang: str,
+) -> tuple[float, dict[str, Any]]:
+    """Build a single order finding from a successful match result.
+
+    Called by :func:`_build_order_findings` for each hypothesis that passes the
+    effective-match-rate threshold.  Encapsulates:
+
+    * Per-phase confidence computation
+    * Amplitude, SNR, error-score, and correlation statistics
+    * Location hotspot query and single-sensor dominance override
+    * Confidence and ranking-score calculation
+    * Finding dict assembly
+
+    Returns ``(ranking_score, finding_dict)``.
+    """
+    possible = m["possible"]
+    matched = m["matched"]
+    matched_amp = m["matched_amp"]
+    matched_floor = m["matched_floor"]
+    rel_errors = m["rel_errors"]
+    predicted_vals = m["predicted_vals"]
+    measured_vals = m["measured_vals"]
+    matched_points = m["matched_points"]
+    ref_sources = m["ref_sources"]
+    possible_by_phase = m["possible_by_phase"]
+    matched_by_phase = m["matched_by_phase"]
+    possible_by_location = m["possible_by_location"]
+    matched_by_location = m["matched_by_location"]
+    has_phases = m["has_phases"]
+    compliance = m["compliance"]
+
+    # Per-phase confidence: compute match rate for each driving phase.
+    # Phases with sufficient matches act as independent evidence sources.
+    per_phase_confidence: dict[str, float] | None = None
+    phases_with_evidence = 0
+    if has_phases and possible_by_phase:
+        per_phase_confidence = {}
+        for ph_key, ph_possible in possible_by_phase.items():
+            ph_matched = matched_by_phase.get(ph_key, 0)
+            per_phase_confidence[ph_key] = ph_matched / max(1, ph_possible)
+            if (
+                ph_matched >= ORDER_MIN_MATCH_POINTS
+                and per_phase_confidence[ph_key] >= min_match_rate
+            ):
+                phases_with_evidence += 1
+
+    mean_amp = _mean(matched_amp) if matched_amp else 0.0
+    mean_floor = _mean(matched_floor) if matched_floor else 0.0
+    mean_rel_err = _mean(rel_errors) if rel_errors else 1.0
+    corr = _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
+    # When speed is constant, predicted Hz never varies so correlation
+    # is degenerate (undefined or misleading).  Zero it out.
+    if constant_speed:
+        corr = None
+    corr_val = corr if corr is not None else 0.0
+
+    # Compute location hotspot BEFORE confidence so spatial info is available.
+    # When order evidence is accepted via focused high-speed coverage,
+    # localize within that same speed band to avoid low-speed road-noise
+    # bins dominating strongest-location selection.
+    relevant_speed_bins = [focused_speed_band] if focused_speed_band else None
+    location_line, location_hotspot = _location_speedbin_summary(
+        matched_points,
+        lang=lang,
+        relevant_speed_bins=relevant_speed_bins,
+        connected_locations=connected_locations,
+        suspected_source=hypothesis.suspected_source,
+    )
+    _hotspot_is_dict = isinstance(location_hotspot, dict)
+    weak_spatial_separation = (
+        bool(location_hotspot.get("weak_spatial_separation")) if _hotspot_is_dict else True
+    )
+    dominance_ratio = (
+        _as_float(location_hotspot.get("dominance_ratio")) if _hotspot_is_dict else None
+    )
+    localization_confidence = (
+        _as_float(location_hotspot.get("localization_confidence")) or 0.05
+        if _hotspot_is_dict
+        else 0.05
+    )
+
+    # ── Single-sensor dominance override ────────────────────────────
+    # When matched points cluster at one location but multiple sensors
+    # were connected, the standard localization_confidence formula
+    # computes dominance_ratio = 1.0 (no second sensor to compare).
+    # That gives localization_confidence ≈ 0.05, wrongly penalising a
+    # finding that is actually well-localised.
+    # Fix: absence of matches from other connected sensors IS strong
+    # spatial evidence.
+    # Exception: when diagnosing wheel/tire but no wheel sensors are
+    # present, clustering at one cabin sensor does NOT imply corner
+    # localization — keep weak_spatial_separation as set by the hotspot.
+    unique_match_locations = {
+        str(pt.get("location") or "") for pt in matched_points if pt.get("location")
+    }
+    _no_wheel_override = (
+        bool(location_hotspot.get("no_wheel_sensors")) if _hotspot_is_dict else False
+    )
+    if (
+        per_location_dominant
+        and len(unique_match_locations) == 1
+        and len(connected_locations) >= 2
+        and not _no_wheel_override
+    ):
+        # Strong localization: 1 of N sensors matched.
+        localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
+        weak_spatial_separation = False
+    elif (
+        len(unique_match_locations) == 1
+        and len(connected_locations) >= 2
+        and matched >= ORDER_MIN_MATCH_POINTS
+        and not _no_wheel_override
+    ):
+        # Weaker case: global rate passed but all matches still from one sensor.
+        localization_confidence = max(
+            localization_confidence,
+            min(1.0, 0.40 + 0.10 * (len(connected_locations) - 1)),
+        )
+        weak_spatial_separation = False
+
+    # Count how many distinct locations independently detected this order
+    corroborating_locations = len(
+        {str(pt.get("location") or "") for pt in matched_points if pt.get("location")}
+    )
+
+    # Error score: compliant paths (wheel through suspension) produce
+    # broader peaks that wander more across FFT bins, so we use a more
+    # lenient denominator (0.25 * compliance) to avoid over-penalising.
+    error_denominator = 0.25 * compliance
+    error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
+    snr_score = min(1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR)
+    # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
+    if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
+        snr_score = min(snr_score, 0.40)
+    absolute_strength_db = canonical_vibration_db(
+        peak_band_rms_amp_g=mean_amp,
+        floor_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
+    )
+
+    _diffuse_excitation, _diffuse_penalty = _detect_diffuse_excitation(
+        connected_locations,
+        possible_by_location,
+        matched_by_location,
+        matched_points,
+    )
+
+    confidence = _compute_order_confidence(
+        effective_match_rate=effective_match_rate,
+        error_score=error_score,
+        corr_val=corr_val,
+        snr_score=snr_score,
+        absolute_strength_db=absolute_strength_db,
+        localization_confidence=localization_confidence,
+        weak_spatial_separation=weak_spatial_separation,
+        dominance_ratio=dominance_ratio,
+        constant_speed=constant_speed,
+        steady_speed=steady_speed,
+        matched=matched,
+        corroborating_locations=corroborating_locations,
+        phases_with_evidence=phases_with_evidence,
+        is_diffuse_excitation=_diffuse_excitation,
+        diffuse_penalty=_diffuse_penalty,
+        n_connected_locations=len(connected_locations),
+        no_wheel_sensors=_no_wheel_override,
+        path_compliance=compliance,
+    )
+
+    # Use the same compliance-adjusted error denominator as the
+    # confidence formula so ranking and confidence agree on how much
+    # frequency-tracking error is tolerable.
+    ranking_error_denom = 0.25 * compliance
+    ranking_score = (
+        effective_match_rate
+        * log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor))
+        * max(0.0, (1.0 - min(1.0, mean_rel_err / ranking_error_denom)))
+    )
+
+    ref_text = ", ".join(sorted(ref_sources))
+    evidence = _i18n_ref(
+        "EVIDENCE_ORDER_TRACKED",
+        order_label=_order_label(hypothesis.order, hypothesis.order_label_base),
+        matched=matched,
+        possible=possible,
+        match_rate=effective_match_rate,
+        mean_rel_err=mean_rel_err,
+        ref_text=ref_text,
+    )
+    if location_line:
+        evidence = dict(evidence)
+        evidence["_suffix"] = f" {location_line}"
+
+    strongest_location = str(location_hotspot.get("location")) if _hotspot_is_dict else ""
+    hotspot_speed_band = str(location_hotspot.get("speed_range")) if _hotspot_is_dict else ""
+    (
+        peak_speed_kmh,
+        speed_window_kmh,
+        strongest_speed_band,
+        _hotspot_speed_band_out,
+        phase_evidence,
+        dominant_phase,
+    ) = _compute_matched_speed_phase_evidence(
+        matched_points,
+        focused_speed_band=focused_speed_band,
+        hotspot_speed_band=hotspot_speed_band,
+    )
+    actions = _finding_actions_for_source(
+        lang,
+        hypothesis.suspected_source,
+        strongest_location=strongest_location,
+        strongest_speed_band=strongest_speed_band,
+        weak_spatial_separation=weak_spatial_separation,
+    )
+    # Preserve i18n reference dicts as-is so the report layer can resolve
+    # them at render time.  Previously str() was applied, which converted
+    # {"_i18n_key": "ACTION_WHEEL_BALANCE_WHAT", ...} to its Python repr
+    # (e.g. "{'_i18n_key': 'ACTION_WHEEL_BALANCE_WHAT', ...}"), making
+    # quick_checks inconsistent with builder.py and reference_checks.py
+    # which both store actual dict objects.
+    quick_checks = [action["what"] for action in actions if action.get("what")][:3]
+
+    finding = {
+        "finding_id": "F_ORDER",
+        "finding_key": hypothesis.key,
+        "suspected_source": hypothesis.suspected_source,
+        "evidence_summary": evidence,
+        "frequency_hz_or_order": _order_label(hypothesis.order, hypothesis.order_label_base),
+        "amplitude_metric": {
+            "name": "vibration_strength_db",
+            "value": absolute_strength_db,
+            "units": "dB",
+            "definition": _i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
+        },
+        "confidence_0_to_1": confidence,
+        "quick_checks": quick_checks,
+        "matched_points": matched_points,
+        "location_hotspot": location_hotspot,
+        "strongest_location": strongest_location or None,
+        "strongest_speed_band": strongest_speed_band or None,
+        "dominant_phase": dominant_phase,
+        "peak_speed_kmh": peak_speed_kmh,
+        "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
+        "dominance_ratio": dominance_ratio,
+        "localization_confidence": localization_confidence,
+        "weak_spatial_separation": weak_spatial_separation,
+        "corroborating_locations": corroborating_locations,
+        "diffuse_excitation": _diffuse_excitation,
+        "phase_evidence": phase_evidence,
+        "evidence_metrics": {
+            "match_rate": effective_match_rate,
+            "global_match_rate": match_rate,
+            "focused_speed_band": focused_speed_band,
+            "mean_relative_error": mean_rel_err,
+            "mean_matched_intensity_db": absolute_strength_db,
+            "mean_noise_floor_db": canonical_vibration_db(
+                peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
+                floor_amp_g=MEMS_NOISE_FLOOR_G,
+            ),
+            "vibration_strength_db": absolute_strength_db,
+            "possible_samples": possible,
+            "matched_samples": matched,
+            "frequency_correlation": corr,
+            "per_phase_confidence": per_phase_confidence,
+            "phases_with_evidence": phases_with_evidence,
+            "diffuse_excitation": _diffuse_excitation,
+        },
+        "next_sensor_move": actions[0].get("what")
+        if actions
+        else _i18n_ref("NEXT_SENSOR_MOVE_DEFAULT"),
+        "actions": actions,
+        "_ranking_score": ranking_score,
+    }
+    return ranking_score, finding
+
+
 def _build_order_findings(
     *,
     metadata: dict[str, Any],
@@ -480,104 +941,19 @@ def _build_order_findings(
         if hypothesis.key.startswith("engine_") and not engine_ref_sufficient:
             continue
 
-        possible = 0
-        matched = 0
-        matched_amp: list[float] = []
-        matched_floor: list[float] = []
-        rel_errors: list[float] = []
-        predicted_vals: list[float] = []
-        measured_vals: list[float] = []
-        matched_points: list[dict[str, Any]] = []
-        ref_sources: set[str] = set()
-        possible_by_speed_bin: dict[str, int] = defaultdict(int)
-        matched_by_speed_bin: dict[str, int] = defaultdict(int)
-        possible_by_phase: dict[str, int] = defaultdict(int)
-        matched_by_phase: dict[str, int] = defaultdict(int)
-        # Per-location tracking: multi-sensor runs dilute the global match rate
-        # because only the fault sensor matches.  Track per-location stats so we
-        # can recognise a single-sensor signal even when the global rate is low.
-        possible_by_location: dict[str, int] = defaultdict(int)
-        matched_by_location: dict[str, int] = defaultdict(int)
-        has_phases = per_sample_phases is not None and len(per_sample_phases) == len(samples)
-        compliance = getattr(hypothesis, "path_compliance", 1.0)
+        m = _match_samples_for_hypothesis(
+            samples,
+            cached_peaks,
+            hypothesis,
+            metadata,
+            tire_circumference_m,
+            per_sample_phases,
+            lang,
+        )
 
-        for sample_idx, sample in enumerate(samples):
-            peaks = cached_peaks[sample_idx]
-            if not peaks:
-                continue
-            predicted_hz, ref_source = hypothesis.predicted_hz(
-                sample,
-                metadata,
-                tire_circumference_m,
-            )
-            if predicted_hz is None or predicted_hz <= 0:
-                continue
-            possible += 1
-            ref_sources.add(ref_source)
-            sample_location = _location_label(sample, lang=lang)
-            if sample_location:
-                possible_by_location[sample_location] += 1
-            sample_speed = _as_float(sample.get("speed_kmh"))
-            sample_speed_bin = (
-                _speed_bin_label(sample_speed)
-                if sample_speed is not None and sample_speed > 0
-                else None
-            )
-            if sample_speed_bin is not None:
-                possible_by_speed_bin[sample_speed_bin] += 1
-            if has_phases:
-                ph = per_sample_phases[sample_idx]
-                phase_key = str(ph.value if hasattr(ph, "value") else ph)
-                possible_by_phase[phase_key] += 1
-
-            # Scale tolerance by sqrt(compliance) — a conservative widening
-            # for mechanically compliant paths (wheel/bushing) without
-            # inflating false-positive match rates excessively.
-            compliance_scale = compliance**0.5
-            tolerance_hz = max(
-                ORDER_TOLERANCE_MIN_HZ,
-                predicted_hz * ORDER_TOLERANCE_REL * compliance_scale,
-            )
-            best_hz, best_amp = min(peaks, key=lambda item: abs(item[0] - predicted_hz))
-            delta_hz = abs(best_hz - predicted_hz)
-            if delta_hz > tolerance_hz:
-                continue
-
-            matched += 1
-            if sample_location:
-                matched_by_location[sample_location] += 1
-            if sample_speed_bin is not None:
-                matched_by_speed_bin[sample_speed_bin] += 1
-            if has_phases:
-                matched_by_phase[phase_key] += 1
-            rel_errors.append(delta_hz / max(1e-9, predicted_hz))
-            matched_amp.append(best_amp)
-            _floor_est = _estimate_strength_floor_amp_g(sample)
-            floor_amp = _floor_est if _floor_est is not None else 0.0
-            matched_floor.append(max(0.0, floor_amp))
-            predicted_vals.append(predicted_hz)
-            measured_vals.append(best_hz)
-            sample_phase: str | None = None
-            # Only assign phase when has_phases is True (lengths verified equal),
-            # otherwise matched_points would have inconsistent phase coverage.
-            if has_phases:
-                sample_phase = _phase_to_str(per_sample_phases[sample_idx])
-            matched_points.append(
-                {
-                    "t_s": _as_float(sample.get("t_s")),
-                    "speed_kmh": _as_float(sample.get("speed_kmh")),
-                    "predicted_hz": predicted_hz,
-                    "matched_hz": best_hz,
-                    "rel_error": delta_hz / max(1e-9, predicted_hz),
-                    "amp": best_amp,
-                    "location": sample_location,
-                    "phase": sample_phase,
-                }
-            )
-
-        if possible < ORDER_MIN_COVERAGE_POINTS or matched < ORDER_MIN_MATCH_POINTS:
+        if m["possible"] < ORDER_MIN_COVERAGE_POINTS or m["matched"] < ORDER_MIN_MATCH_POINTS:
             continue
-        match_rate = matched / max(1, possible)
+        match_rate = m["matched"] / max(1, m["possible"])
         # At constant speed the predicted frequency never varies, so random
         # broadband peaks match by chance at ~30-40%.  A genuine order source
         # would be present in the vast majority of samples.  Require a much
@@ -590,259 +966,28 @@ def _build_order_findings(
             _compute_effective_match_rate(
                 match_rate,
                 min_match_rate,
-                possible_by_speed_bin,
-                matched_by_speed_bin,
-                possible_by_location,
-                matched_by_location,
+                m["possible_by_speed_bin"],
+                m["matched_by_speed_bin"],
+                m["possible_by_location"],
+                m["matched_by_location"],
             )
         )
         if effective_match_rate < min_match_rate:
             continue
 
-        # Per-phase confidence: compute match rate for each driving phase.
-        # Phases with sufficient matches act as independent evidence sources.
-        per_phase_confidence: dict[str, float] | None = None
-        phases_with_evidence = 0
-        if has_phases and possible_by_phase:
-            per_phase_confidence = {}
-            for ph_key, ph_possible in possible_by_phase.items():
-                ph_matched = matched_by_phase.get(ph_key, 0)
-                per_phase_confidence[ph_key] = ph_matched / max(1, ph_possible)
-                if (
-                    ph_matched >= ORDER_MIN_MATCH_POINTS
-                    and per_phase_confidence[ph_key] >= min_match_rate
-                ):
-                    phases_with_evidence += 1
-
-        mean_amp = _mean(matched_amp) if matched_amp else 0.0
-        mean_floor = _mean(matched_floor) if matched_floor else 0.0
-        mean_rel_err = _mean(rel_errors) if rel_errors else 1.0
-        corr = (
-            _corr_abs_clamped(predicted_vals, measured_vals) if len(matched_points) >= 3 else None
-        )
-        # When speed is constant, predicted Hz never varies so correlation
-        # is degenerate (undefined or misleading).  Zero it out.
-        if constant_speed:
-            corr = None
-        corr_val = corr if corr is not None else 0.0
-
-        # Compute location hotspot BEFORE confidence so spatial info is available.
-        # When order evidence is accepted via focused high-speed coverage,
-        # localize within that same speed band to avoid low-speed road-noise
-        # bins dominating strongest-location selection.
-        relevant_speed_bins = [focused_speed_band] if focused_speed_band else None
-        location_line, location_hotspot = _location_speedbin_summary(
-            matched_points,
-            lang=lang,
-            relevant_speed_bins=relevant_speed_bins,
-            connected_locations=connected_locations,
-            suspected_source=hypothesis.suspected_source,
-        )
-        _hotspot_is_dict = isinstance(location_hotspot, dict)
-        weak_spatial_separation = (
-            bool(location_hotspot.get("weak_spatial_separation")) if _hotspot_is_dict else True
-        )
-        dominance_ratio = (
-            _as_float(location_hotspot.get("dominance_ratio")) if _hotspot_is_dict else None
-        )
-        localization_confidence = (
-            _as_float(location_hotspot.get("localization_confidence")) or 0.05
-            if _hotspot_is_dict
-            else 0.05
-        )
-
-        # ── Single-sensor dominance override ────────────────────────────
-        # When matched points cluster at one location but multiple sensors
-        # were connected, the standard localization_confidence formula
-        # computes dominance_ratio = 1.0 (no second sensor to compare).
-        # That gives localization_confidence ≈ 0.05, wrongly penalising a
-        # finding that is actually well-localised.
-        # Fix: absence of matches from other connected sensors IS strong
-        # spatial evidence.
-        # Exception: when diagnosing wheel/tire but no wheel sensors are
-        # present, clustering at one cabin sensor does NOT imply corner
-        # localization — keep weak_spatial_separation as set by the hotspot.
-        unique_match_locations = {
-            str(pt.get("location") or "") for pt in matched_points if pt.get("location")
-        }
-        _no_wheel_override = (
-            bool(location_hotspot.get("no_wheel_sensors")) if _hotspot_is_dict else False
-        )
-        if (
-            per_location_dominant
-            and len(unique_match_locations) == 1
-            and len(connected_locations) >= 2
-            and not _no_wheel_override
-        ):
-            # Strong localization: 1 of N sensors matched.
-            localization_confidence = min(1.0, 0.50 + 0.15 * (len(connected_locations) - 1))
-            weak_spatial_separation = False
-        elif (
-            len(unique_match_locations) == 1
-            and len(connected_locations) >= 2
-            and matched >= ORDER_MIN_MATCH_POINTS
-            and not _no_wheel_override
-        ):
-            # Weaker case: global rate passed but all matches still from one sensor.
-            localization_confidence = max(
-                localization_confidence,
-                min(1.0, 0.40 + 0.10 * (len(connected_locations) - 1)),
-            )
-            weak_spatial_separation = False
-
-        # Count how many distinct locations independently detected this order
-        corroborating_locations = len(
-            {str(pt.get("location") or "") for pt in matched_points if pt.get("location")}
-        )
-
-        # Error score: compliant paths (wheel through suspension) produce
-        # broader peaks that wander more across FFT bins, so we use a more
-        # lenient denominator (0.25 * compliance) to avoid over-penalising.
-        error_denominator = 0.25 * compliance
-        error_score = max(0.0, 1.0 - min(1.0, mean_rel_err / error_denominator))
-        snr_score = min(
-            1.0, log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor)) / _SNR_LOG_DIVISOR
-        )
-        # Absolute-strength guard: amplitude barely above MEMS noise cannot score > 0.40 on SNR.
-        if mean_amp <= 2 * MEMS_NOISE_FLOOR_G:
-            snr_score = min(snr_score, 0.40)
-        absolute_strength_db = canonical_vibration_db(
-            peak_band_rms_amp_g=mean_amp,
-            floor_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
-        )
-
-        _diffuse_excitation, _diffuse_penalty = _detect_diffuse_excitation(
-            connected_locations,
-            possible_by_location,
-            matched_by_location,
-            matched_points,
-        )
-
-        confidence = _compute_order_confidence(
+        ranking_score, finding = _assemble_order_finding(
+            hypothesis,
+            m,
             effective_match_rate=effective_match_rate,
-            error_score=error_score,
-            corr_val=corr_val,
-            snr_score=snr_score,
-            absolute_strength_db=absolute_strength_db,
-            localization_confidence=localization_confidence,
-            weak_spatial_separation=weak_spatial_separation,
-            dominance_ratio=dominance_ratio,
+            focused_speed_band=focused_speed_band,
+            per_location_dominant=per_location_dominant,
+            match_rate=match_rate,
+            min_match_rate=min_match_rate,
             constant_speed=constant_speed,
             steady_speed=steady_speed,
-            matched=matched,
-            corroborating_locations=corroborating_locations,
-            phases_with_evidence=phases_with_evidence,
-            is_diffuse_excitation=_diffuse_excitation,
-            diffuse_penalty=_diffuse_penalty,
-            n_connected_locations=len(connected_locations),
-            no_wheel_sensors=_no_wheel_override,
-            path_compliance=compliance,
+            connected_locations=connected_locations,
+            lang=lang,
         )
-
-        # Use the same compliance-adjusted error denominator as the
-        # confidence formula so ranking and confidence agree on how much
-        # frequency-tracking error is tolerable.
-        ranking_error_denom = 0.25 * compliance
-        ranking_score = (
-            effective_match_rate
-            * log1p(mean_amp / max(MEMS_NOISE_FLOOR_G, mean_floor))
-            * max(0.0, (1.0 - min(1.0, mean_rel_err / ranking_error_denom)))
-        )
-
-        ref_text = ", ".join(sorted(ref_sources))
-        evidence = _i18n_ref(
-            "EVIDENCE_ORDER_TRACKED",
-            order_label=_order_label(hypothesis.order, hypothesis.order_label_base),
-            matched=matched,
-            possible=possible,
-            match_rate=effective_match_rate,
-            mean_rel_err=mean_rel_err,
-            ref_text=ref_text,
-        )
-        if location_line:
-            evidence = dict(evidence)
-            evidence["_suffix"] = f" {location_line}"
-
-        strongest_location = str(location_hotspot.get("location")) if _hotspot_is_dict else ""
-        hotspot_speed_band = str(location_hotspot.get("speed_range")) if _hotspot_is_dict else ""
-        (
-            peak_speed_kmh,
-            speed_window_kmh,
-            strongest_speed_band,
-            _hotspot_speed_band_out,
-            phase_evidence,
-            dominant_phase,
-        ) = _compute_matched_speed_phase_evidence(
-            matched_points,
-            focused_speed_band=focused_speed_band,
-            hotspot_speed_band=hotspot_speed_band,
-        )
-        actions = _finding_actions_for_source(
-            lang,
-            hypothesis.suspected_source,
-            strongest_location=strongest_location,
-            strongest_speed_band=strongest_speed_band,
-            weak_spatial_separation=weak_spatial_separation,
-        )
-        # Preserve i18n reference dicts as-is so the report layer can resolve
-        # them at render time.  Previously str() was applied, which converted
-        # {"_i18n_key": "ACTION_WHEEL_BALANCE_WHAT", ...} to its Python repr
-        # (e.g. "{'_i18n_key': 'ACTION_WHEEL_BALANCE_WHAT', ...}"), making
-        # quick_checks inconsistent with builder.py and reference_checks.py
-        # which both store actual dict objects.
-        quick_checks = [action["what"] for action in actions if action.get("what")][:3]
-
-        finding = {
-            "finding_id": "F_ORDER",
-            "finding_key": hypothesis.key,
-            "suspected_source": hypothesis.suspected_source,
-            "evidence_summary": evidence,
-            "frequency_hz_or_order": _order_label(hypothesis.order, hypothesis.order_label_base),
-            "amplitude_metric": {
-                "name": "vibration_strength_db",
-                "value": absolute_strength_db,
-                "units": "dB",
-                "definition": _i18n_ref("METRIC_VIBRATION_STRENGTH_DB"),
-            },
-            "confidence_0_to_1": confidence,
-            "quick_checks": quick_checks,
-            "matched_points": matched_points,
-            "location_hotspot": location_hotspot,
-            "strongest_location": strongest_location or None,
-            "strongest_speed_band": strongest_speed_band or None,
-            "dominant_phase": dominant_phase,
-            "peak_speed_kmh": peak_speed_kmh,
-            "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
-            "dominance_ratio": dominance_ratio,
-            "localization_confidence": localization_confidence,
-            "weak_spatial_separation": weak_spatial_separation,
-            "corroborating_locations": corroborating_locations,
-            "diffuse_excitation": _diffuse_excitation,
-            "phase_evidence": phase_evidence,
-            "evidence_metrics": {
-                "match_rate": effective_match_rate,
-                "global_match_rate": match_rate,
-                "focused_speed_band": focused_speed_band,
-                "mean_relative_error": mean_rel_err,
-                "mean_matched_intensity_db": absolute_strength_db,
-                "mean_noise_floor_db": canonical_vibration_db(
-                    peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
-                    floor_amp_g=MEMS_NOISE_FLOOR_G,
-                ),
-                "vibration_strength_db": absolute_strength_db,
-                "possible_samples": possible,
-                "matched_samples": matched,
-                "frequency_correlation": corr,
-                "per_phase_confidence": per_phase_confidence,
-                "phases_with_evidence": phases_with_evidence,
-                "diffuse_excitation": _diffuse_excitation,
-            },
-            "next_sensor_move": actions[0].get("what")
-            if actions
-            else _i18n_ref("NEXT_SENSOR_MOVE_DEFAULT"),
-            "actions": actions,
-            "_ranking_score": ranking_score,
-        }
         findings.append((ranking_score, finding))
 
     return _suppress_engine_aliases(findings)
