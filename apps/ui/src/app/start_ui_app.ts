@@ -418,7 +418,7 @@ export function startUiApp(): void {
     catch (err) { state.payloadError = err instanceof Error ? err.message : t("ws.payload_error"); state.hasSpectrumData = false; renderWsState(); updateSpectrumOverlay(); return; }
     state.payloadError = null; renderWsState();
     const prevSelected = state.selectedClientId;
-    state.clients = adapted.clients as unknown as ClientRow[];
+    state.clients = adapted.clients;
     const hasFresh = dashboardFeature?.hasFreshSensorFrames(state.clients) ?? false;
     const incomingSpectra = adapted.spectra
       ? { clients: Object.fromEntries(Object.entries(adapted.spectra.clients).map(([clientId, spectrum]) => [clientId, { freq: spectrum.freq, strength_metrics: spectrum.strength_metrics, combined: spectrum.combined }])) }

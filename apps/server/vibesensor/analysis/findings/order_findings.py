@@ -526,7 +526,6 @@ def _build_order_findings(
             if sample_speed_bin is not None:
                 possible_by_speed_bin[sample_speed_bin] += 1
             if has_phases:
-                assert per_sample_phases is not None
                 ph = per_sample_phases[sample_idx]
                 phase_key = str(ph.value if hasattr(ph, "value") else ph)
                 possible_by_phase[phase_key] += 1
@@ -561,7 +560,7 @@ def _build_order_findings(
             sample_phase: str | None = None
             # Only assign phase when has_phases is True (lengths verified equal),
             # otherwise matched_points would have inconsistent phase coverage.
-            if has_phases and per_sample_phases is not None:
+            if has_phases:
                 sample_phase = _phase_to_str(per_sample_phases[sample_idx])
             matched_points.append(
                 {
@@ -647,7 +646,9 @@ def _build_order_findings(
             _as_float(location_hotspot.get("dominance_ratio")) if _hotspot_is_dict else None
         )
         localization_confidence = (
-            float(location_hotspot.get("localization_confidence")) if _hotspot_is_dict else 0.05
+            _as_float(location_hotspot.get("localization_confidence")) or 0.05
+            if _hotspot_is_dict
+            else 0.05
         )
 
         # ── Single-sensor dominance override ────────────────────────────
@@ -812,9 +813,7 @@ def _build_order_findings(
             "dominant_phase": dominant_phase,
             "peak_speed_kmh": peak_speed_kmh,
             "speed_window_kmh": list(speed_window_kmh) if speed_window_kmh else None,
-            "dominance_ratio": (
-                float(location_hotspot.get("dominance_ratio")) if _hotspot_is_dict else None
-            ),
+            "dominance_ratio": dominance_ratio,
             "localization_confidence": localization_confidence,
             "weak_spatial_separation": weak_spatial_separation,
             "corroborating_locations": corroborating_locations,

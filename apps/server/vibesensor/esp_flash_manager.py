@@ -179,7 +179,8 @@ class FlashCommandRunner:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
-        assert proc.stdout is not None
+        if proc.stdout is None:  # pragma: no cover – PIPE always sets stdout
+            raise RuntimeError("subprocess stdout is None despite PIPE setting")
         started_at = time.monotonic()
 
         while proc.returncode is None:
