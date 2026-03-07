@@ -5,6 +5,9 @@ from pathlib import Path
 import pytest
 import yaml
 
+from vibesensor.history_db import HistoryDB
+from vibesensor.udp_control_tx import UDPControlPlane
+
 
 @pytest.mark.asyncio
 async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) -> None:
@@ -24,7 +27,6 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
     monkeypatch.setenv("VIBESENSOR_SERVE_STATIC", "0")
     monkeypatch.setenv("VIBESENSOR_DISABLE_AUTO_APP", "1")
     from vibesensor import app as app_module
-    from vibesensor import bootstrap as bootstrap_module
     from vibesensor.runtime import lifecycle as lifecycle_mod
 
     async def _fake_udp_receiver(*args, **kwargs):
@@ -39,8 +41,8 @@ async def test_lifespan_shutdown_closes_history_db(tmp_path: Path, monkeypatch) 
         closed["value"] = True
 
     monkeypatch.setattr(lifecycle_mod, "start_udp_data_receiver", _fake_udp_receiver)
-    monkeypatch.setattr(bootstrap_module.UDPControlPlane, "start", _fake_start)
-    monkeypatch.setattr(bootstrap_module.HistoryDB, "close", _fake_close)
+    monkeypatch.setattr(UDPControlPlane, "start", _fake_start)
+    monkeypatch.setattr(HistoryDB, "close", _fake_close)
 
     app = app_module.create_app(config_path=cfg_path)
     async with app.router.lifespan_context(app):

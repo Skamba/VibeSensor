@@ -128,16 +128,18 @@
 | `test_all_source_referenced_keys_exist_in_json` | All tr() keys in source exist in JSON |
 | `test_variants_returns_both_languages` | variants() returns both translations |
 
-### Added to `test_history_db.py` (6 tests)
+### Added to history DB focused suites (6 tests)
 
 | Test | What it validates |
 |------|-------------------|
-| `test_future_schema_version_raises` | Version 99 → RuntimeError |
+| `test_schema_version_mismatch_fails_fast[future]` | Future version → RuntimeError |
 | `test_delete_run_cascades_samples` | DELETE CASCADE on samples |
 | `test_run_status_transitions` | recording → analyzing → complete + error path |
 | `test_append_empty_samples_is_noop` | Empty append doesn't change count |
 | `test_client_names_crud` | upsert, list, delete client names |
 | `test_settings_kv_roundtrip` | set/get settings with various JSON types |
+
+Current homes: `test_history_db_lifecycle.py` and `test_history_db_validation.py`
 
 ### Added to `test_settings_store.py` (2 tests)
 
@@ -152,11 +154,13 @@
 |------|-------------------|
 | `test_health_endpoint_response_shape` | Response contains status, processing_state, processing_failures |
 
-### Added to `test_api_history_endpoints.py` (1 test)
+### Added to history API route-state suite (1 test)
 
 | Test | What it validates |
 |------|-------------------|
 | `test_delete_active_run_returns_409` | Cannot delete active recording run |
+
+Current home: `test_api_history_route_state.py`
 
 ### Fixed in `test_ui_selenium.py` (7 tests + 1 helper updated)
 

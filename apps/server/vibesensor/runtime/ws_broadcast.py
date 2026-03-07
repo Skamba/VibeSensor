@@ -19,7 +19,11 @@ from .rotational_speeds import (
 if TYPE_CHECKING:
     from ..live_diagnostics.engine import LiveDiagnosticsEngine
     from ..metrics_log import MetricsLogger
-    from .dependencies import RuntimeIngressServices, RuntimeOperationsServices
+    from .subsystems import (
+        RuntimeDiagnosticsSubsystem,
+        RuntimeIngressSubsystem,
+        RuntimeSettingsSubsystem,
+    )
 
 from ..runlog import utc_now_iso
 from ..ws_models import SCHEMA_VERSION
@@ -107,7 +111,8 @@ class WsBroadcastService:
         "_ui_push_hz",
         "_ui_heavy_push_hz",
         "_ingress",
-        "_operations",
+        "_settings",
+        "_diagnostics",
     )
 
     def __init__(
@@ -116,14 +121,16 @@ class WsBroadcastService:
         cache: WsBroadcastCache,
         ui_push_hz: int,
         ui_heavy_push_hz: int,
-        ingress: RuntimeIngressServices,
-        operations: RuntimeOperationsServices,
+        ingress: RuntimeIngressSubsystem,
+        settings: RuntimeSettingsSubsystem,
+        diagnostics: RuntimeDiagnosticsSubsystem,
     ) -> None:
         self.cache = cache
         self._ui_push_hz = ui_push_hz
         self._ui_heavy_push_hz = ui_heavy_push_hz
         self._ingress = ingress
-        self._operations = operations
+        self._settings = settings
+        self._diagnostics = diagnostics
 
     def on_tick(self) -> None:
         """Advance the broadcast tick counter and toggle heavy-tick flag."""
@@ -145,7 +152,7 @@ class WsBroadcastService:
             max_age_s=STALE_DATA_AGE_S,
         )
 
-        resolution = self._operations.gps_monitor.resolve_speed()
+        resolution = self._settings.gps_monitor.resolve_speed()
         speed_mps = resolution.speed_mps
         payload: dict[str, Any] = {
             "schema_version": SCHEMA_VERSION,
@@ -154,10 +161,10 @@ class WsBroadcastService:
             "clients": clients,
             "selected_client_id": active,
         }
-        analysis_settings_snapshot = self._operations.analysis_settings.snapshot()
+        analysis_settings_snapshot = self._settings.analysis_settings.snapshot()
         basis = rotational_basis_speed_source(
-            self._operations.settings_store,
-            self._operations.gps_monitor,
+            self._settings.settings_store,
+            self._settings.gps_monitor,
             resolution_source=resolution.source,
         )
         payload["rotational_speeds"] = build_rotational_speeds_payload(
@@ -166,18 +173,18 @@ class WsBroadcastService:
             analysis_settings=analysis_settings_snapshot,
         )
         analysis_metadata, analysis_samples = self.cache.refresh_analysis(
-            self._operations.metrics_logger
+            self._diagnostics.metrics_logger
         )
         if self.cache.include_heavy:
             payload["spectra"] = self._ingress.processor.multi_spectrum_payload(fresh_ids)
         payload["diagnostics"] = self.cache.refresh_diagnostics(
-            self._operations.live_diagnostics,
+            self._diagnostics.live_diagnostics,
             speed_mps=speed_mps,
             clients=clients,
             spectra=payload.get("spectra") if self.cache.include_heavy else None,
             settings=analysis_settings_snapshot,
             analysis_metadata=analysis_metadata,
             analysis_samples=analysis_samples,
-            language=self._operations.settings_store.language,
+            language=self._settings.settings_store.language,
         )
         return payload

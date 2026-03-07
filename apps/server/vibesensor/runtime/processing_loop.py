@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .dependencies import RuntimeIngressServices
+    from .subsystems import RuntimeIngressSubsystem
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ class ProcessingLoop:
         fft_update_hz: int,
         sample_rate_hz: int,
         fft_n: int,
-        ingress: RuntimeIngressServices,
+        ingress: RuntimeIngressSubsystem,
     ) -> None:
         self.state = state
         self._fft_update_hz = fft_update_hz

@@ -17,7 +17,8 @@ def _wheel_hz(sample: dict[str, Any], tire_circumference_m: float | None) -> flo
         return None
     if tire_circumference_m is None or tire_circumference_m <= 0:
         return None
-    return wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
+    wheel_hz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
+    return float(wheel_hz) if wheel_hz is not None else None
 
 
 def _driveshaft_hz(
@@ -29,7 +30,7 @@ def _driveshaft_hz(
     fd = _as_float(sample.get("final_drive_ratio")) or _as_float(metadata.get("final_drive_ratio"))
     if whz is None or fd is None or fd <= 0:
         return None
-    return whz * fd
+    return float(whz * fd)
 
 
 def _engine_hz(
@@ -40,7 +41,7 @@ def _engine_hz(
     rpm, src = _effective_engine_rpm(sample, metadata, tire_circumference_m)
     if rpm is None or rpm <= 0:
         return None, src
-    return rpm / SECONDS_PER_MINUTE, src
+    return float(rpm / SECONDS_PER_MINUTE), src
 
 
 def _order_label(order: int, base: str) -> str:

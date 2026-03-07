@@ -16,6 +16,7 @@ from vibesensor_core.vibration_strength import (
 
 from ...constants import MEMS_NOISE_FLOOR_G
 from ...runlog import as_float_or_none as _as_float
+from .._types import PhaseLabels
 from ..helpers import (
     CONSTANT_SPEED_STDDEV_KMH,
     ORDER_CONSTANT_SPEED_MIN_MATCH_RATE,
@@ -234,7 +235,7 @@ def _match_samples_for_hypothesis(
     hypothesis: Any,
     metadata: dict[str, Any],
     tire_circumference_m: float | None,
-    per_sample_phases: list | None,
+    per_sample_phases: PhaseLabels | None,
     lang: str,
 ) -> MatchAccumulator:
     """Match hypothesis order frequencies against each sample's top peaks.
@@ -306,6 +307,7 @@ def _match_samples_for_hypothesis(
         if sample_speed_bin is not None:
             possible_by_speed_bin[sample_speed_bin] += 1
         if has_phases:
+            assert per_sample_phases is not None
             ph = per_sample_phases[sample_idx]
             phase_key = str(ph.value if hasattr(ph, "value") else ph)
             possible_by_phase[phase_key] += 1
@@ -337,6 +339,7 @@ def _match_samples_for_hypothesis(
         # Only assign phase when has_phases is True (lengths verified equal),
         # otherwise matched_points would have inconsistent phase coverage.
         if has_phases:
+            assert per_sample_phases is not None
             sample_phase = _phase_to_str(per_sample_phases[sample_idx])
         matched_points.append(
             {
@@ -494,16 +497,16 @@ def _assemble_order_finding(
         connected_locations=connected_locations,
         suspected_source=hypothesis.suspected_source,
     )
-    _hotspot_is_dict = isinstance(location_hotspot, dict)
+    hotspot_dict = location_hotspot if isinstance(location_hotspot, dict) else None
     weak_spatial_separation = (
-        bool(location_hotspot.get("weak_spatial_separation")) if _hotspot_is_dict else True
+        bool(hotspot_dict.get("weak_spatial_separation")) if hotspot_dict is not None else True
     )
     dominance_ratio = (
-        _as_float(location_hotspot.get("dominance_ratio")) if _hotspot_is_dict else None
+        _as_float(hotspot_dict.get("dominance_ratio")) if hotspot_dict is not None else None
     )
     localization_confidence = (
-        _as_float(location_hotspot.get("localization_confidence")) or 0.05
-        if _hotspot_is_dict
+        _as_float(hotspot_dict.get("localization_confidence")) or 0.05
+        if hotspot_dict is not None
         else 0.05
     )
 
@@ -514,7 +517,7 @@ def _assemble_order_finding(
         str(pt.get("location") or "") for pt in matched_points if pt.get("location")
     }
     _no_wheel_override = (
-        bool(location_hotspot.get("no_wheel_sensors")) if _hotspot_is_dict else False
+        bool(hotspot_dict.get("no_wheel_sensors")) if hotspot_dict is not None else False
     )
     localization_confidence, weak_spatial_separation = _apply_localization_override(
         per_location_dominant,
@@ -597,8 +600,8 @@ def _assemble_order_finding(
         evidence = dict(evidence)
         evidence["_suffix"] = f" {location_line}"
 
-    strongest_location = str(location_hotspot.get("location")) if _hotspot_is_dict else ""
-    hotspot_speed_band = str(location_hotspot.get("speed_range")) if _hotspot_is_dict else ""
+    strongest_location = str(hotspot_dict.get("location")) if hotspot_dict is not None else ""
+    hotspot_speed_band = str(hotspot_dict.get("speed_range")) if hotspot_dict is not None else ""
     (
         peak_speed_kmh,
         speed_window_kmh,
@@ -613,7 +616,7 @@ def _assemble_order_finding(
     actions = _finding_actions_for_source(
         hypothesis.suspected_source,
         strongest_location=strongest_location,
-        strongest_speed_band=strongest_speed_band,
+        strongest_speed_band=strongest_speed_band or "",
         weak_spatial_separation=weak_spatial_separation,
     )
     # Preserve i18n reference dicts as-is so the report layer can resolve
@@ -639,7 +642,7 @@ def _assemble_order_finding(
         "confidence_0_to_1": confidence,
         "quick_checks": quick_checks,
         "matched_points": matched_points,
-        "location_hotspot": location_hotspot,
+        "location_hotspot": hotspot_dict,
         "strongest_location": strongest_location or None,
         "strongest_speed_band": strongest_speed_band or None,
         "dominant_phase": dominant_phase,
@@ -688,7 +691,7 @@ def _build_order_findings(
     raw_sample_rate_hz: float | None,
     connected_locations: set[str],
     lang: str,
-    per_sample_phases: list | None = None,
+    per_sample_phases: PhaseLabels | None = None,
 ) -> list[dict[str, Any]]:
     if raw_sample_rate_hz is None or raw_sample_rate_hz <= 0:
         return []

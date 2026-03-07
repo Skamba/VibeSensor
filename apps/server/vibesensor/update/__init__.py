@@ -1,6 +1,6 @@
-"""Update subsystem package.
+"""Updater subsystem package.
 
-The live updater implementation lives in this package, with
-``manager.py`` as the orchestration entry point and companion modules for
-network access, state persistence, and update models.
+``manager.py`` remains the public entry point, while focused modules own
+status tracking, command execution, Wi-Fi operations, release discovery,
+install and rollback behavior, service control, and runtime reporting.
 """

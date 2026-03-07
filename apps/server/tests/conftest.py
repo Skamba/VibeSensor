@@ -9,6 +9,7 @@ sub-directory ``conftest.py`` files exist (which shadow this module in
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -40,6 +41,31 @@ class FakeState:
     loop_state: ProcessingLoopState = field(default_factory=ProcessingLoopState)
     apply_car_settings: object = field(default_factory=MagicMock)
     apply_speed_source_settings: object = field(default_factory=MagicMock)
+
+    def __post_init__(self) -> None:
+        self.ingress = SimpleNamespace(
+            registry=self.registry,
+            processor=self.processor,
+            control_plane=self.control_plane,
+        )
+        self.settings = SimpleNamespace(
+            settings_store=self.settings_store,
+            gps_monitor=self.gps_monitor,
+            analysis_settings=self.analysis_settings,
+            apply_car_settings=self.apply_car_settings,
+            apply_speed_source_settings=self.apply_speed_source_settings,
+        )
+        self.diagnostics = SimpleNamespace(
+            metrics_logger=self.metrics_logger,
+            live_diagnostics=self.live_diagnostics,
+        )
+        self.persistence = SimpleNamespace(history_db=self.history_db)
+        self.websocket = SimpleNamespace(hub=self.ws_hub)
+        self.updates = SimpleNamespace(
+            update_manager=self.update_manager,
+            esp_flash_manager=self.esp_flash_manager,
+        )
+        self.processing = SimpleNamespace(state=self.loop_state)
 
 
 @pytest.fixture

@@ -16,13 +16,13 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 - Firmware: `firmware/esp/` sends UDP frames and receives control commands.
 - Backend: `apps/server/vibesensor/`.
 	- `app.py`: FastAPI app factory.
-	- `bootstrap.py`: focused service-group construction.
+	- `bootstrap.py`: focused subsystem-builder orchestration.
 	- `routes/`: HTTP and WebSocket route groups.
-	- `runtime/`: explicit runtime composition, dependency groups, coordination, and websocket broadcast state.
+	- `runtime/`: explicit runtime subsystem ownership, route-service assembly, lifecycle coordination, and websocket broadcast state.
 	- `processing/`, `analysis/`, `live_diagnostics/`: signal and findings logic.
 	- `metrics_log/`, `history_db/`, `history_*.py`, `runlog.py`: recording and persistence.
 	- `report/`, `report_i18n.py`: report rendering and report strings.
-	- `update/`: updater orchestration.
+	- `update/`: updater facade, workflow orchestration, and focused subsystems for Wi-Fi, releases, install and rollback, service control, status, and runtime reporting.
 - Frontend: `apps/ui/src/` provides the dashboard, settings, and history UI.
 - Tooling: `apps/simulator/`, `tools/tests/`, `tools/ci/`, `scripts/ai/`.
 - Pi image and infra: `infra/pi-image/pi-gen/`, `apps/server/systemd/`, `apps/server/scripts/`.
@@ -31,7 +31,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 
 1. `udp_data_rx.py` parses sensor frames and feeds the registry and processing buffers.
 2. `processing/` and `analysis/` compute spectra, vibration strength, and findings inputs.
-3. `runtime/` composes the processing loop, websocket broadcast, and lifecycle subsystems, then coordinates their background work.
+3. `runtime/` assembles explicit ingress, settings, diagnostics, persistence, update, processing, websocket, and route-service subsystems, then coordinates their background work through lifecycle ownership.
 4. `metrics_log/` and `history_db/` persist run data, analysis results, and settings.
 5. `routes/` exposes the HTTP and WebSocket surface consumed by `apps/ui/src/`.
 6. `report/` builds PDFs from saved run and analysis data.
@@ -51,7 +51,7 @@ VibeSensor is an offline vehicle vibration diagnostics system. A Raspberry Pi ho
 
 - Canonical vibration severity metric is `vibration_strength_db`; do not replace it with raw g-value proxies in persisted analysis outputs.
 - Server, UI, and tests must move together when the API or websocket contract changes.
-- The updater is wheel-first. Normal delivery must go through `apps/server/vibesensor/update/manager.py`, not in-place edits on devices.
+- The updater is wheel-first. Normal delivery must go through the `apps/server/vibesensor/update/` package, with `manager.py` as the public facade, not in-place edits on devices.
 - Hotspot startup must remain offline-safe.
 - `make test-all` is the local CI-parity verification path.
 

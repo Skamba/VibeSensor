@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Callable
 from typing import Any
 
 from ...runlog import as_float_or_none as _as_float
@@ -22,7 +23,10 @@ def compute_matched_speed_phase_evidence(
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
-    speed_profile_from_points,
+    speed_profile_from_points: Callable[
+        ...,
+        tuple[float | None, tuple[float, float] | None, str | None],
+    ],
 ) -> tuple[float | None, list[float], str | None, dict[str, Any], str | None]:
     """Derive speed-profile and phase-evidence from matched points."""
     cruise_value = DrivingPhase.CRUISE.value
@@ -106,7 +110,7 @@ def compute_amplitude_and_error_stats(
     matched_points: list[dict[str, Any]],
     *,
     constant_speed: bool,
-    corr_abs_clamped,
+    corr_abs_clamped: Callable[[list[float], list[float]], float | None],
 ) -> tuple[float, float, float, float, float | None]:
     """Compute amplitude, floor, relative-error, and correlation statistics."""
     mean_amp = (sum(matched_amp) / len(matched_amp)) if matched_amp else 0.0
