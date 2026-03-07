@@ -3,12 +3,12 @@
 ## Start here
 
 - `apps/server/vibesensor/app.py`: FastAPI app factory and CLI-facing startup.
-- `apps/server/vibesensor/bootstrap.py`: grouped service construction before runtime composition.
+- `apps/server/vibesensor/bootstrap.py`: subsystem builder orchestration before final runtime assembly.
 - `apps/server/vibesensor/routes/__init__.py`: assembles the HTTP and WebSocket route groups.
-- `apps/server/vibesensor/runtime/`: runtime composition helpers, focused dependency groups, thin runtime state, processing loop, websocket broadcast state, and lifecycle services.
+- `apps/server/vibesensor/runtime/`: runtime subsystem builders and owners, processing loop, websocket broadcast state, route-service assembly, and lifecycle services.
 - `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
 - `apps/server/vibesensor/report/pdf_builder.py`: public PDF renderer facade.
-- `apps/server/vibesensor/update/manager.py`: wheel-based updater orchestration.
+- `apps/server/vibesensor/update/manager.py`: public wheel-based updater facade that composes the focused update modules.
 - `apps/ui/src/main.ts`: top-level UI orchestration.
 - `apps/ui/src/api.ts` and `apps/ui/src/ws.ts`: HTTP and WebSocket client surfaces.
 - `apps/simulator/`: simulator CLI and websocket smoke tooling.
@@ -27,8 +27,8 @@
 
 - `apps/server/vibesensor/runtime/composition.py`: runtime subsystem assembly and ownership boundaries.
 - `apps/server/vibesensor/routes/__init__.py`: shared route assembly point.
-- `apps/server/vibesensor/update/manager.py`: long-running update flow with rollback logic.
-- `apps/server/vibesensor/report/pdf_builder.py` plus `pdf_page1*.py` and `pdf_page2*.py`: public report rendering surface.
+- `apps/server/vibesensor/update/workflow.py`: long-running update flow with explicit validation, Wi-Fi, release, install, rollback, and restart orchestration.
+- `apps/server/vibesensor/report/`: public report rendering surface. Start at `pdf_builder.py`, then follow `pdf_engine.py`, page modules, and shared drawing/layout helpers.
 - `apps/ui/src/main.ts`: large UI coordinator.
 
 ## Safe starting points

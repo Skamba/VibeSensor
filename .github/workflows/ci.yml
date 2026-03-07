@@ -75,7 +75,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e "./apps/server[dev]"
 
-      - name: Mypy backend runtime/api boundary
+      - name: Mypy backend enforced coverage
         working-directory: apps/server
         env:
           MYPYPATH: .:../../libs/core/python:../../libs/shared/python

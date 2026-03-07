@@ -14,6 +14,7 @@ from vibesensor_core.vibration_strength import (
 
 from ...constants import MEMS_NOISE_FLOOR_G
 from ...runlog import as_float_or_none as _as_float
+from .._types import PhaseLabels
 from ..helpers import (
     _effective_baseline_floor,
     _estimate_strength_floor_amp_g,
@@ -117,7 +118,7 @@ def _accumulate_peak_bin_stats(
     freq_bin_hz: float,
     freq_bin_hz_half: float,
     lang: str,
-    per_sample_phases: list[str] | None,
+    per_sample_phases: PhaseLabels | None,
     has_phases: bool,
 ) -> _PeakBinStats:
     """Accumulate per-sample data into frequency-bin statistics.
@@ -242,7 +243,7 @@ def _build_persistent_peak_findings(
     order_finding_freqs: set[float],
     lang: str,
     freq_bin_hz: float = 2.0,
-    per_sample_phases: list[str] | None = None,
+    per_sample_phases: PhaseLabels | None = None,
     run_noise_baseline_g: float | None = None,
 ) -> list[dict[str, Any]]:
     """Build findings for non-order persistent frequency peaks.

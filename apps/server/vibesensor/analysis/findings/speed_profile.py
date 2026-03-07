@@ -17,7 +17,9 @@ def _phase_to_str(phase: object) -> str | None:
     if phase is None:
         return None
     val = getattr(phase, "value", _SENTINEL)
-    return val if val is not _SENTINEL else str(phase)
+    if val is _SENTINEL:
+        return str(phase)
+    return str(val)
 
 
 def _speed_profile_from_points(
@@ -37,8 +39,9 @@ def _speed_profile_from_points(
     valid: list[tuple[float, float]] = []
     effective_amps: list[float] = []
     speeds: list[float] = []
+    phase_weights_seq = phase_weights if phase_weights is not None else []
     has_weights = phase_weights is not None
-    n_weights = len(phase_weights) if has_weights else 0
+    n_weights = len(phase_weights_seq)
 
     for idx, (speed, amp) in enumerate(points):
         if speed <= 0 or amp <= 0:
@@ -47,7 +50,7 @@ def _speed_profile_from_points(
             continue
         phase_weight = 1.0
         if has_weights and idx < n_weights:
-            parsed_weight = _float_or_none(phase_weights[idx])
+            parsed_weight = _float_or_none(phase_weights_seq[idx])
             if parsed_weight is not None and parsed_weight > 0:
                 phase_weight = parsed_weight
         valid.append((speed, amp))

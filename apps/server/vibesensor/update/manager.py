@@ -1,28 +1,15 @@
-"""Update manager orchestrator.
-
-Coordinates: hotspot down → Wi-Fi uplink connect → download release →
-install wheel → rollback on failure → hotspot restore.
-All operations run as a background asyncio task so the API endpoint
-returns immediately.  Job state is persisted to disk so it survives
-server restarts.
-"""
+"""Public updater facade over focused update subsystems."""
 
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
 import logging
 import os
-import re
-import shutil
-import subprocess
-import tempfile
-import time
 from pathlib import Path
-from typing import Any
 
-from .models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from .commands import UpdateCommandExecutor
+from .installer import UpdateInstaller, UpdateInstallerConfig
+from .models import UpdateJobStatus, UpdateRequest, UpdateState
 from .network import (
     DNS_PROBE_HOST,
     DNS_READY_MIN_WAIT_S,
@@ -34,105 +21,34 @@ from .network import (
     UPLINK_CONNECT_WAIT_S,
     UPLINK_CONNECTION_NAME,
     UPLINK_FALLBACK_DNS,
-    cleanup_uplink,
     parse_wifi_diagnostics,
-    restore_hotspot,
 )
-from .runner import CommandRunner, _sudo_prefix, sanitize_log_line
+from .releases import UpdateReleaseConfig, UpdateReleaseService
+from .runner import CommandRunner
+from .runtime_details import UpdateRuntimeDetailsCollector
+from .runtime_details import _hash_tree as _runtime_hash_tree
+from .service_control import UpdateServiceControlConfig, UpdateServiceController
 from .state_store import UpdateStateStore
+from .status import UpdateStatusTracker
+from .validation import UpdatePrerequisiteValidator, UpdateValidationConfig
+from .wifi import UpdateWifiConfig, UpdateWifiController, ssid_security_modes
+from .workflow import UpdateWorkflow
 
 LOGGER = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
-
 UPDATE_TIMEOUT_S = 600
-"""Hard timeout for the entire update job (seconds)."""
-
 REINSTALL_OP_TIMEOUT_S = 180
-"""Per-backend-reinstall timeout."""
-
 MIN_FREE_DISK_BYTES = 200 * 1024 * 1024
-"""Minimum free disk space (200 MiB) required before starting an update."""
-
 ESP_FIRMWARE_REFRESH_TIMEOUT_S = 240
-"""Per-online ESP firmware cache refresh timeout."""
-
 DEFAULT_ROLLBACK_DIR = "/var/lib/vibesensor/rollback"
-
-UI_BUILD_METADATA_FILE = ".vibesensor-ui-build.json"
 UPDATE_RESTART_UNIT = "vibesensor-post-update-restart"
 UPDATE_SERVICE_NAME = "vibesensor.service"
 SERVICE_ENV_DROPIN = "/etc/systemd/system/vibesensor.service.d/10-contracts-dir.conf"
 SERVICE_CONTRACTS_DIR = "/opt/VibeSensor/libs/shared/contracts"
 
-_SENSITIVE_KEYS: frozenset[str] = frozenset(
-    {
-        "password",
-        "psk",
-        "secret",
-        "key",
-        "802-11-wireless-security.psk",
-    }
-)
-
-_LOG_TAIL_MAX: int = 200
-"""Maximum number of entries kept in the job log tail before trimming."""
-
-_LOG_TAIL_TRIM_TO: int = 100
-"""Number of most-recent entries to retain after the log tail is trimmed."""
-
-_PACKAGED_STATIC_DIR: Path = Path(__file__).resolve().parent.parent / "static"
-
-_UNESCAPED_COLON_RE = re.compile(r"(?<!\\):")
-"""Regex matching an unescaped colon — compiled once at module level."""
-
-
-def _hash_tree(root: Path, *, ignore_names: set[str]) -> str:
-    if not root.exists():
-        return ""
-    hasher = hashlib.sha256()
-    for path in sorted(p for p in root.rglob("*") if p.is_file()):
-        relative = path.relative_to(root)
-        if any(part in ignore_names for part in relative.parts):
-            continue
-        hasher.update(str(relative.as_posix()).encode("utf-8"))
-        hasher.update(b"\0")
-        try:
-            with path.open("rb") as fh:
-                while True:
-                    chunk = fh.read(65536)
-                    if not chunk:
-                        break
-                    hasher.update(chunk)
-        except OSError:
-            continue  # file deleted/moved since listing
-        hasher.update(b"\0")
-    return hasher.hexdigest()
-
-
-def _sha256_file(path: Path) -> str:
-    """Return the lowercase hex SHA-256 digest of *path*."""
-    hasher = hashlib.sha256()
-    with path.open("rb") as fh:
-        while chunk := fh.read(65536):
-            hasher.update(chunk)
-    return hasher.hexdigest()
-
-
-# ---------------------------------------------------------------------------
-# UpdateManager
-# ---------------------------------------------------------------------------
-
 
 class UpdateManager:
-    """Orchestrator for system update jobs.
-
-    Job status is persisted to disk so the UI can poll
-    ``/api/settings/update/status`` and see the latest state even after
-    a server restart.
-    """
+    """Public update API used by routes and runtime lifecycle."""
 
     def __init__(
         self,
@@ -147,6 +63,7 @@ class UpdateManager:
     ) -> None:
         self._runner = runner or CommandRunner()
         self._repo_path = repo_path or os.environ.get("VIBESENSOR_REPO_PATH", "/opt/VibeSensor")
+        self._repo = Path(self._repo_path)
         self._ap_con_name = ap_con_name
         self._wifi_ifname = wifi_ifname
         self._rollback_dir = Path(
@@ -154,30 +71,26 @@ class UpdateManager:
         )
         self._server_repo = server_repo or os.environ.get("VIBESENSOR_SERVER_REPO", "")
         self._state_store = state_store or UpdateStateStore()
-        self._repo = Path(self._repo_path)
-
-        # Try to load persisted state; fall back to fresh idle status
         loaded = self._state_store.load()
-        self._status = loaded if loaded is not None else UpdateJobStatus()
-
+        self._tracker = UpdateStatusTracker(
+            state_store=self._state_store,
+            status=loaded if loaded is not None else UpdateJobStatus(),
+        )
+        self._runtime_details = UpdateRuntimeDetailsCollector(repo=self._repo)
+        self._tracker.set_runtime(self._collect_runtime_details())
+        self._status = self._tracker.status
         self._task: asyncio.Task[None] | None = None
         self._cancel_event = asyncio.Event()
-        self._redact_secrets: set[str] = set()
-        self._status.runtime = self._collect_runtime_details()
-
-    # -- public API ----------------------------------------------------------
 
     @property
     def status(self) -> UpdateJobStatus:
-        return self._status
+        return self._tracker.status
 
     @property
     def job_task(self) -> asyncio.Task[None] | None:
-        """The background task for the currently running update job, or None."""
         return self._task
 
     def start(self, ssid: str, password: str) -> None:
-        """Start an update job.  Raises ValueError on bad input, RuntimeError if busy."""
         ssid = ssid.strip()
         if not ssid or len(ssid) > 64:
             raise ValueError("SSID must be 1-64 characters")
@@ -185,1132 +98,280 @@ class UpdateManager:
             raise ValueError("Password must be at most 128 characters")
         if self._task is not None and not self._task.done():
             raise RuntimeError("Update already in progress")
-
-        # Reset
         self._cancel_event.clear()
-        previous_runtime = dict(self._status.runtime)
-        self._status = UpdateJobStatus(
-            state=UpdateState.running,
-            phase=UpdatePhase.validating,
-            started_at=time.time(),
-            ssid=ssid,
-            last_success_at=self._status.last_success_at,
-            runtime=previous_runtime,
-        )
-        self._persist_status()
-        # Track password for log redaction, launch background task
-        self._redact_secrets = {password} if password else set()
+        self._tracker.start_job(ssid)
+        self._status = self._tracker.status
+        self._tracker.track_secret(password)
+        request = UpdateRequest(ssid=ssid, password=password)
         self._task = asyncio.get_running_loop().create_task(
-            self._run_update(ssid, password),
+            self._run_update(request),
             name="system-update",
         )
 
     def cancel(self) -> bool:
-        """Request cancellation.  Returns True if a job was running."""
         if self._task is None or self._task.done():
             return False
         self._cancel_event.set()
-        # Also cancel the asyncio task directly so long-blocking awaits (e.g.
-        # nmcli --wait, DNS probe loop) are interrupted immediately via
-        # CancelledError rather than waiting for the next cancel_event poll.
         self._task.cancel()
         return True
 
     async def startup_recover(self) -> None:
-        """Recover from an interrupted update after server restart.
-
-        If persisted state shows state==running and finished_at is None
-        the job was interrupted by a crash/restart.  Mark it failed and
-        attempt best-effort network cleanup.
-        """
-        if self._status.state != UpdateState.running or self._status.finished_at is not None:
+        if (
+            self._tracker.status.state != UpdateState.running
+            or self._tracker.status.finished_at is not None
+        ):
             return
-
         LOGGER.warning("Detected interrupted update job; marking as failed and cleaning up")
-        self._status.state = UpdateState.failed
-        self._status.finished_at = time.time()
-        self._status.issues.append(
-            UpdateIssue(
-                phase="startup",
-                message="Update interrupted by server restart",
-            )
-        )
-        # Persist immediately so a crash during network cleanup still records the
-        # failed state rather than leaving the job stuck in 'running'.
-        self._persist_status()
+        self._tracker.mark_interrupted("Update interrupted by server restart")
+        wifi = self._build_wifi_controller()
 
-        # Best-effort network cleanup
-        self._log("startup_recover: cleaning up uplink connection")
+        self._tracker.log("startup_recover: cleaning up uplink connection")
         try:
-            await cleanup_uplink(self._runner)
+            await wifi.cleanup_uplink()
         except Exception as exc:
-            self._status.issues.append(
-                UpdateIssue(
-                    phase="startup",
-                    message="Failed to clean up uplink connection",
-                    detail=str(exc),
-                )
+            self._tracker.add_issue(
+                "startup",
+                "Failed to clean up uplink connection",
+                str(exc),
             )
 
-        self._log("startup_recover: restoring hotspot")
+        self._tracker.log("startup_recover: restoring hotspot")
         try:
-            ok = await restore_hotspot(self._runner, self._ap_con_name)
-            if not ok:
-                self._status.issues.append(
-                    UpdateIssue(
-                        phase="startup",
-                        message="Failed to restore hotspot after interrupted update",
-                    )
-                )
-                self._log("startup_recover: hotspot restore failed")
+            restored = await wifi.restore_hotspot()
+            if restored:
+                self._tracker.log("startup_recover: hotspot restored successfully")
             else:
-                self._log("startup_recover: hotspot restored successfully")
-        except Exception as exc:
-            self._status.issues.append(
-                UpdateIssue(
-                    phase="startup",
-                    message="Hotspot restore error during recovery",
-                    detail=str(exc),
+                self._tracker.add_issue(
+                    "startup",
+                    "Failed to restore hotspot after interrupted update",
                 )
+                self._tracker.log("startup_recover: hotspot restore failed")
+        except Exception as exc:
+            self._tracker.add_issue(
+                "startup",
+                "Hotspot restore error during recovery",
+                str(exc),
             )
+        self._tracker.persist()
 
-        self._persist_status()
-
-    # -- persistence helper --------------------------------------------------
-
-    def _persist_status(self) -> None:
-        """Save current status to disk."""
-        self._state_store.save(self._status)
-
-    # -- internals -----------------------------------------------------------
-
-    def _redact(self, text: str) -> str:
-        """Replace any tracked secrets with ***."""
-        for secret in self._redact_secrets:
-            if secret:
-                text = text.replace(secret, "***")
-        return text
-
-    def _log(self, msg: str) -> None:
-        sanitized = self._redact(sanitize_log_line(msg))
-        log_tail = self._status.log_tail
-        log_tail.append(sanitized)
-        if len(log_tail) > _LOG_TAIL_MAX:
-            del log_tail[:-_LOG_TAIL_TRIM_TO]
-        LOGGER.debug("update: %s", sanitized)
-
-    def _redacted_args_for_log(self, args: list[str]) -> list[str]:
-        """Return command args with sensitive values replaced by *** for safe logging."""
-        redacted: list[str] = []
-        hide_next = False
-        secrets = self._redact_secrets
-        for raw_arg in args:
-            arg = str(raw_arg)
-            if hide_next:
-                redacted.append("***")
-                hide_next = False
-                continue
-            if arg.lower() in _SENSITIVE_KEYS:
-                redacted.append(arg)
-                hide_next = True
-                continue
-            if secrets and arg in secrets:
-                redacted.append("***")
-                continue
-            redacted.append(arg)
-        return redacted
-
-    def _add_issue(self, phase: str, message: str, detail: str = "") -> None:
-        self._status.issues.append(
-            UpdateIssue(
-                phase=phase,
-                message=self._redact(message),
-                detail=self._redact(sanitize_log_line(detail)),
-            )
-        )
-        self._persist_status()
-
-    @staticmethod
-    def _ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
-        modes: set[str] = set()
-        target = ssid.strip()
-        if not target:
-            return modes
-        for line in scan_output.splitlines():
-            raw = line.strip()
-            if not raw or ":" not in raw:
-                continue
-            # nmcli escapes colons inside SSIDs as ``\:``.  Split on the
-            # first *unescaped* colon to separate SSID from security mode.
-            parts = _UNESCAPED_COLON_RE.split(raw, maxsplit=1)
-            if len(parts) != 2:
-                continue
-            candidate_ssid, security = parts[0].replace("\\:", ":"), parts[1]
-            if candidate_ssid.strip() != target:
-                continue
-            sec = security.strip()
-            if sec and sec != "--":
-                modes.add(sec)
-        return modes
-
-    async def _run_cmd(
+    async def _run_update(
         self,
-        args: list[str],
-        *,
-        timeout: float = NMCLI_TIMEOUT_S,
-        phase: str = "",
-        sudo: bool = False,
-    ) -> tuple[int, str, str]:
-        if sudo:
-            args = [*_sudo_prefix(), *args]
-        cmd_for_log = " ".join(self._redacted_args_for_log(args)) if args else "<empty>"
-        if len(cmd_for_log) > 500:
-            cmd_for_log = f"{cmd_for_log[:497]}..."
-        self._log(f"[{phase}] $ {cmd_for_log}")
-        rc, stdout, stderr = await self._runner.run(args, timeout=timeout)
-        stdout_s = stdout.strip()
-        stderr_s = stderr.strip()
-        if stdout_s:
-            self._log(f"[{phase}] stdout: {sanitize_log_line(stdout_s[:500])}")
-        if stderr_s:
-            self._log(f"[{phase}] stderr: {sanitize_log_line(stderr_s[:500])}")
-        if rc != 0:
-            self._log(f"[{phase}] exit code: {rc}")
-        return rc, stdout, stderr
-
-    async def _wait_for_dns_ready(self) -> bool:
-        """Wait for uplink DNS resolution before online update operations."""
-        self._log(
-            f"Validating uplink internet/DNS readiness for at least {int(DNS_READY_MIN_WAIT_S)}s..."
-        )
-        probe_cmd = [
-            "python3",
-            "-c",
-            (
-                "import socket; "
-                f"socket.getaddrinfo('{DNS_PROBE_HOST}', 443, proto=socket.IPPROTO_TCP)"
-            ),
-        ]
-        deadline = time.monotonic() + DNS_READY_MIN_WAIT_S
-        last_error = ""
-        attempt = 0
-
-        while True:
-            attempt += 1
-            rc, stdout, stderr = await self._run_cmd(
-                probe_cmd,
-                phase="connecting_wifi",
-                timeout=5,
-                sudo=False,
-            )
-            if rc == 0:
-                self._log(f"DNS probe succeeded on attempt {attempt}")
-                return True
-
-            last_error = (stderr or stdout or f"exit {rc}").strip()
-            if time.monotonic() >= deadline:
-                break
-            await asyncio.sleep(DNS_RETRY_INTERVAL_S)
-
-        self._add_issue(
-            "connecting_wifi",
-            "Connected to Wi-Fi, but internet/DNS is not ready",
-            (
-                f"Waited at least {int(DNS_READY_MIN_WAIT_S)} seconds for DNS resolution "
-                f"({DNS_PROBE_HOST}) before starting the updater. "
-                f"Last probe error: {last_error or 'unknown'}"
-            ),
-        )
-        return False
-
-    async def _restore_hotspot(self) -> bool:
-        """Best-effort hotspot restore with retries.  Returns True if successful."""
-        self._status.phase = UpdatePhase.restoring_hotspot
-        self._persist_status()
-        self._log("Restoring hotspot...")
-
-        # Clean up temporary uplink connection
-        await self._run_cmd(
-            ["nmcli", "connection", "down", UPLINK_CONNECTION_NAME],
-            phase="restore",
-            sudo=True,
-        )
-        await self._run_cmd(
-            ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
-            phase="restore",
-            sudo=True,
-        )
-
-        for attempt in range(1, HOTSPOT_RESTORE_RETRIES + 1):
-            rc, _, _ = await self._run_cmd(
-                ["nmcli", "connection", "up", self._ap_con_name],
-                phase="restore",
-                sudo=True,
-            )
-            if rc == 0:
-                self._log(f"Hotspot restored on attempt {attempt}")
-                return True
-            self._log(f"Hotspot restore attempt {attempt} failed (rc={rc})")
-            if attempt < HOTSPOT_RESTORE_RETRIES:
-                await asyncio.sleep(HOTSPOT_RESTORE_DELAY_S)
-
-        self._add_issue("restoring_hotspot", "Failed to restore hotspot after retries")
-        return False
-
-    async def _run_update(self, ssid: str, password: str) -> None:
-        """Run the main update coroutine.  Always restores hotspot on exit."""
+        request_or_ssid: UpdateRequest | str,
+        password: str | None = None,
+    ) -> None:
         try:
             await asyncio.wait_for(
-                self._run_update_inner(ssid, password),
+                self._run_update_inner(request_or_ssid, password),
                 timeout=UPDATE_TIMEOUT_S,
             )
         except TimeoutError:
-            self._add_issue("timeout", f"Update timed out after {UPDATE_TIMEOUT_S}s")
-            self._log(f"Update timed out after {UPDATE_TIMEOUT_S}s")
-            self._status.state = UpdateState.failed
+            if hasattr(self, "_tracker"):
+                self._tracker.fail("timeout", f"Update timed out after {UPDATE_TIMEOUT_S}s")
+                self._tracker.log(f"Update timed out after {UPDATE_TIMEOUT_S}s")
         except asyncio.CancelledError:
-            self._add_issue("cancelled", "Update was cancelled")
-            self._log("Update cancelled")
-            self._status.state = UpdateState.failed
-            raise  # re-raise so the event loop knows the task was cancelled
+            if hasattr(self, "_tracker"):
+                self._tracker.fail("cancelled", "Update was cancelled")
+                self._tracker.log("Update cancelled")
+            raise
         except Exception as exc:
-            self._add_issue("unexpected", f"Unexpected error: {exc}")
+            if hasattr(self, "_tracker"):
+                self._tracker.fail("unexpected", f"Unexpected error: {exc}")
             LOGGER.exception("update: unexpected error")
-            self._status.state = UpdateState.failed
         finally:
-            # Shield cleanup from CancelledError so hotspot restore,
-            # status persistence, and secret clearing always complete.
-            try:
-                # Always try to restore the hotspot
-                if self._status.phase not in (UpdatePhase.idle, UpdatePhase.done):
-                    await asyncio.shield(self._restore_hotspot())
-                self._status.finished_at = time.time()
-                if self._status.state == UpdateState.running:
-                    # If we reach here still "running", something went wrong
-                    self._status.state = UpdateState.failed
-                if self._status.state != UpdateState.failed:
-                    self._status.phase = UpdatePhase.done
-                # Clear secrets from memory
-                self._redact_secrets.clear()
-                try:
-                    self._status.runtime = await asyncio.to_thread(self._collect_runtime_details)
-                except Exception:
-                    LOGGER.warning("Failed to collect runtime details", exc_info=True)
+            await self._cleanup_after_update()
 
-                # Parse diagnostics
-                try:
-                    diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
-                    self._status.issues.extend(diag_issues)
-                except Exception:
-                    LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
+    async def _run_update_inner(
+        self,
+        request_or_ssid: UpdateRequest | str,
+        password: str | None = None,
+    ) -> None:
+        request = (
+            request_or_ssid
+            if isinstance(request_or_ssid, UpdateRequest)
+            else UpdateRequest(ssid=request_or_ssid, password=password or "")
+        )
+        await self._build_workflow().run(request)
 
-                self._persist_status()
-            except (asyncio.CancelledError, Exception) as _cleanup_exc:
-                # Last-resort: ensure secrets are cleared and status is persisted
-                # even if cleanup itself is interrupted.
-                self._redact_secrets.clear()
-                self._status.finished_at = self._status.finished_at or time.time()
-                if self._status.state == UpdateState.running:
-                    self._status.state = UpdateState.failed
-                self._persist_status()
-                LOGGER.warning("Update cleanup interrupted", exc_info=True)
-                # Re-raise CancelledError so the task is properly marked as
-                # cancelled; swallowing it prevents asyncio from knowing the
-                # task was cancelled.
-                if isinstance(_cleanup_exc, asyncio.CancelledError):
-                    raise
-
-    async def _run_update_inner(self, ssid: str, password: str) -> None:
-        if not await self._phase_validate(ssid):
+    async def _cleanup_after_update(self) -> None:
+        tracker = getattr(self, "_tracker", None)
+        if tracker is None:
+            await self._cleanup_after_update_legacy()
             return
-        if self._cancel_event.is_set():
-            return
-        if not await self._phase_stop_hotspot():
-            return
-        if self._cancel_event.is_set():
-            return
-        if not await self._phase_connect_wifi(ssid, password):
-            return
-        if self._cancel_event.is_set():
-            return
-        await self._phase_check_and_install(ssid)
 
-    async def _phase_validate(self, ssid: str) -> bool:
-        """Validate prerequisites.  Returns False if the update should abort."""
-        self._status.phase = UpdatePhase.validating
-        self._persist_status()
-        self._log(f"Starting update with SSID: {ssid}")
-
-        # Check required tools (git and npm no longer needed)
-        for tool in ("nmcli", "python3"):
-            if not shutil.which(tool):
-                self._add_issue("validating", f"Required tool not found: {tool}")
-                self._status.state = UpdateState.failed
-                return False
-
-        # Check sudo / privileges
-        if os.geteuid() != 0:
-            rc, _, _ = await self._run_cmd(["sudo", "-n", "true"], phase="validating", timeout=5)
-            if rc != 0:
-                self._add_issue(
-                    "validating",
-                    "Insufficient privileges",
-                    "Cannot run sudo non-interactively. "
-                    "In dev/Docker environments, hotspot management is not available.",
-                )
-                self._status.state = UpdateState.failed
-                return False
-
-        # Check available disk space before committing to download + install
         try:
-            # Prefer to measure the filesystem that will hold the rollback wheel;
-            # fall back to the root filesystem if that path doesn't exist yet.
-            disk_check_path = self._rollback_dir.parent
-            if not disk_check_path.exists():
-                disk_check_path = Path("/var/lib") if Path("/var/lib").exists() else Path("/")
-            free_bytes = shutil.disk_usage(disk_check_path).free
-            if free_bytes < MIN_FREE_DISK_BYTES:
-                free_mb = free_bytes // (1024 * 1024)
-                min_mb = MIN_FREE_DISK_BYTES // (1024 * 1024)
-                self._add_issue(
-                    "validating",
-                    f"Insufficient disk space: {free_mb} MiB free, {min_mb} MiB required",
-                )
-                self._status.state = UpdateState.failed
-                return False
-        except OSError as exc:
-            self._log(f"Could not check disk space: {exc}; proceeding anyway")
+            if tracker.status.state == UpdateState.running:
+                tracker.transition("restoring_hotspot")
+                tracker.log("Restoring hotspot...")
+                await asyncio.shield(self._build_wifi_controller().restore_hotspot())
+            tracker.clear_secrets()
+            try:
+                tracker.set_runtime(await asyncio.to_thread(self._collect_runtime_details))
+                self._status = tracker.status
+            except Exception:
+                LOGGER.warning("Failed to collect runtime details", exc_info=True)
+            try:
+                diag_issues = await asyncio.to_thread(parse_wifi_diagnostics)
+                tracker.extend_issues(diag_issues)
+            except Exception:
+                LOGGER.debug("Failed to parse Wi-Fi diagnostics", exc_info=True)
+            tracker.finish_cleanup()
+            self._status = tracker.status
+        except Exception:
+            tracker.clear_secrets()
+            tracker.finish_cleanup()
+            self._status = tracker.status
+            LOGGER.warning("Update cleanup interrupted", exc_info=True)
 
-        return True
+    async def _cleanup_after_update_legacy(self) -> None:
+        status = getattr(self, "_status", None)
+        try:
+            if status is not None and getattr(status, "state", None) == UpdateState.running:
+                restore_hotspot = getattr(self, "_restore_hotspot", None)
+                if restore_hotspot is not None:
+                    await restore_hotspot()
+            collect_runtime_details = getattr(self, "_collect_runtime_details", None)
+            if callable(collect_runtime_details):
+                collect_runtime_details()
+            persist_status = getattr(self, "_persist_status", None)
+            if callable(persist_status):
+                persist_status()
+        except Exception:
+            LOGGER.warning("Legacy update cleanup interrupted", exc_info=True)
 
-    async def _phase_stop_hotspot(self) -> bool:
-        """Stop the Wi-Fi hotspot.  Returns False if the update should abort."""
-        self._status.phase = UpdatePhase.stopping_hotspot
-        self._persist_status()
-        self._log("Stopping hotspot...")
-
-        rc, _, _ = await self._run_cmd(
-            ["nmcli", "connection", "down", self._ap_con_name],
-            phase="stopping_hotspot",
-            sudo=True,
-        )
-        if rc != 0:
-            self._log("Hotspot down returned non-zero; may already be inactive")
-        return True
-
-    async def _phase_connect_wifi(self, ssid: str, password: str) -> bool:
-        """Connect to the upstream Wi-Fi network.  Returns False if the update should abort."""
-        self._status.phase = UpdatePhase.connecting_wifi
-        self._persist_status()
-        self._log(f"Connecting to Wi-Fi network: {ssid}")
-
-        if not password:
-            rc, stdout, _ = await self._run_cmd(
-                [
-                    "nmcli",
-                    "-t",
-                    "-f",
-                    "SSID,SECURITY",
-                    "dev",
-                    "wifi",
-                    "list",
-                    "ifname",
-                    self._wifi_ifname,
-                    "--rescan",
-                    "yes",
-                ],
-                phase="connecting_wifi",
-                timeout=NMCLI_TIMEOUT_S,
-                sudo=True,
-            )
-            if rc == 0:
-                security_modes = self._ssid_security_modes(stdout, ssid)
-                if security_modes:
-                    self._add_issue(
-                        "connecting_wifi",
-                        "Wi-Fi password required for secured network",
-                        f"SSID '{ssid}' advertises security: {', '.join(sorted(security_modes))}",
-                    )
-                    self._status.state = UpdateState.failed
-                    return False
-
-        # Clean up any previous uplink
-        rc, stdout, _ = await self._run_cmd(
-            ["nmcli", "-t", "-f", "UUID,NAME", "connection", "show"],
-            phase="connecting_wifi",
-            sudo=True,
-        )
-        existing_uplink_uuids: list[str] = []
-        if rc == 0 and stdout:
-            for line in stdout.splitlines():
-                if not line:
-                    continue
-                uuid, _, name = line.partition(":")
-                if name == UPLINK_CONNECTION_NAME and uuid:
-                    existing_uplink_uuids.append(uuid)
-        for uuid in existing_uplink_uuids:
-            await self._run_cmd(
-                ["nmcli", "connection", "delete", "uuid", uuid],
-                phase="connecting_wifi",
-                sudo=True,
-            )
-
-        # Create uplink connection
-        add_cmd = [
-            "nmcli",
-            "connection",
-            "add",
-            "type",
-            "wifi",
-            "ifname",
-            self._wifi_ifname,
-            "con-name",
-            UPLINK_CONNECTION_NAME,
-            "autoconnect",
-            "no",
-            "ssid",
-            ssid,
-        ]
-
-        rc, _, stderr = await self._run_cmd(
-            add_cmd,
-            phase="connecting_wifi",
-            sudo=True,
-        )
-        if rc != 0:
-            self._add_issue("connecting_wifi", "Failed to create uplink connection", stderr)
-            self._status.state = UpdateState.failed
-            return False
-
-        rc, _, stderr = await self._run_cmd(
-            [
-                "nmcli",
-                "connection",
-                "modify",
-                UPLINK_CONNECTION_NAME,
-                "autoconnect",
-                "no",
-                "ipv4.method",
-                "auto",
-                "ipv4.ignore-auto-dns",
-                "yes",
-                "ipv4.dns",
-                UPLINK_FALLBACK_DNS,
-                "ipv6.method",
-                "ignore",
-            ],
-            phase="connecting_wifi",
-            sudo=True,
+    def _build_workflow(self) -> UpdateWorkflow:
+        commands = self._build_command_executor()
+        return UpdateWorkflow(
+            tracker=self._tracker,
+            validator=UpdatePrerequisiteValidator(
+                commands=commands,
+                tracker=self._tracker,
+                config=UpdateValidationConfig(
+                    rollback_dir=self._rollback_dir,
+                    min_free_disk_bytes=MIN_FREE_DISK_BYTES,
+                ),
+            ),
+            wifi=self._build_wifi_controller(commands=commands),
+            releases=UpdateReleaseService(
+                tracker=self._tracker,
+                config=UpdateReleaseConfig(
+                    rollback_dir=self._rollback_dir,
+                    server_repo=self._server_repo,
+                ),
+            ),
+            installer=UpdateInstaller(
+                commands=commands,
+                tracker=self._tracker,
+                config=UpdateInstallerConfig(
+                    repo=self._repo,
+                    rollback_dir=self._rollback_dir,
+                    reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
+                    firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+                ),
+            ),
+            services=UpdateServiceController(
+                commands=commands,
+                tracker=self._tracker,
+                config=UpdateServiceControlConfig(
+                    service_name=UPDATE_SERVICE_NAME,
+                    restart_unit=UPDATE_RESTART_UNIT,
+                    contracts_dir=Path(SERVICE_CONTRACTS_DIR),
+                    env_dropin=Path(SERVICE_ENV_DROPIN),
+                ),
+            ),
+            cancel_requested=self._cancel_event.is_set,
         )
 
-        if rc != 0:
-            self._add_issue("connecting_wifi", "Failed to configure uplink", stderr)
-            self._status.state = UpdateState.failed
-            await self._run_cmd(
-                ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
-                phase="connecting_wifi",
-                sudo=True,
-            )
-            return False
+    def _build_command_executor(self) -> UpdateCommandExecutor:
+        return UpdateCommandExecutor(runner=self._runner, tracker=self._tracker)
 
-        if password:
-            rc, _, stderr = await self._run_cmd(
-                [
-                    "nmcli",
-                    "connection",
-                    "modify",
-                    UPLINK_CONNECTION_NAME,
-                    "wifi-sec.key-mgmt",
-                    "wpa-psk",
-                    "wifi-sec.psk",
-                    password,
-                ],
-                phase="connecting_wifi",
-                sudo=True,
-            )
-            if rc != 0:
-                self._add_issue("connecting_wifi", "Failed to set Wi-Fi credentials", stderr)
-                self._status.state = UpdateState.failed
-                await self._run_cmd(
-                    ["nmcli", "connection", "delete", UPLINK_CONNECTION_NAME],
-                    phase="connecting_wifi",
-                    sudo=True,
-                )
-                return False
-
-        rc = 1
-        stderr = ""
-        for attempt in range(1, UPLINK_CONNECT_RETRIES + 1):
-            rc, _, stderr = await self._run_cmd(
-                [
-                    "nmcli",
-                    "--wait",
-                    str(UPLINK_CONNECT_WAIT_S),
-                    "connection",
-                    "up",
-                    UPLINK_CONNECTION_NAME,
-                ],
-                phase="connecting_wifi",
-                sudo=True,
-                timeout=float(UPLINK_CONNECT_WAIT_S + 10),
-            )
-            if rc != 0:
-                if "No network with SSID" not in (stderr or ""):
-                    break
-                self._log(
-                    f"SSID '{ssid}' not found on connect attempt {attempt}; rescanning and retrying"
-                )
-                await self._run_cmd(
-                    [
-                        "nmcli",
-                        "-t",
-                        "-f",
-                        "SSID,SIGNAL,CHAN,FREQ",
-                        "dev",
-                        "wifi",
-                        "list",
-                        "ifname",
-                        self._wifi_ifname,
-                        "--rescan",
-                        "yes",
-                    ],
-                    phase="connecting_wifi",
-                    timeout=NMCLI_TIMEOUT_S,
-                    sudo=True,
-                )
-                await asyncio.sleep(2.0)
-                continue
-            break
-
-        if rc != 0:
-            self._add_issue("connecting_wifi", f"Failed to connect to Wi-Fi '{ssid}'", stderr)
-            self._status.state = UpdateState.failed
-            return False
-
-        self._log(f"Wi-Fi connected successfully (client DNS fallback={UPLINK_FALLBACK_DNS})")
-
-        if not await self._wait_for_dns_ready():
-            self._status.state = UpdateState.failed
-            return False
-
-        return True
-
-    async def _phase_check_and_install(self, ssid: str) -> None:
-        """Check for available update, download, install, and finalize."""
-        # --- Phase: Check for updates ---
-        self._status.phase = UpdatePhase.checking
-        self._persist_status()
-        self._log("Checking for available updates...")
-
-        from vibesensor import __version__ as current_version
-        from vibesensor.release_fetcher import ReleaseFetcherConfig, ServerReleaseFetcher
-
-        fetcher = ServerReleaseFetcher(
-            ReleaseFetcherConfig(
-                server_repo=self._server_repo,
-                rollback_dir=str(self._rollback_dir),
+    def _build_wifi_controller(
+        self,
+        *,
+        commands: UpdateCommandExecutor | None = None,
+    ) -> UpdateWifiController:
+        return UpdateWifiController(
+            commands=commands or self._build_command_executor(),
+            tracker=self._tracker,
+            config=UpdateWifiConfig(
+                ap_con_name=self._ap_con_name,
+                wifi_ifname=self._wifi_ifname,
+                uplink_connection_name=UPLINK_CONNECTION_NAME,
+                uplink_connect_wait_s=UPLINK_CONNECT_WAIT_S,
+                uplink_connect_retries=UPLINK_CONNECT_RETRIES,
+                uplink_fallback_dns=UPLINK_FALLBACK_DNS,
+                dns_ready_min_wait_s=DNS_READY_MIN_WAIT_S,
+                dns_retry_interval_s=DNS_RETRY_INTERVAL_S,
+                dns_probe_host=DNS_PROBE_HOST,
+                nmcli_timeout_s=NMCLI_TIMEOUT_S,
+                hotspot_restore_retries=HOTSPOT_RESTORE_RETRIES,
+                hotspot_restore_delay_s=HOTSPOT_RESTORE_DELAY_S,
             ),
         )
 
-        try:
-            release = await asyncio.to_thread(fetcher.check_update_available, current_version)
-        except Exception as exc:
-            self._add_issue("checking", f"Failed to check for updates: {exc}")
-            self._status.state = UpdateState.failed
-            return
-
-        if release is None:
-            self._log(f"Already up-to-date (version={current_version})")
-            latest_release_tag = ""
-            try:
-                latest_release = await asyncio.to_thread(fetcher.find_latest_release)
-                if isinstance(latest_release.tag, str):
-                    latest_release_tag = latest_release.tag
-            except Exception as exc:
-                self._log(
-                    "Could not resolve the latest release tag for ESP firmware sync: "
-                    f"{sanitize_log_line(str(exc))}"
-                )
-
-            # Still refresh ESP firmware cache
-            await self._refresh_esp_firmware(pinned_tag=latest_release_tag)
-
-            if self._cancel_event.is_set():
-                return
-
-            restored = await self._restore_hotspot()
-            if not restored:
-                self._status.state = UpdateState.failed
-                return
-            self._status.state = UpdateState.success
-            self._status.phase = UpdatePhase.done
-            self._status.last_success_at = time.time()
-            self._status.exit_code = 0
-            self._log("No server update needed; ESP firmware checked")
-            return
-
-        self._log(f"Update available: {current_version} → {release.version}")
-
-        if self._cancel_event.is_set():
-            return
-
-        # --- Phase: Download ---
-        self._status.phase = UpdatePhase.downloading
-        self._persist_status()
-        self._log(f"Downloading release {release.tag}...")
-
-        staging_dir = Path(tempfile.mkdtemp(prefix="vibesensor-update-"))
-        try:
-            # Inner guard to set state on download Exception without leaking
-            # staging_dir.  CancelledError propagates to the outer finally.
-            try:
-                wheel_path = await asyncio.to_thread(fetcher.download_wheel, release, staging_dir)
-            except Exception as exc:
-                self._add_issue("downloading", f"Failed to download release: {exc}")
-                self._status.state = UpdateState.failed
-                return
-
-            self._log(f"Downloaded {wheel_path.name} (sha256={release.sha256})")
-
-            # Verify SHA-256 integrity of the downloaded wheel.
-            # A mismatch means the file was corrupted in transit or the
-            # release metadata is wrong — abort before installing.
-            if release.sha256:
-                actual_sha256 = await asyncio.to_thread(_sha256_file, wheel_path)
-                if actual_sha256 != release.sha256.lower():
-                    self._add_issue(
-                        "downloading",
-                        "Downloaded wheel SHA-256 mismatch",
-                        f"expected={release.sha256} actual={actual_sha256}",
-                    )
-                    self._log(
-                        f"SHA-256 mismatch: expected {release.sha256} but got {actual_sha256}"
-                    )
-                    self._status.state = UpdateState.failed
-                    return
-                self._log(f"SHA-256 verified: {actual_sha256}")
-
-            # Refresh ESP firmware from the same GitHub release as the server wheel.
-            await self._refresh_esp_firmware(pinned_tag=release.tag)
-
-            if self._cancel_event.is_set():
-                return
-
-            # --- Phase: Install ---
-            self._status.phase = UpdatePhase.installing
-            self._persist_status()
-            self._log("Installing update...")
-
-            # Snapshot current version for rollback
-            rollback_ok = await self._snapshot_for_rollback()
-            if not rollback_ok:
-                self._log("WARNING: Could not create rollback snapshot; proceeding anyway")
-
-            venv_python = self._reinstall_python_executable(self._repo)
-
-            # Install the new wheel
-            install_cmd = [
-                venv_python,
-                "-m",
-                "pip",
-                "install",
-                "--force-reinstall",
-                "--no-deps",
-                str(wheel_path),
-            ]
-            rc, _, stderr = await self._run_cmd(
-                install_cmd,
-                phase="installing",
-                timeout=REINSTALL_OP_TIMEOUT_S,
-                sudo=False,
-            )
-            if rc != 0:
-                self._add_issue("installing", f"Wheel install failed (exit {rc})", stderr)
-                self._log("Attempting rollback...")
-                await self._rollback()
-                self._status.state = UpdateState.failed
-                return
-
-            self._log(f"Installed vibesensor {release.version}")
-
-            # Verify the installed package can be imported
-            verify_cmd = [
-                venv_python,
-                "-c",
-                "from vibesensor import __version__; print(__version__)",
-            ]
-            rc, stdout, stderr = await self._run_cmd(
-                verify_cmd,
-                phase="installing",
-                timeout=30,
-                sudo=False,
-            )
-            if rc != 0:
-                self._add_issue(
-                    "installing",
-                    f"Post-install verification failed (exit {rc})",
-                    stderr,
-                )
-                self._log("Attempting rollback...")
-                await self._rollback()
-                self._status.state = UpdateState.failed
-                return
-
-            installed_version = stdout.strip()
-            self._log(f"Verified installed version: {installed_version}")
-        finally:
-            shutil.rmtree(staging_dir, ignore_errors=True)
-
-        runtime_details = await asyncio.to_thread(self._collect_runtime_details)
-        self._status.runtime = runtime_details
-
-        if self._cancel_event.is_set():
-            return
-
-        # --- Phase: Restore hotspot ---
-        restored = await self._restore_hotspot()
-        if not restored:
-            self._status.state = UpdateState.failed
-            return
-
-        # --- Done ---
-        self._status.state = UpdateState.success
-        self._status.phase = UpdatePhase.done
-        self._status.last_success_at = time.time()
-        self._status.exit_code = 0
-        self._log("Update completed successfully")
-        await self._ensure_service_contracts_env()
-        if not await self._schedule_service_restart():
-            self._add_issue(
-                "done",
-                "Backend restart was not scheduled automatically",
-                f"Run 'sudo systemctl restart {UPDATE_SERVICE_NAME}' manually",
-            )
-            self._log("Automatic backend restart scheduling failed")
-
-    async def _refresh_esp_firmware(self, pinned_tag: str = "") -> None:
-        """Refresh the ESP firmware cache.  Non-fatal on failure."""
-        self._log("Refreshing ESP firmware cache...")
-        venv_python = self._reinstall_python_executable(self._repo)
-        refresh_exe = str(Path(venv_python).with_name("vibesensor-fw-refresh"))
-        refresh_args = [
-            "--cache-dir",
-            "/var/lib/vibesensor/firmware",
-        ]
-        if pinned_tag:
-            refresh_args.extend(["--tag", pinned_tag])
-        # Fall back to module invocation if the entry point doesn't exist
-        if not Path(refresh_exe).is_file():
-            refresh_cmd = [venv_python, "-m", "vibesensor.firmware_cache", *refresh_args]
-        else:
-            refresh_cmd = [
-                refresh_exe,
-                *refresh_args,
-            ]
-        rc, _, stderr = await self._run_cmd(
-            refresh_cmd,
-            phase="downloading",
-            timeout=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
-            sudo=False,
+    async def _ensure_service_contracts_env(self) -> None:
+        commands = self._build_command_executor()
+        services = UpdateServiceController(
+            commands=commands,
+            tracker=self._tracker,
+            config=UpdateServiceControlConfig(
+                service_name=UPDATE_SERVICE_NAME,
+                restart_unit=UPDATE_RESTART_UNIT,
+                contracts_dir=Path(SERVICE_CONTRACTS_DIR),
+                env_dropin=Path(SERVICE_ENV_DROPIN),
+            ),
         )
-        if rc != 0:
-            self._add_issue(
-                "downloading",
-                f"ESP firmware cache refresh failed (exit {rc})",
-                stderr,
-            )
-            self._log("ESP firmware refresh failed; continuing with existing cache")
-        else:
-            self._log("ESP firmware cache refresh completed successfully")
+        await services.ensure_service_contracts_env()
 
     async def _snapshot_for_rollback(self) -> bool:
-        """Save the current wheel to the rollback directory.
-
-        Returns True on success, False on failure (non-fatal).
-        """
-        self._rollback_dir.mkdir(parents=True, exist_ok=True)
-        venv_python = self._reinstall_python_executable(self._repo)
-
-        # Use pip to download the currently installed version into rollback dir
-        from vibesensor import __version__ as current_version
-
-        self._log(f"Creating rollback snapshot (version={current_version})")
-
-        # pip download the installed package to rollback dir.
-        # NOTE: Clear old wheels only AFTER the download succeeds so we never
-        # end up with zero rollback wheels when pip fails.
-        rc, _, stderr = await self._run_cmd(
-            [
-                venv_python,
-                "-m",
-                "pip",
-                "download",
-                "--no-deps",
-                "--no-build-isolation",
-                "-d",
-                str(self._rollback_dir),
-                f"vibesensor=={current_version}",
-            ],
-            phase="installing",
-            timeout=60,
-            sudo=False,
+        commands = self._build_command_executor()
+        installer = UpdateInstaller(
+            commands=commands,
+            tracker=self._tracker,
+            config=UpdateInstallerConfig(
+                repo=self._repo,
+                rollback_dir=self._rollback_dir,
+                reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
+                firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+            ),
         )
-        if rc != 0:
-            # Fallback: just record the version number (old wheels, if any, are
-            # intentionally left in place so _rollback() can still use them).
-            self._log(f"pip download for rollback failed (exit {rc}): {stderr}")
-            meta_path = self._rollback_dir / "rollback_version.txt"
-            meta_path.write_text(current_version, encoding="utf-8")
-            return False
-
-        # Download succeeded: now safe to remove stale wheels that are no longer
-        # the target version, keeping any freshly downloaded ones.
-        for old_whl in self._rollback_dir.glob("vibesensor-*.whl"):
-            whl_ver = old_whl.stem.split("-")[1] if "-" in old_whl.stem else ""
-            if whl_ver != current_version:
-                old_whl.unlink(missing_ok=True)
-
-        self._log("Rollback snapshot created successfully")
-        return True
+        return await installer.snapshot_for_rollback()
 
     async def _rollback(self) -> bool:
-        """Attempt to restore the previous version from rollback dir.
-
-        Returns True if rollback succeeded.
-        """
-        self._log("Rolling back to previous version...")
-        rollback_wheels = sorted(
-            self._rollback_dir.glob("vibesensor-*.whl"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
+        commands = self._build_command_executor()
+        installer = UpdateInstaller(
+            commands=commands,
+            tracker=self._tracker,
+            config=UpdateInstallerConfig(
+                repo=self._repo,
+                rollback_dir=self._rollback_dir,
+                reinstall_timeout_s=REINSTALL_OP_TIMEOUT_S,
+                firmware_refresh_timeout_s=ESP_FIRMWARE_REFRESH_TIMEOUT_S,
+            ),
         )
-        if not rollback_wheels:
-            self._add_issue("installing", "No rollback wheel available")
-            return False
+        return await installer.rollback()
 
-        venv_python = self._reinstall_python_executable(self._repo)
-        wheel = rollback_wheels[0]
-
-        rc, _, stderr = await self._run_cmd(
-            [
-                venv_python,
-                "-m",
-                "pip",
-                "install",
-                "--force-reinstall",
-                "--no-deps",
-                str(wheel),
-            ],
-            phase="installing",
-            timeout=REINSTALL_OP_TIMEOUT_S,
-            sudo=False,
-        )
-        if rc != 0:
-            self._add_issue(
-                "installing",
-                f"Rollback install failed (exit {rc})",
-                stderr,
-            )
-            return False
-
-        # Verify the rolled-back package can be imported (mirrors install check)
-        verify_cmd = [
-            venv_python,
-            "-c",
-            "from vibesensor import __version__; print(__version__)",
-        ]
-        rc, stdout, stderr = await self._run_cmd(
-            verify_cmd,
-            phase="installing",
-            timeout=30,
-            sudo=False,
-        )
-        if rc != 0:
-            self._add_issue(
-                "installing",
-                f"Post-rollback verification failed (exit {rc})",
-                stderr,
-            )
-            return False
-
-        rolled_back_version = stdout.strip()
-        # Sanity-check: the running version should match the wheel filename.
-        # The wheel stem is e.g. "vibesensor-1.2.3-py3-none-any" so split on
-        # '-' and take index 1 for the version segment.
-        wheel_parts = wheel.stem.split("-")
-        expected_version = wheel_parts[1] if len(wheel_parts) >= 2 else ""
-        if expected_version and rolled_back_version != expected_version:
-            self._add_issue(
-                "installing",
-                "Rolled-back version label mismatch",
-                (
-                    f"wheel filename version={expected_version} but "
-                    f"import reports version={rolled_back_version}; "
-                    "possible wheel naming issue or pip normalisation difference"
-                ),
-            )
-            self._log(
-                f"WARNING: rolled-back version mismatch "
-                f"(wheel={expected_version}, import={rolled_back_version})"
-            )
-        self._log(f"Rolled back to {wheel.name} (verified version={rolled_back_version})")
-        return True
+    @staticmethod
+    def _ssid_security_modes(scan_output: str, ssid: str) -> set[str]:
+        return ssid_security_modes(scan_output, ssid)
 
     @staticmethod
     def _reinstall_venv_python_path(repo: Path) -> Path:
-        return repo / "apps" / "server" / ".venv" / "bin" / "python3"
+        return UpdateInstaller.reinstall_venv_python_path(repo)
 
     @staticmethod
     def _reinstall_venv_config_path(repo: Path) -> Path:
-        return repo / "apps" / "server" / ".venv" / "pyvenv.cfg"
+        return UpdateInstaller.reinstall_venv_config_path(repo)
 
     @classmethod
     def _is_reinstall_venv_ready(cls, repo: Path) -> bool:
-        venv_python = cls._reinstall_venv_python_path(repo)
-        if not (venv_python.is_file() and os.access(venv_python, os.X_OK)):
-            return False
-        return cls._reinstall_venv_config_path(repo).is_file()
+        return UpdateInstaller.is_reinstall_venv_ready(repo)
 
     @staticmethod
     def _reinstall_python_executable(repo: Path) -> str:
-        return str(UpdateManager._reinstall_venv_python_path(repo))
+        return UpdateInstaller.reinstall_python_executable(repo)
 
-    async def _schedule_service_restart(self) -> bool:
-        # Prefer a delayed transient unit so this update task can finish cleanly
-        # before restarting the currently running service process.
-        restart_attempts = [
-            [
-                "systemd-run",
-                "--unit",
-                UPDATE_RESTART_UNIT,
-                "--on-active=2s",
-                "systemctl",
-                "restart",
-                UPDATE_SERVICE_NAME,
-            ],
-            ["systemctl", "restart", UPDATE_SERVICE_NAME],
-        ]
-        for command in restart_attempts:
-            rc, _, _ = await self._run_cmd(command, phase="done", timeout=30, sudo=True)
-            if rc == 0:
-                self._log("Scheduled backend service restart")
-                return True
-        return False
+    def _collect_runtime_details(self) -> dict[str, object]:
+        return self._runtime_details.collect()
 
-    async def _ensure_service_contracts_env(self) -> None:
-        contracts_dir = Path(SERVICE_CONTRACTS_DIR)
-        if not contracts_dir.is_dir():
-            return
 
-        dropin_path = Path(SERVICE_ENV_DROPIN)
-        dropin_body = f"[Service]\nEnvironment=VIBESENSOR_CONTRACTS_DIR={contracts_dir}\n"
-        script = (
-            "from pathlib import Path; "
-            f"p=Path({str(dropin_path)!r}); "
-            "p.parent.mkdir(parents=True, exist_ok=True); "
-            f"content={dropin_body!r}; "
-            "changed=(not p.exists()) or (p.read_text(encoding='utf-8')!=content); "
-            "p.write_text(content, encoding='utf-8'); "
-            "print('changed' if changed else 'unchanged')"
-        )
-
-        rc, stdout, stderr = await self._run_cmd(
-            ["python3", "-c", script],
-            phase="done",
-            timeout=15,
-            sudo=True,
-        )
-        if rc != 0:
-            self._add_issue(
-                "done",
-                "Failed to configure contracts environment for service",
-                stderr,
-            )
-            return
-
-        if "changed" in (stdout or ""):
-            rc, _, stderr = await self._run_cmd(
-                ["systemctl", "daemon-reload"],
-                phase="done",
-                timeout=15,
-                sudo=True,
-            )
-            if rc != 0:
-                self._add_issue(
-                    "done",
-                    "Failed to reload systemd after contracts environment update",
-                    stderr,
-                )
-                return
-            self._log("Updated systemd drop-in for shared contracts directory")
-
-    def _collect_runtime_details(self) -> dict[str, Any]:
-        repo = self._repo
-        ui_root = repo / "apps" / "ui"
-        public_root = repo / "apps" / "server" / "public"
-        metadata_path = public_root / UI_BUILD_METADATA_FILE
-
-        # Get installed version
-        try:
-            from vibesensor import __version__
-
-            version = __version__
-        except Exception:
-            version = "unknown"
-
-        commit = ""
-        if (repo / ".git").exists():
-            try:
-                proc = subprocess.run(
-                    ["git", "-C", str(repo), "rev-parse", "HEAD"],
-                    check=False,
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
-                )
-                if proc.returncode == 0:
-                    commit = proc.stdout.strip()
-            except OSError:
-                LOGGER.debug("git rev-parse failed; commit hash unavailable", exc_info=True)
-
-        # Check for packaged static assets (wheel-based install)
-        has_packaged_static = (_PACKAGED_STATIC_DIR / "index.html").exists()
-
-        ui_source_hash = _hash_tree(
-            ui_root,
-            ignore_names={"node_modules", "dist", ".git", ".npm-ci-lock.sha256"},
-        )
-        public_assets_hash = _hash_tree(public_root, ignore_names={UI_BUILD_METADATA_FILE})
-
-        metadata: dict[str, Any] = {}
-        if metadata_path.is_file():
-            try:
-                metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                metadata = {}
-
-        public_build_source_hash = str(metadata.get("ui_source_hash") or "")
-        public_build_assets_hash = str(metadata.get("public_assets_hash") or "")
-        public_build_commit = str(metadata.get("git_commit") or "")
-
-        # Assets are verified if packaged static assets exist (wheel)
-        # or the public/ dir matches the source hashes.
-        assets_verified = has_packaged_static or (
-            bool(ui_source_hash)
-            and bool(public_assets_hash)
-            and bool(public_build_source_hash)
-            and bool(public_build_assets_hash)
-            and ui_source_hash == public_build_source_hash
-            and public_assets_hash == public_build_assets_hash
-        )
-
-        return {
-            "version": version,
-            "commit": commit,
-            "ui_source_hash": ui_source_hash,
-            "public_assets_hash": public_assets_hash,
-            "public_build_source_hash": public_build_source_hash,
-            "public_build_commit": public_build_commit,
-            "assets_verified": assets_verified,
-            "has_packaged_static": has_packaged_static,
-        }
+_hash_tree = _runtime_hash_tree

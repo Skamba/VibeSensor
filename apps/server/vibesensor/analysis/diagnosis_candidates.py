@@ -7,13 +7,16 @@ place.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Any
+
+from ._types import Finding
 
 _UNKNOWN_LOCATION_VALUES = {"", "unknown", "not available", "n/a"}
 _PLACEHOLDER_SOURCES = {"unknown_resonance", "unknown"}
 
 
-def non_reference_findings(items: list[object]) -> list[dict[str, Any]]:
+def non_reference_findings(items: Sequence[object]) -> list[Finding]:
     """Return well-formed finding dicts excluding ``REF_*`` entries."""
     findings = [item for item in items if isinstance(item, dict)]
     return [
@@ -23,7 +26,7 @@ def non_reference_findings(items: list[object]) -> list[dict[str, Any]]:
     ]
 
 
-def non_reference_top_causes(items: list[object]) -> list[dict[str, Any]]:
+def non_reference_top_causes(items: Sequence[object]) -> list[Finding]:
     """Return well-formed top-cause dicts excluding ``REF_*`` entries."""
     return non_reference_findings(items)
 
@@ -42,9 +45,9 @@ def is_actionable_cause(cause: dict[str, Any]) -> bool:
 
 
 def select_effective_top_causes(
-    top_causes: list[object],
-    findings: list[object],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    top_causes: Sequence[object],
+    findings: Sequence[object],
+) -> tuple[list[Finding], list[Finding], list[Finding], list[Finding]]:
     """Return report-ready cause/finding collections.
 
     Returns ``(all_findings, findings_non_ref, top_causes_all, effective_top_causes)``.

@@ -17,9 +17,10 @@ import time
 from collections.abc import Callable
 from functools import wraps
 from threading import RLock
-from typing import Any, ParamSpec, TypeVar, cast
+from typing import Any, Concatenate, ParamSpec, TypeAlias, TypeVar, cast
 
 import numpy as np
+import numpy.typing as npt
 
 from ..worker_pool import WorkerPool
 from .buffers import ClientBuffer
@@ -48,6 +49,8 @@ MAX_CLIENT_SAMPLE_RATE_HZ = 4096
 
 _P = ParamSpec("_P")
 _R = TypeVar("_R")
+FloatArray: TypeAlias = npt.NDArray[np.float32]
+IntIndexArray: TypeAlias = npt.NDArray[np.intp]
 
 
 def _finite_or_zero(v: float) -> float:
@@ -55,20 +58,22 @@ def _finite_or_zero(v: float) -> float:
     return v if math.isfinite(v) else 0.0
 
 
-_EMPTY_F32: np.ndarray = np.array([], dtype=np.float32)
+_EMPTY_F32: FloatArray = np.array([], dtype=np.float32)
 """Immutable-by-convention empty float32 array used as `.get()` default."""
 _FFT_CACHE_MAXSIZE = 64
 """Maximum number of cached FFT plans.  Bounds memory while avoiding
 repeated plan recomputation for common (sample_rate, fft_size) pairs."""
 
 
-def _synchronized(method: Callable[_P, _R]) -> Callable[_P, _R]:
+def _synchronized(
+    method: Callable[Concatenate[SignalProcessor, _P], _R],
+) -> Callable[Concatenate[SignalProcessor, _P], _R]:
     @wraps(method)
-    def _wrapped(self: SignalProcessor, *args: Any, **kwargs: Any) -> _R:
+    def _wrapped(self: SignalProcessor, *args: _P.args, **kwargs: _P.kwargs) -> _R:
         with self._lock:
             return method(self, *args, **kwargs)
 
-    return cast(Callable[_P, _R], _wrapped)
+    return _wrapped
 
 
 class SignalProcessor:
@@ -84,7 +89,7 @@ class SignalProcessor:
         spectrum_max_hz: float = 200.0,
         accel_scale_g_per_lsb: float | None = None,
         worker_pool: WorkerPool | None = None,
-    ):
+    ) -> None:
         """Initialise the signal processor with buffer and FFT parameters."""
         self.sample_rate_hz = sample_rate_hz
         self.waveform_seconds = waveform_seconds
@@ -99,9 +104,9 @@ class SignalProcessor:
         )
         self.max_samples = sample_rate_hz * waveform_seconds
         self._buffers: dict[str, ClientBuffer] = {}
-        self._fft_window = np.hanning(self.fft_n).astype(np.float32)
+        self._fft_window: FloatArray = np.hanning(self.fft_n).astype(np.float32)
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
-        self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
+        self._fft_cache: dict[int, tuple[FloatArray, IntIndexArray]] = {}
         self._fft_cache_lock = RLock()
         self._lock = RLock()
         # Worker pool for parallel per-client FFT.  Owned externally when
@@ -118,7 +123,7 @@ class SignalProcessor:
 
     @staticmethod
     def _smooth_spectrum(amps: np.ndarray, bins: int = 5) -> np.ndarray:
-        return smooth_spectrum(amps, bins=bins)
+        return cast(np.ndarray, smooth_spectrum(np.asarray(amps, dtype=np.float32), bins=bins))
 
     @staticmethod
     def _noise_floor(amps: np.ndarray) -> float:
@@ -134,10 +139,15 @@ class SignalProcessor:
         floor_ratio: float | None = None,
         smoothing_bins: int = 5,
     ) -> list[dict[str, float]]:
-        kwargs: dict[str, Any] = {"top_n": top_n, "smoothing_bins": smoothing_bins}
         if floor_ratio is not None:
-            kwargs["floor_ratio"] = floor_ratio
-        return top_peaks(freqs, amps, **kwargs)
+            return top_peaks(
+                freqs,
+                amps,
+                top_n=top_n,
+                floor_ratio=floor_ratio,
+                smoothing_bins=smoothing_bins,
+            )
+        return top_peaks(freqs, amps, top_n=top_n, smoothing_bins=smoothing_bins)
 
     # -- Buffer management ----------------------------------------------------
 
@@ -168,7 +178,7 @@ class SignalProcessor:
     def _get_or_create(self, client_id: str) -> ClientBuffer:
         buf = self._buffers.get(client_id)
         if buf is None:
-            data = np.zeros((3, self.max_samples), dtype=np.float32)
+            data: FloatArray = np.zeros((3, self.max_samples), dtype=np.float32)
             buf = ClientBuffer(data=data, capacity=self.max_samples)
             self._buffers[client_id] = buf
         return buf
@@ -178,7 +188,7 @@ class SignalProcessor:
         if new_capacity == buf.capacity:
             return
         latest = self._latest(buf, min(buf.count, new_capacity))
-        resized = np.zeros((3, new_capacity), dtype=np.float32)
+        resized: FloatArray = np.zeros((3, new_capacity), dtype=np.float32)
         if latest.size:
             resized[:, : latest.shape[1]] = latest
         buf.data = resized
@@ -190,7 +200,7 @@ class SignalProcessor:
     def ingest(
         self,
         client_id: str,
-        samples: np.ndarray,
+        samples: FloatArray,
         sample_rate_hz: int | None = None,
         t0_us: int | None = None,
     ) -> None:
@@ -198,7 +208,7 @@ class SignalProcessor:
         if samples.size == 0:
             return
         buf = self._get_or_create(client_id)
-        chunk = np.asarray(samples, dtype=np.float32)
+        chunk: FloatArray = np.asarray(samples, dtype=np.float32)
         if self.accel_scale_g_per_lsb is not None:
             chunk = chunk * np.float32(self.accel_scale_g_per_lsb)
         if chunk.ndim != 2 or chunk.shape[1] != 3:
@@ -254,7 +264,7 @@ class SignalProcessor:
         self._total_ingested_samples += n
         self._last_ingest_duration_s = time.monotonic() - t_start
 
-    def _latest(self, buf: ClientBuffer, n: int) -> np.ndarray:
+    def _latest(self, buf: ClientBuffer, n: int) -> FloatArray:
         if n <= 0 or buf.count == 0:
             return np.empty((3, 0), dtype=np.float32)
         n = min(n, buf.count)
@@ -266,7 +276,7 @@ class SignalProcessor:
 
     # -- FFT / metric computation ---------------------------------------------
 
-    def _fft_params(self, sample_rate_hz: int) -> tuple[np.ndarray, np.ndarray]:
+    def _fft_params(self, sample_rate_hz: int) -> tuple[FloatArray, IntIndexArray]:
         with self._fft_cache_lock:
             cached = self._fft_cache.get(sample_rate_hz)
             if cached is not None:
@@ -290,7 +300,7 @@ class SignalProcessor:
 
     def _compute_fft_spectrum(
         self,
-        fft_block: np.ndarray,
+        fft_block: FloatArray,
         sample_rate_hz: int,
     ) -> dict[str, Any]:
         """Shared FFT spectrum computation used by both compute_metrics and debug_spectrum.

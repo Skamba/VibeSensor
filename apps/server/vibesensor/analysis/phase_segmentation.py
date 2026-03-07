@@ -172,12 +172,13 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
             j += 1
         # j is now one past the end of the gap [i, j)
 
-        left = phases[i - 1] if i > 0 else None
-        right = phases[j] if j < n else None
+        left: DrivingPhase | None = phases[i - 1] if i > 0 else None
+        right: DrivingPhase | None = phases[j] if j < n else None
 
         left_moving = left in _MOVING_PHASES
         right_moving = right in _MOVING_PHASES
 
+        fill: DrivingPhase | None
         if left_moving and right_moving:
             fill = DrivingPhase.CRUISE
         elif left_moving:
@@ -187,6 +188,10 @@ def _interpolate_speed_unknown(phases: list[DrivingPhase]) -> None:
         else:
             # Neither side is a moving phase (run boundary, IDLE, or nested
             # SPEED_UNKNOWN) — leave as SPEED_UNKNOWN.
+            i = j
+            continue
+
+        if fill is None:
             i = j
             continue
 

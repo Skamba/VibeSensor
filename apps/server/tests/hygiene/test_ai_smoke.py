@@ -35,6 +35,15 @@ def install_pi_text() -> str:
 @pytest.mark.smoke
 def test_smoke_health_route_registered() -> None:
     state = MagicMock()
+    state.ingress = MagicMock()
+    state.settings = MagicMock()
+    state.diagnostics = MagicMock()
+    state.persistence = MagicMock()
+    state.websocket = MagicMock()
+    state.updates = MagicMock()
+    state.processing = MagicMock()
+    state.settings.apply_car_settings = MagicMock()
+    state.settings.apply_speed_source_settings = MagicMock()
     router = create_router(state)
     routes = {r.path: r.methods for r in router.routes if hasattr(r, "methods")}
     assert "/api/health" in routes, "Missing /api/health route"

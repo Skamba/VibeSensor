@@ -86,6 +86,29 @@ class _State:
             raw_samples=lambda _id, n_samples=1: {},
             intake_stats=lambda: {},
         )
+        self.ingress = SimpleNamespace(
+            registry=self.registry,
+            processor=self.processor,
+            control_plane=self.control_plane,
+        )
+        self.settings = SimpleNamespace(
+            settings_store=self.settings_store,
+            gps_monitor=self.gps_monitor,
+            analysis_settings=self.analysis_settings,
+            apply_car_settings=self.apply_car_settings,
+            apply_speed_source_settings=self.apply_speed_source_settings,
+        )
+        self.diagnostics = SimpleNamespace(
+            metrics_logger=self.metrics_logger,
+            live_diagnostics=self.live_diagnostics,
+        )
+        self.persistence = SimpleNamespace(history_db=self.history_db)
+        self.websocket = SimpleNamespace(hub=self.ws_hub)
+        self.updates = SimpleNamespace(
+            update_manager=self.update_manager,
+            esp_flash_manager=self.esp_flash_manager,
+        )
+        self.processing = SimpleNamespace(state=self.loop_state)
 
 
 def _route(router, path: str, method: str = "GET"):

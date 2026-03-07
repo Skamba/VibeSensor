@@ -129,7 +129,7 @@ def test_build_ws_payload_includes_schema_version() -> None:
         clients=[{"id": "aaa", "name": "front"}],
         ws_include_heavy=True,
     )
-    payload = state.ws_broadcast.build_payload(selected_client="aaa")
+    payload = state.websocket.broadcast.build_payload(selected_client="aaa")
     assert "schema_version" in payload
     assert payload["schema_version"] == SCHEMA_VERSION
 

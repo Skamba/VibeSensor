@@ -2,25 +2,26 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
 
 from ..runlog import utc_now_iso
+from ._types import Finding, SummaryData
 from .diagnosis_candidates import normalize_origin_location, select_effective_top_causes
 from .report_mapping_common import extract_confidence, human_source
 
 
 def extract_run_context(
-    summary: dict,
+    summary: SummaryData,
 ) -> tuple[
-    dict,
+    SummaryData,
     str | None,
     str | None,
     str,
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-    list[dict[str, Any]],
-    dict,
-    dict,
+    list[Finding],
+    list[Finding],
+    list[Finding],
+    SummaryData,
+    SummaryData,
 ]:
     """Extract and normalize the structural context fields from a run summary."""
     meta = summary.get("metadata")
@@ -57,7 +58,7 @@ def extract_run_context(
     )
 
 
-def extract_sensor_locations(summary: dict) -> list[str]:
+def extract_sensor_locations(summary: SummaryData) -> list[str]:
     """Return active sensor locations for report rendering."""
     sensor_locations_all = summary.get("sensor_locations", [])
     if not isinstance(sensor_locations_all, list):
@@ -72,11 +73,11 @@ def extract_sensor_locations(summary: dict) -> list[str]:
 
 
 def resolve_primary_candidate(
-    top_causes: list[dict[str, Any]],
-    findings_non_ref: list[dict[str, Any]],
+    top_causes: list[Finding],
+    findings_non_ref: list[Finding],
     origin_location: str,
-    tr,
-) -> tuple[dict[str, Any] | None, object, str, str, str, float]:
+    tr: Callable[[str], str],
+) -> tuple[Finding | None, object, str, str, str, float]:
     """Resolve the primary diagnosis candidate used by the report."""
     primary_candidates = top_causes or findings_non_ref
     primary_candidate = primary_candidates[0] if primary_candidates else None
@@ -103,6 +104,6 @@ def resolve_primary_candidate(
     return primary_candidate, primary_source, primary_system, primary_location, primary_speed, conf
 
 
-def normalized_origin_location(origin: dict[str, Any]) -> str:
+def normalized_origin_location(origin: SummaryData) -> str:
     """Return the report-ready origin location string."""
     return normalize_origin_location(origin.get("location"))

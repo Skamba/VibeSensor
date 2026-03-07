@@ -1,63 +1,59 @@
 """Runtime composition helpers.
 
-This module owns subsystem construction so the runtime coordinator remains a
-thin holder of already-wired boundaries rather than a hidden composition root.
+This module wires already-built subsystems into the top-level runtime without
+re-expanding them into another broad facade.
 """
 
 from __future__ import annotations
 
 from ..config import AppConfig
 from ._state import RuntimeState
-from .dependencies import (
-    RuntimeIngressServices,
-    RuntimeOperationsServices,
-    RuntimePlatformServices,
-)
+from .builders import build_lifecycle_manager
 from .lifecycle import LifecycleManager
-from .processing_loop import ProcessingLoop, ProcessingLoopState
-from .ws_broadcast import WsBroadcastCache, WsBroadcastService
+from .subsystems import (
+    RuntimeDiagnosticsSubsystem,
+    RuntimeIngressSubsystem,
+    RuntimePersistenceSubsystem,
+    RuntimeProcessingSubsystem,
+    RuntimeRouteServices,
+    RuntimeSettingsSubsystem,
+    RuntimeUpdateSubsystem,
+    RuntimeWebsocketSubsystem,
+)
 
 
 def build_runtime_state(
     *,
     config: AppConfig,
-    ingress: RuntimeIngressServices,
-    operations: RuntimeOperationsServices,
-    platform: RuntimePlatformServices,
+    ingress: RuntimeIngressSubsystem,
+    settings: RuntimeSettingsSubsystem,
+    diagnostics: RuntimeDiagnosticsSubsystem,
+    persistence: RuntimePersistenceSubsystem,
+    updates: RuntimeUpdateSubsystem,
+    processing: RuntimeProcessingSubsystem,
+    websocket: RuntimeWebsocketSubsystem,
+    routes: RuntimeRouteServices,
 ) -> RuntimeState:
-    """Construct a fully wired ``RuntimeState`` from focused service groups."""
-    loop_state = ProcessingLoopState()
-    ws_cache = WsBroadcastCache()
-    processing_loop = ProcessingLoop(
-        state=loop_state,
-        fft_update_hz=config.processing.fft_update_hz,
-        sample_rate_hz=config.processing.sample_rate_hz,
-        fft_n=config.processing.fft_n,
-        ingress=ingress,
-    )
-    ws_broadcast = WsBroadcastService(
-        cache=ws_cache,
-        ui_push_hz=config.processing.ui_push_hz,
-        ui_heavy_push_hz=config.processing.ui_heavy_push_hz,
-        ingress=ingress,
-        operations=operations,
-    )
-    lifecycle = LifecycleManager(
+    """Construct a fully wired ``RuntimeState`` from explicit subsystems."""
+    lifecycle: LifecycleManager = build_lifecycle_manager(
         config=config,
         ingress=ingress,
-        operations=operations,
-        platform=platform,
-        processing_loop=processing_loop,
-        ws_broadcast=ws_broadcast,
+        settings=settings,
+        diagnostics=diagnostics,
+        persistence=persistence,
+        updates=updates,
+        processing=processing,
+        websocket=websocket,
     )
     return RuntimeState(
         config=config,
         ingress=ingress,
-        operations=operations,
-        platform=platform,
-        loop_state=loop_state,
-        ws_cache=ws_cache,
-        processing_loop=processing_loop,
-        ws_broadcast=ws_broadcast,
+        settings=settings,
+        diagnostics=diagnostics,
+        persistence=persistence,
+        updates=updates,
+        processing=processing,
+        websocket=websocket,
+        routes=routes,
         lifecycle=lifecycle,
     )
