@@ -158,7 +158,7 @@ def test_matrix_dwell_seconds_accumulate_on_light_ticks(monkeypatch) -> None:
 
 
 # ---------------------------------------------------------------------------
-# rotational payload order_bands (via RuntimeState._build_rotational_speeds_payload)
+# rotational payload order_bands (via _build_rotational_speeds_payload helper)
 # ---------------------------------------------------------------------------
 
 
@@ -177,11 +177,10 @@ class _StubGPS:
 
 def test_rotational_order_bands_present_with_speed() -> None:
     """When speed is available, _build_rotational_speeds_payload should include order_bands."""
-    from vibesensor.app import RuntimeState
+    from vibesensor.runtime import _build_rotational_speeds_payload, _rotational_basis_speed_source
 
-    state = RuntimeState.__new__(RuntimeState)
-    state.settings_store = _StubSettingsStore()  # type: ignore[assignment]
-    state.gps_monitor = _StubGPS()  # type: ignore[assignment]
+    settings_store = _StubSettingsStore()  # type: ignore[assignment]
+    gps_monitor = _StubGPS()  # type: ignore[assignment]
     settings = {
         "tire_width_mm": 285,
         "tire_aspect_pct": 30,
@@ -189,10 +188,15 @@ def test_rotational_order_bands_present_with_speed() -> None:
         "final_drive_ratio": 3.08,
         "current_gear_ratio": 0.64,
     }
-    result = state._build_rotational_speeds_payload(
+    basis = _rotational_basis_speed_source(
+        settings_store,  # type: ignore[arg-type]
+        gps_monitor,  # type: ignore[arg-type]
+        resolution_source="gps",
+    )
+    result = _build_rotational_speeds_payload(
+        basis_speed_source=basis,
         speed_mps=27.8,
         analysis_settings=settings,
-        resolution_source="gps",
     )
     bands = result.get("order_bands")
     assert bands is not None, "order_bands should be present when speed is available"
@@ -208,14 +212,18 @@ def test_rotational_order_bands_present_with_speed() -> None:
 
 def test_rotational_order_bands_none_without_speed() -> None:
     """When speed is unavailable, order_bands should be None."""
-    from vibesensor.app import RuntimeState
+    from vibesensor.runtime import _build_rotational_speeds_payload, _rotational_basis_speed_source
 
-    state = RuntimeState.__new__(RuntimeState)
-    state.settings_store = _StubSettingsStore()  # type: ignore[assignment]
-    state.gps_monitor = _StubGPS()  # type: ignore[assignment]
-    result = state._build_rotational_speeds_payload(
+    settings_store = _StubSettingsStore()  # type: ignore[assignment]
+    gps_monitor = _StubGPS()  # type: ignore[assignment]
+    basis = _rotational_basis_speed_source(
+        settings_store,  # type: ignore[arg-type]
+        gps_monitor,  # type: ignore[arg-type]
+        resolution_source=None,
+    )
+    result = _build_rotational_speeds_payload(
+        basis_speed_source=basis,
         speed_mps=None,
         analysis_settings={},
-        resolution_source=None,
     )
     assert result.get("order_bands") is None, "order_bands should be None without speed"
