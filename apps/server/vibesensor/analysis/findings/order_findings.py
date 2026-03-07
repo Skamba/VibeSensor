@@ -525,8 +525,7 @@ def _build_order_findings(
             )
             if sample_speed_bin is not None:
                 possible_by_speed_bin[sample_speed_bin] += 1
-            if has_phases:
-                assert per_sample_phases is not None
+            if has_phases and per_sample_phases is not None:
                 ph = per_sample_phases[sample_idx]
                 phase_key = str(ph.value if hasattr(ph, "value") else ph)
                 possible_by_phase[phase_key] += 1
@@ -549,7 +548,7 @@ def _build_order_findings(
                 matched_by_location[sample_location] += 1
             if sample_speed_bin is not None:
                 matched_by_speed_bin[sample_speed_bin] += 1
-            if has_phases:
+            if has_phases and per_sample_phases is not None:
                 matched_by_phase[phase_key] += 1
             rel_errors.append(delta_hz / max(1e-9, predicted_hz))
             matched_amp.append(best_amp)

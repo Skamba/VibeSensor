@@ -108,6 +108,37 @@ class TestSanitizeForJson:
         cleaned, _ = sanitize_for_json(np.float32(float("inf")))
         assert cleaned is None
 
+    def test_depth_limit_truncates_to_none(self) -> None:
+        """Objects beyond _max_depth are replaced with None."""
+        # Build a chain 4 deep with a sentinel float value at the bottom.
+        nested: dict = {}
+        innermost = nested
+        for _ in range(3):
+            child: dict = {}
+            innermost["child"] = child
+            innermost = child
+        innermost["val"] = 1.5
+
+        # Default limit is 128, so this trivially passes at depth 4.
+        cleaned, had = sanitize_for_json(nested)
+        # All data is within depth limit; sentinel value should survive.
+        assert had is False
+
+        # With _max_depth=2 the deeply nested value is truncated.
+        # Depth 0 → nested, depth 1 → child1, depth 2 → child2 (still ok),
+        # depth 3 → child3 exceeds limit and becomes None.
+        cleaned_limited, _ = sanitize_for_json(nested, _max_depth=2)
+        assert cleaned_limited["child"]["child"]["child"] is None  # truncated at depth 3
+
+    def test_depth_limit_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Exceeding _max_depth emits a warning log."""
+        import logging
+
+        nested = {"a": {"b": {"c": "deep"}}}
+        with caplog.at_level(logging.WARNING, logger="vibesensor.json_utils"):
+            sanitize_for_json(nested, _max_depth=1)
+        assert any("nesting depth" in r.message for r in caplog.records)
+
 
 # ── sanitize_value ───────────────────────────────────────────────────────────
 

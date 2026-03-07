@@ -63,9 +63,9 @@ export interface ClientRow {
   connected: boolean;
   mac_address: string;
   location_code: string;
-  last_seen_age_ms: number;
-  dropped_frames: number;
-  frames_total: number;
+  last_seen_age_ms: number | null;
+  dropped_frames: number | null;
+  frames_total: number | null;
 }
 
 export interface SpectrumClientData {

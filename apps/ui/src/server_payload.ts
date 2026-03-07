@@ -72,7 +72,7 @@ export type OrderBand = {
 };
 
 export type AdaptedPayload = {
-  clients: ClientInfo[];
+  clients: AdaptedClient[];
   speed_mps: number | null;
   rotational_speeds: RotationalSpeeds | null;
   diagnostics: {
@@ -85,6 +85,26 @@ export type AdaptedPayload = {
   spectra: {
     clients: Record<string, AdaptedSpectrum>;
   } | null;
+};
+
+/** Explicitly typed client row produced by {@link adaptServerPayload}.
+ *
+ * Structurally compatible with ``ClientRow`` in ``ui_app_state``.  All
+ * fields are extracted and coerced from the raw server payload so callers
+ * receive a predictably typed object instead of relying on an index
+ * signature fallback.
+ */
+export type AdaptedClient = {
+  id: string;
+  name: string;
+  connected: boolean;
+  mac_address: string;
+  location_code: string;
+  last_seen_age_ms: number | null;
+  dropped_frames: number | null;
+  frames_total: number | null;
+  /** Remaining raw fields from the server, available for diagnostics/debug. */
+  [key: string]: unknown;
 };
 
 function asNumberArray(value: unknown): number[] {
@@ -130,14 +150,23 @@ export function adaptServerPayload(payload: Record<string, unknown>): AdaptedPay
     : [];
 
   const rawClients = Array.isArray(payload.clients) ? (payload.clients as Record<string, unknown>[]) : [];
-  // Remap server field names to UI-internal field names
-  const clients: ClientInfo[] = rawClients.map((c) => {
-    const mapped = { ...c } as ClientInfo;
-    // Server sends "location", UI uses "location_code" in ClientRow
-    if ("location" in c && !("location_code" in c)) {
-      mapped.location_code = c.location;
-    }
-    return mapped;
+  // Explicitly extract and coerce all ClientRow fields from the raw server payload.
+  // The server sends "location" but the UI uses "location_code" internally.
+  const clients: AdaptedClient[] = rawClients.map((c) => {
+    const locationCode = typeof c.location_code === "string"
+      ? c.location_code
+      : typeof c.location === "string" ? c.location : "";
+    return {
+      ...c,
+      id: typeof c.id === "string" ? c.id : String(c.id ?? ""),
+      name: typeof c.name === "string" ? c.name : String(c.name ?? ""),
+      connected: Boolean(c.connected),
+      mac_address: typeof c.mac_address === "string" ? c.mac_address : "",
+      location_code: locationCode,
+      last_seen_age_ms: typeof c.last_seen_age_ms === "number" ? c.last_seen_age_ms : null,
+      dropped_frames: typeof c.dropped_frames === "number" ? c.dropped_frames : null,
+      frames_total: typeof c.frames_total === "number" ? c.frames_total : null,
+    };
   });
 
   const adapted: AdaptedPayload = {
