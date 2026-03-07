@@ -76,7 +76,7 @@ Regression coverage is grouped by intent:
 - `regression/report/`: report rendering and report-data regressions.
 - `regression/runtime/`: runtime, history, API, queueing, and update-adjacent regressions.
 
-Prefer focused files grouped by behavior or maintenance boundary. Recent scenario-heavy suites in `report/` and `integration/` are intentionally split into smaller files plus shared helper modules so failures stay easy to diagnose.
+Prefer focused files grouped by behavior or maintenance boundary. Recent high-churn suites in `api/`, `report/`, `update/`, `analysis/`, and `apps/ui/tests/` are intentionally split into smaller behavior-focused files plus local helper modules such as `_history_endpoint_helpers.py`, `_report_persistence_helpers.py`, `_report_pdf_test_helpers.py`, `_update_manager_test_helpers.py`, `_diagnosis_robustness_helpers.py`, `_phased_scenario_helpers.py`, and `smoke.helpers.ts` so failures stay easy to diagnose without centralizing unrelated assertions in one mega-file.
 
 ## Running tests
 
@@ -105,7 +105,7 @@ python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
 The default CI-parity suite now mirrors these blocking GitHub checks:
 
 - `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, WS schema sync.
-- `backend-typecheck`: mypy on the backend runtime/API orchestration boundary.
+- `backend-typecheck`: mypy on the enforced backend slice covering app/bootstrap, runtime/routes, and the high-risk `analysis/`, `processing/`, `history_db/`, and `update/` packages.
 - `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
 - `ui-smoke`, `backend-tests`, `e2e`: required test jobs.
 

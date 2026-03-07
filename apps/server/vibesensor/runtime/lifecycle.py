@@ -17,13 +17,15 @@ from ..udp_data_rx import start_udp_data_receiver
 
 if TYPE_CHECKING:
     from ..config import AppConfig
-    from .dependencies import (
-        RuntimeIngressServices,
-        RuntimeOperationsServices,
-        RuntimePlatformServices,
+    from .subsystems import (
+        RuntimeDiagnosticsSubsystem,
+        RuntimeIngressSubsystem,
+        RuntimePersistenceSubsystem,
+        RuntimeProcessingSubsystem,
+        RuntimeSettingsSubsystem,
+        RuntimeUpdateSubsystem,
+        RuntimeWebsocketSubsystem,
     )
-    from .processing_loop import ProcessingLoop
-    from .ws_broadcast import WsBroadcastService
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,10 +36,12 @@ class LifecycleManager:
     __slots__ = (
         "_config",
         "_ingress",
-        "_operations",
-        "_platform",
-        "_processing_loop",
-        "_ws_broadcast",
+        "_settings",
+        "_diagnostics",
+        "_persistence",
+        "_updates",
+        "_processing",
+        "_websocket",
         "tasks",
         "_data_transport",
         "_data_consumer_task",
@@ -47,18 +51,22 @@ class LifecycleManager:
         self,
         *,
         config: AppConfig,
-        ingress: RuntimeIngressServices,
-        operations: RuntimeOperationsServices,
-        platform: RuntimePlatformServices,
-        processing_loop: ProcessingLoop,
-        ws_broadcast: WsBroadcastService,
+        ingress: RuntimeIngressSubsystem,
+        settings: RuntimeSettingsSubsystem,
+        diagnostics: RuntimeDiagnosticsSubsystem,
+        persistence: RuntimePersistenceSubsystem,
+        updates: RuntimeUpdateSubsystem,
+        processing: RuntimeProcessingSubsystem,
+        websocket: RuntimeWebsocketSubsystem,
     ) -> None:
         self._config = config
         self._ingress = ingress
-        self._operations = operations
-        self._platform = platform
-        self._processing_loop = processing_loop
-        self._ws_broadcast = ws_broadcast
+        self._settings = settings
+        self._diagnostics = diagnostics
+        self._persistence = persistence
+        self._updates = updates
+        self._processing = processing
+        self._websocket = websocket
         self.tasks: list[asyncio.Task] = []
         self._data_transport: asyncio.DatagramTransport | None = None
         self._data_consumer_task: asyncio.Task | None = None
@@ -74,18 +82,18 @@ class LifecycleManager:
         )
         await self._ingress.control_plane.start()
         self.tasks = [
-            asyncio.create_task(self._processing_loop.run(), name="processing-loop"),
+            asyncio.create_task(self._processing.loop.run(), name="processing-loop"),
             asyncio.create_task(
-                self._platform.ws_hub.run(
+                self._websocket.hub.run(
                     self._config.processing.ui_push_hz,
-                    self._ws_broadcast.build_payload,
-                    on_tick=self._ws_broadcast.on_tick,
+                    self._websocket.broadcast.build_payload,
+                    on_tick=self._websocket.broadcast.on_tick,
                 ),
                 name="ws-broadcast",
             ),
-            asyncio.create_task(self._operations.metrics_logger.run(), name="metrics-log"),
+            asyncio.create_task(self._diagnostics.metrics_logger.run(), name="metrics-log"),
             asyncio.create_task(
-                self._operations.gps_monitor.run(
+                self._settings.gps_monitor.run(
                     host=self._config.gps.gpsd_host,
                     port=self._config.gps.gpsd_port,
                 ),
@@ -95,7 +103,7 @@ class LifecycleManager:
         # Recover interrupted update jobs (best-effort, must not crash server)
         self.tasks.append(
             asyncio.create_task(
-                self._platform.update_manager.startup_recover(),
+                self._updates.update_manager.startup_recover(),
                 name="update-startup-recover",
             )
         )
@@ -119,8 +127,8 @@ class LifecycleManager:
         # Cancel any in-progress update or flash jobs so cleanup
         # (e.g. hotspot restore) can run before shutdown completes.
         managed = [
-            self._platform.update_manager.job_task,
-            self._platform.esp_flash_manager.job_task,
+            self._updates.update_manager.job_task,
+            self._updates.esp_flash_manager.job_task,
         ]
         for task in managed:
             if task is not None:
@@ -130,10 +138,10 @@ class LifecycleManager:
                 with contextlib.suppress(asyncio.CancelledError, Exception):
                     await asyncio.wait_for(asyncio.shield(task), timeout=10.0)
 
-        self._operations.metrics_logger.stop_logging()
+        self._diagnostics.metrics_logger.stop_logging()
         analysis_timeout_s = self._config.logging.shutdown_analysis_timeout_s
         finished = await asyncio.to_thread(
-            self._operations.metrics_logger.wait_for_post_analysis,
+            self._diagnostics.metrics_logger.wait_for_post_analysis,
             analysis_timeout_s,
         )
         if not finished:
@@ -158,11 +166,11 @@ class LifecycleManager:
             await asyncio.gather(self._data_consumer_task, return_exceptions=True)
             self._data_consumer_task = None
         try:
-            await asyncio.to_thread(self._platform.worker_pool.shutdown, True)
+            await asyncio.to_thread(self._ingress.worker_pool.shutdown, True)
         except Exception:
             LOGGER.warning("Error shutting down worker pool", exc_info=True)
         try:
-            self._platform.history_db.close()
+            self._persistence.history_db.close()
         except Exception:
             LOGGER.warning("Error closing history DB", exc_info=True)
-        LOGGER.info("RuntimeState stopped cleanly.")
+        LOGGER.info("Runtime lifecycle stopped cleanly.")

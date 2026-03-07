@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from ..runlog import utc_now_iso
+from ._typing import HistoryCursorProvider
 
 
 class HistoryClientNamesMixin:
@@ -10,13 +11,13 @@ class HistoryClientNamesMixin:
 
     __slots__ = ()
 
-    def list_client_names(self) -> dict[str, str]:
+    def list_client_names(self: HistoryCursorProvider) -> dict[str, str]:
         with self._cursor(commit=False) as cur:
             cur.execute("SELECT client_id, name FROM client_names")
             rows = cur.fetchall()
         return {row[0]: row[1] for row in rows}
 
-    def upsert_client_name(self, client_id: str, name: str) -> None:
+    def upsert_client_name(self: HistoryCursorProvider, client_id: str, name: str) -> None:
         now = utc_now_iso()
         with self._cursor() as cur:
             cur.execute(
@@ -26,7 +27,7 @@ class HistoryClientNamesMixin:
                 (client_id, name, now),
             )
 
-    def delete_client_name(self, client_id: str) -> bool:
+    def delete_client_name(self: HistoryCursorProvider, client_id: str) -> bool:
         with self._cursor() as cur:
             cur.execute("DELETE FROM client_names WHERE client_id = ?", (client_id,))
-            return cur.rowcount > 0
+            return bool(int(cur.rowcount) > 0)

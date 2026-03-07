@@ -343,14 +343,18 @@ def main() -> int:
         return bootstrap_rc
 
     all_jobs = _job_steps(python_cmd)
-    selected_jobs = args.job if args.job else [
-        "backend-quality",
-        "backend-typecheck",
-        "frontend-typecheck",
-        "ui-smoke",
-        "backend-tests",
-        "e2e",
-    ]
+    selected_jobs = (
+        args.job
+        if args.job
+        else [
+            "backend-quality",
+            "backend-typecheck",
+            "frontend-typecheck",
+            "ui-smoke",
+            "backend-tests",
+            "e2e",
+        ]
+    )
 
     started = time.monotonic()
     results: dict[str, JobResult] = {}

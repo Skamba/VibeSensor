@@ -8,11 +8,25 @@ from fastapi import FastAPI
 from vibesensor.routes import create_router
 
 
+def _openapi_state() -> MagicMock:
+    state = MagicMock()
+    state.ingress = MagicMock()
+    state.settings = MagicMock()
+    state.diagnostics = MagicMock()
+    state.persistence = MagicMock()
+    state.websocket = MagicMock()
+    state.updates = MagicMock()
+    state.processing = MagicMock()
+    state.settings.apply_car_settings = MagicMock()
+    state.settings.apply_speed_source_settings = MagicMock()
+    return state
+
+
 @pytest.fixture(scope="module")
 def openapi_schema() -> dict:
     """Build the OpenAPI schema once for all tests in this module."""
     app = FastAPI()
-    app.include_router(create_router(MagicMock()))
+    app.include_router(create_router(_openapi_state()))
     return app.openapi()
 
 

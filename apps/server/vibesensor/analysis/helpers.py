@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from math import isfinite, sqrt
 from pathlib import Path
 from typing import Any, TypedDict
@@ -18,6 +19,7 @@ from ..constants import MEMS_NOISE_FLOOR_G, MIN_ANALYSIS_FREQ_HZ, WEAK_SPATIAL_D
 from ..locations import label_for_code as _label_for_code
 from ..runlog import as_float_or_none as _as_float
 from ..runlog import read_jsonl_run
+from ._types import PhaseLabel
 
 SPEED_BIN_WIDTH_KMH = 10
 SPEED_COVERAGE_MIN_PCT = 35.0
@@ -52,9 +54,9 @@ def weak_spatial_dominance_threshold(location_count: int | None) -> float:
     chance ties become more likely as the number of compared locations grows.
     """
     if location_count is None:
-        return WEAK_SPATIAL_DOMINANCE_THRESHOLD
+        return float(WEAK_SPATIAL_DOMINANCE_THRESHOLD)
     n_locations = max(2, int(location_count))
-    return WEAK_SPATIAL_DOMINANCE_THRESHOLD * (1.0 + (0.1 * (n_locations - 2)))
+    return float(WEAK_SPATIAL_DOMINANCE_THRESHOLD) * (1.0 + (0.1 * (n_locations - 2)))
 
 
 def _validate_required_strength_metrics(samples: list[dict[str, Any]]) -> None:
@@ -121,8 +123,8 @@ def _outlier_summary(values: list[float]) -> _OutlierSummary:
             "upper_bound": None,
         }
     sorted_vals = sorted(values)
-    q1 = percentile(sorted_vals, 0.25)
-    q3 = percentile(sorted_vals, 0.75)
+    q1 = float(percentile(sorted_vals, 0.25))
+    q3 = float(percentile(sorted_vals, 0.75))
     iqr = max(0.0, q3 - q1)
     low = q1 - (1.5 * iqr)
     high = q3 + (1.5 * iqr)
@@ -207,7 +209,7 @@ def _speed_stats(speed_values: list[float]) -> dict[str, float | bool | None]:
 
 def _speed_stats_by_phase(
     samples: list[dict[str, Any]],
-    per_sample_phases: list[str],
+    per_sample_phases: Sequence[PhaseLabel],
 ) -> dict[str, dict[str, Any]]:
     """Compute speed statistics broken down by driving phase.
 
@@ -251,7 +253,7 @@ def _tire_reference_from_metadata(metadata: dict[str, Any]) -> tuple[float | Non
         deflection_factor=_as_float(metadata.get("tire_deflection_factor")),
     )
     if derived is not None and derived > 0:
-        return derived, "derived_from_tire_dimensions"
+        return float(derived), "derived_from_tire_dimensions"
     return None, None
 
 
@@ -289,7 +291,7 @@ def _effective_engine_rpm(
     whz = wheel_hz_from_speed_kmh(speed_kmh, tire_circumference_m)
     if whz is None:
         return None, "missing"
-    return engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio), (
+    return float(engine_rpm_from_wheel_hz(whz, final_drive_ratio, gear_ratio)), (
         "estimated_from_speed_and_ratios"
     )
 
@@ -304,7 +306,8 @@ def _load_run(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]], list[st
 
 
 def _primary_vibration_strength_db(sample: dict[str, Any]) -> float | None:
-    return _as_float(sample.get("vibration_strength_db"))
+    value = _as_float(sample.get("vibration_strength_db"))
+    return float(value) if value is not None else None
 
 
 def _corr_abs(x_vals: list[float], y_vals: list[float]) -> float | None:
@@ -375,11 +378,11 @@ def _estimate_strength_floor_amp_g(sample: dict[str, Any]) -> float | None:
     """
     floor_amp = _as_float(sample.get("strength_floor_amp_g"))
     if floor_amp is not None and floor_amp > 0:
-        return floor_amp
+        return float(floor_amp)
     peak_amps = sorted(amp for _hz, amp in _sample_top_peaks(sample) if amp > 0)
     if len(peak_amps) < 3:
         return None
-    floor_from_peaks = percentile(peak_amps, 0.20)
+    floor_from_peaks = float(percentile(peak_amps, 0.20))
     return float(floor_from_peaks) if floor_from_peaks > 0 else None
 
 
@@ -396,7 +399,7 @@ def _run_noise_baseline_g(samples: list[dict[str, Any]]) -> float | None:
             floors.append(floor_amp)
     if not floors:
         return None
-    return percentile(sorted(floors), 0.50)
+    return float(percentile(sorted(floors), 0.50))
 
 
 def _effective_baseline_floor(
@@ -414,7 +417,7 @@ def _effective_baseline_floor(
         if run_noise_baseline_g is not None
         else (extra_fallback if extra_fallback is not None else 0.0)
     )
-    return max(MEMS_NOISE_FLOOR_G, val)
+    return float(max(float(MEMS_NOISE_FLOOR_G), float(val)))
 
 
 def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
@@ -427,7 +430,8 @@ def _location_label(sample: dict[str, Any], *, lang: str = "en") -> str:
     # Prefer structured location code (from SensorConfig) if available
     location_code = str(sample.get("location") or "").strip()
     if location_code:
-        return _label_for_code(location_code) or location_code
+        translated = _label_for_code(location_code)
+        return str(translated) if translated else location_code
 
     client_name_raw = str(sample.get("client_name") or "").strip()
     if client_name_raw:
