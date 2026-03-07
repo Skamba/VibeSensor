@@ -11,5 +11,5 @@ from __future__ import annotations
 from test_support.analysis import *
 from test_support.assertions import *
 from test_support.core import *
-from test_support.scenarios import *
 from test_support.core import _stable_hash
+from test_support.scenarios import *
