@@ -7,7 +7,7 @@ from pathlib import Path
 from vibesensor_core.vibration_strength import compute_vibration_strength_db
 
 from vibesensor.analysis import build_findings_for_samples, summarize_log
-from vibesensor.analysis.findings import _sensor_intensity_by_location
+from vibesensor.analysis.findings.intensity import _sensor_intensity_by_location
 from vibesensor.constants import MPS_TO_KMH
 from vibesensor.diagnostics_shared import (
     build_diagnostic_settings,
@@ -16,7 +16,7 @@ from vibesensor.diagnostics_shared import (
     tolerance_for_order,
     vehicle_orders_hz,
 )
-from vibesensor.live_diagnostics import LiveDiagnosticsEngine
+from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 
 _DEFAULT_SPEED_MPS = 27.7777777778  # 100 km/h
 

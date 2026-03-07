@@ -4,10 +4,9 @@ Stores run history (metadata, samples, analysis), application settings
 and client names in a single file – lightweight enough for a
 Raspberry Pi 3A+.
 
-Schema v5 stores time-series samples as typed columns instead of JSON
-blobs, dramatically improving write speed, read speed and storage size
-on Raspberry Pi class hardware.  Legacy v4 ``samples`` rows (JSON) are
-read transparently for old runs that have not been migrated.
+Schema v5 stores time-series samples as typed columns in ``samples_v2``,
+providing fast write/read and compact storage on Raspberry Pi class
+hardware.
 """
 
 from __future__ import annotations
@@ -105,7 +104,7 @@ _V2_PEAK_OFFSET: int = _V2_TYPED_OFFSET + len(_V2_TYPED_COLS)
 _V2_EXTRA_OFFSET: int = _V2_PEAK_OFFSET + len(_V2_PEAK_COLS)
 
 # Allowed table names for keyset pagination — used to guard the f-string in SQL.
-_ALLOWED_SAMPLE_TABLES: frozenset[str] = frozenset({"samples_v2", "samples"})
+_ALLOWED_SAMPLE_TABLES: frozenset[str] = frozenset({"samples_v2"})
 
 # Module-level binding avoids repeated attribute lookup in hot loops.
 _isfinite = math.isfinite
@@ -188,51 +187,6 @@ CREATE TABLE IF NOT EXISTS client_names (
 );
 """
 
-# DDL applied when migrating an existing v4 database to v5.
-_MIGRATION_V4_TO_V5_SQL = """\
-CREATE TABLE IF NOT EXISTS samples_v2 (
-    id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_id                TEXT NOT NULL REFERENCES runs(run_id) ON DELETE CASCADE,
-    record_type           TEXT,
-    schema_version        TEXT,
-    timestamp_utc         TEXT,
-    t_s                   REAL,
-    client_id             TEXT,
-    client_name           TEXT,
-    location              TEXT,
-    sample_rate_hz        INTEGER,
-    speed_kmh             REAL,
-    gps_speed_kmh         REAL,
-    speed_source          TEXT,
-    engine_rpm            REAL,
-    engine_rpm_source     TEXT,
-    gear                  REAL,
-    final_drive_ratio     REAL,
-    accel_x_g             REAL,
-    accel_y_g             REAL,
-    accel_z_g             REAL,
-    dominant_freq_hz      REAL,
-    dominant_axis         TEXT,
-    vibration_strength_db REAL,
-    strength_bucket       TEXT,
-    strength_peak_amp_g   REAL,
-    strength_floor_amp_g  REAL,
-    frames_dropped_total  INTEGER DEFAULT 0,
-    queue_overflow_drops  INTEGER DEFAULT 0,
-    top_peaks             TEXT,
-    top_peaks_x           TEXT,
-    top_peaks_y           TEXT,
-    top_peaks_z           TEXT,
-    extra_json            TEXT
-);
-
-CREATE INDEX IF NOT EXISTS idx_samples_v2_run_id ON samples_v2(run_id);
-CREATE INDEX IF NOT EXISTS idx_samples_v2_run_time ON samples_v2(run_id, t_s);
-
-CREATE INDEX IF NOT EXISTS idx_runs_status ON runs(status);
-CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs(created_at);
-"""
-
 
 class HistoryDB:
     """Thin wrapper around a SQLite database for run history."""
@@ -251,7 +205,6 @@ class HistoryDB:
         except Exception:
             self._conn.close()
             raise
-        self._has_legacy_samples: bool = self._table_exists("samples")
 
     # -- lifecycle ------------------------------------------------------------
 
@@ -321,32 +274,10 @@ class HistoryDB:
                 return
             if version == _SCHEMA_VERSION:
                 return
-            if version == 4:
-                self._migrate_v4_to_v5()
-                return
             raise RuntimeError(
                 f"Unsupported history DB schema version {version}; "
                 f"expected {_SCHEMA_VERSION}. Delete the database file to recreate."
             )
-
-    def _migrate_v4_to_v5(self) -> None:
-        """Create the structured samples_v2 table alongside the legacy samples table."""
-        LOGGER.info("Migrating history DB from schema v4 to v5 (structured samples)")
-        with self._cursor() as cur:
-            cur.executescript(_MIGRATION_V4_TO_V5_SQL)
-            cur.execute(
-                "UPDATE schema_meta SET value = ? WHERE key = 'version'",
-                (str(_SCHEMA_VERSION),),
-            )
-        LOGGER.info("Migration v4→v5 complete; legacy sample rows remain readable")
-
-    def _table_exists(self, name: str) -> bool:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?",
-                (name,),
-            )
-            return cur.fetchone() is not None
 
     # -- write ----------------------------------------------------------------
 
@@ -705,24 +636,7 @@ class HistoryDB:
     ) -> Iterator[list[dict[str, Any]]]:
         if offset < 0:
             raise ValueError(f"iter_run_samples: offset must be >= 0, got {offset}")
-        if self._run_has_v2_samples(run_id):
-            yield from self._iter_v2_samples(run_id, batch_size, offset)
-        elif self._has_legacy_samples:
-            yield from self._iter_legacy_samples(run_id, batch_size, offset)
-        else:
-            LOGGER.debug(
-                "iter_run_samples: run_id=%s has no samples in v2 table "
-                "and no legacy samples table is present",
-                run_id,
-            )
-
-    def _run_has_v2_samples(self, run_id: str) -> bool:
-        with self._cursor(commit=False) as cur:
-            cur.execute(
-                "SELECT 1 FROM samples_v2 WHERE run_id = ? LIMIT 1",
-                (run_id,),
-            )
-            return cur.fetchone() is not None
+        yield from self._iter_v2_samples(run_id, batch_size, offset)
 
     def _resolve_keyset_offset(self, table: str, run_id: str, offset: int) -> int | None:
         """Translate a row *offset* into a keyset-pagination ``last_id``.
@@ -784,50 +698,6 @@ class HistoryDB:
                 except Exception:
                     total_skipped += 1
                     LOGGER.warning("Skipping corrupt v2 sample row id=%s", row[0], exc_info=True)
-            if parsed_batch:
-                yield parsed_batch
-
-    def _iter_legacy_samples(
-        self, run_id: str, batch_size: int = 1000, offset: int = 0
-    ) -> Iterator[list[dict[str, Any]]]:
-        """Read samples from the legacy v4 JSON-blob ``samples`` table."""
-        size = max(1, batch_size)
-        last_id: int | None = None
-        if offset > 0:
-            last_id = self._resolve_keyset_offset("samples", run_id, offset)
-            if last_id is None:
-                return
-        total_skipped = 0
-        while True:
-            with self._cursor(commit=False) as cur:
-                if last_id is None:
-                    cur.execute(
-                        "SELECT id, sample_json FROM samples WHERE run_id = ? ORDER BY id LIMIT ?",
-                        (run_id, size),
-                    )
-                else:
-                    cur.execute(
-                        "SELECT id, sample_json FROM samples"
-                        " WHERE run_id = ? AND id > ? ORDER BY id LIMIT ?",
-                        (run_id, last_id, size),
-                    )
-                batch_rows = cur.fetchall()
-            if not batch_rows:
-                if total_skipped:
-                    LOGGER.warning(
-                        "run_id=%s: skipped %d unparseable legacy sample row(s) in total",
-                        run_id,
-                        total_skipped,
-                    )
-                return
-            last_id = batch_rows[-1][0]
-            parsed_batch: list[dict[str, Any]] = []
-            for sample_id, sample_json in batch_rows:
-                parsed = safe_json_loads(sample_json, context=f"sample {sample_id}")
-                if isinstance(parsed, dict):
-                    parsed_batch.append(parsed)
-                else:
-                    total_skipped += 1
             if parsed_batch:
                 yield parsed_batch
 

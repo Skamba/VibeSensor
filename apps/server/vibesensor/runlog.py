@@ -1,7 +1,7 @@
 """Run-log I/O — reading, writing, and normalising JSONL run files.
 
 Provides helpers for creating and reading metric run files in JSONL format,
-plus normalisation helpers for backward-compatible field name migration.
+plus normalisation helpers for canonical field name handling.
 """
 
 from __future__ import annotations

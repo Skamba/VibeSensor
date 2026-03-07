@@ -985,8 +985,7 @@ import asyncio
 
 import pytest
 
-from vibesensor.analysis.findings import _weighted_percentile
-from vibesensor.analysis.helpers import _corr_abs_clamped
+from vibesensor.analysis.helpers import _corr_abs_clamped, _weighted_percentile
 from vibesensor.analysis.summary import _normalize_lang
 from vibesensor.firmware_cache import _dir_sha256
 from vibesensor.report.pdf_builder import _strength_with_peak
@@ -1368,7 +1367,7 @@ from math import pi
 import pytest
 
 from vibesensor.api import _bounded_sample
-from vibesensor.live_diagnostics import LiveDiagnosticsEngine
+from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 
 # -- shared helpers ----------------------------------------------------------
 
@@ -1631,7 +1630,7 @@ from collections import deque
 import pytest
 
 from vibesensor.analysis.test_plan import _weighted_percentile_speed
-from vibesensor.live_diagnostics import _TrackerLevelState
+from vibesensor.live_diagnostics._types import _TrackerLevelState
 
 
 # ---------------------------------------------------------------------------

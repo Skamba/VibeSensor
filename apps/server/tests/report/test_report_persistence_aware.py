@@ -15,7 +15,7 @@ from _report_helpers import (
     analysis_sample_with_peaks as _sample,
 )
 
-from vibesensor.analysis.findings import (
+from vibesensor.analysis.findings.persistent_findings import (
     _build_persistent_peak_findings,
     _classify_peak_type,
 )

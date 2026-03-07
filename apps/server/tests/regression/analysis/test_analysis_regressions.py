@@ -25,7 +25,7 @@ from unittest.mock import patch
 
 import pytest
 
-from vibesensor.analysis.findings import _compute_effective_match_rate
+from vibesensor.analysis.findings.order_findings import _compute_effective_match_rate
 from vibesensor.analysis.helpers import _speed_bin_label
 from vibesensor.metrics_log import MetricsLogger, MetricsLoggerConfig
 from vibesensor.update.manager import _hash_tree
@@ -606,8 +606,8 @@ def test_end_to_end_pipeline(db: HistoryDB) -> None:
 
 import pytest
 
-import vibesensor.analysis.findings as fmod
-from vibesensor.analysis.findings import (
+import vibesensor.analysis.findings.persistent_findings as fmod_persistent
+from vibesensor.analysis.findings.order_findings import (
     _compute_order_confidence,
     _suppress_engine_aliases,
 )
@@ -627,7 +627,7 @@ class TestRankingScoreErrorDenominator:
         The ranking_score computation was extracted to ``_assemble_order_finding``
         in the refactoring; verify it there rather than in the outer orchestrator.
         """
-        from vibesensor.analysis.findings import _assemble_order_finding
+        from vibesensor.analysis.findings.order_findings import _assemble_order_finding
 
         src = inspect.getsource(_assemble_order_finding)
         # Old code had a hardcoded 0.5 denominator; new code derives from compliance.
@@ -823,7 +823,7 @@ class TestPersistentPeakNegligibleCapAligned:
     frequency."""
 
     def test_persistent_peak_cap_value_in_source(self) -> None:
-        src = inspect.getsource(fmod._build_persistent_peak_findings)
+        src = inspect.getsource(fmod_persistent._build_persistent_peak_findings)
         # The negligible cap must be 0.40, not 0.35
         assert "min(confidence, 0.40)" in src, (
             "Persistent peak negligible cap must be 0.40 to align with order cap"
@@ -1308,7 +1308,7 @@ from vibesensor.analysis.strength_labels import (
     strength_label,
 )
 from vibesensor.constants import SILENCE_DB
-from vibesensor.live_diagnostics import _combine_amplitude_strength_db
+from vibesensor.live_diagnostics._types import _combine_amplitude_strength_db
 from vibesensor.ws_hub import WebSocketHub
 
 # ------------------------------------------------------------------

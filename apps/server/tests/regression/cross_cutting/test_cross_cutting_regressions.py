@@ -18,7 +18,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from vibesensor.analysis.findings import _sensor_intensity_by_location
+from vibesensor.analysis.findings.intensity import _sensor_intensity_by_location
 from vibesensor.analysis.helpers import _format_duration, _speed_bin_label
 from vibesensor.analysis.phase_segmentation import segment_run_phases
 from vibesensor.analysis.report_data_builder import _order_label_human, _resolve_i18n
@@ -26,7 +26,7 @@ from vibesensor.analysis.summary import _compute_run_timing, confidence_label
 from vibesensor.analysis.test_plan import _weighted_speed_window_label
 from vibesensor.config import _split_host_port
 from vibesensor.domain_models import VALID_SPEED_SOURCES
-from vibesensor.live_diagnostics import LiveDiagnosticsEngine
+from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
 from vibesensor.release_fetcher import ReleaseInfo, ServerReleaseFetcher
 from vibesensor.report_i18n import tr
 from vibesensor.runlog import as_float_or_none as runlog_as_float_or_none
