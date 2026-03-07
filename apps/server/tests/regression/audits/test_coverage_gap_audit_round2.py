@@ -204,12 +204,12 @@ class TestWorkerPoolExtended:
         finally:
             pool.shutdown()
 
-    def test_stats_tracks_total_wait_s(self) -> None:
+    def test_stats_tracks_total_run_s(self) -> None:
         pool = WorkerPool(max_workers=1)
         try:
             pool.map_unordered(lambda x: time.sleep(0.01) or x, [1, 2])
             stats = pool.stats()
-            assert stats["total_wait_s"] > 0
+            assert stats["total_run_s"] > 0
             assert stats["total_tasks"] == 2
         finally:
             pool.shutdown()

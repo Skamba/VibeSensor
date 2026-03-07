@@ -1,4 +1,4 @@
-.PHONY: setup format lint test test-fast test-all test-ci test-full-suite smoke loc docs-lint ui-typecheck ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
+.PHONY: setup format lint typecheck-backend typecheck ui-typecheck test test-fast test-all test-ci test-full-suite smoke loc docs-lint ai-check ai-test ai-smoke ai-pack ai\:check ai\:test ai\:smoke ai\:pack
 
 setup:
 	python3 -m pip install --upgrade pip
@@ -11,6 +11,14 @@ format:
 lint:
 	ruff check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
 	ruff format --check apps/server/vibesensor apps/server/tests apps/simulator libs/core/python libs/shared/python tools/dev tools/tests tools/ci tools/config
+
+typecheck-backend:
+	PYTHON=$(CURDIR)/.venv/bin/python; \
+	if [ ! -x "$$PYTHON" ]; then PYTHON=python3; fi; \
+	cd apps/server && MYPYPATH=.:../../libs/core/python:../../libs/shared/python "$$PYTHON" -m mypy --config-file pyproject.toml
+
+typecheck: typecheck-backend ui-typecheck
+
 test:
 	python3 -m pytest -q -m "not selenium" apps/server/tests
 

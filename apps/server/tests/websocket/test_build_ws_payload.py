@@ -130,28 +130,39 @@ def _make_state(
     ui_push_hz: int = 10,
     ui_heavy_push_hz: int = 4,
 ) -> RuntimeState:
-    from vibesensor.runtime import RuntimeState
+    from vibesensor.runtime import (
+        RuntimeIngressServices,
+        RuntimeOperationsServices,
+        RuntimePlatformServices,
+        build_runtime_state,
+    )
 
-    state = RuntimeState(
+    state = build_runtime_state(
         config=_StubConfig(
             processing=_StubProcessingConfig(
                 ui_push_hz=ui_push_hz,
                 ui_heavy_push_hz=ui_heavy_push_hz,
             )
         ),  # type: ignore[arg-type]
-        registry=_StubRegistry(clients),  # type: ignore[arg-type]
-        processor=_StubProcessor(),  # type: ignore[arg-type]
-        control_plane=_SENTINEL,  # type: ignore[arg-type]
-        ws_hub=_SENTINEL,  # type: ignore[arg-type]
-        gps_monitor=_StubGPS(),  # type: ignore[arg-type]
-        analysis_settings=_StubAnalysisSettings(),  # type: ignore[arg-type]
-        metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
-        live_diagnostics=_StubDiagnostics(),  # type: ignore[arg-type]
-        settings_store=_StubSettingsStore(),  # type: ignore[arg-type]
-        history_db=_SENTINEL,  # type: ignore[arg-type]
-        update_manager=_SENTINEL,  # type: ignore[arg-type]
-        esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
-        worker_pool=_SENTINEL,  # type: ignore[arg-type]
+        ingress=RuntimeIngressServices(
+            registry=_StubRegistry(clients),  # type: ignore[arg-type]
+            processor=_StubProcessor(),  # type: ignore[arg-type]
+            control_plane=_SENTINEL,  # type: ignore[arg-type]
+        ),
+        operations=RuntimeOperationsServices(
+            settings_store=_StubSettingsStore(),  # type: ignore[arg-type]
+            analysis_settings=_StubAnalysisSettings(),  # type: ignore[arg-type]
+            gps_monitor=_StubGPS(),  # type: ignore[arg-type]
+            metrics_logger=_StubMetricsLogger(),  # type: ignore[arg-type]
+            live_diagnostics=_StubDiagnostics(),  # type: ignore[arg-type]
+        ),
+        platform=RuntimePlatformServices(
+            ws_hub=_SENTINEL,  # type: ignore[arg-type]
+            history_db=_SENTINEL,  # type: ignore[arg-type]
+            update_manager=_SENTINEL,  # type: ignore[arg-type]
+            esp_flash_manager=_SENTINEL,  # type: ignore[arg-type]
+            worker_pool=_SENTINEL,  # type: ignore[arg-type]
+        ),
     )
     state.ws_cache.include_heavy = ws_include_heavy
     return state

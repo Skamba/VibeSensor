@@ -20,6 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+  "mypy>=1.19,<2",
   "pytest>=8,<9",
   "pytest-asyncio>=0.23,<1",
   "pytest-timeout>=2,<3",
@@ -90,3 +91,23 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
 "vibesensor/report/*.py" = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+files = [
+  "vibesensor/app.py",
+  "vibesensor/bootstrap.py",
+  "vibesensor/worker_pool.py",
+  "vibesensor/runtime",
+  "vibesensor/routes",
+]
+follow_imports = "skip"
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+strict_equality = true
+show_error_codes = true
