@@ -128,7 +128,13 @@ class TestSanitizeForJson:
         # Depth 0 → nested, depth 1 → child1, depth 2 → child2 (still ok),
         # depth 3 → child3 exceeds limit and becomes None.
         cleaned_limited, _ = sanitize_for_json(nested, _max_depth=2)
-        assert cleaned_limited["child"]["child"]["child"] is None  # truncated at depth 3
+        # Use .get() chaining to avoid KeyError if truncation produces a different structure.
+        level1 = cleaned_limited.get("child")
+        assert isinstance(level1, dict), "level1 should still be a dict (within depth limit)"
+        level2 = level1.get("child")
+        assert isinstance(level2, dict), "level2 should still be a dict (within depth limit)"
+        # The third level exceeds the depth limit and should be None.
+        assert level2.get("child") is None, "level3 should be truncated to None"
 
     def test_depth_limit_logs_warning(self, caplog: pytest.LogCaptureFixture) -> None:
         """Exceeding _max_depth emits a warning log."""
