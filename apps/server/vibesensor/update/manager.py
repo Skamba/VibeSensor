@@ -304,7 +304,7 @@ class UpdateManager:
         log_tail.append(sanitized)
         if len(log_tail) > _LOG_TAIL_MAX:
             del log_tail[:-_LOG_TAIL_TRIM_TO]
-        LOGGER.debug("update event recorded")
+        LOGGER.debug("update: %s", sanitized)
 
     def _redacted_args_for_log(self, args: list[str]) -> list[str]:
         """Return command args with sensitive values replaced by *** for safe logging."""

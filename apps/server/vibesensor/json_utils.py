@@ -37,6 +37,11 @@ def sanitize_for_json(obj: Any, *, _max_depth: int = 128) -> tuple[Any, bool]:
     def _walk(v: Any, depth: int = 0) -> Any:
         nonlocal found_non_finite
         if depth > _max_depth:
+            LOGGER.warning(
+                "sanitize_for_json: nesting depth %d exceeded limit %d; truncating to None",
+                depth,
+                _max_depth,
+            )
             return None
         # Fast path: common leaf types that never need sanitisation.
         # Intentional type() identity checks (not isinstance): these are exact

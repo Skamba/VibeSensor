@@ -572,7 +572,11 @@ class HistoryDB:
                 )
 
     def analysis_is_current(self, run_id: str) -> bool:
-        """Return *True* when the persisted analysis version matches the current schema."""
+        """Return *True* when the persisted analysis version is at least the current schema.
+
+        Uses ``>=`` so that analyses written by a newer server (higher version)
+        are not needlessly re-run when an older server reads them.
+        """
         with self._cursor(commit=False) as cur:
             cur.execute(
                 "SELECT analysis_version FROM runs WHERE run_id = ?",

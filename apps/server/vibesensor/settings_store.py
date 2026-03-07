@@ -231,7 +231,8 @@ class SettingsStore:
             try:
                 self._persist()
             except PersistenceError:
-                car.aspects = old_aspects
+                car.aspects.clear()
+                car.aspects.update(old_aspects)
                 raise
             return dict(car.aspects)
 

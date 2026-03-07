@@ -306,7 +306,9 @@ export function createHistoryFeature(ctx: HistoryFeatureDeps): HistoryFeature {
   function filenameFromDisposition(headerValue: string | null, fallback: string): string {
     if (!headerValue) return fallback;
     const utf8Match = headerValue.match(/filename\*=UTF-8''([^;]+)/i);
-    if (utf8Match && utf8Match[1]) return decodeURIComponent(utf8Match[1]);
+    if (utf8Match && utf8Match[1]) {
+      try { return decodeURIComponent(utf8Match[1]); } catch { /* fall through to simple match */ }
+    }
     const simpleMatch = headerValue.match(/filename="?([^";]+)"?/i);
     if (simpleMatch && simpleMatch[1]) return simpleMatch[1];
     return fallback;
