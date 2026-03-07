@@ -15,6 +15,13 @@ Submodules
 
 from ._state import RuntimeState
 from .composition import build_runtime_state
+from .processing_loop import ProcessingLoopState
+from .rotational_speeds import (
+    build_rotational_speeds_payload as _build_rotational_speeds_payload,
+)
+from .rotational_speeds import (
+    rotational_basis_speed_source as _rotational_basis_speed_source,
+)
 from .subsystems import (
     RuntimeDiagnosticsSubsystem,
     RuntimeIngressSubsystem,
@@ -24,13 +31,6 @@ from .subsystems import (
     RuntimeSettingsSubsystem,
     RuntimeUpdateSubsystem,
     RuntimeWebsocketSubsystem,
-)
-from .processing_loop import ProcessingLoopState
-from .rotational_speeds import (
-    build_rotational_speeds_payload as _build_rotational_speeds_payload,
-)
-from .rotational_speeds import (
-    rotational_basis_speed_source as _rotational_basis_speed_source,
 )
 from .ws_broadcast import WsBroadcastCache
 

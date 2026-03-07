@@ -5,16 +5,17 @@ import hashlib
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from _update_manager_test_helpers import (
+    assert_hotspot_restored,
+    make_mock_release,
+    mock_which,
+    patch_release_fetcher,
+    run_update,
+    seed_runtime_artifacts,
+    setup_update_env,
+)
 
 from vibesensor.update.models import UpdateState
-
-from _update_manager_test_helpers import assert_hotspot_restored
-from _update_manager_test_helpers import make_mock_release
-from _update_manager_test_helpers import mock_which
-from _update_manager_test_helpers import patch_release_fetcher
-from _update_manager_test_helpers import run_update
-from _update_manager_test_helpers import seed_runtime_artifacts
-from _update_manager_test_helpers import setup_update_env
 
 
 @pytest.mark.asyncio
@@ -39,11 +40,22 @@ class TestUpdateManagerAsync:
 
         assert manager.status.state == UpdateState.success
         assert manager.status.exit_code == 0
-        assert [call[0] for call in runner.calls if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])]
+        assert [
+            call[0]
+            for call in runner.calls
+            if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
+        ]
         assert_hotspot_restored(runner)
-        firmware_refresh_calls = [call[0] for call in runner.calls if "vibesensor.firmware_cache" in " ".join(call[0])]
+        firmware_refresh_calls = [
+            call[0]
+            for call in runner.calls
+            if "vibesensor.firmware_cache" in " ".join(call[0])
+        ]
         assert firmware_refresh_calls
-        restart_cmd = "systemd-run --unit vibesensor-post-update-restart --on-active=2s systemctl restart vibesensor.service"
+        restart_cmd = (
+            "systemd-run --unit vibesensor-post-update-restart --on-active=2s "
+            "systemctl restart vibesensor.service"
+        )
         assert any(restart_cmd in " ".join(call[0]) for call in runner.calls)
 
     async def test_already_up_to_date(self, tmp_path) -> None:
@@ -56,7 +68,12 @@ class TestUpdateManagerAsync:
             await run_update(manager)
 
         assert manager.status.state == UpdateState.success
-        pip_install_calls = [call[0] for call in runner.calls if "pip" in " ".join(call[0]) and "force-reinstall" in " ".join(call[0])]
+        pip_install_calls = [
+            call[0]
+            for call in runner.calls
+            if "pip" in " ".join(call[0])
+            and "force-reinstall" in " ".join(call[0])
+        ]
         assert not pip_install_calls
 
     async def test_no_sudo_fails_gracefully(self, tmp_path) -> None:
@@ -65,11 +82,18 @@ class TestUpdateManagerAsync:
         with patch("shutil.which", mock_which):
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
-        assert "privileg" in " ".join(f"{issue.message} {issue.detail}" for issue in manager.status.issues).lower()
+        assert "privileg" in " ".join(
+            f"{issue.message} {issue.detail}" for issue in manager.status.issues
+        ).lower()
 
     async def test_wifi_connection_failure(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
-        runner.set_response("connection up VibeSensor-Uplink", 1, "", "Error: Connection activation failed")
+        runner.set_response(
+            "connection up VibeSensor-Uplink",
+            1,
+            "",
+            "Error: Connection activation failed",
+        )
         with patch("shutil.which", mock_which):
             await run_update(manager, "BadNet", "wrong")
         assert manager.status.state == UpdateState.failed
@@ -151,7 +175,11 @@ class TestUpdateManagerAsync:
         with patch_release_fetcher() as mock_fetcher:
             mock_fetcher.return_value.check_update_available.return_value = None
             await run_update(manager, "Pim", "tomaat123")
-        assert any("connection modify VibeSensor-Uplink wifi-sec.key-mgmt wpa-psk wifi-sec.psk" in " ".join(call[0]) for call in runner.calls)
+        assert any(
+            "connection modify VibeSensor-Uplink "
+            "wifi-sec.key-mgmt wpa-psk wifi-sec.psk" in " ".join(call[0])
+            for call in runner.calls
+        )
 
     async def test_download_failure_still_restores_hotspot(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
@@ -191,7 +219,11 @@ class TestUpdateManagerAsync:
             fetcher.download_wheel.return_value = fake_wheel
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
-        pip_calls = [call[0] for call in runner.calls if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])]
+        pip_calls = [
+            call[0]
+            for call in runner.calls
+            if "pip" in " ".join(call[0]) and "install" in " ".join(call[0])
+        ]
         assert not pip_calls
         assert_hotspot_restored(runner)
 
@@ -238,7 +270,9 @@ class TestUpdateManagerAsync:
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            mock_fetcher.return_value.check_update_available.side_effect = RuntimeError("API rate limit exceeded")
+            mock_fetcher.return_value.check_update_available.side_effect = (
+                RuntimeError("API rate limit exceeded")
+            )
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
 
@@ -260,7 +294,10 @@ class TestUpdateManagerAsync:
         contracts_dir.mkdir()
         with (
             patch("vibesensor.update.manager.SERVICE_CONTRACTS_DIR", str(contracts_dir)),
-            patch("vibesensor.update.manager.SERVICE_ENV_DROPIN", str(tmp_path / "10-contracts-dir.conf")),
+            patch(
+                "vibesensor.update.manager.SERVICE_ENV_DROPIN",
+                str(tmp_path / "10-contracts-dir.conf"),
+            ),
         ):
             await manager._ensure_service_contracts_env()
         joined_calls = [" ".join(call[0]) for call in runner.calls]

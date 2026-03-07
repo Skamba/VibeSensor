@@ -3,15 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
-from _report_pdf_test_helpers import RUN_END
-from _report_pdf_test_helpers import run_metadata
-from _report_pdf_test_helpers import sample
-from _report_pdf_test_helpers import summarize_log
-from _report_pdf_test_helpers import write_jsonl
+from _report_pdf_test_helpers import RUN_END, run_metadata, sample, summarize_log, write_jsonl
 
 
-def test_sensor_location_stats_include_percentiles_and_strength_distribution(tmp_path: Path) -> None:
+def test_sensor_location_stats_include_percentiles_and_strength_distribution(
+    tmp_path: Path,
+) -> None:
     run_path = tmp_path / "run_location_stats.jsonl"
     records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
     for idx, amp in enumerate([0.1, 0.2, 0.3, 0.4]):
@@ -36,12 +33,22 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     run_path = tmp_path / "run_location_stats_partial_sensor.jsonl"
     records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800)]
     for idx in range(10):
-        full_sensor = sample(idx, speed_kmh=60.0 + idx, dominant_freq_hz=20.0, peak_amp_g=0.09 + (idx * 0.001))
+        full_sensor = sample(
+            idx,
+            speed_kmh=60.0 + idx,
+            dominant_freq_hz=20.0,
+            peak_amp_g=0.09 + (idx * 0.001),
+        )
         full_sensor["client_id"] = "full-1"
         full_sensor["client_name"] = "front-left wheel"
         records.append(full_sensor)
         if 2 <= idx <= 7:
-            partial_sensor = sample(idx, speed_kmh=60.0 + idx, dominant_freq_hz=19.0, peak_amp_g=0.07 + (idx * 0.001))
+            partial_sensor = sample(
+                idx,
+                speed_kmh=60.0 + idx,
+                dominant_freq_hz=19.0,
+                peak_amp_g=0.07 + (idx * 0.001),
+            )
             partial_sensor["client_id"] = "partial-2"
             partial_sensor["client_name"] = "front-right wheel"
             records.append(partial_sensor)
@@ -49,7 +56,9 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     write_jsonl(run_path, records)
     summary = summarize_log(run_path, include_samples=False)
     assert summary["sensor_locations"] == ["front-left wheel", "front-right wheel"]
-    assert {row["location"] for row in summary["sensor_intensity_by_location"]} == {"front-left wheel", "front-right wheel"}
+    assert {
+        row["location"] for row in summary["sensor_intensity_by_location"]
+    } == {"front-left wheel", "front-right wheel"}
 
 
 def test_sensor_location_stats_handle_counter_reset_and_l0_percent(tmp_path: Path) -> None:
@@ -82,7 +91,12 @@ def test_sensor_location_stats_warn_on_sparse_sensor_keeps_ranking_stable(tmp_pa
         full_sensor["vibration_strength_db"] = 22.0
         records.append(full_sensor)
         if idx < 10:
-            sparse_sensor = sample(idx, speed_kmh=60.0 + idx, dominant_freq_hz=19.0, peak_amp_g=0.09)
+            sparse_sensor = sample(
+                idx,
+                speed_kmh=60.0 + idx,
+                dominant_freq_hz=19.0,
+                peak_amp_g=0.09,
+            )
             sparse_sensor["client_id"] = "sparse-2"
             sparse_sensor["client_name"] = "front-right wheel"
             sparse_sensor["vibration_strength_db"] = 40.0

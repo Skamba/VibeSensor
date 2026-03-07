@@ -5,13 +5,10 @@ import time
 from unittest.mock import patch
 
 import pytest
+from _update_manager_test_helpers import FakeRunner, cancel_task, mock_which
 
 from vibesensor.update.manager import UpdateManager
 from vibesensor.update.models import UpdatePhase, UpdateState
-
-from _update_manager_test_helpers import FakeRunner
-from _update_manager_test_helpers import cancel_task
-from _update_manager_test_helpers import mock_which
 
 
 class TestUpdateManager:

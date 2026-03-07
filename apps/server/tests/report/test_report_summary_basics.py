@@ -2,26 +2,41 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from _report_pdf_test_helpers import KMH_TO_MPS
-from _report_pdf_test_helpers import RUN_END
-from _report_pdf_test_helpers import assert_pdf_contains
-from _report_pdf_test_helpers import build_report_pdf
-from _report_pdf_test_helpers import map_summary
-from _report_pdf_test_helpers import run_metadata
-from _report_pdf_test_helpers import sample
-from _report_pdf_test_helpers import suitability_by_key
-from _report_pdf_test_helpers import summarize_log
-from _report_pdf_test_helpers import write_jsonl
+from _report_pdf_test_helpers import (
+    KMH_TO_MPS,
+    RUN_END,
+    assert_pdf_contains,
+    build_report_pdf,
+    map_summary,
+    run_metadata,
+    sample,
+    suitability_by_key,
+    summarize_log,
+    write_jsonl,
+)
 
 
 def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     run_path = tmp_path / "run_complete.jsonl"
     circumference_m = 2.20
-    records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800, tire_circumference_m=circumference_m)]
+    records = [
+        run_metadata(
+            run_id="run-01",
+            raw_sample_rate_hz=800,
+            tire_circumference_m=circumference_m,
+        )
+    ]
     for idx in range(30):
         speed = 40 + idx
         wheel_hz = (speed * KMH_TO_MPS) / circumference_m
-        records.append(sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.09 + (idx * 0.001)))
+        records.append(
+            sample(
+                idx,
+                speed_kmh=float(speed),
+                dominant_freq_hz=wheel_hz,
+                peak_amp_g=0.09 + (idx * 0.001),
+            )
+        )
     records.append(RUN_END)
     write_jsonl(run_path, records)
 
@@ -31,7 +46,15 @@ def test_complete_run_has_speed_bins_findings_and_plots(tmp_path: Path) -> None:
     assert summary["findings"]
     pdf = build_report_pdf(map_summary(summary))
     assert pdf.startswith(b"%PDF")
-    for text in ("Diagnostic Worksheet", "Observed Signature", "Certainty", "Systems with findings", "Next steps", "Evidence", "Diagnostic Peaks"):
+    for text in (
+        "Diagnostic Worksheet",
+        "Observed Signature",
+        "Certainty",
+        "Systems with findings",
+        "Next steps",
+        "Evidence",
+        "Diagnostic Peaks",
+    ):
         assert_pdf_contains(pdf, text)
     assert b"Spectrogram" not in pdf
 
@@ -133,7 +156,14 @@ def test_missing_raw_sample_rate_adds_reference_finding(tmp_path: Path) -> None:
     run_path = tmp_path / "run_missing_sample_rate.jsonl"
     records = [run_metadata(run_id="run-01", raw_sample_rate_hz=None)]
     for idx in range(20):
-        records.append(sample(idx, speed_kmh=float(60 + idx), dominant_freq_hz=20.0, peak_amp_g=0.06 + (idx * 0.0005)))
+        records.append(
+            sample(
+                idx,
+                speed_kmh=float(60 + idx),
+                dominant_freq_hz=20.0,
+                peak_amp_g=0.06 + (idx * 0.0005),
+            )
+        )
     records.append(RUN_END)
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
@@ -151,15 +181,34 @@ def test_data_quality_outliers_include_zero_strength_values(tmp_path: Path) -> N
         records.append(current_sample)
     records.append(RUN_END)
     write_jsonl(run_path, records)
-    outliers = summarize_log(run_path, include_samples=False)["data_quality"]["outliers"]["amplitude_metric"]
+    outliers = summarize_log(run_path, include_samples=False)["data_quality"][
+        "outliers"
+    ]["amplitude_metric"]
     assert outliers["count"] == 3
 
 
 def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
     run_path = tmp_path / "run_derived_references.jsonl"
-    records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800, tire_width_mm=285, tire_aspect_pct=30, rim_in=21, final_drive_ratio=3.08, current_gear_ratio=0.64)]
+    records = [
+        run_metadata(
+            run_id="run-01",
+            raw_sample_rate_hz=800,
+            tire_width_mm=285,
+            tire_aspect_pct=30,
+            rim_in=21,
+            final_drive_ratio=3.08,
+            current_gear_ratio=0.64,
+        )
+    ]
     for idx in range(28):
-        records.append(sample(idx, speed_kmh=float(45 + idx), dominant_freq_hz=6.5 + (idx * 0.05), peak_amp_g=0.08 + (idx * 0.0008)))
+        records.append(
+            sample(
+                idx,
+                speed_kmh=float(45 + idx),
+                dominant_freq_hz=6.5 + (idx * 0.05),
+                peak_amp_g=0.08 + (idx * 0.0008),
+            )
+        )
     records.append(RUN_END)
     write_jsonl(run_path, records)
     finding_ids = {str(f.get("finding_id")) for f in summarize_log(run_path)["findings"]}
@@ -169,11 +218,25 @@ def test_derive_references_from_vehicle_parameters(tmp_path: Path) -> None:
 
 def test_metadata_accel_scale_and_units_are_exposed(tmp_path: Path) -> None:
     run_path = tmp_path / "run_units.jsonl"
-    records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800, tire_circumference_m=2.2, accel_scale_g_per_lsb=1.0 / 256.0)]
+    records = [
+        run_metadata(
+            run_id="run-01",
+            raw_sample_rate_hz=800,
+            tire_circumference_m=2.2,
+            accel_scale_g_per_lsb=1.0 / 256.0,
+        )
+    ]
     for idx in range(10):
         speed = 50 + idx
         wheel_hz = (speed * KMH_TO_MPS) / 2.2
-        records.append(sample(idx, speed_kmh=float(speed), dominant_freq_hz=wheel_hz, peak_amp_g=0.08 + (idx * 0.0006)))
+        records.append(
+            sample(
+                idx,
+                speed_kmh=float(speed),
+                dominant_freq_hz=wheel_hz,
+                peak_amp_g=0.08 + (idx * 0.0006),
+            )
+        )
     records.append(RUN_END)
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)
@@ -186,7 +249,14 @@ def test_steady_speed_report_wording(tmp_path: Path) -> None:
     run_path = tmp_path / "run_steady_speed.jsonl"
     records = [run_metadata(run_id="run-01", raw_sample_rate_hz=800, tire_circumference_m=2.2)]
     for idx in range(24):
-        records.append(sample(idx, speed_kmh=100.0 + ((idx % 3) * 0.4), dominant_freq_hz=22.0 + (idx * 0.02), peak_amp_g=0.08 + (idx * 0.0003)))
+        records.append(
+            sample(
+                idx,
+                speed_kmh=100.0 + ((idx % 3) * 0.4),
+                dominant_freq_hz=22.0 + (idx * 0.02),
+                peak_amp_g=0.08 + (idx * 0.0003),
+            )
+        )
     records.append(RUN_END)
     write_jsonl(run_path, records)
     summary = summarize_log(run_path)

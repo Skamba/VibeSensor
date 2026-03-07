@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from vibesensor.update.manager import UpdateManager
 from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
 from vibesensor.update.network import parse_wifi_diagnostics
@@ -120,7 +118,10 @@ class TestParseWifiDiagnostics:
             "2024-01-01 INFO normaline\n2024-01-01 ERROR something failed\n2024-01-01 INFO ok\n"
         )
         issues = parse_wifi_diagnostics(str(log_dir))
-        assert any("error" in issue.detail.lower() or "failed" in issue.detail.lower() for issue in issues)
+        assert any(
+            "error" in issue.detail.lower() or "failed" in issue.detail.lower()
+            for issue in issues
+        )
 
     def test_password_not_leaked_in_diagnostics(self, tmp_path) -> None:
         log_dir = tmp_path / "wifi"
