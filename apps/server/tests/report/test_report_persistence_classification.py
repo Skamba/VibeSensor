@@ -2,16 +2,14 @@
 from __future__ import annotations
 
 import pytest
+from _report_persistence_helpers import build_findings, findings_at_freq, sample, uniform_samples
 
 from vibesensor.analysis.findings.persistent_findings import _classify_peak_type
-from vibesensor.analysis.plot_data import _aggregate_fft_spectrum
-from vibesensor.analysis.plot_data import _aggregate_fft_spectrum_raw
-from vibesensor.analysis.plot_data import _top_peaks_table_rows
-
-from _report_persistence_helpers import build_findings
-from _report_persistence_helpers import findings_at_freq
-from _report_persistence_helpers import sample
-from _report_persistence_helpers import uniform_samples
+from vibesensor.analysis.plot_data import (
+    _aggregate_fft_spectrum,
+    _aggregate_fft_spectrum_raw,
+    _top_peaks_table_rows,
+)
 
 
 class TestClassifyPeakType:

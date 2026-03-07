@@ -109,8 +109,8 @@ def noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
         return None
     return float(
         canonical_vibration_db(
-        peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
-        floor_amp_g=MEMS_NOISE_FLOOR_G,
+            peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
+            floor_amp_g=MEMS_NOISE_FLOOR_G,
         )
     )
 

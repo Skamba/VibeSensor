@@ -47,9 +47,7 @@ class TestUpdateManagerAsync:
         ]
         assert_hotspot_restored(runner)
         firmware_refresh_calls = [
-            call[0]
-            for call in runner.calls
-            if "vibesensor.firmware_cache" in " ".join(call[0])
+            call[0] for call in runner.calls if "vibesensor.firmware_cache" in " ".join(call[0])
         ]
         assert firmware_refresh_calls
         restart_cmd = (
@@ -71,8 +69,7 @@ class TestUpdateManagerAsync:
         pip_install_calls = [
             call[0]
             for call in runner.calls
-            if "pip" in " ".join(call[0])
-            and "force-reinstall" in " ".join(call[0])
+            if "pip" in " ".join(call[0]) and "force-reinstall" in " ".join(call[0])
         ]
         assert not pip_install_calls
 
@@ -82,9 +79,12 @@ class TestUpdateManagerAsync:
         with patch("shutil.which", mock_which):
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed
-        assert "privileg" in " ".join(
-            f"{issue.message} {issue.detail}" for issue in manager.status.issues
-        ).lower()
+        assert (
+            "privileg"
+            in " ".join(
+                f"{issue.message} {issue.detail}" for issue in manager.status.issues
+            ).lower()
+        )
 
     async def test_wifi_connection_failure(self, tmp_path) -> None:
         manager, runner, _ = setup_update_env(tmp_path)
@@ -270,8 +270,8 @@ class TestUpdateManagerAsync:
     async def test_check_update_failure_fails_update(self, tmp_path) -> None:
         manager, _runner, _ = setup_update_env(tmp_path)
         with patch_release_fetcher(current_version="2025.6.14") as mock_fetcher:
-            mock_fetcher.return_value.check_update_available.side_effect = (
-                RuntimeError("API rate limit exceeded")
+            mock_fetcher.return_value.check_update_available.side_effect = RuntimeError(
+                "API rate limit exceeded"
             )
             await run_update(manager, "TestNet", "pass")
         assert manager.status.state == UpdateState.failed

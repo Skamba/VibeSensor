@@ -187,9 +187,7 @@ class UpdateInstaller:
                 "WARNING: rolled-back version mismatch "
                 f"(wheel={expected_version}, import={rolled_back_version})"
             )
-        self._tracker.log(
-            f"Rolled back to {wheel.name} (verified version={rolled_back_version})"
-        )
+        self._tracker.log(f"Rolled back to {wheel.name} (verified version={rolled_back_version})")
         return True
 
     async def _verify_installed_version(self, *, phase: str) -> str | None:

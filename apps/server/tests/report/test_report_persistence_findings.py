@@ -1,18 +1,20 @@
 # ruff: noqa: E501
 from __future__ import annotations
 
-import pytest
+from _report_persistence_helpers import (
+    build_findings,
+    findings_at_freq,
+    make_metadata,
+    sample,
+    uniform_samples,
+)
 
 from vibesensor.analysis.phase_segmentation import DrivingPhase
 from vibesensor.analysis.plot_data import _top_peaks_table_rows
-from vibesensor.analysis.summary import _annotate_peaks_with_order_labels
-from vibesensor.analysis.summary import build_findings_for_samples
-
-from _report_persistence_helpers import build_findings
-from _report_persistence_helpers import findings_at_freq
-from _report_persistence_helpers import make_metadata
-from _report_persistence_helpers import sample
-from _report_persistence_helpers import uniform_samples
+from vibesensor.analysis.summary import (
+    _annotate_peaks_with_order_labels,
+    build_findings_for_samples,
+)
 
 
 class TestBuildPersistentPeakFindings:
@@ -42,7 +44,9 @@ class TestBuildPersistentPeakFindings:
         samples = []
         for i in range(20):
             peaks = [{"hz": 40.0, "amp": 0.06}] if i < 16 else []
-            samples.append(sample(float(i) * 0.5, 80.0, peaks, client_name=locations[i % len(locations)]))
+            samples.append(
+                sample(float(i) * 0.5, 80.0, peaks, client_name=locations[i % len(locations)])
+            )
 
         findings = build_findings(samples)
         candidates = findings_at_freq(findings, "41.0", "40.0")
@@ -78,7 +82,9 @@ class TestBuildPersistentPeakFindings:
                 peaks.append({"hz": 55.0, "amp": 2.0})
             samples.append(sample(float(i) * 0.5, 80.0, peaks))
 
-        transient = [f for f in build_findings(samples) if f.get("peak_classification") == "transient"]
+        transient = [
+            f for f in build_findings(samples) if f.get("peak_classification") == "transient"
+        ]
         for finding in transient:
             assert float(finding.get("confidence_0_to_1", 0)) <= 0.25
 
@@ -111,7 +117,9 @@ class TestBuildPersistentPeakFindings:
             for idx, (speed_kmh, amp) in enumerate(zip(speeds, amps, strict=False))
         ]
         findings = build_findings(samples)
-        finding = next(f for f in findings if str(f.get("frequency_hz_or_order") or "").startswith("31.0"))
+        finding = next(
+            f for f in findings if str(f.get("frequency_hz_or_order") or "").startswith("31.0")
+        )
         assert finding.get("strongest_speed_band") == "80-90 km/h"
 
     def test_run_noise_baseline_lowers_confidence_for_borderline_peak(self) -> None:
@@ -136,14 +144,18 @@ class TestBuildPersistentPeakFindings:
                     if rep == 0:
                         amp = 0.20 if (speed, location) == (35.0, "Front Left") else 0.05
                         peaks.append({"hz": 25.0, "amp": amp})
-                    samples.append(sample(float(len(samples)) * 0.5, speed, peaks, client_name=location))
+                    samples.append(
+                        sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
+                    )
 
         findings = build_findings(samples)
         target = findings_at_freq(findings, "25")
         assert target[0]["peak_classification"] == "baseline_noise"
 
         rows = _top_peaks_table_rows(samples, top_n=12, freq_bin_hz=1.0)
-        row_25 = next((row for row in rows if abs(float(row.get("frequency_hz", 0.0)) - 25.0) <= 0.5), None)
+        row_25 = next(
+            (row for row in rows if abs(float(row.get("frequency_hz", 0.0)) - 25.0) <= 0.5), None
+        )
         assert row_25 is not None
         assert row_25["peak_classification"] == "baseline_noise"
 
@@ -158,7 +170,9 @@ class TestBuildPersistentPeakFindings:
                     if location == "Front Left":
                         amp = 0.20 if (speed, rep) == (35.0, 0) else 0.05
                         peaks.append({"hz": 25.0, "amp": amp})
-                    samples.append(sample(float(len(samples)) * 0.5, speed, peaks, client_name=location))
+                    samples.append(
+                        sample(float(len(samples)) * 0.5, speed, peaks, client_name=location)
+                    )
 
         findings = build_findings(samples)
         target = findings_at_freq(findings, "25")
@@ -218,7 +232,9 @@ class TestPersistentPeakFindingsPhaseAwareness:
             samples.append(sample(float(14 + i) * 0.5, 70.0, [{"hz": 35.0, "amp": 0.05}]))
             phases.append(DrivingPhase.DECELERATION)
 
-        phase_presence = next(iter(findings_at_freq(build_findings(samples, per_sample_phases=phases), "35.0")), None).get("phase_presence")
+        phase_presence = next(
+            iter(findings_at_freq(build_findings(samples, per_sample_phases=phases), "35.0")), None
+        ).get("phase_presence")
         assert "cruise" in phase_presence
         assert "acceleration" in phase_presence
         assert "deceleration" in phase_presence
@@ -226,7 +242,9 @@ class TestPersistentPeakFindingsPhaseAwareness:
     def test_phase_presence_values_are_ratios_between_0_and_1(self) -> None:
         findings = build_findings(
             uniform_samples(20, 40.0, 0.06),
-            per_sample_phases=[DrivingPhase.ACCELERATION] * 5 + [DrivingPhase.CRUISE] * 10 + [DrivingPhase.DECELERATION] * 5,
+            per_sample_phases=[DrivingPhase.ACCELERATION] * 5
+            + [DrivingPhase.CRUISE] * 10
+            + [DrivingPhase.DECELERATION] * 5,
         )
         for finding in findings:
             phase_presence = finding.get("phase_presence")
@@ -236,13 +254,17 @@ class TestPersistentPeakFindingsPhaseAwareness:
                 assert abs(sum(float(v) for v in phase_presence.values()) - 1.0) < 1e-9
 
     def test_phase_presence_via_build_findings_integration(self) -> None:
-        findings = build_findings_for_samples(metadata=make_metadata(), samples=uniform_samples(25, 40.0, 0.06), lang="en")
+        findings = build_findings_for_samples(
+            metadata=make_metadata(), samples=uniform_samples(25, 40.0, 0.06), lang="en"
+        )
         phase_presence = findings_at_freq(findings, "41")[0].get("phase_presence")
         assert isinstance(phase_presence, dict)
         assert phase_presence
 
     def test_phase_presence_ignored_when_length_mismatch(self) -> None:
-        findings = build_findings(uniform_samples(10, 40.0, 0.06), per_sample_phases=[DrivingPhase.CRUISE] * 5)
+        findings = build_findings(
+            uniform_samples(10, 40.0, 0.06), per_sample_phases=[DrivingPhase.CRUISE] * 5
+        )
         for finding in findings:
             assert finding.get("phase_presence") is None
 
@@ -250,8 +272,23 @@ class TestPersistentPeakFindingsPhaseAwareness:
 class TestAnnotatePeaksWithOrderLabels:
     def test_order_label_populated_from_finding(self) -> None:
         summary = {
-            "findings": [{"finding_id": "F_ORDER", "frequency_hz_or_order": "1x wheel order", "matched_points": [{"matched_hz": 10.8}, {"matched_hz": 11.0}, {"matched_hz": 11.2}]}],
-            "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}, {"frequency_hz": 25.0, "order_label": ""}]},
+            "findings": [
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "1x wheel order",
+                    "matched_points": [
+                        {"matched_hz": 10.8},
+                        {"matched_hz": 11.0},
+                        {"matched_hz": 11.2},
+                    ],
+                }
+            ],
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 11.0, "order_label": ""},
+                    {"frequency_hz": 25.0, "order_label": ""},
+                ]
+            },
         }
         _annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == "1x wheel order"
@@ -259,14 +296,23 @@ class TestAnnotatePeaksWithOrderLabels:
 
     def test_no_annotation_when_frequency_too_far(self) -> None:
         summary = {
-            "findings": [{"finding_id": "F_ORDER", "frequency_hz_or_order": "1x wheel order", "matched_points": [{"matched_hz": 50.0}]}],
+            "findings": [
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "1x wheel order",
+                    "matched_points": [{"matched_hz": 50.0}],
+                }
+            ],
             "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}]},
         }
         _annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == ""
 
     def test_no_crash_when_no_findings(self) -> None:
-        summary = {"findings": [], "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}]}}
+        summary = {
+            "findings": [],
+            "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}]},
+        }
         _annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == ""
 
@@ -275,7 +321,13 @@ class TestAnnotatePeaksWithOrderLabels:
 
     def test_f_peak_findings_ignored(self) -> None:
         summary = {
-            "findings": [{"finding_id": "F_PEAK", "frequency_hz_or_order": "41.0 Hz", "matched_points": [{"matched_hz": 41.0}]}],
+            "findings": [
+                {
+                    "finding_id": "F_PEAK",
+                    "frequency_hz_or_order": "41.0 Hz",
+                    "matched_points": [{"matched_hz": 41.0}],
+                }
+            ],
             "plots": {"peaks_table": [{"frequency_hz": 41.0, "order_label": ""}]},
         }
         _annotate_peaks_with_order_labels(summary)
@@ -284,10 +336,24 @@ class TestAnnotatePeaksWithOrderLabels:
     def test_multiple_order_findings_annotate_different_peaks(self) -> None:
         summary = {
             "findings": [
-                {"finding_id": "F_ORDER", "frequency_hz_or_order": "1x wheel order", "matched_points": [{"matched_hz": 11.0}]},
-                {"finding_id": "F_ORDER", "frequency_hz_or_order": "2x engine order", "matched_points": [{"matched_hz": 25.0}]},
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "1x wheel order",
+                    "matched_points": [{"matched_hz": 11.0}],
+                },
+                {
+                    "finding_id": "F_ORDER",
+                    "frequency_hz_or_order": "2x engine order",
+                    "matched_points": [{"matched_hz": 25.0}],
+                },
             ],
-            "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": ""}, {"frequency_hz": 25.0, "order_label": ""}, {"frequency_hz": 60.0, "order_label": ""}]},
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 11.0, "order_label": ""},
+                    {"frequency_hz": 25.0, "order_label": ""},
+                    {"frequency_hz": 60.0, "order_label": ""},
+                ]
+            },
         }
         _annotate_peaks_with_order_labels(summary)
         assert summary["plots"]["peaks_table"][0]["order_label"] == "1x wheel order"
@@ -295,6 +361,13 @@ class TestAnnotatePeaksWithOrderLabels:
         assert summary["plots"]["peaks_table"][2]["order_label"] == ""
 
     def test_fallback_still_works_in_report_data(self) -> None:
-        summary = {"findings": [], "plots": {"peaks_table": [{"frequency_hz": 11.0, "order_label": "", "peak_classification": "patterned"}]}}
+        summary = {
+            "findings": [],
+            "plots": {
+                "peaks_table": [
+                    {"frequency_hz": 11.0, "order_label": "", "peak_classification": "patterned"}
+                ]
+            },
+        }
         _annotate_peaks_with_order_labels(summary)
         assert str(summary["plots"]["peaks_table"][0].get("order_label") or "").strip() == ""

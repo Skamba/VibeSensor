@@ -56,9 +56,10 @@ def test_sensor_location_stats_include_partial_run_sensors(tmp_path: Path) -> No
     write_jsonl(run_path, records)
     summary = summarize_log(run_path, include_samples=False)
     assert summary["sensor_locations"] == ["front-left wheel", "front-right wheel"]
-    assert {
-        row["location"] for row in summary["sensor_intensity_by_location"]
-    } == {"front-left wheel", "front-right wheel"}
+    assert {row["location"] for row in summary["sensor_intensity_by_location"]} == {
+        "front-left wheel",
+        "front-right wheel",
+    }
 
 
 def test_sensor_location_stats_handle_counter_reset_and_l0_percent(tmp_path: Path) -> None:
