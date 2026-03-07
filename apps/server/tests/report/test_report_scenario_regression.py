@@ -799,9 +799,8 @@ class TestReportMetadataCompleteness:
         tmpl = map_summary(summary)
         # NextStep should now have confirm/falsify/eta if test_plan provides them
         for step in tmpl.next_steps:
-            # At minimum, action and rank should be set
+            # At minimum, action should be set
             assert step.action
-            assert step.rank >= 1
 
 
 # ---------------------------------------------------------------------------

@@ -89,9 +89,9 @@ def _require_analysis_ready(run: dict[str, Any]) -> dict[str, Any]:
     report-PDF download).  Raises 409 when still analysing, 422 on error
     or missing analysis.
     """
-    if run.get("status") == RunStatus.ANALYZING:
+    if run["status"] == RunStatus.ANALYZING:
         raise HTTPException(status_code=409, detail="Analysis is still in progress")
-    if run.get("status") == RunStatus.ERROR:
+    if run["status"] == RunStatus.ERROR:
         raise HTTPException(
             status_code=422,
             detail=run.get("error_message", "Analysis failed"),

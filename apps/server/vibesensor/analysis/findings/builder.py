@@ -79,8 +79,6 @@ def _build_findings(
     """
     findings: list[dict[str, Any]] = []
     tire_circumference_m, _ = _tire_reference_from_metadata(metadata)
-    units_obj = metadata.get("units")
-    accel_units = str(units_obj.get("accel_x_g") or "g") if isinstance(units_obj, dict) else "g"
 
     if not speed_sufficient:
         findings.append(
@@ -178,7 +176,6 @@ def _build_findings(
         tire_circumference_m=tire_circumference_m if speed_sufficient else None,
         engine_ref_sufficient=engine_ref_sufficient,
         raw_sample_rate_hz=raw_sample_rate_hz,
-        accel_units=accel_units,
         connected_locations=_locations_connected_throughout_run(analysis_samples, lang=lang),
         lang=lang,
         per_sample_phases=analysis_phases,
@@ -206,7 +203,6 @@ def _build_findings(
         _build_persistent_peak_findings(
             samples=analysis_samples,  # IDLE-filtered; issue #191
             order_finding_freqs=order_freqs,
-            accel_units=accel_units,
             lang=lang,
             per_sample_phases=analysis_phases,
             run_noise_baseline_g=(run_noise_baseline_g if not use_filtered_samples else None),

@@ -92,14 +92,11 @@ class SignalProcessor:
             else None
         )
         self.max_samples = sample_rate_hz * waveform_seconds
-        self.waveform_step = max(1, sample_rate_hz // max(1, waveform_display_hz))
         self._buffers: dict[str, ClientBuffer] = {}
         self._fft_window = np.hanning(self.fft_n).astype(np.float32)
         self._fft_scale = float(2.0 / max(1.0, float(np.sum(self._fft_window))))
         self._fft_cache: dict[int, tuple[np.ndarray, np.ndarray]] = {}
-        self._fft_cache_maxsize = _FFT_CACHE_MAXSIZE
         self._fft_cache_lock = RLock()
-        self._spike_filter_enabled = True
         self._lock = RLock()
         # Worker pool for parallel per-client FFT.  Owned externally when
         # injected, otherwise a private pool is created.
@@ -153,7 +150,6 @@ class SignalProcessor:
         buf.data[:] = 0.0
         buf.write_idx = 0
         buf.count = 0
-        buf.first_ingest_mono_s = 0.0
         buf.last_t0_us = 0
         buf.samples_since_t0 = 0
         buf.latest_metrics = {}
@@ -218,8 +214,6 @@ class SignalProcessor:
             buf.sample_rate_hz = clamped_rate
             self._resize_buffer(buf, buf.sample_rate_hz * self.waveform_seconds)
         now_mono = time.monotonic()
-        if buf.first_ingest_mono_s <= 0:
-            buf.first_ingest_mono_s = now_mono
         buf.last_ingest_mono_s = now_mono
 
         n = int(chunk.shape[0])
@@ -283,7 +277,7 @@ class SignalProcessor:
             freq_slice = freqs[valid].astype(np.float32)
             valid_idx = np.flatnonzero(valid)
             self._fft_cache[sample_rate_hz] = (freq_slice, valid_idx)
-            if len(self._fft_cache) > self._fft_cache_maxsize:
+            if len(self._fft_cache) > _FFT_CACHE_MAXSIZE:
                 oldest = next(iter(self._fft_cache))
                 del self._fft_cache[oldest]
             return freq_slice, valid_idx
@@ -306,7 +300,7 @@ class SignalProcessor:
             fft_scale=self._fft_scale,
             freq_slice=freq_slice,
             valid_idx=valid_idx,
-            spike_filter_enabled=self._spike_filter_enabled,
+            spike_filter_enabled=True,
         )
 
     def compute_metrics(self, client_id: str, sample_rate_hz: int | None = None) -> dict[str, Any]:
@@ -340,8 +334,7 @@ class SignalProcessor:
             snap_ingest_gen = buf.ingest_generation
 
         # --- Phase 2: heavy computation (no lock held) -----------------------
-        if self._spike_filter_enabled:
-            time_window = medfilt3(time_window)
+        time_window = medfilt3(time_window)
         time_window_detrended = time_window - np.mean(time_window, axis=1, keepdims=True)
 
         metrics: dict[str, Any] = {}

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from _report_helpers import minimal_summary
-from vibesensor_core.vibration_strength import vibration_strength_db_scalar
 
 from vibesensor.analysis.report_data_builder import map_summary
 from vibesensor.analysis.strength_labels import strength_text
@@ -88,27 +87,6 @@ def test_map_summary_strength_label_uses_finding_db_when_sensor_rows_missing() -
     assert "23.4 dB" in data.observed.strength_label
     assert " g" not in data.observed.strength_label
     assert data.observed.strength_peak_db == 23.4
-
-
-def test_map_summary_strength_label_derives_db_from_finding_amp_and_floor() -> None:
-    amp = 0.015
-    floor = 0.005
-    expected_db = vibration_strength_db_scalar(peak_band_rms_amp_g=amp, floor_amp_g=floor)
-    summary = minimal_summary(
-        top_causes=[_F_ORDER_CAUSE],
-        findings=[
-            {
-                "finding_id": "F_ORDER",
-                "amplitude_metric": {"value": amp, "units": "g"},
-                "evidence_metrics": {"mean_noise_floor": floor},
-            }
-        ],
-    )
-    data = map_summary(summary)
-    assert data.observed.strength_label is not None
-    assert f"{expected_db:.1f} dB" in data.observed.strength_label
-    assert " g" not in data.observed.strength_label
-    assert data.observed.strength_peak_db is not None
 
 
 def test_map_summary_strength_label_keeps_db_and_peak_from_same_finding() -> None:

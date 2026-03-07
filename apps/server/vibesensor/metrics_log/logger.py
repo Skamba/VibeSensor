@@ -30,10 +30,7 @@ from .sample_builder import (
     _LIVE_SAMPLE_WINDOW_S,
     build_run_metadata,
     build_sample_records,
-    extract_strength_data,
     firmware_version_for_run,
-    resolve_speed_context,
-    safe_metric,
 )
 
 if TYPE_CHECKING:
@@ -295,30 +292,6 @@ class MetricsLogger:
             analysis_settings_snapshot=self.analysis_settings.snapshot(),
             default_sample_rate_hz=self.default_sample_rate_hz,
         )
-
-    # -- backward-compat static method delegates ------------------------------
-
-    @staticmethod
-    def _safe_metric(metrics: dict[str, object], axis: str, key: str) -> float | None:
-        return safe_metric(metrics, axis, key)
-
-    @staticmethod
-    def _extract_strength_data(
-        metrics: dict[str, object],
-    ) -> tuple[
-        dict[str, object],
-        float | None,
-        str | None,
-        float | None,
-        float | None,
-        list[dict[str, object]],
-    ]:
-        return extract_strength_data(metrics)
-
-    def _resolve_speed_context(
-        self,
-    ) -> tuple[float | None, float | None, str, float | None, float | None, float | None]:
-        return resolve_speed_context(self.gps_monitor, self.analysis_settings.snapshot())
 
     # -- persistence ----------------------------------------------------------
 

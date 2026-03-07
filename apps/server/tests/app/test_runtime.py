@@ -314,19 +314,6 @@ async def test_stop_cancels_tasks_and_closes_resources(monkeypatch) -> None:
     assert history_db.close.called
 
 
-# ---------------------------------------------------------------------------
-# RuntimeState re-export from app.py
-# ---------------------------------------------------------------------------
-
-
-def test_runtime_state_importable_from_app() -> None:
-    """Backward compat: RuntimeState should be importable from vibesensor.app."""
-    from vibesensor.app import RuntimeState as FromApp
-    from vibesensor.runtime import RuntimeState as FromRuntime
-
-    assert FromApp is FromRuntime
-
-
 @pytest.mark.parametrize("attr", ["processing_loop", "start", "stop", "build_ws_payload"])
 def test_runtime_state_has_public_method(attr: str) -> None:
     """Canonical import path should expose key public methods."""

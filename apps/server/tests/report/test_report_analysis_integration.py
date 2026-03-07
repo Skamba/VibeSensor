@@ -102,7 +102,6 @@ def _call_build_order_findings(
         "tire_circumference_m": 2.036,
         "engine_ref_sufficient": engine_ref_sufficient,
         "raw_sample_rate_hz": 200.0,
-        "accel_units": "g",
         "connected_locations": {"front_left"},
         "lang": "en",
     }
@@ -524,7 +523,7 @@ def test_most_likely_origin_summary_uses_adaptive_weak_spatial_fallback() -> Non
         }
     ]
 
-    origin = _most_likely_origin_summary(findings, "en")
+    origin = _most_likely_origin_summary(findings)
     assert origin["weak_spatial_separation"] is True
 
 

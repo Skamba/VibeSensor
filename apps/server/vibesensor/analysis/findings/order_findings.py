@@ -188,7 +188,7 @@ def _compute_effective_match_rate(
     focused_speed_band: str | None = None
     if match_rate < min_match_rate and possible_by_speed_bin:
         highest_speed_bin = max(possible_by_speed_bin.keys(), key=_speed_bin_sort_key)
-        focused_possible = int(possible_by_speed_bin.get(highest_speed_bin, 0))
+        focused_possible = int(possible_by_speed_bin[highest_speed_bin])
         focused_matched = int(matched_by_speed_bin.get(highest_speed_bin, 0))
         focused_rate = focused_matched / max(1, focused_possible)
         min_focused_possible = max(ORDER_MIN_MATCH_POINTS, ORDER_MIN_COVERAGE_POINTS // 2)
@@ -424,11 +424,11 @@ def _compute_matched_speed_phase_evidence(
     *,
     focused_speed_band: str | None,
     hotspot_speed_band: str,
-) -> tuple[float | None, list[float], str | None, str, dict[str, Any], str | None]:
+) -> tuple[float | None, list[float], str | None, dict[str, Any], str | None]:
     """Derive speed-profile and phase-evidence from *matched_points*.
 
     Returns ``(peak_speed_kmh, speed_window_kmh, strongest_speed_band,
-    hotspot_speed_band_out, phase_evidence, dominant_phase)``.
+    phase_evidence, dominant_phase)``.
     """
     _cruise_val = DrivingPhase.CRUISE.value
     speed_points: list[tuple[float, float]] = []
@@ -474,7 +474,6 @@ def _compute_matched_speed_phase_evidence(
         peak_speed_kmh,
         list(speed_window_kmh) if speed_window_kmh is not None else [],
         strongest_speed_band or None,
-        hotspot_speed_band,
         phase_evidence,
         dominant_phase,
     )
@@ -833,7 +832,6 @@ def _assemble_order_finding(
         peak_speed_kmh,
         speed_window_kmh,
         strongest_speed_band,
-        _hotspot_speed_band_out,
         phase_evidence,
         dominant_phase,
     ) = _compute_matched_speed_phase_evidence(
@@ -842,7 +840,6 @@ def _assemble_order_finding(
         hotspot_speed_band=hotspot_speed_band,
     )
     actions = _finding_actions_for_source(
-        lang,
         hypothesis.suspected_source,
         strongest_location=strongest_location,
         strongest_speed_band=strongest_speed_band,
@@ -888,7 +885,6 @@ def _assemble_order_finding(
             "global_match_rate": match_rate,
             "focused_speed_band": focused_speed_band,
             "mean_relative_error": mean_rel_err,
-            "mean_matched_intensity_db": absolute_strength_db,
             "mean_noise_floor_db": canonical_vibration_db(
                 peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, mean_floor),
                 floor_amp_g=MEMS_NOISE_FLOOR_G,
@@ -899,7 +895,6 @@ def _assemble_order_finding(
             "frequency_correlation": corr,
             "per_phase_confidence": per_phase_confidence,
             "phases_with_evidence": phases_with_evidence,
-            "diffuse_excitation": _diffuse_excitation,
         },
         "next_sensor_move": actions[0].get("what")
         if actions
@@ -920,7 +915,6 @@ def _build_order_findings(
     tire_circumference_m: float | None,
     engine_ref_sufficient: bool,
     raw_sample_rate_hz: float | None,
-    accel_units: str,
     connected_locations: set[str],
     lang: str,
     per_sample_phases: list | None = None,

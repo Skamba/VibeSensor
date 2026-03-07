@@ -61,7 +61,6 @@ def _build_findings(
     return _build_persistent_peak_findings(
         samples=samples,
         order_finding_freqs=order_finding_freqs or set(),
-        accel_units="g",
         lang="en",
         per_sample_phases=per_sample_phases,
     )

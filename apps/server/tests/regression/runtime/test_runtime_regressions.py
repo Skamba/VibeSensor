@@ -17,9 +17,9 @@ import numpy as np
 import pytest
 from _paths import SERVER_ROOT
 
-from vibesensor.api import _safe_filename
 from vibesensor.history_db import HistoryDB
 from vibesensor.processing import SignalProcessor
+from vibesensor.routes._helpers import safe_filename as _safe_filename
 
 _SAFE_RE = re.compile(r"^[a-zA-Z0-9._-]+$")
 
@@ -1366,8 +1366,8 @@ from math import pi
 
 import pytest
 
-from vibesensor.api import _bounded_sample
 from vibesensor.live_diagnostics.engine import LiveDiagnosticsEngine
+from vibesensor.runlog import bounded_sample as _bounded_sample
 
 # -- shared helpers ----------------------------------------------------------
 

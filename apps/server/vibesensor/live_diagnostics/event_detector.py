@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from time import monotonic
 from typing import Any
 
 from ..diagnostics_shared import build_diagnostic_settings, classify_peak_hz
@@ -35,7 +34,6 @@ def detect_sensor_events(
         return []
 
     settings_bundle = build_diagnostic_settings(settings)
-    now_ms = int(monotonic() * 1000.0)
     _classify = classify_peak_hz  # local bind for inner loop
     _debug = LOGGER.debug
 
@@ -72,7 +70,6 @@ def detect_sensor_events(
             )
             _append(
                 _RecentEvent(
-                    ts_ms=now_ms,
                     sensor_id=client_id,
                     sensor_label=label,
                     sensor_location=location,

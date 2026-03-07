@@ -7,12 +7,7 @@ runtime when the state-store reloads a persisted snapshot.
 
 from __future__ import annotations
 
-from vibesensor.update_manager import (
-    UpdateIssue,
-    UpdateJobStatus,
-    UpdatePhase,
-    UpdateState,
-)
+from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
 
 
 class TestUpdateJobStatusRoundTrip:

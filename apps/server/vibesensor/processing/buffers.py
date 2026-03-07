@@ -26,7 +26,6 @@ class ClientBuffer:
     latest_spectrum: dict[str, dict[str, np.ndarray]] = field(default_factory=dict)
     latest_strength_metrics: dict[str, Any] = field(default_factory=dict)
     last_ingest_mono_s: float = 0.0
-    first_ingest_mono_s: float = 0.0
     # Sensor-clock timestamp (µs) of the most recent ingested frame.
     # After CMD_SYNC_CLOCK this is server-relative and comparable across sensors.
     last_t0_us: int = 0

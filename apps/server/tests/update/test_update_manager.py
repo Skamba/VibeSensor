@@ -15,16 +15,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
-from vibesensor.update_manager import (
-    CommandRunner,
-    UpdateIssue,
-    UpdateJobStatus,
-    UpdateManager,
-    UpdatePhase,
-    UpdateState,
-    _sanitize_log_line,
-    parse_wifi_diagnostics,
-)
+from vibesensor.update.manager import UpdateManager
+from vibesensor.update.models import UpdateIssue, UpdateJobStatus, UpdatePhase, UpdateState
+from vibesensor.update.network import parse_wifi_diagnostics
+from vibesensor.update.runner import CommandRunner
+from vibesensor.update.runner import sanitize_log_line as _sanitize_log_line
 
 # ---------------------------------------------------------------------------
 # Fake command runner for tests
@@ -352,8 +347,6 @@ class TestUpdateManager:
         mgr = UpdateManager(
             runner=r,
             repo_path="/tmp/fakerepo",
-            git_remote="https://example.com/repo.git",
-            git_branch="main",
         )
         return mgr, r
 
@@ -898,7 +891,7 @@ class TestUpdateApiEndpoints:
 
     def test_status_endpoint_exists(self) -> None:
         """Verify the update status route is registered."""
-        from vibesensor.api import create_router
+        from vibesensor.routes import create_router
 
         state = MagicMock()
         state.update_manager = UpdateManager()
@@ -911,7 +904,7 @@ class TestUpdateApiEndpoints:
 
     def test_start_request_model_validation(self) -> None:
         """Verify the request model validates SSID/password."""
-        from vibesensor.api import UpdateStartRequest
+        from vibesensor.api_models import UpdateStartRequest
 
         # Valid
         req = UpdateStartRequest(ssid="TestNet", password="pass123")

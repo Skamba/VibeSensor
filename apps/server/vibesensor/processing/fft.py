@@ -197,7 +197,7 @@ def compute_fft_spectrum(
 
     Returns
     -------
-    dict with keys: ``freq_slice``, ``valid_idx``, ``spectrum_by_axis``,
+    dict with keys: ``freq_slice``, ``spectrum_by_axis``,
     ``axis_amp_slices``, ``axis_amps``, ``combined_amp``,
     ``strength_metrics``, ``axis_peaks``.
 
@@ -265,7 +265,6 @@ def compute_fft_spectrum(
 
     return {
         "freq_slice": freq_slice,
-        "valid_idx": valid_idx,
         "spectrum_by_axis": spectrum_by_axis,
         "axis_amp_slices": axis_amp_slices,
         "axis_amps": axis_amps,
