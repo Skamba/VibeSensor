@@ -9,12 +9,12 @@ from fastapi import APIRouter, HTTPException, Query
 from ._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
-    from ..runtime import RuntimeState
+    from ..processing import SignalProcessor
 
 __all__ = ["create_debug_routes"]
 
 
-def create_debug_routes(state: RuntimeState) -> APIRouter:
+def create_debug_routes(processor: SignalProcessor) -> APIRouter:
     """Create and return the internal debug API routes."""
     router = APIRouter()
 
@@ -22,7 +22,7 @@ def create_debug_routes(state: RuntimeState) -> APIRouter:
     async def debug_spectrum(client_id: str) -> dict[str, Any]:
         """Detailed spectrum debug info for independent verification."""
         normalized = normalize_client_id_or_400(client_id)
-        result = state.processor.debug_spectrum(normalized)
+        result = processor.debug_spectrum(normalized)
         if "error" in result:
             raise HTTPException(status_code=404, detail=result["error"])
         return result
@@ -34,7 +34,7 @@ def create_debug_routes(state: RuntimeState) -> APIRouter:
     ) -> dict[str, Any]:
         """Raw time-domain samples in g for offline analysis."""
         normalized = normalize_client_id_or_400(client_id)
-        result = state.processor.raw_samples(normalized, n_samples=n)
+        result = processor.raw_samples(normalized, n_samples=n)
         if "error" in result:
             raise HTTPException(status_code=404, detail=result["error"])
         return result

@@ -21,16 +21,22 @@ from ..protocol import client_id_mac
 from ._helpers import normalize_client_id_or_400
 
 if TYPE_CHECKING:
-    from ..runtime import RuntimeState
+    from ..registry import ClientRegistry
+    from ..settings_store import SettingsStore
+    from ..udp_control_tx import UDPControlPlane
 
 
-def create_client_routes(state: RuntimeState) -> APIRouter:
+def create_client_routes(
+    registry: ClientRegistry,
+    control_plane: UDPControlPlane,
+    settings_store: SettingsStore,
+) -> APIRouter:
     """Create and return the client-management API routes."""
     router = APIRouter()
 
     @router.get("/api/clients", response_model=ClientsResponse)
     async def get_clients() -> ClientsResponse:
-        return {"clients": state.registry.snapshot_for_api()}
+        return {"clients": registry.snapshot_for_api()}
 
     @router.get("/api/client-locations", response_model=ClientLocationsResponse)
     async def get_client_locations() -> ClientLocationsResponse:
@@ -41,9 +47,9 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
         normalized = normalize_client_id_or_400(client_id)
         # Distinguish "sensor never seen" (404) from "sensor known but not
         # currently connected" (503) so callers can react appropriately.
-        if state.registry.get(normalized) is None:
+        if registry.get(normalized) is None:
             raise HTTPException(status_code=404, detail="Sensor not found")
-        ok, cmd_seq = state.control_plane.send_identify(normalized, req.duration_ms)
+        ok, cmd_seq = control_plane.send_identify(normalized, req.duration_ms)
         if not ok:
             raise HTTPException(status_code=503, detail="Sensor is not currently reachable")
         return {"status": "sent", "cmd_seq": cmd_seq}
@@ -56,7 +62,6 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
         client_id: str,
         req: SetLocationRequest,
     ) -> SetClientLocationResponse:
-        registry = state.registry
         normalized_client_id = normalize_client_id_or_400(client_id)
         if registry.get(normalized_client_id) is None:
             raise HTTPException(status_code=404, detail="Sensor not found")
@@ -90,7 +95,7 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
 
         registry.set_location(normalized_client_id, code)
         mac = client_id_mac(updated.client_id)
-        await asyncio.to_thread(state.settings_store.set_sensor, mac, {"location": code})
+        await asyncio.to_thread(settings_store.set_sensor, mac, {"location": code})
         return {
             "id": updated.client_id,
             "mac_address": mac,
@@ -101,7 +106,7 @@ def create_client_routes(state: RuntimeState) -> APIRouter:
     @router.delete("/api/clients/{client_id}", response_model=RemoveClientResponse)
     async def remove_client(client_id: str) -> RemoveClientResponse:
         normalized_client_id = normalize_client_id_or_400(client_id)
-        removed = state.registry.remove_client(normalized_client_id)
+        removed = registry.remove_client(normalized_client_id)
         if not removed:
             raise HTTPException(status_code=404, detail="Sensor not found")
         return {"id": normalized_client_id, "status": "removed"}
