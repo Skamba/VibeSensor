@@ -1,6 +1,6 @@
 """Update subsystem package.
 
-Public API is re-exported from the top-level ``update_manager`` compat
-module so existing ``from vibesensor.update_manager import …`` imports
-continue to work.
+The live updater implementation lives in this package, with
+``manager.py`` as the orchestration entry point and companion modules for
+network access, state persistence, and update models.
 """

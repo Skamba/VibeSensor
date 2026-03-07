@@ -12,45 +12,25 @@ __all__ = [
 
 import math
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from statistics import median as _median
 from typing import Any
 
-from vibesensor_core.vibration_strength import (
-    vibration_strength_db_scalar as canonical_vibration_db,
-)
-
-from ..analysis_settings import tire_circumference_m_from_spec
 from ..runlog import as_float_or_none as _as_float
-from ..runlog import parse_iso8601, utc_now_iso
+from ..runlog import utc_now_iso
+from .diagnosis_candidates import non_reference_findings
 from .findings.builder import _build_findings
 from .findings.intensity import (
     _phase_speed_breakdown,
-    _sensor_intensity_by_location,
     _speed_breakdown,
 )
 from .helpers import (
-    MEMS_NOISE_FLOOR_G,
     ORDER_MIN_CONFIDENCE,
-    PHASE_I18N_KEYS,
-    SPEED_COVERAGE_MIN_PCT,
-    SPEED_MIN_POINTS,
-    _format_duration,
     _load_run,
-    _location_label,
-    _locations_connected_throughout_run,
-    _mean_variance,
-    _outlier_summary,
-    _percent_missing,
-    _primary_vibration_strength_db,
     _run_noise_baseline_g,
-    _sensor_limit_g,
-    _speed_stats,
     _speed_stats_by_phase,
     _validate_required_strength_metrics,
-    counter_delta,
-    weak_spatial_dominance_threshold,
 )
 from .order_analysis import _i18n_ref
 from .phase_segmentation import (
@@ -60,9 +40,6 @@ from .phase_segmentation import (
 from .phase_segmentation import (
     phase_summary as _phase_summary,
 )
-from .phase_segmentation import (
-    segment_run_phases as _segment_run_phases,
-)
 from .plot_data import _plot_data
 from .strength_labels import (
     CONFIDENCE_HIGH_THRESHOLD,
@@ -71,11 +48,44 @@ from .strength_labels import (
 from .strength_labels import (
     strength_label as _strength_label,
 )
+from .summary_pipeline import (
+    build_data_quality_dict as _build_data_quality_dict_impl,
+)
+from .summary_pipeline import (
+    build_phase_timeline as _build_phase_timeline_impl,
+)
+from .summary_pipeline import (
+    build_run_suitability_checks as _build_run_suitability_checks_impl,
+)
+from .summary_pipeline import (
+    build_sensor_analysis,
+    build_summary_payload,
+)
+from .summary_pipeline import (
+    compute_accel_statistics as _compute_accel_statistics_impl,
+)
+from .summary_pipeline import (
+    compute_frame_integrity_counts as _compute_frame_integrity_counts_impl,
+)
+from .summary_pipeline import (
+    compute_reference_completeness as _compute_reference_completeness_impl,
+)
+from .summary_pipeline import (
+    compute_run_timing as _compute_run_timing_impl,
+)
+from .summary_pipeline import (
+    noise_baseline_db as _noise_baseline_db_impl,
+)
+from .summary_pipeline import (
+    prepare_speed_and_phases as _prepare_speed_and_phases_impl,
+)
+from .summary_pipeline import (
+    serialize_phase_segments as _serialize_phase_segments_impl,
+)
+from .summary_pipeline import (
+    summarize_origin as _summarize_origin_impl,
+)
 from .test_plan import _merge_test_plan
-
-# Fraction of sensor ADC limit above which a sample is considered clipping.
-# 2% headroom accounts for quantization effects near the ADC rail.
-_SATURATION_FRACTION = 0.98
 
 
 def _normalize_lang(lang: object) -> str:
@@ -335,214 +345,34 @@ def select_top_causes(
 
 
 def _most_likely_origin_summary(findings: list[dict[str, Any]]) -> dict[str, Any]:
-    if not findings:
-        return {
-            "location": _UNKNOWN,
-            "alternative_locations": [],
-            "source": _UNKNOWN,
-            "dominance_ratio": None,
-            "weak_spatial_separation": True,
-            "explanation": _i18n_ref("ORIGIN_NO_RANKED_FINDING_AVAILABLE"),
-        }
-    top = findings[0]
-    primary_location = str(top.get("strongest_location") or "").strip() or _UNKNOWN
-    alternative_locations: list[str] = []
-    hotspot = top.get("location_hotspot")
-    if isinstance(hotspot, dict):
-        for candidate in hotspot.get("ambiguous_locations", []):
-            loc = str(candidate or "").strip()
-            if loc and loc != primary_location and loc not in alternative_locations:
-                alternative_locations.append(loc)
-        second_location = str(hotspot.get("second_location") or "").strip()
-        if (
-            second_location
-            and second_location != primary_location
-            and second_location not in alternative_locations
-        ):
-            alternative_locations.append(second_location)
-
-    source = str(top.get("suspected_source") or _UNKNOWN)
-    dominance = _as_float(top.get("dominance_ratio"))
-    location_count = _as_float(top.get("location_count"))
-    if location_count is None and isinstance(hotspot, dict):
-        location_count = _as_float(hotspot.get("location_count"))
-    adaptive_weak_spatial_threshold = weak_spatial_dominance_threshold(
-        int(location_count) if location_count else None
-    )
-    weak = bool(top.get("weak_spatial_separation")) or (
-        dominance is not None and dominance < adaptive_weak_spatial_threshold
-    )
-
-    # Spatial disambiguation: check if second-ranked finding disagrees on
-    # location with similar confidence — strengthens the "weak" flag.
-    if len(findings) >= 2:
-        second = findings[1]
-        second_loc = str(second.get("strongest_location") or "").strip()
-        second_conf = _as_float(second.get("confidence_0_to_1")) or 0.0
-        top_conf = _as_float(top.get("confidence_0_to_1")) or 0.0
-        if (
-            second_loc
-            and primary_location
-            and second_loc != primary_location
-            and top_conf > 0
-            and second_conf / top_conf >= 0.7  # within 30% confidence
-        ):
-            weak = True
-            if second_loc not in alternative_locations:
-                alternative_locations.append(second_loc)
-
-    location = primary_location
-    if weak and dominance is not None and dominance < adaptive_weak_spatial_threshold:
-        display_locations = [primary_location, *alternative_locations]
-        location = " / ".join(
-            [
-                candidate
-                for idx, candidate in enumerate(display_locations)
-                if candidate and candidate not in display_locations[:idx]
-            ]
-        )
-
-    speed_band = str(top.get("strongest_speed_band") or "")
-    explanation_parts: list[object] = [
-        _i18n_ref(
-            "ORIGIN_EXPLANATION_FINDING_1",
-            source=source,
-            speed_band=speed_band or _UNKNOWN,
-            location=location,
-            dominance=f"{dominance:.2f}x" if dominance is not None else "n/a",
-        ),
-    ]
-    if weak:
-        explanation_parts.append(_i18n_ref("WEAK_SPATIAL_SEPARATION_INSPECT_NEARBY"))
-    dominant_phase = str(top.get("dominant_phase") or "").strip()
-    if dominant_phase and dominant_phase in PHASE_I18N_KEYS:
-        explanation_parts.append(_i18n_ref("ORIGIN_PHASE_ONSET_NOTE", phase=dominant_phase))
-    # Store explanation as structured i18n parts for render-time resolution.
-    explanation = explanation_parts[0] if len(explanation_parts) == 1 else explanation_parts
-    return {
-        "location": location,
-        "alternative_locations": alternative_locations,
-        "source": source,
-        "dominance_ratio": dominance,
-        "weak_spatial_separation": weak,
-        "speed_band": speed_band or None,
-        "dominant_phase": dominant_phase or None,
-        "explanation": explanation,
-    }
+    return _summarize_origin_impl(findings)
 
 
 def _build_phase_timeline(
     phase_segments: list[PhaseSegment],
     findings: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Build a simple timeline summary: what changed when.
-
-    Returns a list of timeline entries with phase, time window, speed range,
-    and whether fault evidence was detected in that segment.
-    """
-    if not phase_segments:
-        return []
-
-    # Determine which phases have strong finding evidence
-    finding_phases: set[str] = set()
-    for f in findings:
-        if not isinstance(f, dict):
-            continue
-        if str(f.get("finding_id", "")).startswith("REF_"):
-            continue
-        conf = float(f.get("confidence_0_to_1") or 0)
-        if conf < ORDER_MIN_CONFIDENCE:
-            continue
-        phase_ev = f.get("phase_evidence")
-        if isinstance(phase_ev, dict):
-            for p in phase_ev.get("phases_detected", []):
-                finding_phases.add(str(p))
-
-    entries: list[dict[str, Any]] = []
-    for seg in phase_segments:
-        phase_val = seg.phase.value
-        # Convert NaN sentinels (unknown time) to None for JSON safety.
-        start_t = None if math.isnan(seg.start_t_s) else seg.start_t_s
-        end_t = None if math.isnan(seg.end_t_s) else seg.end_t_s
-
-        entries.append(
-            {
-                "phase": phase_val,
-                "start_t_s": start_t,
-                "end_t_s": end_t,
-                "speed_min_kmh": seg.speed_min_kmh,
-                "speed_max_kmh": seg.speed_max_kmh,
-                "has_fault_evidence": phase_val in finding_phases,
-            }
-        )
-    return entries
+    return _build_phase_timeline_impl(
+        phase_segments,
+        findings,
+        min_confidence=ORDER_MIN_CONFIDENCE,
+    )
 
 
 def _serialize_phase_segments(
     phase_segments: list[PhaseSegment],
 ) -> list[dict[str, Any]]:
-    """Serialise phase segments to JSON-safe dicts.
-
-    Converts NaN sentinel values (unknown start/end times) to ``None``.
-    """
-    return [
-        {
-            "phase": seg.phase.value,
-            "start_idx": seg.start_idx,
-            "end_idx": seg.end_idx,
-            "start_t_s": (
-                None
-                if isinstance(seg.start_t_s, float) and math.isnan(seg.start_t_s)
-                else seg.start_t_s
-            ),
-            "end_t_s": (
-                None if isinstance(seg.end_t_s, float) and math.isnan(seg.end_t_s) else seg.end_t_s
-            ),
-            "speed_min_kmh": seg.speed_min_kmh,
-            "speed_max_kmh": seg.speed_max_kmh,
-            "sample_count": seg.sample_count,
-        }
-        for seg in phase_segments
-    ]
+    return _serialize_phase_segments_impl(phase_segments)
 
 
 def _noise_baseline_db(run_noise_baseline_g: float | None) -> float | None:
-    """Convert a run noise baseline amplitude in g to dB, or return None."""
-    if run_noise_baseline_g is None:
-        return None
-    return canonical_vibration_db(
-        peak_band_rms_amp_g=max(MEMS_NOISE_FLOOR_G, run_noise_baseline_g),
-        floor_amp_g=MEMS_NOISE_FLOOR_G,
-    )
+    return _noise_baseline_db_impl(run_noise_baseline_g)
 
 
 def _prepare_speed_and_phases(
     samples: list[dict[str, Any]],
 ) -> tuple[list[float], dict[str, Any], float, bool, list[DrivingPhase], list[PhaseSegment]]:
-    """Compute speed stats and phase segmentation shared by multiple entry points.
-
-    Returns ``(speed_values, speed_stats, speed_non_null_pct,
-    speed_sufficient, per_sample_phases, phase_segments)``.
-    """
-    speed_values = [
-        speed
-        for speed in (_as_float(sample.get("speed_kmh")) for sample in samples)
-        if speed is not None and speed > 0
-    ]
-    speed_stats = _speed_stats(speed_values)
-    speed_non_null_pct = (len(speed_values) / len(samples) * 100.0) if samples else 0.0
-    speed_sufficient = (
-        speed_non_null_pct >= SPEED_COVERAGE_MIN_PCT and len(speed_values) >= SPEED_MIN_POINTS
-    )
-    per_sample_phases, phase_segments = _segment_run_phases(samples)
-    return (
-        speed_values,
-        speed_stats,
-        speed_non_null_pct,
-        speed_sufficient,
-        per_sample_phases,
-        phase_segments,
-    )
+    return _prepare_speed_and_phases_impl(samples)
 
 
 def build_findings_for_samples(
@@ -577,113 +407,20 @@ def _compute_run_timing(
     samples: list[dict[str, Any]],
     file_name: str,
 ) -> tuple[str, datetime | None, datetime | None, float]:
-    """Extract run_id, start/end timestamps and duration from metadata+samples."""
-    run_id = str(metadata.get("run_id") or f"run-{file_name}")
-    start_ts = parse_iso8601(metadata.get("start_time_utc"))
-    end_ts = parse_iso8601(metadata.get("end_time_utc"))
-
-    if end_ts is None and samples:
-        sample_max_t = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
-        if start_ts is not None:
-            end_ts = start_ts + timedelta(seconds=sample_max_t)
-    duration_s = 0.0
-    if start_ts is not None and end_ts is not None:
-        duration_s = max(0.0, (end_ts - start_ts).total_seconds())
-    elif samples:
-        duration_s = max((_as_float(sample.get("t_s")) or 0.0) for sample in samples)
-
-    return run_id, start_ts, end_ts, duration_s
+    return _compute_run_timing_impl(metadata, samples, file_name)
 
 
 def _compute_accel_statistics(
     samples: list[dict[str, Any]],
     sensor_model: object,
 ) -> dict[str, Any]:
-    """Compute per-axis accel lists, magnitude, amplitude metric, saturation and mean/variance."""
-    sensor_limit = _sensor_limit_g(sensor_model)
-    sat_threshold = sensor_limit * _SATURATION_FRACTION if sensor_limit is not None else None
-
-    # Single pass over samples to collect all per-axis values, magnitude,
-    # vibration-strength metric, and saturation count — replacing six
-    # separate iterations.
-    _sqrt = math.sqrt
-    _to_float = _as_float
-    _vib_db = _primary_vibration_strength_db
-    accel_x_vals: list[float] = []
-    accel_y_vals: list[float] = []
-    accel_z_vals: list[float] = []
-    accel_mag_vals: list[float] = []
-    amp_metric_values: list[float] = []
-    sat_count = 0
-
-    for sample in samples:
-        _get = sample.get
-        x = _to_float(_get("accel_x_g"))
-        y = _to_float(_get("accel_y_g"))
-        z = _to_float(_get("accel_z_g"))
-        if x is not None:
-            accel_x_vals.append(x)
-        if y is not None:
-            accel_y_vals.append(y)
-        if z is not None:
-            accel_z_vals.append(z)
-        if x is not None and y is not None and z is not None:
-            accel_mag_vals.append(_sqrt(x * x + y * y + z * z))
-        # Check saturation independently of magnitude: a single-axis sensor
-        # (or a sample where one channel is missing) should not silently
-        # skip the saturation check for the remaining axes.
-        if sat_threshold is not None and any(
-            axis_val is not None and abs(axis_val) >= sat_threshold for axis_val in (x, y, z)
-        ):
-            sat_count += 1
-        amp = _vib_db(sample)
-        if amp is not None:
-            amp_metric_values.append(amp)
-
-    x_mean, x_var = _mean_variance(accel_x_vals)
-    y_mean, y_var = _mean_variance(accel_y_vals)
-    z_mean, z_var = _mean_variance(accel_z_vals)
-
-    return {
-        "accel_x_vals": accel_x_vals,
-        "accel_y_vals": accel_y_vals,
-        "accel_z_vals": accel_z_vals,
-        "accel_mag_vals": accel_mag_vals,
-        "amp_metric_values": amp_metric_values,
-        "sat_count": sat_count,
-        "sensor_limit": sensor_limit,
-        "x_mean": x_mean,
-        "x_var": x_var,
-        "y_mean": y_mean,
-        "y_var": y_var,
-        "z_mean": z_mean,
-        "z_var": z_var,
-    }
+    return _compute_accel_statistics_impl(samples, sensor_model)
 
 
 def _compute_frame_integrity_counts(
     samples: list[dict[str, Any]],
 ) -> tuple[int, int]:
-    """Compute (total_dropped, total_overflow) frame counters across all client sensors.
-
-    Uses per-sensor counter deltas (max − min per client) to avoid mixing
-    cumulative counters from different sensors.
-    """
-    _per_client_dropped: dict[str, list[float]] = defaultdict(list)
-    _per_client_overflow: dict[str, list[float]] = defaultdict(list)
-    for s in samples:
-        cid = str(s.get("client_id") or "")
-        if not cid:
-            continue
-        d = _as_float(s.get("frames_dropped_total"))
-        if d is not None:
-            _per_client_dropped[cid].append(d)
-        o = _as_float(s.get("queue_overflow_drops"))
-        if o is not None:
-            _per_client_overflow[cid].append(o)
-    total_dropped = sum(counter_delta(vals) for vals in _per_client_dropped.values())
-    total_overflow = sum(counter_delta(vals) for vals in _per_client_overflow.values())
-    return total_dropped, total_overflow
+    return _compute_frame_integrity_counts_impl(samples)
 
 
 def _build_run_suitability_checks(
@@ -694,103 +431,18 @@ def _build_run_suitability_checks(
     sat_count: int,
     samples: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Construct the run-suitability checklist (speed, sensors, reference, saturation, frames).
-
-    Output is language-neutral: ``check`` stores the i18n key directly and
-    ``explanation`` stores an i18n reference dict for render-time translation.
-    """
-    sensor_count_sufficient = len(sensor_ids) >= 3
-    speed_variation_ok = speed_sufficient and not steady_speed
-    run_suitability: list[dict[str, Any]] = [
-        {
-            "check": "SUITABILITY_CHECK_SPEED_VARIATION",
-            "check_key": "SUITABILITY_CHECK_SPEED_VARIATION",
-            "state": "pass" if speed_variation_ok else "warn",
-            "explanation": (
-                _i18n_ref("SUITABILITY_SPEED_VARIATION_PASS")
-                if speed_variation_ok
-                else _i18n_ref("SUITABILITY_SPEED_VARIATION_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_SENSOR_COVERAGE",
-            "check_key": "SUITABILITY_CHECK_SENSOR_COVERAGE",
-            "state": "pass" if sensor_count_sufficient else "warn",
-            "explanation": (
-                _i18n_ref("SUITABILITY_SENSOR_COVERAGE_PASS")
-                if sensor_count_sufficient
-                else _i18n_ref("SUITABILITY_SENSOR_COVERAGE_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-            "check_key": "SUITABILITY_CHECK_REFERENCE_COMPLETENESS",
-            "state": "pass" if reference_complete else "warn",
-            "explanation": (
-                _i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_PASS")
-                if reference_complete
-                else _i18n_ref("SUITABILITY_REFERENCE_COMPLETENESS_WARN")
-            ),
-        },
-        {
-            "check": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
-            "check_key": "SUITABILITY_CHECK_SATURATION_AND_OUTLIERS",
-            "state": "pass" if sat_count == 0 else "warn",
-            "explanation": (
-                _i18n_ref("SUITABILITY_SATURATION_PASS")
-                if sat_count == 0
-                else _i18n_ref("SUITABILITY_SATURATION_WARN", sat_count=sat_count)
-            ),
-        },
-    ]
-
-    total_dropped, total_overflow = _compute_frame_integrity_counts(samples)
-    frame_issues = total_dropped + total_overflow
-    run_suitability.append(
-        {
-            "check": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-            "check_key": "SUITABILITY_CHECK_FRAME_INTEGRITY",
-            "state": "pass" if frame_issues == 0 else "warn",
-            "explanation": (
-                _i18n_ref("SUITABILITY_FRAME_INTEGRITY_PASS")
-                if frame_issues == 0
-                else _i18n_ref(
-                    "SUITABILITY_FRAME_INTEGRITY_WARN",
-                    total_dropped=total_dropped,
-                    total_overflow=total_overflow,
-                )
-            ),
-        }
+    return _build_run_suitability_checks_impl(
+        steady_speed=steady_speed,
+        speed_sufficient=speed_sufficient,
+        sensor_ids=sensor_ids,
+        reference_complete=reference_complete,
+        sat_count=sat_count,
+        samples=samples,
     )
-    return run_suitability
 
 
 def _compute_reference_completeness(metadata: dict[str, Any]) -> bool:
-    """Return True when enough reference metadata is present for order analysis.
-
-    Requires all three groups:
-    1. A ``raw_sample_rate_hz`` value (FFT reference).
-    2. Tire circumference — either explicit or computable from width/aspect/rim.
-    3. Engine reference — either a direct RPM value or a gear+final-drive ratio pair.
-    """
-    return bool(
-        _as_float(metadata.get("raw_sample_rate_hz"))
-        and (
-            _as_float(metadata.get("tire_circumference_m"))
-            or tire_circumference_m_from_spec(
-                _as_float(metadata.get("tire_width_mm")),
-                _as_float(metadata.get("tire_aspect_pct")),
-                _as_float(metadata.get("rim_in")),
-            )
-        )
-        and (
-            _as_float(metadata.get("engine_rpm"))
-            or (
-                _as_float(metadata.get("final_drive_ratio"))
-                and _as_float(metadata.get("current_gear_ratio"))
-            )
-        )
-    )
+    return _compute_reference_completeness_impl(metadata)
 
 
 def _build_data_quality_dict(
@@ -801,42 +453,14 @@ def _build_data_quality_dict(
     accel_stats: dict[str, Any],
     amp_metric_values: list[float],
 ) -> dict[str, Any]:
-    """Build the ``data_quality`` sub-dict for the run summary.
-
-    Groups required-field missing-rate, speed coverage stats, acceleration
-    sanity checks, and outlier summaries into one structured block.
-    """
-    return {
-        "required_missing_pct": {
-            "t_s": _percent_missing(samples, "t_s"),
-            "speed_kmh": _percent_missing(samples, "speed_kmh"),
-            "accel_x": _percent_missing(samples, "accel_x_g"),
-            "accel_y": _percent_missing(samples, "accel_y_g"),
-            "accel_z": _percent_missing(samples, "accel_z_g"),
-        },
-        "speed_coverage": {
-            "non_null_pct": speed_non_null_pct,
-            "min_kmh": min(speed_values) if speed_values else None,
-            "max_kmh": max(speed_values) if speed_values else None,
-            "mean_kmh": speed_stats.get("mean_kmh"),
-            "stddev_kmh": speed_stats.get("stddev_kmh"),
-            "count_non_null": len(speed_values),
-        },
-        "accel_sanity": {
-            "x_mean": accel_stats["x_mean"],
-            "x_variance": accel_stats["x_var"],
-            "y_mean": accel_stats["y_mean"],
-            "y_variance": accel_stats["y_var"],
-            "z_mean": accel_stats["z_mean"],
-            "z_variance": accel_stats["z_var"],
-            "sensor_limit": accel_stats["sensor_limit"],
-            "saturation_count": accel_stats["sat_count"],
-        },
-        "outliers": {
-            "accel_magnitude": _outlier_summary(accel_stats["accel_mag_vals"]),
-            "amplitude_metric": _outlier_summary(amp_metric_values),
-        },
-    }
+    return _build_data_quality_dict_impl(
+        samples,
+        speed_values,
+        speed_stats,
+        speed_non_null_pct,
+        accel_stats,
+        amp_metric_values,
+    )
 
 
 def summarize_run_data(
@@ -899,11 +523,7 @@ def summarize_run_data(
         per_sample_phases=_per_sample_phases,
         run_noise_baseline_g=run_noise_baseline_g,
     )
-    # Filter out REF_ reference-missing findings so origin summary is based
-    # on actual diagnostic findings, not reference gaps (e.g. REF_ENGINE).
-    _diagnostic_for_origin = [
-        f for f in findings if not str(f.get("finding_id", "")).startswith("REF_")
-    ]
+    _diagnostic_for_origin = non_reference_findings(findings)
     most_likely_origin = _most_likely_origin_summary(_diagnostic_for_origin)
     test_plan = _merge_test_plan(findings, language)
     phase_timeline = _build_phase_timeline(phase_segments, findings)
@@ -932,74 +552,44 @@ def summarize_run_data(
     top_causes = select_top_causes(findings, strength_band_key=_overall_band_key)
 
     # --- Sensor analysis ---
-    sensor_locations = sorted(
-        {
-            label
-            for sample in samples
-            if isinstance(sample, dict) and (label := _location_label(sample, lang=language))
-        }
-    )
-    # Mark and de-prioritize sensors not connected throughout the run,
-    # so intermittent sensors don't skew strongest-location ranking.
-    connected_locations = _locations_connected_throughout_run(samples, lang=language)
-    sensor_intensity_by_location = _sensor_intensity_by_location(
-        samples,
-        include_locations=set(sensor_locations),
-        lang=language,
-        connected_locations=connected_locations,
-        per_sample_phases=_per_sample_phases,  # phase context; issue #192
+    sensor_locations, connected_locations, sensor_intensity_by_location = build_sensor_analysis(
+        samples=samples,
+        language=language,
+        per_sample_phases=_per_sample_phases,
     )
 
     # --- Summary construction ---
-    summary: dict[str, Any] = {
-        "file_name": file_name,
-        "run_id": run_id,
-        "rows": len(samples),
-        "duration_s": duration_s,
-        "record_length": _format_duration(duration_s),
-        "lang": language,
-        "report_date": metadata.get("end_time_utc") or utc_now_iso(),
-        "start_time_utc": metadata.get("start_time_utc"),
-        "end_time_utc": metadata.get("end_time_utc"),
-        "sensor_model": metadata.get("sensor_model"),
-        "firmware_version": metadata.get("firmware_version"),
-        "raw_sample_rate_hz": raw_sample_rate_hz,
-        "feature_interval_s": _as_float(metadata.get("feature_interval_s")),
-        "fft_window_size_samples": metadata.get("fft_window_size_samples"),
-        "fft_window_type": metadata.get("fft_window_type"),
-        "peak_picker_method": metadata.get("peak_picker_method"),
-        "accel_scale_g_per_lsb": _as_float(metadata.get("accel_scale_g_per_lsb")),
-        "incomplete_for_order_analysis": bool(metadata.get("incomplete_for_order_analysis")),
-        "metadata": metadata,
-        "warnings": [],
-        "speed_breakdown": speed_breakdown,
-        "phase_speed_breakdown": phase_speed_breakdown,
-        "phase_segments": _serialize_phase_segments(phase_segments),
-        "run_noise_baseline_db": _noise_baseline_db(run_noise_baseline_g),
-        "speed_breakdown_skipped_reason": speed_breakdown_skipped_reason,
-        "findings": findings,
-        "top_causes": top_causes,
-        "most_likely_origin": most_likely_origin,
-        "test_plan": test_plan,
-        "phase_timeline": phase_timeline,
-        "speed_stats": speed_stats,
-        "speed_stats_by_phase": speed_stats_by_phase,
-        "phase_info": phase_info,
-        "sensor_locations": sensor_locations,
-        "sensor_locations_connected_throughout": sorted(connected_locations),
-        "sensor_count_used": len(sensor_locations),
-        "sensor_intensity_by_location": sensor_intensity_by_location,
-        "run_suitability": run_suitability,
-        "samples": samples,
-        "data_quality": _build_data_quality_dict(
-            samples,
-            speed_values,
-            speed_stats,
-            speed_non_null_pct,
-            accel_stats,
-            amp_metric_values,
-        ),
-    }
+    summary = build_summary_payload(
+        file_name=file_name,
+        run_id=run_id,
+        samples=samples,
+        duration_s=duration_s,
+        language=language,
+        metadata=metadata,
+        raw_sample_rate_hz=raw_sample_rate_hz,
+        speed_breakdown=speed_breakdown,
+        phase_speed_breakdown=phase_speed_breakdown,
+        phase_segments=phase_segments,
+        run_noise_baseline_g=run_noise_baseline_g,
+        speed_breakdown_skipped_reason=speed_breakdown_skipped_reason,
+        findings=findings,
+        top_causes=top_causes,
+        most_likely_origin=most_likely_origin,
+        test_plan=test_plan,
+        phase_timeline=phase_timeline,
+        speed_stats=speed_stats,
+        speed_stats_by_phase=speed_stats_by_phase,
+        phase_info=phase_info,
+        sensor_locations=sensor_locations,
+        connected_locations=connected_locations,
+        sensor_intensity_by_location=sensor_intensity_by_location,
+        run_suitability=run_suitability,
+        speed_values=speed_values,
+        speed_non_null_pct=speed_non_null_pct,
+        accel_stats=accel_stats,
+        amp_metric_values=amp_metric_values,
+    )
+    summary["report_date"] = metadata.get("end_time_utc") or utc_now_iso()
     # --- Plot generation & peak annotation ---
     summary["plots"] = _plot_data(
         summary,

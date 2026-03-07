@@ -1,48 +1,45 @@
 # VibeSensor AI Entry-Point Map
 
-## Key Entry Points (canonical)
-- `apps/server/vibesensor/app.py` - app factory, runtime loop, WS payload assembly.
-- `apps/server/vibesensor/api.py` - HTTP endpoints and request/response surface.
-- `apps/server/vibesensor/processing/` - signal buffers, FFT, metrics, freshness filtering.
-- `apps/server/vibesensor/metrics_log/` - run/session logging and history integration.
-- `apps/server/vibesensor/live_diagnostics/` - event detection engine (package: engine, tracker, matrix, detector, phase).
-- `apps/server/vibesensor/config.py` - config defaults, schema mapping, typed dataclasses.
-- `apps/server/vibesensor/history_db.py` - persisted run DB interfaces.
-- `apps/server/vibesensor/report/pdf_builder.py` - report generation pipeline.
-- `apps/server/vibesensor/report_i18n.py` - translatable report string keys.
-- `apps/server/vibesensor/registry.py` - client liveness and metadata registry.
-- `apps/server/vibesensor/ws_hub.py` - websocket client fanout and broadcast.
-- `apps/server/scripts/hotspot_nmcli.sh` - AP provisioning (must be offline-safe).
-- `apps/server/systemd/vibesensor-hotspot.service` - hotspot boot orchestration unit.
-- `infra/pi-image/pi-gen/build.sh` - Pi image wrapper + stage generation + assertions.
-- `infra/pi-image/pi-gen/assets/vibesensor-hotspot.service` - baked image hotspot unit.
-- `apps/simulator/sim_sender.py` - synthetic sensor traffic source.
-- `apps/simulator/ws_smoke.py` - websocket smoke verifier.
-- `apps/ui/src/main.ts` - UI state reducer/render orchestration.
-- `apps/ui/src/ws.ts` - websocket client and payload contract handling.
-- `.github/workflows/ci.yml` - CI critical checks; local mirror is `make test-all` via `tools/tests/run_ci_parallel.py`.
+## Start here
 
-## Module Boundaries
-- **Acquisition**: `udp_data_rx.py`, `registry.py`.
-- **Computation**: `processing/`, `libs/core/python/vibesensor_core/*`, `live_diagnostics/`.
-- **Delivery**: `app.py`, `api.py`, `ws_hub.py`, `apps/ui/src/*`.
-- **Persistence**: `metrics_log/`, `history_db.py`, `runlog.py`.
-- **Device Ops**: `apps/server/scripts/*`, `apps/server/systemd/*`, `infra/pi-image/pi-gen/*`.
+- `apps/server/vibesensor/app.py`: FastAPI app factory and CLI-facing startup.
+- `apps/server/vibesensor/bootstrap.py`: grouped service construction before runtime composition.
+- `apps/server/vibesensor/routes/__init__.py`: assembles the HTTP and WebSocket route groups.
+- `apps/server/vibesensor/runtime/`: runtime composition helpers, focused dependency groups, thin runtime state, processing loop, websocket broadcast state, and lifecycle services.
+- `apps/server/vibesensor/history_db/`: SQLite-backed history and settings persistence.
+- `apps/server/vibesensor/report/pdf_builder.py`: public PDF renderer facade.
+- `apps/server/vibesensor/update/manager.py`: wheel-based updater orchestration.
+- `apps/ui/src/main.ts`: top-level UI orchestration.
+- `apps/ui/src/api.ts` and `apps/ui/src/ws.ts`: HTTP and WebSocket client surfaces.
+- `apps/simulator/`: simulator CLI and websocket smoke tooling.
 
-## Hot Spots (read before touching)
-- `apps/server/vibesensor/app.py` (high fan-in, scheduling-sensitive).
-- `apps/ui/src/main.ts` (large orchestrator; keep changes scoped).
-- `infra/pi-image/pi-gen/build.sh` (artifact correctness + mount assertions).
-- `apps/server/scripts/hotspot_nmcli.sh` (boot-critical behavior).
+## Current backend boundaries
 
-## Safe Change Areas
-- New focused backend helpers: `apps/server/vibesensor/` modules or `libs/core/python/vibesensor_core/*` for shared vibration math.
-- Test additions: `apps/server/tests/<module>/test_*` with narrow scope.
-- AI docs/runbooks: `docs/ai/*`.
-- Simulator-only enhancements: `apps/simulator/*`.
+- Acquisition: `udp_data_rx.py`, `udp_control_tx.py`, `registry.py`, `protocol.py`.
+- Analysis: `processing/`, `analysis/`, `live_diagnostics/`, `libs/core/python/vibesensor_core/`.
+- Runtime coordination: `app.py`, `bootstrap.py`, `runtime/`.
+- API delivery: `routes/`, `ws_hub.py`, `ws_models.py`.
+- Persistence and exports: `metrics_log/`, `history_db/`, `history_runs.py`, `history_reports.py`, `history_exports.py`, `runlog.py`.
+- Reports: `report/`, `report_i18n.py`.
+- Updates and device ops: `update/`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py`, `apps/server/scripts/`, `apps/server/systemd/`.
 
-## File Selection Heuristic (start focused, expand when needed)
-1. Pick one hot spot + directly imported helpers.
-2. Add 1–2 nearest tests.
-3. Add any impacted config/unit file.
-4. Avoid scanning unrelated modules.
+## Hot spots
+
+- `apps/server/vibesensor/runtime/composition.py`: runtime subsystem assembly and ownership boundaries.
+- `apps/server/vibesensor/routes/__init__.py`: shared route assembly point.
+- `apps/server/vibesensor/update/manager.py`: long-running update flow with rollback logic.
+- `apps/server/vibesensor/report/pdf_builder.py` plus `pdf_page1*.py` and `pdf_page2*.py`: public report rendering surface.
+- `apps/ui/src/main.ts`: large UI coordinator.
+
+## Safe starting points
+
+- Small backend extractions inside the owning package instead of adding parallel modules elsewhere.
+- Focused tests in `apps/server/tests/<area>/` plus adjacent integration or regression coverage when needed.
+- `docs/ai/*`, `docs/testing.md`, and area READMEs when code movement changes the current source of truth.
+
+## File-selection heuristic
+
+1. Open the owning entry point for the area you are changing.
+2. Read the nearest helper packages and tests for that ownership boundary.
+3. Update the related docs or instructions in the same change set if paths, responsibilities, or workflows changed.
+4. Avoid repo-wide scans until the local boundary is exhausted.

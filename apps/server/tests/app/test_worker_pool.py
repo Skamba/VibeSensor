@@ -4,7 +4,7 @@ Validates:
 - WorkerPool map_unordered correctness and error handling
 - Parallel compute_all produces identical results to sequential
 - No data races under concurrent ingest + compute
-- Bounded queue / backpressure behaviour
+- Bounded outstanding-task / backpressure behaviour
 - Clean shutdown semantics
 """
 
@@ -74,7 +74,12 @@ class TestWorkerPool:
         pool.map_unordered(lambda x: x, [1, 2])
         stats = pool.stats()
         assert stats["max_workers"] == 3
+        assert stats["max_queue_size"] == 3
+        assert stats["max_pending_tasks"] == 6
         assert stats["total_tasks"] == 2
+        assert stats["pending_tasks"] == 0
+        assert stats["queued_tasks"] == 0
+        assert stats["running_tasks"] == 0
         assert stats["alive"] is True
         pool.shutdown()
         assert pool.stats()["alive"] is False
@@ -89,6 +94,85 @@ class TestWorkerPool:
         pool.shutdown()
         with pytest.raises(RuntimeError, match="shut down"):
             pool.submit(lambda: 42)
+
+    def test_submit_blocks_when_pool_is_saturated(self, make_pool) -> None:
+        pool = make_pool(max_workers=1, max_queue_size=0)
+        release_first = threading.Event()
+        second_submitted = threading.Event()
+        second_finished = threading.Event()
+        results: list[int] = []
+
+        first = pool.submit(lambda: release_first.wait(timeout=1.0) or 1)
+
+        def _submit_second() -> None:
+            future = pool.submit(lambda: 2)
+            second_submitted.set()
+            results.append(future.result(timeout=1.0))
+            second_finished.set()
+
+        submit_thread = threading.Thread(target=_submit_second)
+        submit_thread.start()
+
+        time.sleep(0.05)
+        assert submit_thread.is_alive()
+        assert not second_submitted.is_set()
+
+        release_first.set()
+        assert first.result(timeout=1.0) is True
+        submit_thread.join(timeout=1.0)
+
+        assert second_submitted.is_set()
+        assert second_finished.is_set()
+        assert results == [2]
+        assert pool.stats()["total_submit_wait_s"] > 0
+
+    def test_submit_timeout_raises_when_pool_is_saturated(self, make_pool) -> None:
+        pool = make_pool(max_workers=1, max_queue_size=0)
+        release_first = threading.Event()
+        first = pool.submit(lambda: release_first.wait(timeout=1.0))
+
+        with pytest.raises(TimeoutError, match="saturated"):
+            pool.submit(lambda: 2, timeout_s=0.05)
+
+        release_first.set()
+        first.result(timeout=1.0)
+
+        stats = pool.stats()
+        assert stats["rejected_tasks"] == 1
+        assert stats["pending_tasks"] == 0
+
+    def test_shutdown_wakes_blocked_submitter(self, make_pool) -> None:
+        pool = make_pool(max_workers=1, max_queue_size=0)
+        release_first = threading.Event()
+        first = pool.submit(lambda: release_first.wait(timeout=1.0))
+        blocked_result: dict[str, str] = {}
+
+        def _blocked_submit() -> None:
+            try:
+                pool.submit(lambda: 2)
+            except RuntimeError as exc:
+                blocked_result["error"] = str(exc)
+
+        submit_thread = threading.Thread(target=_blocked_submit)
+        submit_thread.start()
+        time.sleep(0.05)
+        assert submit_thread.is_alive()
+
+        pool.shutdown(wait=False, cancel_futures=True)
+        submit_thread.join(timeout=1.0)
+        release_first.set()
+        first.result(timeout=1.0)
+
+        assert blocked_result["error"] == "WorkerPool is shut down"
+
+    def test_map_unordered_handles_batches_larger_than_capacity(self, make_pool) -> None:
+        pool = make_pool(max_workers=2, max_queue_size=1)
+        result = pool.map_unordered(lambda x: time.sleep(0.01) or x * 2, [1, 2, 3, 4, 5])
+        assert result == {1: 2, 2: 4, 3: 6, 4: 8, 5: 10}
+        stats = pool.stats()
+        assert stats["pending_tasks"] == 0
+        assert stats["queued_tasks"] == 0
+        assert stats["running_tasks"] == 0
 
     def test_uses_multiple_threads(self, make_pool) -> None:
         """Verify that work actually runs on different threads."""

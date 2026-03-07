@@ -34,23 +34,57 @@ if TYPE_CHECKING:
 def create_router(state: RuntimeState) -> APIRouter:
     """Assemble all domain-specific route groups into one router."""
     router = APIRouter()
-    router.include_router(create_health_routes(state.loop_state, state.processor))
+    ingress = getattr(state, "ingress", None)
+    operations = getattr(state, "operations", None)
+    platform = getattr(state, "platform", None)
+
+    registry = ingress.registry if ingress is not None else state.registry
+    processor = ingress.processor if ingress is not None else state.processor
+    control_plane = ingress.control_plane if ingress is not None else state.control_plane
+
+    settings_store = operations.settings_store if operations is not None else state.settings_store
+    gps_monitor = operations.gps_monitor if operations is not None else state.gps_monitor
+    analysis_settings = (
+        operations.analysis_settings if operations is not None else state.analysis_settings
+    )
+    metrics_logger = operations.metrics_logger if operations is not None else state.metrics_logger
+    live_diagnostics = (
+        operations.live_diagnostics if operations is not None else state.live_diagnostics
+    )
+
+    history_db = platform.history_db if platform is not None else state.history_db
+    ws_hub = platform.ws_hub if platform is not None else state.ws_hub
+    update_manager = platform.update_manager if platform is not None else state.update_manager
+    esp_flash_manager = (
+        platform.esp_flash_manager if platform is not None else state.esp_flash_manager
+    )
+
+    router.include_router(create_health_routes(state.loop_state, processor))
     router.include_router(
         create_settings_routes(
-            state.settings_store,
-            state.gps_monitor,
-            state.analysis_settings,
+            settings_store,
+            gps_monitor,
+            analysis_settings,
             state.apply_car_settings,
             state.apply_speed_source_settings,
         )
     )
     router.include_router(
-        create_client_routes(state.registry, state.control_plane, state.settings_store)
+        create_client_routes(
+            registry,
+            control_plane,
+            settings_store,
+        )
     )
-    router.include_router(create_recording_routes(state.metrics_logger, state.live_diagnostics))
-    router.include_router(create_history_routes(state.history_db))
-    router.include_router(create_websocket_routes(state.ws_hub))
-    router.include_router(create_update_routes(state.update_manager, state.esp_flash_manager))
+    router.include_router(
+        create_recording_routes(
+            metrics_logger,
+            live_diagnostics,
+        )
+    )
+    router.include_router(create_history_routes(history_db))
+    router.include_router(create_websocket_routes(ws_hub))
+    router.include_router(create_update_routes(update_manager, esp_flash_manager))
     router.include_router(create_car_library_routes())
-    router.include_router(create_debug_routes(state.processor))
+    router.include_router(create_debug_routes(processor))
     return router

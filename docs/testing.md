@@ -1,143 +1,127 @@
-# Test structure
+# Testing
 
-## Directory layout
+## Source of truth
 
-Tests live under `apps/server/tests/` in feature-based subdirectories
-that mirror the source modules they cover:
+- Server tests live under `apps/server/tests/`.
+- The default CI-parity runner is `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
+- Python test configuration lives in `apps/server/pyproject.toml`.
 
+## Layout
+
+The test tree is feature-based. Most directories mirror the backend package or module they cover.
+
+```text
+apps/server/tests/
+├── conftest.py
+├── builders.py
+├── _paths.py
+├── _*.py helper modules
+├── analysis/
+├── api/
+├── app/
+├── car_library/
+├── config/
+├── domain/
+├── e2e/
+├── gps/
+├── history/
+├── hygiene/
+├── integration/
+├── live_diagnostics/
+├── metrics_log/
+├── processing/
+├── protocol/
+├── regression/
+│   └── {analysis,audits,cross_cutting,report,runtime}/
+├── report/
+├── test_support/
+├── update/
+└── websocket/
 ```
-tests/
-├── conftest.py              # Shared fixtures (available to all subdirs)
-├── builders.py              # Synthetic data generators for integration tests
-├── _paths.py                # Stable path constants (SERVER_ROOT, REPO_ROOT)
-│
-├── analysis/                # vibesensor/analysis/* — findings, strength, phase
-├── api/                     # vibesensor/routes/*, vibesensor/api.py
-├── app/                     # vibesensor/app.py, runtime.py, worker_pool
-├── car_library/             # Car profile/variant modules
-├── config/                  # vibesensor/config.py, settings_store, constants
-├── domain/                  # vibesensor/domain_models.py, json_utils, registry
-├── e2e/                     # Selenium browser tests (marked @selenium)
-├── gps/                     # vibesensor/gps_speed.py, speed parsing
-├── history/                 # vibesensor/history_db.py, runlog
-├── hygiene/                 # Architecture guards, repo hygiene, smoke tests
-├── integration/             # Cross-cutting level tests, scenarios, multi-sensor
-├── live_diagnostics/        # vibesensor/live_diagnostics/*
-├── metrics_log/             # vibesensor/metrics_log/*
-├── processing/              # vibesensor/processing/* — FFT, buffers, time-align
-├── protocol/                # vibesensor/protocol.py, UDP tx/rx
-├── regression/              # Bug-fix regressions grouped by intent (single pack file per folder):
-│   ├── analysis/test_analysis_regressions.py
-│   ├── audits/test_audit_regressions.py
-│   ├── cross_cutting/test_cross_cutting_regressions.py
-│   ├── report/test_report_regressions.py
-│   └── runtime/test_runtime_regressions.py
-├── report/                  # vibesensor/report/* — PDF, i18n, hotspots
-├── update/                  # vibesensor/update/*, firmware_cache, esp_flash
-└── websocket/               # vibesensor/ws_hub.py, ws_models, schema export
-```
 
-## Finding tests
+## Where tests belong
 
-### By source module
+| If you change... | Start with... |
+|---|---|
+| `vibesensor/analysis/*` | `apps/server/tests/analysis/` |
+| `vibesensor/report/*`, `report_i18n.py` | `apps/server/tests/report/` |
+| `vibesensor/routes/*` | `apps/server/tests/api/` |
+| `vibesensor/app.py`, `bootstrap.py`, `runtime/*`, `worker_pool.py` | `apps/server/tests/app/` |
+| `vibesensor/history_db/*`, `history_*.py`, `runlog.py` | `apps/server/tests/history/` |
+| `vibesensor/update/*`, `firmware_cache.py`, `esp_flash_manager.py`, `release_fetcher.py` | `apps/server/tests/update/` |
+| `vibesensor/processing/*` | `apps/server/tests/processing/` |
+| `vibesensor/live_diagnostics/*` | `apps/server/tests/live_diagnostics/` |
+| `vibesensor/ws_hub.py`, `ws_models.py`, `ws_schema_export.py` | `apps/server/tests/websocket/` |
+| `vibesensor/config.py`, `settings_store.py`, `constants.py` | `apps/server/tests/config/` |
+| `vibesensor/domain_models.py`, `json_utils.py`, `registry.py` | `apps/server/tests/domain/` |
+| `vibesensor/gps_speed.py` | `apps/server/tests/gps/` |
+| `vibesensor/protocol.py`, `udp_*.py` | `apps/server/tests/protocol/` |
+| `vibesensor/metrics_log/*` | `apps/server/tests/metrics_log/` |
+| `vibesensor/car_library.py` and related data | `apps/server/tests/car_library/` |
 
-| If you change…                          | Tests live in…            |
-|-----------------------------------------|---------------------------|
-| `vibesensor/analysis/*`                 | `tests/analysis/`         |
-| `vibesensor/report/*`                   | `tests/report/`           |
-| `vibesensor/processing/*`              | `tests/processing/`       |
-| `vibesensor/live_diagnostics/*`        | `tests/live_diagnostics/` |
-| `vibesensor/routes/*`, `vibesensor/api.py` | `tests/api/`          |
-| `vibesensor/ws_hub.py`, `ws_models.py` | `tests/websocket/`       |
-| `vibesensor/config.py`, `settings_store.py` | `tests/config/`     |
-| `vibesensor/gps_speed.py`              | `tests/gps/`             |
-| `vibesensor/protocol.py`, `udp_*.py`  | `tests/protocol/`        |
-| `vibesensor/metrics_log/*`             | `tests/metrics_log/`     |
-| `vibesensor/update/*`, `firmware_cache.py` | `tests/update/`      |
-| `vibesensor/history_db.py`, `runlog.py`| `tests/history/`         |
-| `vibesensor/app.py`, `runtime.py`      | `tests/app/`             |
-| `vibesensor/domain_models.py`          | `tests/domain/`          |
-| Car library modules                     | `tests/car_library/`     |
+Use cross-cutting directories when a test is intentionally broader than one package boundary:
 
-### By feature
+- `apps/server/tests/integration/`: scenario, pipeline, and multi-module behavior.
+- `apps/server/tests/regression/`: bug-fix regressions grouped by intent.
+- `apps/server/tests/hygiene/`: architecture guards and repo hygiene.
+- `apps/server/tests/e2e/`: browser and Docker-backed end-to-end coverage.
 
-| Feature                    | Tests live in…                    |
-|----------------------------|-----------------------------------|
-| Recording & signal flow    | `tests/processing/`, `tests/protocol/` |
-| Analysis & findings        | `tests/analysis/`                 |
-| Report generation          | `tests/report/`                   |
-| Live dashboard diagnostics | `tests/live_diagnostics/`         |
-| GPS speed tracking         | `tests/gps/`                      |
-| Settings & configuration   | `tests/config/`                   |
-| Car profiles               | `tests/car_library/`              |
-| OTA updates                | `tests/update/`                   |
-| WebSocket API              | `tests/websocket/`                |
-| REST API endpoints         | `tests/api/`                      |
+## Regression layout
 
-### Cross-cutting tests
+Regression coverage is grouped by intent:
 
-| Category          | Directory            | Description                                |
-|-------------------|----------------------|--------------------------------------------|
-| Integration       | `tests/integration/` | Multi-module scenarios, level tests        |
-| Regression        | `tests/regression/`  | Bug-fix regressions in five consolidated intent packs (`analysis`, `audits`, `cross_cutting`, `report`, `runtime`) |
-| Architecture      | `tests/hygiene/`     | Repo hygiene, architecture guards, smoke   |
-| End-to-end        | `tests/e2e/`         | Selenium browser tests                     |
+- `regression/analysis/`: scoring, ranking, signal-selection, and analysis pipeline guardrails.
+- `regression/audits/`: audit-style tests that verify known findings or coverage gaps.
+- `regression/cross_cutting/`: failures that span multiple subsystems.
+- `regression/report/`: report rendering and report-data regressions.
+- `regression/runtime/`: runtime, history, API, queueing, and update-adjacent regressions.
+
+Prefer focused files grouped by behavior or maintenance boundary. Recent scenario-heavy suites in `report/` and `integration/` are intentionally split into smaller files plus shared helper modules so failures stay easy to diagnose.
 
 ## Running tests
 
 ```bash
-# Full suite (excludes browser tests)
+# Full backend suite (excludes selenium)
 pytest -q -m "not selenium" apps/server/tests
 
 # Single feature area
-pytest -q apps/server/tests/analysis/
 pytest -q apps/server/tests/report/
-pytest -q apps/server/tests/processing/
+pytest -q apps/server/tests/history/
+pytest -q apps/server/tests/update/
 
-# Integration tests only
+# Cross-cutting scopes
 pytest -q apps/server/tests/integration/
+pytest -q apps/server/tests/regression/report/
 
-# Regression tests only
-pytest -q apps/server/tests/regression/
-
-# With live progress
+# Progress output for a faster local loop
 python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests
 
-# CI-parity (all jobs in parallel)
+# CI-parity job groups
 make test-all
+python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests
+python3 tools/tests/run_ci_parallel.py --job frontend-typecheck --job ui-smoke
 ```
 
-## Adding new tests
+The default CI-parity suite now mirrors these blocking GitHub checks:
 
-1. **Identify the source module** your test covers.
-2. **Place the test** in the matching `tests/<module>/` subdirectory.
-3. **Name the file** `test_<descriptive_name>.py`.
-4. **Use fixtures** from `conftest.py` (available to all subdirs) and
-   builders from `builders.py` (`from builders import …`).
-5. **For path references**, import `SERVER_ROOT` / `REPO_ROOT` from
-   `_paths` instead of using fragile `Path(__file__).parents[N]` chains.
-6. **For cross-cutting tests** that span multiple modules, use
-   `tests/integration/` (scenarios) or `tests/regression/` (bug fixes).
-   Under regression, add tests to the matching consolidated intent pack file:
-   `analysis/test_analysis_regressions.py`, `audits/test_audit_regressions.py`,
-   `cross_cutting/test_cross_cutting_regressions.py`,
-   `report/test_report_regressions.py`, or `runtime/test_runtime_regressions.py`.
+- `backend-quality`: Ruff, line endings, config preflight, path-indirection guard, WS schema sync.
+- `backend-typecheck`: mypy on the backend runtime/API orchestration boundary.
+- `frontend-typecheck`: `npm run typecheck` in `apps/ui/`.
+- `ui-smoke`, `backend-tests`, `e2e`: required test jobs.
 
-## Naming conventions
+## Adding or moving tests
 
-- **Test files**: `test_<feature_or_module>.py`
-- **Regression file names**: prefer descriptive names (for example
-  `test_analysis_pipeline_fixes.py`) over ad-hoc run labels.
-- **Test classes**: `Test<FeatureName>` (group related tests)
-- **Test functions**: `test_<behavior_under_test>`
-- **Fixtures/builders**: in `conftest.py` (fixtures) or `builders.py` (data generators)
-- **Path helpers**: in `_paths.py` (`SERVER_ROOT`, `REPO_ROOT`)
+1. Put the test in the narrowest directory that matches the production ownership boundary.
+2. Keep files focused on one behavior, scenario family, or maintenance boundary.
+3. Reuse shared helpers only when multiple files need the same setup or assertions.
+4. Import `SERVER_ROOT` and `REPO_ROOT` from `_paths.py` instead of using fragile parent traversals.
+5. If a refactor changes test placement or ownership boundaries, update this file in the same change set.
 
 ## Markers
 
-| Marker     | Meaning                                    |
-|------------|--------------------------------------------|
-| `selenium` | Browser-based UI tests (skipped in CI)     |
-| `e2e`      | Docker-based end-to-end tests              |
-| `long_sim` | Longer simulated-run tests (>20s data)     |
-| `smoke`    | Minimal critical path checks               |
+| Marker | Meaning |
+|---|---|
+| `selenium` | Browser-based UI tests |
+| `e2e` | Docker-based end-to-end tests |
+| `long_sim` | Longer simulated-run tests |
+| `smoke` | Minimal critical-path checks |

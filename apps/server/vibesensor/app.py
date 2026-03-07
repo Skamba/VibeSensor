@@ -11,6 +11,7 @@ import argparse
 import errno
 import logging
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -45,7 +46,7 @@ def create_app(config_path: Path | None = None) -> FastAPI:
     runtime = build_services(config)
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         try:
             await runtime.start()
         except Exception:

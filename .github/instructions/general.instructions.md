@@ -28,6 +28,12 @@ Canonical agent workflow (shared source of truth)
   - when adding large inline data definitions, move them into appropriate data files (`.json`, `.yaml`, etc.),
   - do not create duplicate parallel implementations when extending existing logic is cleaner.
 
+Documentation maintenance (always required)
+- After every meaningful code change, check whether docs, repo maps, runbooks, READMEs, and instruction files that reference the touched area are now stale.
+- Update stale documentation in the same change set; do not leave documentation drift for later unless the user explicitly asks you not to touch docs.
+- Remove or rewrite obsolete guidance instead of layering caveats on top of it.
+- Keep human-facing docs and AI-facing guidance aligned with the live code, paths, commands, and ownership boundaries.
+
 Updater deployment policy
 - Treat updater delivery as wheel-first. Runtime fixes must land in repo code and flow through PR/CI; avoid relying on ad-hoc runtime file edits.
 - Emergency-only exception: if updater path is broken on a live device, temporary in-place patching on the device is allowed strictly to restore service.
@@ -40,11 +46,11 @@ Validation (always required)
 - Treat watcher exit `RESULT=ALL_GREEN` as the merge-ready gate for CI checks.
 - Test in this order: targeted tests first, then broader relevant suites.
 - CI-parity suite (same command groups as `.github/workflows/ci.yml`, run in parallel locally): `make test-all` (`python3 tools/tests/run_ci_parallel.py`).
-- Optional CI-parity subset jobs for faster loops: `python3 tools/tests/run_ci_parallel.py --job preflight --job tests`.
+- Optional CI-parity subset jobs for faster loops: `python3 tools/tests/run_ci_parallel.py --job backend-quality --job backend-typecheck --job backend-tests`.
 - Optional focused backend pytest: `python3 tools/tests/pytest_progress.py --show-test-names -- -m "not selenium" apps/server/tests`.
 - Run a single feature area: `pytest -q apps/server/tests/<module>/` (e.g., `tests/analysis/`, `tests/report/`).
 - Test layout: feature-based subdirectories mirror source modules; see `docs/testing.md`.
-- Run lint (`ruff check`) before pushing changes.
+- Run lint (`ruff check`) and backend type checks (`make typecheck-backend`) before pushing changes.
 - After any backend or frontend change, rebuild and test via Docker before considering the work done:
   1. `docker compose build --pull`
   2. `docker compose up -d`
